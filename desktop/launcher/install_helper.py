@@ -380,7 +380,7 @@ def main() -> int:
     p.add_argument("--src", required=True)
     p.add_argument("--home", default=os.environ.get("AI_WORKSPACE_HOME") or str(Path.home() / ".ai-workspace"))
     p.add_argument("--bin", default=os.environ.get("AI_WORKSPACE_BIN") or str(Path.home() / ".local" / "bin"))
-    p.add_argument("--repo", default=os.environ.get("AI_WORKSPACE_REPO") or "Inclined88888/ai-workspace")
+    p.add_argument("--repo", default=os.environ.get("AI_WORKSPACE_REPO") or "Inclined88888/rooks")
     p.add_argument("--native", choices=("auto", "yes", "no"), default=os.environ.get("AI_WORKSPACE_NATIVE", "no"))
     p.add_argument("--no-browser", action="store_true")
     p.add_argument("--no-desk", action="store_true", help="do not install rooks-desk (computer use)")

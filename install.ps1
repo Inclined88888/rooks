@@ -3,7 +3,7 @@
 #   From the downloaded folder (zip or clone), in PowerShell:
 #       powershell -ExecutionPolicy Bypass -File .\install.ps1
 #   Straight from GitHub:
-#       powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/Inclined88888/ai-workspace/integration/v0.4/install.ps1 | iex"
+#       powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/Inclined88888/rooks/main/install.ps1 | iex"
 #
 # Then start everything with:   ai-workspace      (or Start menu > AI Workspace)
 #
@@ -19,7 +19,7 @@
 #   AI_WORKSPACE_NO_START=1   don't open the app at the end
 #   AI_WORKSPACE_NATIVE=auto|yes|no   native installer from GitHub releases (default no; that release is the old app)
 #   AI_WORKSPACE_HELPERS=yes|no   optional helper apps for Files (Tesseract, FFmpeg, LibreOffice via winget; default: ask)
-#   AI_WORKSPACE_REF (branch/tag to download, default integration/v0.4)   AI_WORKSPACE_REPO (owner/repo)
+#   AI_WORKSPACE_REF (branch/tag to download, default main)   AI_WORKSPACE_REPO (owner/repo)
 # Run it again to upgrade. Your chats, keys and settings are kept. Uninstall: QUICKSTART.md.
 
 & {
@@ -27,8 +27,8 @@
   $ProgressPreference = 'SilentlyContinue'
   [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
-  $repo = if ($env:AI_WORKSPACE_REPO) { $env:AI_WORKSPACE_REPO } else { 'Inclined88888/ai-workspace' }
-  $ref = if ($env:AI_WORKSPACE_REF) { $env:AI_WORKSPACE_REF } else { 'integration/v0.4' }
+  $repo = if ($env:AI_WORKSPACE_REPO) { $env:AI_WORKSPACE_REPO } else { 'Inclined88888/rooks' }
+  $ref = if ($env:AI_WORKSPACE_REF) { $env:AI_WORKSPACE_REF } else { 'main' }
   $bin = if ($env:AI_WORKSPACE_BIN) { $env:AI_WORKSPACE_BIN } else { Join-Path $env:USERPROFILE '.local\bin' }
 
   Write-Host 'AI Workspace installer' -ForegroundColor White

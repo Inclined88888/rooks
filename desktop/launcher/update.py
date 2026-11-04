@@ -29,7 +29,7 @@ CHANNEL_STABLE = "stable"
 CHANNEL_EDGE = "edge"
 CHANNELS = (CHANNEL_STABLE, CHANNEL_EDGE)
 EDGE_REF = "main"
-DEFAULT_REPO = "Inclined88888/ai-workspace"
+DEFAULT_REPO = "Inclined88888/rooks"
 STABLE_TAG_RE = re.compile(r"^v(?:0|[1-9]\d{0,2})\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$")
 _VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.]+))?$")
 

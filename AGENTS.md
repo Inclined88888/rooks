@@ -30,7 +30,7 @@ plus three command line agents: `rooks` (terminal coding agent), `rooks-browser`
 
 ## Rules
 
-- Branch `integration/v0.4` is the working line; `main` and `integration/v0.3` are stale. Do not merge to `main` unless the owner says so.
+- The install repo is `Inclined88888/rooks`, version 1.0.0, branch `main`. The old `ai-workspace` repo is not the install line. Do not merge that old `main` unless the owner says so.
 - Every user-facing string is plain words for non-technical people: no URLs, ids, "cli://", "OAuth", "MCP", "UTC",
   "Workbench" or stack traces on normal screens. Technical detail only under "Advanced".
 - The terminal, the browser and the app must match: same features, names and behaviour. A feature added in one is
