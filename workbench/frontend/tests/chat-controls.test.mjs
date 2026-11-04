@@ -12,10 +12,9 @@ test("the in-flight turn can be aborted (AbortController on the stream)", () => 
   assert.match(chat, /ctrl\.signal\)/);
   assert.match(chat, /aria-label="Stop"/);
   assert.match(chat, /\/assistant\/stop/);
-  // Switching to Mail, Terminal, or anywhere else must not stop the reply. Only Stop does.
+  // Switching away must not stop the reply. Only Stop does. The page itself is not kept alive.
   assert.doesNotMatch(chat, /\(\) => abortRef\.current\?\.abort\(\), \[\]/);
-  // The page you left stays mounted, so its reply, draft, research or terminal keeps going.
-  assert.match(app, /hidden=\{!here\}/);
+  assert.doesNotMatch(app, /hidden=\{!here\}/);
 });
 
 test("regenerate drops the last reply and re-runs the same turn", () => {

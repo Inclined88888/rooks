@@ -217,9 +217,9 @@ def start_rooks_browser(app_url: str, key: str, log_dir: Path) -> Optional[str]:
         print("workbench: rooks-browser is not installed; the Browser agent page stays off", file=sys.stderr)
         return None
     port = _free_port()
-    headed = sys.platform in ("darwin", "win32") or bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
-    if os.environ.get("ROOKS_BROWSER_HEADLESS") == "1":
-        headed = False
+    # A second visible browser at launch is what made the app feel heavy. The Browser page
+    # still shows each step. Set ROOKS_BROWSER_HEADED=1 when you want that window too.
+    headed = os.environ.get("ROOKS_BROWSER_HEADED") == "1"
     env = {**os.environ, "ROOKS_BROWSER_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
            "ROOKS_BROWSER_PROVIDER": os.environ.get("ROOKS_BROWSER_PROVIDER", "workbench")}
     args = [exe, "serve", "--port", str(port), "--exit-with-parent", "--headed" if headed else "--headless"]
