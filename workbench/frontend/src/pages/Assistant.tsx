@@ -38,6 +38,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   const [text, setText] = useState(((location.state as { draft?: string; start?: boolean } | null)?.start ? "" : (location.state as { draft?: string } | null)?.draft) ?? ""); // pre-filled from Files / Sites; Home sends straight away
   // feat/v02-anywhere-voice: a draft handed over while Chat is already open (the ask bar's "Do it in Chat")
   useEffect(() => {
+    if (!window.location.pathname.startsWith("/assistant")) return;
     const s = location.state as { draft?: string; start?: boolean } | null;
     if (s?.draft && !s.start) setText(s.draft);
   }, [location.state]);
@@ -58,7 +59,8 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   const cid = id ? Number(id) : null;
   // Who answered each reply this session (the smart router's "via" line); kept across the reload after a new chat
   const viaByReply = useRef(new Map<string, RouterInfo>());
-  const abortRef = useRef<AbortController | null>(null); // the in-flight turn; Stop aborts it
+  const abortRef = useRef<AbortController | null>(null); // the in-flight turn; only Stop aborts it
+  const busyRef = useRef(false);
   const [editing, setEditing] = useState<number | null>(null); // user message being edited inline
   const [editText, setEditText] = useState("");
   const att = useAttachments(); // feat/attachments: files waiting to go with the next message
@@ -88,6 +90,8 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     return () => clearInterval(t);
   }, [cid]);
   useEffect(() => {
+    // Opening the chat list while a reply is still being written must not wipe it.
+    if (!cid && busyRef.current) return;
     setSteps([]);
     setLookAt(null);
     setApprovals([]);
@@ -95,8 +99,6 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     if (!cid) return setMessages([]);
     loadConv(cid);
   }, [cid]);
-  // Leaving the page (or closing it) stops the streamed turn on this end; the server notices the closed stream
-  useEffect(() => () => abortRef.current?.abort(), []);
 
   const decide = async (a: Approval, approve: boolean) => {
     try {
@@ -111,6 +113,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   /** One streamed turn. echo: show the user's text as a fresh bubble (not on resend, where it's already on screen
    *  and stored). resend: the server skips saving the user message again. */
   const run = async (msg: string, opts: { echo?: boolean; resend?: boolean; files?: Att[] } = {}) => {
+    busyRef.current = true;
     setBusy(true);
     setBusySince(Date.now());
     setSteps([]);
@@ -163,13 +166,14 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
       stopped = stopped || ctrl.signal.aborted; // the abort drops the fetch before the server's "stopped" line arrives
     }
     abortRef.current = null;
+    busyRef.current = false;
     setBusy(false);
     setDraft("");
     if (!stopped && lastReply && inBackground()) void notify("Reply ready", lastReply.replace(/\s+/g, " ").slice(0, 160), { tag: "reply" });
     loadConvs();
     const doneCid = newId || cid;
     if (stopped && doneCid) loadConv(doneCid); // pick up what the turn kept before it stopped
-    else if (newId && newId !== cid) navigate(`/assistant/${newId}`, { replace: true });
+    else if (newId && newId !== cid && window.location.pathname.startsWith("/assistant")) navigate(`/assistant/${newId}`, { replace: true });
   };
 
   const send = async (e?: FormEvent) => {
@@ -188,6 +192,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   const runRef = useRef(run);
   runRef.current = run;
   useEffect(() => {
+    if (!window.location.pathname.startsWith("/assistant")) return;
     const handed = location.state as { draft?: string; start?: boolean } | null;
     const msg = handed?.start ? handed.draft?.trim() : "";
     if (!msg) return;
@@ -196,7 +201,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
       void runRef.current(msg, { echo: true });
     }, 0);
     return () => clearTimeout(t);
-  }, []);
+  }, [location.key]);
 
   /** Stop: abort the fetch here and tell the server to cancel the turn, so tools stop too; partial text is kept. */
   const stopTurn = async () => {

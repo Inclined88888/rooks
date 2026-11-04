@@ -5,7 +5,7 @@ import {
   AudioLines, Users, // feat/v02-anywhere-voice
   UsersRound, // feat/team-lead
 } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CommandPalette } from "./Palette";
 import Teammates from "./teammates/Teammates"; // feat/grok-style
 import Groups from "./teammates/Groups"; // feat/grok-style
@@ -272,8 +272,17 @@ export default function App() {
     localStorage.setItem(foldKey(name), open ? "1" : "0");
     return { ...f, [name]: open };
   });
-  // Route transition key: top-level section only, so switching conversations or notes doesn't remount the page
+  // Top-level section. A page you have opened stays mounted when you leave it, so a chat reply,
+  // a mail draft, research, or a terminal keeps going. Talk is the exception: leaving it stops the microphone.
   const section = "/" + (location.pathname.split("/")[1] ?? "");
+  const held = useRef<Record<string, typeof location>>({});
+  held.current[section] = location;
+  const [kept, setKept] = useState<string[]>([]);
+  useEffect(() => {
+    if (section === "/talk") return;
+    setKept((xs) => (xs.includes(section) ? xs : [...xs, section]));
+  }, [section]);
+  const shown = kept.includes(section) ? kept : [...kept, section];
 
   if (error) return <div className="auth"><div className="card auth-card col"><div className="alert err" role="alert">Cannot reach Workbench: {error}</div><button className="btn" onClick={refresh}>Try again</button></div></div>;
   if (!status) return <Boot />;
@@ -348,8 +357,13 @@ export default function App() {
           <strong className="truncate grow">{status.workspace_name}</strong>
           <button className="btn ghost icon" onClick={() => setPaletteOpen(true)} aria-label="Search or jump to"><Search size={17} /></button>
         </div>
-        <div className="route" key={section}>
-        <Routes>
+        {shown.map((sec) => {
+          const here = sec === section;
+          const spot = here ? location : held.current[sec];
+          if (!spot) return null;
+          return (
+            <div key={sec} className="route" hidden={!here}>
+            <Routes location={spot}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/assistant" element={<Assistant tab="chat" />} />
           <Route path="/assistant/:id" element={<Assistant tab="chat" />} />
@@ -417,8 +431,10 @@ export default function App() {
           <Route path="/voice" element={<VoiceSettings />} />
           <Route path="/welcome" element={<Navigate to="/assistant" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        </div>
+            </Routes>
+            </div>
+          );
+        })}
       </main>
       <DeskGlow enabled={!!status.desk_enabled} />
       <JobNotifier />{/* feat/v02-automations */}<DesktopBridge />{/* feat/tauri-native */}

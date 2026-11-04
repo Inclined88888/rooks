@@ -5,14 +5,17 @@ import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const chat = read("../src/pages/Assistant.tsx");
+const app = read("../src/App.tsx");
 
 test("the in-flight turn can be aborted (AbortController on the stream)", () => {
   assert.match(chat, /new AbortController\(\)/);
   assert.match(chat, /ctrl\.signal\)/);
   assert.match(chat, /aria-label="Stop"/);
   assert.match(chat, /\/assistant\/stop/);
-  // leaving the page stops the stream on this end
-  assert.match(chat, /\(\) => abortRef\.current\?\.abort\(\), \[\]/);
+  // Switching to Mail, Terminal, or anywhere else must not stop the reply. Only Stop does.
+  assert.doesNotMatch(chat, /\(\) => abortRef\.current\?\.abort\(\), \[\]/);
+  // The page you left stays mounted, so its reply, draft, research or terminal keeps going.
+  assert.match(app, /hidden=\{!here\}/);
 });
 
 test("regenerate drops the last reply and re-runs the same turn", () => {
