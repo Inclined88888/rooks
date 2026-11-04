@@ -21,6 +21,17 @@ export default function Research() {
   const toast = useToast();
 
   const loadList = () => api<Item[]>("/research").then(setItems).catch(toast.err);
+  const lookUp = async () => {
+    const goal = (current?.question || question).trim();
+    if (goal.length < 3) return;
+    const start = current?.sources?.[0]?.url;
+    try {
+      await api("/browser/jobs", { body: { goal, ...(start ? { start_url: start } : {}) } });
+      toast.ok("Looking that up. I'll wait before I click anything.");
+    } catch (e) {
+      toast.err(e);
+    }
+  };
   useEffect(() => { loadList(); }, []);
 
   useEffect(() => {
@@ -108,6 +119,7 @@ export default function Research() {
               <Tracer active={current.status === "running"} label="Research in progress" />
               <div className="row" style={{ alignItems: "flex-start" }}>
                 <h2 className="grow">{current.question}</h2>
+                <button type="button" className="btn sm" onClick={lookUp} disabled={current.question.trim().length < 3}><Search size={14} /> Look this up</button>
                 {current.status === "done" && <button className="btn sm" onClick={save}><FileText size={14} /> Save to documents</button>}
               </div>
               <div className="faint small mono">{current.model}</div>

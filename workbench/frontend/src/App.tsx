@@ -7,65 +7,65 @@ import {
 } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { CommandPalette } from "./Palette";
-import Teammates from "./teammates/Teammates"; // feat/grok-style
-import Groups from "./teammates/Groups"; // feat/grok-style
-import Vault from "./teammates/Vault"; // feat/grok-style
-import PagesLib from "./teammates/Pages"; // feat/grok-style
-import Channels from "./teammates/Channels"; // feat/grok-style
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import { movePage, pinPage, readSidebar, sidebarKey, unpinPage } from "./navOrder";
 import { EdgeGlow, transitionClick } from "./motion";
-import Assistant from "./pages/Assistant";
 import Auth from "./pages/Auth";
-import Appearance from "./pages/Appearance";
-import MotionLab from "./pages/Motion";
-import Automations from "./pages/Automations";
-import Company from "./pages/Company";
-import Browser from "./pages/Browser";
-import Code from "./pages/Code";
-import Computer from "./pages/Computer";
-import CalendarPage from "./pages/Calendar";
-import Compare from "./pages/Compare";
 import Dashboard from "./pages/Dashboard";
-import Docs from "./pages/Docs";
-import FilesPage from "./pages/Files";
-import SitesPage from "./pages/Sites";
-import MailPage from "./pages/Mail";
-import Research from "./pages/Research";
-import Runs from "./pages/Runs";
-import Insights from "./pages/Insights"; // phase 3: usage trends
-import FineTune from "./pages/FineTune"; // phase 4: datasets from chats, hosted training
-import Status from "./pages/Status";
-import Settings from "./pages/Settings";
-import About from "./pages/About";
-import Privacy from "./pages/Privacy";
-import Skills from "./pages/Skills";
-import Tasks from "./pages/Tasks";
 import Welcome, { AccountsStep } from "./pages/Welcome";
-import Models from "./pages/Models";
-import AboutYou from "./pages/AboutYou"; // adapt and learn (feat/learn-and-adapt)
-import Teach from "./pages/Teach"; // adapt and learn (feat/learn-and-adapt)
-import Plan from "./pages/Plan";
 import { AccountLayer } from "./ProGate";
-import JobsPage from "./v02/Jobs"; // feat/v02-automations: background jobs board
 import DesktopBridge from "./DesktopBridge"; // feat/tauri-native: aiworkspace:// links + tray
 import JobNotifier from "./v02/JobNotifier"; // feat/v02-automations: desktop notifications for jobs
-// feat/v02-anywhere-voice: ask bar, Talk, Meetings, their settings
 import AskBar from "./pages/AskBar";
-import Meetings from "./pages/Meetings";
-import Talk from "./pages/Talk";
-import VoiceSettings from "./pages/VoiceSettings";
 import { FolderKanban, History as HistoryIcon } from "lucide-react"; // feat/v02-core
 import { LineChart as LineChartIcon } from "lucide-react"; // phase 3: Insights
 import { FileText as FileTextIcon, Lock as LockIcon, MessageCircle as MessageCircleIcon } from "lucide-react"; // feat/grok-style
 import { FlaskConical, Mic, SquareTerminal, UserRound, Video } from "lucide-react"; // one icon per meaning in the nav
-import Projects from "./pages/Projects"; // feat/v02-core
-import HistoryPage from "./pages/History"; // feat/v02-core
-import McpServers from "./pages/McpServers"; // feat/mcp-client
-import Knowledge from "./memory/Knowledge"; // feat/memory-core
-import Team from "./team/Team"; // feat/team-lead
-const TerminalPage = lazy(() => import("./pages/TerminalPage")); // #7: xterm.js loads only on this page
+// Home, sign-in and the first welcome stay in the first load. Every other page loads when you open it.
+const Assistant = lazy(() => import("./pages/Assistant"));
+const Appearance = lazy(() => import("./pages/Appearance"));
+const MotionLab = lazy(() => import("./pages/Motion"));
+const Automations = lazy(() => import("./pages/Automations"));
+const Company = lazy(() => import("./pages/Company"));
+const Browser = lazy(() => import("./pages/Browser"));
+const Code = lazy(() => import("./pages/Code"));
+const Computer = lazy(() => import("./pages/Computer"));
+const CalendarPage = lazy(() => import("./pages/Calendar"));
+const Compare = lazy(() => import("./pages/Compare"));
+const Docs = lazy(() => import("./pages/Docs"));
+const FilesPage = lazy(() => import("./pages/Files"));
+const SitesPage = lazy(() => import("./pages/Sites"));
+const MailPage = lazy(() => import("./pages/Mail"));
+const Research = lazy(() => import("./pages/Research"));
+const Runs = lazy(() => import("./pages/Runs"));
+const Insights = lazy(() => import("./pages/Insights"));
+const FineTune = lazy(() => import("./pages/FineTune"));
+const Status = lazy(() => import("./pages/Status"));
+const Settings = lazy(() => import("./pages/Settings"));
+const About = lazy(() => import("./pages/About"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Skills = lazy(() => import("./pages/Skills"));
+const Tasks = lazy(() => import("./pages/Tasks"));
+const Models = lazy(() => import("./pages/Models"));
+const AboutYou = lazy(() => import("./pages/AboutYou"));
+const Teach = lazy(() => import("./pages/Teach"));
+const Plan = lazy(() => import("./pages/Plan"));
+const JobsPage = lazy(() => import("./v02/Jobs"));
+const Meetings = lazy(() => import("./pages/Meetings"));
+const Talk = lazy(() => import("./pages/Talk"));
+const VoiceSettings = lazy(() => import("./pages/VoiceSettings"));
+const Projects = lazy(() => import("./pages/Projects"));
+const HistoryPage = lazy(() => import("./pages/History"));
+const McpServers = lazy(() => import("./pages/McpServers"));
+const Knowledge = lazy(() => import("./memory/Knowledge"));
+const Team = lazy(() => import("./team/Team"));
+const Teammates = lazy(() => import("./teammates/Teammates"));
+const Groups = lazy(() => import("./teammates/Groups"));
+const Vault = lazy(() => import("./teammates/Vault"));
+const PagesLib = lazy(() => import("./teammates/Pages"));
+const Channels = lazy(() => import("./teammates/Channels"));
+const TerminalPage = lazy(() => import("./pages/TerminalPage"));
 
 export type Status = {
   setup_complete: boolean;
@@ -99,13 +99,13 @@ const NAV: NavGroup[] = [
   { items: [
     { to: "/", label: "Home", icon: Home },
     { to: "/assistant", label: "Chat", icon: MessageSquare },
+    { to: "/teach", label: "Show me how", icon: GraduationCap },
     { to: "/mail", label: "Mail", icon: Mail },
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
     { to: "/tasks", label: "Tasks", icon: CheckSquare },
     { to: "/notes", label: "Notes", icon: NotebookPen },
   ] },
   { section: "More", collapsible: true, items: [
-    { to: "/teach", label: "Show me how", icon: GraduationCap },
     { to: "/files", label: "Files", icon: FolderOpen },
     { to: "/knowledge", label: "Memory", icon: Brain },
     { to: "/skills", label: "Skills", icon: Puzzle },
@@ -197,8 +197,8 @@ function DeskGlow({ enabled }: { enabled: boolean }) {
     const tick = () => api<{ id: string; goal: string; status: string }[]>("/desk/jobs")
       .then((js) => { if (!stop) setJob(js.find((j) => j.status === "running" || j.status === "queued" || j.status === "waiting") ?? null); })
       .catch(() => undefined)
-      .finally(() => { if (!stop) t = setTimeout(tick, document.hidden ? 8000 : 2500); });
-    tick();
+      .finally(() => { if (!stop) t = setTimeout(tick, document.hidden ? 20000 : 10000); });
+    t = setTimeout(tick, 4000);
     return () => { stop = true; clearTimeout(t); };
   }, [enabled]);
   return <EdgeGlow active={!!job} hotkey={isMac ? "⌃⌥Esc" : "Ctrl+Alt+Esc"}
@@ -346,6 +346,7 @@ export default function App() {
           <button className="btn ghost icon" onClick={() => setPaletteOpen(true)} aria-label="Search or jump to"><Search size={17} /></button>
         </div>
         <div className="route">
+        <Suspense fallback={<Boot />}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/assistant" element={<Assistant tab="chat" />} />
@@ -379,7 +380,7 @@ export default function App() {
           <Route path="/sites" element={<SitesPage />} />
           <Route path="/research/:id" element={<Research />} />
           <Route path="/code" element={<Code />} />
-          <Route path="/terminal" element={<Suspense fallback={<div className="page muted">Loading…</div>}><TerminalPage /></Suspense>} />
+          <Route path="/terminal" element={<TerminalPage />} />
           <Route path="/code/:id" element={<Code />} />
           <Route path="/browser" element={<Browser />} />
           <Route path="/browser/:id" element={<Browser />} />
@@ -415,6 +416,7 @@ export default function App() {
           <Route path="/welcome" element={<Navigate to="/assistant" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
         </div>
       </main>
       <DeskGlow enabled={!!status.desk_enabled} />

@@ -12,9 +12,10 @@ export default function About() {
         </div>
       </div>
       <div className="card col" style={{ gap: 14 }}>
-        <p style={{ margin: 0 }}>Rooks runs on this computer. Chat, mail, calendar, tasks, notes, files and the rest of the work stay with you.</p>
-        <p style={{ margin: 0 }}>Sign in with the accounts you already use when you want them. Gmail, Apple, Microsoft, ChatGPT and Claude each open that company's own window. You can skip that and add them later.</p>
-        <p style={{ margin: 0 }}>The assistant uses the model you choose. That can be a key you paste, a plan you already pay for, or a model on this computer.</p>
+        <p style={{ margin: 0 }}>Rooks runs on this computer. Your mail, your files, and what it remembers stay here.</p>
+        <p style={{ margin: 0 }}>Chat, mail, the browser, and the computer share one memory. A fact you save in one place is there in the others.</p>
+        <p style={{ margin: 0 }}>It asks before it sends a mail or clicks on a page. Signing in is your turn.</p>
+        <p style={{ margin: 0 }}>The model is the one you choose. A key you paste, a plan you already pay for, or a model on this computer.</p>
         <p style={{ margin: 0 }}>A phone you pair opens the same work. The work still lives here.</p>
       </div>
       <p className="small muted"><Link to="/privacy">Privacy</Link></p>

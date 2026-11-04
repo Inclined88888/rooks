@@ -64,6 +64,7 @@ export default function Computer() {
   const [shotSize, setShotSize] = useState<[number, number]>([0, 0]);
   const [form, setForm] = useState({ goal: "", model: "", max_steps: 30, dry_run: false, approve: [] as string[] });
   const [lists, setLists] = useState<{ folders: string; allow_apps: string } | null>(null);
+  const [turn, setTurn] = useState<{ reason?: string } | null>(null);
   const toast = useToast();
 
   const loadJobs = () => api<JobSummary[]>("/desk/jobs").then(setJobs).catch(toast.err);
@@ -72,6 +73,9 @@ export default function Computer() {
     setLists((l) => l ?? { folders: d.policy.folders.join("\n"), allow_apps: d.policy.allow_apps.join(", ") });
   }).catch(toast.err);
   useEffect(() => { loadDesk(); loadJobs(); }, []);
+  useEffect(() => {
+    api<{ reason?: string }>("/desk/handoff").then((h) => setTurn(h?.reason ? h : null)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!id) return setJob(null);
@@ -151,6 +155,13 @@ export default function Computer() {
           <OctagonX size={16} /> Stop everything
         </button>
       </div>
+      {turn?.reason && (
+        <div className="card" style={{ marginBottom: 12 }}>
+          <strong>Your turn</strong>
+          <p style={{ margin: "6px 0 0" }}>{turn.reason}</p>
+          <p className="muted small" style={{ margin: "6px 0 0" }}>Finish this step on this computer. I will not type a password or click for you.</p>
+        </div>
+      )}
 
       {desk && !desk.ok && <div className="alert err" style={{ marginBottom: 16 }}>Rooks Desk cannot see this screen: {desk.error}</div>}
       {missing.length > 0 && <PermissionSteps missing={missing.map(([k]) => k)} platform={desk?.platform}

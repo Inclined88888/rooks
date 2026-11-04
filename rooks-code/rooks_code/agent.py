@@ -648,6 +648,11 @@ class Agent:
         """Optional .rooks/hooks/before_tool script. Exit 0 allows; any other exit stops the tool. Empty if no hook."""
         script = self.root / ".rooks" / "hooks" / "before_tool"
         if not script.is_file():
+            extra = str(getattr(self.s, "hook_before_tool", "") or "")
+            script = Path(extra) if extra else script
+            if extra and not script.is_absolute():
+                script = self.root / script
+        if not script.is_file():
             return ""
         payload = json.dumps({"tool": tool, "effect": effect, "arguments": arguments}, ensure_ascii=False)
         try:

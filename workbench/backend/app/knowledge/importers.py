@@ -17,7 +17,8 @@ from fastapi import HTTPException
 from .. import db
 from . import graph, index, live, schema
 
-SOURCES = {"chatgpt": "ChatGPT", "claude": "Claude", "grok": "Grok", "notion": "Notion", "obsidian": "Obsidian"}
+SOURCES = {"chatgpt": "ChatGPT", "claude": "Claude", "grok": "Grok", "notion": "Notion", "obsidian": "Obsidian",
+           "memories": "Memories"}
 
 
 def _ts(v) -> str:
@@ -127,12 +128,38 @@ def _notes(source: str, data: bytes) -> dict:
     return {"notes": added, "skipped": skipped}
 
 
+def _memories(data: bytes) -> dict:
+    """A file of facts you already keep: {"facts": ["..."]} or a list of sentences. Filed into our memory, not copied as-is."""
+    from ..adapt import knowledge
+
+    raw = json.loads(data)
+    facts = raw.get("facts") if isinstance(raw, dict) else raw
+    if isinstance(raw, dict) and not facts:
+        facts = raw.get("memories") or []
+    if not isinstance(facts, list):
+        raise HTTPException(400, "That file should list the things to remember.")
+    saved = 0
+    for item in facts:
+        text = item if isinstance(item, str) else str((item or {}).get("content") or (item or {}).get("text") or "")
+        text = " ".join(text.split())
+        if len(text) < 4:
+            continue
+        try:
+            if knowledge.add(text, source="import"):
+                saved += 1
+        except HTTPException:
+            continue
+    return {"remembered": saved}
+
+
 def run(source: str, data: bytes) -> dict:
     if source not in SOURCES:
         raise HTTPException(400, "Unknown source")
     schema.ensure()
     try:
-        if source in ("notion", "obsidian"):
+        if source == "memories":
+            res = _memories(data)
+        elif source in ("notion", "obsidian"):
             res = _notes(source, data)
         else:
             raw = _json_from(data)

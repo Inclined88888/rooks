@@ -174,6 +174,19 @@ class AttachmentIn(BaseModel):
     content_b64: str
 
 
+class DeskHandoffIn(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=300)
+    url: str = Field("", max_length=500)
+
+
+@router.post("/desk/handoff")
+def desk_handoff(data: DeskHandoffIn):
+    """The browser asks the person to finish a login or a desktop step. Nothing is clicked from here."""
+    from .handoff import record
+
+    return record(data.reason, data.url)
+
+
 class DeskEmailIn(BaseModel):
     to: str = Field(..., min_length=3, max_length=2000)
     cc: str = Field("", max_length=2000)

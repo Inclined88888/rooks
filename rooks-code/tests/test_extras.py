@@ -3,6 +3,7 @@
 import json
 import sys
 import time
+from pathlib import Path
 
 import pytest
 
@@ -229,3 +230,34 @@ def test_claude_style_tool_lines_and_modes(tmp_path, capsys):
     assert s.dry_run and tui.mode_of(s) == "plan only"
     # arguments named the way other agents name them still land
     assert ToolCall("1", "read_file", {"file_path": "a.py"}).arguments == {"path": "a.py"}
+
+
+def test_mcp_add_only_records_the_server():
+    servers, sentence = config.mcp_plain("add notes npx notes-server", {})
+    assert servers["notes"] == {"command": "npx", "args": ["notes-server"]}
+    assert "Added notes" in sentence
+    again, listed = config.mcp_plain("list", servers)
+    assert again["notes"]["command"] == "npx" and "notes:" in listed
+    # /mcp in the terminal uses this and does not start the command
+    src = (Path(__file__).resolve().parents[1] / "rooks_code" / "tui.py").read_text()
+    assert 'cmd == "/mcp"' in src and "mcp_plain" in src
+
+
+def test_rooks_toml_hook_can_stop_a_command(tmp_path):
+    script = tmp_path / "guard"
+    script.write_text("#!/bin/sh\nexit 3\n")
+    script.chmod(0o755)
+    loaded = config.resolve(
+        {"provider": "openai", "model": "m"},
+        tmp_path,
+        file={"provider": "openai", "model": "m", "hooks": {"before_tool": str(script)}},
+    )
+    assert loaded.hook_before_tool == str(script)
+    ui = UI()
+    model = FakeModel([
+        assistant("", [call("run_command", {"command": "echo hi"})]),
+        assistant("Stopped."),
+    ])
+    a = Agent(settings(tmp_path, auto_approve=True, hook_before_tool=loaded.hook_before_tool), ui, model=model)
+    assert a.run("run it") == "Stopped."
+    assert "project hook" in model.calls[-1]["messages"][-1]["content"]

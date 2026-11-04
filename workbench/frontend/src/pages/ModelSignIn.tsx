@@ -99,7 +99,7 @@ export function ChatGPTCard({ onConnected, cta = "Start chatting" }: { sub: Sub;
         <BrandMark name="chatgpt" /><strong className="sub-name">ChatGPT</strong>
         {status?.status === "connected" && <span className="badge ok"><Check size={11} /> Signed in</span>}
       </div>
-      <p className="small muted">Use the ChatGPT plan you already pay for. In Chat, pick the model and Chat, Plan, or Build.</p>
+      <p className="small muted">Use the ChatGPT plan you already pay for. In Chat, pick the model, then choose Chat or Code at the top.</p>
       {error && <div className="alert err">{error}</div>}
       {status?.status === "failed" && <div className="alert err">{status.error || "Sign-in didn't finish. Try again."}</div>}
       {status?.status === "connected" ? (

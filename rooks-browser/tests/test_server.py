@@ -36,6 +36,15 @@ def api(tmp_path):
     srv.shutdown()
 
 
+def test_a_held_job_waits_and_does_not_start(api):
+    base, jobs = api
+    code, job = call(base, "POST", "/api/jobs", {"goal": "browse the vendor page", "hold": True})
+    assert code == 200
+    assert job["status"] == "waiting" and job["clicks"] is False and job["sends"] is False
+    assert job["id"] not in jobs.tasks
+    assert job["steps"] == []
+
+
 def script(tmp_path, steps):
     p = tmp_path / "script.json"
     p.write_text(json.dumps(steps))

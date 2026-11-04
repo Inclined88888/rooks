@@ -33,9 +33,24 @@ async def providers():
     return (await _call("GET", "/api/providers")).json()
 
 
+def _waiting() -> list[dict]:
+    from .handoff import pending_browse
+
+    row = pending_browse()
+    return [row] if row and row.get("status") == "waiting" and row.get("id") else []
+
+
 @router.get("/jobs")
 async def jobs():
-    return (await _call("GET", "/api/jobs")).json()
+    local = _waiting()
+    try:
+        remote = (await _call("GET", "/api/jobs")).json()
+    except HTTPException:
+        if local:
+            return local
+        raise
+    seen = {j.get("id") for j in remote if isinstance(j, dict)}
+    return [j for j in local if j["id"] not in seen] + (remote if isinstance(remote, list) else [])
 
 
 @router.post("/jobs")
@@ -45,6 +60,9 @@ async def create_job(request: Request):
 
 @router.get("/jobs/{job_id}")
 async def job(job_id: str):
+    for row in _waiting():
+        if row["id"] == job_id:
+            return row
     return (await _call("GET", f"/api/jobs/{job_id}")).json()
 
 

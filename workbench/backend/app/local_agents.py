@@ -75,7 +75,8 @@ def _start(exe: str) -> bool:
     app_url = os.environ.get("WORKBENCH_URL") or "http://127.0.0.1:8000"
     env = {**os.environ, "ROOKS_BROWSER_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
            "ROOKS_BROWSER_PROVIDER": os.environ.get("ROOKS_BROWSER_PROVIDER", "workbench")}
-    headed = os.environ.get("ROOKS_BROWSER_HEADLESS") != "1"
+    # A visible Chrome at idle is the window that sits there loading. The Browser page shows the steps.
+    headed = os.environ.get("ROOKS_BROWSER_HEADED") == "1"
     log_dir = Path(config.DATA_DIR)
     log_dir.mkdir(parents=True, exist_ok=True)
     log = open(log_dir / "rooks-browser.log", "ab")  # noqa: SIM115 - lives with the child

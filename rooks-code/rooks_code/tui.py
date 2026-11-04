@@ -53,6 +53,7 @@ COMMANDS: dict[str, str] = {
     "/model": "pick the AI, the model and how hard it thinks (arrow keys)",
     "/effort": "how hard a plan's model thinks: /effort low, medium, high or auto",
     "/mode": "chat talks, plan reads, build can change files: /mode chat",
+    "/mcp": "connect an extra tool in plain words: /mcp add notes npx notes-server",
     "/provider": "switch the AI service: /provider NAME",
     "/login": "connect an AI service (paste a key, or use your AI Workspace app)",
     "/memory": "what Rooks remembers about you; /memory forget <words> drops one",
@@ -511,7 +512,7 @@ def _k(n: int) -> str:
 def help_table(ui: RichUI) -> None:
     categories = {
         "Session": ["/help", "/new", "/undo", "/diff", "/compact", "/cost", "/receipt", "/exit"],
-        "Model": ["/model", "/effort", "/mode", "/provider", "/login"],
+        "Model": ["/model", "/effort", "/mode", "/provider", "/login", "/mcp"],
         "Context": ["/memory", "/history", "/skills", "/init", "/context", "/sessions", "/resume"],
         "Behavior": ["/auto", "/dry-run", "/doctor", "/copy", "/image", "/jobs"],
     }
@@ -768,6 +769,12 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         effort_command(agent, ui, rest)
     elif cmd == "/mode":
         mode_command(agent, ui, rest)
+    elif cmd == "/mcp":
+        from .config import mcp_plain
+
+        servers, sentence = mcp_plain(rest, getattr(agent.s, "mcp_servers", {}))
+        agent.s.mcp_servers = servers
+        ui.p("  " + sentence.replace("\n", "\n  "))
     elif cmd == "/provider":
         provider_command(agent, ui, rest)
     elif cmd == "/login":

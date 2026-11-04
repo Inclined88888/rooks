@@ -205,6 +205,7 @@ class Settings:
     learn: bool = True                   # remember facts and learn skills (through the app: shared with chat)
     mode: str = "build"                  # chat talks, plan reads, build can change files and run commands
     sandbox: str = "project"             # project keeps command writes inside the folder; full does not
+    hook_before_tool: str = ""           # optional script path from rooks.toml [hooks] before_tool
     lint_after_edit: bool = False        # run linter/tests after edits and feed errors back
     root: Path = field(default_factory=Path.cwd)
     # Fallback chain: list of (provider, model) pairs to try on transient failures (429, 5xx)
@@ -250,6 +251,32 @@ def load_choice() -> dict:
         return {}
 
 
+def mcp_plain(text: str, servers: dict | None = None) -> tuple[dict, str]:
+    """Plain-words setup for an extra tool. Returns the server list and a sentence to show."""
+    current = dict(servers or {})
+    words = " ".join((text or "").split())
+    if not words or words.lower() in {"list", "help", "?"}:
+        if not current:
+            return current, "No extra tools connected. Say: add notes, then the command that starts it."
+        lines = []
+        for name, spec in current.items():
+            cmd = " ".join([str(spec.get("command") or ""), *[str(a) for a in (spec.get("args") or [])]]).strip()
+            lines.append(f"{name}: {cmd}" if cmd else name)
+        return current, "Connected tools:\n" + "\n".join(lines)
+    if words.lower().startswith("add "):
+        rest = words[4:].strip()
+        if " " not in rest:
+            return current, "Say the name and the command. For example: add notes npx notes-server"
+        name, cmd = rest.split(None, 1)
+        name = "".join(c for c in name.lower() if c.isalnum() or c in "-_")[:40]
+        if not name:
+            return current, "Give the tool a short name."
+        parts = cmd.split()
+        current[name] = {"command": parts[0], "args": parts[1:]}
+        return current, f"Added {name}. It starts when you use it. It cannot send mail or spend money on its own."
+    return current, "Say add, then a short name, then the command. Or say list."
+
+
 def save_choice(provider: str, model: str, effort: str) -> None:
     try:
         p = choice_path()
@@ -276,6 +303,9 @@ def resolve(flags: dict, root: Path, file: dict | None = None) -> Settings:
     else:
         s.sandbox = str(s.sandbox).lower()
     s.prices = dict(cfg.get("prices", {}))
+    hooks = cfg.get("hooks") or {}
+    if isinstance(hooks, dict):
+        s.hook_before_tool = str(hooks.get("before_tool") or "")
     s.mcp_servers = dict(cfg.get("mcp", {}).get("servers", {}))
     s.mcp_servers.update(_project_mcp(root))
     # Load fallback chain

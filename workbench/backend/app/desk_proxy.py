@@ -35,6 +35,14 @@ async def call(method: str, path: str, json: dict | None = None, params: dict | 
     return r
 
 
+@router.get("/handoff")
+def handoff_note():
+    """The latest step that needs the person at this computer. Empty when there is nothing waiting."""
+    from .handoff import latest
+
+    return latest() or {}
+
+
 def _png(r: httpx.Response, cache: str) -> Response:
     return Response(r.content, media_type="image/png", headers={"Cache-Control": cache})
 

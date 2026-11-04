@@ -347,21 +347,30 @@ def main(argv: list[str] | None = None) -> None:
     atexit.register(_cleanup)
     if args.exit_with_parent:
         _exit_with_parent()
-    if not args.no_agents:
-        browser_url = start_rooks_browser(app_url, os.environ["BROWSER_API_KEY"], data_dir)
-        if browser_url:
-            os.environ["BROWSER_URL"] = browser_url
-        desk_url = start_rooks_desk(app_url, os.environ["BROWSER_API_KEY"], data_dir)
-        if desk_url:
-            os.environ["DESK_URL"] = desk_url
-            os.environ.setdefault("DESK_API_KEY", os.environ["BROWSER_API_KEY"])
-        write_app_link(app_url, os.environ["BROWSER_API_KEY"])
-
     if not getattr(sys, "frozen", False):
         sys.path.insert(0, str(REPO / "workbench" / "backend"))
     import uvicorn
 
     from app.main import app
+
+    if not args.no_agents:
+        # Start these after the window can open. They stay quiet until a browse or a computer task.
+        def _agents() -> None:
+            from app import config
+
+            browser_url = start_rooks_browser(app_url, os.environ["BROWSER_API_KEY"], data_dir)
+            desk_url = start_rooks_desk(app_url, os.environ["BROWSER_API_KEY"], data_dir)
+            if browser_url:
+                os.environ["BROWSER_URL"] = browser_url
+                config.BROWSER_URL = browser_url
+            if desk_url:
+                os.environ["DESK_URL"] = desk_url
+                os.environ.setdefault("DESK_API_KEY", os.environ["BROWSER_API_KEY"])
+                config.DESK_URL = desk_url
+                config.DESK_API_KEY = os.environ.get("DESK_API_KEY", "")
+
+        threading.Thread(target=_agents, daemon=True, name="local-agents").start()
+        write_app_link(app_url, os.environ["BROWSER_API_KEY"])
 
     print(f"workbench-server listening on http://127.0.0.1:{args.port} (secrets: {where})", flush=True)
     try:

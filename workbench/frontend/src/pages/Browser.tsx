@@ -186,7 +186,7 @@ export default function Browser() {
                 </div>
                 <div className="card col step-list timeline">
                   <h3>Steps</h3>
-                  {job.steps.length === 0 && <div className="muted small">{active(job.status) ? <span className="row"><Loader2 size={13} className="spin" /> Waiting for the first step</span> : "No steps recorded."}</div>}
+                  {job.steps.length === 0 && <div className="muted small">{job.status === "waiting" ? "Waiting for your approval. Nothing has been clicked or sent." : active(job.status) ? <span className="row"><Loader2 size={13} className="spin" /> Waiting for the first step</span> : "No steps recorded."}</div>}
                   {job.steps.map((s) => (
                     <div key={s.step} className="col" style={{ gap: 4, borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
                       <div className="row small"><span className="badge">{s.step}</span><strong className="grow">{s.next_goal || "…"}</strong>

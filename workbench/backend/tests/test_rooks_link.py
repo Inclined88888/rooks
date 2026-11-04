@@ -146,3 +146,75 @@ def test_history_searches_past_chat_and_terminal_turns(client, auth):
         assert hit[0]["channel"] == "cli"
     finally:
         db.run("DELETE FROM conversations WHERE id = ?", cid)
+
+
+def test_refining_a_skill_shows_what_changed():
+    from app import db, learn
+
+    learn.upsert_skill("quote-parser", "Read a vendor quote", "1. open the file")
+    try:
+        out = learn.upsert_skill("quote-parser", "Read a vendor quote", "1. open the file\n2. pull out the price")
+        assert out["updated"] == "quote-parser"
+        assert "+ 2. pull out the price" in out["diff"]
+        assert "- " not in out["diff"]
+    finally:
+        db.run("DELETE FROM skills WHERE name = 'quote-parser'")
+
+
+def test_a_memory_file_is_filed_into_our_memory(client):
+    from app.adapt import knowledge
+    from app.knowledge import importers
+
+    out = importers.run("memories", b'{"facts": ["The vendor quotes in dollars", "I use pnpm"]}')
+    assert out["remembered"] == 2
+    found = knowledge.search("vendor")
+    assert any("dollars" in (r.get("content") or "") for r in found)
+
+
+def test_the_suite_story_drafts_mail_then_sets_a_morning_note(client, auth, monkeypatch):
+    """Offline north star: draft, browse note, skill diff, morning schedule. Nothing is sent."""
+    from app import db, learn, scheduler, telegram
+    from app.handoff import last_page, remember_page
+
+    sent = []
+    monkeypatch.setattr(telegram, "send", lambda *a, **k: sent.append("sent"))
+    try:
+        draft = client.post("/v1/rooks/draft-mail", headers=auth, json={
+            "to": "boss@example.com", "subject": "Quote", "body": "Please review the vendor price.",
+        })
+        assert draft.status_code == 200
+        assert "not sent" in draft.json()["status"]
+        saved = db.one("SELECT to_addr, body FROM mail_drafts WHERE to_addr = ?", "boss@example.com")
+        assert saved and "vendor price" in saved["body"]
+
+        page = remember_page("https://vendor.example/quote", "Vendor quote", "twelve dollars a widget")
+        assert "twelve dollars" in page["note"]
+        assert "vendor" in (last_page() or {}).get("note", "").lower()
+
+        learn.upsert_skill("quote-parser", "Read a vendor quote", "1. open the file")
+        changed = learn.upsert_skill("quote-parser", "Read a vendor quote", "1. open the file\n2. pull out the price")
+        assert changed["updated"] == "quote-parser"
+        assert "+ 2. pull out the price" in changed["diff"]
+
+        away = client.post("/v1/rooks/away", headers=auth, json={
+            "name": "Morning", "prompt": "Summarise overnight mail", "when": "0 8 * * *",
+        })
+        assert away.status_code == 200
+        row = db.one("SELECT * FROM schedules WHERE name = 'Morning'")
+        assert row["cron"] == "0 8 * * *" and "overnight" in row["prompt"]
+        assert row["last_run"] in (None, "")
+        scheduler.deliver(row["name"], "Overnight is quiet.", row["deliver"], "schedule:test")
+        assert sent == []
+
+        noted = client.post("/v1/desk/handoff", headers=auth, json={
+            "reason": "Sign in to the vendor page", "url": "https://vendor.example/login",
+        })
+        assert noted.status_code == 200 and noted.json()["where"] == "computer"
+        opened = client.get("/api/desk/handoff").json()
+        assert opened["reason"] == "Sign in to the vendor page"
+    finally:
+        db.run("DELETE FROM skills WHERE name = 'quote-parser'")
+        db.run("DELETE FROM mail_drafts WHERE to_addr = ?", "boss@example.com")
+        db.run("DELETE FROM schedules WHERE name = 'Morning'")
+        db.set_setting("browse_note", "")
+        db.set_setting("desk_handoff", "")

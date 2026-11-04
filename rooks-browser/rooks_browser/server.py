@@ -59,6 +59,15 @@ class Jobs:
         goal = str(data.get("goal") or "").strip()
         if len(goal) < 3:
             raise ValueError("goal is required")
+        if data.get("hold"):
+            jid = uuid.uuid4().hex[:12]
+            now = time.time()
+            job = {"id": jid, "goal": goal, "provider": "", "model": "", "status": "waiting", "source": source,
+                   "created_at": now, "updated_at": now, "max_steps": 0, "allowed_domains": [], "steps": [],
+                   "result": None, "error": None, "approvals": [], "receipt": None, "clicks": False, "sends": False}
+            with self.lock:
+                self.jobs[jid] = job
+            return self.get(jid)
         provider = data.get("provider") or None
         if provider not in (None, "auto") and provider not in llm.PROVIDERS:
             raise ValueError(f"unknown provider {provider}")

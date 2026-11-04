@@ -55,12 +55,11 @@ export default function Skills() {
     <div className="page" style={{ maxWidth: 1040 }}>
       <div className="page-head">
         <div className="grow">
-          <p className="kicker">Agents</p>
           <h1>Skills</h1>
-          <p className="muted">Teach the assistant and Rooks Code new tricks. Anything from GitHub is checked before it can run.</p>
+          <p className="muted">Teach me a new trick. I check anything you add before it can run.</p>
         </div>
         <div className="tabs" role="tablist">
-          {([["installed", "Installed"], ["add", "Add from GitHub"], ["activity", pending ? `Activity · ${pending}` : "Activity"]] as const).map(([id, label]) => (
+          {([["installed", "Installed"], ["add", "Add"], ["activity", pending ? `Activity · ${pending}` : "Activity"]] as const).map(([id, label]) => (
             <button key={id} role="tab" aria-selected={tab === id} className={`tab ${tab === id ? "active" : ""}`} onClick={() => go(id)}>{label}</button>
           ))}
         </div>
@@ -102,11 +101,11 @@ function Installed({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="col gap-lg">
       <section className="col">
-        <div className="row"><h3 className="grow" style={{ margin: 0 }}>From GitHub</h3><button className="btn sm" onClick={onAdd}><Github size={13} /> Add a skill</button></div>
+        <div className="row"><h3 className="grow" style={{ margin: 0 }}>Your skills</h3><button className="btn sm" onClick={onAdd}><Github size={13} /> Add a skill</button></div>
         {items.length === 0 ? (
-          <Empty icon={<Puzzle size={24} />} title="No GitHub skills yet"
-            hint="Paste a link to a GitHub folder with a SKILL.md, or search. Every skill is scanned and trial-run in a sandbox before you decide.">
-            <button className="btn primary" onClick={onAdd}><Github size={14} /> Add from GitHub</button>
+          <Empty icon={<Puzzle size={24} />} title="No skills yet"
+            hint="Paste a link to a folder of instructions, or search. I check each one before you decide.">
+            <button className="btn primary" onClick={onAdd}><Github size={14} /> Add a skill</button>
           </Empty>
         ) : (
           <div className="card flush">
@@ -117,11 +116,14 @@ function Installed({ onAdd }: { onAdd: () => void }) {
                     <div className="row" style={{ gap: 8 }}>
                       <strong className="mono">{s.name}</strong>
                       <RiskBadge level={s.risk} />
-                      {s.kind === "mcp" && <span className="badge">MCP server</span>}
+                      {s.kind === "mcp" && <span className="badge">Add-on</span>}
                       {s.status === "disabled" && <span className="badge">Off</span>}
                     </div>
                     <div className="muted small">{s.description || "No description"}</div>
-                    <div className="faint small mono">{s.owner}/{s.repo}{s.path ? `/${s.path}` : ""} @ {s.commit_sha.slice(0, 10)} · installed {relTime(s.installed_at || s.updated_at)}</div>
+                    <details className="small">
+                      <summary className="faint">Advanced</summary>
+                      <div className="faint small mono">{s.owner}/{s.repo}{s.path ? `/${s.path}` : ""} @ {s.commit_sha.slice(0, 10)} · installed {relTime(s.installed_at || s.updated_at)}</div>
+                    </details>
                     <div className="small">{grantSummary(s.granted)}</div>
                   </div>
                   <div className="row" style={{ gap: 6 }}>
@@ -209,13 +211,14 @@ function AddFromGitHub({ onInstalled }: { onInstalled: () => void }) {
   return (
     <div className="col gap-lg">
       <form className="card col" onSubmit={submit}>
-        <label className="label" htmlFor="sk-url">Paste a GitHub link</label>
+        <label className="label" htmlFor="sk-url">Paste a link</label>
         <div className="row">
           <input id="sk-url" className="input mono grow" value={url} onChange={(e) => setUrl(e.target.value)} spellCheck={false}
             placeholder="https://github.com/owner/repo/tree/main/skills/my-skill" />
           <button className="btn primary" disabled={!url.trim() || running}>{running ? "Checking…" : <>Check it <ArrowRight size={14} /></>}</button>
         </div>
-        <p className="faint small" style={{ margin: 0 }}>A repository or a folder. Works with SKILL.md skills and MCP servers. Nothing is installed until you say so.</p>
+        <p className="faint small" style={{ margin: 0 }}>A folder of instructions. Nothing is installed until you say so.</p>
+        <details className="small"><summary className="faint">Advanced</summary><p className="faint small" style={{ margin: "6px 0 0" }}>Accepts a GitHub folder with a SKILL.md, or an MCP server. I scan it and trial-run it before you decide.</p></details>
       </form>
 
       {stages && (
@@ -240,13 +243,16 @@ function AddFromGitHub({ onInstalled }: { onInstalled: () => void }) {
       {!stages && (
         <section className="col">
           <form className="row" onSubmit={search}>
-            <div className="input-icon grow"><Search size={14} /><input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search GitHub, e.g. pdf, spreadsheet, notion" aria-label="Search GitHub for skills" /></div>
+            <div className="input-icon grow"><Search size={14} /><input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search, for example pdf or spreadsheet" aria-label="Search for skills" /></div>
             <button className="btn" disabled={searching}>{searching ? "Searching…" : "Search"}</button>
           </form>
           {hits === null ? (
-            <p className="faint small" style={{ margin: 0 }}>
-              {settings?.has_token ? "Searching SKILL.md files and repositories tagged agent-skills, claude-skills or mcp-server." : "Searches repositories tagged agent-skills, claude-skills or mcp-server. Add a GitHub token below to search inside repositories too."}
-            </p>
+            <details className="small">
+              <summary className="faint">Advanced</summary>
+              <p className="faint small" style={{ margin: "6px 0 0" }}>
+                {settings?.has_token ? "Searching SKILL.md files and repositories tagged agent-skills, claude-skills or mcp-server." : "Searches repositories tagged agent-skills, claude-skills or mcp-server. Add a GitHub token below to search inside repositories too."}
+              </p>
+            </details>
           ) : hits.length === 0 ? (
             <Empty icon={<Search size={22} />} title="Nothing found" hint="Try a broader word, or paste the link if you already know where the skill lives." />
           ) : (
@@ -254,7 +260,7 @@ function AddFromGitHub({ onInstalled }: { onInstalled: () => void }) {
               {hits.map((h) => (
                 <div key={h.url} className="sk-row row" style={{ alignItems: "flex-start" }}>
                   <div className="grow col" style={{ gap: 2 }}>
-                    <div className="row" style={{ gap: 8 }}><strong className="mono">{h.name}</strong>{h.kind === "mcp" && <span className="badge">MCP</span>}{h.stars != null && <span className="faint small">★ {h.stars}</span>}</div>
+                    <div className="row" style={{ gap: 8 }}><strong className="mono">{h.name}</strong>{h.kind === "mcp" && <span className="badge">Add-on</span>}{h.stars != null && <span className="faint small">★ {h.stars}</span>}</div>
                     <span className="faint small mono">{h.full_name}{h.path ? `/${h.path}` : ""}</span>
                     {h.description && <span className="muted small">{h.description}</span>}
                   </div>
@@ -372,7 +378,7 @@ function Review({ skill, onDone }: { skill: HubSkill; onDone: (installed: boolea
       <div className="sk-verdict">
         {high ? <ShieldAlert size={22} /> : <ShieldCheck size={22} />}
         <div className="grow">
-          <p className="kicker" style={{ margin: 0 }}>Security report · {skill.kind === "mcp" ? "MCP server" : "Skill"}</p>
+          <p className="kicker" style={{ margin: 0 }}>Security report · {skill.kind === "mcp" ? "Add-on" : "Skill"}</p>
           <h2 style={{ margin: "2px 0 0" }}><span className="mono" style={{ fontSize: "0.8em" }}>{skill.name}</span> · {RISK_COPY[skill.risk]}</h2>
         </div>
         <a className="btn ghost sm" href={`https://github.com/${r.source.owner}/${r.source.repo}/tree/${r.source.sha}/${r.source.path}`} target="_blank" rel="noreferrer">

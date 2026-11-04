@@ -53,6 +53,13 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     const saved = localStorage.getItem("aiw.workMode");
     return saved === "plan" || saved === "build" ? saved : "chat";
   });
+  // The last Code depth, so leaving for Chat and coming back restores Plan or Build.
+  const codeDepth = useRef<"plan" | "build">(workMode === "build" ? "build" : "plan");
+  const chooseMode = (next: "chat" | "plan" | "build") => {
+    if (next !== "chat") codeDepth.current = next;
+    setWorkMode(next);
+    localStorage.setItem("aiw.workMode", next);
+  };
   const isPlan = !!models.find((m) => m.ref === model)?.effort;
   const endRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
@@ -299,6 +306,21 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
           ) : null}
           {tabs}
         </div>
+        <div className="work-switch">
+          <div className="row">
+            <div className="tabs" role="group" aria-label="Mode">
+              <button type="button" className={`tab ${workMode === "chat" ? "active" : ""}`} onClick={() => chooseMode("chat")}>Chat</button>
+              <button type="button" className={`tab ${workMode !== "chat" ? "active" : ""}`} onClick={() => { if (workMode === "chat") chooseMode(codeDepth.current); }}>Code</button>
+            </div>
+            {workMode !== "chat" && (
+              <div className="tabs" role="group" aria-label="Code">
+                <button type="button" className={`tab ${workMode === "plan" ? "active" : ""}`} onClick={() => chooseMode("plan")}>Plan</button>
+                <button type="button" className={`tab ${workMode === "build" ? "active" : ""}`} onClick={() => chooseMode("build")}>Build</button>
+              </div>
+            )}
+          </div>
+          <p className="muted small" style={{ margin: 0 }}>Chat is for the day. Code is for changing a project, and it asks before it changes files.</p>
+        </div>
         {approvals.length > 0 && (
           <div className="approvals-header" role="region" aria-label="Pending approvals" aria-live="polite">
             <div className="approvals-header-inner">
@@ -442,21 +464,6 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
             <div className="composer-bar">
               <AttachButton onFiles={att.add} disabled={busy} />
               <ModelSelect value={model} onChange={setModel} models={models} />
-              <select
-                className="input"
-                aria-label="Mode"
-                title="Chat talks. Plan proposes steps first. Build carries the task through."
-                value={workMode}
-                onChange={(e) => {
-                  const v = e.target.value as "chat" | "plan" | "build";
-                  setWorkMode(v);
-                  localStorage.setItem("aiw.workMode", v);
-                }}
-              >
-                <option value="chat">Chat</option>
-                <option value="plan">Plan</option>
-                <option value="build">Build</option>
-              </select>
               {isPlan && <EffortSelect value={effort} onChange={setEffort} />}
               <div className="spacer" />
               <span className="composer-hint">Shift + Enter for a new line</span>

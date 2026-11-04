@@ -73,6 +73,35 @@ def notify(text: str) -> None:
         pass
 
 
+def suite_command(text: str) -> str | None:
+    """A short message that drafts mail, sets a morning note, or queues a browse. None means it is an ordinary chat."""
+    raw = " ".join((text or "").split())
+    low = raw.lower()
+    if low.startswith("browse ") or low.startswith("look up "):
+        from .handoff import queue_browse
+
+        queue_browse(raw)
+        return "I'll look at that page and wait for you to approve anything before I click. Nothing is sent."
+    if low.startswith("draft mail"):
+        rest = raw[len("draft mail"):].strip()
+        import re
+
+        found = re.match(r"to\s+(\S+)\s*:\s*(.+)", rest, re.I)
+        if not found:
+            return "Say: draft mail to name@example.com: what it should say. Nothing is sent until you send it."
+        from .tools import DraftIn, save_draft
+
+        save_draft(DraftIn(to=found.group(1), subject="Draft", body=found.group(2).strip()))
+        return "Saved a draft. Nothing was sent. Open Mail to read it and send it yourself."
+    if low.startswith("every morning"):
+        prompt = raw.split(":", 1)[1].strip() if ":" in raw else "Check what needs me today and summarise it."
+        from . import scheduler
+
+        scheduler.create_schedule("Morning", "0 8 * * *", prompt, "telegram")
+        return "I'll do that each morning and send it here."
+    return None
+
+
 def _conversation(chat_id: int, fresh: bool = False) -> int:
     if not fresh:
         c = db.one("SELECT id FROM conversations WHERE channel = 'telegram' AND external_id = ? ORDER BY id DESC LIMIT 1", str(chat_id))
@@ -130,6 +159,10 @@ async def _handle(client: httpx.AsyncClient, msg: dict, update_id: int | None = 
     if text == "/new":
         _conversation(chat_id, fresh=True)
         await send(client, chat_id, "New conversation started.")
+        return
+    note = suite_command(text)
+    if note is not None:
+        await send(client, chat_id, note)
         return
     # Telegram redelivers an update until the next getUpdates acknowledges it, so after a restart the last message can
     # arrive again. Its update id is the idempotency key: a message already answered is not run again (item 28).

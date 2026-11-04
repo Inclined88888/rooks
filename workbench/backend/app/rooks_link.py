@@ -180,6 +180,48 @@ def forget(data: ForgetIn):
     return {"forgotten": knowledge.forget_matching(data.text)}
 
 
+class DraftMailIn(BaseModel):
+    to: str = ""
+    subject: str = ""
+    body: str = ""
+
+
+@router.post("/draft-mail")
+def draft_mail(data: DraftMailIn):
+    """Save a mail draft the person can read and send. This never sends."""
+    from .tools import DraftIn, save_draft
+
+    if not data.to.strip() or not data.body.strip():
+        raise HTTPException(400, "Say who it is to and what it should say. Nothing is sent.")
+    return save_draft(DraftIn(to=data.to.strip(), subject=data.subject.strip() or "Draft", body=data.body))
+
+
+@router.get("/calendar")
+def calendar_soon():
+    """The next events already on this computer."""
+    from . import db
+
+    rows = db.all("SELECT title, start FROM events WHERE start >= ? ORDER BY start LIMIT 8", db.now()[:10])
+    return {"events": [{"title": r["title"], "start": r["start"]} for r in rows]}
+
+
+class AwayIn(BaseModel):
+    name: str = "Morning note"
+    prompt: str = ""
+    when: str = "0 8 * * *"
+
+
+@router.post("/away")
+def away(data: AwayIn):
+    """Do something later and deliver it, without anyone watching."""
+    from . import scheduler
+
+    if not data.prompt.strip():
+        raise HTTPException(400, "Say what should happen.")
+    row = scheduler.create_schedule(data.name or "Morning note", data.when or "0 8 * * *", data.prompt, "telegram")
+    return {"id": row["id"], "name": row["name"], "when": row["cron"]}
+
+
 class Call(BaseModel):
     name: str = Field(..., max_length=200)
     arguments: str = Field("", max_length=4000)

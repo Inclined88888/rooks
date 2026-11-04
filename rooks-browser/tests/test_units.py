@@ -229,3 +229,36 @@ def test_import_into_workbench_and_live_write(tmp_path):
     assert con.execute("SELECT outcome FROM actions WHERE args = 'live'").fetchone() == ("backed",)
     # Workbench's egress summary query sees the browser's visits
     assert con.execute("SELECT COUNT(*) FROM actions WHERE kind = 'egress' AND effect = 'external'").fetchone()[0] == 2
+
+
+def test_a_page_note_is_what_the_next_step_is_told():
+    from rooks_browser.agent import Agent, page_note
+
+    note = page_note("https://vendor.example/quote", "Vendor quote", "twelve dollars")
+    assert "Vendor quote" in note and "vendor.example" in note and "twelve dollars" in note
+    agent = Agent.__new__(Agent)
+    agent.carried = note
+    agent.history = []
+    agent.last_result = ""
+    agent.vision = False
+    agent.max_steps = 4
+
+    class Snap:
+        def describe(self):
+            return "CURRENT"
+
+    text = Agent._prompt(agent, "find the price", Snap(), 2)
+    assert "WHAT THIS PAGE SHOWED LAST:" in text and note in text
+    assert text.index("WHAT THIS PAGE SHOWED LAST:") < text.index("CURRENT PAGE:")
+    loop = (REPO / "rooks-browser" / "rooks_browser" / "agent.py").read_text()
+    body = loop.split("async def run", 1)[1].split("def _prompt", 1)[0]
+    assert body.index("prompt = self._prompt") < body.index("self.carried = page_note")
+
+
+def test_a_login_handoff_is_a_note_for_the_computer():
+    from rooks_browser.agent import desk_handoff_note
+
+    note = desk_handoff_note("Sign in on this computer", "https://vendor.example/login")
+    assert note["where"] == "computer"
+    assert note["reason"] == "Sign in on this computer"
+    assert note["url"].endswith("/login")

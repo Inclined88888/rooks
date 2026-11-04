@@ -23,6 +23,42 @@ from . import llm, search
 from .browser import Browser, PolicyBlocked, Snapshot
 from .policy import LABELS, Approval, classify
 
+def page_note(url: str, title: str, outline: str = "") -> str:
+    """A short note of the page just seen, carried into the next step."""
+    head = " · ".join(part for part in ((title or "").strip(), (url or "").strip()) if part)
+    body = " ".join((outline or "").split())[:400]
+    return (head + ("\n" + body if body else "")).strip()
+
+
+def desk_handoff_note(reason: str, url: str = "") -> dict:
+    """A plain note the Computer page can open when a login or a desktop app needs the person."""
+    return {
+        "reason": (reason or "Please finish this step yourself.").strip()[:300],
+        "url": (url or "").strip()[:500],
+        "where": "computer",
+    }
+
+
+def publish_desk_handoff(note: dict) -> None:
+    """Tell the app about a handoff when this browser was started by it. Quiet when that link is not set."""
+    import os
+    import urllib.request
+
+    base = os.environ.get("WORKBENCH_URL", "").rstrip("/")
+    key = os.environ.get("WORKBENCH_API_KEY", "")
+    if not base or not key or not note.get("reason"):
+        return
+    body = json.dumps({"reason": note["reason"], "url": note.get("url") or ""}).encode()
+    req = urllib.request.Request(
+        f"{base}/v1/desk/handoff", data=body, method="POST",
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+    )
+    try:
+        urllib.request.urlopen(req, timeout=3).close()
+    except (OSError, ValueError):
+        return
+
+
 ACTIONS = ("search", "open", "click", "type", "select", "scroll", "extract", "download", "back", "handoff", "done")
 
 SYSTEM = """You are Rooks Browser, a careful web agent working for the user in a real browser.
@@ -87,6 +123,7 @@ class TaskResult:
     errors: list[str] = field(default_factory=list)
     denied: list[str] = field(default_factory=list)
     downloads: list[dict] = field(default_factory=list)
+    desk_handoff: dict | None = None
     duration_s: float = 0.0
     tokens_in: int = 0
     tokens_out: int = 0
@@ -120,6 +157,7 @@ class Agent:
         self.start_url, self.screenshot_events, self.max_tokens = start_url, screenshot_events, max_tokens
         self.log = browser.log
         self.history: list[str] = []
+        self.carried = ""
         self.last_result = ""
         self.tokens_in = self.tokens_out = 0
         self.cancelled = False
@@ -145,6 +183,7 @@ class Agent:
                 snap = await self.browser.snapshot()
                 image = await self.browser.screenshot_b64() if self.vision else None
                 prompt = self._prompt(goal, snap, step)
+                self.carried = page_note(snap.url, snap.title, snap.describe())
                 t0 = time.monotonic()
                 try:
                     reply = await asyncio.to_thread(self.model.complete, SYSTEM, prompt, image)
@@ -222,6 +261,8 @@ class Agent:
 
     def _prompt(self, goal: str, snap: Snapshot, step: int) -> str:
         parts = [f"TASK: {goal}", f"Step {step} of {self.max_steps}."]
+        if getattr(self, "carried", ""):
+            parts.append("WHAT THIS PAGE SHOWED LAST:\n" + self.carried)
         if self.history:
             parts.append("PREVIOUS STEPS:\n" + "\n".join(self.history[-10:]))
         if self.last_result:
@@ -265,6 +306,8 @@ class Agent:
         b.parent = row
         await b.show(shown, eid if el else None)
         if name == "handoff":
+            res.desk_handoff = desk_handoff_note(str(args.get("reason") or "Please finish this step yourself."), snap.url or "")
+            publish_desk_handoff(res.desk_handoff)
             ap = Approval(uuid.uuid4().hex[:10], "login", name, f"Your turn: {args.get('reason') or 'please finish this step in the browser'}"
                           + (" (in the browser window)" if not b.headless else " (headless: this cannot be done here)"), snap.url)
             ev.approval = ap.to_dict()

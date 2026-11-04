@@ -30,19 +30,29 @@ def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9 ]", "", s.lower()).strip()
 
 
+def _step_diff(previous: str, fresh: str) -> str:
+    """Lines that left and lines that arrived, so a refined skill shows what changed."""
+    old, new = previous.splitlines(), fresh.splitlines()
+    gone = [f"- {line}" for line in old if line not in new]
+    added = [f"+ {line}" for line in new if line not in old]
+    return "\n".join([*gone, *added])[:4000]
+
+
 def upsert_skill(name: str, description: str, steps: str, source: str = "auto") -> dict:
     name = name.strip().lower().replace(" ", "-")
     if not NAME_RE.match(name):
         raise HTTPException(400, "Skill name must be short-kebab-case (letters, digits, dashes).")
     if not steps.strip() or not description.strip():
         raise HTTPException(400, "A skill needs a description and steps.")
-    existing = db.one("SELECT id, source FROM skills WHERE name = ?", name)
+    existing = db.one("SELECT id, source, steps FROM skills WHERE name = ?", name)
     if existing and existing["source"] == "github":  # reviewed third-party text: only a new reviewed install may change it
         raise HTTPException(409, f"{name} was installed from GitHub after a security check and cannot be edited here. Save under another name.")
     if existing:
+        previous = existing["steps"] or ""
+        fresh = steps.strip()[:20000]
         db.run("UPDATE skills SET description = ?, steps = ?, updated_at = ? WHERE id = ?",
-               description.strip()[:300], steps.strip()[:20000], db.now(), existing["id"])
-        return {"updated": name}
+               description.strip()[:300], fresh, db.now(), existing["id"])
+        return {"updated": name, "previous": previous, "diff": _step_diff(previous, fresh)}
     db.run("INSERT INTO skills(name, description, steps, source, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
            name, description.strip()[:300], steps.strip()[:20000], source, db.now(), db.now())
     return {"created": name}
