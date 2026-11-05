@@ -241,5 +241,5 @@ jobs:
             # release.yml creates v* releases after its own checks; wait for it rather than racing it.
             for i in $(seq 1 60); do gh release view "$TAG" >/dev/null 2>&1 && break; sleep 30; done
           fi
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --verify-tag --prerelease --title "AI Workspace ${TAG#desktop-}" --notes-file docs/desktop-release.md
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "AI Workspace ${TAG#desktop-}" --notes-file docs/desktop-release.md
           gh release upload "$TAG" out/* --clobber

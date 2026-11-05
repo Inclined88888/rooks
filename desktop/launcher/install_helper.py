@@ -311,13 +311,36 @@ def native_asset(repo: str) -> tuple[str, str] | None:
     return None
 
 
+def _quit_desktop_app() -> None:
+    """The old app has to be closed before it can be replaced. Ignore it when it is not running."""
+    if MAC:
+        subprocess.run(["osascript", "-e", f'quit app "{NAME}"'], capture_output=True)
+    elif WIN:
+        for image in ("ai-workspace-desktop.exe", f"{NAME}.exe"):
+            subprocess.run(["taskkill", "/IM", image, "/F"], capture_output=True)
+
+
 def remove_stale_desktop_app() -> None:
-    """The published Mac app is older than this branch. If it stays, opening AI Workspace loads that old one."""
-    if not MAC:
-        return
-    app = Path("/Applications") / f"{NAME}.app"
-    if (app / "Contents" / "MacOS" / "ai-workspace-desktop").is_file():
-        shutil.rmtree(app, ignore_errors=True)
+    """An older desktop app, if left in place, is what opens. Remove it so this install is the one that runs."""
+    _quit_desktop_app()
+    leftovers: list[Path] = []
+    if MAC:
+        leftovers = [d / f"{NAME}.app" for d in (Path("/Applications"), Path.home() / "Applications")]
+    elif WIN:
+        local = os.environ.get("LOCALAPPDATA", "")
+        leftovers = [Path(r) / NAME for r in filter(None, (local, os.path.join(local, "Programs") if local else ""))]
+    else:
+        leftovers = [Path.home() / ".ai-workspace" / "bin" / "AI-Workspace.AppImage"]
+    for path in leftovers:
+        if not path.exists():
+            continue
+        if path.is_dir():
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            path.unlink(missing_ok=True)
+        if path.exists():
+            say(f"The older {NAME} app is still at {path}. Drag it to the Trash and open {NAME} again, "
+                "or the old one keeps opening.")
 
 
 def install_native(repo: str, home: Path) -> str:
