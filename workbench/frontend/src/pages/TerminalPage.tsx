@@ -10,9 +10,16 @@ import "../work.css";
 const MAX = 6;
 const REASON: Record<number, string> = {
   4401: "You are signed out. Sign in again, then reopen the terminal.",
-  4403: "The terminal only opens on the computer running Rooks, and only when it is switched on in Settings.",
+  4403: "The terminal only opens on the computer running this app, and only when it is switched on in Settings.",
   4429: "Too many terminals are open. Close one and try again.",
 };
+
+function terminalWhy(code: number, reason: string): string {
+  if (REASON[code]) return REASON[code];
+  if (reason) return reason;
+  if (code === 1006 || code === 1005) return "The terminal could not connect. Press Reopen this terminal.";
+  return "The shell exited.";
+}
 
 type Phase = "connecting" | "open" | "closed";
 
@@ -42,6 +49,7 @@ function Shell({ active, label, onPhase, onSend }: {
     termRef.current = term;
     fitRef.current = fit;
     try { fit.fit(); } catch { /* hidden or not laid out yet */ }
+    let alive = true;
     setPhase("connecting");
     setWhy("");
     const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/api/terminal/ws`);
@@ -49,17 +57,23 @@ function Shell({ active, label, onPhase, onSend }: {
     const run = (cmd: string) => send({ type: "input", data: cmd + "\r" });
     onSend(run);
     ws.onopen = () => {
+      if (!alive) return;
       setPhase("open");
       send({ type: "resize", cols: term.cols, rows: term.rows });
       if (active) term.focus();
     };
-    ws.onmessage = (e) => term.write(typeof e.data === "string" ? e.data : "");
-    ws.onclose = (e) => { setPhase("closed"); setWhy(REASON[e.code] ?? (e.reason || "The shell exited.")); };
+    ws.onmessage = (e) => { if (alive) term.write(typeof e.data === "string" ? e.data : ""); };
+    ws.onclose = (e) => {
+      if (!alive) return;
+      setPhase("closed");
+      setWhy(terminalWhy(e.code, e.reason));
+    };
     const input = term.onData((d) => send({ type: "input", data: d }));
     const resized = term.onResize(({ cols, rows }) => send({ type: "resize", cols, rows }));
     const ro = new ResizeObserver(() => { try { fit.fit(); } catch { /* hidden */ } });
     ro.observe(box.current);
     return () => {
+      alive = false;
       ro.disconnect();
       input.dispose();
       resized.dispose();
@@ -194,7 +208,7 @@ export default function TerminalPage() {
       <div className="page-head row">
         <SquareTerminal size={18} aria-hidden />
         <h1 className="grow">Terminal</h1>
-        <button className="btn sm" onClick={() => senders.current.get(active)?.("rooks")} disabled={phase !== "open"} title="Start the rooks coding agent in this terminal">Start rooks</button>
+        <button className="btn sm" onClick={() => senders.current.get(active)?.("rooks")} disabled={phase !== "open"} title="Start the coding assistant in this terminal">Start coding</button>
       </div>
       <div className="muted small">Drag a name to move it. Double-click a name to rename it. Each one keeps running when you switch. Up to six.</div>
       <div className="terminal-tabs">

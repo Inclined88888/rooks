@@ -234,7 +234,7 @@ export default function App() {
     [nav],
   );
 
-  if (error) return <div className="auth"><div className="card auth-card col"><div className="alert err" role="alert">Cannot reach Workbench: {error}</div><button className="btn" onClick={refresh}>Try again</button></div></div>;
+  if (error) return <div className="auth"><div className="card auth-card col"><div className="alert err" role="alert">Cannot reach the app: {error}</div><button className="btn" onClick={refresh}>Try again</button></div></div>;
   if (!status) return <Boot />;
   if (!status.setup_complete || !status.signed_in) {
     if (status.desktop) {

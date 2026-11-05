@@ -89,6 +89,14 @@ def test_nested_screenshot(room_home, monkeypatch):
         room.down()
 
 
+def test_shell_picture_uses_plain_words():
+    text = Path(__file__).resolve().parents[1].joinpath("rooks_try/drivers/shell.py").read_text()
+    start = text.index("def screenshot")
+    body = text[start:text.index("\n    def click")]
+    for bad in ("Try Room", "Xvfb", "QEMU", "shell mode"):
+        assert bad not in body, bad
+
+
 def test_drivers_are_described(room_home):
     info = TryRoom().drivers()
     names = {d["name"] for d in info}

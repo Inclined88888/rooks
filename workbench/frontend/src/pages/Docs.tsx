@@ -200,7 +200,7 @@ export default function Docs({ kind }: { kind: "note" | "document" }) {
           <Editor key={current.id} doc={current} onSaved={(d) => { setCurrent(d); setList((l) => l.map((x) => (x.id === d.id ? { ...x, ...d, preview: d.body.slice(0, 240) } : x))); }}
             onDeleted={() => { setCurrent(null); navigate(base); load(); }} />
         ) : (
-          <Empty icon={<Icon size={28} />} title={`Select or create a ${kind}`} hint={kind === "document" ? "Draft long form writing with AI assist. Research reports can be saved here." : "Quick thoughts, meeting notes, ideas. Agents in Chat can search and add to these."} />
+          <Empty icon={<Icon size={28} />} title={`Select or create a ${kind}`} hint={kind === "document" ? "Longer writing lives here. Research reports can be saved here too." : "Quick thoughts, meeting notes, ideas. Chat can search these and add to them."} />
         )}
       </div>
       {toast.node}

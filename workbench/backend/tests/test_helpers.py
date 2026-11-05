@@ -21,13 +21,13 @@ def test_missing_helpers_are_named_plainly_and_one_button_installs_them(client, 
 
     monkeypatch.setattr(helpers.subprocess, "run", fake_run)
     s = client.get("/api/files/helpers").json()
-    assert [m["label"] for m in s["missing"]] == ["Tesseract", "FFmpeg", "LibreOffice"] and s["can_install"]
+    assert [m["label"] for m in s["missing"]] == ["Text reader", "Video reader", "Older documents"] and s["can_install"]
     assert client.get("/api/files/capabilities").json()["helpers"]["missing"]
     helpers.install(wait=True)
     assert ["brew", "install", "--cask", "--quiet", "libreoffice"] in ran
     s = client.get("/api/files/helpers").json()
     assert [m["key"] for m in s["missing"]] == ["ffmpeg"] and not s["installing"]
-    assert "FFmpeg could not be installed; skipped." in s["log"]
+    assert "Video reader could not be installed; skipped." in s["log"]
 
 
 def test_without_brew_or_winget_it_says_how_instead_of_failing(client, monkeypatch):

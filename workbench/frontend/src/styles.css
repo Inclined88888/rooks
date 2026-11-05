@@ -422,6 +422,7 @@ kbd, .kbd {
 .shell-agents .cursor-settings-head { background: transparent; }
 .practice-page { padding: 28px 32px 40px; max-width: 760px; }
 .practice-shot { width: 100%; max-width: 560px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); }
+.practice-out { margin: 0; max-width: 560px; max-height: 220px; overflow: auto; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); white-space: pre-wrap; font-size: 13px; }
 .shell-agents .face-body {
   fill: #efeff1;
   stroke: #d4d4d8;

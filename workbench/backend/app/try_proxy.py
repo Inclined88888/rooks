@@ -55,7 +55,7 @@ async def _remote(method: str, path: str, json: dict | None = None, timeout: flo
     url = getattr(config, "TRY_URL", "") or ""
     key = getattr(config, "TRY_API_KEY", "") or ""
     if not url:
-        raise HTTPException(503, "Try Room is not running on this computer.")
+        raise HTTPException(503, "Practice computer is not running.")
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             return await client.request(
@@ -63,13 +63,13 @@ async def _remote(method: str, path: str, json: dict | None = None, timeout: flo
                 headers={"Authorization": f"Bearer {key}"} if key else {},
             )
     except httpx.HTTPError as exc:
-        raise HTTPException(502, f"Try Room unreachable: {exc}") from exc
+        raise HTTPException(502, "Practice computer could not be reached.") from exc
 
 
 def _local_call(action: str, body: dict | None = None) -> dict:
     room = _import_room()
     if room is None:
-        raise HTTPException(503, "Try Room is not installed on this computer. Re-run the installer.")
+        raise HTTPException(503, "Practice computer is not installed on this computer.")
     body = body or {}
     if action == "status":
         return {"available": True, **room.status()}
@@ -102,7 +102,7 @@ async def status():
             raise HTTPException(r.status_code, r.text)
         return {"available": True, **r.json()}
     if not enabled():
-        return {"available": False, "note": "Try Room is not installed on this computer yet."}
+        return {"available": False, "note": "Practice computer is not on this computer yet."}
     return _local_call("status")
 
 
@@ -160,6 +160,6 @@ async def screenshot():
         return Response(r.content, media_type="image/png", headers={"Cache-Control": "no-store"})
     room = _import_room()
     if room is None:
-        raise HTTPException(503, "Try Room is not installed on this computer.")
+        raise HTTPException(503, "Practice computer is not installed on this computer.")
     path = room.screenshot()
     return Response(Path(path).read_bytes(), media_type="image/png", headers={"Cache-Control": "no-store"})

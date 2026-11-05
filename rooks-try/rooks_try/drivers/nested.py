@@ -199,7 +199,7 @@ class NestedDriver(Driver):
             "    s = d.screen()\n"
             "    w = s.root.create_window(40, 40, 900, 500, 1, s.root_depth, X.InputOutput, X.CopyFromParent,\n"
             "                             background_pixel=s.black_pixel, event_mask=X.ExposureMask)\n"
-            "    w.set_wm_name('Rooks Try Room')\n"
+            "    w.set_wm_name('Practice computer')\n"
             "    w.map()\n"
             "    d.flush()\n"
             "    while True:\n"

@@ -263,13 +263,13 @@ async def _use_try_room(
     from . import try_proxy
 
     if not try_proxy.enabled():
-        return {"ok": False, "message": "Try Room is not installed on this computer. Re-run the installer."}
+        return {"ok": False, "message": "Practice computer is not installed on this computer."}
     action = (action or "status").strip().lower()
     if action == "status":
         return await try_proxy.status()
     if action == "up":
         out = await try_proxy.up()
-        _publish_watch(ctx, "try", "room", "Try Room")
+        _publish_watch(ctx, "try", "room", "Practice computer")
         return out
     if action == "down":
         return await try_proxy.down()
@@ -279,7 +279,7 @@ async def _use_try_room(
         return try_proxy._local_call("reset", {})
     if action == "run":
         if not command.strip():
-            return {"ok": False, "error": "Say what command to run inside the Try Room."}
+            return {"ok": False, "error": "Say what command to run on the practice computer."}
         return try_proxy._local_call("run", {"command": command})
     if action == "handoff":
         return try_proxy._local_call("handoff", {"src": src, "dest": dest, "approve": bool(approve)})
@@ -575,7 +575,7 @@ TOOLS: list[Tool] = [
          {"action": S("status|up|down|run|checkpoint|reset|handoff"), "command": S("for run"), "label": S("for checkpoint"),
           "src": S("Try Room path for handoff"), "dest": S("host path for handoff"), "approve": B("handoff only")},
          _use_try_room, ("action",), effect="external", untrusted=True,
-         confirm=lambda a: "This uses the Try Room on this computer, not your real desktop."),
+         confirm=lambda a: "This uses the practice computer on this machine, not your real desktop."),
     # Memory
     Tool("remember", "Save a durable fact about the user. kind: profile (who they are), preference, or fact.",
          {"content": S(), "kind": S()}, lambda content, kind="fact", ctx=None: _remember(content, kind, ctx), ("content",),

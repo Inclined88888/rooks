@@ -44,8 +44,8 @@ export function AgentSetup({ agent, onRecheck, checking }: { agent: CliAgent; on
       </div>
       {!agent.ready && agent.id === "rooks" && (
         <ol className="cli-steps">
-          <li>Rooks comes with this app. If it is missing, install Rooks again.</li>
-          <li>Come back and press Check again.</li>
+          <li>{agent.detail || "The coding assistant is not installed on this computer."}</li>
+          <li>Install it, then press Check again.</li>
         </ol>
       )}
       {!agent.ready && agent.id !== "rooks" && (

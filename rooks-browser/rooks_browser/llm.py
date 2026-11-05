@@ -217,7 +217,7 @@ class _HTTP(Model):
                 if e.code == 429:
                     raise ProviderHTTPError(f"{self.provider} rate limit reached and it did not clear in time "
                                             f"({_short(raw)}). Wait a minute, pick a bigger plan or another model, or lower max steps.", 429, raw) from e
-                if e.code == 400 and "No model provider configured" in detail:
+                if e.code == 400 and ("No model provider configured" in detail or "No model is connected" in detail):
                     raise RuntimeError(NO_MODEL_HELP) from e
                 if e.code in (401, 403) and self.provider in ("groq", "gemini", "openai", "anthropic", "openrouter"):
                     raise RuntimeError(f"{self.provider} refused the API key (HTTP {e.code}). Check the key and try again.") from e

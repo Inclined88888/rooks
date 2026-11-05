@@ -189,7 +189,7 @@ def _http_error(e: urllib.error.HTTPError, url: str) -> ProviderError:
         detail = detail.get("message", detail) if isinstance(detail, dict) else detail
     except ValueError:
         detail = e.reason
-    if e.code == 400 and "No model provider configured" in str(detail):
+    if e.code == 400 and ("No model provider configured" in str(detail) or "No model is connected" in str(detail)):
         from .config import NO_MODEL_HELP
 
         return ProviderError(NO_MODEL_HELP, e.code)

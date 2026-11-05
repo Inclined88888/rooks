@@ -92,14 +92,19 @@ export default function Automations() {
         </div>
         <div className="row wrap">
           <input className="input grow" style={{ minWidth: 180 }} required placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className="input mono" style={{ width: 150 }} required value={form.cron} onChange={(e) => setForm({ ...form, cron: e.target.value })} title="minute hour day month weekday" />
-          <span className="muted small" style={{ width: 150 }}>{describe(form.cron)}</span>
+          <span className="muted small">{describe(form.cron)}</span>
           <select className="input" style={{ width: 130 }} value={form.deliver} onChange={(e) => setForm({ ...form, deliver: e.target.value })}>
             <option value="inbox">Inbox</option><option value="telegram">Inbox + Telegram</option>
           </select>
         </div>
         <textarea className="input" rows={3} required placeholder="What should the assistant do each time?" value={form.prompt} onChange={(e) => setForm({ ...form, prompt: e.target.value })} />
-        <div className="row"><span className="muted small grow">Each run is a model call (and tool calls). Keep frequent jobs short.</span><button className="btn primary"><Plus size={15} /> Schedule</button></div>
+        <details>
+          <summary className="small muted">Advanced</summary>
+          <label className="field small">Schedule pattern
+            <input className="input mono" required value={form.cron} onChange={(e) => setForm({ ...form, cron: e.target.value })} aria-label="Schedule pattern" />
+          </label>
+        </details>
+        <div className="row"><span className="muted small grow">Each run asks the assistant to do this. Keep ones that run often short.</span><button className="btn primary"><Plus size={15} /> Schedule</button></div>
       </form>
 
       <div className="grid two">
@@ -123,7 +128,7 @@ export default function Automations() {
         </div>
         <div className="col">
           <div className="row"><InboxIcon size={16} /><h2 className="grow">Inbox</h2>{inbox.unread > 0 && <button className="btn sm" onClick={async () => { await api("/inbox/read", { method: "POST" }); load(); }}>Mark {inbox.unread} read</button>}</div>
-          {inbox.items.length === 0 && <div className="card"><Empty icon={<InboxIcon size={22} />} title="Empty" hint="Scheduled results and agent reports land here." /></div>}
+          {inbox.items.length === 0 && <div className="card"><Empty icon={<InboxIcon size={22} />} title="Empty" hint="Scheduled results show up here." /></div>}
           <div className="card flush">
             {inbox.items.map((i) => (
               <div key={i.id} className="col" style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", gap: 4 }}>

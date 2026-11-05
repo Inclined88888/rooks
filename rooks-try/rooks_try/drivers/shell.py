@@ -57,16 +57,16 @@ class ShellDriver(Driver):
 
         img = Image.new("RGB", (960, 540), (28, 32, 40))
         draw = ImageDraw.Draw(img)
-        draw.text((40, 40), "Try Room · private shell", fill=(220, 220, 220))
-        draw.text((40, 80), f"Home: {store.guest_home()}", fill=(160, 170, 180))
-        draw.text((40, 120), "No graphical desktop in shell mode.", fill=(160, 170, 180))
-        draw.text((40, 160), "Use run to try commands. Upgrade with Xvfb or QEMU for a screen.", fill=(160, 170, 180))
+        draw.text((40, 40), "Practice computer", fill=(220, 220, 220))
+        draw.text((40, 80), "A private folder on this computer.", fill=(160, 170, 180))
+        draw.text((40, 120), "There is no separate screen.", fill=(160, 170, 180))
+        draw.text((40, 160), "Type a command on the Practice computer page.", fill=(160, 170, 180))
         path.parent.mkdir(parents=True, exist_ok=True)
         img.save(path)
         return path
 
     def click(self, x: int, y: int, button: str = "left", count: int = 1) -> dict:
-        return {"ok": False, "error": "Shell mode has no screen. Start with a nested or qemu driver."}
+        return {"ok": False, "error": "This practice computer has no screen to click."}
 
     def drag(self, x1: int, y1: int, x2: int, y2: int) -> dict:
         return self.click(x1, y1)
@@ -75,10 +75,10 @@ class ShellDriver(Driver):
         return self.click(x, y)
 
     def type_text(self, text: str) -> dict:
-        return {"ok": False, "error": "Shell mode has no screen."}
+        return {"ok": False, "error": "This practice computer has no screen."}
 
     def key(self, keys: str) -> dict:
-        return {"ok": False, "error": "Shell mode has no screen."}
+        return {"ok": False, "error": "This practice computer has no screen."}
 
     def run(self, command: str, timeout: float = 120) -> dict:
         home = store.guest_home()
