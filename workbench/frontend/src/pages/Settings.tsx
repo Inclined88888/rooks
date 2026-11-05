@@ -24,8 +24,8 @@ function BrowserPair() {
   };
   return (
     <div className="card col">
-      <h2>Use Rooks in a browser</h2>
-      <p className="muted small">On another device, open Rooks and choose “I have a pairing code”. The code works once, for about 10 minutes. Chat and memory are the same. Using this computer still happens here.</p>
+      <h2>Open this Rooks in a browser</h2>
+      <p className="muted small">The browser is this app, on this computer. On another device you own, open this computer’s address (or a private tunnel to it) and choose “I have a pairing code”. The code works once, for about 10 minutes. There is no shared Rooks in the cloud.</p>
       {code && <p className="mono" style={{ fontSize: 22, letterSpacing: "0.12em" }}>{code}</p>}
       {err && <div className="alert err">{err}</div>}
       <button type="button" className="btn" onClick={make}>{code ? "Make another code" : "Make a pairing code"}</button>

@@ -1,8 +1,9 @@
-"""One Rooks account on three surfaces: the desktop app, a paired browser, and the terminal.
+"""One person, one computer. The desktop app, a browser, and the terminal all talk to the Rooks on that computer.
 
-A paired browser gets a bearer token (the code is shown once, on a machine that is already signed in).
-The token is stored only as a hash. Computer and local-file work stay on the machine that runs Rooks;
-a browser somewhere else can still chat, and is told when those actions are not on this device.
+The browser is a page served by that local Rooks. Another device can open it only by reaching this same
+computer (on the desk, or through a private tunnel to it). There is no hosted multi-user service, and
+work is not sent to a cloud to run. A pairing code is a one-time proof for that browser; the token is
+stored only as a hash. If the screen or local files are not available here, the page says so.
 """
 
 from __future__ import annotations
@@ -59,7 +60,7 @@ def claim(code: str) -> dict:
         cleaned = f"{cleaned[:4]}-{cleaned[4:]}"
     row = db.one("SELECT code_hash, expires, used FROM browser_pairs WHERE code_hash = ?", _hash(cleaned))
     if not row or row["used"] or row["expires"] < time.time():
-        raise HTTPException(401, "That code has expired or was already used. Make a new one on the computer running Rooks.")
+        raise HTTPException(401, "That code has expired or was already used. Make a new one in Rooks on this computer.")
     db.run("UPDATE browser_pairs SET used = 1 WHERE code_hash = ?", row["code_hash"])
     token = secrets.token_urlsafe(32)
     db.run("INSERT INTO browser_tokens(token_hash, created_at) VALUES (?, ?)", _hash(token), db.now())
@@ -88,8 +89,9 @@ def status() -> dict:
     computer = bool(getattr(config, "DESK_URL", "") and getattr(config, "DESK_API_KEY", ""))
     browser_agent = bool(getattr(config, "BROWSER_URL", "") and getattr(config, "BROWSER_API_KEY", ""))
     return {
+        "local": True,
         "computer": computer,
         "browser_agent": browser_agent,
-        "files": "this computer" if computer else "the Rooks machine",
-        "note": "" if computer else "Chat and memory work here. Using this computer, or files that live only on it, needs the desktop app on that machine.",
+        "files": "this computer",
+        "note": "" if computer else "Rooks stays on this computer. Chat and memory work in the browser. Using the screen or files here needs the desktop app on this same computer.",
     }

@@ -19,8 +19,11 @@ def test_pairing_code_opens_the_same_account(client):
     ok = anon.get("/api/surfaces", headers={"Authorization": f"Bearer {token}"})
     assert ok.status_code == 200
     body = ok.json()
+    assert body["local"] is True
     assert body["computer"] is False
+    assert body["files"] == "this computer"
     assert "desktop app" in body["note"]
+    assert "shared" not in body["note"]
     headers = {"Authorization": f"Bearer {token}"}
     main = anon.get("/api/assistant/main", headers=headers).json()["id"]
     again = anon.get("/api/assistant/main", headers=headers).json()["id"]

@@ -2,7 +2,8 @@
 
 One-off:  rooks talk "what's on today"
 Stay:     rooks talk
-The chat, memory and routines are the ones on the Rooks server (the desktop app, or the URL you logged in to).
+It talks to the Rooks running on this computer. WORKBENCH_URL may be a private tunnel
+back to that same computer. There is no hosted multi-user service.
 """
 
 from __future__ import annotations
@@ -130,7 +131,7 @@ def turn(link: dict, message: str, conversation_id: int | None, tty: bool) -> in
         print(f"Rooks answered {exc.code}. {detail}", flush=True)
         return 1
     except (OSError, ValueError) as exc:
-        print(f"Can't reach Rooks: {exc}", flush=True)
+        print(f"Can't reach the Rooks on this computer: {exc}", flush=True)
         return 1
     return 2 if needs and not tty else 0
 
@@ -213,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
         i += 1
     found = link_from(url, key)
     if not found:
-        print("Open Rooks on this computer, or set WORKBENCH_URL and WORKBENCH_API_KEY.", flush=True)
+        print("Open Rooks on this computer. WORKBENCH_URL is only for a private tunnel back to that same computer.", flush=True)
         return 2
     if prompt:
         cid = main_conversation(found)

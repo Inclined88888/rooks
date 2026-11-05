@@ -189,7 +189,7 @@ export default function Auth({ status, onDone }: { status: Status; onDone: () =>
 
   if (status.setup_complete && step === 0) {
     return (
-      <div className="auth"><div><div className="card auth-card"><Login onDone={onDone} /></div><div className="auth-foot"><Lock size={12} /> Self-hosted. Your data stays on your server.</div></div></div>
+      <div className="auth"><div><div className="card auth-card"><Login onDone={onDone} /></div><div className="auth-foot"><Lock size={12} /> On this computer. Rooks is not a shared service.</div></div></div>
     );
   }
 
