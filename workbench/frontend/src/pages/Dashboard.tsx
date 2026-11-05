@@ -5,6 +5,7 @@ import {
   Globe2, GraduationCap, Inbox, MessageSquare, NotebookPen, Puzzle, Search, UsersRound, Video,
 } from "lucide-react";
 import { api, CalEvent, Task } from "../api";
+import { AssistantFace } from "../AssistantFace";
 import { fmtTime, Markdown, relTime, todayISO, useToast } from "../util";
 
 type Arrived = { project_id: number; name: string; what: string; kind: string };
@@ -155,13 +156,23 @@ export default function Dashboard(_: { chatUrl?: string }) {
     start(text);
   };
 
-  const start = (text: string) => navigate("/assistant", { state: { draft: text, start: true } });
+  const start = async (text: string) => {
+    try {
+      const main = await api<{ id: number }>("/assistant/main");
+      navigate(`/assistant/${main.id}`, { state: { draft: text, start: true } });
+    } catch (err) {
+      toast.err(err);
+    }
+  };
 
   return (
     <div className="page home">
       <div className="start-center">
-        <p className="desk-date">{date}</p>
-        <h1>What should {who} do?</h1>
+        <div className="home-greet">
+          <AssistantFace mood={arrived.length ? "done" : "idle"} name={who} />
+          <p className="desk-date">{date}</p>
+          <h1>What should {who} do?</h1>
+        </div>
 
         <form className="home-add" onSubmit={submit}>
           <input
