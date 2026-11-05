@@ -20,7 +20,7 @@ function shortAgo(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-/** Left nav for the assistant app: new chat, projects, chats, footer. */
+/** Cursor Agents Window left sidebar: New Agent, Projects, Repositories/Agents tree, footer. */
 export default function AgentsSidebar({
   workspaceName,
   onSearch,
@@ -49,7 +49,8 @@ export default function AgentsSidebar({
   const [projects, setProjects] = useState<ProjectList | null>(null);
   const [q, setQ] = useState("");
   const [projOpen, setProjOpen] = useState(true);
-  const [agentsOpen, setAgentsOpen] = useState(true);
+  const [reposOpen, setReposOpen] = useState(true);
+  const [openRepos, setOpenRepos] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let stop = false;
@@ -69,7 +70,26 @@ export default function AgentsSidebar({
   const activeProjectId = projects?.active_id ?? null;
   const projectRows = useMemo(() => projects?.projects ?? [], [projects]);
 
+  /** Repositories = project (or workspace) groups with agent threads underneath. */
+  const repoGroups = useMemo(() => {
+    const groups = projectRows.length
+      ? projectRows.map((p) => ({ key: `p-${p.id}`, id: p.id, name: p.name, when: shortAgo(p.last_used_at || p.updated_at) }))
+      : [{ key: "ws", id: null as number | null, name: workspaceName || "Home", when: "" }];
+    return groups;
+  }, [projectRows, workspaceName]);
+
+  useEffect(() => {
+    setOpenRepos((prev) => {
+      const next = { ...prev };
+      for (const g of repoGroups) {
+        if (next[g.key] === undefined) next[g.key] = true;
+      }
+      return next;
+    });
+  }, [repoGroups]);
+
   const initial = (workspaceName || "R").trim().charAt(0).toUpperCase() || "R";
+  const filtered = convs ?? [];
 
   return (
     <aside className="agents-side" aria-label="Agents">
@@ -79,7 +99,7 @@ export default function AgentsSidebar({
           className="agents-new"
           onClick={() => navigate("/assistant", { state: { fresh: true } })}
         >
-          <Plus size={15} /> New chat
+          <Plus size={15} /> New Agent
         </button>
         <nav className="agents-shortcuts">
           <NavLink to="/automations" className="agents-link"><CalendarClock size={15} /> Automations</NavLink>
@@ -94,8 +114,8 @@ export default function AgentsSidebar({
           className="agents-search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search chats"
-          aria-label="Search chats"
+          placeholder="Search"
+          aria-label="Search agents"
         />
       </div>
 
@@ -135,29 +155,61 @@ export default function AgentsSidebar({
           </div>
         )}
 
-        <button type="button" className="agents-tree-head" onClick={() => setAgentsOpen((v) => !v)} aria-expanded={agentsOpen}>
-          {agentsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <span>Chats</span>
+        <button type="button" className="agents-tree-head" onClick={() => setReposOpen((v) => !v)} aria-expanded={reposOpen}>
+          {reposOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          <span>Repositories</span>
         </button>
-        {agentsOpen && (
+        {reposOpen && (
           <div className="agents-tree-body">
             {convs === null && <p className="agents-empty">Loading…</p>}
-            {convs?.length === 0 && <p className="agents-empty">{q ? "No matches" : "No chats yet"}</p>}
-            {convs?.map((c) => {
-              const active = c.id === cid;
+            {convs && !filtered.length && !repoGroups.length && (
+              <p className="agents-empty">{q ? "No matches" : "No agents yet"}</p>
+            )}
+            {repoGroups.map((g, gi) => {
+              const expanded = openRepos[g.key] !== false;
+              const activeRepo = g.id != null && (g.id === activeProjectId || g.id === openProject);
+              // Show all agents under the active/first repo; other repos stay as folders until opened with their project.
+              const showAgents = gi === 0 || (g.id != null && g.id === activeProjectId);
+              const agentsHere = showAgents ? filtered : [];
               return (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`agents-row${active ? " active" : ""}`}
-                  onClick={() => navigate(`/assistant/${c.id}`)}
-                >
-                  <span className={`agents-dot${active ? " on" : ""}`} aria-hidden />
-                  <span className="grow truncate">
-                    <span className="agents-chat-title truncate">{c.title}</span>
-                  </span>
-                  <span className="agents-age">{shortAgo(c.updated_at)}</span>
-                </button>
+                <div key={g.key} className="agents-repo">
+                  <button
+                    type="button"
+                    className={`agents-row agents-repo-head${activeRepo ? " active" : ""}`}
+                    onClick={() => setOpenRepos((m) => ({ ...m, [g.key]: !expanded }))}
+                  >
+                    {expanded ? <ChevronDown size={13} className="agents-repo-chev" /> : <ChevronRight size={13} className="agents-repo-chev" />}
+                    <span className={`agents-dot${activeRepo ? " on" : ""}`} aria-hidden />
+                    <span className="grow truncate">
+                      <span className="agents-chat-title truncate">{g.name}</span>
+                    </span>
+                    {g.when && <span className="agents-age">{g.when}</span>}
+                  </button>
+                  {expanded && (
+                    <div className="agents-repo-agents">
+                      {!agentsHere.length && showAgents && (
+                        <p className="agents-empty">{q ? "No matches" : "No agents yet"}</p>
+                      )}
+                      {agentsHere.map((c) => {
+                        const active = c.id === cid;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            className={`agents-row agents-agent-row${active ? " active" : ""}`}
+                            onClick={() => navigate(`/assistant/${c.id}`)}
+                          >
+                            <span className={`agents-dot${active ? " on" : ""}`} aria-hidden />
+                            <span className="grow truncate">
+                              <span className="agents-chat-title truncate">{c.title}</span>
+                            </span>
+                            <span className="agents-age">{shortAgo(c.updated_at)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

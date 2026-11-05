@@ -81,7 +81,7 @@ export default function AgentsContext({
   return (
     <aside className="agents-context" aria-label="Context">
       <div className="agents-context-scroll">
-        <div className="agents-context-label">Open now</div>
+        <div className="agents-context-label">Open tabs</div>
         <div className="agents-tabs">
           {tabs.map((t) => (
             <Link key={t.id} to={t.to} className={`agents-tab${t.on ? " on" : ""}`}>
@@ -89,12 +89,12 @@ export default function AgentsContext({
               <span className="truncate">{t.label}</span>
             </Link>
           ))}
-          {!tabs.length && <p className="agents-empty">Nothing open yet</p>}
+          {!tabs.length && <p className="agents-empty">Nothing open</p>}
         </div>
 
-        <div className="agents-context-label">With {workspaceName || "you"}</div>
+        <div className="agents-context-label">On {workspaceName || "this workspace"}</div>
         <div className="agents-work">
-          {!work.length && <p className="agents-empty">Recent work shows up here</p>}
+          {!work.length && <p className="agents-empty">Recent jobs show up here</p>}
           {work.map((w) => (
             <Link key={w.key} to={w.to} className={`agents-work-row${w.live ? " live" : ""}`}>
               <span className={`agents-dot${w.live ? " on" : ""}`} aria-hidden />
@@ -108,7 +108,7 @@ export default function AgentsContext({
       </div>
 
       <nav className="agents-context-foot" aria-label="Places">
-        <Link to="/computer" className="agents-surface"><Monitor size={15} /> <span>Computer</span></Link>
+        <Link to="/computer" className="agents-surface"><Monitor size={15} /> <span>Desktop</span></Link>
         <Link to="/browser" className="agents-surface"><Globe size={15} /> <span>Browser</span></Link>
         <Link to="/terminal" className="agents-surface"><SquareTerminal size={15} /> <span>Terminal</span></Link>
         <Link to="/files" className="agents-surface"><FolderOpen size={15} /> <span>Files</span></Link>
