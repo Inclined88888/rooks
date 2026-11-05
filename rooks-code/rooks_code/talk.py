@@ -174,7 +174,10 @@ def main_conversation(link: dict) -> int | None:
 
 def repl(link: dict) -> int:
     cid = main_conversation(link)
-    print("(here)  Same chat as the app. /routines  /pause  /quit", flush=True)
+    print("Rooks  ·  terminal", flush=True)
+    print("Same chat as the app. No desktop window needed.", flush=True)
+    print("/routines   /pause schedule 3   /quit", flush=True)
+    print(flush=True)
     while True:
         try:
             line = input("you> ").strip()

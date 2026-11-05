@@ -1,4 +1,4 @@
-import { SquareTerminal, ArrowLeft, ArrowUp, BookOpen, Brain, Check, Copy, KeyRound, MessageSquare, Pencil, Plus, RotateCcw, Search, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
+import { SquareTerminal, ArrowLeft, ArrowUp, BookOpen, Brain, Check, Copy, Ellipsis, KeyRound, Pencil, Plus, RotateCcw, Search, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api, stream } from "../api";
@@ -120,7 +120,7 @@ type Skill = { id: number; name: string; description: string; steps: string; use
 
 const CHANNEL: Record<string, string> = { web: "Web", cli: "Terminal", telegram: "Telegram", schedule: "Schedule" };
 
-function Chat({ tabs }: { tabs: React.ReactNode }) {
+function Chat() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [convs, setConvs] = useState<Conv[] | null>(null);
@@ -176,6 +176,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   const [watch, setWatch] = useState<Watch | null>(null);
   const [routines, setRoutines] = useState<Routine[] | null>(null);
   const [showRoutines, setShowRoutines] = useState(Boolean((location.state as { routines?: boolean } | null)?.routines));
+  const [showTry, setShowTry] = useState(false);
   useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
   useEffect(() => { api<{ id: number }>("/assistant/main").then((r) => setMainId(r.id)).catch(() => undefined); }, []);
   const fresh = Boolean((location.state as { fresh?: boolean } | null)?.fresh);
@@ -429,53 +430,53 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
 
   return (
     <div className={`split ${cid !== null ? "has-selection" : ""}`}>
-      <div className="split-list">
-        <div className="col" style={{ padding: "14px 12px 10px", gap: 10 }}>
-          <div className="row"><h2 className="grow">Chats</h2><button className="btn primary sm" style={{ fontWeight: 600 }} onClick={() => navigate("/assistant", { state: { fresh: true } })}><Plus size={14} /> New chat</button></div>
+      <div className="split-list chat-rail">
+        <div className="col chat-rail-head">
+          <button type="button" className="btn primary chat-new" onClick={() => navigate("/assistant", { state: { fresh: true } })}>
+            <Plus size={15} /> New chat
+          </button>
           <div className="row" style={{ position: "relative" }}>
             <Search size={14} className="faint" style={{ position: "absolute", left: 10 }} aria-hidden="true" />
-            <input className="input" style={{ paddingLeft: 30, height: 32 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search conversations" aria-label="Search conversations" />
+            <input className="input chat-rail-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" aria-label="Search chats" />
           </div>
         </div>
         <div className="scroll">
           {convs === null && <SkeletonList rows={5} />}
-          {convs?.length === 0 && <Empty icon={<MessageSquare size={22} />} title={q ? "No matches" : "No conversations yet"} hint={q ? undefined : "Start one on the right."} />}
+          {convs?.length === 0 && <p className="small muted" style={{ padding: "12px 14px" }}>{q ? "No matches" : "No chats yet"}</p>}
           {convs?.map((c) => (
-            <div key={c.id} className={`list-item ${c.id === cid ? "active" : ""}`} role="link" tabIndex={0} aria-current={c.id === cid ? "page" : undefined}
+            <div key={c.id} className={`list-item chat-rail-item ${c.id === cid ? "active" : ""}`} role="link" tabIndex={0} aria-current={c.id === cid ? "page" : undefined}
               onClick={() => navigate(`/assistant/${c.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/assistant/${c.id}`); }}>
               <div className="grow">
-                <div className="truncate" style={{ fontWeight: c.id === cid ? 550 : 450 }}>{c.title}</div>
-                <div className="faint small">{c.id === mainId ? "Main" : (CHANNEL[c.channel] ?? c.channel)} · {relTime(c.updated_at)}</div>
+                <div className="truncate">{c.title}</div>
+                <div className="faint small">{c.id === mainId ? who : (CHANNEL[c.channel] ?? c.channel)} · {relTime(c.updated_at)}</div>
               </div>
-              <button className="btn ghost sm icon" aria-label={`Delete ${c.title}`} onClick={(e) => { e.stopPropagation(); remove(c); }}><Trash2 size={13} /></button>
+              <button className="btn ghost sm icon chat-rail-del" aria-label={`Delete ${c.title}`} onClick={(e) => { e.stopPropagation(); remove(c); }}><Trash2 size={13} /></button>
             </div>
           ))}
         </div>
       </div>
-      <div className="split-main">
-        <div className="toolbar" style={{ position: "relative" }}>
+      <div className="split-main chat-main">
+        <div className="toolbar chat-top" style={{ position: "relative" }}>
           <button className="btn ghost sm mobile-only" onClick={() => navigate("/assistant", { state: { list: true } })} aria-label="Back to chats"><ArrowLeft size={14} /></button>
-          <AssistantFace mood={mood} name={who} size={36} pleasedAt={pleasedAt} />
+          <AssistantFace mood={mood} name={who} size={32} pleasedAt={pleasedAt} />
           <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat")}</div>
           <div className="spacer" />
-          <button type="button" className={`btn ghost sm${showRoutines ? " primary" : ""}`} aria-expanded={showRoutines} onClick={() => { setShowRoutines((v) => !v); setRoutines(null); }}>Routines</button>
-          <TryRoomButton />
-          <ProjectSwitcher cid={cid} /><CheckToggle cid={cid} />{/* feat/v02-core */}
-          {cid ? (
-            <button className="btn ghost sm" title="Continue this chat in the rooks terminal" aria-label="Continue in terminal"
-              onClick={() => api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } })
-                .then((h) => { navigator.clipboard?.writeText(h.command); toast.ok(`Copied: ${h.command} (one use, ${Math.round(h.expires_in / 60)} min)`); })
-                .catch(toast.err)}>
-              <SquareTerminal size={14} />
-            </button>
-          ) : null}
-          {tabs}
+          <ChatMenu
+            showRoutines={showRoutines}
+            onRoutines={() => { setShowRoutines((v) => !v); setShowTry(false); setRoutines(null); }}
+            onTry={() => { setShowTry((v) => !v); setShowRoutines(false); }}
+            cid={cid}
+            onTerminal={() => api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } })
+              .then((h) => { navigator.clipboard?.writeText(h.command); toast.ok(`Copied: ${h.command}`); })
+              .catch(toast.err)}
+          />
         </div>
+        {showTry && <div className="routines-panel chat-flyout"><TryRoomButton startOpen onClose={() => setShowTry(false)} /></div>}
         {showRoutines && (
           <div className="routines-panel" aria-label="Routines">
             <div className="row"><strong className="grow">Routines</strong><span className="small muted">Pause any time. Sending still asks you.</span></div>
             {routines === null && <p className="small muted">Loading…</p>}
-            {routines?.length === 0 && <p className="small muted">None yet. Say “every weekday morning, summarise my inbox” or “when an invoice email arrives, save the PDF”.</p>}
+            {routines?.length === 0 && <p className="small muted">None yet. Say “every weekday morning, summarise my inbox”.</p>}
             <ul>
               {routines?.map((r) => (
                 <li key={`${r.kind}-${r.id}`}>
@@ -489,21 +490,6 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
             </ul>
           </div>
         )}
-        <div className="work-switch">
-          <div className="row">
-            <div className="tabs" role="group" aria-label="Mode">
-              <button type="button" className={`tab ${workMode === "chat" ? "active" : ""}`} onClick={() => chooseMode("chat")}>Chat</button>
-              <button type="button" className={`tab ${workMode !== "chat" ? "active" : ""}`} onClick={() => { if (workMode === "chat") chooseMode(codeDepth.current); }}>Code</button>
-            </div>
-            {workMode !== "chat" && (
-              <div className="tabs" role="group" aria-label="Code">
-                <button type="button" className={`tab ${workMode === "plan" ? "active" : ""}`} onClick={() => chooseMode("plan")}>Plan</button>
-                <button type="button" className={`tab ${workMode === "build" ? "active" : ""}`} onClick={() => chooseMode("build")}>Build</button>
-              </div>
-            )}
-          </div>
-          <p className="muted small" style={{ margin: 0 }}>Chat is for the day. Code is for changing a project, and it asks before it changes files.</p>
-        </div>
         {approvals.length > 0 && (
           <div className="approvals-header" role="region" aria-label="Pending approvals" aria-live="polite">
             <div className="approvals-header-inner">
@@ -529,6 +515,13 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
         <div className="chat-scroll" aria-live="polite">
           <main className="chat-thread" role="main" aria-label="Chat conversation">
             <h1 style={srOnly}>Chat conversation</h1>
+            {!busy && visible.length === 0 && (
+              <div className="chat-hero">
+                <AssistantFace mood="idle" name={who} size={72} pleasedAt={pleasedAt} />
+                <h2 className="chat-hero-title">{who}</h2>
+                <p className="chat-hero-sub">Ask anything. Work stays on this computer.</p>
+              </div>
+            )}
             {visible.map((m) => m.role === "user"
               ? <div key={m.id} className="msg user">
                   {editing === m.id ? (
@@ -559,13 +552,15 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
                       ? <LiveMarkdown text={m.content} messageId={m.id} streaming onDone={() => setFreshId(null)} />
                       : <LiveMarkdown text={m.content} messageId={m.id} />)}
                     {m.via && <RouterVia r={m.via} />}
-                    {m.content && m.id !== freshId && <MessageFeedback msg={m} />}
-                    {m.content && m.id !== freshId && <CheckThis cid={cid} content={m.content} fresh={m.id > 1e12} />}{/* feat/v02-core */}
                     {m.cards && <ResultCards cards={m.cards.filter((c) => c.kind !== "watch")} />}
                     {m.choices && lastReply?.id === m.id && !busy && <ChoiceButtons c={m.choices} onPick={pickChoice} />}
-                    {m.content && m.id !== freshId && lastReply?.id === m.id && !busy && (
-                      <div className="row" style={{ gap: 4, marginTop: 4 }}>
-                        <button className="btn ghost sm" aria-label="Regenerate reply" title="Drop this reply and answer again" onClick={regenerate}><RotateCcw size={13} /> Regenerate</button>
+                    {m.content && m.id !== freshId && (
+                      <div className="msg-actions">
+                        <MessageFeedback msg={m} />
+                        <CheckThis cid={cid} content={m.content} fresh={m.id > 1e12} />
+                        {lastReply?.id === m.id && !busy && (
+                          <button className="btn ghost sm icon" aria-label="Regenerate reply" title="Answer again" onClick={regenerate}><RotateCcw size={13} /></button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -653,10 +648,15 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <div className="composer-bar">
               <AttachButton onFiles={att.add} disabled={busy} />
+              <select className="input" aria-label="Mode" value={workMode} onChange={(e) => chooseMode(e.target.value as "chat" | "plan" | "build")}>
+                <option value="chat">Chat</option>
+                <option value="plan">Plan</option>
+                <option value="build">Build</option>
+              </select>
               <ModelSelect value={model} onChange={setModel} models={models} />
               {isPlan && <EffortSelect value={effort} onChange={setEffort} />}
               <div className="spacer" />
-              <span className="composer-hint">Shift + Enter for a new line</span>
+              <span className="composer-hint">↵ to send</span>
               {/* feat/v02-anywhere-voice + motion: one mic. Local/cloud speech-to-text with browser fallback, drawn as the voice orb */}
               <DictateButton orb disabled={busy} onText={(t) => { setText((v) => (v ? v + " " : "") + t); composerRef.current?.focus(); }} />
               {busy
@@ -836,19 +836,42 @@ function SettingsTab() {
   );
 }
 
-export default function Assistant({ tab }: { tab: "chat" | "memory" | "skills" | "settings" }) {
+function ChatMenu({ showRoutines, onRoutines, onTry, cid, onTerminal }: {
+  showRoutines: boolean; onRoutines: () => void; onTry: () => void; cid: number | null; onTerminal: () => void;
+}) {
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const tabs = (
-    <div className="tabs">
-      {(["chat", "memory", "skills", "settings"] as const).map((t) => (
-        <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => navigate(t === "chat" ? "/assistant" : `/assistant-${t}`)}>{t[0].toUpperCase() + t.slice(1)}</button>
-      ))}
+  return (
+    <div className="chat-menu">
+      <button type="button" className={`btn ghost sm icon${open ? " on" : ""}`} aria-label="More" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <Ellipsis size={16} />
+      </button>
+      {open && (
+        <div className="chat-menu-panel" role="menu">
+          <button type="button" role="menuitem" className={showRoutines ? "on" : ""} onClick={() => { onRoutines(); setOpen(false); }}>Routines</button>
+          <button type="button" role="menuitem" onClick={() => { onTry(); setOpen(false); }}>Try Room</button>
+          <div className="chat-menu-row"><ProjectSwitcher cid={cid} /></div>
+          <div className="chat-menu-row"><CheckToggle cid={cid} /></div>
+          {cid ? <button type="button" role="menuitem" onClick={() => { onTerminal(); setOpen(false); }}><SquareTerminal size={14} /> Continue in terminal</button> : null}
+          <hr />
+          <button type="button" role="menuitem" onClick={() => { navigate("/assistant-memory"); setOpen(false); }}>Memory</button>
+          <button type="button" role="menuitem" onClick={() => { navigate("/assistant-settings"); setOpen(false); }}>Chat settings</button>
+          <button type="button" role="menuitem" onClick={() => { navigate("/settings"); setOpen(false); }}>Settings</button>
+        </div>
+      )}
     </div>
   );
-  if (tab === "chat") return <Chat tabs={tabs} />;
+}
+
+export default function Assistant({ tab }: { tab: "chat" | "memory" | "skills" | "settings" }) {
+  const navigate = useNavigate();
+  if (tab === "chat") return <Chat />;
   return (
-    <div className="page" style={{ maxWidth: 900 }}>
-      <div className="page-head"><h1 className="grow">Assistant</h1>{tabs}</div>
+    <div className="page" style={{ maxWidth: 720 }}>
+      <div className="page-head">
+        <button type="button" className="btn ghost sm" onClick={() => navigate("/assistant")}><ArrowLeft size={14} /> Chat</button>
+        <h1 className="grow">{tab === "memory" ? "Memory" : tab === "skills" ? "Skills" : "Chat settings"}</h1>
+      </div>
       {tab === "memory" && <MemoryTab />}
       {tab === "skills" && <SkillsTab />}
       {tab === "settings" && <SettingsTab />}
@@ -883,10 +906,10 @@ function MessageFeedback({ msg }: { msg: Msg }) {
   return (
     <div className="msg-feedback">
       {toast.node}
-      <div className="row" style={{ gap: 4 }}>
+      <div className="row" style={{ gap: 2 }}>
         <button className={`btn ghost sm icon${rating > 0 ? " on" : ""}`} aria-pressed={rating > 0} aria-label="Good answer" title="Good answer" disabled={busy} onClick={() => thumb(1)}><ThumbsUp size={13} /></button>
         <button className={`btn ghost sm icon${rating < 0 ? " on" : ""}`} aria-pressed={rating < 0} aria-label="Not right" title="Not right" disabled={busy} onClick={() => thumb(-1)}><ThumbsDown size={13} /></button>
-        <button className="btn ghost sm" title="Change the answer the way you wanted it; I learn from the difference" disabled={busy} onClick={() => setMode(mode === "edit" ? "" : "edit")}><Pencil size={13} /> Fix this</button>
+        <button className="btn ghost sm icon" title="Fix this" aria-label="Fix this" disabled={busy} onClick={() => setMode(mode === "edit" ? "" : "edit")}><Pencil size={13} /></button>
         {note && <span className="muted small" role="status">{note}</span>}
       </div>
       {mode === "why" && (

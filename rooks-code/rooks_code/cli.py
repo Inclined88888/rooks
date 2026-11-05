@@ -14,9 +14,13 @@ or local Ollama / LM Studio (works fully offline).
   rooks doctor                  check the provider, key and MCP servers, and say what to fix
   rooks init                    write an example config file
   rooks mcp                     list MCP servers and their tools
+  rooks talk ["prompt"]         the same assistant as the app, in the terminal (no desktop install needed)
 
 Every edit (shown as a diff) and every command is asked about first, unless the folder is trusted, --yes is given, or
 you answer "a" (always, for this session). --dry-run shows what would change and changes nothing.
+
+If you only want the assistant in a terminal (no desktop app window), install rooks-code and run `rooks talk`.
+It uses the Rooks on this computer, or WORKBENCH_URL for a private tunnel back to that same computer.
 """
 
 from __future__ import annotations

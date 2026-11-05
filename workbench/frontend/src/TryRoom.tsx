@@ -11,10 +11,10 @@ type TryStatus = {
   last_checkpoint?: { name?: string; label?: string } | null;
 };
 
-/** Start, checkpoint and reset the disposable Try Room from chat. */
-export function TryRoomButton() {
+/** Start, checkpoint and reset the disposable Try Room. */
+export function TryRoomButton({ startOpen = false, onClose }: { startOpen?: boolean; onClose?: () => void } = {}) {
   const toast = useToast();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [st, setSt] = useState<TryStatus | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -23,6 +23,10 @@ export function TryRoomButton() {
   useEffect(() => {
     if (open) refresh();
   }, [open]);
+
+  useEffect(() => {
+    if (startOpen) setOpen(true);
+  }, [startOpen]);
 
   if (!open) {
     return (
@@ -45,14 +49,19 @@ export function TryRoomButton() {
     }
   };
 
+  const close = () => {
+    setOpen(false);
+    onClose?.();
+  };
+
   return (
-    <div className="routines-panel" aria-label="Try Room" style={{ position: "absolute", right: 16, top: 56, zIndex: 20, minWidth: 280 }}>
+    <div aria-label="Try Room">
       <div className="row">
         <strong className="grow">Try Room</strong>
-        <button type="button" className="btn ghost sm" onClick={() => setOpen(false)}>Close</button>
+        <button type="button" className="btn ghost sm" onClick={close}>Close</button>
       </div>
       <p className="small muted" style={{ marginTop: 0 }}>
-        A disposable computer on this machine. Your real desktop stays alone. Works on Mac, Windows and Linux.
+        A disposable computer on this machine. Your real desktop stays alone.
       </p>
       {st && !st.available && <p className="small muted">{st.note || "Not installed yet."}</p>}
       {st?.available && (

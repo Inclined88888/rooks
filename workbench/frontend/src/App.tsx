@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { CommandPalette } from "./Palette";
-import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import { movePage, pinPage, readSidebar, sidebarKey, unpinPage } from "./navOrder";
 import { EdgeGlow, transitionClick } from "./motion";
@@ -92,28 +92,28 @@ type NavItem = { to: string; label: string; icon: typeof Home; addon?: "browser"
 type NavGroup = { section?: string; collapsible?: boolean; items: NavItem[] };
 
 /**
- * The sidebar shows a day's work. Everything else is under More, Settings or Advanced, and Search finds any page.
+ * Chat is the product. Everything else lives under Workspace, Settings or Advanced (Search finds any page).
  * Every page keeps its route.
  */
 const NAV: NavGroup[] = [
   { items: [
-    { to: "/", label: "Home", icon: Home },
     { to: "/assistant", label: "Chat", icon: MessageSquare },
-    { to: "/teach", label: "Show me how", icon: GraduationCap },
+  ] },
+  { section: "Workspace", collapsible: true, items: [
+    { to: "/home", label: "Home", icon: Home },
     { to: "/mail", label: "Mail", icon: Mail },
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
     { to: "/tasks", label: "Tasks", icon: CheckSquare },
     { to: "/notes", label: "Notes", icon: NotebookPen },
-  ] },
-  { section: "More", collapsible: true, items: [
     { to: "/files", label: "Files", icon: FolderOpen },
-    { to: "/knowledge", label: "Memory", icon: Brain },
-    { to: "/skills", label: "Skills", icon: Puzzle },
     { to: "/automations", label: "Automations", icon: CalendarClock },
     { to: "/browser", label: "Browser", icon: Globe, addon: "browser" },
     { to: "/computer", label: "Computer", icon: Monitor, addon: "desk" },
     { to: "/code", label: "Coding", icon: Code2 },
     { to: "/terminal", label: "Terminal", icon: SquareTerminal },
+    { to: "/teach", label: "Show me how", icon: GraduationCap },
+    { to: "/knowledge", label: "Memory", icon: Brain },
+    { to: "/skills", label: "Skills", icon: Puzzle },
     { to: "/team", label: "Team", icon: UsersRound },
     { to: "/research", label: "Research", icon: Search },
     { to: "/projects", label: "Projects", icon: FolderKanban },
@@ -300,9 +300,9 @@ export default function App() {
   return (
     <div className="shell">
       <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
-        <div className="brand">
+        <Link to="/assistant" className="brand" style={{ textDecoration: "none", color: "inherit" }}>
           <span className="wordmark truncate">{status.workspace_name}</span>
-        </div>
+        </Link>
         <button type="button" className="sidebar-search" onClick={() => setPaletteOpen(true)} aria-keyshortcuts="Meta+K Control+K">
           <Search size={14} /> <span>Search</span> <span className="kbd">{MOD_KEY} K</span>
         </button>
@@ -348,7 +348,8 @@ export default function App() {
         <div className="route">
         <Suspense fallback={<Boot />}>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Navigate to="/assistant" replace />} />
+          <Route path="/home" element={<Dashboard />} />
           <Route path="/assistant" element={<Assistant tab="chat" />} />
           <Route path="/assistant/:id" element={<Assistant tab="chat" />} />
           <Route path="/assistant-memory" element={<Assistant tab="memory" />} />
@@ -359,8 +360,8 @@ export default function App() {
           <Route path="/knowledge" element={<Knowledge />} />{/* feat/memory-core */}
           <Route path="/teach" element={<Teach />} />
           <Route path="/teach/:id" element={<Teach />} />
-          <Route path="/packs" element={<Navigate to="/" replace />} />
-          <Route path="/packs/*" element={<Navigate to="/" replace />} />
+          <Route path="/packs" element={<Navigate to="/assistant" replace />} />
+          <Route path="/packs/*" element={<Navigate to="/assistant" replace />} />
           <Route path="/appearance" element={<Appearance />} />
           <Route path="/appearance/motion" element={<MotionLab />} />
           <Route path="/models" element={<Models />} />
