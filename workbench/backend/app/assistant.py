@@ -179,7 +179,23 @@ def _publish_watch(ctx: "Ctx | None", surface: str, job_id, goal: str) -> None:
         return
 
 
-async def _browse(goal: str, max_steps: int = 15, ctx: "Ctx | None" = None) -> dict:
+BROWSE_STEP_CAP = 12
+COMPUTER_STEP_CAP = 16
+
+
+def bounded_steps(value: object, default: int, ceiling: int) -> int:
+    """A browser or computer run always stops. A missing, zero, or huge number uses the default, never 'keep going'."""
+    try:
+        n = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+    if n < 1:
+        return default
+    return min(n, ceiling)
+
+
+async def _browse(goal: str, max_steps: int = 8, ctx: "Ctx | None" = None) -> dict:
+    max_steps = bounded_steps(max_steps, 8, BROWSE_STEP_CAP)
     from . import local_agents
 
     why = local_agents.unavailable()
@@ -219,9 +235,10 @@ async def _browse(goal: str, max_steps: int = 15, ctx: "Ctx | None" = None) -> d
     return {"status": "still running", "job_id": jid}
 
 
-async def _use_computer(goal: str, max_steps: int = 30, dry_run: bool = False, ctx: "Ctx | None" = None) -> dict:
+async def _use_computer(goal: str, max_steps: int = 12, dry_run: bool = False, ctx: "Ctx | None" = None) -> dict:
     """Rooks Desk: operate the user's own desktop apps, terminal and files. Sensitive steps pause for the user's approval
     on the Computer page; this waits for them."""
+    max_steps = bounded_steps(max_steps, 12, COMPUTER_STEP_CAP)
     from . import account, desk_proxy, local_agents
 
     if not account.allowed("computer_use"):  # integration/v0.2: Pro gate for chat, jobs and automations alike

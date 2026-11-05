@@ -64,6 +64,17 @@ def test_a_long_untrusted_result_stays_untrusted_when_read_back(client, monkeypa
     assert readback["content"].startswith("[Untrusted content from read_tool_result")
 
 
+def test_browser_and_computer_runs_always_stop():
+    from app.assistant import bounded_steps
+
+    assert bounded_steps(None, 8, 12) == 8
+    assert bounded_steps(0, 8, 12) == 8
+    assert bounded_steps("", 8, 12) == 8
+    assert bounded_steps(5, 8, 12) == 5
+    assert bounded_steps(500, 8, 12) == 12
+    assert bounded_steps("nope", 12, 16) == 12
+
+
 def test_the_step_limit_is_a_setting_per_channel(client, monkeypatch):
     from app import db
 

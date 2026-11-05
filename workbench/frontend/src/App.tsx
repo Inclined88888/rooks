@@ -12,6 +12,7 @@ import { api } from "./api";
 import AgentsSidebar from "./AgentsSidebar";
 import { BesideStage } from "./Beside";
 import AgentsContext from "./AgentsContext";
+import { TerminalKeeper, TerminalSlot } from "./terminalHost";
 import { EdgeGlow, transitionClick } from "./motion";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -67,7 +68,6 @@ const Groups = lazy(() => import("./teammates/Groups"));
 const Vault = lazy(() => import("./teammates/Vault"));
 const PagesLib = lazy(() => import("./teammates/Pages"));
 const Channels = lazy(() => import("./teammates/Channels"));
-const TerminalPage = lazy(() => import("./pages/TerminalPage"));
 const TryRoomPage = lazy(() => import("./pages/TryRoomPage"));
 const Customize = lazy(() => import("./pages/Customize"));
 
@@ -223,7 +223,7 @@ function AppRoutes({ onChanged }: { onChanged: () => void }) {
           <Route path="/sites" element={<SitesPage />} />
           <Route path="/research/:id" element={<Research />} />
           <Route path="/code" element={<Code />} />
-          <Route path="/terminal" element={<TerminalPage />} />
+          <Route path="/terminal" element={<TerminalSlot />} />
           <Route path="/try" element={<TryRoomPage />} />
           <Route path="/code/:id" element={<Code />} />
           <Route path="/browser" element={<Browser />} />
@@ -402,6 +402,7 @@ export default function App() {
         browserEnabled={status.browser_enabled}
         deskEnabled={!!status.desk_enabled}
       />
+      <TerminalKeeper />
 
       <DeskGlow enabled={!!status.desk_enabled} />
       <JobNotifier />{/* feat/v02-automations */}<DesktopBridge />{/* feat/tauri-native */}

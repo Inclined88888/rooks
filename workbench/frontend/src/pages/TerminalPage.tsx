@@ -5,6 +5,7 @@ import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import { Plus, SquareTerminal, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { publishTerminals } from "../terminalHost";
 import "../work.css";
 
 const MAX = 6;
@@ -23,8 +24,9 @@ function terminalWhy(code: number, reason: string): string {
 
 type Phase = "connecting" | "open" | "closed";
 
-function Shell({ active, label, onPhase, onSend }: {
+function Shell({ active, hold, label, onPhase, onSend }: {
   active: boolean;
+  hold: boolean;
   label: string;
   onPhase: (phase: Phase, why: string) => void;
   onSend: (send: (cmd: string) => void) => void;
@@ -35,6 +37,8 @@ function Shell({ active, label, onPhase, onSend }: {
   const [phase, setPhase] = useState<Phase>("connecting");
   const [why, setWhy] = useState("");
   const [gen, setGen] = useState(0);
+  const holdRef = useRef(hold);
+  holdRef.current = hold;
 
   useEffect(() => {
     if (!box.current) return;
@@ -42,13 +46,31 @@ function Shell({ active, label, onPhase, onSend }: {
     const term = new Terminal({
       cursorBlink: true, fontSize: 13, scrollback: 5000, screenReaderMode: true,
       fontFamily: css.getPropertyValue("--mono").trim() || "ui-monospace, Menlo, monospace",
+      theme: {
+        background: "#1c1c1e",
+        foreground: "#f5f5f7",
+        cursor: "#f5f5f7",
+        cursorAccent: "#1c1c1e",
+        selectionBackground: "#3a3a3c",
+        black: "#1c1c1e",
+        brightBlack: "#8e8e93",
+        red: "#ff5f57",
+        green: "#28c840",
+        yellow: "#febc2e",
+        blue: "#0a84ff",
+        magenta: "#bf5af2",
+        cyan: "#64d2ff",
+        white: "#f5f5f7",
+      },
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
     term.open(box.current);
     termRef.current = term;
     fitRef.current = fit;
-    try { fit.fit(); } catch { /* hidden or not laid out yet */ }
+    if (!holdRef.current) {
+      try { fit.fit(); } catch { /* hidden or not laid out yet */ }
+    }
     let alive = true;
     setPhase("connecting");
     setWhy("");
@@ -60,7 +82,7 @@ function Shell({ active, label, onPhase, onSend }: {
       if (!alive) return;
       setPhase("open");
       send({ type: "resize", cols: term.cols, rows: term.rows });
-      if (active) term.focus();
+      if (active && !holdRef.current) term.focus();
     };
     ws.onmessage = (e) => { if (alive) term.write(typeof e.data === "string" ? e.data : ""); };
     ws.onclose = (e) => {
@@ -70,7 +92,7 @@ function Shell({ active, label, onPhase, onSend }: {
     };
     const input = term.onData((d) => send({ type: "input", data: d }));
     const resized = term.onResize(({ cols, rows }) => send({ type: "resize", cols, rows }));
-    const ro = new ResizeObserver(() => { try { fit.fit(); } catch { /* hidden */ } });
+    const ro = new ResizeObserver(() => { if (holdRef.current) return; try { fit.fit(); } catch { /* hidden */ } });
     ro.observe(box.current);
     return () => {
       alive = false;
@@ -89,10 +111,10 @@ function Shell({ active, label, onPhase, onSend }: {
   useEffect(() => { if (active) report.current(phase, why); }, [phase, why, active]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || hold) return;
     try { fitRef.current?.fit(); } catch { /* not open yet */ }
     termRef.current?.focus();
-  }, [active, phase]);
+  }, [active, hold, phase]);
 
   return (
     <div className={`terminal-pane${active ? "" : " is-hidden"}`} aria-hidden={!active}>
@@ -151,7 +173,7 @@ function readSaved(): { panes: Pane[]; active: number; next: number } | null {
   }
 }
 
-export default function TerminalPage({ bare = false }: { bare?: boolean }) {
+export default function TerminalPage({ bare = false, parked = false }: { bare?: boolean; parked?: boolean }) {
   const saved = useRef(readSaved());
   const [panes, setPanes] = useState<Pane[]>(saved.current?.panes ?? [{ id: 1, name: "Terminal 1" }]);
   const [active, setActive] = useState(saved.current?.active ?? 1);
@@ -164,6 +186,7 @@ export default function TerminalPage({ bare = false }: { bare?: boolean }) {
 
   useEffect(() => {
     localStorage.setItem(STORE, JSON.stringify({ panes, active, next: next.current }));
+    publishTerminals(panes, active);
   }, [panes, active]);
 
   const add = () => {
@@ -211,7 +234,7 @@ export default function TerminalPage({ bare = false }: { bare?: boolean }) {
         {bare && <span className="grow" />}
         <button className="btn sm" onClick={() => senders.current.get(active)?.("rooks")} disabled={phase !== "open"} title="Start the coding assistant in this terminal">Start coding</button>
       </div>
-      <div className="muted small">Drag a name to move it. Double-click a name to rename it. Each one keeps running when you switch. Up to six.</div>
+      <div className="muted small">Drag a name to move it. Double-click a name to rename it. Each one keeps running when you leave for chat or settings. Up to six.</div>
       <div className="terminal-tabs">
         <div className="tabs" role="tablist" aria-label="Terminals">
           {panes.map((p) => (
@@ -227,12 +250,18 @@ export default function TerminalPage({ bare = false }: { bare?: boolean }) {
           <Plus size={14} /> New terminal
         </button>
       </div>
-      <div className="terminal-stage">
-        {panes.map((p) => (
-          <Shell key={p.id} active={p.id === active} label={p.name}
-            onPhase={(ph, _why) => { if (p.id === active) setPhase(ph); }}
-            onSend={(send) => { senders.current.set(p.id, send); }} />
-        ))}
+      <div className="terminal-screen">
+        <div className="terminal-screen-bar">
+          <span className="terminal-dots" aria-hidden><i /><i /><i /></span>
+          <span className="terminal-screen-title">{panes.find((p) => p.id === active)?.name || "Terminal"}</span>
+        </div>
+        <div className="terminal-stage">
+          {panes.map((p) => (
+            <Shell key={p.id} active={p.id === active} hold={parked} label={p.name}
+              onPhase={(ph, _why) => { if (p.id === active) setPhase(ph); }}
+              onSend={(send) => { senders.current.set(p.id, send); }} />
+          ))}
+        </div>
       </div>
     </div>
   );

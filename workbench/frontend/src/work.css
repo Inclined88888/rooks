@@ -70,7 +70,8 @@
 .terminal-tab-rename { width: 9em; border: 0; background: transparent; color: inherit; font: inherit; padding: 0; }
 .terminal-tab-x { border: 0; background: transparent; color: inherit; padding: 2px; display: inline-flex; cursor: pointer; opacity: 0.7; }
 .terminal-tab-x:hover { opacity: 1; }
-.terminal-stage { position: relative; flex: 1; min-height: 360px; }
+.terminal-stage { position: relative; flex: 1; min-height: 240px; }
 .terminal-pane { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 8px; }
 .terminal-pane.is-hidden { visibility: hidden; pointer-events: none; }
-.terminal-box { flex: 1; min-height: 0; background: var(--panel-2); border: 1px solid var(--border); padding: 6px; }
+.terminal-box { flex: 1; min-height: 0; background: #1c1c1e; border: 0; padding: 6px; }
+.terminal-screen .small { color: #d1d1d6; padding: 0 8px; }

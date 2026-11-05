@@ -40,7 +40,7 @@ export default function Browser() {
   const [job, setJob] = useState<Job | null>(null);
   const [shotKey, setShotKey] = useState(0);
   const [openStep, setOpenStep] = useState<number | null>(null);
-  const [form, setForm] = useState({ goal: "", provider: "", model: "", max_steps: 25, domains: "" });
+  const [form, setForm] = useState({ goal: "", provider: "", model: "", max_steps: 8, domains: "" });
   const toast = useToast();
 
   const loadJobs = () => api<JobSummary[]>("/browser/jobs").then(setJobs).catch(toast.err);
@@ -116,14 +116,14 @@ export default function Browser() {
         )}
         <div className="row wrap">
           <div style={{ width: 260 }}><ModelSelect value={form.model} onChange={(model) => setForm({ ...form, model })} models={models} /></div>
-          <label className="row small muted">Max steps
-            <input className="input" type="number" min={1} max={50} style={{ width: 80 }} value={form.max_steps} onChange={(e) => setForm({ ...form, max_steps: Number(e.target.value) })} />
+          <label className="row small muted">Stop after
+            <input className="input" type="number" min={1} max={12} style={{ width: 80 }} value={form.max_steps} onChange={(e) => setForm({ ...form, max_steps: Math.min(12, Math.max(1, Number(e.target.value) || 8)) })} />
           </label>
           <input className="input grow" style={{ minWidth: 200 }} value={form.domains} onChange={(e) => setForm({ ...form, domains: e.target.value })} placeholder="Only these sites (optional): *.pcpartpicker.com, …" />
           <button className="btn primary" disabled={form.goal.trim().length < 3}><Play size={15} /> Run</button>
         </div>
-        <div className="faint small" title="Max steps caps how long one run can go on. Small local models are unreliable at browsing.">
-          Uses the model you pick, or Auto. Models that can see pictures work best.
+        <div className="faint small" title="It stops after this many actions. It does not keep going on its own.">
+          It stops after the number you set. It does not run without a limit. Models that can see pictures work best.
           {usage && usage.limit ? <> {usage.used} of {usage.limit} browser steps used this month.</> : null}
         </div>
       </form>

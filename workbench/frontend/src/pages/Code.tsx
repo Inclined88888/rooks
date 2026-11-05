@@ -2,9 +2,10 @@ import { CheckCircle2, CircleStop, Code2, FolderOpen, Loader2, Plus, Send, Termi
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
+import { TerminalSlot } from "../terminalHost";
 import { Empty, Markdown, useToast } from "../util";
-import TerminalPage from "./TerminalPage";
-import TryRoomPage from "./TryRoomPage";
+import Browser from "./Browser";
+import Computer from "./Computer";
 
 export type CliAgent = {
   id: "rooks" | "claude" | "codex"; name: string; plan: string; install: string; login: string; login_hint: string; docs: string; terms: string;
@@ -311,7 +312,7 @@ function CodeJob() {
   );
 }
 
-/** One code place: the terminal, the virtual computer, and Claude or Codex only when already signed in. */
+/** One code place: a terminal that stays open, the browser, the computer, and Claude or Codex when already signed in. */
 export default function Code() {
   const { id } = useParams();
   if (id) return <CodeJob />;
@@ -321,7 +322,7 @@ export default function Code() {
 function CodeDesk() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [pane, setPane] = useState<"terminal" | "virtual" | "ask">("terminal");
+  const [pane, setPane] = useState<"terminal" | "browser" | "computer" | "ask">("terminal");
   const [agents, setAgents] = useState<CliAgent[] | null>(null);
   const [task, setTask] = useState("");
   const [folder, setFolder] = useState("");
@@ -356,7 +357,8 @@ function CodeDesk() {
     <div className="code-desk">
       <div className="code-desk-bar" role="tablist" aria-label="Code">
         <button type="button" role="tab" aria-selected={pane === "terminal"} className={pane === "terminal" ? "on" : ""} onClick={() => setPane("terminal")}>Terminal</button>
-        <button type="button" role="tab" aria-selected={pane === "virtual"} className={pane === "virtual" ? "on" : ""} onClick={() => setPane("virtual")}>Virtual computer</button>
+        <button type="button" role="tab" aria-selected={pane === "browser"} className={pane === "browser" ? "on" : ""} onClick={() => setPane("browser")}>Browser</button>
+        <button type="button" role="tab" aria-selected={pane === "computer"} className={pane === "computer" ? "on" : ""} onClick={() => setPane("computer")}>Computer</button>
         {signed.map((a) => (
           <button key={a.id} type="button" role="tab" aria-selected={pane === "ask" && chosen?.id === a.id}
             className={pane === "ask" && chosen?.id === a.id ? "on" : ""}
@@ -364,11 +366,12 @@ function CodeDesk() {
             {a.id === "claude" ? "Claude" : "Codex"}
           </button>
         ))}
-        <span className="code-desk-note muted">Virtual computer is its own screen. Claude and Codex show up here after you sign in.</span>
+        <span className="code-desk-note muted">The terminal stays as you left it. Claude and Codex show up here after you sign in.</span>
       </div>
       <div className="code-desk-body">
-        {pane === "terminal" && <TerminalPage bare />}
-        {pane === "virtual" && <TryRoomPage bare />}
+        {pane === "terminal" && <TerminalSlot />}
+        {pane === "browser" && <Browser />}
+        {pane === "computer" && <Computer />}
         {pane === "ask" && chosen && (
           <form className="code-ask" onSubmit={start}>
             <h1 style={{ margin: 0 }}>{chosen.id === "claude" ? "Claude" : "Codex"}</h1>

@@ -63,7 +63,7 @@ export default function Computer() {
   const [shotKey, setShotKey] = useState(0);
   const [openStep, setOpenStep] = useState<number | null>(null);
   const [shotSize, setShotSize] = useState<[number, number]>([0, 0]);
-  const [form, setForm] = useState({ goal: "", model: "", max_steps: 30, dry_run: false, approve: [] as string[] });
+  const [form, setForm] = useState({ goal: "", model: "", max_steps: 12, dry_run: false, approve: [] as string[] });
   const [lists, setLists] = useState<{ folders: string; allow_apps: string } | null>(null);
   const [turn, setTurn] = useState<{ reason?: string } | null>(null);
   const toast = useToast();
@@ -177,8 +177,8 @@ export default function Computer() {
         </div>
         <div className="row wrap">
           <div style={{ width: 260 }}><ModelSelect value={form.model} onChange={(model) => setForm({ ...form, model })} models={models} /></div>
-          <label className="row small muted">Max steps
-            <input className="input" type="number" min={1} max={100} style={{ width: 80 }} value={form.max_steps} onChange={(e) => setForm({ ...form, max_steps: Number(e.target.value) })} />
+          <label className="row small muted">Stop after
+            <input className="input" type="number" min={1} max={16} style={{ width: 80 }} value={form.max_steps} onChange={(e) => setForm({ ...form, max_steps: Math.min(16, Math.max(1, Number(e.target.value) || 12)) })} />
           </label>
           <label className="row small"><input type="checkbox" checked={form.dry_run} onChange={(e) => setForm({ ...form, dry_run: e.target.checked })} /> Dry run (look and plan, change nothing)</label>
           <button className="btn primary" disabled={form.goal.trim().length < 3}><Play size={15} /> Start</button>
@@ -191,6 +191,7 @@ export default function Computer() {
           ))}
           <span className="faint">Sign-ins, passwords and risky commands still ask.</span>
         </div>
+        <div className="faint small">It stops after the number you set. It does not run without a limit.</div>
         <div className="muted small">
           While it works you see a red frame around the screen. Move the mouse to the top-left corner, press <span className="mono">{desk?.hotkey || "Ctrl+Alt+Esc"}</span> or
           Stop to halt it at once. Models that can see screenshots work best (free: Gemini Flash, Groq Llama 4 / Qwen 3.8); others read the window's accessibility text.
