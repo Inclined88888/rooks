@@ -420,6 +420,8 @@ kbd, .kbd {
 .shell-agents .cursor-settings-nav { background: var(--agents-panel); border-color: var(--agents-border); }
 .shell-agents .cursor-settings-link.active { background: var(--agents-panel-3); }
 .shell-agents .cursor-settings-head { background: transparent; }
+.practice-page { padding: 28px 32px 40px; max-width: 760px; }
+.practice-shot { width: 100%; max-width: 560px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); }
 .shell-agents .face-body {
   fill: #efeff1;
   stroke: #d4d4d8;

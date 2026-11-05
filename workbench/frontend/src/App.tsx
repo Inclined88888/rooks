@@ -67,6 +67,7 @@ const Vault = lazy(() => import("./teammates/Vault"));
 const PagesLib = lazy(() => import("./teammates/Pages"));
 const Channels = lazy(() => import("./teammates/Channels"));
 const TerminalPage = lazy(() => import("./pages/TerminalPage"));
+const TryRoomPage = lazy(() => import("./pages/TryRoomPage"));
 const Customize = lazy(() => import("./pages/Customize"));
 
 export type Status = {
@@ -350,6 +351,7 @@ export default function App() {
           <Route path="/research/:id" element={<Research />} />
           <Route path="/code" element={<Code />} />
           <Route path="/terminal" element={<TerminalPage />} />
+          <Route path="/try" element={<TryRoomPage />} />
           <Route path="/code/:id" element={<Code />} />
           <Route path="/browser" element={<Browser />} />
           <Route path="/browser/:id" element={<Browser />} />
@@ -390,7 +392,6 @@ export default function App() {
       </main>
 
       <AgentsContext
-        workspaceName={status.workspace_name}
         browserEnabled={status.browser_enabled}
         deskEnabled={!!status.desk_enabled}
       />

@@ -1,4 +1,4 @@
-import { CalendarClock, ChevronDown, ChevronRight, Code2, Moon, Plus, Puzzle, Search, Settings as SettingsIcon, Sun } from "lucide-react";
+import { CalendarClock, ChevronDown, ChevronRight, Code2, Monitor, Moon, Plus, Puzzle, Search, Settings as SettingsIcon, Sun } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
@@ -99,12 +99,13 @@ export default function AgentsSidebar({
           className="agents-new"
           onClick={() => navigate("/assistant", { state: { fresh: true } })}
         >
-          <Plus size={15} /> New Agent
+          <Plus size={15} /> New chat
         </button>
         <nav className="agents-shortcuts">
           <NavLink to="/automations" className="agents-link"><CalendarClock size={15} /> Automations</NavLink>
           <NavLink to="/customize" className="agents-link"><Puzzle size={15} /> Customize</NavLink>
           <NavLink to="/code" className="agents-link"><Code2 size={15} /> Code</NavLink>
+          <NavLink to="/try" className="agents-link"><Monitor size={15} /> Practice computer</NavLink>
         </nav>
       </div>
 
@@ -157,7 +158,7 @@ export default function AgentsSidebar({
 
         <button type="button" className="agents-tree-head" onClick={() => setReposOpen((v) => !v)} aria-expanded={reposOpen}>
           {reposOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <span>Repositories</span>
+          <span>Chats</span>
         </button>
         {reposOpen && (
           <div className="agents-tree-body">

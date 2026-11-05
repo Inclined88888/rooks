@@ -13,8 +13,6 @@ import { askNotifyPermission, inBackground, notify } from "../desktop"; // feat/
 import { Att, AttachButton, filesFrom, MessageAttachments, PendingChips, useAttachments } from "../Attachments"; // feat/attachments
 import { DiffView, extractDiffFromArgs } from "../components/DiffView";
 import { plainStep } from "../plainStep";
-import { TryRoomButton } from "../TryRoom";
-
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
 type Choices = { question: string; options: string[] };
 type Card = { kind: string; id?: number; title?: string; to?: string; subject?: string; body?: string; status?: string; start?: string; due?: string; sentence?: string; routine_kind?: string; name?: string; surface?: string; job_id?: string; goal?: string; files?: string[]; note_kind?: string; location?: string };
@@ -171,7 +169,6 @@ function Chat() {
   const [watch, setWatch] = useState<Watch | null>(null);
   const [routines, setRoutines] = useState<Routine[] | null>(null);
   const [showRoutines, setShowRoutines] = useState(Boolean((location.state as { routines?: boolean } | null)?.routines));
-  const [showTry, setShowTry] = useState(false);
   useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
   useEffect(() => { api<{ id: number }>("/assistant/main").then((r) => setMainId(r.id)).catch(() => undefined); }, []);
   const fresh = Boolean((location.state as { fresh?: boolean } | null)?.fresh);
@@ -434,15 +431,13 @@ function Chat() {
           <span className="sr-only">Chat is for the day. Code is for changing a project, and it asks before it changes files.</span>
           <ChatMenu
             showRoutines={showRoutines}
-            onRoutines={() => { setShowRoutines((v) => !v); setShowTry(false); setRoutines(null); }}
-            onTry={() => { setShowTry((v) => !v); setShowRoutines(false); }}
+            onRoutines={() => { setShowRoutines((v) => !v); setRoutines(null); }}
             cid={cid}
             onTerminal={() => api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } })
               .then((h) => { navigator.clipboard?.writeText(h.command); toast.ok(`Copied: ${h.command}`); })
               .catch(toast.err)}
           />
         </div>
-        {showTry && <div className="routines-panel chat-flyout"><TryRoomButton startOpen onClose={() => setShowTry(false)} /></div>}
         {showRoutines && (
           <div className="routines-panel" aria-label="Routines">
             <div className="row"><strong className="grow">Routines</strong><span className="small muted">Pause any time. Sending still asks you.</span></div>
@@ -803,8 +798,8 @@ function SettingsTab() {
   );
 }
 
-function ChatMenu({ showRoutines, onRoutines, onTry, cid, onTerminal }: {
-  showRoutines: boolean; onRoutines: () => void; onTry: () => void; cid: number | null; onTerminal: () => void;
+function ChatMenu({ showRoutines, onRoutines, cid, onTerminal }: {
+  showRoutines: boolean; onRoutines: () => void; cid: number | null; onTerminal: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -816,7 +811,7 @@ function ChatMenu({ showRoutines, onRoutines, onTry, cid, onTerminal }: {
       {open && (
         <div className="chat-menu-panel" role="menu">
           <button type="button" role="menuitem" className={showRoutines ? "on" : ""} onClick={() => { onRoutines(); setOpen(false); }}>Routines</button>
-          <button type="button" role="menuitem" onClick={() => { onTry(); setOpen(false); }}>Try Room</button>
+          <button type="button" role="menuitem" onClick={() => { navigate("/try"); setOpen(false); }}>Practice computer</button>
           <div className="chat-menu-row"><ProjectSwitcher cid={cid} /></div>
           <div className="chat-menu-row"><CheckToggle cid={cid} /></div>
           {cid ? <button type="button" role="menuitem" onClick={() => { onTerminal(); setOpen(false); }}><SquareTerminal size={14} /> Continue in terminal</button> : null}

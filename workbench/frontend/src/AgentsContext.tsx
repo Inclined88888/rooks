@@ -17,11 +17,9 @@ function shortAgoTs(ts?: number): string {
 
 /** Right side: what’s open, recent work, and places on this computer. */
 export default function AgentsContext({
-  workspaceName,
   browserEnabled,
   deskEnabled,
 }: {
-  workspaceName: string;
   browserEnabled?: boolean;
   deskEnabled?: boolean;
 }) {
@@ -92,7 +90,7 @@ export default function AgentsContext({
           {!tabs.length && <p className="agents-empty">Nothing open</p>}
         </div>
 
-        <div className="agents-context-label">On {workspaceName || "this workspace"}</div>
+        <div className="agents-context-label">On this computer</div>
         <div className="agents-work">
           {!work.length && <p className="agents-empty">Recent jobs show up here</p>}
           {work.map((w) => (
