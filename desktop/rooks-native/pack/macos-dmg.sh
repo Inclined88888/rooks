@@ -15,8 +15,8 @@ cat > "$app/Contents/Info.plist" <<'EOF'
   <key>CFBundleName</key><string>Rooks</string>
   <key>CFBundleDisplayName</key><string>Rooks</string>
   <key>CFBundleIdentifier</key><string>com.inclined88888.rooks.native</string>
-  <key>CFBundleVersion</key><string>0.2.0</string>
-  <key>CFBundleShortVersionString</key><string>0.2.0</string>
+  <key>CFBundleVersion</key><string>0.3.0</string>
+  <key>CFBundleShortVersionString</key><string>0.3.0</string>
   <key>CFBundleExecutable</key><string>rooks-native</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>

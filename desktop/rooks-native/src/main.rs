@@ -2,11 +2,23 @@
 
 use std::time::Duration;
 
+use iced::font::{Family, Font, Weight};
 use iced::widget::button::Status;
 use iced::widget::{button, checkbox, column, container, row, scrollable, text, text_input};
 use iced::{
     Alignment, Background, Border, Color, Element, Length, Shadow, Subscription, Task, Theme,
 };
+
+const INTER: &[u8] = include_bytes!("../fonts/Inter-Regular.otf");
+const INTER_SEMI: &[u8] = include_bytes!("../fonts/Inter-SemiBold.otf");
+
+fn inter(weight: Weight) -> Font {
+    Font {
+        family: Family::Name("Inter"),
+        weight,
+        ..Font::DEFAULT
+    }
+}
 
 use rooks_native::copy::{self, BODY, HEADLINE, KICKER, PRODUCT};
 use rooks_native::fit::{self, Profile, Suggestion};
@@ -19,6 +31,9 @@ fn main() -> iced::Result {
     iced::application(copy::window_title(), App::update, App::view)
         .subscription(App::subscription)
         .theme(App::theme)
+        .font(INTER)
+        .font(INTER_SEMI)
+        .default_font(inter(Weight::Normal))
         .window_size(iced::Size::new(1180.0, 760.0))
         .run_with(App::boot)
 }
@@ -65,7 +80,6 @@ enum Message {
     Connected(Result<Link, String>),
     Go(&'static str),
     Home((Vec<String>, Vec<TaskRow>)),
-    Notices(Result<Vec<String>, String>),
     Tasks(Result<Vec<TaskRow>, String>),
     TaskDraft(String),
     AddTask,
@@ -100,38 +114,47 @@ enum Message {
 
 fn palette() -> iced::theme::Palette {
     iced::theme::Palette {
-        background: Color::from_rgb(0.965, 0.953, 0.929),
-        text: Color::from_rgb(0.12, 0.11, 0.09),
-        primary: Color::from_rgb(0.18, 0.24, 0.21),
-        success: Color::from_rgb(0.29, 0.45, 0.36),
-        danger: Color::from_rgb(0.62, 0.32, 0.27),
+        background: Color::from_rgb(0.957, 0.961, 0.969),
+        text: Color::from_rgb(0.09, 0.09, 0.11),
+        primary: Color::from_rgb(0.76, 0.255, 0.047),
+        success: Color::from_rgb(0.13, 0.45, 0.32),
+        danger: Color::from_rgb(0.72, 0.22, 0.18),
     }
 }
 
 fn ink() -> Color {
-    Color::from_rgb(0.18, 0.24, 0.21)
+    Color::from_rgb(0.09, 0.09, 0.11)
 }
 
 fn paper() -> Color {
-    Color::from_rgb(0.99, 0.98, 0.96)
+    Color::WHITE
 }
 
-fn line() -> Color {
-    Color::from_rgb(0.82, 0.78, 0.72)
+fn hairline() -> Color {
+    Color::from_rgb(0.898, 0.906, 0.922)
+}
+
+fn accent_wash() -> Color {
+    Color {
+        r: 0.76,
+        g: 0.255,
+        b: 0.047,
+        a: 0.10,
+    }
 }
 
 fn card_style(on: bool) -> impl Fn(&Theme, Status) -> button::Style {
     move |theme: &Theme, _status: Status| button::Style {
-        background: Some(Background::Color(if on {
-            Color::from_rgb(0.90, 0.88, 0.83)
-        } else {
-            paper()
-        })),
+        background: Some(Background::Color(if on { accent_wash() } else { paper() })),
         text_color: theme.palette().text,
         border: Border {
-            color: if on { ink() } else { line() },
-            width: if on { 1.5 } else { 1.0 },
-            radius: 12.0.into(),
+            color: if on {
+                theme.palette().primary
+            } else {
+                hairline()
+            },
+            width: 1.0,
+            radius: 8.0.into(),
         },
         shadow: Shadow::default(),
     }
@@ -141,7 +164,7 @@ fn nav_style(on: bool) -> impl Fn(&Theme, Status) -> button::Style {
     move |theme, status| {
         if on {
             button::Style {
-                background: Some(Background::Color(Color::from_rgb(0.90, 0.88, 0.83))),
+                background: Some(Background::Color(Color::from_rgb(0.93, 0.94, 0.95))),
                 text_color: theme.palette().text,
                 border: Border {
                     color: ink(),
@@ -285,7 +308,6 @@ impl App {
                 state.banner.clear();
                 Task::none()
             }
-            Message::Notices(result) => state.take(result, |app, value| app.notices = value),
             Message::Tasks(result) => state.take(result, |app, value| app.tasks = value),
             Message::TaskDraft(value) => {
                 state.task_draft = value;
@@ -488,9 +510,9 @@ impl App {
         let mut page = column![
             text(kicker).size(13),
             if step == Step::Welcome {
-                text(PRODUCT).size(46)
+                text(PRODUCT).size(44).font(inter(Weight::Semibold))
             } else {
-                text(title).size(30)
+                text(title).size(26).font(inter(Weight::Semibold))
             },
         ]
         .spacing(12)
@@ -594,7 +616,7 @@ impl App {
         }
         container(
             row![
-                text(PRODUCT).size(20),
+                text(PRODUCT).size(15).font(inter(Weight::Semibold)),
                 iced::widget::horizontal_space(),
                 setup
             ]
@@ -605,7 +627,7 @@ impl App {
         .style(|_theme| container::Style {
             background: Some(Background::Color(paper())),
             border: Border {
-                color: line(),
+                color: hairline(),
                 width: 1.0,
                 radius: 0.0.into(),
             },
@@ -667,7 +689,7 @@ impl App {
             .filter(|task| task.status != "done")
             .count();
         let has_work = !self.notices.is_empty() || open > 0;
-        page = page.push(text("Home").size(30));
+        page = page.push(text("Home").size(26).font(inter(Weight::Semibold)));
         page = page.push(text(fit::greeting(&profile)).size(16));
         page = page.push(text(fit::home_guide(has_work)).size(16));
         page = page.push(text("Suggested for you").size(18));
@@ -682,8 +704,12 @@ impl App {
                 page = page.push(text(line).size(16));
             }
             if open > 0 {
-                page =
-                    page.push(text(format!("{open} open tasks. They live under Tasks.")).size(15));
+                let line = if open == 1 {
+                    "1 open task. It lives under Tasks.".to_string()
+                } else {
+                    format!("{open} open tasks. They live under Tasks.")
+                };
+                page = page.push(text(line).size(15));
             }
         }
         page
@@ -696,7 +722,7 @@ impl App {
             .style(|_theme| container::Style {
                 background: Some(Background::Color(paper())),
                 border: Border {
-                    color: line(),
+                    color: hairline(),
                     width: 1.0,
                     radius: 12.0.into(),
                 },
@@ -709,7 +735,7 @@ impl App {
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Customize").size(30));
+        page = page.push(text("Customize").size(26).font(inter(Weight::Semibold)));
         page = page.push(text("How Rooks works for you. This stays on this computer.").size(16));
         page = page.push(
             text_input("Name", &self.name_draft)
@@ -744,23 +770,31 @@ impl App {
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
         let profile = self.prefs.profile.clone().unwrap_or_default();
-        page = page.push(text("Skills").size(30));
+        page = page.push(text("Skills").size(26).font(inter(Weight::Semibold)));
         page = page.push(
             text("For you, from what you said. Adding one is still checked before it runs.")
                 .size(16),
         );
-        for item in fit::for_group(&profile, "skill") {
+        let recommended = fit::for_group(&profile, "skill");
+        let shown: std::collections::HashSet<&str> =
+            recommended.iter().map(|item| item.id).collect();
+        for item in &recommended {
             let added = self
                 .skills
                 .iter()
                 .any(|skill| skill.id == item.id && skill.added);
-            page = page.push(self.fit_row(item, added));
+            page = page.push(self.fit_row(*item, added));
         }
-        if self.skills.is_empty() {
-            page = page.push(text("The skill list on this computer is not loaded yet. The suggestions above still stand.").size(15));
-        } else {
-            page = page.push(text("On this computer").size(18));
-            for skill in &self.skills {
+        let rest: Vec<_> = self
+            .skills
+            .iter()
+            .filter(|skill| !shown.contains(skill.id.as_str()))
+            .collect();
+        if recommended.is_empty() && self.skills.is_empty() {
+            page = page.push(text("The skill list on this computer is not loaded yet.").size(15));
+        } else if !rest.is_empty() {
+            page = page.push(text("Also on this computer").size(13));
+            for skill in rest {
                 let id = skill.id.clone();
                 let mut line =
                     row![text(format!("{} — {}", skill.name, skill.detail)).width(Length::Fill)]
@@ -804,7 +838,7 @@ impl App {
             .style(|_theme| container::Style {
                 background: Some(Background::Color(paper())),
                 border: Border {
-                    color: line(),
+                    color: hairline(),
                     width: 1.0,
                     radius: 12.0.into(),
                 },
@@ -818,7 +852,7 @@ impl App {
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
         let profile = self.prefs.profile.clone().unwrap_or_default();
-        page = page.push(text("Connectors").size(30));
+        page = page.push(text("Connectors").size(26).font(inter(Weight::Semibold)));
         page = page.push(
             text("Suggested from what you already use. Each one stays on this computer.").size(16),
         );
@@ -854,7 +888,7 @@ impl App {
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Mail").size(30));
+        page = page.push(text("Mail").size(26).font(inter(Weight::Semibold)));
         page = page.push(
             text("Sending still waits for you. This screen reads what is already here.").size(16),
         );
@@ -874,7 +908,7 @@ impl App {
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Tasks").size(30));
+        page = page.push(text("Tasks").size(26).font(inter(Weight::Semibold)));
         page = page.push(
             row![
                 text_input("Add a task", &self.task_draft)
@@ -918,7 +952,7 @@ impl App {
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Terminal").size(30));
+        page = page.push(text("Terminal").size(26).font(inter(Weight::Semibold)));
         page = page.push(text(&self.terminal_line).size(16));
         if self.term.is_none() {
             page = page.push(
@@ -956,7 +990,7 @@ impl App {
         } else {
             "A job in a folder. Nothing runs past a stop until you say so."
         };
-        page = page.push(text(title).size(30));
+        page = page.push(text(title).size(26).font(inter(Weight::Semibold)));
         page = page.push(text(note).size(16));
         if jobs.is_empty() {
             page = page.push(text(if browser {

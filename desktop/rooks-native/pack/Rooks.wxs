@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="Rooks" Language="1033" Version="0.2.0" Manufacturer="Inclined88888" UpgradeCode="6F1C2A3E-7B44-4D1A-9C3E-2A6B8D4E1F70">
+  <Product Id="*" Name="Rooks" Language="1033" Version="0.3.0" Manufacturer="Inclined88888" UpgradeCode="6F1C2A3E-7B44-4D1A-9C3E-2A6B8D4E1F70">
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" Description="Rooks, on this computer" />
     <MajorUpgrade DowngradeErrorMessage="A newer Rooks is already installed." />
     <MediaTemplate EmbedCab="yes" />
