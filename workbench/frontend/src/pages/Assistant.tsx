@@ -1,7 +1,8 @@
-import { SquareTerminal, ArrowLeft, ArrowUp, BookOpen, Brain, Check, Copy, Ellipsis, KeyRound, Pencil, Plus, RotateCcw, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
+import { SquareTerminal, ArrowLeft, ArrowUp, Bell, BookOpen, Brain, CalendarDays, Check, Copy, Ellipsis, KeyRound, Mail, Pencil, Plus, RotateCcw, Search, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api, stream } from "../api";
+import { AssistantFace, noticedYou } from "../AssistantFace";
 import { Tracer } from "../Tracer";
 import { EffortSelect, Empty, Markdown, ModelSelect, relTime, RouterInfo, RouterVia, useEffort, useModels, useToast } from "../util";
 import { Thinking, useExit } from "../motion";
@@ -14,6 +15,13 @@ import { Att, AttachButton, filesFrom, MessageAttachments, PendingChips, useAtta
 import { DiffView, extractDiffFromArgs } from "../components/DiffView";
 import { plainStep } from "../plainStep";
 import { TryRoomButton } from "../TryRoom";
+
+const STARTERS = [
+  { id: "catch", label: "Catch me up", text: "Catch me up on what matters today", icon: Mail },
+  { id: "day", label: "My day", text: "Help me plan my day", icon: CalendarDays },
+  { id: "remind", label: "Remind me", text: "Remind me about something later", icon: Bell },
+  { id: "look", label: "Look it up", text: "Look something up for me", icon: Search },
+] as const;
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
 type Choices = { question: string; options: string[] };
@@ -167,6 +175,7 @@ function Chat() {
   const [dropping, setDropping] = useState(false);
   const [offer, setOffer] = useState<{ key: string; name: string; request: string; line: string } | null>(null);
   const [who, setWho] = useState("Atlas");
+  const [pleasedAt, setPleasedAt] = useState(0);
   const [mainId, setMainId] = useState<number | null>(null);
   const [watch, setWatch] = useState<Watch | null>(null);
   const [routines, setRoutines] = useState<Routine[] | null>(null);
@@ -174,6 +183,7 @@ function Chat() {
   const [showTry, setShowTry] = useState(false);
   useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
   useEffect(() => { api<{ id: number }>("/assistant/main").then((r) => setMainId(r.id)).catch(() => undefined); }, []);
+  const faceMood = approvals.length ? "needs" as const : busy ? "working" as const : "idle" as const;
   const fresh = Boolean((location.state as { fresh?: boolean } | null)?.fresh);
   const listing = Boolean((location.state as { list?: boolean } | null)?.list);
   useEffect(() => {
@@ -326,10 +336,17 @@ function Chat() {
     const files = att.ready;
     if ((!msg && !files.length) || busy || att.uploading) return;
     askNotifyPermission(); // a key press or click, so the browser shows its prompt (once)
+    if (msg && noticedYou(msg, who)) setPleasedAt(Date.now());
     att.clear();
     setText("");
     if (composerRef.current) composerRef.current.style.height = "auto";
     await run(msg, { echo: true, files });
+  };
+
+  const startWith = (line: string) => {
+    if (busy || att.uploading) return;
+    setText(line);
+    window.setTimeout(() => composerRef.current?.focus(), 0);
   };
 
   // Home hands over a sentence and means it: send once, then drop the handoff so a refresh does not send it again.
@@ -418,7 +435,8 @@ function Chat() {
     <div className="agents-chat">
       <div className="agents-chat-main chat-main">
         <div className="toolbar chat-top agents-thread-top" style={{ position: "relative" }}>
-          <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New agent")}</div>
+          <AssistantFace mood={faceMood} name={who} size={28} pleasedAt={pleasedAt} />
+          <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat")}</div>
           <span className="agents-local-pill" title="Work stays on this computer">On this computer</span>
           <div className="spacer" />
           <div className="tabs mode-tabs agents-mode-head" role="group" aria-label="Mode" title="Chat is for the day. Code is for changing a project, and it asks before it changes files.">
@@ -488,7 +506,17 @@ function Chat() {
             <h1 style={srOnly}>Chat conversation</h1>
             {!busy && visible.length === 0 && (
               <div className="chat-hero agents-empty-hero">
+                <AssistantFace mood={faceMood} name={who} size={88} pleasedAt={pleasedAt} />
+                <h2 className="chat-hero-title agents-hero-name">{who}</h2>
                 <p className="chat-hero-sub">Ask anything. Work stays on this computer.</p>
+                <div className="agents-starters" role="group" aria-label="Ideas to start with">
+                  {STARTERS.map((s) => (
+                    <button key={s.id} type="button" className="agents-starter" onClick={() => startWith(s.text)}>
+                      <s.icon size={14} aria-hidden />
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             {visible.map((m) => m.role === "user"

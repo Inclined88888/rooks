@@ -15,7 +15,7 @@ function shortAgoTs(ts?: number): string {
   return `${Math.floor(diff / 86400)}d`;
 }
 
-/** Cursor-style right context: Open Tabs + work on this workspace + surface foot. */
+/** Right side: what’s open, recent work, and places on this computer. */
 export default function AgentsContext({
   workspaceName,
   browserEnabled,
@@ -81,7 +81,7 @@ export default function AgentsContext({
   return (
     <aside className="agents-context" aria-label="Context">
       <div className="agents-context-scroll">
-        <div className="agents-context-label">Open tabs</div>
+        <div className="agents-context-label">Open now</div>
         <div className="agents-tabs">
           {tabs.map((t) => (
             <Link key={t.id} to={t.to} className={`agents-tab${t.on ? " on" : ""}`}>
@@ -89,12 +89,12 @@ export default function AgentsContext({
               <span className="truncate">{t.label}</span>
             </Link>
           ))}
-          {!tabs.length && <p className="agents-empty">Nothing open</p>}
+          {!tabs.length && <p className="agents-empty">Nothing open yet</p>}
         </div>
 
-        <div className="agents-context-label">On {workspaceName || "this computer"}</div>
+        <div className="agents-context-label">With {workspaceName || "you"}</div>
         <div className="agents-work">
-          {!work.length && <p className="agents-empty">Recent jobs show up here</p>}
+          {!work.length && <p className="agents-empty">Recent work shows up here</p>}
           {work.map((w) => (
             <Link key={w.key} to={w.to} className={`agents-work-row${w.live ? " live" : ""}`}>
               <span className={`agents-dot${w.live ? " on" : ""}`} aria-hidden />
@@ -107,12 +107,12 @@ export default function AgentsContext({
         </div>
       </div>
 
-      <div className="agents-context-foot">
-        <Link to="/computer" className="agents-surface"><Monitor size={14} /> Computer</Link>
-        <Link to="/browser" className="agents-surface"><Globe size={14} /> Browser</Link>
-        <Link to="/terminal" className="agents-surface"><SquareTerminal size={14} /> Terminal</Link>
-        <Link to="/files" className="agents-surface"><FolderOpen size={14} /> Files</Link>
-      </div>
+      <nav className="agents-context-foot" aria-label="Places">
+        <Link to="/computer" className="agents-surface"><Monitor size={15} /> <span>Computer</span></Link>
+        <Link to="/browser" className="agents-surface"><Globe size={15} /> <span>Browser</span></Link>
+        <Link to="/terminal" className="agents-surface"><SquareTerminal size={15} /> <span>Terminal</span></Link>
+        <Link to="/files" className="agents-surface"><FolderOpen size={15} /> <span>Files</span></Link>
+      </nav>
     </aside>
   );
 }

@@ -19,7 +19,7 @@ function shortAgo(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-/** Cursor Agents Window left sidebar: New Agent, Projects, Agents tree, footer. */
+/** Left nav for the assistant app: new chat, projects, chats, footer. */
 export default function AgentsSidebar({
   workspaceName,
   onSearch,
@@ -72,7 +72,7 @@ export default function AgentsSidebar({
           className="agents-new"
           onClick={() => navigate("/assistant", { state: { fresh: true } })}
         >
-          <Plus size={15} /> New Agent
+          <Plus size={15} /> New chat
         </button>
         <nav className="agents-shortcuts">
           <NavLink to="/automations" className="agents-link"><CalendarClock size={15} /> Automations</NavLink>
@@ -87,8 +87,8 @@ export default function AgentsSidebar({
           className="agents-search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search"
-          aria-label="Search agents"
+          placeholder="Search chats"
+          aria-label="Search chats"
         />
       </div>
 
@@ -130,12 +130,12 @@ export default function AgentsSidebar({
 
         <button type="button" className="agents-tree-head" onClick={() => setAgentsOpen((v) => !v)} aria-expanded={agentsOpen}>
           {agentsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <span>Agents</span>
+          <span>Chats</span>
         </button>
         {agentsOpen && (
           <div className="agents-tree-body">
             {convs === null && <p className="agents-empty">Loading…</p>}
-            {convs?.length === 0 && <p className="agents-empty">{q ? "No matches" : "No agents yet"}</p>}
+            {convs?.length === 0 && <p className="agents-empty">{q ? "No matches" : "No chats yet"}</p>}
             {convs?.map((c) => {
               const active = c.id === cid;
               return (
