@@ -17,8 +17,8 @@ plus three command line agents: `rooks` (terminal coding agent), `rooks-browser`
 - `rooks-code/rooks_code/` the `rooks` terminal: `agent.py` (loop), `tools.py` (file and command tools), `extras.py`
   (todo, web, background jobs, sub-agents, project instructions), `learning.py` (memory and skills shared with the
   app), `tui.py` (interactive terminal), `cli.py` (commands, plain mode), `config.py`, `providers.py`.
-- `rooks-browser/`, `rooks-desk/` the browser and computer agents. `rooks-try/` Try Room: a disposable computer on this
-  machine (Mac, Windows or Linux) for safe experiments. `desktop/` launcher and native shell.
+- `rooks-browser/`, `rooks-desk/` the browser and computer agents. `desktop/` launcher and native shell.
+  There is no virtual computer in the app.
 - `install.sh` installs everything; `scripts/test-all.sh` runs every suite.
 
 ## Commands

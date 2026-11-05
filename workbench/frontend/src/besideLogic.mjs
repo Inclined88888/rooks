@@ -5,7 +5,6 @@ export const BESIDE_KEY = "aiw.beside";
 export const BESIDE_SCREENS = Object.freeze([
   { id: "chat", label: "Chat", path: "/assistant" },
   { id: "terminal", label: "Terminal", path: "/terminal" },
-  { id: "practice", label: "Virtual computer", path: "/try" },
   { id: "files", label: "Files", path: "/files" },
   { id: "notes", label: "Notes", path: "/notes" },
   { id: "tasks", label: "Tasks", path: "/tasks" },
@@ -48,7 +47,9 @@ export function screenLabel(path) {
 
 /** Paths that are safe to open beside this app (no scheme, no protocol-relative URL). */
 export function safePath(path) {
-  return typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes(":");
+  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//") || path.includes(":")) return false;
+  if (path === "/try" || path.startsWith("/try/")) return false;
+  return true;
 }
 
 export function readStoredBeside(storage) {

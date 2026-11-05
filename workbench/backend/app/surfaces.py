@@ -88,16 +88,10 @@ def bearer_ok(request: Request) -> bool:
 def status() -> dict:
     computer = bool(getattr(config, "DESK_URL", "") and getattr(config, "DESK_API_KEY", ""))
     browser_agent = bool(getattr(config, "BROWSER_URL", "") and getattr(config, "BROWSER_API_KEY", ""))
-    try:
-        from . import try_proxy
-        try_room = try_proxy.enabled()
-    except Exception:  # noqa: BLE001
-        try_room = False
     return {
         "local": True,
         "computer": computer,
         "browser_agent": browser_agent,
-        "try_room": try_room,
         "files": "this computer",
         "note": "" if computer else "Rooks stays on this computer. Chat and memory work in the browser. Using the screen or files here needs the desktop app on this same computer.",
     }

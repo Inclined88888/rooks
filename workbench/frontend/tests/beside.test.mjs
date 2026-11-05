@@ -20,7 +20,6 @@ test("chat opens the terminal beside it, and the terminal opens chat", () => {
   assert.equal(suggestBeside("/terminal"), "/assistant");
   assert.equal(suggestBeside("/code"), "/terminal");
   assert.equal(suggestBeside("/code/9"), "/terminal");
-  assert.equal(suggestBeside("/try"), "/assistant");
   assert.equal(suggestBeside("/files"), "/assistant");
 });
 
@@ -51,11 +50,12 @@ test("a saved side is a path in this app", () => {
 
 test("screen names stay the words people already see", () => {
   assert.equal(screenPath("/assistant/2"), "/assistant");
-  assert.equal(screenPath("/try"), "/try");
   const labels = BESIDE_SCREENS.map((s) => s.label);
-  for (const word of ["Chat", "Terminal", "Virtual computer", "Files", "Notes", "Tasks", "Mail"]) {
+  for (const word of ["Chat", "Terminal", "Files", "Notes", "Tasks", "Mail"]) {
     assert.ok(labels.includes(word), word);
   }
+  assert.equal(labels.includes("Virtual computer"), false);
+  assert.equal(safePath("/try"), false);
   for (const label of labels) {
     assert.equal(/oauth|mcp|workbench|cli:|https?:/i.test(label), false, label);
   }

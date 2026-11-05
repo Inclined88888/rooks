@@ -68,7 +68,6 @@ const Groups = lazy(() => import("./teammates/Groups"));
 const Vault = lazy(() => import("./teammates/Vault"));
 const PagesLib = lazy(() => import("./teammates/Pages"));
 const Channels = lazy(() => import("./teammates/Channels"));
-const TryRoomPage = lazy(() => import("./pages/TryRoomPage"));
 const Customize = lazy(() => import("./pages/Customize"));
 
 export type Status = {
@@ -224,7 +223,6 @@ function AppRoutes({ onChanged }: { onChanged: () => void }) {
           <Route path="/research/:id" element={<Research />} />
           <Route path="/code" element={<Code />} />
           <Route path="/terminal" element={<TerminalSlot />} />
-          <Route path="/try" element={<TryRoomPage />} />
           <Route path="/code/:id" element={<Code />} />
           <Route path="/browser" element={<Browser />} />
           <Route path="/browser/:id" element={<Browser />} />

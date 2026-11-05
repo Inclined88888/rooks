@@ -1,5 +1,5 @@
-// Guards for problems found by using the app: chats listed twice, a dead terminal
-// blamed on the shell, and the practice computer pretending to be a desktop.
+// Guards for problems found by using the app: chats listed twice, and a dead terminal
+// blamed on the shell.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const side = read("../src/AgentsSidebar.tsx");
 const terminal = read("../src/pages/TerminalPage.tsx");
-const practice = read("../src/pages/TryRoomPage.tsx");
+const app = read("../src/App.tsx");
 const vite = read("../vite.config.ts");
 const tasks = read("../src/pages/Tasks.tsx");
 const auto = read("../src/pages/Automations.tsx");
@@ -27,9 +27,8 @@ test("a dropped terminal connection is not called a shell exit", () => {
   assert.match(vite, /ws:\s*true/);
 });
 
-test("a folder practice computer offers a command instead of a fake screen", () => {
-  assert.match(practice, /Try a command/);
-  assert.match(practice, /Commands run as you/);
-  assert.match(practice, /screen === false/);
-  assert.doesNotMatch(practice, /st\.running && shotOk \?/);
+test("the app has no virtual computer page", () => {
+  assert.doesNotMatch(app, /\/try/);
+  assert.doesNotMatch(app, /TryRoomPage/);
+  assert.doesNotMatch(side, /Virtual computer/);
 });

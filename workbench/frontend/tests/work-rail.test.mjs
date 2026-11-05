@@ -42,10 +42,11 @@ test("terminal shells stay mounted away from the terminal page", () => {
   assert.match(terminal, /ws\.close\(\)/);
 });
 
-test("code keeps the real terminal, browser and computer, not a fake screen", () => {
+test("code keeps the real terminal, browser and computer", () => {
   assert.match(code, /TerminalSlot/);
   assert.match(code, />Browser</);
   assert.match(code, />Computer</);
   assert.doesNotMatch(code, /Virtual computer/);
   assert.doesNotMatch(code, /TryRoomPage/);
+  assert.doesNotMatch(app, /path=\"\/try\"/);
 });
