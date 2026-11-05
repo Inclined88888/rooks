@@ -12,6 +12,7 @@ PUBLIC = {
     ("GET", "/api/desktop/handoff"),         # one-time code checked in handler
     ("POST", "/api/desktop/handoff"),        # desktop bearer token checked in handler
     ("GET", "/api/desktop/session"),         # desktop token checked in handler
+    ("POST", "/api/browser/pair/claim"),  # one-time pairing code, same idea as the phone
     ("POST", "/api/login"),
     ("POST", "/api/lock/reset"),          # forgotten PIN, this computer only; checked in the handler
     ("POST", "/api/logout"),

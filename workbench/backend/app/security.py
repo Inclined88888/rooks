@@ -150,8 +150,13 @@ def check_session(token: str | None) -> bool:
 
 
 def require_user(request: Request) -> None:
-    if not check_session(request.cookies.get(COOKIE)):
-        raise HTTPException(status_code=401, detail="Not signed in")
+    if check_session(request.cookies.get(COOKIE)):
+        return
+    from . import surfaces
+
+    if surfaces.bearer_ok(request):
+        return
+    raise HTTPException(status_code=401, detail="Not signed in")
 
 
 def check_bearer(request: Request) -> bool:

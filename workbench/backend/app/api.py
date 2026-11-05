@@ -73,6 +73,20 @@ def status(request: Request):
     }
 
 
+@api.post("/browser/pair/start")
+def browser_pair_start():
+    from . import surfaces
+
+    return surfaces.start_pair()
+
+
+@api.get("/surfaces")
+def surfaces_status():
+    from . import surfaces
+
+    return surfaces.status()
+
+
 @api.get("/connections/doctor")
 def connections_doctor():
     """Plain-language health of models, browser, computer, and mail. Docker is never required for the desktop app."""
@@ -196,6 +210,16 @@ def desktop_handoff(code: str, request: Request):
 
 class LoginIn(BaseModel):
     password: str
+
+
+@public.post("/browser/pair/claim")
+def browser_pair_claim(data: dict):
+    """A browser that is not signed in trades a one-time code for a token. The code is made while signed in."""
+    from . import surfaces
+
+    throttle("pair")
+    code = str((data or {}).get("code") or "")
+    return surfaces.claim(code)
 
 
 @public.post("/login")

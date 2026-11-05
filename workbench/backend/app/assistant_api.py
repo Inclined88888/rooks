@@ -27,6 +27,10 @@ def require_user_or_cli(request: Request) -> None:
     stored = db.get_setting("cli_token_hash", "") or ""
     if token and stored and hmac.compare_digest(hashlib.sha256(token.encode()).hexdigest(), stored):
         return
+    from . import surfaces
+
+    if surfaces.bearer_ok(request):
+        return
     raise HTTPException(401, "Not signed in")
 
 
