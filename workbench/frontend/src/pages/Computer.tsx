@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { Tracer } from "../Tracer";
 import { CursorOverlay, DoneTick, LiveShot, parsePointer, Pointer } from "../motion";
+import { SurfaceNote } from "../SurfaceNote";
 import { Empty, Markdown, ModelSelect, useModels, useToast } from "../util";
 
 type JobSummary = { id: string; goal: string; provider: string; model: string; status: string; source: string; created_at: number; dry_run: boolean };
@@ -163,6 +164,7 @@ export default function Computer() {
         </div>
       )}
 
+      <SurfaceNote />
       {desk && !desk.ok && <div className="alert err" style={{ marginBottom: 16 }}>Rooks Desk cannot see this screen: {desk.error}</div>}
       {missing.length > 0 && <PermissionSteps missing={missing.map(([k]) => k)} platform={desk?.platform}
         onRecheck={loadDesk} />}

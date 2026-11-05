@@ -1,6 +1,6 @@
 import { ArrowRight, Check, Cpu, Download, KeyRound, Loader2, Lock } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
-import { api, stream } from "../api";
+import { api, saveBrowserToken, stream } from "../api";
 import type { Status } from "../App";
 
 const SUGGESTED = [
@@ -42,6 +42,7 @@ function Login({ onDone }: { onDone: () => void }) {
         <input className="input" type="password" autoFocus autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </label>
       <button className="btn primary" disabled={busy || !password}>{busy ? <Loader2 size={16} className="spin" /> : "Sign in"}</button>
+      <PairCode busy={busy} onDone={onDone} onError={setError} />
       <button type="button" className="btn ghost" disabled={busy} onClick={async () => {
         if (!window.confirm("The old PIN can't be looked up. Set a new one? Your mail, notes and tasks stay.")) return;
         setBusy(true);
@@ -50,6 +51,33 @@ function Login({ onDone }: { onDone: () => void }) {
         catch (err) { setError((err as Error).message); setBusy(false); }
       }}>Forgot it? Set a new one</button>
     </form>
+  );
+}
+
+function PairCode({ busy, onDone, onError }: { busy: boolean; onDone: () => void; onError: (s: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const [working, setWorking] = useState(false);
+  if (!open) return <button type="button" className="btn ghost" disabled={busy} onClick={() => setOpen(true)}>I have a pairing code</button>;
+  const connect = async () => {
+    setWorking(true);
+    try {
+      const r = await api<{ token: string }>("/browser/pair/claim", { body: { code } });
+      saveBrowserToken(r.token);
+      onDone();
+    } catch (err) {
+      onError((err as Error).message);
+    } finally {
+      setWorking(false);
+    }
+  };
+  return (
+    <div className="col">
+      <label className="field">Pairing code
+        <input className="input" value={code} autoComplete="one-time-code" aria-label="Pairing code" placeholder="ABCD-EFGH" onChange={(e) => setCode(e.target.value)} />
+      </label>
+      <button type="button" className="btn" disabled={working || code.trim().length < 8} onClick={connect}>{working ? "Checking…" : "Connect this browser"}</button>
+    </div>
   );
 }
 

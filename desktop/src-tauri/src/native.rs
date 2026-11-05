@@ -30,11 +30,23 @@ pub struct Link {
     pub draft: Option<String>,
 }
 
-#[derive(Default)]
 pub struct Native {
     quitting: AtomicBool,
+    /// When true, closing the window leaves Rooks running in the tray.
+    background: AtomicBool,
     page_ready: AtomicBool,
     pending: Mutex<Option<Link>>,
+}
+
+impl Default for Native {
+    fn default() -> Self {
+        Self {
+            quitting: AtomicBool::new(false),
+            background: AtomicBool::new(true),
+            page_ready: AtomicBool::new(false),
+            pending: Mutex::new(None),
+        }
+    }
 }
 
 fn clip(s: &str, max: usize) -> String {
@@ -111,9 +123,15 @@ pub fn open_urls(app: &AppHandle, urls: &[Url]) {
 }
 
 /// Close to tray: hide the main window instead of closing it, unless the user chose Quit.
+/// Closing the window hides Rooks so it keeps running. Quit, or turning background off, really exits.
+pub fn close_hides_to_tray(background: bool, quitting: bool) -> bool {
+    background && !quitting
+}
+
 pub fn on_window_event(window: &tauri::Window, event: &WindowEvent) {
     if let WindowEvent::CloseRequested { api, .. } = event {
-        if window.label() == "main" && !window.app_handle().state::<Native>().quitting.load(Ordering::SeqCst) {
+        let native = window.app_handle().state::<Native>();
+        if window.label() == "main" && close_hides_to_tray(native.background.load(Ordering::SeqCst), native.quitting.load(Ordering::SeqCst)) {
             api.prevent_close();
             let _ = window.hide();
         }
@@ -126,14 +144,14 @@ pub fn quit(app: &AppHandle) {
 }
 
 pub fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Open AI Workspace", true, None::<&str>)?;
+    let open = MenuItem::with_id(app, "open", "Open Rooks", true, None::<&str>)?;
     let new_chat = MenuItem::with_id(app, "new_chat", "New chat", true, None::<&str>)?;
-    let automations = MenuItem::with_id(app, "automations", "Automations", true, None::<&str>)?;
+    let automations = MenuItem::with_id(app, "automations", "Routines", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
-    let quit_item = MenuItem::with_id(app, "quit", "Quit AI Workspace", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "quit", "Quit Rooks", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &new_chat, &automations, &sep, &quit_item])?;
     let mut tray = TrayIconBuilder::with_id("main")
-        .tooltip("AI Workspace")
+        .tooltip("Rooks is running")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -180,6 +198,13 @@ pub fn desktop_ready(app: AppHandle) -> Option<Link> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn closing_hides_while_rooks_keeps_running() {
+        assert!(close_hides_to_tray(true, false));
+        assert!(!close_hides_to_tray(true, true));
+        assert!(!close_hides_to_tray(false, false));
+    }
 
     fn p(s: &str) -> Option<Link> {
         parse_link(&Url::parse(s).unwrap())

@@ -2,6 +2,7 @@ import { BarChart3, Code2, Download, FileSearch, FileText, FolderOpen, GitCompar
 import { DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
+import { SurfaceNote } from "../SurfaceNote";
 import { Empty, Markdown, relTime, useToast } from "../util";
 import "../work.css";
 
@@ -198,6 +199,7 @@ export default function Files() {
       <div className="page-head">
         <div><h1>Files</h1><p className="muted">Drop in anything: spreadsheets, Word, PDFs, slides, emails, zips, drawings, photos, data or code. It is read on this computer; only the text you ask about goes to your model.</p></div>
       </div>
+      <SurfaceNote />
 
       <HelperApps initial={caps?.helpers} />
       <MakeImage onMade={(id) => { load(); open(id); }} onError={toast.err} />
