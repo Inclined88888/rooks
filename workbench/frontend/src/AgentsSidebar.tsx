@@ -1,21 +1,29 @@
-import { CalendarClock, Code2, Menu, Plus, Puzzle, Search, Settings as SettingsIcon, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CalendarClock, ChevronDown, ChevronRight, Code2, Plus, Puzzle, Search, Settings as SettingsIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
-import { relTime } from "./util";
-
-const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-const MOD_KEY = isMac ? "⌘" : "Ctrl";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
+type Project = { id: number; name: string; kind: string; status: string; last_used_at?: string | null; updated_at?: string; counts?: Record<string, number> };
+type ProjectList = { projects: Project[]; active_id: number | null };
 
-/** Cursor Agents Window left sidebar: New Agent, shortcuts, chat list, footer. */
+/** Compact Cursor-style age: 23h, 44m */
+function shortAgo(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (Number.isNaN(diff) || diff < 0) return "";
+  if (diff < 60) return "now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  if (diff < 86400 * 14) return `${Math.floor(diff / 86400)}d`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+/** Cursor Agents Window left sidebar: New Agent, Projects, Agents tree, footer. */
 export default function AgentsSidebar({
   workspaceName,
   onSearch,
   onMore,
-  onLogout,
-  desktop,
 }: {
   workspaceName: string;
   onSearch: () => void;
@@ -27,25 +35,34 @@ export default function AgentsSidebar({
   const location = useLocation();
   const idMatch = location.pathname.match(/^\/assistant\/(\d+)/);
   const cid = idMatch ? Number(idMatch[1]) : null;
+  const projectMatch = location.pathname.match(/^\/projects\/(\d+)/);
+  const openProject = projectMatch ? Number(projectMatch[1]) : null;
+
   const [convs, setConvs] = useState<Conv[] | null>(null);
+  const [projects, setProjects] = useState<ProjectList | null>(null);
   const [q, setQ] = useState("");
+  const [projOpen, setProjOpen] = useState(true);
+  const [agentsOpen, setAgentsOpen] = useState(true);
 
   useEffect(() => {
     let stop = false;
-    const load = () => api<Conv[]>(`/conversations${q ? `?q=${encodeURIComponent(q)}` : ""}`)
-      .then((r) => { if (!stop) setConvs(r); })
-      .catch(() => undefined);
+    const load = () => {
+      api<Conv[]>(`/conversations${q ? `?q=${encodeURIComponent(q)}` : ""}`)
+        .then((r) => { if (!stop) setConvs(r); })
+        .catch(() => undefined);
+      api<ProjectList>("/projects")
+        .then((r) => { if (!stop) setProjects(r); })
+        .catch(() => undefined);
+    };
     load();
-    const t = window.setInterval(load, 8000);
+    const t = window.setInterval(load, 10000);
     return () => { stop = true; clearInterval(t); };
   }, [q, location.key]);
 
-  const remove = async (c: Conv) => {
-    if (!confirm(`Delete “${c.title}”?`)) return;
-    await api(`/conversations/${c.id}`, { method: "DELETE" });
-    setConvs((list) => (list || []).filter((x) => x.id !== c.id));
-    if (cid === c.id) navigate("/assistant", { state: { fresh: true } });
-  };
+  const activeProjectId = projects?.active_id ?? null;
+  const projectRows = useMemo(() => projects?.projects ?? [], [projects]);
+
+  const initial = (workspaceName || "R").trim().charAt(0).toUpperCase() || "R";
 
   return (
     <aside className="agents-side" aria-label="Agents">
@@ -64,7 +81,6 @@ export default function AgentsSidebar({
         </nav>
       </div>
 
-      <div className="agents-section-label">Chats</div>
       <div className="agents-search-wrap">
         <Search size={13} aria-hidden />
         <input
@@ -72,54 +88,85 @@ export default function AgentsSidebar({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search"
-          aria-label="Search chats"
+          aria-label="Search agents"
         />
       </div>
-      <div className="agents-chats">
-        {convs === null && <p className="agents-empty">Loading…</p>}
-        {convs?.length === 0 && <p className="agents-empty">{q ? "No matches" : "No chats yet"}</p>}
-        {convs?.map((c) => (
-          <div
-            key={c.id}
-            className={`agents-chat${c.id === cid ? " active" : ""}`}
-            role="link"
-            tabIndex={0}
-            onClick={() => navigate(`/assistant/${c.id}`)}
-            onKeyDown={(e) => { if (e.key === "Enter") navigate(`/assistant/${c.id}`); }}
-          >
-            <span className="agents-dot" aria-hidden />
-            <span className="grow truncate">
-              <span className="agents-chat-title truncate">{c.title}</span>
-              <span className="agents-chat-meta">{relTime(c.updated_at)}</span>
-            </span>
-            <button
-              type="button"
-              className="agents-chat-del"
-              aria-label={`Delete ${c.title}`}
-              onClick={(e) => { e.stopPropagation(); remove(c); }}
-            >
-              <Trash2 size={12} />
-            </button>
+
+      <div className="agents-tree">
+        <button type="button" className="agents-tree-head" onClick={() => setProjOpen((v) => !v)} aria-expanded={projOpen}>
+          {projOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          <span>Projects</span>
+        </button>
+        {projOpen && (
+          <div className="agents-tree-body">
+            {!projectRows.length && (
+              <button type="button" className="agents-row" onClick={() => navigate("/projects")}>
+                <span className="agents-dot" aria-hidden />
+                <span className="grow truncate">
+                  <span className="agents-chat-title truncate">{workspaceName || "Home"}</span>
+                </span>
+              </button>
+            )}
+            {projectRows.map((p) => {
+              const active = p.id === activeProjectId || p.id === openProject;
+              const when = shortAgo(p.last_used_at || p.updated_at);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`agents-row${active ? " active" : ""}`}
+                  onClick={() => navigate(`/projects/${p.id}`)}
+                >
+                  <span className={`agents-dot${active ? " on" : ""}`} aria-hidden />
+                  <span className="grow truncate">
+                    <span className="agents-chat-title truncate">{p.name}</span>
+                  </span>
+                  {when && <span className="agents-age">{when}</span>}
+                </button>
+              );
+            })}
           </div>
-        ))}
+        )}
+
+        <button type="button" className="agents-tree-head" onClick={() => setAgentsOpen((v) => !v)} aria-expanded={agentsOpen}>
+          {agentsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          <span>Agents</span>
+        </button>
+        {agentsOpen && (
+          <div className="agents-tree-body">
+            {convs === null && <p className="agents-empty">Loading…</p>}
+            {convs?.length === 0 && <p className="agents-empty">{q ? "No matches" : "No agents yet"}</p>}
+            {convs?.map((c) => {
+              const active = c.id === cid;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`agents-row${active ? " active" : ""}`}
+                  onClick={() => navigate(`/assistant/${c.id}`)}
+                >
+                  <span className={`agents-dot${active ? " on" : ""}`} aria-hidden />
+                  <span className="grow truncate">
+                    <span className="agents-chat-title truncate">{c.title}</span>
+                  </span>
+                  <span className="agents-age">{shortAgo(c.updated_at)}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="agents-foot">
-        <button type="button" className="agents-foot-btn" onClick={onSearch} title={`Search (${MOD_KEY}K)`}>
-          <Search size={15} />
+        <button type="button" className="agents-avatar" onClick={onMore} title="More" aria-label="More">
+          {initial}
         </button>
-        <button type="button" className="agents-foot-btn" onClick={onMore} title="More">
-          <Menu size={15} />
+        <button type="button" className="agents-user truncate" onClick={onSearch} title="Search">
+          {workspaceName}
         </button>
         <Link to="/settings" className="agents-foot-btn" title="Settings" aria-label="Settings">
           <SettingsIcon size={15} />
         </Link>
-        <div className="agents-user truncate" title={workspaceName}>{workspaceName}</div>
-        {!desktop && onLogout && (
-          <button type="button" className="agents-foot-btn" onClick={onLogout} title="Sign out" aria-label="Sign out">
-            Out
-          </button>
-        )}
       </div>
     </aside>
   );

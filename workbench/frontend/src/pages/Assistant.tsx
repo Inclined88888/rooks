@@ -417,9 +417,21 @@ function Chat() {
   return (
     <div className="agents-chat">
       <div className="agents-chat-main chat-main">
-        <div className="toolbar chat-top" style={{ position: "relative" }}>
-          <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat")}</div>
+        <div className="toolbar chat-top agents-thread-top" style={{ position: "relative" }}>
+          <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New agent")}</div>
+          <span className="agents-local-pill" title="Work stays on this computer">On this computer</span>
           <div className="spacer" />
+          <div className="tabs mode-tabs agents-mode-head" role="group" aria-label="Mode" title="Chat is for the day. Code is for changing a project, and it asks before it changes files.">
+            <button type="button" className={`tab ${workMode === "chat" ? "active" : ""}`} onClick={() => chooseMode("chat")}>Chat</button>
+            <button type="button" className={`tab ${workMode !== "chat" ? "active" : ""}`} onClick={() => { if (workMode === "chat") chooseMode(codeDepth.current); }}>Code</button>
+          </div>
+          {workMode !== "chat" && (
+            <div className="tabs mode-tabs agents-mode-head" role="group" aria-label="Code">
+              <button type="button" className={`tab ${workMode === "plan" ? "active" : ""}`} onClick={() => chooseMode("plan")}>Plan</button>
+              <button type="button" className={`tab ${workMode === "build" ? "active" : ""}`} onClick={() => chooseMode("build")}>Build</button>
+            </div>
+          )}
+          <span className="sr-only">Chat is for the day. Code is for changing a project, and it asks before it changes files.</span>
           <ChatMenu
             showRoutines={showRoutines}
             onRoutines={() => { setShowRoutines((v) => !v); setShowTry(false); setRoutines(null); }}
@@ -475,8 +487,7 @@ function Chat() {
           <main className="chat-thread" role="main" aria-label="Chat conversation">
             <h1 style={srOnly}>Chat conversation</h1>
             {!busy && visible.length === 0 && (
-              <div className="chat-hero">
-                <h2 className="chat-hero-title">{who}</h2>
+              <div className="chat-hero agents-empty-hero">
                 <p className="chat-hero-sub">Ask anything. Work stays on this computer.</p>
               </div>
             )}
@@ -606,19 +617,8 @@ function Chat() {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <div className="composer-bar">
               <AttachButton onFiles={att.add} disabled={busy} />
-              <div className="tabs mode-tabs" role="group" aria-label="Mode" title="Chat is for the day. Code is for changing a project, and it asks before it changes files.">
-                <button type="button" className={`tab ${workMode === "chat" ? "active" : ""}`} onClick={() => chooseMode("chat")}>Chat</button>
-                <button type="button" className={`tab ${workMode !== "chat" ? "active" : ""}`} onClick={() => { if (workMode === "chat") chooseMode(codeDepth.current); }}>Code</button>
-              </div>
-              {workMode !== "chat" && (
-                <div className="tabs mode-tabs" role="group" aria-label="Code">
-                  <button type="button" className={`tab ${workMode === "plan" ? "active" : ""}`} onClick={() => chooseMode("plan")}>Plan</button>
-                  <button type="button" className={`tab ${workMode === "build" ? "active" : ""}`} onClick={() => chooseMode("build")}>Build</button>
-                </div>
-              )}
-              <span className="sr-only">Chat is for the day. Code is for changing a project, and it asks before it changes files.</span>
               <ModelSelect value={model} onChange={setModel} models={models} />
-              {isPlan && <EffortSelect value={effort} onChange={setEffort} />}
+              {isPlan && workMode !== "chat" && <EffortSelect value={effort} onChange={setEffort} />}
               <div className="spacer" />
               {/* feat/v02-anywhere-voice + motion: one mic. Local/cloud speech-to-text with browser fallback, drawn as the voice orb */}
               <DictateButton orb disabled={busy} onText={(t) => { setText((v) => (v ? v + " " : "") + t); composerRef.current?.focus(); }} />
@@ -626,6 +626,10 @@ function Chat() {
                 ? <button type="button" className="btn send" onClick={stopTurn} aria-label="Stop" title="Stop; what was written so far is kept"><Square size={15} /></button>
                 : <button className="btn primary send" disabled={(!text.trim() && !att.ready.length) || att.uploading} aria-label="Send"><ArrowUp size={16} /></button>}
             </div>
+          </div>
+          <div className="agents-composer-status">
+            <span>On this computer</span>
+            {workMode !== "chat" && <span>{workMode === "plan" ? "Plan" : "Build"}</span>}
           </div>
         </form>
       </div>

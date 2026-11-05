@@ -7,9 +7,10 @@ import {
 } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { CommandPalette } from "./Palette";
-import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import AgentsSidebar from "./AgentsSidebar";
+import AgentsContext from "./AgentsContext";
 import { EdgeGlow, transitionClick } from "./motion";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -252,19 +253,12 @@ export default function App() {
     );
   }
 
-  const logout = async () => {
-    await api("/logout", { method: "POST" });
-    refresh();
-  };
-
   return (
     <div className="shell shell-agents">
       <AgentsSidebar
         workspaceName={status.workspace_name}
         onSearch={() => setPaletteOpen(true)}
         onMore={() => setMenuOpen(true)}
-        onLogout={status.desktop ? undefined : logout}
-        desktop={status.desktop}
       />
 
       {menuOpen && (
@@ -395,12 +389,11 @@ export default function App() {
         </div>
       </main>
 
-      <aside className="agents-dock" aria-label="Surfaces">
-        <Link to="/computer" className="agents-dock-btn" title="Computer" aria-label="Computer"><Monitor size={17} /></Link>
-        {(status.browser_enabled !== false) && <Link to="/browser" className="agents-dock-btn" title="Browser" aria-label="Browser"><Globe size={17} /></Link>}
-        <Link to="/terminal" className="agents-dock-btn" title="Terminal" aria-label="Terminal"><SquareTerminal size={17} /></Link>
-        <Link to="/files" className="agents-dock-btn" title="Files" aria-label="Files"><FolderOpen size={17} /></Link>
-      </aside>
+      <AgentsContext
+        workspaceName={status.workspace_name}
+        browserEnabled={status.browser_enabled}
+        deskEnabled={!!status.desk_enabled}
+      />
 
       <DeskGlow enabled={!!status.desk_enabled} />
       <JobNotifier />{/* feat/v02-automations */}<DesktopBridge />{/* feat/tauri-native */}
