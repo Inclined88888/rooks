@@ -524,7 +524,9 @@ kbd, .kbd {
 .shell-agents .cursor-settings-nav { background: var(--agents-panel); border-color: var(--agents-border); }
 .shell-agents .cursor-settings-link.active { background: var(--agents-panel-3); }
 .shell-agents .cursor-settings-head { background: transparent; }
-.practice-page { padding: 28px 32px 40px; max-width: 760px; }
+.practice-page { padding: 28px 32px 40px; max-width: 1040px; }
+.virtual-screen { outline: none; cursor: text; }
+.virtual-screen:focus-visible { box-shadow: 0 0 0 2px var(--agents-text); border-radius: 10px; }
 .code-desk { height: 100%; min-height: 0; display: flex; flex-direction: column; }
 .code-desk-bar {
   display: flex; align-items: center; gap: 6px; flex: none; flex-wrap: wrap;

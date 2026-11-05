@@ -26,7 +26,8 @@ Same idea as a rented cloud box, but local-first: Mac, Windows or Linux host, on
 
 1. **qemu** — a real Linux guest VM (best isolation). Needs `qemu-system-*` on the PATH.
 2. **nested** — a private X11 desktop on this computer (fast). Needs Xvfb on Linux.
-3. **shell** — a private home folder and shell only (always available). Good for “try this install”.
+3. **display** — a separate screen drawn in the app. Click it and type. Used when there is no guest image and no Xvfb.
+4. **shell** — a private home folder and shell only. No screen.
 
 On every host the guest OS is Linux, so skills and scripts transfer. Mac and Windows are
 hosts; they are not required as guest images.

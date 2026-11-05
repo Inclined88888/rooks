@@ -172,6 +172,15 @@ class BuiltinVirtual:
     def handoff(self, src: str, dest: str, approve: bool = False) -> dict:
         return {"ok": False, "error": "Copying files out of this folder is not available yet."}
 
+    def click(self, x: int, y: int, button: str = "left", count: int = 1) -> dict:
+        return {"ok": False, "error": "This computer has no screen."}
+
+    def type_text(self, text: str) -> dict:
+        return {"ok": False, "error": "This computer has no screen."}
+
+    def key(self, keys: str) -> dict:
+        return {"ok": False, "error": "This computer has no screen."}
+
 
 _BUILTIN: BuiltinVirtual | None = None
 
@@ -253,6 +262,30 @@ async def reset(request: Request):
     if getattr(config, "TRY_URL", ""):
         return (await _remote("POST", "/api/reset", body)).json()
     return _local_call("reset", body)
+
+
+@router.post("/click")
+async def click(request: Request):
+    body = await request.json()
+    if getattr(config, "TRY_URL", ""):
+        return (await _remote("POST", "/api/click", body)).json()
+    return _local_call("click", body)
+
+
+@router.post("/type")
+async def type_text(request: Request):
+    body = await request.json()
+    if getattr(config, "TRY_URL", ""):
+        return (await _remote("POST", "/api/type", body)).json()
+    return _local_call("type", body)
+
+
+@router.post("/key")
+async def key(request: Request):
+    body = await request.json()
+    if getattr(config, "TRY_URL", ""):
+        return (await _remote("POST", "/api/key", body)).json()
+    return _local_call("key", body)
 
 
 @router.post("/run")

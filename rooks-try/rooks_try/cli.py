@@ -14,7 +14,7 @@ from .room import TryRoom
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="rooks-try", description="A disposable computer on this machine for the agent to try things.")
     ap.add_argument("--version", action="version", version=f"rooks-try {__version__}")
-    ap.add_argument("--driver", choices=["auto", "qemu", "nested", "shell"],
+    ap.add_argument("--driver", choices=["auto", "qemu", "nested", "display", "shell"],
                     default=os.environ.get("ROOKS_TRY_DRIVER", "auto"))
     ap.add_argument("--offline", action="store_true", help="No network inside the room when the driver supports it")
     sub = ap.add_subparsers(dest="cmd", required=True)

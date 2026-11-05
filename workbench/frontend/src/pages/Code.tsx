@@ -364,7 +364,7 @@ function CodeDesk() {
             {a.id === "claude" ? "Claude" : "Codex"}
           </button>
         ))}
-        <span className="code-desk-note muted">The terminal is enough. Claude and Codex show up here after you sign in.</span>
+        <span className="code-desk-note muted">Virtual computer is its own screen. Claude and Codex show up here after you sign in.</span>
       </div>
       <div className="code-desk-body">
         {pane === "terminal" && <TerminalPage bare />}

@@ -72,7 +72,8 @@ def test_pick_prefers_nested_when_xvfb_exists(room_home, monkeypatch):
     if shutil.which("Xvfb") and not disk.exists():
         assert driver.name == "nested"
     elif not disk.exists():
-        assert driver.name == "shell"
+        from rooks_try.drivers.display import DisplayDriver
+        assert driver.name == ("display" if DisplayDriver().available() else "shell")
 
 
 def test_explicit_missing_driver_is_an_error(room_home, monkeypatch):
@@ -136,6 +137,20 @@ def test_nested_screenshot(room_home, monkeypatch):
         room.down()
 
 
+def test_display_is_a_screen_you_can_type_on(room_home):
+    room = TryRoom(prefer="display")
+    st = room.up()
+    assert st["running"] is True
+    assert st["screen"] is True
+    assert st["driver"] == "display"
+    room.type_text("echo hi > seen.txt")
+    room.key("Return")
+    assert (store.guest_home() / "seen.txt").read_text().strip() == "hi"
+    path = room.screenshot()
+    assert path.exists() and path.stat().st_size > 500
+    assert room.click(80, 120).get("ok") is True
+
+
 def test_shell_picture_uses_plain_words():
     text = Path(__file__).resolve().parents[1].joinpath("rooks_try/drivers/shell.py").read_text()
     start = text.index("def screenshot")
@@ -147,4 +162,4 @@ def test_shell_picture_uses_plain_words():
 def test_drivers_are_described(room_home):
     info = TryRoom().drivers()
     names = {d["name"] for d in info}
-    assert names == {"qemu", "nested", "shell"}
+    assert names == {"qemu", "nested", "display", "shell"}

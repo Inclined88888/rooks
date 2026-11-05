@@ -1,5 +1,6 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { api } from "../api";
+import { LiveShot } from "../motion";
 import { useToast } from "../util";
 
 type TryStatus = {
@@ -18,6 +19,7 @@ function plainKind(driver?: string): string {
   if (driver === "qemu") return "A private Linux computer";
   if (driver === "nested") return "A private desktop";
   if (driver === "shell") return "A private folder";
+  if (driver === "display") return "A separate screen";
   return "A spare computer on this machine";
 }
 
@@ -34,7 +36,29 @@ export default function TryRoomPage({ bare = false }: { bare?: boolean }) {
 
   const refresh = () => api<TryStatus>("/try/status").then(setSt).catch(() => setSt({ available: false, note: "Not on this computer yet." }));
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    let stop = false;
+    (async () => {
+      try {
+        let s = await api<TryStatus>("/try/status");
+        if (stop) return;
+        if (s.available && !s.running) {
+          s = { ...s, ...(await api<TryStatus>("/try/up", { method: "POST", body: {} })), available: true };
+          if (!stop) setShot((n) => n + 1);
+        }
+        if (!stop) setSt(s);
+      } catch {
+        if (!stop) setSt({ available: false, note: "Not on this computer yet." });
+      }
+    })();
+    return () => { stop = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!st?.running || st.screen === false) return;
+    const t = window.setInterval(() => setShot((n) => n + 1), 1000);
+    return () => window.clearInterval(t);
+  }, [st?.running, st?.screen]);
 
   const act = async (path: string, body: Record<string, unknown> = {}) => {
     setPhase(path === "up" ? "starting" : path === "down" ? "stopping" : "idle");
@@ -67,6 +91,34 @@ export default function TryRoomPage({ bare = false }: { bare?: boolean }) {
     }
   };
 
+  const poke = async (path: string, body: Record<string, unknown>) => {
+    try {
+      await api(`/try/${path}`, { method: "POST", body });
+      setShot((n) => n + 1);
+    } catch (err) {
+      toast.err(err);
+    }
+  };
+
+  const onScreenClick = (e: MouseEvent<HTMLDivElement>) => {
+    const img = e.currentTarget.querySelector("img");
+    if (!img) return;
+    const rect = img.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = Math.round((e.clientX - rect.left) * (img.naturalWidth / rect.width));
+    const y = Math.round((e.clientY - rect.top) * (img.naturalHeight / rect.height));
+    void poke("click", { x, y });
+    e.currentTarget.focus();
+  };
+
+  const onScreenKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    e.preventDefault();
+    if (e.key === "Enter") void poke("key", { keys: "Return" });
+    else if (e.key === "Backspace") void poke("key", { keys: "BackSpace" });
+    else if (e.key.length === 1) void poke("type", { text: e.key });
+  };
+
   const statusWord = phase === "starting" ? "Starting" : phase === "stopping" ? "Stopping" : st?.running ? "On" : "Off";
   const folderOnly = st?.screen === false;
 
@@ -76,9 +128,9 @@ export default function TryRoomPage({ bare = false }: { bare?: boolean }) {
         <div>
           {!bare && <h1>Virtual computer</h1>}
           <p className="muted">
-            {st?.driver === "shell"
+            {folderOnly
               ? "A private folder on this computer. Commands run as you."
-              : "A spare computer on this machine. Your real desktop stays alone."}
+              : "A separate screen on this computer. Your own desktop stays alone."}
           </p>
         </div>
       </header>
@@ -86,7 +138,7 @@ export default function TryRoomPage({ bare = false }: { bare?: boolean }) {
       {st === null && <p className="muted">Checking…</p>}
       {st && !st.available && <p className="muted">{st.note || "Not on this computer yet."}</p>}
       {st?.available && (
-        <div className="card col" style={{ gap: 12, maxWidth: 640 }}>
+        <div className="card col" style={{ gap: 12, maxWidth: folderOnly ? 640 : 980 }}>
           <p style={{ margin: 0 }}><strong>{statusWord}</strong></p>
           {st.last_checkpoint?.name && (
             <p className="small muted" style={{ margin: 0 }}>Last saved point: {st.last_checkpoint.label || st.last_checkpoint.name}</p>
@@ -111,12 +163,21 @@ export default function TryRoomPage({ bare = false }: { bare?: boolean }) {
             </form>
           )}
           {st.running && !folderOnly && shotOk ? (
-            <img
-              className="practice-shot"
-              alt="Virtual computer screen"
-              src={`/api/try/screenshot?k=${shot}`}
-              onError={() => setShotOk(false)}
-            />
+            <div
+              className="virtual-screen"
+              tabIndex={0}
+              role="application"
+              aria-label="Virtual computer screen. Click it, then type."
+              onClick={onScreenClick}
+              onKeyDown={onScreenKey}
+            >
+              <LiveShot
+                src={`/api/try/screenshot?k=${shot}`}
+                alt="Virtual computer screen"
+                scanning={phase === "starting"}
+              />
+              <p className="small muted" style={{ margin: "8px 0 0" }}>Click the screen, then type. It is not your Mac terminal.</p>
+            </div>
           ) : !st.running ? (
             <p className="small muted" style={{ margin: 0 }}>The screen shows up here once it is on.</p>
           ) : null}

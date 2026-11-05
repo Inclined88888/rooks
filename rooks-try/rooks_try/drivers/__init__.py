@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .base import Driver, DriverInfo
+from .display import DisplayDriver
 from .nested import NestedDriver
 from .qemu import QemuDriver
 from .shell import ShellDriver
@@ -14,14 +15,15 @@ def pick(prefer: str = "auto", offline: bool = False) -> Driver:
     auto may fall through to the private folder. An explicit driver does not.
     """
     order = {
-        "auto": ("qemu", "nested", "shell"),
+        "auto": ("qemu", "nested", "display", "shell"),
         "qemu": ("qemu",),
         "nested": ("nested",),
+        "display": ("display",),
         "shell": ("shell",),
     }.get(prefer)
     if order is None:
         raise ValueError(f"Unknown driver {prefer}")
-    classes = {"qemu": QemuDriver, "nested": NestedDriver, "shell": ShellDriver}
+    classes = {"qemu": QemuDriver, "nested": NestedDriver, "display": DisplayDriver, "shell": ShellDriver}
     last: Exception | None = None
     for name in order:
         try:
@@ -38,4 +40,4 @@ def pick(prefer: str = "auto", offline: bool = False) -> Driver:
 
 
 def describe_all() -> list[DriverInfo]:
-    return [cls().info() for cls in (QemuDriver, NestedDriver, ShellDriver)]
+    return [cls().info() for cls in (QemuDriver, NestedDriver, DisplayDriver, ShellDriver)]
