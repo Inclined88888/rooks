@@ -4,7 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api, stream } from "../api";
 import { AppInfo, Sidecar, appInfo, inDesktopShell, listSidecars, openDataDir, openLogs, requestApproval } from "../desktop";
 import { ModelSelect, useModels, useToast } from "../util";
-import ConnectMailCalendar from "./ConnectMailCalendar";
+import ConnectSection from "./ConnectSection";
 import { AddKey, KeyInfo, SignInWithPlan, WebSearchSetup } from "./ModelSignIn";
 import { PhoneCard } from "./Phone";
 
@@ -15,7 +15,7 @@ const SECTIONS: { id: string; label: string }[] = [
   { id: "models", label: "Models" },
   { id: "tools", label: "Tools" },
   { id: "skills", label: "Skills & rules" },
-  { id: "apps", label: "Apps" },
+  { id: "apps", label: "Connect" },
   { id: "appearance", label: "Appearance" },
   { id: "privacy", label: "Privacy" },
   { id: "advanced", label: "Advanced" },
@@ -434,16 +434,7 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
             </>
           )}
 
-          {section === "apps" && (
-            <>
-              <ConnectMailCalendar />
-              <div className="card col">
-                <h2>Other calendars</h2>
-                <p className="muted small">Google and Microsoft calendars come with your mail account. To add another calendar, use the Calendar page.</p>
-                <div><Link className="btn" to="/calendar">Open calendar</Link></div>
-              </div>
-            </>
-          )}
+          {section === "apps" && <ConnectSection onChange={onChanged} />}
 
           {section === "appearance" && (
             <div className="card col">
