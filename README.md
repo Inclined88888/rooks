@@ -1,23 +1,22 @@
-# AI Workspace
+# Rooks
 
-A self hosted AI workspace in **one light container**. Chat with an assistant that remembers you and learns skills, plus notes, documents, tasks, calendar, mail, research with sources, scheduled reports, a company of AI agents with budgets, and model comparison. Runs on Anthropic, OpenAI, OpenRouter or any OpenAI compatible provider, or local models.
+Rooks is your own assistant, on your computer. One chat that remembers you, plus notes, documents, tasks, calendar, mail, research with sources, and schedules. A coding agent lives in the terminal. You use a model you already have, or one that stays on this machine.
 
-**The core is Workbench:** FastAPI + SQLite + React, one image (248 MB of unpacked layers, measured by CI), about 100 MB of RAM at idle (measured on the backend process; real use depends on traffic). No GPU, no database server, no extra containers. A small VPS with 1 GB of RAM or a Mac laptop runs it.
+The app is one small piece: about 248 MB unpacked, and about 100 MB of memory when it is idle. No graphics card and no separate database. A small server or a laptop runs it.
 
-Everything heavier is an **optional add-on, off by default**:
+Chat, memory, skills, schedules, and mail are already in Rooks. You do not add another product to get them.
 
-| Add-on | Turn on with | Adds | Cost |
+Heavier pieces stay off until you ask. Each one adds something Rooks can do. The names in **Switch** are only for the installer.
+
+| Extra | What you get | Switch | Size |
 | --- | --- | --- | --- |
-| `search` | SearXNG | Free private web search (otherwise use a Brave or Tavily key, or none) | small |
-| `codex` | Official Codex CLI 0.163.0 | Explicit CLI task hand-off ([setup](cli-launcher/CODEX.md)) | image size unmeasured |
-| `claude-code` | Official Claude Code 2.1.308 | Explicit CLI task hand-off using the user's own official login ([setup and API](cli-launcher/README.md)) | image size unmeasured |
-| `browser` | browser-use + Chromium | Browser agent page and a `browse_web` tool (or use the lighter [Rooks Browser](rooks-browser/README.md), no image) | ≈ 2.5 GB image |
-| `local-models` | Ollama in Docker | Local models (on a Mac, native Ollama is faster and is detected by setup) | ≈ 8.5 GB image + models |
-| `openwebui` | Open WebUI | A second chat app with RAG knowledge bases and multi user accounts | ≈ 6.5 GB image |
-| `paperclip` | Paperclip | Upstream company of agents running coding CLIs (Claude Code, Codex, OpenCode) | ≈ 13 GB image |
-| `hermes` | Hermes Agent | Upstream personal agent with its own gateway (WhatsApp, Signal, Slack) | ≈ 4.3 GB image |
-
-You don't need any of them for the assistant, memory, skills, schedules, Telegram or the company of agents. Those are built into Workbench.
+| Search | Look things up in private, without a search-company key | `search` | small |
+| Browser | Open pages and click, in a browser that stays on this computer. [Rooks Browser](rooks-browser/README.md) does this with no extra image | `browser` | about 2.5 GB |
+| Models here | Run models on this computer. On a Mac, Rooks uses a models app you already installed when it finds one | `local-models` | about 8.5 GB, plus the models |
+| A coding tool you already use | Hand one coding job to a tool you installed and signed in to yourself | [`codex`](cli-launcher/CODEX.md), [`claude-code`](cli-launcher/README.md) | not measured |
+| A second window | Another place to talk, using the same notes, only if you want one | `openwebui` | about 6.5 GB |
+| More agents | Extra agents with their own jobs and a monthly limit, beside the team already in the app | `paperclip` | about 13 GB |
+| Other chat apps | Reach this assistant from WhatsApp, Signal, or Slack | `hermes` | about 4.3 GB |
 
 ## Install on your computer (one command, no Docker)
 
@@ -42,7 +41,7 @@ folder and the last lines of `launcher.log` and `workbench.log`.
 
 ## Download for Mac / Windows
 
-**Desktop app (preview).** Double-click to install. No Docker, no terminal: it runs Workbench on your own computer,
+**Desktop app (preview).** Double-click to install. No Docker, no terminal: it runs Rooks on your own computer,
 keeps your data in your user folder and your API keys in the system keychain. On first launch, paste an API key
 (OpenAI, Anthropic, OpenRouter, Gemini and more) or use free local models with [Ollama](https://ollama.com/download),
 and you land in chat.
@@ -59,10 +58,9 @@ the installers with the `desktop` workflow in GitHub Actions.
 
 Preview builds are **not code-signed yet**. On macOS, right-click the app → **Open** the first time; on Windows, click
 **More info → Run anyway**. Signing, notarisation and auto-updates switch on once the keys exist
-([docs/desktop-release.md](docs/desktop-release.md)). The add-ons below (browser agent, Paperclip, Hermes, Open WebUI)
-are still Docker-only; the server install below is unchanged.
+([docs/desktop-release.md](docs/desktop-release.md)). The heavier extras in the table above are for a server install. The desktop app does not need them.
 
-## Why AI Workspace
+## Why Rooks
 
 1. **Light.** Core image is 248 MB (CI, unpacked layers), not multi-GB, and idles at ~100 MB of RAM (measured outside Docker).
 2. **Cheap to run.** Comfortable on a €4 VPS; no GPU required for the core.
@@ -142,10 +140,6 @@ Native Ollama uses the Mac GPU; the `local-models` add-on would run on CPU insid
 
 ## Workspace features
 
-**Second chat app (`openwebui` add-on).** Streaming chat with any connected model; file uploads and knowledge bases with retrieval; memory (Settings → Personalization); web search through SearXNG when the `search` add-on is on (toggle per chat); multi model chat (pick several models in the model selector to get answers side by side); custom models with system prompts and tools.
-
-**Workbench tools in Open WebUI.** The `Workbench` tool server is preconfigured. Enable it per chat from the tools button in the message box, or attach it to a model in Admin → Models. Tools: `search_notes`, `read_note`, `create_note`, `append_to_note`, `list_tasks`, `create_task`, `update_task`, `get_agenda`, `list_events`, `create_event`, `list_calendars`, `search_email`, `read_email`, `save_email_draft`, `web_search`. There is deliberately **no send email tool**: agents can only save drafts, which you review and send under Mail → Drafts. Tool calling quality depends on the model; small local models are hit and miss, larger ones (Qwen3 8B+, or cloud models) are reliable.
-
 **Research.** Ask a question; the model plans several searches, Workbench queries your search provider (SearXNG add-on, or a Brave or Tavily key in Assistant settings), reads the pages (internal and private network addresses are refused), and the model writes a Markdown report with numbered inline citations and a source list. Save any report to Documents.
 
 **Compare.** Up to four columns, each with its own model and conversation. One prompt goes to all of them; each column shows total time, time to first token, tokens and tokens per second.
@@ -166,7 +160,7 @@ Native Ollama uses the Mac GPU; the `local-models` add-on would run on CPU insid
 
 ## Terminal coding agent (Rooks Code)
 
-`rooks` is a coding agent for your terminal, like Claude Code or Codex CLI, that works with any model: OpenAI, Anthropic,
+`rooks` is Rooks' coding agent for your terminal. It works with any model: OpenAI, Anthropic,
 OpenRouter, any OpenAI-compatible server, or local Ollama and LM Studio with no internet at all. It reads and searches
 code, edits with diffs, runs your tests and loops until done. Every edit and command is approved first (or trusted per
 folder), `--dry-run` changes nothing, `/undo` reverts the last prompt's edits, a per-session token and dollar cap is
@@ -185,20 +179,26 @@ keychain (or `~/.config/ai-workspace/rooks.env`, mode 600), never printed, and t
 
 Install on macOS, Windows and Linux, configuration, MCP servers and limits: [rooks-code/README.md](rooks-code/README.md).
 
-### Your Claude plan, through Claude Code
+### A plan you already pay for
 
-Have a Claude Pro or Max plan? Install Anthropic's Claude Code (`npm i -g @anthropic-ai/claude-code`), run `claude` once to
-sign in, and hand it coding jobs from the app's **Coding agent** page or with `rooks -P claude-code "..."`. You approve
-each edit and command, and see the diff. The app never sees your sign-in. Codex with a ChatGPT plan works the same way.
-Details and Anthropic's terms: [docs/CLAUDE-CODE.md](docs/CLAUDE-CODE.md).
+If you already pay for Claude or ChatGPT, you can hand a coding job to the coding tool you signed in to yourself.
+Install it, sign in once, then start the job from the app's **Coding agent** page or with `rooks -P claude-code "..."`
+(or `rooks -P codex "..."`). You approve each edit and command, and see the diff. Rooks never sees that sign-in.
+Details: [docs/CLAUDE-CODE.md](docs/CLAUDE-CODE.md).
 
 ## Add-ons in detail
 
-The sections below only matter if you turned the add-on on.
+The sections below only matter if you turned an extra on. Rooks already chats, remembers, keeps skills, runs schedules, and has its own team of agents.
 
-### Company of coding agents: Paperclip (`paperclip` add-on)
+### A second window (`openwebui`)
 
-You define the company and its goal, then hire agents into roles. Paperclip gives you the org chart, a task board, a dashboard of runs, spend and approvals, and a monthly budget per agent and per company. Per [Paperclip's docs](https://github.com/paperclipai/paperclip/blob/master/docs/guides/board-operator/costs-and-budgets.md), an agent gets a warning at 80% of its budget and is **auto paused at 100%** until you raise the budget or the month rolls over. The UI works on phones (bottom tab bar).
+A separate chat window, only if you want one. Streaming chat with any connected model; file uploads and knowledge bases with retrieval; memory (Settings → Personalization); web search when the `search` extra is on (toggle per chat); several models answering side by side; custom models with system prompts and tools.
+
+Rooks' tools can be attached there. The tool server is preconfigured. Enable it per chat from the tools button in the message box, or attach it to a model in Admin → Models. Tools: `search_notes`, `read_note`, `create_note`, `append_to_note`, `list_tasks`, `create_task`, `update_task`, `get_agenda`, `list_events`, `create_event`, `list_calendars`, `search_email`, `read_email`, `save_email_draft`, `web_search`. There is deliberately **no send email tool**: agents can only save drafts, which you review and send under Mail → Drafts. Tool calling quality depends on the model; small local models are hit and miss, larger ones (Qwen3 8B+, or cloud models) are reliable.
+
+### Extra agents (`paperclip`)
+
+Rooks already has a team, a board, and a monthly limit. This extra is a separate company view for people who want agents that call coding tools you already installed. You define the company and its goal, then hire agents into roles. It gives you the org chart, a task board, a dashboard of runs, spend and approvals, and a monthly budget per agent and per company. An agent gets a warning at 80% of its budget and is **auto paused at 100%** until you raise the budget or the month rolls over. The screen works on phones (bottom tab bar).
 
 Hiring an agent (Agents → New agent) means choosing an adapter, which is the program that does the work:
 
@@ -220,9 +220,9 @@ Things to know:
 * **Telemetry.** The Paperclip add-on explicitly sets `PAPERCLIP_TELEMETRY_DISABLED=1` and `DO_NOT_TRACK=1`, which override upstream file preferences, plus `OTEL_SDK_DISABLED=true`. Recreate it after upgrading (`docker compose up -d --force-recreate paperclip`). See [Phase 0 checks](docs/PHASE0-GATE.md) for scope and verification.
 * **Data** lives in the `ai-workspace_paperclip` volume (embedded Postgres with hourly backups, agent workspaces, uploads, secrets key).
 
-### Hermes Agent (`hermes` add-on)
+### Messages from other apps (`hermes`)
 
-Hermes is the agent that gets better the longer you use it. What it adds over the other agents here:
+Rooks already remembers you, saves skills, and runs schedules. This extra is a separate gateway, so you can reach an assistant from WhatsApp, Signal, Slack, and the other apps it supports. What it keeps on its own:
 
 * **Learning loop.** After a task it can write a reusable skill (a saved procedure) and improve it on later use. Skills live in its volume and show up in the dashboard.
 * **Memory that persists.** It keeps notes about you and your work across sessions, and full text search over its past conversations.
