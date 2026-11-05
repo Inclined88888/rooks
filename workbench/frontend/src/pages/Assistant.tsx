@@ -13,7 +13,7 @@ import { askNotifyPermission, inBackground, notify } from "../desktop"; // feat/
 import { Att, AttachButton, filesFrom, MessageAttachments, PendingChips, useAttachments } from "../Attachments"; // feat/attachments
 import { DiffView, extractDiffFromArgs } from "../components/DiffView";
 import { plainStep } from "../plainStep";
-import { AssistantFace, Mood } from "../AssistantFace";
+import { AssistantFace, Mood, noticedYou } from "../AssistantFace";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
 type Choices = { question: string; options: string[] };
@@ -170,6 +170,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   const [dropping, setDropping] = useState(false);
   const [offer, setOffer] = useState<{ key: string; name: string; request: string; line: string } | null>(null);
   const [who, setWho] = useState("Atlas");
+  const [pleasedAt, setPleasedAt] = useState(0);
   const [mainId, setMainId] = useState<number | null>(null);
   const [watch, setWatch] = useState<Watch | null>(null);
   const [routines, setRoutines] = useState<Routine[] | null>(null);
@@ -233,6 +234,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   /** One streamed turn. echo: show the user's text as a fresh bubble (not on resend, where it's already on screen
    *  and stored). resend: the server skips saving the user message again. */
   const run = async (msg: string, opts: { echo?: boolean; resend?: boolean; files?: Att[] } = {}) => {
+    if (opts.echo && noticedYou(msg, who)) setPleasedAt(Date.now());
     busyRef.current = true;
     setBusy(true);
     setBusySince(Date.now());
@@ -452,7 +454,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
       <div className="split-main">
         <div className="toolbar">
           <button className="btn ghost sm mobile-only" onClick={() => navigate("/assistant", { state: { list: true } })} aria-label="Back to chats"><ArrowLeft size={14} /></button>
-          <AssistantFace mood={mood} name={who} size={32} />
+          <AssistantFace mood={mood} name={who} size={36} pleasedAt={pleasedAt} />
           <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat")}</div>
           <div className="spacer" />
           <button type="button" className={`btn ghost sm${showRoutines ? " primary" : ""}`} aria-expanded={showRoutines} onClick={() => { setShowRoutines((v) => !v); setRoutines(null); }}>Routines</button>
