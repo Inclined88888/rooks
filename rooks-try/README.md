@@ -1,7 +1,11 @@
 # Rooks Try Room
 
 A disposable computer that lives on **this** machine. The agent can install packages,
-open apps, click and type inside it. Your real desktop, mouse and clipboard stay alone.
+open apps, click and type inside a Linux guest or a private desktop. Your real mouse
+and clipboard stay alone.
+
+The private-folder driver runs commands as you, in its own folder. Those commands can
+still open files you can open. It is not a locked-off computer.
 
 Same idea as a rented cloud box, but local-first: Mac, Windows or Linux host, one API.
 
@@ -41,8 +45,10 @@ claude mcp add rooks-try -- rooks-try mcp
 
 - Host pointer and clipboard are never driven by Try Room actions.
 - The room has its own home folder under `~/.ai-workspace/try-room/`.
-- `handoff` is the only way files leave the room, and it waits for a yes.
-- Default networking follows the driver (qemu can start offline with `--offline`).
+- A saved point copies that folder. When a QEMU disk is present, the same point is also saved on the disk.
+- `handoff` is the only supported way to copy a file out, and it waits for a yes.
+- `rooks-try serve` listens on this computer only, and it refuses to start until `ROOKS_TRY_API_KEY` is set.
+- Default networking follows the driver (qemu can start offline with `--offline`). The private folder does not cut the network off.
 
 ## Install
 

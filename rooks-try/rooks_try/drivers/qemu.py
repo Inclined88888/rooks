@@ -8,14 +8,12 @@ from __future__ import annotations
 
 import os
 import shutil
-import signal
 import subprocess
 import time
 from pathlib import Path
 
 from .. import store
-from .base import Driver, DriverInfo
-from .shell import ShellDriver
+from .base import Driver, DriverInfo, stop_pid
 
 
 def _qemu_bin() -> str | None:
@@ -36,7 +34,6 @@ class QemuDriver(Driver):
 
     def __init__(self, offline: bool = False) -> None:
         super().__init__(offline=offline)
-        self._shell = ShellDriver(offline=offline)
         self._vnc = "127.0.0.1:17"  # display :17 → port 5917
 
     def available(self) -> bool:
@@ -61,7 +58,7 @@ class QemuDriver(Driver):
             "qemu",
             "Linux guest (QEMU)",
             False,
-            "QEMU is installed. Set ROOKS_TRY_IMAGE to a Linux disk/ISO, or run: rooks-try prepare",
+            "QEMU is installed. Set ROOKS_TRY_IMAGE to a Linux qcow2 path. rooks-try prepare explains the steps.",
         )
 
     def up(self) -> dict:
@@ -114,13 +111,7 @@ class QemuDriver(Driver):
         state = store.load_state()
         pid = state.get("pid")
         if pid and state.get("driver") == self.name:
-            try:
-                os.killpg(int(pid), signal.SIGTERM)
-            except (ProcessLookupError, PermissionError, OSError):
-                try:
-                    os.kill(int(pid), signal.SIGTERM)
-                except (ProcessLookupError, PermissionError, OSError):
-                    pass
+            stop_pid(pid)
         state["running"] = False
         store.save_state(state)
         return self.status()
@@ -131,7 +122,7 @@ class QemuDriver(Driver):
         return {
             "driver": self.name,
             "running": running,
-            "screen": True,
+            "screen": bool(running and shutil.which("vncdotool")),
             "vnc": state.get("vnc") or self._vnc,
             "home": str(store.guest_home()),
             "disk": state.get("disk") or str(self._disk()),
@@ -141,25 +132,32 @@ class QemuDriver(Driver):
         }
 
     def screenshot(self, path: Path) -> Path:
-        # Without a VNC client dependency, return a status card; nested/shell cover CI.
-        # Full framebuffer capture plugs in when `vncdotool` or the app's viewer is present.
-        if shutil.which("vncdotool"):
-            path.parent.mkdir(parents=True, exist_ok=True)
-            host, disp = (store.load_state().get("vnc") or self._vnc).split(":")
-            port = 5900 + int(disp)
-            subprocess.run(["vncdotool", "-s", f"{host}::{port}", "capture", str(path)], check=False)
-            if path.exists():
-                return path
-        return self._shell.screenshot(path)
+        if not shutil.which("vncdotool"):
+            raise RuntimeError("The guest screen cannot be captured on this computer yet.")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        host, disp = (store.load_state().get("vnc") or self._vnc).split(":")
+        port = 5900 + int(disp)
+        subprocess.run(["vncdotool", "-s", f"{host}::{port}", "capture", str(path)], check=False)
+        if path.exists() and path.stat().st_size > 0:
+            return path
+        raise RuntimeError("The guest screen could not be captured.")
 
     def click(self, x: int, y: int, button: str = "left", count: int = 1) -> dict:
-        return self._vnc_cmd(["move", str(x), str(y), "click", "1" if button == "left" else "3"])
+        which = {"left": "1", "middle": "2", "right": "3"}.get(button, "1")
+        args = ["move", str(x), str(y)]
+        for _ in range(max(1, min(int(count), 3))):
+            args += ["click", which]
+        return self._vnc_cmd(args)
 
     def drag(self, x1: int, y1: int, x2: int, y2: int) -> dict:
         return self._vnc_cmd(["move", str(x1), str(y1), "mousedown", "1", "move", str(x2), str(y2), "mouseup", "1"])
 
     def scroll(self, x: int, y: int, dy: int = -3) -> dict:
-        return self._vnc_cmd(["move", str(x), str(y), "pause", "0.1"])
+        which = "4" if int(dy) > 0 else "5"
+        args = ["move", str(x), str(y)]
+        for _ in range(max(1, min(abs(int(dy)), 20))):
+            args += ["click", which]
+        return self._vnc_cmd(args)
 
     def type_text(self, text: str) -> dict:
         return self._vnc_cmd(["type", text])
@@ -168,9 +166,14 @@ class QemuDriver(Driver):
         return self._vnc_cmd(["key", keys])
 
     def run(self, command: str, timeout: float = 120) -> dict:
-        # Guest SSH is optional; until cloud-init wires it, run against the shared host-side home
-        # that will be mounted into future images. Keeps the tool usable during setup.
-        return self._shell.run(command, timeout=timeout)
+        # The guest has no shell connection yet. Do not run the command on the host.
+        return {
+            "ok": False,
+            "code": 127,
+            "stdout": "",
+            "stderr": "",
+            "error": "This Linux guest has no command connection yet.",
+        }
 
     def _vnc_cmd(self, args: list[str]) -> dict:
         if not shutil.which("vncdotool"):
@@ -193,7 +196,7 @@ class QemuDriver(Driver):
         image = os.environ.get("ROOKS_TRY_IMAGE", "").strip()
         if not image:
             raise RuntimeError(
-                "No guest disk yet. Set ROOKS_TRY_IMAGE to a qcow2/ISO path, or run: rooks-try prepare"
+                "No guest disk yet. Set ROOKS_TRY_IMAGE to a qcow2 path. rooks-try prepare explains the steps."
             )
         src = Path(image).expanduser()
         if not src.exists():

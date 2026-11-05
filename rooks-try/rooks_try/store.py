@@ -78,10 +78,11 @@ def restore(name: str | None = None) -> dict:
     state = load_state()
     if not name:
         name = (state.get("last_checkpoint") or {}).get("name")
-    if not name:
+    if not name or name in {".", ".."} or "/" in name or "\\" in name:
         raise FileNotFoundError("No checkpoint yet. Run rooks-try checkpoint first.")
-    src = checkpoints_dir() / name
-    if not src.is_dir():
+    root_dir = checkpoints_dir().resolve()
+    src = (root_dir / name).resolve()
+    if src.parent != root_dir or not src.is_dir():
         raise FileNotFoundError(f"Checkpoint {name} is missing.")
     home = guest_home()
     backup = root() / "home.before-reset"
@@ -89,7 +90,14 @@ def restore(name: str | None = None) -> dict:
         shutil.rmtree(backup)
     if home.exists():
         home.rename(backup)
-    shutil.copytree(src, home, symlinks=True)
+    try:
+        shutil.copytree(src, home, symlinks=True)
+    except Exception:
+        if backup.exists():
+            if home.exists():
+                shutil.rmtree(home)
+            backup.rename(home)
+        raise
     if backup.exists():
         shutil.rmtree(backup)
     meta = {"name": name, "restored": True}

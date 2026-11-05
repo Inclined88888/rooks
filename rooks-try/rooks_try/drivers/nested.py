@@ -5,13 +5,12 @@ from __future__ import annotations
 import atexit
 import os
 import shutil
-import signal
 import subprocess
 import time
 from pathlib import Path
 
 from .. import store
-from .base import Driver, DriverInfo
+from .base import Driver, DriverInfo, stop_pid
 from .shell import ShellDriver
 
 
@@ -23,6 +22,7 @@ class NestedDriver(Driver):
         self._display = os.environ.get("ROOKS_TRY_DISPLAY", ":17")
         self._procs: list[subprocess.Popen] = []
         self._shell = ShellDriver(offline=offline)
+        self._stop_registered = False
 
     def available(self) -> bool:
         return os.name == "posix" and shutil.which("Xvfb") is not None
@@ -67,20 +67,16 @@ class NestedDriver(Driver):
             "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         })
         store.save_state(state)
-        atexit.register(self.down)
+        if not self._stop_registered:
+            atexit.register(self.down)
+            self._stop_registered = True
         return self.status()
 
     def down(self) -> dict:
         state = store.load_state()
         pid = state.get("pid")
-        if pid:
-            try:
-                os.killpg(int(pid), signal.SIGTERM)
-            except (ProcessLookupError, PermissionError, OSError):
-                try:
-                    os.kill(int(pid), signal.SIGTERM)
-                except (ProcessLookupError, PermissionError, OSError):
-                    pass
+        if pid and state.get("driver") == self.name:
+            stop_pid(pid)
         for proc in self._procs:
             try:
                 proc.terminate()
@@ -111,11 +107,18 @@ class NestedDriver(Driver):
         from PIL import Image
 
         display = store.load_state().get("display") or self._display
-        os.environ["DISPLAY"] = display
         path.parent.mkdir(parents=True, exist_ok=True)
-        with mss.mss() as sct:
-            shot = sct.grab(sct.monitors[1])
-            Image.frombytes("RGB", shot.size, shot.bgra, "raw", "BGRX").save(path)
+        previous = os.environ.get("DISPLAY")
+        os.environ["DISPLAY"] = display
+        try:
+            with mss.MSS() as sct:
+                shot = sct.grab(sct.monitors[1])
+                Image.frombytes("RGB", shot.size, shot.bgra, "raw", "BGRX").save(path)
+        finally:
+            if previous is None:
+                os.environ.pop("DISPLAY", None)
+            else:
+                os.environ["DISPLAY"] = previous
         return path
 
     def click(self, x: int, y: int, button: str = "left", count: int = 1) -> dict:
@@ -163,7 +166,7 @@ class NestedDriver(Driver):
         self._ensure_up()
         if shutil.which("xdotool"):
             env = {"DISPLAY": store.load_state().get("display") or self._display}
-            subprocess.run(["xdotool", "key", keys.replace("+", "+")], env={**os.environ, **env}, check=False)
+            subprocess.run(["xdotool", "key", keys], env={**os.environ, **env}, check=False)
             return {"ok": True, "keys": keys}
         self._xtest_char(keys)
         return {"ok": True, "keys": keys}
@@ -221,8 +224,15 @@ class NestedDriver(Driver):
     def _display_conn(self):
         from Xlib import display
 
+        previous = os.environ.get("DISPLAY")
         os.environ["DISPLAY"] = store.load_state().get("display") or self._display
-        return display.Display()
+        try:
+            return display.Display()
+        finally:
+            if previous is None:
+                os.environ.pop("DISPLAY", None)
+            else:
+                os.environ["DISPLAY"] = previous
 
     def _xtest_move(self, x: int, y: int) -> None:
         from Xlib.ext import xtest
@@ -231,6 +241,7 @@ class NestedDriver(Driver):
         d = self._display_conn()
         xtest.fake_input(d, X.MotionNotify, x=int(x), y=int(y))
         d.sync()
+        d.close()
 
     def _xtest_button(self, button: int, pressed: bool) -> None:
         from Xlib.ext import xtest
@@ -239,13 +250,19 @@ class NestedDriver(Driver):
         d = self._display_conn()
         xtest.fake_input(d, X.ButtonPress if pressed else X.ButtonRelease, button)
         d.sync()
+        d.close()
 
     def _xtest_char(self, ch: str) -> None:
-        # Minimal ASCII path; nested rooms prefer xdotool.
+        from Xlib import X, XK
         from Xlib.ext import xtest
-        from Xlib import X
 
         d = self._display_conn()
-        xtest.fake_input(d, X.KeyPress, 36 if ch in ("Return", "\n") else 24)
-        xtest.fake_input(d, X.KeyRelease, 36 if ch in ("Return", "\n") else 24)
+        keysym = XK.string_to_keysym("Return" if ch in ("Return", "\n") else ch)
+        keycode = d.keysym_to_keycode(keysym) if keysym else 0
+        if not keycode:
+            d.close()
+            return
+        xtest.fake_input(d, X.KeyPress, keycode)
+        xtest.fake_input(d, X.KeyRelease, keycode)
         d.sync()
+        d.close()

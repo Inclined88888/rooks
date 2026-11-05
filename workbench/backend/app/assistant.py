@@ -283,7 +283,7 @@ async def _use_try_room(
         return try_proxy._local_call("run", {"command": command})
     if action == "handoff":
         return try_proxy._local_call("handoff", {"src": src, "dest": dest, "approve": bool(approve)})
-    return {"ok": False, "error": f"Unknown Try Room action {action}."}
+    return {"ok": False, "error": f"Unknown practice computer action {action}."}
 
 
 def _remember(content: str, kind: str = "fact", ctx: Ctx | None = None) -> dict:
@@ -569,13 +569,14 @@ TOOLS: list[Tool] = [
          {"goal": S("the whole task, self contained"), "max_steps": I(), "dry_run": B("plan and describe only, change nothing")},
          _use_computer, ("goal",), effect="external", untrusted=True,
          confirm=lambda a: "This uses the computer in front of you."),
-    Tool("use_try_room", "Use the Try Room: a disposable computer on this machine for experiments. The real desktop stays "
-         "alone. Actions: status, up, down, run, checkpoint, reset, handoff. Prefer this when the user wants to try "
-         "installs, scripts or apps safely. handoff copies a file out and needs approve=true.",
+    Tool("use_try_room", "Use the practice computer on this machine. Actions: status, up, down, run, checkpoint, reset, handoff. "
+         "A private folder runs commands as the person, so do not treat it as a locked-off computer. "
+         "A Linux guest or a private desktop keeps the real desktop alone. "
+         "handoff copies a file out and needs approve=true.",
          {"action": S("status|up|down|run|checkpoint|reset|handoff"), "command": S("for run"), "label": S("for checkpoint"),
           "src": S("Try Room path for handoff"), "dest": S("host path for handoff"), "approve": B("handoff only")},
          _use_try_room, ("action",), effect="external", untrusted=True,
-         confirm=lambda a: "This uses the practice computer on this machine, not your real desktop."),
+         confirm=lambda a: "This uses the practice computer. In a private folder, commands run as you."),
     # Memory
     Tool("remember", "Save a durable fact about the user. kind: profile (who they are), preference, or fact.",
          {"content": S(), "kind": S()}, lambda content, kind="fact", ctx=None: _remember(content, kind, ctx), ("content",),
@@ -914,8 +915,8 @@ def system_prompt(ctx: Ctx, user_text: str) -> str:
         "If the user asks to open a browser, go to a website, or check an account, call browse_web. That asks them before the "
         "browser opens. Never say a work site is missing, and never tell them to add a site, instead of calling browse_web. "
         "If the user asks to use this computer, call use_computer. That asks them first. Do not say computer use is off.",
-        "If they want to try something safely (installs, scripts, a throwaway desktop), call use_try_room. "
-        "That is a disposable computer on this machine; the real desktop stays alone.",
+        "If they want to try something (installs, scripts, a throwaway desktop), call use_try_room. "
+        "A private folder runs commands as them. A Linux guest or private desktop keeps the real desktop alone.",
     ]
     if ctx.channel == "web":
         parts.append(

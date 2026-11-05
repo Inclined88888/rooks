@@ -65,12 +65,59 @@ def test_handoff_refuses_paths_outside_the_room(room_home, tmp_path):
     assert result["ok"] is False
 
 
-def test_pick_prefers_nested_when_xvfb_exists(room_home):
+def test_pick_prefers_nested_when_xvfb_exists(room_home, monkeypatch):
+    monkeypatch.delenv("ROOKS_TRY_IMAGE", raising=False)
     driver = pick(prefer="auto")
-    if shutil.which("Xvfb"):
-        assert driver.name in {"nested", "qemu", "shell"}
-    else:
+    disk = store.root() / "guest.qcow2"
+    if shutil.which("Xvfb") and not disk.exists():
+        assert driver.name == "nested"
+    elif not disk.exists():
         assert driver.name == "shell"
+
+
+def test_explicit_missing_driver_is_an_error(room_home, monkeypatch):
+    monkeypatch.delenv("ROOKS_TRY_IMAGE", raising=False)
+    monkeypatch.setattr("rooks_try.drivers.qemu._qemu_bin", lambda: None)
+    with pytest.raises(RuntimeError):
+        pick(prefer="qemu")
+
+
+def test_restore_rejects_paths_outside_checkpoints(room_home):
+    room = TryRoom(prefer="shell")
+    room.up()
+    room.run("echo safe > keep.txt")
+    outside = room_home / "outside"
+    outside.mkdir()
+    (outside / "keep.txt").write_text("stolen")
+    with pytest.raises(FileNotFoundError):
+        room.reset("../outside")
+    assert (store.guest_home() / "keep.txt").read_text().strip() == "safe"
+
+
+def test_qemu_run_does_not_write_the_practice_folder(room_home):
+    from rooks_try.drivers.qemu import QemuDriver
+
+    driver = QemuDriver()
+    result = driver.run("echo pwned > should-not-exist.txt")
+    assert result["ok"] is False
+    assert not (store.guest_home() / "should-not-exist.txt").exists()
+
+
+def test_server_requires_a_key(monkeypatch):
+    import rooks_try.server as server
+
+    monkeypatch.setattr(server, "API_KEY", "")
+    assert server.authorized("") is False
+    monkeypatch.setattr(server, "API_KEY", "secret")
+    assert server.authorized("Bearer secret") is True
+    assert server.authorized("Bearer no") is False
+
+
+def test_nested_typing_uses_the_character():
+    text = Path(__file__).resolve().parents[1].joinpath("rooks_try/drivers/nested.py").read_text()
+    body = text[text.index("def _xtest_char"):]
+    assert "keysym_to_keycode" in body
+    assert "else 24" not in body
 
 
 @pytest.mark.skipif(not shutil.which("Xvfb"), reason="needs Xvfb")

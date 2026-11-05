@@ -75,7 +75,11 @@ export default function TryRoomPage() {
       <header className="cursor-customize-head">
         <div>
           <h1>Practice computer</h1>
-          <p className="muted">A spare computer on this machine. Your real desktop stays alone.</p>
+          <p className="muted">
+            {st?.driver === "shell"
+              ? "A private folder on this computer. Commands run as you."
+              : "A spare computer on this machine. Your real desktop stays alone."}
+          </p>
         </div>
       </header>
 
@@ -96,7 +100,7 @@ export default function TryRoomPage() {
           </div>
           {st.running && folderOnly && (
             <form className="col" style={{ gap: 8 }} onSubmit={runCmd}>
-              <label className="small muted" htmlFor="practice-cmd">Try a command</label>
+              <label className="small muted" htmlFor="practice-cmd">Try a command. Commands run as you, in this folder.</label>
               <div className="row" style={{ gap: 8 }}>
                 <input id="practice-cmd" className="input grow" value={cmd} onChange={(e) => setCmd(e.target.value)}
                   placeholder="For example, ls" aria-label="Command" maxLength={500}

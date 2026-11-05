@@ -91,7 +91,7 @@ def _local_call(action: str, body: dict | None = None) -> dict:
         return room.key(body.get("keys") or "")
     if action == "handoff":
         return room.handoff(body.get("src") or "", body.get("dest") or "", bool(body.get("approve")))
-    raise HTTPException(404, "Unknown Try Room action")
+    raise HTTPException(404, "Unknown practice computer action")
 
 
 @router.get("/status")

@@ -48,7 +48,7 @@ class ShellDriver(Driver):
             "screen": False,
             "home": str(store.guest_home()),
             "offline": self.offline,
-            "label": "Private shell on this computer",
+            "label": "A private folder. Commands run as you.",
             "last_checkpoint": state.get("last_checkpoint"),
         }
 
@@ -115,6 +115,7 @@ class ShellDriver(Driver):
             "code": proc.returncode,
             "stdout": (proc.stdout or "")[-8000:],
             "stderr": (proc.stderr or "")[-4000:],
+            "note": "This ran as you, in the private folder.",
         }
 
     def supports_screen(self) -> bool:
