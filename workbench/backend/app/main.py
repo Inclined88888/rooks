@@ -18,7 +18,7 @@ from . import egress  # noqa: E402
 
 egress.install()  # before anything connects: every outbound request is in the audit log (R8, item 75)
 
-from . import actions, api, appearance, assistant_api, bridge, browser_proxy, cli_agents_api, company, plan_signin, config, connect, db, desk_proxy, health, llm, mobile, scheduler, sites, skills_hub, telegram, work_api  # noqa: E402
+from . import actions, api, appearance, assistant_api, bridge, browser_proxy, cli_agents_api, company, plan_signin, config, connect, db, desk_proxy, health, llm, mobile, scheduler, sites, skills_hub, telegram, try_proxy, work_api  # noqa: E402
 from . import terminal_pty  # noqa: E402 - #7 app terminal
 from . import compression  # AIW-Phase1: rolling compression of long chats
 from . import finetune, media  # noqa: E402 - phase 4
@@ -153,6 +153,7 @@ app.include_router(appearance.owner)  # the chosen look, shared with the phone a
 app.include_router(appearance.device)
 app.include_router(browser_proxy.router)
 app.include_router(desk_proxy.router)
+app.include_router(try_proxy.router)
 app.include_router(work_api.router)  # Files (any file, analysis, sandboxed Python) and Sites (any website the user works in)
 app.include_router(skills_hub.router)  # Skills from GitHub behind the security gate
 app.include_router(mcp_client_api.router)  # feat/mcp-client: connect Workbench to the user's own MCP servers

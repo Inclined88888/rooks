@@ -179,7 +179,7 @@ export default function MailPage() {
               </div>
             </div>
           ))}
-          {view === "drafts" && drafts.length === 0 && <Empty icon={<PenSquare size={22} />} title="No drafts" hint="Agents in Chat save drafts here. They never send on their own." />}
+          {view === "drafts" && drafts.length === 0 && <Empty icon={<PenSquare size={22} />} title="No drafts" hint="Chat saves drafts here. Nothing is sent until you say so." />}
           {view === "drafts" && drafts.map((d) => (
             <div key={d.id} className="list-item" style={{ alignItems: "flex-start" }} onClick={() => { setMsg(null); setCompose({ to: d.to_addr, subject: d.subject, body: d.body, in_reply_to: d.in_reply_to, draft_id: d.id }); }}>
               <div className="grow">

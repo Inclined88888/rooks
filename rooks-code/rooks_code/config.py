@@ -313,8 +313,11 @@ def resolve(flags: dict, root: Path, file: dict | None = None) -> Settings:
     if isinstance(fallback_list, list):
         s.fallback_models = [(item.get("provider", ""), item.get("model", "")) for item in fallback_list if isinstance(item, dict)]
     desk = _desk_mcp(cfg)
+    try_room = _try_mcp(cfg)
     if desk and "desk" not in s.mcp_servers:
         s.mcp_servers["desk"] = desk
+    if try_room and "try" not in s.mcp_servers:
+        s.mcp_servers["try"] = try_room
     env = {"provider": os.environ.get("ROOKS_PROVIDER"), "model": os.environ.get("ROOKS_MODEL"),
            "base_url": os.environ.get("ROOKS_BASE_URL")}
     name = flags.get("provider") or env["provider"] or cfg.get("provider")
@@ -397,6 +400,14 @@ def _desk_mcp(cfg: dict) -> dict | None:
     return {"command": exe, "args": ["mcp"], "trusted": False} if exe else None
 
 
+def _try_mcp(cfg: dict) -> dict | None:
+    """Try Room: a disposable computer on this machine. Off with `[mcp] try = false` or ROOKS_TRY_MCP=0."""
+    if cfg.get("mcp", {}).get("try") is False or os.environ.get("ROOKS_TRY_MCP", "1").lower() in ("0", "false", "no", "off"):
+        return None
+    exe = shutil.which("rooks-try")
+    return {"command": exe, "args": ["mcp"], "trusted": False} if exe else None
+
+
 def _project_mcp(root: Path) -> dict:
     """A project's .mcp.json ({"mcpServers": {...}}, the format Claude Code and Cursor use) adds servers for that folder."""
     import json
@@ -432,6 +443,7 @@ trusted_folders = []                # edits and commands inside these folders ru
 
 # [mcp]
 # desk = false                      # do not add Rooks Desk (computer use) as the MCP server "desk" when it is installed
+# try = false                       # do not add Try Room (disposable computer) as the MCP server "try" when it is installed
 
 # [mcp.servers.filesystem]          # stdio MCP servers; tools appear as mcp__<server>__<tool>
 # command = "npx"

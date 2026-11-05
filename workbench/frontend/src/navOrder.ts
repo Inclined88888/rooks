@@ -1,7 +1,7 @@
-/** The sidebar the first time someone opens the app. They can pin more pages and drag these into any order. */
-export const DEFAULT_SIDEBAR = ["/", "/assistant", "/mail", "/calendar", "/tasks", "/notes"];
+/** The sidebar the first time someone opens the app. Chat only — everything else is under Workspace. */
+export const DEFAULT_SIDEBAR = ["/assistant"];
 
-const KEY = "wb-sidebar";
+const KEY = "wb-sidebar-v4";
 
 export function sidebarKey() {
   return KEY;

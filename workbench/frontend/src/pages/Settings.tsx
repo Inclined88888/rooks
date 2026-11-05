@@ -1,12 +1,25 @@
 import { Check, Cpu, Search, Download, FolderOpen, KeyRound, Loader2, Monitor, Plug, Plus, RefreshCw, Shield, Trash2 } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { api, stream } from "../api";
 import { AppInfo, Sidecar, appInfo, inDesktopShell, listSidecars, openDataDir, openLogs, requestApproval } from "../desktop";
 import { ModelSelect, useModels, useToast } from "../util";
 import ConnectMailCalendar from "./ConnectMailCalendar";
 import { AddKey, KeyInfo, SignInWithPlan, WebSearchSetup } from "./ModelSignIn";
 import { PhoneCard } from "./Phone";
+
+/** Cursor Settings left nav — same order and feel, plain words (no "MCP"). */
+const SECTIONS: { id: string; label: string }[] = [
+  { id: "general", label: "General" },
+  { id: "agents", label: "Agents" },
+  { id: "models", label: "Models" },
+  { id: "tools", label: "Tools" },
+  { id: "skills", label: "Skills & rules" },
+  { id: "apps", label: "Apps" },
+  { id: "appearance", label: "Appearance" },
+  { id: "privacy", label: "Privacy" },
+  { id: "advanced", label: "Advanced" },
+];
 
 type DesktopInfo = { desktop: boolean; data_dir: string; secret_backend: string };
 
@@ -277,6 +290,12 @@ function Usage() {
 
 export default function Settings({ onChanged }: { onChanged: () => void }) {
   const { models, reload } = useModels();
+  const [params, setParams] = useSearchParams();
+  const section = useMemo(() => {
+    const id = params.get("section") || "general";
+    return SECTIONS.some((s) => s.id === id) ? id : "general";
+  }, [params]);
+  const go = (id: string) => setParams(id === "general" ? {} : { section: id }, { replace: true });
   const [s, setS] = useState({ workspace_name: "", default_model: "", chat_url: "", tools_url: "", model_catalog_refresh: false, model_catalog_env: false });
   const [pw, setPw] = useState({ current: "", new: "" });
   const toast = useToast();
@@ -298,72 +317,186 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
     catch (err) { toast.err(err); }
   };
 
+  const title = SECTIONS.find((x) => x.id === section)?.label || "Settings";
+
   return (
-    <div className="page" style={{ maxWidth: 900 }}>
-      <div className="page-head"><h1>Settings</h1></div>
-      <div className="col gap-lg">
-        <div className="card col gap-lg">
-          <h2>General</h2>
-          <label className="field">Workspace name<input className="input" value={s.workspace_name} onChange={(e) => setS({ ...s, workspace_name: e.target.value })} /></label>
-          <label className="field">Default model <span className="hint">Auto picks a fitting model for each job. Pick one to always use it instead.</span>
-            <div className="row"><div className="grow"><ModelSelect value={s.default_model} onChange={(v) => setS({ ...s, default_model: v })} models={models} /></div><button className="btn icon" onClick={() => reload(true)} title="Refresh model list"><RefreshCw size={14} /></button></div>
-          </label>
-          <div><button className="btn primary" onClick={save}>Save</button></div>
-        </div>
-        <div className="card col" id="models">
-          <div className="row"><KeyRound size={16} /><h2 className="grow">AI models</h2><Link className="btn primary" to="/models">Open AI models</Link></div>
-          <div className="muted small">Sign in with ChatGPT or Claude, paste a key, and choose which model does what. It all lives on the AI models page.</div>
-        </div>
-        <div className="card col" id="search">
-          <div className="row"><Search size={16} /><h2>Web search</h2></div>
-          <div className="muted small">Lets Research and Chat look things up on the web.</div>
-          <WebSearchSetup />
-        </div>
-        <div className="card col" id="model-prices">
-          <h2>Model prices and limits</h2>
-          <div className="muted small">Costs and context sizes come from a list built into the app. Turn this on to download a newer list from models.dev once a day. It is a plain download: no chats, keys or settings are sent, though models.dev sees your IP address. Off unless you turn it on.</div>
-          <label className="row" style={{ gap: 8 }}>
-            <input type="checkbox" checked={s.model_catalog_refresh} disabled={s.model_catalog_env} onChange={(e) => setCatalog(e.target.checked)} />
-            Update model prices from models.dev daily
-          </label>
-          {s.model_catalog_env && <div className="muted small">Set by MODEL_CATALOG_REFRESH on the server; change it there.</div>}
-        </div>
-        <ConnectMailCalendar />
-        {desktop?.desktop && <DesktopApp info={desktop} />}
-        {/* feat/v02-anywhere-voice */}
-        <div className="card col">
-          <h2>Ask from anywhere & voice</h2>
-          <div className="muted small">The shortcut that opens the ask bar over any app, how I listen when you talk, and how I sound.</div>
-          <div><Link className="btn" to="/voice">Open these settings</Link></div>
-        </div>
-        <PhoneCard />
-        <BrowserPair />
-        <Usage />
-        <details className="card col settings-more">
-          <summary><strong>More settings</strong> <span className="muted small">offline AI on this computer, other calendars{s.chat_url ? ", Open WebUI" : ""}</span></summary>
-          <div className="col gap-lg" style={{ marginTop: 16 }}>
-            <LocalModels />
+    <div className="cursor-settings">
+      <aside className="cursor-settings-nav" aria-label="Settings">
+        <div className="cursor-settings-nav-title">Settings</div>
+        {SECTIONS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`cursor-settings-link${section === item.id ? " active" : ""}`}
+            onClick={() => go(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </aside>
+      <div className="cursor-settings-main">
+        <div className="cursor-settings-head"><h1>{title}</h1></div>
+        <div className="cursor-settings-body col gap-lg">
+          {section === "general" && (
+            <>
+              <div className="card col gap-lg">
+                <label className="field">Workspace name<input className="input" value={s.workspace_name} onChange={(e) => setS({ ...s, workspace_name: e.target.value })} /></label>
+                <label className="field">Default model <span className="hint">Auto picks a fitting model for each job. Pick one to always use it instead.</span>
+                  <div className="row"><div className="grow"><ModelSelect value={s.default_model} onChange={(v) => setS({ ...s, default_model: v })} models={models} /></div><button className="btn icon" onClick={() => reload(true)} title="Refresh model list"><RefreshCw size={14} /></button></div>
+                </label>
+                <div><button className="btn primary" onClick={save}>Save</button></div>
+              </div>
+              {desktop?.desktop && <DesktopApp info={desktop} />}
+              {!desktop?.desktop && (
+                <form className="card col" onSubmit={changePw}>
+                  <div className="row"><Shield size={16} /><h2>Password</h2></div>
+                  <div className="row wrap">
+                    <input className="input grow" type="password" placeholder="Current password" value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} />
+                    <input className="input grow" type="password" placeholder="New password (10+ characters)" value={pw.new} onChange={(e) => setPw({ ...pw, new: e.target.value })} />
+                    <button className="btn" disabled={!pw.current || pw.new.length < 10}>Change</button>
+                  </div>
+                </form>
+              )}
+            </>
+          )}
+
+          {section === "agents" && (
+            <>
+              <div className="card col">
+                <h2>Chat agent</h2>
+                <p className="muted small">Name, learning, search, and how it reaches you.</p>
+                <div><Link className="btn primary" to="/assistant-settings">Open agent settings</Link></div>
+              </div>
+              <div className="card col">
+                <h2>Ask from anywhere & voice</h2>
+                <p className="muted small">The shortcut that opens the ask bar over any app, how it listens, and how it sounds.</p>
+                <div><Link className="btn" to="/voice">Open these settings</Link></div>
+              </div>
+              <PhoneCard />
+            </>
+          )}
+
+          {section === "models" && (
+            <>
+              <div className="card col" id="models">
+                <div className="row"><KeyRound size={16} /><h2 className="grow">AI models</h2><Link className="btn primary" to="/models">Open AI models</Link></div>
+                <p className="muted small">Sign in with ChatGPT or Claude, paste a key, and choose which model does what.</p>
+              </div>
+              <Providers onChange={onChanged} />
+              <LocalModels />
+              <div className="card col" id="search">
+                <div className="row"><Search size={16} /><h2>Web search</h2></div>
+                <p className="muted small">Lets Research and Chat look things up on the web.</p>
+                <WebSearchSetup />
+              </div>
+            </>
+          )}
+
+          {section === "tools" && (
+            <>
+              <div className="card col">
+                <div className="row"><Plug size={16} /><h2 className="grow">Extra tools</h2><Link className="btn primary" to="/mcp">Manage</Link></div>
+                <p className="muted small">Outside tools you add yourself. Their actions still ask before they leave this computer.</p>
+              </div>
+              <BrowserPair />
+              <div className="card col">
+                <h2>Computer & browser</h2>
+                <p className="muted small">Let the assistant click and type on this machine, or work in a browser, when you allow it.</p>
+                <div className="row wrap">
+                  <Link className="btn" to="/computer">Computer</Link>
+                  <Link className="btn" to="/browser">Browser</Link>
+                  <Link className="btn" to="/customize?tab=tools">Customize tools</Link>
+                </div>
+              </div>
+            </>
+          )}
+
+          {section === "skills" && (
+            <>
+              <div className="card col">
+                <h2>Skills</h2>
+                <p className="muted small">Saved ways of working. Add more whenever you like.</p>
+                <div><Link className="btn primary" to="/skills">Open skills</Link></div>
+              </div>
+              <div className="card col">
+                <h2>Rules & memory</h2>
+                <p className="muted small">Standing instructions and what it already knows about you.</p>
+                <div className="row wrap">
+                  <Link className="btn" to="/about-you">About you</Link>
+                  <Link className="btn" to="/knowledge">Memory</Link>
+                </div>
+              </div>
+              <div className="card col">
+                <h2>Customize</h2>
+                <p className="muted small">One place for apps, tools, skills and rules.</p>
+                <div><Link className="btn" to="/customize">Open Customize</Link></div>
+              </div>
+            </>
+          )}
+
+          {section === "apps" && (
+            <>
+              <ConnectMailCalendar />
+              <div className="card col">
+                <h2>Other calendars</h2>
+                <p className="muted small">Google and Microsoft calendars come with your mail account. To add another calendar, use the Calendar page.</p>
+                <div><Link className="btn" to="/calendar">Open calendar</Link></div>
+              </div>
+            </>
+          )}
+
+          {section === "appearance" && (
             <div className="card col">
-              <h2>Other calendars</h2>
-              <div className="muted small">Google and Microsoft calendars come with your mail account. To add another calendar (iCloud, a school or team calendar link), use the Calendar page.</div>
-              <div><Link className="btn" to="/calendar">Open calendar</Link></div>
+              <h2>Appearance</h2>
+              <p className="muted small">Light white or dark charcoal — pick a look any time. More themes, motion, and type live on Appearance.</p>
+              <div className="row wrap">
+                <Link className="btn primary" to="/appearance">Open appearance</Link>
+                <Link className="btn" to="/plan">Your plan</Link>
+              </div>
             </div>
-            {s.chat_url && <div className="card col">
-              <div className="row"><Plug size={16} /><h2>Open WebUI</h2></div>
-              <div className="muted small">The optional Open WebUI chat can use your notes, tasks, calendar and mail drafts (it can never send mail). Turn it on per chat with the tools button in its message box. Tool server: <span className="mono">{s.tools_url}</span></div>
-              <div><a className="btn" href={s.chat_url} target="_blank" rel="noreferrer">Open WebUI</a></div>
-            </div>}
-          </div>
-        </details>
-        <p className="small muted" style={{ margin: 0 }}><Link to="/about">About</Link> · <Link to="/privacy">Privacy</Link></p>
-        {!desktop?.desktop && <form className="card col" onSubmit={changePw}>
-          <div className="row"><Shield size={16} /><h2>Password</h2></div>
-          <div className="row wrap">
-            <input className="input grow" type="password" placeholder="Current password" value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} />
-            <input className="input grow" type="password" placeholder="New password (10+ characters)" value={pw.new} onChange={(e) => setPw({ ...pw, new: e.target.value })} />
-            <button className="btn" disabled={!pw.current || pw.new.length < 10}>Change</button>
-          </div>
-        </form>}
+          )}
+
+          {section === "privacy" && (
+            <div className="card col">
+              <h2>Privacy</h2>
+              <p className="muted small">What stays on this computer, and what leaves only when you say yes.</p>
+              <div className="row wrap">
+                <Link className="btn primary" to="/privacy">Open privacy</Link>
+                <Link className="btn" to="/about">About</Link>
+              </div>
+            </div>
+          )}
+
+          {section === "advanced" && (
+            <>
+              <div className="card col" id="model-prices">
+                <h2>Model prices and limits</h2>
+                <p className="muted small">Costs and context sizes come from a list built into the app. Turn this on to download a newer list once a day. Off unless you turn it on.</p>
+                <label className="row" style={{ gap: 8 }}>
+                  <input type="checkbox" checked={s.model_catalog_refresh} disabled={s.model_catalog_env} onChange={(e) => setCatalog(e.target.checked)} />
+                  Update model prices daily
+                </label>
+                {s.model_catalog_env && <div className="muted small">Set by the server; change it there.</div>}
+              </div>
+              <Usage />
+              {s.chat_url && (
+                <div className="card col">
+                  <div className="row"><Plug size={16} /><h2>Open WebUI</h2></div>
+                  <p className="muted small">Optional chat that can use your notes, tasks, calendar and mail drafts (it can never send mail).</p>
+                  <div><a className="btn" href={s.chat_url} target="_blank" rel="noreferrer">Open WebUI</a></div>
+                </div>
+              )}
+              <div className="card col">
+                <h2>System</h2>
+                <div className="row wrap">
+                  <Link className="btn" to="/status">System status</Link>
+                  <Link className="btn" to="/runs">Run log</Link>
+                  <Link className="btn" to="/history">History</Link>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
       {toast.node}
     </div>

@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ArrowUp, Bell, Brain, CalendarClock, CalendarDays, CheckSquare, Code2, FileText, FolderKanban, FolderOpen,
-  Globe2, GraduationCap, Inbox, MessageSquare, NotebookPen, Puzzle, Search, UsersRound, Video,
+  ArrowUp, Bell, CalendarClock, CalendarDays, CheckSquare, FolderOpen,
+  Inbox, MessageSquare, NotebookPen, Search,
 } from "lucide-react";
 import { api, CalEvent, Task } from "../api";
 import { AssistantFace } from "../AssistantFace";
@@ -32,18 +32,8 @@ const MORE: { to: string; label: string; icon: typeof Search }[] = [
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/notes", label: "Notes", icon: NotebookPen },
-  { to: "/files", label: "Files", icon: FolderOpen },
-  { to: "/documents", label: "Documents", icon: FileText },
-  { to: "/research", label: "Research", icon: Search },
-  { to: "/code", label: "Coding", icon: Code2 },
-  { to: "/projects", label: "Projects", icon: FolderKanban },
-  { to: "/meetings", label: "Meetings", icon: Video },
   { to: "/automations", label: "Automations", icon: CalendarClock },
-  { to: "/knowledge", label: "Memory", icon: Brain },
-  { to: "/skills", label: "Skills", icon: Puzzle },
-  { to: "/team", label: "Team", icon: UsersRound },
-  { to: "/sites", label: "Sites", icon: Globe2 },
-  { to: "/teach", label: "Show me how", icon: GraduationCap },
+  { to: "/files", label: "Files", icon: FolderOpen },
 ];
 
 function isToday(iso: string, allDay: boolean) {

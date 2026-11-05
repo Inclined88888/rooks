@@ -64,7 +64,7 @@ export default function AskBar() {
   const close = useCallback((restore = false) => {
     abort.current?.abort();
     if (desktop) invoke("hide_ask_bar", { restoreFocus: restore }).catch(() => undefined);
-    else navigate("/");
+    else navigate("/assistant");
   }, [desktop, navigate]);
 
   useEffect(() => {

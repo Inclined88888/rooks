@@ -187,7 +187,7 @@ export default function CalendarPage() {
     loadCalendars(); loadEvents();
   };
   const removeCal = async (c: Calendar) => {
-    if (!confirm(`Remove calendar "${c.name}" and its synced events from Workbench?`)) return;
+    if (!confirm(`Remove calendar "${c.name}" and its events from this app?`)) return;
     await api(`/calendars/${c.id}`, { method: "DELETE" }); loadCalendars(); loadEvents();
   };
   const removeEvent = async (ev: CalEvent) => {

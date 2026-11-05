@@ -100,7 +100,9 @@ def test_desk_is_off_until_rooks_desk_runs(client, monkeypatch):
 
     monkeypatch.setattr(config, "DESK_URL", "")
     r = client.get("/api/desk/status")
-    assert r.status_code == 503 and "Computer use is off" in r.json()["detail"]
+    assert r.status_code == 503
+    assert r.json()["detail"] == "Using this computer from the app is turned off. Open the desktop app on this same computer to turn it on."
+    assert "--" not in r.json()["detail"]
     assert client.get("/api/status").json()["desk_enabled"] is False
 
 

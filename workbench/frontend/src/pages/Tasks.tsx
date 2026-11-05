@@ -118,7 +118,7 @@ export default function Tasks() {
   return (
     <div className="page">
       <div className="page-head">
-        <div><h1>Tasks</h1><p className="muted">Agents in Chat can read, add and complete these.</p></div>
+        <div><h1>Tasks</h1><p className="muted">Chat can read, add and complete these.</p></div>
         <div className="spacer" />
         <div className="tabs">
           {(["open", "done", "all"] as const).map((f) => <button key={f} className={`tab ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>{f[0].toUpperCase() + f.slice(1)}</button>)}
