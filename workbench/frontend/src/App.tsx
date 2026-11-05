@@ -1,5 +1,5 @@
 import {
-  Activity, Gauge, Bot, Brain, Building2, CalendarClock, CalendarDays, MessageSquare, CheckSquare, Globe, Columns3, ExternalLink, FileText, Home, Info, LogOut, Mail, Menu, NotebookPen, Shield,
+  Activity, Gauge, Bot, Brain, Building2, CalendarClock, CalendarDays, MessageSquare, CheckSquare, Globe, Columns3, ExternalLink, FileText, Home, Info, Mail, Menu, NotebookPen, Shield,
   Code2, FolderOpen, Globe2, GraduationCap, ListTree, Monitor, Palette as PaletteIcon, Plug, Sparkles, Puzzle, Search, Settings as SettingsIcon,
   Layers, // feat/v02-automations
   AudioLines, Users, // feat/v02-anywhere-voice
@@ -9,6 +9,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react
 import { CommandPalette } from "./Palette";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
+import AgentsSidebar from "./AgentsSidebar";
 import { EdgeGlow, transitionClick } from "./motion";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -181,23 +182,6 @@ function Boot() {
   return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">Rooks</div></div>;
 }
 
-function RailBtn({ to, label, icon: Icon, active, onNavigate }: {
-  to: string; label: string; icon: typeof MessageSquare; active: boolean; onNavigate: () => void;
-}) {
-  return (
-    <NavLink
-      to={to}
-      className={`rail-btn${active ? " active" : ""}`}
-      aria-label={label}
-      title={label}
-      onClick={transitionClick(onNavigate)}
-    >
-      <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
-      <span className="rail-label">{label}</span>
-    </NavLink>
-  );
-}
-
 export default function App() {
   const [status, setStatus] = useState<Status | null>(null);
   const [error, setError] = useState("");
@@ -273,69 +257,20 @@ export default function App() {
     refresh();
   };
 
-  const path = location.pathname;
-  const moreActive = !RAIL.some((r) => r.match?.(path) || path === r.to || path.startsWith(r.to + "/"))
-    && path !== "/settings" && !path.startsWith("/settings/");
-
   return (
-    <div className="shell shell-rail">
-      <nav className="icon-rail" aria-label="Main">
-        <Link to="/assistant" className="rail-brand" title={status.workspace_name} aria-label={status.workspace_name}>
-          <span className="rail-mark" aria-hidden>R</span>
-        </Link>
-        <div className="rail-modes">
-          {RAIL.map((r) => (
-            <RailBtn
-              key={r.to}
-              to={r.to}
-              label={r.label}
-              icon={r.icon}
-              active={!!(r.match?.(path) || path === r.to)}
-              onNavigate={() => navigate(r.to)}
-            />
-          ))}
-        </div>
-        <div className="rail-spacer" />
-        <button
-          type="button"
-          className="rail-btn"
-          aria-label="Search"
-          title={`Search (${MOD_KEY}K)`}
-          onClick={() => setPaletteOpen(true)}
-        >
-          <Search size={20} strokeWidth={1.8} />
-          <span className="rail-label">Search</span>
-        </button>
-        <button
-          type="button"
-          className={`rail-btn${menuOpen || moreActive ? " active" : ""}`}
-          aria-label="More"
-          aria-expanded={menuOpen}
-          title="More"
-          onClick={() => setMenuOpen((o) => !o)}
-        >
-          <Menu size={20} strokeWidth={menuOpen || moreActive ? 2.2 : 1.8} />
-          <span className="rail-label">More</span>
-        </button>
-        <RailBtn
-          to="/settings"
-          label="Settings"
-          icon={SettingsIcon}
-          active={path === "/settings" || path.startsWith("/settings/")}
-          onNavigate={() => navigate("/settings")}
-        />
-        {!status.desktop && (
-          <button type="button" className="rail-btn" aria-label="Sign out" title="Sign out" onClick={logout}>
-            <LogOut size={18} strokeWidth={1.8} />
-            <span className="rail-label">Out</span>
-          </button>
-        )}
-      </nav>
+    <div className="shell shell-agents">
+      <AgentsSidebar
+        workspaceName={status.workspace_name}
+        onSearch={() => setPaletteOpen(true)}
+        onMore={() => setMenuOpen(true)}
+        onLogout={status.desktop ? undefined : logout}
+        desktop={status.desktop}
+      />
 
       {menuOpen && (
         <>
           <div className="modal-back rail-scrim" onClick={() => setMenuOpen(false)} />
-          <aside className="more-drawer" aria-label="More pages">
+          <aside className="more-drawer agents-more" aria-label="More pages">
             <div className="more-head">
               <strong className="truncate">{status.workspace_name}</strong>
               <button type="button" className="btn ghost sm" onClick={() => setPaletteOpen(true)}>
@@ -376,7 +311,7 @@ export default function App() {
         </>
       )}
 
-      <main className="main">
+      <main className="main agents-main">
         <div className="mobile-bar">
           <button className="btn ghost icon" onClick={() => setMenuOpen(true)} aria-label="Open menu" aria-expanded={menuOpen}><Menu size={18} /></button>
           <strong className="truncate grow">{status.workspace_name}</strong>
@@ -459,6 +394,14 @@ export default function App() {
         </Suspense>
         </div>
       </main>
+
+      <aside className="agents-dock" aria-label="Surfaces">
+        <Link to="/computer" className="agents-dock-btn" title="Computer" aria-label="Computer"><Monitor size={17} /></Link>
+        {(status.browser_enabled !== false) && <Link to="/browser" className="agents-dock-btn" title="Browser" aria-label="Browser"><Globe size={17} /></Link>}
+        <Link to="/terminal" className="agents-dock-btn" title="Terminal" aria-label="Terminal"><SquareTerminal size={17} /></Link>
+        <Link to="/files" className="agents-dock-btn" title="Files" aria-label="Files"><FolderOpen size={17} /></Link>
+      </aside>
+
       <DeskGlow enabled={!!status.desk_enabled} />
       <JobNotifier />{/* feat/v02-automations */}<DesktopBridge />{/* feat/tauri-native */}
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} pages={palettePages} />

@@ -1,9 +1,9 @@
-import { SquareTerminal, ArrowLeft, ArrowUp, BookOpen, Brain, Check, Copy, Ellipsis, KeyRound, Pencil, Plus, RotateCcw, Search, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
+import { SquareTerminal, ArrowLeft, ArrowUp, BookOpen, Brain, Check, Copy, Ellipsis, KeyRound, Pencil, Plus, RotateCcw, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api, stream } from "../api";
 import { Tracer } from "../Tracer";
-import { EffortSelect, Empty, Markdown, ModelSelect, relTime, RouterInfo, RouterVia, SkeletonList, useEffort, useModels, useToast } from "../util";
+import { EffortSelect, Empty, Markdown, ModelSelect, relTime, RouterInfo, RouterVia, useEffort, useModels, useToast } from "../util";
 import { Thinking, useExit } from "../motion";
 import { LiveMarkdown } from "../v02/LiveBlocks"; // feat/v02-automations: live docs, sheets and charts in replies
 import { DictateButton } from "../voice/DictateButton"; // feat/v02-anywhere-voice (drawn as the motion voice orb)
@@ -13,7 +13,6 @@ import { askNotifyPermission, inBackground, notify } from "../desktop"; // feat/
 import { Att, AttachButton, filesFrom, MessageAttachments, PendingChips, useAttachments } from "../Attachments"; // feat/attachments
 import { DiffView, extractDiffFromArgs } from "../components/DiffView";
 import { plainStep } from "../plainStep";
-import { AssistantFace, Mood, noticedYou } from "../AssistantFace";
 import { TryRoomButton } from "../TryRoom";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
@@ -118,15 +117,12 @@ type Approval = { id: number; tool: string; args: string; effect: string; reason
 type Memory = { id: number; content: string; kind: string; source: string; updated_at: string };
 type Skill = { id: number; name: string; description: string; steps: string; uses: number; source: string; enabled: number };
 
-const CHANNEL: Record<string, string> = { web: "Web", cli: "Terminal", telegram: "Telegram", schedule: "Schedule" };
-
 function Chat() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [convs, setConvs] = useState<Conv[] | null>(null);
   const [freshId, setFreshId] = useState<number | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
-  const [q, setQ] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [steps, setSteps] = useState<Step[]>([]);
   const [lookAt, setLookAt] = useState<number | null>(null);
@@ -171,7 +167,6 @@ function Chat() {
   const [dropping, setDropping] = useState(false);
   const [offer, setOffer] = useState<{ key: string; name: string; request: string; line: string } | null>(null);
   const [who, setWho] = useState("Atlas");
-  const [pleasedAt, setPleasedAt] = useState(0);
   const [mainId, setMainId] = useState<number | null>(null);
   const [watch, setWatch] = useState<Watch | null>(null);
   const [routines, setRoutines] = useState<Routine[] | null>(null);
@@ -190,8 +185,8 @@ function Chat() {
     return () => { stop = true; };
   }, [cid, fresh, listing, location.pathname]);
 
-  const loadConvs = () => api<Conv[]>(`/conversations${q ? `?q=${encodeURIComponent(q)}` : ""}`).then(setConvs).catch(toast.err);
-  useEffect(() => { const t = setTimeout(loadConvs, 200); return () => clearTimeout(t); }, [q]);
+  const loadConvs = () => api<Conv[]>("/conversations").then(setConvs).catch(toast.err);
+  useEffect(() => { loadConvs(); }, []);
   const loadConv = (id: number) => {
     api<{ messages: Msg[]; model: string }>(`/conversations/${id}`).then((c) => {
       setMessages(c.messages.map((m) => (m.role === "assistant" && viaByReply.current.has(m.content) ? { ...m, via: viaByReply.current.get(m.content) } : m)));
@@ -236,7 +231,6 @@ function Chat() {
   /** One streamed turn. echo: show the user's text as a fresh bubble (not on resend, where it's already on screen
    *  and stored). resend: the server skips saving the user message again. */
   const run = async (msg: string, opts: { echo?: boolean; resend?: boolean; files?: Att[] } = {}) => {
-    if (opts.echo && noticedYou(msg, who)) setPleasedAt(Date.now());
     busyRef.current = true;
     setBusy(true);
     setBusySince(Date.now());
@@ -383,15 +377,7 @@ function Chat() {
     } catch (e) { toast.err(e); if (cid) loadConv(cid); }
   };
 
-  const remove = async (c: Conv) => {
-    if (!confirm(`Delete "${c.title}"? Memories learned from it are kept.`)) return;
-    await api(`/conversations/${c.id}`, { method: "DELETE" });
-    if (c.id === cid) navigate("/assistant");
-    loadConvs();
-  };
-
   const visible = messages.filter((m) => (m.role === "user" && m.name !== "claim_check") || (m.role === "assistant" && m.content));
-  const mood: Mood = approvals.length ? "needs" : watch ? "working" : busy ? (steps.some((s) => s.name === "use_computer" || s.name === "browse_web") ? "working" : "thinking") : freshId ? "done" : "idle";
   useEffect(() => {
     if (!showRoutines) return;
     api<{ routines: Routine[] }>("/assistant/routines").then((r) => setRoutines(r.routines)).catch(toast.err);
@@ -429,36 +415,9 @@ function Chat() {
   };
 
   return (
-    <div className={`split ${cid !== null ? "has-selection" : ""}`}>
-      <div className="split-list chat-rail">
-        <div className="col chat-rail-head">
-          <button type="button" className="btn primary chat-new" onClick={() => navigate("/assistant", { state: { fresh: true } })}>
-            <Plus size={15} /> New chat
-          </button>
-          <div className="row" style={{ position: "relative" }}>
-            <Search size={14} className="faint" style={{ position: "absolute", left: 10 }} aria-hidden="true" />
-            <input className="input chat-rail-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" aria-label="Search chats" />
-          </div>
-        </div>
-        <div className="scroll">
-          {convs === null && <SkeletonList rows={5} />}
-          {convs?.length === 0 && <p className="small muted" style={{ padding: "12px 14px" }}>{q ? "No matches" : "No chats yet"}</p>}
-          {convs?.map((c) => (
-            <div key={c.id} className={`list-item chat-rail-item ${c.id === cid ? "active" : ""}`} role="link" tabIndex={0} aria-current={c.id === cid ? "page" : undefined}
-              onClick={() => navigate(`/assistant/${c.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/assistant/${c.id}`); }}>
-              <div className="grow">
-                <div className="truncate">{c.title}</div>
-                <div className="faint small">{c.id === mainId ? who : (CHANNEL[c.channel] ?? c.channel)} · {relTime(c.updated_at)}</div>
-              </div>
-              <button className="btn ghost sm icon chat-rail-del" aria-label={`Delete ${c.title}`} onClick={(e) => { e.stopPropagation(); remove(c); }}><Trash2 size={13} /></button>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="split-main chat-main">
+    <div className="agents-chat">
+      <div className="agents-chat-main chat-main">
         <div className="toolbar chat-top" style={{ position: "relative" }}>
-          <button className="btn ghost sm mobile-only" onClick={() => navigate("/assistant", { state: { list: true } })} aria-label="Back to chats"><ArrowLeft size={14} /></button>
-          <AssistantFace mood={mood} name={who} size={32} pleasedAt={pleasedAt} />
           <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat")}</div>
           <div className="spacer" />
           <ChatMenu
@@ -517,7 +476,6 @@ function Chat() {
             <h1 style={srOnly}>Chat conversation</h1>
             {!busy && visible.length === 0 && (
               <div className="chat-hero">
-                <AssistantFace mood="idle" name={who} size={72} pleasedAt={pleasedAt} />
                 <h2 className="chat-hero-title">{who}</h2>
                 <p className="chat-hero-sub">Ask anything. Work stays on this computer.</p>
               </div>
@@ -634,8 +592,8 @@ function Chat() {
             <button type="button" className="btn ghost sm" onClick={() => { api("/automations/offer-skip", { body: { key: offer.key } }).catch(() => undefined); setOffer(null); }}>Not now</button>
           </div>
         )}
-        <form className="composer-wrap" onSubmit={send}>
-          <div className={`composer has-tracer${busy ? " is-working" : ""}${dropping ? " drop-target" : ""}`}
+        <form className="composer-wrap agents-composer-wrap" onSubmit={send}>
+          <div className={`composer agents-composer has-tracer${busy ? " is-working" : ""}${dropping ? " drop-target" : ""}`}
             onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setDropping(true); } }}
             onDragLeave={() => setDropping(false)}
             onDrop={(e) => { const f = filesFrom(e.dataTransfer); setDropping(false); if (f.length) { e.preventDefault(); att.add(f); } }}>
@@ -643,7 +601,7 @@ function Chat() {
             <PendingChips items={att.items} onRemove={att.remove} />
             <textarea ref={composerRef} rows={1} value={text} aria-label="Message"
               onChange={(e) => { setText(e.target.value); const t = e.target; t.style.height = "auto"; t.style.height = `${Math.min(240, t.scrollHeight)}px`; }}
-              placeholder="Ask anything, or describe a job to do…"
+              placeholder={visible.length ? "Send follow-up…" : "Ask anything, or describe a job to do…"}
               onPaste={(e) => { const f = filesFrom(e.clipboardData); if (f.length) { e.preventDefault(); att.add(f); } }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <div className="composer-bar">
@@ -662,7 +620,6 @@ function Chat() {
               <ModelSelect value={model} onChange={setModel} models={models} />
               {isPlan && <EffortSelect value={effort} onChange={setEffort} />}
               <div className="spacer" />
-              <span className="composer-hint">↵ to send</span>
               {/* feat/v02-anywhere-voice + motion: one mic. Local/cloud speech-to-text with browser fallback, drawn as the voice orb */}
               <DictateButton orb disabled={busy} onText={(t) => { setText((v) => (v ? v + " " : "") + t); composerRef.current?.focus(); }} />
               {busy
