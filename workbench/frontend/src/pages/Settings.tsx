@@ -10,6 +10,29 @@ import { PhoneCard } from "./Phone";
 
 type DesktopInfo = { desktop: boolean; data_dir: string; secret_backend: string };
 
+function BrowserPair() {
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  const make = async () => {
+    setErr("");
+    try {
+      const r = await api<{ code: string }>("/browser/pair/start", { method: "POST" });
+      setCode(r.code);
+    } catch (e) {
+      setErr((e as Error).message);
+    }
+  };
+  return (
+    <div className="card col">
+      <h2>Open this Rooks in a browser</h2>
+      <p className="muted small">The browser is this app, on this computer. On another device you own, open this computer’s address (or a private tunnel to it) and choose “I have a pairing code”. The code works once, for about 10 minutes. There is no shared Rooks in the cloud.</p>
+      {code && <p className="mono" style={{ fontSize: 22, letterSpacing: "0.12em" }}>{code}</p>}
+      {err && <div className="alert err">{err}</div>}
+      <button type="button" className="btn" onClick={make}>{code ? "Make another code" : "Make a pairing code"}</button>
+    </div>
+  );
+}
+
 /** Desktop app only: where data lives, how keys are protected, and the helper processes (sidecars). */
 function DesktopApp({ info }: { info: DesktopInfo }) {
   const [app, setApp] = useState<AppInfo | null>(null);
@@ -314,6 +337,7 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
           <div><Link className="btn" to="/voice">Open these settings</Link></div>
         </div>
         <PhoneCard />
+        <BrowserPair />
         <Usage />
         <details className="card col settings-more">
           <summary><strong>More settings</strong> <span className="muted small">offline AI on this computer, other calendars{s.chat_url ? ", Open WebUI" : ""}</span></summary>

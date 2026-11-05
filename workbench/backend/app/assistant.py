@@ -1073,7 +1073,7 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
     if not ctx.skip_save:
         _save(ctx.conversation_id, "user", user_text, attachments=ctx.attachments)
     ctx.live = asyncio.Queue()
-    if ctx.channel == "web" and user_text.strip():
+    if ctx.channel in ("web", "cli") and user_text.strip():
         from . import front_door
 
         saved = front_door.try_routine(user_text)

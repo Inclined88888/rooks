@@ -40,7 +40,7 @@ from . import __version__, config, receipts
 from . import theme as term_theme
 from .undo import ChangeSets
 
-SUBCOMMANDS = ("undo", "receipts", "doctor", "init", "mcp", "version", "login", "pack", "egress", "redact")
+SUBCOMMANDS = ("undo", "receipts", "doctor", "init", "mcp", "version", "login", "pack", "egress", "redact", "talk")
 
 
 class UI:
@@ -707,6 +707,11 @@ def subcommand(name: str, rest: list[str]) -> int:
         from . import redact_cli
 
         return redact_cli.main(rest)
+
+    if name == "talk":  # the same assistant as the app: one-off, routines, approvals
+        from . import talk
+
+        return talk.main(rest)
     ap = argparse.ArgumentParser(prog=f"rooks {name}")
     ap.add_argument("-C", "--cwd", default=os.getcwd())
     if name == "receipts":

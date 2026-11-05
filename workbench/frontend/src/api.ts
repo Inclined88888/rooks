@@ -22,12 +22,32 @@ function detail(body: unknown, fallback: string): string {
   return fallback;
 }
 
+const BROWSER_TOKEN = "rooks.browser";
+
+/** A paired browser keeps its token here. The desktop app and a signed-in tab still use the cookie. */
+export function browserToken(): string {
+  try {
+    return localStorage.getItem(BROWSER_TOKEN) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function saveBrowserToken(token: string) {
+  localStorage.setItem(BROWSER_TOKEN, token);
+}
+
+function authHeaders(): Record<string, string> {
+  const token = browserToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function api<T = unknown>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
   const method = options.method ?? (options.body === undefined ? "GET" : "POST");
   const res = await fetch(`/api${path}`, {
     method,
     credentials: "same-origin",
-    headers: { "Content-Type": "application/json", "X-Workbench": "1" },
+    headers: { "Content-Type": "application/json", "X-Workbench": "1", ...authHeaders() },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
   const text = await res.text();
@@ -66,7 +86,7 @@ export async function stream(path: string, body: unknown, onEvent: (e: StreamEve
   const res = await fetch(`/api${path}`, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "Content-Type": "application/json", "X-Workbench": "1" },
+    headers: { "Content-Type": "application/json", "X-Workbench": "1", ...authHeaders() },
     body: JSON.stringify(body),
     signal,
   });
