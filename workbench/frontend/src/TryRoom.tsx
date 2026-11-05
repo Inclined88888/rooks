@@ -31,7 +31,7 @@ export function TryRoomButton({ startOpen = false, onClose }: { startOpen?: bool
   if (!open) {
     return (
       <button type="button" className="btn ghost sm" onClick={() => setOpen(true)} title="A spare computer on this machine">
-        Practice computer
+        Virtual computer
       </button>
     );
   }
@@ -41,7 +41,7 @@ export function TryRoomButton({ startOpen = false, onClose }: { startOpen?: bool
     try {
       await api(`/try/${path}`, { method: "POST", body });
       await refresh();
-      toast.ok(path === "up" ? "Practice computer is on" : path === "down" ? "Practice computer stopped" : path === "checkpoint" ? "Point saved" : "Started over");
+      toast.ok(path === "up" ? "Virtual computer is on" : path === "down" ? "Virtual computer stopped" : path === "checkpoint" ? "Point saved" : "Started over");
     } catch (e) {
       toast.err(e);
     } finally {
@@ -55,9 +55,9 @@ export function TryRoomButton({ startOpen = false, onClose }: { startOpen?: bool
   };
 
   return (
-    <div aria-label="Practice computer">
+    <div aria-label="Virtual computer">
       <div className="row">
-        <strong className="grow">Practice computer</strong>
+        <strong className="grow">Virtual computer</strong>
         <button type="button" className="btn ghost sm" onClick={close}>Close</button>
       </div>
       <p className="small muted" style={{ marginTop: 0 }}>

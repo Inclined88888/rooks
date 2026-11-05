@@ -2,7 +2,6 @@ import { FolderOpen, Globe, Monitor, SquareTerminal } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { api } from "./api";
-import { BesideButton } from "./Beside";
 
 type Job = { id: string; goal?: string; task?: string; status: string; agent_name?: string; created_at?: number };
 type Tab = { id: string; label: string; to: string; on: boolean };
@@ -83,13 +82,10 @@ export default function AgentsContext({
         <div className="agents-context-label">Open tabs</div>
         <div className="agents-tabs">
           {tabs.map((t) => (
-            <div key={t.id} className="agents-link-row">
-              <Link to={t.to} className={`agents-tab${t.on ? " on" : ""}`}>
-                <span className={`agents-dot${t.on ? " on" : ""}`} aria-hidden />
-                <span className="truncate">{t.label}</span>
-              </Link>
-              <BesideButton path={t.to} label={t.label} />
-            </div>
+            <Link key={t.id} to={t.to} className={`agents-tab${t.on ? " on" : ""}`}>
+              <span className={`agents-dot${t.on ? " on" : ""}`} aria-hidden />
+              <span className="truncate">{t.label}</span>
+            </Link>
           ))}
           {!tabs.length && <p className="agents-empty">Nothing open</p>}
         </div>
@@ -98,16 +94,13 @@ export default function AgentsContext({
         <div className="agents-work">
           {!work.length && <p className="agents-empty">Recent jobs show up here</p>}
           {work.map((w) => (
-            <div key={w.key} className="agents-link-row">
-              <Link to={w.to} className={`agents-work-row${w.live ? " live" : ""}`}>
-                <span className={`agents-dot${w.live ? " on" : ""}`} aria-hidden />
-                <span className="grow truncate">
-                  <span className="agents-chat-title truncate">{w.title}</span>
-                  {w.meta && <span className="agents-chat-meta">{w.meta}</span>}
-                </span>
-              </Link>
-              <BesideButton path={w.to} label={w.title} />
-            </div>
+            <Link key={w.key} to={w.to} className={`agents-work-row${w.live ? " live" : ""}`}>
+              <span className={`agents-dot${w.live ? " on" : ""}`} aria-hidden />
+              <span className="grow truncate">
+                <span className="agents-chat-title truncate">{w.title}</span>
+                {w.meta && <span className="agents-chat-meta">{w.meta}</span>}
+              </span>
+            </Link>
           ))}
         </div>
       </div>
@@ -119,10 +112,7 @@ export default function AgentsContext({
           { to: "/terminal", label: "Terminal", icon: SquareTerminal },
           { to: "/files", label: "Files", icon: FolderOpen },
         ].map((place) => (
-          <div key={place.to} className="agents-link-row">
-            <Link to={place.to} className="agents-surface"><place.icon size={15} /> <span>{place.label}</span></Link>
-            <BesideButton path={place.to} label={place.label} />
-          </div>
+          <Link key={place.to} to={place.to} className="agents-surface"><place.icon size={15} /> <span>{place.label}</span></Link>
         ))}
       </nav>
     </aside>

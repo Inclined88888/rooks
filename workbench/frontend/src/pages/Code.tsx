@@ -3,6 +3,8 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { Empty, Markdown, useToast } from "../util";
+import TerminalPage from "./TerminalPage";
+import TryRoomPage from "./TryRoomPage";
 
 export type CliAgent = {
   id: "rooks" | "claude" | "codex"; name: string; plan: string; install: string; login: string; login_hint: string; docs: string; terms: string;
@@ -88,7 +90,7 @@ function EventRow({ e }: { e: Ev }) {
   return <div className="cev cev-note">{e.text}</div>;
 }
 
-export default function Code() {
+function CodeJob() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
@@ -305,6 +307,83 @@ export default function Code() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/** One code place: the terminal, the virtual computer, and Claude or Codex only when already signed in. */
+export default function Code() {
+  const { id } = useParams();
+  if (id) return <CodeJob />;
+  return <CodeDesk />;
+}
+
+function CodeDesk() {
+  const navigate = useNavigate();
+  const toast = useToast();
+  const [pane, setPane] = useState<"terminal" | "virtual" | "ask">("terminal");
+  const [agents, setAgents] = useState<CliAgent[] | null>(null);
+  const [task, setTask] = useState("");
+  const [folder, setFolder] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [who, setWho] = useState<"claude" | "codex" | "">("");
+
+  useEffect(() => {
+    api<{ agents: CliAgent[] }>("/cli-agents").then((r) => {
+      setAgents(r.agents);
+      const ready = r.agents.find((a) => (a.id === "claude" || a.id === "codex") && a.ready);
+      if (ready?.id === "claude" || ready?.id === "codex") setWho(ready.id);
+    }).catch(() => setAgents([]));
+  }, []);
+
+  const signed = (agents || []).filter((a) => (a.id === "claude" || a.id === "codex") && a.ready);
+  const chosen = signed.find((a) => a.id === who) || signed[0];
+
+  const start = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!chosen) return;
+    setBusy(true);
+    try {
+      const r = await api<Run>("/cli-agents/runs", {
+        method: "POST",
+        body: { agent: chosen.id, task, folder, mode: "ask" },
+      });
+      navigate(`/code/${r.id}`);
+    } catch (err) { toast.err(err); } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="code-desk">
+      <div className="code-desk-bar" role="tablist" aria-label="Code">
+        <button type="button" role="tab" aria-selected={pane === "terminal"} className={pane === "terminal" ? "on" : ""} onClick={() => setPane("terminal")}>Terminal</button>
+        <button type="button" role="tab" aria-selected={pane === "virtual"} className={pane === "virtual" ? "on" : ""} onClick={() => setPane("virtual")}>Virtual computer</button>
+        {signed.map((a) => (
+          <button key={a.id} type="button" role="tab" aria-selected={pane === "ask" && chosen?.id === a.id}
+            className={pane === "ask" && chosen?.id === a.id ? "on" : ""}
+            onClick={() => { if (a.id === "claude" || a.id === "codex") setWho(a.id); setPane("ask"); }}>
+            {a.id === "claude" ? "Claude" : "Codex"}
+          </button>
+        ))}
+        <span className="code-desk-note muted">The terminal is enough. Claude and Codex show up here after you sign in.</span>
+      </div>
+      <div className="code-desk-body">
+        {pane === "terminal" && <TerminalPage bare />}
+        {pane === "virtual" && <TryRoomPage bare />}
+        {pane === "ask" && chosen && (
+          <form className="code-ask" onSubmit={start}>
+            <h1 style={{ margin: 0 }}>{chosen.id === "claude" ? "Claude" : "Codex"}</h1>
+            <p className="muted" style={{ margin: 0 }}>Hand one job to the account you already signed in to. It asks before it changes files.</p>
+            <textarea className="input" rows={4} value={task} onChange={(e) => setTask(e.target.value)} placeholder="What should it change?" />
+            <input className="input" value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="Project folder" aria-label="Project folder" />
+            <div>
+              <button className="btn primary" disabled={busy || !task.trim() || !folder.trim()}>
+                {busy ? <Loader2 size={15} className="spin" /> : <Send size={15} />} Start
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+      {toast.node}
     </div>
   );
 }

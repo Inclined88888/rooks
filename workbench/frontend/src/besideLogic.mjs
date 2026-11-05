@@ -5,7 +5,7 @@ export const BESIDE_KEY = "aiw.beside";
 export const BESIDE_SCREENS = Object.freeze([
   { id: "chat", label: "Chat", path: "/assistant" },
   { id: "terminal", label: "Terminal", path: "/terminal" },
-  { id: "practice", label: "Practice computer", path: "/try" },
+  { id: "practice", label: "Virtual computer", path: "/try" },
   { id: "files", label: "Files", path: "/files" },
   { id: "notes", label: "Notes", path: "/notes" },
   { id: "tasks", label: "Tasks", path: "/tasks" },
@@ -30,7 +30,7 @@ export function suggestBeside(pathname) {
 /** Keep both sides wide enough to actually use. */
 export function clampRatio(n) {
   if (typeof n !== "number" || !Number.isFinite(n)) return 0.5;
-  return Math.min(0.72, Math.max(0.28, n));
+  return Math.min(0.8, Math.max(0.2, n));
 }
 
 /** The menu path for a screen, so a chat or a note still counts as that screen. */

@@ -36,23 +36,38 @@ from .tools import tools
 
 
 def _migrate_keychain() -> None:
+    """Copy anything still in the OS keychain into the database, then stop asking.
+
+    The desktop build is signed ad hoc, so "Always Allow" does not stick. Reading the same
+    item again opens the password box again. Do this once, before the window is usable.
+    """
+    import os
+
+    from . import config, keychain
     from .security import migrate_keychain_refs
 
+    log = logging.getLogger("workbench")
     try:
         migrate_keychain_refs()
-    except Exception:  # noqa: BLE001 - never block startup on this; the refs still read through the keychain
-        logging.getLogger("workbench").warning("Keychain migration failed", exc_info=True)
+    except Exception:  # noqa: BLE001 - never block startup on this
+        log.warning("Keychain migration failed", exc_info=True)
+    try:
+        from .knowledge.crypto import migrate_off_keychain
+
+        migrate_off_keychain()
+    except Exception:  # noqa: BLE001
+        log.warning("Memory key migration failed", exc_info=True)
+    if os.environ.get("WORKBENCH_DESKTOP") == "1" and config.SECRET_BACKEND != "keychain":
+        keychain.seal()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     db.init()
+    _migrate_keychain()  # once, before any page reads a saved key
     compression.init_compression_table()  # AIW-Phase1
     compression.init_summary_table()  # rolling summary of messages that fall out of the window
     finetune.ensure()  # phase 4
-    # Keychain migration on a thread: never block startup, never lose the key if denied
-    import threading
-    threading.Thread(target=_migrate_keychain, daemon=True).start()
     llm.seed_connections()
     catalog.refresh_in_background()  # newer model facts (context, price, vision) at most once a day
     api.recover_interrupted()

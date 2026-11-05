@@ -21,8 +21,8 @@ function plainKind(driver?: string): string {
   return "A spare computer on this machine";
 }
 
-/** Practice computer: start, save a point, start over. Driver names stay under Advanced. */
-export default function TryRoomPage() {
+/** Virtual computer: start, save a point, start over. Driver names stay under Advanced. */
+export default function TryRoomPage({ bare = false }: { bare?: boolean }) {
   const toast = useToast();
   const [st, setSt] = useState<TryStatus | null>(null);
   const [phase, setPhase] = useState<"idle" | "starting" | "stopping">("idle");
@@ -43,7 +43,7 @@ export default function TryRoomPage() {
       await refresh();
       if (path === "up") { setShotOk(true); setShot((n) => n + 1); }
       if (path === "down" || path === "reset") setOut("");
-      toast.ok(path === "up" ? "Practice computer is on" : path === "down" ? "Practice computer stopped" : path === "checkpoint" ? "Point saved" : "Started over");
+      toast.ok(path === "up" ? "Virtual computer is on" : path === "down" ? "Virtual computer stopped" : path === "checkpoint" ? "Point saved" : "Started over");
     } catch (e) {
       toast.err(e);
     } finally {
@@ -74,7 +74,7 @@ export default function TryRoomPage() {
     <div className="page practice-page">
       <header className="cursor-customize-head">
         <div>
-          <h1>Practice computer</h1>
+          {!bare && <h1>Virtual computer</h1>}
           <p className="muted">
             {st?.driver === "shell"
               ? "A private folder on this computer. Commands run as you."
@@ -113,7 +113,7 @@ export default function TryRoomPage() {
           {st.running && !folderOnly && shotOk ? (
             <img
               className="practice-shot"
-              alt="Practice computer screen"
+              alt="Virtual computer screen"
               src={`/api/try/screenshot?k=${shot}`}
               onError={() => setShotOk(false)}
             />

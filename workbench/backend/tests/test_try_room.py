@@ -23,6 +23,25 @@ def try_home(tmp_path, monkeypatch):
     try_proxy._ROOM = None
 
 
+def test_virtual_computer_starts_as_a_private_folder_when_the_package_is_missing(client, monkeypatch, tmp_path):
+    import app.try_proxy as try_proxy
+
+    monkeypatch.setattr(try_proxy, "_import_room", lambda: None)
+    monkeypatch.setattr(try_proxy.config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(try_proxy.config, "TRY_URL", "")
+    try_proxy._BUILTIN = None
+    st = client.get("/api/try/status").json()
+    assert st["available"] is True
+    assert st["driver"] == "shell"
+    assert st["running"] is False
+    up = client.post("/api/try/up").json()
+    assert up["running"] is True
+    run = client.post("/api/try/run", json={"command": "echo virtual-ok"}).json()
+    assert run["ok"] is True
+    assert "virtual-ok" in run["stdout"]
+    try_proxy._BUILTIN = None
+
+
 def test_try_status_and_run(client, try_home):
     st = client.get("/api/try/status").json()
     assert st["available"] is True

@@ -1,11 +1,11 @@
-import { CalendarClock, ChevronDown, ChevronRight, Code2, Monitor, Moon, Plus, Puzzle, Search, Settings as SettingsIcon, Sun } from "lucide-react";
+import { Archive, CalendarClock, ChevronDown, ChevronRight, Code2, Monitor, Moon, MoreHorizontal, Plus, Puzzle, Search, Settings as SettingsIcon, Sun, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import { isDark, pickTheme, useAppearance } from "./appearance";
-import { BesideButton } from "./Beside";
+import { useToast } from "./util";
 
-type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
+type Conv = { id: number; title: string; channel: string; updated_at: string; model: string; archived?: number };
 type Project = { id: number; name: string; kind: string; status: string; last_used_at?: string | null; updated_at?: string; counts?: Record<string, number> };
 type ProjectList = { projects: Project[]; active_id: number | null };
 
@@ -51,11 +51,26 @@ export default function AgentsSidebar({
   const [q, setQ] = useState("");
   const [projOpen, setProjOpen] = useState(true);
   const [chatsOpen, setChatsOpen] = useState(true);
+  const [archivedView, setArchivedView] = useState(false);
+  const [menuFor, setMenuFor] = useState<number | null>(null);
+  const toast = useToast();
+
+  const reloadChats = () => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (archivedView) params.set("archived", "1");
+    const qs = params.toString();
+    return api<Conv[]>(`/conversations${qs ? `?${qs}` : ""}`).then(setConvs);
+  };
 
   useEffect(() => {
     let stop = false;
     const load = () => {
-      api<Conv[]>(`/conversations${q ? `?q=${encodeURIComponent(q)}` : ""}`)
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (archivedView) params.set("archived", "1");
+      const qs = params.toString();
+      api<Conv[]>(`/conversations${qs ? `?${qs}` : ""}`)
         .then((r) => { if (!stop) setConvs(r); })
         .catch(() => undefined);
       api<ProjectList>("/projects")
@@ -65,7 +80,7 @@ export default function AgentsSidebar({
     load();
     const t = window.setInterval(load, 10000);
     return () => { stop = true; clearInterval(t); };
-  }, [q, location.key]);
+  }, [q, location.key, archivedView]);
 
   const activeProjectId = projects?.active_id ?? null;
   const projectRows = useMemo(() => projects?.projects ?? [], [projects]);
@@ -88,12 +103,9 @@ export default function AgentsSidebar({
             { to: "/automations", label: "Automations", icon: CalendarClock },
             { to: "/customize", label: "Customize", icon: Puzzle },
             { to: "/code", label: "Code", icon: Code2 },
-            { to: "/try", label: "Practice computer", icon: Monitor },
+            { to: "/try", label: "Virtual computer", icon: Monitor },
           ].map((item) => (
-            <div key={item.to} className="agents-link-row">
-              <NavLink to={item.to} className="agents-link"><item.icon size={15} /> {item.label}</NavLink>
-              <BesideButton path={item.to} label={item.label} />
-            </div>
+            <NavLink key={item.to} to={item.to} className="agents-link"><item.icon size={15} /> {item.label}</NavLink>
           ))}
         </nav>
       </div>
@@ -136,7 +148,6 @@ export default function AgentsSidebar({
                     </span>
                     {when && <span className="agents-age">{when}</span>}
                   </button>
-                  <BesideButton path={`/projects/${p.id}`} label={p.name} />
                 </div>
               );
             })}
@@ -155,6 +166,7 @@ export default function AgentsSidebar({
             )}
             {filtered.map((c) => {
               const active = c.id === cid;
+              const open = menuFor === c.id;
               return (
                 <div key={c.id} className={`agents-row${active ? " active" : ""}`}>
                   <button type="button" className="agents-row-open" onClick={() => navigate(`/assistant/${c.id}`)}>
@@ -164,10 +176,47 @@ export default function AgentsSidebar({
                     </span>
                     <span className="agents-age">{shortAgo(c.updated_at)}</span>
                   </button>
-                  <BesideButton path={`/assistant/${c.id}`} label={c.title || "Chat"} />
+                  <div className="agents-chat-menu">
+                    <button
+                      type="button"
+                      className="agents-chat-act"
+                      aria-label={`Actions for ${c.title || "chat"}`}
+                      aria-expanded={open}
+                      onClick={(e) => { e.stopPropagation(); setMenuFor(open ? null : c.id); }}
+                    >
+                      <MoreHorizontal size={14} />
+                    </button>
+                    {open && (
+                      <div className="agents-chat-pop" role="menu">
+                        <button type="button" role="menuitem" onClick={async () => {
+                          setMenuFor(null);
+                          try {
+                            await api(`/conversations/${c.id}`, { method: "PATCH", body: { archived: !archivedView } });
+                            if (cid === c.id && !archivedView) navigate("/assistant");
+                            await reloadChats();
+                          } catch (err) { toast.err(err); }
+                        }}>
+                          <Archive size={13} /> {archivedView ? "Restore" : "Archive"}
+                        </button>
+                        <button type="button" role="menuitem" className="danger" onClick={async () => {
+                          setMenuFor(null);
+                          try {
+                            await api(`/conversations/${c.id}`, { method: "DELETE" });
+                            if (cid === c.id) navigate("/assistant");
+                            await reloadChats();
+                          } catch (err) { toast.err(err); }
+                        }}>
+                          <Trash2 size={13} /> Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
+            <button type="button" className="agents-archived" onClick={() => { setMenuFor(null); setArchivedView((v) => !v); }}>
+              {archivedView ? "Back to chats" : "Archived"}
+            </button>
           </div>
         )}
       </div>
@@ -192,6 +241,7 @@ export default function AgentsSidebar({
           <SettingsIcon size={15} />
         </Link>
       </div>
+      {toast.node}
     </aside>
   );
 }

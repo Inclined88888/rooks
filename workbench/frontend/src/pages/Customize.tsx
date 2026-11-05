@@ -33,7 +33,7 @@ const ROWS: Row[] = [
   { id: "computer", tab: "tools", title: "Computer", blurb: "Click and type on this machine when you allow it.", to: "/computer", icon: Monitor, ready: (s) => s?.desk_enabled },
   { id: "browser", tab: "tools", title: "Browser", blurb: "Open sites and do work in a browser for you.", to: "/browser", icon: Globe, ready: (s) => s?.browser_enabled },
   { id: "terminal", tab: "tools", title: "Terminal", blurb: "The same assistant when you skip the window.", to: "/terminal", icon: SquareTerminal },
-  { id: "skills", tab: "skills", title: "Skills", blurb: "Saved ways of working. Add more whenever you like.", to: "/skills", icon: Puzzle, action: "Add" },
+  { id: "skills", tab: "skills", title: "Skill store", blurb: "Skills and connectors that match how you work. Copy more from a project if you want.", to: "/skills?tab=store", icon: Puzzle, action: "Open" },
   { id: "memory", tab: "rules", title: "Memory", blurb: "What it already knows about you.", to: "/knowledge", icon: Brain },
   { id: "about", tab: "rules", title: "About you", blurb: "Standing instructions that shape every reply.", to: "/about-you", icon: Brain },
   { id: "code", tab: "agents", title: "Code agents", blurb: "Rooks, Claude Code, or Codex in a folder.", to: "/code", icon: Code2 },

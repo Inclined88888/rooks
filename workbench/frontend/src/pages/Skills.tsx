@@ -1,6 +1,6 @@
 import { ArrowRight, Check, ExternalLink, Github, KeyRound, Lock, Puzzle, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, X } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api, stream } from "../api";
 import { Tracer } from "../Tracer";
 import { Empty, relTime, useToast } from "../util";
@@ -46,7 +46,7 @@ const RISK_COPY = { low: "Low risk", medium: "Medium risk", high: "High risk · 
 // ---------------------------------------------------------------------------------------------------- page
 export default function Skills() {
   const [params, setParams] = useSearchParams();
-  const tab = (params.get("tab") as "installed" | "add" | "activity") || "installed";
+  const tab = (params.get("tab") as "installed" | "store" | "add" | "activity") || "installed";
   const go = (t: string) => setParams(t === "installed" ? {} : { tab: t }, { replace: true });
   const [pending, setPending] = useState(0);
   useEffect(() => { api<PermRequest[]>("/hub/requests").then((r) => setPending(r.length)).catch(() => {}); }, [tab]);
@@ -59,14 +59,95 @@ export default function Skills() {
           <p className="muted">Teach me a new trick. I check anything you add before it can run.</p>
         </div>
         <div className="tabs" role="tablist">
-          {([["installed", "Installed"], ["add", "Add"], ["activity", pending ? `Activity · ${pending}` : "Activity"]] as const).map(([id, label]) => (
+          {([["installed", "Installed"], ["store", "Store"], ["add", "Add"], ["activity", pending ? `Activity · ${pending}` : "Activity"]] as const).map(([id, label]) => (
             <button key={id} role="tab" aria-selected={tab === id} className={`tab ${tab === id ? "active" : ""}`} onClick={() => go(id)}>{label}</button>
           ))}
         </div>
       </div>
-      {tab === "installed" && <Installed onAdd={() => go("add")} />}
+      {tab === "installed" && <Installed onAdd={() => go("store")} />}
+      {tab === "store" && <StoreTab onAdded={() => go("installed")} />}
       {tab === "add" && <AddFromGitHub onInstalled={() => go("installed")} />}
       {tab === "activity" && <ActivityTab onChange={setPending} />}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------- store
+type StoreSkill = { id: string; name: string; description: string; why: string; added: boolean; for_you: boolean };
+type StoreConnector = { id: string; name: string; blurb: string; to: string; on: boolean };
+
+function StoreTab({ onAdded }: { onAdded: () => void }) {
+  const toast = useToast();
+  const [, setParams] = useSearchParams();
+  const [data, setData] = useState<{ skills: StoreSkill[]; connectors: StoreConnector[] } | null>(null);
+  const load = () => api<{ skills: StoreSkill[]; connectors: StoreConnector[] }>("/skills/store").then(setData).catch(toast.err);
+  useEffect(() => { load(); }, []);
+  const add = async (id: string) => {
+    try {
+      await api(`/skills/store/${id}`, { method: "POST", body: {} });
+      toast.ok("Skill added");
+      await load();
+    } catch (e) { toast.err(e); }
+  };
+  if (!data) return <div className="card"><div className="skeleton" style={{ height: 14, width: "40%" }} /></div>;
+  const forYou = data.skills.filter((s) => s.for_you);
+  const show = forYou.length ? forYou : data.skills.slice(0, 3);
+  return (
+    <div className="col gap-lg">
+      <section className="col">
+        <h3 style={{ margin: 0 }}>For you</h3>
+        <p className="muted small">These follow how you already use this. Work mail brings administration skills forward.</p>
+        <div className="card flush">
+          {show.map((s) => (
+            <div key={s.id} className="sk-row">
+              <div className="row" style={{ alignItems: "flex-start" }}>
+                <div className="grow col" style={{ gap: 4 }}>
+                  <strong>{s.name}</strong>
+                  <div className="muted small">{s.description}</div>
+                  <div className="small faint">{s.why}</div>
+                </div>
+                {s.added
+                  ? <button className="btn sm" onClick={onAdded}>Added</button>
+                  : <button className="btn primary sm" onClick={() => add(s.id)}>Add</button>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="col">
+        <h3 style={{ margin: 0 }}>Connectors</h3>
+        <div className="card flush">
+          {data.connectors.map((c) => (
+            <Link key={c.id} to={c.to} className="sk-row row" style={{ textDecoration: "none" }}>
+              <span className="grow col" style={{ gap: 2 }}>
+                <strong>{c.name}</strong>
+                <span className="muted small">{c.blurb}</span>
+              </span>
+              <span className="small">{c.on ? "On" : "Connect"}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+      <section className="col">
+        <div className="row">
+          <h3 className="grow" style={{ margin: 0 }}>All skills</h3>
+          <button className="btn sm" onClick={() => setParams({ tab: "add" })}>Copy from a project</button>
+        </div>
+        <div className="card flush">
+          {data.skills.map((s) => (
+            <div key={s.id} className="sk-row row">
+              <span className="grow col" style={{ gap: 2 }}>
+                <strong>{s.name}</strong>
+                <span className="muted small">{s.description}</span>
+              </span>
+              {s.added
+                ? <span className="small muted">Added</span>
+                : <button className="btn sm" onClick={() => add(s.id)}>Add</button>}
+            </div>
+          ))}
+        </div>
+      </section>
+      {toast.node}
     </div>
   );
 }

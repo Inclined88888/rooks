@@ -158,14 +158,23 @@ def regenerate(cid: int):
 
 
 @router.get("/conversations")
-def conversations(channel: str | None = None, q: str = ""):
+def conversations(channel: str | None = None, q: str = "", archived: int = 0):
+    flag = 1 if archived else 0
     if q:
         hits = assistant.search_history(q, 30)
         ids = list(dict.fromkeys(h["conversation_id"] for h in hits))
-        return [db.one("SELECT * FROM conversations WHERE id = ?", i) for i in ids]
+        rows = [db.one("SELECT * FROM conversations WHERE id = ?", i) for i in ids]
+        return [r for r in rows if r and int(r.get("archived") or 0) == flag]
     if channel:
-        return db.all("SELECT * FROM conversations WHERE channel = ? ORDER BY updated_at DESC LIMIT 200", channel)
-    return db.all("SELECT * FROM conversations WHERE channel IN ('web', 'cli', 'mobile', 'telegram', 'schedule') ORDER BY updated_at DESC LIMIT 200")
+        return db.all(
+            "SELECT * FROM conversations WHERE channel = ? AND COALESCE(archived, 0) = ? ORDER BY updated_at DESC LIMIT 200",
+            channel, flag,
+        )
+    return db.all(
+        "SELECT * FROM conversations WHERE channel IN ('web', 'cli', 'mobile', 'telegram', 'schedule') "
+        "AND COALESCE(archived, 0) = ? ORDER BY updated_at DESC LIMIT 200",
+        flag,
+    )
 
 
 @router.get("/conversations/{cid}")
@@ -208,6 +217,7 @@ def conversation(cid: int):
 class ConvPatch(BaseModel):
     title: str | None = Field(None, max_length=120)
     model: str | None = None
+    archived: bool | None = None
 
 
 @router.patch("/conversations/{cid}")
@@ -216,6 +226,8 @@ def rename(cid: int, data: ConvPatch):
         db.run("UPDATE conversations SET title = ? WHERE id = ?", data.title.strip() or "Chat", cid)
     if data.model is not None:
         db.run("UPDATE conversations SET model = ? WHERE id = ?", data.model, cid)
+    if data.archived is not None:
+        db.run("UPDATE conversations SET archived = ? WHERE id = ?", int(data.archived), cid)
     return db.one("SELECT * FROM conversations WHERE id = ?", cid)
 
 
@@ -423,6 +435,20 @@ def edit_skill(sid: int, data: SkillIn):
 def delete_skill(sid: int):
     db.run("DELETE FROM skills WHERE id = ?", sid)
     return {"ok": True}
+
+
+@router.get("/skills/store")
+def skill_store():
+    from . import skill_store as store
+
+    return store.listing()
+
+
+@router.post("/skills/store/{skill_id}")
+def add_store_skill(skill_id: str):
+    from . import skill_store as store
+
+    return store.add(skill_id)
 
 
 @router.get("/assistant/main")
