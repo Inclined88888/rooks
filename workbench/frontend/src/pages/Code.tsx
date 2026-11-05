@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleStop, Code2, FolderOpen, Loader2, Play, RefreshCw, Send, Terminal, Trash2 } from "lucide-react";
+import { CheckCircle2, CircleStop, Code2, FolderOpen, Loader2, Plus, Send, Terminal, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
@@ -39,7 +39,7 @@ export function AgentSetup({ agent, onRecheck, checking }: { agent: CliAgent; on
           ? (agent.auth === "workspace" ? "Ready. Uses the models already connected here" : agent.auth === "subscription" ? "Ready, signed in with your plan" : "Ready, signed in with an API key")
           : agent.installed ? "Installed, not signed in" : "Not installed"}</strong>
         <button type="button" className="btn sm ghost" onClick={onRecheck} disabled={checking}>
-          {checking ? <Loader2 size={13} className="spin" /> : <RefreshCw size={13} />} Check again
+          {checking ? <Loader2 size={13} className="spin" /> : null} Check again
         </button>
       </div>
       {!agent.ready && agent.id === "rooks" && (
@@ -102,6 +102,7 @@ export default function Code() {
   });
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
+  const [composing, setComposing] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
   const [tick, setTick] = useState(0);
   const kickUntil = useRef(0); // keep polling briefly after an action while the job restarts
@@ -148,6 +149,7 @@ export default function Code() {
       localStorage.setItem("wb-code-form", JSON.stringify({ agent: form.agent, folder: form.folder, mode: form.mode }));
       const r = await api<Run>("/cli-agents/runs", { method: "POST", body: { agent: form.agent, task: form.task, folder: form.folder, mode: form.mode } });
       setForm({ ...form, task: "" });
+      setComposing(false);
       setRun(r);
       loadRuns();
       navigate(`/code/${r.id}`);
@@ -167,121 +169,141 @@ export default function Code() {
   };
 
   const ready = !!chosen?.ready;
-  return (
-    <div className="page wide code-page">
-      <div className="page-head">
-        <div>
-          <h1>Coding agent</h1>
-          <p className="muted">Rooks works in a project folder on this computer. It reads the code, changes files, and runs commands, and it asks you first. It uses the models you already connected. Claude Code and Codex are here too, if you already use them.</p>
-        </div>
-      </div>
+  const showComposer = composing || (!id && !run);
 
-      <form className="card col code-new" onSubmit={start}>
-        <div className="seg" role="radiogroup" aria-label="Agent">
-          {(agents || [{ id: "rooks", name: "Rooks" }, { id: "claude", name: "Claude Code" }, { id: "codex", name: "Codex" }] as CliAgent[]).map((a) => (
-            <button type="button" role="radio" aria-checked={form.agent === a.id} key={a.id} className={form.agent === a.id ? "on" : ""}
-              onClick={() => setForm({ ...form, agent: a.id })}>
-              {a.name}{a.ready && <span className="dot ok" aria-label="ready" />}
-            </button>
-          ))}
-        </div>
-        {chosen && !ready && <AgentSetup agent={chosen} onRecheck={() => detect(true)} checking={checking} />}
-        <textarea className="input" rows={3} value={form.task} onChange={(e) => setForm({ ...form, task: e.target.value })}
-          placeholder="What should it do? e.g. Add a dark mode toggle to the settings page and run the tests" />
-        <div className="row wrap">
-          <label className="input-icon grow" style={{ minWidth: 240 }}>
-            <FolderOpen size={15} />
-            <input className="input" value={form.folder} onChange={(e) => setForm({ ...form, folder: e.target.value })} placeholder="Project folder, e.g. ~/code/my-app" aria-label="Project folder" />
-          </label>
-          <select className="input" value={form.mode} onChange={(e) => setForm({ ...form, mode: e.target.value })} aria-label="Permissions" style={{ width: "auto" }}>
-            {MODES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
-          </select>
-          <button className="btn primary" disabled={!ready || busy || !form.task.trim() || !form.folder.trim()}>
-            {busy ? <Loader2 size={15} className="spin" /> : <Play size={15} />} Start
+  return (
+    <div className={`split code-mode ${id || run ? "has-selection" : ""}`}>
+      <div className="split-list chat-rail">
+        <div className="col chat-rail-head">
+          <button type="button" className="btn primary chat-new" onClick={() => { setComposing(true); navigate("/code"); }}>
+            <Plus size={15} /> New job
           </button>
         </div>
-        <div className="small faint">{form.agent === "rooks" && form.mode === "edits"
-          ? "Changes files and runs commands in this folder without asking. Only for a folder you trust."
-          : form.agent === "rooks" && form.mode === "plan"
-            ? "Reads the project and writes a plan. Changes nothing."
-            : MODES.find((m) => m.id === form.mode)?.hint} Only use folders you trust.</div>
-      </form>
-
-      <div className="code-layout">
-        <aside className="col code-list">
-          {runs.length > 0 && <div className="small faint list-label">Recent jobs</div>}
+        <div className="scroll">
+          {runs.length === 0 && <p className="small muted" style={{ padding: "12px 14px" }}>No jobs yet</p>}
           {runs.map((r) => (
-            <div key={r.id} className={`list-item ${r.id === id ? "active" : ""}`} onClick={() => navigate(`/code/${r.id}`)}>
+            <div key={r.id} className={`list-item chat-rail-item ${r.id === id ? "active" : ""}`} role="link" tabIndex={0}
+              onClick={() => { setComposing(false); navigate(`/code/${r.id}`); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { setComposing(false); navigate(`/code/${r.id}`); } }}>
               <div className="grow" style={{ minWidth: 0 }}>
                 <div className="truncate">{r.task}</div>
                 <div className="row small faint">{active(r.status) && <Loader2 size={11} className="spin" />}{STATUS[r.status] || r.status} · {r.agent_name} · {ago(r.created_at)}</div>
               </div>
-              <button className="btn ghost sm icon" aria-label="Delete job" onClick={(e) => { e.stopPropagation(); remove(r.id); }}><Trash2 size={13} /></button>
+              <button className="btn ghost sm icon chat-rail-del" aria-label="Delete job" onClick={(e) => { e.stopPropagation(); remove(r.id); }}><Trash2 size={13} /></button>
             </div>
           ))}
-        </aside>
+        </div>
+      </div>
 
-        <section className="col gap-lg" style={{ minWidth: 0 }}>
-          {!run && <Empty icon={<Code2 size={26} />} title={runs.length ? "Pick a job or start one" : "No jobs yet"} hint="Progress, approvals and the changes it made show up here." />}
-          {run && (
-            <>
-              <div className="card col">
-                <div className="row" style={{ alignItems: "flex-start" }}>
-                  <h2 className="grow">{run.task}</h2>
-                  {active(run.status) && <button className="btn sm" onClick={() => act("stop")}><CircleStop size={14} /> Stop</button>}
-                </div>
-                <div className="row small muted wrap">
-                  <span className={`badge ${run.status === "done" ? "ok" : run.status === "failed" ? "danger" : run.status === "needs_approval" ? "warn" : "accent"}`}>{STATUS[run.status] || run.status}</span>
-                  <span>{run.agent_name}{run.model ? ` · ${run.model}` : ""}</span>
-                  <span className="mono truncate">{run.folder}</span>
-                  {(run.tokens_in > 0 || run.tokens_out > 0) && <span>{(run.tokens_in + run.tokens_out).toLocaleString()} tokens</span>}
-                </div>
-                {run.error && <div className="alert err">{run.error}{/Not logged in|401|Unauthorized/.test(run.error) && run.agent !== "rooks" && <div className="small">Sign in again in a terminal with <code>{run.agent === "claude" ? "claude" : "codex login"}</code>, then retry.</div>}</div>}
+      <div className="split-main chat-main">
+        {showComposer && (
+          <>
+            <div className="toolbar chat-top">
+              <div className="toolbar-title">Code</div>
+            </div>
+            <div className="chat-scroll">
+              <div className="chat-hero code-hero">
+                <Code2 size={40} strokeWidth={1.5} className="faint" aria-hidden />
+                <h2 className="chat-hero-title">Work in a folder</h2>
+                <p className="chat-hero-sub">Pick an agent, point at a project, and say what to change. It asks before it edits or runs commands.</p>
               </div>
-
-              {run.pending.length > 0 && (
-                <div className="card col approval">
-                  <strong>{run.agent_name} wants to</strong>
-                  {run.pending.map((p) => (
-                    <details key={p.id} className="pending"><summary>{p.label}</summary>{p.input && <pre className="small">{p.input}</pre>}</details>
+              <form className="code-compose" onSubmit={start}>
+                <div className="seg" role="radiogroup" aria-label="Agent">
+                  {(agents || [{ id: "rooks", name: "Rooks" }, { id: "claude", name: "Claude Code" }, { id: "codex", name: "Codex" }] as CliAgent[]).map((a) => (
+                    <button type="button" role="radio" aria-checked={form.agent === a.id} key={a.id} className={form.agent === a.id ? "on" : ""}
+                      onClick={() => setForm({ ...form, agent: a.id })}>
+                      {a.name}{a.ready && <span className="dot ok" aria-label="ready" />}
+                    </button>
                   ))}
-                  <div className="row">
-                    <button className="btn primary sm" onClick={() => act("approve")}>Allow and continue</button>
-                    <button className="btn sm" onClick={() => act("deny")}>Don't allow</button>
+                </div>
+                {chosen && !ready && <AgentSetup agent={chosen} onRecheck={() => detect(true)} checking={checking} />}
+                <textarea className="input" rows={3} value={form.task} onChange={(e) => setForm({ ...form, task: e.target.value })}
+                  placeholder="What should it do? e.g. Add a dark mode toggle to the settings page and run the tests" />
+                <div className="row wrap">
+                  <label className="input-icon grow" style={{ minWidth: 240 }}>
+                    <FolderOpen size={15} />
+                    <input className="input" value={form.folder} onChange={(e) => setForm({ ...form, folder: e.target.value })} placeholder="Project folder, e.g. ~/code/my-app" aria-label="Project folder" />
+                  </label>
+                  <select className="input" value={form.mode} onChange={(e) => setForm({ ...form, mode: e.target.value })} aria-label="Permissions" style={{ width: "auto" }}>
+                    {MODES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                  </select>
+                  <button className="btn primary" disabled={!ready || busy || !form.task.trim() || !form.folder.trim()}>
+                    {busy ? <Loader2 size={15} className="spin" /> : <Send size={15} />} Start
+                  </button>
+                </div>
+                <div className="small faint">{form.agent === "rooks" && form.mode === "edits"
+                  ? "Changes files and runs commands in this folder without asking. Only for a folder you trust."
+                  : form.agent === "rooks" && form.mode === "plan"
+                    ? "Reads the project and writes a plan. Changes nothing."
+                    : MODES.find((m) => m.id === form.mode)?.hint} Only use folders you trust.</div>
+              </form>
+            </div>
+          </>
+        )}
+
+        {!showComposer && (
+          <>
+            <div className="toolbar chat-top">
+              <div className="toolbar-title truncate grow">{run?.task || "Code"}</div>
+              {run && active(run.status) && <button className="btn sm" onClick={() => act("stop")}><CircleStop size={14} /> Stop</button>}
+            </div>
+            <div className="chat-scroll code-run-scroll">
+              {!run && <Empty icon={<Code2 size={26} />} title={runs.length ? "Pick a job or start one" : "No jobs yet"} hint="Progress, approvals and the changes it made show up here." />}
+              {run && (
+                <div className="code-run col gap-lg">
+                  <div className="row small muted wrap">
+                    <span className={`badge ${run.status === "done" ? "ok" : run.status === "failed" ? "danger" : run.status === "needs_approval" ? "warn" : "accent"}`}>{STATUS[run.status] || run.status}</span>
+                    <span>{run.agent_name}{run.model ? ` · ${run.model}` : ""}</span>
+                    <span className="mono truncate">{run.folder}</span>
+                    {(run.tokens_in > 0 || run.tokens_out > 0) && <span>{(run.tokens_in + run.tokens_out).toLocaleString()} tokens</span>}
                   </div>
-                  <div className="small faint">{run.agent === "rooks" ? "Allowing lets this step go ahead. The next change asks again." : "Allowing lets it run exactly these steps for the rest of this job."}</div>
+                  {run.error && <div className="alert err">{run.error}{/Not logged in|401|Unauthorized/.test(run.error) && run.agent !== "rooks" && <div className="small">Sign in again in a terminal with <code>{run.agent === "claude" ? "claude" : "codex login"}</code>, then retry.</div>}</div>}
+
+                  {run.pending.length > 0 && (
+                    <div className="card col approval">
+                      <strong>{run.agent_name} wants to</strong>
+                      {run.pending.map((p) => (
+                        <details key={p.id} className="pending"><summary>{p.label}</summary>{p.input && <pre className="small">{p.input}</pre>}</details>
+                      ))}
+                      <div className="row">
+                        <button className="btn primary sm" onClick={() => act("approve")}>Allow and continue</button>
+                        <button className="btn sm" onClick={() => act("deny")}>Don't allow</button>
+                      </div>
+                      <div className="small faint">{run.agent === "rooks" ? "Allowing lets this step go ahead. The next change asks again." : "Allowing lets it run exactly these steps for the rest of this job."}</div>
+                    </div>
+                  )}
+
+                  <div className="col events">
+                    {run.events.map((e, i) => <EventRow key={i} e={e} />)}
+                    {active(run.status) && <div className="row small muted"><Loader2 size={13} className="spin" /> Working…</div>}
+                    <div ref={bottom} />
+                  </div>
+
+                  {run.result && !active(run.status) && run.result.trim() !== [...run.events].reverse().find((e) => e.kind === "text")?.text?.trim() && (
+                    <div className="col">
+                      <h3>Result</h3>
+                      <Markdown text={run.result} />
+                    </div>
+                  )}
+
+                  {run.files.length > 0 && (
+                    <div className="col">
+                      <h3>Changes <span className="faint small">{run.files.length} file{run.files.length === 1 ? "" : "s"}</span></h3>
+                      {run.diff ? <DiffView diff={run.diff} /> : <div className="small muted">{run.files.join(", ")}</div>}
+                    </div>
+                  )}
+
+                  {!active(run.status) && run.session && run.status !== "needs_approval" && (
+                    <form className="row" onSubmit={(e) => { e.preventDefault(); if (reply.trim()) { act("message", { text: reply }); setReply(""); } }}>
+                      <input className="input grow" value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Ask for a follow-up in the same session" />
+                      <button className="btn" disabled={!reply.trim()}><Send size={14} /> Send</button>
+                    </form>
+                  )}
                 </div>
               )}
-
-              <div className="card col events">
-                {run.events.map((e, i) => <EventRow key={i} e={e} />)}
-                {active(run.status) && <div className="row small muted"><Loader2 size={13} className="spin" /> Working…</div>}
-                <div ref={bottom} />
-              </div>
-
-              {run.result && !active(run.status) && run.result.trim() !== [...run.events].reverse().find((e) => e.kind === "text")?.text?.trim() && (
-                <div className="card col">
-                  <h3>Result</h3>
-                  <Markdown text={run.result} />
-                </div>
-              )}
-
-              {run.files.length > 0 && (
-                <div className="card col">
-                  <h3>Changes <span className="faint small">{run.files.length} file{run.files.length === 1 ? "" : "s"}</span></h3>
-                  {run.diff ? <DiffView diff={run.diff} /> : <div className="small muted">{run.files.join(", ")}</div>}
-                </div>
-              )}
-
-              {!active(run.status) && run.session && run.status !== "needs_approval" && (
-                <form className="row" onSubmit={(e) => { e.preventDefault(); if (reply.trim()) { act("message", { text: reply }); setReply(""); } }}>
-                  <input className="input grow" value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Ask for a follow-up in the same session" />
-                  <button className="btn" disabled={!reply.trim()}><Send size={14} /> Send</button>
-                </form>
-              )}
-            </>
-          )}
-        </section>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

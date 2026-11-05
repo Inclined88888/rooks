@@ -1,5 +1,5 @@
 import {
-  Activity, Gauge, Bot, Brain, Building2, CalendarClock, CalendarDays, ChevronRight, MessageSquare, CheckSquare, Globe, Columns3, ExternalLink, FileText, Home, Info, LogOut, Mail, Menu, NotebookPen, Pin, PinOff, Shield,
+  Activity, Gauge, Bot, Brain, Building2, CalendarClock, CalendarDays, MessageSquare, CheckSquare, Globe, Columns3, ExternalLink, FileText, Home, Info, LogOut, Mail, Menu, NotebookPen, Shield,
   Code2, FolderOpen, Globe2, GraduationCap, ListTree, Monitor, Palette as PaletteIcon, Plug, Sparkles, Puzzle, Search, Settings as SettingsIcon,
   Layers, // feat/v02-automations
   AudioLines, Users, // feat/v02-anywhere-voice
@@ -9,7 +9,6 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react
 import { CommandPalette } from "./Palette";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
-import { movePage, pinPage, readSidebar, sidebarKey, unpinPage } from "./navOrder";
 import { EdgeGlow, transitionClick } from "./motion";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -66,6 +65,7 @@ const Vault = lazy(() => import("./teammates/Vault"));
 const PagesLib = lazy(() => import("./teammates/Pages"));
 const Channels = lazy(() => import("./teammates/Channels"));
 const TerminalPage = lazy(() => import("./pages/TerminalPage"));
+const Connect = lazy(() => import("./pages/Connect"));
 
 export type Status = {
   setup_complete: boolean;
@@ -92,12 +92,15 @@ type NavItem = { to: string; label: string; icon: typeof Home; addon?: "browser"
 type NavGroup = { section?: string; collapsible?: boolean; items: NavItem[] };
 
 /**
- * Chat is the product. Everything else lives under Workspace, Settings or Advanced (Search finds any page).
- * Every page keeps its route.
+ * Chat and Code are the two product modes on the icon rail.
+ * Connect is the hub for skills, models, mail and tools.
+ * Everything else stays reachable from More / Search.
  */
 const NAV: NavGroup[] = [
   { items: [
     { to: "/assistant", label: "Chat", icon: MessageSquare },
+    { to: "/code", label: "Code", icon: Code2 },
+    { to: "/connect", label: "Connect", icon: Plug },
   ] },
   { section: "Workspace", collapsible: true, items: [
     { to: "/home", label: "Home", icon: Home },
@@ -109,7 +112,6 @@ const NAV: NavGroup[] = [
     { to: "/automations", label: "Automations", icon: CalendarClock },
     { to: "/browser", label: "Browser", icon: Globe, addon: "browser" },
     { to: "/computer", label: "Computer", icon: Monitor, addon: "desk" },
-    { to: "/code", label: "Coding", icon: Code2 },
     { to: "/terminal", label: "Terminal", icon: SquareTerminal },
     { to: "/teach", label: "Show me how", icon: GraduationCap },
     { to: "/knowledge", label: "Memory", icon: Brain },
@@ -145,44 +147,15 @@ const NAV: NavGroup[] = [
     { to: "/fine-tune", label: "Fine-tune", icon: FlaskConical },
     { to: "/company", label: "Company", icon: Building2 },
     { to: "/status", label: "System status", icon: Activity },
-    { to: "/mcp", label: "MCP servers", icon: Plug },
+    { to: "/mcp", label: "Extra tools", icon: Plug },
   ] },
 ];
 
-const foldKey = (section: string) => `wb-nav3-${section.toLowerCase()}`;
-const KNOWN_PAGES = NAV.flatMap((g) => g.items.map((i) => i.to));
-
-function NavRow({ item, pinned, onPin, onUnpin, onDrop }: {
-  item: NavItem;
-  pinned?: boolean;
-  onPin?: () => void;
-  onUnpin?: () => void;
-  onDrop?: (from: string) => void;
-}) {
-  const navigate = useNavigate();
-  return (
-    <div
-      className="nav-row"
-      draggable={!!pinned}
-      onDragStart={pinned ? (e) => { e.dataTransfer.setData("text/plain", item.to); e.dataTransfer.effectAllowed = "move"; } : undefined}
-      onDragOver={pinned ? (e) => { e.preventDefault(); } : undefined}
-      onDrop={pinned ? (e) => { e.preventDefault(); const from = e.dataTransfer.getData("text/plain"); if (from && from !== item.to) onDrop?.(from); } : undefined}
-    >
-      <NavLink to={item.to} end={item.to === "/"} className="nav-link" onClick={transitionClick(() => navigate(item.to))}>
-        {({ isActive }) => <>{isActive && <span className="nav-ind" aria-hidden="true" />}<item.icon size={16} /> <span className="truncate">{item.label}</span></>}
-      </NavLink>
-      <button
-        type="button"
-        className="nav-pin"
-        aria-label={pinned ? `Unpin ${item.label}` : `Pin ${item.label}`}
-        title={pinned ? "Take off the sidebar" : "Keep on the sidebar"}
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); (pinned ? onUnpin : onPin)?.(); }}
-      >
-        {pinned ? <PinOff size={13} /> : <Pin size={13} />}
-      </button>
-    </div>
-  );
-}
+const RAIL: { to: string; label: string; icon: typeof MessageSquare; match?: (path: string) => boolean }[] = [
+  { to: "/assistant", label: "Chat", icon: MessageSquare, match: (p) => p === "/assistant" || p.startsWith("/assistant/") },
+  { to: "/code", label: "Code", icon: Code2, match: (p) => p === "/code" || p.startsWith("/code/") },
+  { to: "/connect", label: "Connect", icon: Plug, match: (p) => p === "/connect" },
+];
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 export const MOD_KEY = isMac ? "⌘" : "Ctrl";
@@ -207,6 +180,23 @@ function DeskGlow({ enabled }: { enabled: boolean }) {
 
 function Boot() {
   return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">Rooks</div></div>;
+}
+
+function RailBtn({ to, label, icon: Icon, active, onNavigate }: {
+  to: string; label: string; icon: typeof MessageSquare; active: boolean; onNavigate: () => void;
+}) {
+  return (
+    <NavLink
+      to={to}
+      className={`rail-btn${active ? " active" : ""}`}
+      aria-label={label}
+      title={label}
+      onClick={transitionClick(onNavigate)}
+    >
+      <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
+      <span className="rail-label">{label}</span>
+    </NavLink>
+  );
 }
 
 export default function App() {
@@ -249,29 +239,16 @@ export default function App() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  // Folded groups (More, Settings, Advanced): remembered per group, and always open while you're on one of their pages
-  const [folds, setFolds] = useState<Record<string, boolean>>(() => Object.fromEntries(
-    NAV.filter((g) => g.collapsible && g.section).map((g) => [g.section as string, localStorage.getItem(foldKey(g.section as string)) === "1"])));
+
   const nav = useMemo(
     () => NAV.map((g) => ({ ...g, items: g.items.filter((i) => !i.addon || (i.addon === "browser" && status?.browser_enabled) || (i.addon === "desk" && status?.desk_enabled)) })),
     [status?.browser_enabled, status?.desk_enabled],
   );
-  const [side, setSide] = useState<string[]>(() => readSidebar(localStorage.getItem(sidebarKey()), KNOWN_PAGES));
-  const writeSide = (next: string[]) => {
-    setSide(next);
-    localStorage.setItem(sidebarKey(), JSON.stringify(next));
-  };
-  const pinnedItems = side.map((p) => nav.flatMap((g) => g.items).find((i) => i.to === p)).filter((i): i is NavItem => !!i);
-  const pinnedSet = new Set(pinnedItems.map((i) => i.to));
   const palettePages = useMemo(
     () => [...nav.flatMap((g) => g.items.map((i) => ({ to: i.to, label: i.label, icon: i.icon })))],
     [nav],
   );
-  const toggleFold = (name: string) => setFolds((f) => {
-    const open = !f[name];
-    localStorage.setItem(foldKey(name), open ? "1" : "0");
-    return { ...f, [name]: open };
-  });
+
   if (error) return <div className="auth"><div className="card auth-card col"><div className="alert err" role="alert">Cannot reach Workbench: {error}</div><button className="btn" onClick={refresh}>Try again</button></div></div>;
   if (!status) return <Boot />;
   if (!status.setup_complete || !status.signed_in) {
@@ -297,48 +274,109 @@ export default function App() {
     refresh();
   };
 
+  const path = location.pathname;
+  const moreActive = !RAIL.some((r) => r.match?.(path) || path === r.to || path.startsWith(r.to + "/"))
+    && path !== "/settings" && !path.startsWith("/settings/");
+
   return (
-    <div className="shell">
-      <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
-        <Link to="/assistant" className="brand" style={{ textDecoration: "none", color: "inherit" }}>
-          <span className="wordmark truncate">{status.workspace_name}</span>
+    <div className="shell shell-rail">
+      <nav className="icon-rail" aria-label="Main">
+        <Link to="/assistant" className="rail-brand" title={status.workspace_name} aria-label={status.workspace_name}>
+          <span className="rail-mark" aria-hidden>R</span>
         </Link>
-        <button type="button" className="sidebar-search" onClick={() => setPaletteOpen(true)} aria-keyshortcuts="Meta+K Control+K">
-          <Search size={14} /> <span>Search</span> <span className="kbd">{MOD_KEY} K</span>
-        </button>
-        {pinnedItems.map((item) => (
-          <NavRow key={item.to} item={item} pinned onUnpin={() => writeSide(unpinPage(side, item.to))} onDrop={(from) => writeSide(movePage(side, from, item.to))} />
-        ))}
-        {nav.filter((g) => g.section).map((g, gi) => {
-          const items = g.items.filter((i) => !pinnedSet.has(i.to));
-          const extras = g.section === "Advanced" && (status.chat_url || status.paperclip_url || status.hermes_url);
-          if (!items.length && !extras) return null;
-          const open = !!folds[g.section ?? ""] || items.some((i) => location.pathname === i.to || location.pathname.startsWith(i.to + "/"));
-          return (
-            <div key={g.section ?? gi} className="nav-group">
-              <button type="button" className="nav-section nav-toggle" aria-expanded={open} onClick={() => toggleFold(g.section ?? "")}>
-                <span className="grow">{g.section}</span><ChevronRight size={12} className="chev" />
-              </button>
-              {open && items.map((item) => (
-                <NavRow key={item.to} item={item} onPin={() => writeSide(pinPage(side, item.to, KNOWN_PAGES))} />
-              ))}
-              {open && g.section === "Advanced" && (
-                <>
-                  {status.chat_url && <a className="nav-link" href={status.chat_url} target="_blank" rel="noreferrer"><MessageSquare size={16} /> Open WebUI <ExternalLink size={12} style={{ marginLeft: "auto" }} /></a>}
-                  {status.paperclip_url && <a className="nav-link" href={status.paperclip_url} target="_blank" rel="noreferrer"><Building2 size={16} /> Paperclip <ExternalLink size={12} style={{ marginLeft: "auto" }} /></a>}
-                  {status.hermes_url && <a className="nav-link" href={status.hermes_url} target="_blank" rel="noreferrer"><Bot size={16} /> Hermes agent <ExternalLink size={12} style={{ marginLeft: "auto" }} /></a>}
-                </>
-              )}
-            </div>
-          );
-        })}
-        <div className="spacer" />
-        <div className="sidebar-foot">
-          <div className="spacer" />
-          {!status.desktop && <button className="btn ghost sm" onClick={logout}><LogOut size={14} /> Sign out</button>}
+        <div className="rail-modes">
+          {RAIL.map((r) => (
+            <RailBtn
+              key={r.to}
+              to={r.to}
+              label={r.label}
+              icon={r.icon}
+              active={!!(r.match?.(path) || path === r.to)}
+              onNavigate={() => navigate(r.to)}
+            />
+          ))}
         </div>
-      </aside>
-      {menuOpen && <div className="modal-back" style={{ zIndex: 35 }} onClick={() => setMenuOpen(false)} />}
+        <div className="rail-spacer" />
+        <button
+          type="button"
+          className="rail-btn"
+          aria-label="Search"
+          title={`Search (${MOD_KEY}K)`}
+          onClick={() => setPaletteOpen(true)}
+        >
+          <Search size={20} strokeWidth={1.8} />
+          <span className="rail-label">Search</span>
+        </button>
+        <button
+          type="button"
+          className={`rail-btn${menuOpen || moreActive ? " active" : ""}`}
+          aria-label="More"
+          aria-expanded={menuOpen}
+          title="More"
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          <Menu size={20} strokeWidth={menuOpen || moreActive ? 2.2 : 1.8} />
+          <span className="rail-label">More</span>
+        </button>
+        <RailBtn
+          to="/settings"
+          label="Settings"
+          icon={SettingsIcon}
+          active={path === "/settings" || path.startsWith("/settings/")}
+          onNavigate={() => navigate("/settings")}
+        />
+        {!status.desktop && (
+          <button type="button" className="rail-btn" aria-label="Sign out" title="Sign out" onClick={logout}>
+            <LogOut size={18} strokeWidth={1.8} />
+            <span className="rail-label">Out</span>
+          </button>
+        )}
+      </nav>
+
+      {menuOpen && (
+        <>
+          <div className="modal-back rail-scrim" onClick={() => setMenuOpen(false)} />
+          <aside className="more-drawer" aria-label="More pages">
+            <div className="more-head">
+              <strong className="truncate">{status.workspace_name}</strong>
+              <button type="button" className="btn ghost sm" onClick={() => setPaletteOpen(true)}>
+                <Search size={14} /> Search <span className="kbd">{MOD_KEY}K</span>
+              </button>
+            </div>
+            <div className="more-scroll">
+              {nav.filter((g) => g.section).map((g, gi) => {
+                const items = g.items.filter((i) => !RAIL.some((r) => r.to === i.to));
+                const extras = g.section === "Advanced" && (status.chat_url || status.paperclip_url || status.hermes_url);
+                if (!items.length && !extras) return null;
+                return (
+                  <div key={g.section ?? gi} className="more-group">
+                    <div className="more-section">{g.section}</div>
+                    {items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        className="more-link"
+                        onClick={transitionClick(() => navigate(item.to))}
+                      >
+                        <item.icon size={16} />
+                        <span className="truncate">{item.label}</span>
+                      </NavLink>
+                    ))}
+                    {g.section === "Advanced" && (
+                      <>
+                        {status.chat_url && <a className="more-link" href={status.chat_url} target="_blank" rel="noreferrer"><MessageSquare size={16} /> Open WebUI <ExternalLink size={12} style={{ marginLeft: "auto" }} /></a>}
+                        {status.paperclip_url && <a className="more-link" href={status.paperclip_url} target="_blank" rel="noreferrer"><Building2 size={16} /> Paperclip <ExternalLink size={12} style={{ marginLeft: "auto" }} /></a>}
+                        {status.hermes_url && <a className="more-link" href={status.hermes_url} target="_blank" rel="noreferrer"><Bot size={16} /> Hermes agent <ExternalLink size={12} style={{ marginLeft: "auto" }} /></a>}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
+        </>
+      )}
+
       <main className="main">
         <div className="mobile-bar">
           <button className="btn ghost icon" onClick={() => setMenuOpen(true)} aria-label="Open menu" aria-expanded={menuOpen}><Menu size={18} /></button>
@@ -350,6 +388,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/assistant" replace />} />
           <Route path="/home" element={<Dashboard />} />
+          <Route path="/connect" element={<Connect />} />
           <Route path="/assistant" element={<Assistant tab="chat" />} />
           <Route path="/assistant/:id" element={<Assistant tab="chat" />} />
           <Route path="/assistant-memory" element={<Assistant tab="memory" />} />

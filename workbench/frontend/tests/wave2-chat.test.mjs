@@ -22,11 +22,12 @@ test("Chat has modes, an approval strip, and a diff", () => {
   assert.match(chat, /DiffView/);
 });
 
-test("Show me how sits in the top group beside Chat", () => {
-  const top = app.slice(app.indexOf("const NAV"), app.indexOf("section: \"More\""));
-  assert.match(top, /label: "Chat"/);
-  assert.match(top, /label: "Show me how"/);
-  assert.ok(top.indexOf('label: "Chat"') < top.indexOf('label: "Show me how"'));
+test("Chat and Code are the rail modes; Show me how stays in Workspace", () => {
+  assert.match(app, /to: "\/assistant", label: "Chat"/);
+  assert.match(app, /to: "\/code", label: "Code"/);
+  assert.match(app, /to: "\/connect", label: "Connect"/);
+  assert.match(app, /label: "Show me how"/);
+  assert.ok(app.indexOf('label: "Chat"') < app.indexOf('label: "Show me how"'));
 });
 
 test("Research can look a report up in the browser and stay on the report", () => {

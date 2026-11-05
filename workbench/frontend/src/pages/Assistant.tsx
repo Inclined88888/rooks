@@ -648,11 +648,17 @@ function Chat() {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <div className="composer-bar">
               <AttachButton onFiles={att.add} disabled={busy} />
-              <select className="input" aria-label="Mode" value={workMode} onChange={(e) => chooseMode(e.target.value as "chat" | "plan" | "build")}>
-                <option value="chat">Chat</option>
-                <option value="plan">Plan</option>
-                <option value="build">Build</option>
-              </select>
+              <div className="tabs mode-tabs" role="group" aria-label="Mode" title="Chat is for the day. Code is for changing a project, and it asks before it changes files.">
+                <button type="button" className={`tab ${workMode === "chat" ? "active" : ""}`} onClick={() => chooseMode("chat")}>Chat</button>
+                <button type="button" className={`tab ${workMode !== "chat" ? "active" : ""}`} onClick={() => { if (workMode === "chat") chooseMode(codeDepth.current); }}>Code</button>
+              </div>
+              {workMode !== "chat" && (
+                <div className="tabs mode-tabs" role="group" aria-label="Code">
+                  <button type="button" className={`tab ${workMode === "plan" ? "active" : ""}`} onClick={() => chooseMode("plan")}>Plan</button>
+                  <button type="button" className={`tab ${workMode === "build" ? "active" : ""}`} onClick={() => chooseMode("build")}>Build</button>
+                </div>
+              )}
+              <span className="sr-only">Chat is for the day. Code is for changing a project, and it asks before it changes files.</span>
               <ModelSelect value={model} onChange={setModel} models={models} />
               {isPlan && <EffortSelect value={effort} onChange={setEffort} />}
               <div className="spacer" />
