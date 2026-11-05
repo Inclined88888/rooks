@@ -56,6 +56,9 @@ step "Rooks Code (rooks-code)"
 (cd desktop/scripts && "$PY" -m pytest -q -p no:cacheprovider test_make_latest_json.py) && ok "desktop-scripts" || bad "desktop-scripts"
 (cd rooks-code && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore tests) && ok "rooks" || bad "rooks"
 
+step "Try Room (rooks-try)"
+(cd rooks-try && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore tests) && ok "try-room" || bad "try-room"
+
 if ! $QUICK; then
   step "Frontend (workbench/frontend: typecheck, build, tests)"
   (cd workbench/frontend && { [[ -d node_modules ]] || npm ci --silent; } && npm run build --silent >/dev/null && npm test 2>&1 | tail -3) \

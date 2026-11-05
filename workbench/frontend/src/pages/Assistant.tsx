@@ -14,6 +14,7 @@ import { Att, AttachButton, filesFrom, MessageAttachments, PendingChips, useAtta
 import { DiffView, extractDiffFromArgs } from "../components/DiffView";
 import { plainStep } from "../plainStep";
 import { AssistantFace, Mood, noticedYou } from "../AssistantFace";
+import { TryRoomButton } from "../TryRoom";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
 type Choices = { question: string; options: string[] };
@@ -430,7 +431,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     <div className={`split ${cid !== null ? "has-selection" : ""}`}>
       <div className="split-list">
         <div className="col" style={{ padding: "14px 12px 10px", gap: 10 }}>
-          <div className="row"><h2 className="grow">Chats</h2><button className="btn primary sm" onClick={() => navigate("/assistant", { state: { fresh: true } })}><Plus size={14} /> New</button></div>
+          <div className="row"><h2 className="grow">Chats</h2><button className="btn primary sm" style={{ fontWeight: 600 }} onClick={() => navigate("/assistant", { state: { fresh: true } })}><Plus size={14} /> New chat</button></div>
           <div className="row" style={{ position: "relative" }}>
             <Search size={14} className="faint" style={{ position: "absolute", left: 10 }} aria-hidden="true" />
             <input className="input" style={{ paddingLeft: 30, height: 32 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search conversations" aria-label="Search conversations" />
@@ -452,12 +453,13 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
         </div>
       </div>
       <div className="split-main">
-        <div className="toolbar">
+        <div className="toolbar" style={{ position: "relative" }}>
           <button className="btn ghost sm mobile-only" onClick={() => navigate("/assistant", { state: { list: true } })} aria-label="Back to chats"><ArrowLeft size={14} /></button>
           <AssistantFace mood={mood} name={who} size={36} pleasedAt={pleasedAt} />
           <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat")}</div>
           <div className="spacer" />
           <button type="button" className={`btn ghost sm${showRoutines ? " primary" : ""}`} aria-expanded={showRoutines} onClick={() => { setShowRoutines((v) => !v); setRoutines(null); }}>Routines</button>
+          <TryRoomButton />
           <ProjectSwitcher cid={cid} /><CheckToggle cid={cid} />{/* feat/v02-core */}
           {cid ? (
             <button className="btn ghost sm" title="Continue this chat in the rooks terminal" aria-label="Continue in terminal"
