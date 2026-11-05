@@ -43,7 +43,7 @@ export default function McpServers() {
     refresh();
   };
   const remove = async (s: Server) => {
-    if (!confirm(`Remove the MCP server "${s.name}"? Its tools leave the assistant right away.`)) return;
+    if (!confirm(`Remove "${s.name}"? Its tools leave the assistant right away.`)) return;
     await api(`/mcp/servers/${s.id}`, { method: "DELETE" });
     toast.ok(`Removed ${s.name}.`);
     refresh();
@@ -64,15 +64,14 @@ export default function McpServers() {
     <div className="page" style={{ maxWidth: 900 }}>
       <div className="page-head">
         <div className="grow">
-          <p className="kicker">Agents</p>
-          <h1>MCP servers</h1>
+          <p className="kicker">Tools</p>
+          <h1>Extra tools</h1>
           <p className="muted">
-            Connect the assistant to tools that speak MCP. Their tools appear as <code>mcp__server__tool</code>;
-            everything they answer is treated as untrusted content, and actions that leave the app after it still
-            wait for your approval.
+            Connect outside tools the assistant can use. Everything they answer is treated as untrusted,
+            and actions that leave this computer still wait for your approval.
           </p>
         </div>
-        <button className="btn" onClick={() => setAdding("custom")}><Plug size={14} /> Add a server</button>
+        <button className="btn" onClick={() => setAdding("custom")}><Plug size={14} /> Add a tool</button>
       </div>
 
       {adding && (
@@ -84,7 +83,7 @@ export default function McpServers() {
       )}
 
       {servers === null ? <p className="muted">Loading…</p> : servers.length === 0 && !adding ? (
-        <Empty icon={<Plug size={22} />} title="No MCP servers yet"
+        <Empty icon={<Plug size={22} />} title="No extra tools yet"
                hint="Pick one from the catalogue below, or add any server with its command or URL." />
       ) : (
         <div className="col" style={{ gap: 10 }}>
@@ -198,7 +197,7 @@ function AddForm({ entry, onDone, onCancel }: { entry: CatalogueEntry | null; on
 
   return (
     <form className="card" onSubmit={submit} style={{ marginBottom: 16 }}>
-      <h3 style={{ marginTop: 0 }}>{entry ? `Add ${entry.name}` : "Add an MCP server"}</h3>
+      <h3 style={{ marginTop: 0 }}>{entry ? `Add ${entry.name}` : "Add a tool"}</h3>
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <label className="field">Name
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="my-server" required

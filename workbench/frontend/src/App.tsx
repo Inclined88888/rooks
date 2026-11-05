@@ -65,7 +65,7 @@ const Vault = lazy(() => import("./teammates/Vault"));
 const PagesLib = lazy(() => import("./teammates/Pages"));
 const Channels = lazy(() => import("./teammates/Channels"));
 const TerminalPage = lazy(() => import("./pages/TerminalPage"));
-const Connect = lazy(() => import("./pages/Connect"));
+const Customize = lazy(() => import("./pages/Customize"));
 
 export type Status = {
   setup_complete: boolean;
@@ -92,15 +92,14 @@ type NavItem = { to: string; label: string; icon: typeof Home; addon?: "browser"
 type NavGroup = { section?: string; collapsible?: boolean; items: NavItem[] };
 
 /**
- * Chat and Code are the two product modes on the icon rail.
- * Connect is the hub for skills, models, mail and tools.
- * Everything else stays reachable from More / Search.
+ * Cursor-shaped shell: Chat (+ Claude-style Code) on the rail.
+ * Customize is Cursor's apps/tools/skills hub. Settings matches Cursor's left-nav settings.
  */
 const NAV: NavGroup[] = [
   { items: [
     { to: "/assistant", label: "Chat", icon: MessageSquare },
     { to: "/code", label: "Code", icon: Code2 },
-    { to: "/connect", label: "Connect", icon: Plug },
+    { to: "/customize", label: "Customize", icon: Puzzle },
   ] },
   { section: "Workspace", collapsible: true, items: [
     { to: "/home", label: "Home", icon: Home },
@@ -154,7 +153,7 @@ const NAV: NavGroup[] = [
 const RAIL: { to: string; label: string; icon: typeof MessageSquare; match?: (path: string) => boolean }[] = [
   { to: "/assistant", label: "Chat", icon: MessageSquare, match: (p) => p === "/assistant" || p.startsWith("/assistant/") },
   { to: "/code", label: "Code", icon: Code2, match: (p) => p === "/code" || p.startsWith("/code/") },
-  { to: "/connect", label: "Connect", icon: Plug, match: (p) => p === "/connect" },
+  { to: "/customize", label: "Customize", icon: Puzzle, match: (p) => p === "/customize" || p.startsWith("/customize") || p === "/connect" },
 ];
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -388,7 +387,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/assistant" replace />} />
           <Route path="/home" element={<Dashboard />} />
-          <Route path="/connect" element={<Connect />} />
+          <Route path="/customize" element={<Customize />} />
+          <Route path="/connect" element={<Navigate to="/customize" replace />} />
           <Route path="/assistant" element={<Assistant tab="chat" />} />
           <Route path="/assistant/:id" element={<Assistant tab="chat" />} />
           <Route path="/assistant-memory" element={<Assistant tab="memory" />} />

@@ -22,10 +22,10 @@ test("Chat has modes, an approval strip, and a diff", () => {
   assert.match(chat, /DiffView/);
 });
 
-test("Chat and Code are the rail modes; Show me how stays in Workspace", () => {
+test("Chat and Code are the rail modes; Customize is the Cursor hub", () => {
   assert.match(app, /to: "\/assistant", label: "Chat"/);
   assert.match(app, /to: "\/code", label: "Code"/);
-  assert.match(app, /to: "\/connect", label: "Connect"/);
+  assert.match(app, /to: "\/customize", label: "Customize"/);
   assert.match(app, /label: "Show me how"/);
   assert.ok(app.indexOf('label: "Chat"') < app.indexOf('label: "Show me how"'));
 });
