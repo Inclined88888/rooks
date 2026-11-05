@@ -161,6 +161,10 @@ def notice(jid: int, kind: str, title: str, body: str = "") -> int:
     from . import push
 
     push.notify(title, body or "Open the Jobs board", kind="job", id=jid)  # no-op unless phone push is on
+    if kind in ("needs_you", "finished", "failed"):
+        from . import front_door
+
+        front_door.ping(title + (f"\n\n{body}" if body else ""))
     return nid
 
 

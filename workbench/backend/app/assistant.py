@@ -78,6 +78,7 @@ class Ctx:
     blocked_calls: set[str] = field(default_factory=set)  # signatures blocked after REPEAT_LIMIT identical failures
     blocked_hits: int = 0              # attempts to run a blocked call; the second one ends the turn
     work_mode: str = "chat"            # chat | plan | build — same names as the terminal
+    live: object = None                # queue of watch events a long tool can publish while it runs
 
     def trace(self) -> dict:
         return {"channel": self.channel, "conversation_id": self.conversation_id,
@@ -160,6 +161,24 @@ def wants_the_computer(text: str) -> bool:
     return bool(_COMPUTER.search(text or ""))
 
 
+def _card_event(name: str, result, arguments) -> dict | None:
+    from . import front_door
+
+    card = front_door.card_from(name, result, arguments)
+    return {"type": "card", **card} if card else None
+
+
+def _publish_watch(ctx: "Ctx | None", surface: str, job_id, goal: str) -> None:
+    """Let the chat show the live screen as soon as a browser or computer job exists."""
+    live = getattr(ctx, "live", None) if ctx is not None else None
+    if live is None or job_id in (None, ""):
+        return
+    try:
+        live.put_nowait({"type": "watch", "surface": surface, "job_id": str(job_id), "goal": (goal or "")[:200]})
+    except Exception:  # noqa: BLE001 - a missing queue must not fail the job
+        return
+
+
 async def _browse(goal: str, max_steps: int = 15, ctx: "Ctx | None" = None) -> dict:
     from . import local_agents
 
@@ -174,6 +193,7 @@ async def _browse(goal: str, max_steps: int = 15, ctx: "Ctx | None" = None) -> d
         if r.status_code >= 400:
             raise HTTPException(r.status_code, r.json().get("detail", r.text))
         jid = r.json()["id"]
+        _publish_watch(ctx, "browser", jid, goal)
         for _ in range(int(TOOL_TIMEOUT_S / 3)):
             await asyncio.sleep(3)
             j = (await c.get(f"{config.BROWSER_URL}/api/jobs/{jid}", headers=h)).json()
@@ -188,6 +208,7 @@ async def _browse(goal: str, max_steps: int = 15, ctx: "Ctx | None" = None) -> d
                     "agent_claims_success": res.get("success"),
                     "urls": urls,
                     "error": j.get("error"),
+                    "job_id": jid,
                     "page_context": {
                         "last_url": urls[-1] if urls else None,
                         "visited": urls,
@@ -211,6 +232,7 @@ async def _use_computer(goal: str, max_steps: int = 30, dry_run: bool = False, c
     job = {"goal": goal, "max_steps": max_steps, "dry_run": bool(dry_run), "provider": "workbench",
            "model": (ctx.model if ctx else "") or "default", "source": "assistant"}
     jid = (await desk_proxy.call("POST", "/api/jobs", json=job)).json()["id"]
+    _publish_watch(ctx, "computer", jid, goal)
     told = False
     for _ in range(int(TOOL_TIMEOUT_S / 3) - 3):  # answer before the tool timeout cuts us off
         await asyncio.sleep(3)
@@ -854,7 +876,10 @@ def system_prompt(ctx: Ctx, user_text: str) -> str:
         parts.append(
             "When you need the user to pick one of a few options, call offer_choices with a short question and "
             "2 to 6 options separated by ' | '. The app shows those as buttons under your reply. Do not also list "
-            "the options in your message. A numbered or bulleted list in the reply is not a choice card."
+            "the options in your message. A numbered or bulleted list in the reply is not a choice card. "
+            "One-off jobs you do with tools, and the reply should say what is now true. "
+            "Standing instructions (always, every morning, whenever) are saved for the user before you see them, "
+            "so do not create a second schedule for a request that was already saved."
         )
     mode = getattr(ctx, "work_mode", "chat") or "chat"
     if mode == "plan":
@@ -1047,6 +1072,19 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
                                  request_id=("turn:" + ctx.request_key) if ctx.request_key else None)
     if not ctx.skip_save:
         _save(ctx.conversation_id, "user", user_text, attachments=ctx.attachments)
+    ctx.live = asyncio.Queue()
+    if ctx.channel == "web" and user_text.strip():
+        from . import front_door
+
+        saved = front_door.try_routine(user_text)
+        if saved:
+            final = saved["confirmation"]
+            _save(ctx.conversation_id, "assistant", final)
+            receipts.record_turn(ctx, "ok")
+            yield {"type": "card", **saved["card"]}
+            yield {"type": "message", "content": final}
+            yield {"type": "done", "conversation_id": ctx.conversation_id, "cost_cents": 0, "tool_calls": 0, "outcome": "ok"}
+            return
     specs = [t.spec() for t in available_tools(ctx)]
     ctx.tainted = ctx.tainted or bool(db.one(
     f"SELECT 1 FROM (SELECT name FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT ?) "
@@ -1076,11 +1114,20 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
             name, final = go
             args = json.dumps({"goal": user_text.strip()[:500]})
             ctx.tool_calls += 1
-            ok, out = await run_tool(name, args, ctx)
+            tool_task = asyncio.ensure_future(run_tool(name, args, ctx))
+            while not tool_task.done():
+                try:
+                    yield await asyncio.wait_for(ctx.live.get(), 0.25)
+                except asyncio.TimeoutError:
+                    continue
+            ok, out = tool_task.result()
             r = ctx.receipts[-1] if ctx.receipts else {}
             yield {"type": "tool_call", "name": name, "args": args[:500], "from_text": False}
             yield {"type": "tool_result", "name": name, "ok": ok, "preview": out[:300],
                    "receipt": {"verified": r.get("verified"), "evidence": r.get("evidence", "")}}
+            card = _card_event(name, out, args)
+            if card and ctx.channel == "web":
+                yield card
             if r.get("outcome") == "held":
                 yield {"type": "approval_required", "id": r["action_id"], "tool": name, "args": args[:500],
                        "effect": r.get("effect") or "external", "reason": r.get("reason") or ""}
@@ -1169,8 +1216,14 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
             ctx.tool_calls += 1
             ctx.from_text = bool(msg.get("parsed_from_text"))
             yield {"type": "tool_call", "name": fn["name"], "args": fn["arguments"][:500], "from_text": bool(msg.get("parsed_from_text"))}
+            tool_task = asyncio.ensure_future(run_tool(fn["name"], fn["arguments"], ctx))
+            while not tool_task.done():
+                try:
+                    yield await asyncio.wait_for(ctx.live.get(), 0.25)
+                except asyncio.TimeoutError:
+                    continue
             try:
-                ok, out = await run_tool(fn["name"], fn["arguments"], ctx)
+                ok, out = tool_task.result()
             except DelegationRequired as e:
                 # Terminal tool delegation: yield event and wait for terminal to execute
                 fut = _PENDING_DELEGATIONS.get(e.action_id)  # held before yielding: the terminal may answer at once
@@ -1200,12 +1253,22 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
                 _save(ctx.conversation_id, "tool", out, tool_call_id=call["id"], name=fn["name"])
                 yield {"type": "tool_result", "name": fn["name"], "ok": ok, "preview": out[:300],
                        "receipt": {"verified": None, "evidence": out[:200] if ok else ""}}
+                card = _card_event(fn["name"], out, fn["arguments"])
+                if card and ctx.channel == "web":
+                    yield card
                 continue
             _save(ctx.conversation_id, "tool", out, tool_call_id=call["id"], name=fn["name"])
             r = ctx.receipts[-1] if ctx.receipts else {}
             yield {"type": "tool_result", "name": fn["name"], "ok": ok, "preview": out[:300],
                    "receipt": {"verified": r.get("verified"), "evidence": r.get("evidence", "")}}
+            card = _card_event(fn["name"], out, fn["arguments"])
+            if card and ctx.channel == "web":
+                yield card
             if r.get("outcome") in ("held", "denied"):
+                if r.get("outcome") == "held" and ctx.channel != "web":
+                    from . import front_door
+
+                    front_door.ping(f"I need a yes before I {fn['name'].replace('_', ' ')}. Open the chat to allow it or say no.")
                 yield {"type": "approval_required" if r["outcome"] == "held" else "approval_denied", "id": r["action_id"],
                        "tool": fn["name"], "args": fn["arguments"][:500], "effect": r["effect"], "reason": r.get("reason") or HOLD_REASON}
         if ctx.blocked_hits >= 2:  # it was told the call is blocked and tried it again: stop instead of spinning

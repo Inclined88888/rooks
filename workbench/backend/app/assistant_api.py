@@ -171,15 +171,33 @@ def conversation(cid: int):
         raise HTTPException(404, "Not found")
     from .teammates.hooks import choices_from_calls, stamp_choices
 
-    rows = db.all("SELECT id, role, content, tool_calls, name, attachments, created_at FROM messages WHERE conversation_id = ? ORDER BY id", cid)
+    from . import front_door
+
+    rows = db.all("SELECT id, role, content, tool_calls, tool_call_id, name, attachments, created_at FROM messages WHERE conversation_id = ? ORDER BY id", cid)
+    pending_calls: dict = {}
     for r in rows:
         raw_calls = r["tool_calls"]
         r["_choice"] = choices_from_calls(raw_calls)
+        if r["role"] == "assistant" and raw_calls:
+            try:
+                for tc in json.loads(raw_calls):
+                    fn = (tc or {}).get("function") or {}
+                    pending_calls[tc.get("id")] = (fn.get("name") or "", fn.get("arguments"))
+            except ValueError:
+                pass
+        if r["role"] == "tool":
+            name, arguments = r["name"], None
+            paired = pending_calls.get(r.get("tool_call_id"))
+            if paired:
+                name, arguments = paired
+            card = front_door.card_from(name, r["content"], arguments)
+            if card:
+                r["_card"] = card
+            r["content"] = (r["content"] or "")[:400]
         r["attachments"] = [attachments_mod.public(a) for a in json.loads(r["attachments"])] if r["attachments"] else []
         r["tool_calls"] = [tc["function"]["name"] for tc in json.loads(raw_calls)] if raw_calls else []
-        if r["role"] == "tool":
-            r["content"] = r["content"][:400]
     stamp_choices(rows)
+    front_door.stamp_cards(rows)
     return {**c, "messages": rows}
 
 
@@ -403,6 +421,34 @@ def delete_skill(sid: int):
     return {"ok": True}
 
 
+@router.get("/assistant/main")
+def assistant_main():
+    """The one conversation Home opens."""
+    from . import front_door
+
+    return {"id": front_door.main_conversation()}
+
+
+@router.get("/assistant/routines")
+def assistant_routines():
+    from . import front_door
+
+    return {"routines": front_door.routines()}
+
+
+class RoutineToggle(BaseModel):
+    kind: str = Field(..., pattern="^(schedule|automation)$")
+    id: int
+    enabled: bool
+
+
+@router.post("/assistant/routines/pause")
+def assistant_routine_pause(data: RoutineToggle):
+    from . import front_door
+
+    return front_door.set_enabled(data.kind, data.id, data.enabled)
+
+
 # Schedules and inbox
 class ScheduleIn(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
@@ -476,6 +522,7 @@ class AssistantSettings(BaseModel):
     tavily_api_key: str | None = Field(None, max_length=200)
     telegram_token: str | None = Field(None, max_length=200)
     telegram_allowed_users: str | None = Field(None, max_length=500)
+    reach_channel: str | None = Field(None, pattern="^(off|telegram|slack)$")
 
 
 @router.get("/assistant/settings")
@@ -487,6 +534,7 @@ def get_assistant_settings():
         "search_provider": search.provider(),
         "telegram": telegram.status(),
         "cli_token_set": bool(db.get_setting("cli_token_hash", "")),
+        "reach_channel": db.get_setting("reach_channel", "off") or "off",
     }
 
 
@@ -500,6 +548,8 @@ def put_assistant_settings(data: AssistantSettings):
         from .teammates import store as teammate_store
 
         teammate_store.sync_default_name(name)
+    if data.reach_channel is not None:
+        db.set_setting("reach_channel", data.reach_channel)
     if data.timezone is not None:
         try:
             ZoneInfo(data.timezone)
