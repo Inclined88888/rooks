@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check, Cloud, Cpu, Download, ExternalLink, KeyRound, Loader2, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api, stream } from "../api";
 import { BrandMark } from "../brand";
 import PlanCard from "./PlanCard";
@@ -8,6 +8,7 @@ import { ThemeGrid, TypeChoices } from "../ThemePicker";
 import { Tracer } from "../Tracer";
 import { saveAppearanceRemote } from "../themeSync";
 import { readAppearance } from "../appearance";
+import { AssistantFace } from "../AssistantFace";
 
 /** First run: "Choose how to think". Cloud is the default (nothing heavy runs on this computer); the smart router
  * then uses whatever was connected and falls back when a free tier runs out. */
@@ -382,8 +383,17 @@ function NameStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const chosen = name.trim();
+  const [pleasedAt, setPleasedAt] = useState(0);
+  const named = useRef(false);
+  useEffect(() => {
+    if (chosen && !named.current) {
+      named.current = true;
+      setPleasedAt(Date.now());
+    }
+  }, [chosen]);
 
   const save = async () => {
+    if (chosen) setPleasedAt(Date.now());
     setBusy(true);
     setError("");
     try {
@@ -400,6 +410,7 @@ function NameStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }
     <form className="col gap-lg" onSubmit={(e) => { e.preventDefault(); void save(); }}>
       <div className="welcome-hero">
         <div className="kicker">First run · 2 of 4</div>
+        <AssistantFace mood="idle" name={chosen || "Atlas"} size={84} pleasedAt={pleasedAt} />
         <div className="wordmark xl">Rooks</div>
         <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
         <h1 className="welcome-title">What should I be called?</h1>

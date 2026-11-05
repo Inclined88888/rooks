@@ -270,6 +270,49 @@ kbd, .kbd {
 .home-docks .left-dock + .left-dock { border-left: 1px solid var(--border); }
 .home-note { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
 .chat-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.home-greet { display: flex; flex-direction: column; align-items: center; }
+.home-greet h1 { margin-top: 8px; }
+.face { flex: none; transform-origin: center bottom; }
+.face svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.face-body { fill: var(--accent-soft); stroke: color-mix(in srgb, var(--accent) 45%, var(--border)); stroke-width: 1.5; }
+.blush { fill: var(--accent); opacity: 0.28; }
+.eye-white { fill: color-mix(in srgb, var(--bg) 55%, white); }
+.pupil { fill: color-mix(in srgb, var(--text) 78%, var(--accent)); }
+.eye-shine { fill: white; }
+.eyes-open, .look, .eye { transform-box: fill-box; transform-origin: center; }
+.eyes-happy { display: none; }
+.eyes-happy path { fill: none; stroke: color-mix(in srgb, var(--text) 78%, var(--accent)); stroke-width: 2.4; stroke-linecap: round; }
+.mouth { fill: none; stroke: color-mix(in srgb, var(--text) 70%, var(--accent)); stroke-width: 2.2; stroke-linecap: round; display: none; }
+.mouth-oh { fill: color-mix(in srgb, var(--text) 70%, var(--accent)); stroke: none; }
+.mood-idle .mouth-soft, .mood-done .mouth-soft, .is-pleased .mouth-soft { display: inline; }
+.mood-thinking .mouth-small, .mood-working .mouth-small { display: inline; }
+.mood-needs .mouth-oh { display: inline; }
+.is-pleased .mouth-small, .is-pleased .mouth-oh { display: none; }
+.mood-done .eyes-open, .is-pleased .eyes-open { display: none; }
+.mood-done .eyes-happy, .is-pleased .eyes-happy { display: inline; }
+.mood-idle { animation: face-breathe 4.8s ease-in-out infinite; }
+.mood-idle .eyes-open { animation: face-blink 5.6s ease-in-out infinite; }
+.mood-thinking .look { transform: translate(-2px, -5px); }
+.mood-working { animation: face-sway 1.8s ease-in-out infinite; }
+.mood-working .look { transform: translate(1px, 3px); }
+.mood-done { animation: face-settle 0.7s ease-out 1; }
+.mood-needs { animation: face-attn 2.4s ease-in-out infinite; }
+.mood-needs .eyes-open { transform: scale(1.08); }
+.is-pleased { animation: face-hello 1.3s ease-in-out 1; }
+.is-pleased .blush { opacity: 0.62; }
+@keyframes face-breathe { 50% { transform: translateY(-2px) scale(1.015); } }
+@keyframes face-blink { 0%, 42%, 48%, 100% { transform: scaleY(1); } 45% { transform: scaleY(0.12); } }
+@keyframes face-sway { 50% { transform: rotate(-3deg) translateY(1px); } }
+@keyframes face-settle { 0% { transform: translateY(-4px) scale(0.98); } 60% { transform: translateY(1px) scale(1.03); } }
+@keyframes face-attn { 50% { transform: translateY(-2px); } }
+@keyframes face-hello { 35% { transform: translateY(-6px) scale(1.05); } 70% { transform: translateY(0) scale(1); } }
+.result-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; max-width: min(460px, 100%); }
+.result-card { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
+.result-card p { margin: 4px 0 0; }
+.watch-card img { width: 100%; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); display: block; }
+.routines-panel { border-bottom: 1px solid var(--border); padding: 10px 16px 12px; max-height: 240px; overflow: auto; }
+.routines-panel li { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.routines-panel li:last-child { border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   .start-chip, .start-menu a { transition: none; }
 }
@@ -795,6 +838,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width
   .run-item .grow { flex-basis: calc(100% - 80px); }
   .run-meta { width: 100%; text-align: left; padding-left: var(--space-1); }
   .composer-hint { display: none; }
+  .routines-panel li { align-items: flex-start; flex-wrap: wrap; }
+  .result-cards, .watch-card { max-width: 100%; }
 }
 
 /* ---- Reduced motion: keep state changes, drop movement ---- */

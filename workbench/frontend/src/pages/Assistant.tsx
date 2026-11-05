@@ -1,6 +1,6 @@
 import { SquareTerminal, ArrowLeft, ArrowUp, BookOpen, Brain, Check, Copy, KeyRound, MessageSquare, Pencil, Plus, RotateCcw, Search, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api, stream } from "../api";
 import { Tracer } from "../Tracer";
 import { EffortSelect, Empty, Markdown, ModelSelect, relTime, RouterInfo, RouterVia, SkeletonList, useEffort, useModels, useToast } from "../util";
@@ -13,10 +13,94 @@ import { askNotifyPermission, inBackground, notify } from "../desktop"; // feat/
 import { Att, AttachButton, filesFrom, MessageAttachments, PendingChips, useAttachments } from "../Attachments"; // feat/attachments
 import { DiffView, extractDiffFromArgs } from "../components/DiffView";
 import { plainStep } from "../plainStep";
+import { AssistantFace, Mood, noticedYou } from "../AssistantFace";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
 type Choices = { question: string; options: string[] };
-type Msg = { id: number; role: string; content: string; tool_calls: string[]; name: string; via?: RouterInfo; attachments?: Att[]; choices?: Choices };
+type Card = { kind: string; id?: number; title?: string; to?: string; subject?: string; body?: string; status?: string; start?: string; due?: string; sentence?: string; routine_kind?: string; name?: string; surface?: string; job_id?: string; goal?: string; files?: string[]; note_kind?: string; location?: string };
+type Watch = { surface: string; job_id: string; goal?: string };
+type Routine = { kind: string; id: number; name: string; sentence: string; enabled: boolean };
+type Msg = { id: number; role: string; content: string; tool_calls: string[]; name: string; via?: RouterInfo; attachments?: Att[]; choices?: Choices; cards?: Card[] };
+
+function ResultCards({ cards }: { cards: Card[] }) {
+  if (!cards.length) return null;
+  return (
+    <div className="result-cards">
+      {cards.map((c, i) => {
+        if (c.kind === "draft") return (
+          <div key={i} className="result-card">
+            <strong>Draft email</strong>
+            <p className="small muted">{c.status}</p>
+            {c.to && <div className="small">To {c.to}</div>}
+            {c.subject && <div className="small">{c.subject}</div>}
+            {c.body && <p className="small">{c.body}</p>}
+            <Link to="/mail">Review in Mail</Link>
+          </div>
+        );
+        if (c.kind === "event") return (
+          <div key={i} className="result-card">
+            <strong>{c.title || "Event"}</strong>
+            <p className="small muted">{[c.start, c.location].filter(Boolean).join(" · ")}</p>
+            <Link to="/calendar">Open calendar</Link>
+          </div>
+        );
+        if (c.kind === "task") return (
+          <div key={i} className="result-card">
+            <strong>{c.title || "Task"}</strong>
+            {c.due && <p className="small muted">Due {c.due}</p>}
+            <Link to="/tasks">Open tasks</Link>
+          </div>
+        );
+        if (c.kind === "note") return (
+          <div key={i} className="result-card">
+            <strong>{c.title || "Note"}</strong>
+            <Link to={c.id ? `/notes/${c.id}` : "/notes"}>Open it</Link>
+          </div>
+        );
+        if (c.kind === "file") return (
+          <div key={i} className="result-card">
+            <strong>Files</strong>
+            <p className="small">{(c.files || []).join(", ")}</p>
+          </div>
+        );
+        if (c.kind === "routine") return (
+          <div key={i} className="result-card">
+            <strong>{c.name || "Routine"}</strong>
+            <p className="small">{c.sentence}</p>
+          </div>
+        );
+        if (c.kind === "watch" && c.job_id) return <WatchCard key={i} watch={{ surface: c.surface || "computer", job_id: c.job_id, goal: c.goal }} />;
+        return null;
+      })}
+    </div>
+  );
+}
+
+function WatchCard({ watch }: { watch: Watch }) {
+  const [tick, setTick] = useState(0);
+  const [gone, setGone] = useState(false);
+  useEffect(() => { setGone(false); }, [watch.job_id]);
+  useEffect(() => {
+    const t = window.setInterval(() => setTick((n) => n + 1), 2000);
+    return () => window.clearInterval(t);
+  }, [watch.job_id]);
+  const src = watch.surface === "browser"
+    ? `/api/browser/jobs/${watch.job_id}/screenshot?k=${tick}`
+    : `/api/desk/jobs/${watch.job_id}/screenshot?k=${tick}`;
+  const open = watch.surface === "browser" ? `/browser/${watch.job_id}` : `/computer/${watch.job_id}`;
+  return (
+    <div className="result-card watch-card">
+      <div className="row">
+        <strong className="grow">{watch.surface === "browser" ? "Browser" : "Computer"}</strong>
+        <Link className="btn sm" to={open}>Take over</Link>
+      </div>
+      {watch.goal && <p className="small muted">{watch.goal}</p>}
+      {gone
+        ? <p className="small muted">The screen isn't available from here. Take over to open it.</p>
+        : <img src={src} alt="What it is looking at" onError={() => { if (tick > 1) setGone(true); }} />}
+    </div>
+  );
+}
 
 function ChoiceButtons({ c, onPick }: { c: Choices; onPick: (s: string) => void }) {
   if (c.options.length < 2) return null;
@@ -86,7 +170,23 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   const [dropping, setDropping] = useState(false);
   const [offer, setOffer] = useState<{ key: string; name: string; request: string; line: string } | null>(null);
   const [who, setWho] = useState("Atlas");
+  const [pleasedAt, setPleasedAt] = useState(0);
+  const [mainId, setMainId] = useState<number | null>(null);
+  const [watch, setWatch] = useState<Watch | null>(null);
+  const [routines, setRoutines] = useState<Routine[] | null>(null);
+  const [showRoutines, setShowRoutines] = useState(Boolean((location.state as { routines?: boolean } | null)?.routines));
   useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
+  useEffect(() => { api<{ id: number }>("/assistant/main").then((r) => setMainId(r.id)).catch(() => undefined); }, []);
+  const fresh = Boolean((location.state as { fresh?: boolean } | null)?.fresh);
+  const listing = Boolean((location.state as { list?: boolean } | null)?.list);
+  useEffect(() => {
+    if (cid || fresh || listing || busyRef.current) return;
+    let stop = false;
+    api<{ id: number }>("/assistant/main").then((r) => {
+      if (!stop && window.location.pathname === "/assistant") navigate(`/assistant/${r.id}`, { replace: true });
+    }).catch(() => undefined);
+    return () => { stop = true; };
+  }, [cid, fresh, listing, location.pathname]);
 
   const loadConvs = () => api<Conv[]>(`/conversations${q ? `?q=${encodeURIComponent(q)}` : ""}`).then(setConvs).catch(toast.err);
   useEffect(() => { const t = setTimeout(loadConvs, 200); return () => clearTimeout(t); }, [q]);
@@ -134,6 +234,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   /** One streamed turn. echo: show the user's text as a fresh bubble (not on resend, where it's already on screen
    *  and stored). resend: the server skips saving the user message again. */
   const run = async (msg: string, opts: { echo?: boolean; resend?: boolean; files?: Att[] } = {}) => {
+    if (opts.echo && noticedYou(msg, who)) setPleasedAt(Date.now());
     busyRef.current = true;
     setBusy(true);
     setBusySince(Date.now());
@@ -146,6 +247,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     let stopped = false;
     let lastReply = "";
     let pendingChoices: Choices | null = null;
+    const pendingCards: Card[] = [];
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
@@ -178,14 +280,25 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
           if (options.length >= 2) pendingChoices = { question: String(ev.question ?? ""), options };
           return;
         }
+        if (t === "card") {
+          const card = ev as unknown as Card;
+          pendingCards.push(card);
+          if (card.kind === "watch" && card.job_id) setWatch({ surface: card.surface || "computer", job_id: card.job_id, goal: card.goal || "" });
+          return;
+        }
+        if (t === "watch") {
+          setWatch({ surface: String(ev.surface || "computer"), job_id: String(ev.job_id || ""), goal: String(ev.goal || "") });
+          return;
+        }
         if (t === "message") {
           lastReply = String(ev.content);
           const mid = Date.now() + 1;
           const choices = pendingChoices ?? undefined;
+          const cards = pendingCards.length ? pendingCards.splice(0) : undefined;
           pendingChoices = null;
           if (via) viaByReply.current.set(String(ev.content), via);
           setFreshId(mid);
-          setMessages((m) => [...m, { id: mid, role: "assistant", content: String(ev.content), tool_calls: [], name: "", via, choices }]);
+          setMessages((m) => [...m, { id: mid, role: "assistant", content: String(ev.content), tool_calls: [], name: "", via, choices, cards }]);
         }
         if (t === "automate_offer") setOffer({ key: String(ev.key), name: String(ev.name), request: String(ev.request), line: String(ev.line) });
         if (t === "stopped") stopped = true;
@@ -276,6 +389,26 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   };
 
   const visible = messages.filter((m) => (m.role === "user" && m.name !== "claim_check") || (m.role === "assistant" && m.content));
+  const mood: Mood = approvals.length ? "needs" : watch ? "working" : busy ? (steps.some((s) => s.name === "use_computer" || s.name === "browse_web") ? "working" : "thinking") : freshId ? "done" : "idle";
+  useEffect(() => {
+    if (!showRoutines) return;
+    api<{ routines: Routine[] }>("/assistant/routines").then((r) => setRoutines(r.routines)).catch(toast.err);
+  }, [showRoutines]);
+  useEffect(() => {
+    if (!cid) return;
+    const t = window.setInterval(() => {
+      if (busyRef.current || document.visibilityState !== "visible") return;
+      api<{ messages: Msg[] }>(`/conversations/${cid}`).then((c) => {
+        setMessages((cur) => {
+          const known = new Set(cur.map((m) => m.id));
+          const said = new Set(cur.filter((m) => m.role === "assistant").map((m) => m.content));
+          const extra = c.messages.filter((m) => m.role === "assistant" && !known.has(m.id) && !said.has(m.content));
+          return extra.length ? [...cur, ...extra] : cur;
+        });
+      }).catch(() => undefined);
+    }, 8000);
+    return () => window.clearInterval(t);
+  }, [cid]);
   const lastReply = [...visible].reverse().find((m) => m.role === "assistant" && m.content);
   const look = lookAt == null || lookAt >= steps.length ? steps.length - 1 : lookAt;
   const shown = look >= 0 ? steps[look] : null;
@@ -297,7 +430,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     <div className={`split ${cid !== null ? "has-selection" : ""}`}>
       <div className="split-list">
         <div className="col" style={{ padding: "14px 12px 10px", gap: 10 }}>
-          <div className="row"><h2 className="grow">Chats</h2><button className="btn primary sm" onClick={() => navigate("/assistant")}><Plus size={14} /> New</button></div>
+          <div className="row"><h2 className="grow">Chats</h2><button className="btn primary sm" onClick={() => navigate("/assistant", { state: { fresh: true } })}><Plus size={14} /> New</button></div>
           <div className="row" style={{ position: "relative" }}>
             <Search size={14} className="faint" style={{ position: "absolute", left: 10 }} aria-hidden="true" />
             <input className="input" style={{ paddingLeft: 30, height: 32 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search conversations" aria-label="Search conversations" />
@@ -311,7 +444,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
               onClick={() => navigate(`/assistant/${c.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/assistant/${c.id}`); }}>
               <div className="grow">
                 <div className="truncate" style={{ fontWeight: c.id === cid ? 550 : 450 }}>{c.title}</div>
-                <div className="faint small">{CHANNEL[c.channel] ?? c.channel} · {relTime(c.updated_at)}</div>
+                <div className="faint small">{c.id === mainId ? "Main" : (CHANNEL[c.channel] ?? c.channel)} · {relTime(c.updated_at)}</div>
               </div>
               <button className="btn ghost sm icon" aria-label={`Delete ${c.title}`} onClick={(e) => { e.stopPropagation(); remove(c); }}><Trash2 size={13} /></button>
             </div>
@@ -320,9 +453,11 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
       </div>
       <div className="split-main">
         <div className="toolbar">
-          <button className="btn ghost sm mobile-only" onClick={() => navigate("/assistant")} aria-label="Back to chats"><ArrowLeft size={14} /></button>
-          <div className="toolbar-title truncate">{convs?.find((c) => c.id === cid)?.title ?? "New chat"}</div>
+          <button className="btn ghost sm mobile-only" onClick={() => navigate("/assistant", { state: { list: true } })} aria-label="Back to chats"><ArrowLeft size={14} /></button>
+          <AssistantFace mood={mood} name={who} size={36} pleasedAt={pleasedAt} />
+          <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat")}</div>
           <div className="spacer" />
+          <button type="button" className={`btn ghost sm${showRoutines ? " primary" : ""}`} aria-expanded={showRoutines} onClick={() => { setShowRoutines((v) => !v); setRoutines(null); }}>Routines</button>
           <ProjectSwitcher cid={cid} /><CheckToggle cid={cid} />{/* feat/v02-core */}
           {cid ? (
             <button className="btn ghost sm" title="Continue this chat in the rooks terminal" aria-label="Continue in terminal"
@@ -334,6 +469,24 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
           ) : null}
           {tabs}
         </div>
+        {showRoutines && (
+          <div className="routines-panel" aria-label="Routines">
+            <div className="row"><strong className="grow">Routines</strong><span className="small muted">Pause any time. Sending still asks you.</span></div>
+            {routines === null && <p className="small muted">Loading…</p>}
+            {routines?.length === 0 && <p className="small muted">None yet. Say “every weekday morning, summarise my inbox” or “when an invoice email arrives, save the PDF”.</p>}
+            <ul>
+              {routines?.map((r) => (
+                <li key={`${r.kind}-${r.id}`}>
+                  <span className="grow small">{r.sentence}</span>
+                  <button type="button" className="btn sm" onClick={async () => {
+                    const next = await api<Routine>("/assistant/routines/pause", { body: { kind: r.kind, id: r.id, enabled: !r.enabled } });
+                    setRoutines((list) => (list || []).map((item) => (item.kind === r.kind && item.id === r.id ? { ...item, enabled: next.enabled } : item)));
+                  }}>{r.enabled ? "Pause" : "Resume"}</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="work-switch">
           <div className="row">
             <div className="tabs" role="group" aria-label="Mode">
@@ -406,6 +559,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
                     {m.via && <RouterVia r={m.via} />}
                     {m.content && m.id !== freshId && <MessageFeedback msg={m} />}
                     {m.content && m.id !== freshId && <CheckThis cid={cid} content={m.content} fresh={m.id > 1e12} />}{/* feat/v02-core */}
+                    {m.cards && <ResultCards cards={m.cards.filter((c) => c.kind !== "watch")} />}
                     {m.choices && lastReply?.id === m.id && !busy && <ChoiceButtons c={m.choices} onPick={pickChoice} />}
                     {m.content && m.id !== freshId && lastReply?.id === m.id && !busy && (
                       <div className="row" style={{ gap: 4, marginTop: 4 }}>
@@ -465,6 +619,11 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
           </aside>
         )}
         </div>
+        {watch && (
+          <div style={{ margin: "0 12px 8px" }}>
+            <WatchCard watch={watch} />
+          </div>
+        )}
         {offer && (
           <div className="card row" style={{ margin: "0 12px 8px", alignItems: "center", gap: 10 }}>
             <div className="grow">
@@ -608,6 +767,7 @@ export function SkillsTab() {
 }
 
 type ASettings = { assistant_name: string; timezone: string; learning_enabled: boolean; search_provider: string; cli_token_set: boolean;
+  reach_channel?: string;
   telegram: { configured: boolean; running: boolean; bot: string; error: string; allowed_users: string } };
 
 function SettingsTab() {
@@ -636,6 +796,14 @@ function SettingsTab() {
           <button className="btn primary" onClick={() => put({ assistant_name: f.assistant_name, timezone: f.timezone })}>Save</button>
         </div>
         <label className="check"><input type="checkbox" checked={s.learning_enabled} onChange={(e) => put({ learning_enabled: e.target.checked })} /> Learn memories and skills automatically (uses extra model calls)</label>
+        <label className="field">Also tell me on another app
+          <select className="input" aria-label="Also tell me on another app" value={s.reach_channel || "off"} onChange={(e) => put({ reach_channel: e.target.value }, "Saved")}>
+            <option value="off">Just in this app</option>
+            <option value="telegram">Telegram, once it's connected below</option>
+            <option value="slack">Slack (connect it on Channels)</option>
+          </select>
+        </label>
+        <p className="small muted">New routines follow this. Telegram needs the connection below. Slack keeps using the Channels page. Nothing is sent until you say yes.</p>
       </div>
       <div className="card col">
         <h3>Web search</h3>

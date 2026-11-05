@@ -50,6 +50,9 @@ def deliver(title: str, body: str, target: str, source: str) -> None:
         from . import telegram
 
         telegram.notify(f"{title}\n\n{body}")
+    from . import front_door
+
+    front_door.ping(f"{title}\n\n{(body or 'Done.')[:800]}")
 
 
 async def run_schedule(s: dict) -> str:
