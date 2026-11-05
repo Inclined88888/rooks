@@ -9,25 +9,32 @@ from .shell import ShellDriver
 
 
 def pick(prefer: str = "auto", offline: bool = False) -> Driver:
-    """Choose the strongest driver this computer can run."""
+    """Choose the strongest driver this computer can run.
+
+    auto may fall through to the private folder. An explicit driver does not.
+    """
     order = {
         "auto": ("qemu", "nested", "shell"),
         "qemu": ("qemu",),
-        "nested": ("nested", "shell"),
+        "nested": ("nested",),
         "shell": ("shell",),
-    }.get(prefer, ("qemu", "nested", "shell"))
+    }.get(prefer)
+    if order is None:
+        raise ValueError(f"Unknown driver {prefer}")
+    classes = {"qemu": QemuDriver, "nested": NestedDriver, "shell": ShellDriver}
     last: Exception | None = None
     for name in order:
-        cls = {"qemu": QemuDriver, "nested": NestedDriver, "shell": ShellDriver}[name]
         try:
-            driver = cls(offline=offline)
+            driver = classes[name](offline=offline)
             if driver.available():
                 return driver
         except Exception as exc:  # noqa: BLE001
             last = exc
+    if prefer == "auto" and last is None:
+        return ShellDriver(offline=offline)
     if last:
         raise last
-    return ShellDriver(offline=offline)
+    raise RuntimeError(f"{prefer} is not available on this computer.")
 
 
 def describe_all() -> list[DriverInfo]:

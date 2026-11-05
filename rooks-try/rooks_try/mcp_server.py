@@ -36,8 +36,8 @@ TOOLS = [
          "x2": {"type": "number"}, "y2": {"type": "number"}}, "required": ["x1", "y1", "x2", "y2"]}},
     {"name": "scroll", "description": "Scroll inside the Try Room.",
      "inputSchema": {"type": "object", "properties": {
-         "x": {"type": "number"}, "y": {"type": "number"}, "dy": {"type": "integer", "default": -3}},
-         "required": ["x", "y"]}},
+         "x": {"type": "number"}, "y": {"type": "number"}, "dy": {"type": "integer", "default": -3},
+     }, "required": ["x", "y"]}},
     {"name": "type", "description": "Type text inside the Try Room.",
      "inputSchema": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}},
     {"name": "key", "description": "Press a key combo inside the Try Room (e.g. ctrl+s, Return).",
@@ -55,7 +55,6 @@ TOOLS = [
 class Server:
     def __init__(self) -> None:
         self.room = TryRoom()
-        self._pending_handoff: dict | None = None
 
     def handle(self, msg: dict) -> dict | None:
         mid = msg.get("id")

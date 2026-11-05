@@ -27,6 +27,7 @@ test("a dropped terminal connection is not called a shell exit", () => {
 
 test("a folder practice computer offers a command instead of a fake screen", () => {
   assert.match(practice, /Try a command/);
+  assert.match(practice, /Commands run as you/);
   assert.match(practice, /screen === false/);
   assert.doesNotMatch(practice, /st\.running && shotOk \?/);
 });

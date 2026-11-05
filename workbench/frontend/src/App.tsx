@@ -10,6 +10,7 @@ import { CommandPalette } from "./Palette";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import AgentsSidebar from "./AgentsSidebar";
+import { BesideButton, BesideStage } from "./Beside";
 import AgentsContext from "./AgentsContext";
 import { EdgeGlow, transitionClick } from "./motion";
 import Auth from "./pages/Auth";
@@ -184,6 +185,84 @@ function Boot() {
   return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">Rooks</div></div>;
 }
 
+function AppRoutes({ onChanged }: { onChanged: () => void }) {
+  return (
+    <Routes>
+          <Route path="/" element={<Navigate to="/assistant" replace />} />
+          <Route path="/home" element={<Dashboard />} />
+          <Route path="/customize" element={<Customize />} />
+          <Route path="/connect" element={<Navigate to="/customize" replace />} />
+          <Route path="/assistant" element={<Assistant tab="chat" />} />
+          <Route path="/assistant/:id" element={<Assistant tab="chat" />} />
+          <Route path="/assistant-memory" element={<Assistant tab="memory" />} />
+          <Route path="/assistant-skills" element={<Navigate to="/skills" replace />} />
+          <Route path="/skills" element={<Skills />} />
+          <Route path="/mcp" element={<McpServers />} />{/* feat/mcp-client */}
+          <Route path="/about-you" element={<AboutYou />} />
+          <Route path="/knowledge" element={<Knowledge />} />{/* feat/memory-core */}
+          <Route path="/teach" element={<Teach />} />
+          <Route path="/teach/:id" element={<Teach />} />
+          <Route path="/packs" element={<Navigate to="/assistant" replace />} />
+          <Route path="/packs/*" element={<Navigate to="/assistant" replace />} />
+          <Route path="/appearance" element={<Appearance />} />
+          <Route path="/appearance/motion" element={<MotionLab />} />
+          <Route path="/models" element={<Models />} />
+          <Route path="/assistant-settings" element={<Assistant tab="settings" />} />
+          <Route path="/automations" element={<Automations />} />
+          <Route path="/teammates" element={<Teammates />} />{/* feat/grok-style */}
+          <Route path="/teammates/:id" element={<Teammates />} />{/* feat/grok-style */}
+          <Route path="/groups/:id" element={<Groups />} />{/* feat/grok-style */}
+          <Route path="/vault" element={<Vault />} />{/* feat/grok-style */}
+          <Route path="/pages" element={<PagesLib />} />{/* feat/grok-style */}
+          <Route path="/pages/:id" element={<PagesLib />} />{/* feat/grok-style */}
+          <Route path="/channels" element={<Channels />} />{/* feat/grok-style */}
+          <Route path="/jobs" element={<JobsPage />} />{/* feat/v02-automations */}
+          <Route path="/company" element={<Company />} />
+          <Route path="/research" element={<Research />} />
+          <Route path="/files" element={<FilesPage />} />
+          <Route path="/sites" element={<SitesPage />} />
+          <Route path="/research/:id" element={<Research />} />
+          <Route path="/code" element={<Code />} />
+          <Route path="/terminal" element={<TerminalPage />} />
+          <Route path="/try" element={<TryRoomPage />} />
+          <Route path="/code/:id" element={<Code />} />
+          <Route path="/browser" element={<Browser />} />
+          <Route path="/browser/:id" element={<Browser />} />
+          <Route path="/computer" element={<Computer />} />
+          <Route path="/computer/:id" element={<Computer />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/projects" element={<Projects />} />{/* feat/v02-core */}
+          <Route path="/projects/:id" element={<Projects />} />{/* feat/v02-core */}
+          <Route path="/history" element={<HistoryPage />} />{/* feat/v02-core */}
+          <Route path="/runs" element={<Runs />} />
+          <Route path="/insights" element={<Insights />} />
+          <Route path="/fine-tune" element={<FineTune />} />
+          <Route path="/runs/:id" element={<Runs />} />
+          <Route path="/status" element={<Status />} />
+          <Route path="/notes" element={<Docs kind="note" />} />
+          <Route path="/notes/:id" element={<Docs kind="note" />} />
+          <Route path="/documents" element={<Docs kind="document" />} />
+          <Route path="/documents/:id" element={<Docs kind="document" />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/team" element={<Team />} />{/* feat/team-lead */}
+          <Route path="/team/people/:id" element={<Team />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/mail" element={<MailPage />} />
+          <Route path="/settings" element={<Settings onChanged={onChanged} />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/plan" element={<Plan />} />
+          {/* feat/v02-anywhere-voice */}
+          <Route path="/talk" element={<Talk />} />
+          <Route path="/meetings" element={<Meetings />} />
+          <Route path="/meetings/:id" element={<Meetings />} />
+          <Route path="/voice" element={<VoiceSettings />} />
+          <Route path="/welcome" element={<Navigate to="/assistant" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+  );
+}
+
 export default function App() {
   const [status, setStatus] = useState<Status | null>(null);
   const [error, setError] = useState("");
@@ -281,15 +360,17 @@ export default function App() {
                   <div key={g.section ?? gi} className="more-group">
                     <div className="more-section">{g.section}</div>
                     {items.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        className="more-link"
-                        onClick={transitionClick(() => navigate(item.to))}
-                      >
-                        <item.icon size={16} />
-                        <span className="truncate">{item.label}</span>
-                      </NavLink>
+                      <div key={item.to} className="more-link-row">
+                        <NavLink
+                          to={item.to}
+                          className="more-link"
+                          onClick={transitionClick(() => navigate(item.to))}
+                        >
+                          <item.icon size={16} />
+                          <span className="truncate">{item.label}</span>
+                        </NavLink>
+                        <BesideButton path={item.to} label={item.label} onOpen={() => setMenuOpen(false)} />
+                      </div>
                     ))}
                     {g.section === "Advanced" && (
                       <>
@@ -312,83 +393,11 @@ export default function App() {
           <strong className="truncate grow">{status.workspace_name}</strong>
           <button className="btn ghost icon" onClick={() => setPaletteOpen(true)} aria-label="Search or jump to"><Search size={17} /></button>
         </div>
-        <div className="route">
-        <Suspense fallback={<Boot />}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/assistant" replace />} />
-          <Route path="/home" element={<Dashboard />} />
-          <Route path="/customize" element={<Customize />} />
-          <Route path="/connect" element={<Navigate to="/customize" replace />} />
-          <Route path="/assistant" element={<Assistant tab="chat" />} />
-          <Route path="/assistant/:id" element={<Assistant tab="chat" />} />
-          <Route path="/assistant-memory" element={<Assistant tab="memory" />} />
-          <Route path="/assistant-skills" element={<Navigate to="/skills" replace />} />
-          <Route path="/skills" element={<Skills />} />
-          <Route path="/mcp" element={<McpServers />} />{/* feat/mcp-client */}
-          <Route path="/about-you" element={<AboutYou />} />
-          <Route path="/knowledge" element={<Knowledge />} />{/* feat/memory-core */}
-          <Route path="/teach" element={<Teach />} />
-          <Route path="/teach/:id" element={<Teach />} />
-          <Route path="/packs" element={<Navigate to="/assistant" replace />} />
-          <Route path="/packs/*" element={<Navigate to="/assistant" replace />} />
-          <Route path="/appearance" element={<Appearance />} />
-          <Route path="/appearance/motion" element={<MotionLab />} />
-          <Route path="/models" element={<Models />} />
-          <Route path="/assistant-settings" element={<Assistant tab="settings" />} />
-          <Route path="/automations" element={<Automations />} />
-          <Route path="/teammates" element={<Teammates />} />{/* feat/grok-style */}
-          <Route path="/teammates/:id" element={<Teammates />} />{/* feat/grok-style */}
-          <Route path="/groups/:id" element={<Groups />} />{/* feat/grok-style */}
-          <Route path="/vault" element={<Vault />} />{/* feat/grok-style */}
-          <Route path="/pages" element={<PagesLib />} />{/* feat/grok-style */}
-          <Route path="/pages/:id" element={<PagesLib />} />{/* feat/grok-style */}
-          <Route path="/channels" element={<Channels />} />{/* feat/grok-style */}
-          <Route path="/jobs" element={<JobsPage />} />{/* feat/v02-automations */}
-          <Route path="/company" element={<Company />} />
-          <Route path="/research" element={<Research />} />
-          <Route path="/files" element={<FilesPage />} />
-          <Route path="/sites" element={<SitesPage />} />
-          <Route path="/research/:id" element={<Research />} />
-          <Route path="/code" element={<Code />} />
-          <Route path="/terminal" element={<TerminalPage />} />
-          <Route path="/try" element={<TryRoomPage />} />
-          <Route path="/code/:id" element={<Code />} />
-          <Route path="/browser" element={<Browser />} />
-          <Route path="/browser/:id" element={<Browser />} />
-          <Route path="/computer" element={<Computer />} />
-          <Route path="/computer/:id" element={<Computer />} />
-          <Route path="/compare" element={<Compare />} />
-          <Route path="/projects" element={<Projects />} />{/* feat/v02-core */}
-          <Route path="/projects/:id" element={<Projects />} />{/* feat/v02-core */}
-          <Route path="/history" element={<HistoryPage />} />{/* feat/v02-core */}
-          <Route path="/runs" element={<Runs />} />
-          <Route path="/insights" element={<Insights />} />
-          <Route path="/fine-tune" element={<FineTune />} />
-          <Route path="/runs/:id" element={<Runs />} />
-          <Route path="/status" element={<Status />} />
-          <Route path="/notes" element={<Docs kind="note" />} />
-          <Route path="/notes/:id" element={<Docs kind="note" />} />
-          <Route path="/documents" element={<Docs kind="document" />} />
-          <Route path="/documents/:id" element={<Docs kind="document" />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/team" element={<Team />} />{/* feat/team-lead */}
-          <Route path="/team/people/:id" element={<Team />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/mail" element={<MailPage />} />
-          <Route path="/settings" element={<Settings onChanged={refresh} />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/plan" element={<Plan />} />
-          {/* feat/v02-anywhere-voice */}
-          <Route path="/talk" element={<Talk />} />
-          <Route path="/meetings" element={<Meetings />} />
-          <Route path="/meetings/:id" element={<Meetings />} />
-          <Route path="/voice" element={<VoiceSettings />} />
-          <Route path="/welcome" element={<Navigate to="/assistant" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        </Suspense>
-        </div>
+        <BesideStage renderRoutes={() => (
+          <Suspense fallback={<Boot />}>
+            <AppRoutes onChanged={refresh} />
+          </Suspense>
+        )} />
       </main>
 
       <AgentsContext

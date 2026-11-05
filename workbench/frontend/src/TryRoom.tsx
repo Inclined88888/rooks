@@ -61,7 +61,7 @@ export function TryRoomButton({ startOpen = false, onClose }: { startOpen?: bool
         <button type="button" className="btn ghost sm" onClick={close}>Close</button>
       </div>
       <p className="small muted" style={{ marginTop: 0 }}>
-        A disposable computer on this machine. Your real desktop stays alone.
+        A private folder on this computer. Commands run as you.
       </p>
       {st && !st.available && <p className="small muted">{st.note || "Not installed yet."}</p>}
       {st?.available && (

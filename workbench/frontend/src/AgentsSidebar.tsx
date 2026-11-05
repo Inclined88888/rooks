@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import { isDark, pickTheme, useAppearance } from "./appearance";
+import { BesideButton } from "./Beside";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
 type Project = { id: number; name: string; kind: string; status: string; last_used_at?: string | null; updated_at?: string; counts?: Record<string, number> };
@@ -83,10 +84,17 @@ export default function AgentsSidebar({
           <Plus size={15} /> New chat
         </button>
         <nav className="agents-shortcuts">
-          <NavLink to="/automations" className="agents-link"><CalendarClock size={15} /> Automations</NavLink>
-          <NavLink to="/customize" className="agents-link"><Puzzle size={15} /> Customize</NavLink>
-          <NavLink to="/code" className="agents-link"><Code2 size={15} /> Code</NavLink>
-          <NavLink to="/try" className="agents-link"><Monitor size={15} /> Practice computer</NavLink>
+          {[
+            { to: "/automations", label: "Automations", icon: CalendarClock },
+            { to: "/customize", label: "Customize", icon: Puzzle },
+            { to: "/code", label: "Code", icon: Code2 },
+            { to: "/try", label: "Practice computer", icon: Monitor },
+          ].map((item) => (
+            <div key={item.to} className="agents-link-row">
+              <NavLink to={item.to} className="agents-link"><item.icon size={15} /> {item.label}</NavLink>
+              <BesideButton path={item.to} label={item.label} />
+            </div>
+          ))}
         </nav>
       </div>
 
@@ -120,18 +128,16 @@ export default function AgentsSidebar({
               const active = p.id === activeProjectId || p.id === openProject;
               const when = shortAgo(p.last_used_at || p.updated_at);
               return (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`agents-row${active ? " active" : ""}`}
-                  onClick={() => navigate(`/projects/${p.id}`)}
-                >
-                  <span className={`agents-dot${active ? " on" : ""}`} aria-hidden />
-                  <span className="grow truncate">
-                    <span className="agents-chat-title truncate">{p.name}</span>
-                  </span>
-                  {when && <span className="agents-age">{when}</span>}
-                </button>
+                <div key={p.id} className={`agents-row${active ? " active" : ""}`}>
+                  <button type="button" className="agents-row-open" onClick={() => navigate(`/projects/${p.id}`)}>
+                    <span className={`agents-dot${active ? " on" : ""}`} aria-hidden />
+                    <span className="grow truncate">
+                      <span className="agents-chat-title truncate">{p.name}</span>
+                    </span>
+                    {when && <span className="agents-age">{when}</span>}
+                  </button>
+                  <BesideButton path={`/projects/${p.id}`} label={p.name} />
+                </div>
               );
             })}
           </div>
@@ -150,18 +156,16 @@ export default function AgentsSidebar({
             {filtered.map((c) => {
               const active = c.id === cid;
               return (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`agents-row${active ? " active" : ""}`}
-                  onClick={() => navigate(`/assistant/${c.id}`)}
-                >
-                  <span className={`agents-dot${active ? " on" : ""}`} aria-hidden />
-                  <span className="grow truncate">
-                    <span className="agents-chat-title truncate">{c.title}</span>
-                  </span>
-                  <span className="agents-age">{shortAgo(c.updated_at)}</span>
-                </button>
+                <div key={c.id} className={`agents-row${active ? " active" : ""}`}>
+                  <button type="button" className="agents-row-open" onClick={() => navigate(`/assistant/${c.id}`)}>
+                    <span className={`agents-dot${active ? " on" : ""}`} aria-hidden />
+                    <span className="grow truncate">
+                      <span className="agents-chat-title truncate">{c.title}</span>
+                    </span>
+                    <span className="agents-age">{shortAgo(c.updated_at)}</span>
+                  </button>
+                  <BesideButton path={`/assistant/${c.id}`} label={c.title || "Chat"} />
+                </div>
               );
             })}
           </div>

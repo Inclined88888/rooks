@@ -2,9 +2,29 @@
 
 from __future__ import annotations
 
+import os
+import signal
+import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+
+
+def stop_pid(pid: int | None) -> None:
+    """Stop a guest process on this computer, including its children."""
+    if not pid:
+        return
+    pid = int(pid)
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], check=False)
+        return
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except (ProcessLookupError, PermissionError, OSError):
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
 
 
 @dataclass

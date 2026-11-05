@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 from pathlib import Path
 
 from . import store
 from .drivers import describe_all, pick
 from .drivers.base import Driver
+from .drivers.nested import NestedDriver
+from .drivers.qemu import QemuDriver
+from .drivers.shell import ShellDriver
+
+_DRIVERS = {"qemu": QemuDriver, "nested": NestedDriver, "shell": ShellDriver}
 
 
 class TryRoom:
@@ -32,8 +38,9 @@ class TryRoom:
         return self.driver().up()
 
     def down(self) -> dict:
-        if self._driver is None and store.load_state().get("driver"):
-            self._driver = pick(prefer=store.load_state()["driver"], offline=self.offline)
+        name = store.load_state().get("driver")
+        if name in _DRIVERS:
+            self._driver = _DRIVERS[name](offline=self.offline)
         if self._driver:
             return self._driver.down()
         return {"running": False}
@@ -48,13 +55,16 @@ class TryRoom:
         return st
 
     def checkpoint(self, label: str = "") -> dict:
-        return store.checkpoint(label)
+        meta = store.checkpoint(label)
+        meta["disk"] = _disk_snapshot(meta["name"], apply=False)
+        return meta
 
     def reset(self, name: str | None = None) -> dict:
         was = self.status().get("running")
         if was:
             self.down()
         meta = store.restore(name)
+        meta["disk"] = _disk_snapshot(meta["name"], apply=True)
         if was:
             meta["status"] = self.up()
         return meta
@@ -102,3 +112,14 @@ class TryRoom:
         else:
             shutil.copy2(source, target)
         return {"ok": True, "from": str(source), "to": str(target)}
+
+
+def _disk_snapshot(name: str, apply: bool) -> bool:
+    """Save or restore a QEMU disk point. The folder checkpoint is separate."""
+    disk = store.root() / "guest.qcow2"
+    qemu_img = shutil.which("qemu-img")
+    if not name or not disk.exists() or not qemu_img:
+        return False
+    flag = "-a" if apply else "-c"
+    proc = subprocess.run([qemu_img, "snapshot", flag, name, str(disk)], capture_output=True)
+    return proc.returncode == 0

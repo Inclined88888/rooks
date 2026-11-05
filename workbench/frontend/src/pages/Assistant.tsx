@@ -126,10 +126,19 @@ function Chat() {
   const [lookAt, setLookAt] = useState<number | null>(null);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const location = useLocation();
+  // Chat can sit beside another screen. Follow this screen's own address, and do not
+  // send the person back here after they have left it.
+  const mounted = useRef(true);
+  const pathRef = useRef(location.pathname);
+  pathRef.current = location.pathname;
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
   const [text, setText] = useState(((location.state as { draft?: string; start?: boolean } | null)?.start ? "" : (location.state as { draft?: string } | null)?.draft) ?? ""); // pre-filled from Files / Sites; Home sends straight away
   // feat/v02-anywhere-voice: a draft handed over while Chat is already open (the ask bar's "Do it in Chat")
   useEffect(() => {
-    if (!window.location.pathname.startsWith("/assistant")) return;
+    if (!location.pathname.startsWith("/assistant")) return;
     const s = location.state as { draft?: string; start?: boolean } | null;
     if (s?.draft && !s.start) setText(s.draft);
   }, [location.state]);
@@ -177,7 +186,7 @@ function Chat() {
     if (cid || fresh || listing || busyRef.current) return;
     let stop = false;
     api<{ id: number }>("/assistant/main").then((r) => {
-      if (!stop && window.location.pathname === "/assistant") navigate(`/assistant/${r.id}`, { replace: true });
+      if (!stop && location.pathname === "/assistant") navigate(`/assistant/${r.id}`, { replace: true });
     }).catch(() => undefined);
     return () => { stop = true; };
   }, [cid, fresh, listing, location.pathname]);
@@ -308,7 +317,7 @@ function Chat() {
     loadConvs();
     const doneCid = newId || cid;
     if (stopped && doneCid) loadConv(doneCid); // pick up what the turn kept before it stopped
-    else if (newId && newId !== cid && window.location.pathname.startsWith("/assistant")) navigate(`/assistant/${newId}`, { replace: true });
+    else if (newId && newId !== cid && mounted.current && pathRef.current.startsWith("/assistant")) navigate(`/assistant/${newId}`, { replace: true });
   };
 
   const pickChoice = (option: string) => {
@@ -333,7 +342,7 @@ function Chat() {
   const runRef = useRef(run);
   runRef.current = run;
   useEffect(() => {
-    if (!window.location.pathname.startsWith("/assistant")) return;
+    if (!location.pathname.startsWith("/assistant")) return;
     const handed = location.state as { draft?: string; start?: boolean } | null;
     const msg = handed?.start ? handed.draft?.trim() : "";
     if (!msg) return;
