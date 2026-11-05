@@ -171,17 +171,19 @@ export function ModelSelect({
   onChange,
   models,
   allowDefault = true,
+  emptyLabel = "Default model",
 }: {
   value: string;
   onChange: (v: string) => void;
   models: Model[];
   allowDefault?: boolean;
+  emptyLabel?: string;
 }) {
   const groups = new Map<string, Model[]>();
   models.forEach((m) => groups.set(m.provider, [...(groups.get(m.provider) ?? []), m]));
   return (
     <select className="input" value={value} onChange={(e) => onChange(e.target.value)} aria-label="Model">
-      {allowDefault && <option value="">Default model</option>}
+      {allowDefault && <option value="">{emptyLabel}</option>}
       {[...groups.entries()].map(([provider, list]) => (
         <optgroup key={provider} label={provider}>
           {list.map((m) => (

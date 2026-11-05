@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
-TIMEOUT = 90  # Mail and Calendar can be slow to answer the first time (launching, syncing)
+TIMEOUT = 20  # Fail with a plain sentence instead of holding the app open on a spinning mailbox.
 
 
 def available() -> bool:
@@ -86,14 +86,19 @@ function iso(d) { try { return d ? d.toISOString() : ""; } catch (e) { return ""
 LIST_JS = _INBOX_JS + """
 function run(argv) {
   const M = Application("Mail");
-  const box = inbox(M, argv[0]), limit = parseInt(argv[1], 10) || 40, q = argv[2] || "";
-  let msgs = box.messages;
-  if (q) msgs = msgs.whose({_or: [{subject: {_contains: q}}, {sender: {_contains: q}}]});
-  const n = Math.min(msgs.length, limit), out = [];
-  for (let i = 0; i < n; i++) {
-    const m = msgs[i];
-    out.push({uid: String(m.id()), from: m.sender(), subject: m.subject() || "(no subject)", date: iso(m.dateReceived()),
-              unread: !m.readStatus()});
+  const box = inbox(M, argv[0]);
+  const limit = Math.min(parseInt(argv[1], 10) || 40, 40);
+  const q = (argv[2] || "").toLowerCase();
+  const out = [];
+  // Read by index. Asking for every message first is what made Mail time out.
+  for (let i = 0; i < limit; i++) {
+    let m;
+    try { m = box.messages[i]; } catch (e) { break; }
+    if (!m || !m.id) break;
+    const subject = m.subject() || "(no subject)";
+    const from = m.sender() || "";
+    if (q && subject.toLowerCase().indexOf(q) < 0 && from.toLowerCase().indexOf(q) < 0) continue;
+    out.push({uid: String(m.id()), from: from, subject: subject, date: iso(m.dateReceived()), unread: !m.readStatus()});
   }
   return JSON.stringify(out);
 }"""

@@ -1,34 +1,50 @@
-// The side list is mail and tasks. Terminals stay mounted when you leave the page.
+// The chat is one column. Recent is chats. Mail failure is a sentence, not a second panel.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
-const context = read("../src/AgentsContext.tsx");
 const side = read("../src/AgentsSidebar.tsx");
 const app = read("../src/App.tsx");
 const host = read("../src/terminalHost.tsx");
 const code = read("../src/pages/Code.tsx");
 const terminal = read("../src/pages/TerminalPage.tsx");
+const chat = read("../src/pages/Assistant.tsx");
+const beside = read("../src/Beside.tsx");
+const css = read("../src/styles.css");
 
-test("the right side is mail and tasks, and a job only while it is running", () => {
-  assert.match(context, /Mail/);
-  assert.match(context, /Tasks/);
-  assert.match(context, /Working/);
-  assert.doesNotMatch(context, /Open tabs/);
-  assert.doesNotMatch(context, /On this computer/);
-  assert.doesNotMatch(context, /Desktop/);
-  assert.doesNotMatch(context, /agents-context-foot/);
+test("the chat has no default mail and tasks column", () => {
+  assert.doesNotMatch(app, /AgentsContext/);
+  assert.match(css, /grid-template-columns: 256px minmax\(0, 1fr\);/);
+  assert.doesNotMatch(css, /256px minmax\(0, 1fr\) 248px/);
 });
 
-test("recent sits above projects and is split into today and earlier", () => {
-  const recent = side.indexOf(">Recent<");
-  const projects = side.indexOf(">Projects<");
-  assert.ok(recent > 0 && projects > recent);
+test("recent is chats only, and an empty project list is not the product name", () => {
+  assert.match(side, />Recent</);
   assert.match(side, /Today/);
   assert.match(side, /Earlier/);
-  assert.match(side, /still open/);
-  assert.doesNotMatch(side, /Virtual computer/);
+  assert.doesNotMatch(side, /still open/);
+  assert.doesNotMatch(side, /Customize/);
+  assert.doesNotMatch(side, /label: "Terminal"/);
+  assert.doesNotMatch(side, /aiw\.recent-places/);
+  assert.match(side, /projectRows\.length > 0/);
+  assert.doesNotMatch(side, /workspaceName \|\| "Home"/);
+});
+
+test("the composer names the model and has a send control, and a mail failure is one sentence", () => {
+  assert.match(chat, /emptyLabel=/);
+  assert.match(chat, />Send</);
+  assert.match(chat, /Mail did not answer in time/);
+  assert.match(chat, /Something is waiting for your approval/);
+  assert.match(chat, /Open mail beside/);
+  assert.doesNotMatch(chat, /approvals-header/);
+  assert.doesNotMatch(chat, /Ask anything/);
+});
+
+test("a second screen stays closed until you ask, and it does not reopen a saved one", () => {
+  assert.match(beside, /let current: BesideState \| null = null/);
+  assert.doesNotMatch(beside, /readStoredBeside/);
+  assert.doesNotMatch(beside, /Side by side/);
 });
 
 test("terminal shells stay mounted away from the terminal page", () => {

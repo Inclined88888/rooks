@@ -1,4 +1,4 @@
-import { SquareTerminal, ArrowLeft, ArrowUp, BookOpen, Brain, Check, Copy, Ellipsis, KeyRound, Pencil, Plus, RotateCcw, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
+import { SquareTerminal, ArrowLeft, BookOpen, Brain, Check, Copy, Ellipsis, KeyRound, Pencil, Plus, RotateCcw, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api, stream } from "../api";
@@ -13,6 +13,13 @@ import { askNotifyPermission, inBackground, notify } from "../desktop"; // feat/
 import { Att, AttachButton, filesFrom, MessageAttachments, PendingChips, useAttachments } from "../Attachments"; // feat/attachments
 import { DiffView, extractDiffFromArgs } from "../components/DiffView";
 import { plainStep } from "../plainStep";
+import { openBeside } from "../Beside";
+
+function mailLine(err: unknown): string {
+  const msg = err instanceof Error ? err.message.trim() : "";
+  if (!msg || /^\d{3}\b/.test(msg) || /gateway timeout/i.test(msg)) return "Mail did not answer in time.";
+  return msg;
+}
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
 type Choices = { question: string; options: string[] };
 type Card = { kind: string; id?: number; title?: string; to?: string; subject?: string; body?: string; status?: string; start?: string; due?: string; sentence?: string; routine_kind?: string; name?: string; surface?: string; job_id?: string; goal?: string; files?: string[]; note_kind?: string; location?: string };
@@ -147,7 +154,8 @@ function Chat() {
   const [model, setModel] = useState("");
   const [busySince, setBusySince] = useState(0);
   const exit = useExit<number>(200);
-  const { models } = useModels();
+  const { models, defaultRef } = useModels();
+  const [broken, setBroken] = useState("");
   const [effort, setEffort] = useEffort();
   const [workMode, setWorkMode] = useState<"chat" | "plan" | "build">(() => {
     const saved = localStorage.getItem("aiw.workMode");
@@ -179,6 +187,19 @@ function Chat() {
   const [routines, setRoutines] = useState<Routine[] | null>(null);
   const [showRoutines, setShowRoutines] = useState(Boolean((location.state as { routines?: boolean } | null)?.routines));
   useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
+  useEffect(() => {
+    let stop = false;
+    api<{ id: number }[]>("/mail/accounts").then(async (accounts) => {
+      const first = accounts[0];
+      if (!first || stop) return;
+      try {
+        await api(`/mail/${first.id}/messages`);
+      } catch (err) {
+        if (!stop) setBroken(mailLine(err));
+      }
+    }).catch((err) => { if (!stop) setBroken(mailLine(err)); });
+    return () => { stop = true; };
+  }, []);
   useEffect(() => { api<{ id: number }>("/assistant/main").then((r) => setMainId(r.id)).catch(() => undefined); }, []);
   const fresh = Boolean((location.state as { fresh?: boolean } | null)?.fresh);
   const listing = Boolean((location.state as { list?: boolean } | null)?.list);
@@ -445,6 +466,17 @@ function Chat() {
             onTerminal={() => api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } })
               .then((h) => { navigator.clipboard?.writeText(h.command); toast.ok(`Copied: ${h.command}`); })
               .catch(toast.err)}
+            onBeside={async () => {
+              try {
+                const accounts = await api<{ id: number }[]>("/mail/accounts");
+                const first = accounts[0];
+                if (!first) { setBroken("No mailbox is connected."); return; }
+                await api(`/mail/${first.id}/messages`);
+                openBeside("/mail");
+              } catch (err) {
+                setBroken(mailLine(err));
+              }
+            }}
           />
         </div>
         {showRoutines && (
@@ -465,34 +497,13 @@ function Chat() {
             </ul>
           </div>
         )}
-        {approvals.length > 0 && (
-          <div className="approvals-header" role="region" aria-label="Pending approvals" aria-live="polite">
-            <div className="approvals-header-inner">
-              <div className="approvals-header-title">
-                <ShieldAlert size={16} style={{ color: "var(--warn-text)" }} />
-                <span><strong>{approvals.length}</strong> pending approval{approvals.length > 1 ? "s" : ""}</span>
-              </div>
-              <div className="approvals-header-list">
-                {approvals.slice(0, 3).map((a) => (
-                  <div key={a.id} className="approval-header-item">
-                    <span className="tool-name">{plainStep(a.tool, a.args)}</span>
-                    <span className="tool-reason">{a.reason}</span>
-                  </div>
-                ))}
-                {approvals.length > 3 && (
-                  <div className="approval-header-more">+{approvals.length - 3} more</div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
         <div className="chat-stage">
         <div className="chat-scroll" aria-live="polite">
           <main className="chat-thread" role="main" aria-label="Chat conversation">
             <h1 style={srOnly}>Chat conversation</h1>
-            {!busy && visible.length === 0 && (
+            {!busy && visible.length === 0 && (broken || approvals.length > 0) && (
               <div className="chat-hero agents-empty-hero">
-                <p className="chat-hero-sub">Ask anything. Work stays on this computer.</p>
+                <p className="chat-hero-sub" role="status">{approvals.length > 0 ? "Something is waiting for your approval." : broken}</p>
               </div>
             )}
             {visible.map((m) => m.role === "user"
@@ -616,24 +627,27 @@ function Chat() {
             <PendingChips items={att.items} onRemove={att.remove} />
             <textarea ref={composerRef} rows={1} value={text} aria-label="Message"
               onChange={(e) => { setText(e.target.value); const t = e.target; t.style.height = "auto"; t.style.height = `${Math.min(240, t.scrollHeight)}px`; }}
-              placeholder={visible.length ? "Send follow-up…" : "Ask anything, or describe a job to do…"}
+              placeholder="Message"
               onPaste={(e) => { const f = filesFrom(e.clipboardData); if (f.length) { e.preventDefault(); att.add(f); } }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <div className="composer-bar">
               <AttachButton onFiles={att.add} disabled={busy} />
-              <ModelSelect value={model} onChange={setModel} models={models} />
+              <ModelSelect
+                value={model}
+                onChange={setModel}
+                models={models}
+                emptyLabel={(models.find((m) => m.ref === (model || defaultRef))?.label)
+                  || models.find((m) => m.ref === (model || defaultRef))?.model
+                  || "No model connected"}
+              />
               {isPlan && workMode !== "chat" && <EffortSelect value={effort} onChange={setEffort} />}
               <div className="spacer" />
               {/* feat/v02-anywhere-voice + motion: one mic. Local/cloud speech-to-text with browser fallback, drawn as the voice orb */}
               <DictateButton orb disabled={busy} onText={(t) => { setText((v) => (v ? v + " " : "") + t); composerRef.current?.focus(); }} />
               {busy
                 ? <button type="button" className="btn send" onClick={stopTurn} aria-label="Stop" title="Stop; what was written so far is kept"><Square size={15} /></button>
-                : <button className="btn primary send" disabled={(!text.trim() && !att.ready.length) || att.uploading} aria-label="Send"><ArrowUp size={16} /></button>}
+                : <button className="btn primary send" disabled={(!text.trim() && !att.ready.length) || att.uploading} aria-label="Send">Send</button>}
             </div>
-          </div>
-          <div className="agents-composer-status">
-            <span>On this computer</span>
-            {workMode !== "chat" && <span>{workMode === "plan" ? "Plan" : "Build"}</span>}
           </div>
         </form>
       </div>
@@ -807,8 +821,8 @@ function SettingsTab() {
   );
 }
 
-function ChatMenu({ showRoutines, onRoutines, cid, onTerminal }: {
-  showRoutines: boolean; onRoutines: () => void; cid: number | null; onTerminal: () => void;
+function ChatMenu({ showRoutines, onRoutines, cid, onTerminal, onBeside }: {
+  showRoutines: boolean; onRoutines: () => void; cid: number | null; onTerminal: () => void; onBeside: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -821,6 +835,7 @@ function ChatMenu({ showRoutines, onRoutines, cid, onTerminal }: {
         <div className="chat-menu-panel" role="menu">
           <button type="button" role="menuitem" className={showRoutines ? "on" : ""} onClick={() => { onRoutines(); setOpen(false); }}>Routines</button>
           <button type="button" role="menuitem" onClick={() => { navigate("/code"); setOpen(false); }}>Code</button>
+          <button type="button" role="menuitem" onClick={() => { onBeside(); setOpen(false); }}>Open mail beside</button>
           <div className="chat-menu-row"><ProjectSwitcher cid={cid} /></div>
           <div className="chat-menu-row"><CheckToggle cid={cid} /></div>
           {cid ? <button type="button" role="menuitem" onClick={() => { onTerminal(); setOpen(false); }}><SquareTerminal size={14} /> Continue in terminal</button> : null}

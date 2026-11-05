@@ -76,6 +76,7 @@ export default function MailPage() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
+  const [problem, setProblem] = useState("");
   const [msg, setMsg] = useState<Message | null>(null);
   const [compose, setCompose] = useState<Compose | null>(null);
   const toast = useToast();
@@ -86,11 +87,14 @@ export default function MailPage() {
   const load = async () => {
     if (!account) return;
     setLoading(true);
+    setProblem("");
     try {
       if (view === "inbox") setList(await api<Summary[]>(`/mail/${account.id}/messages?q=${encodeURIComponent(q)}`));
       else setDrafts(await api<Draft[]>("/mail/drafts"));
     } catch (e) {
-      toast.err(e);
+      const msg = e instanceof Error ? e.message.trim() : "";
+      setProblem(!msg || /^\d{3}\b/.test(msg) || /gateway timeout/i.test(msg) ? "Mail did not answer in time." : msg);
+      if (view === "inbox") setList([]);
     } finally {
       setLoading(false);
     }
@@ -169,7 +173,8 @@ export default function MailPage() {
           )}
         </div>
         <div className="scroll">
-          {view === "inbox" && !loading && list.length === 0 && <Empty icon={<Inbox size={22} />} title="No messages" />}
+          {view === "inbox" && !loading && problem && <p className="muted" style={{ padding: 16 }} role="status">{problem}</p>}
+          {view === "inbox" && !loading && !problem && list.length === 0 && <Empty icon={<Inbox size={22} />} title="No messages" />}
           {view === "inbox" && list.map((m) => (
             <div key={m.uid} className={`list-item ${msg?.uid === m.uid ? "active" : ""}`} onClick={() => open(m.uid)} style={{ alignItems: "flex-start" }}>
               {m.unread ? <span className="dot" style={{ background: "var(--accent)", marginTop: 7 }} /> : <span className="dot" />}

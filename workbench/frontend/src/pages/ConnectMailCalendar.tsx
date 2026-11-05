@@ -22,6 +22,14 @@ type MacAccount = { name: string; emails: string[]; enabled: boolean; type: stri
 const NAMES: Record<Provider, string> = { google: "Google", microsoft: "Microsoft" };
 const WHAT: Record<Provider, string> = { google: "Gmail and Google Calendar", microsoft: "Outlook, Hotmail, Microsoft 365 mail and calendar" };
 
+function AppleMark() {
+  return (
+    <svg className="logo" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.3 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7 2-1.1 2.8-2.2c.9-1.3 1.2-2.5 1.3-2.6-.1 0-2.4-.9-2.5-3.8zM14.5 6.2c.6-.8 1.1-1.9.9-3-1 .1-2.1.6-2.8 1.4-.6.7-1.2 1.8-1 2.9 1.1.1 2.2-.5 2.9-1.3z" />
+    </svg>
+  );
+}
+
 export function ProviderLogo({ provider }: { provider: Provider }) {
   if (provider === "google") {
     return (
@@ -111,12 +119,29 @@ export default function ConnectMailCalendar({ compact = false, onlyWhenEmpty = f
   if (onlyWhenEmpty && (!loaded || linked.length || imap.length || cals.length)) return null;
   const anything = linked.length + imap.length + cals.length > 0;
   const oneClick = (["google", "microsoft"] as Provider[]).filter((p) => providers?.[p]?.configured);
+  const openApple = async () => {
+    setError("");
+    try { await api("/mail/mac/settings", { method: "POST" }); }
+    catch (e) { setError((e as Error).message); }
+  };
 
   return (
     <div className="card col gap-lg" id="mail" style={compact ? { marginBottom: 16 } : undefined}>
       <div className="row"><h2 className="grow">Mail</h2>
         {anything && <button className="btn ghost sm icon" title="Refresh" onClick={load}><RefreshCw size={13} /></button>}</div>
-      <p className="muted" style={{ margin: 0 }}>Type an email address, then sign in in the window that opens. Nothing is sent until you say so.</p>
+      <p className="muted" style={{ margin: 0 }}>Work mail uses that company's own sign-in. Nothing is sent until you say so.</p>
+      <div className="connect-buttons" aria-label="Companies">
+        {(["google", "microsoft"] as Provider[]).map((p) => (
+          <button key={p} className="btn connect-btn" disabled={!!pending} onClick={() => connect(p)} title={WHAT[p]}>
+            {pending?.provider === p ? <Loader2 size={16} className="spin" /> : <ProviderLogo provider={p} />} {NAMES[p]}
+          </button>
+        ))}
+        {ON_MAC && (
+          <button type="button" className="btn connect-btn" onClick={openApple} title="Apple">
+            <AppleMark /> Apple
+          </button>
+        )}
+      </div>
 
       {anything && (
         <div className="account-chips">
@@ -141,16 +166,6 @@ export default function ConnectMailCalendar({ compact = false, onlyWhenEmpty = f
             <Link key={`c${c.id}`} to="/calendar" className="account-chip" title="Manage on the Calendar page">
               <CalendarDays size={13} style={{ color: c.color }} /><span className="truncate">{c.name}</span><span className="what">Calendar</span>
             </Link>
-          ))}
-        </div>
-      )}
-
-      {oneClick.length > 0 && (
-        <div className="connect-buttons">
-          {oneClick.map((p) => (
-            <button key={p} className="btn connect-btn" disabled={!!pending} onClick={() => connect(p)} title={WHAT[p]}>
-              {pending?.provider === p ? <Loader2 size={16} className="spin" /> : <ProviderLogo provider={p} />} Sign in with {NAMES[p]}
-            </button>
           ))}
         </div>
       )}

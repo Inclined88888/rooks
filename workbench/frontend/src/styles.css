@@ -192,7 +192,7 @@ kbd, .kbd {
   --shadow-2: 0 8px 28px rgba(15, 15, 20, 0.08);
   --shadow-3: 0 16px 40px rgba(15, 15, 20, 0.12);
   color-scheme: light;
-  grid-template-columns: 256px minmax(0, 1fr) 248px;
+  grid-template-columns: 256px minmax(0, 1fr);
   position: relative;
   background: var(--agents-bg);
 }
@@ -519,7 +519,8 @@ kbd, .kbd {
   background: var(--agents-text); color: var(--agents-bg); border-color: transparent;
 }
 .shell-agents .btn.primary:hover { filter: brightness(0.94); }
-.shell-agents .btn.send.primary { border-radius: 999px; width: 30px; height: 30px; padding: 0; }
+.shell-agents .btn.send.primary { border-radius: 999px; width: auto; height: 30px; padding: 0 12px; }
+.composer-who { font-size: 12px; font-weight: 550; color: var(--text); }
 .shell-agents .cursor-settings,
 .shell-agents .cursor-customize,
 .shell-agents .code-mode,

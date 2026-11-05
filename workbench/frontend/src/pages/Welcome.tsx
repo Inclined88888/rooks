@@ -9,6 +9,7 @@ import { Tracer } from "../Tracer";
 import { saveAppearanceRemote } from "../themeSync";
 import { readAppearance } from "../appearance";
 import { AssistantFace } from "../AssistantFace";
+import { PRODUCT } from "../product";
 
 /** First run: "Choose how to think". Cloud is the default (nothing heavy runs on this computer); the smart router
  * then uses whatever was connected and falls back when a free tier runs out. */
@@ -411,7 +412,7 @@ function NameStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }
       <div className="welcome-hero">
         <div className="kicker">First run · 2 of 4</div>
         <AssistantFace mood="idle" name={chosen || "Atlas"} size={84} pleasedAt={pleasedAt} />
-        <div className="wordmark xl">Rooks</div>
+        <div className="wordmark xl">{PRODUCT}</div>
         <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
         <h1 className="welcome-title">What should I be called?</h1>
         <p className="muted">This is the name on Home and in chat. You can change it later in Assistant settings.</p>
@@ -457,7 +458,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
           <div className="col gap-lg">
             <div className="welcome-hero">
               <div className="kicker">First run · 1 of 4</div>
-              <div className="wordmark xl">Rooks</div>
+              <div className="wordmark xl">{PRODUCT}</div>
               <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
               <h1 className="welcome-title">Pick your look</h1>
               <p className="muted">Tap a theme and everything changes straight away, including the browser, the terminal and your phone. You can change it any time in Appearance.</p>
@@ -478,7 +479,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
           <div className="col gap-lg">
             <div className="welcome-hero">
               <div className="kicker">First run · 3 of 4</div>
-              <div className="wordmark xl">Rooks</div>
+              <div className="wordmark xl">{PRODUCT}</div>
               <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
               <h1 className="welcome-title">Choose how to think</h1>
               <p className="muted">The thinking happens in the cloud, so your computer stays cool and quiet. You can add more ways later.</p>

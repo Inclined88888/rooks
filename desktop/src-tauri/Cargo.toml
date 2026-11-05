@@ -1,6 +1,6 @@
 [package]
 name = "ai-workspace-desktop"
-version = "1.0.3"
+version = "1.0.4"
 description = "AI Workspace desktop app"
 authors = ["Inclined88888"]
 license = "LicenseRef-Proprietary"

@@ -65,9 +65,9 @@ test("the shell keeps the second screen on its own route", () => {
   const beside = read("../src/Beside.tsx");
   const app = read("../src/App.tsx");
   const side = read("../src/AgentsSidebar.tsx");
-  const context = read("../src/AgentsContext.tsx");
   const assistant = read("../src/pages/Assistant.tsx");
-  assert.match(beside, /Side by side/);
+  assert.doesNotMatch(beside, /Side by side/);
+  assert.match(beside, /let current: BesideState \| null = null/);
   assert.match(beside, /One screen/);
   assert.match(beside, /Swap sides/);
   assert.match(beside, /Drag the bar to resize/);
@@ -81,7 +81,7 @@ test("the shell keeps the second screen on its own route", () => {
   assert.match(side, /Archive/);
   assert.match(side, /Delete/);
   assert.doesNotMatch(side, /BesideButton/);
-  assert.doesNotMatch(context, /BesideButton/);
+  assert.match(assistant, /Open mail beside/);
   // A chat on the side must follow its own screen, and leaving the main chat must not pull you back.
   assert.match(assistant, /mounted\.current/);
   assert.doesNotMatch(assistant, /window\.location\.pathname\.startsWith\("\/assistant"\)/);

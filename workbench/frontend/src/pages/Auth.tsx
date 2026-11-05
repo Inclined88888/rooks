@@ -2,6 +2,7 @@ import { ArrowRight, Check, Cpu, Download, KeyRound, Loader2, Lock } from "lucid
 import { FormEvent, useEffect, useState } from "react";
 import { api, saveBrowserToken, stream } from "../api";
 import type { Status } from "../App";
+import { PRODUCT } from "../product";
 
 const SUGGESTED = [
   { model: "qwen3:4b", note: "Fast all rounder, ~2.5 GB. Good on CPU." },
@@ -30,10 +31,10 @@ function Login({ onDone }: { onDone: () => void }) {
   return (
     <form className="col gap-lg" onSubmit={submit}>
       <div className="auth-brand">
-        <div className="wordmark lg" aria-hidden="true">Rooks</div>
+        <div className="wordmark lg" aria-hidden="true">{PRODUCT}</div>
         <div>
           <h1>Welcome back</h1>
-          <p className="muted">Use the PIN or password you created for Rooks. Gmail, Apple, Microsoft, ChatGPT and Claude are the next step, after this.</p>
+          <p className="muted">Use the PIN or password you created for {PRODUCT}. Gmail, Apple, Microsoft, ChatGPT and Claude are the next step, after this.</p>
         </div>
       </div>
       {error && <div className="alert err">{error}</div>}
@@ -189,7 +190,7 @@ export default function Auth({ status, onDone }: { status: Status; onDone: () =>
 
   if (status.setup_complete && step === 0) {
     return (
-      <div className="auth"><div><div className="card auth-card"><Login onDone={onDone} /></div><div className="auth-foot"><Lock size={12} /> On this computer. Rooks is not a shared service.</div></div></div>
+      <div className="auth"><div><div className="card auth-card"><Login onDone={onDone} /></div><div className="auth-foot"><Lock size={12} /> On this computer. {PRODUCT} is not a shared service.</div></div></div>
     );
   }
 
@@ -215,11 +216,11 @@ export default function Auth({ status, onDone }: { status: Status; onDone: () =>
         {step === 0 && (
           <form className="col gap-lg" onSubmit={createAccount}>
             <div className="auth-brand">
-              <div className="wordmark lg" aria-hidden="true">Rooks</div>
+              <div className="wordmark lg" aria-hidden="true">{PRODUCT}</div>
               <p className="muted small" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
               <div>
                 <h1>Set a PIN or password</h1>
-                <p className="muted">This locks Rooks on this computer. Your mail, notes and tasks stay. Next you can sign in with Gmail, Apple, Microsoft, ChatGPT or Claude.</p>
+                <p className="muted">This locks {PRODUCT} on this computer. Your mail, notes and tasks stay. Next you can sign in with Gmail, Apple, Microsoft, ChatGPT or Claude.</p>
               </div>
             </div>
             {error && <div className="alert err">{error}</div>}

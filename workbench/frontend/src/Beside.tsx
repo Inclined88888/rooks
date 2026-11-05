@@ -1,8 +1,7 @@
-import { ChevronDown, Columns2 } from "lucide-react";
+import { Columns2 } from "lucide-react";
 import {
   useEffect,
   useRef,
-  useState,
   useSyncExternalStore,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
@@ -12,20 +11,17 @@ import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
 import {
   BESIDE_SCREENS,
   clampRatio,
-  readStoredBeside,
   safePath,
   screenLabel,
   screenPath,
-  suggestBeside,
   writeStoredBeside,
 } from "./besideLogic.mjs";
 
 type BesideState = { entry: string; ratio: number };
 
 const storage = typeof localStorage === "undefined" ? null : localStorage;
-const stored = readStoredBeside(storage);
-let current: BesideState | null = stored ? { entry: stored.path, ratio: stored.ratio } : null;
-let livePath = stored?.path ?? "";
+let current: BesideState | null = null;
+let livePath = "";
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -165,26 +161,7 @@ export function BesideStage({ renderRoutes }: { renderRoutes: () => ReactNode })
   const beside = useBeside();
   const location = useLocation();
   const navigate = useNavigate();
-  const [menu, setMenu] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const suggestion = suggestBeside(location.pathname);
-
-  useEffect(() => {
-    if (!menu) return;
-    const onDown = (e: PointerEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenu(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenu(false);
-    };
-    window.addEventListener("pointerdown", onDown);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [menu]);
 
   const drag = (e: ReactPointerEvent<HTMLDivElement>) => {
     const body = bodyRef.current;
@@ -222,43 +199,6 @@ export function BesideStage({ renderRoutes }: { renderRoutes: () => ReactNode })
 
   return (
     <div className="beside-stage">
-      <div className="beside-bar" ref={menuRef}>
-        <div className="beside-launch">
-          <button
-            type="button"
-            className={`beside-open${beside ? " on" : ""}`}
-            title={beside ? "Back to one screen" : `Open ${screenLabel(suggestion)} beside this`}
-            onClick={() => (beside ? closeBeside() : openBeside(suggestion))}
-          >
-            <Columns2 size={14} /> {beside ? "One screen" : "Side by side"}
-          </button>
-          <button
-            type="button"
-            className="beside-more"
-            aria-label="Choose a screen"
-            aria-expanded={menu}
-            aria-haspopup="menu"
-            onClick={() => setMenu((v) => !v)}
-          >
-            <ChevronDown size={14} />
-          </button>
-        </div>
-        {menu && (
-          <div className="beside-menu" role="menu" aria-label="Open beside this">
-            {BESIDE_SCREENS.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                role="menuitem"
-                className={s.path === suggestion ? "suggested" : ""}
-                onClick={() => { openBeside(s.path); setMenu(false); }}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
       <div className={`beside-body${beside ? " is-split" : ""}`} ref={bodyRef}>
         <div className="beside-main" style={beside ? { flexGrow: beside.ratio, flexBasis: 0 } : undefined}>
           <div className="route">

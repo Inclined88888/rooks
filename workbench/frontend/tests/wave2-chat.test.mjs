@@ -18,14 +18,18 @@ test("Chat has modes, an approval strip, and a diff", () => {
   assert.match(chat, />Build<\/button>/);
   assert.match(chat, /Chat is for the day/);
   assert.doesNotMatch(chat, /<option value="chat">/);
-  assert.match(chat, /approvals-header/);
+  assert.match(chat, /Something is waiting for your approval/);
+  assert.doesNotMatch(chat, /approvals-header/);
   assert.match(chat, /DiffView/);
 });
 
-test("Chat and Code are the rail modes; Customize is the Cursor hub", () => {
+test("Chat and Code are the rail modes; Customize sits with settings", () => {
   assert.match(app, /to: "\/assistant", label: "Chat"/);
   assert.match(app, /to: "\/code", label: "Code"/);
   assert.match(app, /to: "\/customize", label: "Customize"/);
+  const settings = app.indexOf('label: "Settings"');
+  const customize = app.indexOf('label: "Customize"');
+  assert.ok(settings > 0 && customize > settings);
   assert.match(app, /label: "Show me how"/);
   assert.ok(app.indexOf('label: "Chat"') < app.indexOf('label: "Show me how"'));
 });

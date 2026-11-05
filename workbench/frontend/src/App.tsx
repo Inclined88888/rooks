@@ -11,7 +11,7 @@ import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "reac
 import { api } from "./api";
 import AgentsSidebar from "./AgentsSidebar";
 import { BesideStage } from "./Beside";
-import AgentsContext from "./AgentsContext";
+import { PRODUCT } from "./product";
 import { TerminalKeeper, TerminalSlot } from "./terminalHost";
 import { EdgeGlow, transitionClick } from "./motion";
 import Auth from "./pages/Auth";
@@ -95,14 +95,12 @@ type NavItem = { to: string; label: string; icon: typeof Home; addon?: "browser"
 type NavGroup = { section?: string; collapsible?: boolean; items: NavItem[] };
 
 /**
- * Cursor-shaped shell: Chat (+ Claude-style Code) on the rail.
- * Customize is Cursor's apps/tools/skills hub. Settings matches Cursor's left-nav settings.
+ * Chat and Code on the rail. Settings holds the rest, including Customize.
  */
 const NAV: NavGroup[] = [
   { items: [
     { to: "/assistant", label: "Chat", icon: MessageSquare },
     { to: "/code", label: "Code", icon: Code2 },
-    { to: "/customize", label: "Customize", icon: Puzzle },
   ] },
   { section: "Workspace", collapsible: true, items: [
     { to: "/home", label: "Home", icon: Home },
@@ -134,6 +132,7 @@ const NAV: NavGroup[] = [
   { section: "Settings", collapsible: true, items: [
     { to: "/models", label: "AI models", icon: Gauge },
     { to: "/settings", label: "Settings", icon: SettingsIcon },
+    { to: "/customize", label: "Customize", icon: Puzzle },
     { to: "/about-you", label: "About you", icon: UserRound },
     { to: "/voice", label: "Ask anywhere & voice", icon: Mic },
     { to: "/appearance", label: "Appearance", icon: PaletteIcon },
@@ -156,7 +155,6 @@ const NAV: NavGroup[] = [
 const RAIL: { to: string; label: string; icon: typeof MessageSquare; match?: (path: string) => boolean }[] = [
   { to: "/assistant", label: "Chat", icon: MessageSquare, match: (p) => p === "/assistant" || p.startsWith("/assistant/") },
   { to: "/code", label: "Code", icon: Code2, match: (p) => p === "/code" || p.startsWith("/code/") },
-  { to: "/customize", label: "Customize", icon: Puzzle, match: (p) => p === "/customize" || p.startsWith("/customize") || p === "/connect" },
 ];
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -181,7 +179,7 @@ function DeskGlow({ enabled }: { enabled: boolean }) {
 }
 
 function Boot() {
-  return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">Rooks</div></div>;
+  return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">{PRODUCT}</div></div>;
 }
 
 function AppRoutes({ onChanged }: { onChanged: () => void }) {
@@ -275,7 +273,8 @@ export default function App() {
         setStatus(s);
         setError("");
         // the product name on the sign-in screen and the desktop app, after the workspace's own name when it has one
-        document.title = s.workspace_name && s.workspace_name !== "Rooks" ? `${s.workspace_name} · Rooks` : "Rooks";
+        const own = (s.workspace_name || "").trim();
+        document.title = own && own !== "Rooks" && own !== PRODUCT ? `${own} · ${PRODUCT}` : PRODUCT;
       })
       .catch((e) => setError(e.message));
   }, []);
@@ -315,7 +314,7 @@ export default function App() {
   if (!status) return <Boot />;
   if (!status.setup_complete || !status.signed_in) {
     if (status.desktop) {
-      return <div className="auth"><div className="card auth-card"><div className="alert" role="status">Your session ended. Close and reopen Rooks to sign back in.</div></div></div>;
+      return <div className="auth"><div className="card auth-card"><div className="alert" role="status">Your session ended. Close and reopen {PRODUCT} to sign back in.</div></div></div>;
     }
     return <Auth status={status} onDone={refresh} />;
   }
@@ -331,10 +330,13 @@ export default function App() {
     );
   }
 
+  const ownName = (status.workspace_name || "").trim();
+  const shellName = !ownName || ownName === "Rooks" || ownName === PRODUCT ? PRODUCT : ownName;
+
   return (
     <div className="shell shell-agents">
       <AgentsSidebar
-        workspaceName={status.workspace_name}
+        workspaceName={shellName}
         onSearch={() => setPaletteOpen(true)}
         onMore={() => setMenuOpen(true)}
       />
@@ -344,7 +346,7 @@ export default function App() {
           <div className="modal-back rail-scrim" onClick={() => setMenuOpen(false)} />
           <aside className="more-drawer agents-more" aria-label="More pages">
             <div className="more-head">
-              <strong className="truncate">{status.workspace_name}</strong>
+              <strong className="truncate">{shellName}</strong>
               <button type="button" className="btn ghost sm" onClick={() => setPaletteOpen(true)}>
                 <Search size={14} /> Search <span className="kbd">{MOD_KEY}K</span>
               </button>
@@ -386,7 +388,7 @@ export default function App() {
       <main className="main agents-main">
         <div className="mobile-bar">
           <button className="btn ghost icon" onClick={() => setMenuOpen(true)} aria-label="Open menu" aria-expanded={menuOpen}><Menu size={18} /></button>
-          <strong className="truncate grow">{status.workspace_name}</strong>
+          <strong className="truncate grow">{shellName}</strong>
           <button className="btn ghost icon" onClick={() => setPaletteOpen(true)} aria-label="Search or jump to"><Search size={17} /></button>
         </div>
         <BesideStage renderRoutes={() => (
@@ -396,10 +398,6 @@ export default function App() {
         )} />
       </main>
 
-      <AgentsContext
-        browserEnabled={status.browser_enabled}
-        deskEnabled={!!status.desk_enabled}
-      />
       <TerminalKeeper />
 
       <DeskGlow enabled={!!status.desk_enabled} />
