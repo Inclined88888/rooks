@@ -820,7 +820,7 @@ function ChatMenu({ showRoutines, onRoutines, cid, onTerminal }: {
       {open && (
         <div className="chat-menu-panel" role="menu">
           <button type="button" role="menuitem" className={showRoutines ? "on" : ""} onClick={() => { onRoutines(); setOpen(false); }}>Routines</button>
-          <button type="button" role="menuitem" onClick={() => { navigate("/try"); setOpen(false); }}>Practice computer</button>
+          <button type="button" role="menuitem" onClick={() => { navigate("/try"); setOpen(false); }}>Virtual computer</button>
           <div className="chat-menu-row"><ProjectSwitcher cid={cid} /></div>
           <div className="chat-menu-row"><CheckToggle cid={cid} /></div>
           {cid ? <button type="button" role="menuitem" onClick={() => { onTerminal(); setOpen(false); }}><SquareTerminal size={14} /> Continue in terminal</button> : null}

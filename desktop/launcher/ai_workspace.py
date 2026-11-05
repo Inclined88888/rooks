@@ -1,6 +1,6 @@
 """`ai-workspace`: the one launch command that install.sh / install.ps1 put on the PATH.
 
-  ai-workspace              open the app (the native desktop app if installed, else an app window in Chrome/Edge)
+  ai-workspace              open the app (the desktop app when it is this version, else an app window in Chrome/Edge)
   ai-workspace --web        always use the app window (skip the native app)
   ai-workspace --no-open    start the backend only and print the sign-in link (servers, testing)
   ai-workspace --stop       stop a copy started by this launcher
@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import secrets
 import shutil
 import signal
@@ -54,6 +55,24 @@ def state_file() -> Path:
     return Path(os.environ.get("AI_WORKSPACE_HOME") or Path.home() / ".ai-workspace") / "launcher.json"
 
 
+def install_record() -> dict:
+    path = Path(os.environ.get("AI_WORKSPACE_HOME") or Path.home() / ".ai-workspace") / "install.json"
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def bundle_version(app: Path) -> str | None:
+    """The version baked into a Mac app, or None when it cannot be read."""
+    try:
+        text = (app / "Contents" / "Info.plist").read_text(errors="replace")
+    except OSError:
+        return None
+    m = re.search(r"<key>CFBundleShortVersionString</key>\s*<string>([^<]*)</string>", text)
+    return m.group(1).strip() if m else None
+
+
 def native_app() -> list[str] | None:
     """The installed native app, if any, as a command that opens it."""
     if os.environ.get("AI_WORKSPACE_NO_NATIVE") == "1":
@@ -75,6 +94,29 @@ def native_app() -> list[str] | None:
         for p in (Path.home() / ".ai-workspace" / "bin" / "AI-Workspace.AppImage", Path("/usr/bin/ai-workspace-desktop")):
             if p.exists() and os.access(p, os.X_OK):
                 return [str(p)]
+    return None
+
+
+def installed_native() -> list[str] | None:
+    """The desktop app to open, or None when the one on disk is an older download.
+
+    An older app left in Applications keeps launching the unfixed version. This copy is what
+    should open instead.
+    """
+    found = native_app()
+    if not found:
+        return None
+    recorded = str(install_record().get("native") or "")
+    if sys.platform == "darwin":
+        app = Path(found[-1])
+        have = bundle_version(app)
+        want = (ROOT / "VERSION").read_text().strip() if (ROOT / "VERSION").exists() else ""
+        if have and want and updates.parse_version(have) and updates.parse_version(want):
+            if updates.newer(want, have):
+                return None
+            return found
+    if recorded and recorded in found:
+        return found
     return None
 
 
@@ -277,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"update: {'available, ' + res['latest'] + ' (ai-workspace --update)' if res['available'] else 'none'}")
         print(f"data: {data_dir()}")
         print(f"logs: {logs_dir()}  (ai-workspace --logs)")
-        print(f"native app: {' '.join(native_app() or ['not installed (uses an app window in Chrome/Edge)'])}")
+        print(f"native app: {' '.join(installed_native() or ['not installed (uses an app window in Chrome/Edge)'])}")
         for tool in ("rooks", "rooks-browser", "rooks-desk"):
             print(f"{tool}: {shutil.which(tool) or 'not on PATH'}")
         return 0
@@ -289,7 +331,7 @@ def main(argv: list[str] | None = None) -> int:
     notice = updates.cached_notice(current)  # no network: the result of the last --status / --update check
     if notice:
         say(notice)
-    native = None if (a.web or a.no_open) else native_app()
+    native = None if (a.web or a.no_open) else installed_native()
     if native:
         say(f"Opening the {NAME} app…")
         subprocess.Popen(native)

@@ -57,10 +57,10 @@ class ShellDriver(Driver):
 
         img = Image.new("RGB", (960, 540), (28, 32, 40))
         draw = ImageDraw.Draw(img)
-        draw.text((40, 40), "Practice computer", fill=(220, 220, 220))
+        draw.text((40, 40), "Virtual computer", fill=(220, 220, 220))
         draw.text((40, 80), "A private folder on this computer.", fill=(160, 170, 180))
         draw.text((40, 120), "There is no separate screen.", fill=(160, 170, 180))
-        draw.text((40, 160), "Type a command on the Practice computer page.", fill=(160, 170, 180))
+        draw.text((40, 160), "Type a command on the Virtual computer page.", fill=(160, 170, 180))
         path.parent.mkdir(parents=True, exist_ok=True)
         img.save(path)
         return path

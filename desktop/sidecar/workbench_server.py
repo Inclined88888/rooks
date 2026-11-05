@@ -50,7 +50,7 @@ def _static_dir() -> Path:
     return frozen if frozen.exists() else REPO / "workbench" / "frontend" / "dist"
 
 
-def _keyring():
+def _keyring(probe: bool = True):
     try:
         import keyring
         from keyring.backends import fail
@@ -59,6 +59,10 @@ def _keyring():
     kr = keyring.get_keyring()
     if isinstance(kr, fail.Keyring):
         return None
+    # A lookup is its own password box. The desktop move reads the real names below and must not
+    # open a second box just to see whether the keychain exists.
+    if not probe:
+        return keyring
     # A Secret Service with no unlocked collection either raises here or, with no prompter
     # available, blocks forever waiting for an unlock dialog. Probe in a thread with a deadline
     # so a broken keychain degrades to the file fallback instead of a stuck splash screen.
@@ -114,7 +118,7 @@ def load_master_secrets(data_dir: Path) -> tuple[dict, str]:
             # sessions and saved keys; after that this build never touches the keychain for its own secrets.
             # A fresh data folder (new install, or the old one moved away) has nothing those secrets could unlock:
             # skip the read, so a clean install never shows the "wants to use the ai-workspace keychain" prompt.
-            kr = _keyring() if (data_dir / "workbench.db").exists() else None
+            kr = _keyring(probe=False) if (data_dir / "workbench.db").exists() else None
             for name, size in wanted.items():
                 old = ""
                 if kr is not None and not values.get(name):

@@ -10,7 +10,7 @@ import { CommandPalette } from "./Palette";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import AgentsSidebar from "./AgentsSidebar";
-import { BesideButton, BesideStage } from "./Beside";
+import { BesideStage } from "./Beside";
 import AgentsContext from "./AgentsContext";
 import { EdgeGlow, transitionClick } from "./motion";
 import Auth from "./pages/Auth";
@@ -360,17 +360,15 @@ export default function App() {
                   <div key={g.section ?? gi} className="more-group">
                     <div className="more-section">{g.section}</div>
                     {items.map((item) => (
-                      <div key={item.to} className="more-link-row">
-                        <NavLink
-                          to={item.to}
-                          className="more-link"
-                          onClick={transitionClick(() => navigate(item.to))}
-                        >
-                          <item.icon size={16} />
-                          <span className="truncate">{item.label}</span>
-                        </NavLink>
-                        <BesideButton path={item.to} label={item.label} onOpen={() => setMenuOpen(false)} />
-                      </div>
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        className="more-link"
+                        onClick={transitionClick(() => navigate(item.to))}
+                      >
+                        <item.icon size={16} />
+                        <span className="truncate">{item.label}</span>
+                      </NavLink>
                     ))}
                     {g.section === "Advanced" && (
                       <>

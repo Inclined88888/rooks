@@ -83,3 +83,32 @@ def test_the_installer_shortcut_is_not_taken_for_the_native_app(tmp_path, monkey
     assert launcher.native_app() is None
     (shortcut / "ai-workspace-desktop").write_text("")
     assert launcher.native_app() == ["open", "-a", str(tmp_path / "Applications" / "AI Workspace.app")]
+
+
+def _mac_app(tmp_path: Path, version: str) -> Path:
+    app = tmp_path / "Applications" / "AI Workspace.app"
+    macos = app / "Contents" / "MacOS"
+    macos.mkdir(parents=True)
+    (macos / "ai-workspace-desktop").write_text("")
+    (app / "Contents" / "Info.plist").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0"><dict>'
+        f"<key>CFBundleShortVersionString</key><string>{version}</string></dict></plist>"
+    )
+    return app
+
+
+def test_an_older_desktop_app_is_not_opened(tmp_path, monkeypatch):
+    monkeypatch.setattr(launcher.sys, "platform", "darwin")
+    monkeypatch.setattr(launcher.Path, "home", lambda: tmp_path)
+    monkeypatch.setenv("AI_WORKSPACE_HOME", str(tmp_path))
+    app = _mac_app(tmp_path, "0.1.0")
+    assert launcher.native_app() == ["open", "-a", str(app)]
+    assert launcher.installed_native() is None
+
+
+def test_this_versions_desktop_app_is_opened(tmp_path, monkeypatch):
+    monkeypatch.setattr(launcher.sys, "platform", "darwin")
+    monkeypatch.setattr(launcher.Path, "home", lambda: tmp_path)
+    monkeypatch.setenv("AI_WORKSPACE_HOME", str(tmp_path))
+    app = _mac_app(tmp_path, (ROOT / "VERSION").read_text().strip())
+    assert launcher.installed_native() == ["open", "-a", str(app)]

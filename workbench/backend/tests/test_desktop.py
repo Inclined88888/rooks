@@ -173,6 +173,31 @@ def test_an_api_key_connection_without_a_key_says_so_and_never_calls_out(client)
     db.run("DELETE FROM connections WHERE id = ?", cid)
 
 
+def test_a_keychain_read_is_not_repeated_after_allow_or_deny(monkeypatch):
+    """Always Allow does not stick on an ad hoc app, so a second read must not open the box again."""
+    from app import keychain
+
+    keychain.unseal()
+    calls = {"n": 0}
+
+    class Once:
+        @staticmethod
+        def get_password(service, name):
+            calls["n"] += 1
+            return "kept" if name == "connection:1" else ""
+
+    monkeypatch.setattr(keychain, "_keyring", lambda: Once)
+    try:
+        assert keychain.get("keychain:connection:1") == "kept"
+        assert keychain.get("keychain:connection:1") == "kept"
+        assert calls["n"] == 1
+        keychain.seal()
+        assert keychain.get("keychain:connection:2") == ""
+        assert calls["n"] == 1
+    finally:
+        keychain.unseal()
+
+
 def test_keychain_refs_move_into_the_database_when_the_keychain_is_switched_off(client, desktop, monkeypatch, fake_url):
     """An ad hoc signed desktop build turns the keychain off; keys an older build kept there must keep working."""
     from app import config, db

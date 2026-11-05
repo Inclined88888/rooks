@@ -151,7 +151,7 @@ function readSaved(): { panes: Pane[]; active: number; next: number } | null {
   }
 }
 
-export default function TerminalPage() {
+export default function TerminalPage({ bare = false }: { bare?: boolean }) {
   const saved = useRef(readSaved());
   const [panes, setPanes] = useState<Pane[]>(saved.current?.panes ?? [{ id: 1, name: "Terminal 1" }]);
   const [active, setActive] = useState(saved.current?.active ?? 1);
@@ -206,8 +206,9 @@ export default function TerminalPage() {
   return (
     <div className="page terminal-page">
       <div className="page-head row">
-        <SquareTerminal size={18} aria-hidden />
-        <h1 className="grow">Terminal</h1>
+        {!bare && <SquareTerminal size={18} aria-hidden />}
+        {!bare && <h1 className="grow">Terminal</h1>}
+        {bare && <span className="grow" />}
         <button className="btn sm" onClick={() => senders.current.get(active)?.("rooks")} disabled={phase !== "open"} title="Start the coding assistant in this terminal">Start coding</button>
       </div>
       <div className="muted small">Drag a name to move it. Double-click a name to rename it. Each one keeps running when you switch. Up to six.</div>

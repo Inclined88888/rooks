@@ -77,9 +77,18 @@ def _load() -> tuple[bytes, str]:
         db.set_setting("kn_key_source", source)
         db.set_setting("kn_key_check", _check_value(raw))
         return raw, source
-    if source == "keychain":
-        kr = _keyring()
-        stored = kr.get_password(SERVICE, KEY_NAME) if kr else None
+    if source == "stored":
+        from ..security import decrypt
+
+        stored = decrypt(db.get_setting("kn_key_blob") or "")
+        if not stored:
+            raise KeyMissing("Your memory is locked, and the saved key can't be read. "
+                             "Restore a backup made on this computer.")
+        raw = base64.urlsafe_b64decode(stored)
+    elif source == "keychain":
+        from .. import keychain
+
+        stored = keychain.get(keychain.PREFIX + KEY_NAME)
         if not stored:
             raise KeyMissing("Your memory is locked with a key in this computer's keychain, and that key can't be found. "
                              "Restore a backup made on this computer, or sign in to the same user account.")
@@ -107,6 +116,28 @@ def _state() -> dict:
                           fernet=Fernet(base64.urlsafe_b64encode(hashlib.sha256(b"enc:" + raw).digest())),
                           blind=hashlib.sha256(b"blind:" + raw).digest())
         return _cache
+
+
+def migrate_off_keychain() -> bool:
+    """Copy the memory key out of the OS keychain so the password box is not shown again.
+
+    The key itself does not change. Old notes stay readable. Returns True when a key was copied.
+    """
+    if config.SECRET_BACKEND == "keychain":
+        return False
+    source = db.get_setting("kn_key_source")
+    if source != "keychain":
+        return False
+    from .. import keychain
+    from ..security import encrypt
+
+    stored = keychain.get(keychain.PREFIX + KEY_NAME)
+    if not stored:
+        return False
+    db.set_setting("kn_key_blob", encrypt(stored))
+    db.set_setting("kn_key_source", "stored")
+    reset_cache()
+    return True
 
 
 def reset_cache() -> None:

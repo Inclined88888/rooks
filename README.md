@@ -42,20 +42,21 @@ folder and the last lines of `launcher.log` and `workbench.log`.
 
 ## Download for Mac / Windows
 
-**Desktop app (preview).** Double-click to install. No Docker, no terminal: it runs Workbench on your own computer,
-keeps your data in your user folder and your API keys in the system keychain. On first launch, paste an API key
-(OpenAI, Anthropic, OpenRouter, Gemini and more) or use free local models with [Ollama](https://ollama.com/download),
-and you land in chat.
+The install command above is the current app. Run it again if you already have a copy: it replaces the app and keeps
+your chats and keys. An older desktop app left in Applications is removed, because opening that one brings back the
+previous version.
+
+The double-click installers with the separate screen are on this project's [releases](https://github.com/Inclined88888/rooks/releases/tag/desktop-v1.0.2).
+The other project's releases page still has the previous app. A file from that page is the old one.
+
+Drag the old AI Workspace app to the Trash before opening the new disk image. If the old one stays in Applications, that is what opens.
 
 | | Download |
 | --- | --- |
-| **macOS** (Apple silicon) | `AI Workspace_<version>_aarch64.dmg` from [Releases](https://github.com/Inclined88888/ai-workspace/releases) |
-| **macOS** (Intel) | `AI Workspace_<version>_x64.dmg` from [Releases](https://github.com/Inclined88888/ai-workspace/releases) |
-| **Windows** 10/11 | `AI Workspace_<version>_x64-setup.exe` (or `.msi`) from [Releases](https://github.com/Inclined88888/ai-workspace/releases) |
-| Linux | `.AppImage` or `.deb` from [Releases](https://github.com/Inclined88888/ai-workspace/releases) |
-
-No release has been published yet: until one is, use the one-command install above (same app, same data), or build
-the installers with the `desktop` workflow in GitHub Actions.
+| **macOS** (Apple silicon) | [AI.Workspace_1.0.0_aarch64.dmg](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.2/AI.Workspace_1.0.0_aarch64.dmg) |
+| **macOS** (Intel) | [AI.Workspace_1.0.0_x64.dmg](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.2/AI.Workspace_1.0.0_x64.dmg) |
+| **Windows** 10/11 | [AI.Workspace_1.0.0_x64-setup.exe](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.2/AI.Workspace_1.0.0_x64-setup.exe) |
+| Linux | [AppImage](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.2/AI.Workspace_1.0.0_amd64.AppImage) or [deb](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.2/AI.Workspace_1.0.0_amd64.deb) |
 
 Preview builds are **not code-signed yet**. On macOS, right-click the app → **Open** the first time; on Windows, click
 **More info → Run anyway**. Signing, notarisation and auto-updates switch on once the keys exist

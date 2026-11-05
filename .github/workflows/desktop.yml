@@ -169,7 +169,19 @@ jobs:
                    AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_TENANT_ID TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD; do
             [ -n "${!v:-}" ] || unset "$v"
           done
-          cd desktop && npx tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} ${{ steps.signing.outputs.args }}
+          cd desktop
+          # hdiutil on the macOS runners often fails once with "Resource busy". The app is already
+          # built by then, so a second bundle attempt usually succeeds.
+          ok=0
+          for attempt in 1 2 3; do
+            if npx tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} ${{ steps.signing.outputs.args }}; then
+              ok=1
+              break
+            fi
+            echo "Installer bundle failed (attempt ${attempt}). Waiting, then trying again."
+            sleep $((attempt * 20))
+          done
+          [ "$ok" = 1 ]
 
       - name: Collect installers
         shell: bash
@@ -229,5 +241,5 @@ jobs:
             # release.yml creates v* releases after its own checks; wait for it rather than racing it.
             for i in $(seq 1 60); do gh release view "$TAG" >/dev/null 2>&1 && break; sleep 30; done
           fi
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --verify-tag --prerelease --title "AI Workspace ${TAG#desktop-}" --notes-file docs/desktop-release.md
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "AI Workspace ${TAG#desktop-}" --notes-file docs/desktop-release.md
           gh release upload "$TAG" out/* --clobber

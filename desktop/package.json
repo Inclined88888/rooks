@@ -1,7 +1,7 @@
 {
   "name": "ai-workspace-desktop",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Native macOS / Windows / Linux shell for Workbench (Tauri v2 + frozen Python sidecar)",
   "type": "module",
   "scripts": {

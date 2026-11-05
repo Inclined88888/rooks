@@ -9,11 +9,12 @@ from pathlib import Path
 from . import store
 from .drivers import describe_all, pick
 from .drivers.base import Driver
+from .drivers.display import DisplayDriver
 from .drivers.nested import NestedDriver
 from .drivers.qemu import QemuDriver
 from .drivers.shell import ShellDriver
 
-_DRIVERS = {"qemu": QemuDriver, "nested": NestedDriver, "shell": ShellDriver}
+_DRIVERS = {"qemu": QemuDriver, "nested": NestedDriver, "display": DisplayDriver, "shell": ShellDriver}
 
 
 class TryRoom:
@@ -26,8 +27,10 @@ class TryRoom:
         if self._driver is None:
             state = store.load_state()
             prefer = self.prefer
-            if prefer == "auto" and state.get("driver") in {"qemu", "nested", "shell"}:
-                prefer = state["driver"]
+            saved = state.get("driver")
+            # A saved private folder is replaced by a screen. A real guest stays what it was.
+            if prefer == "auto" and saved in {"qemu", "nested", "display"}:
+                prefer = saved
             self._driver = pick(prefer=prefer, offline=self.offline)
         return self._driver
 

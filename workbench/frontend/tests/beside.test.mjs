@@ -26,8 +26,8 @@ test("chat opens the terminal beside it, and the terminal opens chat", () => {
 
 test("the divider stays in a range a person can still use", () => {
   assert.equal(clampRatio(0.5), 0.5);
-  assert.equal(clampRatio(0.05), 0.28);
-  assert.equal(clampRatio(0.99), 0.72);
+  assert.equal(clampRatio(0.05), 0.2);
+  assert.equal(clampRatio(0.99), 0.8);
   assert.equal(clampRatio(Number.NaN), 0.5);
 });
 
@@ -44,7 +44,7 @@ test("a saved side is a path in this app", () => {
     removeItem: (k) => mem.delete(k),
   };
   writeStoredBeside(storage, { path: "/notes/3", ratio: 0.1 });
-  assert.deepEqual(readStoredBeside(storage), { path: "/notes/3", ratio: 0.28 });
+  assert.deepEqual(readStoredBeside(storage), { path: "/notes/3", ratio: 0.2 });
   writeStoredBeside(storage, null);
   assert.equal(readStoredBeside(storage), null);
 });
@@ -53,7 +53,7 @@ test("screen names stay the words people already see", () => {
   assert.equal(screenPath("/assistant/2"), "/assistant");
   assert.equal(screenPath("/try"), "/try");
   const labels = BESIDE_SCREENS.map((s) => s.label);
-  for (const word of ["Chat", "Terminal", "Practice computer", "Files", "Notes", "Tasks", "Mail"]) {
+  for (const word of ["Chat", "Terminal", "Virtual computer", "Files", "Notes", "Tasks", "Mail"]) {
     assert.ok(labels.includes(word), word);
   }
   for (const label of labels) {
@@ -68,8 +68,9 @@ test("the shell keeps the second screen on its own route", () => {
   const context = read("../src/AgentsContext.tsx");
   const assistant = read("../src/pages/Assistant.tsx");
   assert.match(beside, /Side by side/);
+  assert.match(beside, /One screen/);
   assert.match(beside, /Swap sides/);
-  assert.match(beside, /Keeps going while you use the other side/);
+  assert.match(beside, /Drag the bar to resize/);
   assert.match(beside, /MemoryRouter/);
   // React Router 6 forbids nesting MemoryRouter under BrowserRouter; a separate root is required.
   assert.match(beside, /createRoot/);
@@ -77,8 +78,10 @@ test("the shell keeps the second screen on its own route", () => {
   assert.match(beside, /safePath/);
   assert.match(beside, /Open \$\{label\} beside this/);
   assert.match(app, /BesideStage/);
-  assert.match(side, /BesideButton/);
-  assert.match(context, /BesideButton/);
+  assert.match(side, /Archive/);
+  assert.match(side, /Delete/);
+  assert.doesNotMatch(side, /BesideButton/);
+  assert.doesNotMatch(context, /BesideButton/);
   // A chat on the side must follow its own screen, and leaving the main chat must not pull you back.
   assert.match(assistant, /mounted\.current/);
   assert.doesNotMatch(assistant, /window\.location\.pathname\.startsWith\("\/assistant"\)/);

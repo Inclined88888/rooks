@@ -227,10 +227,10 @@ export function BesideStage({ renderRoutes }: { renderRoutes: () => ReactNode })
           <button
             type="button"
             className={`beside-open${beside ? " on" : ""}`}
-            title={`Open ${screenLabel(suggestion)} beside this`}
-            onClick={() => openBeside(suggestion)}
+            title={beside ? "Back to one screen" : `Open ${screenLabel(suggestion)} beside this`}
+            onClick={() => (beside ? closeBeside() : openBeside(suggestion))}
           >
-            <Columns2 size={14} /> Side by side
+            <Columns2 size={14} /> {beside ? "One screen" : "Side by side"}
           </button>
           <button
             type="button"
@@ -270,9 +270,16 @@ export function BesideStage({ renderRoutes }: { renderRoutes: () => ReactNode })
             <div
               className="beside-grip"
               role="separator"
+              tabIndex={0}
               aria-orientation={stacked ? "horizontal" : "vertical"}
-              aria-label="Resize"
+              aria-valuenow={Math.round((beside.ratio) * 100)}
+              aria-label="Drag to resize. Arrow keys change the size."
               onPointerDown={drag}
+              onKeyDown={(e) => {
+                const step = e.shiftKey ? 0.08 : 0.04;
+                if (e.key === "ArrowLeft" || e.key === "ArrowUp") setBesideRatio(beside.ratio - step);
+                if (e.key === "ArrowRight" || e.key === "ArrowDown") setBesideRatio(beside.ratio + step);
+              }}
             />
             <section className="beside-extra" aria-label={screenLabel(beside.entry)} style={{ flexGrow: 1 - beside.ratio, flexBasis: 0 }}>
               <header className="beside-extra-bar">
@@ -290,9 +297,9 @@ export function BesideStage({ renderRoutes }: { renderRoutes: () => ReactNode })
                     <option key={s.id} value={s.path}>{s.label}</option>
                   ))}
                 </select>
-                <span className="beside-extra-note">Keeps going while you use the other side.</span>
+                <span className="beside-extra-note">Drag the bar to resize.</span>
                 <button type="button" className="btn ghost sm" onClick={swap}>Swap sides</button>
-                <button type="button" className="btn ghost sm" onClick={closeBeside}>Close</button>
+                <button type="button" className="btn sm" onClick={closeBeside}>One screen</button>
               </header>
               <BesideExtraHost entry={beside.entry} renderRoutes={renderRoutes} />
             </section>

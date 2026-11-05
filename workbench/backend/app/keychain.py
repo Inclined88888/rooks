@@ -8,12 +8,16 @@ The `keyring` package is imported lazily so the Docker image does not need it.
 """
 
 import logging
+import threading
 
 from . import config
 
 SERVICE = "ai-workspace"
 PREFIX = "keychain:"
 log = logging.getLogger("workbench.keychain")
+_lock = threading.Lock()
+_cache: dict[str, str] = {}
+_sealed = False
 
 
 def _keyring():
@@ -41,8 +45,30 @@ def is_ref(value: str) -> bool:
     return bool(value) and value.startswith(PREFIX)
 
 
+def seal() -> None:
+    """Stop talking to the OS keychain for the rest of this run.
+
+    An ad hoc signed desktop app cannot keep "Always Allow". Each later read opens the
+    password box again. After secrets have been copied into the database, seal it.
+    """
+    global _sealed
+    with _lock:
+        _sealed = True
+
+
+def unseal() -> None:
+    """Test helper. The desktop app does not call this."""
+    global _sealed
+    with _lock:
+        _sealed = False
+        _cache.clear()
+
+
 def put(name: str, secret: str) -> str:
     """Store a secret and return the reference to keep in the database."""
+    with _lock:
+        if _sealed:
+            raise RuntimeError("No OS keychain is available")
     kr = _keyring()
     if kr is None:
         raise RuntimeError("No OS keychain is available")
@@ -54,25 +80,45 @@ def put(name: str, secret: str) -> str:
         except Exception:  # noqa: BLE001 - nothing to remove, or not ours to remove
             pass
         kr.set_password(SERVICE, name, secret)
+    with _lock:
+        _cache[name] = secret
     return PREFIX + name
 
 
 def get(ref: str) -> str:
-    kr = _keyring()
-    if kr is None or not is_ref(ref):
+    if not is_ref(ref):
         return ""
-    try:
-        return kr.get_password(SERVICE, ref[len(PREFIX):]) or ""
-    except Exception:  # noqa: BLE001 - a locked or missing keychain reads as "key must be re-entered"
-        log.warning("Keychain read failed for %s", ref)
-        return ""
+    name = ref[len(PREFIX):]
+    with _lock:
+        if name in _cache:
+            return _cache[name]
+        if _sealed:
+            return ""
+        kr = _keyring()
+        value = ""
+        if kr is not None:
+            try:
+                value = kr.get_password(SERVICE, name) or ""
+            except Exception:  # noqa: BLE001 - a locked or missing keychain reads as "key must be re-entered"
+                log.warning("Keychain read failed for %s", name)
+                value = ""
+        # Remember the answer, including a refusal, so the password box is not opened again this run.
+        _cache[name] = value
+        return value
 
 
 def delete(ref: str) -> None:
+    if not is_ref(ref):
+        return
+    name = ref[len(PREFIX):]
+    with _lock:
+        _cache.pop(name, None)
+        if _sealed:
+            return
     kr = _keyring()
-    if kr is None or not is_ref(ref):
+    if kr is None:
         return
     try:
-        kr.delete_password(SERVICE, ref[len(PREFIX):])
+        kr.delete_password(SERVICE, name)
     except Exception:  # noqa: BLE001 - already gone
         pass

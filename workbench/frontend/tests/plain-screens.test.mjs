@@ -14,6 +14,8 @@ const auto = read("../src/pages/Automations.tsx");
 
 test("each chat is listed once, in plain words", () => {
   assert.match(side, /No chats yet/);
+  assert.match(side, /Archive/);
+  assert.match(side, /Delete/);
   assert.doesNotMatch(side, /No agents yet/);
   assert.match(side, /Search chats/);
   assert.doesNotMatch(side, /gi === 0/);
