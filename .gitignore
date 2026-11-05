@@ -20,3 +20,4 @@ companion/macos/.build/
 
 # Local desktop installers (too large for git)
 dist-installers/
+desktop/rooks-native/target/

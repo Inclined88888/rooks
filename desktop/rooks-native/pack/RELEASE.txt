@@ -1,0 +1,12 @@
+This is the new Rooks window. It is separate from the AI Workspace installers.
+
+The app you already use still works. This window talks to the Rooks service on your computer. If that service is not running, open the app you already use, or run ai-workspace, then open Rooks.
+
+Mac: open the disk image, drag Rooks to Applications, then open it. The first time, if the Mac says it cannot be opened, right-click Rooks and choose Open. Use the aarch64 image on Apple silicon, and the x86_64 image on an Intel Mac.
+
+Linux: sudo apt install ./rooks-native_0.1.0_amd64.deb
+Then open Rooks from the app menu, or run rooks-native.
+
+Windows: run Rooks_0.1.0_x64.msi. Rooks appears in the Start menu. It does not need an administrator password.
+
+Sending a prompt to a cloud provider is off until you turn it on in Customize. A model on this computer stays available.
