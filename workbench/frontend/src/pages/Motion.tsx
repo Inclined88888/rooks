@@ -1,6 +1,7 @@
 import { ArrowLeft, Play, ShieldAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { api } from "../api";
 import { pickTheme, THEMES, useAppearance } from "../appearance";
 import { CursorOverlay, DoneTick, EdgeGlow, LiveShot, Pointer, StreamText, Thinking, transitionClick, useDictation, useExit, VoiceOrb, dictationSupported } from "../motion";
 import { Tracer } from "../Tracer";
@@ -136,7 +137,9 @@ export default function MotionLab() {
   const [tick, replayTick] = useReplay();
   const [glow, setGlow] = useState(false);
   const since = useRef(Date.now() - 7000);
+  const [who, setWho] = useState("Atlas");
   useEffect(() => { since.current = Date.now() - 7000; }, [think]);
+  useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
   return (
     <div className="page motion-lab" style={{ maxWidth: 1080 }}>
       <div className="page-head">
@@ -161,7 +164,7 @@ export default function MotionLab() {
       <div className="grid two motion-grid">
         <Section title="Thinking" note="The assistant's name shimmers while it thinks. After a few seconds it says how long, and names the tool it's using." onReplay={replayThink}>
           <div className="msg msg-thinking" key={think}><div className="msg-body">
-            <div className="msg-byline is-thinking" aria-hidden="true">Workspace</div>
+            <div className="msg-byline is-thinking" aria-hidden="true">{who}</div>
             <Thinking since={since.current} phase={think % 2 ? "web search" : undefined} />
           </div></div>
         </Section>

@@ -5,10 +5,11 @@ import {
   Globe2, GraduationCap, Inbox, MessageSquare, NotebookPen, Puzzle, Search, UsersRound, Video,
 } from "lucide-react";
 import { api, CalEvent, Task } from "../api";
-import { fmtTime, todayISO, useToast } from "../util";
+import { fmtTime, Markdown, relTime, todayISO, useToast } from "../util";
 
 type Arrived = { project_id: number; name: string; what: string; kind: string };
-type Dash = { events: CalEvent[]; tasks_due: Task[]; overdue: number; customers?: Arrived[] };
+type Done = { id: number; title: string; body: string; source: string; created_at: string };
+type Dash = { events: CalEvent[]; tasks_due: Task[]; overdue: number; customers?: Arrived[]; assistant_name?: string; arrived?: Done[] };
 type Piece = { key: string; line: string; ask: string; note: string };
 
 function dayNote(due: string, today: string) {
@@ -95,6 +96,7 @@ export default function Dashboard(_: { chatUrl?: string }) {
   const [line, setLine] = useState("");
   const [pill, setPill] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [openNote, setOpenNote] = useState<number | null>(null);
   const toast = useToast();
   const navigate = useNavigate();
   const field = useRef<HTMLInputElement>(null);
@@ -118,6 +120,8 @@ export default function Dashboard(_: { chatUrl?: string }) {
   }, [open]);
 
   const left = data ? pieces(data, today) : [];
+  const arrived = (data?.arrived ?? []).filter((item) => item.title);
+  const who = data?.assistant_name || "Atlas";
   const asTask = /^add\s+/i.test(line.trim());
   const date = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 
@@ -157,7 +161,7 @@ export default function Dashboard(_: { chatUrl?: string }) {
     <div className="page home">
       <div className="start-center">
         <p className="desk-date">{date}</p>
-        <h1>What should Rooks do?</h1>
+        <h1>What should {who} do?</h1>
 
         <form className="home-add" onSubmit={submit}>
           <input
@@ -197,20 +201,42 @@ export default function Dashboard(_: { chatUrl?: string }) {
         </div>
       </div>
 
-      {left.length > 0 && (
-        <section className="left-dock" aria-label="Still to do">
-          <p>Still to do</p>
-          <ul>
-            {left.map((p) => (
-              <li key={p.key}>
-                <button type="button" onClick={() => start(p.ask)}>
-                  <span className="truncate">{p.line}</span>
-                  <small>{p.note}</small>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+      {(left.length > 0 || arrived.length > 0) && (
+        <div className={left.length > 0 && arrived.length > 0 ? "home-docks" : undefined}>
+          {left.length > 0 && (
+            <section className="left-dock" aria-label="Still to do">
+              <p>Still to do</p>
+              <ul>
+                {left.map((p) => (
+                  <li key={p.key}>
+                    <button type="button" onClick={() => start(p.ask)}>
+                      <span className="truncate">{p.line}</span>
+                      <small>{p.note}</small>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {arrived.length > 0 && (
+            <section className="left-dock" aria-label={`${who} already did this`}>
+              <p>{who} already did this</p>
+              <ul>
+                {arrived.map((item) => (
+                  <li key={item.id}>
+                    <button type="button" aria-expanded={openNote === item.id} onClick={() => setOpenNote(openNote === item.id ? null : item.id)}>
+                      <span className="truncate">{item.title}</span>
+                      <small>{relTime(item.created_at)}</small>
+                    </button>
+                    {openNote === item.id
+                      ? <div className="home-note"><Markdown text={item.body} /></div>
+                      : <div className="home-note truncate">{item.body}</div>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
       )}
       {toast.node}
     </div>

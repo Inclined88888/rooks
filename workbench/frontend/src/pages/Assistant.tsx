@@ -15,7 +15,19 @@ import { DiffView, extractDiffFromArgs } from "../components/DiffView";
 import { plainStep } from "../plainStep";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
-type Msg = { id: number; role: string; content: string; tool_calls: string[]; name: string; via?: RouterInfo; attachments?: Att[] };
+type Choices = { question: string; options: string[] };
+type Msg = { id: number; role: string; content: string; tool_calls: string[]; name: string; via?: RouterInfo; attachments?: Att[]; choices?: Choices };
+
+function ChoiceButtons({ c, onPick }: { c: Choices; onPick: (s: string) => void }) {
+  if (c.options.length < 2) return null;
+  return (
+    <div className="chat-choices" role="group" aria-label={c.question || "Quick replies"}>
+      {c.options.map((o) => (
+        <button key={o} type="button" className="btn sm" onClick={() => onPick(o)}>{o}</button>
+      ))}
+    </div>
+  );
+}
 type Step = { kind: "call" | "check"; name: string; text: string; line: string; ok?: boolean };
 type Approval = { id: number; tool: string; args: string; effect: string; reason: string };
 type Memory = { id: number; content: string; kind: string; source: string; updated_at: string };
@@ -73,6 +85,8 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   const att = useAttachments(); // feat/attachments: files waiting to go with the next message
   const [dropping, setDropping] = useState(false);
   const [offer, setOffer] = useState<{ key: string; name: string; request: string; line: string } | null>(null);
+  const [who, setWho] = useState("Atlas");
+  useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
 
   const loadConvs = () => api<Conv[]>(`/conversations${q ? `?q=${encodeURIComponent(q)}` : ""}`).then(setConvs).catch(toast.err);
   useEffect(() => { const t = setTimeout(loadConvs, 200); return () => clearTimeout(t); }, [q]);
@@ -131,6 +145,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     let via: RouterInfo | undefined;
     let stopped = false;
     let lastReply = "";
+    let pendingChoices: Choices | null = null;
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
@@ -158,12 +173,19 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
           setApprovals((a) => [...a, { id: Number(ev.id), tool: String(ev.tool), args: String(ev.args), effect: String(ev.effect), reason: String(ev.reason) }]);
           if (inBackground()) void notify("Approval needed", `${String(ev.tool)}: ${String(ev.reason || "waiting for your OK")}`, { tag: "approval" });
         }
+        if (t === "choices") {
+          const options = Array.isArray(ev.options) ? (ev.options as unknown[]).map(String).filter(Boolean) : [];
+          if (options.length >= 2) pendingChoices = { question: String(ev.question ?? ""), options };
+          return;
+        }
         if (t === "message") {
           lastReply = String(ev.content);
           const mid = Date.now() + 1;
+          const choices = pendingChoices ?? undefined;
+          pendingChoices = null;
           if (via) viaByReply.current.set(String(ev.content), via);
           setFreshId(mid);
-          setMessages((m) => [...m, { id: mid, role: "assistant", content: String(ev.content), tool_calls: [], name: "", via }]);
+          setMessages((m) => [...m, { id: mid, role: "assistant", content: String(ev.content), tool_calls: [], name: "", via, choices }]);
         }
         if (t === "automate_offer") setOffer({ key: String(ev.key), name: String(ev.name), request: String(ev.request), line: String(ev.line) });
         if (t === "stopped") stopped = true;
@@ -181,6 +203,12 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     const doneCid = newId || cid;
     if (stopped && doneCid) loadConv(doneCid); // pick up what the turn kept before it stopped
     else if (newId && newId !== cid && window.location.pathname.startsWith("/assistant")) navigate(`/assistant/${newId}`, { replace: true });
+  };
+
+  const pickChoice = (option: string) => {
+    if (busy || att.uploading) return;
+    askNotifyPermission();
+    void run(option, { echo: true });
   };
 
   const send = async (e?: FormEvent) => {
@@ -247,7 +275,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     loadConvs();
   };
 
-  const visible = messages.filter((m) => (m.role === "user" && m.name !== "claim_check") || (m.role === "assistant" && (m.content || m.tool_calls.length)));
+  const visible = messages.filter((m) => (m.role === "user" && m.name !== "claim_check") || (m.role === "assistant" && m.content));
   const lastReply = [...visible].reverse().find((m) => m.role === "assistant" && m.content);
   const look = lookAt == null || lookAt >= steps.length ? steps.length - 1 : lookAt;
   const shown = look >= 0 ? steps[look] : null;
@@ -371,13 +399,14 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
                 </div>
               : <div key={m.id} className="msg">
                   <div className="msg-body">
-                    <div className="msg-byline" aria-hidden="true">Workspace</div>
+                    <div className="msg-byline" aria-hidden="true">{who}</div>
                     {m.content && (m.id === freshId
                       ? <LiveMarkdown text={m.content} messageId={m.id} streaming onDone={() => setFreshId(null)} />
                       : <LiveMarkdown text={m.content} messageId={m.id} />)}
                     {m.via && <RouterVia r={m.via} />}
                     {m.content && m.id !== freshId && <MessageFeedback msg={m} />}
                     {m.content && m.id !== freshId && <CheckThis cid={cid} content={m.content} fresh={m.id > 1e12} />}{/* feat/v02-core */}
+                    {m.choices && lastReply?.id === m.id && !busy && <ChoiceButtons c={m.choices} onPick={pickChoice} />}
                     {m.content && m.id !== freshId && lastReply?.id === m.id && !busy && (
                       <div className="row" style={{ gap: 4, marginTop: 4 }}>
                         <button className="btn ghost sm" aria-label="Regenerate reply" title="Drop this reply and answer again" onClick={regenerate}><RotateCcw size={13} /> Regenerate</button>
@@ -409,7 +438,7 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
             {busy && (
               <div className="msg msg-thinking" aria-label="Assistant is working">
                 <div className="msg-body">
-                  <div className="msg-byline is-thinking" aria-hidden="true">Workspace</div>
+                  <div className="msg-byline is-thinking" aria-hidden="true">{who}</div>
                   {draft && <div className="msg-text"><Markdown text={draft} /></div>}
                   <Thinking since={busySince} line={steps.at(-1)?.line} />
                 </div>

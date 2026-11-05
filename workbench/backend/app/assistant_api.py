@@ -169,12 +169,17 @@ def conversation(cid: int):
     c = db.one("SELECT * FROM conversations WHERE id = ?", cid)
     if not c:
         raise HTTPException(404, "Not found")
+    from .teammates.hooks import choices_from_calls, stamp_choices
+
     rows = db.all("SELECT id, role, content, tool_calls, name, attachments, created_at FROM messages WHERE conversation_id = ? ORDER BY id", cid)
     for r in rows:
+        raw_calls = r["tool_calls"]
+        r["_choice"] = choices_from_calls(raw_calls)
         r["attachments"] = [attachments_mod.public(a) for a in json.loads(r["attachments"])] if r["attachments"] else []
-        r["tool_calls"] = [tc["function"]["name"] for tc in json.loads(r["tool_calls"])] if r["tool_calls"] else []
+        r["tool_calls"] = [tc["function"]["name"] for tc in json.loads(raw_calls)] if raw_calls else []
         if r["role"] == "tool":
             r["content"] = r["content"][:400]
+    stamp_choices(rows)
     return {**c, "messages": rows}
 
 
@@ -490,7 +495,11 @@ def put_assistant_settings(data: AssistantSettings):
     from zoneinfo import ZoneInfo
 
     if data.assistant_name is not None:
-        db.set_setting("assistant_name", data.assistant_name.strip() or "Atlas")
+        name = " ".join(data.assistant_name.split())[:40] or "Atlas"
+        db.set_setting("assistant_name", name)
+        from .teammates import store as teammate_store
+
+        teammate_store.sync_default_name(name)
     if data.timezone is not None:
         try:
             ZoneInfo(data.timezone)

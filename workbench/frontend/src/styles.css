@@ -265,12 +265,19 @@ kbd, .kbd {
 .left-dock li:last-child button { border-bottom: 0; }
 .left-dock button:hover { color: var(--muted); }
 .left-dock small { color: var(--muted); font-size: 13px; flex: none; }
+.home-docks { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border); }
+.home-docks .left-dock { border-top: 0; }
+.home-docks .left-dock + .left-dock { border-left: 1px solid var(--border); }
+.home-note { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+.chat-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 @media (prefers-reduced-motion: reduce) {
   .start-chip, .start-menu a { transition: none; }
 }
 @media (max-width: 860px) {
   .page.home h1 { font-size: 32px; }
   .left-dock { padding: 12px 16px 14px; }
+  .home-docks { grid-template-columns: 1fr; }
+  .home-docks .left-dock + .left-dock { border-left: 0; border-top: 1px solid var(--border); }
 }
 .page-head { display: flex; align-items: flex-end; gap: var(--space-4); margin-bottom: var(--space-8); padding-bottom: var(--space-5); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .page-head p { margin: var(--space-2) 0 0; color: var(--muted); font-size: var(--text-lg); }

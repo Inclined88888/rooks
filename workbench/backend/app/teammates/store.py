@@ -396,11 +396,21 @@ def import_template(data: dict) -> dict:
     return {**t, "routines_to_review": pending}
 
 
+def sync_default_name(name: str) -> None:
+    """The default teammate is the assistant from Settings. Rename it when that name changes, unless another teammate
+    already has the new name."""
+    ensure()
+    row = db.one("SELECT id, name FROM teammates WHERE is_default = 1")
+    if not row or row["name"] == name:
+        return
+    if db.one("SELECT 1 FROM teammates WHERE lower(name) = lower(?) AND id != ?", name, row["id"]):
+        return
+    db.run("UPDATE teammates SET name = ?, updated_at = ? WHERE id = ?", name, db.now(), row["id"])
+
+
 def history(tid: int, cid: int) -> dict:
     """A teammate conversation as the chat pane shows it: user and assistant turns, with the choice buttons the
     teammate offered (offer_choices tool calls), its drafts and secure forms attached to the turn that made them."""
-    import json as _json
-
     from . import hooks
 
     owner, gid = teammate_for(cid)
@@ -418,14 +428,7 @@ def history(tid: int, cid: int) -> dict:
         a = out[-1]
         if r["content"]:
             a["text"] = f"{a['text']}\n\n{r['content']}" if a["text"] else r["content"]
-        for tc in _json.loads(r["tool_calls"] or "[]"):
-            f = tc.get("function", {})
-            if f.get("name") == "offer_choices":
-                try:
-                    args = _json.loads(f.get("arguments") or "{}")
-                except ValueError:
-                    args = {}
-                opts = hooks.parse_choices(args.get("options"))
-                if len(opts) >= 2:
-                    a["choices"] = {"question": str(args.get("question", ""))[:300], "options": opts}
+        ch = hooks.choices_from_calls(r["tool_calls"])
+        if ch:
+            a["choices"] = ch
     return {"conversation_id": cid, "messages": out}

@@ -651,6 +651,8 @@ def dashboard():
         "research": db.all("SELECT id, question, status, created_at FROM research ORDER BY id DESC LIMIT 5"),
         "customers": customers,
         "trade": _trade(),
+        "assistant_name": db.get_setting("assistant_name", "Atlas") or "Atlas",
+        "arrived": db.all("SELECT id, title, body, source, created_at FROM inbox WHERE read = 0 ORDER BY id DESC LIMIT 6"),
     }
 
 

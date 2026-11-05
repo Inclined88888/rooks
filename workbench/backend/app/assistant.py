@@ -850,6 +850,12 @@ def system_prompt(ctx: Ctx, user_text: str) -> str:
         "browser opens. Never say a work site is missing, and never tell them to add a site, instead of calling browse_web. "
         "If the user asks to use this computer, call use_computer. That asks them first. Do not say computer use is off.",
     ]
+    if ctx.channel == "web":
+        parts.append(
+            "When you need the user to pick one of a few options, call offer_choices with a short question and "
+            "2 to 6 options separated by ' | '. The app shows those as buttons under your reply. Do not also list "
+            "the options in your message. A numbered or bulleted list in the reply is not a choice card."
+        )
     mode = getattr(ctx, "work_mode", "chat") or "chat"
     if mode == "plan":
         parts.append("Mode: plan. Propose steps and ask before you change anything. Do not send mail, spend money, or run destructive actions.")
@@ -1213,6 +1219,12 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
         final = f"I stopped after {limit} steps without finishing. Tell me how to continue."
         _save(ctx.conversation_id, "assistant", final)
         receipts.record_turn(ctx, "step_limit")
+    if ctx.channel == "web" and ctx.conversation_id:
+        from .teammates.hooks import choices_for_latest_turn
+
+        offered = choices_for_latest_turn(ctx.conversation_id)
+        if offered:
+            yield {"type": "choices", **offered}
     yield {"type": "message", "content": final}
     if ctx.channel in ("web", "cli", "mobile"):
         from . import automations

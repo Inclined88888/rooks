@@ -377,8 +377,53 @@ function OllamaStep({ preset, onBack, onDone }: { preset: Preset; onBack: () => 
   );
 }
 
+function NameStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }) {
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const chosen = name.trim();
+
+  const save = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      if (chosen) await api("/assistant/settings", { method: "PUT", body: { assistant_name: chosen } });
+      onNext();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form className="col gap-lg" onSubmit={(e) => { e.preventDefault(); void save(); }}>
+      <div className="welcome-hero">
+        <div className="kicker">First run · 2 of 4</div>
+        <div className="wordmark xl">Rooks</div>
+        <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
+        <h1 className="welcome-title">What should I be called?</h1>
+        <p className="muted">This is the name on Home and in chat. You can change it later in Assistant settings.</p>
+      </div>
+      {error && <div className="alert err">{error}</div>}
+      <label className="field">
+        Name
+        <input className="input" value={name} maxLength={40} autoFocus aria-label="Assistant name"
+          placeholder="Atlas" onChange={(e) => setName(e.target.value)} />
+      </label>
+      <div className="row">
+        <Back onBack={onBack} />
+        <div className="spacer" />
+        <button className="btn primary" disabled={busy}>
+          {busy ? <Loader2 size={16} className="spin" /> : <>{chosen ? `Call me ${chosen}` : "Keep the name Atlas"} <ArrowRight size={16} /></>}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export default function Welcome({ onDone }: { onDone: () => void }) {
-  const [step, setStep] = useState<"accounts" | "look" | "choose" | "free" | "subscription" | "key" | "ollama">("accounts");
+  const [step, setStep] = useState<"accounts" | "look" | "name" | "choose" | "free" | "subscription" | "key" | "ollama">("accounts");
   const [keyPreset, setKeyPreset] = useState<string>();
   const [presets, setPresets] = useState<Record<string, Preset> | null>(null);
   const [info, setInfo] = useState<Record<string, KeyInfo>>({});
@@ -389,16 +434,18 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
   }, []);
   const back = () => setStep("choose");
   const welcomeWide = step === "look";
+  const stepIndex = step === "accounts" ? 0 : step === "look" ? 1 : step === "name" ? 2 : 3;
 
   return (
     <div className="auth welcome">
       <div className={`card auth-card welcome-card${welcomeWide ? " wide" : ""}`} key={step}>
-        <div className="steps">{[0, 1, 2].map((i) => <span key={i} className={i <= (step === "accounts" ? 0 : step === "look" ? 1 : 2) ? "on" : ""} />)}</div>
+        <div className="steps">{[0, 1, 2, 3].map((i) => <span key={i} className={i <= stepIndex ? "on" : ""} />)}</div>
         {step === "accounts" && <AccountsStep onNext={() => setStep("look")} />}
+        {step === "name" && <NameStep onBack={() => setStep("look")} onNext={() => setStep("choose")} />}
         {step === "look" && (
           <div className="col gap-lg">
             <div className="welcome-hero">
-              <div className="kicker">First run · 1 of 3</div>
+              <div className="kicker">First run · 1 of 4</div>
               <div className="wordmark xl">Rooks</div>
               <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
               <h1 className="welcome-title">Pick your look</h1>
@@ -412,14 +459,14 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
             </div>
             <div className="look-actions">
               <span className="small muted">Standard is the everyday look. The others are here if you want them.</span>
-              <button className="btn primary" onClick={() => { saveAppearanceRemote(readAppearance()); setStep("choose"); }}>Continue <ArrowRight size={14} /></button>
+              <button className="btn primary" onClick={() => { saveAppearanceRemote(readAppearance()); setStep("name"); }}>Continue <ArrowRight size={14} /></button>
             </div>
           </div>
         )}
         {step === "choose" && (
           <div className="col gap-lg">
             <div className="welcome-hero">
-              <div className="kicker">First run · 2 of 3</div>
+              <div className="kicker">First run · 3 of 4</div>
               <div className="wordmark xl">Rooks</div>
               <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
               <h1 className="welcome-title">Choose how to think</h1>
