@@ -1,7 +1,8 @@
-import { CalendarClock, ChevronDown, ChevronRight, Code2, Plus, Puzzle, Search, Settings as SettingsIcon } from "lucide-react";
+import { CalendarClock, ChevronDown, ChevronRight, Code2, Moon, Plus, Puzzle, Search, Settings as SettingsIcon, Sun } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
+import { isDark, pickTheme, useAppearance } from "./appearance";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
 type Project = { id: number; name: string; kind: string; status: string; last_used_at?: string | null; updated_at?: string; counts?: Record<string, number> };
@@ -33,10 +34,16 @@ export default function AgentsSidebar({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [appearance] = useAppearance();
+  const dark = isDark(appearance.theme);
   const idMatch = location.pathname.match(/^\/assistant\/(\d+)/);
   const cid = idMatch ? Number(idMatch[1]) : null;
   const projectMatch = location.pathname.match(/^\/projects\/(\d+)/);
   const openProject = projectMatch ? Number(projectMatch[1]) : null;
+
+  const toggleLook = () => {
+    pickTheme(dark ? "gallery" : "night");
+  };
 
   const [convs, setConvs] = useState<Conv[] | null>(null);
   const [projects, setProjects] = useState<ProjectList | null>(null);
@@ -163,6 +170,15 @@ export default function AgentsSidebar({
         </button>
         <button type="button" className="agents-user truncate" onClick={onSearch} title="Search">
           {workspaceName}
+        </button>
+        <button
+          type="button"
+          className="agents-foot-btn"
+          onClick={toggleLook}
+          title={dark ? "Light look" : "Dark look"}
+          aria-label={dark ? "Switch to light look" : "Switch to dark look"}
+        >
+          {dark ? <Sun size={15} /> : <Moon size={15} />}
         </button>
         <Link to="/settings" className="agents-foot-btn" title="Settings" aria-label="Settings">
           <SettingsIcon size={15} />

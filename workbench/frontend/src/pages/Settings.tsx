@@ -448,7 +448,7 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
           {section === "appearance" && (
             <div className="card col">
               <h2>Appearance</h2>
-              <p className="muted small">Theme, motion, and how the window looks.</p>
+              <p className="muted small">Light white or dark charcoal — pick a look any time. More themes, motion, and type live on Appearance.</p>
               <div className="row wrap">
                 <Link className="btn primary" to="/appearance">Open appearance</Link>
                 <Link className="btn" to="/plan">Your plan</Link>

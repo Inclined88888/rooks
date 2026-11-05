@@ -162,9 +162,42 @@ kbd, .kbd {
 /* ---- App shell ---- */
 .shell { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); height: 100%; background: var(--bg); }
 
-/* ---- Cursor Agents Window (premium dark chrome) ---- */
+/* ---- Assistant shell: light white by default; charcoal when Appearance is dark ---- */
 .shell.shell-agents {
-  /* Match the screenshot: flat charcoal, gray type, blue only on the active dot */
+  --agents-bg: #ffffff;
+  --agents-panel: #f7f7f8;
+  --agents-panel-2: #efeff1;
+  --agents-panel-3: #e6e6ea;
+  --agents-border: #ececec;
+  --agents-text: #0d0d0d;
+  --agents-muted: #6e6e80;
+  --agents-faint: #8e8e9a;
+  --agents-accent: #2563eb;
+  --agents-accent-soft: rgba(37, 99, 235, 0.14);
+  --bg: var(--agents-bg);
+  --panel: var(--agents-panel);
+  --panel-2: var(--agents-panel-2);
+  --panel-3: var(--agents-panel-3);
+  --border: var(--agents-border);
+  --border-strong: #d4d4d8;
+  --text: var(--agents-text);
+  --muted: var(--agents-muted);
+  --faint: var(--agents-faint);
+  --accent: var(--agents-accent);
+  --accent-text: #1d4ed8;
+  --accent-soft: rgba(13, 13, 13, 0.05);
+  --accent-ring: rgba(37, 99, 235, 0.28);
+  --on-accent: #ffffff;
+  --code-bg: #f4f4f5;
+  --shadow-2: 0 8px 28px rgba(15, 15, 20, 0.08);
+  --shadow-3: 0 16px 40px rgba(15, 15, 20, 0.12);
+  color-scheme: light;
+  grid-template-columns: 256px minmax(0, 1fr) 248px;
+  position: relative;
+  background: var(--agents-bg);
+}
+[data-mode="dark"] .shell.shell-agents {
+  /* Flat charcoal from the reference shot */
   --agents-bg: #141414;
   --agents-panel: #181818;
   --agents-panel-2: #1e1e1e;
@@ -175,16 +208,7 @@ kbd, .kbd {
   --agents-faint: #737373;
   --agents-accent: #3b82f6;
   --agents-accent-soft: rgba(59, 130, 246, 0.18);
-  --bg: var(--agents-bg);
-  --panel: var(--agents-panel);
-  --panel-2: var(--agents-panel-2);
-  --panel-3: var(--agents-panel-3);
-  --border: var(--agents-border);
   --border-strong: #3a3a3a;
-  --text: var(--agents-text);
-  --muted: var(--agents-muted);
-  --faint: var(--agents-faint);
-  --accent: var(--agents-accent);
   --accent-text: #93c5fd;
   --accent-soft: rgba(255, 255, 255, 0.06);
   --accent-ring: rgba(255, 255, 255, 0.18);
@@ -193,9 +217,6 @@ kbd, .kbd {
   --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
   --shadow-3: 0 14px 36px rgba(0, 0, 0, 0.55);
   color-scheme: dark;
-  grid-template-columns: 256px minmax(0, 1fr) 248px;
-  position: relative;
-  background: var(--agents-bg);
 }
 .agents-side {
   display: flex; flex-direction: column; min-height: 0; min-width: 0;
@@ -206,11 +227,16 @@ kbd, .kbd {
 .agents-side-top { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 .agents-new {
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  height: 34px; width: 100%; border: 1px solid var(--border-strong); border-radius: 8px;
-  background: transparent; color: var(--agents-text); font: inherit; font-size: 13px; font-weight: 600;
+  height: 34px; width: 100%; border: 1px solid var(--agents-text); border-radius: 999px;
+  background: var(--agents-text); color: var(--agents-bg); font: inherit; font-size: 13px; font-weight: 600;
   cursor: pointer;
 }
-.agents-new:hover { background: var(--agents-panel-2); }
+.agents-new:hover { filter: brightness(0.94); }
+[data-mode="dark"] .agents-new {
+  border-color: var(--border-strong); border-radius: 8px;
+  background: transparent; color: var(--agents-text); filter: none;
+}
+[data-mode="dark"] .agents-new:hover { background: var(--agents-panel-2); }
 .agents-shortcuts { display: flex; flex-direction: column; gap: 1px; }
 .agents-link {
   display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px;
@@ -366,6 +392,10 @@ kbd, .kbd {
   border-radius: 16px; box-shadow: var(--shadow-2);
 }
 .shell-agents .agents-composer:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 1px var(--agents-accent-soft), var(--shadow-3);
+}
+[data-mode="dark"] .shell-agents .agents-composer:focus-within {
   border-color: #4a4a4a;
   box-shadow: var(--shadow-3);
 }
@@ -402,14 +432,23 @@ kbd, .kbd {
 .shell-agents .cursor-settings-link.active { background: var(--agents-panel-3); }
 .shell-agents .cursor-settings-head { background: transparent; }
 .shell-agents .face-body {
+  fill: #efeff1;
+  stroke: #d4d4d8;
+}
+.shell-agents .blush { fill: #c4c4cc; opacity: 0.45; }
+.shell-agents .pupil { fill: #0d0d0d; }
+.shell-agents .eye-white { fill: #ffffff; }
+.shell-agents .mouth { stroke: #6e6e80; }
+.shell-agents .eyes-happy path { stroke: #6e6e80; }
+[data-mode="dark"] .shell-agents .face-body {
   fill: #2a2a2a;
   stroke: #3f3f3f;
 }
-.shell-agents .blush { fill: #525252; opacity: 0.35; }
-.shell-agents .pupil { fill: #e8e8e8; }
-.shell-agents .eye-white { fill: #111111; }
-.shell-agents .mouth { stroke: #a3a3a3; }
-.shell-agents .eyes-happy path { stroke: #a3a3a3; }
+[data-mode="dark"] .shell-agents .blush { fill: #525252; opacity: 0.35; }
+[data-mode="dark"] .shell-agents .pupil { fill: #e8e8e8; }
+[data-mode="dark"] .shell-agents .eye-white { fill: #111111; }
+[data-mode="dark"] .shell-agents .mouth { stroke: #a3a3a3; }
+[data-mode="dark"] .shell-agents .eyes-happy path { stroke: #a3a3a3; }
 
 .shell.shell-rail { grid-template-columns: 48px minmax(0, 1fr); position: relative; }
 .icon-rail {
