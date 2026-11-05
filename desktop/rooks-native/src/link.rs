@@ -166,7 +166,10 @@ fn idle_child() -> Result<Child, String> {
     } else {
         Command::new("true")
     };
-    cmd.stdout(Stdio::null()).stderr(Stdio::null()).spawn().map_err(|e| e.to_string())
+    cmd.stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|e| e.to_string())
 }
 
 fn start_from_install() -> Option<Result<Started, String>> {

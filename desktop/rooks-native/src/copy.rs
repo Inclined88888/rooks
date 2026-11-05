@@ -9,12 +9,9 @@ pub fn window_title() -> &'static str {
     PRODUCT
 }
 
-/// The left rail, in order. Customize, Skills and Connectors are the core menus.
-pub const RAIL: &[(&str, &str)] = &[
-    ("Workplace", "workplace"),
-    ("Customize", "customize"),
-    ("Skills", "skills"),
-    ("Connectors", "connectors"),
+/// Work surfaces. Setup is not repeated here.
+pub const SURFACES: &[(&str, &str)] = &[
+    ("Home", "home"),
     ("Mail", "mail"),
     ("Tasks", "tasks"),
     ("Terminal", "terminal"),
@@ -22,16 +19,19 @@ pub const RAIL: &[(&str, &str)] = &[
     ("Code", "code"),
 ];
 
+/// Customize, Skills and Connectors, once, in the top bar.
+pub const SETUP: &[(&str, &str)] = &[
+    ("Customize", "customize"),
+    ("Skills", "skills"),
+    ("Connectors", "connectors"),
+];
+
 pub fn welcome_blob() -> String {
     format!("{PRODUCT}\n{KICKER}\n{HEADLINE}\n{BODY}")
 }
 
-pub fn core_menus() -> Vec<&'static str> {
-    RAIL.iter()
-        .skip(1)
-        .take(3)
-        .map(|(label, _)| *label)
-        .collect()
+pub fn setup_labels() -> Vec<&'static str> {
+    SETUP.iter().map(|(label, _)| *label).collect()
 }
 
 #[cfg(test)]
@@ -49,17 +49,15 @@ mod tests {
     }
 
     #[test]
-    fn customize_skills_and_connectors_are_always_on_the_rail() {
-        let labels: Vec<_> = RAIL.iter().map(|(label, _)| *label).collect();
-        assert!(labels.contains(&"Customize"));
-        assert!(labels.contains(&"Skills"));
-        assert!(labels.contains(&"Connectors"));
-        assert!(
-            labels.iter().position(|l| *l == "Customize")
-                < labels.iter().position(|l| *l == "Mail")
-        );
-        let core = core_menus();
-        assert_eq!(core, vec!["Customize", "Skills", "Connectors"]);
+    fn setup_appears_once_and_not_beside_mail() {
+        let surfaces: Vec<_> = SURFACES.iter().map(|(label, _)| *label).collect();
+        for word in ["Customize", "Skills", "Connectors"] {
+            assert!(!surfaces.contains(&word), "{word} is not a work surface");
+            assert_eq!(SETUP.iter().filter(|(label, _)| *label == word).count(), 1);
+        }
+        assert_eq!(setup_labels(), vec!["Customize", "Skills", "Connectors"]);
+        assert!(surfaces.contains(&"Mail"));
+        assert!(surfaces.contains(&"Home"));
     }
 
     #[test]

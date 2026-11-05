@@ -1,6 +1,6 @@
 [package]
 name = "rooks-native"
-version = "0.1.0"
+version = "0.2.0"
 description = "Rooks window. Its own UI, on this computer, with no web view."
 edition = "2021"
 license = "LicenseRef-Proprietary"

@@ -2,10 +2,14 @@
 
 use std::time::Duration;
 
+use iced::widget::button::Status;
 use iced::widget::{button, checkbox, column, container, row, scrollable, text, text_input};
-use iced::{Alignment, Element, Length, Subscription, Task, Theme};
+use iced::{
+    Alignment, Background, Border, Color, Element, Length, Shadow, Subscription, Task, Theme,
+};
 
 use rooks_native::copy::{self, BODY, HEADLINE, KICKER, PRODUCT};
+use rooks_native::fit::{self, Profile, Suggestion};
 use rooks_native::parse::{self, ConnectorRow, JobRow, MailRow, ModelRow, SkillRow, TaskRow};
 use rooks_native::prefs::{self, Prefs};
 use rooks_native::term::Term;
@@ -19,9 +23,18 @@ fn main() -> iced::Result {
         .run_with(App::boot)
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Step {
+    Welcome,
+    Role,
+    Tools,
+    Help,
+}
+
 struct App {
-    welcome: bool,
+    step: Option<Step>,
     screen: &'static str,
+    draft: Profile,
     client: Option<Client>,
     prefs: Prefs,
     banner: String,
@@ -33,7 +46,6 @@ struct App {
     skills: Vec<SkillRow>,
     connectors: Vec<ConnectorRow>,
     models: Vec<ModelRow>,
-    name: String,
     name_draft: String,
     terminal_line: String,
     term: Option<Term>,
@@ -45,9 +57,14 @@ struct App {
 
 #[derive(Debug, Clone)]
 enum Message {
-    Continue,
+    Next,
+    Back,
+    PickRole(&'static str),
+    ToggleTool(&'static str),
+    ToggleHelp(&'static str),
     Connected(Result<Link, String>),
     Go(&'static str),
+    Home((Vec<String>, Vec<TaskRow>)),
     Notices(Result<Vec<String>, String>),
     Tasks(Result<Vec<TaskRow>, String>),
     TaskDraft(String),
@@ -81,38 +98,112 @@ enum Message {
     DoneOp(Result<(), String>),
 }
 
+fn palette() -> iced::theme::Palette {
+    iced::theme::Palette {
+        background: Color::from_rgb(0.965, 0.953, 0.929),
+        text: Color::from_rgb(0.12, 0.11, 0.09),
+        primary: Color::from_rgb(0.18, 0.24, 0.21),
+        success: Color::from_rgb(0.29, 0.45, 0.36),
+        danger: Color::from_rgb(0.62, 0.32, 0.27),
+    }
+}
+
+fn ink() -> Color {
+    Color::from_rgb(0.18, 0.24, 0.21)
+}
+
+fn paper() -> Color {
+    Color::from_rgb(0.99, 0.98, 0.96)
+}
+
+fn line() -> Color {
+    Color::from_rgb(0.82, 0.78, 0.72)
+}
+
+fn card_style(on: bool) -> impl Fn(&Theme, Status) -> button::Style {
+    move |theme: &Theme, _status: Status| button::Style {
+        background: Some(Background::Color(if on {
+            Color::from_rgb(0.90, 0.88, 0.83)
+        } else {
+            paper()
+        })),
+        text_color: theme.palette().text,
+        border: Border {
+            color: if on { ink() } else { line() },
+            width: if on { 1.5 } else { 1.0 },
+            radius: 12.0.into(),
+        },
+        shadow: Shadow::default(),
+    }
+}
+
+fn nav_style(on: bool) -> impl Fn(&Theme, Status) -> button::Style {
+    move |theme, status| {
+        if on {
+            button::Style {
+                background: Some(Background::Color(Color::from_rgb(0.90, 0.88, 0.83))),
+                text_color: theme.palette().text,
+                border: Border {
+                    color: ink(),
+                    width: 1.0,
+                    radius: 10.0.into(),
+                },
+                shadow: Shadow::default(),
+            }
+        } else {
+            quiet_style(theme, status)
+        }
+    }
+}
+
+fn quiet_style(theme: &Theme, status: Status) -> button::Style {
+    let base = button::text(theme, status);
+    button::Style {
+        text_color: theme.palette().text,
+        ..base
+    }
+}
+
 impl App {
     fn boot() -> (Self, Task<Message>) {
-        (
-            Self {
-                welcome: true,
-                screen: "workplace",
-                client: None,
-                prefs: prefs::load(),
-                banner: String::new(),
-                notices: Vec::new(),
-                tasks: Vec::new(),
-                task_draft: String::new(),
-                mail_label: String::new(),
-                mail: Vec::new(),
-                skills: Vec::new(),
-                connectors: Vec::new(),
-                models: Vec::new(),
-                name: String::new(),
-                name_draft: String::new(),
-                terminal_line: String::new(),
-                term: None,
-                term_text: String::new(),
-                term_draft: String::new(),
-                browser: Vec::new(),
-                code: Vec::new(),
-            },
-            Task::none(),
-        )
+        let prefs = prefs::load();
+        let known = prefs
+            .profile
+            .as_ref()
+            .is_some_and(|profile| profile.ready());
+        let app = Self {
+            step: if known { None } else { Some(Step::Welcome) },
+            screen: "home",
+            draft: prefs.profile.clone().unwrap_or_default(),
+            client: None,
+            prefs,
+            banner: String::new(),
+            notices: Vec::new(),
+            tasks: Vec::new(),
+            task_draft: String::new(),
+            mail_label: String::new(),
+            mail: Vec::new(),
+            skills: Vec::new(),
+            connectors: Vec::new(),
+            models: Vec::new(),
+            name_draft: String::new(),
+            terminal_line: String::new(),
+            term: None,
+            term_text: String::new(),
+            term_draft: String::new(),
+            browser: Vec::new(),
+            code: Vec::new(),
+        };
+        let task = if known {
+            Task::perform(async { rooks_native::link::ensure() }, Message::Connected)
+        } else {
+            Task::none()
+        };
+        (app, task)
     }
 
     fn theme(_state: &Self) -> Theme {
-        Theme::Light
+        Theme::custom("Rooks".to_string(), palette())
     }
 
     fn subscription(state: &Self) -> Subscription<Message> {
@@ -125,19 +216,62 @@ impl App {
 
     fn update(state: &mut Self, message: Message) -> Task<Message> {
         match message {
-            Message::Continue => {
-                state.banner = "Opening the local service…".into();
-                Task::perform(async { rooks_native::link::ensure() }, Message::Connected)
+            Message::Next => match state.step {
+                Some(Step::Welcome) => {
+                    state.step = Some(Step::Role);
+                    Task::none()
+                }
+                Some(Step::Role) if !state.draft.role.is_empty() => {
+                    state.step = Some(Step::Tools);
+                    Task::none()
+                }
+                Some(Step::Tools) => {
+                    state.step = Some(Step::Help);
+                    Task::none()
+                }
+                Some(Step::Help) if !state.draft.help.is_empty() => {
+                    state.prefs.profile = Some(state.draft.clone());
+                    if let Err(err) = prefs::save(&state.prefs) {
+                        state.banner = err;
+                        return Task::none();
+                    }
+                    state.step = None;
+                    state.banner = "Opening the local service…".into();
+                    Task::perform(async { rooks_native::link::ensure() }, Message::Connected)
+                }
+                _ => Task::none(),
+            },
+            Message::Back => {
+                state.step = match state.step {
+                    Some(Step::Role) => Some(Step::Welcome),
+                    Some(Step::Tools) => Some(Step::Role),
+                    Some(Step::Help) => Some(Step::Tools),
+                    other => other,
+                };
+                Task::none()
+            }
+            Message::PickRole(id) => {
+                state.draft.role = id.to_string();
+                Task::none()
+            }
+            Message::ToggleTool(id) => {
+                toggle(&mut state.draft.tools, id);
+                Task::none()
+            }
+            Message::ToggleHelp(id) => {
+                toggle(&mut state.draft.help, id);
+                Task::none()
             }
             Message::Connected(result) => match result {
                 Ok(link) => {
                     state.banner.clear();
                     state.client = Some(Client::new(link.url, link.key, link.cookie));
-                    state.welcome = false;
-                    state.load("workplace")
+                    state.step = None;
+                    state.load("home")
                 }
                 Err(err) => {
                     state.banner = err;
+                    state.step = None;
                     Task::none()
                 }
             },
@@ -145,27 +279,35 @@ impl App {
                 state.screen = screen;
                 state.load(screen)
             }
-            Message::Notices(result) => state.take(result, |s, v| s.notices = v),
-            Message::Tasks(result) => state.take(result, |s, v| s.tasks = v),
+            Message::Home((notices, tasks)) => {
+                state.notices = notices;
+                state.tasks = tasks;
+                state.banner.clear();
+                Task::none()
+            }
+            Message::Notices(result) => state.take(result, |app, value| app.notices = value),
+            Message::Tasks(result) => state.take(result, |app, value| app.tasks = value),
             Message::TaskDraft(value) => {
                 state.task_draft = value;
                 Task::none()
             }
             Message::AddTask => {
+                if state.task_draft.trim().is_empty() {
+                    return Task::none();
+                }
                 state.with_client(|client, title| client.add_task(&title).map(|_| ()))
             }
             Message::Done(id) => state.with_client(move |client, _| client.complete_task(id)),
-            Message::Mail(result) => state.take(result, |s, (label, rows)| {
-                s.mail_label = label;
-                s.mail = rows;
+            Message::Mail(result) => state.take(result, |app, (label, rows)| {
+                app.mail_label = label;
+                app.mail = rows;
             }),
-            Message::Skills(result) => state.take(result, |s, v| s.skills = v),
+            Message::Skills(result) => state.take(result, |app, value| app.skills = value),
             Message::AddSkill(id) => state.with_client(move |client, _| client.add_skill(&id)),
-            Message::Connectors(result) => state.take(result, |s, v| s.connectors = v),
-            Message::Customize(result) => state.take(result, |s, (name, models)| {
-                s.name = name.clone();
-                s.name_draft = name;
-                s.models = models;
+            Message::Connectors(result) => state.take(result, |app, value| app.connectors = value),
+            Message::Customize(result) => state.take(result, |app, (name, models)| {
+                app.name_draft = name;
+                app.models = models;
             }),
             Message::Name(value) => {
                 state.name_draft = value;
@@ -182,7 +324,7 @@ impl App {
                 }
                 state.load("customize")
             }
-            Message::Terminal(result) => state.take(result, |s, line| s.terminal_line = line),
+            Message::Terminal(result) => state.take(result, |app, line| app.terminal_line = line),
             Message::OpenTerm => {
                 if let Some(client) = &state.client {
                     match Term::open(client.base(), client.cookie()) {
@@ -209,7 +351,7 @@ impl App {
                 }
                 Task::none()
             }
-            Message::Browser(result) => state.take(result, |s, v| s.browser = v),
+            Message::Browser(result) => state.take(result, |app, value| app.browser = value),
             Message::AnswerBrowser {
                 job,
                 approval,
@@ -220,7 +362,7 @@ impl App {
             Message::StopBrowser(job) => {
                 state.with_client(move |client, _| client.browser_stop(&job))
             }
-            Message::Code(result) => state.take(result, |s, v| s.code = v),
+            Message::Code(result) => state.take(result, |app, value| app.code = value),
             Message::AnswerCode { id, approve } => {
                 state.with_client(move |client, _| client.code_answer(&id, approve))
             }
@@ -243,7 +385,9 @@ impl App {
     ) -> Task<Message> {
         match result {
             Ok(value) => {
-                self.banner.clear();
+                if !self.banner.starts_with("Opening") {
+                    self.banner.clear();
+                }
                 apply(self, value);
             }
             Err(err) => self.banner = err,
@@ -268,16 +412,20 @@ impl App {
         };
         let allow = self.prefs.send_prompts_to_provider;
         match screen {
-            "workplace" => Task::perform(async move { client.notices() }, Message::Notices),
+            "home" => Task::perform(
+                async move {
+                    let notices = client.notices().unwrap_or_default();
+                    let tasks = client.tasks().unwrap_or_default();
+                    (notices, tasks)
+                },
+                Message::Home,
+            ),
             "tasks" => Task::perform(async move { client.tasks() }, Message::Tasks),
             "mail" => Task::perform(
                 async move {
                     let accounts = client.accounts()?;
                     let Some(account) = accounts.into_iter().next() else {
-                        return Ok((
-                            "No mail is connected yet. Add it under Connectors.".into(),
-                            Vec::new(),
-                        ));
+                        return Ok(("No mail is connected yet.".into(), Vec::new()));
                     };
                     let rows = client.messages(account.id)?;
                     Ok((account.label, rows))
@@ -288,8 +436,8 @@ impl App {
             "connectors" => Task::perform(async move { client.connectors() }, Message::Connectors),
             "customize" => Task::perform(
                 async move {
-                    let name = client.assistant_name()?;
-                    let models = client.models(allow)?;
+                    let name = client.assistant_name().unwrap_or_else(|_| "Atlas".into());
+                    let models = client.models(allow).unwrap_or_default();
                     Ok((name, models))
                 },
                 Message::Customize,
@@ -308,23 +456,79 @@ impl App {
     }
 
     fn view(state: &Self) -> Element<'_, Message> {
-        if state.welcome {
-            return state.welcome_view();
+        if let Some(step) = state.step {
+            return state.interview(step);
         }
-        row![state.rail(), state.body()].into()
+        column![
+            state.topbar(),
+            row![state.rail(), state.body()].height(Length::Fill)
+        ]
+        .into()
     }
 
-    fn welcome_view(&self) -> Element<'_, Message> {
+    fn interview(&self, step: Step) -> Element<'_, Message> {
+        let (kicker, title, note) = match step {
+            Step::Welcome => (KICKER, HEADLINE, BODY),
+            Step::Role => (
+                "About you · 1 of 3",
+                "What is most of your day?",
+                "One answer is enough. It shapes what Rooks suggests.",
+            ),
+            Step::Tools => (
+                "About you · 2 of 3",
+                "What do you already use?",
+                "Pick any that are part of the work. You can add more later.",
+            ),
+            Step::Help => (
+                "About you · 3 of 3",
+                "Where should Rooks help first?",
+                "These stay on this computer. Later launches skip these questions.",
+            ),
+        };
         let mut page = column![
-            text(KICKER).size(14),
-            text(PRODUCT).size(48),
-            text(HEADLINE).size(22),
-            text(BODY).size(16),
-            button(text("Continue")).on_press(Message::Continue),
+            text(kicker).size(13),
+            if step == Step::Welcome {
+                text(PRODUCT).size(46)
+            } else {
+                text(title).size(30)
+            },
         ]
-        .spacing(14)
-        .align_x(Alignment::Center)
-        .max_width(640);
+        .spacing(12)
+        .max_width(560);
+        if step == Step::Welcome {
+            page = page.push(text(title).size(22));
+        }
+        page = page.push(text(note).size(16));
+        page = match step {
+            Step::Welcome => page,
+            Step::Role => self.choices(page, fit::ROLES, &self.draft.role, Message::PickRole),
+            Step::Tools => self.many(page, fit::TOOLS, &self.draft.tools, Message::ToggleTool),
+            Step::Help => self.many(page, fit::HELP, &self.draft.help, Message::ToggleHelp),
+        };
+        let mut actions = row![].spacing(12);
+        if step != Step::Welcome {
+            actions = actions.push(
+                button(text("Back"))
+                    .style(quiet_style)
+                    .on_press(Message::Back),
+            );
+        }
+        let ready = match step {
+            Step::Role => !self.draft.role.is_empty(),
+            Step::Help => !self.draft.help.is_empty(),
+            _ => true,
+        };
+        let label = if step == Step::Help {
+            "Show my workplace"
+        } else {
+            "Continue"
+        };
+        let mut next = button(text(label)).style(button::primary);
+        if ready {
+            next = next.on_press(Message::Next);
+        }
+        actions = actions.push(next);
+        page = page.push(actions);
         if !self.banner.is_empty() {
             page = page.push(text(&self.banner).size(14));
         }
@@ -335,25 +539,107 @@ impl App {
             .into()
     }
 
+    fn choices<'a>(
+        &'a self,
+        mut page: iced::widget::Column<'a, Message>,
+        options: &'static [(&str, &str)],
+        current: &str,
+        make: fn(&'static str) -> Message,
+    ) -> iced::widget::Column<'a, Message> {
+        for (id, label) in options {
+            let on = current == *id;
+            page = page.push(
+                button(text(*label).size(16))
+                    .width(Length::Fill)
+                    .padding(14)
+                    .style(card_style(on))
+                    .on_press(make(id)),
+            );
+        }
+        page
+    }
+
+    fn many<'a>(
+        &'a self,
+        mut page: iced::widget::Column<'a, Message>,
+        options: &'static [(&str, &str)],
+        current: &'a [String],
+        make: fn(&'static str) -> Message,
+    ) -> iced::widget::Column<'a, Message> {
+        for (id, label) in options {
+            let on = current.iter().any(|item| item == id);
+            let mark = if on { "Selected · " } else { "" };
+            page = page.push(
+                button(text(format!("{mark}{label}")).size(16))
+                    .width(Length::Fill)
+                    .padding(14)
+                    .style(card_style(on))
+                    .on_press(make(id)),
+            );
+        }
+        page
+    }
+
+    fn topbar(&self) -> Element<'_, Message> {
+        let mut setup = row![].spacing(4);
+        for (label, id) in copy::SETUP {
+            let on = *id == self.screen;
+            let mut item = button(text(*label).size(15))
+                .padding([8, 12])
+                .style(nav_style(on));
+            if !on {
+                item = item.on_press(Message::Go(id));
+            }
+            setup = setup.push(item);
+        }
+        container(
+            row![
+                text(PRODUCT).size(20),
+                iced::widget::horizontal_space(),
+                setup
+            ]
+            .align_y(Alignment::Center)
+            .padding([14, 20]),
+        )
+        .width(Length::Fill)
+        .style(|_theme| container::Style {
+            background: Some(Background::Color(paper())),
+            border: Border {
+                color: line(),
+                width: 1.0,
+                radius: 0.0.into(),
+            },
+            ..container::Style::default()
+        })
+        .into()
+    }
+
     fn rail(&self) -> Element<'_, Message> {
-        let mut items = column![text(PRODUCT).size(20)].spacing(6).padding(12);
-        for (label, id) in copy::RAIL {
-            let mut item = button(text(*label)).width(Length::Fill);
-            if *id != self.screen {
+        let mut items = column![text("Work").size(12)].spacing(4).padding(16);
+        for (label, id) in copy::SURFACES {
+            if *id == "terminal" {
+                items = items.push(text("Surfaces").size(12));
+            }
+            let on = *id == self.screen;
+            let mut item = button(text(*label).size(15))
+                .width(Length::Fill)
+                .padding([8, 10])
+                .style(nav_style(on));
+            if !on {
                 item = item.on_press(Message::Go(id));
             }
             items = items.push(item);
         }
-        container(items).width(220).height(Length::Fill).into()
+        container(items).width(200).height(Length::Fill).into()
     }
 
     fn body(&self) -> Element<'_, Message> {
-        let mut page = column![].spacing(12).padding(20);
+        let mut page = column![].spacing(14).padding([24, 28]);
         if !self.banner.is_empty() {
             page = page.push(text(&self.banner).size(14));
         }
         page = match self.screen {
-            "workplace" => self.workplace(page),
+            "home" => self.home(page),
             "customize" => self.customize(page),
             "skills" => self.skills(page),
             "connectors" => self.connectors(page),
@@ -370,42 +656,72 @@ impl App {
             .into()
     }
 
-    fn workplace<'a>(
+    fn home<'a>(
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Workplace").size(28));
-        page = page.push(text("What Rooks noticed, and the three places you set it up.").size(16));
-        page = page.push(
-            row![
-                button(text("Customize")).on_press(Message::Go("customize")),
-                button(text("Skills")).on_press(Message::Go("skills")),
-                button(text("Connectors")).on_press(Message::Go("connectors")),
-            ]
-            .spacing(8),
-        );
-        page = page.push(text(prefs::cloud_line(self.prefs.send_prompts_to_provider)).size(14));
-        if self.notices.is_empty() {
-            page = page.push(text("Nothing new right now.").size(16));
+        let profile = self.prefs.profile.clone().unwrap_or_default();
+        let open = self
+            .tasks
+            .iter()
+            .filter(|task| task.status != "done")
+            .count();
+        let has_work = !self.notices.is_empty() || open > 0;
+        page = page.push(text("Home").size(30));
+        page = page.push(text(fit::greeting(&profile)).size(16));
+        page = page.push(text(fit::home_guide(has_work)).size(16));
+        page = page.push(text("Suggested for you").size(18));
+        for item in fit::suggestions(&profile).into_iter().take(4) {
+            page = page.push(self.suggest_card(item));
         }
-        for line in &self.notices {
-            page = page.push(text(line).size(16));
+        if self.notices.is_empty() && open == 0 {
+            page = page.push(text("No open tasks yet. When you add one, it will sit here with the rest of the day.").size(15));
+        } else {
+            page = page.push(text("Waiting").size(18));
+            for line in &self.notices {
+                page = page.push(text(line).size(16));
+            }
+            if open > 0 {
+                page =
+                    page.push(text(format!("{open} open tasks. They live under Tasks.")).size(15));
+            }
         }
         page
+    }
+
+    fn suggest_card(&self, item: Suggestion) -> Element<'_, Message> {
+        container(column![text(item.title).size(16), text(item.why).size(14)].spacing(4))
+            .width(Length::Fill)
+            .padding(14)
+            .style(|_theme| container::Style {
+                background: Some(Background::Color(paper())),
+                border: Border {
+                    color: line(),
+                    width: 1.0,
+                    radius: 12.0.into(),
+                },
+                ..container::Style::default()
+            })
+            .into()
     }
 
     fn customize<'a>(
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Customize").size(28));
+        page = page.push(text("Customize").size(30));
         page = page.push(text("How Rooks works for you. This stays on this computer.").size(16));
         page = page.push(
             text_input("Name", &self.name_draft)
                 .on_input(Message::Name)
-                .on_submit(Message::SaveName),
+                .on_submit(Message::SaveName)
+                .padding(12),
         );
-        page = page.push(button(text("Save name")).on_press(Message::SaveName));
+        page = page.push(
+            button(text("Save name"))
+                .style(button::primary)
+                .on_press(Message::SaveName),
+        );
         page = page.push(
             checkbox(
                 prefs::cloud_line(self.prefs.send_prompts_to_provider),
@@ -413,12 +729,12 @@ impl App {
             )
             .on_toggle(Message::Cloud),
         );
-        page = page.push(text("Models").size(20));
+        page = page.push(text("Models").size(18));
         if self.models.is_empty() {
-            page = page.push(text("No model is connected yet. A model on this computer, or a cloud model after you allow it.").size(16));
+            page = page.push(text("No model is connected yet. One on this computer works without sending anything away. A cloud model waits until you allow it.").size(15));
         }
         for model in &self.models {
-            page = page.push(text(format!("{} · {}", model.name, model.where_)).size(16));
+            page = page.push(text(format!("{} · {}", model.name, model.where_)).size(15));
         }
         page
     }
@@ -427,43 +743,109 @@ impl App {
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Skills").size(28));
+        let profile = self.prefs.profile.clone().unwrap_or_default();
+        page = page.push(text("Skills").size(30));
         page = page.push(
-            text("Tricks it can use. Adding one still gets checked before it runs.").size(16),
+            text("For you, from what you said. Adding one is still checked before it runs.")
+                .size(16),
         );
-        if self.skills.is_empty() {
-            page = page.push(text("No skills to show yet.").size(16));
+        for item in fit::for_group(&profile, "skill") {
+            let added = self
+                .skills
+                .iter()
+                .any(|skill| skill.id == item.id && skill.added);
+            page = page.push(self.fit_row(item, added));
         }
-        for skill in &self.skills {
-            let id = skill.id.clone();
-            let mut line =
-                row![text(format!("{} — {}", skill.name, skill.detail)).width(Length::Fill)]
-                    .spacing(8);
-            if skill.added {
-                line = line.push(text("Added"));
-            } else {
-                line = line.push(button(text("Add")).on_press(Message::AddSkill(id)));
+        if self.skills.is_empty() {
+            page = page.push(text("The skill list on this computer is not loaded yet. The suggestions above still stand.").size(15));
+        } else {
+            page = page.push(text("On this computer").size(18));
+            for skill in &self.skills {
+                let id = skill.id.clone();
+                let mut line =
+                    row![text(format!("{} — {}", skill.name, skill.detail)).width(Length::Fill)]
+                        .spacing(8);
+                if skill.added {
+                    line = line.push(text("Added"));
+                } else {
+                    line = line.push(
+                        button(text("Add"))
+                            .style(quiet_style)
+                            .on_press(Message::AddSkill(id)),
+                    );
+                }
+                page = page.push(line);
             }
-            page = page.push(line);
         }
         page
+    }
+
+    fn fit_row(&self, item: Suggestion, added: bool) -> Element<'_, Message> {
+        let mut row = row![column![text(item.title).size(16), text(item.why).size(14)]
+            .spacing(2)
+            .width(Length::Fill)]
+        .spacing(8)
+        .align_y(Alignment::Center);
+        if item.group == "skill" {
+            if added {
+                row = row.push(text("Added"));
+            } else if !item.id.is_empty() {
+                let id = item.id.to_string();
+                row = row.push(
+                    button(text("Add"))
+                        .style(button::primary)
+                        .on_press(Message::AddSkill(id)),
+                );
+            }
+        }
+        container(row)
+            .width(Length::Fill)
+            .padding(14)
+            .style(|_theme| container::Style {
+                background: Some(Background::Color(paper())),
+                border: Border {
+                    color: line(),
+                    width: 1.0,
+                    radius: 12.0.into(),
+                },
+                ..container::Style::default()
+            })
+            .into()
     }
 
     fn connectors<'a>(
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Connectors").size(28));
+        let profile = self.prefs.profile.clone().unwrap_or_default();
+        page = page.push(text("Connectors").size(30));
         page = page.push(
-            text("Mail, models, and any tool server you added. Each one stays on this computer.")
-                .size(16),
+            text("Suggested from what you already use. Each one stays on this computer.").size(16),
         );
-        if self.connectors.is_empty() {
-            page = page.push(text("Nothing is connected yet.").size(16));
+        for item in fit::for_group(&profile, "connector") {
+            let on = self
+                .connectors
+                .iter()
+                .any(|row| row.name.eq_ignore_ascii_case(item.title) && row.on);
+            page = page.push(
+                text(format!(
+                    "{} — {}{}",
+                    item.title,
+                    item.why,
+                    if on { " On." } else { "" }
+                ))
+                .size(15),
+            );
         }
-        for item in &self.connectors {
-            let state = if item.on { "On" } else { "Off" };
-            page = page.push(text(format!("{state} · {} — {}", item.name, item.detail)).size(16));
+        if self.connectors.is_empty() {
+            page = page.push(text("Nothing else is connected yet. When the local service is up, mail and tool servers show here too.").size(15));
+        } else {
+            page = page.push(text("Connected").size(18));
+            for item in &self.connectors {
+                let state = if item.on { "On" } else { "Off" };
+                page =
+                    page.push(text(format!("{state} · {} — {}", item.name, item.detail)).size(15));
+            }
         }
         page
     }
@@ -472,7 +854,7 @@ impl App {
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Mail").size(28));
+        page = page.push(text("Mail").size(30));
         page = page.push(
             text("Sending still waits for you. This screen reads what is already here.").size(16),
         );
@@ -480,7 +862,7 @@ impl App {
             page = page.push(text(&self.mail_label).size(14));
         }
         if self.mail.is_empty() {
-            page = page.push(text("No messages to show.").size(16));
+            page = page.push(text("No messages yet. If mail is part of your day, connect it and the inbox will show here.").size(15));
         }
         for message in &self.mail {
             page = page.push(text(format!("{} — {}", message.from, message.subject)).size(16));
@@ -492,18 +874,22 @@ impl App {
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Tasks").size(28));
+        page = page.push(text("Tasks").size(30));
         page = page.push(
             row![
                 text_input("Add a task", &self.task_draft)
                     .on_input(Message::TaskDraft)
-                    .on_submit(Message::AddTask),
-                button(text("Add")).on_press(Message::AddTask),
+                    .on_submit(Message::AddTask)
+                    .padding(12),
+                button(text("Add"))
+                    .style(button::primary)
+                    .on_press(Message::AddTask),
             ]
             .spacing(8),
         );
         if self.tasks.is_empty() {
-            page = page.push(text("No tasks yet.").size(16));
+            page = page
+                .push(text("Nothing is due. Add a task when you want it kept in view.").size(15));
         }
         for task in &self.tasks {
             let mut line = row![text(format!(
@@ -517,7 +903,11 @@ impl App {
             ))
             .width(Length::Fill)];
             if task.status != "done" {
-                line = line.push(button(text("Done")).on_press(Message::Done(task.id)));
+                line = line.push(
+                    button(text("Done"))
+                        .style(quiet_style)
+                        .on_press(Message::Done(task.id)),
+                );
             }
             page = page.push(line);
         }
@@ -528,22 +918,25 @@ impl App {
         &'a self,
         mut page: iced::widget::Column<'a, Message>,
     ) -> iced::widget::Column<'a, Message> {
-        page = page.push(text("Terminal").size(28));
+        page = page.push(text("Terminal").size(30));
         page = page.push(text(&self.terminal_line).size(16));
-        page = page.push(
-            text("The browser and the code agent are separate. This is a shell on this computer.")
-                .size(14),
-        );
         if self.term.is_none() {
-            page = page.push(button(text("Open a terminal")).on_press(Message::OpenTerm));
+            page = page.push(
+                button(text("Open a terminal"))
+                    .style(button::primary)
+                    .on_press(Message::OpenTerm),
+            );
         } else {
             page = page.push(text(&self.term_text).size(14));
             page = page.push(
                 row![
                     text_input("Type a command", &self.term_draft)
                         .on_input(Message::TermDraft)
-                        .on_submit(Message::TermSend),
-                    button(text("Send")).on_press(Message::TermSend),
+                        .on_submit(Message::TermSend)
+                        .padding(12),
+                    button(text("Send"))
+                        .style(button::primary)
+                        .on_press(Message::TermSend),
                 ]
                 .spacing(8),
             );
@@ -559,14 +952,18 @@ impl App {
     ) -> iced::widget::Column<'a, Message> {
         let title = if browser { "Browser" } else { "Code" };
         let note = if browser {
-            "Jobs the browser agent is doing. It drives a browser as a tool. This window is not that browser. It stops for you before a sign-in, a send, or a payment."
+            "A job on a site. The browser is a tool. This window is not that browser. It stops before a sign-in, a send, or a payment."
         } else {
-            "Jobs in a folder. Nothing runs past a stop until you say so."
+            "A job in a folder. Nothing runs past a stop until you say so."
         };
-        page = page.push(text(title).size(28));
+        page = page.push(text(title).size(30));
         page = page.push(text(note).size(16));
         if jobs.is_empty() {
-            page = page.push(text("Nothing running.").size(16));
+            page = page.push(text(if browser {
+                "No site is open. When a job is waiting for you, Continue and Stop will sit here."
+            } else {
+                "No code job is running. When one needs a yes, it will wait here."
+            }).size(15));
         }
         for job in jobs {
             page = page.push(text(format!("{} · {}", job.title, job.status)).size(16));
@@ -578,31 +975,41 @@ impl App {
                     let stop_id = job.id.clone();
                     page = page.push(
                         row![
-                            button(text("Continue")).on_press(Message::AnswerBrowser {
-                                job: job_id.clone(),
-                                approval: approval.clone(),
-                                approve: true
-                            }),
-                            button(text("Stop")).on_press(Message::AnswerBrowser {
-                                job: job_id,
-                                approval,
-                                approve: false
-                            }),
-                            button(text("Cancel job")).on_press(Message::StopBrowser(stop_id)),
+                            button(text("Continue")).style(button::primary).on_press(
+                                Message::AnswerBrowser {
+                                    job: job_id.clone(),
+                                    approval: approval.clone(),
+                                    approve: true
+                                }
+                            ),
+                            button(text("Stop")).style(quiet_style).on_press(
+                                Message::AnswerBrowser {
+                                    job: job_id,
+                                    approval,
+                                    approve: false
+                                }
+                            ),
+                            button(text("Cancel job"))
+                                .style(quiet_style)
+                                .on_press(Message::StopBrowser(stop_id)),
                         ]
                         .spacing(8),
                     );
                 } else {
                     page = page.push(
                         row![
-                            button(text("Continue")).on_press(Message::AnswerCode {
-                                id: job_id.clone(),
-                                approve: true
-                            }),
-                            button(text("Stop")).on_press(Message::AnswerCode {
-                                id: job_id,
-                                approve: false
-                            }),
+                            button(text("Continue")).style(button::primary).on_press(
+                                Message::AnswerCode {
+                                    id: job_id.clone(),
+                                    approve: true
+                                }
+                            ),
+                            button(text("Stop"))
+                                .style(quiet_style)
+                                .on_press(Message::AnswerCode {
+                                    id: job_id,
+                                    approve: false
+                                }),
                         ]
                         .spacing(8),
                     );
@@ -610,5 +1017,13 @@ impl App {
             }
         }
         page
+    }
+}
+
+fn toggle(list: &mut Vec<String>, id: &str) {
+    if let Some(index) = list.iter().position(|item| item == id) {
+        list.remove(index);
+    } else {
+        list.push(id.to_string());
     }
 }

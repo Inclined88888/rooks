@@ -6,17 +6,22 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+use crate::fit::Profile;
 use crate::link::data_dir;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Prefs {
+    #[serde(default)]
     pub send_prompts_to_provider: bool,
+    #[serde(default)]
+    pub profile: Option<Profile>,
 }
 
 impl Default for Prefs {
     fn default() -> Self {
         Self {
             send_prompts_to_provider: false,
+            profile: None,
         }
     }
 }
@@ -71,6 +76,7 @@ mod tests {
             &file,
             &Prefs {
                 send_prompts_to_provider: true,
+                profile: None,
             },
         )
         .unwrap();
