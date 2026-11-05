@@ -207,6 +207,7 @@ jobs:
           if-no-files-found: error
       - name: Put this installer on the release as soon as it is built
         if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
