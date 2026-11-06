@@ -117,3 +117,29 @@ export function listenUrl(listen) {
 export function isLoopbackHost(host) {
   return host === 'localhost' || host === '::1' || host === '[::1]' || /^127\./.test(host ?? '');
 }
+
+/**
+ * The AI command-line tools of `GET /api/host/provider-clis` (`SetupBackend`
+ * of `src/onboarding.ts`), told from the terminal: what is ready, what to
+ * sign in, and what to install when nothing is there.
+ */
+export function aiToolLines(backends) {
+  const list = Array.isArray(backends) ? backends : [];
+  const found = list.filter((b) => b && typeof b.path === 'string' && b.path);
+  const lines = ['AI tools (your agents work through them, under this account):'];
+  const signIn = (b) => `${b.signInCommand}${b.signInThen ? `, then ${b.signInThen}` : ''}`;
+  for (const b of found) {
+    const label = String(b.label ?? b.name).padEnd(14);
+    if (b.signedIn === true) lines.push(`  ${label}ready`);
+    else if (b.signedIn === false) lines.push(`  ${label}not signed in: ${signIn(b)}`);
+    else lines.push(`  ${label}found; to sign in: ${signIn(b)}`);
+  }
+  if (!found.length) {
+    lines.push('  None found. Install one, then sign in to it:');
+    for (const b of list.filter((entry) => entry?.seedsMainAgent)) {
+      const how = b.installCommand ?? b.installDocs;
+      if (how) lines.push(`  ${String(b.label ?? b.name).padEnd(14)}${how}`);
+    }
+  }
+  return lines;
+}
