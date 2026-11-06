@@ -144,7 +144,6 @@ export default function McpServers() {
           </div>
         ))}
       </div>
-      {toast.node}
     </div>
   );
 }
@@ -242,7 +241,6 @@ function AddForm({ entry, onDone, onCancel }: { entry: CatalogueEntry | null; on
         <button className="btn" disabled={busy}>{busy ? "Adding…" : "Add server"}</button>
         <button type="button" className="btn ghost" onClick={onCancel}>Cancel</button>
       </div>
-      {toast.node}
     </form>
   );
 }

@@ -158,7 +158,6 @@ export function PhoneCard() {
           </div>
         </details>
       )}
-      {toast.node}
     </div>
   );
 }

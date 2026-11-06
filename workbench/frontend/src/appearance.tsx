@@ -107,7 +107,10 @@ export function applyTo(el: HTMLElement, a: Appearance) {
   el.dataset.mode = DARK_THEMES.includes(theme) ? "dark" : "light";
   el.dataset.font = a.font;
   el.dataset.density = a.density;
-  el.dataset.motion = a.motion;
+  // the OS "reduce motion" setting is applied as Off, so every still state keyed on data-motion="off" holds; the saved
+  // choice is kept (the Appearance page explains why nothing moves)
+  const reduced = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  el.dataset.motion = reduced ? "off" : a.motion;
   el.dataset.accent = FIXED_ACCENT.includes(theme) ? "theme" : a.accent;
   const scale = a.size / 14;
   for (const [name, base] of TEXT_TOKENS) {
@@ -141,13 +144,16 @@ export function pickTheme(theme: ThemeId) {
   setAppearance({ theme, accent: "theme" });
 }
 
-/** Keep "Match my system" live when the OS flips between light and dark. */
+/** Keep "Match my system" live when the OS flips between light and dark, and re-apply when its motion setting changes. */
 export function followSystem(): () => void {
-  const mq = typeof window !== "undefined" ? window.matchMedia?.("(prefers-color-scheme: dark)") : undefined;
-  if (!mq) return () => undefined;
-  const on = () => { const a = readAppearance(); if (a.theme === "auto") setAppearance({}); };
-  mq.addEventListener?.("change", on);
-  return () => mq.removeEventListener?.("change", on);
+  if (typeof window === "undefined") return () => undefined;
+  const scheme = window.matchMedia?.("(prefers-color-scheme: dark)");
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const onScheme = () => { const a = readAppearance(); if (a.theme === "auto") setAppearance({}); };
+  const onReduce = () => setAppearance({});
+  scheme?.addEventListener?.("change", onScheme);
+  reduce?.addEventListener?.("change", onReduce);
+  return () => { scheme?.removeEventListener?.("change", onScheme); reduce?.removeEventListener?.("change", onReduce); };
 }
 
 export function useAppearance(): [Appearance, (p: Partial<Appearance>) => void] {

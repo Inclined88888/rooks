@@ -36,7 +36,6 @@ function OfferWhen() {
         <option value="always">Every time</option>
         <option value="off">Don't ask</option>
       </select>
-      {toast.node}
     </label>
   );
 }
@@ -144,7 +143,6 @@ export default function Automations() {
           </div>
         </div>
       </div>
-      {toast.node}
     </div>
   );
 }

@@ -9,7 +9,8 @@ test("v02 styles use theme variables only (every theme restyles them)", () => {
   const css = read("../src/v02/v02.css").replace(/\/\*[\s\S]*?\*\//g, "");
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "no hex colours");
   assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, "no literal colours");
-  assert.match(css, /prefers-reduced-motion/);
+  assert.doesNotMatch(css, /prefers-reduced-motion/, "the OS setting is honoured once, in motion/tokens.css");
+  assert.match(css, /data-motion="off"/, "still states against the motion setting");
   assert.match(css, /data-motion="full"/, "animations only under full motion");
 });
 

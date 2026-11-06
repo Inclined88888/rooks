@@ -1,38 +1,50 @@
 import { Check } from "lucide-react";
 import { FONTS, THEMES, type ThemeInfo, pickTheme, useAppearance } from "./appearance";
 
+type Swatch = ThemeInfo["swatch"];
+
+/** The Workroom shell in miniature (rail, presence strip, thread, Stage), painted with one theme's own colours. */
+function Shell({ p, narrow = false }: { p: Swatch; narrow?: boolean }) {
+  return (
+    <span className="mini-shell" style={{ background: p.paper, color: p.text }}>
+      <span className="mini-rail" style={{ borderRight: `1px solid ${p.border}` }}>
+        <i style={{ background: p.accent }} />
+        <i style={{ background: p.text }} />
+        <i style={{ background: p.text }} />
+        <i style={{ background: p.text }} />
+      </span>
+      <span className="mini-main">
+        <span className="mini-presence" style={{ borderBottom: `1px solid ${p.border}` }}>
+          <b style={{ background: p.accent }} />
+          <span className="l" style={{ background: p.muted, width: "48%" }} />
+          <em style={{ background: p.accent }} />
+        </span>
+        <span className="mini-thread">
+          <span className="h">Good morning</span>
+          <span className="l" style={{ background: p.muted, width: "85%" }} />
+          <span className="l" style={{ background: p.muted, width: "60%" }} />
+          <span className="b" style={{ background: p.accent, color: p.onAccent }}>Plan my day</span>
+        </span>
+      </span>
+      {!narrow && <span className="mini-stage" style={{ background: p.panel, borderColor: p.accent }} />}
+    </span>
+  );
+}
+
 /** A tiny drawing of the app in a theme's own colours, so every card previews itself whatever theme is on now. */
 function Mini({ t }: { t: ThemeInfo }) {
-  const s = t.swatch;
   if (t.mode === "auto") {
     const light = THEMES.find((x) => x.id === "gallery")!.swatch;
     const dark = THEMES.find((x) => x.id === "night")!.swatch;
     return (
-      <span className="look-mini split" aria-hidden="true">
-        {[light, dark].map((p, i) => (
-          <span key={i} className="main" style={{ background: p.paper, color: p.text }}>
-            <span className="h">Aa</span>
-            <span className="l" style={{ background: p.muted, width: "80%" }} />
-            <span className="b" style={{ background: p.accent, color: p.onAccent }}>Go</span>
-          </span>
-        ))}
+      <span className="look-mini split" aria-hidden="true" style={{ borderColor: light.border }}>
+        <Shell p={light} narrow /><Shell p={dark} narrow />
       </span>
     );
   }
   return (
-    <span className="look-mini" aria-hidden="true" style={{ background: s.paper, borderColor: s.border }}>
-      <span className="side" style={{ borderRight: `1px solid ${s.border}` }}>
-        <i style={{ background: s.text, width: "80%" }} />
-        <i style={{ background: s.muted, width: "60%" }} />
-        <i style={{ background: s.accent, width: "70%", opacity: 1 }} />
-        <i style={{ background: s.muted, width: "50%" }} />
-      </span>
-      <span className="main" style={{ background: s.panel, color: s.text }}>
-        <span className="h">Good morning</span>
-        <span className="l" style={{ background: s.muted, width: "85%" }} />
-        <span className="l" style={{ background: s.muted, width: "60%" }} />
-        <span className="b" style={{ background: s.accent, color: s.onAccent }}>Plan my day</span>
-      </span>
+    <span className="look-mini" aria-hidden="true" style={{ borderColor: t.swatch.border }}>
+      <Shell p={t.swatch} />
     </span>
   );
 }

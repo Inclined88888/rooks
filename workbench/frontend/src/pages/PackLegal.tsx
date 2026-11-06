@@ -44,7 +44,6 @@ export default function PackLegal() {
       {tab === "compare" && <CompareTab files={files} toast={toast} />}
       {tab === "timeline" && <TimelineTab files={files} toast={toast} />}
       {tab === "clauses" && <Clauses toast={toast} />}
-      {toast.node}
     </div>
   );
 }

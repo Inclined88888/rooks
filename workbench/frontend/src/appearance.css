@@ -62,9 +62,10 @@
 .ap-preview { position: sticky; top: 24px; }
 .ap-preview .frame { border: 1px solid var(--border); background: var(--bg); color: var(--text); padding: 22px; display: flex; flex-direction: column; gap: 14px; border-radius: var(--radius-lg); box-shadow: var(--shadow-2); }
 .ap-preview .frame h2 { font-size: calc(var(--text-2xl) * 0.9); }
+.ap-preview .frame .ap-presence { margin: -8px -10px 0; padding: 0 var(--space-2); border-bottom: 1px solid var(--border); }
 .ap-preview .frame .composer { margin: 0; max-width: none; }
 .ap-preview .frame .fake-input { padding: 12px 14px; font-family: var(--serif); font-style: italic; color: var(--faint); font-size: var(--text-lg); }
-@media (max-width: 1000px) { .ap-grid { grid-template-columns: 1fr; } .ap-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ap-preview { position: static; } }
+@media (max-width: 900px) { .ap-grid { grid-template-columns: minmax(0, 1fr); } .ap-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ap-preview { position: static; } }
 
 /* ---- Sidebar "More" toggle ---- */
 .nav-toggle { display: flex; align-items: center; width: 100%; background: none; border: none; cursor: pointer; text-align: left; font-family: inherit; }

@@ -95,6 +95,18 @@ test("motion is off when the user chooses Off or the OS asks for reduced motion"
   assert.equal(ap.motionOff(), true);
 });
 
+test("when the OS asks for reduced motion, applyTo turns motion off whatever was picked", () => {
+  const el = fakeEl();
+  reduced = true;
+  ap.applyTo(el, { ...ap.DEFAULTS, motion: "full" });
+  assert.equal(el.dataset.motion, "off", "the still states keyed on data-motion=off apply");
+  ap.applyTo(el, { ...ap.DEFAULTS, motion: "subtle" });
+  assert.equal(el.dataset.motion, "off");
+  reduced = false;
+  ap.applyTo(el, { ...ap.DEFAULTS, motion: "subtle" });
+  assert.equal(el.dataset.motion, "subtle", "the saved choice is kept, not overwritten");
+});
+
 test("Neon and High contrast always keep their own accent", () => {
   const el = fakeEl();
   ap.applyTo(el, { ...ap.DEFAULTS, theme: "neon", accent: "cobalt" });

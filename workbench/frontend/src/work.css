@@ -9,7 +9,7 @@
 .work-drop > div { flex: 1; }
 .work-busy { margin: 0 0 12px; }
 .work-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
-@media (max-width: 860px) { .work-layout { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .work-layout { grid-template-columns: 1fr; } }
 .work-list { max-height: 72vh; overflow: auto; }
 .work-list .pad { padding: 12px; }
 .work-item { display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--rule); }
@@ -73,5 +73,5 @@
 .terminal-stage { position: relative; flex: 1; min-height: 240px; }
 .terminal-pane { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 8px; }
 .terminal-pane.is-hidden { visibility: hidden; pointer-events: none; }
-.terminal-box { flex: 1; min-height: 0; background: #1c1c1e; border: 0; padding: 6px; }
-.terminal-screen .small { color: #d1d1d6; padding: 0 8px; }
+.terminal-box { flex: 1; min-height: 0; background: var(--screen-bg); border: 0; padding: 6px; }
+.terminal-screen .small { color: var(--screen-ink); padding: 0 8px; }

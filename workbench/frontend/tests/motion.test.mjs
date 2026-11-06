@@ -53,7 +53,10 @@ test("every theme gets its own motion personality from tokens", () => {
 test("Calm, Off and the OS reduced-motion setting are all honoured", () => {
   assert.match(tokens, /\[data-motion="subtle"\][^{]*\{[^}]*--m-travel:\s*0/);
   assert.match(sig, /\[data-motion="off"\]/);
-  assert.match(sig, /@media \(prefers-reduced-motion: reduce\)/);
+  // the OS setting is honoured by one blanket rule in motion/tokens.css (and Appearance sets data-motion="off" for it);
+  // the signature sheet writes its still states once, against data-motion="off"
+  assert.match(tokens, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.doesNotMatch(sig, /prefers-reduced-motion/);
   for (const c of [".edge-glow", ".shimmer-text", ".cursor-track", ".voice-orb", ".done-check", ".w-in"]) assert.ok(sig.includes(c), c);
 });
 

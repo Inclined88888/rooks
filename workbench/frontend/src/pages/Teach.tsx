@@ -70,7 +70,6 @@ function Home() {
   const recording = rec && rec.status === "recording";
   return (
     <div className="page" style={{ maxWidth: 960 }}>
-      {toast.node}
       <div className="page-head">
         <div className="grow">
           <p className="kicker">Your assistant</p>
@@ -213,7 +212,6 @@ function PlaybookView({ id }: { id: number }) {
   const steps = edit ? edit.steps : pb.steps;
   return (
     <div className="page" style={{ maxWidth: 900 }}>
-      {toast.node}
       <button className="btn ghost sm" onClick={() => nav("/teach")} style={{ marginBottom: 16 }}><ArrowLeft size={14} /> Show me how</button>
       <div className="page-head">
         <div className="grow">

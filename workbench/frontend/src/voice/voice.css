@@ -1,6 +1,6 @@
 /* ==========================================================================
    Ask from anywhere, Talk and Meetings (feat/v02-anywhere-voice).
-   Theme variables only. Motion follows html[data-motion] and the OS reduce-motion setting.
+   Theme variables only. Motion follows html[data-motion] (Appearance applies the OS reduce-motion setting as off).
    ========================================================================== */
 
 /* ---- Chips ---- */
@@ -93,6 +93,4 @@ html.askbar-doc, html.askbar-doc body { background: var(--panel); }
 .action-item .ok { color: var(--ok-text); margin-top: 2px; }
 .consent-check { padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm, 4px); background: var(--panel-2); }
 
-@media (prefers-reduced-motion: reduce) {
-  .askbar, .rec-dot, .talk-orb::after, .dictate-level { animation: none !important; transition: none !important; }
-}
+:root[data-motion="off"] :is(.askbar, .rec-dot, .talk-orb::after, .dictate-level) { animation: none !important; transition: none !important; }

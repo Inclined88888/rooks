@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { ACCENTS, DEFAULTS, FONTS, SIZES, resolveTheme, useAppearance } from "../appearance";
 import { ThemeGrid } from "../ThemePicker";
 import { Tracer } from "../Tracer";
+import { Badge, Button, Presence } from "../ui";
+import { usePresence } from "../shell/presence";
 
 /** One panel, six choices, all live. Nothing here needs explaining twice. */
 export default function Appearance() {
   const [a, set] = useAppearance();
+  const presence = usePresence();
   const [osReduced, setOsReduced] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -92,13 +95,15 @@ export default function Appearance() {
         <aside className="ap-preview" aria-label="Preview">
           <p className="label">Preview</p>
           <div className="frame">
-            <p className="kicker" style={{ margin: 0 }}>Tuesday edition</p>
-            <h2>The week, edited.</h2>
-            <p className="muted" style={{ margin: 0 }}>Three tasks are due and your launch checklist is half done. Want a plan for today?</p>
+            {/* the shell's own parts, so what you pick is what you get: the presence strip, a greeting, the buttons, the composer */}
+            <Presence className="ap-presence" name={presence.name} mood="working" doing="Reading 3 emails" needsYou={2} onNeedsYou={() => undefined} />
+            <h2>Good morning.</h2>
+            <p className="muted" style={{ margin: 0 }}>Three tasks are due and the Smith St quote is waiting for your OK. Want a plan for today?</p>
             <div className="row">
-              <button className="btn primary sm" type="button">Plan my day</button>
-              <button className="btn sm" type="button">Later</button>
-              <span className="badge accent">2 new</span>
+              <Button size="sm">Plan my day</Button>
+              <Button size="sm" variant="secondary">Later</Button>
+              <Badge tone="live">Live</Badge>
+              <Badge tone="accent">2 new</Badge>
             </div>
             <div className="composer has-tracer">
               <div className="fake-input">Thinking about your week…</div>

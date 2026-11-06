@@ -239,7 +239,6 @@ export default function Dashboard(_: { chatUrl?: string }) {
           )}
         </div>
       )}
-      {toast.node}
     </div>
   );
 }

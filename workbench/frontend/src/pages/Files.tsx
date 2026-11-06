@@ -195,7 +195,6 @@ export default function Files() {
 
   return (
     <div className="page work">
-      {toast.node}
       <div className="page-head">
         <div><h1>Files</h1><p className="muted">Drop in anything: spreadsheets, Word, PDFs, slides, emails, zips, drawings, photos, data or code. It is read on this computer; only the text you ask about goes to your model.</p></div>
       </div>

@@ -67,7 +67,6 @@ export default function Packs() {
           </section>
         ))}
       </div>
-      {toast.node}
     </div>
   );
 }

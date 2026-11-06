@@ -304,7 +304,6 @@ export default function Computer() {
           )}
         </div>
       </div>
-      {toast.node}
     </div>
   );
 }

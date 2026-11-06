@@ -77,7 +77,6 @@ export default function Projects() {
   const projects = list?.projects ?? [];
   return (
     <div className="page v02">
-      {toast.node}
       <div className="page-head">
         <div>
           <h1>Projects</h1>

@@ -215,7 +215,8 @@ function ToastFallback() {
   return <ToastStack hostId={id} />;
 }
 
-/** The same shape pages always used: toast.ok(text), toast.err(error), and {toast.node} (a no-op once the shell's host is mounted). */
+/** The same shape pages always used: toast.ok(text), toast.err(error), and toast.node, which only a screen without the shell
+ *  (the ask bar) renders; inside the shell the one ToastHost shows everything. */
 export function useToast() {
   return {
     node: <ToastFallback />,

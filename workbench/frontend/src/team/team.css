@@ -124,18 +124,16 @@
   .team-form-grid .span2 { grid-column: auto; }
 }
 
-/* motion: cards settle in, bars grow; only when motion is full and the person hasn't asked for less */
-@media (prefers-reduced-motion: no-preference) {
-  :root[data-motion="full"] .team-view { animation: team-in var(--dur) var(--ease-out) both; }
-  :root[data-motion="full"] .team-card, :root[data-motion="full"] .team-task { animation: team-in var(--dur) var(--ease-out) both; }
-  :root[data-motion="full"] .team-wl-bar, :root[data-motion="full"] .team-load span, :root[data-motion="full"] .team-g-bar > span { transform-origin: left; animation: team-grow calc(var(--dur) * 2) var(--ease-out) both; }
-  :root[data-motion="full"] .team-task, :root[data-motion="full"] .team-card { transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
-  :root[data-motion="full"] .team-task:hover, :root[data-motion="full"] .team-card:hover { transform: translateY(calc(var(--lift, 2px) * -1)); }
-}
+/* motion: cards settle in, bars grow; only when motion is full (Appearance applies the OS reduce-motion setting as off) */
+:root[data-motion="full"] .team-view { animation: team-in var(--dur) var(--ease-out) both; }
+:root[data-motion="full"] .team-card, :root[data-motion="full"] .team-task { animation: team-in var(--dur) var(--ease-out) both; }
+:root[data-motion="full"] .team-wl-bar, :root[data-motion="full"] .team-load span, :root[data-motion="full"] .team-g-bar > span { transform-origin: left; animation: team-grow calc(var(--dur) * 2) var(--ease-out) both; }
+:root[data-motion="full"] .team-task, :root[data-motion="full"] .team-card { transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+:root[data-motion="full"] .team-task:hover, :root[data-motion="full"] .team-card:hover { transform: translateY(calc(var(--lift, 2px) * -1)); }
 @keyframes team-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes team-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .team-more { margin-top: 10px; }
-@media (max-width: 600px) {
+@media (max-width: 900px) {
   .team-assign { flex-wrap: wrap; }
   .team-assign .input { flex: 1 1 100%; min-width: 0; order: 2; }
   .team-assign .btn { order: 3; margin-left: auto; }

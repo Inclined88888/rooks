@@ -100,7 +100,6 @@ export default function PackTrade() {
           )}
         </div>
       )}
-      {toast.node}
     </div>
   );
 }

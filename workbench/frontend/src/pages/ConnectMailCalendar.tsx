@@ -196,7 +196,6 @@ export default function ConnectMailCalendar({ compact = false, onlyWhenEmpty = f
       {compact && !oneClick.length && <Link className="btn" to="/mail">Add an email address</Link>}
 
       {!compact && <OwnRegistration providers={providers} onSaved={load} />}
-      {toast.node}
     </div>
   );
 }
@@ -290,7 +289,6 @@ function MacSignIn({ email, who, onAdded }: { email: string; who: string; onAdde
         </>
       )}
       {error && <div className="alert err small">{error}</div>}
-      {toast.node}
     </div>
   );
 }
@@ -359,8 +357,8 @@ function OtherProvider({ onSuggest, onAdded, plain = false }: { onSuggest: (p: P
   return (
     <form ref={formRef} className="card col" onSubmit={submit} style={{ background: "var(--panel-2)" }}>
       {plain
-        ? <div className="row"><Mail size={15} /><h3 className="grow">Type your email address</h3><span className="muted small">Gmail, iCloud, Yahoo, Fastmail, AOL, Zoho, your own domain…</span></div>
-        : <div className="row"><Mail size={15} /><h3 className="grow">Your email</h3><span className="muted small">Gmail, Outlook, iCloud, Yahoo, and the rest</span></div>}
+        ? <div className="row connect-head"><Mail size={15} /><h3 className="grow">Type your email address</h3><span className="muted small">Gmail, iCloud, Yahoo, Fastmail, AOL, Zoho, your own domain…</span></div>
+        : <div className="row connect-head"><Mail size={15} /><h3 className="grow">Your email</h3><span className="muted small">Gmail, Outlook, iCloud, Yahoo, and the rest</span></div>}
       <div className="row">
         <input className="input grow" required type="email" autoFocus placeholder="Your email address" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => detect()} />
         {checking && <Loader2 size={15} className="spin" />}
@@ -487,7 +485,6 @@ function OtherProvider({ onSuggest, onAdded, plain = false }: { onSuggest: (p: P
         </>
         </PasswordShell>
       )}
-      {toast.node}
     </form>
   );
 }
@@ -523,7 +520,6 @@ function OwnRegistration({ providers, onSaved }: { providers: Record<Provider, P
         {p === "microsoft" && <input className="input mono" placeholder="Tenant: common, consumers, organizations or your tenant ID" value={form.tenant} onChange={(e) => setForm({ ...form, tenant: e.target.value })} />}
         <div className="row"><button className="btn sm">{form.client_id ? "Save registration" : "Use the built-in one"}</button></div>
       </form>
-      {toast.node}
     </details>
   );
 }

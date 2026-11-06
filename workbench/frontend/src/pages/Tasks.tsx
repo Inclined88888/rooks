@@ -154,7 +154,6 @@ export default function Tasks() {
           </div>
         ))}
       </div>
-      {toast.node}
     </div>
   );
 }

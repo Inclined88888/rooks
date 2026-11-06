@@ -504,7 +504,6 @@ function Chat() {
         )}
         <Composer text={text} onText={setText} busy={busy} att={att} onSend={send} onStop={() => void stopTurn()} composerRef={composerRef} />
       </div>
-      {toast.node}
     </div>
   );
 }

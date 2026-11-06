@@ -1,7 +1,8 @@
 /* ==========================================================================
    Motion. Three levels, chosen in Appearance and set as html[data-motion]:
    full (default) · subtle (slower, fades only) · off (nothing moves).
-   The OS "reduce motion" setting always wins and behaves like off.
+   The OS "reduce motion" setting always wins: Appearance applies it as off (one blanket media rule in motion/tokens.css
+   covers the first paint), so every still state below is written once, against data-motion="off".
    Only transform, opacity and a hairline stroke move.
    ========================================================================== */
 :root { --tracer-speed: 2.4s; --lift: 2px; }
@@ -48,11 +49,7 @@
 :root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after {
   animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 1ms !important;
 }
-:root[data-motion="off"] .skeleton, :root[data-motion="off"] .typing span, :root[data-motion="off"] .spin { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .tracer-dash { animation: none !important; stroke-dasharray: none; stroke-width: 1; }
-  .tracer-tip, .tracer-base { display: none; }
-}
+:root[data-motion="off"] :is(.skeleton, .typing span, .spin, .boot .wordmark, .streaming > :last-child::after) { animation: none !important; }
 
 /* Inside clipped lists the tracer sits on the row's own edge */
 .list-item > .tracer, .card.flush .tracer { inset: 0; }

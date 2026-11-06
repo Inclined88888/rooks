@@ -26,7 +26,6 @@
 .kn-enter:nth-child(2) { animation-delay: 30ms } .kn-enter:nth-child(3) { animation-delay: 60ms } .kn-enter:nth-child(4) { animation-delay: 90ms }
 @keyframes kn-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 :root[data-motion="off"] .kn-enter, :root[data-motion="off"] .kn .kn-card { animation: none; transition: none; }
-@media (prefers-reduced-motion: reduce) { .kn-enter { animation: none; } }
 .kn-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--accent-text); background: var(--accent-soft);
   border-radius: 999px; padding: 3px 10px; }
 .kn-chip b { font-weight: 600; }

@@ -135,7 +135,6 @@ function OwnKey({ onChange }: { onChange?: () => void }) {
         <input className="input" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} required placeholder="Paste the key" />
       </label>
       <div><button className="btn primary" disabled={busy || key.trim().length < 8}>{busy ? "Saving…" : "Save key"}</button></div>
-      {toast.node}
     </form>
   );
 }
@@ -204,7 +203,6 @@ function ToolRow({ entry, added, onAdded }: { entry: CatalogueEntry; added: bool
             </div>
           </form>
         )}
-        {toast.node}
       </div>
       {added ? <span className="badge ok">On</span> : !open && <button type="button" className="btn sm" onClick={() => setOpen(true)}>Add</button>}
     </div>

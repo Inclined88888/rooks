@@ -44,7 +44,6 @@ export default function Team() {
   const d = t.data;
   return (
     <div className="page team">
-      {t.toast.node}
       <div className="page-head">
         <div>
           <div className="v02-kicker">Your team</div>
@@ -471,7 +470,6 @@ function PersonPage({ id, team }: { id: number; team: TeamCtx }) {
   const link = async () => { const r = await team.act(() => api<{ url: string; reason?: string }>(`/team/members/${id}/link`, { method: "POST" })); if (r?.url) { await navigator.clipboard?.writeText(r.url).catch(() => undefined); team.toast.ok("Private link copied"); } else if (r?.reason) team.toast.err(r.reason); };
   return (
     <div className="page team">
-      {team.toast.node}
       <button className="btn ghost sm" onClick={() => navigate("/team")}><ChevronLeft size={14} /> Team</button>
       <div className="page-head team-person-head">
         <div className="team-avatar" aria-hidden="true">{p.first_name[0]}</div>

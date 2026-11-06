@@ -1,4 +1,4 @@
-/* Packs (feat/v02-packs): theme variables only; motion follows the app's motion system and prefers-reduced-motion. */
+/* Packs (feat/v02-packs): theme variables only; motion follows the app's motion system (html[data-motion]). */
 .pk-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--rule); border-left: 1px solid var(--border); }
 .pk-tile { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 28px 24px 24px; background: var(--panel); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 360px; transition: background var(--dur) var(--ease-out); }
 .pk-tile:hover { background: var(--panel-2); }
@@ -58,11 +58,8 @@
 :root[data-motion="full"] .pk-tile { animation: page-turn 300ms var(--ease-out) both; }
 :root[data-motion="full"] .pk-tile:nth-child(2) { animation-delay: 60ms; }
 :root[data-motion="full"] .pk-tile:nth-child(3) { animation-delay: 120ms; }
-:root[data-motion="off"] .pk-card-inner { transition: none; }
-@media (prefers-reduced-motion: reduce) {
-  .pk-tile, .pk-card-inner { animation: none !important; transition: none !important; }
-  .pk-card.flipped .pk-face.front { visibility: hidden; }
-}
+:root[data-motion="off"] :is(.pk-tile, .pk-card-inner) { animation: none !important; transition: none !important; }
+:root[data-motion="off"] .pk-card.flipped .pk-face.front { visibility: hidden; }
 @media (max-width: 900px) {
   .pk-gallery { grid-template-columns: 1fr; }
   .pk-two, .pk-two.open { grid-template-columns: 1fr; }

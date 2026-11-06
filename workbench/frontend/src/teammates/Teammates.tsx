@@ -217,7 +217,7 @@ export default function Teammates() {
         <span className="tm-avatar c-sun">#</span><span><b>{g.name}</b><small>{g.members.length} teammates</small></span></button>)}</section>}
       <button className="btn ghost sm" onClick={() => nav("/groups/new")}>New group chat</button>
     </nav>
-    <main className="tm-chat">
+    <section className="tm-chat" aria-label="Chat">
       {id === "new" ? <NewTeammate templates={list?.templates ?? []} onMade={(t) => { load(); nav(`/teammates/${t.id}`); }} />
         : detail ? <>
           <header className="tm-chat-head"><Avatar t={detail} /><div><b>{detail.name}</b><small className="tm-muted">{detail.role}</small></div>
@@ -246,7 +246,7 @@ export default function Teammates() {
             <button className="btn primary" disabled={!!busy || !text.trim()}>Send</button>
           </form>
         </> : <p className="tm-empty">{err || "Loading…"}</p>}
-    </main>
+    </section>
     {info && detail && id !== "new" && <InfoPane d={detail} onChanged={loadDetail} />}
   </div>;
 }

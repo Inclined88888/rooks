@@ -68,7 +68,6 @@ export function SettingsTab() {
         </div>
         {token && <div className="alert">Shown once. It replaces any previous token.</div>}
       </div>
-      {toast.node}
     </div>
   );
 }

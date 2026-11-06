@@ -1,7 +1,7 @@
 // The chat is one column. Recent is chats. Mail failure is a sentence, not a second panel.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const side = read("../src/chat/ChatList.tsx"); // the old sidebar's list, now the Chats column of the Chat page
@@ -79,4 +79,27 @@ test("code keeps the real terminal, browser and computer", () => {
   assert.doesNotMatch(code, /Virtual computer/);
   assert.doesNotMatch(code, /TryRoomPage/);
   assert.doesNotMatch(registry, /path: "\/try"/);
+});
+
+// F4 sweep: every stylesheet reads tokens. The palette files (tokens.css, themes.css, sunshine.css, appearance.css,
+// motion/tokens.css) are the only places a colour is spelled out; feature CSS names a token for every colour, so the
+// themes and the two modes restyle every page, not only the shell.
+const PALETTE_FILES = new Set(["tokens.css", "themes.css", "sunshine.css", "appearance.css", "motion/tokens.css"]);
+function cssFiles(dir = "src", acc = []) {
+  for (const entry of readdirSync(new URL(`../${dir}/`, import.meta.url), { withFileTypes: true })) {
+    const rel = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) cssFiles(rel, acc);
+    else if (entry.name.endsWith(".css")) acc.push(rel.slice("src/".length));
+  }
+  return acc.sort();
+}
+
+test("every stylesheet outside the palette files reads tokens only: no hex, no rgb, no hsl", () => {
+  const files = cssFiles().filter((f) => !PALETTE_FILES.has(f));
+  assert.ok(files.length >= 20, `found ${files.length} feature stylesheets`);
+  for (const f of files) {
+    const css = read(`../src/${f}`).replace(/\/\*[\s\S]*?\*\//g, "");
+    assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, `${f}: no hex colours (name a token)`);
+    assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, `${f}: no literal colours (name a token)`);
+  }
 });

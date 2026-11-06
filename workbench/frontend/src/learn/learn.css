@@ -30,7 +30,7 @@
 .learn-live div { padding: 2px 0; }
 .learn-rec-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); margin-right: 6px; animation: learn-pulse 1.4s ease-in-out infinite; }
 @keyframes learn-pulse { 50% { opacity: 0.3; } }
-@media (prefers-reduced-motion: reduce) { .learn-rec-dot { animation: none; } }
+:root[data-motion="off"] .learn-rec-dot { animation: none; }
 .learn-steps { counter-reset: step; list-style: none; padding: 0; margin: 0; }
 .learn-steps li { display: flex; gap: var(--space-3, 12px); align-items: flex-start; padding: var(--space-2, 8px) 0; border-bottom: 1px solid var(--border); }
 .learn-steps li::before { counter-increment: step; content: counter(step); font-family: var(--serif); color: var(--muted); min-width: 20px; text-align: right; }

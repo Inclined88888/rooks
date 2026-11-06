@@ -147,7 +147,6 @@ function StoreTab({ onAdded }: { onAdded: () => void }) {
           ))}
         </div>
       </section>
-      {toast.node}
     </div>
   );
 }
@@ -232,7 +231,6 @@ function Installed({ onAdd }: { onAdd: () => void }) {
         <h3 style={{ margin: 0 }}>Your own skills</h3>
         <SkillsTab />
       </section>
-      {toast.node}
     </div>
   );
 }
@@ -355,7 +353,6 @@ function AddFromGitHub({ onInstalled }: { onInstalled: () => void }) {
       )}
 
       {settings && <HubSettingsCard settings={settings} onSaved={setSettings} />}
-      {toast.node}
     </div>
   );
 }
@@ -383,7 +380,6 @@ function HubSettingsCard({ settings, onSaved }: { settings: HubSettings; onSaved
         </div>
         <p className="faint small" style={{ margin: 0 }}>Raises GitHub's rate limit and lets search look inside repositories. Stored encrypted on this machine.</p>
       </div>
-      {toast.node}
     </details>
   );
 }
@@ -626,7 +622,6 @@ function ActivityTab({ onChange }: { onChange: (n: number) => void }) {
           </table>
         )}
       </section>
-      {toast.node}
     </div>
   );
 }

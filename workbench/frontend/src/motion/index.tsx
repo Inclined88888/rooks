@@ -5,7 +5,8 @@ import { Markdown } from "../util";
 /**
  * The motion system's runtime half. Tokens live in tokens.css, the moments in signature.css; this file holds the
  * few that need JavaScript: the word-by-word stream, view transitions, the edge glow trigger, the computer-use
- * cursor, live screen cross-fades, the completion tick and the voice orb. Everything moves transform/opacity only,
+ * cursor, live screen cross-fades, the completion tick and the voice orb's drawing (dictation itself is
+ * voice/DictateButton.tsx). Everything moves transform/opacity only,
  * reads the motion level once per use, and does nothing at all when motion is Off or the OS asks for less.
  */
 export type Level = "full" | "subtle" | "off";
@@ -300,81 +301,6 @@ export function useExit<T extends string | number>(ms = 200) {
 }
 
 /* ------------------------------------------------------------------ voice */
-
-type Rec = { start: () => void; stop: () => void; abort: () => void; continuous: boolean; interimResults: boolean; lang: string;
-  onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null;
-  onend: (() => void) | null; onerror: ((e: { error: string }) => void) | null };
-
-export function dictationSupported(): boolean {
-  const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
-  return typeof window !== "undefined" && !!(w.SpeechRecognition || w.webkitSpeechRecognition);
-}
-
-/**
- * Talk instead of type: the browser's own speech-to-text, with the microphone level read by an AnalyserNode and
- * written straight to the orb's CSS variable every frame (no React re-render per frame).
- */
-export function useDictation(onText: (t: string, final: boolean) => void) {
-  const [on, setOn] = useState(false);
-  const [err, setErr] = useState("");
-  const orb = useRef<HTMLButtonElement>(null);
-  const stopAll = useRef<() => void>(() => undefined);
-  const start = async () => {
-    setErr("");
-    const w = window as unknown as { SpeechRecognition?: new () => Rec; webkitSpeechRecognition?: new () => Rec };
-    const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!Ctor) { setErr("Voice isn't available in this browser."); return; }
-    const rec = new Ctor();
-    rec.continuous = true; rec.interimResults = true; rec.lang = navigator.language || "en-AU";
-    let finalText = "";
-    rec.onresult = (e) => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript;
-      }
-      onText((finalText + interim).trim(), !interim);
-    };
-    let stream: MediaStream | null = null;
-    let ctx: AudioContext | null = null;
-    let raf = 0;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      ctx = new AudioContext();
-      const an = ctx.createAnalyser();
-      an.fftSize = 512;
-      ctx.createMediaStreamSource(stream).connect(an);
-      const buf = new Uint8Array(an.fftSize);
-      let smooth = 0;
-      const tick = () => {
-        an.getByteTimeDomainData(buf);
-        let sum = 0;
-        for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
-        const rms = Math.min(1, Math.sqrt(sum / buf.length) * 4);
-        smooth = smooth * 0.7 + rms * 0.3;
-        orb.current?.style.setProperty("--lvl", smooth.toFixed(3));
-        raf = requestAnimationFrame(tick);
-      };
-      if (motionLevel() !== "off") tick();
-    } catch {
-      /* no level meter without mic access; recognition may still prompt on its own */
-    }
-    stopAll.current = () => {
-      cancelAnimationFrame(raf);
-      stream?.getTracks().forEach((t) => t.stop());
-      ctx?.close().catch(() => undefined);
-      orb.current?.style.setProperty("--lvl", "0");
-      try { rec.stop(); } catch { /* already stopped */ }
-      setOn(false);
-    };
-    rec.onend = () => stopAll.current();
-    rec.onerror = (e) => { setErr(e.error === "not-allowed" ? "Allow the microphone to talk to me." : `Voice stopped: ${e.error}`); stopAll.current(); };
-    rec.start();
-    setOn(true);
-  };
-  useEffect(() => () => stopAll.current(), []);
-  return { on, err, orb, toggle: () => (on ? stopAll.current() : start()) };
-}
 
 /** The voice orb: a soft disc that breathes while idle-listening and swells with your voice level (--lvl 0..1). */
 export function VoiceOrb({ on, orbRef, onClick, disabled }: { on: boolean; orbRef: React.RefObject<HTMLButtonElement>; onClick: () => void; disabled?: boolean }) {

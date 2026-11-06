@@ -36,6 +36,10 @@
   --m-glow-band: 3px;
   --m-glow-soft: rgba(255, 184, 0, 0.22);
   --m-cursor-fill: #141311; --m-cursor-stroke: #ffffff; --m-cursor-ring: var(--accent);
+  --m-cursor-shadow: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  --m-glow-ring: transparent;    /* a second, sharper ring inside the edge glow (Neon only) */
+  --m-tick-glow: none;           /* a halo on the done tick (Neon only) */
+  --m-sheen: rgba(255, 255, 255, 0.6);   /* the light that travels across a skeleton */
 }
 
 /* ---- Per-theme voice ---- */
@@ -57,12 +61,17 @@
   --m-glow-a: #d4ff3a; --m-glow-b: #5ef0a0; --m-glow-c: #0b0d10; --m-glow-d: #e2ff70;
   --m-glow-soft: rgba(212, 255, 58, 0.30); --m-glow-band: 3px;
   --m-cursor-fill: #d4ff3a; --m-cursor-stroke: #0b0d10;
+  --m-cursor-shadow: drop-shadow(0 0 6px rgba(212, 255, 58, 0.8));
+  --m-glow-ring: rgba(212, 255, 58, 0.45);
+  --m-tick-glow: drop-shadow(0 0 4px rgba(94, 240, 160, 0.7));
+  --m-sheen: rgba(212, 255, 58, 0.07);
 }
 :root[data-theme="dark"], :root[data-mode="dark"]:not([data-theme="neon"]) {
   --m-shimmer-hi: var(--accent-text);
   --m-glow-a: #f2b705; --m-glow-b: #f6c84c; --m-glow-c: #2e2410; --m-glow-d: #dba504;
   --m-glow-soft: rgba(242, 183, 5, 0.18);
   --m-cursor-fill: #f2ede3; --m-cursor-stroke: #141210;
+  --m-sheen: rgba(255, 255, 255, 0.06);
 }
 :root[data-theme="contrast"] {
   --m-shimmer-hi: #0033aa;
@@ -71,7 +80,8 @@
   --spring-settle: var(--ease-standard); --spring-gentle: var(--ease-standard); /* never overshoot */
 }
 
-/* ---- The OS "reduce motion" setting: one blanket rule for the whole app (feature sheets only add stops) ---- */
+/* ---- The OS "reduce motion" setting: the one media rule in the app. It covers the first paint; Appearance then applies the
+   setting as data-motion="off", so every still state is written once, against that attribute, never in a second media block. ---- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 1ms !important;

@@ -166,7 +166,6 @@ export default function Company() {
           </form>
         </div>
       )}
-      {toast.node}
     </div>
   );
 }

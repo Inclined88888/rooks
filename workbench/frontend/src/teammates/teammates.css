@@ -1,5 +1,5 @@
-/* feat/grok-style: teammates. Theme variables only; Sunshine is the default look. */
-.tm-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 0; height: calc(100vh - 32px); min-height: 520px;
+/* Teammates. Theme variables only. */
+.tm-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 0; height: 100%; min-height: 0;
   background: var(--bg); border-radius: 16px; overflow: hidden; }
 .tm-shell.with-info { grid-template-columns: 248px minmax(0, 1fr) 300px; }
 .tm-side { background: var(--chrome); border-right: 1px solid var(--border); padding: 16px 12px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
@@ -12,7 +12,7 @@
 .tm-person.on { background: var(--accent-soft); }
 .tm-person small { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
 .tm-avatar { display: inline-grid; place-items: center; border-radius: 50%; background: var(--accent-soft); color: var(--text); flex: none; }
-.tm-avatar.c-leaf { background: #e6f4e1; } .tm-avatar.c-sky { background: #e3f0fb; } .tm-avatar.c-rose { background: #fbe6e6; } .tm-avatar.c-sand { background: var(--panel-3); }
+.tm-avatar.c-leaf { background: var(--ok-soft); } .tm-avatar.c-sky { background: var(--blue-soft); } .tm-avatar.c-rose { background: var(--danger-soft); } .tm-avatar.c-sand { background: var(--panel-3); }
 .tm-chat { display: flex; flex-direction: column; min-width: 0; background: var(--panel); }
 .tm-chat-head { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--border); }
 .tm-chat-head > div { flex: 1; display: flex; flex-direction: column; }
@@ -24,12 +24,12 @@
 .tm-compose { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border); }
 .tm-compose textarea { flex: 1; resize: none; }
 .tm-empty { color: var(--muted); text-align: center; margin: auto; max-width: 420px; }
-.tm-err { color: #a3301f; font-size: 13px; }
+.tm-err { color: var(--danger-text); font-size: 13px; }
 .tm-muted { color: var(--muted); font-size: 13px; }
 .tm-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .tm-pill { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); padding: 2px 8px; border-radius: 99px; }
 .tm-card { border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; background: var(--panel); display: flex; flex-direction: column; gap: 8px;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 4%); width: min(520px, 100%); }
+  box-shadow: var(--shadow-1); width: min(520px, 100%); }
 .tm-card label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
 .tm-card-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
 .tm-card.draft[data-status="sent"] { opacity: .75; }
@@ -55,8 +55,22 @@
 @keyframes tm-in { from { opacity: 0; transform: translateY(4px); } }
 @keyframes tm-slide { from { opacity: 0; transform: translateX(8px); } }
 :root[data-motion="off"] .tm-msg, :root[data-motion="off"] .tm-info { animation: none; }
-@media (max-width: 1100px) { .tm-shell.with-info { grid-template-columns: 220px minmax(0, 1fr); } .tm-shell.with-info .tm-info { display: none; } }
-@media (prefers-reduced-motion: reduce) { .tm-msg, .tm-info { animation: none; } }
+@media (max-width: 1280px) { .tm-shell.with-info { grid-template-columns: 220px minmax(0, 1fr); } .tm-shell.with-info .tm-info { display: none; } }
+/* Phones: the people list becomes a strip above the chat */
+@media (max-width: 900px) {
+  .tm-shell, .tm-shell.with-info { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); border-radius: 0; }
+  .tm-side { flex-direction: row; align-items: center; gap: 8px; padding: 8px 12px; border-right: 0; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; }
+  .tm-side section { display: flex; align-items: center; gap: 6px; }
+  .tm-side h2, .tm-side h3 { white-space: nowrap; margin: 0 4px; }
+  .tm-side-head { gap: 8px; }
+  .tm-person { width: auto; padding: 6px 8px; flex: none; }
+  .tm-person small { max-width: 110px; }
+  .tm-side > .btn { flex: none; white-space: nowrap; }
+}
+/* Form fields in these pages are plain elements; they read like the app's own fields */
+:is(.tm-shell, .tm-page) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea, select) {
+  font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 7px 10px; min-width: 0; }
+:is(.tm-shell, .tm-page) :is(input, textarea, select)::placeholder { color: var(--faint); }
 .tm-page { max-width: 880px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
 .tm-page h1 { margin: 0 0 4px; }
 .tm-card.wide { width: 100%; }
@@ -69,7 +83,7 @@
 .tm-react.on { background: var(--accent-soft); }
 .tm-compose { position: relative; }
 .tm-mentions { position: absolute; bottom: 100%; left: 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 4px;
-  box-shadow: 0 6px 24px rgb(0 0 0 / 8%); display: flex; flex-direction: column; }
+  box-shadow: var(--shadow-2); display: flex; flex-direction: column; }
 .tm-mentions button { display: flex; gap: 6px; align-items: center; border: 0; background: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; text-align: left; color: var(--text); }
 .tm-mentions button:hover { background: var(--accent-soft); }
 .tm-viewer { flex: 1; border: 0; width: 100%; background: var(--paper); }

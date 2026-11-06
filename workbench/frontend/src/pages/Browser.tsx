@@ -210,7 +210,6 @@ export default function Browser() {
           )}
         </div>
       </div>
-      {toast.node}
     </div>
   );
 }

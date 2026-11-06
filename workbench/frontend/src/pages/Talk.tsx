@@ -239,7 +239,6 @@ export default function Talk() {
         {st?.engine === "browser" && <div className="muted">If listening doesn't start, use your computer's own dictation: {osDictationHint()}, in any text box.</div>}
         {!pro && st && <div className="muted">Free includes dictation and push to talk. Hands-free conversation, the wake word and spoken approvals are part of Pro.</div>}
       </section>
-      {toast.node}
     </div>
   );
 }

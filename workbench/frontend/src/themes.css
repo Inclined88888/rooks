@@ -231,14 +231,23 @@
 .look-card[aria-checked="true"] { border-color: var(--accent-ring); box-shadow: 0 0 0 2px var(--accent-ring); }
 .look-card .name { font-weight: 600; font-size: var(--text-sm); display: flex; align-items: center; gap: 6px; }
 .look-card .note { font-size: var(--text-xs); color: var(--muted); line-height: 1.35; }
-.look-mini { height: 74px; border-radius: max(var(--radius-xs), 2px); overflow: hidden; display: grid; grid-template-columns: 28% 1fr; border: 1px solid rgba(0, 0, 0, 0.08); }
-.look-mini .side { display: flex; flex-direction: column; gap: 5px; padding: 8px 6px; }
-.look-mini .side i { display: block; height: 3px; border-radius: 2px; opacity: 0.55; }
-.look-mini .main { display: flex; flex-direction: column; gap: 6px; padding: 9px 9px; }
-.look-mini .h { font-size: 11px; font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
-.look-mini .l { height: 3px; border-radius: 2px; opacity: 0.6; }
-.look-mini .b { align-self: flex-start; font-size: 8px; font-weight: 700; padding: 3px 7px; border-radius: 3px; margin-top: auto; }
+/* The mini on each card: the Workroom shell (rail, presence strip, thread, Stage) in that theme's own colours */
+.look-mini { height: 74px; border-radius: max(var(--radius-xs), 2px); overflow: hidden; display: grid; grid-template-columns: 1fr; border: 1px solid var(--border); }
 .look-mini.split { grid-template-columns: 1fr 1fr; }
+.mini-shell { display: grid; grid-template-columns: 12px minmax(0, 1fr) 30%; height: 100%; min-width: 0; }
+.look-mini.split .mini-shell { grid-template-columns: 12px minmax(0, 1fr); }
+.mini-rail { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px 0; }
+.mini-rail i { display: block; width: 5px; height: 5px; border-radius: 1.5px; opacity: 0.45; }
+.mini-rail i:first-child { opacity: 1; }
+.mini-main { display: flex; flex-direction: column; min-width: 0; }
+.mini-presence { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
+.mini-presence b { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.mini-presence em { margin-left: auto; width: 14px; height: 5px; border-radius: 3px; flex: none; }
+.mini-thread { flex: 1; display: flex; flex-direction: column; gap: 5px; padding: 6px 7px; min-width: 0; }
+.mini-thread .h { font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; }
+.look-mini .l { height: 3px; border-radius: 2px; opacity: 0.6; }
+.look-mini .b { align-self: flex-start; font-size: 7px; font-weight: 700; padding: 2px 6px; border-radius: 3px; margin-top: auto; white-space: nowrap; }
+.mini-stage { margin: 6px 6px 6px 0; border: 1.5px solid; border-radius: 4px; }
 .look-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .look-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .welcome-card.wide { width: min(720px, 100%); }

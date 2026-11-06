@@ -136,7 +136,6 @@ function Editor({ doc, onSaved, onDeleted }: { doc: Doc; onSaved: (d: Doc) => vo
           <textarea ref={textRef} className="editor-body" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Start writing. Markdown supported. Select text before using AI assist to work on just that part." />
         )}
       </div>
-      {toast.node}
     </>
   );
 }
@@ -203,7 +202,6 @@ export default function Docs({ kind }: { kind: "note" | "document" }) {
           <Empty icon={<Icon size={28} />} title={`Select or create a ${kind}`} hint={kind === "document" ? "Longer writing lives here. Research reports can be saved here too." : "Quick thoughts, meeting notes, ideas. Chat can search these and add to them."} />
         )}
       </div>
-      {toast.node}
     </div>
   );
 }

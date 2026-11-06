@@ -103,7 +103,6 @@ export default function Compare() {
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
         {busy ? <button type="button" className="btn" onClick={stopAll}><Square size={15} /> Stop</button> : <button className="btn primary" disabled={!prompt.trim()}><Send size={15} /> Send</button>}
       </form>
-      {toast.node}
     </div>
   );
 }

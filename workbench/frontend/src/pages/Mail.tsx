@@ -63,7 +63,6 @@ function Composer({ account, initial, onClose, onSent }: { account: Account; ini
         <div className="spacer" />
         <button className="btn primary" disabled={sending || !c.to.trim() || !c.body.trim() || drafting} onClick={send}>{sending ? <Loader2 size={15} className="spin" /> : <Send size={15} />} Send</button>
       </div>
-      {toast.node}
     </div>
   );
 }
@@ -215,7 +214,6 @@ export default function MailPage() {
           <Empty icon={<Mail size={28} />} title="Select a message" />
         )}
       </div>
-      {toast.node}
     </div>
   );
 }

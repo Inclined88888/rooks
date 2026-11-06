@@ -157,7 +157,6 @@ export default function VoiceSettings() {
           </>}
         </section>
       </div>
-      {toast.node}
     </div>
   );
 }

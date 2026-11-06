@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { pickTheme, THEMES, useAppearance } from "../appearance";
-import { CursorOverlay, DoneTick, EdgeGlow, LiveShot, Pointer, StreamText, Thinking, transitionClick, useDictation, useExit, VoiceOrb, dictationSupported } from "../motion";
+import { CursorOverlay, DoneTick, EdgeGlow, LiveShot, Pointer, StreamText, Thinking, transitionClick, useExit, VoiceOrb } from "../motion";
+import { DictateButton } from "../voice/DictateButton";
 import { Tracer } from "../Tracer";
 import { SkeletonList } from "../util";
 
@@ -103,7 +104,6 @@ function OrbDemo() {
   const fake = useRef<HTMLButtonElement>(null);
   const [demo, setDemo] = useState(true);
   const [heard, setHeard] = useState("");
-  const voice = useDictation((t) => setHeard(t));
   useEffect(() => {
     if (!demo) return;
     let raf = 0;
@@ -121,7 +121,8 @@ function OrbDemo() {
     <div className="row" style={{ gap: 18 }}>
       <VoiceOrb on={demo} orbRef={fake} onClick={() => setDemo((d) => !d)} />
       <span className="small muted">{demo ? "Simulated voice. Tap to pause." : "Paused."}</span>
-      {dictationSupported() && <><VoiceOrb on={voice.on} orbRef={voice.orb} onClick={voice.toggle} /><span className="small muted">{voice.on ? heard || "Listening…" : voice.err || "Try it with your own voice"}</span></>}
+      <DictateButton orb label="Try it with your own voice" onText={setHeard} />
+      <span className="small muted">{heard ? `“${heard}”` : "Try it with your own voice"}</span>
     </div>
   );
 }

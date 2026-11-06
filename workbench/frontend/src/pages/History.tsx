@@ -73,7 +73,6 @@ export default function History() {
   }
   return (
     <div className="page v02 history-page">
-      {toast.node}
       <div className="page-head">
         <div>
           <div className="v02-kicker">Everything that happened</div>

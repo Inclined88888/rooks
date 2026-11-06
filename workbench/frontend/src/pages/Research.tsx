@@ -139,7 +139,6 @@ export default function Research() {
           )}
         </div>
       </div>
-      {toast.node}
     </div>
   );
 }

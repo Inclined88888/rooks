@@ -145,7 +145,6 @@ function Recorder({ meeting, system, onDone }: { meeting: Meeting; system: boole
         {lines.length === 0 ? <div className="faint small">The first lines appear about half a minute in.</div>
           : lines.map((l, i) => <div key={i} className="seg"><span className="seg-time mono faint">{clock(l.start)}</span> {l.text}</div>)}
       </div>
-      {toast.node}
     </div>
   );
 }
@@ -278,7 +277,6 @@ function Detail({ m, onChange, onDelete }: { m: Meeting; onChange: (m: Meeting) 
           <div key={i} className="seg"><span className="seg-time mono faint">{clock(s.start)}</span> {s.speaker && <b>{s.speaker}: </b>}{s.text}</div>
         ))}</div>}
       </section>
-      {toast.node}
     </div>
   );
 }
@@ -383,7 +381,6 @@ export default function Meetings() {
         </div>
       </div>
       {consent && <ConsentModal onStart={start} onClose={() => setConsent(false)} />}
-      {toast.node}
     </div>
   );
 }

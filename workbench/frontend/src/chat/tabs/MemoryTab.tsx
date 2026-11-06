@@ -43,7 +43,6 @@ export function MemoryTab() {
           </div>
         </div>
       ))}
-      {toast.node}
     </div>
   );
 }

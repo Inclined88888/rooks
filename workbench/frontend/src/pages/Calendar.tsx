@@ -267,7 +267,6 @@ export default function CalendarPage() {
       </div>
       {modal === "calendar" && <AddCalendar onClose={() => setModal("")} onAdded={() => { loadCalendars(); loadEvents(); }} />}
       {modal === "event" && <AddEvent date={selected} calendars={calendars} onClose={() => setModal("")} onAdded={loadEvents} />}
-      {toast.node}
     </div>
   );
 }

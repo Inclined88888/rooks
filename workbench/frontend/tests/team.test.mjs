@@ -9,7 +9,8 @@ test("team styles use theme variables only and respect motion settings", () => {
   const css = read("../src/team/team.css").replace(/\/\*[\s\S]*?\*\//g, "");
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "no hex colours");
   assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, "no literal colours");
-  assert.match(css, /prefers-reduced-motion: no-preference/);
+  // the OS reduced-motion setting is honoured once, in motion/tokens.css; the team sheet gates on data-motion only
+  assert.doesNotMatch(css, /prefers-reduced-motion/);
   for (const m of css.matchAll(/animation:[^;]+;/g)) assert.ok(css.slice(0, m.index).lastIndexOf('data-motion="full"') > css.slice(0, m.index).lastIndexOf("}\n}"), "animation only under full motion");
 });
 

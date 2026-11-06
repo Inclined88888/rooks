@@ -44,7 +44,6 @@ export default function FineTune() {
 
   return (
     <div className="page">
-      {toast.node}
       <div className="page-head">
         <div>
           <h1>Fine-tune</h1>

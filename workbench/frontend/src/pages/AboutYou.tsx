@@ -62,7 +62,6 @@ export default function AboutYou() {
 
   return (
     <div className="page" style={{ maxWidth: 1100 }}>
-      {toast.node}
       <div className="page-head">
         <div className="grow">
           <p className="kicker">Your assistant</p>

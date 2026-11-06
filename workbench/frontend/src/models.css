@@ -70,7 +70,7 @@
 .via-tier { text-transform: uppercase; letter-spacing: 0.12em; font-size: 9.5px; font-weight: 700; border: 1px solid var(--border-strong); padding: 1px 6px; }
 .via-quota::before, .via-skip::before { content: "·"; margin-right: 10px; color: var(--faint); }
 .via-skip { color: var(--accent-text); font-style: italic; font-family: var(--serif); font-size: 13px; }
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .free-grid, .tier-strip { grid-template-columns: 1fr; }
   .free-card + .free-card, .tier-strip > div + div { padding-left: 0; border-left: none; border-top: 1px solid var(--border); }
   .route-item { grid-template-columns: 34px 1fr; }

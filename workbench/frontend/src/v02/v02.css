@@ -97,17 +97,13 @@
 .trig-arrow { color: var(--muted); flex: none; }
 .trig-questions { margin: 0; padding-left: 18px; color: var(--warn-text); }
 .trig-builder { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 760px) { .trig-builder { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .trig-builder { grid-template-columns: 1fr; } }
 .trig-list { display: flex; flex-direction: column; gap: 8px; }
 .trig-item { display: flex; gap: 14px; align-items: flex-start; }
 .trig-item.off { opacity: .6; }
 .trig-controls { align-items: flex-end; gap: 4px; flex: none; }
 .trig-err { color: var(--danger-text); }
 
-@media (prefers-reduced-motion: reduce) {
-  .job-pill { animation: none; }
-  .job-card, .trig-example { transition: none; }
-}
 :root[data-motion="off"] .job-pill { animation: none; }
 :root[data-motion="off"] .job-card, :root[data-motion="off"] .trig-example { transition: none; }
 .trig-sub { font-family: var(--serif); font-size: var(--text-xl); margin: 8px 0 10px; }
@@ -152,7 +148,7 @@
 .v02-fix { margin-top: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--warn-soft); color: var(--warn-text); }
 .v02-undone { margin-top: 4px; color: var(--ok-text); display: flex; align-items: center; gap: 4px; }
 .v02-confirm { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; border-color: var(--warn); background: var(--warn-soft); }
-@media (max-width: 640px) { .v02-entry { flex-wrap: wrap; } .v02-entry-actions { width: 100%; padding-left: 40px; } }
+@media (max-width: 900px) { .v02-entry { flex-wrap: wrap; } .v02-entry-actions { width: 100%; padding-left: 40px; } }
 
 /* Chat: project switcher, check toggle, checked answer */
 .v02-switch { position: relative; max-width: 220px; }
@@ -179,4 +175,3 @@
 .v02-sources { margin: 6px 0 0; padding-left: 20px; }
 .v02-sources li { margin: 3px 0; }
 :root[data-motion="full"] .v02-checked, :root[data-motion="full"] .v02-entry { animation: page-turn 260ms var(--ease-out) both; }
-@media (prefers-reduced-motion: reduce) { .v02-checked, .v02-entry { animation: none !important; } }

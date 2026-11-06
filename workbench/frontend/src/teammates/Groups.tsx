@@ -51,7 +51,7 @@ export default function Groups() {
   }, [gid]);
   useEffect(() => { load(); const t = setInterval(load, 2500); return () => clearInterval(t); }, [load]);
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [msgs.length]);
-  if (id === "new") return <div className="tm-shell"><nav className="tm-side"><button className="btn ghost sm" onClick={() => nav("/teammates")}>← Teammates</button></nav><main className="tm-chat"><NewGroup /></main></div>;
+  if (id === "new") return <div className="tm-shell"><nav className="tm-side"><button className="btn ghost sm" onClick={() => nav("/teammates")}>← Teammates</button></nav><section className="tm-chat" aria-label="Group chat"><NewGroup /></section></div>;
   const byId = new Map((group?.members ?? []).map((m) => [m.id, m]));
   const q = mentionQuery(text, caret);
   const suggestions = q === null ? [] : (group?.members ?? []).filter((m) => m.name.toLowerCase().startsWith(q.toLowerCase())).slice(0, 5);
@@ -72,7 +72,7 @@ export default function Groups() {
         <small>{group.working.includes(m.id) ? "Working…" : m.role}</small></span></div>)}
       <p className="tm-muted">In groups, teammates can't send anything or act outside the app.</p>
     </nav>
-    <main className="tm-chat">
+    <section className="tm-chat" aria-label="Group chat">
       <div className="tm-msgs" aria-live="polite">
         {!msgs.length && <p className="tm-empty">Say hello, or @mention a teammate to ask it something.</p>}
         {msgs.map((m) => { const who = m.author_id ? byId.get(m.author_id) : null; return <div key={m.id} className={`tm-msg ${who ? "assistant" : "user"}`}>
@@ -94,6 +94,6 @@ export default function Groups() {
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); post(); } }} />
         <button className="btn primary" disabled={!text.trim()}>Send</button>
       </form>
-    </main>
+    </section>
   </div>;
 }

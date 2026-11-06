@@ -86,7 +86,6 @@ export default function TriggerAutomations() {
 
   return (
     <section className="trig" aria-labelledby="trig-h">
-      {toast.node}
       <div className="trig-head">
         <h2 id="trig-h"><Zap size={18} /> When this happens, do that</h2>
         {data && data.limit != null && <span className="small muted">{count} of {data.limit} on the Free plan · Pro is unlimited</span>}

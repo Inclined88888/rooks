@@ -115,7 +115,6 @@ export default function JobsPage() {
 
   return (
     <div className="page jobs-page">
-      {toast.node}
       <div className="page-head">
         <div><h1>Jobs</h1><p>Hand off longer work and keep going. Jobs run in the background and ask you before anything is sent, posted, paid, deleted or changed outside the app.</p></div>
         <div className="row wrap">

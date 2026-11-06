@@ -153,7 +153,7 @@ export function Providers({ onChange }: { onChange?: () => void } = {}) {
           {list.map((p) => (
             <div key={p.id} className="list-item" style={{ cursor: "default" }} title={p.base_url}>
               <div className="grow">
-                <div className="row" style={{ gap: 8 }}>
+                <div className="row wrap" style={{ gap: 8 }}>
                   <strong>{p.name}</strong>
                   <span className="badge">{kindLabel(p)}</span>
                   {!p.enabled ? <span className="badge">Off</span>
@@ -204,7 +204,6 @@ export function Providers({ onChange }: { onChange?: () => void } = {}) {
           <div className="muted small">Any OpenAI compatible server works (LM Studio, vLLM, LiteLLM, Together, Mistral). If it has no model list, type the model ids.</div>
         </form>
       </details>
-      {toast.node}
     </div>
   );
 }
@@ -240,7 +239,6 @@ function LocalModels() {
       </form>
       {pull && <div className="col"><div className="progress"><div style={{ width: `${pull.pct}%` }} /></div><div className="muted small">{pull.model}: {pull.status} {pull.pct ? `${pull.pct}%` : ""}</div></div>}
       <div className="muted small">Models downloaded here are shared with Chat. Rough guide: a 4B model needs ~4 GB RAM, 8B ~8 GB, 14B ~12 GB. A GPU makes them much faster.</div>
-      {toast.node}
     </div>
   );
 }
@@ -283,7 +281,6 @@ function Usage() {
         <div key={m} className="row small"><span className="mono grow">{m}</span><span>${p.in} in · ${p.out} out per 1M</span>
           <button className="btn ghost sm icon" onClick={() => { const n = { ...u.prices }; delete n[m]; savePrices(n); }}><Trash2 size={12} /></button></div>
       ))}
-      {toast.node}
     </div>
   );
 }
@@ -489,7 +486,6 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
           )}
         </div>
       </div>
-      {toast.node}
     </div>
   );
 }

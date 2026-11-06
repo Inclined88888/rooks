@@ -25,7 +25,7 @@ export default function Pages() {
         <span><b>{p.title}</b><small>{p.shared ? "Shared · " : ""}{p.updated_at?.slice(0, 10)}</small></span></button>)}
       {!list.length && <p className="tm-muted">Ask a teammate to "save that as a page".</p>}
     </nav>
-    <main className="tm-chat">
+    <section className="tm-chat" aria-label="Page">
       {err && <p className="tm-err">{err}</p>}
       {page ? <>
         <header className="tm-chat-head"><div>{edit ? <input value={page.title} onChange={(e) => setPage({ ...page, title: e.target.value })} /> : <b>{page.title}</b>}</div>
@@ -37,6 +37,6 @@ export default function Pages() {
         {edit ? <textarea className="tm-editor" value={page.body ?? ""} onChange={(e) => setPage({ ...page, body: e.target.value })} />
           : <iframe className="tm-viewer" title={page.title} sandbox="" src={`/api/pages/${page.id}/export.html`} />}
       </> : <p className="tm-empty">Pick a page, or make a new one.</p>}
-    </main>
+    </section>
   </div>;
 }

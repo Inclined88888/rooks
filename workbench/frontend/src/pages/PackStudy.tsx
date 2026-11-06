@@ -34,7 +34,6 @@ export default function PackStudy() {
       {tab === "maths" && <Maths toast={toast} />}
       {tab === "refs" && <Refs toast={toast} />}
       {tab === "lab" && <Lab toast={toast} />}
-      {toast.node}
     </div>
   );
 }

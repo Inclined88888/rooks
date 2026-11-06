@@ -29,7 +29,6 @@ export default function Knowledge() {
 
   return (
     <div className="page kn">
-      {toast.node}
       <div className="page-head">
         <div>
           <div className="v02-kicker">Memory</div>

@@ -56,7 +56,6 @@ export function SkillsTab() {
           </div>
         ))}
       </div>
-      {toast.node}
     </div>
   );
 }

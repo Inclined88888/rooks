@@ -82,7 +82,6 @@ export default function Sites() {
 
   return (
     <div className="page work">
-      {toast.node}
       <div className="page-head">
         <div><h1>Sites</h1><p className="muted">The websites you work in: job trackers, rosters, project portals, anything with a login. Sign in once, and the assistant reads them, plans your days and tells you what changed. It never changes anything on a site without asking you first.</p></div>
         <button className="btn primary" onClick={() => setAdding(true)}><Plus size={15} /> Add a site</button>

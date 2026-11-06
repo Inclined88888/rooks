@@ -57,8 +57,9 @@
 .edge-glow-soft { position: absolute; inset: 0; box-shadow: inset 0 0 56px 6px var(--m-glow-soft), inset 0 0 14px 0 var(--m-glow-soft); animation: glow-breathe 3.4s var(--ease-in-out) infinite; will-change: opacity; }
 .edge-glow-band {
   position: absolute; inset: 0; padding: var(--m-glow-band); overflow: hidden;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  /* masks read alpha only, so any opaque colour cuts the band */
+  -webkit-mask: linear-gradient(currentColor 0 0) content-box, linear-gradient(currentColor 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(currentColor 0 0) content-box exclude, linear-gradient(currentColor 0 0);
 }
 .edge-glow-spin {
   position: absolute; left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax;
@@ -66,19 +67,19 @@
   animation: spin var(--m-glow-loop) linear infinite; will-change: transform;
 }
 @keyframes glow-breathe { 50% { opacity: 0.55; } }
-:root[data-theme="neon"] .edge-glow-soft { box-shadow: inset 0 0 64px 10px var(--m-glow-soft), inset 0 0 18px 2px rgba(212, 255, 58, 0.45); }
+:root[data-theme="neon"] .edge-glow-soft { box-shadow: inset 0 0 64px 10px var(--m-glow-soft), inset 0 0 18px 2px var(--m-glow-ring); }
 :root[data-theme="contrast"] .edge-glow-spin, :root[data-theme="contrast"] .edge-glow-soft { animation: none; }
 :root[data-motion="subtle"] .edge-glow-soft { animation: none; }
 .edge-pill {
   position: fixed; top: 12px; left: 50%; z-index: 81; display: inline-flex; white-space: nowrap; max-width: calc(100vw - 32px); align-items: center; gap: 10px;
   padding: 6px 8px 6px 14px; border-radius: 999px; background: var(--ink-btn); color: var(--on-ink); font-size: var(--text-sm); font-weight: 550;
-  box-shadow: var(--shadow-3, 0 8px 24px rgba(0,0,0,.18)); transform: translateX(-50%);
+  box-shadow: var(--shadow-3); transform: translateX(-50%);
   animation: pill-in var(--spring-settle-dur) var(--spring-settle) both;
 }
 .edge-pill .kbd { background: transparent; color: inherit; opacity: 0.7; border-color: currentColor; }
 .edge-pill .btn { height: 26px; border-radius: 999px; }
 .edge-pill-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--m-glow-a); animation: think-dot 1.6s var(--ease-in-out) infinite; }
-:root[data-theme="neon"] .edge-pill { background: #12151a; color: var(--text); box-shadow: var(--glow); }
+:root[data-theme="neon"] .edge-pill { background: var(--color-surface); color: var(--text); box-shadow: var(--glow); }
 @keyframes pill-in { from { opacity: 0; transform: translate(-50%, -14px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 /* ---- 5. Live screen: frames cross-fade, a reading line sweeps while the agent looks, its cursor glides ---- */
@@ -91,9 +92,8 @@
 @keyframes scan { from { transform: translateY(0); } to { transform: translateY(100%); } }
 .cursor-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .cursor-track { position: absolute; inset: 0; transition: transform var(--spring-gentle-dur) var(--spring-gentle); will-change: transform; }
-.cursor-arrow { position: absolute; left: -2px; top: -1px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35)); }
+.cursor-arrow { position: absolute; left: -2px; top: -1px; filter: var(--m-cursor-shadow); }
 .cursor-arrow path { fill: var(--m-cursor-fill); stroke: var(--m-cursor-stroke); stroke-width: 1.4; stroke-linejoin: round; }
-:root[data-theme="neon"] .cursor-arrow { filter: drop-shadow(0 0 6px rgba(212, 255, 58, 0.8)); }
 .cursor-ripple { position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--m-cursor-ring); opacity: 0;
   animation: ripple 700ms var(--ease-standard) var(--spring-gentle-dur) both; }
 @keyframes ripple { from { opacity: 0.9; transform: scale(0.25); } to { opacity: 0; transform: scale(1.5); } }
@@ -108,13 +108,12 @@
 @keyframes card-out { to { opacity: 0; transform: translateY(calc(var(--m-travel) * -1)) scale(0.98); } }
 
 /* ---- 7. Completion: ring draws, tick strokes in, badge settles ---- */
-.done-tick { flex: none; overflow: visible; animation: tick-pop var(--spring-settle-dur) var(--spring-settle) 380ms both; }
+.done-tick { flex: none; overflow: visible; filter: var(--m-tick-glow); animation: tick-pop var(--spring-settle-dur) var(--spring-settle) 380ms both; }
 .done-ring, .done-check { fill: none; stroke: var(--ok-text); stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; }
 .done-ring { stroke-width: 1.6; animation: stroke-draw 420ms var(--ease-expo) both; transform: rotate(-90deg); transform-origin: center; }
 .done-check { stroke-width: 2.2; animation: stroke-draw 280ms var(--ease-standard) 260ms both; }
 @keyframes stroke-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
 @keyframes tick-pop { from { transform: scale(0.9); } to { transform: scale(1); } }
-:root[data-theme="neon"] .done-tick { filter: drop-shadow(0 0 4px rgba(94, 240, 160, 0.7)); }
 .done-row { display: flex; align-items: center; gap: 8px; }
 
 /* ---- 8. Voice orb: breathes while listening, swells with your voice (--lvl from the mic, 0..1) ---- */
@@ -134,10 +133,8 @@
 /* ---- 9. Skeletons: a soft light sheen travels across instead of the whole block blinking ---- */
 .skeleton { position: relative; overflow: hidden; animation: none; }
 .skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, var(--m-sheen, rgba(255, 255, 255, 0.6)), transparent);
+  background: linear-gradient(90deg, transparent, var(--m-sheen), transparent);
   animation: sheen 1.5s var(--ease-in-out) infinite; }
-:root[data-mode="dark"] { --m-sheen: rgba(255, 255, 255, 0.06); }
-:root[data-theme="neon"] { --m-sheen: rgba(212, 255, 58, 0.07); }
 @keyframes sheen { to { transform: translateX(100%); } }
 .skeleton-row:nth-child(2) .skeleton::after { animation-delay: 80ms; }
 .skeleton-row:nth-child(3) .skeleton::after { animation-delay: 160ms; }
@@ -159,19 +156,13 @@
 @keyframes vt-out { to { opacity: 0; } }
 @keyframes vt-in { from { opacity: 0; transform: translateY(var(--m-travel)); } }
 
-/* ---- Off and the OS "reduce motion" setting: every moment keeps its meaning, nothing moves ---- */
+/* ---- Off (chosen in Appearance, or applied for the OS "reduce motion" setting): every moment keeps its meaning, nothing moves ---- */
 :root[data-motion="off"] :is(.shimmer-text, .msg-byline.is-thinking) { animation: none; background: none; color: var(--muted); }
-:root[data-motion="off"] .skeleton::after, :root[data-motion="off"] .scan-line, :root[data-motion="off"] .cursor-trail, :root[data-motion="off"] .cursor-ripple { display: none; }
-:root[data-motion="off"] :is(.edge-glow-spin, .edge-glow-soft, .edge-pill-dot, .orb-halo) { animation: none !important; }
-:root[data-motion="off"] .cursor-track { transition: none; }
-@media (prefers-reduced-motion: reduce) {
-  .shimmer-text, .msg-byline.is-thinking { animation: none; background: none; color: var(--muted); }
-  .skeleton::after, .scan-line, .cursor-trail, .cursor-ripple { display: none; }
-  .edge-glow-spin, .edge-glow-soft, .edge-pill-dot, .orb-halo, .w-in, .timeline .step, .timeline .step::before, .timeline .step::after,
-  .spring-in, .done-tick, .done-ring, .done-check, .edge-pill, .edge-glow { animation: none !important; }
-  .cursor-track, .live-shot img { transition: none; }
-  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
-}
+:root[data-motion="off"] :is(.skeleton::after, .scan-line, .cursor-trail, .cursor-ripple) { display: none; }
+:root[data-motion="off"] :is(.edge-glow-spin, .edge-glow-soft, .edge-pill-dot, .orb-halo, .w-in, .timeline .step, .timeline .step::before, .timeline .step::after,
+  .spring-in, .done-tick, .done-ring, .done-check, .edge-pill, .edge-glow) { animation: none !important; }
+:root[data-motion="off"] :is(.cursor-track, .live-shot img) { transition: none; }
+:root[data-motion="off"]::view-transition-group(*), :root[data-motion="off"]::view-transition-old(*), :root[data-motion="off"]::view-transition-new(*) { animation: none !important; }
 
 /* ---------- Motion page (preview of every moment) ---------- */
 .motion-grid { align-items: start; }
