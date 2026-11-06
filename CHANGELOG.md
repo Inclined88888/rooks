@@ -45,6 +45,8 @@ bump. Until a release is called, everything accumulates under `Unreleased`.
 - Agents can post a full message in the chat, report or comparison table included, right above a question or the Kanban planner, so you see everything before you choose.
 - Install Timon with one command: `curl -fsSL https://timon-ai.com/install.sh | sh` on Linux and macOS, `irm https://timon-ai.com/install.ps1 | iex` on Windows. The installer checks the package against the signed release list before installing it.
 
+- `timon` on its own shows where the installation stands (daemon, account, web address) and the next command to type; a command that cannot reach the daemon now says how to start it instead of `fetch failed`.
+
 ### Fixed
 
 - On a server installed from the terminal, `timon` commands reach the background service before any configuration file exists.

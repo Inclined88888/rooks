@@ -27,10 +27,11 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { homedir } from 'node:os';
+import { homedir, hostname, userInfo } from 'node:os';
 import { dirname, join, resolve as resolvePath } from 'node:path';
 import { isLocalDaemonUrl, resolveApiUrl } from './cli-api.mjs';
 import { isBundledNode, packagedLauncher } from './cli-runtime.mjs';
+import { isDaemonUnreachable, isLoopbackHost, listenUrl, overviewLines, unreachableLines } from './cli-guide.mjs';
 import { readAvatarFile } from './avatar-file.mjs';
 import { installConsoleAscii } from './console-ascii.mjs';
 import { PRESERVED_ON_REWRITE } from './mcp-tools-agents.mjs';
@@ -100,6 +101,53 @@ function resolveApiToken(apiUrl) {
 /** The CLI runs on the package's runtime (its launcher, or Electron as Node). */
 function packagedCli() {
   return Boolean(process.versions.electron) || isBundledNode(process.execPath);
+}
+
+/** `timon service install` and the onboarding leave this marker once a service is registered. */
+function serviceInstalledMarker() {
+  return fs.existsSync(join(timonHome(), 'desktop-runtime', 'installed'));
+}
+
+/**
+ * `timon` alone: where this installation stands and the one command to type
+ * next, instead of the whole help. Every probe is short and optional: a
+ * missing daemon is a state to describe, not an error.
+ */
+async function cmdOverview(remote) {
+  const local = !remote && isLocalDaemonUrl(timonHome(), API, { packaged: packagedCli() });
+  const state = { api: API, local, reachable: false, serviceInstalled: local && serviceInstalledMarker(), version: null };
+  try {
+    const { timonVersion } = await loadDist('data-version');
+    state.version = timonVersion();
+  } catch { /* A CLI without its compiled sources still prints the rest. */ }
+  try {
+    const r = await fetch(`${API}/api/health`, { headers: timonHeaders(), signal: AbortSignal.timeout(2500) });
+    const body = await r.json().catch(() => null);
+    state.reachable = r.ok && body?.ok === true;
+  } catch { /* Unreachable: described below. */ }
+  if (state.reachable) {
+    try {
+      const me = await httpRaw('GET', '/api/auth/me', undefined, 2500);
+      if (me.ok && typeof me.body?.needsSetup === 'boolean') state.needsSetup = me.body.needsSetup;
+    } catch { /* Account state unknown. */ }
+  }
+  if (local) {
+    try {
+      // The packaged first-launch ports reach the config through the
+      // environment, as for `timon service`.
+      const { markPackagedCli } = await loadDist('host/service-environment');
+      const { TIMON_HOME } = await loadDist('paths');
+      markPackagedCli(process.env, process.versions, state.version ?? 'current', TIMON_HOME);
+      const { appStatus } = await loadDist('plugins-bundled/web-app/control');
+      const app = appStatus();
+      if (app.state === 'running') {
+        state.appUrl = listenUrl(app.listen);
+        state.appLocalOnly = isLoopbackHost(app.listen?.host);
+      }
+    } catch { /* No web interface to show. */ }
+    if (process.env.SSH_CONNECTION) state.ssh = { user: userInfo().username, host: hostname() };
+  }
+  process.stdout.write(overviewLines(state).join('\n') + '\n');
 }
 
 function isHttpUrl(s) {
@@ -5355,6 +5403,8 @@ async function main() {
         });
         break;
       case undefined:
+        await cmdOverview(daemonSpec !== undefined);
+        break;
       case 'help':
       case '-h':
       case '--help':
@@ -5368,6 +5418,12 @@ async function main() {
   } catch (e) {
     // 128 + SIGINT, what a shell reports for Ctrl-C. The person asked for it: nothing to explain.
     if (e?.code === PROMPT_CANCELLED) process.exit(130);
+    if (isDaemonUnreachable(e)) {
+      const local = daemonSpec === undefined && isLocalDaemonUrl(timonHome(), API, { packaged: packagedCli() });
+      const lines = unreachableLines({ api: API, local, serviceInstalled: local && serviceInstalledMarker() });
+      process.stderr.write(lines.join('\n') + '\n');
+      process.exit(1);
+    }
     process.stderr.write('timon: ' + (e && e.message ? e.message : String(e)) + '\n');
     process.exit(1);
   }
