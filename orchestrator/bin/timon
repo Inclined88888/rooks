@@ -94,7 +94,12 @@ function readDaemonTokenFile() {
 function resolveApiToken(apiUrl) {
   const env = process.env.TIMON_API_TOKEN;
   if (typeof env === 'string' && env.trim().length > 0) return env.trim();
-  return isLocalDaemonUrl(timonHome(), apiUrl) ? readDaemonTokenFile() : undefined;
+  return isLocalDaemonUrl(timonHome(), apiUrl, { packaged: packagedCli() }) ? readDaemonTokenFile() : undefined;
+}
+
+/** The CLI runs on the package's runtime (its launcher, or Electron as Node). */
+function packagedCli() {
+  return Boolean(process.versions.electron) || isBundledNode(process.execPath);
 }
 
 function isHttpUrl(s) {
@@ -4931,7 +4936,7 @@ async function cmdDoctor(argv) {
   const backendProfiles = await backendProfilesReport({
     // A section read through the route, not `diagnose()`: a CLI process loads
     // no provider, so only the daemon can tell which profiles really run.
-    local: isLocalDaemonUrl(timonHome(), API),
+    local: isLocalDaemonUrl(timonHome(), API, { packaged: packagedCli() }),
     fetchListing: () => httpRaw('GET', '/api/backends/custom', undefined, 5000),
     loadLocalProfiles: () => loadDist('backends/local-profiles'),
   });
@@ -5154,7 +5159,7 @@ async function main() {
   } else {
     // The token follows the resolved target: TIMON_API pointing elsewhere must
     // not carry this home's daemon-token with it.
-    API = resolveApiUrl(timonHome(), process.env.TIMON_API);
+    API = resolveApiUrl(timonHome(), process.env.TIMON_API, undefined, { packaged: packagedCli() });
     API_TOKEN = resolveApiToken(API);
   }
   const [cmd, ...rest] = argv;
