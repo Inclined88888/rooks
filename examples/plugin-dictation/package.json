@@ -1,0 +1,32 @@
+{
+  "name": "@timon-ai/plugin-dictation",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "dictation-models.json", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-dictation",
+    "apiVersion": 14,
+    "kind": "dictation",
+    "label": "Dictation engine example",
+    "description": "Two stand-in speech-to-text engines: one runs in the page, one sends blocks of audio to the plugin's own daemon routes. They recognise nothing; replace the marked parts with your model or service.",
+    "author": "Timon",
+    "permissions": ["dictation:engine"],
+    "client": {
+      "slots": ["dictation.engine"],
+      "external": ["react"],
+      "mode": "esm"
+    },
+    "dictation": {
+      "engines": [
+        { "id": "example-page", "runtime": "page", "egress": "none" },
+        { "id": "example-daemon", "runtime": "daemon", "egress": "daemon" }
+      ],
+      "models": "dictation-models.json"
+    },
+    "license": { "required": false }
+  }
+}

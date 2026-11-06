@@ -1,0 +1,13 @@
+{
+  "invitePage": {
+    "title": "초대 수락",
+    "description": "{email}의 비밀번호를 정하세요.",
+    "invalid": "이 초대는 잘못되었거나 만료되었습니다.",
+    "name": "이름",
+    "password": "비밀번호",
+    "submit": "계정 만들기",
+    "working": "처리 중…",
+    "failed": "초대가 거부되었습니다",
+    "goHome": "계속"
+  }
+}

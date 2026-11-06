@@ -1,0 +1,26 @@
+{
+  "name": "@timon-ai/plugin-page",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-page",
+    "apiVersion": 1,
+    "kind": "page",
+    "label": "Example page",
+    "description": "A /example route that declares a host zone for widgets.",
+    "route": "/example",
+    "declares": { "example.widget": "list" },
+    "permissions": [],
+    "client": {
+      "slots": ["page"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

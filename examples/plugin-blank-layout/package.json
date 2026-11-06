@@ -1,0 +1,16 @@
+{
+  "name": "@timon-ai/plugin-blank-layout",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "exports": { "./client": "./client.js" },
+  "files": ["client.js", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "blank-layout",
+    "apiVersion": 1,
+    "permissions": [],
+    "client": { "slots": ["root"], "external": ["react", "@timon/ui"], "mode": "esm" },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

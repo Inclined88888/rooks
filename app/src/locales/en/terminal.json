@@ -1,0 +1,78 @@
+{
+  "terminal": {
+    "title": "Terminal",
+    "tabs": "Terminal sessions",
+    "state": {
+      "connecting": "Connecting…",
+      "retrying": "Connection lost, reconnecting…",
+      "unauthorized": "Session expired: sign in again.",
+      "ended": "Session ended.",
+      "exited": "Shell exited (code {code})."
+    },
+    "actions": {
+      "new": "New terminal",
+      "kill": "Close {name} (stops its shell)",
+      "reconnect": "Reconnect now",
+      "popOut": "Open in a floating window"
+    },
+    "keys": {
+      "toolbar": "Extra keys",
+      "up": "Up",
+      "down": "Down",
+      "left": "Left",
+      "right": "Right",
+      "copy": "Copy"
+    },
+    "clipboard": {
+      "menu": "Terminal clipboard",
+      "copy": "Copy",
+      "paste": "Paste",
+      "copied": "Copied to the clipboard.",
+      "copyFailed": "Could not copy: the browser refused access to the clipboard.",
+      "pasteFailed": "Could not read the clipboard: allow access to it, or paste with Ctrl+Shift+V (Cmd+V on a Mac)."
+    },
+    "errors": {
+      "create": "Could not start a terminal: {error}",
+      "kill": "Could not close the terminal: {error}",
+      "load": "Could not reach the terminal service: {error}"
+    },
+    "unavailable": {
+      "disabled": "The built-in terminal is turned off. An administrator can enable it in {settingsPath}.",
+      "forbidden": "Your account is not allowed to open a terminal (permission \"terminal:open\").",
+      "session_required": "Sign in from the browser to open a terminal.",
+      "unauthorized": "Sign in to open a terminal.",
+      "pty_unavailable": "This machine cannot start a terminal: the pseudo-terminal component failed to load. Check the daemon log."
+    },
+    "titleScoped": "Terminal — {scope}",
+    "scopes": {
+      "none": "No project",
+      "label": "Projects"
+    },
+    "request": {
+      "title": "{agent} asks you to run a command",
+      "titleFrom": "{agent} · {project} asks you to run a command",
+      "badge": "command",
+      "allow": "Allow",
+      "paste": "Paste into a terminal",
+      "deny": "Dismiss",
+      "copy": "Copy the command",
+      "copied": "Command copied to the clipboard.",
+      "hint": "Pasted without Enter: read it, then press Enter yourself.",
+      "state": {
+        "allow": "Allowed: the agent runs it",
+        "paste": "Pasted into a terminal",
+        "deny": "Dismissed"
+      },
+      "errors": {
+        "forbidden": "Your account cannot open a terminal: nothing was pasted.",
+        "not_found": "This request no longer exists.",
+        "already_decided": "This request was already decided.",
+        "not_offered": "This choice is no longer offered: the agent cannot run the command now.",
+        "failed": "Could not record your decision. Try again."
+      },
+      "windowRefused": "Decision recorded, but the terminal of {scope} is not on screen. Open a conversation of {scope} to paste it there; the command is in your clipboard.",
+      "windowRefusedNoClipboard": "Decision recorded, but the terminal of {scope} is not on screen. Open a conversation of {scope}, then copy the command from the card.",
+      "pendingBadge": "{count} command(s) waiting for your decision"
+    }
+  }
+}

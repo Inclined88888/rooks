@@ -1,0 +1,24 @@
+{
+  "name": "@timon-ai/plugin-message-action",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-message-action",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Copy message reference",
+    "description": "Adds a button under each chat bubble that copies the message's reference (conversation and event id), next to Copy and Reply.",
+    "permissions": [],
+    "client": {
+      "slots": ["chat.message.action"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

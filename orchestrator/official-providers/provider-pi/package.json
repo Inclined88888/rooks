@@ -1,0 +1,69 @@
+{
+  "name": "@timon-ai/provider-pi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "timon": {
+    "id": "provider-pi",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Pi",
+    "description": "Runs missions on Pi (pi.dev) driven over its RPC mode, with Pi's own sign-in and providers, Timon's tools and the Allow/Deny card.",
+    "author": "Timon",
+    "permissions": ["backends:register"],
+    "provider": {
+      "binaries": [
+        {
+          "name": "pi"
+        }
+      ],
+      "credentialDirs": [
+        ".pi"
+      ],
+      "backends": [
+        {
+          "id": "pi",
+          "rank": 70,
+          "binary": {
+            "names": [
+              "pi"
+            ],
+            "install": {
+              "any": {
+                "kind": "npm",
+                "package": "@earendil-works/pi-coding-agent"
+              }
+            },
+            "searchDirs": {
+              "any": [
+                "~/.pi/agent/bin"
+              ]
+            },
+            "standaloneInstaller": {
+              "label": "Pi",
+              "posix": "curl -fsSL https://pi.dev/install.sh | sh",
+              "windows": "irm https://pi.dev/install.ps1 | iex"
+            }
+          },
+          "credentialDirs": [
+            ".pi"
+          ],
+          "signInCommand": "pi",
+          "signInThen": "/login",
+          "installDocs": "https://pi.dev",
+          "updateCheck": {
+            "latest": {
+              "npm": "@earendil-works/pi-coding-agent"
+            }
+          },
+          "setupCard": {
+            "label": "Pi",
+            "order": 7
+          }
+        }
+      ]
+    },
+    "license": { "required": false }
+  }
+}

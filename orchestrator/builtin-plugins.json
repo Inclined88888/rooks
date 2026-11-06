@@ -1,0 +1,53 @@
+{
+  "plugins": [
+    {
+      "pkg": "@timon-ai/plugin-quota-monitor",
+      "source": "../examples/plugin-quota-monitor"
+    },
+    {
+      "pkg": "@timon-ai/provider-grok",
+      "source": "official-providers/provider-grok"
+    },
+    {
+      "pkg": "@timon-ai/provider-copilot",
+      "source": "official-providers/provider-copilot"
+    },
+    {
+      "pkg": "@timon-ai/provider-acp",
+      "source": "official-providers/provider-acp"
+    },
+    {
+      "pkg": "@timon-ai/provider-codex",
+      "source": "official-providers/provider-codex"
+    },
+    {
+      "pkg": "@timon-ai/provider-ollama-cloud",
+      "source": "official-providers/provider-ollama-cloud"
+    },
+    {
+      "pkg": "@timon-ai/provider-claude",
+      "source": "official-providers/provider-claude"
+    },
+    {
+      "pkg": "@timon-ai/provider-kimi",
+      "source": "official-providers/provider-kimi"
+    },
+    {
+      "pkg": "@timon-ai/provider-pi",
+      "source": "official-providers/provider-pi"
+    },
+    {
+      "pkg": "@timon-ai/plugin-hermes-gateway",
+      "source": "../plugins/hermes-gateway",
+      "enabledByDefault": false
+    },
+    {
+      "pkg": "@timon-ai/plugin-agent-import",
+      "source": "../plugins/agent-import"
+    },
+    {
+      "pkg": "@timon-ai/plugin-theme-timon",
+      "source": "../plugins/theme-timon"
+    }
+  ]
+}

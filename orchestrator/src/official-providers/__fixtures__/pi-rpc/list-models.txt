@@ -1,0 +1,4 @@
+provider  model   context  max-out  thinking  images
+mock      mock-a  100K     4.1K     no        no    
+mock      mock-b  100K     4.1K     no        no    
+mock      mock-r  200K     8.2K     yes       no    

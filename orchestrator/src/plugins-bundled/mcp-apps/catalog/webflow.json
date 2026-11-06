@@ -1,0 +1,59 @@
+{
+  "slug": "webflow",
+  "name": "Webflow",
+  "publisher": "Webflow",
+  "category": "design",
+  "tagline": {
+    "en": "Sites, pages and CMS collections",
+    "fr": "Sites, pages et collections CMS"
+  },
+  "description": {
+    "en": "Lets your agents work on your Webflow sites: read and update pages and their SEO fields, manage CMS collections and items, and publish.",
+    "fr": "Vos agents travaillent sur vos sites Webflow : lire et modifier les pages et leurs champs SEO, gérer les collections et éléments du CMS, et publier."
+  },
+  "examples": {
+    "en": [
+      "List the pages of my site that have no meta description",
+      "Add three draft posts to the blog collection",
+      "Publish the site once the changes are done"
+    ],
+    "fr": [
+      "Liste les pages de mon site sans meta description",
+      "Ajoute trois articles en brouillon à la collection du blog",
+      "Publie le site une fois les changements faits"
+    ]
+  },
+  "mcp": {
+    "url": "https://mcp.webflow.com/mcp",
+    "transport": "streamable-http"
+  },
+  "auth": {
+    "type": "oauth"
+  },
+  "links": {
+    "website": "https://webflow.com",
+    "privacy": "https://webflow.com/legal/eu-privacy-policy",
+    "terms": "https://webflow.com/legal/terms"
+  },
+  "registry": {
+    "name": "com.webflow/mcp",
+    "proof": "domain"
+  },
+  "icon": {
+    "monogram": "Wf",
+    "color": "#146EF5",
+    "logo": {
+      "viewBox": "0 0 24 24",
+      "paths": [
+        {
+          "d": "m24 4.515-7.658 14.97H9.149l3.205-6.204h-.144C9.566 16.713 5.621 18.973 0 19.485v-6.118s3.596-.213 5.71-2.435H0V4.515h6.417v5.278l.144-.001 2.622-5.277h4.854v5.244h.144l2.72-5.244H24Z"
+        }
+      ],
+      "source": "https://simpleicons.org/?q=webflow"
+    }
+  },
+  "reviewed": {
+    "on": "2026-11-04",
+    "probe": "oauth: 401 then metadata and dynamic client registration accepted"
+  }
+}

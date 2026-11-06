@@ -1,0 +1,8 @@
+// RECONSTRUCTED FROM CURSOR'S DOCUMENTATION, NOT RECORDED.
+// Source: https://cursor.com/docs/cli/acp (read 18/10/2026). No `cursor-agent` and no Cursor account were available when this
+// file was written, so every shape below is what the documentation says, and none was observed on a real agent. Replace this
+// file with a session recorded from `cursor-agent acp` (see README.md, "Recording a real session") before trusting it.
+{"on": "initialize", "reply": {"protocolVersion": 1, "agentCapabilities": {"loadSession": true, "promptCapabilities": {"image": true}}, "agentInfo": {"name": "cursor-agent", "version": "reconstructed"}, "authMethods": [{"id": "cursor_login", "name": "Cursor Login"}]}}
+{"on": "session/new", "error": {"code": -32000, "message": "auth_required"}}
+{"on": "authenticate", "reply": {}}
+{"on": "session/new", "reply": {"sessionId": "cursor-session-0001", "models": {"currentModelId": "auto", "availableModels": [{"modelId": "auto", "name": "Auto"}, {"modelId": "composer-2", "name": "Composer 2"}]}}}

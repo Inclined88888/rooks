@@ -1,0 +1,117 @@
+# Checks every pull request and every push to main, on the three systems Timon
+# ships to. No secret is used: the jobs build and test only.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} · ${{ matrix.part.suite }}${{ matrix.part.shard && format(' {0}', matrix.part.shard) || '' }}
+    runs-on: ${{ matrix.os }}
+    # Linux gates the merge. macOS and Windows report without blocking until
+    # their suites have been green for a while: they never ran in CI before.
+    continue-on-error: ${{ matrix.os != 'ubuntu-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        # The daemon suite alone takes about 25 minutes on a hosted runner, close
+        # to the 30 minutes run-tests.mjs allows a whole suite: it runs in two
+        # halves (`node --test --test-shard`), beside the web app suite, each
+        # job with its own time limit.
+        part:
+          - { suite: daemon, shard: 1/2 }
+          - { suite: daemon, shard: 2/2 }
+          - { suite: app, shard: '' }
+    env:
+      NODE_ENV: test
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      # The runner context is not available in a job's env: the temporary home is set from a step.
+      - name: Temporary Timon home
+        shell: bash
+        run: echo "TIMON_HOME=${RUNNER_TEMP}/timon-home" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            orchestrator/package-lock.json
+            app/package-lock.json
+            desktop/package-lock.json
+
+      - name: Install the daemon
+        working-directory: orchestrator
+        run: npm ci --include=dev
+
+      - name: Install the web app
+        working-directory: app
+        run: npm ci --include=dev
+
+      # Daemon tests import desktop/src and the agent-import plugin, which carry their own dependencies.
+      - name: Install the desktop app
+        if: matrix.part.suite == 'daemon'
+        working-directory: desktop
+        run: npm ci --include=dev --ignore-scripts
+
+      - name: Install the agent-import plugin
+        if: matrix.part.suite == 'daemon'
+        working-directory: plugins/agent-import
+        run: npm install --no-audit --no-fund --ignore-scripts
+
+      - name: Typecheck the daemon
+        # Checked once, by the first half.
+        if: matrix.part.suite == 'daemon' && matrix.part.shard == '1/2'
+        working-directory: orchestrator
+        run: npx tsc --noEmit
+
+      - name: Portability
+        # Checked once, by the first half.
+        if: matrix.part.suite == 'daemon' && matrix.part.shard == '1/2'
+        run: node scripts/check-portability.mjs
+
+      - name: Test the daemon
+        if: matrix.part.suite == 'daemon'
+        working-directory: orchestrator
+        run: npm test -- --test-shard=${{ matrix.part.shard }}
+
+      - name: Typecheck the web app
+        if: matrix.part.suite == 'app'
+        working-directory: app
+        run: npm run typecheck
+
+      - name: Test the web app
+        if: matrix.part.suite == 'app'
+        working-directory: app
+        run: npm test
+
+  docs:
+    name: public docs policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: public-docs/package-lock.json
+      - name: Install
+        working-directory: public-docs
+        run: npm ci --include=dev
+      - name: Publication policy
+        working-directory: public-docs
+        run: npm run check:policy

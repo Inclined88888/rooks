@@ -1,0 +1,4 @@
+{"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"ses_hm_01","update":{"sessionUpdate":"user_message_chunk","content":{"type":"text","text":"List the files"}}}}
+{"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"ses_hm_01","update":{"sessionUpdate":"agent_thought_chunk","content":{"type":"text","text":"earlier reasoning "}}}}
+{"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"ses_hm_01","update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"The directory is empty."}}}}
+{"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"ses_hm_01","update":{"sessionUpdate":"session_info_update","title":"List files","_meta":{"hermes":{"profile":"default"}}}}}

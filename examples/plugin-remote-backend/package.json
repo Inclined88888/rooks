@@ -1,0 +1,22 @@
+{
+  "name": "@timon-ai/plugin-remote-backend",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "remote-backend-example",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Example remote backend",
+    "description": "Drives an agent with no local process: a session driver that a real plugin would point at an HTTP or WebSocket API.",
+    "author": "Timon",
+    "permissions": ["backends:register", "settings"],
+    "settings": [
+      { "key": "apiKey", "type": "secret", "label": "Agent API key" }
+    ],
+    "license": { "required": false }
+  }
+}

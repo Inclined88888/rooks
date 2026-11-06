@@ -1,0 +1,33 @@
+{
+  "name": "@timon-ai/plugin-hello",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    "./client": "./lib/client.js"
+  },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "plugin-hello",
+    "apiVersion": 1,
+    "label": "Hello",
+    "description": "One identity, two insertions: a nav entry and a widget. It is not a bundle.",
+    "permissions": ["settings"],
+    "client": {
+      "slots": ["nav.item", "cockpit.widget"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "settings": [
+      {
+        "key": "greeting",
+        "type": "string",
+        "label": "Greeting",
+        "default": "Bonjour depuis un plugin"
+      }
+    ],
+    "license": { "required": false }
+  }
+}

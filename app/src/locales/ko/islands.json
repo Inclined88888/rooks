@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "네트워크",
+      "titleOf": "네트워크 · {mission}"
+    },
+    "widgetZone": {
+      "title": "위젯"
+    },
+    "widgetCard": {
+      "title": "위젯",
+      "missing": "위젯 {widget}은(는) 여기서 사용할 수 없습니다."
+    },
+    "page": "페이지",
+    "arrangementPage": {
+      "loading": "배치 불러오는 중…",
+      "missing": "이 배치는 더 이상 존재하지 않습니다. 메뉴 항목도 함께 사라집니다.",
+      "hint": "이 페이지는 배치와 함께 열립니다. 여기서 바꾼 것은 이 페이지에만 남으며, 저장된 배치는 그대로입니다.",
+      "restore": "배치 복원",
+      "restoreFailed": "배치를 복원할 수 없습니다."
+    },
+    "tabs": "아일랜드 탭",
+    "close": "닫기",
+    "closeTab": "{title} 닫기",
+    "detach": "창에서 열기",
+    "resize": "크기 조정",
+    "unavailable": "콘텐츠를 사용할 수 없음 — {plugin}",
+    "refused": {
+      "maxIslands": "아일랜드는 최대 8개",
+      "maxDepth": "분할은 최대 3단계",
+      "maxTabsPerIsland": "아일랜드 하나에 탭은 최대 12개",
+      "maxTabs": "탭은 최대 32개",
+      "routeTab": "이 화면의 페이지는 닫을 수 없습니다",
+      "self": "이미 여기에 있습니다",
+      "unknownType": "이 콘텐츠는 워크스페이스에서 열 수 없습니다",
+      "maxFloats": "팝업은 최대 4개",
+      "floatEdge": "팝업은 가운데로만 탭을 받습니다"
+    },
+    "announce": {
+      "right": "{title}을(를) {target} 오른쪽에 열었습니다",
+      "left": "{title}을(를) {target} 왼쪽에 열었습니다",
+      "top": "{title}을(를) {target} 위에 열었습니다",
+      "bottom": "{title}을(를) {target} 아래에 열었습니다",
+      "tab": "{title}을(를) {target}에 탭으로 추가했습니다",
+      "root": "{title}을(를) 워크스페이스 가장자리를 따라 열었습니다",
+      "closed": "{title} 닫힘",
+      "float": "{title}을(를) 팝업으로 열었습니다",
+      "minimized": "{title} 최소화됨"
+    },
+    "openIn": {
+      "menu": "분할해서 열기",
+      "right": "오른쪽에",
+      "left": "왼쪽에",
+      "bottom": "아래에",
+      "top": "위에",
+      "center": "탭으로",
+      "narrow": "워크스페이스에서 열기",
+      "split": {
+        "right": "오른쪽에 열기",
+        "left": "왼쪽에 열기",
+        "bottom": "아래에 열기",
+        "top": "위에 열기",
+        "center": "탭으로 열기",
+        "float": "팝업으로 열기"
+      },
+      "float": "팝업으로"
+    },
+    "drop": {
+      "right": "{target} 오른쪽에 열기",
+      "left": "{target} 왼쪽에 열기",
+      "top": "{target} 위에 쌓기",
+      "bottom": "{target} 아래에 쌓기",
+      "center": "{target}에 탭 추가",
+      "root": {
+        "left": "왼쪽에 새 열",
+        "right": "오른쪽에 새 열",
+        "top": "위쪽에 새 행",
+        "bottom": "아래쪽에 새 행"
+      },
+      "float": "팝업으로 열기 (Alt)"
+    },
+    "drag": {
+      "island": "드래그해서 이 아일랜드 이동"
+    },
+    "chat": {
+      "title": "채팅",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title}이(가) 오른쪽 새 아일랜드에서 열립니다",
+        "left": "{title}이(가) 왼쪽 새 아일랜드에서 열립니다",
+        "top": "{title}이(가) 위쪽 새 아일랜드에서 열립니다",
+        "bottom": "{title}이(가) 아래쪽 새 아일랜드에서 열립니다"
+      },
+      "openTab": "{title}이(가) 탭으로 열립니다",
+      "cannotApply": "이 레이아웃은 더 이상 워크스페이스에 맞지 않습니다: 대상 아일랜드가 닫혔거나 한도에 도달했습니다.",
+      "dropped": "콘텐츠가 설정을 거부해 제외됨: {titles}",
+      "unreadable": "현재 배치를 읽을 수 없습니다. 잠시 후 다시 시도하세요",
+      "noFit": "대상 아일랜드가 닫혔거나 한도에 도달했습니다",
+      "refusedParams": "{titles}이(가) 받은 설정을 거부했습니다",
+      "closes": "적용하면 닫힘: {titles}",
+      "closesIn": "{project}에 적용하면 닫힘: {titles}",
+      "tabKept": "닫힐 탭이 열린 채로 남아 아무것도 바뀌지 않았습니다"
+    },
+    "arrangementProposal": {
+      "title": "{agent}이(가) 내 아일랜드 배치 중 하나를 제안합니다",
+      "titleFrom": "{agent}이(가) 내 아일랜드 배치 중 하나를 제안합니다 ({project})",
+      "name": "배치: {name}",
+      "gone": "배치 \"{name}\"이(가) 삭제되어 아무것도 바뀌지 않았습니다",
+      "stale": "제안 이후 이 배치가 삭제되어 아무것도 바뀌지 않았습니다."
+    },
+    "menu": "아일랜드 동작",
+    "move": {
+      "keys": "M: 이 탭 이동 · Shift+M: 아일랜드 이동",
+      "start": "{title} 이동 중. 화살표 키로 아일랜드를, Tab으로 위치를 고르고, Enter로 놓으며, Escape로 취소합니다.",
+      "hint": "화살표: 아일랜드 · Tab: 위치 · Enter: 놓기 · Esc: 취소",
+      "cancelled": "이동 취소됨"
+    },
+    "file": {
+      "title": "파일"
+    },
+    "popup": {
+      "open": "{title}을(를) 팝업으로 열기",
+      "dock": "워크스페이스에 도킹",
+      "pin": "모든 페이지에 유지",
+      "unpin": "이 페이지에만 유지",
+      "close": "이 팝업 닫기",
+      "minimize": "최소화",
+      "restore": "{title} 다시 표시",
+      "minimized": "최소화된 팝업"
+    },
+    "glass": {
+      "menu": "유리",
+      "follow": "모양 설정 따르기",
+      "island": "아일랜드 전체",
+      "widgets": "위젯",
+      "both": "둘 다"
+    },
+    "newTab": "새 탭",
+    "skill": {
+      "title": "스킬"
+    },
+    "paramsRefused": "이 변경을 탭에 적용할 수 없습니다.",
+    "closeGuardFailed": "{title}이(가) 닫아도 되는지 확인하지 못해 열린 채로 남습니다.",
+    "unsaved": {
+      "title": "{name}의 변경 사항을 저장하시겠습니까?",
+      "description": "저장하지 않고 닫으면 변경 사항이 사라집니다.",
+      "save": "저장",
+      "saving": "저장 중…",
+      "discard": "저장 안 함",
+      "cancel": "취소"
+    },
+    "stack": {
+      "earlier": "{title} 왼쪽으로 이동",
+      "later": "{title} 오른쪽으로 이동",
+      "moved": "{title} 이동됨"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "워크스페이스에서 열기",
+      "openedThere": "이 세션은 워크스페이스에 열려 있습니다.",
+      "show": "보기"
+    }
+  }
+}

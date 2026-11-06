@@ -1,0 +1,65 @@
+{
+  "agentChat": {
+    "title": "에이전트 채팅",
+    "newCard": "새 에이전트 채팅",
+    "newCardHint": "이 카드에 표시할 에이전트를 선택하세요. 카드를 만든 뒤 위젯 팔레트에서 다른 카드를 추가할 수 있습니다.",
+    "newConversation": "새 대화",
+    "shortcuts": "에이전트 바로가기",
+    "shortcut": "{name}(으)로 전환",
+    "addAgent": "이 카드에 에이전트 추가",
+    "picker": {
+      "label": "에이전트 검색",
+      "placeholder": "에이전트 추가…",
+      "empty": "일치하는 에이전트가 없습니다",
+      "onCard": "카드에 있음"
+    },
+    "config": {
+      "agent": "에이전트",
+      "agentPlaceholder": "예: alice.main",
+      "title": "카드 제목",
+      "titlePlaceholder": "에이전트 이름",
+      "subAgents": "카드의 다른 에이전트",
+      "subAgentsHint": "아직 없습니다. 아래에서 검색하거나 아바타 줄 끝의 + 를 사용하세요.",
+      "removeSubAgent": "카드에서 {name} 제거",
+      "moveUp": "{name} 위로 이동",
+      "moveDown": "{name} 아래로 이동",
+      "save": "저장",
+      "create": "카드 만들기",
+      "cancel": "취소",
+      "delete": "이 카드 제거"
+    },
+    "menu": {
+      "customize": "에이전트 맞춤 설정",
+      "edit": "에이전트 편집",
+      "remove": "제거",
+      "stop": "모두 중지",
+      "makeMain": "메인 오케스트레이터로 설정",
+      "makeMainDone": "{name}이(가) 이제 메인 오케스트레이터입니다. 깨우기 요약과 알림이 이 에이전트로 전달됩니다",
+      "makeMainFailed": "{name}을(를) 메인 오케스트레이터로 설정하지 못했습니다: {error}",
+      "stopConfirm": "{name}을(를) 정말 중지하시겠습니까? 실행 중인 미션이 종료되고, 받은편지함이 비워지고, 대기 중인 작업이 차단되며, 이 에이전트를 깨우는 트리거와 워크플로가 꺼집니다.",
+      "stopped": "{name} 중지됨: 미션 {missions}개, 메시지 {messages}개, 작업 {tasks}개, 트리거 {triggers}개, 워크플로 실행 {runs}개, 워크플로 {workflows}개 무력화",
+      "stopFailed": "{name}을(를) 중지하지 못했습니다: {error}",
+      "duplicate": "에이전트 복제"
+    },
+    "customize": {
+      "title": "에이전트 맞춤 설정",
+      "description": "이 카드에서만 쓰는 {name}의 별명과 사진입니다. 에이전트 자체는 바뀌지 않습니다.",
+      "nickname": "별명",
+      "photo": "사진",
+      "save": "저장",
+      "reset": "초기화"
+    },
+    "duplicate": {
+      "title": "{name} 복제",
+      "description": "복사본은 같은 설정과 프롬프트를 새 이름으로 받습니다. 메모리는 비어 있는 상태로 시작하며, 메인 오케스트레이터가 되지 않고 프로젝트에 고정된 역할도 이어받지 않습니다.",
+      "nameLabel": "복사본 이름",
+      "taken": "이 이름의 에이전트가 이미 있습니다.",
+      "invalid": "문자, 숫자, '.', '_', '-'만 사용할 수 있습니다.",
+      "failed": "복제하지 못했습니다: {error}",
+      "done": "{name}을(를) {source}의 복사본으로 만들었습니다",
+      "skillsNotCopied": "{name}을(를) 만들었지만 다음 스킬은 {source}와 같게 설정되지 않았습니다: {skills}",
+      "cancel": "취소",
+      "confirm": "복제"
+    }
+  }
+}

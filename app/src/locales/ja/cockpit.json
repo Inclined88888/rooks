@@ -1,0 +1,26 @@
+{
+  "cockpit": {
+    "common": {
+      "loading": "読み込み中…"
+    },
+    "dreams": {
+      "pending": "保留中 {count}",
+      "empty": "保留中のドリームはありません"
+    },
+    "accountUsage": {
+      "disconnected": "未サインイン",
+      "connectCliThen": "CLI から {name} にサインインしてください: {command} を実行し、次に {then}。",
+      "connectCli": "CLI から {name} にサインインしてください: {command} を実行します。",
+      "connect": "このプロバイダーの CLI からサインインしてください。",
+      "connectAccount": "{settingsPath} からこのアカウントに再度サインインしてください。",
+      "error": "使用量を取得できません"
+    },
+    "board": {
+      "move": "{title} を移動",
+      "resize": "{title} のサイズを変更",
+      "centerZone": "コックピット中央",
+      "leftRail": "コックピット左レール",
+      "rightRail": "コックピット右レール"
+    }
+  }
+}

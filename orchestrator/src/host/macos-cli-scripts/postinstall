@@ -1,0 +1,14 @@
+#!/bin/sh
+# The pkg target installs Timon.app in /Applications.
+set -eu
+launcher='/Applications/Timon.app/Contents/cli/timon'
+if [ ! -f "$launcher" ]; then
+    echo 'Timon CLI launcher is missing from the installed application.' >&2
+    exit 1
+fi
+mkdir -p /usr/local/bin
+if [ ! -e /usr/local/bin/timon ] && [ ! -L /usr/local/bin/timon ]; then
+    ln -s "$launcher" /usr/local/bin/timon
+elif [ "$(readlink /usr/local/bin/timon)" != "$launcher" ]; then
+    echo 'Timon CLI was not installed: /usr/local/bin/timon already belongs to another installation.' >&2
+fi

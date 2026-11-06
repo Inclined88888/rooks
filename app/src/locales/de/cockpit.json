@@ -1,0 +1,26 @@
+{
+  "cockpit": {
+    "common": {
+      "loading": "Wird geladen…"
+    },
+    "dreams": {
+      "pending": "{count} ausstehend",
+      "empty": "Kein Traum ausstehend"
+    },
+    "accountUsage": {
+      "disconnected": "Nicht angemeldet",
+      "connectCliThen": "Bei {name} über die CLI anmelden: {command} ausführen, dann {then}.",
+      "connectCli": "Bei {name} über die CLI anmelden: {command} ausführen.",
+      "connect": "Über die CLI dieses Anbieters anmelden.",
+      "connectAccount": "Dieses Konto unter {settingsPath} erneut anmelden.",
+      "error": "Nutzung nicht verfügbar"
+    },
+    "board": {
+      "move": "{title} verschieben",
+      "resize": "Größe von {title} ändern",
+      "centerZone": "Cockpit-Mitte",
+      "leftRail": "Linke Cockpit-Leiste",
+      "rightRail": "Rechte Cockpit-Leiste"
+    }
+  }
+}

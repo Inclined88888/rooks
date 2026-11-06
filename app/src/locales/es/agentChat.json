@@ -1,0 +1,65 @@
+{
+  "agentChat": {
+    "title": "Chat con agente",
+    "newCard": "Nuevo chat con agente",
+    "newCardHint": "Elige el agente que muestra esta tarjeta. Cuando se cree, añade otra tarjeta desde la paleta de widgets.",
+    "newConversation": "Nueva conversación",
+    "shortcuts": "Atajos de agentes",
+    "shortcut": "Cambiar a {name}",
+    "addAgent": "Añadir un agente a esta tarjeta",
+    "picker": {
+      "label": "Buscar un agente",
+      "placeholder": "Añadir un agente…",
+      "empty": "Ningún agente coincide",
+      "onCard": "En la tarjeta"
+    },
+    "config": {
+      "agent": "Agente",
+      "agentPlaceholder": "p. ej. alice.main",
+      "title": "Título de la tarjeta",
+      "titlePlaceholder": "Nombre del agente",
+      "subAgents": "Otros agentes de la tarjeta",
+      "subAgentsHint": "Ninguno por ahora. Busca uno más abajo o usa el + al final de la fila de avatares.",
+      "removeSubAgent": "Quitar a {name} de la tarjeta",
+      "moveUp": "Subir a {name}",
+      "moveDown": "Bajar a {name}",
+      "save": "Guardar",
+      "create": "Crear la tarjeta",
+      "cancel": "Cancelar",
+      "delete": "Quitar esta tarjeta"
+    },
+    "menu": {
+      "customize": "Personalizar agente",
+      "edit": "Editar agente",
+      "remove": "Quitar",
+      "stop": "Detener todo",
+      "makeMain": "Establecer como orquestador principal",
+      "makeMainDone": "{name} es ahora el orquestador principal: los resúmenes de reactivación y las notificaciones le llegan a él",
+      "makeMainFailed": "No se pudo establecer a {name} como orquestador principal: {error}",
+      "stopConfirm": "¿Detener a {name} de verdad? Sus misiones en curso se terminan, su bandeja de entrada se vacía, sus tareas pendientes se bloquean y se desactivan sus disparadores y los workflows que lo despertarían.",
+      "stopped": "{name} detenido: {missions} misión(es), {messages} mensaje(s), {tasks} tarea(s), {triggers} disparador(es), {runs} ejecución(es) de workflow, {workflows} workflow(s) neutralizados",
+      "stopFailed": "No se pudo detener a {name}: {error}",
+      "duplicate": "Duplicar agente"
+    },
+    "customize": {
+      "title": "Personalizar agente",
+      "description": "Un apodo y una foto para {name}, solo en esta tarjeta. El agente en sí no cambia.",
+      "nickname": "Apodo",
+      "photo": "Foto",
+      "save": "Guardar",
+      "reset": "Restablecer"
+    },
+    "duplicate": {
+      "title": "Duplicar a {name}",
+      "description": "La copia recibe la misma configuración y el mismo prompt con un nombre nuevo. Su memoria empieza vacía, no es el orquestador principal ni asume el rol fijado de un proyecto.",
+      "nameLabel": "Nombre de la copia",
+      "taken": "Ya existe un agente con este nombre.",
+      "invalid": "Usa solo letras, dígitos, '.', '_' y '-'.",
+      "failed": "No se pudo duplicar: {error}",
+      "done": "{name} creado como copia de {source}",
+      "skillsNotCopied": "{name} creado, pero estas skills no están asignadas como en {source}: {skills}",
+      "cancel": "Cancelar",
+      "confirm": "Duplicar"
+    }
+  }
+}

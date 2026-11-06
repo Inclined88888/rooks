@@ -1,0 +1,6 @@
+// RECONSTRUCTED FROM CURSOR'S DOCUMENTATION, NOT RECORDED.
+// Source: https://cursor.com/docs/cli/acp, "Cursor extension methods" (read 30/10/2026): the two blocking requests, with the
+// documentation's own examples. No `cursor-agent` was run. Replace with a recorded session before trusting it.
+{"on": "initialize", "reply": {"protocolVersion": 1, "agentCapabilities": {"loadSession": true}, "agentInfo": {"name": "cursor-agent", "version": "reconstructed"}, "authMethods": [{"id": "cursor_login", "name": "Cursor Login"}]}}
+{"on": "session/new", "reply": {"sessionId": "cursor-session-0002"}}
+{"on": "session/prompt", "send": [{"id": "ask-1", "method": "cursor/ask_question", "params": {"toolCallId": "call_123", "title": "Need input", "questions": [{"id": "q1", "prompt": "Which mode should I use?", "options": [{"id": "agent", "label": "Agent"}, {"id": "plan", "label": "Plan"}], "allowMultiple": false}]}}], "reply": {"stopReason": "end_turn"}}

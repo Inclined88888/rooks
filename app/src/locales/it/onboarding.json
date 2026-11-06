@@ -1,0 +1,108 @@
+{
+  "onboarding": {
+    "back": "Indietro",
+    "continue": "Continua",
+    "language": {
+      "title": "Scegli la tua lingua"
+    },
+    "splash": {
+      "title": "Il tuo team di IA,\na casa tua.",
+      "subtitle": "Agenti che lavorano sulla tua macchina, con gli abbonamenti IA che paghi già.",
+      "hint": "Psst, puoi afferrarli."
+    },
+    "account": {
+      "title": "Crea il tuo account locale",
+      "subtitle": "Lo usi per accedere a Timon. Ne sei l’amministratore.",
+      "privacy": "Raccogliamo solo la tua email nel caso tu voglia reimpostare la password. L’account che crei resta locale."
+    },
+    "llm": {
+      "title": "Scegli\nil tuo LLM.",
+      "subtitle": "Timon funziona con gli abbonamenti IA che hai già. Mai una fattura a token."
+    },
+    "profile": {
+      "title": "Cosa ti porta qui?",
+      "subtitle": "Timon adatta le sue impostazioni e la sua visita guidata alla tua risposta."
+    },
+    "agent": {
+      "templates": {
+        "title": "Scegli il suo profilo",
+        "subtitle": "Un punto di partenza pronto all’uso. Potrai cambiare tutto in seguito."
+      },
+      "interview": {
+        "title": "Configuriamo la tua automazione",
+        "subtitle": "Cinque domande, e il tuo agente sa cosa fare, con cosa e quando."
+      },
+      "sheet": {
+        "title": "Configura il tuo agente",
+        "subtitle": "Ogni impostazione resta modificabile nella sua scheda."
+      }
+    },
+    "signin": {
+      "title": "Bentornato",
+      "subtitle": "Timon ha un nuovo look. Accedi con il tuo account Timon per continuare."
+    },
+    "mascot": {
+      "title": "Ecco la mascotte di {name}",
+      "subtitle": "Novità di questa versione: ogni agente ha una mascotte che mostra cosa sta facendo — pensa, lavora, ti aspetta. Vesti {name} come preferisci."
+    },
+    "scheme": {
+      "label": "Modalità chiara o scura",
+      "light": "Chiaro",
+      "dark": "Scuro"
+    },
+    "discover": {
+      "label": "Scopri Timon",
+      "slide": "Slide {current} di {total}",
+      "next": "Avanti",
+      "skip": "Salta tutto",
+      "finish": "Vai da {name}",
+      "finishNoName": "Iniziamo",
+      "autonomous": {
+        "title": "I tuoi TIM lavorano in autonomia",
+        "body": "Affida a un TIM una missione, un orario o un evento scatenante: sceglie le sue competenze e i suoi strumenti, ricorda ciò che impara e ti aggiorna quando ha finito.",
+        "nodes": {
+          "skills": "Competenze",
+          "tools": "Strumenti",
+          "memory": "Memoria",
+          "schedule": "Pianificazione"
+        },
+        "done": "Report inviato"
+      },
+      "teams": {
+        "title": "Crea squadre di TIM",
+        "body": "Uno pianifica, uno programma, uno rilegge: i compiti passano da TIM a TIM sul Kanban, e il Multichat ti permette di parlare con tutti insieme.",
+        "columns": {
+          "todo": "Da fare",
+          "doing": "In corso",
+          "done": "Fatto"
+        },
+        "card": "Pagina iniziale"
+      },
+      "projects": {
+        "title": "Progetti con i propri TIM",
+        "body": "Un assistente generalista sa un po’ di tutto. I TIM di un progetto lavorano solo in quel progetto, con le sue regole e la sua memoria, e non ne escono mai.",
+        "general": "I tuoi TIM vanno ovunque",
+        "alpha": "Sito web",
+        "beta": "Contabilità",
+        "rules": "Le sue regole",
+        "memory": "La sua memoria"
+      },
+      "connected": {
+        "title": "Collega tutto il resto",
+        "body": "I connettori portano la tua posta, il tuo calendario e i tuoi strumenti; i workflow concatenano i passaggi; i plugin aggiungono ciò che manca, fino all’interfaccia."
+      },
+      "views": {
+        "label": "Dove trovarlo",
+        "canvas": "Canvas dell’agente",
+        "chat": "Chat",
+        "kanban": "Kanban",
+        "multichat": "Multichat",
+        "projectChat": "Chat di progetto",
+        "widgets": "Widget",
+        "connectors": "Connettori",
+        "workflows": "Workflow",
+        "plugins": "Plugin"
+      }
+    }
+  }
+}

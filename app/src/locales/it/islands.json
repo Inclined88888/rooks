@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "Rete",
+      "titleOf": "Rete · {mission}"
+    },
+    "widgetZone": {
+      "title": "Widget"
+    },
+    "widgetCard": {
+      "title": "Widget",
+      "missing": "Il widget {widget} non è disponibile qui."
+    },
+    "page": "Pagina",
+    "arrangementPage": {
+      "loading": "Caricamento della disposizione…",
+      "missing": "Questa disposizione non esiste più. La sua voce di menu sparisce con lei.",
+      "hint": "Questa pagina si apre con la disposizione. Ciò che modifichi qui resta su questa pagina; la disposizione salvata non viene toccata.",
+      "restore": "Ripristina la disposizione",
+      "restoreFailed": "Impossibile ripristinare la disposizione."
+    },
+    "tabs": "Schede delle isole",
+    "close": "Chiudi",
+    "closeTab": "Chiudi {title}",
+    "detach": "Apri in una finestra",
+    "resize": "Ridimensiona",
+    "unavailable": "Contenuto non disponibile — {plugin}",
+    "refused": {
+      "maxIslands": "Al massimo 8 isole",
+      "maxDepth": "Al massimo 3 livelli di divisioni",
+      "maxTabsPerIsland": "Al massimo 12 schede in un’isola",
+      "maxTabs": "Al massimo 32 schede",
+      "routeTab": "La pagina di questa vista non può essere chiusa",
+      "self": "Già qui",
+      "unknownType": "Questo contenuto non può aprirsi nell’area di lavoro",
+      "maxFloats": "Al massimo 4 popup",
+      "floatEdge": "Un popup accoglie le schede solo dal centro"
+    },
+    "announce": {
+      "right": "{title} aperto a destra di {target}",
+      "left": "{title} aperto a sinistra di {target}",
+      "top": "{title} aperto sopra {target}",
+      "bottom": "{title} aperto sotto {target}",
+      "tab": "{title} aggiunto come scheda a {target}",
+      "root": "{title} aperto lungo il bordo dell’area di lavoro",
+      "closed": "{title} chiuso",
+      "float": "{title} aperto come popup",
+      "minimized": "{title} ridotto a icona"
+    },
+    "openIn": {
+      "menu": "Apri in una divisione",
+      "right": "A destra",
+      "left": "A sinistra",
+      "bottom": "Sotto",
+      "top": "Sopra",
+      "center": "In una scheda",
+      "narrow": "Apri nell’area di lavoro",
+      "split": {
+        "right": "Apri a destra",
+        "left": "Apri a sinistra",
+        "bottom": "Apri sotto",
+        "top": "Apri sopra",
+        "center": "Apri in una scheda",
+        "float": "Apri come popup"
+      },
+      "float": "Come popup"
+    },
+    "drop": {
+      "right": "Apri a destra di {target}",
+      "left": "Apri a sinistra di {target}",
+      "top": "Impila sopra {target}",
+      "bottom": "Impila sotto {target}",
+      "center": "Aggiungi una scheda a {target}",
+      "root": {
+        "left": "Nuova colonna a sinistra",
+        "right": "Nuova colonna a destra",
+        "top": "Nuova riga in alto",
+        "bottom": "Nuova riga in basso"
+      },
+      "float": "Apri come popup (Alt)"
+    },
+    "drag": {
+      "island": "Trascina per spostare questa isola"
+    },
+    "chat": {
+      "title": "Chat",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title} si apre in una nuova isola a destra",
+        "left": "{title} si apre in una nuova isola a sinistra",
+        "top": "{title} si apre in una nuova isola sopra",
+        "bottom": "{title} si apre in una nuova isola sotto"
+      },
+      "openTab": "{title} si apre come scheda",
+      "cannotApply": "Questo layout non si adatta più all’area di lavoro: l’isola di destinazione è stata chiusa oppure è stato raggiunto un limite.",
+      "dropped": "Esclusi, perché il loro contenuto ha rifiutato le impostazioni: {titles}",
+      "unreadable": "non è stato possibile leggere la tua disposizione attuale, riprova tra un momento",
+      "noFit": "l’isola di destinazione è stata chiusa oppure è stato raggiunto un limite",
+      "refusedParams": "{titles} ha rifiutato le impostazioni ricevute",
+      "closes": "L’applicazione chiude: {titles}",
+      "closesIn": "L’applicazione in {project} chiude: {titles}",
+      "tabKept": "una scheda che sarebbe stata chiusa è rimasta aperta, nulla è stato modificato"
+    },
+    "arrangementProposal": {
+      "title": "{agent} propone una delle tue disposizioni di isole",
+      "titleFrom": "{agent} propone una delle tue disposizioni di isole ({project})",
+      "name": "Disposizione: {name}",
+      "gone": "la disposizione \"{name}\" è stata eliminata, nulla è stato modificato",
+      "stale": "Questa disposizione è stata eliminata dopo la proposta: nulla è stato modificato."
+    },
+    "menu": "Azioni dell’isola",
+    "move": {
+      "keys": "M: sposta questa scheda · Shift+M: sposta l’isola",
+      "start": "Spostamento di {title}. Le frecce scelgono l’isola, Tab la posizione, Invio la rilascia, Esc annulla.",
+      "hint": "Frecce: isola · Tab: posizione · Invio: rilascia · Esc: annulla",
+      "cancelled": "Spostamento annullato"
+    },
+    "file": {
+      "title": "File"
+    },
+    "popup": {
+      "open": "Apri {title} come popup",
+      "dock": "Ancora all’area di lavoro",
+      "pin": "Mantieni su ogni pagina",
+      "unpin": "Mantieni solo su questa pagina",
+      "close": "Chiudi questo popup",
+      "minimize": "Riduci a icona",
+      "restore": "Mostra di nuovo {title}",
+      "minimized": "Popup ridotti a icona"
+    },
+    "glass": {
+      "menu": "Vetro",
+      "follow": "Segui l’impostazione Aspetto",
+      "island": "Intera isola",
+      "widgets": "Widget",
+      "both": "Entrambi"
+    },
+    "newTab": "Nuova scheda",
+    "skill": {
+      "title": "Skill"
+    },
+    "paramsRefused": "Impossibile applicare questa modifica alla scheda.",
+    "closeGuardFailed": "{title} non ha potuto confermare di poter essere chiuso: resta aperto.",
+    "unsaved": {
+      "title": "Salvare le modifiche a {name}?",
+      "description": "Le tue modifiche andranno perse se chiudi senza salvare.",
+      "save": "Salva",
+      "saving": "Salvataggio…",
+      "discard": "Non salvare",
+      "cancel": "Annulla"
+    },
+    "stack": {
+      "earlier": "Sposta {title} a sinistra",
+      "later": "Sposta {title} a destra",
+      "moved": "{title} spostato"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "Apri nell’area di lavoro",
+      "openedThere": "Questa sessione è aperta nell’area di lavoro.",
+      "show": "Mostrala"
+    }
+  }
+}

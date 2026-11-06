@@ -1,0 +1,57 @@
+node_modules/
+# A `node_modules` can also be a symbolic link (a worktree pointing at the
+# main checkout's dependencies): the form without `/` covers both.
+node_modules
+dist/
+*.log
+*.tsbuildinfo
+.env
+.env.local
+.DS_Store
+# Every hidden folder is local tool state (.claude, .grepai, .codex, .idea,
+# .next…), at any depth. Files already tracked under one (the maintainers'
+# project skills, and the two links that expose them to the agents' CLIs) stay
+# tracked; a new one needs `git add -f`.
+.*/
+!.github/
+
+# Heavy 3D exports (assets, not code)
+*.glb
+
+# SQLite databases: the real one lives in ~/.timon/, but a launch from the
+# repository root creates one here. It holds missions and events, so every
+# conversation: a `git add -A` would be enough to publish it.
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Local artefacts: working screenshots and transcripts.
+app-screenshots/
+transcripts/
+
+# The daemon's dependency tree rebuilt for Electron's ABI: a 135 MB copy made
+# by `desktop/npm run prepare:deps`, and the installers electron-builder makes
+# from it.
+desktop/build-resources/
+desktop/release/
+
+# A build's channel and expiry: written into the build worktree by the release
+# scripts, never committed (a commit would carry it into the next build, with
+# the wrong date).
+orchestrator/build-info.json
+
+# Public documentation
+public-docs/node_modules/
+public-docs/build/
+.grepai/
+
+# Interface languages built from app/src/locales/<tag>/ by
+# app/scripts/build-locales.mjs (prebuild, pretest, pretypecheck, predev).
+app/public/locales/
+app/src/locales/.generated/
+
+# The maintainers' internal notes repository is cloned here. No trailing slash:
+# a task worktree links it, and git sees a link as a file.
+/docs

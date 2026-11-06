@@ -1,0 +1,497 @@
+{
+  "pluginsPage": {
+    "kind": {
+      "widget": "Widget",
+      "page": "Pagina",
+      "island": "Eiland",
+      "overlay": "Overlay",
+      "theme": "Thema",
+      "composer": "Invoerveld",
+      "layout": "Indeling",
+      "behavior": "Backend",
+      "provider": "Provider",
+      "dictation": "Dictee",
+      "bundle": "Bundel"
+    },
+    "tier": {
+      "core": "Kern",
+      "std": "Standaard",
+      "dev": "Ontwikkelaar",
+      "opt": "Optioneel"
+    },
+    "by": "door {name}",
+    "openDetails": "Details van {name} openen",
+    "noPreview": "Nog geen voorbeeld",
+    "backendHint": "Backendmodule — ze heeft geen eigen scherm.",
+    "declares": "Opent",
+    "settings": "Instellingen",
+    "authorUnknown": "Onbekende auteur",
+    "backTo": "Terug naar {name}",
+    "containedMissing": "Niet geïnstalleerd op deze machine",
+    "searchPlaceholder": "Plug-ins zoeken…",
+    "typesLabel": "Type",
+    "typesAll": "Alle",
+    "gallery": "Screenshots",
+    "prevSlide": "Vorige afbeelding",
+    "nextSlide": "Volgende afbeelding",
+    "noMatch": "Niets komt overeen met deze filters.",
+    "provenance": {
+      "all": "Alle",
+      "timon": "@timon",
+      "marketplace": "Marktplaats"
+    },
+    "verified": "Geverifieerd",
+    "unverified": "Niet geverifieerd",
+    "builtin": "Ingebouwd",
+    "builtinHint": "Wordt met Timon meegeleverd: hij kan worden uitgezet, niet verwijderd.",
+    "awaitingApproval": "Goed te keuren op deze computer",
+    "awaitingApprovalHint": "Deze machine draait hem, maar zijn interfacecode laadt hier pas als dezelfde versie, met dezelfde handtekening, op deze computer is geïnstalleerd en ingeschakeld.",
+    "awaitingApprovalBuiltinHint": "Deze machine draait hem, maar zijn interfacecode laadt hier pas als deze computer dezelfde versie van deze plug-in, met dezelfde interfacecode, meelevert en heeft ingeschakeld. Twee Timon-releases kunnen onder één plug-inversie verschillende code leveren: werk de oudere machine bij.",
+    "modules": {
+      "@timon/db": {
+        "label": "Database",
+        "description": "SQLite-opslag en zijn koude archief. Al het andere injecteert hem, zodat het schema vóór de eerste leesactie actueel is."
+      },
+      "@timon/settings": {
+        "label": "Instellingen",
+        "description": "Instellingenpagina van het product en de tabel waaruit andere modules lezen."
+      },
+      "@timon/http": {
+        "label": "HTTP & statistieken",
+        "description": "Gedeelde Express-app, authenticatie van de UI-proxy en het statistiekendashboard."
+      },
+      "@timon/users": {
+        "label": "Account",
+        "description": "Je account, de sessies en het inlogscherm."
+      },
+      "@timon/plugins": {
+        "label": "Plug-ingalerij",
+        "description": "Toont meegeleverde modules en pakketten van derden, en schrijft hun aan/uit-toestand."
+      },
+      "@timon/secrets-vault": {
+        "label": "Geheimen",
+        "description": "Verzegelde geheimenkluis. Waarden verlaten de daemon nooit leesbaar."
+      },
+      "@timon/ui-layout": {
+        "label": "Indeling",
+        "description": "De omlijsting van de app: navigatie, bovenbalk, cockpitbalken, overlaylaag. Vervangbaar — ze bezet de slot root."
+      },
+      "@timon/ui-theme": {
+        "label": "Thema",
+        "description": "Kleurtokens van het product. Bezet de slot theme; uitgeschakeld blijft de omlijsting ongekleurd."
+      },
+      "@timon/backends": {
+        "label": "LLM-providers",
+        "description": "Catalogus van providers van taalmodellen en hun inloggegevens."
+      },
+      "@timon/agents": {
+        "label": "Agents",
+        "description": "Lijst met agents, skills en MCP-servers. Pagina's: /agents, /skills, /mcp."
+      },
+      "@timon/missions": {
+        "label": "Missies",
+        "description": "Start, volgt en legt missies vast. Pagina's: /missions, /multichat, /messages."
+      },
+      "@timon/projects": {
+        "label": "Projecten",
+        "description": "Projectregister: cwd, rollen en de koppeling van een map aan een agent."
+      },
+      "@timon/notifications": {
+        "label": "Meldingen",
+        "description": "Meldingencentrum in de app. Het kanaal waarmee agents je waarschuwen."
+      },
+      "@timon/web-push": {
+        "label": "Webpush",
+        "description": "Systeemmeldingen op je telefoon, via Web Push. Vereist het meldingencentrum en VAPID-sleutels."
+      },
+      "@timon/memory": {
+        "label": "Geheugen",
+        "description": "Regels voor het langetermijngeheugen en de controle van wat in missies wordt geïnjecteerd."
+      },
+      "@timon/kanban": {
+        "label": "Kanban",
+        "description": "Takenbord: code, review, merge en de rest van de pipeline. De kolom « TO DO » bevat de ideeën die je parkeert — de orchestrator haalt daar nooit werk op."
+      },
+      "@timon/kanban-code": {
+        "label": "Codepipeline",
+        "description": "Geeft elke codetaak een eigen git-worktree en branch, en reviewt en merget hem daarna. Vereist de plug-in Git."
+      },
+      "@timon/git": {
+        "label": "Git",
+        "description": "De branches, checkout en GitHub-remote van je project, in de Git-kaarten van de chat. Werkt met of zonder Kanban; vereist git op deze machine."
+      },
+      "@timon/todo-outcomes": {
+        "label": "TODO-uitkomsten",
+        "description": "Geeft een TO DO-idee een uitkomst en een openbare notitie voor de auteur, gemeld via de gebeurtenis todo_resolved aan het kanaal waar het idee vandaan kwam. Zet Uitkomsten van ideeën aan in Instellingen om het te gebruiken."
+      },
+      "@timon/routines": {
+        "label": "Routines",
+        "description": "Geplande jobs: cron-achtige routines die zelf missies starten."
+      },
+      "@timon/triggers": {
+        "label": "Triggers",
+        "description": "Native triggers: een planning, een webhook of een interne gebeurtenis voert een TO DO-idee, een agenttaak of een melding uit."
+      },
+      "@timon/workflows": {
+        "label": "Workflows",
+        "description": "Visuele automatiseringsflows, runs en hun volledige uitvoeringstrace."
+      },
+      "@timon/dreams": {
+        "label": "Dromen",
+        "description": "De nachtelijke ronde: verbeterpunten en kansen die de orchestrator voorstelt, en de projectscore die ze rangschikt."
+      },
+      "@timon/agent-chat": {
+        "label": "Agentchat",
+        "description": "Eén kaart, de draad van één agent. Elke instantie kiest haar agent en de subagents onder de avatar."
+      },
+      "@timon/resources-guard": {
+        "label": "Bewaker van middelen",
+        "description": "Voorkomt dat missie-cgroups zich opstapelen. Vereist systemd; zonder systemd schakelen twee daemons op dezelfde machine elkaar uit."
+      },
+      "@timon/vault": {
+        "label": "Vault",
+        "description": "Obsidian-vault: de graaftegel in de cockpit en de schijf /brain."
+      },
+      "@timon/grepai": {
+        "label": "Grepai",
+        "description": "Semantische index van een project. Vereist de grepai-binary en systemd om de watcher in leven te houden."
+      },
+      "@timon/docker-supervision": {
+        "label": "Docker",
+        "description": "Containerstatus per project en starten/stoppen. Vereist een container-engine."
+      },
+      "@timon/browser-embedded": {
+        "label": "Ingebouwde browser",
+        "description": "Chromium per project met een blijvend profiel, gepubliceerd via Traefik."
+      },
+      "@timon/browser-recording": {
+        "label": "Browseropname",
+        "description": "Een flow opnemen in de ingebouwde browser, nakijken en door een agent laten omzetten in een skill."
+      },
+      "@timon/browser-annotations": {
+        "label": "Browserannotaties",
+        "description": "Een element in de ingebouwde browser aanwijzen, zeggen wat er moet veranderen, en het naar een agent sturen."
+      },
+      "@timon/terminal-native": {
+        "label": "Hostterminal",
+        "description": "Opent de terminal of bestandsbeheerder van de machine in een desktopvenster. Vereist een grafische sessie."
+      },
+      "@timon/terminal-web": {
+        "label": "Ingebouwde terminal",
+        "description": "Een terminal in Timon — desktop, browser of telefoon — die een shell op deze machine draait. Voorbehouden aan accounts die er een mogen openen."
+      },
+      "@timon/ui-documents": {
+        "label": "Documenten in de chat",
+        "description": "Interactieve HTML-documenten die een agent, jij of een plug-in in een gesprek toont, geïsoleerd van Timon in een sandboxframe."
+      },
+      "@timon/orchestrator-self": {
+        "label": "Daemon",
+        "description": "De orchestrator herstarten en opnieuw bouwen vanuit de interface. Vereist systemd."
+      },
+      "@timon/web-app": {
+        "label": "Webapp",
+        "description": "Start de Next.js-interface als kindproces van de daemon, in plaats van via Compose."
+      },
+      "@timon/telegram": {
+        "label": "Telegram",
+        "description": "Inkomend Telegram-kanaal: praat vanuit een chat met een agent."
+      },
+      "@timon/tts": {
+        "label": "Spraak",
+        "description": "Tekst-naar-spraak voor de uitvoer van missies."
+      },
+      "@timon/gpt-live": {
+        "label": "GPT-Live-stem",
+        "description": "Live spraakgesprek met een missie, aangedreven door OpenAI GPT-Live."
+      },
+      "@timon/video-factory": {
+        "label": "Videofabriek",
+        "description": "Rendert video's uit een stilstaand beeld en een prompt."
+      },
+      "@timon/telemetry": {
+        "label": "Gebruiksstatistieken",
+        "description": "Stuurt anonieme gebruiksstatistieken naar het Timon-team: welke functies worden gebruikt, hoe beurten verlopen, waar de configuratie stokt. Nooit je inhoud, namen of paden. Kan worden uitgezet in de privacyinstellingen."
+      },
+      "@timon/machines": {
+        "label": "Machines",
+        "description": "Andere Timon-machines aan deze koppelen en hun toegang in de kluis bewaren, om de interface van de ene machine naar de andere te wisselen. Uit tot je het aanzet."
+      },
+      "@timon/company": {
+        "label": "Company",
+        "description": "Orden je agents in een bewerkbaar organigram."
+      },
+      "@timon/agents-projects": {
+        "label": "Agents · Projecten",
+        "description": "Agents gegroepeerd per project. Los van het canvas uit te schakelen."
+      },
+      "@timon/bots": {
+        "label": "TIMs",
+        "description": "Je TIMs zonder project, gegroepeerd per team, met de chat van de gekozen TIM."
+      },
+      "@timon/files-widget": {
+        "label": "Bestanden",
+        "description": "De kaart Bestanden van de chat: de bestanden van de werkmap van de agent doorbladeren en bewerken."
+      },
+      "@timon/skills-widget": {
+        "label": "Skills",
+        "description": "De kaart Skills van de chat: de skills van de agent aan- en uitzetten."
+      },
+      "@timon/mcp-widget": {
+        "label": "MCP",
+        "description": "De kaart MCP van de chat: de MCP-servers van de agent aan- en uitzetten."
+      },
+      "@timon/mcp-apps": {
+        "label": "Officiële connectors",
+        "description": "De officiële connectors van het tabblad MCP: de externe MCP-servers van GitHub, Linear, Notion en andere uitgevers met één klik koppelen."
+      }
+    },
+    "install": {
+      "sectionLabel": "Plug-in installeren",
+      "button": "Plug-in installeren",
+      "reading": "Lezen…",
+      "pickFolder": "Plug-inmap kiezen…",
+      "pickArchive": "Een plug-inarchief kiezen (.tgz of .zip)…",
+      "hintDesktop": "Een plug-inmap, of het .tgz- of .zip-archief ervan. Je ziet de details voordat er iets wordt geïnstalleerd.",
+      "available": "Gevonden in de plug-inmap, niet geïnstalleerd ({count})",
+      "previewFailed": "Kan deze plug-in niet lezen",
+      "pickerFailed": "De bestandskiezer kon niet worden geopend.",
+      "done": "‘{name}’ is geïnstalleerd",
+      "doneRefused": "‘{name}’ is geïnstalleerd maar wordt niet geladen: {reason}",
+      "failed": "De plug-in is niet geïnstalleerd",
+      "signed": "Handtekening geverifieerd",
+      "tampered": "Gewijzigd pakket",
+      "unsignedLoads": "Niet ondertekend — laadt in ontwikkelaarsmodus",
+      "unsignedBlocked": "Niet ondertekend — laadt niet",
+      "manifestRefused": "Timon kan deze plug-in niet gebruiken: {reason}",
+      "nodeEngineRefused": "Deze plug-in draait niet op de Node die deze Timon gebruikt: {reason}",
+      "tamperedHint": "De bestanden komen niet meer overeen met hun handtekening: dit pakket is na het ondertekenen gewijzigd. Het kan niet worden geïnstalleerd.",
+      "permissions": "Vraagt om",
+      "permissionsNone": "geen toestemming",
+      "webhooks": "Webhooks",
+      "source": "Van",
+      "origin": {
+        "upload": "een archief verstuurd vanuit deze browser",
+        "path": "een bestand op deze computer",
+        "detected": "de plug-inmap"
+      },
+      "alreadyInstalled": "Versie {version} is al geïnstalleerd. Installeren vervangt haar.",
+      "replacesPackage": "Deze id hoorde bij {pkg}, een ander pakket dat niet meer is geïnstalleerd. Dit pakket installeren trekt in wat aan {pkg} was toegekend: kluisgeheimen, geopende hosts, goedkeuringen. De instellingen en opgeslagen gegevens worden verwijderd (geheime instellingen moeten opnieuw worden ingevoerd) en de gegevensmap gaat naar de prullenbak. Gebruikersverbindingen gaan terug naar goedkeuring en hun sleutels worden verwijderd.",
+      "updatesUnsigned": "Update vanaf een niet-ondertekende kopie van dit pakket: gegevens, instellingen en toekenningen blijven behouden.",
+      "childReplacesPackage": "{id}, meegebracht door deze bundel, neemt een id over die hoorde bij {pkg}, een ander pakket dat niet meer is geïnstalleerd. Installeren trekt in wat aan {pkg} was toegekend: kluisgeheimen, geopende hosts, goedkeuringen. De instellingen en opgeslagen gegevens worden verwijderd (geheime instellingen moeten opnieuw worden ingevoerd) en de gegevensmap gaat naar de prullenbak. Gebruikersverbindingen gaan terug naar goedkeuring en hun sleutels worden verwijderd.",
+      "childrenAccess": {
+        "title": "De plug-ins die deze bundel meebrengt",
+        "permissions": "Vraagt om: {list}",
+        "state": {
+          "kept": "Al geïnstalleerd: deze bundel laat hem zoals hij is, dus hier wordt er niets voor gevraagd.",
+          "unreadable": "Kan pas na installatie worden gelezen: hij wordt geïnstalleerd zonder dat hem iets wordt toegekend. Ken zijn geheimen toe via de pagina Geheimen; is het een provider, dan blijft hij inactief tot je hem autoriseert in {settingsPath}.",
+          "unresolved": "Geen van de afhankelijkheden van deze bundel levert hem: hij wordt niet geïnstalleerd, dus er wordt niets voor gevraagd.",
+          "tampered": "Zijn bestanden komen niet meer overeen met hun handtekening: hij wordt niet geladen, dus er wordt niets voor gevraagd.",
+          "nodeEngine": "Hij draait niet op de Node die deze Timon gebruikt: hij wordt niet geladen, dus er wordt niets voor gevraagd. {reason}"
+        },
+        "refused": {
+          "not-installed": "‘{name}’ is niet geïnstalleerd, dus zijn programma's zijn niet geautoriseerd.",
+          "changed": "‘{name}’ is niet wat het blad toonde, dus zijn programma's zijn niet geautoriseerd. Bekijk ze in {settingsPath}.",
+          "grant-failed": "De programma's van ‘{name}’ konden niet worden geautoriseerd. Probeer het opnieuw in {settingsPath}."
+        },
+        "vaultRefused": {
+          "not-installed": "‘{name}’ is niet geïnstalleerd, dus geen van zijn geheimen en hosts is toegekend.",
+          "changed": "‘{name}’ is niet wat het blad toonde, dus geen van zijn geheimen en hosts is toegekend. Ken zijn geheimen toe via de pagina Geheimen.",
+          "grant-failed": "De geheimen en hosts van ‘{name}’ konden niet worden toegekend. Ken zijn geheimen toe via de pagina Geheimen."
+        }
+      },
+      "licenseRequired": "Deze plug-in laadt alleen met een licentie die hem dekt.",
+      "vault": {
+        "title": "Geheimen en netwerk",
+        "read": "Leest kluisgeheimen op naam, zonder ze op dit blad te noemen: je geeft elk geheim aan deze plug-in via Geheimen, of via de kaart die hij toont als hij erom vraagt.",
+        "broker": "Roept API's aan onder kluisidentiteiten zonder hun sleutels te zien, alleen die hem bij naam zijn toegekend.",
+        "brokerNoHttp": "Hij declareert http:outbound niet, dus zijn API-aanroepen via de broker worden geweigerd.",
+        "network": "Zijn netwerktoegang is beperkt tot de hosts die in timon.config.json zijn geopend, voor elke plug-in (pluginPolicy.http.allow) of alleen voor deze (pluginPolicy.http.byPlugin), en tot de adressen van goedgekeurde verbindingen.",
+        "secretsLead": "Geheimen die hij noemt. Een aangevinkt geheim wordt alleen aan deze plug-in toegekend; uitvinken trekt nooit een toekenning in (dat gebeurt via Geheimen).",
+        "hostsLead": "Hosts die hij bereikt. Een aangevinkte host wordt alleen voor deze plug-in geopend.",
+        "hostOwn": "Al open voor deze plug-in. Vink uit om hem te sluiten: zijn hosts worden vervangen door de hier aangevinkte.",
+        "hostGlobal": "Al open voor elke plug-in (pluginPolicy.http.allow).",
+        "mode": {
+          "read": "gelezen door de plug-in",
+          "broker": "gebruikt via de broker, nooit gezien door de plug-in"
+        },
+        "state": {
+          "granted": "Al aan deze plug-in toegekend.",
+          "missing": "Nog niet in de kluis.",
+          "otherMode": "De kluis bevat een geheim met deze naam voor het andere gebruik, dat deze plug-in niet zou dienen.",
+          "ambiguous": "Meerdere geheimen dragen deze naam: welk wordt toegekend, kies je op de pagina Geheimen.",
+          "vault-off": "De kluis is uitgeschakeld: deze plug-in kan geen geheim lezen."
+        },
+        "create": "Aanmaken op de pagina Geheimen",
+        "choose": "Kiezen op de pagina Geheimen"
+      },
+      "disclaimerTitle": "Plug-in van derden",
+      "disclaimer": "Deze plug-in is niet gemaakt, nagekeken of gegarandeerd door Timon, en Timon is niet verantwoordelijk voor wat hij doet. Eenmaal geïnstalleerd draait hij in Timon met de rechten van je account. Installeer alleen plug-ins van auteurs die je vertrouwt.",
+      "cancel": "Annuleren",
+      "installing": "Installeren…",
+      "reinstall": "Deze versie installeren",
+      "confirm": "Installeren",
+      "refreshed": "{reason} Het blad hieronder is bijgewerkt: bekijk het en installeer opnieuw.",
+      "errors": {
+        "unauthenticated": "Je sessie is verlopen — meld je opnieuw aan.",
+        "forbidden": "Alleen een superadmin die bij Timon is aangemeld, kan een plug-in installeren.",
+        "too-large": "Deze plug-in is te groot (hooguit 25 MB archief, 200 MB bestanden).",
+        "too-many-entries": "Deze plug-in bevat te veel bestanden.",
+        "not-gzip": "Dit is geen plug-inarchief: .tgz of .zip verwacht.",
+        "unsafe-path": "Dit archief probeert buiten zijn map te schrijven. Het is geweigerd.",
+        "link": "Deze plug-in bevat links of speciale bestanden, die een plug-in niet mag bevatten.",
+        "layout": "Dit archief heeft niet de opbouw van een plug-inpakket: een package.json in de hoofdmap, of één bovenste map die hem bevat.",
+        "corrupt": "Dit archief is beschadigd.",
+        "not-archive": "Dit is geen plug-inarchief: .tgz of .zip verwacht.",
+        "not-zip": "Dit is geen geldig .zip-archief.",
+        "zip64": "Deze .zip gebruikt het formaat zip64, dat Timon niet leest. Zip de plug-in opnieuw met een standaardtool, of gebruik een .tgz.",
+        "encrypted": "Deze .zip is met een wachtwoord beveiligd. Zip de plug-in opnieuw zonder wachtwoord.",
+        "multi-volume": "Deze .zip is in meerdere delen gesplitst. Maak één .zip.",
+        "compression": "Deze .zip gebruikt een compressiemethode die Timon niet kan lezen. Zip de plug-in opnieuw met standaardcompressie.",
+        "not-a-plugin": "Dit is geen Timon-plug-in: geen package.json met een `timon`-manifest.",
+        "invalid-path": "Dit pad kan niet worden gebruikt.",
+        "forbidden-path": "Uit deze map kunnen geen plug-ins worden geïnstalleerd.",
+        "not-found": "Daar is niets meer gevonden.",
+        "expired": "Dit voorbeeld is verlopen. Kies de plug-in opnieuw.",
+        "tampered": "Het pakket is na het ondertekenen gewijzigd. Het kan niet worden geïnstalleerd.",
+        "manifest": "Het manifest van de plug-in is ongeldig. Hij kan niet worden geïnstalleerd.",
+        "npm-missing": "npm is niet beschikbaar op de machine waarop Timon draait. Installeer Node.js en probeer het opnieuw.",
+        "install-failed": "De installatie is mislukt. Het Timon-log bevat de details.",
+        "name-taken": "Een ander pakket gebruikt deze naam al in de plug-inmap.",
+        "generic": "De daemon weigerde (HTTP {status}).",
+        "unreadable": "Timon mag deze locatie niet lezen. Sta het op macOS toe in Systeeminstellingen › Privacy en beveiliging, of verplaats de plug-in.",
+        "mismatch": "Wat deze plug-in vraagt (een programma, een geheim of een host) is gewijzigd sinds het werd getoond.",
+        "refused": "Dit programma mag nooit door een plug-in worden uitgevoerd.",
+        "not-provider": "Deze plug-in is geen provider.",
+        "not-grantable": "Een aangevinkt geheim kan niet via dit blad worden toegekend.",
+        "conflict": "De kluis weigerde de toekenning: een geheim met deze naam is daar al toegekend. Los het op via de pagina Geheimen."
+      },
+      "pickFolderRemote": "Een plug-inmap kiezen op de verbonden machine…",
+      "pickArchiveRemote": "Een plug-inarchief kiezen op de verbonden machine…",
+      "uploadArchive": "Een archief versturen vanaf deze computer…",
+      "hintRemote": "Een plug-inmap of het .tgz- of .zip-archief ervan op de machine waarmee dit venster is verbonden, of een archief verstuurd vanaf deze computer. Je ziet de details voordat er iets wordt geïnstalleerd."
+    }
+  },
+  "providersSettings": {
+    "title": "Providers",
+    "description": "Providerplug-ins brengen een AI-dienst naar Timon. Elk programma dat een provider start, wordt hier via zijn opgeloste pad geautoriseerd voordat het kan draaien.",
+    "cancel": "Annuleren",
+    "consent": {
+      "prompts": "Krijgt elke instructie en elk antwoord van de missies die hij bedient.",
+      "credentials": "Krijgt de inloggegevens van zijn eigen profiel.",
+      "binary": "Start het programma {path}.",
+      "credentialDir": "Leest de aanmeldmap ‘~/{dir}’ van zijn opdrachtregeltool en stelt bestanden daaruit alleen beschikbaar aan zijn eigen missies.",
+      "osCredential": "Leest het item ‘{service}’ van je systeemopslag voor inloggegevens (macOS-sleutelhanger). Alleen lezen.",
+      "osCredentialAccount": "Leest het item ‘{service}’ ({account}) van je systeemopslag voor inloggegevens (macOS-sleutelhanger). Alleen lezen."
+    },
+    "install": {
+      "allow": "Timon toestaan de hierboven genoemde programma's uit te voeren.",
+      "allowHint": "Zonder dit is de provider geïnstalleerd maar blijft hij inactief tot je hem autoriseert in {settingsPath}."
+    },
+    "plugins": {
+      "title": "Providerplug-ins",
+      "none": "Er is geen providerplug-in geïnstalleerd.",
+      "backends": "Backends: {list}",
+      "notFound": "niet geïnstalleerd op deze machine",
+      "authorize": "Bekijken en autoriseren",
+      "authorizeTitle": "{name} autoriseren",
+      "authorizeBody": "Timon heeft deze programma's op deze machine opgelost. Sta alleen de paden toe die je herkent.",
+      "authorizeConfirm": "Deze programma's toestaan",
+      "authorized": "{name} is geautoriseerd.",
+      "state": {
+        "active": "Actief",
+        "failed": "Vraagt aandacht",
+        "disabled": "Uit",
+        "skipped": "Geweigerd"
+      },
+      "binary": {
+        "authorize": "te autoriseren",
+        "ready": "geautoriseerd",
+        "install": "eerst installeren",
+        "refused": "nooit toegestaan"
+      }
+    },
+    "acp": {
+      "title": "ACP-register",
+      "description": "Agents uit het officiële register van het Agent Client Protocol. Timon downloadt het programma, controleert het en draait het als backend.",
+      "browse": "Register doorbladeren",
+      "refresh": "Vernieuwen",
+      "stale": "Het register was niet bereikbaar; dit is de laatste lijst die Timon las.",
+      "verified": "sha256 geverifieerd",
+      "noHash": "Geen gepubliceerde hash",
+      "unsupported": "Hier niet beschikbaar: {reason}",
+      "install": "Installeren",
+      "update": "Bijwerken",
+      "repair": "Opnieuw installeren",
+      "installing": "Installeren…",
+      "remove": "Verwijderen",
+      "installed": "{name} is geïnstalleerd.",
+      "updated": "{name} is bijgewerkt.",
+      "removed": "{name} is verwijderd.",
+      "state": {
+        "ok": "Geïnstalleerd {version}",
+        "tampered": "Bestanden gewijzigd — niet gebruikt",
+        "missing": "Bestanden ontbreken",
+        "pending": "{version} controleren…"
+      },
+      "confirmTitle": "{name} installeren zonder gepubliceerde hash?",
+      "confirmBody": "Het register geeft geen controlesom voor dit programma. De integriteit berust alleen op de https-download. Installeer het alleen als je de uitgever vertrouwt.",
+      "confirmAction": "Toch installeren"
+    },
+    "errors": {
+      "forbidden": "Alleen een superadmin die bij Timon is aangemeld, kan providers beheren.",
+      "generic": "De daemon weigerde (HTTP {status}).",
+      "mismatch": "Het programma is gewijzigd sinds het werd getoond. Bekijk het opnieuw.",
+      "refused": "Dit programma mag nooit door een plug-in worden uitgevoerd.",
+      "unverified": "Deze agent publiceert geen hash: bevestig om hem toch te installeren.",
+      "already-installed": "Deze versie is al geïnstalleerd en intact.",
+      "not-installed": "Deze agent is niet geïnstalleerd.",
+      "unknown-agent": "Het register vermeldt deze agent niet.",
+      "unsupported": "Deze agent kan niet op deze machine worden geïnstalleerd.",
+      "registry-unavailable": "Het ACP-register was niet bereikbaar.",
+      "download-failed": "De download is mislukt.",
+      "checksum": "Het gedownloade bestand komt niet overeen met de gepubliceerde controlesom. Het is verwijderd.",
+      "archive": "Het archief is als onveilig geweigerd.",
+      "command-missing": "Het programma dat het register noemt, staat niet in het archief.",
+      "definition-refused": "Timon heeft deze agent geweigerd: zijn beschrijving spreekt zichzelf tegen.",
+      "authorize-failed": "Het programma kon niet worden geautoriseerd. Het Timon-log bevat de details.",
+      "failed": "De bewerking is mislukt. Het Timon-log bevat de details."
+    }
+  },
+  "binariesSettings": {
+    "title": "CLI-programma's",
+    "description": "Waar Timon de opdrachtregeltool van elke AI-provider op deze machine heeft gevonden. Ontbreekt er een of staat hij op een ongewone plek, zet dan zijn volledige pad vast: het geldt vanaf de volgende missie, zonder Timon te herstarten.",
+    "recheck": "Opnieuw controleren",
+    "rechecked": "Programma's opnieuw gecontroleerd.",
+    "none": "Geen lokale provider gebruikt een opdrachtregeltool.",
+    "backends": "Gebruikt door: {list}",
+    "resolved": "Draait {path}",
+    "brokenPin": "Het vastgezette pad kan niet worden uitgevoerd: {path}",
+    "notFound": "Niet gevonden op deze machine. Installeer het, of zet hieronder het pad vast.",
+    "pathLabel": "Pad naar het programma {name}",
+    "placeholder": "Volledig pad, bijvoorbeeld /usr/local/bin/claude of C:\\Users\\jij\\AppData\\Roaming\\npm\\claude.cmd",
+    "browse": "Bladeren…",
+    "save": "Pad opslaan",
+    "clear": "Vastzetting verwijderen",
+    "saved": "{name}: pad opgeslagen. Nieuwe missies gebruiken het.",
+    "cleared": "{name}: vastzetting verwijderd. Timon zoekt het weer zelf.",
+    "state": {
+      "found": "Gevonden",
+      "pinned": "Vastgezet",
+      "brokenPin": "Vastgezet pad defect",
+      "missing": "Niet gevonden"
+    },
+    "errors": {
+      "forbidden": "Alleen een superadmin die in de app is aangemeld, kan deze paden wijzigen.",
+      "unknown_binary": "Dit is niet de opdrachtregeltool van een lokale provider.",
+      "path_not_absolute": "Geef het volledige pad, vanaf de hoofdmap van de schijf.",
+      "path_missing": "Er bestaat niets op dit pad.",
+      "path_not_file": "Dit is een map. Kies het programmabestand zelf.",
+      "path_not_executable": "Dit bestand kan niet worden uitgevoerd: het is niet uitvoerbaar.",
+      "no_config": "Rond eerst de configuratie af.",
+      "config_unreadable": "timon.config.json kan niet worden gelezen. Herstel het bestand en controleer opnieuw.",
+      "invalid_body": "Dit pad kan niet worden opgeslagen.",
+      "browse": "De bestandskiezer kon niet worden geopend.",
+      "generic": "De wijziging is mislukt (fout {status})."
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@timon-ai/plugin-kanban-card",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-kanban-card",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Plain Kanban cards",
+    "description": "Replaces the tiles of the Kanban board and of the TO DO widgets, ideas and tasks alike, with plain cards laid out on the product's BoardCard.",
+    "permissions": [],
+    "client": {
+      "slots": ["kanban.card"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

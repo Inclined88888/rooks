@@ -1,0 +1,82 @@
+{
+  "mission": { "title": "Nouvelle mission", "description": "Démarrer une conversation avec l’agent {agent} avec le LLM choisi.", "resumeDescription": "Tu peux aussi reprendre la mission précédente : le nouveau LLM lira un résumé et poursuivra à partir de là.", "llm": "LLM", "reasoningEffort": "Effort de raisonnement", "default": "Défaut", "continue": "Continuer depuis la mission précédente", "resumeWithSummary": "Le nouveau LLM lira un résumé de l’historique pour reprendre.", "resumeSameLlm": "Reprend le contexte de la mission précédente avec le même LLM.", "followup": "Message de relance", "firstMessage": "Premier message", "followupPlaceholder": "Ex. : continue ce qu’on faisait, concentre-toi sur X…", "firstMessagePlaceholder": "Ex. : aide-moi avec…", "cancel": "Annuler", "continuing": "Reprise…", "creating": "Création…", "start": "Démarrer", "continuedToast": "Mission reprise sur {backend} · {model}", "createdToast": "Nouvelle mission sur {backend} · {model}", "failed": "Échec : {message}" },
+  "llm": {"handoverTail": "Résumé impossible : seule la FIN de la conversation a traversé", "confirmWhole": "Transférer tel quel", "confirmWholeTitle": "Le nouveau moteur reçoit la conversation entière — rien n’est perdu.", "confirmCompact": "Compacter", "confirmCompactTitle": "La conversation est résumée avant de traverser : plus court, mais du détail est perdu.", "confirmContextSize": "Fil actuel : ~{tokens} tokens", "confirmTooLarge": "trop gros pour le prompt de ce moteur — la compaction est le seul passage", "handoverCompacting": "Compactage de la conversation pour {model}…", "handoverSending": "Transmission de la conversation entière à {model}…", "handoverRunning": "Passation de la conversation à {model} — préparation du contexte…", "handoverCompacted": "Contexte COMPACTÉ en résumé — le nouveau moteur reprend à partir de là.", "handoverWhole": "Contexte transmis en entier — rien n’est perdu.", "handoverNoContext": "Nouvelle session, aucun contexte antérieur à transmettre.", "confirmTitle": "Basculer de LLM ?", "confirmSameBackend": "Même moteur, autre modèle : la session continue, rien du contexte n’est perdu.", "confirmNewBackend": "Autre moteur : la session redémarre et la conversation lui est transmise. Le contexte passe en entier s’il tient dans son prompt, sinon il est COMPACTÉ en résumé — du détail est perdu.", "confirmPending": "Aucune conversation en cours : le couple s’appliquera au premier message.", "confirmTurnBlocked": "Un tour est en cours. Le changement de moteur sera refusé tant qu’il n’est pas fini — arrête-le ou attends.", "confirmCancel": "Annuler", "confirmApply": "Basculer", "thinking": "Réflexion", "auto": "auto", "selfPermissions": "Permissions propres", "selfPermissionsHint": "Cet agent gère lui-même ses permissions : aucune carte Allow/Deny de TIMON.", "account": {"reauth": "À reconnecter", "cooldown": "Quota épuisé", "unavailable": "compte indisponible", "reauthHint": "Ce compte doit se reconnecter avant de lancer des missions. Timon ne bascule jamais seul une mission sur un autre abonnement.", "cooldownHint": "Ce compte n’a plus de quota pour l’instant. Choisis-le de nouveau quand sa fenêtre rouvre.", "unavailableHint": "Ce compte n’existe plus ou ne t’est plus attribué : choisis-en un autre.", "signedOut": "Non connecté", "signedOutHint": "Timon a trouvé le CLI de ce fournisseur mais personne n’y est connecté : une mission envoyée dessus s’arrêterait sur « Not logged in ». Connecte-toi depuis {settingsPath}, ou dans un terminal."}, "remote": "Distant", "limited": "Limité", "limitsHint": "Ce backend ne peut pas :", "limitWorktree": "travailler dans le dossier de Timon (pas de tâche code ni merge)", "limitTimonMcp": "utiliser les outils de Timon (Kanban, messages, mémoire)", "limitAttachments": "recevoir des fichiers joints (images seulement)", "unverified": "Non vérifié", "unverifiedHint": "Écrit d'après la documentation de l'éditeur : pas vérifié sur le vrai programme.", "unverifiedSession": "Sessions", "unverifiedMcp": "Outils de Timon", "unverifiedPermissions": "Permissions", "unverifiedSignIn": "Connexion", "unverifiedModels": "Modèles", "unverifiedExtensionRequests": "Questions propres à l'agent", "unverifiedCredentialDirs": "Dossiers de connexion", "unverifiedBinaryIdentity": "Contrôle du programme"},
+  "roles": { "searchIcon": "Rechercher une icône Lucide…", "chooseIcon": "Choisis une icône", "labelRequired": "Label requis", "saveError": "Échec : {message}", "created": "Rôle « {id} » créé", "updated": "Rôle « {id} » mis à jour", "deleted": "Rôle « {id} » supprimé", "deleteConfirm": "Supprimer le rôle custom « {id} » ?", "manage": "Gérer les rôles", "edit": "Éditer {id}", "new": "Nouveau rôle", "roles": "Rôles", "builtin": "Rôles intégrés", "id": "id (immuable)", "label": "label", "color": "couleur", "icon": "icône", "defaultModel": "modèle par défaut", "defaultPermission": "permission par défaut", "directives": "directives (injectées dans le system prompt)", "directivesPlaceholder": "Tu fais X. Tu ne fais pas Y…", "back": "retour", "saving": "Enregistrement…", "save": "Enregistrer" },
+  "notifications": { "bell": { "open": "Notifications", "unread": "Notifications — {count} non lue(s)" }, "dismiss": "Masquer", "center": "Centre de notifications", "sure": "Sûr ?", "close": "Fermer", "empty": "Aucune notification", "clearAll": "Tout supprimer", "clearAlerts": "Supprimer les alertes", "clearReports": "Supprimer les rapports", "clearRequests": "Supprimer les demandes", "all": "Toutes", "alerts": "Alertes", "action": "Action", "reports": "Rapports", "ago": "il y a", "showMore": "Afficher plus", "showLess": "Afficher moins", "feed": { "markRead": "Marquer comme lu", "markAllRead": "Tout marquer comme lu", "seeAll": "Voir toutes les notifications", "actionOnly": "Besoin de toi seulement", "actionOnlyHint": "Ne lister que les notifications qui attendent une action de ta part", "emptyActionOnly": "Rien ne t’attend." } },
+  "vault": {
+    "filter": "filtrer les notes…",
+    "closeSearch": "Fermer la recherche",
+    "graph3d": "graphe 3D",
+    "filterNotes": "Filtrer les notes",
+    "enterFullscreen": "Ouvrir en plein écran",
+    "exitFullscreen": "Quitter le plein écran",
+    "openFullscreen": "graphe ouvert en plein écran",
+    "loadingGraph": "chargement du graphe…",
+    "graphUnavailable": "graphe indisponible ({error})",
+    "noNodes": "aucun nœud dans le vault",
+    "unknownError": "Erreur inconnue",
+    "loadingDisc": "chargement du disque…",
+    "discError": "disque : {error}",
+    "loadFailed": "chargement impossible",
+    "invalidMarkup": "markup vault-graph invalide",
+    "closeNote": "Fermer",
+    "noteNotFound": "note introuvable",
+    "loadingNote": "chargement…"
+  },
+  "multichat": {"picker": {"title": "Missions de {agent}", "new": "Nouvelle", "loading": "Chargement…", "empty": "Aucune mission. Démarre-en une nouvelle."}, "desktopOnly": "Multichat — ordinateur uniquement", "mobileHint": "La grille de chats parallèles n’est pas adaptée au portrait mobile. Ouvre", "templates": {"title": "Templates", "empty": "Enregistre les agents à l’écran pour les rappeler en un clic.", "save": "Enregistrer la configuration…", "namePlaceholder": "Nom du template", "confirm": "Valider", "cancel": "Annuler", "manage": "Gérer", "manageDone": "Terminé", "rename": "Renommer {name}", "overwrite": "Remplacer {name} par la configuration actuelle", "delete": "Supprimer {name}", "overwritten": "Template « {name} » mis à jour", "deleted": "Template « {name} » supprimé", "error": {"empty-name": "Donne un nom au template.", "duplicate-name": "Un template porte déjà ce nom.", "too-many": "Limite de templates atteinte : supprimes-en un d’abord.", "too-large": "Trop volumineux : supprime d’abord un template.", "empty-grid": "Place au moins un agent dans la grille d’abord.", "unknown": "Ce template n’existe plus.", "write-failed": "Le template n’a pas pu être enregistré. Réessaie."}, "triggerActive": "Templates — actuel : {name}"}, "drop": {"here": "Déposer ici", "replace": "Remplacer {name}", "swap": "Échanger avec {name}"}, "slot": {"move": "Glisser {name} vers une autre case", "edit": "Modifier l’agent", "changeMission": "Changer de mission", "openMission": "Ouvrir cette mission dans le chat", "clear": "Vider la case", "empty": "Dépose un agent ici", "openMenu": "Ouvrir le menu des splits de {name}"}, "rail": {"label": "Agents à placer dans la grille", "agents": "Agents", "expandAll": "Déplier tous les groupes", "collapseAll": "Replier tous les groupes", "otherPole": "Autres", "noProject": "Sans projet", "inGrid": "{count} dans la grille", "place": "{name} — Entrée pour l’ajouter dans la première case vide", "hint": "Glisse {name} dans une case, ou double-clique pour l’ajouter dans la première case vide", "controls": "Grille et templates", "collapse": "Replier la barre latérale ({shortcut})", "expand": "Déplier la barre latérale ({shortcut})"}, "search": {"placeholder": "Rechercher un agent…", "label": "Rechercher un agent par nom, projet, pôle ou équipe", "clear": "Effacer la recherche", "ratio": "{count}/{total}", "count": "{count} agents correspondent", "none": "Aucun agent ne correspond à « {query} »."}, "grid": {"title": "Grille", "trigger": "Grille {layout}", "option": "Grille {layout}", "clear": "Vider la grille", "openWorkspace": "Ouvrir dans l’espace", "opened": "Grille ouverte dans l’espace"}},
+  "calendar": { "today": "Aujourd’hui", "tomorrow": "Demain", "upcoming": "À venir", "overdue": "En retard · {date}", "noDueDate": "Sans échéance" },
+  "delegations": { "title": "En attente de retour", "working": "Au travail", "idle": "En attente de son prochain tour", "open": "Ouvrir cette mission", "none": "Rien en attente", "inline": "{count} mission(s) déléguée(s) en cours" },
+  "missionEgress": {
+    "loading": "Lecture du journal réseau…",
+    "refresh": "Actualiser",
+    "openInSplit": "Ouvrir à côté du chat",
+    "noMission": "Aucune mission ouverte : cette vue suit la conversation à l'écran.",
+    "hosts": "Hôtes contactés",
+    "connections": "Connexions récentes",
+    "newHost": "nouveau",
+    "newHostHint": "Atteint pour la première fois dans son projet par cette mission : l'alerte l'a nommé.",
+    "connectionsCount": "{count} conn.",
+    "failures": "{count} en échec",
+    "sent": "Envoyés",
+    "received": "Reçus",
+    "status": "Statut HTTP renvoyé au programme",
+    "upstreamError": "Erreur amont : {code}",
+    "loadOlder": "Charger les connexions plus anciennes",
+    "loadingOlder": "Chargement…",
+    "empty": "Aucune connexion journalisée pour cette mission pour l'instant.",
+    "limit": "Seuls les programmes qui respectent HTTP(S)_PROXY passent par le journal. Ceux qui l'ignorent, dont le fetch natif de Node, atteignent le réseau sans apparaître ici.",
+    "offTitle": "Journal des connexions désactivé",
+    "offBody": "Les connexions de cette mission ne sont pas enregistrées : cette vue ne dit donc rien de ce qu'elle a contacté. Pour activer le journal, mettez host.isolation.egress.mode à « log » dans timon.config.json, puis redémarrez Timon.",
+    "offHistory": "Les connexions ci-dessous datent d'avant sa désactivation.",
+    "notListening": "Le proxy sortant ne tourne pas : les connexions faites maintenant ne sont pas journalisées. Le journal du daemon dit pourquoi.",
+    "retention": "Conservées : les {count} dernières connexions de la mission, {days} jours au plus.",
+    "retry": "Réessayer",
+    "error": { "unauthorized": "Votre session a expiré. Reconnectez-vous pour voir l'activité réseau de cette mission.", "forbidden": "Votre compte n'a pas le droit de lire les missions.", "not_found": "Cette mission n'existe pas, ou elle appartient à un autre compte.", "unavailable": "Le journal réseau n'a pas pu être lu." }
+  },
+  "missionLiveness": {
+    "working": "Au travail", "turn_done": "Tour terminé", "open": "Ouverte", "interrupted": "Interrompue",
+    "hint": {
+      "working": "Process actif, un tour est en cours.",
+      "turn_done": "Process actif, mais le dernier tour est fini — en attente du prochain message.",
+      "open": "Mission encore ouverte, rien ne tourne : pas de process, ou pas encore de tour terminé.",
+      "interrupted": "Coupée avant la fin : {reason}."
+    },
+    "reason": { "rate_limit": "limite d'usage du compte atteinte", "exhausted": "compte sans crédit", "backend_unavailable": "backend indisponible", "overloaded": "modèle surchargé", "permission_denied": "permission refusée", "killed": "process tué", "stopped": "arrêtée à la main", "timeout": "tour silencieux trop longtemps", "turn_budget": "budget de durée du tour atteint", "crash": "arrêt inattendu", "unknown": "cause inconnue" },
+    "pendingMessages": "{count} message(s) en attente dans la boîte",
+    "openDeliveries": "{count} demande(s) sans réponse"
+  },
+  "permissionRefusal": {
+    "accountLacks": "Votre compte n’a pas le droit {permission}. Demandez à un administrateur de l’ajouter à votre rôle.",
+    "generic": "Votre compte n’a pas le droit de faire cela."
+  },
+  "videoFactoryPanel": {
+    "remaining": "reste ~{duration}",
+    "stalledFor": "figé depuis {duration}"
+  },
+  "slotRoot": {
+    "noLayout": "Aucun layout monté — activez ui-layout"
+  },
+  "calendarItems": {
+    "untitled": "(sans titre)"
+  }
+}

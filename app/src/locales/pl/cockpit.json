@@ -1,0 +1,26 @@
+{
+  "cockpit": {
+    "common": {
+      "loading": "Wczytywanie…"
+    },
+    "dreams": {
+      "pending": "oczekujące: {count}",
+      "empty": "Brak oczekujących snów"
+    },
+    "accountUsage": {
+      "disconnected": "Niezalogowano",
+      "connectCliThen": "Zaloguj się do {name} z CLI: uruchom {command}, a następnie {then}.",
+      "connectCli": "Zaloguj się do {name} z CLI: uruchom {command}.",
+      "connect": "Zaloguj się z CLI tego dostawcy.",
+      "connectAccount": "Zaloguj ponownie to konto z {settingsPath}.",
+      "error": "Użycie niedostępne"
+    },
+    "board": {
+      "move": "Przenieś {title}",
+      "resize": "Zmień rozmiar {title}",
+      "centerZone": "Środek kokpitu",
+      "leftRail": "Lewa szyna kokpitu",
+      "rightRail": "Prawa szyna kokpitu"
+    }
+  }
+}

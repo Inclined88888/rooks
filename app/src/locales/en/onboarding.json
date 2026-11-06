@@ -1,0 +1,351 @@
+{
+  "onboarding": {
+    "back": "Back",
+    "continue": "Continue",
+    "progress": "Step {current} of {total}",
+    "scheme": {
+      "label": "Light or dark mode",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "splash": {
+      "title": "Your AI team,\nat home.",
+      "subtitle": "Agents that work on your machine, with the AI subscriptions you already pay for.",
+      "hint": "Psst, you can grab them."
+    },
+    "language": {
+      "title": "Choose your language",
+      "previous": "Previous language",
+      "next": "Next language"
+    },
+    "account": {
+      "title": "Create your local account",
+      "subtitle": "You sign in to Timon with it. You are its administrator.",
+      "name": "First name",
+      "nameHint": "So your agents call you by your first name.",
+      "email": "Email",
+      "emailHint": "Used to sign in. We send it a code to confirm it.",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "confirm": "Confirm the password",
+      "mismatch": "The two passwords don't match.",
+      "tooShort": "At least {min} characters.",
+      "create": "Create my account",
+      "privacy": "We only collect your email in case you want to reset your password. The account you create stays local."
+    },
+    "legacy": {
+      "opening": "Opening the next screen…"
+    },
+    "llm": {
+      "title": "Choose\nyour LLM.",
+      "subtitle": "Timon runs on the AI subscriptions you already have. Never a bill per token.",
+      "plan": {
+        "title": "Use my AI subscription",
+        "detailAny": "The AI tools you already pay for",
+        "hint": "Timon looked for the AI tools already on this machine.",
+        "ready": "Ready with {names}.",
+        "none": "Connect at least one AI to continue.",
+        "anyway": "Continue anyway"
+      },
+      "local": {
+        "title": "Use local models",
+        "detail": "Ollama, no subscription, nothing leaves your machine",
+        "hint": "Your agents run on this computer's own models.",
+        "ollama": "Runs open models (Llama, Qwen, Mistral…) locally.",
+        "connect": "Once Ollama runs, add it as a provider in {settingsPath}."
+      },
+      "legal": "By continuing, you accept the {terms} and acknowledge the {privacy}.",
+      "terms": "Terms of use",
+      "privacy": "Privacy policy"
+    },
+    "profile": {
+      "title": "What brings you here?",
+      "subtitle": "Timon tunes its defaults and its tour to your answer.",
+      "developer": {
+        "title": "I write code",
+        "description": "Agents that code, review and merge in my repositories."
+      },
+      "automation": {
+        "title": "I automate",
+        "description": "Email, calendar, watch, routines: work that runs on its own."
+      },
+      "beginner": {
+        "title": "I'm discovering",
+        "description": "I want to understand AI agents, step by step."
+      },
+      "failed": "Your choice could not be saved. Try again."
+    },
+    "agent": {
+      "names": "Nova, Pixel, Ziggy, Misty, Oslo, Kiwi, Lumen, Sasha, Tempo, Pico",
+      "random": "Random",
+      "customise": "Customise",
+      "nameLabel": "Its name",
+      "namePlaceholder": "Give it a name",
+      "nameRoll": "Random name",
+      "create": "Bring {name} to life",
+      "createNoName": "Bring your agent to life",
+      "creating": "Bringing {name} to life…",
+      "configFailed": "{name} is named, but its settings could not be saved. Try again.",
+      "will": "It will",
+      "loading": "Loading your profile…",
+      "profileError": "Your profile could not be read, so here is the simplest view.",
+      "retry": "Retry",
+      "cap": {
+        "base": "Chat with you in Timon",
+        "mail": "Read and sort your email",
+        "agenda": "Check and fill your calendar",
+        "code": "Work in your Git repositories",
+        "watch": "Run a news watch every morning",
+        "write": "Write documents and messages",
+        "research": "Search and compare on the web"
+      },
+      "mission": {
+        "mail": "Email",
+        "agenda": "Calendar",
+        "code": "Code",
+        "watch": "News watch",
+        "write": "Writing",
+        "research": "Research"
+      },
+      "views": {
+        "label": "View",
+        "recommended": "Recommended for your profile",
+        "templates": "Beginner · Templates",
+        "interview": "Automation · Interview",
+        "sheet": "Developer · Sheet"
+      },
+      "templates": {
+        "title": "Pick its profile",
+        "subtitle": "A ready-made starting point. You can change everything later.",
+        "none": "No profile yet",
+        "empty": "Pick a profile on the right: its card fills in here.",
+        "hint": "Pick a profile first.",
+        "assist": {
+          "title": "Personal assistant",
+          "description": "Email, calendar, reminders."
+        },
+        "dev": {
+          "title": "Coding partner",
+          "description": "Fixes, reviews and ships in your repositories."
+        },
+        "watch": {
+          "title": "Scout",
+          "description": "A news digest every morning."
+        },
+        "write": {
+          "title": "Writer",
+          "description": "Articles, posts and replies."
+        },
+        "research": {
+          "title": "Investigator",
+          "description": "Searches, compares and sums up."
+        },
+        "blank": {
+          "title": "Start from scratch",
+          "description": "A generalist you shape as you go."
+        }
+      },
+      "interview": {
+        "title": "Let’s set up your automation",
+        "subtitle": "Five questions, and your agent knows what to do, with what and when.",
+        "role": "Automator",
+        "count": "{current}/{total}",
+        "edit": "Edit",
+        "finish": "Finish",
+        "hint": "Answer the questions ({current}/{total}).",
+        "q1": "What do I automate for you?",
+        "q2": "Which tools may I use?",
+        "q3": "When do I start?",
+        "q4": "Before an important action, what do I do?",
+        "q5": "Where do I let you know?",
+        "other": "Something else? Describe it…",
+        "toolsHint": "The ones not connected yet will be offered right after.",
+        "always": "always",
+        "dailyAt": "Every day at",
+        "urlProvided": "URL provided",
+        "tool": {
+          "gmail": "Gmail",
+          "gcal": "Google Calendar",
+          "gdrive": "Google Drive",
+          "slack": "Slack",
+          "notion": "Notion",
+          "telegram": "Telegram",
+          "github": "GitHub",
+          "browser": "Built-in browser",
+          "files": "Local files",
+          "webhook": "Webhooks"
+        },
+        "trigger": {
+          "chat": "When you talk to me",
+          "daily": "Every day at {at}",
+          "mail": "On every new email",
+          "hook": "On an event (webhook)"
+        },
+        "autonomy": {
+          "ask": {
+            "title": "Ask me first",
+            "description": "Recommended to start: you approve every send or change."
+          },
+          "report": {
+            "title": "Act, tell me after",
+            "description": "For routine work: it acts and reports back."
+          },
+          "silent": {
+            "title": "Act silently",
+            "description": "Only for safe, well-tested routines."
+          }
+        },
+        "notify": {
+          "timon": "In Timon",
+          "telegram": "Telegram",
+          "email": "By email"
+        },
+        "sum": {
+          "tools": "Tools",
+          "starts": "Starts",
+          "autonomy": "Autonomy",
+          "notifies": "Notifies"
+        }
+      },
+      "sheet": {
+        "title": "Configure your agent",
+        "subtitle": "Every setting stays editable in its profile.",
+        "tab": {
+          "base": "Role and project",
+          "engine": "Engine",
+          "perms": "Permissions",
+          "tools": "Tools"
+        },
+        "roleTitle": "Main line of work",
+        "roleHint": "It stays your main agent, the pilot: this only sets what it focuses on.",
+        "role": {
+          "orchestrator": {
+            "title": "Orchestrator / pilot",
+            "description": "Splits work into tasks and delegates."
+          },
+          "code": {
+            "title": "Coder",
+            "description": "Writes and changes your project’s code."
+          },
+          "review": {
+            "title": "Reviewer",
+            "description": "Reviews changes before they ship."
+          },
+          "research": {
+            "title": "Researcher",
+            "description": "Explores, reads docs, compares approaches."
+          },
+          "chore": {
+            "title": "Ops",
+            "description": "Builds, deploys, maintenance."
+          }
+        },
+        "project": "Project",
+        "noFolder": "No folder chosen",
+        "choose": "Choose…",
+        "worktree": "One isolated git worktree per code task",
+        "worktreeDetail": "It works beside your branch, never in it.",
+        "engine": "Engine",
+        "permissions": "Permissions",
+        "perm": {
+          "default": "Ask for every sensitive tool",
+          "acceptEdits": "Accept file edits, ask for the rest",
+          "plan": "Read-only: plans, changes nothing",
+          "auto": "Auto: Timon’s classifier decides, a card only when unsure",
+          "bypassPermissions": "Allow everything, no checks at all"
+        },
+        "bypassWarning": "No approval card at all: it can do anything on this machine.",
+        "skills": "Skills",
+        "noSkills": "No skill installed yet.",
+        "mcp": "MCP servers",
+        "noMcp": "No MCP server declared yet.",
+        "rules": "Instructions",
+        "rulesPlaceholder": "E.g. answer in English, never push without asking.",
+        "sum": {
+          "project": "Project",
+          "toChoose": "to choose",
+          "permissions": "Permissions",
+          "skills": "Skills",
+          "mcp": "MCP"
+        }
+      },
+      "style": {
+        "title": "{name}'s look",
+        "skull": "Skull",
+        "fur": "Fur",
+        "eyes": "Eyes",
+        "accessory": "Accessory",
+        "try": "Try a state",
+        "random": "Surprise me",
+        "done": "Done",
+        "close": "Close"
+      }
+    },
+    "signin": {
+      "title": "Welcome back",
+      "subtitle": "Timon has a new look. Sign in with your Timon account to continue."
+    },
+    "mascot": {
+      "title": "Meet {name}'s mascot",
+      "subtitle": "New in this version: every agent has a mascot that shows what it is doing — thinking, working, waiting for you. Dress {name} as you like.",
+      "keep": "Keep this look",
+      "skip": "Not now",
+      "later": "You can change it any time in the agent's Avatar tab.",
+      "failed": "The look could not be saved. Try again, or choose “Not now”."
+    },
+    "discover": {
+      "label": "Discover Timon",
+      "slide": "Slide {current} of {total}",
+      "next": "Next",
+      "skip": "Skip all",
+      "finish": "Meet {name}",
+      "finishNoName": "Let's go",
+      "autonomous": {
+        "title": "Your TIMs work on their own",
+        "body": "Give a TIM a mission, a time or a trigger: it picks its skills and tools, remembers what it learns, and reports back once the work is done.",
+        "nodes": {
+          "skills": "Skills",
+          "tools": "Tools",
+          "memory": "Memory",
+          "schedule": "Schedule"
+        },
+        "done": "Report sent"
+      },
+      "teams": {
+        "title": "Build teams of TIMs",
+        "body": "One plans, one codes, one reviews: tasks pass from TIM to TIM on the Kanban, and the Multichat lets you talk to all of them at once.",
+        "columns": {
+          "todo": "To do",
+          "doing": "In progress",
+          "done": "Done"
+        },
+        "card": "Landing page"
+      },
+      "projects": {
+        "title": "Projects with their own TIMs",
+        "body": "A general assistant knows a little about everything. A project’s TIMs work in that project only, with its own rules and its own memory, and never leave it.",
+        "general": "Your TIMs go everywhere",
+        "alpha": "Website",
+        "beta": "Accounting",
+        "rules": "Its rules",
+        "memory": "Its memory"
+      },
+      "connected": {
+        "title": "Plug in everything else",
+        "body": "Connectors bring in your mail, calendar and tools; workflows chain the steps; plugins add what is missing, down to the interface."
+      },
+      "views": {
+        "label": "Where to find it",
+        "canvas": "Agent canvas",
+        "chat": "Chat",
+        "kanban": "Kanban",
+        "multichat": "Multichat",
+        "projectChat": "Project chat",
+        "widgets": "Widgets",
+        "connectors": "Connectors",
+        "workflows": "Workflows",
+        "plugins": "Plugins"
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "chatMarkdown": {
+    "copyUrl": "Copier l’URL",
+    "tableScroll": "Tableau — faites défiler horizontalement pour voir toutes les colonnes"
+  },
+  "chatMedia": {
+    "image": "Image",
+    "video": "Vidéo",
+    "generated": "Image générée",
+    "fromHost": "Depuis {host}",
+    "enlarge": "Agrandir",
+    "download": "Télécharger",
+    "loadFailed": "Impossible de charger ce média.",
+    "markdownImage": "Image non affichée",
+    "markdownImageAlt": "Image non affichée : {alt}"
+  },
+  "filePreview": {
+    "close": "Fermer",
+    "previousImage": "Image précédente",
+    "nextImage": "Image suivante",
+    "imagePosition": "Image {index} sur {total}",
+    "download": "Télécharger",
+    "checking": "Chargement…",
+    "openFailed": "Impossible d'ouvrir ce fichier.",
+    "noPreview": "Ce fichier n'a pas d'aperçu.",
+    "tooLarge": "Ce fichier est trop volumineux pour être prévisualisé.",
+    "damaged": "Ce document est endommagé ou dans un format que le visualiseur ne lit pas.",
+    "officeNote": "Aperçu du texte — les images, graphiques et la mise en page ne sont pas affichés.",
+    "emptyDoc": "Ce document ne contient pas de texte.",
+    "longDoc": "Document long : seul le début est affiché.",
+    "sheetRows": "Seules les {count} premières lignes sont affichées.",
+    "sheetColumns": "Seules les {count} premières colonnes sont affichées.",
+    "emptySheet": "Cette feuille est vide.",
+    "slide": "Diapositive {n}",
+    "untitledSlide": "(sans titre)",
+    "moreSlides": "Seules les {count} premières diapositives sont affichées.",
+    "sheets": "Feuilles",
+    "image": "Image",
+    "video": "Vidéo"
+  },
+  "fileEditor": {
+    "view": "Lecture",
+    "edit": "Édition",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "closeTab": "Fermer {name}",
+    "modified": "Modifié",
+    "tabs": "Fichiers ouverts",
+    "discard": "Abandonner les modifications non enregistrées de {name} ?",
+    "discardAll": "Abandonner les modifications non enregistrées ?"
+  },
+  "fileLink": {
+    "openFailed": "Impossible d'ouvrir {path}.",
+    "forbidden": "Votre compte n'a pas le droit d'ouvrir des fichiers hors du dossier de l'agent.",
+    "warningTitle": "Ouvrir un fichier hors du dossier de l'agent ?",
+    "warningBody": "Attention : ce fichier n'est pas dans le dossier de l'agent, donc hors de son projet. Ne l'ouvrez que si vous faites confiance au lien. Vous pourrez le lire et le modifier.",
+    "yes": "Oui",
+    "no": "Non",
+    "noWorkspace": "Ouvrez une page qui a un espace pour afficher ce fichier."
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "allowJs": true, "checkJs": true, "noEmit": true, "strict": true,
+    "skipLibCheck": true, "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler",
+    "paths": { "@timon-ai/sdk": ["../../packages/sdk/src/index.ts"], "express": ["../../orchestrator/node_modules/@types/express/index.d.ts"] },
+    "typeRoots": ["../../orchestrator/node_modules/@types"]
+  },
+  "include": ["lib/**/*.js"]
+}

@@ -1,0 +1,497 @@
+{
+  "pluginsPage": {
+    "kind": {
+      "widget": "Widget",
+      "page": "Page",
+      "island": "Îlot",
+      "overlay": "Calque",
+      "theme": "Thème",
+      "composer": "Saisie",
+      "layout": "Layout",
+      "behavior": "Backend",
+      "provider": "Fournisseur",
+      "dictation": "Dictée",
+      "bundle": "Bundle"
+    },
+    "tier": {
+      "core": "Noyau",
+      "std": "Standard",
+      "dev": "Développeur",
+      "opt": "Optionnel"
+    },
+    "by": "par {name}",
+    "openDetails": "Ouvrir la fiche de {name}",
+    "noPreview": "Pas encore d'aperçu",
+    "backendHint": "Module backend — il n'a pas d'écran à lui.",
+    "declares": "Ouvre",
+    "settings": "Réglages",
+    "authorUnknown": "Auteur inconnu",
+    "backTo": "Retour à {name}",
+    "containedMissing": "Pas installé sur cette machine",
+    "searchPlaceholder": "Rechercher un plugin…",
+    "typesLabel": "Type",
+    "typesAll": "Tous",
+    "gallery": "Aperçus",
+    "prevSlide": "Image précédente",
+    "nextSlide": "Image suivante",
+    "noMatch": "Aucun plugin ne correspond à ces filtres.",
+    "provenance": {
+      "all": "Tous",
+      "timon": "@timon",
+      "marketplace": "Marketplace"
+    },
+    "verified": "Vérifié",
+    "unverified": "Non vérifié",
+    "builtin": "Intégré",
+    "builtinHint": "Livré avec Timon : on peut le désactiver, pas le désinstaller.",
+    "awaitingApproval": "À approuver sur cet ordinateur",
+    "awaitingApprovalHint": "Cette machine l'exécute, mais son code d'interface ne se charge ici qu'une fois la même version, avec la même signature, installée et activée sur cet ordinateur.",
+    "awaitingApprovalBuiltinHint": "Cette machine l'exécute, mais son code d'interface ne se charge ici qu'une fois que cet ordinateur livre la même version de ce plugin, avec le même code d'interface, et l'a activé. Deux versions de Timon peuvent livrer un code différent sous une même version du plugin : mettez à jour la machine la plus ancienne.",
+    "modules": {
+      "@timon/db": {
+        "label": "Base de données",
+        "description": "Le store SQLite et son archive froide. Tout le reste l'injecte pour que le schéma soit à jour avant la première lecture."
+      },
+      "@timon/settings": {
+        "label": "Réglages",
+        "description": "La page des réglages du produit, et la table que les autres modules lisent."
+      },
+      "@timon/http": {
+        "label": "HTTP & stats",
+        "description": "L'app Express partagée, l'auth du proxy UI, et le tableau de stats."
+      },
+      "@timon/users": {
+        "label": "Compte",
+        "description": "Votre compte, ses sessions et l'écran de connexion."
+      },
+      "@timon/plugins": {
+        "label": "Galerie de plugins",
+        "description": "Liste les modules bundled et les paquets tiers, et écrit leur état on/off."
+      },
+      "@timon/secrets-vault": {
+        "label": "Secrets",
+        "description": "Le coffre des secrets, scellé au repos. Les valeurs ne sortent jamais en clair du daemon."
+      },
+      "@timon/ui-layout": {
+        "label": "Layout",
+        "description": "Le chrome de l'app : nav, barre du haut, rails du cockpit, calque overlay. Remplaçable — il occupe le slot root."
+      },
+      "@timon/ui-theme": {
+        "label": "Thème",
+        "description": "Les jetons de couleur du produit. Occupe le slot theme ; l'éteindre laisse le chrome sans palette."
+      },
+      "@timon/backends": {
+        "label": "Fournisseurs LLM",
+        "description": "Le catalogue des fournisseurs de modèles et leurs identifiants."
+      },
+      "@timon/agents": {
+        "label": "Agents",
+        "description": "Le roster des agents, les skills et les serveurs MCP. Pages : /agents, /skills, /mcp."
+      },
+      "@timon/missions": {
+        "label": "Missions",
+        "description": "Démarre, suit et enregistre les missions. Pages : /missions, /multichat, /messages."
+      },
+      "@timon/projects": {
+        "label": "Projets",
+        "description": "Le registre des projets : cwd, rôles, et le lien d'un dossier à un agent."
+      },
+      "@timon/notifications": {
+        "label": "Notifications",
+        "description": "Le centre de notifications in-app. Le canal par lequel un agent vous alerte."
+      },
+      "@timon/web-push": {
+        "label": "Push web",
+        "description": "Les notifications système sur votre téléphone, via Web Push. Demande le centre de notifications et des clés VAPID."
+      },
+      "@timon/memory": {
+        "label": "Mémoire",
+        "description": "Les règles de mémoire long terme, et l'audit de ce qui est injecté dans les missions."
+      },
+      "@timon/kanban": {
+        "label": "Kanban",
+        "description": "Le tableau des tasks : code, review, merge et le reste du pipeline. Sa colonne « TO DO » porte les idées que vous posez — l'orchestrateur ne vient jamais y prendre de travail."
+      },
+      "@timon/kanban-code": {
+        "label": "Pipeline code",
+        "description": "Donne à chaque task code son worktree git et sa branche, puis la fait relire et intégrer. Nécessite le plugin Git."
+      },
+      "@timon/git": {
+        "label": "Git",
+        "description": "Les branches, le checkout et le dépôt GitHub du projet, dans les cartes Git du chat. Fonctionne avec ou sans le Kanban ; nécessite git sur cette machine."
+      },
+      "@timon/todo-outcomes": {
+        "label": "Issues des TODO",
+        "description": "Donne à une idée du TO DO une issue et une note publique pour son auteur, annoncées par l’événement todo_resolved au canal d’où vient l’idée. Activez « Idea outcomes » dans les réglages pour l’utiliser."
+      },
+      "@timon/routines": {
+        "label": "Routines",
+        "description": "Les jobs planifiés : des routines façon cron qui lancent des missions toutes seules."
+      },
+      "@timon/triggers": {
+        "label": "Triggers",
+        "description": "Les déclencheurs natifs : un horaire, un webhook ou un événement interne crée une idée TO DO, une task d'agent ou une notification."
+      },
+      "@timon/workflows": {
+        "label": "Workflows",
+        "description": "Les flux d'automatisation visuels, leurs exécutions et leur trace complète."
+      },
+      "@timon/dreams": {
+        "label": "Rêves",
+        "description": "La passe nocturne : les pistes d'amélioration et les opportunités que l'orchestrateur propose, et le scoring de projets qui les classe."
+      },
+      "@timon/agent-chat": {
+        "label": "Chat d'agent",
+        "description": "Une carte, le fil d'un agent. Chaque instance choisit son agent et les sous-agents listés sous l'avatar."
+      },
+      "@timon/resources-guard": {
+        "label": "Garde-fous ressources",
+        "description": "Empêche les cgroups de missions de s'empiler. Exige systemd ; sans lui, deux daemons sur la même machine se tuent."
+      },
+      "@timon/vault": {
+        "label": "Vault",
+        "description": "Le vault Obsidian : la tuile graphe du cockpit et le disque /brain."
+      },
+      "@timon/grepai": {
+        "label": "Grepai",
+        "description": "L'index sémantique d'un projet. Demande le binaire grepai et systemd pour garder le watcher en vie."
+      },
+      "@timon/docker-supervision": {
+        "label": "Docker",
+        "description": "L'état des conteneurs par projet, et leur marche/arrêt. Demande un moteur de conteneurs."
+      },
+      "@timon/browser-embedded": {
+        "label": "Navigateur embarqué",
+        "description": "Un Chromium par projet, profil persistant, publié à travers Traefik."
+      },
+      "@timon/browser-recording": {
+        "label": "Enregistrement du navigateur",
+        "description": "Enregistrez un parcours dans le navigateur intégré, relisez-le, et un agent en fait un skill."
+      },
+      "@timon/browser-annotations": {
+        "label": "Annotations du navigateur",
+        "description": "Désignez un élément du navigateur intégré, dites quoi changer et envoyez-le à un agent."
+      },
+      "@timon/terminal-native": {
+        "label": "Terminal hôte",
+        "description": "Ouvre le terminal ou le gestionnaire de fichiers de la machine dans une fenêtre du bureau. Demande une session graphique."
+      },
+      "@timon/terminal-web": {
+        "label": "Terminal intégré",
+        "description": "Un terminal dans Timon — bureau, navigateur ou téléphone — qui lance un shell sur cette machine. Réservé aux comptes autorisés à en ouvrir un."
+      },
+      "@timon/ui-documents": {
+        "label": "Documents dans le chat",
+        "description": "Documents HTML interactifs qu'un agent, vous ou un plugin affichez dans une conversation, isolés de Timon dans un cadre cloisonné."
+      },
+      "@timon/orchestrator-self": {
+        "label": "Daemon",
+        "description": "Redémarrer et reconstruire l'orchestrateur depuis l'UI. Demande systemd."
+      },
+      "@timon/web-app": {
+        "label": "App web",
+        "description": "Lance l'UI Next.js en fils du daemon, à la place de Compose."
+      },
+      "@timon/telegram": {
+        "label": "Telegram",
+        "description": "Le canal Telegram entrant : parler à un agent depuis un chat."
+      },
+      "@timon/tts": {
+        "label": "Voix",
+        "description": "La synthèse vocale de la sortie des missions."
+      },
+      "@timon/gpt-live": {
+        "label": "Voix GPT-Live",
+        "description": "Conversation vocale en direct avec une mission, propulsée par OpenAI GPT-Live."
+      },
+      "@timon/video-factory": {
+        "label": "Usine vidéo",
+        "description": "Rend une vidéo à partir d'une image et d'un prompt."
+      },
+      "@timon/telemetry": {
+        "label": "Statistiques d’usage",
+        "description": "Envoie des statistiques d’usage anonymes à l’équipe Timon : fonctionnalités utilisées, déroulé des tours, étape où l’installation s’arrête. Jamais vos contenus, noms ni chemins. Se désactive dans les réglages de confidentialité."
+      },
+      "@timon/machines": {
+        "label": "Machines",
+        "description": "Appaire d’autres machines Timon à celle-ci et garde leurs accès dans le coffre, pour basculer l’interface d’une machine à l’autre. Éteint tant que vous ne l’activez pas."
+      },
+      "@timon/company": {
+        "label": "Company",
+        "description": "Organisez vos agents dans un organigramme modifiable."
+      },
+      "@timon/agents-projects": {
+        "label": "Agents · Projects",
+        "description": "Vue des agents regroupés par projet. Peut être désactivée indépendamment du canvas."
+      },
+      "@timon/bots": {
+        "label": "TIMs",
+        "description": "Vos TIMs sans projet, regroupés par équipe, avec le chat de celui que vous choisissez."
+      },
+      "@timon/files-widget": {
+        "label": "Fichiers",
+        "description": "La carte Fichiers du chat : parcourir et modifier les fichiers du dossier de travail de l'agent."
+      },
+      "@timon/skills-widget": {
+        "label": "Skills",
+        "description": "La carte Skills du chat : activer et désactiver les skills de l'agent."
+      },
+      "@timon/mcp-widget": {
+        "label": "MCP",
+        "description": "La carte MCP du chat : activer et désactiver les serveurs MCP de l'agent."
+      },
+      "@timon/mcp-apps": {
+        "label": "Connecteurs officiels",
+        "description": "Les connecteurs officiels de l’onglet MCP : connecter en un clic les serveurs MCP distants de GitHub, Linear, Notion et d’autres éditeurs."
+      }
+    },
+    "install": {
+      "sectionLabel": "Installer un plugin",
+      "button": "Installer un plugin",
+      "reading": "Lecture…",
+      "pickFolder": "Choisir un dossier de plugin…",
+      "pickArchive": "Choisir une archive de plugin (.tgz ou .zip)…",
+      "hintDesktop": "Un dossier de plugin, ou son archive .tgz ou .zip. Vous verrez sa fiche avant que quoi que ce soit ne soit installé.",
+      "available": "Trouvés dans le dossier des plugins, non installés ({count})",
+      "previewFailed": "Impossible de lire ce plugin",
+      "pickerFailed": "Le sélecteur de fichiers n'a pas pu s'ouvrir.",
+      "done": "« {name} » est installé",
+      "doneRefused": "« {name} » est installé mais ne se chargera pas : {reason}",
+      "failed": "Le plugin n'a pas été installé",
+      "signed": "Signature vérifiée",
+      "tampered": "Paquet altéré",
+      "unsignedLoads": "Non signé — chargé en mode développeur",
+      "unsignedBlocked": "Non signé — ne se chargera pas",
+      "manifestRefused": "Timon ne peut pas utiliser ce plugin : {reason}",
+      "nodeEngineRefused": "Ce plugin ne tourne pas sur le Node qu'utilise ce Timon : {reason}",
+      "tamperedHint": "Les fichiers ne correspondent plus à leur signature : ce paquet a été modifié après sa signature. Il ne peut pas être installé.",
+      "permissions": "Demande",
+      "permissionsNone": "aucune permission",
+      "webhooks": "Webhooks",
+      "source": "Provenance",
+      "origin": {
+        "upload": "une archive envoyée depuis ce navigateur",
+        "path": "un fichier de cet ordinateur",
+        "detected": "le dossier des plugins"
+      },
+      "alreadyInstalled": "La version {version} est déjà installée. L'installation la remplace.",
+      "replacesPackage": "Cet identifiant appartenait à {pkg}, un autre paquet qui n'est plus installé. Installer celui-ci retire ce qui avait été accordé à {pkg} : secrets du coffre, hôtes ouverts, approbations. Ses réglages et ses données sont effacés (les réglages secrets devront être ressaisis) et son dossier de données part en corbeille. Les connexions des utilisateurs repassent en attente d'approbation et leurs clés sont effacées.",
+      "updatesUnsigned": "Mise à jour depuis une copie non signée de ce paquet : ses données, ses réglages et ses autorisations sont conservés.",
+      "childReplacesPackage": "{id}, apporté par ce bundle, reprend un identifiant qui appartenait à {pkg}, un autre paquet qui n'est plus installé. L'installer retire ce qui avait été accordé à {pkg} : secrets du coffre, hôtes ouverts, approbations. Ses réglages et ses données sont effacés (les réglages secrets devront être ressaisis) et son dossier de données part en corbeille. Les connexions des utilisateurs repassent en attente d'approbation et leurs clés sont effacées.",
+      "childrenAccess": {
+        "title": "Les plugins qu'apporte ce bundle",
+        "permissions": "Demande : {list}",
+        "state": {
+          "kept": "Déjà installé : ce bundle n'y touche pas, rien n'est demandé pour lui ici.",
+          "unreadable": "Lisible seulement une fois installé : il sera installé sans rien lui accorder. Accordez-lui ses secrets depuis la page Secrets ; s'il s'agit d'un fournisseur, il reste inactif tant que vous ne l'autorisez pas dans {settingsPath}.",
+          "unresolved": "Aucune dépendance de ce bundle ne le fournit : il ne sera pas installé, rien n'est demandé pour lui.",
+          "tampered": "Ses fichiers ne correspondent plus à leur signature : il ne sera pas chargé, rien n'est demandé pour lui.",
+          "nodeEngine": "Il ne tourne pas sur le Node qu'utilise ce Timon : il ne sera pas chargé, rien n'est demandé pour lui. {reason}"
+        },
+        "refused": {
+          "not-installed": "« {name} » n'a pas été installé : ses programmes n'ont pas été autorisés.",
+          "changed": "« {name} » n'est pas ce que la fiche montrait : ses programmes n'ont pas été autorisés. Vérifiez-les dans {settingsPath}.",
+          "grant-failed": "Les programmes de « {name} » n'ont pas pu être autorisés. Réessayez dans {settingsPath}."
+        },
+        "vaultRefused": {
+          "not-installed": "« {name} » n'a pas été installé : aucun de ses secrets ni de ses hôtes n'a été accordé.",
+          "changed": "« {name} » n'est pas ce que la fiche montrait : aucun de ses secrets ni de ses hôtes n'a été accordé. Accordez-lui ses secrets depuis la page Secrets.",
+          "grant-failed": "Les secrets et hôtes de « {name} » n'ont pas pu être accordés. Accordez-lui ses secrets depuis la page Secrets."
+        }
+      },
+      "licenseRequired": "Ce plugin ne se charge qu'avec une licence qui le couvre.",
+      "vault": {
+        "title": "Secrets et réseau",
+        "read": "Lit des secrets du coffre par leur nom, sans les nommer sur cette fiche : vous les donnez un par un à ce plugin depuis Secrets, ou depuis la carte qu'il lève quand il en demande un.",
+        "broker": "Appelle des API sous des identités du coffre sans voir leurs clés, seulement celles qui lui sont accordées nommément.",
+        "brokerNoHttp": "Il ne déclare pas http:outbound : ses appels d'API par le courtier seront refusés.",
+        "network": "Son accès réseau se limite aux hôtes ouverts dans timon.config.json, à tous les plugins (pluginPolicy.http.allow) ou à lui seul (pluginPolicy.http.byPlugin), et aux adresses des connexions approuvées.",
+        "secretsLead": "Secrets qu'il nomme. Un secret coché est accordé à ce seul plugin ; décocher ne retire jamais un accord (cela se fait depuis Secrets).",
+        "hostsLead": "Hôtes qu'il joint. Un hôte coché est ouvert à ce seul plugin.",
+        "hostOwn": "Déjà ouvert à ce plugin. Décochez pour le fermer : ses hôtes sont remplacés par ceux cochés ici.",
+        "hostGlobal": "Déjà ouvert à tous les plugins (pluginPolicy.http.allow).",
+        "mode": {
+          "read": "lu par le plugin",
+          "broker": "utilisé par le courtier, jamais vu du plugin"
+        },
+        "state": {
+          "granted": "Déjà accordé à ce plugin.",
+          "missing": "Pas encore dans le coffre.",
+          "otherMode": "Le coffre contient un secret de ce nom pour l'autre usage, qui ne servirait pas ce plugin.",
+          "ambiguous": "Plusieurs secrets portent ce nom : le choix de celui à accorder se fait sur la page Secrets.",
+          "vault-off": "Le coffre est désactivé : ce plugin ne peut lire aucun secret."
+        },
+        "create": "Le créer sur la page Secrets",
+        "choose": "Choisir sur la page Secrets"
+      },
+      "disclaimerTitle": "Plugin tiers",
+      "disclaimer": "Ce plugin n'est ni conçu, ni vérifié, ni garanti par Timon, et Timon n'est pas responsable de ce qu'il fait. Une fois installé, il s'exécute dans Timon avec les droits de votre compte. N'installez que des plugins dont vous connaissez l'auteur.",
+      "cancel": "Annuler",
+      "installing": "Installation…",
+      "reinstall": "Installer cette version",
+      "confirm": "Installer",
+      "refreshed": "{reason} La fiche ci-dessous est à jour : relisez-la, puis installez de nouveau.",
+      "errors": {
+        "unauthenticated": "Votre session a expiré — reconnectez-vous.",
+        "forbidden": "Seul un superadmin connecté à Timon peut installer un plugin.",
+        "too-large": "Ce plugin est trop volumineux (archive de 25 Mo, 200 Mo de fichiers au plus).",
+        "too-many-entries": "Ce plugin contient trop de fichiers.",
+        "not-gzip": "Ce n'est pas une archive de plugin : un .tgz ou un .zip est attendu.",
+        "unsafe-path": "Cette archive tente d'écrire hors de son dossier. Elle a été refusée.",
+        "link": "Ce plugin contient des liens ou des fichiers spéciaux, interdits dans un plugin.",
+        "layout": "Cette archive n'a pas la forme d'un paquet de plugin : un package.json à sa racine, ou un seul dossier racine qui le contient.",
+        "corrupt": "Cette archive est endommagée.",
+        "not-archive": "Ce n'est pas une archive de plugin : un .tgz ou un .zip est attendu.",
+        "not-zip": "Ce n'est pas une archive .zip valide.",
+        "zip64": "Ce .zip utilise le format zip64, que Timon ne lit pas. Recompressez le plugin avec un outil standard, ou utilisez un .tgz.",
+        "encrypted": "Ce .zip est protégé par un mot de passe. Recompressez le plugin sans mot de passe.",
+        "multi-volume": "Ce .zip est découpé en plusieurs parties. Faites un seul .zip.",
+        "compression": "Ce .zip utilise une méthode de compression que Timon ne lit pas. Recompressez le plugin avec la compression standard.",
+        "not-a-plugin": "Ce n'est pas un plugin Timon : aucun package.json avec un manifeste `timon`.",
+        "invalid-path": "Ce chemin n'est pas utilisable.",
+        "forbidden-path": "On ne peut pas installer de plugin depuis ce dossier.",
+        "not-found": "Plus rien n'existe à cet endroit.",
+        "expired": "Cet aperçu a expiré. Choisissez à nouveau le plugin.",
+        "tampered": "Le paquet a été modifié après sa signature. Il ne peut pas être installé.",
+        "manifest": "Le manifeste du plugin est invalide. Il ne peut pas être installé.",
+        "npm-missing": "npm n'est pas disponible sur la machine qui fait tourner Timon. Installez Node.js, puis réessayez.",
+        "install-failed": "L'installation a échoué. Le journal de Timon donne le détail.",
+        "name-taken": "Un autre paquet utilise déjà ce nom dans le dossier des plugins.",
+        "generic": "Le daemon a refusé (HTTP {status}).",
+        "unreadable": "Timon n'a pas le droit de lire cet emplacement. Sur macOS, autorisez-le dans Réglages Système › Confidentialité et sécurité, ou déplacez le plugin.",
+        "mismatch": "Ce que demande ce plugin (un programme, un secret ou un hôte) a changé depuis son affichage.",
+        "refused": "Ce programme ne peut jamais être lancé par un plugin.",
+        "not-provider": "Ce plugin n'est pas un fournisseur.",
+        "not-grantable": "Un secret coché ne peut pas être accordé depuis cette fiche.",
+        "conflict": "Le coffre a refusé l’accord : un secret de ce nom y est déjà accordé. Réglez-le sur la page Secrets."
+      },
+      "pickFolderRemote": "Choisir un dossier de plugin sur la machine connectée…",
+      "pickArchiveRemote": "Choisir une archive de plugin sur la machine connectée…",
+      "uploadArchive": "Envoyer une archive depuis cet ordinateur…",
+      "hintRemote": "Un dossier de plugin ou son archive .tgz ou .zip sur la machine à laquelle cette fenêtre est connectée, ou une archive envoyée depuis cet ordinateur. Vous verrez sa fiche avant que quoi que ce soit ne soit installé."
+    }
+  },
+  "providersSettings": {
+    "title": "Fournisseurs",
+    "description": "Les plugins fournisseurs apportent un service d'IA à Timon. Chaque programme qu'un fournisseur lance est autorisé ici, par son chemin résolu, avant de pouvoir s'exécuter.",
+    "cancel": "Annuler",
+    "consent": {
+      "prompts": "Reçoit chaque instruction et chaque réponse des missions qu'il sert.",
+      "credentials": "Reçoit les identifiants de son propre profil.",
+      "binary": "Lance le programme {path}.",
+      "credentialDir": "Lit le dossier de connexion « ~/{dir} » de son outil en ligne de commande, et n'en expose des fichiers qu'à ses propres missions.",
+      "osCredential": "Lit l'entrée « {service} » du magasin d'identifiants de votre système (trousseau macOS). Lecture seule.",
+      "osCredentialAccount": "Lit l'entrée « {service} » ({account}) du magasin d'identifiants de votre système (trousseau macOS). Lecture seule."
+    },
+    "install": {
+      "allow": "Autoriser Timon à lancer le ou les programmes listés ci-dessus.",
+      "allowHint": "Sans cela, le fournisseur est installé mais reste inactif tant que vous ne l'autorisez pas dans {settingsPath}."
+    },
+    "plugins": {
+      "title": "Plugins fournisseurs",
+      "none": "Aucun plugin fournisseur n'est installé.",
+      "backends": "Backends : {list}",
+      "notFound": "non installé sur cette machine",
+      "authorize": "Examiner et autoriser",
+      "authorizeTitle": "Autoriser {name}",
+      "authorizeBody": "Timon a résolu ces programmes sur cette machine. N'autorisez que les chemins que vous reconnaissez.",
+      "authorizeConfirm": "Autoriser ces programmes",
+      "authorized": "{name} est autorisé.",
+      "state": {
+        "active": "Actif",
+        "failed": "À corriger",
+        "disabled": "Désactivé",
+        "skipped": "Refusé"
+      },
+      "binary": {
+        "authorize": "à autoriser",
+        "ready": "autorisé",
+        "install": "à installer d'abord",
+        "refused": "jamais autorisé"
+      }
+    },
+    "acp": {
+      "title": "Registre ACP",
+      "description": "Agents publiés dans le registre officiel Agent Client Protocol. Timon télécharge le programme, le vérifie et le lance comme un backend.",
+      "browse": "Parcourir le registre",
+      "refresh": "Actualiser",
+      "stale": "Le registre est injoignable ; voici la dernière liste lue par Timon.",
+      "verified": "sha256 vérifié",
+      "noHash": "Pas de hash publié",
+      "unsupported": "Indisponible ici : {reason}",
+      "install": "Installer",
+      "update": "Mettre à jour",
+      "repair": "Réinstaller",
+      "installing": "Installation…",
+      "remove": "Retirer",
+      "installed": "{name} est installé.",
+      "updated": "{name} est à jour.",
+      "removed": "{name} a été retiré.",
+      "state": {
+        "ok": "Installé {version}",
+        "tampered": "Fichiers modifiés — non utilisé",
+        "missing": "Fichiers manquants",
+        "pending": "Vérification de {version}…"
+      },
+      "confirmTitle": "Installer {name} sans hash publié ?",
+      "confirmBody": "Le registre ne donne aucune somme de contrôle pour ce programme. Son intégrité repose sur le seul téléchargement https. N'installez que si vous faites confiance à son éditeur.",
+      "confirmAction": "Installer quand même"
+    },
+    "errors": {
+      "forbidden": "Seul un superadmin connecté à Timon peut gérer les fournisseurs.",
+      "generic": "Le daemon a refusé (HTTP {status}).",
+      "mismatch": "Le programme a changé depuis son affichage. Relisez-le.",
+      "refused": "Ce programme ne peut jamais être lancé par un plugin.",
+      "unverified": "Cet agent ne publie aucun hash : confirmez pour l'installer quand même.",
+      "already-installed": "Cette version est déjà installée et intacte.",
+      "not-installed": "Cet agent n'est pas installé.",
+      "unknown-agent": "Le registre ne liste pas cet agent.",
+      "unsupported": "Cet agent ne peut pas être installé sur cette machine.",
+      "registry-unavailable": "Le registre ACP est injoignable.",
+      "download-failed": "Le téléchargement a échoué.",
+      "checksum": "Le fichier téléchargé ne correspond pas à la somme de contrôle publiée. Il a été supprimé.",
+      "archive": "L'archive a été refusée comme dangereuse.",
+      "command-missing": "Le programme nommé par le registre n'est pas dans l'archive.",
+      "definition-refused": "Timon a refusé cet agent : sa description se contredit.",
+      "authorize-failed": "Le programme n'a pas pu être autorisé. Le journal de Timon donne le détail.",
+      "failed": "L'opération a échoué. Le journal de Timon donne le détail."
+    }
+  },
+  "binariesSettings": {
+    "title": "Binaires CLI",
+    "description": "Où Timon a trouvé l'outil en ligne de commande de chaque fournisseur d'IA sur cette machine. S'il manque ou se trouve dans un endroit inhabituel, épinglez son chemin complet : il s'applique dès la prochaine mission, sans redémarrer Timon.",
+    "recheck": "Vérifier à nouveau",
+    "rechecked": "Binaires vérifiés à nouveau.",
+    "none": "Aucun fournisseur local n'utilise d'outil en ligne de commande.",
+    "backends": "Utilisé par : {list}",
+    "resolved": "Lance {path}",
+    "brokenPin": "Le chemin épinglé ne peut pas être lancé : {path}",
+    "notFound": "Introuvable sur cette machine. Installez-le, ou épinglez son chemin ci-dessous.",
+    "pathLabel": "Chemin du binaire {name}",
+    "placeholder": "Chemin complet, par exemple /usr/local/bin/claude ou C:\\Users\\vous\\AppData\\Roaming\\npm\\claude.cmd",
+    "browse": "Parcourir…",
+    "save": "Enregistrer le chemin",
+    "clear": "Retirer l'épingle",
+    "saved": "{name} : chemin enregistré. Les nouvelles missions l'utilisent.",
+    "cleared": "{name} : épingle retirée. Timon le cherche de nouveau lui-même.",
+    "state": {
+      "found": "Trouvé",
+      "pinned": "Épinglé",
+      "brokenPin": "Chemin épinglé cassé",
+      "missing": "Introuvable"
+    },
+    "errors": {
+      "forbidden": "Seul un superadmin connecté à l'app peut modifier ces chemins.",
+      "unknown_binary": "Ce n'est pas l'outil en ligne de commande d'un fournisseur local.",
+      "path_not_absolute": "Indiquez le chemin complet, depuis la racine du disque.",
+      "path_missing": "Rien n'existe à ce chemin.",
+      "path_not_file": "C'est un dossier. Choisissez le fichier du programme lui-même.",
+      "path_not_executable": "Ce fichier ne peut pas être lancé : il n'est pas exécutable.",
+      "no_config": "Terminez d'abord la configuration initiale.",
+      "config_unreadable": "timon.config.json est illisible. Corrigez-le ou restaurez-le, puis vérifiez à nouveau.",
+      "invalid_body": "Ce chemin ne peut pas être enregistré.",
+      "browse": "Le sélecteur de fichier n'a pas pu s'ouvrir.",
+      "generic": "La modification a échoué (erreur {status})."
+    }
+  }
+}

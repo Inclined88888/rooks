@@ -1,0 +1,24 @@
+{
+  "name": "@timon-ai/plugin-look-styler",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-look-styler",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Compact look styler",
+    "description": "Replaces the mascot configurator of the onboarding and of the agent editor with three short lists and a row of colour swatches.",
+    "permissions": [],
+    "client": {
+      "slots": ["agent.lookstyler"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

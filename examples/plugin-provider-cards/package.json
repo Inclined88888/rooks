@@ -1,0 +1,24 @@
+{
+  "name": "@timon-ai/plugin-provider-cards",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-provider-cards",
+    "apiVersion": 14,
+    "kind": "behavior",
+    "label": "Compact provider cards",
+    "description": "Replaces the AI CLI cards of the onboarding and of Settings with one compact list.",
+    "permissions": [],
+    "client": {
+      "slots": ["providers.cli"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

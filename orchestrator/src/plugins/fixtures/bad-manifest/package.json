@@ -1,0 +1,8 @@
+{
+  "name": "@fixtures/plugin-bad-manifest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "timon": { "id": "X", "apiVersion": 1 }
+}

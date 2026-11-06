@@ -1,0 +1,86 @@
+
+<!-- Generated file. Do not edit by hand. Run npm run gen:sdk. -->
+
+# @timon-ai/sdk/testing
+
+`@timon-ai/sdk/testing`: the conformance bench for provider authors.
+The guide "Add a provider" walks through it, from a recorded transcript to a green run.
+
+## Type Aliases
+
+- [AcpExtensionExpectation](type-aliases/AcpExtensionExpectation.md)
+- [AcpReplayPeer](type-aliases/AcpReplayPeer.md)
+- [AcpScriptMessage](type-aliases/AcpScriptMessage.md)
+- [AcpScriptStep](type-aliases/AcpScriptStep.md)
+- [AcpSessionExpectation](type-aliases/AcpSessionExpectation.md)
+- [BoundProfile](type-aliases/BoundProfile.md)
+- [Chunking](type-aliases/Chunking.md)
+- [ConformanceCheck](type-aliases/ConformanceCheck.md)
+- [ConformanceContext](type-aliases/ConformanceContext.md)
+- [DictationErrorEvent](type-aliases/DictationErrorEvent.md)
+- [DictationExpectation](type-aliases/DictationExpectation.md)
+- [DictationRun](type-aliases/DictationRun.md)
+- [DictationRunOptions](type-aliases/DictationRunOptions.md)
+- [FakeCli](type-aliases/FakeCli.md)
+- [FakeCliOptions](type-aliases/FakeCliOptions.md)
+- [FakeDictationEngine](type-aliases/FakeDictationEngine.md)
+- [FakeDictationEngineOptions](type-aliases/FakeDictationEngineOptions.md)
+- [FakeDictationSessionRecord](type-aliases/FakeDictationSessionRecord.md)
+- [FakeHearing](type-aliases/FakeHearing.md)
+- [LineExpectation](type-aliases/LineExpectation.md)
+- [LoggedLine](type-aliases/LoggedLine.md)
+- [ProviderContextOptions](type-aliases/ProviderContextOptions.md)
+- [RemoteExpectation](type-aliases/RemoteExpectation.md)
+- [ReplayResult](type-aliases/ReplayResult.md)
+- [TestFn](type-aliases/TestFn.md)
+- [TestProviderContext](type-aliases/TestProviderContext.md)
+
+## Variables
+
+- [CHUNKINGS](variables/CHUNKINGS.md)
+- [DEFAULT\_MESSAGE](variables/DEFAULT_MESSAGE.md)
+- [DEFAULT\_MISSION\_ID](variables/DEFAULT_MISSION_ID.md)
+- [DEFAULT\_RESUME\_ID](variables/DEFAULT_RESUME_ID.md)
+- [DEFAULT\_SYSTEM\_PROMPT](variables/DEFAULT_SYSTEM_PROMPT.md)
+- [DICTATION\_ERROR\_CODES](variables/DICTATION_ERROR_CODES.md)
+- [DICTATION\_SAMPLE\_RATE](variables/DICTATION_SAMPLE_RATE.md)
+- [DICTATION\_TEXT\_MAX](variables/DICTATION_TEXT_MAX.md)
+- [FAKE\_TOKEN\_REFERENCE](variables/FAKE_TOKEN_REFERENCE.md)
+- [HOSTILE\_EVENTS](variables/HOSTILE_EVENTS.md)
+- [MALFORMED\_JSON\_LINES](variables/MALFORMED_JSON_LINES.md)
+- [MAX\_ARG\_STRLEN](variables/MAX_ARG_STRLEN.md)
+- [NOT\_JSON\_LINES](variables/NOT_JSON_LINES.md)
+- [providerRuntime](variables/providerRuntime.md)
+
+## Functions
+
+- [acpSessionChecks](functions/acpSessionChecks.md)
+- [bindDialect](functions/bindDialect.md)
+- [chunkPcm](functions/chunkPcm.md)
+- [concatPcm](functions/concatPcm.md)
+- [createAcpReplayPeer](functions/createAcpReplayPeer.md)
+- [createFakeCli](functions/createFakeCli.md)
+- [createFakeDictationEngine](functions/createFakeDictationEngine.md)
+- [createProviderContext](functions/createProviderContext.md)
+- [defineConformanceTests](functions/defineConformanceTests.md)
+- [dialectConformance](functions/dialectConformance.md)
+- [dialectDeclarationChecks](functions/dialectDeclarationChecks.md)
+- [dictationEngineChecks](functions/dictationEngineChecks.md)
+- [dictationEngineProblem](functions/dictationEngineProblem.md)
+- [dictationEventProblem](functions/dictationEventProblem.md)
+- [fakeRemoteHost](functions/fakeRemoteHost.md)
+- [fakeUtterance](functions/fakeUtterance.md)
+- [filesUnder](functions/filesUnder.md)
+- [hugeLine](functions/hugeLine.md)
+- [lineProviderChecks](functions/lineProviderChecks.md)
+- [loadAcpScript](functions/loadAcpScript.md)
+- [loadTranscript](functions/loadTranscript.md)
+- [pcmToWav](functions/pcmToWav.md)
+- [readWavPcm](functions/readWavPcm.md)
+- [remoteProviderChecks](functions/remoteProviderChecks.md)
+- [replayTranscript](functions/replayTranscript.md)
+- [runDictation](functions/runDictation.md)
+- [silencePcm](functions/silencePcm.md)
+- [spawnOptions](functions/spawnOptions.md)
+- [speechLikePcm](functions/speechLikePcm.md)
+- [transcriptLines](functions/transcriptLines.md)

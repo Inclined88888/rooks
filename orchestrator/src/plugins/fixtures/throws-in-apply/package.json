@@ -1,0 +1,8 @@
+{
+  "name": "@fixtures/plugin-throws",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "timon": { "id": "fixture-throws", "apiVersion": 1, "permissions": [] }
+}

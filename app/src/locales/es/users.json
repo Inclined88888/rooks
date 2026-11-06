@@ -1,0 +1,13 @@
+{
+  "invitePage": {
+    "title": "Aceptar invitación",
+    "description": "Elige una contraseña para {email}.",
+    "invalid": "Esta invitación no es válida o ha caducado.",
+    "name": "Nombre",
+    "password": "Contraseña",
+    "submit": "Crear cuenta",
+    "working": "Procesando…",
+    "failed": "Se rechazó la invitación",
+    "goHome": "Continuar"
+  }
+}

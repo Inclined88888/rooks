@@ -1,0 +1,276 @@
+{
+  "taskForm": {
+    "detachWorktree": {
+      "title": "Worktree",
+      "hint": "Scollegare elimina la cartella di lavoro di questa attività e mantiene il suo branch ({branch}) con i suoi commit; all’esecuzione successiva l’attività riceve una nuova cartella su quel branch. Rifiutato se la cartella ha modifiche non committate.",
+      "action": "Scollega il worktree",
+      "detaching": "Scollegamento…",
+      "confirm": "Eliminare la cartella di lavoro di questa attività? Il suo branch e i suoi commit vengono mantenuti.",
+      "done": "Worktree scollegato, branch mantenuto",
+      "failed": "Impossibile scollegare il worktree: {error}"
+    },
+    "markMerged": {
+      "title": "Unito fuori da Timon?",
+      "hint": "Se il branch di questa attività è già stato unito (una pull request unita su GitHub, un merge a mano), indica il commit di merge: l’attività viene chiusa come completata e partono le attività che ne dipendono.",
+      "shaLabel": "Commit di merge",
+      "shaPlaceholder": "Sha del commit, es. bcd02520",
+      "action": "Segna come unito",
+      "marking": "Segnatura…",
+      "done": "Attività segnata come unita",
+      "doneUnverified": "Attività segnata come unita. Questo commit non è ancora nella copia locale del repository, quindi non è stato possibile verificarlo.",
+      "notInBase": "Questo commit non è nel branch di base del repository. Controlla lo sha del merge.",
+      "failed": "Impossibile segnare l’attività come unita: {error}",
+      "unreachable": "Timon non ha risposto",
+      "hintDone": "Questa attività è completata ma il suo branch non è mai passato da un merge in Timon. Se è stato unito altrove (una pull request unita su GitHub, un merge a mano), indica il commit di merge: viene registrato e partono le attività che ne dipendono.",
+      "cardAction": "unito?"
+    },
+    "editTitle": "Modifica l’attività",
+    "newTitle": "Nuova attività",
+    "close": "Chiudi",
+    "delete": "Elimina",
+    "report": "Report",
+    "title": "Titolo",
+    "titlePlaceholder": "Cosa deve fare l’agente?",
+    "titleRequired": "Dai un titolo all’attività.",
+    "tabs": {
+      "label": "Sezioni dell’attività",
+      "general": "Generale",
+      "dependencies": "Dipendenze",
+      "capabilities": "Capacità"
+    },
+    "type": "Tipo",
+    "priority": {
+      "label": "Priorità",
+      "urgent": "Urgente",
+      "high": "Alta",
+      "normal": "Normale",
+      "low": "Bassa",
+      "someday": "Prima o poi"
+    },
+    "description": "Descrizione",
+    "descriptionPlaceholder": "Contesto, vincoli, come appare il lavoro finito…",
+    "write": "Scrivi",
+    "preview": "Anteprima",
+    "previewEmpty": "Ancora nulla da mostrare in anteprima.",
+    "todo": {
+      "label": "Idea TO DO",
+      "placeholder": "Numero, es. 209",
+      "hint": "L’idea si chiude da sola quando la catena di questa attività è completata.",
+      "invalid": "Un’idea TO DO è un numero intero, es. 209."
+    },
+    "attachments": {
+      "label": "Allegati",
+      "drop": "Trascina qui i file, oppure",
+      "browse": "scegli i file",
+      "dropActive": "Rilascia per allegare",
+      "uploading": "Invio…",
+      "queued": "Inviato quando l’attività viene creata",
+      "inherited": "Da un’iterazione precedente",
+      "remove": "Rimuovi {name}",
+      "open": "Apri {name}",
+      "enlarge": "Ingrandisci {name}",
+      "enlarged": "{name}, ingrandito",
+      "closePreview": "Chiudi l’anteprima",
+      "tooLarge": "{name}: troppo grande (15 MB al massimo).",
+      "typeRefused": "{name}: questo tipo di file non è accettato.",
+      "quota": "{name}: l’attività contiene già il massimo di file consentito (20 file, 100 MB).",
+      "failed": "{name}: impossibile inviarlo ({error}).",
+      "removeFailed": "Impossibile rimuovere {name}: {error}",
+      "loadFailed": "Impossibile leggere i file allegati.",
+      "dismiss": "Ignora",
+      "partial": "Attività salvata, ma alcuni file non sono stati inviati: {names}"
+    },
+    "agent": "Agente",
+    "agentRequired": "Scegli l’agente che esegue l’attività.",
+    "agentFilter": "Filtra gli agenti…",
+    "noAgentMatch": "Nessun agente corrisponde.",
+    "loadingAgents": "Caricamento degli agenti…",
+    "model": "Modello",
+    "modelInherit": "Ruolo del progetto",
+    "modelInheritHint": "Decide il ruolo del progetto per questo tipo di attività, altrimenti l’agente",
+    "modelInherited": "{model} (ereditato)",
+    "modelHelp": "« Ruolo del progetto » esegue l’attività con ciò che decide il ruolo del progetto per questo tipo, altrimenti l’agente.",
+    "worktreeBlocked": "Questo backend lavora fuori dalla cartella di Timon: un’attività di codice o di merge assegnata a lui sarà bloccata.",
+    "fallback": {
+      "short": "Alternativa",
+      "label": "Alternativa se la quota si esaurisce",
+      "inherit": "Impostazione della serie o globale",
+      "inheritHint": "Decide il piano della serie, altrimenti l’impostazione di Timon",
+      "never": "Non cambiare mai da solo"
+    },
+    "permission": "Permesso",
+    "permissionModes": {
+      "default": "Ereditato dall’agente",
+      "acceptEdits": "acceptEdits",
+      "plan": "plan",
+      "bypassPermissions": "bypassPermissions"
+    },
+    "pipeline": {
+      "label": "Pipeline",
+      "full": "Completa: codice → revisione → merge",
+      "code-self": "Solo codice, lo sviluppatore unisce il suo branch",
+      "code-group": "Solo codice, un solo merge per il gruppo",
+      "fixed": "Impostato alla creazione dell’attività."
+    },
+    "deps": {
+      "filter": "Filtra le attività…",
+      "count": "{selected} selezionate · {count} candidate",
+      "none": "Nessuna attività idonea.",
+      "noMatch": "Nessuna attività corrisponde."
+    },
+    "status": {
+      "PENDING": "In attesa",
+      "IN_PROGRESS": "In corso",
+      "DONE": "Completata",
+      "BLOCKED": "Bloccata",
+      "new": "Nuova"
+    },
+    "skills": "Skill",
+    "skillsFilter": "Filtra le skill…",
+    "selectedCount": "{count} selezionate",
+    "noneSelected": "nessuna selezionata",
+    "noSkills": "nessuna skill installata",
+    "noSkillMatch": "Nessuna skill corrisponde.",
+    "mcpServers": "Server MCP",
+    "noMcpServers": "nessun server MCP configurato",
+    "extraAllowedTools": "Strumenti consentiti aggiuntivi (separati da virgole)",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__timon__kanban_add",
+    "schedule": {
+      "label": "Pianifica l’avvio (facoltativo)"
+    },
+    "summary": {
+      "label": "Riepilogo",
+      "model": "Modello",
+      "type": "Tipo",
+      "priority": "Priorità",
+      "deps": "Dipendenze",
+      "depsNone": "Nessuna",
+      "depsCount": "{count} da completare prima",
+      "start": "Avvio",
+      "startAsap": "Il prima possibile",
+      "status": "Stato",
+      "attachments": "File",
+      "agentNone": "Nessun agente scelto"
+    },
+    "cancel": "Annulla",
+    "saving": "Salvataggio…",
+    "creating": "Creazione…",
+    "save": "Salva",
+    "create": "Crea l’attività",
+    "toast": {
+      "updated": "Attività aggiornata",
+      "created": "Attività creata",
+      "saveFailed": "Impossibile salvare l’attività: {error}"
+    },
+    "seriesPlan": {
+      "presets": {
+        "saveError": "Non è stato possibile salvare il preset di modelli.",
+        "label": "Preset",
+        "columnIn": {
+          "main": "principale",
+          "fallback": "alternativa"
+        },
+        "columnMain": "Principale",
+        "columnFallback": "Alternativa",
+        "empty": "Ancora nessun preset",
+        "applyTitle": "Applica “{name}” — {roles}",
+        "applyTo": "Applica “{name}” a",
+        "menu": "Preset “{name}”",
+        "saveTitle": "Salva la colonna {column} come preset",
+        "saveNothing": "Scegli prima un modello nella colonna {column}",
+        "namePlaceholder": "Nome del preset",
+        "confirmSave": "Salva",
+        "confirmRename": "Rinomina",
+        "cancel": "Annulla",
+        "overwriteConfirm": "“{name}” esiste già. Sostituirlo?",
+        "replace": "Sostituisci",
+        "saveRefused": "Non salvato: i preset non sono ancora caricati, oppure l’elenco è pieno.",
+        "renameTaken": "Un altro preset ha già questo nome.",
+        "rename": "Rinomina",
+        "delete": "Elimina",
+        "deleteConfirm": "Eliminare “{name}”?",
+        "notice": {
+          "applied": "“{name}” applicato alla colonna {column}.",
+          "none": "“{name}” non imposta nessuno dei ruoli mostrati qui.",
+          "saved": "Salvato come “{name}”."
+        },
+        "skipped": "Saltati, non più disponibili: {roles}",
+        "orphan": {
+          "account": "account non più collegato",
+          "model": "modello non più offerto da questo account"
+        }
+      },
+      "heading": "Piano della serie: come va eseguito questo lavoro?",
+      "role": "ruolo",
+      "model": "modello",
+      "fallback": "alternativa",
+      "current": "{value} (attuale)",
+      "inheritRole": "eredita il ruolo del progetto",
+      "runningMission": "missione in corso",
+      "mainModel": "Modello principale",
+      "runningModel": "Modello della missione in corso: non modificabile qui",
+      "noFallback": "nessuna alternativa",
+      "fallbackTitle": "Alternativa se il modello principale esaurisce la quota",
+      "notePlaceholder": "Nota libera (può precisare o contraddire le scelte qui sopra)",
+      "launch": "Avvia",
+      "answered": "risposto",
+      "groups": {
+        "general": "Impostazioni generali: valgono per ogni gruppo che non imposta nulla",
+        "other": "Altri filoni di lavoro",
+        "inherits": "eredita le impostazioni generali",
+        "countOne": "{count} filone di lavoro",
+        "countMany": "{count} filoni di lavoro",
+        "inheritGeneral": "{value} (impostazione generale)",
+        "fallbackSummary": "alternativa {value}",
+        "noRolesInMode": "Questa modalità non crea attività: nessun modello per gruppo da scegliere.",
+        "modeLabel": "Modelli di questo gruppo",
+        "sync": "Usa i modelli generali",
+        "override": "Sostituisci i modelli",
+        "statusSync": "Modelli generali",
+        "statusCustom": "Modelli propri",
+        "customEmpty": "modelli propri: scegli qui sotto, altrimenti valgono quelli generali"
+      },
+      "roles": {
+        "orchestrator": "Orchestratore",
+        "mission": "Nuova missione",
+        "code": "Sviluppatore",
+        "review": "Revisore",
+        "merge": "Integratore",
+        "doc": "Documentazione"
+      },
+      "modes": {
+        "sequential": {
+          "head": "Sequenziale"
+        },
+        "sequentialHere": {
+          "sub": "in questa missione",
+          "title": "Sequenziale: in questa missione",
+          "detail": "L’agente gestisce qui i filoni di lavoro, in questa conversazione. Non viene creata nessuna attività Kanban né nessun worktree."
+        },
+        "sequentialNewMission": {
+          "sub": "nuova missione",
+          "title": "Sequenziale: nuova missione",
+          "detail": "La stessa esecuzione a catena viene passata a un nuovo contesto di missione mentre questa conversazione attende il riepilogo."
+        },
+        "full": {
+          "head": "Pipeline completa",
+          "sub": "codice → revisione → merge",
+          "title": "Kanban: codice → revisione → merge",
+          "detail": "Un’attività di codice per ogni filone di lavoro, in parallelo in worktree separati, ciascuna rivista e unita. L’opzione più sicura per il lavoro notturno."
+        },
+        "codeSelf": {
+          "head": "Solo codice",
+          "sub": "ogni branch si unisce da solo",
+          "title": "Kanban: solo codice, merge man mano",
+          "detail": "Un’attività di codice per ogni filone di lavoro senza revisione; ogni sviluppatore unisce il suo branch a lavoro finito."
+        },
+        "codeGroup": {
+          "head": "Solo codice",
+          "sub": "un solo merge alla fine",
+          "title": "Kanban: solo codice, merge raggruppato",
+          "detail": "Un’attività di codice per ogni filone di lavoro senza revisione; un’attività di merge finale consolida i branch."
+        }
+      }
+    }
+  }
+}

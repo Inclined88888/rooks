@@ -1,0 +1,29 @@
+{
+  "name": "@timon-ai/plugin-mascot-pack",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-mascot-pack",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Winter mascot pack",
+    "description": "Adds a woolly hat, a scarf, a midnight fur and snowflake eyes to the mascot configurator.",
+    "permissions": [],
+    "client": {
+      "slots": ["mascot.parts"],
+      "external": [],
+      "mode": "esm"
+    },
+    "mascot": {
+      "acc": ["beanie", "scarf"],
+      "color": ["midnight"],
+      "eyes": ["snowflake"]
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

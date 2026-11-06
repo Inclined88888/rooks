@@ -1,0 +1,11 @@
+# Changes here need a review from the maintainers team.
+*                                   @ai-timon/maintainers
+/orchestrator/src/license/          @ai-timon/maintainers
+/orchestrator/src/host/             @ai-timon/maintainers
+/orchestrator/src/plugins/          @ai-timon/maintainers
+/orchestrator/src/users/            @ai-timon/maintainers
+/desktop/                           @ai-timon/maintainers
+/.github/                           @ai-timon/maintainers
+/LICENSE                            @ai-timon/maintainers
+/LICENSING.md                       @ai-timon/maintainers
+/CLA.md                             @ai-timon/maintainers

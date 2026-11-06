@@ -1,0 +1,5 @@
+{
+  "models": [
+    { "id": "fixture-dictation.tiny", "label": "Fixture tiny model" }
+  ]
+}

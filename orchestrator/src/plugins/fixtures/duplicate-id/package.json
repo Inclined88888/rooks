@@ -1,0 +1,8 @@
+{
+  "name": "@fixtures/plugin-ok-dup",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "timon": { "id": "fixture-ok", "apiVersion": 1, "permissions": [] }
+}

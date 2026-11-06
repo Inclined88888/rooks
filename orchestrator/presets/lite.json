@@ -1,0 +1,29 @@
+{
+  "modules": {
+    "@timon/kanban-code": false,
+    "@timon/grepai": false,
+    "@timon/docker-supervision": false,
+    "@timon/browser-embedded": false,
+    "@timon/browser-recording": false,
+    "@timon/browser-annotations": false,
+    "@timon/orchestrator-self": false,
+    "@timon/video-factory": false,
+    "@timon/terminal-native": false,
+    "@timon/todo-outcomes": false
+  },
+  "ui": {
+    "hidden": [
+      "nav.multichat",
+      "nav.git",
+      "nav.pipelines",
+      "nav.mcp",
+      "nav.skills",
+      "settings.advanced",
+      "chat.panel.grepai",
+      "chat.panel.docker",
+      "chat.panel.git-remote",
+      "chat.panel.orchestrator-self",
+      "chat.panel.video-factory"
+    ]
+  }
+}

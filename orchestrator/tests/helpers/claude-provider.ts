@@ -1,0 +1,11 @@
+import { mountOfficialProviders, mountedOfficialContext } from './official-providers.js';
+await mountOfficialProviders();
+const ctx = mountedOfficialContext('provider-claude');
+const { getDialect } = await import('../../src/backends/registry.js');
+export const claudeDialect = getDialect('claude') as import('../../src/backends/types.js').Dialect;
+const module = await import('../../official-providers/provider-claude/lib/token.js');
+const { createClaudeUsage } = await import('../../official-providers/provider-claude/lib/usage.js');
+const token = module.createClaudeToken(ctx.provider);
+export const { getClaudeUsage, getClaudeAccountUsage, resetClaudeUsageCache } = createClaudeUsage(ctx.provider, token);
+export const { claudeSpawnEnv, readClaudeToken, setClaudeToken, clearClaudeToken, claudeTokenStatus, syncClaudeTokenMarker } = token;
+export const { CLAUDE_TOKEN_ENV, CLAUDE_TOKEN_STORE, CLAUDE_TOKEN_KEY, ClaudeTokenError, normalizeClaudeToken, runsOutsideGuiSession, MISSING_TOKEN_MESSAGE } = module;

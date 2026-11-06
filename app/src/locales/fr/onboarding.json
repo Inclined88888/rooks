@@ -1,0 +1,351 @@
+{
+  "onboarding": {
+    "back": "Retour",
+    "continue": "Continuer",
+    "progress": "Étape {current} sur {total}",
+    "scheme": {
+      "label": "Mode clair ou sombre",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
+    "splash": {
+      "title": "Votre équipe d’IA,\nchez vous.",
+      "subtitle": "Des agents qui travaillent sur votre machine, avec les abonnements IA que vous payez déjà.",
+      "hint": "Psst, vous pouvez les attraper."
+    },
+    "language": {
+      "title": "Choisissez votre langue",
+      "previous": "Langue précédente",
+      "next": "Langue suivante"
+    },
+    "account": {
+      "title": "Créez votre compte local",
+      "subtitle": "C’est avec lui que vous vous connectez à Timon. Vous en êtes l’administrateur.",
+      "name": "Prénom",
+      "nameHint": "Pour que vos agents vous appellent par votre prénom.",
+      "email": "E-mail",
+      "emailHint": "Pour vous connecter. Nous y envoyons un code pour le confirmer.",
+      "emailPlaceholder": "vous@exemple.fr",
+      "password": "Mot de passe",
+      "confirm": "Confirmez le mot de passe",
+      "mismatch": "Les deux mots de passe ne correspondent pas.",
+      "tooShort": "Au moins {min} caractères.",
+      "create": "Créer mon compte",
+      "privacy": "Nous collectons uniquement l'e-mail au cas où vous souhaiteriez réinitialiser votre mot de passe. Le compte créé reste local."
+    },
+    "legacy": {
+      "opening": "Ouverture de l’écran suivant…"
+    },
+    "llm": {
+      "title": "Choisissez\nvotre LLM.",
+      "subtitle": "Timon fait travailler les abonnements IA que vous avez déjà. Jamais de facture au token.",
+      "plan": {
+        "title": "Utiliser mon abonnement IA",
+        "detailAny": "Les outils d’IA que vous payez déjà",
+        "hint": "Timon a cherché les outils d’IA déjà présents sur cette machine.",
+        "ready": "Prêt avec {names}.",
+        "none": "Connectez au moins une IA pour continuer.",
+        "anyway": "Continuer quand même"
+      },
+      "local": {
+        "title": "Utiliser des modèles locaux",
+        "detail": "Ollama, sans abonnement, rien ne sort de votre machine",
+        "hint": "Vos agents tournent sur les modèles de cet ordinateur.",
+        "ollama": "Fait tourner des modèles ouverts (Llama, Qwen, Mistral…) en local.",
+        "connect": "Une fois Ollama lancé, ajoutez-le comme fournisseur dans {settingsPath}."
+      },
+      "legal": "En continuant, vous acceptez les {terms} et prenez connaissance de la {privacy}.",
+      "terms": "Conditions d’utilisation",
+      "privacy": "Politique de confidentialité"
+    },
+    "profile": {
+      "title": "Qu’est-ce qui vous amène ?",
+      "subtitle": "Timon adapte ses réglages et sa visite guidée à votre réponse.",
+      "developer": {
+        "title": "Je développe",
+        "description": "Des agents qui codent, relisent et mergent dans mes dépôts."
+      },
+      "automation": {
+        "title": "J’automatise",
+        "description": "Mails, agenda, veille, routines : du travail qui tourne seul."
+      },
+      "beginner": {
+        "title": "Je découvre",
+        "description": "Je veux comprendre les agents IA, pas à pas."
+      },
+      "failed": "Votre choix n’a pas pu être enregistré. Réessayez."
+    },
+    "agent": {
+      "names": "Nova, Pixel, Ziggy, Brume, Oslo, Kiwi, Lumen, Sacha, Tempo, Pico",
+      "random": "Aléatoire",
+      "customise": "Personnaliser",
+      "nameLabel": "Son nom",
+      "namePlaceholder": "Donnez-lui un nom",
+      "nameRoll": "Un nom au hasard",
+      "create": "Donner vie à {name}",
+      "createNoName": "Donner vie à votre agent",
+      "creating": "{name} prend vie…",
+      "configFailed": "{name} a bien son nom, mais ses réglages n’ont pas pu être enregistrés. Réessayez.",
+      "will": "Il saura",
+      "loading": "Lecture de votre profil…",
+      "profileError": "Votre profil n’a pas pu être lu : voici la vue la plus simple.",
+      "retry": "Réessayer",
+      "cap": {
+        "base": "Discuter avec vous dans Timon",
+        "mail": "Lire et trier vos mails",
+        "agenda": "Consulter et remplir votre agenda",
+        "code": "Travailler dans vos dépôts Git",
+        "watch": "Faire une veille chaque matin",
+        "write": "Rédiger documents et messages",
+        "research": "Chercher et comparer sur le web"
+      },
+      "mission": {
+        "mail": "Mails",
+        "agenda": "Agenda",
+        "code": "Code",
+        "watch": "Veille",
+        "write": "Rédaction",
+        "research": "Recherche"
+      },
+      "views": {
+        "label": "Vue",
+        "recommended": "Conseillée pour votre profil",
+        "templates": "Débutant · Modèles",
+        "interview": "Automatisation · Entretien",
+        "sheet": "Développeur · Fiche"
+      },
+      "templates": {
+        "title": "Choisissez son profil",
+        "subtitle": "Un point de départ prêt à l’emploi. Vous pourrez tout changer ensuite.",
+        "none": "Aucun profil choisi",
+        "empty": "Choisissez un profil à droite : sa carte se remplit ici.",
+        "hint": "Choisissez d’abord un profil.",
+        "assist": {
+          "title": "Assistant personnel",
+          "description": "Mails, agenda, rappels."
+        },
+        "dev": {
+          "title": "Binôme de code",
+          "description": "Corrige, relit et livre dans vos dépôts."
+        },
+        "watch": {
+          "title": "Veilleur",
+          "description": "Un résumé de l’actu chaque matin."
+        },
+        "write": {
+          "title": "Plume",
+          "description": "Articles, posts et réponses."
+        },
+        "research": {
+          "title": "Enquêteur",
+          "description": "Cherche, compare et vous fait une synthèse."
+        },
+        "blank": {
+          "title": "Partir de zéro",
+          "description": "Un généraliste que vous façonnez au fil de l’eau."
+        }
+      },
+      "interview": {
+        "title": "Configurons votre automatisation",
+        "subtitle": "Cinq questions, et votre agent sait quoi faire, avec quoi et quand.",
+        "role": "Automatiseur",
+        "count": "{current}/{total}",
+        "edit": "Modifier",
+        "finish": "Terminer",
+        "hint": "Répondez aux questions ({current}/{total}).",
+        "q1": "Qu’est-ce que j’automatise pour vous ?",
+        "q2": "Quels outils ai-je le droit d’utiliser ?",
+        "q3": "Quand est-ce que je me lance ?",
+        "q4": "Avant une action importante, je fais quoi ?",
+        "q5": "Où est-ce que je vous préviens ?",
+        "other": "Autre chose ? Décrivez-le…",
+        "toolsHint": "Ceux qui ne sont pas encore branchés vous seront proposés juste après.",
+        "always": "toujours",
+        "dailyAt": "Chaque jour à",
+        "urlProvided": "URL fournie",
+        "tool": {
+          "gmail": "Gmail",
+          "gcal": "Google Agenda",
+          "gdrive": "Google Drive",
+          "slack": "Slack",
+          "notion": "Notion",
+          "telegram": "Telegram",
+          "github": "GitHub",
+          "browser": "Navigateur intégré",
+          "files": "Fichiers locaux",
+          "webhook": "Webhooks"
+        },
+        "trigger": {
+          "chat": "Quand vous me parlez",
+          "daily": "Chaque jour à {at}",
+          "mail": "À chaque nouveau mail",
+          "hook": "Sur un événement (webhook)"
+        },
+        "autonomy": {
+          "ask": {
+            "title": "Me demander d’abord",
+            "description": "Conseillé pour commencer : vous validez chaque envoi ou modification."
+          },
+          "report": {
+            "title": "Agir, me prévenir après",
+            "description": "Pour les tâches courantes : il agit et vous fait un compte rendu."
+          },
+          "silent": {
+            "title": "Agir en silence",
+            "description": "Pour les routines sûres et bien rodées seulement."
+          }
+        },
+        "notify": {
+          "timon": "Dans Timon",
+          "telegram": "Telegram",
+          "email": "Par e-mail"
+        },
+        "sum": {
+          "tools": "Outils",
+          "starts": "Se lance",
+          "autonomy": "Autonomie",
+          "notifies": "Prévient"
+        }
+      },
+      "sheet": {
+        "title": "Configurez votre agent",
+        "subtitle": "Tous les réglages restent modifiables dans sa fiche.",
+        "tab": {
+          "base": "Rôle et projet",
+          "engine": "Moteur",
+          "perms": "Permissions",
+          "tools": "Outils"
+        },
+        "roleTitle": "Ligne de travail principale",
+        "roleHint": "Il reste votre agent principal, le pilote : ce choix ne règle que ce sur quoi il se concentre.",
+        "role": {
+          "orchestrator": {
+            "title": "Orchestrateur / pilote",
+            "description": "Découpe le travail en tâches et le délègue."
+          },
+          "code": {
+            "title": "Codeur",
+            "description": "Écrit et modifie le code de votre projet."
+          },
+          "review": {
+            "title": "Relecteur",
+            "description": "Relit les changements avant qu’ils partent."
+          },
+          "research": {
+            "title": "Chercheur",
+            "description": "Explore, lit la doc, compare les approches."
+          },
+          "chore": {
+            "title": "Ops",
+            "description": "Builds, déploiements, maintenance."
+          }
+        },
+        "project": "Projet",
+        "noFolder": "Aucun dossier choisi",
+        "choose": "Choisir…",
+        "worktree": "Un worktree git isolé par tâche de code",
+        "worktreeDetail": "Il travaille à côté de votre branche, jamais dedans.",
+        "engine": "Moteur",
+        "permissions": "Permissions",
+        "perm": {
+          "default": "Demander pour chaque outil sensible",
+          "acceptEdits": "Accepter les modifications de fichiers, demander pour le reste",
+          "plan": "Lecture seule : il planifie, ne modifie rien",
+          "auto": "Auto : le classifieur de Timon tranche, carte seulement en cas de doute",
+          "bypassPermissions": "Tout autoriser, sans aucune vérification"
+        },
+        "bypassWarning": "Aucune carte de validation : il pourra tout faire sur cette machine.",
+        "skills": "Compétences",
+        "noSkills": "Aucune compétence installée pour l’instant.",
+        "mcp": "Serveurs MCP",
+        "noMcp": "Aucun serveur MCP déclaré pour l’instant.",
+        "rules": "Instructions",
+        "rulesPlaceholder": "Ex. : réponds en français, jamais de push sans me demander.",
+        "sum": {
+          "project": "Projet",
+          "toChoose": "à choisir",
+          "permissions": "Permissions",
+          "skills": "Compétences",
+          "mcp": "MCP"
+        }
+      },
+      "style": {
+        "title": "Le style de {name}",
+        "skull": "Crâne",
+        "fur": "Pelage",
+        "eyes": "Yeux",
+        "accessory": "Accessoire",
+        "try": "Essayer un état",
+        "random": "Au hasard",
+        "done": "Terminé",
+        "close": "Fermer"
+      }
+    },
+    "signin": {
+      "title": "Bon retour",
+      "subtitle": "Timon fait peau neuve. Connectez-vous avec votre compte Timon pour continuer."
+    },
+    "mascot": {
+      "title": "Découvrez la mascotte de {name}",
+      "subtitle": "Nouveau dans cette version : chaque agent a une mascotte qui montre ce qu’il fait — il réfléchit, travaille, vous attend. Habillez {name} comme vous le voulez.",
+      "keep": "Garder ce look",
+      "skip": "Plus tard",
+      "later": "Vous pourrez la changer à tout moment dans l’onglet Avatar de l’agent.",
+      "failed": "Le look n’a pas pu être enregistré. Réessayez, ou choisissez « Plus tard »."
+    },
+    "discover": {
+      "label": "Découvrir Timon",
+      "slide": "Diapo {current} sur {total}",
+      "next": "Suivant",
+      "skip": "Tout passer",
+      "finish": "Retrouver {name}",
+      "finishNoName": "C’est parti",
+      "autonomous": {
+        "title": "Vos TIMs travaillent en autonomie",
+        "body": "Confiez à un TIM une mission, une heure ou un déclencheur : il choisit ses compétences et ses outils, retient ce qu’il apprend et vous rend compte une fois le travail fait.",
+        "nodes": {
+          "skills": "Compétences",
+          "tools": "Outils",
+          "memory": "Mémoire",
+          "schedule": "Planning"
+        },
+        "done": "Rapport envoyé"
+      },
+      "teams": {
+        "title": "Formez des équipes de TIMs",
+        "body": "L’un planifie, l’autre code, un troisième relit : les tâches passent de TIM en TIM sur le Kanban, et le Multichat vous permet de leur parler à tous en même temps.",
+        "columns": {
+          "todo": "À faire",
+          "doing": "En cours",
+          "done": "Fait"
+        },
+        "card": "Page d’accueil"
+      },
+      "projects": {
+        "title": "Des projets avec leurs propres TIMs",
+        "body": "Un assistant généraliste sait un peu de tout. Les TIMs d’un projet ne travaillent que dans ce projet, avec ses propres règles et sa propre mémoire, et n’en sortent jamais.",
+        "general": "Vos TIMs vont partout",
+        "alpha": "Site web",
+        "beta": "Compta",
+        "rules": "Ses règles",
+        "memory": "Sa mémoire"
+      },
+      "connected": {
+        "title": "Branchez tout le reste",
+        "body": "Les connecteurs amènent votre messagerie, votre agenda et vos outils ; les workflows enchaînent les étapes ; les plugins ajoutent ce qui manque, jusqu’à l’interface."
+      },
+      "views": {
+        "label": "Où le retrouver",
+        "canvas": "Canvas d’agent",
+        "chat": "Chat",
+        "kanban": "Kanban",
+        "multichat": "Multichat",
+        "projectChat": "Chat de projet",
+        "widgets": "Widgets",
+        "connectors": "Connecteurs",
+        "workflows": "Workflows",
+        "plugins": "Plugins"
+      }
+    }
+  }
+}

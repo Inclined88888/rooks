@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "allowJs": true, "checkJs": true, "noEmit": true, "strict": true,
+    "skipLibCheck": true, "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler",
+    "paths": {
+      "@timon-ai/sdk": ["../../packages/sdk/src/index.ts"],
+      "@timon-ai/sdk/provider": ["../../packages/sdk/src/provider.ts"],
+      "@timon-ai/sdk/testing": ["../../packages/sdk/src/testing.ts"]
+    },
+    "types": ["node"],
+    "typeRoots": ["../../orchestrator/node_modules/@types"]
+  },
+  "include": ["lib/**/*.js", "test/**/*.mjs"]
+}

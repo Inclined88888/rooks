@@ -1,0 +1,48 @@
+{
+  "name": "@timon-ai/plugin-hermes-gateway",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js"
+  },
+  "files": [
+    "lib",
+    "icon.svg",
+    "README.md",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=lib/index.js && esbuild src/client.tsx --bundle --format=esm --external:react --external:@timon/ui --outfile=lib/client.js",
+    "typecheck": "node ../../orchestrator/node_modules/typescript/bin/tsc -p tsconfig.json",
+    "test": "cd ../../orchestrator && npm test -- src/plugins/hermes-gateway*.test.ts"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "timon": {
+    "id": "hermes-gateway",
+    "apiVersion": 7,
+    "kind": ["behavior"],
+    "label": "Hermes Gateway",
+    "description": "Your Hermes agents, running on your own Hermes gateway, answer in Timon like any other agent.",
+    "author": "Timon",
+    "icon": "icon.svg",
+    "permissions": [
+      "backends:register",
+      "connections:register",
+      "connections:users:read",
+      "http:outbound",
+      "agents:manage"
+    ],
+    "client": {
+      "slots": ["settings.section"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "license": { "required": false }
+  }
+}

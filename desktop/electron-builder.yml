@@ -1,0 +1,202 @@
+# Packaging of the Timon desktop client (plan §5.5).
+#
+# The client ships the WHOLE product: the Electron shell, the daemon
+# (`orchestrator/dist` + `bin` + `presets`) and the built web app
+# (`app/.next` + `public`). That is what makes portable mode possible — the
+# shell spawns `resources/orchestrator/dist/boot.js` with its own binary
+# (`ELECTRON_RUN_AS_NODE`), so there is one runtime in the package, not two.
+#
+# `better-sqlite3` is native and must match the ABI of the runtime that loads
+# it — Electron's Node (module ABI 130), not the host's. `electron-builder
+# install-app-deps` cannot do it: it rebuilds the dependencies of THIS package,
+# which has none, while the native module belongs to `orchestrator/`. And
+# rebuilding `orchestrator/node_modules` in place would break the daemon the maintainer
+# runs from this repo under plain Node. `npm run prepare:deps`
+# (`scripts/prepare-daemon-deps.mjs`) therefore copies that tree to
+# `build-resources/orchestrator/` and rebuilds it there; the copy is what
+# `extraResources` ships below. `npmRebuild: false`: there is nothing left for
+# electron-builder to rebuild, and letting it try only hides which tree won.
+#
+# OS identities are supplied by the release environment, never checked in.
+appId: com.timon.desktop
+productName: Timon
+# Share the PWA artwork; electron-builder converts it for each platform.
+icon: ../app/public/icon-512.png
+copyright: Timon
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - package.json
+  - scripts/release-integrity.mjs
+  - scripts/release-integrity-worker.mjs
+  - scripts/release-notes.mjs
+  - scripts/data-update.mjs
+  - from: build-resources
+    to: .
+    filter:
+      - release-public-key.pem
+npmRebuild: false
+asar: true
+# Local dictation (TODO #443): the sherpa-onnx recognizer is an N-API addon
+# (ABI-stable, nothing to rebuild) plus the onnxruntime shared library next to
+# it. The OS loader cannot read either from inside app.asar, so the whole
+# per-OS package is unpacked. npm installs only the package of the build
+# machine (optionalDependencies + os/cpu), which is why the build stays native.
+asarUnpack:
+  - node_modules/sherpa-onnx-*/**
+beforePack: ./scripts/release-hooks.mjs
+afterPack: ./scripts/release-hooks.mjs
+extraResources:
+  - from: assets/tray
+    to: tray
+  # The Node the packaged daemon, its app and its CLI run on (`resources/node/
+  # node[.exe]`), fetched and hash-checked by `scripts/fetch-node.mjs` during
+  # `prepare:deps`. Electron 33's own Node (20) lacks `node:sqlite`.
+  - from: build-resources/node
+    to: node
+  # Licences and the Apache-2.0 NOTICE of the speech models the client
+  # downloads on demand, beside the app (`resources/`, or `Contents/Resources`
+  # on macOS) rather than under `orchestrator/`, whose files the signed release
+  # manifest lists. `afterPack` fails the pack when it did not land
+  # (`assertPackagedThirdPartyNotices`).
+  - from: THIRD-PARTY-MODELS.md
+    to: THIRD-PARTY-MODELS.md
+  # The shell's menus and dialogs in every language (`<tag>/meta.json` and
+  # `<tag>/desktop.json` of app/src/locales), copied by `prepare:deps`
+  # (`scripts/shell-locales.mjs`): the app's sources do not travel. `afterPack`
+  # fails the pack when one did not land (`assertPackagedShellLocales`).
+  - from: build-resources/locales
+    to: locales
+  - from: build-resources/daemon-release/release-manifest.json
+    to: orchestrator/release-manifest.json
+  - from: build-resources/daemon-release/release-manifest.sig
+    to: orchestrator/release-manifest.sig
+  - from: build-resources/daemon-release/dist
+    to: orchestrator/dist
+  # `dist/boot.js` is ESM: without the `"type": "module"` of this file, Node
+  # refuses the very first import. `export.ts` reads it for the version too.
+  - from: build-resources/daemon-release/package.json
+    to: orchestrator/package.json
+  # Channel and expiry of this build, signed with the daemon: the daemon reads
+  # `orchestrator/build-info.json` next to `dist/`. `afterPack` fails the pack
+  # when it did not land (`assertPackagedBuildInfo`).
+  - from: build-resources/daemon-release/build-info.json
+    to: orchestrator/build-info.json
+  - from: build-resources/daemon-release/bin
+    to: orchestrator/bin
+  - from: build-resources/daemon-release/presets
+    to: orchestrator/presets
+  # Built-in plugins (`orchestrator/builtin-plugins.json`): SDK packages the
+  # daemon finds next to itself, trusted only for files the signed release
+  # manifest lists — both entries are in it.
+  - from: build-resources/daemon-release/builtin-plugins
+    to: orchestrator/builtin-plugins
+  - from: build-resources/daemon-release/builtin-plugins.json
+    to: orchestrator/builtin-plugins.json
+  # Rebuilt copies, never the live trees (see above): the daemon's
+  # `better-sqlite3`/`node-pty` and the app's `better-sqlite3` all run under
+  # Electron's Node in a package.
+  - from: build-resources/orchestrator/node_modules
+    to: orchestrator/node_modules
+  - from: build-resources/daemon-release/scripts
+    to: orchestrator/scripts
+  # The user documentation as Markdown, read offline by the MCP docs tools
+  # (orchestrator/bin/docs-local.mjs). Public content: not signed.
+  - from: build-resources/daemon-release/public-docs
+    to: orchestrator/public-docs
+  # The app is the traced `.next/standalone` of a `TIMON_NEXT_STANDALONE=1`
+  # build, completed by `app/scripts/build-server.mjs` (compiled server and
+  # workers in `.next/timon/`, `.next/static`, `public`) and given its rebuilt
+  # `better-sqlite3` by `prepare:deps`. One directory, ~3 500 files: shipping
+  # `app/node_modules` whole meant 25 000 files, devDependencies included, and
+  # Windows Defender scanning each of them while the installer wrote it.
+  # `.next/cache` never travels: the standalone output does not contain it.
+  - from: build-resources/app
+    to: app
+linux:
+  category: Development
+  target:
+    - AppImage
+    - deb
+  # The dock ties a window to the entry whose StartupWMClass is the window's
+  # class (X11 WM_CLASS, Wayland app_id). Electron names it after the app's
+  # package.json, which carries `name` and no productName: `timon-desktop`.
+  # electron-builder's default (`Timon`) matches no window.
+  desktop:
+    StartupWMClass: timon-desktop
+# "New Window" on a right-click of Timon in the dock or the app grid (GNOME,
+# KDE): a `.desktop` action that launches Timon again with `--new-window`; the
+# running shell gets that launch (`second-instance`) and opens one more window.
+# electron-builder 25 has no desktop actions: it writes one `key=value` line
+# per entry of `desktop`, in order, then sets Comment and Categories, which
+# keep their place when already listed. So both are listed with the values it
+# sets, and the action group rides on the value of `Actions`, the LAST key.
+# `packaging.test.ts` renders both entries with electron-builder's own code.
+# A target's `desktop` replaces the one of `linux`: StartupWMClass is repeated.
+deb:
+  afterInstall: ../orchestrator/src/host/linux-cli-after-install.tpl
+  afterRemove: ../orchestrator/src/host/linux-cli-after-remove.tpl
+  desktop:
+    StartupWMClass: timon-desktop
+    Comment: Timon desktop client (Electron shell around the local daemon).
+    Categories: Development;
+    # french-ok: the French name of the action; a block scalar cannot hold the
+    # marker (a `.desktop` comment line would be written into the entry), so
+    # the value is double-quoted and its `ê` escaped.
+    Actions: "new-window;\n\n[Desktop Action new-window]\nName=New Window\nName[fr]=Nouvelle fen\u00eatre\nExec=/opt/Timon/timon-desktop --new-window"
+appImage:
+  desktop:
+    StartupWMClass: timon-desktop
+    Comment: Timon desktop client (Electron shell around the local daemon).
+    Categories: Development;
+    # AppImageLauncher and appimaged rewrite every Exec of the entry, the
+    # action's included, to the path of the AppImage.
+    # french-ok: same French action name, escaped as above.
+    Actions: "new-window;\n\n[Desktop Action new-window]\nName=New Window\nName[fr]=Nouvelle fen\u00eatre\nExec=AppRun --no-sandbox --new-window"
+rpm:
+  afterInstall: ../orchestrator/src/host/linux-cli-after-install.tpl
+  afterRemove: ../orchestrator/src/host/linux-cli-after-remove.tpl
+mac:
+  category: public.app-category.developer-tools
+  # The default, stated: a Developer ID build runs under the hardened runtime,
+  # where the microphone needs the audio-input entitlement. The entitlements
+  # are build/entitlements.mac.plist (the app) and
+  # build/entitlements.mac.inherit.plist (its helpers, which capture), found by
+  # electron-builder in buildResources. Not named here: an `entitlements:` path
+  # reaches codesign as written, relative to whatever directory runs the build.
+  # An ad-hoc build (no identity) has no hardened runtime and ignores them.
+  hardenedRuntime: true
+  # The Info.plist text is the English default. macOS swaps in
+  # fr.lproj/InfoPlist.strings on a Mac set to French: shipped by the
+  # extraResources below, mac only, and kept because no `electronLanguages`
+  # is set (it would delete every .lproj it does not list).
+  extendInfo:
+    NSCameraUsageDescription: "Timon can share this computer's camera with a site, with your permission."
+    NSMicrophoneUsageDescription: "Timon uses the microphone for voice dictation, transcribed on this computer, and can share it with a site, with your permission."
+  extraResources:
+    - from: assets/mac/fr.lproj
+      to: fr.lproj
+  target:
+    - dmg
+    - pkg
+pkg:
+  scripts: ../../orchestrator/src/host/macos-cli-scripts
+  isRelocatable: false
+  allowAnywhere: false
+  allowCurrentUserHome: false
+  allowRootDirectory: true
+  # macOS Installer skips, silently, a bundle older than the one on disk
+  # (pkgbuild's BundleIsVersionChecked defaults to true): reinstalling the
+  # previous version to go back would report success and change nothing.
+  isVersionChecked: false
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  # First-run setup registers the daemon. Uninstall removes its task even
+  # after electron-builder has deleted the packaged runtime and CLI.
+  include: build/installer.nsh

@@ -1,0 +1,61 @@
+{
+  "chatMarkdown": {
+    "copyUrl": "URL kopiëren",
+    "tableScroll": "Tabel — scroll horizontaal om alle kolommen te zien"
+  },
+  "chatMedia": {
+    "image": "Afbeelding",
+    "video": "Video",
+    "generated": "Gegenereerde afbeelding",
+    "fromHost": "Van {host}",
+    "enlarge": "Vergroten",
+    "download": "Downloaden",
+    "loadFailed": "Dit medium kon niet worden geladen.",
+    "markdownImage": "Afbeelding niet getoond",
+    "markdownImageAlt": "Afbeelding niet getoond: {alt}"
+  },
+  "filePreview": {
+    "close": "Sluiten",
+    "previousImage": "Vorige afbeelding",
+    "nextImage": "Volgende afbeelding",
+    "imagePosition": "Afbeelding {index} van {total}",
+    "download": "Downloaden",
+    "checking": "Laden…",
+    "openFailed": "Dit bestand kon niet worden geopend.",
+    "noPreview": "Dit bestand heeft geen voorbeeld.",
+    "tooLarge": "Dit bestand is te groot voor een voorbeeld.",
+    "damaged": "Dit document is beschadigd of heeft een indeling die de viewer niet leest.",
+    "officeNote": "Tekstvoorbeeld — afbeeldingen, grafieken en opmaak worden niet getoond.",
+    "emptyDoc": "Dit document bevat geen tekst.",
+    "longDoc": "Lang document: alleen het begin wordt getoond.",
+    "sheetRows": "Alleen de eerste {count} rijen worden getoond.",
+    "sheetColumns": "Alleen de eerste {count} kolommen worden getoond.",
+    "emptySheet": "Dit blad is leeg.",
+    "slide": "Dia {n}",
+    "untitledSlide": "(zonder titel)",
+    "moreSlides": "Alleen de eerste {count} dia's worden getoond.",
+    "sheets": "Bladen",
+    "image": "Afbeelding",
+    "video": "Video"
+  },
+  "fileEditor": {
+    "view": "Bekijken",
+    "edit": "Bewerken",
+    "save": "Opslaan",
+    "saving": "Opslaan…",
+    "closeTab": "{name} sluiten",
+    "modified": "Gewijzigd",
+    "tabs": "Geopende bestanden",
+    "discard": "Niet-opgeslagen wijzigingen in {name} verwerpen?",
+    "discardAll": "Niet-opgeslagen wijzigingen verwerpen?"
+  },
+  "fileLink": {
+    "openFailed": "Kan {path} niet openen.",
+    "forbidden": "Je account mag geen bestanden buiten de map van de agent openen.",
+    "warningTitle": "Een bestand buiten de map van de agent openen?",
+    "warningBody": "Let op: dit bestand staat niet in de map van de agent en hoort dus niet bij zijn project. Open het alleen als je de link vertrouwt. Je kunt het lezen en bewerken.",
+    "yes": "Ja",
+    "no": "Nee",
+    "noWorkspace": "Open een pagina met een werkruimte om dit bestand te tonen."
+  }
+}

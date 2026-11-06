@@ -1,0 +1,39 @@
+{
+  "name": "timon-public-docs",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "scripts": {
+    "docusaurus": "docusaurus",
+    "build": "node scripts/gen-changelog.mjs && node scripts/gen-examples.mjs && docusaurus build",
+    "typecheck": "tsc --noEmit",
+    "gen:changelog": "node scripts/gen-changelog.mjs",
+    "gen:sdk": "node scripts/gen-sdk.mjs",
+    "gen:config": "node scripts/gen-config.mjs",
+    "gen:cli": "node scripts/gen-cli.mjs",
+    "gen:examples": "node scripts/gen-examples.mjs",
+    "gen": "npm run gen:sdk && npm run gen:config && npm run gen:cli && npm run gen:examples && npm run gen:changelog",
+    "check:policy": "node scripts/check-doc-policy.mjs"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@easyops-cn/docusaurus-search-local": "^0.55.3",
+    "@mdx-js/react": "^3.1.1",
+    "prism-react-renderer": "^2.4.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@docusaurus/tsconfig": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "@types/react": "^19.2.0",
+    "docusaurus-plugin-typedoc": "^1.4.2",
+    "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.13.0",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

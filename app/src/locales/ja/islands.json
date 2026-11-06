@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "ネットワーク",
+      "titleOf": "ネットワーク · {mission}"
+    },
+    "widgetZone": {
+      "title": "ウィジェット"
+    },
+    "widgetCard": {
+      "title": "ウィジェット",
+      "missing": "ウィジェット {widget} はここでは利用できません。"
+    },
+    "page": "ページ",
+    "arrangementPage": {
+      "loading": "配置を読み込み中…",
+      "missing": "この配置はもう存在しません。メニューの項目も一緒に消えます。",
+      "hint": "このページは配置とともに開きます。ここでの変更はこのページにのみ残り、保存された配置は変わりません。",
+      "restore": "配置を復元",
+      "restoreFailed": "配置を復元できませんでした。"
+    },
+    "tabs": "アイランドのタブ",
+    "close": "閉じる",
+    "closeTab": "{title} を閉じる",
+    "detach": "ウィンドウで開く",
+    "resize": "サイズを変更",
+    "unavailable": "コンテンツを利用できません — {plugin}",
+    "refused": {
+      "maxIslands": "アイランドは最大 8 個",
+      "maxDepth": "分割は最大 3 階層",
+      "maxTabsPerIsland": "1 つのアイランドのタブは最大 12 個",
+      "maxTabs": "タブは最大 32 個",
+      "routeTab": "この画面のページは閉じられません",
+      "self": "すでにここにあります",
+      "unknownType": "このコンテンツはワークスペースで開けません",
+      "maxFloats": "ポップアップは最大 4 個",
+      "floatEdge": "ポップアップは中央でのみタブを受け取ります"
+    },
+    "announce": {
+      "right": "{title} を {target} の右に開きました",
+      "left": "{title} を {target} の左に開きました",
+      "top": "{title} を {target} の上に開きました",
+      "bottom": "{title} を {target} の下に開きました",
+      "tab": "{title} を {target} にタブとして追加しました",
+      "root": "{title} をワークスペースの端に沿って開きました",
+      "closed": "{title} を閉じました",
+      "float": "{title} をポップアップとして開きました",
+      "minimized": "{title} を最小化しました"
+    },
+    "openIn": {
+      "menu": "分割して開く",
+      "right": "右に",
+      "left": "左に",
+      "bottom": "下に",
+      "top": "上に",
+      "center": "タブで",
+      "narrow": "ワークスペースで開く",
+      "split": {
+        "right": "右に開く",
+        "left": "左に開く",
+        "bottom": "下に開く",
+        "top": "上に開く",
+        "center": "タブで開く",
+        "float": "ポップアップで開く"
+      },
+      "float": "ポップアップで"
+    },
+    "drop": {
+      "right": "{target} の右に開く",
+      "left": "{target} の左に開く",
+      "top": "{target} の上に重ねる",
+      "bottom": "{target} の下に重ねる",
+      "center": "{target} にタブを追加",
+      "root": {
+        "left": "左に新しい列",
+        "right": "右に新しい列",
+        "top": "上に新しい行",
+        "bottom": "下に新しい行"
+      },
+      "float": "ポップアップで開く (Alt)"
+    },
+    "drag": {
+      "island": "ドラッグしてこのアイランドを移動"
+    },
+    "chat": {
+      "title": "チャット",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title} を右の新しいアイランドで開きます",
+        "left": "{title} を左の新しいアイランドで開きます",
+        "top": "{title} を上の新しいアイランドで開きます",
+        "bottom": "{title} を下の新しいアイランドで開きます"
+      },
+      "openTab": "{title} をタブで開きます",
+      "cannotApply": "このレイアウトはもうワークスペースに合いません: 対象のアイランドが閉じられたか、上限に達しています。",
+      "dropped": "コンテンツが設定を拒否したため除外: {titles}",
+      "unreadable": "現在の配置を読み取れませんでした。しばらくしてからもう一度お試しください",
+      "noFit": "対象のアイランドが閉じられたか、上限に達しています",
+      "refusedParams": "{titles} は渡された設定を拒否しました",
+      "closes": "適用すると閉じるもの: {titles}",
+      "closesIn": "{project} で適用すると閉じるもの: {titles}",
+      "tabKept": "閉じるはずのタブが開いたままだったため、何も変更していません"
+    },
+    "arrangementProposal": {
+      "title": "{agent} があなたのアイランド配置の 1 つを提案しています",
+      "titleFrom": "{agent} があなたのアイランド配置の 1 つを提案しています ({project})",
+      "name": "配置: {name}",
+      "gone": "配置「{name}」は削除されたため、何も変更していません",
+      "stale": "提案の後にこの配置が削除されたため、何も変更していません。"
+    },
+    "menu": "アイランドの操作",
+    "move": {
+      "keys": "M: このタブを移動 · Shift+M: アイランドを移動",
+      "start": "{title} を移動中。矢印キーでアイランド、Tab で場所を選び、Enter で配置、Escape でキャンセルします。",
+      "hint": "矢印: アイランド · Tab: 場所 · Enter: 配置 · Esc: キャンセル",
+      "cancelled": "移動をキャンセルしました"
+    },
+    "file": {
+      "title": "ファイル"
+    },
+    "popup": {
+      "open": "{title} をポップアップで開く",
+      "dock": "ワークスペースにドッキング",
+      "pin": "すべてのページで表示",
+      "unpin": "このページだけで表示",
+      "close": "このポップアップを閉じる",
+      "minimize": "最小化",
+      "restore": "{title} を再表示",
+      "minimized": "最小化したポップアップ"
+    },
+    "glass": {
+      "menu": "ガラス",
+      "follow": "外観の設定に従う",
+      "island": "アイランド全体",
+      "widgets": "ウィジェット",
+      "both": "両方"
+    },
+    "newTab": "新しいタブ",
+    "skill": {
+      "title": "スキル"
+    },
+    "paramsRefused": "この変更をタブに適用できませんでした。",
+    "closeGuardFailed": "{title} は閉じてよいか確認できなかったため、開いたままです。",
+    "unsaved": {
+      "title": "{name} の変更を保存しますか？",
+      "description": "保存せずに閉じると、変更は失われます。",
+      "save": "保存",
+      "saving": "保存中…",
+      "discard": "保存しない",
+      "cancel": "キャンセル"
+    },
+    "stack": {
+      "earlier": "{title} を左へ移動",
+      "later": "{title} を右へ移動",
+      "moved": "{title} を移動しました"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "ワークスペースで開く",
+      "openedThere": "このセッションはワークスペースで開いています。",
+      "show": "表示する"
+    }
+  }
+}

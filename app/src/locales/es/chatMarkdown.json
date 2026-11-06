@@ -1,0 +1,61 @@
+{
+  "chatMarkdown": {
+    "copyUrl": "Copiar URL",
+    "tableScroll": "Tabla: desplázate horizontalmente para ver todas las columnas"
+  },
+  "chatMedia": {
+    "image": "Imagen",
+    "video": "Vídeo",
+    "generated": "Imagen generada",
+    "fromHost": "Desde {host}",
+    "enlarge": "Ampliar",
+    "download": "Descargar",
+    "loadFailed": "No se pudo cargar este contenido multimedia.",
+    "markdownImage": "Imagen no mostrada",
+    "markdownImageAlt": "Imagen no mostrada: {alt}"
+  },
+  "filePreview": {
+    "close": "Cerrar",
+    "previousImage": "Imagen anterior",
+    "nextImage": "Imagen siguiente",
+    "imagePosition": "Imagen {index} de {total}",
+    "download": "Descargar",
+    "checking": "Cargando…",
+    "openFailed": "No se pudo abrir este archivo.",
+    "noPreview": "Este archivo no tiene vista previa.",
+    "tooLarge": "Este archivo es demasiado grande para mostrar una vista previa.",
+    "damaged": "Este documento está dañado o tiene un formato que el visor no lee.",
+    "officeNote": "Vista previa del texto: no se muestran imágenes, gráficos ni el diseño de página.",
+    "emptyDoc": "Este documento no tiene texto.",
+    "longDoc": "Documento largo: solo se muestra el principio.",
+    "sheetRows": "Solo se muestran las primeras {count} filas.",
+    "sheetColumns": "Solo se muestran las primeras {count} columnas.",
+    "emptySheet": "Esta hoja está vacía.",
+    "slide": "Diapositiva {n}",
+    "untitledSlide": "(sin título)",
+    "moreSlides": "Solo se muestran las primeras {count} diapositivas.",
+    "sheets": "Hojas",
+    "image": "Imagen",
+    "video": "Vídeo"
+  },
+  "fileEditor": {
+    "view": "Ver",
+    "edit": "Editar",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "closeTab": "Cerrar {name}",
+    "modified": "Modificado",
+    "tabs": "Archivos abiertos",
+    "discard": "¿Descartar los cambios sin guardar de {name}?",
+    "discardAll": "¿Descartar los cambios sin guardar?"
+  },
+  "fileLink": {
+    "openFailed": "No se pudo abrir {path}.",
+    "forbidden": "Tu cuenta no tiene permiso para abrir archivos fuera de la carpeta del agente.",
+    "warningTitle": "¿Abrir un archivo fuera de la carpeta del agente?",
+    "warningBody": "Aviso: este archivo no está en la carpeta del agente, así que no forma parte de su proyecto. Ábrelo solo si confías en el enlace. Podrás leerlo y editarlo.",
+    "yes": "Sí",
+    "no": "No",
+    "noWorkspace": "Abre una página que tenga un espacio de trabajo para mostrar este archivo."
+  }
+}

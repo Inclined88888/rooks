@@ -1,0 +1,1180 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import '@xyflow/react/dist/style.css';
+@import '@xterm/xterm/css/xterm.css';
+
+/*! Symbols Nerd Font Mono 3.5.1 — Copyright (c) 2014 Ryan L McIntyre — MIT License
+ * https://github.com/ryanoasis/nerd-fonts (full text: src/styles/fonts/LICENSE-nerd-fonts) */
+/* Fallback for the terminal only: prompts (starship, Powerlevel10k, eza…) print
+ * Nerd Font icons from the Private Use Area, which no system monospace font
+ * carries. The unicode-range keeps the file from being fetched for plain text.
+ * A copy installed on the machine is preferred to the download. */
+@font-face {
+  font-family: 'Timon Nerd Symbols';
+  src: local('Symbols Nerd Font Mono'), url('./fonts/SymbolsNerdFontMono-Regular.woff2') format('woff2');
+  font-display: block;
+  unicode-range: U+23FB-23FE, U+2630, U+2665, U+26A1, U+276C-2771, U+2B58, U+E000-E00A, U+E0A0-E0D7,
+    U+E200-E2A9, U+E300-E3E3, U+E5FA-E6BB, U+E700-E958, U+EA60-EC84, U+ED00-EFCF, U+F000-F385,
+    U+F400-F533, U+F0001-F1AF0;
+}
+
+/* Palette tokens (`:root` / `.light`) live in `@timon/ui-theme`. This
+ * file keeps infrastructure measures and the rules that consume tokens. */
+
+@layer base {
+  :root {
+    /* Measured height of the TopBar (see components/topbar.tsx), published at
+       runtime through a ResizeObserver — varies with the row of active agents.
+       Default = height of a single-row header, so pages that align on it are
+       not left at 0px before the first paint. */
+    --timon-topbar-h: 68px;
+    --timon-chrome-fill: hsl(var(--chrome));
+    /* Islands: every zone of a split screen is a rounded panel and the
+       backdrop (the chrome colour) is the only separator between them. The
+       radius matches the corners painted by components/chrome-corners.tsx. */
+    --timon-island-gap: 8px;
+    --timon-island-radius: 16px;
+    /* Width of the COLLAPSED vertical nav (see components/vertical-nav.tsx)
+       — constant (unlike --timon-topbar-h), no ResizeObserver needed.
+       Unfolding on hover is an overlay above the content, so it never
+       changes this reserved space. */
+    --timon-nav-w: 56px;
+    /* Width taken by the browser side panel (see
+       components/browser-panel.tsx). 0 while it is folded; the component
+       updates it after mounting. Declared here so the pages that consume it
+       (`pr-[var(--timon-browser-w)]`) never end up with a missing value at
+       the first paint. */
+    --timon-browser-w: 0px;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  /* The surface islands sit on: gaps between them show the chrome colour. */
+  .timon-island-backdrop { background: var(--timon-chrome-fill); }
+  /* One zone of a split screen. No border: the gap around it is the line. */
+  .timon-island {
+    border-radius: var(--timon-island-radius);
+    background: hsl(var(--background));
+    overflow: hidden;
+  }
+  /* Glass: the page shows the wallpaper. `:where` keeps this rule as weak as
+     a utility, so an island that sets its own fill (`bg-card`) keeps it.
+     A backdrop keeps its own (translucent, `--timon-chrome-fill`) fill. One
+     nested in another lets the outer paint, or the gutters would be tinted
+     twice. */
+  :where(html[data-glass]) .timon-island-backdrop .timon-island-backdrop { background: transparent; }
+  /* An island keeps a translucent plate: transparent, it would take the
+     backdrop's colour and the gutter would no longer separate anything. An
+     island that holds its own frost layer (`GlassClear`, below) has its plate
+     there, so its box stays clear — except in a dialog, where that layer is
+     hidden. Islands without one (Kanban columns, forms) keep the plate on
+     their box, over the chrome's frost. */
+  :where(html[data-glass]) .timon-island { background: var(--timon-glass-island-plate, transparent); }
+  :where(html[data-glass]) .timon-island:where(:has(> .timon-glass-clear)) { background: var(--timon-glass-cleared-plate, transparent); }
+
+  html, body {
+    @apply h-full;
+  }
+
+  body {
+    isolation: isolate;
+    @apply bg-background text-foreground antialiased font-sans;
+  }
+
+  /* CJK glyphs come from the system fonts of the page's language, listed
+     after the theme's stack (`font-sans` reads --font-sans, then --font-cjk):
+     without them Chromium may draw Japanese with Chinese glyphs, and a Linux
+     box with no CJK font at all shows boxes. No CJK webfont is shipped (each
+     weighs megabytes). --font-cjk must always hold a value: an undefined
+     variable would void the whole font-family declaration. */
+  :root {
+    --font-cjk: system-ui;
+  }
+  :lang(ja) {
+    --font-cjk: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', Meiryo,
+      'Noto Sans CJK JP', 'Noto Sans JP', system-ui;
+  }
+  :lang(ko) {
+    --font-cjk: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans CJK KR', 'Noto Sans KR', system-ui;
+  }
+  /* Korean breaks between words, like English, not between syllables. */
+  html:lang(ko) {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.35);
+  }
+
+  /* The desktop client's Chromium (Electron 33 = Chromium 130) gives
+     `<button>` `align-items: flex-start` in its UA stylesheet; current
+     browsers give `normal`. A `flex flex-col` button then sizes its children
+     to their content there, and a `truncate` title inside overflows the card
+     instead of ending with an ellipsis. `:where` keeps this as weak as the UA
+     rule it replaces: any `items-*` utility still wins. */
+  :where(button) {
+    align-items: normal;
+  }
+}
+
+@layer components {
+  /* A bubble far from the end of the thread skips layout and paint until it
+   * nears the viewport; `auto` keeps its real height once drawn. Ctrl+F still
+   * finds its text. Only where the browser anchors scrolling itself: without
+   * it (Safari), an estimate turning into a real height above the reader
+   * moves what they are reading. The last ten stay normal, so the end of the
+   * thread — where it opens, where a turn grows — is always measured. Paint
+   * containment clips at the box: the padding, cancelled by the margin,
+   * leaves room for the bubble's shadow. */
+  @supports (overflow-anchor: auto) {
+    .chat-msg:nth-last-child(n + 11) {
+      content-visibility: auto;
+      contain-intrinsic-block-size: auto 160px;
+      padding-block: 4px;
+      margin-block: -4px;
+      overflow-clip-margin: 8px;
+    }
+  }
+
+  /* The last strip above the composer docks onto its header tab
+   * (`composer-trays.tsx`): square bottom, no outline on the edge it shares. */
+  .composer-trays-docked > .composer-tray:last-child {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-width: 0;
+  }
+
+  /* The bubble a reply's quote leads back to: a short glow of the accent,
+   * which fades by itself (`reply-quote.tsx`). */
+  .chat-msg-flash {
+    animation: chat-msg-flash 1.6s ease-out;
+    border-radius: var(--timon-island-radius, 12px);
+  }
+  @keyframes chat-msg-flash {
+    0%, 30% { background-color: hsl(var(--primary) / 0.12); }
+    100% { background-color: transparent; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chat-msg-flash { animation: none; background-color: hsl(var(--primary) / 0.08); }
+  }
+
+  /* Markdown rendering inside chat bubbles. Element-level styles applied
+   * to the raw HTML emitted by lib/markdown — Tailwind's `prose` plugin
+   * is heavy and themes weirdly here, so we hand-roll a tight set. */
+  .chat-bubble > :first-child { margin-top: 0; }
+  .chat-bubble > :last-child  { margin-bottom: 0; }
+
+  .chat-bubble p { margin: 0.5em 0; }
+  .chat-bubble h1,
+  .chat-bubble h2,
+  .chat-bubble h3,
+  .chat-bubble h4 {
+    margin: 0.9em 0 0.4em;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .chat-bubble h1 { font-size: 1.35em; }
+  .chat-bubble h2 { font-size: 1.18em; }
+  .chat-bubble h3 { font-size: 1.05em; }
+  .chat-bubble h4 { font-size: 0.98em; }
+
+  .chat-bubble ul,
+  .chat-bubble ol { margin: 0.5em 0; padding-left: 1.4em; }
+  .chat-bubble li { margin: 0.18em 0; }
+  .chat-bubble ul { list-style: disc; }
+  .chat-bubble ol { list-style: decimal; }
+
+  .chat-bubble hr {
+    margin: 1em 0;
+    border: 0;
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .chat-bubble a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* Media blocks (components/chat/media-block.tsx, slot `chat.media`). */
+  .chat-media {
+    display: flex;
+    flex-direction: column;
+    width: fit-content;
+    max-width: min(100%, 520px);
+    margin: 0.5em 0;
+    border: 1px solid hsl(var(--border));
+    border-radius: calc(var(--radius) * 0.8);
+    background: hsl(var(--surface-chip));
+    overflow: hidden;
+  }
+  .chat-media .chat-media-frame {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    line-height: 0;
+    cursor: zoom-in;
+  }
+  .chat-media .chat-media-frame:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
+  .chat-media .chat-media-el {
+    display: block;
+    max-width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    background: hsl(var(--muted) / 0.4);
+  }
+  .chat-media video.chat-media-el { width: 100%; }
+  .chat-media-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35em 0.75em;
+    padding: 0.4em 0.7em 0.5em;
+    font-size: 0.8em;
+    color: hsl(var(--muted-foreground));
+  }
+  .chat-media-caption { color: hsl(var(--foreground)); overflow-wrap: anywhere; }
+  .chat-media-note { overflow-wrap: anywhere; }
+  .chat-media-actions { display: inline-flex; gap: 0.75em; margin-left: auto; }
+  .chat-media .chat-media-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-weight: 500;
+    color: hsl(var(--primary));
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .chat-media .chat-media-action:hover { text-decoration: underline; }
+  .chat-media-failed { padding: 0.7em 0.85em; gap: 0.25em; font-size: 0.85em; border-style: dashed; }
+  .chat-media-full {
+    display: block;
+    max-width: 100%;
+    max-height: 85vh;
+    margin: 0 auto;
+    object-fit: contain;
+  }
+  /* An image written in markdown is never loaded: its caption stands in. */
+  .md-image-note {
+    display: inline-block;
+    padding: 0.05em 0.45em;
+    border: 1px dashed hsl(var(--border));
+    border-radius: calc(var(--radius) * 0.5);
+    font-size: 0.85em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .chat-bubble blockquote {
+    margin: 0.6em 0;
+    padding: 0.1em 0.9em;
+    border-left: 3px solid hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+  }
+
+  .chat-bubble :not(pre) > code {
+    padding: 0.1em 0.38em;
+    border-radius: calc(var(--radius) * 0.4);
+    background: hsl(var(--surface-chip));
+    border: 1px solid hsl(var(--border));
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      'Liberation Mono', 'Courier New', monospace;
+    font-size: 0.88em;
+  }
+
+  .chat-bubble pre {
+    position: relative;
+    margin: 0.7em 0;
+    padding: 0.85em 0.95em 0.85em;
+    border-radius: calc(var(--radius) * 0.8);
+    background: var(--hl-bg);
+    border: 1px solid hsl(var(--border));
+    overflow-x: auto;
+    font-size: 0.85em;
+    line-height: 1.55;
+  }
+  .chat-bubble pre code {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      'Liberation Mono', 'Courier New', monospace;
+    color: var(--hl-fg);
+  }
+  /* The label adds a line: the top of the block tightens by as much. */
+  .chat-bubble pre[data-lang] {
+    padding-top: 0.55em;
+  }
+  /* The language takes its own line, on the left, above the code: placed
+   * absolutely at the top right it overlapped the first line, and the copy
+   * button — same corner — ended up hiding it.
+   * `sticky; left: 0` because the <pre> scrolls horizontally: a label
+   * simply in the flow went out of view at the first scroll. */
+  .chat-bubble pre[data-lang]::before {
+    content: attr(data-lang);
+    display: block;
+    position: sticky;
+    left: 0;
+    width: fit-content;
+    margin-bottom: 0.45em;
+    font-family: ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: hsl(var(--muted-foreground));
+    opacity: 0.7;
+    text-transform: lowercase;
+    pointer-events: none;
+  }
+
+  /* File preview (the explorer's modal) — a bare code surface: no border
+   * per line, no markdown bubble rule leaks in here.
+   * The line-number gutter is a sticky ::before: it stays visible when a
+   * long line scrolls the code horizontally. */
+  .code-view {
+    background: var(--hl-bg);
+    color: var(--hl-fg);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      'Liberation Mono', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    tab-size: 2;
+  }
+  .code-view code,
+  .code-view .hljs {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+  }
+  .code-view .code-lines {
+    counter-reset: code-line;
+    list-style: none;
+    margin: 0;
+    padding: 0.75em 0;
+    min-width: max-content;
+  }
+  .code-view .code-lines > li {
+    counter-increment: code-line;
+    margin: 0;
+    padding-right: 1.2em;
+    white-space: pre;
+  }
+  .code-view .code-lines > li::before {
+    content: counter(code-line);
+    position: sticky;
+    left: 0;
+    display: inline-block;
+    width: 4.5ch;
+    margin-right: 1.1em;
+    padding-right: 0.6em;
+    text-align: right;
+    color: var(--hl-comment);
+    background: var(--hl-bg);
+    opacity: 0.55;
+    user-select: none;
+  }
+
+  /* highlight.js token mapping — not scoped to .chat-bubble: the same
+   * colours serve the chat bubbles AND the file preview (.code-view). Both
+   * themes share these selectors and take their values from the --hl-*
+   * variables of the `@timon/ui-theme` plugin. */
+  .hljs { color: var(--hl-fg); background: transparent; }
+  .hljs-comment,
+  .hljs-quote { color: var(--hl-comment); font-style: italic; }
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-section,
+  .hljs-doctag,
+  .hljs-meta-keyword { color: var(--hl-keyword); }
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-meta-string,
+  .hljs-template-tag,
+  .hljs-template-variable { color: var(--hl-string); }
+  .hljs-number,
+  .hljs-literal,
+  .hljs-bullet,
+  .hljs-link { color: var(--hl-number); }
+  .hljs-title,
+  .hljs-title.class_,
+  .hljs-title.function_,
+  .hljs-name { color: var(--hl-function); }
+  .hljs-variable,
+  .hljs-attr,
+  .hljs-attribute,
+  .hljs-property,
+  .hljs-params { color: var(--hl-variable); }
+  .hljs-type,
+  .hljs-class .hljs-title { color: var(--hl-type); }
+  .hljs-built_in,
+  .hljs-builtin-name,
+  .hljs-symbol,
+  .hljs-tag { color: var(--hl-builtin); }
+  .hljs-emphasis { font-style: italic; }
+  .hljs-strong { font-weight: 700; }
+  .hljs-deletion { background: var(--hl-deletion-bg); display: inline-block; width: 100%; }
+  .hljs-addition { background: var(--hl-addition-bg); display: inline-block; width: 100%; }
+
+  .markdown-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    margin: 0.7em 0;
+    scrollbar-width: thin;
+  }
+  .markdown-table-scroll:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  .chat-bubble table {
+    margin: 0.7em 0;
+    border-collapse: collapse;
+    font-size: 0.95em;
+  }
+  .chat-bubble .markdown-table-scroll table {
+    width: max-content;
+    min-width: 100%;
+    margin: 0;
+  }
+  .chat-bubble th,
+  .chat-bubble td {
+    min-width: 10ch;
+    max-width: 36ch;
+    overflow-wrap: anywhere;
+    border: 1px solid hsl(var(--border));
+    padding: 0.35em 0.7em;
+    text-align: left;
+  }
+  .chat-bubble th {
+    background: hsl(var(--muted));
+    font-weight: 600;
+  }
+
+  .chat-bubble strong { font-weight: 600; }
+  .chat-bubble em { font-style: italic; }
+
+  .streaming-markdown > div {
+    animation: streaming-block-enter 120ms ease-out;
+  }
+  .streaming-markdown > div + div { margin-top: 8px; }
+  .streaming-caret {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    margin-inline-start: 3px;
+    vertical-align: -0.1em;
+    background: hsl(var(--muted-foreground));
+  }
+  @keyframes streaming-block-enter {
+    from { opacity: 0.65; }
+    to { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .streaming-markdown > div { animation: none; }
+  }
+
+
+}
+
+@layer base {
+  /* Global scrollbar — thin, primary hue, without the browser's default grey
+     arrows/tracks. Applies everywhere (`*`); `.scrollbar-none` below stays
+     the one-off escape hatch (class specificity > `*`, no need for
+     `!important`). */
+  * {
+    scrollbar-width: thin;                              /* Firefox */
+    scrollbar-color: var(--timon-scrollbar-thumb) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--timon-scrollbar-thumb);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--timon-scrollbar-thumb-hover);
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-button {
+    display: none;                /* no arrows */
+  }
+}
+
+/* A highlighted menu entry paints its own background (accent) and text
+   colour: a muted secondary line or picto inside it would stay grey on that
+   background. It follows the entry instead — every menu, Select and plugin
+   entry alike, without each one adding its own `focus:` variants. Outside any
+   `@layer`: Tailwind keeps a layered rule only when a class it names is used,
+   and this one names none. */
+:is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]):is([data-highlighted], [data-state="open"]) [class*="text-muted-foreground"] {
+  color: inherit;
+}
+
+@layer utilities {
+  /* Fade of the chat thread, WITHOUT touching the scrollbar. A mask hides the
+     bar too: so a solid band (8 px of bar + margin) is laid over it on the
+     right, set on the BORDER box — the bar is outside the padding box —
+     while the gradient stays on the padding box (a transparent 10 px top
+     border would otherwise eat the start of the ramp). `-top`: cockpit
+     card, only the top dissolves. */
+  .chat-thread-fade,
+  .chat-thread-fade-top {
+    -webkit-mask-image: linear-gradient(#000, #000), linear-gradient(to bottom, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+    mask-image: linear-gradient(#000, #000), linear-gradient(to bottom, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+    -webkit-mask-origin: border-box, padding-box;
+    mask-origin: border-box, padding-box;
+    -webkit-mask-position: right top, left top;
+    mask-position: right top, left top;
+    -webkit-mask-size: 12px 100%, 100% 100%;
+    mask-size: 12px 100%, 100% 100%;
+    -webkit-mask-repeat: no-repeat, no-repeat;
+    mask-repeat: no-repeat, no-repeat;
+  }
+  .chat-thread-fade-top {
+    -webkit-mask-image: linear-gradient(#000, #000), linear-gradient(to bottom, transparent, #000 40px);
+    mask-image: linear-gradient(#000, #000), linear-gradient(to bottom, transparent, #000 40px);
+  }
+
+  /* Hides the scrollbar while keeping scrolling (wheel / touch). Avoids the
+     scroll arrows flickering when an overflow-x-auto container hovers around
+     its overflow threshold (e.g. the topbar's strip of active agents, whose
+     width changes on every tick of the timer). */
+  .scrollbar-none {
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* Edge/IE legacy */
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;                /* Chromium / WebKit / Safari */
+  }
+
+  /* Kept for compatibility — the style is now global (see @layer base
+     above), this class does nothing more. */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--timon-scrollbar-thumb) transparent;
+  }
+
+  /* Bar present, thumb invisible until the mouse is over the area. The
+     gutter stays RESERVED at all times: hiding the bar with `display: none`
+     and bringing it back on hover would widen the content by 8 px on every
+     pointer entry, and the whole thread would jump under the cursor. Only
+     the thumb's colour changes, so nothing moves — and it can even be
+     animated. */
+  .scrollbar-hover {
+    scrollbar-color: transparent transparent;   /* Firefox */
+  }
+  /* The track stays transparent, as in the widgets: only the thumb shows. */
+  .scrollbar-hover:hover,
+  .scrollbar-hover:focus-within {
+    scrollbar-color: var(--timon-scrollbar-thumb) transparent;
+  }
+  .scrollbar-hover::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+  }
+  .scrollbar-hover:hover::-webkit-scrollbar-thumb,
+  .scrollbar-hover:focus-within::-webkit-scrollbar-thumb {
+    background-color: var(--timon-scrollbar-thumb);
+  }
+
+  /* Without a mouse, "on hover" means nothing and the gutter is lost width:
+     touch keeps the system's overlay scrollbar. */
+  @media (hover: none) {
+    .scrollbar-hover {
+      scrollbar-width: none;
+    }
+    .scrollbar-hover::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+/* Mobile: no permanent rail, the nav becomes a drawer floating over the
+   content (see components/vertical-nav.tsx). No page must reserve a gutter
+   for it. Duplicated here in CSS so the FIRST paint is already right — the
+   component can only set the variable after mounting, which would otherwise
+   leave an empty 56px band during hydration. */
+@media (max-width: 767px) {
+  :root {
+    --timon-nav-w: 0px;
+  }
+}
+
+/* Pinned rail: the server seed sets `data-nav-pinned` on <html> so the first
+   paint of a reload already reserves its 224 px (see
+   components/vertical-nav.tsx, NAV_W_PINNED). The rail's effect then takes
+   over with an inline style. Desktop only: the mobile drawer reserves
+   nothing. */
+@media (min-width: 768px) {
+  :root[data-nav-pinned] {
+    --timon-nav-w: 224px;
+  }
+}
+
+/* Listening equaliser — a purely decorative animation.
+   On mobile, the microphone level CANNOT be measured during dictation: the
+   recognition engine needs the microphone to itself (see
+   lib/stt-mic-exclusif.ts). Frozen bars read as a dead dictation; this beat
+   says "listening" without claiming to measure anything. The bars are
+   offset from one another by an `animation-delay` set at render. */
+@keyframes timon-egaliseur {
+  0%, 100% { transform: scaleY(0.22); }
+  50%      { transform: scaleY(0.95); }
+}
+
+.animate-egaliseur {
+  animation: timon-egaliseur 900ms ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-egaliseur {
+    animation: none;
+    transform: scaleY(0.5);
+  }
+}
+
+/* The three dots of a wait — the chat's "thinking" bubble and the line of a
+   tool in flight in a call stack.
+   They take `currentColor`: one markup serves the grey of a wait and the
+   amber of a running Bash. A set of frozen dots reads exactly like a frozen
+   UI, which is precisely what they are there to deny. */
+@keyframes timon-dots {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40%           { opacity: 1;    transform: translateY(-2px); }
+}
+
+.timon-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.timon-dots > i {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: timon-dots 1.15s ease-in-out infinite;
+}
+
+.timon-dots > i:nth-child(2) { animation-delay: 0.16s; }
+.timon-dots > i:nth-child(3) { animation-delay: 0.32s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .timon-dots > i {
+    animation: none;
+    opacity: 0.55;
+  }
+}
+
+/* The agent's mascot (components/mascot, docs/AGENT-MASCOT.md). A still mascot
+   blinks by CSS; a live one is driven by mascot-motion.ts, which also puts the
+   body moves below on the svg. Accessories overflow the box on purpose. */
+.timon-mascot { overflow: visible; display: block; }
+.timon-mascot-eyes { transition: transform 0.12s linear; }
+.timon-mascot-blink { transform-box: fill-box; transform-origin: center; }
+.timon-mascot:not([data-live]) .timon-mascot-blink { animation: timon-mascot-blink 5.2s infinite; animation-delay: var(--timon-mascot-blink-delay, 0s); }
+@keyframes timon-mascot-blink { 0%, 94%, 100% { transform: scaleY(1); } 96.5% { transform: scaleY(0.08); } }
+.timon-mascot-hop { animation: timon-mascot-hop 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite; transform-origin: 50% 100%; }
+@keyframes timon-mascot-hop { 0%, 62%, 100% { transform: translateY(0) scale(1, 1); } 68% { transform: translateY(2px) scale(1.06, 0.92); } 78% { transform: translateY(-16px) scale(0.95, 1.06); } 88% { transform: translateY(0) scale(1.04, 0.96); } }
+.timon-mascot-jump { animation: timon-mascot-jump 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes timon-mascot-jump { 0% { transform: scale(1); } 30% { transform: translateY(4px) scale(1.12, 0.86); } 60% { transform: translateY(-22px) scale(0.92, 1.1); } 100% { transform: none; } }
+.timon-mascot-wiggle { animation: timon-mascot-wiggle 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes timon-mascot-wiggle { 25% { transform: rotate(-8deg); } 50% { transform: rotate(7deg); } 75% { transform: rotate(-3deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .timon-mascot .timon-mascot-blink,
+  .timon-mascot-eyes,
+  .timon-mascot-hop,
+  .timon-mascot-jump,
+  .timon-mascot-wiggle {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* The onboarding (components/onboarding, docs/ONBOARDING.md). The welcome's
+   words rise one after the other; a step change is a View Transition, styled
+   only while the onboarding runs one (`data-timon-vt`), so no other screen
+   inherits it. */
+.timon-onboarding-rise { opacity: 0; animation: timon-onboarding-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+@keyframes timon-onboarding-rise { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+.timon-onboarding-fade { opacity: 0; animation: timon-onboarding-fade 1s forwards; }
+@keyframes timon-onboarding-fade { to { opacity: 1; } }
+.timon-onboarding-drop { animation: timon-onboarding-drop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes timon-onboarding-drop { from { opacity: 0; transform: translateY(-70px) scale(0.6); } }
+.timon-onboarding-dot { transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.45s; }
+.timon-onboarding-roller { perspective: 700px; touch-action: none; -webkit-mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.timon-onboarding-roller-item { will-change: transform, opacity; backface-visibility: hidden; }
+html[data-timon-vt='onboarding']::view-transition-old(root) { animation: timon-onboarding-vt-out 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+html[data-timon-vt='onboarding']::view-transition-new(root) { animation: timon-onboarding-vt-in 0.48s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes timon-onboarding-vt-out { to { opacity: 0; transform: translateY(-10px) scale(0.985); filter: blur(4px); } }
+@keyframes timon-onboarding-vt-in { from { opacity: 0; transform: translateY(14px) scale(0.985); filter: blur(6px); } }
+
+/* The onboarding's "Discover Timon" slides (steps/discover.tsx, discover/drawings.tsx):
+   the progress bar of the current slide fills, the drawings' parts pop in,
+   their lines draw or carry a flow, a task card travels across the Kanban
+   columns, the project TIMs bob inside their project's ring. */
+.timon-discover-fill { transform: scaleX(0); animation-name: timon-discover-fill; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes timon-discover-fill { to { transform: scaleX(1); } }
+.timon-discover-grid { background-image: radial-gradient(hsl(var(--muted-foreground) / 0.22) 1px, transparent 1.2px); background-size: 16px 16px; }
+.timon-discover-pop { animation: timon-discover-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes timon-discover-pop { from { opacity: 0; scale: 0.6; } }
+.timon-discover-draw { stroke-dasharray: 100; stroke-dashoffset: 100; animation: timon-discover-draw 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+@keyframes timon-discover-draw { to { stroke-dashoffset: 0; } }
+.timon-discover-flow { stroke-dasharray: 4 6; animation: timon-discover-flow 1.1s linear infinite; }
+@keyframes timon-discover-flow { to { stroke-dashoffset: -20; } }
+.timon-discover-travel { animation: timon-discover-travel 5s cubic-bezier(0.65, 0, 0.35, 1) 0.3s both; }
+@keyframes timon-discover-travel {
+  0%, 30% { transform: none; }
+  40%, 68% { transform: translateX(calc(100% + 0.625rem)); }
+  78%, 100% { transform: translateX(calc(200% + 1.25rem)); }
+}
+.timon-discover-bob { display: inline-block; animation: timon-discover-bob 2.4s ease-in-out infinite; }
+@keyframes timon-discover-bob { 50% { transform: translateY(-5px); } }
+.timon-discover-ring { box-shadow: 0 0 0 1.5px hsl(var(--primary) / 0.35); animation: timon-discover-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both, timon-discover-ring 2.6s ease-in-out 1s infinite; }
+@keyframes timon-discover-ring { 50% { box-shadow: 0 0 0 4px hsl(var(--primary) / 0.18); } }
+
+/* The six boxes of an emailed code (components/email-code): a blinking caret
+ * in the box that takes the next digit, a pop when it fills, a wave while the
+ * daemon checks, a shake on a wrong code. */
+.timon-code-caret::after { content: ''; width: 1.5px; height: 20px; background: currentColor; animation: timon-code-caret 1s steps(1) infinite; }
+@keyframes timon-code-caret { 50% { opacity: 0; } }
+.timon-code-filled { animation: timon-code-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes timon-code-pop { from { transform: scale(0.8); } to { transform: none; } }
+.timon-code-check { animation: timon-code-wave 1s cubic-bezier(0.2, 0.8, 0.2, 1) infinite; }
+@keyframes timon-code-wave { 0%, 100% { transform: none; } 40% { transform: translateY(-4px); } }
+.timon-code-shake { animation: timon-code-shake 0.45s; }
+@keyframes timon-code-shake { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .timon-onboarding-rise,
+  .timon-onboarding-fade,
+  .timon-onboarding-drop {
+    animation: none;
+    opacity: 1;
+  }
+  .timon-onboarding-dot { transition: none; }
+  .timon-discover-pop,
+  .timon-discover-draw,
+  .timon-discover-flow,
+  .timon-discover-travel,
+  .timon-discover-bob,
+  .timon-discover-ring { animation: none; stroke-dashoffset: 0; }
+  .timon-code-caret::after,
+  .timon-code-filled,
+  .timon-code-check,
+  .timon-code-shake { animation: none; }
+}
+
+/* ── Workflow canvas (@timon/workflows) — xyflow chrome on theme tokens ──
+ * The library ships a white, light-only skin; the canvas must read like the
+ * rest of the product in both palettes. */
+.wf-canvas .react-flow__controls {
+  box-shadow: none;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) * 0.8);
+  overflow: hidden;
+  background: hsl(var(--card));
+}
+.wf-canvas .react-flow__controls-button {
+  width: 26px;
+  height: 26px;
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+.wf-canvas .react-flow__controls-button:last-child { border-bottom: 0; }
+.wf-canvas .react-flow__controls-button:hover { background: hsl(var(--muted)); }
+.wf-canvas .react-flow__controls-button svg { fill: currentColor; }
+.wf-canvas .react-flow__minimap {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) * 0.8);
+}
+.wf-canvas .react-flow__minimap-mask { fill: hsl(var(--background) / 0.65); }
+.wf-canvas .react-flow__attribution {
+  background: transparent;
+  color: hsl(var(--muted-foreground) / 0.6);
+  font-size: 9px;
+}
+.wf-canvas .react-flow__attribution a { color: inherit; }
+.wf-canvas .react-flow__node { cursor: grab; }
+.wf-canvas .react-flow__node.dragging { cursor: grabbing; }
+.wf-canvas .react-flow__node:focus, .wf-canvas .react-flow__node:focus-visible { outline: none; }
+.wf-canvas .react-flow__connectionline path { stroke: hsl(var(--primary)); stroke-dasharray: 4 4; }
+.wf-canvas .react-flow__edge:focus, .wf-canvas .react-flow__edge:focus-visible { outline: none; }
+.wf-canvas .react-flow__handle { transition: transform 120ms ease; }
+.wf-canvas .react-flow__handle-left:hover, .wf-canvas .react-flow__handle-right:hover { transform: translate(0, -50%) scale(1.4); }
+.wf-canvas-drop .react-flow__pane { outline: 2px dashed hsl(var(--primary) / 0.5); outline-offset: -8px; }
+
+/* Widget chrome is a user preference, independent of a plugin's own frame. */
+.widget-frame[data-borderless] > .widget-content > section,
+.widget-frame[data-borderless] > .widget-content > section > header,
+.widget-frame[data-borderless] { border-color: transparent; box-shadow: none; }
+.widget-frame[data-transparent],
+.widget-frame[data-transparent] > .widget-content > section,
+.widget-frame[data-transparent] > .widget-content > section > header,
+.widget-frame[data-transparent] > .widget-content > section > div,
+.widget-frame[data-transparent] .agent-chat-content { background: transparent; backdrop-filter: none; box-shadow: none; }
+.widget-stack > .widget-content > section { border: 0; border-radius: 0; box-shadow: none; }
+.widget-stack > .widget-content > section > header > span:first-child { display: none; }
+.widget-stack > .widget-content > section > header { min-height: 36px; padding-block: 0; }
+/* A chat in a widget card takes its margins from the card (the maintainer, 05/11/2026).
+   Bordered: the same small margin on the sides and under the composer, inside
+   the card's edge. Borderless: none at all, so it lines up with the widgets
+   beside it — except on a phone, or inside a container (a stack of tabs, an
+   island such as the chat's widget drawer), where a mini margin each side
+   keeps the composer off the edge. One variable, `--chat-pad`, drives the
+   thread, the strips above the input and the composer alike. */
+.widget-frame [data-chat-shell] { --chat-pad: 8px; }
+.widget-frame [data-chat-shell] [data-composer-dock] { padding-bottom: var(--chat-pad); }
+.widget-frame[data-borderless] [data-chat-shell] { --chat-pad: 0px; }
+.widget-stack[data-borderless] [data-chat-shell],
+.timon-island .widget-frame[data-borderless] [data-chat-shell] { --chat-pad: 6px; }
+@media (max-width: 767px) {
+  .widget-frame[data-borderless] [data-chat-shell] { --chat-pad: 6px; }
+}
+/* A widget's header is its toolbar, not a heading to rule off from the body. */
+.widget-frame > .widget-content > section > header { border-bottom: 0; }
+.widget-frame > .widget-content > section { min-width: 0; }
+
+/* Frosted glass (Settings → Appearance). Opt-in: nothing here applies without
+ * the attribute the Appearance screen sets on <html>.
+ *
+ * Four zones, each with its own blur, opacity and tone, painted by the theme
+ * (`glassCss` in ui-theme-variants.ts) as `--timon-glass-<zone>-blur`,
+ * `-alpha` and `-tone`: `chrome` (top bar, rail, gutters), `island` (the
+ * plate of each island), `widget` (cards, the chat's reading column, popups)
+ * and `bubble` (chat bubbles). Unset, a tone falls back on the surface the
+ * zone replaces. The helpers below turn them into fills and filters once.
+ *
+ * A blur sits on a ::before or on a layer of its own, never on the surface
+ * itself: `backdrop-filter` makes its element the containing block of every
+ * `position: fixed` descendant, and widgets open inline modals that would
+ * then be trapped in the card (see cockpit-vault-graph-tile). */
+:root {
+  --timon-glass-chrome-bg: hsl(var(--timon-glass-chrome-tone, var(--chrome)) / var(--timon-glass-chrome-alpha, 0.6));
+  --timon-glass-chrome-filter: blur(var(--timon-glass-chrome-blur, 16px)) saturate(1.4);
+  --timon-glass-island-bg: hsl(var(--timon-glass-island-tone, var(--background)) / calc(var(--timon-glass-island-alpha, 0.6) * 1.17));
+  --timon-glass-island-blur-filter: blur(var(--timon-glass-island-blur, 16px)) saturate(1.4);
+  --timon-glass-widget-bg: hsl(var(--timon-glass-widget-tone, var(--card)) / var(--timon-glass-widget-alpha, 0.6));
+  --timon-glass-widget-blur-filter: blur(var(--timon-glass-widget-blur, 16px)) saturate(1.4);
+  --timon-glass-bubble-filter: blur(calc(var(--timon-glass-bubble-blur, 16px) * 0.75)) saturate(1.3);
+}
+html[data-glass] :is(.timon-topbar-bar, .timon-topbar-agents, .timon-topbar-safe, .timon-nav-rail, .widget-stack),
+html[data-glass] .widget-frame:not(.widget-stack):not([data-transparent]) > .widget-content > section {
+  background: transparent;
+  isolation: isolate;
+}
+html[data-glass] :is(.timon-topbar-bar, .timon-topbar-agents, .timon-topbar-safe, .widget-frame > .widget-content > section) { position: relative; }
+html[data-glass] :is(.timon-topbar-bar, .timon-topbar-agents, .timon-topbar-safe, .timon-nav-rail, .widget-stack)::before,
+html[data-glass] .widget-frame:not(.widget-stack):not([data-transparent]) > .widget-content > section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+html[data-glass] :is(.timon-topbar-bar, .timon-topbar-agents, .timon-topbar-safe, .timon-nav-rail)::before {
+  background: var(--timon-glass-chrome-bg);
+  -webkit-backdrop-filter: var(--timon-glass-chrome-filter);
+  backdrop-filter: var(--timon-glass-chrome-filter);
+}
+/* A widget's glass follows the glass scope of its island (below). */
+html[data-glass] .widget-stack::before,
+html[data-glass] .widget-frame:not(.widget-stack):not([data-transparent]) > .widget-content > section::before {
+  background: var(--timon-glass-widget-fill);
+  -webkit-backdrop-filter: var(--timon-glass-widget-filter);
+  backdrop-filter: var(--timon-glass-widget-filter);
+}
+/* The rounded corners of the chrome (chrome-corners.tsx) take the frame's own fill. */
+html[data-glass] { --timon-chrome-fill: var(--timon-glass-chrome-bg); }
+/* Inner layers that paint their own card colour would cover the glass. */
+html[data-glass] .widget-frame:not([data-transparent]) > .widget-content > section > :is(header, div),
+html[data-glass] .widget-stack > .widget-content > section { background: transparent; }
+
+/* Glass scope (Settings → Appearance, an island's menu; lib/glass-scope.ts).
+ * `island`: each island is ONE frosted plate and its widgets, without a blur
+ * of their own, stand out by a light surface contrast. `widgets`: the island
+ * is clear — the wallpaper shows, sharp — and each widget, like the chat's
+ * reading column, is a frosted card. `both`: the frosted plate, and each
+ * widget frosts it again on top.
+ *
+ * An island of the workspace frosts its own copy of the wallpaper
+ * (`GlassClear`), so its blur owes nothing to the chrome's:
+ * `--timon-glass-island-fill` and `-filter` paint that layer. The island's
+ * own box takes `--timon-glass-cleared-plate` when it holds that layer
+ * (transparent: the layer is the plate), `--timon-glass-island-plate` when
+ * it does not (a Kanban column, a form: the plate over the chrome's frost).
+ *
+ * `<html>` carries the account's default, an island of the workspace its own
+ * choice. Custom properties inherit, so the closest element that carries the
+ * attribute wins, however deep. */
+html[data-glass],
+html[data-glass] [data-glass-scope='island'] {
+  --timon-glass-island-plate: var(--timon-glass-island-bg);
+  --timon-glass-cleared-plate: transparent;
+  --timon-glass-island-fill: var(--timon-glass-island-bg);
+  --timon-glass-island-filter: var(--timon-glass-island-blur-filter);
+  --timon-glass-widget-fill: var(--timon-glass-widget-bg);
+  --timon-glass-widget-filter: none;
+  --timon-glass-clear: block;
+  --timon-glass-cards: none;
+}
+html[data-glass][data-glass-scope='widgets'],
+html[data-glass] [data-glass-scope='widgets'] {
+  --timon-glass-island-plate: transparent;
+  --timon-glass-island-fill: transparent;
+  --timon-glass-island-filter: none;
+  --timon-glass-widget-fill: var(--timon-glass-widget-bg);
+  --timon-glass-widget-filter: var(--timon-glass-widget-blur-filter);
+  --timon-glass-cards: block;
+}
+html[data-glass][data-glass-scope='both'],
+html[data-glass] [data-glass-scope='both'] {
+  --timon-glass-island-plate: var(--timon-glass-island-bg);
+  --timon-glass-island-fill: var(--timon-glass-island-bg);
+  --timon-glass-island-filter: var(--timon-glass-island-blur-filter);
+  --timon-glass-widget-fill: var(--timon-glass-widget-bg);
+  --timon-glass-widget-filter: var(--timon-glass-widget-blur-filter);
+  --timon-glass-cards: block;
+}
+/* A dialog sits over the page, not over the wallpaper: no copy of it, the
+ * island scope, and the plate on the island's own box. */
+html[data-glass] :is([role='dialog'], [aria-modal='true']) {
+  --timon-glass-island-plate: var(--timon-glass-island-bg);
+  --timon-glass-cleared-plate: var(--timon-glass-island-bg);
+  --timon-glass-widget-fill: var(--timon-glass-widget-bg);
+  --timon-glass-widget-filter: none;
+  --timon-glass-clear: none;
+  --timon-glass-cards: none;
+}
+/* A floating island (`data-island-float`: a popup, pinned or not) sits over
+ * the page and the islands beneath, not on the wallpaper: it frosts what lies
+ * under it itself, like a widget (the `widget` zone), on a ::before (it holds
+ * `position: fixed` content too), with no copy of the wallpaper. The widgets
+ * inside add no blur of their own: the popup is their card. After the scope
+ * rules: same specificity, so the order makes it win. */
+html[data-glass] [data-island-float] {
+  --timon-glass-island-plate: transparent;
+  --timon-glass-cleared-plate: transparent;
+  --timon-glass-widget-fill: transparent;
+  --timon-glass-widget-filter: none;
+  --timon-glass-clear: none;
+  --timon-glass-cards: none;
+  isolation: isolate;
+}
+html[data-glass] [data-island-float]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--timon-glass-widget-bg);
+  -webkit-backdrop-filter: var(--timon-glass-widget-blur-filter);
+  backdrop-filter: var(--timon-glass-widget-blur-filter);
+}
+/* The island's own frost (`GlassClear`): a fixed copy of the wallpaper, so it
+ * lines up with the real one, and a layer that blurs that copy and tints it.
+ * The wrapper's mask makes it a backdrop root: the blur reads the copy only,
+ * never the chrome's frost or the islands around, and costs the island's box,
+ * not the screen. The clip sits on the wrapper and never on the island: a
+ * `clip-path` there would cut the inline modals a widget opens. */
+.timon-glass-clear { display: none; }
+.timon-glass-clear-view { position: fixed; inset: 0; }
+html[data-glass] .timon-glass-clear {
+  display: var(--timon-glass-clear, none);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  clip-path: inset(0 round var(--timon-island-radius));
+  -webkit-mask-image: linear-gradient(#000 0 0);
+  mask-image: linear-gradient(#000 0 0);
+}
+.timon-glass-clear-frost {
+  position: absolute;
+  inset: 0;
+  background: var(--timon-glass-island-fill, transparent);
+  -webkit-backdrop-filter: var(--timon-glass-island-filter, none);
+  backdrop-filter: var(--timon-glass-island-filter, none);
+}
+/* The chat's reading column as one frosted card (`widgets` and `both`): it
+ * takes its column's padding, so its box is the thread's, at every width. */
+.timon-glass-chat-card { display: none; }
+html[data-glass] .timon-glass-chat-card {
+  display: var(--timon-glass-cards, none);
+  position: absolute;
+  inset: var(--timon-island-gap) 0;
+  z-index: -1;
+  pointer-events: none;
+  padding: inherit;
+  padding-block: 0;
+}
+html[data-glass] .timon-glass-chat-card > div {
+  height: 100%;
+  border-radius: var(--timon-island-radius);
+  background: var(--timon-glass-widget-fill);
+  -webkit-backdrop-filter: var(--timon-glass-widget-filter);
+  backdrop-filter: var(--timon-glass-widget-filter);
+}
+
+/* From `md`, the chrome — top bar, rail, gutters between islands — is ONE
+ * frosted layer under the whole page, painted once. Each surface frosting its
+ * own piece tinted twice wherever two of them overlapped (the page backdrop
+ * runs under the rail) and left a seam at every edge. So the pieces go
+ * transparent and the islands, with their own frost, sit on that layer.
+ * Below `md` the top bar slides over the content: it keeps its own glass.
+ *
+ * A dialog that frames its islands with a backdrop keeps a fill of its own:
+ * it sits over the page, not over the wallpaper. */
+@media (min-width: 768px) {
+  html[data-glass] { --timon-chrome-fill: transparent; }
+  html[data-glass] :is([role='dialog'], [aria-modal='true']) { --timon-chrome-fill: var(--timon-glass-chrome-bg); }
+  /* `:has`: only a page that shows the chrome; sign-in and onboarding paint none. */
+  html[data-glass] body:has(.timon-nav-rail)::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--timon-glass-chrome-bg);
+    -webkit-backdrop-filter: var(--timon-glass-chrome-filter);
+    backdrop-filter: var(--timon-glass-chrome-filter);
+  }
+  html[data-glass] :is(.timon-topbar-bar, .timon-topbar-safe, .timon-nav-rail)::before { content: none; }
+  html[data-glass] .timon-glass-rail { display: block; }
+  /* The chat alone: its island stops one gutter short of the bottom. */
+  html[data-glass] [data-island-underlay] ~ .chat-thread-layout > .timon-glass-chat-card { bottom: calc(2 * var(--timon-island-gap)); }
+}
+/* A page that paints edge to edge gets its island from its underlay, which
+   always holds the frost layer: the plate is there, like a cleared island. */
+html[data-glass] .timon-island-underlay { background: var(--timon-glass-cleared-plate, transparent); }
+
+/* The rail unfolded over the page (glass-rail.tsx): the rail's band, from the
+ * top bar down, plus the island's two rounded corners against its edge. The
+ * width is a registered property so it can follow the rail's own transition
+ * (`duration-150`, Tailwind's default easing). */
+@property --timon-glass-rail-w {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 56px;
+}
+.timon-glass-rail {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  pointer-events: none;
+  --timon-glass-rail-w: var(--timon-nav-w);
+  transition: --timon-glass-rail-w 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --timon-glass-corner: var(--timon-island-radius);
+  -webkit-mask-image: linear-gradient(#000 0 0),
+    radial-gradient(circle at 100% 100%, transparent calc(var(--timon-glass-corner) - 0.5px), #000 var(--timon-glass-corner)),
+    radial-gradient(circle at 100% 0, transparent calc(var(--timon-glass-corner) - 0.5px), #000 var(--timon-glass-corner));
+  mask-image: linear-gradient(#000 0 0),
+    radial-gradient(circle at 100% 100%, transparent calc(var(--timon-glass-corner) - 0.5px), #000 var(--timon-glass-corner)),
+    radial-gradient(circle at 100% 0, transparent calc(var(--timon-glass-corner) - 0.5px), #000 var(--timon-glass-corner));
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: var(--timon-glass-rail-w) calc(100% - var(--timon-topbar-h)), var(--timon-glass-corner) var(--timon-glass-corner), var(--timon-glass-corner) var(--timon-glass-corner);
+  mask-size: var(--timon-glass-rail-w) calc(100% - var(--timon-topbar-h)), var(--timon-glass-corner) var(--timon-glass-corner), var(--timon-glass-corner) var(--timon-glass-corner);
+  -webkit-mask-position: left 0 top var(--timon-topbar-h), left var(--timon-glass-rail-w) top var(--timon-topbar-h), left var(--timon-glass-rail-w) bottom var(--timon-island-gap);
+  mask-position: left 0 top var(--timon-topbar-h), left var(--timon-glass-rail-w) top var(--timon-topbar-h), left var(--timon-glass-rail-w) bottom var(--timon-island-gap);
+}
+.timon-glass-rail[data-expanded] { --timon-glass-rail-w: 14rem; }
+.timon-glass-rail-frost {
+  position: absolute;
+  inset: 0;
+  background: var(--timon-glass-chrome-bg);
+  -webkit-backdrop-filter: var(--timon-glass-chrome-filter);
+  backdrop-filter: var(--timon-glass-chrome-filter);
+}
+
+/* Frosted chat bubbles: only those `glass-bubbles.ts` marks as near the
+ * viewport. Same ::before as above — tool calls open menus from inside. */
+html[data-glass-bubbles] .chat-bubble[data-glass-surface][data-glass-visible] {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+html[data-glass-bubbles] .chat-bubble[data-glass-surface][data-glass-visible]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: hsl(var(--timon-glass-bubble-tone, var(--card)) / var(--timon-glass-bubble-alpha, 0.55));
+  -webkit-backdrop-filter: var(--timon-glass-bubble-filter);
+  backdrop-filter: var(--timon-glass-bubble-filter);
+}
+html.dark[data-glass-bubbles] .chat-bubble[data-glass-surface='agent'][data-glass-visible]::before { background: hsl(var(--timon-glass-bubble-tone, var(--surface-2)) / var(--timon-glass-bubble-alpha, 0.55)); }
+html[data-glass-bubbles] .chat-bubble[data-glass-surface='user'][data-glass-visible]::before {
+  background: color-mix(in srgb, var(--bubble-user) calc(var(--timon-glass-bubble-alpha, 0.55) * 100%), transparent);
+}
+
+/* Tabs are a segmented control (shadcn "tabs"): a muted pill holding the
+ * titles, the active one raised on the background colour, sitting inside the
+ * card at its top. */
+/* Scrolling stays (wheel, touch, keyboard); only the bar goes — a native
+ * scrollbar inside the pill would cut it in two. */
+.widget-tablist { scrollbar-width: none; }
+.widget-tablist::-webkit-scrollbar { display: none; }
+/* A title bar is a handle, not text to select: no I-beam over the title
+ * before the hint shows, and a press there never starts a selection. Fields
+ * placed in a header keep their own cursor. */
+.widget-frame > .widget-content > section > header,
+.widget-frame > .widget-tabbar { cursor: default; user-select: none; -webkit-user-select: none; }
+.widget-frame > .widget-content > section > header :is(input, textarea, [contenteditable="true"]) { cursor: text; user-select: text; -webkit-user-select: text; }
+/* The drag hint: once the pointer has rested on a card's title, the title bar
+ * (a stack's tab strip, a whole bare form) takes the open hand. Its controls
+ * keep their own cursor. */
+.widget-frame[data-drag-ready] > .widget-content > section > header,
+.widget-frame[data-drag-ready] > .widget-tabbar,
+.widget-frame[data-drag-ready] > .widget-tabbar [role="tab"],
+.widget-frame[data-drag-ready][data-compact] { cursor: grab; }
+/* A widget in the hand: the closed hand over the whole window until it drops. */
+.widget-dragging, .widget-dragging * { cursor: grabbing !important; }
+/* Untitled: the header keeps its buttons, loses its title, and goes away when
+ * nothing is left in it. */
+.widget-frame[data-untitled] > .widget-content > section > header > span:first-child { display: none; }
+.widget-frame[data-untitled] > .widget-content > section > header:not(:has(button, a, input)) { display: none; }
+
+@layer base {
+  button, input, select, textarea { accent-color: hsl(var(--primary)); }
+  :where(button, a, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+}
+
+.widget-zone:not([data-orientation="horizontal"]) > .widget-frame ~ .widget-frame { margin-top: 12px; }
+
+.widget-stack > .widget-content > section > header:not(:has(button, a, input)) { display: none; }
+

@@ -1,0 +1,130 @@
+{
+  "name": "@timon-ai/provider-claude",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "timon": {
+    "id": "provider-claude",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Claude (Anthropic)",
+    "description": "Official subscription provider using the Claude CLI.",
+    "author": "Timon",
+    "permissions": [
+      "backends:register"
+    ],
+    "provider": {
+      "binaries": [
+        {
+          "name": "claude"
+        }
+      ],
+      "credentialDirs": [
+        ".claude"
+      ],
+      "osCredentials": [
+        {
+          "service": "Claude Code-credentials"
+        }
+      ],
+      "backends": [
+        {
+          "id": "claude",
+          "rank": 10,
+          "binary": {
+            "names": [
+              "claude"
+            ],
+            "install": {
+              "darwin": {
+                "kind": "none"
+              },
+              "any": {
+                "kind": "npm",
+                "package": "@anthropic-ai/claude-code"
+              }
+            },
+            "searchDirs": {
+              "darwin": [
+                "~/.claude/local"
+              ]
+            },
+            "desktopBuilds": [
+              {
+                "platform": "darwin",
+                "root": "~/Library/Application Support/Claude/claude-code",
+                "executable": [
+                  "claude.app",
+                  "Contents",
+                  "MacOS",
+                  "claude"
+                ],
+                "order": "semver"
+              }
+            ],
+            "standaloneInstaller": {
+              "label": "Claude Code",
+              "posix": "curl -fsSL https://claude.ai/install.sh | bash",
+              "windows": "irm https://claude.ai/install.ps1 | iex"
+            }
+          },
+          "credentialDirs": [
+            ".claude"
+          ],
+          "setupCard": {
+            "label": "Claude",
+            "order": 2
+          },
+          "modelBrands": [
+            {
+              "match": "claude",
+              "brand": "claude"
+            },
+            {
+              "match": "opus",
+              "brand": "claude"
+            },
+            {
+              "match": "sonnet",
+              "brand": "claude"
+            },
+            {
+              "match": "haiku",
+              "brand": "claude"
+            },
+            {
+              "match": "fable",
+              "brand": "claude"
+            }
+          ],
+          "seedsMainAgent": true,
+          "readOnlyTools": true,
+          "signInCommand": "claude",
+          "signInThen": "/login",
+          "installDocs": "https://docs.anthropic.com/en/docs/claude-code/setup",
+          "updateCheck": {
+            "latest": {
+              "npm": "@anthropic-ai/claude-code"
+            }
+          },
+          "apiKeyProviders": [
+            {
+              "id": "deepseek",
+              "label": "DeepSeek",
+              "brand": "deepseek"
+            },
+            {
+              "id": "kimi",
+              "label": "Kimi",
+              "brand": "moonshot"
+            }
+          ]
+        }
+      ]
+    },
+    "license": {
+      "required": false
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@timon-ai/plugin-overlay",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-overlay",
+    "apiVersion": 1,
+    "kind": ["widget", "overlay"],
+    "label": "Example mascot",
+    "description": "One plugin: a card in a rail and an in-app overlay. Not an OS window.",
+    "permissions": [],
+    "client": {
+      "slots": ["cockpit.widget", "overlay"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

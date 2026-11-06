@@ -1,0 +1,78 @@
+{
+  "terminal": {
+    "title": "Terminale",
+    "tabs": "Sessioni del terminale",
+    "state": {
+      "connecting": "Connessione…",
+      "retrying": "Connessione persa, riconnessione…",
+      "unauthorized": "Sessione scaduta: accedi di nuovo.",
+      "ended": "Sessione terminata.",
+      "exited": "Shell terminata (codice {code})."
+    },
+    "actions": {
+      "new": "Nuovo terminale",
+      "kill": "Chiudi {name} (ferma la sua shell)",
+      "reconnect": "Riconnetti ora",
+      "popOut": "Apri in una finestra flottante"
+    },
+    "keys": {
+      "toolbar": "Tasti aggiuntivi",
+      "up": "Su",
+      "down": "Giù",
+      "left": "Sinistra",
+      "right": "Destra",
+      "copy": "Copia"
+    },
+    "clipboard": {
+      "menu": "Appunti del terminale",
+      "copy": "Copia",
+      "paste": "Incolla",
+      "copied": "Copiato negli appunti.",
+      "copyFailed": "Impossibile copiare: il browser ha negato l’accesso agli appunti.",
+      "pasteFailed": "Impossibile leggere gli appunti: consenti l’accesso, oppure incolla con Ctrl+Shift+V (Cmd+V su Mac)."
+    },
+    "errors": {
+      "create": "Impossibile avviare un terminale: {error}",
+      "kill": "Impossibile chiudere il terminale: {error}",
+      "load": "Impossibile raggiungere il servizio del terminale: {error}"
+    },
+    "unavailable": {
+      "disabled": "Il terminale integrato è disattivato. Un amministratore può attivarlo in {settingsPath}.",
+      "forbidden": "Il tuo account non può aprire un terminale (permesso \"terminal:open\").",
+      "session_required": "Accedi dal browser per aprire un terminale.",
+      "unauthorized": "Accedi per aprire un terminale.",
+      "pty_unavailable": "Questa macchina non può avviare un terminale: il componente di pseudo-terminale non si è caricato. Controlla il log del daemon."
+    },
+    "titleScoped": "Terminale — {scope}",
+    "scopes": {
+      "none": "Nessun progetto",
+      "label": "Progetti"
+    },
+    "request": {
+      "title": "{agent} ti chiede di eseguire un comando",
+      "titleFrom": "{agent} · {project} ti chiede di eseguire un comando",
+      "badge": "comando",
+      "allow": "Consenti",
+      "paste": "Incolla in un terminale",
+      "deny": "Ignora",
+      "copy": "Copia il comando",
+      "copied": "Comando copiato negli appunti.",
+      "hint": "Incollato senza Enter: leggilo, poi premi Enter tu.",
+      "state": {
+        "allow": "Consentito: lo esegue l’agente",
+        "paste": "Incollato in un terminale",
+        "deny": "Ignorato"
+      },
+      "errors": {
+        "forbidden": "Il tuo account non può aprire un terminale: non è stato incollato nulla.",
+        "not_found": "Questa richiesta non esiste più.",
+        "already_decided": "Su questa richiesta è già stata presa una decisione.",
+        "not_offered": "Questa scelta non è più disponibile: l’agente ora non può eseguire il comando.",
+        "failed": "Impossibile registrare la tua decisione. Riprova."
+      },
+      "windowRefused": "Decisione registrata, ma il terminale di {scope} non è sullo schermo. Apri una conversazione di {scope} per incollarlo lì; il comando è negli appunti.",
+      "windowRefusedNoClipboard": "Decisione registrata, ma il terminale di {scope} non è sullo schermo. Apri una conversazione di {scope}, poi copia il comando dalla scheda.",
+      "pendingBadge": "{count} comando/i in attesa della tua decisione"
+    }
+  }
+}

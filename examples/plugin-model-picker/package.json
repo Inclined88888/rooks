@@ -1,0 +1,24 @@
+{
+  "name": "@timon-ai/plugin-model-picker",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-model-picker",
+    "apiVersion": 13,
+    "kind": "behavior",
+    "label": "Flat model picker",
+    "description": "Replaces the model selector everywhere with one flat list and a search.",
+    "permissions": [],
+    "client": {
+      "slots": ["model.picker"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

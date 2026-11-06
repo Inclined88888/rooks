@@ -1,0 +1,78 @@
+{
+  "terminal": {
+    "title": "Terminal",
+    "tabs": "Sesje terminala",
+    "state": {
+      "connecting": "Łączenie…",
+      "retrying": "Połączenie utracone, ponowne łączenie…",
+      "unauthorized": "Sesja wygasła: zaloguj się ponownie.",
+      "ended": "Sesja zakończona.",
+      "exited": "Powłoka zakończyła działanie (kod {code})."
+    },
+    "actions": {
+      "new": "Nowy terminal",
+      "kill": "Zamknij {name} (zatrzymuje powłokę)",
+      "reconnect": "Połącz ponownie teraz",
+      "popOut": "Otwórz w pływającym oknie"
+    },
+    "keys": {
+      "toolbar": "Dodatkowe klawisze",
+      "up": "W górę",
+      "down": "W dół",
+      "left": "W lewo",
+      "right": "W prawo",
+      "copy": "Kopiuj"
+    },
+    "clipboard": {
+      "menu": "Schowek terminala",
+      "copy": "Kopiuj",
+      "paste": "Wklej",
+      "copied": "Skopiowano do schowka.",
+      "copyFailed": "Nie udało się skopiować: przeglądarka odmówiła dostępu do schowka.",
+      "pasteFailed": "Nie udało się odczytać schowka: zezwól na dostęp do niego lub wklej przez Ctrl+Shift+V (Cmd+V na Macu)."
+    },
+    "errors": {
+      "create": "Nie udało się uruchomić terminala: {error}",
+      "kill": "Nie udało się zamknąć terminala: {error}",
+      "load": "Nie można połączyć się z usługą terminala: {error}"
+    },
+    "unavailable": {
+      "disabled": "Wbudowany terminal jest wyłączony. Administrator może go włączyć w {settingsPath}.",
+      "forbidden": "Twoje konto nie może otwierać terminala (uprawnienie „terminal:open”).",
+      "session_required": "Zaloguj się w przeglądarce, aby otworzyć terminal.",
+      "unauthorized": "Zaloguj się, aby otworzyć terminal.",
+      "pty_unavailable": "Ta maszyna nie może uruchomić terminala: nie udało się wczytać komponentu pseudoterminala. Sprawdź dziennik demona."
+    },
+    "titleScoped": "Terminal — {scope}",
+    "scopes": {
+      "none": "Bez projektu",
+      "label": "Projekty"
+    },
+    "request": {
+      "title": "{agent} prosi cię o uruchomienie polecenia",
+      "titleFrom": "{agent} · {project} prosi cię o uruchomienie polecenia",
+      "badge": "polecenie",
+      "allow": "Zezwól",
+      "paste": "Wklej do terminala",
+      "deny": "Odrzuć",
+      "copy": "Kopiuj polecenie",
+      "copied": "Polecenie skopiowane do schowka.",
+      "hint": "Wklejone bez Enter: przeczytaj je, a potem sam naciśnij Enter.",
+      "state": {
+        "allow": "Zezwolono: agent je uruchamia",
+        "paste": "Wklejono do terminala",
+        "deny": "Odrzucono"
+      },
+      "errors": {
+        "forbidden": "Twoje konto nie może otwierać terminala: nic nie wklejono.",
+        "not_found": "Ta prośba już nie istnieje.",
+        "already_decided": "O tej prośbie już zdecydowano.",
+        "not_offered": "Ten wybór nie jest już dostępny: agent nie może teraz uruchomić polecenia.",
+        "failed": "Nie udało się zapisać twojej decyzji. Spróbuj ponownie."
+      },
+      "windowRefused": "Decyzja zapisana, ale terminala {scope} nie ma na ekranie. Otwórz rozmowę {scope}, aby tam wkleić; polecenie jest w schowku.",
+      "windowRefusedNoClipboard": "Decyzja zapisana, ale terminala {scope} nie ma na ekranie. Otwórz rozmowę {scope}, a potem skopiuj polecenie z karty.",
+      "pendingBadge": "Polecenia czekające na twoją decyzję: {count}"
+    }
+  }
+}

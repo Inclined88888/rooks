@@ -1,0 +1,37 @@
+{
+  "name": "@timon-ai/plugin-theme-timon",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": "./lib/client.js"
+  },
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "timon": {
+    "id": "theme-timon",
+    "apiVersion": 1,
+    "kind": "theme",
+    "label": "Timon",
+    "description": "The Timon brand palette, dark and light: the website's violet-tinted night, beige-leaning whites, peach and copper accents.",
+    "author": "Timon",
+    "permissions": [],
+    "client": {
+      "slots": [
+        "theme"
+      ],
+      "external": [
+        "react",
+        "@timon/ui"
+      ],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": {
+      "required": false
+    }
+  }
+}

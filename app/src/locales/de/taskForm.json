@@ -1,0 +1,276 @@
+{
+  "taskForm": {
+    "detachWorktree": {
+      "title": "Worktree",
+      "hint": "Lösen entfernt den Arbeitsordner dieser Aufgabe und behält ihren Branch ({branch}) mit seinen Commits; die Aufgabe erhält einen neuen Ordner auf diesem Branch, wenn sie wieder läuft. Abgelehnt, wenn der Ordner nicht committete Änderungen hat.",
+      "action": "Worktree lösen",
+      "detaching": "Wird gelöst…",
+      "confirm": "Den Arbeitsordner dieser Aufgabe entfernen? Ihr Branch und ihre Commits bleiben erhalten.",
+      "done": "Worktree gelöst, Branch behalten",
+      "failed": "Der Worktree konnte nicht gelöst werden: {error}"
+    },
+    "markMerged": {
+      "title": "Außerhalb von Timon gemergt?",
+      "hint": "Wenn der Branch dieser Aufgabe bereits gemergt wurde (ein auf GitHub gemergter Pull Request, ein Merge von Hand), gib den Merge-Commit an: Die Aufgabe wird als erledigt geschlossen, und die abhängigen Aufgaben starten.",
+      "shaLabel": "Merge-Commit",
+      "shaPlaceholder": "Commit-SHA, z. B. bcd02520",
+      "action": "Als gemergt markieren",
+      "marking": "Wird markiert…",
+      "done": "Aufgabe als gemergt markiert",
+      "doneUnverified": "Aufgabe als gemergt markiert. Dieser Commit ist noch nicht in der lokalen Kopie des Repositorys und konnte daher nicht geprüft werden.",
+      "notInBase": "Dieser Commit ist nicht im Basis-Branch des Repositorys. Prüfe die SHA des Merges.",
+      "failed": "Die Aufgabe konnte nicht als gemergt markiert werden: {error}",
+      "unreachable": "Timon hat nicht geantwortet",
+      "hintDone": "Diese Aufgabe ist erledigt, aber ihr Branch ging in Timon nie durch einen Merge. Wurde er anderswo gemergt (ein auf GitHub gemergter Pull Request, ein Merge von Hand), gib den Merge-Commit an: Er wird festgehalten, und die abhängigen Aufgaben starten.",
+      "cardAction": "gemergt?"
+    },
+    "editTitle": "Aufgabe bearbeiten",
+    "newTitle": "Neue Aufgabe",
+    "close": "Schließen",
+    "delete": "Löschen",
+    "report": "Bericht",
+    "title": "Titel",
+    "titlePlaceholder": "Was soll der Agent tun?",
+    "titleRequired": "Gib der Aufgabe einen Titel.",
+    "tabs": {
+      "label": "Abschnitte der Aufgabe",
+      "general": "Allgemein",
+      "dependencies": "Abhängigkeiten",
+      "capabilities": "Fähigkeiten"
+    },
+    "type": "Typ",
+    "priority": {
+      "label": "Priorität",
+      "urgent": "Dringend",
+      "high": "Hoch",
+      "normal": "Normal",
+      "low": "Niedrig",
+      "someday": "Irgendwann"
+    },
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Kontext, Einschränkungen, wie das Ergebnis aussieht…",
+    "write": "Schreiben",
+    "preview": "Vorschau",
+    "previewEmpty": "Noch nichts für die Vorschau.",
+    "todo": {
+      "label": "TO-DO-Idee",
+      "placeholder": "Nummer, z. B. 209",
+      "hint": "Die Idee schließt sich selbst, wenn die Kette dieser Aufgabe ankommt.",
+      "invalid": "Eine TO-DO-Idee ist eine ganze Zahl, z. B. 209."
+    },
+    "attachments": {
+      "label": "Anhänge",
+      "drop": "Dateien hier ablegen oder",
+      "browse": "Dateien wählen",
+      "dropActive": "Zum Anhängen ablegen",
+      "uploading": "Wird gesendet…",
+      "queued": "Wird beim Erstellen der Aufgabe gesendet",
+      "inherited": "Aus einem früheren Durchlauf",
+      "remove": "{name} entfernen",
+      "open": "{name} öffnen",
+      "enlarge": "{name} vergrößern",
+      "enlarged": "{name}, vergrößert",
+      "closePreview": "Vorschau schließen",
+      "tooLarge": "{name}: zu groß (höchstens 15 MB).",
+      "typeRefused": "{name}: Dieser Dateityp wird nicht akzeptiert.",
+      "quota": "{name}: Die Aufgabe enthält bereits so viele Dateien wie möglich (20 Dateien, 100 MB).",
+      "failed": "{name}: konnte nicht gesendet werden ({error}).",
+      "removeFailed": "{name} konnte nicht entfernt werden: {error}",
+      "loadFailed": "Die angehängten Dateien konnten nicht gelesen werden.",
+      "dismiss": "Ausblenden",
+      "partial": "Aufgabe gespeichert, aber einige Dateien konnten nicht gesendet werden: {names}"
+    },
+    "agent": "Agent",
+    "agentRequired": "Wähle den Agenten, der die Aufgabe ausführt.",
+    "agentFilter": "Agenten filtern…",
+    "noAgentMatch": "Kein passender Agent.",
+    "loadingAgents": "Agenten werden geladen…",
+    "model": "Modell",
+    "modelInherit": "Projektrolle",
+    "modelInheritHint": "Die Rolle des Projekts für diesen Aufgabentyp entscheidet, sonst der Agent",
+    "modelInherited": "{model} (geerbt)",
+    "modelHelp": "« Projektrolle » führt die Aufgabe mit dem aus, was die Rolle des Projekts für diesen Typ, sonst der Agent, festlegt.",
+    "worktreeBlocked": "Dieses Backend arbeitet außerhalb des Ordners von Timon: Eine ihm zugewiesene Code- oder Merge-Aufgabe wird blockiert.",
+    "fallback": {
+      "short": "Fallback",
+      "label": "Fallback, wenn das Kontingent ausgeht",
+      "inherit": "Einstellung der Serie oder global",
+      "inheritHint": "Der Serienplan entscheidet, sonst die Einstellung von Timon",
+      "never": "Nie selbst wechseln"
+    },
+    "permission": "Berechtigung",
+    "permissionModes": {
+      "default": "Vom Agenten geerbt",
+      "acceptEdits": "acceptEdits",
+      "plan": "plan",
+      "bypassPermissions": "bypassPermissions"
+    },
+    "pipeline": {
+      "label": "Pipeline",
+      "full": "Voll: Code → Review → Merge",
+      "code-self": "Nur Code, der Coder mergt seinen Branch",
+      "code-group": "Nur Code, ein Merge für die Gruppe",
+      "fixed": "Beim Erstellen der Aufgabe festgelegt."
+    },
+    "deps": {
+      "filter": "Aufgaben filtern…",
+      "count": "{selected} ausgewählt · {count} Kandidaten",
+      "none": "Keine infrage kommende Aufgabe.",
+      "noMatch": "Keine passende Aufgabe."
+    },
+    "status": {
+      "PENDING": "Ausstehend",
+      "IN_PROGRESS": "In Arbeit",
+      "DONE": "Erledigt",
+      "BLOCKED": "Blockiert",
+      "new": "Neu"
+    },
+    "skills": "Skills",
+    "skillsFilter": "Skills filtern…",
+    "selectedCount": "{count} ausgewählt",
+    "noneSelected": "keine ausgewählt",
+    "noSkills": "keine Skills installiert",
+    "noSkillMatch": "Kein passender Skill.",
+    "mcpServers": "MCP-Server",
+    "noMcpServers": "keine MCP-Server konfiguriert",
+    "extraAllowedTools": "Zusätzlich erlaubte Tools (kommagetrennt)",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__timon__kanban_add",
+    "schedule": {
+      "label": "Start planen (optional)"
+    },
+    "summary": {
+      "label": "Übersicht",
+      "model": "Modell",
+      "type": "Typ",
+      "priority": "Priorität",
+      "deps": "Abhängigkeiten",
+      "depsNone": "Keine",
+      "depsCount": "{count} zuerst abzuschließen",
+      "start": "Start",
+      "startAsap": "So bald wie möglich",
+      "status": "Status",
+      "attachments": "Dateien",
+      "agentNone": "Kein Agent gewählt"
+    },
+    "cancel": "Abbrechen",
+    "saving": "Wird gespeichert…",
+    "creating": "Wird erstellt…",
+    "save": "Speichern",
+    "create": "Aufgabe erstellen",
+    "toast": {
+      "updated": "Aufgabe aktualisiert",
+      "created": "Aufgabe erstellt",
+      "saveFailed": "Aufgabe konnte nicht gespeichert werden: {error}"
+    },
+    "seriesPlan": {
+      "presets": {
+        "saveError": "Die Modellvorgabe konnte nicht gespeichert werden.",
+        "label": "Vorgaben",
+        "columnIn": {
+          "main": "primär",
+          "fallback": "Fallback"
+        },
+        "columnMain": "Primär",
+        "columnFallback": "Fallback",
+        "empty": "Noch keine Vorgabe",
+        "applyTitle": "„{name}“ anwenden — {roles}",
+        "applyTo": "„{name}“ anwenden auf",
+        "menu": "Vorgabe „{name}“",
+        "saveTitle": "Spalte {column} als Vorgabe speichern",
+        "saveNothing": "Wähle zuerst ein Modell in der Spalte {column}",
+        "namePlaceholder": "Name der Vorgabe",
+        "confirmSave": "Speichern",
+        "confirmRename": "Umbenennen",
+        "cancel": "Abbrechen",
+        "overwriteConfirm": "„{name}“ existiert bereits. Ersetzen?",
+        "replace": "Ersetzen",
+        "saveRefused": "Nicht gespeichert: Die Vorgaben sind noch nicht geladen, oder die Liste ist voll.",
+        "renameTaken": "Eine andere Vorgabe trägt bereits diesen Namen.",
+        "rename": "Umbenennen",
+        "delete": "Löschen",
+        "deleteConfirm": "„{name}“ löschen?",
+        "notice": {
+          "applied": "„{name}“ auf die Spalte {column} angewendet.",
+          "none": "„{name}“ legt keine der hier gezeigten Rollen fest.",
+          "saved": "Als „{name}“ gespeichert."
+        },
+        "skipped": "Übersprungen, nicht mehr verfügbar: {roles}",
+        "orphan": {
+          "account": "Konto nicht mehr verbunden",
+          "model": "Modell von diesem Konto nicht mehr angeboten"
+        }
+      },
+      "heading": "Serienplan — wie soll diese Arbeit ausgeführt werden?",
+      "role": "Rolle",
+      "model": "Modell",
+      "fallback": "Fallback",
+      "current": "{value} (aktuell)",
+      "inheritRole": "Projektrolle erben",
+      "runningMission": "laufende Mission",
+      "mainModel": "Primärmodell",
+      "runningModel": "Modell der laufenden Mission — hier nicht änderbar",
+      "noFallback": "kein Fallback",
+      "fallbackTitle": "Fallback, wenn das Primärmodell kein Kontingent mehr hat",
+      "notePlaceholder": "Freie Notiz (kann die Auswahl oben präzisieren oder ihr widersprechen)",
+      "launch": "Starten",
+      "answered": "beantwortet",
+      "groups": {
+        "general": "Allgemeine Einstellungen — gelten für jede Gruppe, die nichts festlegt",
+        "other": "Weitere Arbeitsstränge",
+        "inherits": "erbt die allgemeinen Einstellungen",
+        "countOne": "{count} Arbeitsstrang",
+        "countMany": "{count} Arbeitsstränge",
+        "inheritGeneral": "{value} (allgemeine Einstellung)",
+        "fallbackSummary": "Fallback {value}",
+        "noRolesInMode": "Dieser Modus erstellt keine Aufgabe: kein Modell pro Gruppe zu wählen.",
+        "modeLabel": "Modelle dieser Gruppe",
+        "sync": "Allgemeine Modelle verwenden",
+        "override": "Modelle überschreiben",
+        "statusSync": "Allgemeine Modelle",
+        "statusCustom": "Eigene Modelle",
+        "customEmpty": "eigene Modelle — unten wählen, sonst gelten die allgemeinen"
+      },
+      "roles": {
+        "orchestrator": "Orchestrator",
+        "mission": "Neue Mission",
+        "code": "Coder",
+        "review": "Reviewer",
+        "merge": "Merger",
+        "doc": "Doku"
+      },
+      "modes": {
+        "sequential": {
+          "head": "Sequenziell"
+        },
+        "sequentialHere": {
+          "sub": "in dieser Mission",
+          "title": "Sequenziell — in dieser Mission",
+          "detail": "Der Agent bearbeitet die Arbeitsstränge hier in dieser Unterhaltung. Keine Kanban-Aufgabe und kein Worktree wird erstellt."
+        },
+        "sequentialNewMission": {
+          "sub": "neue Mission",
+          "title": "Sequenziell — neue Mission",
+          "detail": "Dieselbe verkettete Ausführung geht an einen frischen Missionskontext, während diese Unterhaltung auf die Zusammenfassung wartet."
+        },
+        "full": {
+          "head": "Volle Pipeline",
+          "sub": "Code → Review → Merge",
+          "title": "Kanban — Code → Review → Merge",
+          "detail": "Eine Code-Aufgabe pro Arbeitsstrang in parallelen Worktrees, jede geprüft und gemergt. Die sicherste Option für Arbeit über Nacht."
+        },
+        "codeSelf": {
+          "head": "Nur Code",
+          "sub": "jeder Branch mergt sich selbst",
+          "title": "Kanban — nur Code, Merge unterwegs",
+          "detail": "Eine Code-Aufgabe pro Arbeitsstrang ohne Review; jeder Coder mergt seinen Branch, wenn er fertig ist."
+        },
+        "codeGroup": {
+          "head": "Nur Code",
+          "sub": "ein Merge am Ende",
+          "title": "Kanban — nur Code, gemeinsamer Merge",
+          "detail": "Eine Code-Aufgabe pro Arbeitsstrang ohne Review; eine abschließende Merge-Aufgabe führt die Branches zusammen."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,323 @@
+# Host-mode TIMON:
+#   - the orchestrator runs as a node process on the host (see
+#     orchestrator/README.md → "host mode" or `npm run start:host`), so
+#     agents inherit your real $PATH, $HOME, ~/.ssh, all installed tools,
+#     etc. No more reinventing the wheel inside a slim container image.
+#   - this compose file now manages only the Next.js app + its workers.
+#     They reach the host orchestrator on host.docker.internal:3001 via the
+#     extra_hosts host-gateway shim (works on Linux + Mac). Dual-home: :3000
+#     is the v1 daily driver, :3001 is Timon.
+#     The daemon binds `daemon.listen.host` (TODO #339): with the default
+#     127.0.0.1 a container cannot reach it through the bridge gateway. Add the
+#     gateway to `daemon.listen.extraHosts` (`["172.17.0.1"]`, see `ip -4 addr
+#     show docker0`): bound unauthenticated, auth and cookies keep following
+#     `host`. Changing `host` itself turns daemon auth on (`auth: auto`) and
+#     makes session cookies `Secure`.
+#
+# To go back to fully-containerised TIMON, re-add an `orchestrator:` service
+# that builds ./orchestrator and put it back as a depends_on target.
+
+services:
+  # Static public documentation behind the existing Traefik proxy.
+  #     docker compose --profile docs up -d --build docs
+  # This is a snapshot: rebuild after editing Markdown to see the changes.
+  docs:
+    # Host build networking is required for DNS resolution; see app below.
+    build:
+      context: ./public-docs
+      network: host
+    container_name: timon-docs
+    profiles: ["docs"]
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.timon-docs.rule=Host(`doc-timon.localhost`)"
+      - "traefik.http.routers.timon-docs.entrypoints=web"
+      - "traefik.http.routers.timon-docs.service=timon-docs"
+      - "traefik.http.routers.timon-docs-secure.rule=Host(`doc-timon.localhost`)"
+      - "traefik.http.routers.timon-docs-secure.entrypoints=websecure"
+      - "traefik.http.routers.timon-docs-secure.tls=true"
+      - "traefik.http.routers.timon-docs-secure.service=timon-docs"
+      - "traefik.http.services.timon-docs.loadbalancer.server.port=80"
+    networks:
+      - traefik_network
+
+  # Single Next.js app: UI, inbound channels, remote bearer-auth API, /api/ui proxy.
+  # Hosted on three Traefik virtual hosts — same container, three routes.
+  app:
+    # network: host at build time — required, not an optimisation. The host
+    # resolves through the systemd-resolved stub (127.0.0.53), unreachable
+    # from buildkit's isolated network namespace; buildkit then falls back on
+    # the upstream servers it discovered, among them a Tailscale link-local
+    # address (fe80::…%4) that is invalid outside its interface, and nothing
+    # resolves any more. Symptom: EAI_AGAIN on fonts.googleapis.com,
+    # registry.npmjs.org or deb.debian.org, depending on which step leaves the
+    # cache. Holds for every service built here.
+    build:
+      context: ./app
+      network: host
+    container_name: timon-app
+    # `docker` profile (step 3.1): `docker compose up -d` without
+    # `--profile docker` no longer restarts the app. The bundled `web-app`
+    # module can serve it as a child process of the daemon; both listen on the
+    # same :3100, so one OR the other, never both. As long as `app.enabled` is
+    # `false` (the default), this container serves the UI: starting it
+    # explicitly is still required (`docker compose --profile docker up -d app`).
+    profiles: ["docker"]
+    restart: unless-stopped
+    # The container's settings come from here, not from the daemon's registry:
+    # `web-app::envOf` copies registry values only for an app the daemon launches.
+    # TIMON_ALLOW_HTTP set in Settings therefore has no effect on this service,
+    # and an `env > registry` resolution would let this file win anyway. Change it
+    # in .env, then `up -d` to recreate (a `restart` does not reread env_file).
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - TIMON_HOME=/data/.timon
+      # host.docker.internal resolves to the docker bridge gateway thanks
+      # to the extra_hosts shim — that's how the app container talks to
+      # the orchestrator running on the host.
+      # The Timon daemon this file targets listens on :3001: :3000 is left to
+      # another instance on the maintainers' machine, whose database this UI
+      # must never reach.
+      - ORCHESTRATOR_URL=http://host.docker.internal:3001
+      - APP_URL=http://app:3100
+      - TIMON_CHANNEL_ATTACHMENT_HOST_DIR=${TIMON_HOST_HOME:-${HOME}/.timon}/channel-attachments
+      # Instance marker (app/src/lib/instance.ts). Set to `dev` in .env on
+      # The maintainer's machine: the window is titled "Timon DEV", the logotype turns
+      # amber and the installed PWA gets its own name and icon, so the
+      # development copy cannot be mistaken for the daily driver. Empty
+      # everywhere else — a user running this compose file gets the product.
+      # Passed through rather than hardcoded, and read at RUNTIME by the
+      # server: nothing about the variant is ever baked into `.next`, which
+      # ships inside the Electron package.
+      - TIMON_INSTANCE=${TIMON_INSTANCE:-}
+      # Agents' voice — piper service on the docker network.
+      - TTS_URL=http://tts:5000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Dual-home: ~/.timon-dev in dev (set in .env).
+      - ${TIMON_HOST_HOME:-${HOME}/.timon}:/data/.timon
+    # Published on the LOOPBACK only, like `app-dev` below. Nothing outside this
+    # machine reaches it: what does is `tailscale serve --bg --https=443
+    # http://127.0.0.1:3100` — the command the onboarding panel and
+    # GETTING-STARTED.md §4 both print. Without this mapping that command
+    # proxies to a port nobody listens on, and the tailnet URL answers 502
+    # while the UI works fine on `timon.localhost`. Going through Traefik
+    # instead would need a router on the tailnet vhost, which the comment
+    # below forbids. Tailscale sets `X-Forwarded-Proto: https`, so the remote
+    # HTTPS-enforcement check (`app/src/lib/remote/auth.ts`) still passes on
+    # this path even though the hop itself is plain HTTP.
+    ports:
+      - "127.0.0.1:3100:3100"
+    labels:
+      - "traefik.enable=true"
+      # timon.localhost — UI + remote API
+      - "traefik.http.routers.timon.rule=Host(`timon.localhost`)"
+      - "traefik.http.routers.timon.entrypoints=web"
+      - "traefik.http.routers.timon-secure.rule=Host(`timon.localhost`)"
+      - "traefik.http.routers.timon-secure.entrypoints=websecure"
+      - "traefik.http.routers.timon-secure.tls=true"
+      # channels.timon.localhost — inbound webhooks / Telegram forwards
+      - "traefik.http.routers.timon-channels.rule=Host(`channels.timon.localhost`)"
+      - "traefik.http.routers.timon-channels.entrypoints=web"
+      - "traefik.http.routers.timon-channels-secure.rule=Host(`channels.timon.localhost`)"
+      - "traefik.http.routers.timon-channels-secure.entrypoints=websecure"
+      - "traefik.http.routers.timon-channels-secure.tls=true"
+      # NO router on the machine's tailnet name: on the maintainers' machine
+      # that Host belongs to another stack, which runs on the SAME Traefik AT
+      # THE SAME TIME. Two routers with the same rule and the
+      # same priority fight over the vhost: a `docker compose up` here would
+      # silently cut phone access to the other stack. To reach Timon from the
+      # phone, use another vhost served by Tailscale.
+      # Pass TLS proto through so the remote HTTPS-enforcement check passes.
+      - "traefik.http.middlewares.timon-proto.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.timon-secure.middlewares=timon-proto"
+      - "traefik.http.routers.timon-channels-secure.middlewares=timon-proto"
+      - "traefik.http.services.timon-app.loadbalancer.server.port=3100"
+    networks:
+      - traefik_network
+
+  # The SAME app, in development: the code comes from the host instead of being
+  # copied into the image, and Next recompiles the page touched instead of
+  # requiring a build.
+  #
+  #     docker compose --profile dev up -d app-dev
+  #
+  # `dev` profile, not `docker`: both services carry the SAME Traefik labels, so
+  # the vhost would have two containers behind it and every other request would
+  # land on the frozen build. One OR the other, never both —
+  # `docker compose --profile docker stop app` first, `--profile dev stop app-dev`
+  # to go back.
+  #
+  # What it does not change: the daemon stays on the host (:3001), the home
+  # stays ~/.timon-dev, the workers keep talking to `app:3100`. Only where the
+  # JavaScript comes from changes.
+  app-dev:
+    # Same image as production — `npm ci` also installs the development
+    # dependencies there, so `next` can start its development server in it.
+    build:
+      context: ./app
+      network: host
+    container_name: timon-app-dev
+    profiles: ["dev"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # The one line that turns the mode on: `src/server.ts` reads NODE_ENV to
+      # decide `dev`, and then wires the hot-reload websocket.
+      - NODE_ENV=development
+      - TIMON_HOME=/data/.timon
+      - ORCHESTRATOR_URL=http://host.docker.internal:3001
+      - APP_URL=http://app-dev:3100
+      - TIMON_CHANNEL_ATTACHMENT_HOST_DIR=${TIMON_HOST_HOME:-${HOME}/.timon}/channel-attachments
+      - TIMON_INSTANCE=${TIMON_INSTANCE:-}
+      - TTS_URL=http://tts:5000
+      # On a mounted folder, the host's inotify does not always cross the
+      # container boundary: periodic polling is what makes reloading
+      # reliable, at the cost of one wake-up per second.
+      - WATCHPACK_POLLING=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${TIMON_HOST_HOME:-${HOME}/.timon}:/data/.timon
+      # The live code. File by file rather than all of `./app`: mounting the
+      # whole folder would overwrite `node_modules` with the host's, compiled
+      # for another Node version than the image's.
+      - ./app/src:/app/src
+      - ./app/public:/app/public
+      - ./app/next.config.mjs:/app/next.config.mjs
+      - ./app/tailwind.config.ts:/app/tailwind.config.ts
+      - ./app/postcss.config.js:/app/postcss.config.js
+      - ./app/tsconfig.json:/app/tsconfig.json
+      # Named volume: the development cache survives restarts and never mixes
+      # with the production `.next` baked into the image.
+      - app-dev-next:/app/.next
+    ports:
+      # Loopback only, to reach the development server without going through
+      # Traefik. The `app` service publishes nothing, so no clash when both
+      # images exist.
+      - "127.0.0.1:3100:3100"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.timon.rule=Host(`timon.localhost`)"
+      - "traefik.http.routers.timon.entrypoints=web"
+      - "traefik.http.routers.timon-secure.rule=Host(`timon.localhost`)"
+      - "traefik.http.routers.timon-secure.entrypoints=websecure"
+      - "traefik.http.routers.timon-secure.tls=true"
+      - "traefik.http.routers.timon-channels.rule=Host(`channels.timon.localhost`)"
+      - "traefik.http.routers.timon-channels.entrypoints=web"
+      - "traefik.http.routers.timon-channels-secure.rule=Host(`channels.timon.localhost`)"
+      - "traefik.http.routers.timon-channels-secure.entrypoints=websecure"
+      - "traefik.http.routers.timon-channels-secure.tls=true"
+      - "traefik.http.middlewares.timon-proto.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.timon-secure.middlewares=timon-proto"
+      - "traefik.http.routers.timon-channels-secure.middlewares=timon-proto"
+      - "traefik.http.services.timon-app.loadbalancer.server.port=3100"
+    networks:
+      - traefik_network
+
+  # Local text-to-speech (piper). See tools/piper-tts/Dockerfile for the why.
+  # No port published: only the app reaches it, through the docker network.
+  tts:
+    # network: host at build time — see the app service for the why.
+    build:
+      context: ./tools/piper-tts
+      network: host
+    container_name: timon-tts
+    # `docker` profile (step 3.4): the bundled `tts` module starts this service
+    # on demand (`docker compose --profile docker up -d tts`) when no external
+    # `TIMON_TTS_URL` is set and the host can run containers. No duplicate is
+    # possible here: it is the SAME container in both cases, never a second
+    # engine.
+    profiles: ["docker"]
+    restart: unless-stopped
+    environment:
+      # Agents' voice. Preloaded at startup so that the first sentence of a
+      # conversation does not pay for loading the model (~1 s).
+      # The speaker (pierre) is chosen on every request by /api/ui/tts.
+      - PIPER_VOICE=/voices/fr_FR-upmc-medium.onnx
+    # Published on the loopback since step 3.4: the app can now run OUTSIDE
+    # the docker network (`web-app` module), where `http://tts:5000` does not
+    # resolve. The container stays unreachable from outside the machine.
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ${HOME}/.timon/tts/voices:/voices:ro
+    networks:
+      - traefik_network
+
+  # Background workers — reuse the app image, different entrypoints.
+  telegram-poll:
+    # network: host at build time — see the app service for the why.
+    build:
+      context: ./app
+      network: host
+    container_name: timon-telegram-poll
+    # `docker` profile as a COROLLARY of `app`'s (step 3.1), not by choice: a
+    # service without a profile cannot depend on a profiled service ("you must
+    # ensure those dependencies are either in the same profile, started
+    # separately, or not assigned to any profile"), otherwise
+    # `docker compose up -d` fails instead of just skipping the app. The
+    # bundled `telegram` module (step 3.2) can serve these two workers as
+    # child processes of the daemon; it is disabled by default, so this
+    # container still picks up the messages until the user sets
+    # `"telegram": { "enabled": true }` in `timon.config.json`. Both at once
+    # would steal each other's updates: one OR the other, never both.
+    profiles: ["docker"]
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - TIMON_HOME=/data/.timon
+      - APP_URL=http://app:3100
+      - TIMON_CHANNEL_ATTACHMENT_HOST_DIR=${TIMON_HOST_HOME:-${HOME}/.timon}/channel-attachments
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${TIMON_HOST_HOME:-${HOME}/.timon}:/data/.timon
+    command: ["npx", "tsx", "src/workers/telegram-poll.ts"]
+    networks:
+      - traefik_network
+
+  reply-worker:
+    # network: host at build time — see the app service for the why.
+    build:
+      context: ./app
+      network: host
+    container_name: timon-reply-worker
+    # Same corollary as `telegram-poll` above: this worker depends on `app`.
+    # The service is named `reply-worker` but the command runs
+    # `mission-watcher.ts` — that is the real file, and the `telegram` module
+    # launches the same one.
+    profiles: ["docker"]
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - TIMON_HOME=/data/.timon
+      - ORCHESTRATOR_URL=http://host.docker.internal:3001
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${TIMON_HOST_HOME:-${HOME}/.timon}:/data/.timon
+    command: ["npx", "tsx", "src/workers/mission-watcher.ts"]
+    networks:
+      - traefik_network
+
+volumes:
+  # Compilation cache of the development server (`app-dev` service).
+  app-dev-next:
+
+networks:
+  traefik_network:
+    external: true

@@ -1,0 +1,109 @@
+{
+  "name": "@timon-ai/provider-acp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "timon": {
+    "id": "provider-acp",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "ACP agents (opencode, Hermes)",
+    "description": "Runs missions on opencode or Hermes over the Agent Client Protocol, with the agent's own sign-in and providers.",
+    "author": "Timon",
+    "permissions": ["backends:register"],
+    "provider": {
+      "binaries": [
+        {
+          "name": "opencode"
+        },
+        {
+          "name": "hermes-acp"
+        },
+        {
+          "name": "hermes"
+        }
+      ],
+      "credentialDirs": [
+        ".config/opencode",
+        ".local/share/opencode",
+        ".hermes"
+      ],
+      "backends": [
+        {
+          "id": "opencode",
+          "rank": 50,
+          "binary": {
+            "names": [
+              "opencode"
+            ],
+            "install": {
+              "any": {
+                "kind": "npm",
+                "package": "opencode-ai"
+              }
+            },
+            "searchDirs": {
+              "any": [
+                "~/.opencode/bin"
+              ],
+              "win32": [
+                "${SCOOP}/shims|~/scoop/shims",
+                "${ChocolateyInstall}/bin|${ProgramData}/chocolatey/bin"
+              ]
+            },
+            "standaloneInstaller": {
+              "label": "opencode",
+              "posix": "curl -fsSL https://opencode.ai/install | bash"
+            }
+          },
+          "credentialDirs": [
+            ".config/opencode",
+            ".local/share/opencode"
+          ],
+          "setupCard": {
+            "label": "opencode",
+            "order": 5
+          },
+          "installDocs": "https://opencode.ai/docs/",
+          "updateCheck": {
+            "latest": {
+              "npm": "opencode-ai"
+            },
+            "supportedMajor": 1
+          }
+        },
+        {
+          "id": "hermes",
+          "rank": 60,
+          "binary": {
+            "names": [
+              "hermes-acp",
+              "hermes"
+            ],
+            "install": {
+              "any": {
+                "kind": "none"
+              }
+            },
+            "searchDirs": {
+              "win32": [
+                "${LOCALAPPDATA}/hermes/bin",
+                "${LOCALAPPDATA}/hermes/hermes-agent/bin"
+              ]
+            }
+          },
+          "credentialDirs": [
+            ".hermes"
+          ],
+          "setupCard": {
+            "label": "Hermes",
+            "order": 6
+          },
+          "installDocs": "https://hermes-agent.nousresearch.com/docs/getting-started/installation"
+        }
+      ]
+    },
+    "license": { "required": false }
+  }
+}

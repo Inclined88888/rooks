@@ -1,0 +1,26 @@
+{
+  "name": "@timon-ai/plugin-webhook-bridge",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "webhook-bridge",
+    "apiVersion": 3,
+    "kind": "behavior",
+    "label": "Signed webhook bridge",
+    "description": "SDK example: signed webhook, persistent responses and workflow extensions.",
+    "permissions": [
+      "transports:register", "connections:read", "connections:write",
+      "missions:spawn", "missions:read", "secrets:read", "http:outbound",
+      "events:register", "events:publish", "workflows:triggers:register", "workflows:executors:register"
+    ],
+    "http": {
+      "hosts": [
+        { "host": "receiver.example.com", "why": "The callback receiving the replies; replace it with your service's host." }
+      ]
+    }
+  }
+}

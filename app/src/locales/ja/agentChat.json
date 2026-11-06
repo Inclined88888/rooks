@@ -1,0 +1,65 @@
+{
+  "agentChat": {
+    "title": "エージェントチャット",
+    "newCard": "新しいエージェントチャット",
+    "newCardHint": "このカードに表示するエージェントを選んでください。作成後は、ウィジェットパレットから別のカードを追加できます。",
+    "newConversation": "新しい会話",
+    "shortcuts": "エージェントのショートカット",
+    "shortcut": "{name} に切り替え",
+    "addAgent": "このカードにエージェントを追加",
+    "picker": {
+      "label": "エージェントを検索",
+      "placeholder": "エージェントを追加…",
+      "empty": "一致するエージェントはありません",
+      "onCard": "カード上"
+    },
+    "config": {
+      "agent": "エージェント",
+      "agentPlaceholder": "例: alice.main",
+      "title": "カードのタイトル",
+      "titlePlaceholder": "エージェント名",
+      "subAgents": "カード上の他のエージェント",
+      "subAgentsHint": "まだありません。下で検索するか、アバター列の末尾にある + を使ってください。",
+      "removeSubAgent": "{name} をカードから外す",
+      "moveUp": "{name} を上へ移動",
+      "moveDown": "{name} を下へ移動",
+      "save": "保存",
+      "create": "カードを作成",
+      "cancel": "キャンセル",
+      "delete": "このカードを削除"
+    },
+    "menu": {
+      "customize": "エージェントをカスタマイズ",
+      "edit": "エージェントを編集",
+      "remove": "削除",
+      "stop": "すべて停止",
+      "makeMain": "メインのオーケストレーターに設定",
+      "makeMainDone": "{name} がメインのオーケストレーターになりました。起動時の要約と通知はこのエージェントに届きます",
+      "makeMainFailed": "{name} をメインのオーケストレーターに設定できませんでした: {error}",
+      "stopConfirm": "{name} を本当に停止しますか？実行中のミッションは終了し、受信箱は空になり、保留中のタスクはブロックされ、このエージェントを起こすトリガーとワークフローは無効になります。",
+      "stopped": "{name} を停止しました: ミッション {missions} 件、メッセージ {messages} 件、タスク {tasks} 件、トリガー {triggers} 件、ワークフロー実行 {runs} 件、ワークフロー {workflows} 件を無効化",
+      "stopFailed": "{name} を停止できませんでした: {error}",
+      "duplicate": "エージェントを複製"
+    },
+    "customize": {
+      "title": "エージェントをカスタマイズ",
+      "description": "このカードだけで使う {name} のニックネームと写真です。エージェント自体は変わりません。",
+      "nickname": "ニックネーム",
+      "photo": "写真",
+      "save": "保存",
+      "reset": "リセット"
+    },
+    "duplicate": {
+      "title": "{name} を複製",
+      "description": "コピーは同じ設定とプロンプトを新しい名前で引き継ぎます。メモリは空の状態から始まり、メインのオーケストレーターにはならず、プロジェクトで固定された役割も引き継ぎません。",
+      "nameLabel": "コピーの名前",
+      "taken": "この名前のエージェントはすでに存在します。",
+      "invalid": "英字、数字、「.」「_」「-」のみ使用できます。",
+      "failed": "複製できませんでした: {error}",
+      "done": "{name} を {source} のコピーとして作成しました",
+      "skillsNotCopied": "{name} を作成しましたが、次のスキルは {source} と同じ設定になっていません: {skills}",
+      "cancel": "キャンセル",
+      "confirm": "複製"
+    }
+  }
+}

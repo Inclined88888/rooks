@@ -1,0 +1,61 @@
+{
+  "slug": "miro",
+  "name": "Miro",
+  "publisher": "Miro",
+  "category": "design",
+  "tagline": {
+    "en": "Boards, diagrams and sticky notes",
+    "fr": "Tableaux, diagrammes et post-it"
+  },
+  "description": {
+    "en": "Lets your agents read your Miro boards and add to them: sticky notes, diagrams, frames and documents generated from a conversation.",
+    "fr": "Vos agents lisent vos tableaux Miro et y ajoutent des éléments : post-it, diagrammes, cadres et documents tirés d’une conversation."
+  },
+  "examples": {
+    "en": [
+      "Summarise the sticky notes of the retrospective board",
+      "Draw the architecture we just discussed as a diagram",
+      "Group the ideas of this board by theme"
+    ],
+    "fr": [
+      "Résume les post-it du tableau de la rétrospective",
+      "Dessine en diagramme l’architecture dont on vient de parler",
+      "Regroupe les idées de ce tableau par thème"
+    ]
+  },
+  "mcp": {
+    "url": "https://mcp.miro.com/",
+    "transport": "streamable-http"
+  },
+  "auth": {
+    "type": "oauth"
+  },
+  "links": {
+    "website": "https://miro.com",
+    "privacy": "https://miro.com/legal/privacy-policy/",
+    "terms": "https://miro.com/legal/terms-of-service/"
+  },
+  "registry": {
+    "name": "io.github.miroapp/mcp-server",
+    "proof": "documented",
+    "evidence": "https://github.com/miroapp/miro-ai"
+  },
+  "icon": {
+    "monogram": "Mi",
+    "color": "#FFD02F",
+    "logo": {
+      "viewBox": "0 0 24 24",
+      "paths": [
+        {
+          "d": "M17.392 0H13.9L17 4.808 10.444 0H6.949l3.102 6.3L3.494 0H0l3.05 8.131L0 24h3.494L10.05 6.985 6.949 24h3.494L17 5.494 13.899 24h3.493L24 3.672 17.392 0z",
+          "fill": "#050038"
+        }
+      ],
+      "source": "https://simpleicons.org/?q=miro"
+    }
+  },
+  "reviewed": {
+    "on": "2026-11-04",
+    "probe": "oauth: 401 then metadata and dynamic client registration accepted"
+  }
+}

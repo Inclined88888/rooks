@@ -1,0 +1,26 @@
+{
+  "name": "@timon-ai/plugin-todo-connector",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "todo-connector-github",
+    "apiVersion": 8,
+    "kind": ["behavior"],
+    "label": "GitHub Issues connector (template)",
+    "description": "Template: keeps the TO DO notebook and GitHub Issues in step. Copy it, rename it, adapt `lib/index.js`. Public SDK only.",
+    "author": "Timon",
+    "permissions": ["webhooks:receive", "todos:read", "todos:write", "events:subscribe", "http:outbound", "secrets:read", "settings"],
+    "webhooks": [{ "name": "issues", "auth": "github" }],
+    "secrets": [{ "name": "GITHUB_TOKEN", "mode": "read", "why": "Closes the GitHub issue of an idea closed in Timon." }],
+    "http": { "hosts": [{ "host": "api.github.com", "why": "The GitHub REST API." }] },
+    "settings": [
+      { "key": "repository", "type": "string", "label": "Repository (owner/name)", "default": "" },
+      { "key": "tokenSecret", "type": "string", "label": "Name of the vault entry holding the GitHub token", "default": "GITHUB_TOKEN" }
+    ],
+    "license": { "required": false }
+  }
+}

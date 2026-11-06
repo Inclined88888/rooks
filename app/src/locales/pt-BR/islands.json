@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "Rede",
+      "titleOf": "Rede · {mission}"
+    },
+    "widgetZone": {
+      "title": "Widgets"
+    },
+    "widgetCard": {
+      "title": "Widget",
+      "missing": "O widget {widget} não está disponível aqui."
+    },
+    "page": "Página",
+    "arrangementPage": {
+      "loading": "Carregando o arranjo…",
+      "missing": "Este arranjo não existe mais. Sua entrada no menu desaparece com ele.",
+      "hint": "Esta página abre com o arranjo. O que você alterar aqui permanece nesta página; o arranjo salvo não é modificado.",
+      "restore": "Restaurar o arranjo",
+      "restoreFailed": "Não foi possível restaurar o arranjo."
+    },
+    "tabs": "Abas da ilha",
+    "close": "Fechar",
+    "closeTab": "Fechar {title}",
+    "detach": "Abrir em uma janela",
+    "resize": "Redimensionar",
+    "unavailable": "Conteúdo indisponível — {plugin}",
+    "refused": {
+      "maxIslands": "No máximo 8 ilhas",
+      "maxDepth": "No máximo 3 níveis de divisões",
+      "maxTabsPerIsland": "No máximo 12 abas em uma ilha",
+      "maxTabs": "No máximo 32 abas",
+      "routeTab": "A página desta visualização não pode ser fechada",
+      "self": "Já está aqui",
+      "unknownType": "Este conteúdo não pode ser aberto no espaço de trabalho",
+      "maxFloats": "No máximo 4 pop-ups",
+      "floatEdge": "Um pop-up só recebe abas pelo centro"
+    },
+    "announce": {
+      "right": "{title} aberto à direita de {target}",
+      "left": "{title} aberto à esquerda de {target}",
+      "top": "{title} aberto acima de {target}",
+      "bottom": "{title} aberto abaixo de {target}",
+      "tab": "{title} adicionado como aba a {target}",
+      "root": "{title} aberto na borda do espaço de trabalho",
+      "closed": "{title} fechado",
+      "float": "{title} aberto como pop-up",
+      "minimized": "{title} minimizado"
+    },
+    "openIn": {
+      "menu": "Abrir em uma divisão",
+      "right": "À direita",
+      "left": "À esquerda",
+      "bottom": "Abaixo",
+      "top": "Acima",
+      "center": "Em uma aba",
+      "narrow": "Abrir no espaço de trabalho",
+      "split": {
+        "right": "Abrir à direita",
+        "left": "Abrir à esquerda",
+        "bottom": "Abrir abaixo",
+        "top": "Abrir acima",
+        "center": "Abrir em uma aba",
+        "float": "Abrir como pop-up"
+      },
+      "float": "Como pop-up"
+    },
+    "drop": {
+      "right": "Abrir à direita de {target}",
+      "left": "Abrir à esquerda de {target}",
+      "top": "Empilhar acima de {target}",
+      "bottom": "Empilhar abaixo de {target}",
+      "center": "Adicionar uma aba a {target}",
+      "root": {
+        "left": "Nova coluna à esquerda",
+        "right": "Nova coluna à direita",
+        "top": "Nova linha no topo",
+        "bottom": "Nova linha na base"
+      },
+      "float": "Abrir como pop-up (Alt)"
+    },
+    "drag": {
+      "island": "Arraste para mover esta ilha"
+    },
+    "chat": {
+      "title": "Chat",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title} abre em uma nova ilha à direita",
+        "left": "{title} abre em uma nova ilha à esquerda",
+        "top": "{title} abre em uma nova ilha acima",
+        "bottom": "{title} abre em uma nova ilha abaixo"
+      },
+      "openTab": "{title} abre como aba",
+      "cannotApply": "Este layout não cabe mais no espaço de trabalho: a ilha de destino foi fechada ou um limite foi atingido.",
+      "dropped": "Omitidos, pois seu conteúdo recusou as configurações: {titles}",
+      "unreadable": "não foi possível ler o seu arranjo atual, tente novamente em instantes",
+      "noFit": "a ilha de destino foi fechada ou um limite foi atingido",
+      "refusedParams": "{titles} recusou as configurações recebidas",
+      "closes": "Aplicar fecha: {titles}",
+      "closesIn": "Aplicar em {project} fecha: {titles}",
+      "tabKept": "uma aba que seria fechada permaneceu aberta, nada foi alterado"
+    },
+    "arrangementProposal": {
+      "title": "{agent} propõe um dos seus arranjos de ilhas",
+      "titleFrom": "{agent} propõe um dos seus arranjos de ilhas ({project})",
+      "name": "Arranjo: {name}",
+      "gone": "o arranjo “{name}” foi excluído, nada foi alterado",
+      "stale": "Este arranjo foi excluído desde a proposta: nada foi alterado."
+    },
+    "menu": "Ações da ilha",
+    "move": {
+      "keys": "M: mover esta aba · Shift+M: mover a ilha",
+      "start": "Movendo {title}. As setas escolhem a ilha, Tab o lugar, Enter solta, Escape cancela.",
+      "hint": "Setas: ilha · Tab: lugar · Enter: soltar · Esc: cancelar",
+      "cancelled": "Movimentação cancelada"
+    },
+    "file": {
+      "title": "Arquivo"
+    },
+    "popup": {
+      "open": "Abrir {title} como pop-up",
+      "dock": "Fixar no espaço de trabalho",
+      "pin": "Manter em todas as páginas",
+      "unpin": "Manter somente nesta página",
+      "close": "Fechar este pop-up",
+      "minimize": "Minimizar",
+      "restore": "Mostrar {title} novamente",
+      "minimized": "Pop-ups minimizados"
+    },
+    "glass": {
+      "menu": "Vidro",
+      "follow": "Seguir a configuração de Aparência",
+      "island": "Ilha inteira",
+      "widgets": "Widgets",
+      "both": "Ambos"
+    },
+    "newTab": "Nova aba",
+    "skill": {
+      "title": "Skill"
+    },
+    "paramsRefused": "Não foi possível aplicar esta alteração à aba.",
+    "closeGuardFailed": "{title} não pôde confirmar que pode ser fechado: permanece aberto.",
+    "unsaved": {
+      "title": "Salvar as alterações em {name}?",
+      "description": "Suas alterações serão perdidas se você fechar sem salvar.",
+      "save": "Salvar",
+      "saving": "Salvando…",
+      "discard": "Não salvar",
+      "cancel": "Cancelar"
+    },
+    "stack": {
+      "earlier": "Mover {title} para a esquerda",
+      "later": "Mover {title} para a direita",
+      "moved": "{title} movido"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "Abrir no espaço de trabalho",
+      "openedThere": "Esta sessão está aberta no espaço de trabalho.",
+      "show": "Mostrar"
+    }
+  }
+}

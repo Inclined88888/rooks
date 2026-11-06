@@ -1,0 +1,26 @@
+{
+  "cockpit": {
+    "common": {
+      "loading": "불러오는 중…"
+    },
+    "dreams": {
+      "pending": "대기 중 {count}",
+      "empty": "대기 중인 드림이 없습니다"
+    },
+    "accountUsage": {
+      "disconnected": "로그인 안 됨",
+      "connectCliThen": "CLI에서 {name}에 로그인하세요: {command}을(를) 실행한 뒤 {then}.",
+      "connectCli": "CLI에서 {name}에 로그인하세요: {command}을(를) 실행합니다.",
+      "connect": "이 공급자의 CLI에서 로그인하세요.",
+      "connectAccount": "{settingsPath}에서 이 계정에 다시 로그인하세요.",
+      "error": "사용량을 확인할 수 없음"
+    },
+    "board": {
+      "move": "{title} 이동",
+      "resize": "{title} 크기 조정",
+      "centerZone": "콕핏 가운데",
+      "leftRail": "콕핏 왼쪽 레일",
+      "rightRail": "콕핏 오른쪽 레일"
+    }
+  }
+}

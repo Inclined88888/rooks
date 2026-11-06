@@ -1,0 +1,42 @@
+{
+  "name": "@timon-ai/provider-kimi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "timon": {
+    "id": "provider-kimi",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Kimi (Moonshot)",
+    "description": "Official Kimi profile on the Claude CLI protocol.",
+    "author": "Timon",
+    "permissions": [
+      "backends:register"
+    ],
+    "provider": {
+      "binaries": [],
+      "credentialDirs": [
+        ".kimi"
+      ],
+      "backends": [
+        {
+          "id": "kimi",
+          "rank": 80,
+          "credentialDirs": [
+            ".kimi"
+          ],
+          "modelBrands": [
+            {
+              "match": "kimi",
+              "brand": "moonshot"
+            }
+          ]
+        }
+      ]
+    },
+    "license": {
+      "required": false
+    }
+  }
+}

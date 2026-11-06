@@ -1,0 +1,3 @@
+# Ignored folders each Kanban task worktree links from the main checkout.
+# The maintainers' notes repository, when it is cloned here.
+docs

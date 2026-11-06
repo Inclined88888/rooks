@@ -1,0 +1,24 @@
+{
+  "name": "@timon-ai/plugin-confirm-dialog",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "timon": {
+    "id": "example-confirm-dialog",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Two-step confirmation",
+    "description": "Replaces Timon's confirmation dialog: a destructive question needs a second click on its button.",
+    "permissions": [],
+    "client": {
+      "slots": ["confirm.dialog"],
+      "external": ["react", "@timon/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

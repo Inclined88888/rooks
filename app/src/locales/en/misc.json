@@ -1,0 +1,103 @@
+{
+  "mission": {
+    "title": "New mission",
+    "description": "Start a conversation with agent {agent} using your chosen LLM.",
+    "resumeDescription": "You can also resume the previous mission: the new LLM will read a summary and continue from there.",
+    "llm": "LLM",
+    "reasoningEffort": "Reasoning effort",
+    "default": "Default",
+    "continue": "Continue from previous mission",
+    "resumeWithSummary": "The new LLM will read a history summary to resume.",
+    "resumeSameLlm": "Resumes the previous mission's context on the same LLM.",
+    "followup": "Follow-up message",
+    "firstMessage": "First message",
+    "followupPlaceholder": "E.g.: continue what we were doing, focus on X…",
+    "firstMessagePlaceholder": "E.g.: help me with…",
+    "cancel": "Cancel",
+    "continuing": "Continuing…",
+    "creating": "Creating…",
+    "start": "Start",
+    "continuedToast": "Mission continued on {backend} · {model}",
+    "createdToast": "New mission on {backend} · {model}",
+    "failed": "Failed: {message}"
+  },
+  "llm": {"handoverTail": "Summary failed: only the END of the conversation crossed", "confirmWhole": "Hand over whole", "confirmWholeTitle": "The new engine receives the entire conversation — nothing is lost.", "confirmCompact": "Compact", "confirmCompactTitle": "The conversation is summarised before crossing: shorter, but detail is lost.", "confirmContextSize": "Current thread: ~{tokens} tokens", "confirmTooLarge": "too large for this engine's prompt — compaction is the only way across", "handoverCompacting": "Compacting the conversation for {model}…", "handoverSending": "Handing the whole conversation over to {model}…", "handoverRunning": "Handing the conversation over to {model} — preparing the context…", "handoverCompacted": "Context COMPACTED into a summary — the new engine takes over from there.", "handoverWhole": "Full context transmitted — nothing lost.", "handoverNoContext": "New session started, no prior context to transmit.", "confirmTitle": "Switch LLM?", "confirmSameBackend": "Same engine, other model: the session keeps running and nothing of the context is lost.", "confirmNewBackend": "Another engine: the session is restarted and the conversation is handed over. The context crosses whole if it fits in the new prompt, otherwise it is COMPACTED into a summary — detail is lost.", "confirmPending": "No conversation open yet: the pair applies to the first message.", "confirmTurnBlocked": "A turn is running. Changing engine will be refused until it ends — stop it or wait.", "confirmCancel": "Cancel", "confirmApply": "Switch", "thinking": "Thinking", "auto": "auto", "selfPermissions": "Own permissions", "selfPermissionsHint": "This agent manages its own permissions: no Allow/Deny card from TIMON.", "account": {"reauth": "Sign in again", "cooldown": "Out of quota", "unavailable": "account unavailable", "reauthHint": "This account must sign in again before it can run missions. Timon never moves a mission to another subscription on its own.", "cooldownHint": "This account is out of quota for now. Pick it again once its window reopens.", "unavailableHint": "This account no longer exists or is no longer assigned to you: choose another one.", "signedOut": "Not signed in", "signedOutHint": "Timon found this provider's CLI but nobody is signed in to it: a mission sent to it would stop on \"Not logged in\". Sign in from {settingsPath}, or in a terminal."}, "remote": "Remote", "limited": "Limited", "limitsHint": "This backend cannot:", "limitWorktree": "work in Timon's folder (no code or merge tasks)", "limitTimonMcp": "use Timon's tools (Kanban, messages, memory)", "limitAttachments": "receive attached files (images only)", "unverified": "Unverified", "unverifiedHint": "Written from the vendor's documentation: not checked against the real program.", "unverifiedSession": "Sessions", "unverifiedMcp": "Timon's tools", "unverifiedPermissions": "Permissions", "unverifiedSignIn": "Sign-in", "unverifiedModels": "Models", "unverifiedExtensionRequests": "The agent's own questions", "unverifiedCredentialDirs": "Sign-in folders", "unverifiedBinaryIdentity": "Program check"},
+  "roles": { "searchIcon": "Search Lucide icon…", "chooseIcon": "Choose an icon", "labelRequired": "Label required", "saveError": "Failed: {message}", "created": "Role \"{id}\" created", "updated": "Role \"{id}\" updated", "deleted": "Role \"{id}\" deleted", "deleteConfirm": "Delete custom role \"{id}\"?", "manage": "Manage roles", "edit": "Edit {id}", "new": "New role", "roles": "Roles", "builtin": "Built-in", "id": "id (immutable)", "label": "label", "color": "color", "icon": "icon", "defaultModel": "default model", "defaultPermission": "default permission", "directives": "directives (injected into the system prompt)", "directivesPlaceholder": "You do X. You don't do Y…", "back": "back", "saving": "Saving…", "save": "Save" },
+  "notifications": { "bell": { "open": "Notifications", "unread": "Notifications — {count} unread" }, "dismiss": "Dismiss", "center": "Notification center", "sure": "Sure?", "close": "Close", "empty": "No notification", "clearAll": "Clear all", "clearAlerts": "Clear alerts", "clearReports": "Clear reports", "clearRequests": "Clear requests", "all": "All", "alerts": "Alerts", "action": "Action", "reports": "Reports", "ago": "ago", "showMore": "Show more", "showLess": "Show less", "feed": { "markRead": "Mark as read", "markAllRead": "Mark all as read", "seeAll": "See all notifications", "actionOnly": "Need you only", "actionOnlyHint": "List only the notifications waiting for you to act", "emptyActionOnly": "Nothing is waiting for you." } },
+  "vault": {
+    "filter": "filter notes…",
+    "closeSearch": "Close search",
+    "graph3d": "3D graph",
+    "filterNotes": "Filter notes",
+    "enterFullscreen": "Open full screen",
+    "exitFullscreen": "Exit full screen",
+    "openFullscreen": "graph open in full screen",
+    "loadingGraph": "loading the graph…",
+    "graphUnavailable": "graph unavailable ({error})",
+    "noNodes": "no node in the vault",
+    "unknownError": "Unknown error",
+    "loadingDisc": "loading the disc…",
+    "discError": "disc: {error}",
+    "loadFailed": "loading failed",
+    "invalidMarkup": "invalid vault-graph markup",
+    "closeNote": "Close",
+    "noteNotFound": "note not found",
+    "loadingNote": "loading…"
+  },
+  "multichat": {"picker": {"title": "Missions of {agent}", "new": "New", "loading": "Loading…", "empty": "No missions. Start a new one."}, "desktopOnly": "Multichat — desktop only", "mobileHint": "The parallel chat grid is not useful in mobile portrait. Open", "templates": {"title": "Templates", "empty": "Save the agents on screen to bring them back in one click.", "save": "Save current setup…", "namePlaceholder": "Template name", "confirm": "Confirm", "cancel": "Cancel", "manage": "Manage", "manageDone": "Done", "rename": "Rename {name}", "overwrite": "Replace {name} with the current setup", "delete": "Delete {name}", "overwritten": "Template “{name}” updated", "deleted": "Template “{name}” deleted", "error": {"empty-name": "Give the template a name.", "duplicate-name": "A template already has that name.", "too-many": "Template limit reached: delete one first.", "too-large": "Too much to store: delete a template first.", "empty-grid": "Put at least one agent in the grid first.", "unknown": "This template no longer exists.", "write-failed": "The template could not be saved. Try again."}, "triggerActive": "Templates — current: {name}"}, "drop": {"here": "Drop here", "replace": "Replace {name}", "swap": "Swap with {name}"}, "slot": {"move": "Drag {name} to another cell", "edit": "Edit agent", "changeMission": "Change mission", "openMission": "Open this mission in the chat", "clear": "Empty this cell", "empty": "Drop an agent here", "openMenu": "Open split menu for {name}"}, "rail": {"label": "Agents to place in the grid", "agents": "Agents", "expandAll": "Expand all groups", "collapseAll": "Collapse all groups", "otherPole": "Other", "noProject": "No project", "inGrid": "{count} in the grid", "place": "{name} — press Enter to add to the first empty cell", "hint": "Drag {name} into a cell, or double-click to add it to the first empty one", "controls": "Grid and templates", "collapse": "Collapse the side bar ({shortcut})", "expand": "Expand the side bar ({shortcut})"}, "search": {"placeholder": "Search agents…", "label": "Search agents by name, project, pole or team", "clear": "Clear search", "ratio": "{count}/{total}", "count": "{count} matching agents", "none": "No agent matches “{query}”."}, "grid": {"title": "Grid", "trigger": "Grid {layout}", "option": "{layout} grid", "clear": "Empty the grid", "openWorkspace": "Open in the workspace", "opened": "Grid opened in the workspace"}},
+  "calendar": { "today": "Today", "tomorrow": "Tomorrow", "upcoming": "Upcoming", "overdue": "Overdue · {date}", "noDueDate": "No due date" },
+  "delegations": { "title": "Awaiting return", "working": "Working", "idle": "Waiting for its next turn", "open": "Open this mission", "none": "Nothing awaited", "inline": "{count} delegated mission(s) running" },
+  "missionEgress": {
+    "loading": "Reading the network journal…",
+    "refresh": "Refresh",
+    "openInSplit": "Open beside the chat",
+    "noMission": "No mission open: this view follows the conversation on screen.",
+    "hosts": "Hosts contacted",
+    "connections": "Recent connections",
+    "newHost": "new",
+    "newHostHint": "First reached in its project by this mission: the alert named it.",
+    "connectionsCount": "{count} conn.",
+    "failures": "{count} failed",
+    "sent": "Sent",
+    "received": "Received",
+    "status": "HTTP status sent back to the program",
+    "upstreamError": "Upstream error: {code}",
+    "loadOlder": "Load older connections",
+    "loadingOlder": "Loading…",
+    "empty": "No connection journaled for this mission yet.",
+    "limit": "Only programs that honour HTTP(S)_PROXY go through the journal. Those that ignore it, Node's built-in fetch among them, reach the network without appearing here.",
+    "offTitle": "Connection journal disabled",
+    "offBody": "This mission's connections are not recorded, so this view says nothing about what it reached. To enable the journal, set host.isolation.egress.mode to \"log\" in timon.config.json, then restart Timon.",
+    "offHistory": "The connections below were recorded before it was turned off.",
+    "notListening": "The outbound proxy is not running: connections made now are not journaled. The daemon log says why.",
+    "retention": "Kept: the last {count} connections of the mission, {days} days at most.",
+    "retry": "Retry",
+    "error": { "unauthorized": "Your session has ended. Sign in again to see this mission's network activity.", "forbidden": "Your account is not allowed to read missions.", "not_found": "This mission does not exist, or it belongs to another account.", "unavailable": "The network journal could not be read." }
+  },
+  "missionLiveness": {
+    "working": "Working", "turn_done": "Turn done", "open": "Open", "interrupted": "Interrupted",
+    "hint": {
+      "working": "Process alive, a turn is running.",
+      "turn_done": "Process alive, but the last turn is over — waiting for the next message.",
+      "open": "Mission still open, nothing running: no process, or no finished turn yet.",
+      "interrupted": "Cut before the end: {reason}."
+    },
+    "reason": { "rate_limit": "account usage limit reached", "exhausted": "account out of credit", "backend_unavailable": "backend unavailable", "overloaded": "model overloaded", "permission_denied": "permission denied", "killed": "process killed", "stopped": "stopped by hand", "timeout": "turn silent too long", "turn_budget": "turn budget reached", "crash": "unexpected stop", "unknown": "unknown cause" },
+    "pendingMessages": "{count} message(s) waiting in the inbox",
+    "openDeliveries": "{count} request(s) not answered yet"
+  },
+  "permissionRefusal": {
+    "accountLacks": "Your account does not hold {permission}. Ask an administrator to add it to your role.",
+    "generic": "Your account is not allowed to do this."
+  },
+  "videoFactoryPanel": {
+    "remaining": "~{duration} left",
+    "stalledFor": "stalled for {duration}"
+  },
+  "slotRoot": {
+    "noLayout": "No layout mounted — enable ui-layout"
+  },
+  "calendarItems": {
+    "untitled": "(untitled)"
+  }
+}
