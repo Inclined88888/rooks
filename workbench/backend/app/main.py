@@ -24,6 +24,7 @@ from . import compression  # AIW-Phase1: rolling compression of long chats
 from . import finetune, media  # noqa: E402 - phase 4
 from . import catalog  # noqa: E402 - model facts from models.dev
 from . import companion  # noqa: E402 - Companion: every agent's live steps, approvals and questions in one place
+from . import restart  # noqa: E402 - B3: a restart reported honestly; goals that opted in continue
 from .mcp_server import mcp, mcp_app
 from . import mcp_client_api  # noqa: E402 - feat/mcp-client: Workbench as an MCP client (the user's own servers)
 from .adapt import hooks as adapt_hooks, routes as adapt_routes  # adapt and learn (feat/learn-and-adapt)
@@ -71,7 +72,7 @@ async def lifespan(_: FastAPI):
     llm.seed_connections()
     catalog.refresh_in_background()  # newer model facts (context, price, vision) at most once a day
     api.recover_interrupted()
-    actions.recover()
+    restart.recover()  # B3: turns cut off by the restart are closed (actions.recover) and their chats are told
     company.recover()
     mobile.boot()
     loops = [asyncio.create_task(fn()) for fn in (api.calendar_loop, scheduler.loop, telegram.loop, company.loop, sites.loop)]
@@ -100,6 +101,7 @@ async def lifespan(_: FastAPI):
     tm = [(n, asyncio.create_task(fn())) for n, fn in tm_routes.background()]
     health.LOOPS.update(dict(tm))
     loops += [t for _, t in tm]
+    restart.start()  # B3: goals that asked to carry on after a restart continue now, in the background
     async with mcp.session_manager.run():
         yield
     mobile.lan_stop()

@@ -11,7 +11,9 @@ plus three command line agents: `rooks` (terminal coding agent), `rooks-browser`
   `/v1` bridge: `bridge.py`; terminal link (memory, skills, search): `rooks_link.py`. Mail: `mail.py` (IMAP/SMTP),
   `cloud_mail.py` (Gmail and Microsoft Graph), `connect.py` (Google/Microsoft OAuth sign-in), `mail_autodetect.py`.
   Database and migrations: `db.py` (SQLite, schema version in `SCHEMA_VERSION`). The Workroom: `presence.py`,
-  `needs_you.py`, `room.py`.
+  `needs_you.py`, `room.py`, `restart.py` (a restart reported honestly: the cut off turn gets a note, the next turn says
+  `resumed`, goals that opted in continue). A prompt that does not fit is compacted and retried in `assistant._run_turn`
+  (`compacted` event), never fatal at once.
 - `workbench/backend/tests/` pytest suite (about 600 tests, about 5 minutes).
 - `workbench/frontend/src/` React + Vite + TypeScript. Pages in `pages/`, shared helpers in `util.tsx`, API client in
   `api.ts`, styles in `styles.css` and `connect.css`.

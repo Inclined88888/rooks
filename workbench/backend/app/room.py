@@ -308,13 +308,37 @@ async def reset_to(name: str | None = None) -> dict:
 
 
 # --- hand-off: out of the Room only after a yes ------------------------------------------------------------------------------
+def _waiting_handoff(src: str, dest: str) -> dict | None:
+    """A hand-off for the same file and place that still waits for an answer, anywhere: the Room is one."""
+    for a in actions.pending():
+        if a["tool"] != TOOL:
+            continue
+        try:
+            args = json.loads(a["args"] or "{}")
+        except ValueError:
+            continue
+        if not isinstance(args, dict) or args.get("action") != "handoff":
+            continue
+        if (str(args.get("src") or "").strip(), str(args.get("dest") or "").strip()) == (src, dest) and args.get("request_id"):
+            return {"action_id": a["id"], "request_id": str(args["request_id"])}
+    return None
+
+
 def request_handoff(src: str, dest: str, conversation_id: int | None = None, channel: str = CHANNEL) -> dict:
-    """Hold the copy as an approval in Needs you (a held use_room call in the run log). Nothing is copied here."""
+    """Hold the copy as an approval in Needs you (a held use_room call in the run log). Nothing is copied here.
+    Asking again for the same file and place before the answer joins the request that is already waiting (B3):
+    Needs you shows it once."""
     src, dest = str(src or "").strip(), str(dest or "").strip()
     if not src or not dest:
         raise HTTPException(400, "Say which file to copy out of the Room and where to put it.")
     from . import front_door, push
 
+    waiting = _waiting_handoff(src, dest)
+    if waiting:
+        return {"ok": False, "held": True, "request_id": waiting["request_id"], "action_id": waiting["action_id"],
+                "needs_you_id": f"a:{waiting['action_id']}", "already_asked": True,
+                "summary": f"Copy {src} from the Room to {dest} on this computer?",
+                "note": "Nothing was copied. That copy is already waiting for your OK in Needs you; it was not asked for twice."}
     rid = "room:" + uuid.uuid4().hex
     args = json.dumps({"action": "handoff", "src": src, "dest": dest, "request_id": rid})
     cid = conversation_id or front_door.main_conversation()

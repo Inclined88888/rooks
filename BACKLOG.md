@@ -27,14 +27,33 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
+* **Four backend tests fail on `main` and on `feat/workroom` for reasons outside the branch (recorded in B3).**
+  `test_connect_mail_calendar::test_assistant_reads_and_drafts_with_microsoft`,
+  `test_desk::test_desk_emails_a_render_with_attachments`,
+  `test_health::test_status_page_reports_every_part_and_the_worst_wins` (passes alone; order dependent inside the
+  full run) and `test_lock_reset::test_forgotten_pin_can_be_replaced` are environment or pre existing failures
+  (design 0003, section 7). rooks-code's `test_project_sandbox` needs `bwrap`, which this container lacks. None of
+  them touch the Workroom packages; fix or quarantine them on `main` with their own record.
+* **Compaction forgets its level on restart, and only one level per chat and model is kept (B3 of feat/workroom).**
+  `assistant._SHRINK` remembers in memory how far a chat's window had to shrink so the next turn starts there; after a
+  restart the first turn of such a chat pays one failed model call again before it compacts. Keeping the level in
+  `conversation_summaries` would remove that call. Also, a `prompt too long` answer from a provider that is really a
+  per-minute token limit (Groq's 413) is compacted rather than waited out; harmless, but it shrinks more than needed.
+* **A restart note is a system row the thread does not show yet (B3 of feat/workroom).** `restart.py` writes
+  `role: system, name: restart` into the conversation ("Rooks restarted during this turn. These steps were cut off and
+  not run: ..."). The model reads it as an automatic note; `GET /api/conversations/{id}` returns it; the chat's
+  `rebuildTurns` ignores system rows, so lane F should render it as a notice (the `resumed` event covers the live
+  case). The terminal (`rooks`) does not show it either.
+* **Goals resumed after a restart run at once, side by side (B3 of feat/workroom).** `restart.resume_goals` starts
+  one turn per opted in goal when the app comes up, with no cap and before the person has seen the app; a limit (one
+  at a time, or a short delay) is a decision for the owner.
 * **The Room's pointer and keyboard steps are not in the run log (B2 of feat/workroom).** `/api/room` records up,
   down, saved points, start over, commands and copies out (channel `room`); click, drag, scroll, type and key are not
   recorded, because a person stepping in produces several a second and would swamp the log. Design 0003, section 4,
   rule 4 says "every Room action"; decide whether to record them in batches (one row per step-in session) or to leave
   them out and say so on the page.
-* **A repeated hand-off request from the model makes a second held item.** `use_room` with `action: handoff` and no
-  `request_id` always holds a new request; if the model asks twice for the same file before a person answers, Needs
-  you shows two. B3's held approval dedupe should cover it (same tool, same arguments, one still pending).
+* **Done in B3: a repeated hand-off request no longer makes a second held item.** `room.request_handoff` joins a
+  pending request for the same file and place (`already_asked`), and the chat turn stops asking.
 * **The terminal's Room MCP server lets the calling agent set `approve: true` on handoff.** In the app, the copy out
   of the Room waits for a person in Needs you. In the terminal, `rooks-try mcp` takes the agent's own flag; rooks-code
   treats the server as untrusted, so its usual approval prompt is the only gate. Replace the flag with an MCP

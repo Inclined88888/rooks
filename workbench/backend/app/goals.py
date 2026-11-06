@@ -75,6 +75,12 @@ def get_by_conversation(conversation_id: int) -> dict | None:
     return _out(r) if r else None
 
 
+def resumable() -> list[dict]:
+    """Active goals that asked to carry on after a restart (restart.py continues them at startup)."""
+    ensure()
+    return [_out(r) for r in db.all("SELECT * FROM goals WHERE phase = 'active' AND resume_on_restart = 1 ORDER BY id")]
+
+
 def listing(conversation_id: int | None = None) -> list[dict]:
     ensure()
     if conversation_id:

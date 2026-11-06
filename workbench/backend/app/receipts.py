@@ -192,6 +192,10 @@ def claims(text: str) -> list[tuple[str, str]]:
 
 
 NO_CHANGE = "no tool call in this turn made and confirmed that change"
+NO_SEND = "no email was sent in this conversation: nothing sent one, and no send was approved"
+# The message assistant.decide writes into the conversation after a person approved a send and it ran
+_APPROVED_SEND = re.compile(r"^\[I approved request #\d+: send_email\. Result: .*\"sent\": true", re.S)
+WINDOW_ROWS = 40  # the rows the model saw (assistant.HISTORY_MESSAGES); kept apart to avoid an import cycle
 PRIORITY = {"none": 0, "no": 0, "low": 1, "medium": 2, "normal": 2, "high": 3, "urgent": 3}
 PRIORITY_NAME = {0: "none", 1: "low", 2: "medium", 3: "high"}
 _PRIORITY_RE = re.compile(r"\bpriority\W{0,3}(?:is\s+|of\s+|set\s+to\s+)?(none|low|medium|normal|high|urgent)\b|"
@@ -236,12 +240,29 @@ def summary(receipts: list[dict]) -> str:
     return "\n".join(["Here is what was actually done:", *lines, *failed])
 
 
-def unbacked_claim(text: str, receipts: list[dict]) -> tuple[str, str]:
-    """The first statement in the answer that this turn's confirmed changes do not support: (sentence, reason)."""
+def sent_backed(receipts: list[dict], conversation_id: int | None = None) -> bool:
+    """Whether an email really went out: send_email ran in this turn, or a person approved one and it ran (the
+    decision message assistant.decide wrote is in the window the model saw)."""
+    if any(r.get("tool") == "send_email" and r.get("outcome") in ("ok", "verified") for r in receipts):
+        return True
+    if not conversation_id:
+        return False
+    rows = db.all("SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT ?", conversation_id, WINDOW_ROWS)
+    return any(r["role"] == "user" and _APPROVED_SEND.match(r["content"] or "") for r in rows)
+
+
+def unbacked_claim(text: str, receipts: list[dict], conversation_id: int | None = None) -> tuple[str, str]:
+    """The first statement in the answer that this turn's confirmed changes do not support: (sentence, reason).
+    A "sent" sentence is backed only by a send that ran: send_email in this turn, or one the person approved (B3)."""
     changed = any(r["verified"] is True and r["effect"] != "read" for r in receipts)
+    sent: bool | None = None
     for kind, sentence in claims(text):
-        if kind == "sent":  # nothing in Workbench sends mail, so a send claim is never backed
-            return sentence, "Workbench cannot send email, only save drafts"
+        if kind == "sent":
+            if sent is None:
+                sent = sent_backed(receipts, conversation_id)
+            if not sent:
+                return sentence, NO_SEND
+            continue
         if not changed:
             return sentence, NO_CHANGE
     return contradiction(text, receipts)

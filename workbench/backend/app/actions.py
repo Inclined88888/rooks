@@ -3,9 +3,10 @@ from __future__ import annotations
 """The run log: every agent action is one row in `actions` (R2). There is no other ledger.
 Kinds and their outcomes:
   turn        running | no_claim | backed | fixed | unbacked | model_error | step_limit | empty_answer | budget_paused | interrupted
-              | repeat_blocked
+              | repeat_blocked | held (the turn stopped at a call that waits for the user's OK)
   model_call  ok | error
   tool_call   verified | ok | check_failed | bad_args | unknown_tool | rejected | tool_error | held | denied | duplicate
+              (the same change already made this turn, or the same call already waiting for the user's OK)
               | repeat_blocked (refused: the same call already failed the same way REPEAT_LIMIT times in a row)
   decision    approved | denied        (the user's answer to a held tool_call, which is its parent)
 
@@ -73,10 +74,13 @@ def finish(action_id: int, outcome: str, **fields) -> None:
     db.run(f"UPDATE actions SET {sets} WHERE id = ?", outcome, *fields.values(), action_id)
 
 
+RESTART_REASON = "Rooks restarted during the turn"
+
+
 def recover() -> int:
-    """Turns still 'running' at startup were cut off by a restart."""
-    return db.run("UPDATE actions SET outcome = 'interrupted', failure_reason = 'Workbench restarted during the turn' "
-                  "WHERE kind = 'turn' AND outcome = 'running'")
+    """Turns still 'running' at startup were cut off by a restart (restart.py then tells each conversation so)."""
+    return db.run("UPDATE actions SET outcome = 'interrupted', failure_reason = ? WHERE kind = 'turn' AND outcome = 'running'",
+                  RESTART_REASON)
 
 
 # Approvals are held tool_call rows; a decision row answers each one exactly once (unique index on its parent).

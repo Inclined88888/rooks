@@ -593,3 +593,34 @@ def test_model_pickers_leave_out_models_that_cannot_chat():
                        "meta/llama-3.2-90b-vision-instruct", "gpt-5.1"])
     assert got == ["meta/llama-4", "meta/llama-3.2-90b-vision-instruct", "gpt-5.1"]
     assert chat_models(["text-embedding-3-small"]) == ["text-embedding-3-small"]  # never an empty picker
+
+
+@pytest.mark.anyio
+async def test_a_prompt_too_long_is_not_sent_to_the_next_provider(routed):
+    """B3: a context length error is the prompt's fault, not the provider's: no failover, no park (router.classify)."""
+    from fastapi import HTTPException
+
+    from app import router
+
+    MODE["groq"] = {"status": 400, "body": "This model's maximum context length is 8192 tokens. However, you requested 9000 tokens. "
+                                           "Please reduce the length of the messages."}
+    HITS.clear()
+    with pytest.raises(HTTPException) as e:
+        await _chat()
+    assert router.classify(e.value) == (router.PROMPT_TOO_LONG, 0, False)
+    assert [h[0] for h in HITS] == ["groq"]  # gemini and paid were never asked: they would not take it either
+    MODE.pop("groq")
+    HITS.clear()
+    res = await _chat()  # a shorter prompt goes straight back to the same provider: it was never parked
+    assert res["router"]["provider"] == "Groq" and res["router"]["fallbacks"] == []
+    HITS.clear()
+    MODE["groq"] = {"status": 400, "body": "prompt is too long: 213462 tokens > 200000 maximum"}
+    out = [e async for e in llm_stream()]
+    assert "error" in out[-1] and [h[0] for h in HITS] == ["groq"]
+
+
+async def llm_stream():
+    from app import llm
+
+    async for e in llm.stream("auto", [{"role": "user", "content": "hi"}], trace={"channel": "research"}):
+        yield e

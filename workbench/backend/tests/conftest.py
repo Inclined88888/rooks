@@ -70,6 +70,9 @@ async def completions(req: Request):
         msg = nxt(body["messages"]) if callable(nxt) else nxt
     else:
         msg = {"role": "assistant", "content": "ok"}
+    if isinstance(msg, dict) and msg.get("_error"):  # a scripted provider error: {"_error": text, "_status": 400, "_code": ...}
+        return JSONResponse({"error": {"message": msg["_error"], "type": "invalid_request_error", "code": msg.get("_code", "")}},
+                            status_code=int(msg.get("_status", 400)))
     if body.get("stream"):  # a tool-using turn read as a stream: the same reply, in OpenAI's chunk format
         text = msg.get("content") or ""
         chunks = [{"choices": [{"index": 0, "delta": {"content": p}}]} for p in (text[: len(text) // 2], text[len(text) // 2:]) if p]

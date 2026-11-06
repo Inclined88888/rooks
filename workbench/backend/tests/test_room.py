@@ -419,3 +419,34 @@ def test_an_unreachable_helper_is_an_error_not_a_silent_folder(client, monkeypat
         assert surfaces.status()["room"]["available"] is False
     finally:
         room.reset()
+
+
+def test_two_asks_for_the_same_file_show_once_in_needs_you(client, room_home, tmp_path):
+    """B3: a repeated hand-off request before the answer is the same request, through the route and the chat tool."""
+    from app import actions, assistant
+
+    client.post("/api/room/up")
+    client.post("/api/room/run", json={"command": "echo twice > twice.txt"})
+    dest = tmp_path / "out" / "twice.txt"
+    before = len(client.get("/api/needs-you").json())
+    first = client.post("/api/room/handoff", json={"src": "twice.txt", "dest": str(dest)}).json()
+    second = client.post("/api/room/handoff", json={"src": "twice.txt", "dest": str(dest)}).json()
+    assert first["held"] is True and second["held"] is True
+    assert second["request_id"] == first["request_id"] and second["action_id"] == first["action_id"]
+    assert len(client.get("/api/needs-you").json()) == before + 1
+    # the chat tool asking again for the same file joins the same request and the turn stops asking
+    cid = assistant.new_conversation("web")
+    ctx = assistant.Ctx(channel="web", conversation_id=cid)
+    again = asyncio.run(assistant._use_room(action="handoff", src="twice.txt", dest=str(dest), ctx=ctx))
+    assert again["held"] is True and again["request_id"] == first["request_id"] and ctx.held_repeats == 1
+    assert len(client.get("/api/needs-you").json()) == before + 1 and not dest.exists()
+    # a different place is a different request
+    other = client.post("/api/room/handoff", json={"src": "twice.txt", "dest": str(tmp_path / "elsewhere.txt")}).json()
+    assert other["request_id"] != first["request_id"] and len(client.get("/api/needs-you").json()) == before + 2
+    # once answered, the same ask is a new request again
+    assert client.post(f"/api/approvals/{first['action_id']}", json={"approve": False}).json()["status"] == "denied"
+    third = client.post("/api/room/handoff", json={"src": "twice.txt", "dest": str(dest)}).json()
+    assert third["request_id"] != first["request_id"]
+    for a in actions.pending():
+        if a["tool"] == "use_room":
+            actions.decide(a["id"], False, "test")

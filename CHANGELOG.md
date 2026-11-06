@@ -43,11 +43,42 @@ Design record: `docs/design/0003-workroom.md` (binding for this branch). Package
     manager when one exists and otherwise a terminal that fills the screen, with this interpreter for any helper; a
     command run in it sees the Room's display; the local HTTP helper compares its key in constant time, serves the last
     picture without waiting behind a running command, and has drag and scroll.
-- Migration: none for this package. New settings `TRY_URL` and `TRY_API_KEY` are optional (a separate `rooks-try
-  serve`); without them the Room runs in process when the package is installed.
-- Rollback: set `ROOKS_TRY_MCP=0` so the terminal stops adding the `room` server, and ignore `/room` in the app (the
-  tool is only offered while the package is installed; uninstall `rooks-try` to remove it). Nothing in the database
-  changes shape: held hand-offs are ordinary held actions and can be denied from Needs you.
+- **Reliability people feel (B3).**
+  - A chat that got too long no longer dies on the model's context error. The error is recognised for what it is
+    (`prompt too long`, from OpenAI, Anthropic, Gemini and compatible servers, and Ollama's full window), the router
+    stops there instead of trying every other provider with the same prompt, and the turn compacts the window and
+    asks again, up to three times: the budget is halved, the oldest tool results become one line stubs that still
+    lead to the full result through `read_tool_result` (kept under `tool_results`, id `m<message>`), whole old
+    exchanges go only after that, and the chat gets a `compacted` event `{dropped_rows, summary_words}` each time.
+    When nothing can be left out, or three tries were not enough, the turn ends with "This chat got too long for the
+    model. Start a new chat or pick a model with more room." The record is never touched: every result stays whole in
+    the thread; only what the model is sent shrinks. The next turn in that chat starts from the window that fitted.
+  - The rolling summary is tool aware: tool rows are in it, one line each (the tool, ok or failed, the first 80
+    characters of its result), and a note the app wrote (a restart) as a note. When the window is already over budget
+    at the start of a turn, or is being compacted, the summary of what fell out is refreshed before the model is
+    asked, so it sees it now rather than next turn; otherwise the refresh runs in the background as before.
+  - A restart is reported honestly. Every turn still running when the app comes back is closed as interrupted
+    ("Rooks restarted during the turn") and its conversation gets a plain note as a system row ("Rooks restarted
+    during this turn. These steps were cut off and not run: ..."). The next turn in that conversation opens with a
+    `resumed` event `{reason: "restart", at}`. Goals that asked to carry on (`resume_on_restart`) are continued by a
+    task that starts with the app, one more round each as a normal turn (registered like any turn, so Stop works),
+    never past a held approval. Jobs keep their rule: paused, with Resume.
+  - Approvals are never duplicated. A call that is already waiting for your OK with the same arguments is not held
+    again: the model is told it is waiting (request number included) and the turn stops with an honest line ("I asked
+    once and stopped instead of asking again") instead of asking the model on; the run log records the repeat as
+    `duplicate` and the turn as `held`. The Room's hand-off does the same: a second ask for the same file and place
+    joins the request that is already in Needs you.
+  - The check that catches a false "I sent the email" no longer catches a true one. A send that ran in the turn, or
+    one you approved from the card or Needs you, backs the sentence; without one the reply is still withdrawn, with the
+    reason in plain words ("no email was sent in this conversation").
+- Migration: none for this package. The restart notes are ordinary rows in `messages` (`role: system`,
+  `name: restart`); compacted results reuse the `tool_results` table with ids `m<message id>`. New settings `TRY_URL`
+  and `TRY_API_KEY` are optional (a separate `rooks-try serve`); without them the Room runs in process when the
+  package is installed.
+- Rollback: check out the previous commit. Set `ROOKS_TRY_MCP=0` so the terminal stops adding the `room` server, and
+  ignore `/room` in the app (the tool is only offered while the package is installed; uninstall `rooks-try` to remove
+  it). Nothing in the database changes shape: held hand-offs are ordinary held actions and can be denied from Needs
+  you, the restart notes are plain messages the older code ignores, and the leftover `tool_results` rows are harmless.
 
 ## 2026-11-01 · Long tool results, step limit setting, repeat guard · branch feat/rea-p0-harness
 
