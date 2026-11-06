@@ -29,6 +29,12 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
+* **Presence polling fills the outbound audit log with loopback rows (R8 follow-up, found in B1 of feat/workroom).**
+  Every call to the desk and browser helpers on this computer is an `egress` row (effect `local`). The presence strip
+  polls every second; `needs_you` keeps the helpers' answer for five seconds, so with both helpers on an open app adds
+  about 35,000 local rows a day on top of Telegram's 2,880. Two ways out, both decisions for the owner: the retention
+  setting already listed above, or exempting loopback helper polls from the audit (they never leave the machine, and
+  `local_only` ignores them anyway). Until then the five second keep is the only brake.
 * **Windows skill sandbox (AppContainer/Job objects).** macOS Seatbelt and Linux bubblewrap are implemented; Windows isolation is planned but not wired. `isolation_layers()` reports "Windows isolation not implemented (AppContainer/Job objects planned)". See docs/skills-security.md for the design.
 * **Deleted conversation ids are reused, and the run log follows the id.** `conversations.id` is a plain `INTEGER PRIMARY KEY`, so deleting the newest conversation lets SQLite give its id to the next one. `actions` rows are kept on delete (the ledger, R2) and still carry the old `conversation_id`. The new conversation's trace then shows the deleted one's turns and tool calls. Found by a test in feat/rea-p0-harness. Fix: `AUTOINCREMENT` on conversations (needs a table rebuild in a migration), or null `actions.conversation_id` on delete.
 * **Bridge tokens for other local tools (item 103, Phase 1).** `/v1` accepts only `BROWSER_API_KEY` today. Other OpenAI-only tools (editors, scripts) need user-created, revocable bridge tokens and streaming (`stream: true` is refused with 400 for now).

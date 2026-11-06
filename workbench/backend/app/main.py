@@ -168,6 +168,10 @@ app.include_router(appearance.owner)  # the chosen look, shared with the phone a
 app.include_router(appearance.device)
 app.include_router(browser_proxy.router)
 app.include_router(desk_proxy.router)
+from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): the presence strip and the Needs you inbox
+
+app.include_router(presence.router)
+app.include_router(needs_you.router)
 app.include_router(work_api.router)  # Files (any file, analysis, sandboxed Python) and Sites (any website the user works in)
 app.include_router(skills_hub.router)  # Skills from GitHub behind the security gate
 app.include_router(mcp_client_api.router)  # feat/mcp-client: connect Workbench to the user's own MCP servers

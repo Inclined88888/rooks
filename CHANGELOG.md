@@ -4,6 +4,24 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## 2026-11-06 · The Workroom: presence, Needs you, the Room, reliability · branch feat/workroom
+
+Design record: `docs/design/0003-workroom.md` (binding for this branch). Packages add their bullets here as they land.
+
+- **Presence.** `GET /api/presence` says what the assistant is doing right now: its name, a mood (idle, thinking,
+  working, needs, done), the current step in plain words with the tool and a redacted summary of its arguments,
+  where it is working (chat, terminal, browser, desktop, Room), what it watches (mail, calendar, jobs, Room), how many
+  things need you, and the turns and jobs in flight. It reads state the app already keeps, never calls a model, asks
+  the helpers on this computer at most every five seconds (half a second per request), and is cached for one second.
+- **Needs you.** `GET /api/needs-you` is one inbox for everything waiting on you, newest first: held actions from
+  chat, jobs and schedules, jobs that ask before they start, and steps the desk and browser helpers paused on.
+  `POST /api/needs-you/{id}/approve` and `/deny` answer each item in the system it came from, exactly once: a second
+  answer is refused, so nothing is run twice from the inbox. Both routes need the signed in user.
+- **Outbound audit (R8).** The helpers' health checks (browser, computer use) now go through the audited client;
+  `tests/test_egress.py::test_no_unaudited_network_library_in_the_app` passes again. The loopback port probe that
+  finds a free port for a helper is listed there with its reason (a bind sends nothing).
+- Migration: none for this package.
+
 ## 2026-11-01 · Long tool results, step limit setting, repeat guard · branch feat/rea-p0-harness
 
 From the competitor review (P0 items 1, 2 and 4):

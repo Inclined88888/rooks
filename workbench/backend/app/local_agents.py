@@ -2,6 +2,10 @@
 
 The desktop app starts it on launch. A dev server often does not, which used to hide the tool and make chat
 say a work site was missing. Tests never start a process (PYTEST_CURRENT_TEST).
+
+Network: the health check goes through httpx, which the outbound audit wraps (R8, egress.py), so every probe of a
+helper is a row in the run log like any other call. The only other use of the network stack is binding a loopback
+port to find a free one for the helper; nothing is sent (tests/test_egress.py lists it).
 """
 
 from __future__ import annotations
@@ -11,8 +15,9 @@ import shutil
 import socket
 import subprocess
 import time
-import urllib.request
 from pathlib import Path
+
+import httpx
 
 from . import config
 
@@ -41,9 +46,9 @@ def _port() -> int:
 
 
 def _up(url: str) -> bool:
+    """Whether a helper answers on this address. Audited like every outbound call (egress.py wraps httpx)."""
     try:
-        urllib.request.urlopen(f"{url}/healthz", timeout=0.4).close()
-        return True
+        return httpx.get(f"{url}/healthz", timeout=0.4).status_code < 400
     except Exception:  # noqa: BLE001 - not up yet, or not our process
         return False
 

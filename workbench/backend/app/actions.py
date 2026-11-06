@@ -111,6 +111,12 @@ def pending(conversation_id: int | None = None) -> list[dict]:
     return [approval(r["id"]) for r in rows]
 
 
+def pending_count() -> int:
+    """How many held calls still wait for an answer, across every conversation (the Needs you pill; one COUNT, no
+    decrypting)."""
+    return db.one(f"SELECT COUNT(*) AS n FROM ({_PENDING})")["n"]
+
+
 def decide(action_id: int, approve: bool, channel: str = "web") -> int:
     """Record the user's answer. Raises 409 if it was already answered (by another click or client)."""
     a = approval(action_id)
