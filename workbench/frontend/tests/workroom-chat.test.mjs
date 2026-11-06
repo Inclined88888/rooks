@@ -364,7 +364,9 @@ test("a watched Room is drawn from the Room's own screen, and only while the Roo
   assert.match(watch.roomNoScreenLine({ running: false, screen: false, label: "" }), /off/i);
   const cards = read("../src/chat/ResultCards.tsx");
   assert.match(cards, /watchSource\(/, "the watch card uses the one mapping");
-  assert.match(cards, /roomScreenLive\(/, "the watch card asks the Room before it polls a picture");
+  assert.doesNotMatch(cards, /<img/, "the card polls no picture: the Stage shows the surface (package F3)");
+  assert.match(read("../src/room/RoomView.tsx"), /roomScreenLive\(/, "the Room's stage asks the Room before it polls a picture");
+  assert.match(read("../src/stage/surfaces.tsx"), /watchSource\(/, "the job surfaces draw from the one mapping");
   assert.doesNotMatch(cards, /desk\/jobs\/\$\{watch\.job_id\}/, "no hand-written screenshot paths in the card");
 });
 

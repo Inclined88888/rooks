@@ -89,3 +89,16 @@ test("the shell keeps the second screen on its own route", () => {
   assert.doesNotMatch(assistant, /window\.location\.pathname\.startsWith\("\/assistant"\)/);
   assert.doesNotMatch(assistant, /window\.location\.pathname === "\/assistant"/);
 });
+
+test("the Stage shows the Room, a browser, the desktop and the terminal through registered surfaces on the split", () => {
+  const surfaces = read("../src/stage/surfaces.tsx");
+  for (const s of ['"room"', '"browser"', '"desktop"', '"terminal"']) assert.ok(surfaces.includes(`registerStageSurface(${s}`), s);
+  assert.match(read("../src/App.tsx"), /registerStageSurfaces\(\)/, "registered when the app starts");
+  assert.match(read("../src/shell/StageHost.tsx"), /BesideStage/);
+  // a chat watch event opens the Stage; the card in the thread only opens it and shows no picture of its own
+  const cards = read("../src/chat/ResultCards.tsx");
+  assert.match(cards, /Open on the Stage/);
+  assert.doesNotMatch(cards, /<img/);
+  // the Stage closes with its own control
+  assert.match(surfaces, /closeStage|close\(\)/);
+});

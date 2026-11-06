@@ -44,23 +44,29 @@
 .col-you .job-col-head { border-color: var(--accent); }
 .job-count { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
 .job-col-hint { margin-top: -6px; }
-.job-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); padding: 12px; display: flex; flex-direction: column; gap: 6px;
-  transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+/* the board's cards are the Card primitive (src/ui) with these details on top */
+.job-card { display: flex; flex-direction: column; gap: 6px; transition: border-color var(--dur-fast) var(--ease-out); }
 .job-card:hover { border-color: var(--border-strong); }
 .job-waiting { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.job-top { gap: 6px; }
+.job-top { display: flex; align-items: center; gap: 6px; }
 .job-kind { font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: var(--track); color: var(--muted); }
-.job-state { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-2xs); padding: 1px 7px; border-radius: 999px; background: var(--panel-2); }
-.job-state.running { background: var(--accent-soft); color: var(--accent-text); }
-.job-state.waiting { background: var(--accent); color: var(--on-accent); }
-.job-state.done { background: var(--ok-soft); color: var(--ok-text); }
-.job-state.failed { background: var(--danger-soft); color: var(--danger-text); }
+.job-when { font-size: var(--text-xs); color: var(--muted); white-space: nowrap; }
 .job-title { all: unset; cursor: pointer; font-family: var(--serif); font-size: var(--text-lg); line-height: 1.25; overflow-wrap: anywhere; }
 .job-title:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
-.job-actions { gap: 6px; flex-wrap: wrap; }
-.job-approval { border-left: 3px solid var(--accent); padding: 6px 8px; background: var(--panel-2); display: flex; flex-direction: column; gap: 6px; overflow-wrap: anywhere; }
+.job-detail { font-size: var(--text-sm); color: var(--muted); overflow-wrap: anywhere; }
+.job-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.job-approval-card { max-width: none; }
 .job-more { border-top: 1px solid var(--border); padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-.job-prompt { white-space: pre-wrap; color: var(--muted); }
+.job-more-k { font-size: var(--text-xs); color: var(--muted); }
+.job-prompt { font-size: var(--text-sm); white-space: pre-wrap; color: var(--muted); }
+.job-new-form { display: flex; flex-direction: column; gap: 10px; }
+.job-new-text { font-size: var(--text-md); }
+.job-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.job-new-note { margin: 0; font-size: var(--text-sm); color: var(--muted); }
+.job-loading { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.job-empty { padding: var(--space-6) var(--space-3); }
+.job-empty .ui-empty-title { font-size: var(--text-lg); }
+.job-col-head .ui-btn, .job-col-head .ui-iconbtn { align-self: center; }
 .job-pill { position: fixed; right: 18px; bottom: 18px; z-index: 60; display: flex; align-items: flex-start; gap: 4px; max-width: 360px;
   background: var(--panel); border: 1px solid var(--border-strong); border-left: 4px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow-4);
   padding: 10px 6px 10px 12px; animation: job-pill-in var(--dur) var(--ease-out); }
@@ -105,8 +111,6 @@
 :root[data-motion="off"] .job-pill { animation: none; }
 :root[data-motion="off"] .job-card, :root[data-motion="off"] .trig-example { transition: none; }
 .trig-sub { font-family: var(--serif); font-size: var(--text-xl); margin: 8px 0 10px; }
-.job-new .seg { flex-wrap: wrap; max-width: 100%; }
-.job-new .seg-btn { white-space: nowrap; }
 
 /* feat/v02-core: Projects, History, Checked answers. Theme tokens only (every theme restyles it); movement follows motion.css. */
 .v02-kicker { font-size: var(--text-2xs); letter-spacing: var(--track); text-transform: uppercase; font-weight: 700; color: var(--accent-text); }
@@ -129,13 +133,10 @@
 /* History */
 .v02-filters { gap: 12px; margin-bottom: 16px; align-items: center; }
 .v02-search { position: relative; flex: 1 1 220px; max-width: 360px; }
-.v02-search > svg { top: 50%; transform: translateY(-50%); }
-.v02-search > .input { height: 34px; width: 100%; }
 .v02-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.v02-chip { border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: var(--radius-full); padding: 3px 11px; font: inherit; font-size: var(--text-xs); cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
-.v02-chip:hover { border-color: var(--text); }
-.v02-chip.on { background: var(--ink-btn, var(--text)); color: var(--on-ink, var(--bg)); border-color: transparent; }
+.v02-link { color: var(--accent-text); font-weight: 600; text-decoration: none; }
+.v02-link:hover { text-decoration: underline; }
+.v02-entry-meta { margin-top: 2px; }
 .v02-day { margin-bottom: 18px; }
 .v02-day-head { font-size: var(--text-2xs); letter-spacing: var(--track); text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
 .v02-entry { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--rule); align-items: flex-start; }
@@ -148,7 +149,7 @@
 .v02-icon.c-setting { background: var(--blue-soft); }
 .v02-icon.c-calendar, .v02-icon.c-task { background: var(--accent-soft); color: var(--accent-text); }
 .v02-detail { margin-top: 2px; overflow-wrap: anywhere; }
-.v02-fix { margin-top: 6px; padding: 6px 10px; background: var(--warn-soft); color: var(--warn-text); }
+.v02-fix { margin-top: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--warn-soft); color: var(--warn-text); }
 .v02-undone { margin-top: 4px; color: var(--ok-text); display: flex; align-items: center; gap: 4px; }
 .v02-confirm { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; border-color: var(--warn); background: var(--warn-soft); }
 @media (max-width: 640px) { .v02-entry { flex-wrap: wrap; } .v02-entry-actions { width: 100%; padding-left: 40px; } }

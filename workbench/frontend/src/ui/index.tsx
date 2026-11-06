@@ -171,7 +171,7 @@ export function Sheet({ open, onClose, title, side = "right", children, footer, 
   return createPortal(
     <div className="ui-scrim" onMouseDown={onClose}>
       <div ref={ref} className={cx("ui-sheet", `ui-sheet-${side}`)} role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1}
-        style={width ? { width } : undefined} onMouseDown={(e) => e.stopPropagation()}>
+        style={width ? { width: `min(${width}px, 100vw)` } : undefined} onMouseDown={(e) => e.stopPropagation()}>
         <header className="ui-sheet-head">
           <h2 id={id} className="ui-sheet-title">{title}</h2>
           <IconButton label="Close" onClick={onClose} size="sm"><X size={16} /></IconButton>
@@ -336,6 +336,7 @@ export function StageFrame({ title, label, live, captured, controls, children, c
   title: string; label: string; live: boolean; captured: boolean; controls: ReactNode; children: ReactNode; className?: string;
 }) {
   const id = useId();
+  const place = /^the\s/i.test(title) ? title.replace(/^the\s/i, "the ") : `the ${title}`; // "The Room" reads "the Room", never "the The Room"
   return (
     <section className={cx("ui-stage", live && "is-live", captured && "is-captured", className)} aria-labelledby={id} data-live={live || undefined} data-captured={captured || undefined}>
       <header className="ui-stage-head">
@@ -347,7 +348,7 @@ export function StageFrame({ title, label, live, captured, controls, children, c
       </header>
       <div className="ui-stage-body">{children}</div>
       <div className="ui-stage-controls" role="toolbar" aria-label={`${title} controls`}>{controls}</div>
-      {captured && <p className="ui-stage-captured" role="status">Your mouse and keyboard go to the {title}. Hand back to stop.</p>}
+      {captured && <p className="ui-stage-captured" role="status">Your mouse and keyboard go to {place}. Hand back to stop.</p>}
     </section>
   );
 }

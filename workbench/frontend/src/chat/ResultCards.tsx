@@ -4,15 +4,16 @@
  * happened with whether it can be undone, POST /api/history/{id}/undo does it, and a 409 means the service wants a
  * yes first (the entry's own confirm sentence). The history is fetched once per chat and shared by every card.
  */
-import { AlertTriangle, Undo2 } from "lucide-react";
+import { AlertTriangle, Columns2, Undo2 } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../api";
+import { openStage, surfaceOf, useStage } from "../shell/StageHost";
 import { Badge, Button } from "../ui";
 import { useToast } from "../util";
 import type { Card, Watch } from "./events";
 import { matchHistoryEntry, type HistoryEntry } from "./turns";
-import { roomNoScreenLine, roomScreenLive, watchSource, type RoomStatus } from "./watch";
+import { watchSource } from "./watch";
 
 const UNDOABLE = new Set(["draft", "event", "task", "note", "file", "routine"]);
 
@@ -164,44 +165,30 @@ export function ResultCards({ cards, cid, live = false }: { cards: Card[]; cid: 
 }
 
 /**
- * A job on a browser, the computer or the Room (watch.ts says where each one's picture comes from). While the job
- * runs (a reply made in this session) the latest frame is shown and refreshed; after a reload the card only links to
- * the job, it never pretends the screen is still live. The Room is asked first whether it is on and has a real
- * screen, and no picture is requested until it says yes; otherwise the card says what the Room is instead.
+ * A job on a browser, this computer or the Room: a small card that opens it on the Stage (the right pane), which is
+ * where the live view lives (src/stage/surfaces.tsx, with the Room's honesty check). The card itself shows no
+ * picture, so a reloaded chat never pretends a screen is still live; watch.ts names the surface and where its page is.
  */
 export function WatchCard({ watch, live }: { watch: Watch; live: boolean }) {
   const source = watchSource(watch);
-  const [tick, setTick] = useState(0);
-  const [gone, setGone] = useState(!live);
-  // undefined: not asked yet; null: the Room did not answer; otherwise its status
-  const [room, setRoom] = useState<RoomStatus | null | undefined>(undefined);
-  useEffect(() => { setGone(!live); setTick(0); }, [watch.job_id, live]);
-  useEffect(() => {
-    if (!source.status || !live) return;
-    let stop = false;
-    const ask = () => api<RoomStatus>(source.status as string).then((s) => { if (!stop) setRoom(s); }).catch(() => { if (!stop) setRoom(null); });
-    void ask();
-    const t = window.setInterval(() => void ask(), 5000);
-    return () => { stop = true; window.clearInterval(t); };
-  }, [source.status, live, watch.job_id]);
-  const showsScreen = live && !gone && (source.status ? roomScreenLive(room) : true);
-  useEffect(() => {
-    if (!showsScreen) return;
-    const t = window.setInterval(() => setTick((n) => n + 1), 2000);
-    return () => window.clearInterval(t);
-  }, [showsScreen, watch.job_id]);
-  let line: string;
-  if (source.status && live) line = room === undefined ? "Checking the Room…" : roomNoScreenLine(room);
-  else line = `${live ? "The screen is not available from here." : "This job's screen is not live any more."} Open it to see every step.`;
+  const stage = useStage();
+  const surface = surfaceOf(watch.surface);
+  const onStage = !!stage && stage.surface === surface && (stage.jobId || "") === watch.job_id;
+  const open = () => openStage({ surface, jobId: watch.job_id, goal: watch.goal || undefined });
+  const where = source.kicker === "Computer" ? "your computer" : `the ${source.kicker.toLowerCase()}`;
+  const line = source.status
+    ? (live ? "Rooks is using the Room. The Stage shows it as it really is." : "Rooks used the Room here. The Stage shows it as it is now.")
+    : (live ? `Rooks is working on ${where}. Watch it on the Stage.` : `A job on ${where}. Its page has every step it took.`);
   return (
     <div className="result-card watch-card">
       <div className="result-card-kicker">{source.kicker}</div>
       {watch.goal && <div className="result-card-title">{watch.goal}</div>}
-      {showsScreen
-        ? <img src={`${source.screenshot}?k=${tick}`} alt={`What is on the ${source.kicker} now`} onError={() => { if (tick > 1) setGone(true); }} />
-        : <div className="result-card-meta">{line}</div>}
+      <div className="result-card-meta">{line}</div>
       <div className="result-card-actions">
-        <Link className="ui-btn ui-btn-secondary ui-btn-sm" to={source.open}>{!live ? "Open" : source.status ? "Open the Room" : "Take over"}</Link>
+        <Button size="sm" variant={onStage ? "secondary" : "primary"} icon={<Columns2 size={13} />} aria-pressed={onStage} onClick={open}>
+          {onStage ? "On the Stage" : "Open on the Stage"}
+        </Button>
+        <Link className="ui-btn ui-btn-ghost ui-btn-sm" to={source.open}>{source.status ? "Open the Room" : "Open the job"}</Link>
       </div>
     </div>
   );

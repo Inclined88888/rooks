@@ -19,8 +19,13 @@ import { MobileBar } from "./shell/MobileBar";
 import { MoreSheet } from "./shell/MoreSheet";
 import { ToastHost } from "./ui";
 import { IS_MAC, MOD_KEY } from "./keys";
+import { registerStageSurfaces } from "./stage/surfaces";
+import { NeedsYouSheet } from "./needs/NeedsYou";
 
 export { MOD_KEY };
+
+// The Stage's surfaces (the Room, a browser job, a desk job, the terminal) draw themselves once registered.
+registerStageSurfaces();
 
 export type Status = {
   setup_complete: boolean;
@@ -184,6 +189,7 @@ export default function App() {
       <JobNotifier />{/* feat/v02-automations */}<DesktopBridge />{/* feat/tauri-native */}
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} pages={pages} />
       <AccountLayer />
+      <NeedsYouSheet />
       <ToastHost />
     </div>
   );

@@ -15,7 +15,7 @@ import { useAttachments, type Att } from "../Attachments"; // feat/attachments
 import { openBeside } from "../Beside";
 import { ChatList } from "../chat/ChatList"; // the Chats column: recent chats, archive, projects
 import { matches, wideQuery } from "../shell/breakpoints";
-import { openStage, type StageSurface } from "../shell/StageHost";
+import { openStage, surfaceOf } from "../shell/StageHost";
 import { emptyTurn, parseEvent, reduceTurn, type Approval, type Offer, type TurnState, type Watch } from "../chat/events";
 import { adoptServerIds, mergeSteps, rebuildTurns, stepTitle, type Row } from "../chat/turns";
 import { Thread, type Fresh } from "../chat/Thread";
@@ -89,8 +89,6 @@ function mergeLoaded(cur: Msg[], loaded: Msg[]): Msg[] {
     return out;
   });
 }
-
-const surfaceOf = (s: string): StageSurface => (s === "browser" ? "browser" : s === "room" ? "room" : s === "terminal" ? "terminal" : "desktop");
 
 function Chat() {
   const { id } = useParams();

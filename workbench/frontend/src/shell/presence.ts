@@ -30,6 +30,7 @@ const listeners = new Set<() => void>();
 let users = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let inflight = false;
+let wanted = false;
 let nameLoaded = false;
 
 function set(next: Presence) {
@@ -59,8 +60,8 @@ function fromWire(w: Wire): Presence {
   return { ...base, doing: presenceLine({ doing: w.doing || "", watching, mood }) };
 }
 
-async function tick() {
-  if (inflight) return;
+async function tick(): Promise<void> {
+  if (inflight) { wanted = true; return; }
   inflight = true;
   try {
     const w = await api<Wire>("/presence");
@@ -77,8 +78,15 @@ async function tick() {
   } finally {
     inflight = false;
     clearTimeout(timer);
-    if (users > 0) timer = setTimeout(tick, document.hidden ? 15000 : 5000);
+    if (wanted) { wanted = false; void tick(); }
+    else if (users > 0) timer = setTimeout(() => void tick(), document.hidden ? 15000 : 5000);
   }
+}
+
+/** Ask now (after a decision in Needs you, after a hand-off is held) instead of at the next tick. */
+export function refreshPresence(): Promise<void> {
+  clearTimeout(timer);
+  return tick();
 }
 
 function start() {

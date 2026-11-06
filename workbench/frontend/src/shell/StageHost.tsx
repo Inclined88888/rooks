@@ -26,7 +26,19 @@ function notify() {
   for (const fn of listeners) fn();
 }
 
+/** The surface word a chat event carries ("computer" is the desktop), as a Stage surface. */
+export function surfaceOf(s: string): StageSurface {
+  return s === "browser" ? "browser" : s === "room" ? "room" : s === "terminal" ? "terminal" : "desktop";
+}
+
+function sameStage(a: Stage | null, b: Stage): boolean {
+  return !!a && a.surface === b.surface && (a.jobId || "") === (b.jobId || "") && (a.goal || "") === (b.goal || "")
+    && (a.title || "") === (b.title || "") && (a.label || "") === (b.label || "");
+}
+
+/** Open the Stage on a surface. Opening what is already open keeps it exactly as it is (a watch event repeats). */
 export function openStage(stage: Stage) {
+  if (sameStage(current, stage)) return;
   current = { ...stage };
   notify();
 }

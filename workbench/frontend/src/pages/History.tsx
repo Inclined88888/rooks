@@ -1,10 +1,15 @@
-// feat/v02-core: Action history. Everything the assistant, automations and helpers did, with one-tap undo.
-import { AlertTriangle, CalendarDays, Check, CheckSquare, Cog, Download, FileText, FolderKanban, Globe2, History as HistoryIcon, Mail, MessageSquare,
-  Monitor, NotebookPen, Puzzle, Brain, Search, ShieldAlert, Undo2, Workflow, Eye } from "lucide-react";
+/**
+ * History: everything the assistant, automations and helpers did, newest first, with one-tap undo (the same history
+ * API the result cards in the chat use). Built on the primitives: Undo is a Button, "Can't undo" a Badge with the
+ * fix beside it, and each row opens the chat it came from.
+ */
+import { AlertTriangle, Brain, CalendarDays, Check, CheckSquare, Cog, Download, Eye, FileText, FolderKanban, Globe2, History as HistoryIcon, Mail,
+  MessageSquare, Monitor, NotebookPen, Puzzle, ShieldAlert, Undo2, Workflow } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api";
-import { Empty, relTime, SkeletonList, useToast } from "../util";
+import { Badge, Button, Card, Chip, EmptyState, Input } from "../ui";
+import { relTime, SkeletonList, useToast } from "../util";
 import "../v02/v02.css";
 
 export type Entry = { id: string; at: string; category: string; who: string; title: string; detail: string; tool: string; conversation_id: number | null;
@@ -67,7 +72,7 @@ export default function History() {
     if (g && g[0] === d) g[1].push(e); else groups.push([d, [e]]);
   }
   return (
-    <div className="page v02">
+    <div className="page v02 history-page">
       {toast.node}
       <div className="page-head">
         <div>
@@ -76,37 +81,40 @@ export default function History() {
           <p className="muted">What the assistant, your automations and helpers did, newest first. Undo what can be undone in one tap; for the rest, here's how to fix it.</p>
         </div>
         <div className="row">
-          <button className="btn sm" onClick={() => exportAs("csv")}><Download size={14} /> Spreadsheet</button>
-          <button className="btn sm" onClick={() => exportAs("pdf")}><Download size={14} /> PDF</button>
+          <Button size="sm" icon={<Download size={14} />} onClick={() => exportAs("csv")}>Spreadsheet</Button>
+          <Button size="sm" icon={<Download size={14} />} onClick={() => exportAs("pdf")}>PDF</Button>
         </div>
       </div>
 
       <div className="row wrap v02-filters">
-        <div className="input-icon v02-search">
-          <Search size={14} className="faint" aria-hidden="true" />
-          <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search your history" aria-label="Search your history" />
+        <div className="v02-search">
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search your history" aria-label="Search your history" />
         </div>
-        <div className="v02-chips" role="tablist" aria-label="Show">
-          {FILTERS.map((f) => <button key={f} role="tab" aria-selected={cat === f} className={`v02-chip ${cat === f ? "on" : ""}`} onClick={() => setCat(f)}>{f ? page?.categories[f] ?? f : "Everything"}</button>)}
+        <div className="v02-chips" role="group" aria-label="Show">
+          {FILTERS.map((f) => <Chip key={f} active={cat === f} onClick={() => setCat(f)}>{f ? page?.categories[f] ?? f : "Everything"}</Chip>)}
         </div>
         <label className="row small muted"><input type="checkbox" checked={lookups} onChange={(e) => setLookups(e.target.checked)} /> Include look-ups</label>
       </div>
 
       {asking && (
-        <div className="card v02-confirm" role="alertdialog" aria-label="Confirm undo">
+        <Card className="v02-confirm" role="alertdialog" aria-label="Confirm undo">
           <AlertTriangle size={18} aria-hidden="true" />
           <div className="grow"><b>Undo “{asking.title}”?</b><div className="small">{asking.undo.confirm}</div></div>
-          <button className="btn primary sm" disabled={busy === asking.id} onClick={() => undo(asking, true)}>Yes, undo</button>
-          <button className="btn ghost sm" onClick={() => setAsking(null)}>Keep it</button>
-        </div>
+          <Button variant="primary" size="sm" busy={busy === asking.id} onClick={() => void undo(asking, true)}>Yes, undo</Button>
+          <Button variant="ghost" size="sm" onClick={() => setAsking(null)}>Keep it</Button>
+        </Card>
       )}
 
-      {page === null && <div className="card"><SkeletonList rows={6} /></div>}
-      {page && !page.entries.length && <div className="card"><Empty icon={<HistoryIcon size={24} />} title={q || cat ? "Nothing matches" : "Nothing yet"} hint={q || cat ? undefined : "When the assistant does something for you, it shows up here."} /></div>}
+      {page === null && <Card><SkeletonList rows={6} /></Card>}
+      {page && !page.entries.length && (
+        <Card>
+          <EmptyState icon={<HistoryIcon size={24} />} title={q || cat ? "Nothing matches." : "Nothing yet."} line={q || cat ? undefined : "When the assistant does something for you, it shows up here."} />
+        </Card>
+      )}
       {groups.map(([day, rows]) => (
         <section key={day} className="v02-day">
           <h3 className="v02-day-head">{day}</h3>
-          <div className="card flush">
+          <Card padding="none">
             {rows.map((e) => {
               const Icon = ICON[e.category] ?? HistoryIcon;
               return (
@@ -114,26 +122,26 @@ export default function History() {
                   <span className={`v02-icon c-${e.category}`} aria-hidden="true"><Icon size={14} /></span>
                   <div className="grow" style={{ minWidth: 0 }}>
                     <div className="v02-entry-title">{e.title}</div>
-                    <div className="small faint">{e.who} · {new Date(e.at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} · {relTime(e.at)}
-                      {e.conversation_id && <> · <a href={`/assistant/${e.conversation_id}`} onClick={(ev) => { ev.preventDefault(); navigate(`/assistant/${e.conversation_id}`); }}>Open chat</a></>}
+                    <div className="small faint v02-entry-meta">{e.who} · {new Date(e.at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} · {relTime(e.at)}
+                      {e.conversation_id && <> · <Link className="v02-link" to={`/assistant/${e.conversation_id}`}>Open chat</Link></>}
                     </div>
                     {e.detail && <div className="small muted v02-detail">{e.detail}</div>}
-                    {e.status === "undone" && <div className="small v02-undone"><Undo2 size={12} /> Undone {e.undone_at ? relTime(e.undone_at) : ""}{e.undo.note ? `: ${e.undo.note}` : ""}</div>}
+                    {e.status === "undone" && <div className="small v02-undone"><Undo2 size={12} aria-hidden="true" /> Undone {e.undone_at ? relTime(e.undone_at) : ""}{e.undo.note ? `: ${e.undo.note}` : ""}</div>}
                     {e.status === "undo_failed" && <div className="small v02-late">Couldn't undo: {e.undo.note}</div>}
-                    {e.fix && <div className="small v02-fix"><b>Can't undo.</b> {e.fix}</div>}
-                    {e.status === "waiting" && <a className="small" href={`/assistant/${e.conversation_id ?? ""}`} onClick={(ev) => { ev.preventDefault(); navigate(`/assistant/${e.conversation_id ?? ""}`); }}>Review it</a>}
+                    {e.fix && <div className="small v02-fix"><Badge tone="warn">Can't undo</Badge> <span>{e.fix}</span></div>}
+                    {e.status === "waiting" && <Link className="small v02-link" to={`/assistant/${e.conversation_id ?? ""}`}>Review it</Link>}
                   </div>
                   <div className="v02-entry-actions">
-                    {e.undo.available && <button className="btn sm" disabled={busy === e.id} onClick={() => (e.undo.confirm ? setAsking(e) : undo(e))}><Undo2 size={13} /> Undo</button>}
-                    {e.fix_prompt && <button className="btn ghost sm" onClick={() => navigate("/assistant", { state: { draft: e.fix_prompt } })}>Help me fix it</button>}
+                    {e.undo.available && <Button size="sm" icon={<Undo2 size={13} />} busy={busy === e.id} onClick={() => (e.undo.confirm ? setAsking(e) : void undo(e))}>Undo</Button>}
+                    {e.fix_prompt && <Button size="sm" variant="ghost" onClick={() => navigate("/assistant", { state: { draft: e.fix_prompt } })}>Help me fix it</Button>}
                   </div>
                 </div>
               );
             })}
-          </div>
+          </Card>
         </section>
       ))}
-      {page?.next_before && <div className="row" style={{ justifyContent: "center" }}><button className="btn ghost" onClick={more}>Show older</button></div>}
+      {page?.next_before && <div className="row" style={{ justifyContent: "center" }}><Button variant="ghost" onClick={() => void more()}>Show older</Button></div>}
     </div>
   );
 }
