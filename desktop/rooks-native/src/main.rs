@@ -28,13 +28,23 @@ use rooks_native::term::Term;
 use rooks_native::{client::Client, link::Link};
 
 fn main() -> iced::Result {
+    let mut window = iced::window::Settings {
+        size: iced::Size::new(1180.0, 760.0),
+        ..Default::default()
+    };
+    if let Ok(icon) = iced::window::icon::from_file_data(
+        include_bytes!("../assets/app-icon.png"),
+        None,
+    ) {
+        window.icon = Some(icon);
+    }
     iced::application(copy::window_title(), App::update, App::view)
         .subscription(App::subscription)
         .theme(App::theme)
         .font(INTER)
         .font(INTER_SEMI)
         .default_font(inter(Weight::Normal))
-        .window_size(iced::Size::new(1180.0, 760.0))
+        .window(window)
         .run_with(App::boot)
 }
 

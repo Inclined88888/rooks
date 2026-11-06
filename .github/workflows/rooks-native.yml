@@ -73,6 +73,7 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip" -OutFile "$wix\wix.zip"
           Expand-Archive "$wix\wix.zip" -DestinationPath $wix
           Copy-Item desktop\rooks-native\target\release\rooks-native.exe desktop\rooks-native\pack\rooks-native.exe
+          Copy-Item desktop\rooks-native\assets\app-icon.ico desktop\rooks-native\pack\app-icon.ico
           Push-Location desktop\rooks-native\pack
           & "$wix\candle.exe" Rooks.wxs
           & "$wix\light.exe" -sval -o "$env:GITHUB_WORKSPACE\${{ matrix.artifact }}" Rooks.wixobj

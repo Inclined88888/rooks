@@ -4,6 +4,8 @@
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" Description="Rooks, on this computer" />
     <MajorUpgrade DowngradeErrorMessage="A newer Rooks is already installed." />
     <MediaTemplate EmbedCab="yes" />
+    <Icon Id="RooksIcon" SourceFile="app-icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="RooksIcon" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="LocalAppDataFolder">
         <Directory Id="INSTALLDIR" Name="Rooks" />
@@ -15,11 +17,12 @@
     <DirectoryRef Id="INSTALLDIR">
       <Component Id="MainExe" Guid="B1C2D3E4-F5A6-4789-8ABC-DEF012345678">
         <File Id="RooksExe" Source="rooks-native.exe" KeyPath="yes" />
+        <File Id="RooksIco" Source="app-icon.ico" />
       </Component>
     </DirectoryRef>
     <DirectoryRef Id="ApplicationProgramsFolder">
       <Component Id="StartMenu" Guid="C2D3E4F5-A6B7-4890-9BCD-EF0123456789">
-        <Shortcut Id="RooksStart" Name="Rooks" Description="Rooks" Target="[INSTALLDIR]rooks-native.exe" WorkingDirectory="INSTALLDIR" />
+        <Shortcut Id="RooksStart" Name="Rooks" Description="Rooks" Target="[INSTALLDIR]rooks-native.exe" WorkingDirectory="INSTALLDIR" Icon="RooksIcon" />
         <RemoveFolder Id="CleanMenu" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\Inclined88888\Rooks" Name="installed" Type="integer" Value="1" KeyPath="yes" />
       </Component>

@@ -123,7 +123,7 @@ pub fn ensure() -> Result<Link, String> {
         return Ok(link);
     }
     let started = start_installed()?;
-    let link = started.link.clone();
+    let link = with_cookie(started.link.clone());
     if let Ok(mut slot) = HOLD.lock() {
         *slot = Some(started);
     }
@@ -132,10 +132,20 @@ pub fn ensure() -> Result<Link, String> {
 
 static HOLD: Mutex<Option<Started>> = Mutex::new(None);
 
+/// Fill in a session cookie when the service was already up (app.json has the key, not a launch token).
+fn with_cookie(mut link: Link) -> Link {
+    if link.cookie.is_empty() && !link.key.is_empty() {
+        if let Ok(cookie) = crate::client::Client::session_from_key(&link.url, &link.key) {
+            link.cookie = cookie;
+        }
+    }
+    link
+}
+
 pub fn discover() -> Result<Link, String> {
     if let Some(link) = read_link(&app_json_path()) {
         if healthy(&link.url) {
-            return Ok(link);
+            return Ok(with_cookie(link));
         }
     }
     Err("Rooks is not running on this computer yet. Open the app you already use, or run ai-workspace, then open Rooks again.".into())
@@ -147,7 +157,7 @@ pub fn start_installed() -> Result<Started, String> {
         if healthy(&link.url) {
             return Ok(Started {
                 child: idle_child()?,
-                link,
+                link: with_cookie(link),
             });
         }
     }
@@ -236,7 +246,10 @@ fn start_from_launcher() -> Result<Started, String> {
         }
         if let Some(link) = read_link(&app_json_path()) {
             if healthy(&link.url) {
-                return Ok(Started { child, link });
+                return Ok(Started {
+                    child,
+                    link: with_cookie(link),
+                });
             }
         }
         thread::sleep(Duration::from_millis(300));

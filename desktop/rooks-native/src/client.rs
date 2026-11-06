@@ -58,7 +58,10 @@ impl Client {
     }
 
     fn prep(&self, req: ureq::Request) -> ureq::Request {
-        let mut req = req.set("Accept", "application/json");
+        // X-Workbench is the CSRF gate on state-changing /api calls (main.py guard).
+        let mut req = req
+            .set("Accept", "application/json")
+            .set("X-Workbench", "1");
         if !self.bearer.is_empty() {
             req = req.set("Authorization", &format!("Bearer {}", self.bearer));
         }
@@ -218,11 +221,33 @@ impl Client {
             ))
             .call()
             .map_err(|e| e.to_string())?;
-        let header = response.header("set-cookie").unwrap_or("");
-        let cookie = header.split(';').next().unwrap_or("").trim();
-        let Some(value) = cookie.strip_prefix("wb_session=") else {
-            return Err("The local service did not sign this window in.".into());
-        };
-        Ok(value.to_string())
+        cookie_from_response(&response)
     }
+
+    /// Trade the bridge key from app.json for a session cookie when the service was already up.
+    pub fn session_from_key(base: &str, key: &str) -> Result<String, String> {
+        if key.is_empty() {
+            return Err("No local bridge key.".into());
+        }
+        let agent = ureq::AgentBuilder::new().redirects(0).build();
+        let response = agent
+            .post(&format!(
+                "{}/api/desktop/local-session",
+                base.trim_end_matches('/')
+            ))
+            .set("Authorization", &format!("Bearer {key}"))
+            .set("X-Workbench", "1")
+            .call()
+            .map_err(|e| e.to_string())?;
+        cookie_from_response(&response)
+    }
+}
+
+fn cookie_from_response(response: &ureq::Response) -> Result<String, String> {
+    let header = response.header("set-cookie").unwrap_or("");
+    let cookie = header.split(';').next().unwrap_or("").trim();
+    let Some(value) = cookie.strip_prefix("wb_session=") else {
+        return Err("The local service did not sign this window in.".into());
+    };
+    Ok(value.to_string())
 }

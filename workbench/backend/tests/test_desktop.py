@@ -50,6 +50,28 @@ def test_desktop_session_needs_the_launch_token(client, desktop):
     assert "wb_session" in r.headers.get("set-cookie", "")
 
 
+def test_local_session_mints_a_cookie_with_the_bridge_key(client, monkeypatch):
+    """Native window on a service already running: trade app.json key for wb_session."""
+    from app import config
+    from starlette.testclient import TestClient
+
+    monkeypatch.setattr(config, "TOOLS_API_KEY", "k" * 30)
+    # Same CSRF header the native shell sends on every write (main.py guard).
+    h = {"X-Workbench": "1"}
+    anon = TestClient(client.app)
+    assert anon.post("/api/desktop/local-session", headers=h).status_code == 401
+    assert anon.post(
+        "/api/desktop/local-session",
+        headers={**h, "Authorization": "Bearer wrong-key-xxxxxxxxxxxxxxxx"},
+    ).status_code == 401
+    r = anon.post(
+        "/api/desktop/local-session",
+        headers={**h, "Authorization": f"Bearer {'k' * 30}"},
+    )
+    assert r.status_code == 200 and r.json() == {"ok": True}
+    assert "wb_session" in r.headers.get("set-cookie", "")
+
+
 def test_welcome_flag_is_reported_and_routes_the_session(client, desktop):
     from app import db
 

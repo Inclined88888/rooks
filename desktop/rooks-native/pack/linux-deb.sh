@@ -3,14 +3,26 @@
 set -euo pipefail
 bin=${1:?binary}
 out=${2:?deb}
+here=$(cd "$(dirname "$0")" && pwd)
+icon_src=${ROOKS_ICON:-"$here/../assets/app-icon.png"}
 root=$(mktemp -d)
-mkdir -p "$root/usr/bin" "$root/usr/share/applications" "$root/DEBIAN"
+mkdir -p "$root/usr/bin" "$root/usr/share/applications" "$root/usr/share/icons/hicolor/256x256/apps" "$root/DEBIAN"
 install -m 0755 "$bin" "$root/usr/bin/rooks-native"
+if [[ -f "$icon_src" ]]; then
+  if command -v convert >/dev/null; then
+    convert "$icon_src" -resize 256x256 "$root/usr/share/icons/hicolor/256x256/apps/rooks-native.png"
+  elif command -v sips >/dev/null; then
+    sips -z 256 256 "$icon_src" --out "$root/usr/share/icons/hicolor/256x256/apps/rooks-native.png" >/dev/null
+  else
+    cp "$icon_src" "$root/usr/share/icons/hicolor/256x256/apps/rooks-native.png"
+  fi
+fi
 cat > "$root/usr/share/applications/rooks-native.desktop" <<'EOF'
 [Desktop Entry]
 Name=Rooks
 Comment=A personal assistant on this computer
 Exec=rooks-native
+Icon=rooks-native
 Terminal=false
 Type=Application
 Categories=Utility;

@@ -3,12 +3,27 @@
 set -euo pipefail
 bin=${1:?binary}
 out=${2:?dmg}
+here=$(cd "$(dirname "$0")" && pwd)
+icon_src=${ROOKS_ICON:-"$here/../assets/app-icon.png"}
 stage=$(mktemp -d)
 app="$stage/Rooks.app"
-mkdir -p "$app/Contents/MacOS"
+mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin" "$app/Contents/MacOS/rooks-native"
 chmod +x "$app/Contents/MacOS/rooks-native"
-cat > "$app/Contents/Info.plist" <<'EOF'
+icon_plist=""
+if [[ -f "$icon_src" ]] && command -v sips >/dev/null && command -v iconutil >/dev/null; then
+  iconset_dir=$(mktemp -d)
+  iconset="$iconset_dir/Rooks.iconset"
+  mkdir -p "$iconset"
+  for s in 16 32 128 256 512; do
+    sips -z "$s" "$s" "$icon_src" --out "$iconset/icon_${s}x${s}.png" >/dev/null
+    sips -z $((s * 2)) $((s * 2)) "$icon_src" --out "$iconset/icon_${s}x${s}@2x.png" >/dev/null
+  done
+  iconutil -c icns "$iconset" -o "$app/Contents/Resources/AppIcon.icns"
+  rm -rf "$iconset_dir"
+  icon_plist='  <key>CFBundleIconFile</key><string>AppIcon</string>'
+fi
+cat > "$app/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
@@ -21,6 +36,7 @@ cat > "$app/Contents/Info.plist" <<'EOF'
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>NSHighResolutionCapable</key><true/>
+${icon_plist}
 </dict></plist>
 EOF
 hdiutil create -volname Rooks -srcfolder "$stage" -ov -format UDZO "$out"
