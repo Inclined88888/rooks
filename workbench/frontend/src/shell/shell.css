@@ -1,0 +1,122 @@
+/* ==========================================================================
+   The Workroom shell (docs/design/0003-workroom.md, section 3): rail, presence strip, thread host, stage, bottom bar.
+   Tokens only: no literal colours. The two breakpoints are 900px (--bp-narrow) and 1280px (--bp-wide); custom
+   properties cannot be used inside @media, so those two numbers appear here as literals and nowhere else.
+   ========================================================================== */
+
+.shell { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); height: 100%; background: var(--bg); position: relative; }
+.shell-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.shell-main > .main { flex: 1; min-height: 0; }
+
+/* ---- Skip link ---- */
+.skip-link {
+  position: absolute; left: var(--space-2); top: -48px; z-index: 200; padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: var(--text-sm); text-decoration: none;
+  box-shadow: var(--shadow-3);
+}
+.skip-link:focus-visible { top: var(--space-2); }
+
+/* ---- Rail ---- */
+.rail {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: var(--space-3) var(--space-1) var(--space-2); background: var(--panel); border-right: 1px solid var(--border);
+  z-index: 20; min-height: 0; overflow: visible;
+}
+.rail-mark {
+  display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: var(--space-2); flex: none;
+  border: 0; border-radius: 10px; background: var(--accent); color: var(--on-accent);
+  font-family: var(--serif); font-size: 19px; font-weight: 600; line-height: 1; cursor: pointer;
+}
+.rail-mark:hover { background: var(--accent-hover); }
+.rail-group { position: relative; }
+.rail-item {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  width: 56px; min-height: 52px; padding: 4px 2px; border: 0; border-radius: var(--radius-sm); flex: none;
+  background: transparent; color: var(--muted); text-decoration: none; font: inherit; cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.rail-item:hover { background: var(--panel-2); color: var(--text); text-decoration: none; }
+.rail-item.is-active, .rail-item[aria-current="page"] { background: var(--accent-soft); color: var(--accent-text); }
+.rail-item.is-open { background: var(--panel-3); color: var(--text); }
+.rail-label { font-size: var(--text-rail); font-weight: 600; letter-spacing: 0.02em; line-height: 1; white-space: nowrap; }
+.rail-chev { position: absolute; right: 5px; top: 50%; margin-top: -5px; color: var(--faint); }
+.rail-spacer { flex: 1; min-height: var(--space-2); }
+.rail-search:focus-visible { position: static; width: auto; height: auto; margin: 0; clip: auto; overflow: visible; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: var(--text-xs); }
+.rail-flyout {
+  position: absolute; left: calc(100% + 6px); top: 0; z-index: 40; min-width: 208px;
+  padding: var(--space-1); border-radius: var(--radius-md); background: var(--panel); border: 1px solid var(--border);
+  box-shadow: var(--shadow-2); display: flex; flex-direction: column; outline: none;
+  animation: shell-pop var(--dur-normal) var(--ease-out) both;
+}
+.rail-flyout-title { padding: 6px 10px 4px; font-size: var(--text-2xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
+.rail-flyout-link {
+  display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: var(--radius-sm);
+  color: var(--text); font-size: var(--text-sm); font-weight: 500; text-decoration: none; white-space: nowrap;
+}
+.rail-flyout-link svg { color: var(--faint); flex: none; }
+.rail-flyout-link:hover { background: var(--panel-2); text-decoration: none; }
+.rail-flyout-link:hover svg { color: var(--text); }
+.rail-flyout-link.is-active { background: var(--accent-soft); color: var(--accent-text); }
+.rail-flyout-link.is-active svg { color: var(--accent-text); }
+@keyframes shell-pop { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
+
+/* ---- Presence strip ---- */
+.presence-strip { flex: none; height: var(--presence-h); border-bottom: 1px solid var(--border); background: var(--bg); min-width: 0; }
+
+/* ---- Stage pane (the right side of the Beside split when a surface is live) ---- */
+.stage-pane { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: var(--space-3); }
+.stage-pane > .ui-stage { flex: 1; }
+
+/* ---- More sheet lists ---- */
+.more-group { margin-bottom: var(--space-3); }
+.more-section { padding: var(--space-2) var(--space-3) var(--space-1); font-size: var(--text-2xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
+.more-link {
+  display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-sm);
+  color: var(--text); font-size: var(--text-sm); font-weight: 500; text-decoration: none;
+}
+.more-link svg { color: var(--faint); flex: none; }
+.more-link:hover { background: var(--panel-2); text-decoration: none; }
+.more-link:hover svg { color: var(--text); }
+.more-link.is-active { background: var(--accent-soft); color: var(--accent-text); }
+.more-link.is-active svg { color: var(--accent-text); }
+.more-ext { margin-left: auto; }
+
+/* ---- Bottom bar (phones and narrow windows) ---- */
+.mobile-nav {
+  display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: stretch;
+  height: calc(56px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--panel); border-top: 1px solid var(--border);
+}
+.mobile-item {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 44px; border: 0; background: transparent; color: var(--muted); text-decoration: none; font: inherit; cursor: pointer;
+}
+.mobile-item span { font-size: var(--text-rail); font-weight: 600; letter-spacing: 0.02em; line-height: 1; }
+.mobile-item.is-active { color: var(--accent-text); }
+.mobile-item.has-count { color: var(--accent-text); }
+.mobile-count {
+  position: absolute; top: 4px; left: calc(50% + 6px); min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-full);
+  background: var(--accent); color: var(--on-accent); font-size: var(--text-2xs) !important; font-weight: 700; display: grid; place-items: center;
+}
+
+/* ---- Wide windows (--bp-wide): the Chats column opens by default (the chat page reads the same number from
+   shell/breakpoints.ts) and the Stage gets more air ---- */
+@media (min-width: 1281px) {
+  .stage-pane { padding: var(--space-4); }
+  .presence-strip .ui-presence { padding: 0 var(--space-6); }
+}
+
+/* ---- Narrow windows and phones (--bp-narrow): bottom bar instead of the rail; the Stage stacks under the thread ---- */
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .rail { display: none; }
+  .mobile-nav { display: grid; }
+  .shell-main { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+  .presence-strip .ui-presence { padding: 0 var(--space-3); gap: var(--space-2); }
+  .presence-strip .ui-presence-where { display: none; }
+  .stage-pane { padding: var(--space-2); }
+}
+
+/* ---- Motion off ---- */
+:root[data-motion="off"] .rail-flyout { animation: none; }

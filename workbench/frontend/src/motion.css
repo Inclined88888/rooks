@@ -7,7 +7,7 @@
 :root { --tracer-speed: 2.4s; --lift: 2px; }
 :root[data-motion="subtle"] { --tracer-speed: 6.5s; --lift: 0px; }
 
-/* ---- Signature tracer: a cherry stroke with an ink tip running round the working element ---- */
+/* ---- Signature tracer: an accent stroke with an ink tip running round the working element ---- */
 .has-tracer { position: relative; }
 .tracer { position: absolute; inset: -1px; pointer-events: none; z-index: 3; animation: fade-in var(--dur-slow) var(--ease-out) both; }
 .tracer svg { display: block; overflow: visible; }
@@ -21,7 +21,7 @@
 .has-tracer:has(> .tracer), .has-tracer:has(> .tracer):focus-within { border-color: var(--border); box-shadow: none; }
 :root[data-motion="subtle"] .tracer-dash { stroke-dasharray: 12 88; opacity: 0.8; }
 :root[data-motion="subtle"] .tracer-tip { display: none; }
-/* Off: a still cherry keyline says "working" without moving */
+/* Off: a still accent keyline says "working" without moving */
 :root[data-motion="off"] .tracer-dash { animation: none; stroke-dasharray: none; stroke-width: 1; }
 :root[data-motion="off"] .tracer-tip, :root[data-motion="off"] .tracer-base { display: none; }
 
@@ -43,9 +43,6 @@
 .list-item { transition: background-color var(--dur-fast) var(--ease-out); }
 .list-item > .grow { transition: transform var(--dur) var(--ease-out); }
 :root[data-motion="full"] a.list-item:hover > .grow, :root[data-motion="full"] button.list-item:hover > .grow { transform: translateX(3px); }
-.nav-link { transition: color var(--dur-fast) var(--ease-out); }
-:root[data-motion="full"] .nav-link.active::before { animation: dot-in 220ms var(--ease-out) both; }
-@keyframes dot-in { from { transform: scale(0); } to { transform: scale(1); } }
 
 /* ---- Off and OS reduced motion: keep state changes, drop all movement ---- */
 :root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after {

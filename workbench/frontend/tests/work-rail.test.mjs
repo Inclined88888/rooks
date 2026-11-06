@@ -4,23 +4,24 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
-const side = read("../src/AgentsSidebar.tsx");
+const side = read("../src/chat/ChatList.tsx"); // the old sidebar's list, now the Chats column of the Chat page
 const app = read("../src/App.tsx");
+const registry = read("../src/pages/registry.ts");
 const host = read("../src/terminalHost.tsx");
 const code = read("../src/pages/Code.tsx");
 const terminal = read("../src/pages/TerminalPage.tsx");
 const chat = read("../src/pages/Assistant.tsx");
 const beside = read("../src/Beside.tsx");
-const css = read("../src/styles.css");
+const shell = read("../src/shell/shell.css");
 
-test("the chat has no default mail and tasks column", () => {
+test("the chat has no default mail and tasks column: the shell is a 64px rail and the page", () => {
   assert.doesNotMatch(app, /AgentsContext/);
-  assert.match(css, /grid-template-columns: 256px minmax\(0, 1fr\);/);
-  assert.doesNotMatch(css, /256px minmax\(0, 1fr\) 248px/);
+  assert.match(shell, /grid-template-columns: var\(--rail-w\) minmax\(0, 1fr\);/);
+  assert.doesNotMatch(shell, /minmax\(0, 1fr\) 248px/);
 });
 
 test("recent is chats only, and an empty project list is not the product name", () => {
-  assert.match(side, />Recent</);
+  assert.match(side, /"Recent"/);
   assert.match(side, /Today/);
   assert.match(side, /Earlier/);
   assert.doesNotMatch(side, /still open/);
@@ -49,8 +50,8 @@ test("a second screen stays closed until you ask, and it does not reopen a saved
 
 test("terminal shells stay mounted away from the terminal page", () => {
   assert.match(app, /TerminalKeeper/);
-  assert.match(app, /TerminalSlot/);
-  assert.doesNotMatch(app, /<TerminalPage/);
+  assert.match(registry, /path: "\/terminal"[^\n]*TerminalSlot/);
+  assert.doesNotMatch(`${app}\n${registry}`, /<TerminalPage/);
   assert.match(host, /terminal-park/);
   assert.match(host, /requestAnimationFrame/);
   assert.match(terminal, /parked/);
@@ -64,5 +65,5 @@ test("code keeps the real terminal, browser and computer", () => {
   assert.match(code, />Computer</);
   assert.doesNotMatch(code, /Virtual computer/);
   assert.doesNotMatch(code, /TryRoomPage/);
-  assert.doesNotMatch(app, /path=\"\/try\"/);
+  assert.doesNotMatch(registry, /path: "\/try"/);
 });

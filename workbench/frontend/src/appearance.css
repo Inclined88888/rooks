@@ -3,91 +3,6 @@
    Themes, accents, type pairings and density. Uses tokens from tokens.css.
    ========================================================================== */
 
-/* ---- Themes (override color tokens only) ---- */
-:root[data-theme="linen"] {
-  --color-bg: #ebe3d2;
-  --color-bg-hover: #e2d9c5;
-  --color-bg-active: #d9cfb8;
-  --color-surface: #f4eee2;
-  --color-surface-raised: #f4eee2;
-  --color-surface-sunken: #e2d9c5;
-  --color-border: #d0c5ad;
-  --color-border-strong: #82786a;
-  --color-border-focus: #1d1a16;
-  --color-ink: #1d1a16;
-  --color-ink-muted: #554f45;
-  --color-ink-faint: #5f584d;
-  --color-accent: #1d1a16;
-  --color-accent-hover: #3a352d;
-  --color-accent-soft: #e2d9c5;
-  --color-accent-text: #1d1a16;
-  --color-on-accent: #f4eee2;
-  --color-danger: #a50d26;
-  --color-danger-hover: #8b0a1f;
-  --color-danger-soft: #fbe3e3;
-  --color-danger-text: #a50d26;
-  --color-success: #2d6236;
-  --color-success-hover: #254d2b;
-  --color-success-soft: #e3ebdd;
-  --color-success-text: #2d6236;
-  --color-warning: #7a4c00;
-  --color-warning-hover: #633e00;
-  --color-warning-soft: #f3e7cf;
-  --color-warning-text: #7a4c00;
-  --color-code-bg: #e2d9c5;
-  --color-scrim: rgba(29, 26, 22, 0.22);
-}
-:root[data-theme="gallery"] {
-  --color-bg: #ffffff;
-  --color-bg-hover: #f4f4f5;
-  --color-bg-active: #ececee;
-  --color-surface: #f7f7f8;
-  --color-surface-raised: #ffffff;
-  --color-surface-sunken: #f4f4f5;
-  --color-border: #ececec;
-  --color-border-strong: #e3e3e3;
-  --color-border-focus: #0d0d0d;
-  --color-ink: #0d0d0d;
-  --color-ink-muted: #6e6e80;
-  --color-ink-faint: #8e8ea0;
-  --color-accent: #0d0d0d;
-  --color-accent-hover: #000000;
-  --color-accent-soft: #f4f4f5;
-  --color-accent-text: #0d0d0d;
-  --color-on-accent: #ffffff;
-  --color-danger: #a00000;
-  --color-danger-hover: #800000;
-  --color-danger-soft: #ffe5e5;
-  --color-danger-text: #660000;
-  --color-success: #005c1f;
-  --color-success-hover: #004518;
-  --color-success-soft: #e1f5e7;
-  --color-success-text: #003d15;
-  --color-warning: #6b4000;
-  --color-warning-hover: #553300;
-  --color-warning-soft: #fff1d6;
-  --color-warning-text: #452a00;
-  --color-code-bg: #f7f7f8;
-  --color-scrim: rgba(13, 13, 13, 0.28);
-}
-:root[data-theme="gallery"] .nav-row:has(.nav-link.active) { background: transparent; }
-:root[data-theme="gallery"] .nav-row:has(.nav-link.active) .nav-link {
-  background: var(--panel-3); color: var(--text); border-radius: 8px;
-}
-:root[data-theme="gallery"] .nav-row:has(.nav-link.active) .nav-link svg,
-:root[data-theme="gallery"] .nav-row:has(.nav-link.active) .nav-pin { color: var(--text); }
-
-/* ---- Accents (light themes) ---- */
-:root[data-accent="ink"] { --color-accent: #141311; --color-accent-hover: #34312b; --color-accent-text: #141311; --color-accent-soft: #e6e0d2; --color-border-focus: #141311; }
-:root[data-accent="cobalt"] { --color-accent: #2563eb; --color-accent-hover: #1d4ed8; --color-accent-text: #1e40af; --color-accent-soft: #eff6ff; --color-border-focus: #2563eb; }
-:root[data-accent="forest"] { --color-accent: #16a34a; --color-accent-hover: #15803d; --color-accent-text: #166534; --color-accent-soft: #f0fdf4; --color-border-focus: #16a34a; }
-:root[data-accent="ochre"] { --color-accent: #ca8a04; --color-accent-hover: #a16207; --color-accent-text: #854d0e; --color-accent-soft: #fefce8; --color-border-focus: #ca8a04; }
-/* Night keeps the same families, lifted for contrast on ink */
-[data-theme="dark"][data-accent="ink"] { --color-accent: #efeae0; --color-accent-hover: #ffffff; --color-accent-text: #efeae0; --color-accent-soft: #2a2824; --color-border-focus: #efeae0; }
-[data-theme="dark"][data-accent="cobalt"] { --color-accent: #3b82f6; --color-accent-hover: #60a5fa; --color-accent-text: #93c5fd; --color-accent-soft: #1e3a5f; --color-border-focus: #3b82f6; }
-[data-theme="dark"][data-accent="forest"] { --color-accent: #22c55e; --color-accent-hover: #4ade80; --color-accent-text: #86efac; --color-accent-soft: #052e16; --color-border-focus: #22c55e; }
-[data-theme="dark"][data-accent="ochre"] { --color-accent: #eab308; --color-accent-hover: #facc15; --color-accent-text: #fde047; --color-accent-soft: #422006; --color-border-focus: #eab308; }
-
 /* ---- Type pairings ---- */
 :root[data-font="modern"] {
   --font-serif: var(--font-sans);
@@ -116,7 +31,6 @@
 :root[data-density="compact"] .page { padding: 28px 36px 64px; }
 :root[data-density="compact"] .page-head { margin-bottom: 20px; padding-bottom: 14px; }
 :root[data-density="compact"] .list-item { padding-top: 8px; padding-bottom: 8px; }
-:root[data-density="compact"] .nav-link { padding-top: 4px; padding-bottom: 4px; }
 :root[data-density="compact"] .card { padding: 14px; }
 
 /* ---- Appearance panel ---- */

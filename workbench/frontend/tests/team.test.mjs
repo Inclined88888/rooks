@@ -14,9 +14,10 @@ test("team styles use theme variables only and respect motion settings", () => {
 });
 
 test("Team is in the nav and routed, including the person page", () => {
-  const app = read("../src/App.tsx");
-  assert.ok(app.includes('{ to: "/team"'));
-  assert.ok(app.includes('<Route path="/team"') && app.includes('<Route path="/team/people/:id"'));
+  const registry = read("../src/pages/registry.ts");
+  assert.ok(registry.includes('{ path: "/team"'));
+  assert.ok(registry.includes('also: ["/team/people/:id"]'));
+  assert.match(read("../src/App.tsx"), /PAGES\.flatMap\(/, "every registered page becomes a route");
 });
 
 test("every view is there and nothing is sent without a button press", () => {

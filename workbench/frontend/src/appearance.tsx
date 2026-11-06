@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 
 /**
  * Appearance: theme, type, size, density, motion and accent. One object in localStorage, applied to <html> as data
- * attributes and CSS variables, so every page restyles live without a reload. Standard is the everyday look.
- * Sunshine, Paper, Cherry & Ink, Neon, Dark and High contrast stay available, plus "Match my system".
- * The choice is also saved to the backend so the desktop window, Rooks Code, Rooks Browser and the phone follow it.
- * Anyone who already saved their own choices keeps them (Linen and Gallery still work, they are just not offered).
+ * attributes and CSS variables, so every page restyles live without a reload. Studio (light) and Lamp (dark) are the
+ * two first class looks (tokens.css, keyed on data-mode); Sunshine, Paper, Cherry & Ink, Neon and High contrast stay
+ * available as colour layers on top, plus "Match my system". The choice is also saved to the backend so the desktop
+ * window, Rooks Code, Rooks Browser and the phone follow it. Anyone who already saved their own choices keeps them
+ * (Linen still works, it is just not offered). The ids "gallery" and "night" are kept for saved settings.
  */
 export type ThemeId = "sunshine" | "paper" | "cherry" | "neon" | "night" | "contrast" | "auto" | "linen" | "gallery";
 export type FontId = "editorial" | "modern" | "classic" | "system";
@@ -24,8 +25,8 @@ export type ThemeInfo = { id: ThemeId; label: string; note: string; mode: "light
 
 /** The curated six, plus "Match my system". Linen and Gallery stay valid for anyone who saved them, just not offered. */
 export const THEMES: ThemeInfo[] = [
-  { id: "gallery", label: "Standard", note: "White page, black type. The everyday look.", mode: "light",
-    swatch: { paper: "#ffffff", panel: "#f7f7f8", text: "#0d0d0d", muted: "#6e6e80", accent: "#0d0d0d", onAccent: "#ffffff", border: "#ececec" } },
+  { id: "gallery", label: "Studio", note: "Warm paper, ink type, one saffron signal. The everyday look.", mode: "light",
+    swatch: { paper: "#faf8f3", panel: "#ffffff", text: "#1b1a17", muted: "#5f5a50", accent: "#f2b705", onAccent: "#1b1a17", border: "#e6e1d6" } },
   { id: "sunshine", label: "Sunshine", note: "Bright, warm and airy.", mode: "light",
     swatch: { paper: "#fffdf8", panel: "#ffffff", text: "#2a2620", muted: "#615a4e", accent: "#ffc83d", onAccent: "#2a2000", border: "#f0e9da" } },
   { id: "paper", label: "Paper", note: "Soft newsprint, quiet ink.", mode: "light",
@@ -34,19 +35,19 @@ export const THEMES: ThemeInfo[] = [
     swatch: { paper: "#fbf8f3", panel: "#ffffff", text: "#141311", muted: "#57524a", accent: "#c8102e", onAccent: "#ffffff", border: "#e2dace" } },
   { id: "neon", label: "Neon", note: "Ink black with one electric lime.", mode: "dark",
     swatch: { paper: "#0b0d10", panel: "#12151a", text: "#e9eef2", muted: "#a3adb8", accent: "#d4ff3a", onAccent: "#0b0d10", border: "#262b33" } },
-  { id: "night", label: "Dark", note: "Calm ink, bone type. Easy at night.", mode: "dark",
-    swatch: { paper: "#121110", panel: "#191816", text: "#efeae0", muted: "#aca598", accent: "#ff4d5e", onAccent: "#121110", border: "#33302b" } },
+  { id: "night", label: "Lamp", note: "Dark paper, soft ink, the same saffron. Easy at night.", mode: "dark",
+    swatch: { paper: "#141210", panel: "#1c1915", text: "#f2ede3", muted: "#b0a89a", accent: "#f2b705", onAccent: "#141210", border: "#2e2a24" } },
   { id: "contrast", label: "High contrast", note: "Pure black on white, bold edges.", mode: "light",
     swatch: { paper: "#ffffff", panel: "#ffffff", text: "#000000", muted: "#1f1f1f", accent: "#0033aa", onAccent: "#ffffff", border: "#000000" } },
-  { id: "auto", label: "Match my system", note: "Standard by day, Dark when your computer is dark.", mode: "auto",
-    swatch: { paper: "#ffffff", panel: "#121110", text: "#0d0d0d", muted: "#aca598", accent: "#0d0d0d", onAccent: "#ffffff", border: "#ececec" } },
+  { id: "auto", label: "Match my system", note: "Studio by day, Lamp when your computer is dark.", mode: "auto",
+    swatch: { paper: "#faf8f3", panel: "#141210", text: "#1b1a17", muted: "#b0a89a", accent: "#f2b705", onAccent: "#1b1a17", border: "#e6e1d6" } },
 ];
 const HIDDEN_THEMES: ThemeId[] = ["linen"];
 /** Themes with a hand-tuned palette whose accent never changes (an accent picked elsewhere would break contrast). */
 const FIXED_ACCENT: ThemeId[] = ["neon", "contrast"];
 export const DARK_THEMES: ThemeId[] = ["night", "neon"];
 
-/** "auto" resolves to Sunshine or Dark from the OS setting. */
+/** "auto" resolves to Studio or Lamp from the OS setting, so data-mode is always one of light or dark. */
 export function resolveTheme(t: ThemeId): Exclude<ThemeId, "auto"> {
   if (t !== "auto") return t;
   const dark = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
@@ -71,9 +72,9 @@ export const ACCENTS: { id: AccentId; label: string; color: string }[] = [
 ];
 export const SIZES = { min: 12, max: 18 };
 
-// Base sizes at 14px; every text token scales with the slider.
+// Base sizes at 14px, the same numbers tokens.css declares; every text token scales with the slider.
 const TEXT_TOKENS: [string, number][] = [["--text-2xs", 10.5], ["--text-xs", 12], ["--text-sm", 13], ["--text-md", 14], ["--text-lg", 16],
-  ["--text-xl", 20], ["--text-2xl", 28], ["--text-3xl", 40], ["--text-4xl", 56]];
+  ["--text-xl", 20], ["--text-2xl", 28], ["--text-3xl", 40], ["--text-4xl", 56], ["--text-thread", 15], ["--text-mono", 12.5], ["--text-rail", 11]];
 
 export function readAppearance(): Appearance {
   try {
@@ -102,7 +103,7 @@ function sanitize(v: Partial<Appearance>): Appearance {
 /** Apply to a root element (the document, or a preview box). */
 export function applyTo(el: HTMLElement, a: Appearance) {
   const theme = resolveTheme(a.theme);
-  el.dataset.theme = theme === "night" ? "dark" : theme; // Night keeps the original [data-theme="dark"] tokens
+  el.dataset.theme = theme === "night" ? "dark" : theme; // the saved id; the palette itself follows data-mode
   el.dataset.mode = DARK_THEMES.includes(theme) ? "dark" : "light";
   el.dataset.font = a.font;
   el.dataset.density = a.density;

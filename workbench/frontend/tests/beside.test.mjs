@@ -64,7 +64,8 @@ test("screen names stay the words people already see", () => {
 test("the shell keeps the second screen on its own route", () => {
   const beside = read("../src/Beside.tsx");
   const app = read("../src/App.tsx");
-  const side = read("../src/AgentsSidebar.tsx");
+  const stage = read("../src/shell/StageHost.tsx"); // the Stage is built on the Beside split
+  const side = read("../src/chat/ChatList.tsx");
   const assistant = read("../src/pages/Assistant.tsx");
   assert.doesNotMatch(beside, /Side by side/);
   assert.match(beside, /let current: BesideState \| null = null/);
@@ -77,7 +78,8 @@ test("the shell keeps the second screen on its own route", () => {
   assert.match(beside, /BesideExtraHost/);
   assert.match(beside, /safePath/);
   assert.match(beside, /Open \$\{label\} beside this/);
-  assert.match(app, /BesideStage/);
+  assert.match(app, /StageHost/);
+  assert.match(stage, /BesideStage/);
   assert.match(side, /Archive/);
   assert.match(side, /Delete/);
   assert.doesNotMatch(side, /BesideButton/);

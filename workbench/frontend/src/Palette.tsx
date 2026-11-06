@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FONTS, setAppearance, THEMES } from "./appearance";
 import { api } from "./api";
+import { PRODUCT } from "./product";
 import { Brain } from "lucide-react";
 import { Hit, KIND_ROUTE } from "./memory/types"; // feat/memory-core: universal search
 
@@ -120,7 +121,7 @@ export function CommandPalette({ open, onClose, pages }: { open: boolean; onClos
         <div className="palette-foot">
           <span><span className="kbd">↑</span><span className="kbd">↓</span> to move</span>
           <span><span className="kbd"><CornerDownLeft size={11} /></span> to open</span>
-          <span style={{ marginLeft: "auto" }}>Rooks</span>
+          <span style={{ marginLeft: "auto" }}>{PRODUCT}</span>
         </div>
       </div>
     </div>

@@ -1,54 +1,107 @@
 /* ==========================================================================
-   AI Workspace — Design Tokens
-   Calm, professional product aesthetic (Linear / Raycast / Claude quality).
-   One accent (cobalt), neutral grays, no warm paper, no gradients, no emoji.
-   WCAG AA for all text pairs in both themes.
-   Import this FIRST in main.tsx before styles.css / themes.css / sunshine.css.
+   Rooks design tokens v2: "Paper and Ink, with a saffron signal" (docs/design/0003-workroom.md, section 6).
+   Two first class themes keyed on html[data-mode]: Studio (light) and Lamp (dark). appearance.tsx sets data-mode
+   from the chosen theme ("auto" resolves to one of the two at runtime and follows the system). The older
+   data-theme ids (sunshine, paper, cherry, neon, contrast, linen) layer their own colours on top in themes.css and
+   sunshine.css; everything else (type, radius, spacing, shadow, motion, layout) comes from here.
+   Import this FIRST in main.tsx. Contrast figures are for the stated pairs (checked in tests/workroom-tokens).
    ========================================================================== */
 
-/* ---- Colour: neutrals (theme-independent names, theme-dependent values) ---- */
-:root {
-  /* Light theme defaults (overridden by [data-theme="sunshine"] etc.) */
-  --color-bg: #ffffff;
-  --color-bg-hover: #f5f5f5;
-  --color-bg-active: #eeeeee;
-  --color-surface: #ffffff;
-  --color-surface-raised: #ffffff;
-  --color-surface-sunken: #f5f5f5;
-  --color-border: #e0e0e0;
-  --color-border-strong: #d0d0d0;
-  --color-border-focus: #3b82f6;      /* cobalt focus ring */
-  --color-ink: #111827;               /* primary text, 15.8:1 on white */
-  --color-ink-muted: #6b7280;         /* secondary text, 4.7:1 on white */
-  --color-ink-faint: #9ca3af;         /* tertiary/disabled, 3.1:1 (non-text only) */
-  --color-accent: #2563eb;            /* cobalt 600 — primary actions, links */
-  --color-accent-hover: #1d4ed8;      /* cobalt 700 */
-  --color-accent-soft: #eff6ff;       /* cobalt 50 — fills, badges */
-  --color-accent-text: #1e40af;       /* cobalt 800 — text on accent-soft, 7.2:1 */
-  --color-on-accent: #ffffff;         /* text on solid accent */
-  --color-danger: #dc2626;            /* red 600 */
-  --color-danger-hover: #b91c1c;
-  --color-danger-soft: #fef2f2;
-  --color-danger-text: #991b1b;
-  --color-success: #16a34a;           /* green 600 */
-  --color-success-hover: #15803d;
-  --color-success-soft: #f0fdf4;
-  --color-success-text: #166534;
-  --color-warning: #ca8a04;           /* yellow 600 */
-  --color-warning-hover: #a16207;
-  --color-warning-soft: #fefce8;
-  --color-warning-text: #854d0e;
-  --color-code-bg: #f5f5f5;
-  --color-scrim: rgba(17, 24, 39, 0.4);
+/* ---- Studio (light): the default, also the fallback before data-mode is set ---- */
+:root,
+html[data-mode="light"] {
+  --color-bg: #FAF8F3;
+  --color-bg-hover: #F3F0E8;
+  --color-bg-active: #EBE7DC;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FFFFFF;
+  --color-surface-sunken: #F3F0E8;
+  --color-border: #E6E1D6;
+  --color-border-strong: #D2CBBB;
+  --color-border-focus: #7A4F00;      /* the focus ring: accent text, 7.2:1 on bg */
+  --color-ink: #1B1A17;
+  --color-ink-muted: #5F5A50;         /* 6.6:1 on bg */
+  --color-ink-faint: #948E82;         /* 3.2:1, non text only */
+  --color-accent: #F2B705;            /* saffron: solid fills, with on-accent ink */
+  --color-accent-hover: #DBA504;
+  --color-accent-soft: #FFF3CC;
+  --color-accent-text: #7A4F00;       /* 7.2:1 on bg */
+  --color-on-accent: #1B1A17;         /* 12.3:1 on accent */
+  --color-live: #F2B705;              /* the one colour that always means "live" */
+  --color-success: #1E7F4F;
+  --color-success-hover: #196B43;
+  --color-success-soft: #E3F3EA;
+  --color-success-text: #14532D;
+  --color-warning: #B45309;
+  --color-warning-hover: #9A4707;
+  --color-warning-soft: #FBEBD8;
+  --color-warning-text: #7C3A05;
+  --color-danger: #C0392B;
+  --color-danger-hover: #A33224;
+  --color-danger-soft: #F9E3E0;
+  --color-danger-text: #7F1D1D;
+  --color-code-bg: #F3F0E8;
+  --color-scrim: rgba(27, 26, 23, 0.45);
 
-  /* ---- Radius scale (6 / 10 / 14) ---- */
+  --shadow-1: 0 1px 2px rgba(27, 26, 23, 0.05), 0 1px 1px rgba(27, 26, 23, 0.03);
+  --shadow-2: 0 1px 2px rgba(27, 26, 23, 0.05), 0 6px 18px -6px rgba(27, 26, 23, 0.12);
+  --shadow-3: 0 2px 4px rgba(27, 26, 23, 0.05), 0 14px 28px -10px rgba(27, 26, 23, 0.16);
+  --shadow-4: 0 24px 48px -24px rgba(27, 26, 23, 0.24);
+  color-scheme: light;
+}
+
+/* ---- Lamp (dark) ---- */
+html[data-mode="dark"] {
+  --color-bg: #141210;
+  --color-bg-hover: #221E19;
+  --color-bg-active: #2A2520;
+  --color-surface: #1C1915;
+  --color-surface-raised: #221E19;
+  --color-surface-sunken: #0F0E0C;
+  --color-border: #2E2A24;
+  --color-border-strong: #3D382F;
+  --color-border-focus: #F6C84C;      /* 10.5:1 on bg */
+  --color-ink: #F2EDE3;
+  --color-ink-muted: #B0A89A;         /* 9.1:1 on bg */
+  --color-ink-faint: #756E62;         /* 3.3:1, non text only */
+  --color-accent: #F2B705;
+  --color-accent-hover: #F6C84C;
+  --color-accent-soft: #2E2410;
+  --color-accent-text: #F6C84C;       /* 10.5:1 on bg */
+  --color-on-accent: #141210;         /* 12.6:1 on accent */
+  --color-live: #F2B705;
+  --color-success: #4ADE80;
+  --color-success-hover: #6EE7A0;
+  --color-success-soft: #0F2A1A;
+  --color-success-text: #86EFAC;
+  --color-warning: #FBBF24;
+  --color-warning-hover: #FCD34D;
+  --color-warning-soft: #2E2410;
+  --color-warning-text: #FDE68A;
+  --color-danger: #F87171;
+  --color-danger-hover: #FCA5A5;
+  --color-danger-soft: #3A1A1A;
+  --color-danger-text: #FCA5A5;
+  --color-code-bg: #0F0E0C;
+  --color-scrim: rgba(0, 0, 0, 0.6);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 18px -6px rgba(0, 0, 0, 0.5);
+  --shadow-3: 0 2px 4px rgba(0, 0, 0, 0.35), 0 14px 28px -10px rgba(0, 0, 0, 0.6);
+  --shadow-4: 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+
+/* ---- Everything that is not a colour (theme independent) ---- */
+:root {
+  /* Shape: 8 / 12 / 16. Cards 12, composer and stage frame 16, chips full. */
   --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-full: 999px;
 
-  /* ---- Spacing scale (base 4px) ---- */
+  /* Spacing: the 4px scale only */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -59,16 +112,20 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* ---- Type scale (rem-based, scales with html font-size) ---- */
-  --text-2xs: 0.6875rem;   /* 11px @ 16px base */
-  --text-xs: 0.75rem;      /* 12px */
-  --text-sm: 0.875rem;     /* 14px */
-  --text-md: 1rem;         /* 16px */
-  --text-lg: 1.125rem;     /* 18px */
-  --text-xl: 1.25rem;      /* 20px */
-  --text-2xl: 1.5rem;      /* 24px */
-  --text-3xl: 2rem;        /* 32px */
-  --text-4xl: 3rem;        /* 48px */
+  /* Type: Hanken Grotesk at a 14px base. The Appearance slider scales every --text-* token from these numbers
+     (appearance.tsx TEXT_TOKENS), so size 14 renders exactly these values. */
+  --text-2xs: 10.5px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-3xl: 40px;
+  --text-4xl: 56px;
+  --text-thread: 15px;     /* the conversation body, line height 1.6 */
+  --text-mono: 12.5px;     /* steps, receipts, the presence line, the terminal */
+  --text-rail: 11px;       /* rail and bottom bar labels, weight 600, tracking 0.02em */
 
   --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-serif: "Bodoni Moda Variable", ui-serif, Georgia, serif;
@@ -77,223 +134,56 @@
   --leading-tight: 1.1;
   --leading-snug: 1.35;
   --leading-normal: 1.5;
-  --leading-relaxed: 1.65;
+  --leading-relaxed: 1.6;
 
-  --tracking-tight: -0.02em;
+  --tracking-tight: -0.01em;
   --tracking-normal: 0;
   --tracking-wide: 0.02em;
 
-  /* ---- Shadow / elevation ---- */
-  --shadow-1: 0 1px 2px rgba(17, 24, 39, 0.04), 0 1px 1px rgba(17, 24, 39, 0.03);
-  --shadow-2: 0 1px 2px rgba(17, 24, 39, 0.04), 0 4px 12px -4px rgba(17, 24, 39, 0.08);
-  --shadow-3: 0 2px 4px rgba(17, 24, 39, 0.04), 0 12px 24px -8px rgba(17, 24, 39, 0.12);
-  --shadow-4: 0 24px 48px -24px rgba(17, 24, 39, 0.2);
-
-  /* ---- Motion ---- */
+  /* Motion (the signature moments have their own scale in motion/tokens.css) */
   --dur-fast: 100ms;
   --dur-normal: 150ms;
   --dur-slow: 200ms;
   --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ---- Layout ---- */
-  --sidebar-w: 240px;
+  /* Layout */
+  --rail-w: 64px;
+  --presence-h: 44px;
+  --sidebar-w: 240px;              /* older themes still set it; nothing in the shell reads it */
   --header-h: 48px;
   --max-content-width: 760px;      /* chat message width */
   --max-page-width: 1120px;
+
+  /* Breakpoints. CSS custom properties cannot be read inside @media, so these are documentation and the values
+     for JavaScript (shell/breakpoints.ts); the shell stylesheets write the same two numbers, 900px and 1280px,
+     and nothing else. */
+  --bp-narrow: 900px;
+  --bp-wide: 1280px;
 }
 
-/* ---- Dark theme overrides ---- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="sunshine"]):not([data-theme="paper"]):not([data-theme="cherry"]):not([data-theme="linen"]):not([data-theme="gallery"]):not([data-theme="contrast"]) {
-    --color-bg: #0f1012;
-    --color-bg-hover: #181a1d;
-    --color-bg-active: #1f2226;
-    --color-surface: #141619;
-    --color-surface-raised: #1a1d21;
-    --color-surface-sunken: #0f1012;
-    --color-border: #2a2d31;
-    --color-border-strong: #3a3e43;
-    --color-border-focus: #60a5fa;      /* cobalt 400 */
-    --color-ink: #f3f4f6;
-    --color-ink-muted: #9ca3af;
-    --color-ink-faint: #6b7280;
-    --color-accent: #3b82f6;            /* cobalt 500 */
-    --color-accent-hover: #60a5fa;      /* cobalt 400 */
-    --color-accent-soft: #1e3a5f;       /* cobalt 900/800 mix */
-    --color-accent-text: #93c5fd;       /* cobalt 300 */
-    --color-on-accent: #0f1012;
-    --color-danger: #ef4444;
-    --color-danger-hover: #f87171;
-    --color-danger-soft: #450a0a;
-    --color-danger-text: #fca5a5;
-    --color-success: #22c55e;
-    --color-success-hover: #4ade80;
-    --color-success-soft: #052e16;
-    --color-success-text: #86efac;
-    --color-warning: #eab308;
-    --color-warning-hover: #facc15;
-    --color-warning-soft: #422006;
-    --color-warning-text: #fde047;
-    --color-code-bg: #0d1117;
-    --color-scrim: rgba(0, 0, 0, 0.6);
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
-    --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -4px rgba(0, 0, 0, 0.4);
-    --shadow-3: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 24px -8px rgba(0, 0, 0, 0.5);
-    --shadow-4: 0 24px 48px -24px rgba(0, 0, 0, 0.6);
-  }
-}
-
-/* Explicit dark theme classes (used by appearance.tsx data-theme="night" -> data-theme="dark") */
-[data-theme="dark"] {
-  --color-bg: #0f1012;
-  --color-bg-hover: #181a1d;
-  --color-bg-active: #1f2226;
-  --color-surface: #141619;
-  --color-surface-raised: #1a1d21;
-  --color-surface-sunken: #0f1012;
-  --color-border: #2a2d31;
-  --color-border-strong: #3a3e43;
-  --color-border-focus: #60a5fa;
-  --color-ink: #f3f4f6;
-  --color-ink-muted: #9ca3af;
-  --color-ink-faint: #6b7280;
-  --color-accent: #3b82f6;
-  --color-accent-hover: #60a5fa;
-  --color-accent-soft: #1e3a5f;
-  --color-accent-text: #93c5fd;
-  --color-on-accent: #0f1012;
-  --color-danger: #ef4444;
-  --color-danger-hover: #f87171;
-  --color-danger-soft: #450a0a;
-  --color-danger-text: #fca5a5;
-  --color-success: #22c55e;
-  --color-success-hover: #4ade80;
-  --color-success-soft: #052e16;
-  --color-success-text: #86efac;
-  --color-warning: #eab308;
-  --color-warning-hover: #facc15;
-  --color-warning-soft: #422006;
-  --color-warning-text: #fde047;
-  --color-code-bg: #0d1117;
-  --color-scrim: rgba(0, 0, 0, 0.6);
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
-  --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -4px rgba(0, 0, 0, 0.4);
-  --shadow-3: 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 24px -8px rgba(0, 0, 0, 0.5);
-  --shadow-4: 0 24px 48px -24px rgba(0, 0, 0, 0.6);
-  color-scheme: dark;
-}
-
-/* High contrast theme */
-[data-theme="contrast"] {
-  --color-bg: #ffffff;
-  --color-bg-hover: #f0f0f0;
-  --color-bg-active: #e0e0e0;
-  --color-surface: #ffffff;
-  --color-surface-raised: #ffffff;
-  --color-surface-sunken: #f5f5f5;
-  --color-border: #000000;
-  --color-border-strong: #000000;
-  --color-border-focus: #000000;
-  --color-ink: #000000;
-  --color-ink-muted: #333333;
-  --color-ink-faint: #666666;
-  --color-accent: #0033aa;
-  --color-accent-hover: #002080;
-  --color-accent-soft: #e0e8ff;
-  --color-accent-text: #001a55;
-  --color-on-accent: #ffffff;
-  --color-danger: #a00000;
-  --color-danger-hover: #800000;
-  --color-danger-soft: #ffe5e5;
-  --color-danger-text: #660000;
-  --color-success: #005c1f;
-  --color-success-hover: #004518;
-  --color-success-soft: #e1f5e7;
-  --color-success-text: #003d15;
-  --color-warning: #6b4000;
-  --color-warning-hover: #553300;
-  --color-warning-soft: #fff1d6;
-  --color-warning-text: #452a00;
-  --color-code-bg: #f5f5f5;
-  --color-scrim: rgba(0, 0, 0, 0.5);
-  --shadow-1: none;
-  --shadow-2: 0 0 0 1px #000;
-  --shadow-3: 0 0 0 1px #000, 0 4px 8px rgba(0,0,0,0.2);
-  --shadow-4: 0 0 0 1px #000, 0 12px 24px rgba(0,0,0,0.3);
-  color-scheme: light;
-}
-
-/* Neon theme (dark, electric lime accent — keep distinct) */
-[data-theme="neon"] {
-  --color-bg: #08090a;
-  --color-bg-hover: #0f1114;
-  --color-bg-active: #16191d;
-  --color-surface: #0d0f12;
-  --color-surface-raised: #13161a;
-  --color-surface-sunken: #08090a;
-  --color-border: #1f2328;
-  --color-border-strong: #30363d;
-  --color-border-focus: #d4ff3a;
-  --color-ink: #e6edf3;
-  --color-ink-muted: #8b949e;
-  --color-ink-faint: #6e7681;
-  --color-accent: #d4ff3a;
-  --color-accent-hover: #e2ff66;
-  --color-accent-soft: #1d2410;
-  --color-accent-text: #d4ff3a;
-  --color-on-accent: #08090a;
-  --color-danger: #ff5c6c;
-  --color-danger-hover: #ff8b95;
-  --color-danger-soft: #2e1418;
-  --color-danger-text: #ff8b95;
-  --color-success: #5ef0a0;
-  --color-success-hover: #8cffba;
-  --color-success-soft: #0f2419;
-  --color-success-text: #5ef0a0;
-  --color-warning: #ffc94d;
-  --color-warning-hover: #ffd57a;
-  --color-warning-soft: #2a2210;
-  --color-warning-text: #ffc94d;
-  --color-code-bg: #06080a;
-  --color-scrim: rgba(0, 0, 0, 0.7);
-  --shadow-1: 0 1px 2px rgba(0,0,0,0.4), 0 1px 1px rgba(0,0,0,0.3);
-  --shadow-2: 0 1px 2px rgba(0,0,0,0.4), 0 4px 12px -4px rgba(0,0,0,0.5);
-  --shadow-3: 0 2px 4px rgba(0,0,0,0.4), 0 12px 24px -8px rgba(0,0,0,0.6);
-  --shadow-4: 0 24px 48px -24px rgba(0,0,0,0.8), 0 0 0 1px rgba(212,255,58,0.08);
-  color-scheme: dark;
-}
-
-/* Focus visible — consistent ring using token */
+/* ---- Focus: one visible ring that no component cancels ---- */
 :focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--color-border-focus);
-  border-radius: var(--radius-sm);
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  box-shadow: none;
+  border-radius: var(--radius-xs);
 }
 
-/* Selection */
+/* ---- Selection ---- */
 ::selection {
   background: var(--color-accent-soft);
   color: var(--color-accent-text);
 }
 
-/* Scrollbar */
-* { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
+/* ---- Scrollbar ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border: 2px solid transparent; background-clip: content-box; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--color-border-strong); border: 2px solid transparent; background-clip: content-box; border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-border-strong); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-ink-faint); }
 
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-/* Aliases for names older components still use. */
+/* ---- Aliases for names older components still use ---- */
 :root {
   --sans: var(--font-sans);
   --border-focus: var(--color-border-focus);

@@ -1,0 +1,80 @@
+/* The Chats column inside the Chat page (chat/ChatList.tsx). Tokens only. Breakpoints: 900px (--bp-narrow). */
+.chat-layout { position: relative; display: flex; flex-direction: row; align-items: stretch; height: 100%; min-height: 0; }
+.chat-layout > .agents-chat-main { flex: 1; min-width: 0; }
+.chatlist {
+  display: flex; flex-direction: column; flex: none; width: 260px; min-height: 0; min-width: 0;
+  background: var(--panel); border-right: 1px solid var(--border); padding: var(--space-3) var(--space-2) var(--space-2);
+}
+.chatlist[hidden] { display: none; }
+.chatlist-top { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-2); }
+.chatlist-new {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+  height: 36px; width: 100%; border: 1px solid var(--accent); border-radius: var(--radius-full);
+  background: var(--accent); color: var(--on-accent); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer;
+}
+.chatlist-new:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.chatlist-search-wrap { position: relative; display: flex; align-items: center; }
+.chatlist-search-wrap > svg { position: absolute; left: 10px; color: var(--faint); pointer-events: none; }
+.chatlist-search {
+  width: 100%; height: 32px; padding: 0 10px 0 30px; border: 1px solid transparent; border-radius: var(--radius-sm);
+  background: var(--panel-2); color: var(--text); font: inherit; font-size: var(--text-xs);
+}
+.chatlist-search::placeholder { color: var(--faint); }
+.chatlist-search:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 0; }
+.chatlist-tree { flex: 1; overflow-y: auto; min-height: 0; padding: 0 2px 4px; }
+.chatlist-head {
+  display: flex; align-items: center; gap: 6px; width: 100%; border: 0; background: transparent;
+  color: var(--faint); font: inherit; font-size: var(--text-2xs); font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; padding: 8px 8px 4px; cursor: pointer; border-radius: var(--radius-xs);
+}
+.chatlist-head:hover { color: var(--muted); }
+.chatlist-body { display: flex; flex-direction: column; gap: 1px; margin-bottom: 4px; }
+.chatlist-label { padding: 6px 8px 4px; font-size: var(--text-2xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
+.chatlist-empty { margin: 0; padding: 8px 10px; color: var(--faint); font-size: var(--text-xs); }
+.chatlist-row { display: flex; align-items: center; gap: 4px; border-radius: var(--radius-sm); color: var(--muted); }
+.chatlist-row:hover, .chatlist-row:focus-within { background: var(--panel-2); color: var(--text); }
+.chatlist-row.is-active { background: var(--accent-soft); color: var(--accent-text); }
+.chatlist-open {
+  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; min-height: 34px;
+  padding: 6px 8px; border: 0; border-radius: var(--radius-sm); background: transparent; color: inherit; font: inherit;
+  text-align: left; cursor: pointer;
+}
+.chatlist-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); flex: none; }
+.chatlist-dot.on { background: var(--accent); }
+.chatlist-title { flex: 1; min-width: 0; font-size: var(--text-sm); font-weight: 500; line-height: 1.25; }
+.chatlist-age { flex: none; font-size: var(--text-2xs); font-variant-numeric: tabular-nums; color: var(--faint); }
+.chatlist-row.is-active .chatlist-age { color: inherit; opacity: 0.8; }
+.chatlist-menu { position: relative; flex: none; }
+/* Hover only on a mouse; always reachable by keyboard (focus-visible) and on touch (no hover: always shown) */
+.chatlist-act {
+  width: 28px; height: 28px; margin-right: 2px; border: 0; border-radius: var(--radius-xs);
+  display: grid; place-items: center; background: transparent; color: var(--faint); cursor: pointer; opacity: 0;
+}
+.chatlist-row:hover .chatlist-act, .chatlist-row:focus-within .chatlist-act, .chatlist-act:focus-visible, .chatlist-act[aria-expanded="true"] { opacity: 1; }
+@media (hover: none) { .chatlist-act { opacity: 1; } }
+.chatlist-act:hover, .chatlist-act:focus-visible { background: var(--panel-3); color: var(--text); }
+.chatlist-pop {
+  position: absolute; right: 0; top: 30px; z-index: 8; min-width: 140px;
+  padding: 4px; border-radius: var(--radius-sm); background: var(--panel);
+  border: 1px solid var(--border); box-shadow: var(--shadow-2); display: flex; flex-direction: column; outline: none;
+}
+.chatlist-pop button {
+  display: flex; align-items: center; gap: 8px; text-align: left;
+  border: 0; background: transparent; color: var(--text);
+  font: inherit; font-size: var(--text-sm); padding: 7px 8px; border-radius: 6px; cursor: pointer;
+}
+.chatlist-pop button:hover { background: var(--panel-2); }
+.chatlist-pop button.is-danger { color: var(--danger-text); }
+.chatlist-archived {
+  margin: 6px 8px 2px; padding: 4px; border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--faint);
+  font: inherit; font-size: var(--text-xs); text-align: left; cursor: pointer;
+}
+.chatlist-archived:hover { color: var(--text); }
+
+/* Narrow windows (--bp-narrow): the column floats over the thread until it is closed again, and the composer's
+   model menu gives way so Send stays on screen */
+@media (max-width: 900px) {
+  .chatlist.is-open { position: absolute; left: 0; top: 0; bottom: 0; z-index: 30; width: min(300px, 88vw); box-shadow: var(--shadow-3); }
+  .chat-layout .composer-bar select.input { max-width: 38vw; min-width: 0; }
+  .chat-layout .composer-bar { flex-wrap: nowrap; }
+}

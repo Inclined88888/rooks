@@ -5,9 +5,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
-const side = read("../src/AgentsSidebar.tsx");
+const side = read("../src/chat/ChatList.tsx"); // the chats list lives in the Chat page's column now
 const terminal = read("../src/pages/TerminalPage.tsx");
 const app = read("../src/App.tsx");
+const registry = read("../src/pages/registry.ts");
 const vite = read("../vite.config.ts");
 const tasks = read("../src/pages/Tasks.tsx");
 const auto = read("../src/pages/Automations.tsx");
@@ -27,8 +28,14 @@ test("a dropped terminal connection is not called a shell exit", () => {
   assert.match(vite, /ws:\s*true/);
 });
 
-test("the app has no virtual computer page", () => {
+test("the app has no virtual computer page; the Room never shows a fake screen", () => {
   assert.doesNotMatch(app, /\/try/);
-  assert.doesNotMatch(app, /TryRoomPage/);
+  assert.doesNotMatch(registry, /\/try\b/);
+  assert.doesNotMatch(`${app}\n${registry}`, /TryRoomPage/);
   assert.doesNotMatch(side, /Virtual computer/);
+  // the Room page only shows what the service reports, never a drawing of a desktop
+  const room = read("../src/pages/Room.tsx");
+  assert.match(room, /\/room\/status/);
+  assert.match(room, /Not on this computer yet\./);
+  assert.doesNotMatch(room, /<img/);
 });

@@ -1,4 +1,4 @@
-import { SquareTerminal, ArrowLeft, BookOpen, Brain, Check, Copy, Ellipsis, KeyRound, Pencil, Plus, RotateCcw, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
+import { SquareTerminal, ArrowLeft, BookOpen, Brain, Check, Copy, Ellipsis, KeyRound, PanelLeft, Pencil, Plus, RotateCcw, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { api, stream } from "../api";
@@ -14,6 +14,20 @@ import { Att, AttachButton, filesFrom, MessageAttachments, PendingChips, useAtta
 import { DiffView, extractDiffFromArgs } from "../components/DiffView";
 import { plainStep } from "../plainStep";
 import { openBeside } from "../Beside";
+import { ChatList } from "../chat/ChatList"; // the Chats column: recent chats, archive, projects
+import { IconButton } from "../ui";
+import { matches, wideQuery } from "../shell/breakpoints";
+
+const CHATLIST_KEY = "rooks.chatlist";
+/** The Chats column is open by default above the wide breakpoint; the toggle in the thread header is remembered. */
+function readChatListOpen(): boolean {
+  try {
+    const saved = localStorage.getItem(CHATLIST_KEY);
+    if (saved === "open") return true;
+    if (saved === "closed") return false;
+  } catch { /* storage unavailable */ }
+  return matches(wideQuery);
+}
 
 function mailLine(err: unknown): string {
   const msg = err instanceof Error ? err.message.trim() : "";
@@ -186,6 +200,12 @@ function Chat() {
   const [watch, setWatch] = useState<Watch | null>(null);
   const [routines, setRoutines] = useState<Routine[] | null>(null);
   const [showRoutines, setShowRoutines] = useState(Boolean((location.state as { routines?: boolean } | null)?.routines));
+  const [listOpen, setListOpen] = useState<boolean>(readChatListOpen);
+  const toggleList = () => setListOpen((v) => {
+    const next = !v;
+    try { localStorage.setItem(CHATLIST_KEY, next ? "open" : "closed"); } catch { /* storage unavailable */ }
+    return next;
+  });
   useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
   useEffect(() => {
     let stop = false;
@@ -442,10 +462,14 @@ function Chat() {
   };
 
   return (
-    <div className="agents-chat">
+    <div className={`agents-chat chat-layout${listOpen ? " has-list" : ""}`}>
+      <ChatList open={listOpen} id="chat-list" />
       <div className="agents-chat-main chat-main">
         <div className="toolbar chat-top agents-thread-top" style={{ position: "relative" }}>
-          <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New agent")}</div>
+          <IconButton label={listOpen ? "Hide chats" : "Show chats"} size="sm" active={listOpen} aria-expanded={listOpen} aria-controls="chat-list" onClick={toggleList}>
+            <PanelLeft size={16} />
+          </IconButton>
+          <div className="toolbar-title truncate">{cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat")}</div>
           <span className="agents-local-pill" title="Work stays on this computer">On this computer</span>
           <div className="spacer" />
           <div className="tabs mode-tabs agents-mode-head" role="group" aria-label="Mode" title="Chat is for the day. Code is for changing a project, and it asks before it changes files.">
@@ -499,7 +523,8 @@ function Chat() {
         )}
         <div className="chat-stage">
         <div className="chat-scroll" aria-live="polite">
-          <main className="chat-thread" role="main" aria-label="Chat conversation">
+          {/* the shell owns the one main landmark; the thread is the skip link's target */}
+          <section id="thread" className="chat-thread" aria-label="Chat conversation" tabIndex={-1}>
             <h1 style={srOnly}>Chat conversation</h1>
             {!busy && visible.length === 0 && (broken || approvals.length > 0) && (
               <div className="chat-hero agents-empty-hero">
@@ -580,7 +605,7 @@ function Chat() {
               </div>
             )}
             <div ref={endRef} />
-          </main>
+          </section>
         </div>
         {steps.length > 0 && shown && (
           <aside className="shoulder" aria-label="What Rooks is doing">

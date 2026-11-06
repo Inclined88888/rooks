@@ -1,6 +1,5 @@
 import DOMPurify from "dompurify";
 import "katex/dist/katex.min.css";
-import { Check, X } from "lucide-react";
 import { MouseEvent, useEffect, useRef, useState } from "react";
 import { api, Model } from "./api";
 import { motionOff } from "./appearance";
@@ -244,28 +243,9 @@ export function fmtTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-export function useToast() {
-  const [msg, setMsg] = useState<{ text: string; kind: "ok" | "err"; key: number } | null>(null);
-  const [leaving, setLeaving] = useState(false);
-  useEffect(() => {
-    if (!msg) return;
-    setLeaving(false);
-    const a = setTimeout(() => setLeaving(true), 3800);
-    const t = setTimeout(() => setMsg(null), 4000);
-    return () => { clearTimeout(a); clearTimeout(t); };
-  }, [msg]);
-  const node = msg ? (
-    <div key={msg.key} className={`toast ${msg.kind} ${leaving ? "leaving" : ""}`} role={msg.kind === "err" ? "alert" : "status"}>
-      <span className="toast-icon" aria-hidden="true">{msg.kind === "err" ? <X size={12} strokeWidth={3} /> : <Check size={12} strokeWidth={3} />}</span>
-      <span>{msg.text}</span>
-    </div>
-  ) : null;
-  return {
-    node,
-    ok: (text: string) => setMsg({ text, kind: "ok", key: Date.now() }),
-    err: (e: unknown) => setMsg({ text: e instanceof Error ? e.message : String(e), kind: "err", key: Date.now() }),
-  };
-}
+/** One toast stack for the app (ui/toast.ts). Pages keep calling useToast() and rendering {toast.node}; the stack itself
+ *  is mounted once in the shell, and {toast.node} only draws anything on screens that have no shell (sign in). */
+export { useToast } from "./ui";
 
 export function Empty({ icon, title, hint, hero = false, children }: { icon?: React.ReactNode; title: string; hint?: string; hero?: boolean; children?: React.ReactNode }) {
   return (

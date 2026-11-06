@@ -14,11 +14,11 @@ test("v02 styles use theme variables only (every theme restyles them)", () => {
 });
 
 test("Projects and History are in the nav and routed", () => {
+  const registry = read("../src/pages/registry.ts");
   const app = read("../src/App.tsx");
-  for (const path of ["/projects", "/history"]) {
-    assert.ok(app.includes(`{ to: "${path}"`), `${path} in NAV`);
-    assert.ok(app.includes(`<Route path="${path}"`), `${path} routed`);
-  }
+  for (const path of ["/projects", "/history"]) assert.ok(registry.includes(`{ path: "${path}"`), `${path} registered`);
+  assert.ok(registry.includes('also: ["/projects/:id"]'), "a project page is routed");
+  assert.match(app, /PAGES\.flatMap\(/, "every registered page becomes a route");
 });
 
 test("chat has the project switcher, the check toggle and Check this", () => {

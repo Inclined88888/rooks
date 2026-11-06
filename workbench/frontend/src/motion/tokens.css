@@ -58,17 +58,28 @@
   --m-glow-soft: rgba(212, 255, 58, 0.30); --m-glow-band: 3px;
   --m-cursor-fill: #d4ff3a; --m-cursor-stroke: #0b0d10;
 }
-:root[data-theme="dark"] {
-  --m-shimmer-hi: #ff8a96;
-  --m-glow-a: #ff4d5e; --m-glow-b: #ffb3a1; --m-glow-c: #33302b; --m-glow-d: #ff7a59;
-  --m-glow-soft: rgba(255, 77, 94, 0.18);
-  --m-cursor-fill: #efeae0; --m-cursor-stroke: #121110;
+:root[data-theme="dark"], :root[data-mode="dark"]:not([data-theme="neon"]) {
+  --m-shimmer-hi: var(--accent-text);
+  --m-glow-a: #f2b705; --m-glow-b: #f6c84c; --m-glow-c: #2e2410; --m-glow-d: #dba504;
+  --m-glow-soft: rgba(242, 183, 5, 0.18);
+  --m-cursor-fill: #f2ede3; --m-cursor-stroke: #141210;
 }
 :root[data-theme="contrast"] {
   --m-shimmer-hi: #0033aa;
   --m-glow-a: #0033aa; --m-glow-b: #0033aa; --m-glow-c: #0033aa; --m-glow-d: #0033aa;
   --m-glow-soft: transparent; --m-glow-band: 4px;
   --spring-settle: var(--ease-standard); --spring-gentle: var(--ease-standard); /* never overshoot */
+}
+
+/* ---- The OS "reduce motion" setting: one blanket rule for the whole app (feature sheets only add stops) ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ---- Calm motion: same moments, no travel, no bounce, slower loops ---- */
