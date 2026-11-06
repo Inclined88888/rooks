@@ -249,12 +249,13 @@ async def decide(item_id: str, answer: str):
     approve = answer == "approve"
     kind, _, rest = item_id.partition(":")
     status = "approved" if approve else "denied"
-    if kind == "a" and rest.isdigit():
+    plain_number = rest.isascii() and rest.isdecimal()  # "²" passes isdigit() but not int()
+    if kind == "a" and plain_number:
         from . import assistant
 
         a = await assistant.decide(int(rest), approve)  # 404 unknown, 409 already answered
         return {"id": item_id, "status": a["status"], "result": a.get("result", "")}
-    if kind == "j" and rest.isdigit():
+    if kind == "j" and plain_number:
         j = jobs.approve_start(int(rest), approve)  # 404 unknown, 409 not waiting to start
         return {"id": item_id, "status": status, "job": {"id": j["id"], "status": j["status"], "detail": j["detail"]}}
     if kind in ("d", "b"):

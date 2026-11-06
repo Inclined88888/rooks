@@ -165,9 +165,13 @@ export function stepState(ok: boolean, preview: string): StepState {
 }
 
 export const RESUMED_LINE = "Picked up after a restart";
+/**
+ * The compaction notice. Only what is true: earlier messages were shortened (an old tool answer cut down counts), and
+ * "summarised" only when there is a summary. The summary's size is not what those messages became, so it is not said.
+ */
 export function compactedLine(dropped: number, words: number): string {
   const rows = `${dropped} earlier message${dropped === 1 ? "" : "s"}`;
-  return `Earlier parts of this chat were summarised to fit: ${rows} became a ${words} word summary.`;
+  return `Earlier parts of this chat were ${words > 0 ? "shortened and summarised" : "shortened"} to fit (${rows}).`;
 }
 
 function withStep(s: TurnState, step: Omit<Step, "id">): TurnState {

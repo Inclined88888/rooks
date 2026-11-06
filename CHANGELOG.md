@@ -6,21 +6,31 @@ version and the merge commit on `main`.
 
 ## 2026-11-06 · The Workroom: presence, Needs you, the Room, reliability · branch feat/workroom
 
-Design record: `docs/design/0003-workroom.md` (binding for this branch). Packages add their bullets here as they land.
+Design record: `docs/design/0003-workroom.md` (binding for this branch). Packages: F1 to F4 (the app) and B1 to B3 (the service), listed in the order a person meets them.
 
-- **Presence.** `GET /api/presence` says what the assistant is doing right now: its name, a mood (idle, thinking,
+- **The Workroom shell and design system (F1).** One set of colour, type and spacing tokens with two modes, Studio
+  (light) and Lamp (dark); the older themes stay in Appearance as layers on top. A rail of pages with flyouts and a
+  More sheet, the presence line at the top with the Needs you pill, the Stage beside the chat, and a bar at the
+  bottom on phones, all built from one page list (`pages/registry.ts`) that also feeds the palette. Shared parts
+  (buttons, cards, tabs, sheets, toasts, the approval card, the Stage frame) live in `src/ui/`. The chat list is a
+  column inside the chat. The app calls itself Rooks. One main landmark, a skip link, focus rings everywhere, and
+  every sheet and flyout keeps focus inside and closes on Escape.
+- **The chat as a living record (F2).** Every turn keeps its step timeline after it finishes, with receipts and Undo
+  inline, one approval card everywhere, and a stored answer shown in plain words (no ids or raw JSON). A yes or no
+  given later closes the step it answers. The Room's steps read in plain words, and a watch event opens the Room on
+  the Stage.
+- **Presence (B1).** `GET /api/presence` says what the assistant is doing right now: its name, a mood (idle, thinking,
   working, needs, done), the current step in plain words with the tool and a redacted summary of its arguments,
   where it is working (chat, terminal, browser, desktop, Room), what it watches (mail, calendar, jobs, Room), how many
   things need you, and the turns and jobs in flight. It reads state the app already keeps, never calls a model, asks
   the helpers on this computer at most every five seconds (half a second per request), and is cached for one second.
-- **Needs you.** `GET /api/needs-you` is one inbox for everything waiting on you, newest first: held actions from
+- **Needs you (B1, F3).** `GET /api/needs-you` is one inbox for everything waiting on you, newest first: held actions from
   chat, jobs and schedules, jobs that ask before they start, and steps the desk and browser helpers paused on.
   `POST /api/needs-you/{id}/approve` and `/deny` answer each item in the system it came from, exactly once: a second
   answer is refused, so nothing is run twice from the inbox. Both routes need the signed in user.
-- **Outbound audit (R8).** The helpers' health checks (browser, computer use) now go through the audited client;
-  `tests/test_egress.py::test_no_unaudited_network_library_in_the_app` passes again. The loopback port probe that
-  finds a free port for a helper is listed there with its reason (a bind sends nothing).
-- **The Room (B2).** The assistant's own computer is back in the app, honestly this time. It is the `rooks-try`
+  In the app the inbox is a side sheet opened from the pill at the top, the phone bar and the Jobs page; it lists
+  every item with the one approval card, and a Room hand-off reads as what it is about, never by its request number.
+- **The Room (B2, F3).** The assistant's own computer is back in the app, honestly this time. It is the `rooks-try`
   package: a Linux guest when QEMU and an image exist, a private desktop with a real terminal in it when Xvfb exists
   (Linux), else a private folder and shell. The app side is `app/room.py` (`/api/room`: status, up, down, checkpoint,
   reset, click, drag, scroll, type, key, run, handoff, screenshot) and the chat tool `use_room`, offered only when a
@@ -43,6 +53,10 @@ Design record: `docs/design/0003-workroom.md` (binding for this branch). Package
     manager when one exists and otherwise a terminal that fills the screen, with this interpreter for any helper; a
     command run in it sees the Room's display; the local HTTP helper compares its key in constant time, serves the last
     picture without waiting behind a running command, and has drag and scroll.
+  - In the app (F3): a **Room** page and the Room on the Stage. The picture is drawn only while the Room is on and has
+    a real screen; Watch, Step in and Hand back appear only when clicks reach something real; without a screen the
+    page is a real command view. Save a point, Start over and Hand off a file are on the page; the rail shows a live
+    dot while the Room is on. Jobs and History are rebuilt on the shared parts, with Undo inline in History.
 - **Reliability people feel (B3).**
   - A chat that got too long no longer dies on the model's context error. The error is recognised for what it is
     (`prompt too long`, from OpenAI, Anthropic, Gemini and compatible servers, and Ollama's full window), the router
@@ -71,10 +85,17 @@ Design record: `docs/design/0003-workroom.md` (binding for this branch). Package
   - The check that catches a false "I sent the email" no longer catches a true one. A send that ran in the turn, or
     one you approved from the card or Needs you, backs the sentence; without one the reply is still withdrawn, with the
     reason in plain words ("no email was sent in this conversation").
-- Migration: none for this package. The restart notes are ordinary rows in `messages` (`role: system`,
-  `name: restart`); compacted results reuse the `tool_results` table with ids `m<message id>`. New settings `TRY_URL`
-  and `TRY_API_KEY` are optional (a separate `rooks-try serve`); without them the Room runs in process when the
-  package is installed.
+- **Sweep (F4).** Colours come only from the tokens (no hex left in feature styles), one reduced motion rule that
+  Appearance also applies, two breakpoints (900 and 1280 px), one main landmark on every page, dead code removed, and
+  the theme picker previews the Workroom itself. Every page was checked in the shell on a laptop and a phone in both
+  modes.
+- **Outbound audit (R8, B1).** The helpers' health checks (browser, computer use) now go through the audited client;
+  `tests/test_egress.py::test_no_unaudited_network_library_in_the_app` passes again. The loopback port probe that
+  finds a free port for a helper is listed there with its reason (a bind sends nothing).
+- Migration: none (no schema version change, no data rewritten). The restart notes are ordinary rows in `messages`
+  (`role: system`, `name: restart`); compacted results reuse the `tool_results` table with ids `m<message id>`. New
+  settings `TRY_URL` and `TRY_API_KEY` are optional (a separate `rooks-try serve`); without them the Room runs in
+  process when the package is installed.
 - Rollback: check out the previous commit. Set `ROOKS_TRY_MCP=0` so the terminal stops adding the `room` server, and
   ignore `/room` in the app (the tool is only offered while the package is installed; uninstall `rooks-try` to remove
   it). Nothing in the database changes shape: held hand-offs are ordinary held actions and can be denied from Needs

@@ -20,30 +20,59 @@ log = logging.getLogger("restart")
 NOTE_NAME = "restart"  # messages.name of the note row
 NOTE = "Rooks restarted during this turn."
 CUT = " These steps were cut off and not run: {steps}. Anything after them was not done."
+MAYBE_RAN = " These steps may have run before the restart; check History to see: {steps}."
 NOTHING_CUT = " The reply was cut short; nothing after that point was done."
 _TASKS: set[asyncio.Task] = set()
 
 
-def _cut_steps(conversation_id: int) -> list[str]:
-    """The tool calls in the conversation's newest assistant row that never got an answer: what the restart cut."""
+def _cut_steps(conversation_id: int, turn_id: int | None = None) -> tuple[list[str], list[str]]:
+    """The tool calls in the conversation's newest assistant row that never got an answer: what the restart cut, as
+    (not run, may have run). A call whose run already has a row in the run log (ok or verified) for this turn may have
+    done its work before its answer was saved, so it is never said to be "not run"."""
     m = db.one("SELECT id, tool_calls FROM messages WHERE conversation_id = ? AND role = 'assistant' ORDER BY id DESC LIMIT 1",
                conversation_id)
     if not m or not m["tool_calls"]:
-        return []
+        return [], []
     try:
         calls = json.loads(m["tool_calls"])
     except ValueError:
-        return []
+        return [], []
     answered = {r["tool_call_id"] for r in db.all(
         "SELECT tool_call_id FROM messages WHERE conversation_id = ? AND role = 'tool' AND id > ?", conversation_id, m["id"])}
-    return [str((c.get("function") or {}).get("name") or "a step") for c in calls if isinstance(c, dict) and c.get("id") not in answered]
+    ran: dict[str, int] = {}
+    if turn_id:
+        for r in db.all("SELECT tool FROM actions WHERE kind = 'tool_call' AND parent_action_id = ? AND outcome IN ('ok', 'verified')",
+                        turn_id):
+            ran[r["tool"]] = ran.get(r["tool"], 0) + 1
+    calls = [c for c in calls if isinstance(c, dict)]
+    for c in calls:  # an answered call accounts for its own run first
+        name = str((c.get("function") or {}).get("name") or "")
+        if c.get("id") in answered and ran.get(name):
+            ran[name] -= 1
+    cut, maybe = [], []
+    for c in calls:
+        if c.get("id") in answered:
+            continue
+        name = str((c.get("function") or {}).get("name") or "a step")
+        if ran.get(name):
+            ran[name] -= 1
+            maybe.append(name)
+        else:
+            cut.append(name)
+    return cut, maybe
 
 
-def note_for(cut: list[str]) -> str:
+def note_for(cut: list[str], maybe_ran: list[str] | None = None) -> str:
     """The note, in plain words (the tool names read as words: list tasks, not list_tasks)."""
+    words = lambda names: ", ".join(n.replace("_", " ") for n in names)  # noqa: E731
+    if not cut and not maybe_ran:
+        return NOTE + NOTHING_CUT
+    out = NOTE
+    if maybe_ran:
+        out += MAYBE_RAN.format(steps=words(maybe_ran))
     if cut:
-        return NOTE + CUT.format(steps=", ".join(c.replace("_", " ") for c in cut))
-    return NOTE + NOTHING_CUT
+        out += CUT.format(steps=words(cut))
+    return out
 
 
 def interrupt_running_turns() -> list[dict]:
@@ -58,9 +87,9 @@ def interrupt_running_turns() -> list[dict]:
         cid = r["conversation_id"]
         if not cid or not db.one("SELECT id FROM conversations WHERE id = ?", cid):
             continue
-        cut = _cut_steps(cid)
-        mid = assistant._save(cid, "system", note_for(cut), name=NOTE_NAME)
-        out.append({"turn_id": r["id"], "conversation_id": cid, "cut": cut, "message_id": mid})
+        cut, maybe = _cut_steps(cid, r["id"])
+        mid = assistant._save(cid, "system", note_for(cut, maybe), name=NOTE_NAME)
+        out.append({"turn_id": r["id"], "conversation_id": cid, "cut": cut, "maybe_ran": maybe, "message_id": mid})
     return out
 
 

@@ -12,7 +12,7 @@
 }
 @keyframes shimmer { to { background-position: -160% 0; } }
 .thinking { display: inline-flex; align-items: baseline; gap: 10px; min-height: 24px; font-size: var(--text-md); font-weight: 550; }
-.thinking-time { font-size: var(--text-xs); color: var(--faint); font-variant-numeric: tabular-nums; animation: fade-in var(--m-2) var(--ease-standard) both; }
+.thinking-time { font-size: var(--text-xs); color: var(--muted); font-variant-numeric: tabular-nums; animation: fade-in var(--m-2) var(--ease-standard) both; }
 .msg-thinking .msg-byline { margin-bottom: 4px; }
 :root:is([data-theme="sunshine"], [data-theme="neon"]) .msg-byline.is-thinking::before { animation: think-dot var(--m-loop) var(--ease-in-out) infinite; }
 @keyframes think-dot { 50% { transform: scale(0.55); opacity: 0.6; } }
@@ -158,9 +158,10 @@
 
 /* ---- Off (chosen in Appearance, or applied for the OS "reduce motion" setting): every moment keeps its meaning, nothing moves ---- */
 :root[data-motion="off"] :is(.shimmer-text, .msg-byline.is-thinking) { animation: none; background: none; color: var(--muted); }
-:root[data-motion="off"] :is(.skeleton::after, .scan-line, .cursor-trail, .cursor-ripple) { display: none; }
-:root[data-motion="off"] :is(.edge-glow-spin, .edge-glow-soft, .edge-pill-dot, .orb-halo, .w-in, .timeline .step, .timeline .step::before, .timeline .step::after,
-  .spring-in, .done-tick, .done-ring, .done-check, .edge-pill, .edge-glow) { animation: none !important; }
+:root[data-motion="off"] :is(.scan-line, .cursor-trail, .cursor-ripple), :root[data-motion="off"] .skeleton::after { display: none; }
+:root[data-motion="off"] :is(.edge-glow-spin, .edge-glow-soft, .edge-pill-dot, .orb-halo, .w-in, .timeline .step,
+  .spring-in, .done-tick, .done-ring, .done-check, .edge-pill, .edge-glow),
+:root[data-motion="off"] .timeline .step::before, :root[data-motion="off"] .timeline .step::after { animation: none !important; }
 :root[data-motion="off"] :is(.cursor-track, .live-shot img) { transition: none; }
 :root[data-motion="off"]::view-transition-group(*), :root[data-motion="off"]::view-transition-old(*), :root[data-motion="off"]::view-transition-new(*) { animation: none !important; }
 

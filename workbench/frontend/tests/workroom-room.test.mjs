@@ -29,7 +29,7 @@ const items = await load("../src/needs/items.ts", "needs-items.mjs");
 test("the Room says what it is in plain words: its isolation, its state, and the honest command line", () => {
   assert.ok(words, "src/room/words.ts exists");
   assert.equal(words.isolationWords("none"), "Not locked off");
-  assert.equal(words.isolationWords("namespace"), "Files and network kept apart");
+  assert.equal(words.isolationWords("namespace"), "Your home folder kept apart");
   assert.equal(words.isolationWords("vm"), "A separate computer");
   assert.equal(words.isolationWords(undefined), "Not locked off", "an unknown isolation is never oversold");
   assert.equal(words.HONEST_LINE, "Commands run as you, in a folder of its own. It is not a locked off computer.");
@@ -239,8 +239,8 @@ test("the History page is built on the primitives: Undo is a Button, Can't undo 
 // ---------------------------------------------------------------------------------------------- the rail
 test("the Room item on the rail shows a live dot while the Room runs, from the one shared status store", () => {
   const rail = read("../src/shell/Rail.tsx");
-  assert.match(rail, /useRoomStatus\(\)/);
+  assert.match(rail, /roomOn\(usePresence\(\)\)/);
   assert.match(rail, /rail-live/);
-  assert.match(read("../src/shell/MobileBar.tsx"), /useRoomStatus\(\)/);
+  assert.match(read("../src/shell/MobileBar.tsx"), /roomOn\(p\)/);
   assert.match(read("../src/shell/shell.css"), /\.rail-live[^{]*\{[^}]*var\(--live\)|\.rail-live[^{]*\{[^}]*var\(--color-live\)/, "the dot is the live colour");
 });

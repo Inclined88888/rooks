@@ -61,6 +61,20 @@ export function traceCalls(node: TraceNode, out: TraceCall[] = []): TraceCall[] 
   return out.sort((a, b) => Number(a.id) - Number(b.id));
 }
 
+/**
+ * What a timeline already asked the run log for. A timeline asks once: the steps it asked about and the steps the
+ * answer put in their place are both remembered, so an answer that adds no receipt (calls nothing checks) does not
+ * send the same question again. A new timeline (a reload brings new steps) may ask.
+ */
+export function runLogMemory() {
+  const seen = new WeakSet<Step[]>();
+  return {
+    /** True when these steps have calls, no receipt yet and were neither asked about nor came back as an answer. */
+    wants: (steps: Step[]) => steps.some((s) => s.kind === "call") && !steps.some((s) => s.receipt) && !seen.has(steps),
+    remember: (steps: Step[]) => { seen.add(steps); },
+  };
+}
+
 const ms = (iso: string | undefined) => (iso ? Date.parse(iso) : NaN);
 
 /**

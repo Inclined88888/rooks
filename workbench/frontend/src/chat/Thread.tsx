@@ -15,7 +15,7 @@ import { Markdown, RouterVia, useToast } from "../util";
 import { CheckThis } from "../v02/ChatExtras";
 import { LiveMarkdown } from "../v02/LiveBlocks";
 import { currentLine, type Approval, type Choices, type Notice, type Step, type TurnState } from "./events";
-import { receiptsFor } from "./receipts";
+import { receiptsFor, runLogMemory } from "./receipts";
 import { ResultCards } from "./ResultCards";
 import { argsLine, commandOf, isDecisionRow, plainPreview, splitNotVerified, stepTitle } from "./turns";
 import { madeHere, type Msg } from "./types";
@@ -224,13 +224,17 @@ function ReplyMessage({ m, p, askedAt, isLast }: { m: Msg; p: ThreadProps; asked
   // A timeline rebuilt from the rows has neither receipts nor the calls' words; ask the run log once per timeline,
   // when the person opens it. A ref remembers what was asked (state would re-run this effect and drop the answer),
   // and the answer only lands on the very steps it was asked about.
-  const askedFor = useRef<Step[] | null>(null);
+  const asked = useRef(runLogMemory());
   useEffect(() => {
-    if (!open || fromHere || !p.cid || !steps.length || steps.some((s) => s.receipt) || askedFor.current === steps) return;
-    const asked = steps;
-    askedFor.current = asked;
-    receiptsFor(p.cid, askedAt, m.created_at, asked)
-      .then((withReceipts) => { if (alive.current && withReceipts) setSteps((cur) => (cur === asked ? withReceipts : cur)); })
+    if (!open || fromHere || !p.cid || !asked.current.wants(steps)) return;
+    const these = steps;
+    asked.current.remember(these);
+    receiptsFor(p.cid, askedAt, m.created_at, these)
+      .then((withReceipts) => {
+        if (!alive.current || !withReceipts) return;
+        asked.current.remember(withReceipts);
+        setSteps((cur) => (cur === these ? withReceipts : cur));
+      })
       .catch(() => undefined);
   }, [open, fromHere, p.cid, steps, askedAt, m.created_at]);
   const { body, unverified } = splitNotVerified(m.content);
@@ -251,7 +255,7 @@ function ReplyMessage({ m, p, askedAt, isLast }: { m: Msg; p: ThreadProps; asked
           </div>
         )}
         {m.via && <RouterVia r={m.via} />}
-        {m.cards && <ResultCards cards={m.cards} cid={p.cid} live={fromHere} />}
+        {m.cards && <ResultCards cards={m.cards} cid={p.cid} live={fromHere} at={fromHere ? undefined : m.created_at} />}
         {m.choices && isLast && !p.busy && <ChoiceButtons c={m.choices} onPick={p.onPickChoice} />}
         {body && !revealing && (
           <div className="msg-actions">
@@ -276,7 +280,8 @@ function LiveTurn({ live, who, since }: { live: TurnState; who: string; since: n
         <Notices notices={live.notices} />
         <StepsPanel steps={live.steps} open live label="What it is doing" />
         {live.draft && <div className="msg-text"><Markdown text={live.draft} /></div>}
-        <Thinking since={since} line={currentLine(live.steps)} />
+        {/* the presence strip already says what Rooks is doing: this line is not a second live region */}
+        <Thinking since={since} line={currentLine(live.steps)} announce={false} />
       </div>
     </div>
   );
@@ -288,7 +293,10 @@ export function Thread(p: ThreadProps) {
   const showLive = p.busy && p.live && p.live.reply === null;
   let askedAt: string | undefined;
   return (
-    <div className="chat-scroll" aria-live="polite">
+    <div className="chat-scroll">
+      {/* One announcement when a reply is ready; the thread itself is not a live region, so a streamed reply is not read
+          word by word and a step is not spoken twice (the presence strip says what Rooks is doing). */}
+      <p className="sr-only" role="status">{p.fresh ? "Reply ready." : ""}</p>
       {/* the shell owns the one main landmark; the thread is the skip link's target */}
       <section id="thread" className="chat-thread" aria-label="Chat conversation" tabIndex={-1}>
         <h1 style={srOnly}>Chat conversation</h1>

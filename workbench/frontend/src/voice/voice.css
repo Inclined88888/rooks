@@ -93,4 +93,4 @@ html.askbar-doc, html.askbar-doc body { background: var(--panel); }
 .action-item .ok { color: var(--ok-text); margin-top: 2px; }
 .consent-check { padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm, 4px); background: var(--panel-2); }
 
-:root[data-motion="off"] :is(.askbar, .rec-dot, .talk-orb::after, .dictate-level) { animation: none !important; transition: none !important; }
+:root[data-motion="off"] :is(.askbar, .rec-dot, .dictate-level), :root[data-motion="off"] .talk-orb::after { animation: none !important; transition: none !important; }

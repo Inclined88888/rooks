@@ -20,7 +20,8 @@
 }
 .room-screen img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border-radius: var(--radius-xs); box-shadow: var(--shadow-1); user-select: none; -webkit-user-drag: none; }
 .room-screen.is-captured, .room-screen.is-captured img { cursor: crosshair; }
-.room-screen:focus-visible { outline: 2px solid var(--color-live); outline-offset: -2px; }
+/* the live colour is too light on Studio surfaces for a ring alone: the focus colour, with the live colour inside it */
+.room-screen:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: -2px; box-shadow: inset 0 0 0 4px var(--color-live); }
 .room-stale, .room-hint {
   position: absolute; left: var(--space-3); bottom: var(--space-3); padding: 3px 8px; border-radius: var(--radius-full);
   background: var(--color-ink); color: var(--color-bg); font-family: var(--font-mono); font-size: var(--text-2xs); opacity: 0.85; pointer-events: none;
@@ -73,7 +74,7 @@
 .room-advanced { margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-ink-muted); }
 .room-advanced summary { cursor: pointer; }
 .room-advanced-list { margin: var(--space-2) 0 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px var(--space-3); font-family: var(--font-mono); font-size: var(--text-2xs); }
-.room-advanced-list dt { color: var(--color-ink-faint); }
+.room-advanced-list dt { color: var(--color-ink-muted); }
 .room-advanced-list dd { margin: 0; overflow-wrap: anywhere; }
 
 @media (max-width: 900px) {

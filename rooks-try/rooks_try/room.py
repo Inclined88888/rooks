@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -41,9 +42,16 @@ class TryRoom:
         return self.driver().up()
 
     def down(self) -> dict:
+        """Stop whatever runs. A saved real guest (or the one asked for by name) is stopped through its own driver;
+        a saved drawing or folder is stopped but never adopted, so the next Start picks again."""
         name = store.load_state().get("driver")
-        if name in _DRIVERS:
+        if name in _DRIVERS and (name in _KEEP_SAVED or name == self.prefer):
             self._driver = _DRIVERS[name](offline=self.offline)
+            return self._driver.down()
+        if name in _DRIVERS:
+            result = _DRIVERS[name](offline=self.offline).down()
+            self._driver = None
+            return result
         if self._driver:
             return self._driver.down()
         return {"running": False}
@@ -113,12 +121,24 @@ class TryRoom:
         if not source.exists():
             return {"ok": False, "error": "No such file in the Room."}
         target = Path(dest).expanduser().resolve()
+        if source.is_dir() and not _stays_inside(source, home):
+            return {"ok": False, "error": "That folder links to files outside the Room."}
         target.parent.mkdir(parents=True, exist_ok=True)
         if source.is_dir():
-            shutil.copytree(source, target, dirs_exist_ok=True)
+            shutil.copytree(source, target, symlinks=True, dirs_exist_ok=True)  # links stay links, never content
         else:
             shutil.copy2(source, target)
         return {"ok": True, "from": str(source), "to": str(target)}
+
+
+def _stays_inside(folder: Path, home: Path) -> bool:
+    """True when nothing in the folder (a link included) leads outside the Room's home."""
+    for base, dirs, files in os.walk(folder):
+        for entry in [*dirs, *files]:
+            target = (Path(base) / entry).resolve()
+            if target != home and home not in target.parents:
+                return False
+    return True
 
 
 def _disk_snapshot(name: str, apply: bool) -> bool:

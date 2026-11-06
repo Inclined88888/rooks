@@ -22,6 +22,7 @@ from .shell import ShellDriver, isolation_level, wrapped
 
 LABEL = "A private desktop on this computer"
 NOTE = "A screen of its own on this computer. Commands run as you, in a folder of its own."
+ROOM_OFF = "The Room is off. Start it first."
 WINDOW_MANAGERS = ("openbox", "fluxbox", "icewm", "xfwm4", "metacity", "matchbox-window-manager", "jwm", "fvwm", "twm")
 # White on dark, a readable size, filling the screen. xterm falls back to its bitmap font when the face is missing.
 TERMINAL_ARGS = ["-title", "Room", "-maximized", "+sb", "-bg", "#141210", "-fg", "#F2EDE3", "-fa", "DejaVu Sans Mono", "-fs", "11"]
@@ -132,7 +133,8 @@ class NestedDriver(Driver):
         }
 
     def screenshot(self, path: Path) -> Path:
-        self._ensure_up()
+        if not self.status().get("running"):  # a picture never starts the Room; only up does
+            raise RuntimeError(ROOM_OFF)
         self._ensure_desktop()
         import mss
         from PIL import Image

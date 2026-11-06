@@ -72,9 +72,8 @@ class Handler(BaseHTTPRequestHandler):
         if not self._auth():
             return self._json(401, {"detail": "Not signed in"})
         path = urlparse(self.path).path
-        if path == "/api/status":
-            with self.lock:
-                return self._json(200, {"version": __version__, **self.room.status()})
+        if path == "/api/status":  # only reads; never waits behind a running command (the app gives up after 10 s)
+            return self._json(200, {"version": __version__, **self.room.status()})
         if path == "/api/screenshot":
             return self._screenshot()
         return self._json(404, {"detail": "Not found"})

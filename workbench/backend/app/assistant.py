@@ -80,6 +80,7 @@ class Ctx:
     work_mode: str = "chat"            # chat | plan | build — same names as the terminal
     live: object = None                # queue of watch events a long tool can publish while it runs
     held_repeats: int = 0              # calls that asked again for an OK already waiting; one ends the turn (B3)
+    held_title: str = ""               # what that waiting request is, in Needs you's own words, for the turn's last line
 
     def trace(self) -> dict:
         return {"channel": self.channel, "conversation_id": self.conversation_id,
@@ -268,6 +269,7 @@ async def _use_computer(goal: str, max_steps: int = 12, dry_run: bool = False, c
             "note": "Waiting for your approval on the Computer page." if told else "Still working; watch it on the Computer page."}
 
 
+TOOL_USE_ROOM = "use_room"
 ROOM_CONFIRM = "This uses the Room, Rooks's own computer. In a private folder, commands run as you."
 ROOM_PROMPT = ("If they want to try something, install things, or work on files without touching this computer, call "
                "use_room. It asks them first. A private folder runs commands as them; a private desktop or a Linux guest "
@@ -319,6 +321,8 @@ async def _use_room(action: str = "status", command: str = "", goal: str = "", l
     if action == "run":
         if not (command or "").strip():
             return {"ok": False, "error": "Say what command to run in the Room."}
+        if not (await room.perform("status")).get("running"):  # only up starts it, so the Stage and the run log see it
+            return {"ok": False, "error": room.ROOM_OFF}
         return await room.perform("run", {"command": command, "timeout": timeout})
     if action == "checkpoint":
         return await room.checkpoint(label or "")
@@ -332,7 +336,10 @@ async def _use_room(action: str = "status", command: str = "", goal: str = "", l
         out = room.request_handoff(src, dest, conversation_id=ctx.conversation_id if ctx else None,
                                    channel=ctx.channel if ctx else "web")
         if out.get("already_asked") and ctx is not None:
+            from .needs_you import _title
+
             ctx.held_repeats += 1  # the same file asked for twice: the turn stops asking (one request in Needs you)
+            ctx.held_title = _title(TOOL_USE_ROOM, {"action": "handoff", "src": src})
         return out
     return {"ok": False, "error": f"The Room cannot do {action}."}
 
@@ -507,7 +514,7 @@ async def _send_email(to: str, subject: str, body: str, in_reply_to: str = "", a
     acct = (db.one("SELECT * FROM mail_accounts WHERE id = ?", account_id) if account_id
             else db.one("SELECT * FROM mail_accounts ORDER BY id LIMIT 1"))
     if not acct:
-        raise HTTPException(404, "No mail account connected in Workbench")
+        raise HTTPException(404, "No mailbox is connected yet. Connect one on the Mail page.")
     mid = await asyncio.to_thread(mail.send, acct, to, subject, body, in_reply_to or "")
     return {"sent": True, "from": acct["email"], "to": to, "subject": subject, "message_id": mid}
 
@@ -761,6 +768,8 @@ def hold_reason(t: Tool, ctx: Ctx, args: dict) -> str:
             why = "This action needs your approval."
         if why:
             return why
+    if t.name == TOOL_USE_ROOM and str(args.get("action") or "").strip().lower() == "handoff":
+        return ""  # its copy always waits on a held request of its own in Needs you: one yes, not two
     if ctx.tainted and t.effect in GATED_EFFECTS:
         return HOLD_REASON
     if ctx.channel == "automation" and t.effect in GATED_EFFECTS:  # feat/v02-automations: triggered jobs always ask first
@@ -836,8 +845,8 @@ REPEAT_BLOCKED = ("Blocked: {name} with these exact arguments already failed {n}
                   "without it.")
 HELD_AGAIN = ("Not run: {name} is already waiting for the user's approval (request #{aid}). It was not asked for again. "
               "Tell the user you are waiting for their answer, then stop.")
-HELD_AGAIN_FINAL = ("I need your OK before I {verb} (request #{aid}). I asked once and stopped instead of asking again; "
-                    "it is waiting for your answer.")
+HELD_AGAIN_FINAL = ("I need your OK first: {title}. I asked once and stopped instead of asking again; it is waiting for "
+                    "your answer in Needs you.")
 
 
 async def run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) -> tuple[bool, str]:
@@ -919,7 +928,10 @@ async def _run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) 
     if reason:
         waiting = _already_waiting(ctx, name, args) if ctx.channel not in UNATTENDED else None
         if waiting:  # B3: one approval per request, however often the model asks; the second ask ends the turn
+            from .needs_you import _title
+
             ctx.held_repeats += 1
+            ctx.held_title = _title(name, args)
             done(False, "", "duplicate", None, "", detail=f"the same call is already waiting for the user's OK as request #{waiting}; not asked again")
             ctx.receipts[-1]["reason"] = reason
             ctx.receipts[-1]["waiting"] = waiting
@@ -1222,12 +1234,16 @@ async def _prompt(ctx: Ctx, model: str | None, system: str, specs: list[dict], b
     summary = compression.history_summary(cid) if compression.enabled() else None
     note = ("\n\n" + compression.SUMMARY_NOTE + summary["summary"]) if summary else ""
     window = history_window(cid, budget - len(system) - len(json.dumps(specs)) - len(note), shrink)
+    awaited = state.setdefault("awaited", set())  # compaction levels already summarised (or tried) this turn
     if compression.enabled() and window.first_kept:
-        if window.cut or shrink:
-            if compression.needs_summary(cid, window.first_kept, minimum=1) and await compression.refresh_history_summary(
-                    cid, _summary_model(model), window.first_kept, minimum=1):
-                summary = compression.history_summary(cid)
-                note = "\n\n" + compression.SUMMARY_NOTE + summary["summary"]
+        if (window.cut or shrink) and shrink not in awaited:
+            # Awaited once per compaction level per turn, whether it worked or not: a summariser that is slow or
+            # failing is not waited on again before every step. Later steps fall back to the background refresh.
+            if compression.needs_summary(cid, window.first_kept, minimum=1):
+                awaited.add(shrink)
+                if await compression.refresh_history_summary(cid, _summary_model(model), window.first_kept, minimum=1):
+                    summary = compression.history_summary(cid)
+                    note = "\n\n" + compression.SUMMARY_NOTE + summary["summary"]
         elif not state.get("summarising") and compression.needs_summary(cid, window.first_kept):
             state["summarising"] = _spawn(compression.refresh_history_summary(cid, _summary_model(model), window.first_kept))
     return system + note, window, summary
@@ -1519,8 +1535,7 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
                 yield {"type": "approval_required" if r["outcome"] == "held" else "approval_denied", "id": r["action_id"],
                        "tool": fn["name"], "args": fn["arguments"][:500], "effect": r["effect"], "reason": r.get("reason") or HOLD_REASON}
         if ctx.held_repeats:  # it asked again for an OK that is already waiting: stop here instead of asking the model on
-            waiting = next((r for r in reversed(ctx.receipts) if r.get("waiting")), {})
-            final = HELD_AGAIN_FINAL.format(verb=str(waiting.get("tool") or "do that").replace("_", " "), aid=waiting.get("waiting"))
+            final = HELD_AGAIN_FINAL.format(title=ctx.held_title or "the step I asked about")
             done_lines = [f"- {r['evidence']}" for r in ctx.receipts if r["verified"] is True and r["effect"] != "read"]
             if done_lines:
                 final += "\n\nDone so far:\n" + "\n".join(done_lines)

@@ -1,4 +1,5 @@
 import { useSyncExternalStore, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import { BesideStage } from "../Beside";
 import { Button, EmptyState, StageFrame } from "../ui";
 
@@ -73,7 +74,23 @@ export function stageTitle(stage: Stage): string {
   return stage.title || SURFACE_WORD[stage.surface];
 }
 
+/** The page that already shows this surface live, or null. The Stage does not draw it a second time beside it. */
+export function surfacePage(surface: StageSurface): string | null {
+  return surface === "room" ? "/room" : null;
+}
+
 function StagePane({ stage }: { stage: Stage }) {
+  const { pathname } = useLocation();
+  const page = surfacePage(stage.surface);
+  if (page && (pathname === page || pathname.startsWith(`${page}/`))) {
+    // The Room page draws the Room itself: a second picture here would ask for every frame twice.
+    return (
+      <StageFrame title={stageTitle(stage)} label="Open on its own page" live={false} captured={false}
+        controls={<Button size="sm" onClick={closeStage}>Close</Button>}>
+        <EmptyState title={`The ${SURFACE_WORD[stage.surface]} is open on its page.`} line="It comes back here when you go back to the chat." />
+      </StageFrame>
+    );
+  }
   const render = renderers.get(stage.surface);
   if (render) return <>{render(stage, closeStage)}</>;
   // A surface that has not registered yet: say so plainly instead of pretending to show a screen.

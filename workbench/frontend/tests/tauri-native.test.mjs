@@ -20,7 +20,7 @@ test("notify is native in the desktop app and the Web Notification API in a brow
 });
 
 test("a finished reply and a held approval notify only while the page is in the background", () => {
-  assert.match(chat, /if \(inBackground\(\)\) void notify\("Approval needed"/);
+  assert.match(chat, /if \(inBackground\(\)\) void notify\("Needs your OK"/);
   assert.match(chat, /!stopped && lastReply && inBackground\(\)\) void notify\("Reply ready"/);
   assert.match(chat, /askNotifyPermission\(\);/);
   assert.match(jobs, /if \(inBackground\(\)\) void notify\(n\.title/);

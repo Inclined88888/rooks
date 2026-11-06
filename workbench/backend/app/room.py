@@ -42,12 +42,17 @@ NOT_INSTALLED_NOTE = "Install Rooks with its installer to add it. Chat, the brow
 OFF = "The Room is off. Start it to see its screen."
 NO_SCREEN = "This Room has no screen. It is a private folder and shell."
 UNREACHABLE = "The Room helper could not be reached."
+HELPER_KEY = "The Room helper did not accept the app's key. Check its key under Advanced."
+HELPER_FAILED = "The Room helper ran into a problem."
+ROOM_OFF = "The Room is off. Start it first."
+NEEDS_ON = {"run", "click", "drag", "scroll", "type", "key"}  # actions that work in a Room that is on, never start it
 RUN_MAX_S = 120          # a command in the Room stops after this
 REMOTE_TIMEOUT_S = 150   # a helper call may carry a whole command
 STATUS_KEEP_S = 5.0      # the cheap readers (presence, surfaces) reuse a helper's status answer this long
 
 _ROOM = None                                # the in-process TryRoom, once imported
 _REMOTE: tuple[float, dict] | None = None   # (when, status) the helper last answered
+_REMOTE_MISS: float | None = None            # when the helper last failed to answer the cheap readers
 
 
 # --- where the Room is -------------------------------------------------------------------------------------------------
@@ -57,8 +62,8 @@ def remote() -> bool:
 
 def reset() -> None:
     """Forget the in-process Room and the helper's last answer (tests: a new home, driver or address)."""
-    global _ROOM, _REMOTE
-    _ROOM, _REMOTE = None, None
+    global _ROOM, _REMOTE, _REMOTE_MISS
+    _ROOM, _REMOTE, _REMOTE_MISS = None, None, None
 
 
 def _import_room():
@@ -103,8 +108,9 @@ def available() -> bool:
 def enabled() -> bool:
     """A real Room is here: a virtual machine, a private desktop or a private folder and shell, never the drawn
     terminal. The chat tool is offered only when this is true."""
-    if remote():
-        return True
+    if remote():  # a helper that only draws a terminal is no Room either
+        st = _remote_status_sync()
+        return st is not None and st.get("driver") != "display"
     try:
         d = _driver()
     except Exception as e:  # noqa: BLE001 - a driver that cannot start is no Room
@@ -132,7 +138,7 @@ def describe() -> dict:
         st = _remote_status_sync()
         if st is None:
             return {"available": False, "label": "", "isolation": "none"}
-        return {"available": True, "label": st.get("label") or "", "isolation": st.get("isolation") or "none"}
+        return {"available": st.get("driver") != "display", "label": st.get("label") or "", "isolation": st.get("isolation") or "none"}
     try:
         d = _driver()
     except Exception:  # noqa: BLE001
@@ -153,9 +159,13 @@ def _headers() -> dict:
 
 
 def _remote_status_sync() -> dict | None:
-    global _REMOTE
+    """The helper's status for the cheap readers, kept STATUS_KEEP_S; a helper that did not answer is not asked again
+    for as long, so a tool list or a prompt built on the event loop never waits on it twice in a row."""
+    global _REMOTE, _REMOTE_MISS
     if _REMOTE and time.monotonic() - _REMOTE[0] < STATUS_KEEP_S:
         return _REMOTE[1]
+    if _REMOTE_MISS and time.monotonic() - _REMOTE_MISS < STATUS_KEEP_S:
+        return None
     try:
         with httpx.Client(timeout=2.0) as c:
             r = c.get(f"{config.TRY_URL}/api/status", headers=_headers())
@@ -163,7 +173,9 @@ def _remote_status_sync() -> dict | None:
         st = r.json()
     except (httpx.HTTPError, ValueError) as e:
         log.debug("room helper unavailable: %s", e.__class__.__name__)
+        _REMOTE_MISS = time.monotonic()
         return None
+    _REMOTE_MISS = None
     _REMOTE = (time.monotonic(), st)
     return st
 
@@ -175,11 +187,16 @@ async def _remote(method: str, path: str, json: dict | None = None, timeout: flo
     except httpx.HTTPError as e:
         raise HTTPException(502, UNREACHABLE) from e
     if r.status_code >= 400:
+        # The helper's own sign-in is not the person's: a 401 passed through would sign them out of the app.
+        if r.status_code in (401, 403):
+            raise HTTPException(502, HELPER_KEY)
+        if r.status_code >= 500:
+            raise HTTPException(502, HELPER_FAILED)
         try:
             detail = r.json().get("detail", r.text)
-        except ValueError:
+        except (ValueError, AttributeError):
             detail = r.text
-        raise HTTPException(r.status_code, detail)
+        raise HTTPException(r.status_code if r.status_code in (400, 404, 409) else 502, str(detail)[:300])
     return r
 
 
@@ -251,6 +268,8 @@ async def perform(action: str, body: dict | None = None) -> dict:
         except (TypeError, ValueError) as e:
             raise HTTPException(400, "The time limit must be a number of seconds.") from e
         body.update(command=command, timeout=max(1.0, min(timeout, RUN_MAX_S)))
+    if action in NEEDS_ON and not (await perform("status")).get("running"):
+        raise HTTPException(409, ROOM_OFF)  # only up starts the Room: it is in the run log and on the presence strip
     if remote():
         if action == "status":
             st = (await _remote("GET", "/api/status", timeout=10)).json()
@@ -540,5 +559,7 @@ async def screenshot():
     try:
         path = await asyncio.to_thread(room.screenshot)
     except Exception as e:  # noqa: BLE001
+        if not (await perform("status"))["running"]:  # stopped between the check and the capture: off, not broken
+            raise HTTPException(404, OFF) from e
         raise HTTPException(500, str(e)[:300] or "The screen could not be captured.") from e
     return Response(Path(path).read_bytes(), media_type="image/png", headers={"Cache-Control": "no-store"})

@@ -4,7 +4,7 @@
    from the chosen theme ("auto" resolves to one of the two at runtime and follows the system). The older
    data-theme ids (sunshine, paper, cherry, neon, contrast, linen) layer their own colours on top in themes.css and
    sunshine.css; everything else (type, radius, spacing, shadow, motion, layout) comes from here.
-   Import this FIRST in main.tsx. Contrast figures are for the stated pairs (checked in tests/workroom-tokens).
+   Import this FIRST in main.tsx. Contrast figures are for the stated pairs (checked in tests/workroom-tokens.test.mjs).
    ========================================================================== */
 
 /* ---- Studio (light): the default, also the fallback before data-mode is set ---- */
@@ -18,15 +18,15 @@ html[data-mode="light"] {
   --color-surface-sunken: #F3F0E8;
   --color-border: #E6E1D6;
   --color-border-strong: #D2CBBB;
-  --color-border-focus: #7A4F00;      /* the focus ring: accent text, 7.2:1 on bg */
+  --color-border-focus: #7A4F00;      /* the focus ring: accent text, 6.7:1 on bg */
   --color-ink: #1B1A17;
-  --color-ink-muted: #5F5A50;         /* 6.6:1 on bg */
-  --color-ink-faint: #948E82;         /* 3.2:1, non text only */
+  --color-ink-muted: #5F5A50;         /* 6.5:1 on bg */
+  --color-ink-faint: #948E82;         /* 3.1:1, non text only */
   --color-accent: #F2B705;            /* saffron: solid fills, with on-accent ink */
   --color-accent-hover: #DBA504;
   --color-accent-soft: #FFF3CC;
-  --color-accent-text: #7A4F00;       /* 7.2:1 on bg */
-  --color-on-accent: #1B1A17;         /* 12.3:1 on accent */
+  --color-accent-text: #7A4F00;       /* 6.7:1 on bg */
+  --color-on-accent: #1B1A17;         /* 9.6:1 on accent */
   --color-live: #F2B705;              /* the one colour that always means "live" */
   --color-success: #1E7F4F;
   --color-success-hover: #196B43;
@@ -66,15 +66,15 @@ html[data-mode="dark"] {
   --color-surface-sunken: #0F0E0C;
   --color-border: #2E2A24;
   --color-border-strong: #3D382F;
-  --color-border-focus: #F6C84C;      /* 10.5:1 on bg */
+  --color-border-focus: #F6C84C;      /* 11.8:1 on bg */
   --color-ink: #F2EDE3;
-  --color-ink-muted: #B0A89A;         /* 9.1:1 on bg */
-  --color-ink-faint: #756E62;         /* 3.3:1, non text only */
+  --color-ink-muted: #B0A89A;         /* 7.9:1 on bg */
+  --color-ink-faint: #756E62;         /* 3.7:1, non text only */
   --color-accent: #F2B705;
   --color-accent-hover: #F6C84C;
   --color-accent-soft: #2E2410;
-  --color-accent-text: #F6C84C;       /* 10.5:1 on bg */
-  --color-on-accent: #141210;         /* 12.6:1 on accent */
+  --color-accent-text: #F6C84C;       /* 11.8:1 on bg */
+  --color-on-accent: #141210;         /* 10.3:1 on accent */
   --color-live: #F2B705;
   --color-success: #4ADE80;
   --color-success-hover: #6EE7A0;

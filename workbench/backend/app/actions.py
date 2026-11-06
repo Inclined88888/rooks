@@ -17,6 +17,7 @@ kept encrypted in payload_enc and never logged.
 """
 
 import json
+import re
 import sqlite3
 import uuid
 
@@ -88,6 +89,9 @@ _PENDING = ("SELECT a.* FROM actions a WHERE a.kind = 'tool_call' AND a.outcome 
             "(SELECT 1 FROM actions d WHERE d.kind = 'decision' AND d.parent_action_id = a.id)")
 
 
+_STILL_HELD = re.compile(r'"held":\s*true')
+
+
 def approval(action_id: int) -> dict:
     """A held or refused tool call as the approval card shows it, with the raw arguments for its owner only."""
     from .security import decrypt
@@ -102,6 +106,8 @@ def approval(action_id: int) -> dict:
         run = db.one("SELECT * FROM actions WHERE kind = 'tool_call' AND parent_action_id = ?", d["id"])
         status = "denied" if d["outcome"] == "denied" else ("approved" if not run else ("done" if run["outcome"] in ("ok", "verified") else "failed"))
         result = (run["detail"] or run["failure_reason"]) if run else ""
+        if status == "done" and a["tool"] == "use_room" and _STILL_HELD.search(result or ""):
+            status = "held"  # the yes ran, and what it ran only asked again (a Room hand-off): nothing was done yet
     return {"id": a["id"], "conversation_id": a["conversation_id"], "tool": a["tool"],
             "args": decrypt(a["payload_enc"]) or a["args"], "effect": a["effect"], "reason": a["detail"],
             "status": status, "result": result, "created_at": a["ts"], "decided_at": decided_at}

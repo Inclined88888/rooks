@@ -12,7 +12,7 @@ import { openStage, surfaceOf, useStage } from "../shell/StageHost";
 import { Badge, Button } from "../ui";
 import { useToast } from "../util";
 import type { Card, Watch } from "./events";
-import { matchHistoryEntry, type HistoryEntry } from "./turns";
+import { matchHistoryEntries, type HistoryEntry } from "./turns";
 import { watchSource } from "./watch";
 
 const UNDOABLE = new Set(["draft", "event", "task", "note", "file", "routine"]);
@@ -153,13 +153,15 @@ export function ResultCard({ card, cid, entry, live }: { card: Card; cid: number
 }
 
 /** Every card of one reply. `live` marks a reply made in this session (a watched job may still be running). */
-export function ResultCards({ cards, cid, live = false }: { cards: Card[]; cid: number | null; live?: boolean }) {
+export function ResultCards({ cards, cid, live = false, at }: { cards: Card[]; cid: number | null; live?: boolean; at?: string }) {
   const wanted = !!cid && cards.some((c) => UNDOABLE.has(c.kind));
   const history = useHistoryEntries(cid, wanted);
   if (!cards.length) return null;
+  const undoable = cards.map((c) => (UNDOABLE.has(c.kind) ? c : { ...c, kind: "" }));
+  const entries = matchHistoryEntries(undoable, history, cid, at);
   return (
     <div className="result-cards">
-      {cards.map((c, i) => <ResultCard key={i} card={c} cid={cid} live={live} entry={UNDOABLE.has(c.kind) ? matchHistoryEntry(c, history, cid) : null} />)}
+      {cards.map((c, i) => <ResultCard key={i} card={c} cid={cid} live={live} entry={entries[i]} />)}
     </div>
   );
 }

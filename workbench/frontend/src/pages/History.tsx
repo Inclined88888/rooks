@@ -5,7 +5,7 @@
  */
 import { AlertTriangle, Brain, CalendarDays, Check, CheckSquare, Cog, Download, Eye, FileText, FolderKanban, Globe2, History as HistoryIcon, Mail,
   MessageSquare, Monitor, NotebookPen, Puzzle, ShieldAlert, Undo2, Workflow } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api";
 import { Badge, Button, Card, Chip, EmptyState, Input } from "../ui";
@@ -37,6 +37,16 @@ export default function History() {
   const [lookups, setLookups] = useState(false);
   const [busy, setBusy] = useState("");
   const [asking, setAsking] = useState<Entry | null>(null);
+  // The confirm takes focus when it appears (so it is announced and "Yes, undo" is one key away); Keep it or Escape
+  // puts focus back on the entry's own Undo button.
+  const yesRef = useRef<HTMLButtonElement>(null);
+  const askingId = asking?.id;
+  useEffect(() => { if (askingId) yesRef.current?.focus(); }, [askingId]);
+  const keepIt = () => {
+    const from = asking?.id;
+    setAsking(null);
+    if (from) window.setTimeout(() => document.querySelector<HTMLElement>(`[data-undo-for="${CSS.escape(String(from))}"]`)?.focus(), 0);
+  };
 
   const params = useCallback((extra: Record<string, string> = {}) => new URLSearchParams({ ...(cat ? { category: cat } : {}), ...(q ? { q } : {}), ...(lookups ? { lookups: "true" } : {}), ...extra }).toString(), [cat, q, lookups]);
   const load = useCallback(() => api<Page>(`/history?${params()}`).then(setPage).catch(toast.err), [params]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -96,11 +106,12 @@ export default function History() {
       </div>
 
       {asking && (
-        <Card className="v02-confirm" role="alertdialog" aria-label="Confirm undo">
+        <Card className="v02-confirm" role="alertdialog" aria-label="Confirm undo" aria-describedby="history-confirm-text"
+          onKeyDown={(ev: ReactKeyboardEvent) => { if (ev.key === "Escape") { ev.preventDefault(); keepIt(); } }}>
           <AlertTriangle size={18} aria-hidden="true" />
-          <div className="grow"><b>Undo “{asking.title}”?</b><div className="small">{asking.undo.confirm}</div></div>
-          <Button variant="primary" size="sm" busy={busy === asking.id} onClick={() => void undo(asking, true)}>Yes, undo</Button>
-          <Button variant="ghost" size="sm" onClick={() => setAsking(null)}>Keep it</Button>
+          <div className="grow" id="history-confirm-text"><b>Undo “{asking.title}”?</b><div className="small">{asking.undo.confirm}</div></div>
+          <Button ref={yesRef} variant="primary" size="sm" busy={busy === asking.id} onClick={() => void undo(asking, true)}>Yes, undo</Button>
+          <Button variant="ghost" size="sm" onClick={keepIt}>Keep it</Button>
         </Card>
       )}
 
@@ -131,7 +142,7 @@ export default function History() {
                     {e.status === "waiting" && <Link className="small v02-link" to={`/assistant/${e.conversation_id ?? ""}`}>Review it</Link>}
                   </div>
                   <div className="v02-entry-actions">
-                    {e.undo.available && <Button size="sm" icon={<Undo2 size={13} />} busy={busy === e.id} onClick={() => (e.undo.confirm ? setAsking(e) : void undo(e))}>Undo</Button>}
+                    {e.undo.available && <Button size="sm" data-undo-for={e.id} icon={<Undo2 size={13} />} busy={busy === e.id} onClick={() => (e.undo.confirm ? setAsking(e) : void undo(e))}>Undo</Button>}
                     {e.fix_prompt && <Button size="sm" variant="ghost" onClick={() => navigate("/assistant", { state: { draft: e.fix_prompt } })}>Help me fix it</Button>}
                   </div>
                 </div>

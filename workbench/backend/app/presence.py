@@ -13,6 +13,7 @@ key in a tool call is never shown on the status line.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -57,6 +58,17 @@ def _with(verb: str, subject: str) -> str:
     return f"{verb}: {clip(subject)}" if subject else verb
 
 
+_ROOM: dict[str, Callable[[dict], str]] = {  # use_room, one sentence per action (mirror of plainStep.ts ROOM)
+    "status": lambda a: "Checking the Room",
+    "up": lambda a: _with("Starting the Room", _field(a, "goal")),
+    "down": lambda a: "Stopping the Room",
+    "run": lambda a: _with("Running in the Room", _field(a, "command")),
+    "checkpoint": lambda a: _with("Saving a point in the Room", _field(a, "label")),
+    "reset": lambda a: f"Starting the Room over from {clip(_field(a, 'name'))}" if _field(a, "name") else "Starting the Room over",
+    "handoff": lambda a: _with("Copying a file out of the Room", _field(a, "src")),
+}
+WORKING = "Working"  # a step the vocabulary has no words for (the frontend's own fallback)
+
 SAY: dict[str, Callable[[dict], str]] = {
     "web_search": lambda a: _with("Searching", _field(a, "query")),
     "read_page": lambda a: "Reading a page",
@@ -83,6 +95,7 @@ SAY: dict[str, Callable[[dict], str]] = {
     "edit_file": lambda a: "Editing a file",
     "run_command": lambda a: "Running something on this computer",
     "use_computer": lambda a: "Using this computer",
+    "use_room": lambda a: _ROOM.get(_field(a, "action").lower(), lambda a: "Using the Room")(a),
     "remember": lambda a: "Remembering that",
     "forget": lambda a: "Forgetting that",
     "search_memory": lambda a: "Looking through what it remembers",
@@ -197,7 +210,8 @@ def room_running() -> bool:
         return False
 
 
-def watching(active: list[dict]) -> list[str]:
+def watching(active: list[dict], room_on: bool | None = None) -> list[str]:
+    """What is watched. room_on: the Room's running bit when the caller already asked (off the event loop)."""
     out = []
     if db.one("SELECT 1 FROM mail_accounts LIMIT 1"):
         out.append("mail")
@@ -205,7 +219,7 @@ def watching(active: list[dict]) -> list[str]:
         out.append("calendar")
     if active:
         out.append("jobs")
-    if room_running():
+    if room_running() if room_on is None else room_on:
         out.append("room")
     return out
 
@@ -229,7 +243,7 @@ async def build() -> dict:
             on_a_tool = True
             doing_tool = name
             doing_args = args_summary(clean) or None
-            doing = plain_step(name, clean)
+            doing = plain_step(name, clean) or WORKING  # never "Quiet." while a step runs
             where = where_of(name, turn["channel"])
         else:
             where = where_of(None, turn["channel"])
@@ -254,7 +268,7 @@ async def build() -> dict:
         "doing_tool": doing_tool,
         "doing_args": doing_args,
         "where": where,
-        "watching": watching(active),
+        "watching": watching(active, await asyncio.to_thread(room_running)),  # driver code and files: off the loop
         "needs_you": needs,
         "running": {"turns": len(turns), "jobs": len(running_jobs)},
         "updated_at": db.now(),

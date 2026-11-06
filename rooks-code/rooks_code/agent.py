@@ -453,7 +453,11 @@ class Agent:
                     elif kind == "tool_call" and ev.get("name") not in BRIDGE_LOCAL:
                         self.ui.tool_note(f"{ev.get('name')} (app)", read=True)
                     elif kind == "approval_required":
-                        self.ui.tool_note(f"{ev.get('tool')} is waiting for your OK in the app (Approvals): {ev.get('reason', '')}")
+                        self.ui.tool_note(f"{ev.get('tool')} is waiting for your OK in the app (Needs you): {ev.get('reason', '')}")
+                    elif kind == "resumed":  # the app restarted during the last turn here; it says so, and so does this
+                        self.ui.tool_note("picked up after the app restarted")
+                    elif kind == "compacted":
+                        self.ui.tool_note(f"the app compacted this chat to fit the model ({ev.get('dropped_rows', 0)} rows left out)")
                     elif kind == "writing" and self._streaming():
                         self.ui.stream(ev.get("text", ""))
                     elif kind == "message":

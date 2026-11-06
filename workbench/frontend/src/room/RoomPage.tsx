@@ -60,7 +60,7 @@ export default function RoomPage() {
             {status.note && <p className="room-side-line">{status.note}</p>}
             {status.available && (
               <p className="room-side-badges">
-                <Badge tone="neutral">{isolationWords(status.isolation)}</Badge>
+                <Badge tone="neutral">{isolationWords(status.isolation, !!status.offline)}</Badge>
                 {status.offline && <Badge tone="neutral">Offline</Badge>}
               </p>
             )}

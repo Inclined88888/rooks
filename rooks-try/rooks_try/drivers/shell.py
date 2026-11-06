@@ -25,8 +25,11 @@ RAN_NOTE = "This ran as you, in the private folder."
 NO_SCREEN = "This room has no screen. It is a private folder and shell."
 _SECRET_NAMES = {"APP_SECRET", "TOOLS_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "NVIDIA_API_KEY"}
 # $1 the room's home, $2 the person's home path, $3 the command. Inside the namespace the room's home sits over the
-# person's home path, so a program that ignores HOME still lands in the room.
-_WRAP = '[ -d "$2" ] && [ "$1" != "$2" ] && mount --bind "$1" "$2" 2>/dev/null; cd "$1" && exec sh -c "$3"'
+# person's home path, so a program that ignores HOME still lands in the room. The shell steps into the room's home
+# before the bind: when that home lies under the person's home (the usual ~/.ai-workspace/try-room/home) its path is
+# hidden once the bind is in place, so HOME then moves to the person's home path, which now shows the room's home.
+_WRAP = ('cd "$1" || exit 1; if [ -d "$2" ] && [ "$1" != "$2" ] && mount --bind "$1" "$2" 2>/dev/null; then '
+         '[ -d "$1" ] || export HOME="$2"; fi; exec sh -c "$3"')
 _NAMESPACES: bool | None = None
 
 

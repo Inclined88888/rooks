@@ -1,6 +1,6 @@
 # 0003: The Workroom. Rooks works in the open.
 
-Status: in progress on branch `feat/workroom`. Owner decision 2026-11-06: the owner deferred the four questions below to the implementer; the answers here are the implementer's recommendations, taken as decisions for this branch (numbered W1 to W4 so they do not collide with D1 to D7 in the earlier records) and reversible by the owner.
+Status: built on branch `feat/workroom` (2026-11-06), not yet merged to `main`. Shipped: the design system v2 and the Workroom shell (rail, presence strip, Stage, phone bar, one page registry), the chat as a living record (timeline, receipts, inline undo, one approval card), the Room restored honestly (`rooks-try`, `/api/room`, the `use_room` tool, the Room page and Stage), the presence and Needs you APIs and inbox, and the reliability work (prompt too long compaction, honest restarts, approval dedupe). Open gaps are in BACKLOG.md. Owner decision 2026-11-06: the owner deferred the four questions below to the implementer; the answers here are the implementer's recommendations, taken as decisions for this branch (numbered W1 to W4 so they do not collide with D1 to D7 in the earlier records) and reversible by the owner.
 
 ## 1. What this is
 
@@ -147,10 +147,11 @@ One `main` landmark (the nested `role=main` in `Assistant.tsx` goes), a skip lin
 ## 7. Verification
 
 * Backend: `cd workbench/backend && env -u OPENAI_API_KEY -u ANTHROPIC_API_KEY -u NVIDIA_API_KEY ~/.venvs/aiw/bin/python -m pytest -q -p no:cacheprovider -W ignore --ignore=bench`. Baseline on `main`: 724 passed, 5 failed (`test_connect_mail_calendar::test_assistant_reads_and_drafts_with_microsoft`, `test_desk::test_desk_emails_a_render_with_attachments`, `test_egress::test_no_unaudited_network_library_in_the_app`, `test_health::test_status_page_reports_every_part_and_the_worst_wins`, `test_lock_reset::test_forgotten_pin_can_be_replaced`); the egress one is fixed on this branch, the other four are environment or pre existing and are listed in BACKLOG.
-* Try Room: `cd rooks-try && ~/.venvs/aiw/bin/python -m pytest -q tests` (14 pass with `mss` and `python-xlib` installed).
-* Rooks Code: 161 pass, 1 environment failure (no `bwrap` in the container).
-* Frontend: `cd workbench/frontend && npx tsc --noEmit -p . && npm run build && npm test`.
-* Screens: a Playwright harness runs the real backend with a scripted model and captures the shell, chat, Room stage, Jobs and Needs you in both themes into `screenshots/workroom/`.
+* Branch result, 2026-11-06: 765 passed, 4 failed (the four above, environment or pre existing), 1 skipped in about 4:25; `test_egress` passes.
+* Try Room: `cd rooks-try && ~/.venvs/aiw/bin/python -m pytest -q tests` (22 pass with `mss` and `python-xlib` installed; 14 on `main`).
+* Rooks Code: `cd rooks-code && ~/.venvs/rooks/bin/python -m pytest -q -p no:cacheprovider`: 154 passed, 1 environment failure (no `bwrap` in the container), 4 skipped. With test-all.sh's interpreter `~/.venvs/aiw` the 4 skipped run too (161 pass, the same 1 failure).
+* Frontend: `cd workbench/frontend && npx tsc --noEmit -p . && npm run build && npm test`: tsc clean, build passes, 153 tests pass (102 on `main`).
+* Screens: a Playwright harness (kept outside the repository, in the build session's scratch folder) drove the real backend with a scripted model and captured the shell, chat, Room stage, Jobs and Needs you in both themes; the captures are not committed.
 * Honesty: a backend test proves the Room reports `screen: false` for the shell driver and never auto picks the drawing driver; the frontend test `plain-screens.test.mjs` is rewritten from "there is no virtual computer page" to "the Room never shows a fake screen".
 
 ## 8. API contracts shared by the two build lanes
@@ -172,7 +173,7 @@ All routes require the signed in user (`require_user`) and the `X-Workbench` hea
 }
 ```
 
-`doing` is a plain sentence derived from the newest running turn's latest tool call (`plainStep` vocabulary lives in the frontend; the backend sends the tool name and args summary as `doing_tool` and `doing_args` too), or the newest running job's title, or `null`. `needs_you` counts pending held tool calls across all conversations plus pending desk and browser job approvals.
+`doing` is a plain sentence derived from the newest running turn's latest tool call (`plainStep` vocabulary lives in the frontend; the backend sends the tool name and args summary as `doing_tool` and `doing_args` too), or the newest running job's title, or `null`. `needs_you` counts pending held tool calls across all conversations, jobs that ask before they start, and pending desk and browser job approvals: the same number as the length of `GET /api/needs-you`.
 
 ### `GET /api/needs-you`
 

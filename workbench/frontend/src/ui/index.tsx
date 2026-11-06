@@ -188,7 +188,8 @@ export function Sheet({ open, onClose, title, side = "right", children, footer, 
 function ToastStack({ hostId }: { hostId: symbol }) {
   const items = useSyncExternalStore(subscribeToasts, getToasts, getToasts);
   const primary = useSyncExternalStore(subscribeToasts, () => isPrimaryToastHost(hostId), () => false);
-  if (!primary || !items.length) return null;
+  // The live region stays mounted while this host is the primary one, so a toast added to it is announced.
+  if (!primary) return null;
   return (
     <div className="ui-toasts" aria-live="polite">
       {items.map((t: ToastItem) => (
@@ -217,13 +218,16 @@ function ToastFallback() {
 
 /** The same shape pages always used: toast.ok(text), toast.err(error), and toast.node, which only a screen without the shell
  *  (the ask bar) renders; inside the shell the one ToastHost shows everything. */
+const TOAST = {
+  node: <ToastFallback />,
+  ok: (text: string) => { pushToast("ok", text); },
+  info: (text: string) => { pushToast("info", text); },
+  err: (e: unknown) => { pushToast("err", errorText(e)); },
+};
+
+/** One object for every caller and every render, so a callback that depends on it is not remade on each render. */
 export function useToast() {
-  return {
-    node: <ToastFallback />,
-    ok: (text: string) => { pushToast("ok", text); },
-    info: (text: string) => { pushToast("info", text); },
-    err: (e: unknown) => { pushToast("err", errorText(e)); },
-  };
+  return TOAST;
 }
 
 /* ---------------------------------------------------------------- EmptyState, Stat */
@@ -285,12 +289,13 @@ export function Timeline({ steps, label = "Steps", onPick, current }: { steps: T
             <span className={cx("ui-timeline-dot", `is-${s.state}`)} aria-hidden="true" />
             <span className="ui-timeline-text">{s.text}</span>
             <span className="sr-only">, {STEP_WORD[s.state]}</span>
-            {s.receipt && <Receipt state={s.receipt.state} evidence={s.receipt.evidence} className="ui-timeline-receipt" />}
           </>
         );
+        // The receipt sits beside the row, never inside its button: it has its own focus and its own evidence.
         return (
           <li key={s.id} className={cx("ui-timeline-step", `is-${s.state}`, current === s.id && "is-current")} aria-current={current === s.id ? "step" : undefined}>
             {onPick ? <button type="button" className="ui-timeline-row" onClick={() => onPick(s.id)}>{row}</button> : <span className="ui-timeline-row">{row}</span>}
+            {s.receipt && <Receipt state={s.receipt.state} evidence={s.receipt.evidence} className="ui-timeline-receipt" />}
           </li>
         );
       })}
@@ -332,11 +337,19 @@ export function ApprovalCard({ title, detail, effect, command, diff, onApprove, 
 }
 
 /* ---------------------------------------------------------------- StageFrame: the live view's frame */
+/** The frame's status line: how to get out while stepped in, "Handed back." once released, nothing before. */
+export function capturedLine(captured: boolean, wasCaptured: boolean, place: string): string {
+  if (captured) return `Your mouse and keyboard go to ${place}. Press Escape or Hand back to stop.`;
+  return wasCaptured ? "Handed back." : "";
+}
 /** 16px frame, live edge, controls bar. `captured` means your mouse and keyboard go to the surface: the edge glows. */
 export function StageFrame({ title, label, live, captured, controls, children, className }: {
   title: string; label: string; live: boolean; captured: boolean; controls: ReactNode; children: ReactNode; className?: string;
 }) {
   const id = useId();
+  // The status line stays mounted so stepping in and handing back are both announced.
+  const wasCaptured = useRef(false);
+  if (captured) wasCaptured.current = true;
   const place = /^the\s/i.test(title) ? title.replace(/^the\s/i, "the ") : `the ${title}`; // "The Room" reads "the Room", never "the The Room"
   return (
     <section className={cx("ui-stage", live && "is-live", captured && "is-captured", className)} aria-labelledby={id} data-live={live || undefined} data-captured={captured || undefined}>
@@ -349,7 +362,7 @@ export function StageFrame({ title, label, live, captured, controls, children, c
       </header>
       <div className="ui-stage-body">{children}</div>
       <div className="ui-stage-controls" role="toolbar" aria-label={`${title} controls`}>{controls}</div>
-      {captured && <p className="ui-stage-captured" role="status">Your mouse and keyboard go to {place}. Hand back to stop.</p>}
+      <p className="ui-stage-captured" role="status">{capturedLine(captured, wasCaptured.current, place)}</p>
     </section>
   );
 }

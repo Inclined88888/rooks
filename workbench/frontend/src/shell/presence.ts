@@ -6,6 +6,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { api, ApiError } from "../api";
 import type { Mood } from "../AssistantFace";
+import { plainStep } from "../plainStep";
 
 export type Presence = {
   name: string;
@@ -19,7 +20,9 @@ export type Presence = {
   stub: boolean;
 };
 
-type Wire = Partial<Omit<Presence, "stub">> & { doing?: string | null; where?: Presence["where"] | string | null; updated_at?: string };
+type Wire = Partial<Omit<Presence, "stub">> & {
+  doing?: string | null; doing_tool?: string | null; doing_args?: string | null; where?: Presence["where"] | string | null; updated_at?: string;
+};
 
 export const IDLE_LINE = "Quiet. Watching mail and calendar.";
 const MOODS: Mood[] = ["idle", "thinking", "working", "done", "needs"];
@@ -43,12 +46,23 @@ function listWords(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-/** The plain sentence for the strip. The service sends `doing`; when it is quiet we say what it is watching. */
-export function presenceLine(p: Pick<Presence, "doing" | "watching" | "mood">): string {
+/**
+ * The plain sentence for the strip. The service sends `doing`; a turn that has not called a tool yet is thinking, a
+ * tool the service has no words for is said from its name (plainStep, "Working" when unknown), and only when nothing
+ * runs do we say what it is watching.
+ */
+export function presenceLine(p: Pick<Presence, "doing" | "watching" | "mood"> & { doing_tool?: string | null }): string {
   if (p.doing) return p.doing;
   if (p.mood === "needs") return "Waiting for you.";
+  if (p.mood === "thinking") return "Thinking…";
+  if (p.mood === "working") return `${plainStep(p.doing_tool || "")}…`;
   if (p.watching.length) return `Quiet. Watching ${listWords(p.watching)}.`;
   return "Quiet.";
+}
+
+/** True while the Room runs: the presence answer lists it in `watching` (presence.py), so no second poller is needed. */
+export function roomOn(p: Pick<Presence, "watching">): boolean {
+  return p.watching.includes("room");
 }
 
 function fromWire(w: Wire): Presence {
@@ -57,7 +71,7 @@ function fromWire(w: Wire): Presence {
   const watching = Array.isArray(w.watching) ? w.watching.filter((x): x is string => typeof x === "string") : [];
   const base = { name: w.name || state.name, mood, where, watching, needs_you: Number(w.needs_you) || 0,
     running: { turns: Number(w.running?.turns) || 0, jobs: Number(w.running?.jobs) || 0 }, stub: false, doing: "" };
-  return { ...base, doing: presenceLine({ doing: w.doing || "", watching, mood }) };
+  return { ...base, doing: presenceLine({ doing: w.doing || "", watching, mood, doing_tool: w.doing_tool }) };
 }
 
 async function tick(): Promise<void> {

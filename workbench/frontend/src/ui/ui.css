@@ -50,7 +50,7 @@
   font: inherit; font-size: var(--text-md);
   transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
-.ui-input::placeholder { color: var(--color-ink-faint); }
+.ui-input::placeholder { color: var(--color-ink-muted); }
 textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(--space-3); line-height: var(--leading-normal); resize: vertical; }
 .ui-input:focus-visible, .ui-select:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 1px; }
 .ui-select { appearance: none; padding-right: var(--space-8); cursor: pointer;
@@ -165,11 +165,12 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
   padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--color-ink); color: var(--color-bg);
   font-family: var(--font-sans); font-size: var(--text-xs); line-height: var(--leading-normal); white-space: normal; box-shadow: var(--shadow-2);
 }
-.ui-receipt:hover .ui-receipt-evidence, .ui-receipt:focus-visible .ui-receipt-evidence { display: block; }
+/* hover, keyboard focus, and a tap (which focuses the receipt) all show the evidence */
+.ui-receipt:hover .ui-receipt-evidence, .ui-receipt:focus .ui-receipt-evidence, .ui-receipt:focus-within .ui-receipt-evidence { display: block; }
 
 /* ---- Timeline ---- */
 .ui-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.ui-timeline-step { position: relative; }
+.ui-timeline-step { position: relative; display: flex; align-items: flex-start; gap: var(--space-2); }
 .ui-timeline-step::before { content: ""; position: absolute; left: 7px; top: 16px; bottom: -4px; width: 1px; background: var(--color-border-strong); transform-origin: top; animation: ui-draw var(--m-4, 420ms) var(--ease-expo, var(--ease-out)) both; }
 .ui-timeline-step:last-child::before { display: none; }
 .ui-timeline-row { display: flex; align-items: flex-start; gap: var(--space-2); width: 100%; padding: 3px 4px 5px 0; border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--color-ink-muted); font: inherit; font-family: var(--font-mono); font-size: var(--text-mono); line-height: 1.45; text-align: left; }
@@ -179,9 +180,9 @@ button.ui-timeline-row:hover, .ui-timeline-step.is-current .ui-timeline-row { co
 .ui-timeline-dot.is-ok { background: var(--color-success); box-shadow: none; }
 .ui-timeline-dot.is-failed { background: var(--color-danger); box-shadow: none; }
 .ui-timeline-dot.is-held { background: var(--color-warning); box-shadow: none; }
-.ui-timeline-dot.is-running { background: var(--color-live); box-shadow: none; animation: ui-node var(--spring-settle-dur, 540ms) var(--spring-settle, var(--ease-out)) both, ui-live 1.6s var(--ease-in-out) infinite var(--spring-settle-dur, 540ms); }
+.ui-timeline-dot.is-running { background: var(--color-live); box-shadow: 0 0 0 1px var(--color-ink); animation: ui-node var(--spring-settle-dur, 540ms) var(--spring-settle, var(--ease-out)) both, ui-live 1.6s var(--ease-in-out) infinite var(--spring-settle-dur, 540ms); }
 .ui-timeline-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.ui-timeline-receipt { flex: none; margin-top: 1px; }
+.ui-timeline-receipt { flex: none; margin-top: 4px; }
 @keyframes ui-draw { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 @keyframes ui-node { from { transform: scale(0); } to { transform: scale(1); } }
 
@@ -203,11 +204,12 @@ button.ui-timeline-row:hover, .ui-timeline-step.is-current .ui-timeline-row { co
 .ui-stage-label { margin: 0; font-family: var(--font-mono); font-size: var(--text-mono); color: var(--color-ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-stage-body { flex: 1; min-height: 0; overflow: auto; background: var(--color-surface-sunken); display: flex; flex-direction: column; }
 .ui-stage-controls { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-2) var(--space-3); border-top: 1px solid var(--color-border); background: var(--color-surface); }
+.ui-stage-captured:empty { padding: 0; }
 .ui-stage-captured { margin: 0; padding: var(--space-1) var(--space-3) var(--space-2); font-family: var(--font-mono); font-size: var(--text-mono); color: var(--color-accent-text); }
 .ui-stage.is-live { border-color: var(--color-border-strong); }
 /* Step in: the frame's edge animates into the live colour and stays while input is captured */
-.ui-stage.is-captured { border-color: var(--color-live); box-shadow: 0 0 0 2px var(--color-live), var(--shadow-2); animation: ui-stage-glow 600ms var(--ease-out) both; }
-@keyframes ui-stage-glow { from { box-shadow: 0 0 0 0 var(--color-live), var(--shadow-2); } to { box-shadow: 0 0 0 2px var(--color-live), var(--shadow-2); } }
+.ui-stage.is-captured { border-color: var(--color-ink); box-shadow: 0 0 0 2px var(--color-live), 0 0 0 3px var(--color-ink), var(--shadow-2); animation: ui-stage-glow 600ms var(--ease-out) both; }
+@keyframes ui-stage-glow { from { box-shadow: 0 0 0 0 var(--color-live), var(--shadow-2); } to { box-shadow: 0 0 0 2px var(--color-live), 0 0 0 3px var(--color-ink), var(--shadow-2); } }
 
 /* ---- Presence ---- */
 .ui-presence { display: flex; align-items: center; gap: var(--space-3); height: var(--presence-h); min-width: 0; padding: 0 var(--space-4); font-family: var(--font-mono); font-size: var(--text-mono); color: var(--color-ink-muted); }
@@ -224,4 +226,7 @@ button.ui-timeline-row:hover, .ui-timeline-step.is-current .ui-timeline-row { co
 .ui-needs-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--radius-full); background: var(--color-ink); color: var(--color-bg); font-variant-numeric: tabular-nums; }
 
 /* ---- Motion off: every moment keeps its meaning, nothing moves ---- */
-:root[data-motion="off"] :is(.ui-badge-live::before, .ui-timeline-dot, .ui-timeline-step::before, .ui-stage.is-captured, .ui-toast, .ui-sheet, .ui-scrim) { animation: none !important; }
+/* pseudo-elements are not allowed inside :is(), so they are listed as plain selectors */
+:root[data-motion="off"] :is(.ui-timeline-dot, .ui-stage.is-captured, .ui-toast, .ui-sheet, .ui-scrim),
+:root[data-motion="off"] .ui-badge-live::before,
+:root[data-motion="off"] .ui-timeline-step::before { animation: none !important; }

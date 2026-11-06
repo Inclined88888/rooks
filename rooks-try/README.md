@@ -20,12 +20,16 @@ Same idea as a rented cloud box, but local-first: Mac, Windows or Linux host, on
 | `rooks-try reset` | Roll back to the last checkpoint |
 | `rooks-try checkpoint` | Save a restore point (the 20 newest are kept) |
 | `rooks-try down` | Stop the room |
+| `rooks-try run "cmd"` | Run a command inside the Room |
+| `rooks-try drivers` | List the drivers this computer can run |
+| `rooks-try prepare` | Explain how to attach a Linux guest image for QEMU |
 | `rooks-try mcp` | MCP server for Rooks Code, Cursor, Claude Code, … |
 | `rooks-try serve` | Local HTTP API for the Rooks app |
 
 ## Drivers (picked automatically, strongest first)
 
-1. **qemu** — a real Linux guest VM (best isolation, `isolation: vm`). Needs `qemu-system-*` on the PATH.
+1. **qemu** — a real Linux guest VM (best isolation, `isolation: vm`). Needs `qemu-system-*` on the PATH and a guest
+   image (`ROOKS_TRY_IMAGE`; `rooks-try prepare` explains); its screen and pointer need `vncdotool`.
 2. **nested** — a private X11 desktop on this computer with a real terminal in it (fast). Needs Xvfb on Linux.
 3. **shell** — a private home folder and shell only. No screen, no pointer.
 
@@ -42,7 +46,7 @@ room should show a picture only when `screen` is true and input controls only wh
 ## MCP tools
 
 `status`, `up`, `down`, `checkpoint`, `reset`, `screenshot`, `click`, `drag`, `scroll`,
-`type`, `key`, `run` (shell inside the room), `handoff` (copy a file out, asks first).
+`type`, `key`, `run` (shell inside the room), `handoff` (copy a file out; see Safety).
 
 ```sh
 # Rooks Code picks it up when installed (the MCP server "room"); or:
@@ -55,9 +59,12 @@ claude mcp add rooks-try -- rooks-try mcp
 - The room has its own home folder under `~/.ai-workspace/try-room/`.
 - A saved point copies that folder. Names never collide; the 20 newest are kept and status names the ones removed.
   When a QEMU disk is present, the same point is also saved on the disk.
-- `handoff` is the only supported way to copy a file out, and it waits for a yes.
-- `rooks-try serve` listens on this computer only, refuses to start until `ROOKS_TRY_API_KEY` is set, and
-  compares the key in constant time. Its screenshot route serves the last picture without waiting behind a command.
+- `handoff` is the only supported way to copy a file out. In the Rooks app it waits for your yes in Needs you.
+  Through `rooks-try mcp` the package cannot ask you itself: the copy runs only when the calling agent passes
+  `approve: true`. Rooks Code treats the server as untrusted and shows its own approval prompt first; another MCP
+  client must gate it the same way.
+- `rooks-try serve` listens on this computer only, refuses to start until `ROOKS_TRY_API_KEY` (or `TOOLS_API_KEY`)
+  is set, and compares the key in constant time. Its screenshot route serves the last picture without waiting behind a command.
 - Networking follows the driver (qemu and the namespaced shell can start offline with `--offline`).
 
 ## Install

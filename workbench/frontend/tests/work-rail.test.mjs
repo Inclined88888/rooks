@@ -63,13 +63,13 @@ test("the rail's Room item is live while the Room runs, and Needs you on the bot
   const rail = read("../src/shell/Rail.tsx");
   const bar = read("../src/shell/MobileBar.tsx");
   const store = read("../src/room/status.ts");
-  assert.match(rail, /useRoomStatus\(\)/);
+  assert.match(rail, /roomOn\(usePresence\(\)\)/, "the dot comes from the presence answer, not a second poller");
   assert.match(rail, /rail-live/);
   assert.match(store, /\/room\/status/);
   assert.match(store, /document\.hidden \? 15000 : 5000/, "one poller: 5 s, 15 s when hidden");
   assert.match(bar, /openNeedsYou\(\)/);
   assert.doesNotMatch(bar, /navigate\("\/jobs#needs-you"\)/, "the bar opens the sheet instead of leaving the page");
-  assert.match(bar, /useRoomStatus\(\)/, "the bar's Room item carries the same live dot");
+  assert.match(bar, /roomOn\(p\)/, "the bar's Room item carries the same live dot");
 });
 
 test("code keeps the real terminal, browser and computer", () => {

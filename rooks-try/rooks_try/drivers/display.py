@@ -16,6 +16,7 @@ from .shell import ShellDriver, isolation_level
 _W, _H = 1280, 720
 LABEL = "A drawing of a terminal"
 NOTE = "A picture the app draws, not a real screen. Typing runs commands as you, in a folder of its own."
+ROOM_OFF = "The Room is off. Start it first."
 NO_POINTER = "This is a drawing of a terminal. It has no pointer."
 
 
@@ -108,7 +109,8 @@ class DisplayDriver(Driver):
         }
 
     def screenshot(self, path: Path) -> Path:
-        self._ensure_up()
+        if self._image is None or not self.status().get("running"):  # a picture never starts the Room; only up does
+            raise RuntimeError(ROOM_OFF)
         path.parent.mkdir(parents=True, exist_ok=True)
         self._image.save(path)
         return path

@@ -301,7 +301,7 @@ def test_without_the_package_the_room_is_honestly_unavailable(client, room_home,
 HELPER_KEY = "r" * 32
 helper = FastAPI()
 SEEN: dict[str, list] = {"auth": [], "posts": []}
-REMOTE: dict = {"running": False, "checkpoints": []}
+REMOTE: dict = {"running": False, "checkpoints": [], "driver": "nested"}
 
 
 def _auth(req: Request) -> bool:
@@ -310,7 +310,7 @@ def _auth(req: Request) -> bool:
 
 
 def _remote_status() -> dict:
-    return {"version": "0.1.0", "driver": "nested", "running": REMOTE["running"], "screen": True, "pointer": True,
+    return {"version": "0.1.0", "driver": REMOTE.get("driver", "nested"), "running": REMOTE["running"], "screen": True, "pointer": True,
             "isolation": "namespace", "label": "A private desktop on this computer",
             "note": "A screen of its own on this computer. Commands run as you, in a folder of its own.", "home": "/x/home",
             "checkpoints": [{"name": n, "path": f"/x/checkpoints/{n}"} for n in reversed(REMOTE["checkpoints"])],
@@ -375,7 +375,7 @@ def remote_room(client, helper_url, monkeypatch):
     monkeypatch.setattr(config, "TRY_API_KEY", HELPER_KEY)
     for v in SEEN.values():
         v.clear()
-    REMOTE.update(running=False, checkpoints=[])
+    REMOTE.update(running=False, checkpoints=[], driver="nested")
     room.reset()
     yield helper_url
     room.reset()
@@ -450,3 +450,129 @@ def test_two_asks_for_the_same_file_show_once_in_needs_you(client, room_home, tm
     for a in actions.pending():
         if a["tool"] == "use_room":
             actions.decide(a["id"], False, "test")
+
+
+# --- review fixes ------------------------------------------------------------------------------------------------------
+def test_a_helper_refusing_the_apps_key_is_not_a_sign_out(client, remote_room, monkeypatch):
+    """A 401 from the helper is the helper's key, not the person's sign-in: the app answers 502, never 401."""
+    from app import config
+
+    monkeypatch.setattr(config, "TRY_API_KEY", "wrong-key")
+    r = client.get("/api/room/status")
+    assert r.status_code == 502
+    detail = r.json()["detail"]
+    assert "key" in detail and "Not signed in" not in detail
+    assert client.post("/api/room/up").status_code == 502
+    assert client.get("/api/room/screenshot").status_code == 502
+
+
+def test_a_helper_that_only_draws_is_not_a_room(client, remote_room):
+    from app import room
+
+    REMOTE["driver"] = "display"
+    room.reset()
+    assert room.enabled() is False
+    assert room.describe()["available"] is False
+    REMOTE["driver"] = "nested"
+    room.reset()
+    assert room.enabled() is True
+
+
+def test_the_chat_tool_does_not_run_in_a_room_that_is_off(client, room_home):
+    from app import assistant
+
+    ctx = assistant.Ctx(channel="web", conversation_id=assistant.new_conversation("web"))
+    out = asyncio.run(assistant._use_room(action="run", command="echo should-not > nope.txt", ctx=ctx))
+    assert out["ok"] is False and "off" in out["error"].lower()
+    assert not (room_home / "home" / "nope.txt").exists()
+    assert client.get("/api/room/status").json()["running"] is False
+    r = client.post("/api/room/run", json={"command": "echo should-not > nope.txt"})
+    assert r.status_code == 409 and "off" in r.json()["detail"].lower()
+    assert not (room_home / "home" / "nope.txt").exists()
+
+
+def test_a_stop_during_a_screenshot_does_not_start_the_room_again(client, room_home, monkeypatch):
+    from app import room
+
+    monkeypatch.setenv("ROOKS_TRY_DRIVER", "display")
+    room.reset()
+    client.post("/api/room/up")
+    live = room._import_room()
+    real = live.screenshot
+
+    def stopped_first(*a, **k):  # the person pressed Stop between the status check and the capture
+        live.down()
+        return real(*a, **k)
+
+    monkeypatch.setattr(live, "screenshot", stopped_first)
+    r = client.get("/api/room/screenshot")
+    assert r.status_code == 404 and r.json()["detail"] == room.OFF
+    assert client.get("/api/room/status").json()["running"] is False
+
+
+def test_a_tainted_chat_hands_off_with_one_yes(client, room_home, tmp_path):
+    """use_room taints the chat; the hand-off it then asks for waits once, in Needs you, and one yes copies it."""
+    from app import actions
+
+    client.post("/api/room/up")
+    client.post("/api/room/run", json={"command": "echo once > keep.txt"})
+    dest = tmp_path / "out" / "keep.txt"
+    SCRIPT[:] = [tool_call("use_room", {"action": "status"}, "s1"),
+                 tool_call("use_room", {"action": "handoff", "src": "keep.txt", "dest": str(dest)}, "h1"),
+                 {"role": "assistant", "content": "It waits for your OK in Needs you."}]
+    ev = events(client.post("/api/assistant/chat", json={"message": "copy keep.txt out"}))
+    SCRIPT.clear()
+    assert not [e for e in ev if e["type"] == "approval_required"], [e for e in ev if e["type"] == "approval_required"]
+    waiting = [a for a in actions.pending() if a["tool"] == "use_room"]
+    assert len(waiting) == 1 and json.loads(waiting[0]["args"])["action"] == "handoff"
+    ok = client.post(f"/api/needs-you/a:{waiting[0]['id']}/approve").json()
+    assert ok["status"] == "done" and dest.read_text().strip() == "once"
+    assert not [a for a in actions.pending() if a["tool"] == "use_room"]
+
+
+def test_an_approval_whose_run_only_waits_again_is_reported_held(client, room_home, tmp_path):
+    """A held call that, once approved, only made another request reports held, not done."""
+    from app import actions, front_door
+
+    client.post("/api/room/up")
+    client.post("/api/room/run", json={"command": "echo twice > two.txt"})
+    dest = tmp_path / "out" / "two.txt"
+    args = json.dumps({"action": "handoff", "src": "two.txt", "dest": str(dest)})
+    aid = actions.add("tool_call", "held", trace={"channel": "web", "conversation_id": front_door.main_conversation()},
+                      tool="use_room", effect="external", payload=args, args=args, detail="test")
+    out = client.post(f"/api/approvals/{aid}", json={"approve": True}).json()
+    assert out["status"] == "held" and not dest.exists()
+    for a in actions.pending():
+        if a["tool"] == "use_room":
+            actions.decide(a["id"], False, "test")
+
+
+def test_asking_twice_for_a_handoff_ends_without_an_id(client, room_home, tmp_path):
+    from app import actions
+
+    client.post("/api/room/up")
+    client.post("/api/room/run", json={"command": "echo again > again.txt"})
+    dest = tmp_path / "out" / "again.txt"
+    client.post("/api/room/handoff", json={"src": "again.txt", "dest": str(dest)})
+    SCRIPT[:] = [tool_call("use_room", {"action": "handoff", "src": "again.txt", "dest": str(dest)}),
+                 {"role": "assistant", "content": "never"}]
+    ev = events(client.post("/api/assistant/chat", json={"message": "copy again.txt out"}))
+    SCRIPT.clear()
+    final = next(e for e in ev if e["type"] == "message")["content"]
+    assert "None" not in final and "#" not in final and "use room" not in final
+    assert "Needs you" in final and "Copy a file out of the Room" in final
+    for a in actions.pending():
+        if a["tool"] == "use_room":
+            actions.decide(a["id"], False, "test")
+
+
+def test_history_says_what_the_room_did_in_plain_words(client, room_home):
+    from app import history
+
+    up = history.describe("use_room", {"action": "up", "goal": "Try the new tool"}, {"running": True}, {})
+    assert up["title"] == "Started the Room: Try the new tool" and up["category"] == "computer"
+    assert "use_room" not in up["title"] and "Room page" in up["fix"]
+    ran = history.describe("use_room", {"action": "run", "command": "ls -la"}, {"ok": True}, {})
+    assert ran["title"] == "Ran in the Room: ls -la"
+    out = history.describe("use_room", {"action": "handoff", "src": "a.txt", "dest": "/tmp/a.txt"}, {"ok": True}, {})
+    assert out["title"].startswith("Copied a file out of the Room: a.txt")

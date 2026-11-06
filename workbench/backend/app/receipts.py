@@ -240,27 +240,62 @@ def summary(receipts: list[dict]) -> str:
     return "\n".join(["Here is what was actually done:", *lines, *failed])
 
 
-def sent_backed(receipts: list[dict], conversation_id: int | None = None) -> bool:
+_TO_FIELD = re.compile(r'"to":\s*"([^"]*)"')
+_ADDRESS = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+_NAMED = re.compile(r"\bto\s+([A-Za-z][\w'-]*)")
+_NOT_A_NAME = {"you", "your", "yours", "him", "her", "them", "it", "the", "a", "an", "everyone", "all", "both", "me", "us",
+               "that", "this", "those", "these", "their", "his", "my", "our", "send", "go", "be"}
+
+
+def _recipient_words(content: str) -> set[str]:
+    """The ways a sentence may name the people an approved send went to: each address, and its name parts."""
+    words: set[str] = set()
+    for field in _TO_FIELD.findall(content or ""):
+        for addr in re.split(r"[,;\s]+", field.lower()):
+            if not addr:
+                continue
+            words.add(addr)
+            local = addr.split("@", 1)[0]
+            words.add(local)
+            words.update(p for p in re.split(r"[._+-]+", local) if len(p) >= 2)
+    return words
+
+
+def _named(sentence: str) -> set[str]:
+    """Who the sentence says the email went to: addresses, and the word after "to" when it is a name."""
+    names = {a.lower() for a in _ADDRESS.findall(sentence or "")}
+    names.update(w.lower() for w in _NAMED.findall(_ADDRESS.sub(" ", sentence or "")) if w.lower() not in _NOT_A_NAME)
+    return names
+
+
+def sent_backed(receipts: list[dict], conversation_id: int | None = None, sentence: str = "") -> bool:
     """Whether an email really went out: send_email ran in this turn, or a person approved one and it ran (the
-    decision message assistant.decide wrote is in the window the model saw)."""
+    decision message assistant.decide wrote is in the window the model saw). An approved send backs only a sentence
+    about it: one that names its recipient, or, naming no one, one in the turn right after the ask it answered. An
+    earlier send to Sam never backs "I sent it to Bob"."""
     if any(r.get("tool") == "send_email" and r.get("outcome") in ("ok", "verified") for r in receipts):
         return True
     if not conversation_id:
         return False
-    rows = db.all("SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT ?", conversation_id, WINDOW_ROWS)
-    return any(r["role"] == "user" and _APPROVED_SEND.match(r["content"] or "") for r in rows)
+    rows = db.all("SELECT id, role, content FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT ?", conversation_id, WINDOW_ROWS)
+    approved = [r for r in rows if r["role"] == "user" and _APPROVED_SEND.match(r["content"] or "")]
+    if not approved:
+        return False
+    named = _named(sentence)
+    if named:
+        return any(named & _recipient_words(r["content"]) for r in approved)
+    asks = [r["id"] for r in rows if r["role"] == "user" and not (r["content"] or "").startswith("[")]
+    previous_ask = asks[1] if len(asks) > 1 else 0  # rows are newest first: asks[0] is this turn's message
+    return any(r["id"] > previous_ask for r in approved)
 
 
 def unbacked_claim(text: str, receipts: list[dict], conversation_id: int | None = None) -> tuple[str, str]:
     """The first statement in the answer that this turn's confirmed changes do not support: (sentence, reason).
     A "sent" sentence is backed only by a send that ran: send_email in this turn, or one the person approved (B3)."""
     changed = any(r["verified"] is True and r["effect"] != "read" for r in receipts)
-    sent: bool | None = None
     for kind, sentence in claims(text):
         if kind == "sent":
-            if sent is None:
-                sent = sent_backed(receipts, conversation_id)
-            if not sent:
+            if not sent_backed(receipts, conversation_id, sentence):
                 return sentence, NO_SEND
             continue
         if not changed:

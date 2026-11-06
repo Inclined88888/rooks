@@ -14,9 +14,12 @@ plus three command line agents: `rooks` (terminal coding agent), `rooks-browser`
   `needs_you.py`, `room.py`, `restart.py` (a restart reported honestly: the cut off turn gets a note, the next turn says
   `resumed`, goals that opted in continue). A prompt that does not fit is compacted and retried in `assistant._run_turn`
   (`compacted` event), never fatal at once.
-- `workbench/backend/tests/` pytest suite (about 600 tests, about 5 minutes).
-- `workbench/frontend/src/` React + Vite + TypeScript. Pages in `pages/`, shared helpers in `util.tsx`, API client in
-  `api.ts`, styles in `styles.css` and `connect.css`.
+- `workbench/backend/tests/` pytest suite (about 770 tests, about 5 minutes).
+- `workbench/frontend/src/` React + Vite + TypeScript. The Workroom shell: `pages/registry.ts` (the one page list:
+  routes, rail, flyouts, More sheet, palette), `shell/` (rail, presence strip, stage host, phone bar), `ui/`
+  (primitives), `chat/` (thread, events, turns), `room/` (the Room page and stage), `stage/` (surfaces), `needs/` (the
+  Needs you sheet); tokens in `tokens.css`. Pages in `pages/`, shared helpers in `util.tsx`, API client in `api.ts`,
+  styles in `styles.css` and `connect.css`.
 - `rooks-code/rooks_code/` the `rooks` terminal: `agent.py` (loop), `tools.py` (file and command tools), `extras.py`
   (todo, web, background jobs, sub-agents, project instructions), `learning.py` (memory and skills shared with the
   app), `tui.py` (interactive terminal), `cli.py` (commands, plain mode), `config.py`, `providers.py`.
@@ -33,6 +36,7 @@ plus three command line agents: `rooks` (terminal coding agent), `rooks-browser`
 - Backend only: `cd workbench/backend && env -u OPENAI_API_KEY -u ANTHROPIC_API_KEY -u NVIDIA_API_KEY ~/.venvs/aiw/bin/python -m pytest -q -p no:cacheprovider -W ignore`
   (provider keys unset, or tests call real providers).
 - Rooks only: `cd rooks-code && ~/.venvs/rooks/bin/python -m pytest -q -p no:cacheprovider`
+- Try Room only: `cd rooks-try && ~/.venvs/aiw/bin/python -m pytest -q -p no:cacheprovider tests`
 - Frontend: `cd workbench/frontend && npx tsc --noEmit -p . && npm run build && npm test`
 
 ## Rules

@@ -42,6 +42,16 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+/**
+ * One picture from the service (a live screen's frame) as a blob. An <img src> sends the cookie but no header, so a
+ * browser paired with a code (signed in by its token) would get "not signed in" for every frame; this sends both.
+ */
+export async function fetchFrame(path: string): Promise<Blob> {
+  const res = await fetch(`/api${path}`, { credentials: "same-origin", headers: { "X-Workbench": "1", ...authHeaders() }, cache: "no-store" });
+  if (!res.ok) throw new ApiError(res.status, `${res.status} ${res.statusText}`);
+  return res.blob();
+}
+
 export async function api<T = unknown>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
   const method = options.method ?? (options.body === undefined ? "GET" : "POST");
   const res = await fetch(`/api${path}`, {

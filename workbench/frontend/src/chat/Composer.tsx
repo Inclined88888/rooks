@@ -26,7 +26,7 @@ export function Composer({ text, onText, busy, att, onSend, onStop, composerRef 
         onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setDropping(true); } }}
         onDragLeave={() => setDropping(false)}
         onDrop={(e) => { const f = filesFrom(e.dataTransfer); setDropping(false); if (f.length) { e.preventDefault(); att.add(f); } }}>
-        <Tracer active={busy} label="Assistant is working" />
+        <Tracer active={busy} />
         <PendingChips items={att.items} onRemove={att.remove} />
         <textarea ref={composerRef} rows={1} value={text} aria-label="Message"
           onChange={(e) => { onText(e.target.value); const t = e.target; t.style.height = "auto"; t.style.height = `${Math.min(240, t.scrollHeight)}px`; }}

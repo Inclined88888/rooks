@@ -49,20 +49,37 @@ export function parseDecision(row: Pick<Row, "role" | "content">): Decision | nu
 /** True for a row that is the person's yes or no to a held step: it closes that step and is never a bubble. */
 export const isDecisionRow = (row: Pick<Row, "role" | "content">): boolean => parseDecision(row) !== null;
 
-/** The held step a decision answers: the one that names its request, else the newest held call of that tool. */
-function heldStepFor(turns: Turn[], d: Decision): { turn: Turn; index: number } | null {
-  const mention = `request #${d.requestId}`;
-  let fallback: { turn: Turn; index: number } | null = null;
+/** A held answer that only says the same request is already waiting (assistant.py HELD_AGAIN): not the request itself. */
+const ALREADY_WAITING = /^Not run:[^\n]*\bis already waiting\b/;
+const isDuplicateHold = (s: Step) => ALREADY_WAITING.test((s.preview || "").trimStart());
+/** True when the text names this request exactly ("request #1" never matches "request #12"). */
+const mentions = (text: string, id: number) => new RegExp(`\\brequest #${id}(?!\\d)`).test(text);
+
+type Held = { turn: Turn; index: number };
+
+/**
+ * The held step a decision answers: the one that names its request, else the newest held call of that tool. The
+ * request itself ("Not run yet: ...") wins over a later "already waiting" answer that names the same request.
+ */
+function heldStepFor(turns: Turn[], d: Decision): { held: Held | null; duplicates: Held[] } {
+  let named: Held | null = null;
+  let fallback: Held | null = null;
+  const duplicates: Held[] = [];
   for (let t = turns.length - 1; t >= 0; t--) {
     const turn = turns[t];
     for (let i = turn.steps.length - 1; i >= 0; i--) {
       const s = turn.steps[i];
       if (s.kind !== "call" || s.state !== "held" || s.name !== d.tool) continue;
-      if ((s.preview || "").includes(mention)) return { turn, index: i };
-      if (!fallback) fallback = { turn, index: i };
+      const dup = isDuplicateHold(s);
+      if (mentions(s.preview || "", d.requestId)) {
+        if (dup) duplicates.push({ turn, index: i });
+        else if (!named) named = { turn, index: i };
+        continue;
+      }
+      if (!fallback && !dup) fallback = { turn, index: i };
     }
   }
-  return fallback;
+  return { held: named ?? fallback ?? duplicates[duplicates.length - 1] ?? null, duplicates };
 }
 
 /** The step as it reads once the decision is in: done with the result, or not done because the person said no. */
@@ -92,7 +109,12 @@ export function rebuildTurns(rows: Row[]): Turn[] {
       }
       const d = parseDecision(r);
       if (d) {
-        const held = heldStepFor(turns, d);
+        const { held, duplicates } = heldStepFor(turns, d);
+        // an "already waiting" answer for the same request is closed too: it was never asked for on its own
+        for (const x of duplicates) {
+          if (x.turn === held?.turn && x.index === held.index) continue;
+          x.turn.steps[x.index] = { ...x.turn.steps[x.index], state: "ok", preview: "Not asked again. The first request was answered." };
+        }
         if (held) held.turn.steps[held.index] = decidedStep(held.turn.steps[held.index], d);
         else if (cur) cur.steps.push(decidedStep(step({ kind: "call", name: d.tool, args: "", state: "held", text: plainStep(d.tool) }), d));
         continue;
@@ -180,7 +202,9 @@ function plainValue(v: unknown, depth: number): string {
 
 /** A hold, in the person's words: the stored text is written for the model. */
 function heldLine(text: string): string {
-  return /^Not run yet:/.test(text) ? "Waiting for your OK." : "Not run. Nobody was there to say yes, so it was skipped.";
+  if (/^Not run yet:/.test(text)) return "Waiting for your OK.";
+  if (ALREADY_WAITING.test(text)) return "Already waiting for your OK.";
+  return "Not run. Nobody was there to say yes, so it was skipped.";
 }
 
 /**
@@ -287,18 +311,45 @@ function cardWords(card: Card): string[] {
   return parts.map((p) => norm(p).slice(0, 56));
 }
 
-/** The newest history entry of this chat that recorded the change behind a result card, or null. */
-export function matchHistoryEntry(card: Card, entries: HistoryEntry[], cid: number | null): HistoryEntry | null {
-  const tools = TOOLS_OF_KIND[card.kind];
-  if (!tools || !cid) return null;
-  const words = cardWords(card);
-  const ordered = entries.slice().sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
-  for (const e of ordered) {
-    if (e.conversation_id !== cid || !tools.includes(e.tool)) continue;
-    const title = norm(e.title);
-    if (!words.length || words.some((w) => w && title.includes(w))) return e;
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** True when the title names the words as a whole ("hi" is not found in "things to do"). */
+function namesWhole(title: string, words: string): boolean {
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRe(words)}($|[^\\p{L}\\p{N}])`, "u").test(title);
+}
+
+const atMs = (iso: string | undefined) => (iso ? Date.parse(iso) : NaN);
+
+/**
+ * The history entries that recorded the changes behind one reply's result cards, one per card (null where none).
+ * An entry is of this chat, made by a tool of the card's kind, names the card's title as whole words, was recorded
+ * no later than the reply (`before`, the reply's stored time; a reply still on screen has none) and is given to one
+ * card only. A later card takes the newer entry, so two drafts saved one after the other each keep their own.
+ */
+export function matchHistoryEntries(cards: Card[], entries: HistoryEntry[], cid: number | null, before?: string): (HistoryEntry | null)[] {
+  const out: (HistoryEntry | null)[] = cards.map(() => null);
+  if (!cid) return out;
+  const until = atMs(before);
+  const ordered = entries
+    .filter((e) => e.conversation_id === cid && (Number.isNaN(until) || !(atMs(e.at) > until)))
+    .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+  const claimed = new Set<string>();
+  for (let i = cards.length - 1; i >= 0; i--) {
+    const card = cards[i];
+    const tools = TOOLS_OF_KIND[card.kind];
+    if (!tools) continue;
+    const words = cardWords(card);
+    for (const e of ordered) {
+      if (claimed.has(e.id) || !tools.includes(e.tool)) continue;
+      const title = norm(e.title);
+      if (!words.length || words.some((w) => w && namesWhole(title, w))) { out[i] = e; claimed.add(e.id); break; }
+    }
   }
-  return null;
+  return out;
+}
+
+/** The newest history entry of this chat that recorded the change behind a result card, or null. */
+export function matchHistoryEntry(card: Card, entries: HistoryEntry[], cid: number | null, before?: string): HistoryEntry | null {
+  return matchHistoryEntries([card], entries, cid, before)[0];
 }
 
 /* ---------------------------------------------------------------- a new chat */

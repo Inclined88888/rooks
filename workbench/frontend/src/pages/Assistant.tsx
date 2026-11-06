@@ -14,7 +14,7 @@ import { askNotifyPermission, inBackground, notify } from "../desktop"; // feat/
 import { useAttachments, type Att } from "../Attachments"; // feat/attachments
 import { openBeside } from "../Beside";
 import { ChatList } from "../chat/ChatList"; // the Chats column: recent chats, archive, projects
-import { matches, wideQuery } from "../shell/breakpoints";
+import { matches, narrowQuery, useMediaQuery, wideQuery } from "../shell/breakpoints";
 import { openStage, surfaceOf } from "../shell/StageHost";
 import { emptyTurn, parseEvent, reduceTurn, type Approval, type Offer, type TurnState, type Watch } from "../chat/events";
 import { adoptServerIds, mergeSteps, rebuildTurns, stepTitle, type Row } from "../chat/turns";
@@ -28,6 +28,7 @@ import { MemoryTab } from "../chat/tabs/MemoryTab";
 import { SkillsTab } from "../chat/tabs/SkillsTab";
 import { SettingsTab } from "../chat/tabs/SettingsTab";
 import type { Conv, Msg, WorkMode } from "../chat/types";
+import { motionOff } from "../appearance";
 import "../chat/chat.css";
 
 export { SkillsTab };
@@ -35,6 +36,7 @@ export { SkillsTab };
 const CHATLIST_KEY = "rooks.chatlist";
 /** The Chats column is open by default above the wide breakpoint; the toggle in the thread header is remembered. */
 function readChatListOpen(): boolean {
+  if (matches(narrowQuery)) return false; // on a phone the column floats over the thread: it never opens by itself
   try {
     const saved = localStorage.getItem(CHATLIST_KEY);
     if (saved === "open") return true;
@@ -155,9 +157,11 @@ function Chat() {
   const [routines, setRoutines] = useState<Routine[] | null>(null);
   const [showRoutines, setShowRoutines] = useState(Boolean((location.state as { routines?: boolean } | null)?.routines));
   const [listOpen, setListOpen] = useState<boolean>(readChatListOpen);
+  const narrow = useMediaQuery(narrowQuery);
   const toggleList = () => setListOpen((v) => {
     const next = !v;
-    try { localStorage.setItem(CHATLIST_KEY, next ? "open" : "closed"); } catch { /* storage unavailable */ }
+    // only the wide layout's choice is remembered; the floating column on a narrow window is opened each time
+    if (!matches(narrowQuery)) { try { localStorage.setItem(CHATLIST_KEY, next ? "open" : "closed"); } catch { /* storage unavailable */ } }
     return next;
   });
   useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
@@ -226,7 +230,8 @@ function Chat() {
       if (cid) { loadConv(cid); void refreshHistory(cid); }
     } catch (e) { toast.err(e); }
   };
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, live?.steps.length, live?.draft.length]);
+  // reduced motion (Appearance or the OS setting) jumps instead of animating the scroll on every streamed word
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: motionOff() ? "auto" : "smooth" }); }, [messages, live?.steps.length, live?.draft.length]);
 
   /** A job started on a surface: the Stage shows it (the Room, a browser, the desktop). */
   const openWatch = (w: Watch) => {
@@ -274,7 +279,7 @@ function Chat() {
         case "start": newId = ev.conversation_id; break;
         case "approval_required": {
           setApprovals((a) => (a.some((x) => x.id === ev.approval.id) ? a : [...a, ev.approval]));
-          if (inBackground()) void notify("Approval needed", `${stepTitle(ev.approval.tool, ev.approval.args)}: ${ev.approval.reason || "waiting for your OK"}`, { tag: "approval" });
+          if (inBackground()) void notify("Needs your OK", `${stepTitle(ev.approval.tool, ev.approval.args)}: ${ev.approval.reason || "waiting for your OK"}`, { tag: "approval" });
           break;
         }
         case "watch": openWatch(ev.watch); break;
@@ -436,7 +441,7 @@ function Chat() {
 
   return (
     <div className={`agents-chat chat-layout${listOpen ? " has-list" : ""}`}>
-      <ChatList open={listOpen} id="chat-list" />
+      <ChatList open={listOpen} id="chat-list" floating={narrow} onClose={() => setListOpen(false)} />
       <div className="agents-chat-main chat-main">
         <ThreadHeader
           title={title} cid={cid} listOpen={listOpen} onToggleList={toggleList}

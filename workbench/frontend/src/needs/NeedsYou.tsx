@@ -6,7 +6,7 @@
  * and are answered in place through POST /api/needs-you/{id}/approve or /deny, exactly once; the pill count is asked
  * again at once. The same ApprovalCard as the chat and the jobs board, with one copy: "Needs your OK".
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../api";
 import { refreshPresence } from "../shell/presence";
@@ -31,6 +31,21 @@ export function NeedsYouList() {
   const [items, setItems] = useState<NeedsItem[] | null>(null);
   const [away, setAway] = useState(false);
   const [busy, setBusy] = useState("");
+  // After a yes or no the card goes away: focus moves to the next card's Approve (or to the list when it is empty)
+  // and the outcome is written into a status line inside the sheet, so a keyboard or screen reader user keeps their place.
+  const root = useRef<HTMLDivElement>(null);
+  const [said, setSaid] = useState("");
+  const [focusAt, setFocusAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (focusAt === null || items === null) return;
+    const el = root.current;
+    if (!el) return;
+    const cards = el.querySelectorAll<HTMLElement>(".needs-item");
+    const card = cards[Math.min(focusAt, cards.length - 1)];
+    const target = card?.querySelector<HTMLElement>(".ui-approval-actions button") ?? el;
+    target.focus();
+    setFocusAt(null);
+  }, [focusAt, items]);
 
   const load = useCallback(async () => {
     try {
@@ -50,15 +65,19 @@ export function NeedsYouList() {
 
   const decide = async (item: NeedsItem, approve: boolean) => {
     setBusy(item.id);
+    const at = Math.max(0, (items ?? []).findIndex((x) => x.id === item.id));
     try {
       const r = await api<{ status?: string; result?: string }>(`/needs-you/${encodeURIComponent(item.id)}/${approve ? "approve" : "deny"}`, { method: "POST" });
       setItems((xs) => (xs ?? []).filter((x) => x.id !== item.id));
-      if (r?.status === "failed") toast.err(new Error(r.result || "That did not work."));
-      else toast.ok(decidedWords(approve, r?.status));
+      setFocusAt(at);
+      if (r?.status === "failed") { const text = r.result || "That did not work."; setSaid(text); toast.err(new Error(text)); }
+      else { const text = decidedWords(approve, r?.status); setSaid(text); toast.ok(text); }
     } catch (e) {
       if (e instanceof ApiError && (e.status === 409 || e.status === 404)) {
+        setSaid("That one was already answered.");
         toast.info("That one was already answered.");
         setItems((xs) => (xs ?? []).filter((x) => x.id !== item.id));
+        setFocusAt(at);
       } else {
         toast.err(e);
       }
@@ -70,15 +89,17 @@ export function NeedsYouList() {
   };
 
   if (items === null) return <p className="needs-line" role="status">{away ? "Rooks did not answer. Trying again." : "Looking…"}</p>;
-  if (!items.length) {
-    return (
-      <EmptyState className="needs-empty" title="Nothing needs you." line="Anything that waits for your OK, from chat, jobs, the Room, the browser or this computer, shows up here." />
-    );
-  }
   return (
-    <div className="needs-list">
-      {away && <p className="needs-line" role="status">Rooks did not answer just now; this is the last known list.</p>}
-      {items.map((item) => <NeedsItemCard key={item.id} item={item} busy={busy === item.id} onDecide={(yes) => void decide(item, yes)} />)}
+    <div ref={root} className="needs-root" tabIndex={-1}>
+      <p className="sr-only" role="status">{said}</p>
+      {!items.length
+        ? <EmptyState className="needs-empty" title="Nothing needs you." line="Anything that waits for your OK, from chat, jobs, the Room, the browser or this computer, shows up here." />
+        : (
+          <div className="needs-list">
+            {away && <p className="needs-line" role="status">Rooks did not answer just now; this is the last known list.</p>}
+            {items.map((item) => <NeedsItemCard key={item.id} item={item} busy={busy === item.id} onDecide={(yes) => void decide(item, yes)} />)}
+          </div>
+        )}
     </div>
   );
 }

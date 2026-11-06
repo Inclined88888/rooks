@@ -11,7 +11,7 @@
 import { Bookmark, Columns2, Eye, FileOutput, Hand, Laptop, Power, RotateCcw, Undo2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../api";
+import { api, fetchFrame } from "../api";
 import { openNeedsYou } from "../needs/store";
 import { refreshPresence } from "../shell/presence";
 import { openStage } from "../shell/StageHost";
@@ -91,7 +91,13 @@ export function useRoomFrame({ mode, goal, onClose }: { mode: "page" | "stage"; 
   const screenLive = roomScreenLive(status);
   const canStep = screenLive && status.pointer === true;
   useEffect(() => { if (!canStep) setCaptured(false); }, [canStep]);
-  const release = useCallback(() => setCaptured(false), []);
+  // Handing back puts focus on Step in: the Hand back button (or the picture) goes away under it, and focus is never
+  // dropped to the page.
+  const stepIn = useRef<HTMLButtonElement>(null);
+  const release = useCallback(() => {
+    setCaptured(false);
+    window.setTimeout(() => stepIn.current?.focus(), 0);
+  }, []);
   const points: Checkpoint[] = status.checkpoints ?? [];
   const toggle = (p: Panel) => setPanel((cur) => (cur === p ? null : p));
 
@@ -107,7 +113,7 @@ export function useRoomFrame({ mode, goal, onClose }: { mode: "page" | "stage"; 
       {canStep && (
         <span className="room-modes" role="group" aria-label="Your mouse and keyboard">
           <Button size="sm" variant="ghost" aria-pressed={!captured} icon={<Eye size={13} />} onClick={release}>Watch</Button>
-          <Button size="sm" variant="ghost" aria-pressed={captured} icon={<Hand size={13} />} onClick={() => setCaptured(true)}>Step in</Button>
+          <Button ref={stepIn} size="sm" variant="ghost" aria-pressed={captured} icon={<Hand size={13} />} onClick={() => setCaptured(true)}>Step in</Button>
           {captured && <Button size="sm" variant="primary" icon={<Undo2 size={13} />} onClick={release}>Hand back</Button>}
         </span>
       )}
@@ -173,30 +179,39 @@ function RoomPicture({ captured, onRelease }: { captured: boolean; onRelease: ()
 
   // The next frame is fetched off screen every second (every 5 s when the tab is hidden) and swapped in once it has
   // loaded, so the screen never blinks. A frame that fails means the Room changed: ask its status again.
+  // Frames are fetched with the same sign-in as every other call (a paired browser has a token, not a cookie).
   useEffect(() => {
     let stop = false;
     let timer: number | undefined;
+    let shown = "";
+    const failed = () => {
+      if (stop) return;
+      setStale(true);
+      void refreshRoomStatus();
+      timer = window.setTimeout(next, 3000);
+    };
     const next = () => {
       if (stop) return;
-      const url = `/api/room/screenshot?k=${Date.now()}`;
-      const im = new Image();
-      im.onload = () => {
+      fetchFrame(`/room/screenshot?k=${Date.now()}`).then((blob) => {
         if (stop) return;
-        setSrc(url);
-        setNatural((n) => (n.width === im.naturalWidth && n.height === im.naturalHeight ? n : { width: im.naturalWidth, height: im.naturalHeight }));
-        setStale(false);
-        timer = window.setTimeout(next, document.hidden ? 5000 : 1000);
-      };
-      im.onerror = () => {
-        if (stop) return;
-        setStale(true);
-        void refreshRoomStatus();
-        timer = window.setTimeout(next, 3000);
-      };
-      im.src = url;
+        const url = URL.createObjectURL(blob);
+        const im = new Image();
+        im.onload = () => {
+          if (stop) { URL.revokeObjectURL(url); return; }
+          const before = shown;
+          shown = url;
+          setSrc(url);
+          if (before) window.setTimeout(() => URL.revokeObjectURL(before), 0);
+          setNatural((n) => (n.width === im.naturalWidth && n.height === im.naturalHeight ? n : { width: im.naturalWidth, height: im.naturalHeight }));
+          setStale(false);
+          timer = window.setTimeout(next, document.hidden ? 5000 : 1000);
+        };
+        im.onerror = () => { URL.revokeObjectURL(url); failed(); };
+        im.src = url;
+      }, failed);
     };
     next();
-    return () => { stop = true; window.clearTimeout(timer); };
+    return () => { stop = true; window.clearTimeout(timer); if (shown) URL.revokeObjectURL(shown); };
   }, []);
 
   const send = useCallback((path: string, body: Record<string, unknown>) => {
@@ -344,7 +359,7 @@ function CommandView({ status }: { status: RoomState }) {
       </form>
       <p className="room-honest">
         <span>{commandViewLine(status)}</span>
-        <Badge tone="neutral" title="How separate the Room is">{isolationWords(status.isolation)}</Badge>
+        <Badge tone="neutral" title="How separate the Room is">{isolationWords(status.isolation, !!status.offline)}</Badge>
       </p>
     </div>
   );

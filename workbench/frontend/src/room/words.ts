@@ -30,13 +30,19 @@ export const RUN_TIMEOUT_S = 120;
 
 const ISOLATION: Record<string, string> = {
   none: "Not locked off",
-  namespace: "Files and network kept apart",
+  namespace: "Your home folder kept apart",
   vm: "A separate computer",
 };
 
-/** How separate the Room is, in plain words. Anything unknown is never oversold. */
-export function isolationWords(isolation: string | null | undefined): string {
-  return ISOLATION[String(isolation || "").toLowerCase()] ?? ISOLATION.none;
+/**
+ * How separate the Room is, in plain words. Anything unknown is never oversold. A private space shadows only the
+ * home folder, and it is cut off from the network only when the Room was started offline, so "no network" is said
+ * only then.
+ */
+export function isolationWords(isolation: string | null | undefined, offline = false): string {
+  const key = String(isolation || "").toLowerCase();
+  const said = ISOLATION[key] ?? ISOLATION.none;
+  return key === "namespace" && offline ? `${said}, no network` : said;
 }
 
 /** One word for the badge: Not installed, Off, On. */

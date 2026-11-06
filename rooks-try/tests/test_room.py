@@ -325,3 +325,107 @@ def test_drivers_are_described(room_home):
     info = TryRoom().drivers()
     names = {d["name"] for d in info}
     assert names == {"qemu", "nested", "display", "shell"}
+
+
+def test_namespace_room_runs_when_its_home_sits_under_the_persons_home(tmp_path, monkeypatch):
+    """The shipped layout: the Room's home is ~/.ai-workspace/try-room/home, under the person's home. Laying it over
+    the person's home path must not hide the folder the command starts in."""
+    from rooks_try.drivers import shell as shell_mod
+
+    if not shell_mod.namespaces_available():
+        pytest.skip("needs unshare -Urm")
+    person = tmp_path / "person"
+    person.mkdir()
+    monkeypatch.setenv("HOME", str(person))
+    monkeypatch.delenv("ROOKS_TRY_HOME", raising=False)
+    room = TryRoom(prefer="shell")
+    room.up()
+    assert person in store.guest_home().parents
+    result = room.run('echo RAN > made.txt; cd "$HOME" && ls made.txt')
+    assert result["ok"] is True, result
+    assert result["isolation"] == "namespace"
+    assert (store.guest_home() / "made.txt").read_text().strip() == "RAN"
+    assert not (person / "made.txt").exists()
+
+
+def test_handoff_of_a_folder_never_copies_through_a_link_to_outside(room_home, tmp_path):
+    room = TryRoom(prefer="shell")
+    room.up()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "id_rsa").write_text("SECRET")
+    out = store.guest_home() / "out"
+    out.mkdir()
+    (out / "notes.txt").symlink_to(outside / "id_rsa")
+    dest = tmp_path / "dest"
+    result = room.handoff("out", str(dest), approve=True)
+    assert result["ok"] is False
+    assert "outside the Room" in result["error"]
+    copied = dest / "notes.txt"
+    assert not copied.exists() or copied.is_symlink()
+    assert "SECRET" not in (copied.read_text() if copied.exists() and not copied.is_symlink() else "")
+
+
+def test_handoff_of_a_folder_keeps_links_inside_the_room_as_links(room_home, tmp_path):
+    room = TryRoom(prefer="shell")
+    room.up()
+    out = store.guest_home() / "out"
+    out.mkdir()
+    (out / "a.txt").write_text("a")
+    (out / "b.txt").symlink_to("a.txt")
+    dest = tmp_path / "dest"
+    assert room.handoff("out", str(dest), approve=True)["ok"] is True
+    assert (dest / "a.txt").read_text() == "a" and (dest / "b.txt").is_symlink()
+
+
+def test_down_never_adopts_a_saved_drawing_for_auto(room_home, monkeypatch):
+    """A drawing left in state.json by an earlier explicit run is not what the next auto Start brings up."""
+    monkeypatch.delenv("ROOKS_TRY_IMAGE", raising=False)
+    monkeypatch.setattr("rooks_try.drivers.qemu._qemu_bin", lambda: None)
+    monkeypatch.setattr("rooks_try.drivers.nested.NestedDriver.available", lambda self: False)
+    store.save_state({"driver": "display", "running": False})
+    room = TryRoom(prefer="auto")
+    assert room.driver().name == "shell"
+    room.down()
+    assert room.driver().name == "shell"
+    st = room.up()
+    assert st["driver"] == "shell" and st["screen"] is False
+    room.down()
+
+
+def test_a_screenshot_never_starts_the_room(room_home):
+    """Only up starts the Room: a picture asked of a Room that is off is refused, and the Room stays off."""
+    from rooks_try.drivers.display import DisplayDriver
+    from rooks_try.drivers.nested import NestedDriver
+
+    for cls in (DisplayDriver, NestedDriver):
+        driver = cls()
+        started = []
+        driver.up = lambda: started.append(1) or {}  # type: ignore[method-assign]
+        with pytest.raises(RuntimeError, match="off"):
+            driver.screenshot(room_home / "shot.png")
+        assert started == [], cls.__name__
+        assert driver.status()["running"] is False
+
+
+def test_server_status_answers_while_a_command_runs(room_home, monkeypatch):
+    """A long command holds the action lock; the status the app polls still answers at once."""
+    import rooks_try.server as server
+
+    monkeypatch.setattr(server, "API_KEY", "secret-key")
+    server.Handler.room = TryRoom(prefer="shell")
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{httpd.server_address[1]}"
+    try:
+        assert _call(base, "POST", "/api/up")[0] == 200
+        assert server.Handler.lock.acquire(timeout=5)  # what /api/run holds for the whole command
+        try:
+            started = time.monotonic()
+            code, body = _call(base, "GET", "/api/status")
+            assert code == 200 and body["running"] is True
+            assert time.monotonic() - started < 5
+        finally:
+            server.Handler.lock.release()
+    finally:
+        httpd.shutdown()

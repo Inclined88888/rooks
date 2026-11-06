@@ -41,7 +41,7 @@
 .rail-label { font-size: var(--text-rail); font-weight: 600; letter-spacing: 0.02em; line-height: 1; white-space: nowrap; }
 .rail-chev { position: absolute; right: 5px; top: 50%; margin-top: -5px; color: var(--faint); }
 /* the Room is on: a live dot on its rail item and its bottom bar item */
-.rail-live, .mobile-live { position: absolute; top: 7px; right: 13px; width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 2px var(--panel); animation: ui-live 1.6s var(--ease-in-out) infinite; }
+.rail-live, .mobile-live { position: absolute; top: 7px; right: 13px; width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 1px var(--color-ink), 0 0 0 3px var(--panel); animation: ui-live 1.6s var(--ease-in-out) infinite; }
 .mobile-live { top: 6px; right: calc(50% - 16px); }
 .rail-spacer { flex: 1; min-height: var(--space-2); }
 .rail-search:focus-visible { position: static; width: auto; height: auto; margin: 0; clip: auto; overflow: visible; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: var(--text-xs); }
@@ -51,7 +51,7 @@
   box-shadow: var(--shadow-2); display: flex; flex-direction: column; outline: none;
   animation: shell-pop var(--dur-normal) var(--ease-out) both;
 }
-.rail-flyout-title { padding: 6px 10px 4px; font-size: var(--text-2xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
+.rail-flyout-title { padding: 6px 10px 4px; font-size: var(--text-2xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .rail-flyout-link {
   display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: var(--radius-sm);
   color: var(--text); font-size: var(--text-sm); font-weight: 500; text-decoration: none; white-space: nowrap;
@@ -72,7 +72,7 @@
 
 /* ---- More sheet lists ---- */
 .more-group { margin-bottom: var(--space-3); }
-.more-section { padding: var(--space-2) var(--space-3) var(--space-1); font-size: var(--text-2xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
+.more-section { padding: var(--space-2) var(--space-3) var(--space-1); font-size: var(--text-2xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .more-link {
   display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-sm);
   color: var(--text); font-size: var(--text-sm); font-weight: 500; text-decoration: none;

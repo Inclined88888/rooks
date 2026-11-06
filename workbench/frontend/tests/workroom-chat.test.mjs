@@ -91,9 +91,8 @@ test("resumed, compacted, denied, stopped and error read as plain notices and st
   s = reduceTurn(s, parseEvent({ type: "resumed", reason: "restart", at: "2026-11-06T05:40:00+00:00" }));
   s = reduceTurn(s, parseEvent({ type: "compacted", dropped_rows: 12, summary_words: 180 }));
   assert.equal(s.notices[0].text, "Picked up after a restart");
-  assert.match(s.notices[1].text, /Earlier parts of this chat were summarised to fit/);
+  assert.match(s.notices[1].text, /Earlier parts of this chat were shortened and summarised to fit/);
   assert.match(s.notices[1].text, /12/);
-  assert.match(s.notices[1].text, /180/);
   s = reduceTurn(s, parseEvent({ type: "tool_call", name: "send_email", args: "{}" }));
   s = reduceTurn(s, parseEvent({ type: "tool_result", name: "send_email", ok: false, preview: "Not run" }));
   s = reduceTurn(s, parseEvent({ type: "approval_denied", id: 5, tool: "send_email", args: "{}", effect: "external", reason: "Nobody was there to say yes." }));
@@ -248,7 +247,7 @@ test("result cards carry Undo through the history API with the same confirm hand
   assert.match(cards, /confirm/);
   assert.match(cards, />Undo</);
   assert.match(cards, /\/history\?/, "entries come from the history API");
-  assert.match(cards, /matchHistoryEntry/);
+  assert.match(cards, /matchHistoryEntr(y|ies)/);
 });
 
 test("the thread header shows the project, the model, effort and Check answers as chips, out of the menu", () => {
@@ -413,8 +412,9 @@ test("asking the run log for a turn's receipts is not cancelled by its own bookk
   const thread = read("../src/chat/Thread.tsx");
   // the old code kept "asked" in state: setting it re-ran the effect, whose cleanup dropped the answer on arrival
   assert.doesNotMatch(thread, /setAsked\(/, "no state flip inside the effect that fetches receipts");
-  assert.match(thread, /askedFor\.current === steps/, "a ref remembers which steps were asked about");
-  assert.match(thread, /cur === asked \? withReceipts : cur/, "the answer only lands on the steps it was asked for");
+  assert.match(thread, /useRef\(runLogMemory\(\)\)/, "a ref remembers which steps were asked about");
+  assert.match(thread, /asked\.current\.wants\(steps\)/);
+  assert.match(thread, /cur === these \? withReceipts : cur/, "the answer only lands on the steps it was asked for");
 });
 
 test("a yes given later re-runs the held call under it in the run log; that re-run is the same step, not another", async () => {

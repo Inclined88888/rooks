@@ -3,8 +3,8 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKe
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { MOD_KEY } from "../keys";
 import { isActive, railItems, SETTINGS_PAGE, type GroupId, type RailItem, type StatusLike } from "../pages/registry";
-import { useRoomStatus } from "../room/status";
 import { useFocusTrap } from "../ui";
+import { roomOn, usePresence } from "./presence";
 
 /**
  * The rail: 64px, icon above an 11px label, 44px hit targets, always visible above 900px. Chat, Room, Jobs are
@@ -14,7 +14,8 @@ import { useFocusTrap } from "../ui";
 export function Rail({ status, onMore, onSearch, name }: { status: StatusLike | null; onMore: () => void; onSearch: () => void; name: string }) {
   const items = railItems(status);
   const location = useLocation();
-  const room = useRoomStatus(); // the Room item shows a live dot while the Room runs (one shared poller)
+  // the Room item shows a live dot while the Room runs, from the presence answer the strip already polls
+  const roomLive = roomOn(usePresence());
   const [open, setOpen] = useState<GroupId | null>(null);
   const closeFlyout = useCallback(() => setOpen(null), []);
   useEffect(() => setOpen(null), [location.pathname]);
@@ -24,7 +25,7 @@ export function Rail({ status, onMore, onSearch, name }: { status: StatusLike | 
         <span aria-hidden="true">{name.trim().charAt(0).toUpperCase() || "R"}</span>
       </button>
       {items.map((it) => (it.page
-        ? <RailLink key={it.id} item={it} pathname={location.pathname} live={it.id === "room" && room.running === true} />
+        ? <RailLink key={it.id} item={it} pathname={location.pathname} live={it.id === "room" && roomLive} />
         : <RailGroup key={it.id} item={it} pathname={location.pathname} open={open === it.group} onToggle={() => setOpen((o) => (o === it.group ? null : it.group!))} onClose={closeFlyout} />))}
       <span className="rail-spacer" />
       <button type="button" className="rail-item" onClick={onMore} aria-haspopup="dialog">

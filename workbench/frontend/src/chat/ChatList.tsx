@@ -1,8 +1,8 @@
-import { Archive, ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
+import { Archive, ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { useFocusTrap, useToast } from "../ui";
+import { IconButton, useFocusTrap, useToast } from "../ui";
 import "./chat.css";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string; archived?: number };
@@ -63,8 +63,11 @@ function ChatRow({ c, active, archivedView, onOpen, onArchive, onDelete }: {
  * earlier, with archive and delete), the archive, and projects with the active one marked. Polls every 10 s
  * while it is open.
  */
-export function ChatList({ open, id = "chat-list" }: { open: boolean; id?: string }) {
+export function ChatList({ open, id = "chat-list", floating = false, onClose }: { open: boolean; id?: string; floating?: boolean; onClose?: () => void }) {
   const navigate = useNavigate();
+  // On a narrow window the column floats over the thread: choosing a chat, New chat, Escape, Close or a tap beside
+  // it closes it again.
+  const closeFloating = () => { if (floating && onClose) onClose(); };
   const location = useLocation();
   const toast = useToast();
   const idMatch = location.pathname.match(/^\/assistant\/(\d+)/);
@@ -121,15 +124,21 @@ export function ChatList({ open, id = "chat-list" }: { open: boolean; id?: strin
     } catch (err) { toast.err(err); }
   };
   const rows = (list: Conv[]) => list.map((c) => (
-    <ChatRow key={c.id} c={c} active={c.id === cid} archivedView={archivedView} onOpen={() => navigate(`/assistant/${c.id}`)} onArchive={() => archive(c)} onDelete={() => remove(c)} />
+    <ChatRow key={c.id} c={c} active={c.id === cid} archivedView={archivedView} onOpen={() => { navigate(`/assistant/${c.id}`); closeFloating(); }} onArchive={() => archive(c)} onDelete={() => remove(c)} />
   ));
 
   return (
-    <aside id={id} className={`chatlist${open ? " is-open" : ""}`} aria-label="Chats and projects" hidden={!open}>
+    <>
+    {floating && open && <div className="chatlist-scrim" aria-hidden="true" onMouseDown={closeFloating} />}
+    <aside id={id} className={`chatlist${open ? " is-open" : ""}${floating ? " is-floating" : ""}`} aria-label="Chats and projects" hidden={!open}
+      onKeyDown={(e) => { if (floating && e.key === "Escape" && !e.defaultPrevented) { e.preventDefault(); closeFloating(); } }}>
       <div className="chatlist-top">
-        <button type="button" className="chatlist-new" onClick={() => navigate("/assistant", { state: { fresh: true } })}>
-          <Plus size={15} aria-hidden="true" /> New chat
-        </button>
+        <div className="chatlist-top-row">
+          <button type="button" className="chatlist-new" onClick={() => { navigate("/assistant", { state: { fresh: true } }); closeFloating(); }}>
+            <Plus size={15} aria-hidden="true" /> New chat
+          </button>
+          {floating && <IconButton label="Close chats" size="sm" onClick={closeFloating}><X size={15} /></IconButton>}
+        </div>
         <div className="chatlist-search-wrap">
           <Search size={13} aria-hidden="true" />
           <input className="chatlist-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" aria-label="Search chats" />
@@ -179,5 +188,6 @@ export function ChatList({ open, id = "chat-list" }: { open: boolean; id?: strin
         )}
       </div>
     </aside>
+    </>
   );
 }
