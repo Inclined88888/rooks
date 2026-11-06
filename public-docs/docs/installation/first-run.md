@@ -9,6 +9,8 @@ sidebar_position: 8
 4. Save the initial configuration. Free runs without a licence key, registration or activation, and includes every feature and plugin for one account. Creating your account asks for no key: enter one later in **Settings › Profile › License key**, only when you need additional user accounts.
 5. Open **Agents**, select an available agent and send a small request in Chat, such as asking it to describe the files in its working directory.
 
+On a server without a display, create the account from the terminal with `timon init` instead, then open the web interface to continue from the next step: see [Run Timon on a headless server](headless-server.md#2-create-your-account-first).
+
 Right after your account, the **Choose your LLM** screen offers two ways to run your agents. **Use my AI subscription**, which names the AI tools this version of Timon supports, opens them on the same screen, as described below; **Ready with …** names the ones Timon can start on, and **Continue anyway** disappears as soon as one is there. **Use local models** shows Ollama: download it from its site, then add it as a provider in Settings › AI models › Providers. **Back** returns to the two choices first. Usage statistics are not asked here: they are on by default and turned off in Settings › Privacy.
 
 Next, **What brings you here?** asks your profile in one click: **I write code** (agents that code, review and merge in your repositories), **I automate** (email, calendar, watch, routines that run on their own) or **I'm discovering** (AI agents, step by step). Timon tunes its defaults to your answer; **Back** returns to the previous screen and shows your choice, and a click on another row changes it.
