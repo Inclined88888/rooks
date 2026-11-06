@@ -92,57 +92,64 @@ These are the rules the deleted version broke and the reason it was removed ("th
 
 Plain words for people who do not program. Never on a normal screen: URLs, ids, "cli://", "OAuth", "MCP", "UTC", "Workbench", "driver", "namespace", stack traces. Names used in the UI: **Rooks** (the product; `product.ts` PRODUCT becomes "Rooks"), the assistant's chosen name, **Room** (its computer), **Stage** (the live view), **Jobs**, **Needs you**, **Day**, **Memory**, **Library**. "Needs your OK" is the one approval phrase. Buttons are verbs: Approve, Deny, Step in, Hand back, Save a point, Start over, Undo.
 
-## 6. Design system v2: "Paper and Ink, with a saffron signal"
+## 6. Design system v3: restraint
 
-Decided by the implementer after the design panel could not run (usage limit). It evolves what the product already owns (the Sunshine theme and the motion system) instead of importing a generic SaaS look. Two first class themes, one accent that always means "live".
+Premium pass, 2026-11-07, at the owner's request ("as premium as Claude in look and function; restraint, not effects"). It replaces design system v2 ("Paper and Ink, with a saffron signal"); v2's signature moments and decorative theme variants are removed, not kept as options.
+
+### Principles
+
+1. **Neutral first.** Surfaces, text and controls are neutral greys. The primary button is ink on paper (dark fill, light text), not a colour.
+2. **One accent, used rarely, so it means something.** Amber marks only things that are live or need the person: the Room's live dot and step in border, the Needs you count, an unread or running marker. Never a decorative fill, never a page title, never a whole button.
+3. **Motion explains, never decorates.** The only motion is an opacity fade of 150 ms or less when something appears or disappears (a sheet, a menu, a toast, a new row). Nothing slides, springs, shimmers, draws, trails, pulses or glows. The one exception is a calm, static (not animated) amber border on the Room while the person has stepped in. Text replies are shown as they stream from the model, never replayed word by word. Reduced motion turns the fades off.
+4. **Speed is the premium feature.** A reply starts drawing on the first token; pages render their frame at once and fill in; one poller per kind of data.
+5. **Keyboard first.** Every page and every action is reachable from ⌘K; every shortcut is listed in ⌘K and in the ⋯ menu.
 
 ### Themes
 
-Theme axis is `data-mode="light|dark"` on `<html>` (already set by `appearance.tsx`). The old `data-theme` ids keep working as variants layered on top, but the signed in shell must read **only** tokens: no hex in `styles.css` `.shell-agents` or in any component; the `.shell-agents` palette block is deleted.
+Three themes, on `data-mode`: **Light**, **Dark**, **High contrast** (`data-mode="contrast"`, light based, black text, 2 px borders, AA large on every pair, focus ring 3 px). The picker offers these three plus Match my computer. Sunshine, Paper, Cherry, Neon, Linen, Gallery, Studio and Lamp are removed from the picker and the CSS; a saved choice is mapped on load: night, lamp, neon, cherry → Dark; contrast → High contrast; everything else → Light.
 
-| Token | Studio (light) | Lamp (dark) |
+| Token | Light | Dark |
 | --- | --- | --- |
-| `--color-bg` | `#FAF8F3` | `#141210` |
-| `--color-surface` | `#FFFFFF` | `#1C1915` |
-| `--color-surface-raised` | `#FFFFFF` | `#221E19` |
-| `--color-surface-sunken` | `#F3F0E8` | `#0F0E0C` |
-| `--color-border` | `#E6E1D6` | `#2E2A24` |
-| `--color-border-strong` | `#D2CBBB` | `#3D382F` |
-| `--color-ink` | `#1B1A17` | `#F2EDE3` |
-| `--color-ink-muted` | `#5F5A50` (6.6:1 on bg) | `#B0A89A` (9.1:1 on bg) |
-| `--color-ink-faint` | `#948E82` (3.2:1, non text only) | `#756E62` (3.3:1, non text only) |
-| `--color-accent` | `#F2B705` (solid fills, on_accent ink) | `#F2B705` |
-| `--color-on-accent` | `#1B1A17` (12.3:1) | `#141210` (12.6:1) |
-| `--color-accent-text` | `#7A4F00` (7.2:1 on bg) | `#F6C84C` (10.5:1 on bg) |
-| `--color-accent-soft` | `#FFF3CC` | `#2E2410` |
-| `--color-live` | `#F2B705` | `#F2B705` |
-| `--color-success` / `-text` | `#1E7F4F` / `#14532D` | `#4ADE80` / `#86EFAC` |
-| `--color-warning` / `-text` | `#B45309` / `#7C3A05` | `#FBBF24` / `#FDE68A` |
-| `--color-danger` / `-text` | `#C0392B` / `#7F1D1D` | `#F87171` / `#FCA5A5` |
-| `--color-code-bg` | `#F3F0E8` | `#0F0E0C` |
-| `--color-scrim` | `rgba(27,26,23,.45)` | `rgba(0,0,0,.6)` |
+| `--color-bg` | `#FAFAF9` | `#161616` |
+| `--color-surface` | `#FFFFFF` | `#1E1E1E` |
+| `--color-surface-raised` | `#FFFFFF` | `#242424` |
+| `--color-surface-sunken` | `#F4F4F2` | `#121212` |
+| `--color-border` | `#E7E6E3` | `#2E2E2E` |
+| `--color-border-strong` | `#D4D3CF` | `#3C3C3C` |
+| `--color-ink` | `#1A1A19` | `#EDEDEC` |
+| `--color-ink-muted` | `#5E5D59` | `#A3A29E` |
+| `--color-ink-faint` | `#8F8E89` (non text only) | `#6E6D69` (non text only) |
+| `--color-primary` (button fill) | `#1A1A19` | `#EDEDEC` |
+| `--color-on-primary` | `#FFFFFF` | `#161616` |
+| `--color-accent` (live, needs you) | `#C98A00` | `#E3A82B` |
+| `--color-accent-text` | `#7A5300` | `#E9B949` |
+| `--color-accent-soft` | `#FBF1DA` | `#2B2414` |
+| `--color-success` / `-text` | `#2F7D4F` / `#1E5A37` | `#5FBF85` / `#8FD8AB` |
+| `--color-warning` / `-text` | `#A85F06` / `#7A4300` | `#E3A82B` / `#F0C870` |
+| `--color-danger` / `-text` | `#B3372B` / `#82231A` | `#E5735F` / `#F2A193` |
+| `--color-code-bg` | `#F4F4F2` | `#121212` |
 
-The old short aliases (`--bg`, `--panel`, `--text`, `--muted`, `--accent`, `--ok`, `--warn`, `--danger`) stay as aliases of the tokens above so untouched pages keep working. Contrast figures are computed for the stated pairs; the engineer checks them again with the existing `tests/appearance.test.mjs` pattern.
+Every text pair is AA (4.5:1) and every `-text` token is checked against `bg`, `surface` and `accent-soft` by a frontend test that computes the ratios from `tokens.css`. The old short aliases stay as aliases.
 
 ### Type
 
-Hanken Grotesk for UI at 14 px base (`--text-md` becomes 14 px; `appearance.tsx` TEXT_TOKENS already treat 14 as base, which fixes the size bug the readers found). Thread body 15 px / 1.6. Steps, receipts, presence line and terminal in JetBrains Mono 12.5 px. Bodoni Moda only for the greeting, page titles and the empty state line (28 to 32 px, weight 500, tracking -0.01em). Rail labels 11 px, weight 600, tracking 0.02em. No other sizes outside the scale.
+One sans family for all UI text: Hanken Grotesk. JetBrains Mono only for code, commands, terminal output, receipts and ids under Advanced. Bodoni Moda is removed (fonts, tokens and every use). Scale, and no other sizes: 12 (labels, captions), 13 (secondary, rail), 14 (body, controls), 16 (thread body), 20 (page and section titles), 28 (page heading). Weights 400 and 500 only, 600 for page headings. Line height 1.5 for UI, 1.65 for the thread and long text. Tracking 0, except −0.01em at 28.
 
-### Shape and depth
+### Spacing, shape, depth
 
-Radius 8 / 12 / 16 (cards 12, composer and stage frame 16, chips full). Hairline 1 px borders in `--color-border`; `--shadow-2` only on raised surfaces (menus, sheets, stage frame); nothing else floats. Spacing on the 4 px scale only. Breakpoints are tokens: `--bp-narrow: 900px`, `--bp-wide: 1280px`.
-
-### Signature moments (reuse, do not reinvent)
-
-Thinking shimmer, word stream, timeline drawing, approval spring, done tick, working border and edge glow all exist in `motion/signature.css` and `motion/index.tsx`. New: the **Stage edge glow** when you step in (the frame's border animates in `--color-live`, 600 ms ease, held while input is captured). Reduced motion is honoured by one rule in `motion/tokens.css`; the nine duplicate `prefers-reduced-motion` blocks are removed.
+One 4 px grid: 4, 8, 12, 16, 24, 32, 48, 64. Radius 6 (controls), 10 (cards, sheets, composer, stage frame), full (chips, pills). Hairline 1 px borders carry structure. One shadow, used only on things that float above the page (menus, sheets, the palette, toasts): `0 8px 24px -12px rgb(0 0 0 / .18)`. Cards and panels have no shadow. Page content max width 880 for reading pages, full width for boards and the Room. Breakpoints 900 and 1280 only.
 
 ### Primitives (`src/ui/`)
 
-One stylesheet `src/ui/ui.css` and one module `src/ui/index.tsx`: `Button` (primary saffron with ink text, secondary outline, ghost, danger; sizes sm 28 px, md 36 px), `IconButton` (36 px, always has an aria label), `Card`, `Input`, `Select` (styled native select), `Tabs`, `Badge`, `Chip`, `Sheet` (side sheet with focus trap and Escape), `Toast` (one stack mounted once in the shell), `Kbd`, `EmptyState` (Bodoni line, one sentence, one action), `Stat`, `Timeline` (step rows with the drawing line), `Receipt` (verified / partly / not verified marks with evidence on hover and focus), `ApprovalCard` (the one approval card), `StageFrame` (16 px frame, live edge, controls bar), `Presence` (face, name, status line, Needs you pill).
+Every page is built from the primitives: `Page` (heading, one line description, actions, the content width), `Section`, `Button` (primary ink, secondary outline, ghost, danger; 28 and 36 px), `IconButton`, `Card`, `Input`, `Textarea`, `Select`, `Tabs`, `Badge`, `Chip`, `Sheet`, `Menu`, `Toast`, `Kbd`, `List` and `Row` (the one list row: title, meta, trailing actions), `EmptyState` (sans, one sentence, one action), `Loading` (skeleton rows, static, no sheen), `ErrorState` (what went wrong in plain words, Try again), `Stat`, `Timeline`, `Receipt`, `ApprovalCard`, `StageFrame`, `Presence`. Every page has a loading, an empty and an error state and a phone layout.
 
 ### Accessibility
 
-One `main` landmark (the nested `role=main` in `Assistant.tsx` goes), a skip link, visible focus rings that no component cancels (`:focus { outline: none }` is removed), hover only actions get a keyboard and touch path, every live region declared once, the More sheet and flyouts trap focus and close on Escape.
+As before: one `main` landmark, a skip link, visible focus rings, hover only actions get a keyboard and touch path, live regions declared once, sheets and menus trap focus and close on Escape.
+
+### Terminal
+
+The `rooks` terminal follows the same rules: the same names (Rooks, the Room, Needs you, Jobs, Memory), the same calm look (neutral text, one accent colour for live or needs you, no spinners beyond a single static "working" line that updates in place, no emoji), the same features reachable by command (`/room`, `/needs`, `/jobs`, `/memory`, `/model`), and one `/help` that lists every command and key.
 
 ## 7. Verification
 
