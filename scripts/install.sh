@@ -292,6 +292,17 @@ timon_command() {
   fi
 }
 
+# The step that creates the first account. `timon init` arrived after 0.1.7:
+# an older package only has the web form, reached through an SSH tunnel.
+account_step() {
+  if [ -n "${1:-}" ] && "$1" help 2>/dev/null | grep -q 'timon init'; then
+    say '  timon init'
+  else
+    say '  open the web interface through an SSH tunnel and create it there:'
+    say '  https://docs.timon-ai.com/installation/remote-access#step-0-finish-the-first-run-through-an-ssh-tunnel'
+  fi
+}
+
 after_install() {
   say ''
   say "Timon $VERSION is installed."
@@ -311,20 +322,22 @@ after_install() {
     timon_bin=$(timon_command)
     [ -n "$timon_bin" ] || die 'the timon command was not installed; see the package output above'
     if [ "$NO_SERVICE" = 1 ]; then
-      say 'Next steps, as the account that will own Timon (not root):'
+      say 'Next steps, as the account that will own Timon (not root): install the background service,'
       say '  timon service install'
-      say '  timon init'
+      say 'then create your account:'
+      account_step "$timon_bin"
     elif [ "$(id -u)" = 0 ]; then
       say 'The background service runs as the account that owns Timon, never as root.'
-      say 'Log in as that account, then run:'
+      say 'Log in as that account, then install the background service:'
       say '  timon service install'
-      say '  timon init'
+      say 'and create your account:'
+      account_step "$timon_bin"
     else
       say 'Installing the background service...'
       if "$timon_bin" service install </dev/null; then
         say ''
         say 'Timon runs in the background. Next step, create your account:'
-        say '  timon init'
+        account_step "$timon_bin"
       else
         warn 'the background service was not installed. Run it again to see why:'
         warn '  timon service install'
