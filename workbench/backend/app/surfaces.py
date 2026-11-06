@@ -81,8 +81,9 @@ def bearer_ok(request: Request) -> bool:
     if row and not row["revoked"] and hmac.compare_digest(row["token_hash"], digest):
         return True
     # The desktop app's own key (app.json) lets the terminal on this machine talk as the same account.
-    app_key = getattr(config, "TOOLS_API_KEY", "") or ""
-    return bool(app_key) and len(token) == len(app_key) and hmac.compare_digest(token, app_key)
+    from .security import check_app_key
+
+    return check_app_key(request)
 
 
 def status() -> dict:

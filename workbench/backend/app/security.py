@@ -165,6 +165,20 @@ def check_bearer(request: Request) -> bool:
     return bool(token) and hmac.compare_digest(token, config.TOOLS_API_KEY)
 
 
+def check_app_key(request: Request) -> bool:
+    """The key this install hands out in app.json. The sidecar writes the bridge key (BROWSER_API_KEY) there; a
+    plain backend has only TOOLS_API_KEY. Either one is a per-install random secret kept in the keychain and only
+    ever presented over loopback, so both unlock the same account."""
+    auth = request.headers.get("authorization", "")
+    token = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+    if len(token) < 20:
+        return False
+    for key in (getattr(config, "TOOLS_API_KEY", "") or "", getattr(config, "BROWSER_API_KEY", "") or ""):
+        if key and len(key) == len(token) and hmac.compare_digest(token, key):
+            return True
+    return False
+
+
 def require_tool_key(request: Request) -> None:
     if not check_bearer(request):
         raise HTTPException(401, "Invalid tool API key")

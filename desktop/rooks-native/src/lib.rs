@@ -1,5 +1,6 @@
 //! The Rooks window's logic. The pixels live in `main.rs`. Nothing here draws a web page.
 
+pub mod chat;
 pub mod client;
 pub mod copy;
 pub mod fit;

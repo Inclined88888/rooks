@@ -165,7 +165,7 @@ pub fn suggestions(profile: &Profile) -> Vec<Suggestion> {
     out
 }
 
-pub fn for_group<'a>(profile: &Profile, group: &str) -> Vec<Suggestion> {
+pub fn for_group(profile: &Profile, group: &str) -> Vec<Suggestion> {
     suggestions(profile)
         .into_iter()
         .filter(|item| item.group == group)

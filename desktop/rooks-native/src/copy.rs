@@ -12,6 +12,7 @@ pub fn window_title() -> &'static str {
 /// Work surfaces. Setup is not repeated here.
 pub const SURFACES: &[(&str, &str)] = &[
     ("Home", "home"),
+    ("Ask", "ask"),
     ("Mail", "mail"),
     ("Tasks", "tasks"),
     ("Terminal", "terminal"),
@@ -58,6 +59,7 @@ mod tests {
         assert_eq!(setup_labels(), vec!["Customize", "Skills", "Connectors"]);
         assert!(surfaces.contains(&"Mail"));
         assert!(surfaces.contains(&"Home"));
+        assert_eq!(surfaces[1], "Ask", "giving a task is the second thing in the rail");
     }
 
     #[test]

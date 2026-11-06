@@ -43,7 +43,7 @@ pub fn data_dir() -> PathBuf {
     }
     #[cfg(target_os = "macos")]
     {
-        return home().join("Library/Application Support/com.inclined88888.aiworkspace");
+        home().join("Library/Application Support/com.inclined88888.aiworkspace")
     }
     #[cfg(target_os = "windows")]
     {

@@ -3,6 +3,7 @@ use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::thread;
 
+use rooks_native::chat::{self, Event};
 use rooks_native::client::Client;
 use rooks_native::parse;
 
@@ -97,6 +98,49 @@ fn route(req: &str, path: &str) -> (u16, String, Vec<String>) {
             "{req}"
         );
         return (200, r#"{"ok":true}"#.into(), vec![]);
+    }
+    if path == "/api/assistant/chat" && req.starts_with("POST") {
+        assert!(req.contains("\"message\":\"Find the invoice\""), "{req}");
+        assert!(req.contains("x-workbench: 1") || req.contains("X-Workbench: 1"), "{req}");
+        return (
+            200,
+            concat!(
+                "data: {\"type\":\"start\",\"conversation_id\":12}\n\n",
+                ": keep-alive\n\n",
+                "data: {\"type\":\"thought\",\"content\":\"private\"}\n\n",
+                "data: {\"type\":\"tool_call\",\"name\":\"search_mail\",\"args\":\"{}\"}\n\n",
+                "data: {\"type\":\"writing\",\"text\":\"It is \"}\n\n",
+                "data: {\"type\":\"writing\",\"text\":\"from Ada.\"}\n\n",
+                "data: {\"type\":\"approval_required\",\"id\":41,\"tool\":\"send_mail\",\"args\":\"{\\\"to\\\":\\\"ada\\\"}\",\"reason\":\"It sends mail.\"}\n\n",
+                "data: {\"type\":\"message\",\"content\":\"It is from Ada.\"}\n\n",
+                "data: {\"type\":\"done\",\"conversation_id\":12,\"cost_cents\":0}\n\n"
+            )
+            .into(),
+            vec![],
+        );
+    }
+    if path == "/api/assistant/stop" && req.starts_with("POST") {
+        assert!(req.contains("\"conversation_id\":12"), "{req}");
+        return (200, r#"{"stopped":true}"#.into(), vec![]);
+    }
+    if path == "/api/approvals/41" && req.starts_with("POST") {
+        assert!(req.contains("\"approve\":false"), "{req}");
+        return (200, r#"{"ok":true}"#.into(), vec![]);
+    }
+    if path.starts_with("/api/conversations/12") {
+        return (
+            200,
+            r#"{"id":12,"title":"Invoices","messages":[{"role":"user","content":"Find the invoice","tool_calls":[]},{"role":"assistant","content":"","tool_calls":["search_mail"]},{"role":"tool","content":"3 hits","name":"search_mail"},{"role":"assistant","content":"It is from Ada.","tool_calls":[]}]}"#.into(),
+            vec![],
+        );
+    }
+    if path.starts_with("/api/conversations") {
+        assert!(path.contains("channel=web"), "{path}");
+        return (
+            200,
+            r#"[{"id":12,"title":"Invoices","updated_at":"2026-11-06T09:30:00Z","channel":"web"}]"#.into(),
+            vec![],
+        );
     }
     if path == "/api/browser/jobs" {
         return (
@@ -211,4 +255,48 @@ fn bridge_key_mints_a_session_cookie_when_the_service_was_already_up() {
     let cookie = Client::session_from_key(&base, "test-key-test-key-test-key").unwrap();
     assert_eq!(cookie, "session-from-key");
     assert!(Client::session_from_key(&base, "").is_err());
+}
+
+#[test]
+fn a_question_streams_back_and_a_held_action_can_be_refused() {
+    let base = serve();
+    let client = Client::new(base, "test-key-test-key-test-key", "");
+    let reader = client.ask("Find the invoice", None).unwrap();
+    let events: Vec<Event> = std::io::BufRead::lines(std::io::BufReader::new(reader))
+        .map_while(Result::ok)
+        .filter_map(|line| chat::parse_line(&line))
+        .collect();
+    assert_eq!(
+        events[0],
+        Event::Start {
+            conversation_id: 12
+        }
+    );
+    assert!(
+        !events.iter().any(|e| matches!(e, Event::Writing(t) if t == "private")),
+        "a thought is not drawn"
+    );
+    assert_eq!(events[1], Event::Tool("search_mail".into()));
+    assert_eq!(events[2], Event::Writing("It is ".into()));
+    let held = events
+        .iter()
+        .find_map(|e| match e {
+            Event::Approval(a) => Some(a.clone()),
+            _ => None,
+        })
+        .expect("the held send_mail reaches the window");
+    assert_eq!(held.id, 41);
+    assert_eq!(
+        chat::approval_line(&held),
+        "Rooks wants to send mail. It sends mail."
+    );
+    assert!(matches!(events.last(), Some(Event::Done { conversation_id: 12 })));
+    client.decide(41, false).unwrap();
+    client.stop_turn(12).unwrap();
+    let chats = client.conversations().unwrap();
+    assert_eq!(chats[0].title, "Invoices");
+    let turns = client.transcript(12).unwrap();
+    assert_eq!(turns.len(), 3);
+    assert_eq!(turns[1].content, "Using search mail");
+    assert_eq!(turns[2].role, "rooks");
 }

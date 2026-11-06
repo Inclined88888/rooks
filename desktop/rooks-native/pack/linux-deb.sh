@@ -29,7 +29,7 @@ Categories=Utility;
 EOF
 cat > "$root/DEBIAN/control" <<'EOF'
 Package: rooks-native
-Version: 0.3.0
+Version: 0.4.0
 Section: utils
 Priority: optional
 Architecture: amd64
