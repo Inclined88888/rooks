@@ -119,7 +119,7 @@ test("the chat keeps its list of chats and projects as a collapsible column with
   assert.match(list, /Delete/);
   assert.match(list, /Projects/);
   assert.match(list, /No chats yet/);
-  const chat = read("../src/pages/Assistant.tsx");
+  const chat = ["../src/pages/Assistant.tsx", "../src/chat/Thread.tsx"].map(read).join("\n"); // the chat page is split (package F2)
   assert.match(chat, /<ChatList/);
   assert.doesNotMatch(chat, /role="main"/, "one main landmark: the shell's");
   assert.match(chat, /id="thread"/, "the skip link lands on the thread");

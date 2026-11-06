@@ -22,7 +22,7 @@ test("Projects and History are in the nav and routed", () => {
 });
 
 test("chat has the project switcher, the check toggle and Check this", () => {
-  const chat = read("../src/pages/Assistant.tsx");
+  const chat = ["../src/pages/Assistant.tsx", "../src/chat/ThreadHeader.tsx", "../src/chat/Thread.tsx"].map(read).join("\n"); // the chat page is split (package F2)
   for (const c of ["<ProjectSwitcher", "<CheckToggle", "<CheckThis"]) assert.ok(chat.includes(c), c);
 });
 

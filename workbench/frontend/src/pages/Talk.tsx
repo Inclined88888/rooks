@@ -4,11 +4,13 @@
  * answering approval requests out loud. A spoken "yes" never skips the card: the card is on screen first, the words are
  * checked again on the server, and anything but a clear yes ("yes, send it") is asked again or treated as no.
  */
-import { Ear, Loader2, Mic, MicOff, ShieldAlert, Square, Volume2, VolumeX } from "lucide-react";
+import { Ear, Loader2, Mic, MicOff, Square, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, stream } from "../api";
 import { Markdown, useToast } from "../util";
+import { ApprovalCard } from "../ui";
+import { argsLine, stepTitle } from "../chat/turns";
 import { listenOnce, Mic as MicT, openMic, osDictationHint, speak, stopSpeaking, voiceStatus, VoiceStatus, watchBargeIn } from "../voice/engine";
 import { afterWake } from "../voice/logic";
 import "../voice/voice.css";
@@ -216,16 +218,10 @@ export default function Talk() {
       </section>
 
       {approval && (
-        <div className="card col approval-card" style={{ gap: 10 }} role="alertdialog" aria-label={`Approve ${approval.tool}?`}>
-          <div className="row"><ShieldAlert size={16} style={{ color: "var(--warn-text)" }} /> <b>Approve {approval.tool.replace(/_/g, " ")}?</b></div>
-          <div className="small muted">{approval.reason} {approval.effect === "persistent" ? "This would change how the assistant behaves from now on." : "This acts outside the workspace."}</div>
-          <pre className="small mono" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{approval.args}</pre>
-          <div className="small faint">{pro ? "Say “yes, send it” or “no”, or tap a button. Anything unclear is asked again." : "Tap a button to answer."}</div>
-          <div className="row">
-            <button className="btn primary sm" onClick={() => decideByTap(approval, true)}>Approve</button>
-            <button className="btn sm" onClick={() => decideByTap(approval, false)}>Deny</button>
-          </div>
-        </div>
+        <ApprovalCard title={stepTitle(approval.tool, approval.args)} effect={approval.effect}
+          detail={`${approval.reason ? approval.reason + " " : ""}${pro ? "Say “yes, send it” or “no”, or tap a button. Anything unclear is asked again." : "Tap a button to answer."}`}
+          command={argsLine(approval.args) || undefined}
+          onApprove={() => decideByTap(approval, true)} onDeny={() => decideByTap(approval, false)} />
       )}
 
       {turns.length > 0 && (

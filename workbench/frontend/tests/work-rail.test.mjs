@@ -10,7 +10,7 @@ const registry = read("../src/pages/registry.ts");
 const host = read("../src/terminalHost.tsx");
 const code = read("../src/pages/Code.tsx");
 const terminal = read("../src/pages/TerminalPage.tsx");
-const chat = read("../src/pages/Assistant.tsx");
+const chat = ["../src/pages/Assistant.tsx", "../src/chat/Thread.tsx", "../src/chat/ThreadHeader.tsx", "../src/chat/Composer.tsx", "../src/chat/events.ts"].map(read).join("\n"); // the chat page is split (package F2)
 const beside = read("../src/Beside.tsx");
 const shell = read("../src/shell/shell.css");
 

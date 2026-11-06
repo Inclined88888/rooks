@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
-const chat = read("../src/pages/Assistant.tsx");
+const chat = ["../src/pages/Assistant.tsx", "../src/chat/Thread.tsx", "../src/chat/ThreadHeader.tsx", "../src/chat/Composer.tsx", "../src/chat/events.ts"].map(read).join("\n"); // the chat page is split (package F2)
 const app = read("../src/App.tsx");
 
 test("the in-flight turn can be aborted (AbortController on the stream)", () => {
@@ -29,10 +29,11 @@ test("a sent user message can be edited inline and resent", () => {
   assert.match(chat, /\/conversations\/\$\{cid\}\/messages\/\$\{m\.id\}/);
   assert.match(chat, /run\(content, \{ resend: true \}\)/);
   // Escape cancels, Enter sends
-  assert.match(chat, /e\.key === "Escape"\) setEditing\(null\)/);
+  assert.match(chat, /e\.key === "Escape"\) p\.onEditCancel\(\)/);
 });
 
 test("the composer swaps Send for Stop while the assistant works", () => {
-  assert.match(chat, /\{busy\s*\?\s*<button type="button" className="btn send" onClick=\{stopTurn\}/);
+  assert.match(chat, /\{busy\s*\?\s*<button type="button" className="btn send" onClick=\{onStop\}/);
+  assert.match(chat, /onStop=\{\(\) => void stopTurn\(\)\}/, "the composer's Stop is the page's stopTurn");
   assert.match(chat, /: <button className="btn primary send" disabled=\{\(!text\.trim\(\) && !att\.ready\.length\) \|\| att\.uploading\} aria-label="Send">/);
 });

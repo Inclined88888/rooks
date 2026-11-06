@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
-const chat = read("../src/pages/Assistant.tsx");
+const chat = ["../src/pages/Assistant.tsx", "../src/chat/Thread.tsx", "../src/chat/ThreadHeader.tsx", "../src/chat/Composer.tsx", "../src/chat/events.ts"].map(read).join("\n"); // the chat page is split (package F2)
 const app = read("../src/pages/registry.ts"); // the one page registry App.tsx builds the nav from
 const research = read("../src/pages/Research.tsx");
 const skills = read("../src/pages/Skills.tsx");

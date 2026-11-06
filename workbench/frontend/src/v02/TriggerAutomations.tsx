@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api";
 import { relTime, useToast } from "../util";
 import "./v02.css";
+import { AUTOMATION_EXAMPLES } from "./examples";
 
 type Trig = Record<string, unknown>;
 export type Automation = {
@@ -16,14 +17,7 @@ type Listing = { automations: Automation[]; limit: number | null; pro: boolean }
 type Draft = { name: string; request: string; trigger_kind: string; trigger: Trig; action_kind: string; action: Trig; ask_first: boolean;
   when?: string; then?: string; questions?: string[]; confidence?: number };
 
-const EXAMPLES = [
-  "When an invoice email arrives, save the PDF to Invoices and add it to my spreadsheet",
-  "15 minutes before each meeting, tell me who is coming and what we last talked about",
-  "When a PDF lands in my Downloads folder, summarise it",
-  "When something new appears on my builder portal, add it to my tasks",
-  "Every weekday at 8am, summarise my unread email",
-  "When I share a link from my phone, save it to my reading list note",
-];
+const EXAMPLES = AUTOMATION_EXAMPLES;
 const TRIGGERS: { v: string; label: string }[] = [
   { v: "email", label: "An email arrives" }, { v: "calendar", label: "A calendar event is coming up" }, { v: "site", label: "A work site changes" },
   { v: "folder", label: "A file appears in a folder" }, { v: "schedule", label: "On a schedule" }, { v: "share", label: "I share something from my phone" },

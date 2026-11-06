@@ -101,22 +101,25 @@ export function wordsAt(ms: number, total: number, maxMs = 1600): number {
  * the markdown every frame continues the fade instead of restarting it. Calm motion keeps the same gentle fade;
  * Off shows the whole reply at once.
  */
-export function StreamText({ text, onDone }: { text: string; onDone?: () => void }) {
+export function StreamText({ text, onDone, from = 0 }: { text: string; onDone?: () => void; from?: number }) {
   const ends = useRef(wordEnds(text));
   const level = useRef(motionLevel());
   const start = useRef(performance.now());
-  const [n, setN] = useState(() => (level.current === "off" ? ends.current.length : 1));
+  // Words already on screen as the streamed draft (`from` characters) are shown at once; only the rest is revealed.
+  const shownBefore = useRef(from > 0 ? ends.current.filter((e) => e <= from).length : 0);
+  const [n, setN] = useState(() => (level.current === "off" ? ends.current.length : Math.max(1, shownBefore.current)));
   const box = useRef<HTMLDivElement>(null);
   const done = useRef(false);
   const total = ends.current.length;
-  const per = total ? Math.min(28, 1600 / total) : 0;
+  const left = total - shownBefore.current;
+  const per = left > 0 ? Math.min(28, 1600 / left) : 0;
 
   // One frame loop for the whole reveal (a frame may not add a word, so it must not depend on n changing)
   useEffect(() => {
     if (n >= total) return;
     let raf = 0;
     const tick = () => {
-      const next = wordsAt(performance.now() - start.current, total);
+      const next = shownBefore.current + wordsAt(performance.now() - start.current, left);
       setN(next);
       if (next < total) raf = requestAnimationFrame(tick);
     };
@@ -147,7 +150,7 @@ export function StreamText({ text, onDone }: { text: string; onDone?: () => void
       for (let j = parts.length - 1; j >= 0; j--) {
         const p = parts[j];
         if (stop || !p.trim()) { tail.unshift(document.createTextNode(p)); continue; }
-        const age = now - (n - 1 - k) * per;
+        const age = now - (n - 1 - k - shownBefore.current) * per;
         if (age > fadeMs || k > 10) { stop = true; tail.unshift(document.createTextNode(p)); continue; }
         const s = document.createElement("span");
         s.className = "w-in";

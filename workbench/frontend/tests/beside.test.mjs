@@ -66,7 +66,7 @@ test("the shell keeps the second screen on its own route", () => {
   const app = read("../src/App.tsx");
   const stage = read("../src/shell/StageHost.tsx"); // the Stage is built on the Beside split
   const side = read("../src/chat/ChatList.tsx");
-  const assistant = read("../src/pages/Assistant.tsx");
+  const assistant = ["../src/pages/Assistant.tsx", "../src/chat/ThreadHeader.tsx"].map(read).join("\n"); // the chat page is split (package F2)
   assert.doesNotMatch(beside, /Side by side/);
   assert.match(beside, /let current: BesideState \| null = null/);
   assert.match(beside, /One screen/);

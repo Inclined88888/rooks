@@ -11,12 +11,13 @@ import "./v02.css";
 type Data = Sheet | Chart | string;
 
 /** Drop-in for <Markdown> on assistant replies: live blocks render as documents, the rest as Markdown. */
-export function LiveMarkdown({ text, messageId, streaming = false, onDone }: { text: string; messageId?: number | string; streaming?: boolean; onDone?: () => void }) {
+export function LiveMarkdown({ text, messageId, streaming = false, onDone, from = 0 }: { text: string; messageId?: number | string; streaming?: boolean; onDone?: () => void; from?: number }) {
   const pieces = useMemo(() => splitLive(text), [text]);
   const hasLive = pieces.some((p) => p.kind !== "md");
   // Live blocks render at once (no word reveal), so finish the "fresh" state straight away.
   useEffect(() => { if (streaming && hasLive) onDone?.(); }, [streaming, hasLive]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!hasLive) return streaming ? <StreamText text={text} onDone={onDone} /> : <Markdown text={text} />;
+  // One reveal: what already streamed in as the draft (`from` characters) stays; only the rest is revealed word by word.
+  if (!hasLive) return streaming ? <StreamText text={text} onDone={onDone} from={from} /> : <Markdown text={text} />;
   return (
     <div className="live-reply">
       {pieces.map((p, i) => p.kind === "md"

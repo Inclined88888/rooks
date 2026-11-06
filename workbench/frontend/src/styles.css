@@ -363,10 +363,6 @@ kbd, .kbd {
 @keyframes face-settle { 0% { transform: translateY(-4px) scale(0.98); } 60% { transform: translateY(1px) scale(1.03); } }
 @keyframes face-attn { 50% { transform: translateY(-2px); } }
 @keyframes face-hello { 35% { transform: translateY(-6px) scale(1.05); } 70% { transform: translateY(0) scale(1); } }
-.result-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; max-width: min(460px, 100%); }
-.result-card { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
-.result-card p { margin: 4px 0 0; }
-.watch-card img { width: 100%; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); display: block; }
 .routines-panel { border-bottom: 1px solid var(--border); padding: 10px 16px 12px; max-height: 240px; overflow: auto; }
 .routines-panel li { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
 .routines-panel li:last-child { border-bottom: 0; }
@@ -680,25 +676,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width
 .chat-stage { flex: 1; min-height: 0; display: flex; }
 .chat-stage .chat-scroll { flex: 1; min-width: 0; }
 .chat-scroll { flex: 1; overflow-y: auto; padding: var(--space-8) var(--space-6) var(--space-4); }
-.shoulder {
-  width: 280px; flex: none; overflow-y: auto; padding: 20px 16px 24px;
-  border-left: 1px solid var(--border); background: var(--panel);
-}
-.shoulder h2 { margin: 0 0 8px; font-family: var(--font); font-size: 13px; font-weight: 600; letter-spacing: 0; }
-.shoulder-now { margin: 0 0 16px; font-size: 15px; line-height: 1.45; }
-.shoulder ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-.shoulder button {
-  display: flex; align-items: flex-start; gap: 8px; width: 100%; text-align: left;
-  border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px;
-  line-height: 1.4; padding: 6px 8px; border-radius: 8px; cursor: pointer;
-}
-.shoulder button.on { background: var(--bg); color: var(--text); }
-.shoulder button svg { flex: none; margin-top: 2px; }
-.shoulder-dot { width: 6px; height: 6px; margin: 5px 3px 0; border-radius: 50%; background: var(--accent); flex: none; }
-@media (max-width: 960px) {
-  .chat-stage { flex-direction: column; }
-  .shoulder { width: auto; max-height: 200px; border-left: 0; border-bottom: 1px solid var(--border); }
-}
 .chat-thread { max-width: var(--max-content-width); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6); }
 .msg { display: flex; gap: var(--space-3); animation: fade-in var(--dur-slow) var(--ease-out) both; }
 .msg.user { justify-content: flex-end; }
@@ -1008,7 +985,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width
   .run-meta { width: 100%; text-align: left; padding-left: var(--space-1); }
   .composer-hint { display: none; }
   .routines-panel li { align-items: flex-start; flex-wrap: wrap; }
-  .result-cards, .watch-card { max-width: 100%; }
 }
 
 /* ---- Reduced motion: the blanket rule is in motion/tokens.css; these loops stop outright ---- */

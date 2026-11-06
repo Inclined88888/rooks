@@ -4,11 +4,13 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { Empty, relTime, useToast } from "../util";
+import { ApprovalCard } from "../ui";
+import { argsLine, stepTitle } from "../chat/turns";
 import { LiveMarkdown } from "./LiveBlocks";
 import { jobControls, jobLabel } from "./live";
 import "./v02.css";
 
-export type Approval = { id: number; tool: string; args: string; reason: string; status: string };
+export type Approval = { id: number; tool: string; args: string; reason: string; status: string; effect?: string };
 export type Job = {
   id: number; kind: string; title: string; prompt: string; status: string; needs: string; detail: string; result: string;
   conversation_id: number | null; automation_id: number | null; column: "running" | "you" | "done"; approvals: Approval[];
@@ -27,13 +29,6 @@ const VERB: Record<string, { label: string; icon: typeof Play }> = {
   pause: { label: "Pause", icon: Pause }, resume: { label: "Resume", icon: Play }, stop: { label: "Stop", icon: CircleStop },
   start: { label: "Yes, run it", icon: Check }, deny: { label: "No", icon: X }, retry: { label: "Run again", icon: RotateCcw },
 };
-
-function argsPreview(raw: string): string {
-  try {
-    const a = JSON.parse(raw) as Record<string, unknown>;
-    return Object.entries(a).map(([k, v]) => `${k.replace(/_/g, " ")}: ${typeof v === "string" ? v : JSON.stringify(v)}`).join(" · ").slice(0, 220);
-  } catch { return raw.slice(0, 220); }
-}
 
 export default function JobsPage() {
   const [board, setBoard] = useState<Board | null>(null);
@@ -79,13 +74,9 @@ export default function JobsPage() {
       <button className="job-title" onClick={() => setOpen(open === j.id ? null : j.id)} aria-expanded={open === j.id}>{j.title}</button>
       <div className="small muted">{j.detail}</div>
       {j.approvals.map((a) => (
-        <div key={a.id} className="job-approval">
-          <div className="small"><strong>{a.tool.replace(/_/g, " ")}</strong> <span className="muted">{argsPreview(a.args)}</span></div>
-          <div className="row">
-            <button className="btn primary sm" disabled={busy === `a${a.id}`} onClick={() => void decide(a, true)}><Check size={13} /> Approve</button>
-            <button className="btn ghost sm" disabled={busy === `a${a.id}`} onClick={() => void decide(a, false)}><X size={13} /> Skip</button>
-          </div>
-        </div>
+        <ApprovalCard key={a.id} className="job-approval-card" title={stepTitle(a.tool, a.args)} detail={a.reason || undefined} effect={a.effect || ""}
+          command={argsLine(a.args) || undefined} busy={busy === `a${a.id}`}
+          onApprove={() => void decide(a, true)} onDeny={() => void decide(a, false)} />
       ))}
       <div className="row job-actions">
         {jobControls(j.status, j.needs).map((v) => {
