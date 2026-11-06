@@ -2,7 +2,8 @@
 
 Items keep their home and are answered there, exactly once. The id says where an item lives:
 
-  a:<action id>              a held tool call in the run log (chat, jobs, schedules; a Room hand-off is one too)
+  a:<action id>              a held tool call in the run log (chat, jobs, schedules); kind "room" when it is a use_room
+                             call, such as a hand-off out of the Room
   j:<job id>                 a job that asks before it starts (automations with "ask first")
   d:<desk job>:<approval>    a step Rooks Desk paused on (a command, a file outside the allowed folders, a purchase)
   b:<browser job>:<approval> a step Rooks Browser paused on (submit, purchase, message, login, download)
@@ -70,9 +71,24 @@ TITLES: dict[str, tuple[str, str]] = {  # tool: (title, the argument that names 
 }
 
 
+ROOM_TITLES: dict[str, tuple[str, str]] = {  # use_room action: (title, the argument that names its subject)
+    "up": ("Start the Room", "goal"),
+    "down": ("Stop the Room", ""),
+    "run": ("Run in the Room", "command"),
+    "checkpoint": ("Save a point in the Room", "label"),
+    "reset": ("Start the Room over", "name"),
+    "status": ("Check the Room", ""),
+    "handoff": ("Copy a file out of the Room", "src"),
+}
+
+
 def _title(tool: str, args: dict) -> str:
     from .presence import clip
 
+    if tool == "use_room":  # the Room's own verbs, with what they are about
+        title, key = ROOM_TITLES.get(str(args.get("action") or "status").lower(), ("Use the Room", "goal"))
+        subject = args.get(key) if key else None
+        return f"{title}: {clip(' '.join(str(subject).split()))}" if isinstance(subject, (str, int)) and str(subject).strip() else title
     if tool.startswith("mcp__"):  # mcp__<server>__<tool>: a tool on one of the user's own connected servers
         parts = tool.split("__", 2)
         server, name = (parts[1], parts[2]) if len(parts) == 3 else ("", parts[-1])
@@ -100,7 +116,7 @@ def _action_item(a: dict) -> dict:
     except ValueError:
         args = {}
     args = args if isinstance(args, dict) else {}
-    return {"id": f"a:{a['id']}", "kind": "approval", "title": _title(a["tool"], args),
+    return {"id": f"a:{a['id']}", "kind": "room" if a["tool"] == "use_room" else "approval", "title": _title(a["tool"], args),
             "detail": args_summary(args, 200), "since": a["created_at"], "conversation_id": a["conversation_id"],
             "job_id": None, "actions": ACTIONS, "tool": a["tool"], "effect": a["effect"], "reason": a["reason"] or "",
             "args": a["args"]}

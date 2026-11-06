@@ -267,6 +267,72 @@ async def _use_computer(goal: str, max_steps: int = 12, dry_run: bool = False, c
             "note": "Waiting for your approval on the Computer page." if told else "Still working; watch it on the Computer page."}
 
 
+ROOM_CONFIRM = "This uses the Room, Rooks's own computer. In a private folder, commands run as you."
+ROOM_PROMPT = ("If they want to try something, install things, or work on files without touching this computer, call "
+               "use_room. It asks them first. A private folder runs commands as them; a private desktop or a Linux guest "
+               "keeps their desktop alone. Say what the Room really is from the result, and only say it is on when up "
+               "returned running.")
+
+
+def _room_enabled() -> bool:
+    """A real Room is here (design 0003, section 4, rule 6): never the drawn terminal."""
+    from . import room
+
+    return room.enabled()
+
+
+def _room_confirm(args: dict) -> str:
+    """Every use of the Room asks first, except a status check and a hand-off, which makes its own held request
+    (one yes, not two)."""
+    return "" if str(args.get("action") or "status").strip().lower() in ("status", "handoff") else ROOM_CONFIRM
+
+
+def _room_facts(st: dict) -> dict:
+    """What the Room really is, for the reply to repeat: never "a computer", always the label and how separate it is."""
+    return {"label": st.get("label") or "", "isolation": st.get("isolation") or "none", "screen": bool(st.get("screen")),
+            "pointer": bool(st.get("pointer")), "note": st.get("note") or "", "home": st.get("home")}
+
+
+async def _use_room(action: str = "status", command: str = "", goal: str = "", label: str = "", name: str = "",
+                    src: str = "", dest: str = "", request_id: str = "", timeout: int = 120, ctx: "Ctx | None" = None) -> dict:
+    """The Room: Rooks's own computer on this machine (design 0003). Every result says what the Room really is so the
+    reply can repeat it. up publishes a watch event for the Stage. handoff never copies on its own: it holds the copy
+    in Needs you, and the copy runs when a person says yes there (the held call runs back through here, with its
+    approved request id)."""
+    from . import room
+
+    action = (action or "status").strip().lower()
+    if not room.enabled():
+        return {"ok": False, "message": "The Room is not available on this computer."}
+    if action == "status":
+        return await room.perform("status")
+    if action == "up":
+        st = await room.perform("up")
+        on = bool(st.get("running"))
+        if on:
+            _publish_watch(ctx, "room", "room", goal or "The Room")
+        return {"running": on, **_room_facts(st), "error": None if on else "The Room did not start."}
+    if action == "down":
+        st = await room.perform("down")
+        return {"running": bool(st.get("running")), **_room_facts(st)}
+    if action == "run":
+        if not (command or "").strip():
+            return {"ok": False, "error": "Say what command to run in the Room."}
+        return await room.perform("run", {"command": command, "timeout": timeout})
+    if action == "checkpoint":
+        return await room.checkpoint(label or "")
+    if action == "reset":
+        return await room.reset_to(name or None)
+    if action == "handoff":
+        if request_id:
+            req = room.handoff_request(request_id)
+            if req and (req["src"], req["dest"]) == ((src or "").strip(), (dest or "").strip()):
+                return await room.perform_handoff(src, dest, request_id)  # pending: still held; approved: copies once
+        return room.request_handoff(src, dest, conversation_id=ctx.conversation_id if ctx else None,
+                                    channel=ctx.channel if ctx else "web")
+    return {"ok": False, "error": f"The Room cannot do {action}."}
+
+
 def _remember(content: str, kind: str = "fact", ctx: Ctx | None = None) -> dict:
     """Saved in the encrypted learn store (adapt.knowledge), shown on "What I know about you"."""
     from .adapt import knowledge
@@ -550,6 +616,18 @@ TOOLS: list[Tool] = [
          {"goal": S("the whole task, self contained"), "max_steps": I(), "dry_run": B("plan and describe only, change nothing")},
          _use_computer, ("goal",), effect="external", untrusted=True,
          confirm=lambda a: "This uses the computer in front of you."),
+    Tool("use_room", "Use the Room: Rooks's own computer on this machine (a private desktop, a Linux guest, or a private "
+         "folder and shell), never the person's own desktop. Call it when they want to try something, install things, or "
+         "work on files without touching this computer. Actions: status; up (start it; goal says what you will do there); "
+         "down; run (a shell command inside it); checkpoint (save a point; label); reset (start over from a saved point: "
+         "name, or the last one); handoff (copy a file out: src inside the Room, dest on this computer; it only asks the "
+         "person and never copies by itself). Every result says what the Room really is (label, isolation, screen): "
+         "repeat that, and never say the Room is on unless up returned running.",
+         {"action": S("status|up|down|run|checkpoint|reset|handoff"), "goal": S("for up: what you will do there"),
+          "command": S("for run"), "label": S("for checkpoint"), "name": S("for reset: the saved point; empty for the last one"),
+          "src": S("for handoff: the file inside the Room"), "dest": S("for handoff: where to put it on this computer")},
+         _use_room, ("action",), effect="external", untrusted=True, when=lambda ctx: _room_enabled(),
+         confirm=_room_confirm),
     # Memory
     Tool("remember", "Save a durable fact about the user. kind: profile (who they are), preference, or fact.",
          {"content": S(), "kind": S()}, lambda content, kind="fact", ctx=None: _remember(content, kind, ctx), ("content",),
@@ -889,6 +967,8 @@ def system_prompt(ctx: Ctx, user_text: str) -> str:
         "browser opens. Never say a work site is missing, and never tell them to add a site, instead of calling browse_web. "
         "If the user asks to use this computer, call use_computer. That asks them first. Do not say computer use is off.",
     ]
+    if _room_enabled():
+        parts.append(ROOM_PROMPT)
     if ctx.channel == "web":
         parts.append(
             "When you need the user to pick one of a few options, call offer_choices with a short question and "

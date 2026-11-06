@@ -10,15 +10,19 @@ plus three command line agents: `rooks` (terminal coding agent), `rooks-browser`
   (one class per protocol, `CliPlan` runs the user's own `claude`/`codex`/`copilot` CLI), `router.py` (Auto).
   `/v1` bridge: `bridge.py`; terminal link (memory, skills, search): `rooks_link.py`. Mail: `mail.py` (IMAP/SMTP),
   `cloud_mail.py` (Gmail and Microsoft Graph), `connect.py` (Google/Microsoft OAuth sign-in), `mail_autodetect.py`.
-  Database and migrations: `db.py` (SQLite, schema version in `SCHEMA_VERSION`).
+  Database and migrations: `db.py` (SQLite, schema version in `SCHEMA_VERSION`). The Workroom: `presence.py`,
+  `needs_you.py`, `room.py`.
 - `workbench/backend/tests/` pytest suite (about 600 tests, about 5 minutes).
 - `workbench/frontend/src/` React + Vite + TypeScript. Pages in `pages/`, shared helpers in `util.tsx`, API client in
   `api.ts`, styles in `styles.css` and `connect.css`.
 - `rooks-code/rooks_code/` the `rooks` terminal: `agent.py` (loop), `tools.py` (file and command tools), `extras.py`
   (todo, web, background jobs, sub-agents, project instructions), `learning.py` (memory and skills shared with the
   app), `tui.py` (interactive terminal), `cli.py` (commands, plain mode), `config.py`, `providers.py`.
-- `rooks-browser/`, `rooks-desk/` the browser and computer agents. `desktop/` launcher and native shell.
-  There is no virtual computer in the app.
+- `rooks-browser/`, `rooks-desk/` the browser and computer agents. `rooks-try/` the Room: the assistant's own computer on
+  this machine (a private desktop on Linux, a Linux guest with QEMU, else a private folder and shell); the app side is
+  `workbench/backend/app/room.py` (`/api/room`, the `use_room` tool). Honesty rule: a screen is shown only when a real
+  display exists, status says `screen`, `pointer`, `isolation` and a plain label, the drawn terminal is never picked on
+  its own, and a file leaves the Room only after a yes in Needs you. `desktop/` launcher and native shell.
 - `install.sh` installs everything; `scripts/test-all.sh` runs every suite.
 
 ## Commands

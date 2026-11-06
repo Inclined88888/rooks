@@ -1,4 +1,8 @@
-"""Guest drivers: qemu (VM), nested (private display), shell (private home only)."""
+"""Guest drivers: qemu (a virtual machine), nested (a private desktop), shell (a private folder and shell).
+
+The display driver (a drawing of a terminal) is listed but never chosen on its own: it is a picture, not a screen, and
+only an explicit name reaches it.
+"""
 
 from __future__ import annotations
 
@@ -8,14 +12,16 @@ from .nested import NestedDriver
 from .qemu import QemuDriver
 from .shell import ShellDriver
 
+AUTO_ORDER = ("qemu", "nested", "shell")
+
 
 def pick(prefer: str = "auto", offline: bool = False) -> Driver:
-    """Choose the strongest driver this computer can run.
+    """Choose the strongest real driver this computer can run.
 
     auto may fall through to the private folder. An explicit driver does not.
     """
     order = {
-        "auto": ("qemu", "nested", "display", "shell"),
+        "auto": AUTO_ORDER,
         "qemu": ("qemu",),
         "nested": ("nested",),
         "display": ("display",),

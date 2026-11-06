@@ -20,7 +20,34 @@ Design record: `docs/design/0003-workroom.md` (binding for this branch). Package
 - **Outbound audit (R8).** The helpers' health checks (browser, computer use) now go through the audited client;
   `tests/test_egress.py::test_no_unaudited_network_library_in_the_app` passes again. The loopback port probe that
   finds a free port for a helper is listed there with its reason (a bind sends nothing).
-- Migration: none for this package.
+- **The Room (B2).** The assistant's own computer is back in the app, honestly this time. It is the `rooks-try`
+  package: a Linux guest when QEMU and an image exist, a private desktop with a real terminal in it when Xvfb exists
+  (Linux), else a private folder and shell. The app side is `app/room.py` (`/api/room`: status, up, down, checkpoint,
+  reset, click, drag, scroll, type, key, run, handoff, screenshot) and the chat tool `use_room`, offered only when a
+  real driver is there; the terminal gets the same package as the MCP server `room`; the installer installs it when
+  the folder exists.
+  - What it says about itself: status carries `screen`, `pointer`, `isolation` (`none`, `namespace` or `vm`), a plain
+    label and a note, and `/api/surfaces` carries `room: {available, label, isolation}`. A picture is served only when
+    a real screen exists and the Room is on; the drawn terminal ("A drawing of a terminal") is never picked on its own,
+    has no pointer, and does not count as a Room for the chat tool. The private folder says "Commands run as you, in a
+    folder of its own. It is not a locked off computer."; on Linux its commands run in a private mount namespace (and
+    with no network when the Room is offline) when `unshare` works, which is what `namespace` means.
+  - What it keeps: saved points never collide in a name, the twenty newest are kept and status names the ones removed;
+    "Save a point" and "Start over" are checked against the store before they are reported done.
+  - What it never does alone: copying a file out of the Room holds a request in Needs you (`kind: room`) and copies
+    once, after a yes there or on the approval card; the chat tool cannot approve it. Every up, down, saved point,
+    start over, command and copy is a row in the run log on channel `room`; a refused request is on record too.
+  - For the Stage: `use_room` with `action: up` publishes a watch event `{surface: "room", job_id: "room", goal}`, and
+    the same card is saved with the reply. Presence reports `where: room` and watches the Room while it is on.
+  - The package itself: the nested desktop no longer starts a black canvas with the system Python; it starts a window
+    manager when one exists and otherwise a terminal that fills the screen, with this interpreter for any helper; a
+    command run in it sees the Room's display; the local HTTP helper compares its key in constant time, serves the last
+    picture without waiting behind a running command, and has drag and scroll.
+- Migration: none for this package. New settings `TRY_URL` and `TRY_API_KEY` are optional (a separate `rooks-try
+  serve`); without them the Room runs in process when the package is installed.
+- Rollback: set `ROOKS_TRY_MCP=0` so the terminal stops adding the `room` server, and ignore `/room` in the app (the
+  tool is only offered while the package is installed; uninstall `rooks-try` to remove it). Nothing in the database
+  changes shape: held hand-offs are ordinary held actions and can be denied from Needs you.
 
 ## 2026-11-01 · Long tool results, step limit setting, repeat guard · branch feat/rea-p0-harness
 

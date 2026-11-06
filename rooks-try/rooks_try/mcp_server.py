@@ -1,4 +1,4 @@
-"""MCP server on stdio for the Try Room."""
+"""MCP server on stdio for the Room."""
 
 from __future__ import annotations
 
@@ -12,40 +12,40 @@ from .room import TryRoom
 PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
 
 TOOLS = [
-    {"name": "status", "description": "Is the Try Room running, which driver, checkpoints.",
+    {"name": "status", "description": "Is the Room running, what it really is (screen, pointer, isolation, label), its saved points.",
      "inputSchema": {"type": "object", "properties": {}}},
-    {"name": "up", "description": "Start the Try Room on this computer (private guest). Host desktop stays alone.",
+    {"name": "up", "description": "Start the Room on this computer: a private desktop, a Linux guest, or a private folder and shell. The host desktop stays alone; status says which it is.",
      "inputSchema": {"type": "object", "properties": {
          "driver": {"type": "string", "enum": ["auto", "qemu", "nested", "shell"]},
          "offline": {"type": "boolean", "default": False}}}},
-    {"name": "down", "description": "Stop the Try Room.", "inputSchema": {"type": "object", "properties": {}}},
-    {"name": "checkpoint", "description": "Save a restore point of the Try Room home.",
+    {"name": "down", "description": "Stop the Room.", "inputSchema": {"type": "object", "properties": {}}},
+    {"name": "checkpoint", "description": "Save a restore point of the Room's home (the 20 newest are kept).",
      "inputSchema": {"type": "object", "properties": {"label": {"type": "string"}}}},
-    {"name": "reset", "description": "Roll the Try Room back to a checkpoint (latest if omitted).",
+    {"name": "reset", "description": "Roll the Room back to a saved point (latest if omitted).",
      "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}}}},
-    {"name": "screenshot", "description": "PNG of the Try Room screen (not the host desktop).",
+    {"name": "screenshot", "description": "PNG of the Room's screen (not the host desktop). Only when status says screen is true.",
      "inputSchema": {"type": "object", "properties": {}}},
-    {"name": "click", "description": "Click inside the Try Room at screenshot pixels.",
+    {"name": "click", "description": "Click inside the Room at screenshot pixels. Only when status says pointer is true.",
      "inputSchema": {"type": "object", "properties": {
          "x": {"type": "number"}, "y": {"type": "number"},
          "button": {"type": "string", "enum": ["left", "right", "middle"]},
          "count": {"type": "integer", "default": 1}}, "required": ["x", "y"]}},
-    {"name": "drag", "description": "Drag inside the Try Room.",
+    {"name": "drag", "description": "Drag inside the Room.",
      "inputSchema": {"type": "object", "properties": {
          "x1": {"type": "number"}, "y1": {"type": "number"},
          "x2": {"type": "number"}, "y2": {"type": "number"}}, "required": ["x1", "y1", "x2", "y2"]}},
-    {"name": "scroll", "description": "Scroll inside the Try Room.",
+    {"name": "scroll", "description": "Scroll inside the Room.",
      "inputSchema": {"type": "object", "properties": {
          "x": {"type": "number"}, "y": {"type": "number"}, "dy": {"type": "integer", "default": -3},
      }, "required": ["x", "y"]}},
-    {"name": "type", "description": "Type text inside the Try Room.",
+    {"name": "type", "description": "Type text inside the Room.",
      "inputSchema": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}},
-    {"name": "key", "description": "Press a key combo inside the Try Room (e.g. ctrl+s, Return).",
+    {"name": "key", "description": "Press a key combo inside the Room (e.g. ctrl+s, Return).",
      "inputSchema": {"type": "object", "properties": {"keys": {"type": "string"}}, "required": ["keys"]}},
-    {"name": "run", "description": "Run a shell command inside the Try Room home (not on the host desktop).",
+    {"name": "run", "description": "Run a shell command inside the Room's home as the person (not on the host desktop). The result says how separate it was (isolation).",
      "inputSchema": {"type": "object", "properties": {
          "command": {"type": "string"}, "timeout": {"type": "number", "default": 120}}, "required": ["command"]}},
-    {"name": "handoff", "description": "Copy a file out of the Try Room onto this computer. Without approve=true, only asks.",
+    {"name": "handoff", "description": "Copy a file out of the Room onto this computer. Without approve=true it only asks; approve=true is the person's yes, never your own.",
      "inputSchema": {"type": "object", "properties": {
          "src": {"type": "string"}, "dest": {"type": "string"}, "approve": {"type": "boolean", "default": False}},
          "required": ["src", "dest"]}},
@@ -93,7 +93,7 @@ class Server:
                 path = self.room.screenshot()
                 data = path.read_bytes()
                 return {"content": [
-                    {"type": "text", "text": f"Try Room screen saved ({path})"},
+                    {"type": "text", "text": f"Room screen saved ({path})"},
                     {"type": "image", "data": base64.b64encode(data).decode(), "mimeType": "image/png"},
                 ]}
             if name == "click":

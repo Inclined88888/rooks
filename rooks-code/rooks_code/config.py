@@ -315,6 +315,9 @@ def resolve(flags: dict, root: Path, file: dict | None = None) -> Settings:
     desk = _desk_mcp(cfg)
     if desk and "desk" not in s.mcp_servers:
         s.mcp_servers["desk"] = desk
+    room = _try_mcp(cfg)
+    if room and "room" not in s.mcp_servers:
+        s.mcp_servers["room"] = room
     env = {"provider": os.environ.get("ROOKS_PROVIDER"), "model": os.environ.get("ROOKS_MODEL"),
            "base_url": os.environ.get("ROOKS_BASE_URL")}
     name = flags.get("provider") or env["provider"] or cfg.get("provider")
@@ -397,6 +400,17 @@ def _desk_mcp(cfg: dict) -> dict | None:
     return {"command": exe, "args": ["mcp"], "trusted": False} if exe else None
 
 
+def _try_mcp(cfg: dict) -> dict | None:
+    """The Room (rooks-try), when installed, is added as the MCP server "room": a computer of its own on this machine
+    (a private desktop on Linux, a Linux guest with QEMU, else a private folder and shell) for trying things without
+    touching the person's desktop. Its status says what it really is; its tools are never trusted here. Turn it off
+    with `[mcp] room = false` or ROOKS_TRY_MCP=0."""
+    if cfg.get("mcp", {}).get("room") is False or os.environ.get("ROOKS_TRY_MCP", "1").lower() in ("0", "false", "no", "off"):
+        return None
+    exe = shutil.which("rooks-try")
+    return {"command": exe, "args": ["mcp"], "trusted": False} if exe else None
+
+
 def _project_mcp(root: Path) -> dict:
     """A project's .mcp.json ({"mcpServers": {...}}, the format Claude Code and Cursor use) adds servers for that folder."""
     import json
@@ -432,6 +446,7 @@ trusted_folders = []                # edits and commands inside these folders ru
 
 # [mcp]
 # desk = false                      # do not add Rooks Desk (computer use) as the MCP server "desk" when it is installed
+# room = false                      # do not add the Room (rooks-try, a computer of its own) as the MCP server "room" when it is installed
 
 # [mcp.servers.filesystem]          # stdio MCP servers; tools appear as mcp__<server>__<tool>
 # command = "npx"

@@ -1,11 +1,13 @@
-"""Tiny HTTP API so the Rooks app can start, watch and drive the Try Room on loopback."""
+"""Tiny HTTP API so the Rooks app can start, watch and drive the Room on loopback."""
 
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import sys
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -20,12 +22,14 @@ MAX_BODY = 1_000_000
 def authorized(header: str) -> bool:
     if not API_KEY:
         return False
-    return header == f"Bearer {API_KEY}"
+    return hmac.compare_digest((header or "").encode(), f"Bearer {API_KEY}".encode())
 
 
 class Handler(BaseHTTPRequestHandler):
     room: TryRoom
-    lock = threading.Lock()
+    lock = threading.Lock()   # one action at a time; a screenshot never waits behind it
+    frame: bytes | None = None  # the last picture taken, served while an action holds the lock
+    frame_at: float = 0.0
 
     def log_message(self, fmt: str, *args) -> None:  # quieter than the default
         pass
@@ -40,6 +44,15 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _png(self, data: bytes, age: float) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", "image/png")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Frame-Age", f"{age:.1f}")
+        self.end_headers()
+        self.wfile.write(data)
 
     def _read(self) -> dict:
         length = int(self.headers.get("Content-Length") or 0)
@@ -59,20 +72,34 @@ class Handler(BaseHTTPRequestHandler):
         if not self._auth():
             return self._json(401, {"detail": "Not signed in"})
         path = urlparse(self.path).path
-        with self.lock:
-            if path == "/api/status":
+        if path == "/api/status":
+            with self.lock:
                 return self._json(200, {"version": __version__, **self.room.status()})
-            if path == "/api/screenshot":
-                dest = self.room.screenshot()
-                data = Path(dest).read_bytes()
-                self.send_response(200)
-                self.send_header("Content-Type", "image/png")
-                self.send_header("Content-Length", str(len(data)))
-                self.send_header("Cache-Control", "no-store")
-                self.end_headers()
-                self.wfile.write(data)
-                return
+        if path == "/api/screenshot":
+            return self._screenshot()
         return self._json(404, {"detail": "Not found"})
+
+    def _screenshot(self) -> None:
+        """The screen now, without waiting behind a running command: a fresh picture when the room is free, else the
+        last one taken. No picture at all when the driver has no screen."""
+        try:
+            has_screen = self.room.driver().supports_screen()
+        except Exception as exc:  # noqa: BLE001
+            return self._json(400, {"detail": str(exc)})
+        if not has_screen:
+            return self._json(404, {"detail": "This room has no screen."})
+        if self.lock.acquire(blocking=False):
+            try:
+                data = Path(self.room.screenshot()).read_bytes()
+                Handler.frame, Handler.frame_at = data, time.time()
+            except Exception as exc:  # noqa: BLE001
+                if Handler.frame is None:
+                    return self._json(400, {"detail": str(exc)})
+            finally:
+                self.lock.release()
+        if Handler.frame is None:
+            return self._json(503, {"detail": "The room is busy. Try again in a moment."})
+        return self._png(Handler.frame, time.time() - Handler.frame_at)
 
     def do_POST(self) -> None:  # noqa: N802
         if not self._auth():
@@ -94,6 +121,10 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(200, self.room.reset(body.get("name")))
                 if path == "/api/click":
                     return self._json(200, self.room.click(body["x"], body["y"], body.get("button", "left"), body.get("count", 1)))
+                if path == "/api/drag":
+                    return self._json(200, self.room.drag(body["x1"], body["y1"], body["x2"], body["y2"]))
+                if path == "/api/scroll":
+                    return self._json(200, self.room.scroll(body["x"], body["y"], body.get("dy", -3)))
                 if path == "/api/type":
                     return self._json(200, self.room.type_text(body.get("text") or ""))
                 if path == "/api/key":

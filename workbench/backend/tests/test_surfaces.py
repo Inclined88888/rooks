@@ -24,6 +24,11 @@ def test_pairing_code_opens_the_same_account(client):
     assert body["files"] == "this computer"
     assert "desktop app" in body["note"]
     assert "shared" not in body["note"]
+    room = body["room"]  # the Room says what it is, never just "on": available, a plain label, and its isolation
+    assert set(room) == {"available", "label", "isolation"}
+    assert isinstance(room["available"], bool) and room["isolation"] in ("none", "namespace", "vm")
+    for word in ("Xvfb", "driver", "http", "Workbench"):
+        assert word not in room["label"], word
     headers = {"Authorization": f"Bearer {token}"}
     main = anon.get("/api/assistant/main", headers=headers).json()["id"]
     again = anon.get("/api/assistant/main", headers=headers).json()["id"]

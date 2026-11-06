@@ -1,4 +1,10 @@
-"""Private X11 desktop on this computer (Xvfb). Host pointer and clipboard stay alone."""
+"""A private desktop on this computer: an X display of its own (Xvfb) with a real terminal in it.
+
+The person's pointer, keyboard and clipboard stay alone: input goes in through XTest (or xdotool) on that display and
+the picture comes out with mss. A window manager runs when one is installed; otherwise a terminal fills the screen, so
+the screen is never an empty black frame. Commands from run() start with DISPLAY set to the room, so a program they
+open appears in the room, and they go through the shell driver, so they run as the person with the isolation it reports.
+"""
 
 from __future__ import annotations
 
@@ -6,12 +12,20 @@ import atexit
 import os
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 from .. import store
 from .base import Driver, DriverInfo, stop_pid
-from .shell import ShellDriver
+from .shell import ShellDriver, isolation_level, wrapped
+
+LABEL = "A private desktop on this computer"
+NOTE = "A screen of its own on this computer. Commands run as you, in a folder of its own."
+WINDOW_MANAGERS = ("openbox", "fluxbox", "icewm", "xfwm4", "metacity", "matchbox-window-manager", "jwm", "fvwm", "twm")
+# White on dark, a readable size, filling the screen. xterm falls back to its bitmap font when the face is missing.
+TERMINAL_ARGS = ["-title", "Room", "-maximized", "+sb", "-bg", "#141210", "-fg", "#F2EDE3", "-fa", "DejaVu Sans Mono", "-fs", "11"]
+SCREEN = "1280x720x24"
 
 
 class NestedDriver(Driver):
@@ -21,6 +35,9 @@ class NestedDriver(Driver):
         super().__init__(offline=offline)
         self._display = os.environ.get("ROOKS_TRY_DISPLAY", ":17")
         self._procs: list[subprocess.Popen] = []
+        self._xvfb_pid: int | None = None
+        self._terminal: subprocess.Popen | None = None
+        self._env: dict | None = None
         self._shell = ShellDriver(offline=offline)
         self._stop_registered = False
 
@@ -30,9 +47,9 @@ class NestedDriver(Driver):
     def info(self) -> DriverInfo:
         ok = self.available()
         detail = (
-            "A private X11 desktop on this computer. Fast. Needs Xvfb."
+            "A private desktop on this computer with a real terminal in it. Fast. Needs Xvfb."
             if ok
-            else "Needs Xvfb (Linux). On Mac/Windows the qemu driver is used instead."
+            else "Needs Xvfb (Linux). On Mac and Windows the qemu driver is used instead."
         )
         return DriverInfo("nested", "Private desktop", ok, detail)
 
@@ -44,20 +61,20 @@ class NestedDriver(Driver):
         (home / "Desktop").mkdir(exist_ok=True)
         log = store.root() / "nested.log"
         xvfb = subprocess.Popen(
-            ["Xvfb", self._display, "-screen", "0", "1280x720x24", "-nolisten", "tcp"],
+            ["Xvfb", self._display, "-screen", "0", SCREEN, "-nolisten", "tcp"],
             stdout=log.open("ab"),
             stderr=subprocess.STDOUT,
             start_new_session=True,
         )
         self._procs.append(xvfb)
-        time.sleep(0.4)
-        if xvfb.poll() is not None:
-            raise RuntimeError("Xvfb failed to start. See nested.log in the Try Room folder.")
+        self._xvfb_pid = xvfb.pid
+        if not self._wait_for_display(xvfb):
+            raise RuntimeError("The room's display did not start. See nested.log in the Room folder.")
         env = os.environ.copy()
         env["DISPLAY"] = self._display
         env["HOME"] = str(home)
-        # Wallpaper / welcome window so screenshots are not empty black.
-        self._spawn_canvas(env)
+        self._env = env
+        self._start_desktop(env, home)
         state = store.load_state()
         state.update({
             "driver": self.name,
@@ -68,9 +85,18 @@ class NestedDriver(Driver):
         })
         store.save_state(state)
         if not self._stop_registered:
-            atexit.register(self.down)
+            atexit.register(self._stop_at_exit)
             self._stop_registered = True
         return self.status()
+
+    def _stop_at_exit(self) -> None:
+        """At interpreter exit: stop what this process started, without touching the store (its folder may be gone)."""
+        for proc in self._procs:
+            try:
+                proc.terminate()
+            except Exception:  # noqa: BLE001
+                pass
+        stop_pid(self._xvfb_pid)
 
     def down(self) -> dict:
         state = store.load_state()
@@ -83,6 +109,7 @@ class NestedDriver(Driver):
             except Exception:  # noqa: BLE001
                 pass
         self._procs.clear()
+        self._terminal = None
         state["running"] = False
         store.save_state(state)
         return self.status()
@@ -94,31 +121,40 @@ class NestedDriver(Driver):
             "driver": self.name,
             "running": running,
             "screen": True,
+            "pointer": True,
+            "isolation": isolation_level(),
             "display": state.get("display") or self._display,
             "home": str(store.guest_home()),
             "offline": self.offline,
-            "label": "Private desktop on this computer",
+            "label": LABEL,
+            "note": NOTE,
             "last_checkpoint": state.get("last_checkpoint"),
         }
 
     def screenshot(self, path: Path) -> Path:
         self._ensure_up()
+        self._ensure_desktop()
         import mss
         from PIL import Image
 
-        display = store.load_state().get("display") or self._display
+        display = self._display_name()
         path.parent.mkdir(parents=True, exist_ok=True)
-        previous = os.environ.get("DISPLAY")
-        os.environ["DISPLAY"] = display
+        factory = getattr(mss, "MSS", None) or mss.mss
         try:
-            with mss.MSS() as sct:
-                shot = sct.grab(sct.monitors[1])
-                Image.frombytes("RGB", shot.size, shot.bgra, "raw", "BGRX").save(path)
-        finally:
-            if previous is None:
-                os.environ.pop("DISPLAY", None)
-            else:
-                os.environ["DISPLAY"] = previous
+            grabber = factory(display=display)
+        except TypeError:  # an mss without a display argument: point it at the room for the grab
+            previous = os.environ.get("DISPLAY")
+            os.environ["DISPLAY"] = display
+            try:
+                grabber = factory()
+            finally:
+                if previous is None:
+                    os.environ.pop("DISPLAY", None)
+                else:
+                    os.environ["DISPLAY"] = previous
+        with grabber as sct:
+            shot = sct.grab(sct.monitors[1])
+            Image.frombytes("RGB", shot.size, shot.bgra, "raw", "BGRX").save(path)
         return path
 
     def click(self, x: int, y: int, button: str = "left", count: int = 1) -> dict:
@@ -152,8 +188,8 @@ class NestedDriver(Driver):
         self._ensure_up()
         # Prefer xdotool when present; else XTest key events for ASCII.
         if shutil.which("xdotool"):
-            env = {"DISPLAY": store.load_state().get("display") or self._display}
-            subprocess.run(["xdotool", "type", "--clearmodifiers", "--", text], env={**os.environ, **env}, check=False)
+            env = {**os.environ, "DISPLAY": self._display_name()}
+            subprocess.run(["xdotool", "type", "--clearmodifiers", "--", text], env=env, check=False)
             return {"ok": True, "chars": len(text)}
         for ch in text:
             if ch == "\n":
@@ -165,19 +201,31 @@ class NestedDriver(Driver):
     def key(self, keys: str) -> dict:
         self._ensure_up()
         if shutil.which("xdotool"):
-            env = {"DISPLAY": store.load_state().get("display") or self._display}
-            subprocess.run(["xdotool", "key", keys], env={**os.environ, **env}, check=False)
+            env = {**os.environ, "DISPLAY": self._display_name()}
+            subprocess.run(["xdotool", "key", keys], env=env, check=False)
             return {"ok": True, "keys": keys}
         self._xtest_char(keys)
         return {"ok": True, "keys": keys}
 
     def run(self, command: str, timeout: float = 120) -> dict:
+        """A command in the room's home, with the room's display, so a program it opens shows up in the room."""
         self._ensure_up()
-        return self._shell.run(command, timeout=timeout)
+        return self._shell.run(command, timeout=timeout, env_extra={"DISPLAY": self._display_name()})
 
     def _ensure_up(self) -> None:
         if not self.status().get("running"):
             self.up()
+
+    def _ensure_desktop(self) -> None:
+        """The terminal is the desktop here: when it was closed, open it again so the screen is never left empty."""
+        if self._terminal is not None and self._terminal.poll() is not None and self._env:
+            self._procs = [p for p in self._procs if p is not self._terminal]
+            self._terminal = None
+            self._start_desktop(self._env, store.guest_home(), terminal_only=True)
+            time.sleep(0.3)
+
+    def _display_name(self) -> str:
+        return store.load_state().get("display") or self._display
 
     def _alive(self) -> bool:
         state = store.load_state()
@@ -190,49 +238,84 @@ class NestedDriver(Driver):
         except (ProcessLookupError, PermissionError, OSError):
             return False
 
-    def _spawn_canvas(self, env: dict) -> None:
-        """Open a simple labelled window so the room is visibly 'alive' without a full DE."""
+    def _wait_for_display(self, xvfb: subprocess.Popen, timeout: float = 5.0) -> bool:
+        """True once the display answers (or, without python-xlib to ask, once Xvfb has stayed up for a moment)."""
+        deadline = time.monotonic() + timeout
+        try:
+            from Xlib import display as xdisplay
+        except ImportError:
+            time.sleep(0.5)
+            return xvfb.poll() is None
+        while time.monotonic() < deadline:
+            if xvfb.poll() is not None:
+                return False
+            try:
+                conn = xdisplay.Display(self._display)
+                conn.close()
+                return True
+            except Exception:  # noqa: BLE001 - not listening yet
+                time.sleep(0.1)
+        return False
+
+    def _spawn(self, argv: list[str], env: dict, cwd: Path | None = None) -> subprocess.Popen:
+        log = store.root() / "nested.log"
+        return subprocess.Popen(
+            argv,
+            env=env,
+            cwd=str(cwd) if cwd else None,
+            stdout=subprocess.DEVNULL,
+            stderr=log.open("ab"),
+            start_new_session=True,
+        )
+
+    def _start_desktop(self, env: dict, home: Path, terminal_only: bool = False) -> None:
+        """A window manager when one is installed, and a terminal that fills the screen. Without a terminal on this
+        computer, a plain labelled window keeps the screen from being an empty frame."""
+        if not terminal_only:
+            manager = next((shutil.which(n) for n in WINDOW_MANAGERS if shutil.which(n)), None)
+            if manager:
+                self._procs.append(self._spawn([manager], env))
+        xterm = shutil.which("xterm")
+        if xterm:
+            self._terminal = self._spawn([xterm, *TERMINAL_ARGS, "-e", *self._login_shell(home)], env, cwd=home)
+            self._procs.append(self._terminal)
+        elif not terminal_only:
+            self._procs.append(self._spawn_canvas(env))
+
+    def _login_shell(self, home: Path) -> list[str]:
+        """The shell inside the terminal, with the same isolation the shell driver gives a command."""
+        inner = 'exec "${SHELL:-/bin/sh}"'
+        argv = wrapped(inner, home, self.offline)
+        if argv:
+            return argv
+        return ["sh", "-c", 'cd "$1" && exec "${SHELL:-/bin/sh}"', "room", str(home)]
+
+    def _spawn_canvas(self, env: dict) -> subprocess.Popen:
+        """A plain labelled window on the room's display (a real window, not a picture), with this interpreter."""
         script = store.root() / "canvas.py"
         script.write_text(
             "import os\n"
-            "os.environ['DISPLAY'] = os.environ.get('DISPLAY', ':17')\n"
-            "try:\n"
-            "    from Xlib import X, display\n"
-            "    d = display.Display()\n"
-            "    s = d.screen()\n"
-            "    w = s.root.create_window(40, 40, 900, 500, 1, s.root_depth, X.InputOutput, X.CopyFromParent,\n"
-            "                             background_pixel=s.black_pixel, event_mask=X.ExposureMask)\n"
-            "    w.set_wm_name('Virtual computer')\n"
-            "    w.map()\n"
-            "    d.flush()\n"
-            "    while True:\n"
-            "        d.next_event()\n"
-            "except Exception:\n"
-            "    import time\n"
-            "    while True:\n"
-            "        time.sleep(3600)\n"
+            "from Xlib import X, display\n"
+            "d = display.Display(os.environ.get('DISPLAY', ':17'))\n"
+            "s = d.screen()\n"
+            "w = s.root.create_window(0, 0, s.width_in_pixels, s.height_in_pixels, 0, s.root_depth, X.InputOutput,\n"
+            "                         X.CopyFromParent, background_pixel=s.white_pixel, event_mask=X.ExposureMask)\n"
+            "w.set_wm_name('Room')\n"
+            "gc = w.create_gc(foreground=s.black_pixel, background=s.white_pixel)\n"
+            "w.map()\n"
+            "d.flush()\n"
+            "while True:\n"
+            "    e = d.next_event()\n"
+            "    if e.type == X.Expose:\n"
+            "        w.draw_text(gc, 24, 40, 'The Room. No terminal program is installed on this computer, so this screen stays empty.')\n"
+            "        d.flush()\n"
         )
-        proc = subprocess.Popen(
-            ["python3", str(script)],
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-        self._procs.append(proc)
+        return self._spawn([sys.executable, str(script)], env)
 
     def _display_conn(self):
         from Xlib import display
 
-        previous = os.environ.get("DISPLAY")
-        os.environ["DISPLAY"] = store.load_state().get("display") or self._display
-        try:
-            return display.Display()
-        finally:
-            if previous is None:
-                os.environ.pop("DISPLAY", None)
-            else:
-                os.environ["DISPLAY"] = previous
+        return display.Display(self._display_name())
 
     def _xtest_move(self, x: int, y: int) -> None:
         from Xlib.ext import xtest

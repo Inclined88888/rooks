@@ -1,7 +1,7 @@
 """Real Linux guest via QEMU. Works on Mac, Windows and Linux hosts when QEMU is installed.
 
 The guest is always Linux so skills transfer. Apple Virtualization / Hyper-V can replace the
-backend later; the Try Room API stays the same.
+backend later; the Room API stays the same.
 """
 
 from __future__ import annotations
@@ -14,6 +14,9 @@ from pathlib import Path
 
 from .. import store
 from .base import Driver, DriverInfo, stop_pid
+
+LABEL = "A Linux computer of its own (a virtual machine)"
+NOTE = "A separate computer running inside this one, with files of its own. Its screen needs a viewer program."
 
 
 def _qemu_bin() -> str | None:
@@ -104,7 +107,7 @@ class QemuDriver(Driver):
         store.save_state(state)
         time.sleep(0.5)
         if proc.poll() is not None:
-            raise RuntimeError("QEMU exited early. See qemu.log in the Try Room folder.")
+            raise RuntimeError("QEMU exited early. See qemu.log in the Room folder.")
         return self.status()
 
     def down(self) -> dict:
@@ -119,15 +122,19 @@ class QemuDriver(Driver):
     def status(self) -> dict:
         state = store.load_state()
         running = bool(state.get("running")) and state.get("driver") == self.name and self._alive()
+        screen = bool(running and shutil.which("vncdotool"))
         return {
             "driver": self.name,
             "running": running,
-            "screen": bool(running and shutil.which("vncdotool")),
+            "screen": screen,
+            "pointer": screen,
+            "isolation": "vm",
             "vnc": state.get("vnc") or self._vnc,
             "home": str(store.guest_home()),
             "disk": state.get("disk") or str(self._disk()),
             "offline": self.offline,
-            "label": "Linux guest on this computer (QEMU)",
+            "label": LABEL,
+            "note": NOTE,
             "last_checkpoint": state.get("last_checkpoint"),
         }
 

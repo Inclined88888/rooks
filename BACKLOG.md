@@ -27,7 +27,21 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
-## Found during work, not yet scheduled
+* **The Room's pointer and keyboard steps are not in the run log (B2 of feat/workroom).** `/api/room` records up,
+  down, saved points, start over, commands and copies out (channel `room`); click, drag, scroll, type and key are not
+  recorded, because a person stepping in produces several a second and would swamp the log. Design 0003, section 4,
+  rule 4 says "every Room action"; decide whether to record them in batches (one row per step-in session) or to leave
+  them out and say so on the page.
+* **A repeated hand-off request from the model makes a second held item.** `use_room` with `action: handoff` and no
+  `request_id` always holds a new request; if the model asks twice for the same file before a person answers, Needs
+  you shows two. B3's held approval dedupe should cover it (same tool, same arguments, one still pending).
+* **The terminal's Room MCP server lets the calling agent set `approve: true` on handoff.** In the app, the copy out
+  of the Room waits for a person in Needs you. In the terminal, `rooks-try mcp` takes the agent's own flag; rooks-code
+  treats the server as untrusted, so its usual approval prompt is the only gate. Replace the flag with an MCP
+  elicitation question, as Rooks Desk does, so a person answers in the terminal too.
+* **The Room has no real screen on macOS and Windows yet.** Only the private folder and shell (and the drawn terminal
+  by name) work there; a virtual machine driver (Apple Virtualization or QEMU with a guest agent and an in-process
+  screen viewer) is the next driver behind the same interface. Design 0003 records this as out of scope for the branch.
 
 * **Presence polling fills the outbound audit log with loopback rows (R8 follow-up, found in B1 of feat/workroom).**
   Every call to the desk and browser helpers on this computer is an `egress` row (effect `local`). The presence strip
