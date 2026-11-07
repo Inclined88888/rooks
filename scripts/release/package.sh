@@ -7,7 +7,8 @@ cd "$(git rev-parse --show-toplevel)"
 out=${1:-dist/ai-workspace-$(cat VERSION).zip}
 mkdir -p "$(dirname "$out")"
 out=$(cd "$(dirname "$out")" && pwd)/$(basename "$out")
-[ -f workbench/frontend/dist/index.html ] || (cd workbench/frontend && npm ci --no-audit --no-fund && npm run build)
+# Always build: a dist/ that merely has index.html can be stale or missing files, and the zip would open blank.
+(cd workbench/frontend && npm ci --no-audit --no-fund && npm run build)
 tmp=$(mktemp -d)
 name=ai-workspace-$(cat VERSION)
 git archive --format=tar --prefix="$name/" HEAD | tar -x -C "$tmp"

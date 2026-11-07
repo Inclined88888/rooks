@@ -1,6 +1,9 @@
 .env
 node_modules/
 dist/
+# The built web UI is committed so the one-command install needs no Node.js. Ignoring it made `git add` skip every
+# newly hashed file while still recording the new index.html, which shipped a blank window.
+!/workbench/frontend/dist/
 __pycache__/
 *.pyc
 .venv/
