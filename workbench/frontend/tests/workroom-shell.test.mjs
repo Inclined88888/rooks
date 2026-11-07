@@ -88,12 +88,14 @@ test("the primitives exist, use tokens only, and the sheet traps focus", () => {
   assert.match(css, /--color-live/, "the stage edge glows in the live colour");
 });
 
-test("the shell is themed by data-mode: 64px rail, presence strip, stage host, mobile bar below 900px", () => {
+test("the shell is themed by data-mode: glass top bar, presence, stage host, glass dock below 900px", () => {
   const css = strip(read("../src/shell/shell.css"));
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "no hex colours in shell.css");
   assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, "no literal colours in shell.css");
-  assert.match(tokens, /--rail-w:\s*64px/);
-  assert.match(css, /grid-template-columns: var\(--rail-w\)/);
+  assert.match(tokens, /--topbar-h:\s*68px/);
+  assert.match(tokens, /--dock-h:\s*64px/);
+  assert.match(css, /\.topbar \{[^}]*height: var\(--topbar-h\)/);
+  assert.match(css, /\.mobile-nav \{[^}]*height: var\(--dock-h\)/);
   assert.match(css, /@media \(max-width: 900px\)/, "the narrow breakpoint (same value as --bp-narrow)");
   assert.match(css, /@media \(min-width: 1281px\)|@media \(max-width: 1280px\)/, "the wide breakpoint (same value as --bp-wide)");
   const rail = read("../src/shell/Rail.tsx");
