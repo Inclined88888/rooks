@@ -8,6 +8,7 @@ Every check goes through the real routes and dependencies; nothing here stubs au
 from __future__ import annotations
 
 import json
+import secrets
 
 import pytest
 from fastapi.testclient import TestClient
@@ -144,7 +145,7 @@ def sidecar_env(monkeypatch):
     """The desktop sidecar's own environment, where these secrets live."""
     for name in APP_SECRETS:
         monkeypatch.setenv(name, f"secret-{name.lower()}-0123456789")
-    monkeypatch.setenv("WORKBENCH_API_KEY", "inherited-key-0123456789")
+    monkeypatch.setenv("WORKBENCH_API_KEY", secrets.token_hex(12))
 
 
 @pytest.mark.parametrize("agent", ["rooks", "claude", "codex"])
