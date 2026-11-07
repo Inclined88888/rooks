@@ -77,6 +77,11 @@ precedence over this file.
    Internal work (refactor, tests) does not go in the changelog.
 10. **No version bump, no new npm dependency** without a maintainer's request.
 11. TypeScript strict, no `any`. Comments explain why.
+12. **Everything reaches `main` through a pull request.** Nobody pushes to
+    `main`, maintainers and agents included. Branch from an up-to-date
+    `origin/main`, commit there, run the checks, push the branch, open the pull
+    request, and merge it once the required checks are green. A pushed branch
+    is public at once, even if it is never merged: check it before you push.
 
 ## Where things live
 
