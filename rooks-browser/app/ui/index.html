@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:">
+<meta name="color-scheme" content="light dark">
+<title>Rooks Browser</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <nav class="tabs" role="tablist" aria-label="Tabs" id="tabs"></nav>
+  <div class="newtabs">
+    <button class="icon" id="newtab" title="New tab (Ctrl+T)" aria-label="New tab">+</button>
+    <button class="private-btn" id="newprivate" title="New private tab (Ctrl+Shift+N): nothing is kept after it closes">Private</button>
+  </div>
+  <div class="bar">
+    <button class="icon" id="back" aria-label="Back">&#8592;</button>
+    <button class="icon" id="forward" aria-label="Forward">&#8594;</button>
+    <button class="icon" id="reload" aria-label="Reload">&#8635;</button>
+    <form id="addr" class="addr" role="search">
+      <span id="lock" class="lock" aria-live="polite"></span>
+      <input id="url" type="text" spellcheck="false" autocomplete="off" aria-label="Address or search" placeholder="Search or type an address">
+    </form>
+    <div id="driving" class="driving" hidden role="status">
+      <span>Rooks is using this tab. Esc or typing in the page takes over.</span>
+      <button id="stop" class="stop">Stop</button>
+    </div>
+    <button class="ai" id="toggle" aria-expanded="false" aria-controls="panel">Ask Rooks</button>
+  </div>
+</header>
+<aside id="panel" class="panel" hidden aria-label="Ask Rooks">
+  <h2>Ask Rooks</h2>
+  <p class="muted" id="helper">Starting the task helper…</p>
+  <form id="task" class="task">
+    <textarea id="goal" rows="3" placeholder="Ask about this page, or tell me what to do in it" aria-label="Your request"></textarea>
+    <div class="row">
+      <button type="submit" data-mode="ask" class="secondary">Ask about this page</button>
+      <button type="submit" data-mode="do" class="primary">Do it for me</button>
+    </div>
+  </form>
+  <p class="muted small">Buying, sending, signing in and submitting forms always wait for your OK. Private tabs are never shared with a model.</p>
+  <section id="run" class="run" hidden aria-live="polite">
+    <h3 id="runtitle">Working</h3>
+    <ol id="steps" class="steps"></ol>
+    <div id="approvals"></div>
+    <p id="answer" class="answer" hidden></p>
+  </section>
+</aside>
+<script src="app.js"></script>
+</body>
+</html>
