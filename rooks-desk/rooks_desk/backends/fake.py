@@ -39,8 +39,12 @@ class FakeBackend(Backend):
     name = "fake"
     platform = "fake"
 
-    def __init__(self, width: int = 1600, height: int = 1000, save_dir: Path | None = None):
+    def __init__(self, width: int = 1600, height: int = 1000, save_dir: Path | None = None, focus_on_open: bool = True):
         self.width, self.height = width, height
+        # False: like a window manager that maps a new window without focusing it (seen on CI's Xvfb + xfwm4). Nothing
+        # is in front and keys go nowhere until a window is focused or clicked.
+        self.focus_on_open = focus_on_open
+        self.unfocused = False
         self.events: list[tuple] = []
         self.apps: dict[str, FakeApp] = {}
         self.order: list[str] = []  # z-order, last is focused
@@ -91,6 +95,7 @@ class FakeBackend(Backend):
         for name in reversed(self.order):
             a = self.apps[name]
             if a.x <= x <= a.x + a.w and a.y <= y <= a.y + a.h:
+                self.unfocused = False
                 if name != self.order[-1]:
                     self.order.remove(name)
                     self.order.append(name)
@@ -117,6 +122,8 @@ class FakeBackend(Backend):
     def hotkey(self, keys):
         keys = normalise_keys(keys)
         self.events.append(("hotkey", "+".join(keys)))
+        if self.unfocused:
+            return
         if keys[-1] == "s" and ("ctrl" in keys or "cmd" in keys) and self.order and self.order[-1] == "Text Editor":
             self._save(self.apps["Text Editor"])
         if keys == ["enter"] and self.focus_widget is not None and self.focus_widget.role == "text area":
@@ -127,7 +134,7 @@ class FakeBackend(Backend):
         out = []
         for name in self.order:
             a = self.apps[name]
-            out.append(Window(f"w{a.pid}", a.title, a.name, a.pid, a.x, a.y, a.w, a.h, name == self.order[-1]))
+            out.append(Window(f"w{a.pid}", a.title, a.name, a.pid, a.x, a.y, a.w, a.h, name == self.order[-1] and not self.unfocused))
         return list(reversed(out))
 
     def focus_window(self, win):
@@ -135,6 +142,9 @@ class FakeBackend(Backend):
         if win.app in self.order:
             self.order.remove(win.app)
             self.order.append(win.app)
+            if self.unfocused:
+                self.unfocused = False
+                self.focus_widget = next((w for w in self.apps[win.app].widgets if w.role == "text area"), None)
 
     def open_app(self, name, args=None):
         match = next((n for n in self.installed if n.lower() == name.strip().lower() or name.strip().lower() in n.lower()), None)
@@ -147,6 +157,9 @@ class FakeBackend(Backend):
         if match in self.order:
             self.order.remove(match)
         self.order.append(match)
+        if not self.focus_on_open:
+            self.unfocused, self.focus_widget = True, None
+            return f"opened {match}"
         self.focus_widget = next((w for w in self.apps[match].widgets if w.role == "text area"), None)
         return f"opened {match}"
 
