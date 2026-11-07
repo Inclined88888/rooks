@@ -1,4 +1,4 @@
-# Vendored verbatim from workbench/backend/app/redact.py (tests/test_units.py keeps the copy identical).
+# Vendored verbatim from workbench/backend/app/redact.py (tests/test_redaction.py keeps the copy identical).
 """Secrets never reach a log sink: every log record is redacted when it is created, whatever logger made it (R7).
 
 Installed once at import of the app (main.py). Call sites need nothing. Patterns grow here, not at call sites.

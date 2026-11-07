@@ -42,7 +42,7 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}},
     {"name": "key", "description": "Press a key combo inside the Room (e.g. ctrl+s, Return).",
      "inputSchema": {"type": "object", "properties": {"keys": {"type": "string"}}, "required": ["keys"]}},
-    {"name": "run", "description": "Run a shell command inside the Room's home as the person (not on the host desktop). The result says how separate it was (isolation).",
+    {"name": "run", "description": "Run a shell command inside the Room's home as the person (not on the host desktop). The result says how separate it was (isolation) and what ran it (shell: \"sh\" for a POSIX shell, \"cmd\" for Windows Command Prompt).",
      "inputSchema": {"type": "object", "properties": {
          "command": {"type": "string"}, "timeout": {"type": "number", "default": 120}}, "required": ["command"]}},
     {"name": "handoff", "description": "Copy a file out of the Room onto this computer. Without approve=true it only asks; approve=true is the person's yes, never your own.",

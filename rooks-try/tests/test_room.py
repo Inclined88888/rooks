@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sys
 import threading
 import time
 from http.server import ThreadingHTTPServer
@@ -16,6 +17,7 @@ import pytest
 
 from rooks_try import store
 from rooks_try.drivers import pick
+from rooks_try.drivers import shell as shell_mod
 from rooks_try.room import TryRoom
 
 XVFB = shutil.which("Xvfb")
@@ -32,6 +34,8 @@ def test_shell_room_runs_without_touching_host_home(room_home):
     st = room.up()
     assert st["running"] is True
     assert st["driver"] == "shell"
+    if st["shell"] == "cmd":
+        pytest.skip("Windows without Git for Windows: the Room's shell is Command Prompt, and it says so")
     result = room.run("pwd; echo hello-try > note.txt; cat note.txt")
     assert result["ok"] is True
     assert "hello-try" in result["stdout"]
@@ -429,3 +433,24 @@ def test_server_status_answers_while_a_command_runs(room_home, monkeypatch):
             server.Handler.lock.release()
     finally:
         httpd.shutdown()
+
+
+# --- which shell runs a room command: Command Prompt reads `a; b` as one command and still exits 0 ---------------
+def test_shell_kind_is_sh_off_windows_and_with_git_on_windows():
+    assert shell_mod.shell_kind(windows=False) == "sh"
+    assert shell_mod.shell_kind(windows=True, sh=r"C:\Program Files\Git\bin\bash.exe") == "sh"
+
+
+def test_windows_without_git_is_command_prompt_and_says_so():
+    assert shell_mod.shell_kind(windows=True, sh="") == "cmd"
+    assert "Command Prompt" in shell_mod.CMD_NOTE and "Git for Windows" in shell_mod.CMD_NOTE
+
+
+def test_status_and_every_result_say_which_shell(room_home):
+    room = TryRoom(prefer="shell")
+    st = room.up()
+    assert st["shell"] in ("sh", "cmd")
+    assert room.run("echo hi")["shell"] == st["shell"]
+    assert ("Command Prompt" in st["note"]) == (st["shell"] == "cmd")
+    if sys.platform != "win32":
+        assert st["shell"] == "sh"
