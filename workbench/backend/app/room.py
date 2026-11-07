@@ -29,10 +29,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 
 from . import actions, config, db
-from .security import require_user
+from .security import require_user, require_user_or_terminal
 
 log = logging.getLogger("room")
 router = APIRouter(prefix="/api/room", dependencies=[Depends(require_user)])
+# What the rooks terminal's /room uses (status, start, stop, run) also takes its own key; everything else is the app's.
+terminal = APIRouter(prefix="/api/room", dependencies=[Depends(require_user_or_terminal)])
 
 CHANNEL = "room"
 TOOL = "use_room"
@@ -471,19 +473,19 @@ async def _body(request: Request) -> dict:
     return body if isinstance(body, dict) else {}
 
 
-@router.get("/status")
+@terminal.get("/status")
 async def status():
     """What the Room is and how it stands: available, running, screen, pointer, isolation, a plain label and note,
     the saved points. The driver and folder are for the Advanced view only."""
     return await perform("status")
 
 
-@router.post("/up")
+@terminal.post("/up")
 async def up():
     return await _audited("up", {}, lambda: perform("up"))
 
 
-@router.post("/down")
+@terminal.post("/down")
 async def down():
     return await _audited("down", {}, lambda: perform("down"))
 
@@ -500,7 +502,7 @@ async def start_over(request: Request):
     return await _audited("reset", {"name": name}, lambda: reset_to(name or None))
 
 
-@router.post("/run")
+@terminal.post("/run")
 async def run(request: Request):
     body = await _body(request)
     return await _audited("run", {"command": body.get("command"), "timeout": body.get("timeout")}, lambda: perform("run", body))

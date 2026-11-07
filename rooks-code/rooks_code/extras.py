@@ -3,7 +3,7 @@
 * project instructions: AGENTS.md, CLAUDE.md, ROOKS.md or .rooks/instructions.md (nearest first, up to the git root)
   go into the system prompt, so the agent follows the project's own rules
 * todo: a visible checklist the agent keeps for multi-step work (shown live in the terminal)
-* web_search and web_fetch: through the AI Workspace app's search, or straight from the web without it
+* web_search and web_fetch: through the Rooks app's search, or straight from the web without it
 * background commands: start a server, watcher or long test run, check its output later, stop it
 * task: a sub-agent with its own fresh context — explore (read-only research), plan (read-only), or build (can edit/run
   under the same approvals as you)
@@ -207,7 +207,7 @@ class Web:
         try:
             page, _ = _get("https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query}))
         except (OSError, urllib.error.URLError) as e:
-            raise ToolError(f"web search failed ({e}); open the AI Workspace app to search through it") from None
+            raise ToolError(f"web search failed ({e}); open the Rooks app to search through it") from None
         out = []
         for m in re.finditer(r'class="result__a" href="([^"]+)"[^>]*>(.*?)</a>.*?class="result__snippet"[^>]*>(.*?)</a>', page, re.S):
             link = html.unescape(m.group(1))
@@ -218,7 +218,7 @@ class Web:
             if len(out) >= count:
                 break
         if not out:
-            raise ToolError("web search is not set up: add the free search key in the AI Workspace app (Settings > Web search). web_fetch still reads any page you have a link for")
+            raise ToolError("web search is not set up: add the free search key in the Rooks app (Settings > Web search). web_fetch still reads any page you have a link for")
         return out
 
     def fetch(self, url: str) -> str:

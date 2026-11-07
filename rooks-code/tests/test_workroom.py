@@ -1,4 +1,5 @@
-"""/room, /needs and /jobs reach the app's Room, Needs you and Jobs, and say plainly when this terminal can't."""
+"""/room, /needs and /jobs reach the app's Room, Needs you and Jobs with the terminal's own key, and say plainly when an
+older app does not let them."""
 
 import io
 import json
@@ -15,7 +16,8 @@ GOOD = "g" * 32
 
 
 class FakeApp:
-    """The app's /api/room, /api/needs-you and /api/jobs, behind the same bearer check as require_user."""
+    """The app's /api/room, /api/needs-you and /api/jobs, behind the terminal's check (require_user_or_terminal): the key,
+    and the terminal's channel header that a bridge key needs."""
 
     def __init__(self):
         self.calls: list[tuple[str, str, dict | None]] = []
@@ -26,6 +28,7 @@ class FakeApp:
                        "since": "2026-11-06T10:00:00", "actions": ["approve", "deny"]},
                       {"id": "j:3", "kind": "job", "title": "Tidy the downloads folder", "detail": "",
                        "since": "2026-11-06T09:00:00", "actions": ["approve", "deny"]}]
+        self.answers: list[str] = []  # what the app reports for the next answers (approved, done, failed, held, denied)
         app = self
 
         class H(BaseHTTPRequestHandler):
@@ -44,7 +47,7 @@ class FakeApp:
                 n = int(self.headers.get("Content-Length") or 0)
                 body = json.loads(self.rfile.read(n)) if n else None
                 app.calls.append((method, self.path, body))
-                if self.headers.get("Authorization") != f"Bearer {GOOD}":
+                if self.headers.get("Authorization") != f"Bearer {GOOD}" or self.headers.get("X-Workbench-Channel") != "rooks-code":
                     return self._send(401, {"detail": "Not signed in"})
                 p = self.path
                 if p == "/api/room/status":
@@ -64,7 +67,8 @@ class FakeApp:
                 if p.startswith("/api/needs-you/") and method == "POST":
                     item, answer = p.split("/")[3:5]
                     app.needs = [i for i in app.needs if i["id"] != item]
-                    return self._send(200, {"id": item, "status": "approved" if answer == "approve" else "denied"})
+                    status = app.answers.pop(0) if app.answers else ("approved" if answer == "approve" else "denied")
+                    return self._send(200, {"id": item, "status": status})
                 if p == "/api/jobs":
                     return self._send(200, {"running": [{"id": 4, "title": "Weekly report", "status": "running"}],
                                             "you": [], "done": []})
@@ -145,12 +149,29 @@ def test_needs_lists_and_answers_through_the_app(fake_app):
     assert "Nothing needs you" in _say(workroom.needs_command, agent)
 
 
-def test_a_key_that_cannot_reach_a_route_is_said_plainly_not_faked(fake_app):
+def test_an_older_app_that_refuses_the_key_is_said_plainly_not_faked(fake_app):
     agent = _agent(fake_app.url, key="b" * 32)
     for fn in (workroom.room_command, workroom.needs_command):
         text = _say(fn, agent)
-        assert "can't" in text and "in the app" in text, text
+        assert "in the app" in text and "update" in text.lower(), text
         assert "401" not in text and "HTTP" not in text and "Not signed in" not in text
+        assert "chat and models only" not in text  # the old claim: today's app lets the terminal's key in
+
+
+def test_the_terminal_says_who_it_is_on_every_workroom_call(fake_app):
+    """A bridge key opens these routes only with the terminal's channel header (the browser and desk helpers share it)."""
+    agent = _agent(fake_app.url)
+    assert "The Room" in _say(workroom.room_command, agent)
+    assert "Send an email to Ana" in _say(workroom.needs_command, agent)
+
+
+def test_an_approval_that_ran_says_approved_not_denied(fake_app):
+    agent = _agent(fake_app.url)
+    fake_app.answers[:] = ["done"]
+    assert _say(workroom.needs_command, agent, "approve 1").strip().startswith("Approved: Send an email to Ana")
+    fake_app.answers[:] = ["failed"]
+    text = _say(workroom.needs_command, agent, "approve 1")
+    assert text.strip().startswith("Approved") and "did not work" in text and "Denied" not in text, text
 
 
 def test_jobs_lists_the_terminal_jobs_and_the_apps_jobs(fake_app, tmp_path):

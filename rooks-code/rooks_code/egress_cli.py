@@ -1,4 +1,4 @@
-"""`rooks egress`: what AI Workspace sent off this machine, per host (the app's egress ledger, egress.py)."""
+"""`rooks egress`: what the Rooks app sent off this machine, per host (the app's egress ledger, egress.py)."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from .app_api import App, run
 
 
 def main(rest: list[str]) -> int:
-    ap = argparse.ArgumentParser(prog="rooks egress", description="Outbound network audit of the AI Workspace app")
+    ap = argparse.ArgumentParser(prog="rooks egress", description="Outbound network audit of the Rooks app")
     ap.add_argument("-C", "--cwd", default=".")
     ap.add_argument("--hours", type=int, default=24, help="look back this many hours (1 to 2160, default 24)")
     ap.add_argument("--json", action="store_true", help="print the raw report")

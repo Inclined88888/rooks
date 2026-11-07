@@ -159,7 +159,7 @@ class RichUI(UI):
         self.console.print(t, overflow="ellipsis", no_wrap=True)
 
     def _sub(self, text: str, role: str = "dim") -> None:
-        self.console.print(Text("  ⎿  ", style=self.hexcolour("dim")) + Text(text, style=self.hexcolour(role)),
+        self.console.print(Text("     ") + Text(text, style=self.hexcolour(role)),  # a plain indent under the step
                            overflow="ellipsis", no_wrap=True)
 
     def tool_note(self, text: str, read: bool = False) -> None:
@@ -354,7 +354,7 @@ def sessions(root) -> list[tuple[str, str]]:
 
 
 def model_label(s, dim: str) -> str:
-    """'Auto, through your AI Workspace app' rather than 'default (workbench)'."""
+    """'Auto, through your Rooks app' rather than 'default (workbench)'."""
     if s.provider == "workbench":
         return f"{short_model(s)}  [{dim}](through the Rooks app: same models, keys and plans · /model to change)[/]"
     return f"{short_model(s)}  [{dim}]({s.provider})[/]"

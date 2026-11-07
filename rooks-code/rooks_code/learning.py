@@ -1,6 +1,6 @@
 """Rooks gets better the more you use it.
 
-Through the AI Workspace app (provider workbench) Rooks shares the app's memory and skills, so what you taught in
+Through the Rooks app (provider workbench) Rooks shares the app's memory and skills, so what you taught in
 chat helps in the terminal and the other way round:
   * before a request, the facts that fit it and the index of saved skills go into the system prompt
   * the remember tool saves a fact you state ("I use pnpm", "my name is Azad") in the app's memory
@@ -133,7 +133,7 @@ class Learning:
                 r = self._req("POST", "/remember", {"content": fact, "kind": kind})
             except (OSError, ValueError, urllib.error.URLError) as e:
                 return f"Error: the app could not save it ({e})"
-            return "Saved to your AI Workspace memory." if r.get("saved") else "Already known; nothing new saved."
+            return "Saved to your Rooks memory." if r.get("saved") else "Already known; nothing new saved."
         facts = _load_local()
         n = _norm(fact)
         if any(_norm(f) == n for f in facts):
@@ -205,7 +205,7 @@ class Learning:
     def check_skill(self, url: str) -> dict:
         """Hand a GitHub skill to the app's security check; the user installs it on the app's Skills page."""
         if not self.app:
-            return {"ok": False, "error": "Skills from GitHub are checked and installed through the AI Workspace app; it isn't connected."}
+            return {"ok": False, "error": "Skills from GitHub are checked and installed through the Rooks app; it isn't connected."}
         data = json.dumps({"url": url}).encode()
         headers = {"Content-Type": "application/json", **(getattr(self.s, "headers", None) or {})}
         if self.s.api_key:
@@ -224,7 +224,7 @@ class Learning:
 
     def load_skill(self, name: str) -> str:
         if not self.app:
-            return "Error: saved skills come from the AI Workspace app; it is not connected."
+            return "Error: saved skills come from the Rooks app; it is not connected."
         try:
             d = self._req("GET", "/skills/" + urllib.parse.quote(name, safe=""))
         except urllib.error.HTTPError as e:

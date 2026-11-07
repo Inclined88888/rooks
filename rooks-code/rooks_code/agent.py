@@ -410,7 +410,7 @@ class Agent:
         return answer
 
     def uses_shared_loop(self) -> bool:
-        """Connected to the AI Workspace app, linked to one of its conversations, and not a sub-agent.
+        """Connected to the Rooks app, linked to one of its conversations, and not a sub-agent.
         ROOKS_SHARED_LOOP=0 keeps the local loop (the app still receives the finished turn via /v1/rooks/turn)."""
         return (os.environ.get("ROOKS_SHARED_LOOP", "1") != "0" and not self.sub and self.s.provider == "workbench"
                 and bool(self.s.base_url and self.s.api_key and getattr(self.ui, "conversation_id", None)))

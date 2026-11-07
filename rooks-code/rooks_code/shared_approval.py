@@ -1,4 +1,4 @@
-"""One approval, two places: the terminal prompt and the AI Workspace app's Approvals list.
+"""One approval, two places: the terminal prompt and the Rooks app's Approvals list.
 
 When rooks is linked to an app conversation (provider workbench), every change it asks about is also posted to the app
 (/v1/rooks/approvals) with its diff or command. The first answer wins: typed here, or clicked in the app (browser, app

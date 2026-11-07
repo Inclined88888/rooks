@@ -1,9 +1,10 @@
 """/room, /needs and the app's half of /jobs: the Workroom from the terminal, through the Rooks app on this computer.
 
-The app's routes (/api/room, /api/needs-you, /api/jobs) take the signed in user, or the app's own key. The Terminal
-access token and the app.json bridge key reach chat and models (/v1) only, so with those the app answers "not signed
-in", and the terminal says so in plain words instead of pretending. Nothing here runs the Room or answers an approval
-itself: the app does, and records it like a click in the app.
+The terminal uses the key it already has: the app.json bridge key, or the Terminal access token from the app's
+settings. The app lets either reach exactly these routes (room status, start, stop and run; Needs you; the Jobs board),
+with the terminal's channel header. An older app refuses them, and the terminal says so in plain words instead of
+pretending. Nothing here runs the Room or answers an approval itself: the app does, and records it like a click in
+the app.
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ RUN_WAIT_S = 330  # the Room's own limit on a command is 300 s
 
 
 class Refused(Exception):
-    """The app did not accept this terminal's key for that route."""
+    """The app did not accept this terminal's key for that route (an app older than the terminal's Workroom access)."""
 
 
 class Unreachable(Exception):
@@ -41,7 +42,8 @@ def call(link: dict, method: str, path: str, body: dict | None = None, timeout: 
     req = urllib.request.Request(
         link["url"].rstrip("/") + path, method=method,
         data=None if body is None else json.dumps(body).encode(),
-        headers={"Authorization": f"Bearer {link['key']}", "Content-Type": "application/json", "X-Workbench": "1"})
+        headers={"Authorization": f"Bearer {link['key']}", "Content-Type": "application/json", "X-Workbench": "1",
+                 "X-Workbench-Channel": "rooks-code"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             raw = r.read()
@@ -59,6 +61,10 @@ def call(link: dict, method: str, path: str, body: dict | None = None, timeout: 
 
 
 UNREACHABLE = "  Can't reach the Rooks app right now. Is it open on this computer?"
+# A key the app refuses: an app older than this terminal, or a key from another app. Said plainly, never faked.
+OLDER_APP = ("  The Rooks app did not let this terminal {what}. Starting the Room or answering Needs you from here needs the"
+             " terminal's own sign in: in the app open Settings, Terminal access, then run rooks login. If the app is older"
+             " than this terminal, update it. Or {where} in the app.")
 
 
 # --- /room ------------------------------------------------------------------------------------------------------------
@@ -128,7 +134,7 @@ def room_command(agent, ui, rest: str = "") -> None:
         else:
             ui.p(ROOM_USE)
     except Refused:
-        ui.p("  This terminal's key can't open the Room: it reaches chat and models only. Open the Room in the app.")
+        ui.p(OLDER_APP.format(what="open the Room", where="open the Room"))
     except Unreachable:
         ui.p(UNREACHABLE)
     except Said as e:
@@ -138,6 +144,17 @@ def room_command(agent, ui, rest: str = "") -> None:
 # --- /needs -----------------------------------------------------------------------------------------------------------
 APPROVE = ("approve", "yes", "ok", "allow")
 DENY = ("deny", "no", "refuse")
+
+
+def _answered(answer: str, status) -> str:
+    """What the app did with the answer: approved (it runs, or the asker runs it), done, failed, held again, denied."""
+    if answer == "deny" or status == "denied":
+        return "Denied"
+    if status == "failed":
+        return "Approved, but it did not work"
+    if status == "held":
+        return "Approved; it asks once more in Needs you"
+    return "Approved"
 
 
 def needs_command(agent, ui, rest: str = "") -> None:
@@ -158,8 +175,7 @@ def needs_command(agent, ui, rest: str = "") -> None:
             item = items[int(n) - 1]
             answer = "approve" if verb in APPROVE else "deny"
             out = call(link, "POST", f"/api/needs-you/{urllib.parse.quote(str(item['id']), safe=':')}/{answer}")
-            said = "Approved" if out.get("status") == "approved" else "Denied"
-            ui.p(f"  {said}: {item.get('title') or 'that'}")
+            ui.p(f"  {_answered(answer, out.get('status'))}: {item.get('title') or 'that'}")
             return
         if verb:
             ui.p("  /needs lists what waits for your OK  ·  /needs approve N  ·  /needs deny N")
@@ -175,8 +191,8 @@ def needs_command(agent, ui, rest: str = "") -> None:
             ui.p(ui.c("dim", f"  … {len(items) - 30} more in the app"))
         ui.p(ui.c("dim", "  /needs approve N or /needs deny N answers one. The app shows the same list."))
     except Refused:
-        ui.p("  This terminal's key can't read Needs you: it reaches chat and models only. Open Needs you in the app."
-             " What this terminal asks about still waits here and in the app.")
+        ui.p(OLDER_APP.format(what="read Needs you", where="answer it")
+             + " What this terminal asks about still waits here and in the app.")
     except Unreachable:
         ui.p(UNREACHABLE)
     except Said as e:
@@ -191,7 +207,7 @@ def app_jobs(agent, ui) -> None:
     try:
         board = call(link, "GET", "/api/jobs")
     except Refused:
-        ui.p(ui.c("dim", "  The app's Jobs can't be read with this terminal's key. Open Jobs in the app."))
+        ui.p(ui.c("dim", OLDER_APP.format(what="read its Jobs", where="open Jobs")))
         return
     except (Unreachable, Said):
         ui.p(ui.c("dim", "  Can't reach the app for its Jobs right now."))

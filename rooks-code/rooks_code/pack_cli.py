@@ -1,4 +1,4 @@
-"""`rooks pack`: the AI Workspace Packs gallery from the terminal: list, info, add, remove (same as the app's Packs page).
+"""`rooks pack`: the Rooks Packs gallery from the terminal: list, info, add, remove (same as the app's Packs page).
 Adding a pack runs every skill in it through the app's security gate; all of them install, or none."""
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from .app_api import App, run
 
 
 def main(rest: list[str]) -> int:
-    ap = argparse.ArgumentParser(prog="rooks pack", description="AI Workspace packs")
+    ap = argparse.ArgumentParser(prog="rooks pack", description="Rooks packs")
     ap.add_argument("-C", "--cwd", default=".")
     ap.add_argument("action", nargs="?", default="list", choices=("list", "info", "add", "remove"))
     ap.add_argument("pack", nargs="?", help="pack id (see rooks pack list)")

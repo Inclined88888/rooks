@@ -18,7 +18,7 @@ from pathlib import Path
 # kind: "openai" = OpenAI Chat Completions protocol (also OpenRouter, Ollama, LM Studio, vLLM, llama.cpp, Groq, ...)
 #       "anthropic" = Anthropic Messages protocol
 PROVIDERS: dict[str, dict] = {
-    # The AI Workspace desktop app (or a Workbench server): its default model, which is the smart router ("auto") unless
+    # The Rooks desktop app (or a Workbench server): its default model, which is the smart router ("auto") unless
     # changed, so Rooks uses the keys and free tiers connected there and falls back when one hits a limit. Found
     # automatically while the app is open (app.json); otherwise set workbench_url / WORKBENCH_URL and WORKBENCH_API_KEY.
     "workbench": {"kind": "openai", "base_url": "", "key_env": "WORKBENCH_API_KEY", "model": "default", "key_optional": True,
@@ -71,7 +71,7 @@ def config_path_dir() -> Path:
 
 
 def app_link() -> dict:
-    """{"url", "key"} of the running AI Workspace app, or {} when it is not open (a stale file is ignored)."""
+    """{"url", "key"} of the running Rooks app, or {} when it is not open (a stale file is ignored)."""
     import json
     import urllib.request
 
@@ -339,7 +339,7 @@ def resolve(flags: dict, root: Path, file: dict | None = None) -> Settings:
                 elif not name:
                     if not _ollama_up():
                         if docker:
-                            raise SystemExit(f"rooks: found AI Workspace at {docker}, but no key for it. Run `rooks login` "
+                            raise SystemExit(f"rooks: found the Rooks app at {docker}, but no key for it. Run `rooks login` "
                                              "and paste the token from Settings > Terminal access.")
                         raise SystemExit(f"rooks: {NO_MODEL_HELP}")
                     name = "ollama"
@@ -360,7 +360,7 @@ def resolve(flags: dict, root: Path, file: dict | None = None) -> Settings:
         if not wb:
             wb = docker_workbench()
         if not wb:
-            raise SystemExit("rooks: the workbench provider needs the AI Workspace app open (or WORKBENCH_URL / workbench_url)")
+            raise SystemExit("rooks: the workbench provider needs the Rooks app open (or WORKBENCH_URL / workbench_url)")
         s.base_url = wb.rstrip("/") + "/v1"
     cfg_model = cfg.get("model", "") if name == cfg.get("provider") else ""  # a model named for another provider never leaks
     s.model = flags.get("model") or env["model"] or cfg_model or p.get("model", "")
@@ -425,7 +425,7 @@ def _project_mcp(root: Path) -> dict:
 
 
 EXAMPLE = '''# Rooks Code settings. API keys are read from the environment variables named here; never put a key in this file.
-# provider = "workbench"            # default: the open AI Workspace app, else ollama
+# provider = "workbench"            # default: the open Rooks app, else ollama
 #                                   # workbench | openai | anthropic | openrouter | groq | gemini | xai | deepseek | mistral
 #                                   # | nvidia | cerebras | together | fireworks
 #                                   # | ollama | lmstudio | openai-compatible | your own

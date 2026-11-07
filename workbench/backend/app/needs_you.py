@@ -32,10 +32,11 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException
 
 from . import actions, browser_proxy, config, db, desk_proxy, jobs
-from .security import require_user
+from .security import require_user_or_terminal
 
 log = logging.getLogger("needs_you")
-router = APIRouter(prefix="/api/needs-you", dependencies=[Depends(require_user)])
+# The terminal's /needs lists and answers the same items with its own key (security.require_user_or_terminal).
+router = APIRouter(prefix="/api/needs-you", dependencies=[Depends(require_user_or_terminal)])
 
 HELPER_TIMEOUT_S = 0.5   # per request: the helpers are on this computer; a slow one must not slow the strip
 HELPER_BUDGET_S = 1.5    # per helper, all its requests together (a listing and a few job details)

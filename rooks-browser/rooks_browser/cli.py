@@ -108,7 +108,7 @@ def cmd_run(argv: list[str]) -> int:
     p.add_argument("--screenshots", default=None, metavar="DIR", help="save a screenshot after every step")
     p.add_argument("--json", action="store_true", help="print the result as JSON")
     p.add_argument("--no-color", action="store_true", help="plain text output")
-    p.add_argument("--theme", choices=term_theme.THEMES, default=None, help="terminal colours (default: the theme chosen in AI Workspace, or $ROOKS_THEME)")
+    p.add_argument("--theme", choices=term_theme.CHOICES, default=None, help="terminal colours: light, dark, contrast or auto (default: the theme chosen in Rooks, or $ROOKS_THEME)")
     a = p.parse_args(argv)
     goal = " ".join(a.task)
     try:

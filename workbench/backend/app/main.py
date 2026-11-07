@@ -173,6 +173,7 @@ app.include_router(desk_proxy.router)
 from . import room  # noqa: E402 - the Room (design 0003): Rooks's own computer inside the app
 
 app.include_router(room.router)
+app.include_router(room.terminal)  # /room in the terminal: status, start, stop, run
 from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): the presence strip and the Needs you inbox
 
 app.include_router(presence.router)
@@ -186,6 +187,7 @@ app.include_router(adapt_routes.router)  # /api/learn: What I know about you, Sh
 adapt_hooks.register_tools()
 app.include_router(v02_api.router)  # feat/v02-automations: automations, jobs board, live documents
 app.include_router(v02_api.phone)
+app.include_router(v02_api.terminal)  # /jobs in the terminal reads the board
 auto_tools.register_tools()
 # feat/v02-anywhere-voice: Ask from anywhere, voice, meeting companion
 from . import anywhere, meetings, voice  # noqa: E402

@@ -1,10 +1,10 @@
-"""rooks: ai-workspace's terminal coding agent. Any model: OpenAI, Anthropic, OpenRouter, any OpenAI-compatible server,
+"""rooks: the Rooks app's terminal coding agent. Any model: OpenAI, Anthropic, OpenRouter, any OpenAI-compatible server,
 or local Ollama / LM Studio (works fully offline).
 
   rooks                         interactive session in the current folder
   rooks "fix the failing test"  one prompt, then exit (prints the final answer; exit 1 if it did not finish)
   rooks -c                      continue the last session in this folder (--resume ID for an older one)
-  rooks login                   connect a model: paste a key, or point at your AI Workspace server
+  rooks login                   connect a model: paste a key, or point at your Rooks app server
   rooks undo                    put back the files changed by the last prompt
   rooks pack [list|info|add|remove] ID   the app's Packs gallery
   rooks egress [--hours N]      what the app sent off this machine, per host
@@ -457,7 +457,7 @@ def effort_command(agent, ui: UI, rest: str) -> None:
         return
     set_model(agent, agent.s.model, "" if want in ("auto", "default") else want)
     ui.p(f"thinking level is now {agent.s.effort or 'auto'}" + ("" if agent.s.provider == "workbench" else
-         " (it applies to subscription plans through the AI Workspace app)"))
+         " (it applies to subscription plans through the Rooks app)"))
 
 
 def mode_command(agent, ui: UI, rest: str) -> None:
@@ -557,30 +557,30 @@ def provider_command(agent, ui: UI, rest: str) -> None:
 
 
 def open_app_and_link(wait_s: float = 90, model_wait_s: float = 600) -> bool:
-    """Start AI Workspace if it is not open (the native app, or its window in Chrome/Edge), wait until it publishes
+    """Start the Rooks app if it is not open (the native app, or its window in Chrome/Edge), wait until it publishes
     app.json, then wait until a model is connected in it. Ctrl-C gives up."""
     try:
         link = config.app_link()
         if not link:
-            print("  Opening AI Workspace…", flush=True)
+            print("  Opening the Rooks app…", flush=True)
             subprocess.Popen(["ai-workspace"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                              start_new_session=True)  # keeps running after rooks exits
             deadline = time.monotonic() + wait_s
             while not (link := config.app_link()):
                 if time.monotonic() > deadline:
-                    print("  AI Workspace did not answer in time. Run `ai-workspace` yourself, then start rooks again.")
+                    print("  The Rooks app did not answer in time. Open it yourself (`ai-workspace`), then start rooks again.")
                     return False
                 time.sleep(1)
         if not config.app_has_models(link):
-            print("  AI Workspace is open. Connect a model in its window (a free key, or sign in with ChatGPT, Claude or")
+            print("  The Rooks app is open. Connect a model in its window (a free key, or sign in with ChatGPT, Claude or")
             print("  Copilot). I'll carry on here as soon as it's connected. Ctrl-C to stop.", flush=True)
             deadline = time.monotonic() + model_wait_s
             while not config.app_has_models(link):
                 if time.monotonic() > deadline:
-                    print("  Still no model in AI Workspace. Start rooks again once one is connected.")
+                    print("  Still no model in the Rooks app. Start rooks again once one is connected.")
                     return False
                 time.sleep(2)
-        print("  Linked to AI Workspace.\n")
+        print("  Linked to the Rooks app.\n")
         return True
     except KeyboardInterrupt:
         print()
@@ -595,7 +595,7 @@ def first_run_setup(root: Path, why: str = "No AI service is connected yet.") ->
 
     print(f"\nWelcome to Rooks. {why}")
     if shutil.which("ai-workspace") or config.app_link():
-        print("  1  Use AI Workspace and the models connected there (recommended)")
+        print("  1  Use the Rooks app and the models connected there (recommended)")
         print("  2  Connect a model here instead (API key, Ollama, a server)")
         try:
             pick = input("  › ").strip() or "1"
@@ -697,7 +697,7 @@ def subcommand(name: str, rest: list[str]) -> int:
         ap.add_argument("--force", action="store_true")
     if name == "login":
         ap.add_argument("-P", "--provider", help="skip the menu: the provider to connect")
-        ap.add_argument("--url", help="AI Workspace server URL (provider workbench)")
+        ap.add_argument("--url", help="Rooks app server URL (provider workbench)")
         ap.add_argument("-m", "--model")
         ap.add_argument("--key-stdin", action="store_true", help="read the key from standard input (scripts)")
     if name == "doctor":
@@ -779,7 +779,7 @@ def diagnose(problem: str) -> int:
     docker = config.docker_workbench()
     has_wb_key = bool(os.environ.get("WORKBENCH_API_KEY") or config.stored_keys().get("workbench"))
     if docker and not has_wb_key:
-        print("fix: run `rooks login`, choose the AI Workspace server, paste the token from Settings > Terminal access")
+        print("fix: run `rooks login`, choose the Rooks app server, paste the token from Settings > Terminal access")
     else:
         print("fix: run `rooks login` and paste a key (free: NVIDIA, Groq, Gemini)")
     return 1

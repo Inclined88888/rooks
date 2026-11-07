@@ -159,6 +159,45 @@ def require_user(request: Request) -> None:
     raise HTTPException(status_code=401, detail="Not signed in")
 
 
+def _bearer_token(request: Request) -> str:
+    auth = request.headers.get("authorization", "")
+    return auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+
+
+def check_cli_token(token: str) -> bool:
+    """The Terminal access token (Settings > Terminal access); stored only as a hash."""
+    stored = db.get_setting("cli_token_hash", "") or ""
+    return bool(token) and bool(stored) and hmac.compare_digest(hashlib.sha256(token.encode()).hexdigest(), stored)
+
+
+def check_bridge_key(token: str) -> bool:
+    """The /v1 bridge keys: the app.json key (BROWSER_API_KEY in the desktop app), Rooks Desk's, and the coding jobs' one."""
+    keys = [k for k in (config.BROWSER_API_KEY, config.DESK_API_KEY, config.CODING_BRIDGE_KEY) if k]
+    return bool(token) and any(hmac.compare_digest(token, k) for k in keys)
+
+
+def require_user_or_terminal(request: Request) -> None:
+    """The signed in user, or the rooks terminal on this computer with its own key: only for the Workroom routes the
+    terminal's /room, /needs and /jobs use (room status/up/down/run, Needs you, the Jobs board). The Terminal access
+    token works as it does for chat; a bridge key only with the terminal's channel header, since the browser and desk
+    helpers hold the same key and must not answer Needs you for themselves. Writes still need X-Workbench (main.guard)."""
+    try:
+        require_user(request)
+        return
+    except HTTPException:
+        pass
+    token = _bearer_token(request)
+    if check_cli_token(token):
+        return
+    # A bridge key only reads. Coding jobs the app starts hold the same key, so if it could write, an unattended job
+    # (or its model through its shell) could approve its own request in Needs you or run in the Room without a yes.
+    # Answering and acting need the Terminal access token, which a person creates, or a signed in session.
+    if (request.method == "GET" and request.headers.get("x-workbench-channel") == "rooks-code"
+            and check_bridge_key(token)):
+        return
+    raise HTTPException(status_code=401, detail="Not signed in")
+
+
 def check_bearer(request: Request) -> bool:
     auth = request.headers.get("authorization", "")
     token = auth[7:] if auth.lower().startswith("bearer ") else ""
