@@ -1,3 +1,5 @@
+import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -397,3 +399,21 @@ def test_repo_map_skips_the_home_folder(monkeypatch, tmp_path):
     (tmp_path / "a.py").write_text("def f():\n    pass\n")
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     assert RepoMap(tmp_path).get_repo_map() == ""
+
+
+def test_project_sandbox_says_why_when_bubblewrap_cannot_start(tmp_path, monkeypatch):
+    """bwrap installed but blocked (Ubuntu 24.04 user namespaces): refuse with its reason, never run unconfined."""
+    if not sys.platform.startswith("linux"):
+        pytest.skip("bubblewrap is the Linux sandbox")
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    (fake / "bwrap").write_text("#!/bin/sh\necho 'bwrap: setting up uid map: Permission denied' >&2\nexit 1\n")
+    (fake / "bwrap").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake}{os.pathsep}{os.environ['PATH']}")
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    tb = Toolbox(proj)
+    tb.sandbox = "project"
+    with pytest.raises(ToolError) as e:
+        tb._command_argv("echo hi")
+    assert "uid map: Permission denied" in str(e.value) and 'sandbox = "full"' in str(e.value)

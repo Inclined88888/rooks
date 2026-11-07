@@ -58,7 +58,11 @@ jobs:
       - run: python -m pip install -e ".[dev]"  # pytest, plus prompt_toolkit and rich so the terminal UI tests run
       - name: Bubblewrap, which keeps project-mode commands inside the folder on Linux
         if: runner.os == 'Linux'
-        run: sudo apt-get update -q && sudo apt-get install -y -q bubblewrap
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q bubblewrap
+          # Ubuntu 24.04 switches off unprivileged user namespaces, which bwrap needs; print why, then allow them
+          bwrap --ro-bind / / /bin/true || sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          bwrap --ro-bind / / /bin/true
       - name: Tests, including the fake-model end-to-end run and the interactive terminal
         run: python -m pytest -q
       - name: Installs as a command and runs

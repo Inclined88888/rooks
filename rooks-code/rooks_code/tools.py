@@ -7,6 +7,7 @@ import difflib
 import fnmatch
 import hashlib
 import json
+import functools
 import os
 import re
 import shutil
@@ -198,6 +199,18 @@ def diff(old: str, new: str, rel: str) -> str:
                                  f"a/{rel}" if old else "/dev/null", f"b/{rel}")
     out = "".join(l if l.endswith("\n") else l + "\n\\ No newline at end of file\n" for l in lines)
     return out or "(no change)\n"
+
+
+@functools.lru_cache(maxsize=8)
+def _bwrap_problem(prefix: tuple[str, ...]) -> str:
+    """One trial run of bubblewrap with these settings: "" when it works, else the first line it printed."""
+    try:
+        r = subprocess.run([*prefix, "/bin/true"], capture_output=True, text=True, timeout=20, stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return str(e)[:200]
+    if r.returncode == 0:
+        return ""
+    return ((r.stderr or r.stdout).strip().splitlines() or [f"exit code {r.returncode}"])[0][:200]
 
 
 class Toolbox:
@@ -501,7 +514,13 @@ class Toolbox:
         out = [bwrap, "--die-with-parent", "--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev"]
         for w in dict.fromkeys(writable):
             out += ["--bind", w, w]
-        return [*out, "--chdir", str(Path(self.root).resolve()), *argv]
+        out += ["--chdir", str(Path(self.root).resolve())]
+        problem = _bwrap_problem(tuple(out))
+        if problem:
+            raise ToolError("This computer cannot keep commands inside the project folder: bubblewrap says "
+                            f"\"{problem}\". On Ubuntu 24.04 and later, unprivileged user namespaces are switched off "
+                            "by default. Allow them, or set sandbox = \"full\" to run commands without that limit.")
+        return [*out, *argv]
 
     def _run_command(self, a: dict) -> Plan:
         cmd = a.get("command")
