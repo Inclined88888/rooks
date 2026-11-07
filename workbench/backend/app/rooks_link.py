@@ -16,7 +16,7 @@ Same bridge key as /v1/chat/completions. Learning obeys the app's switches: Sett
 import asyncio
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from . import db, learn
@@ -423,10 +423,14 @@ class TerminalDecisionIn(BaseModel):
 
 
 @router.post("/approvals/{aid}")
-def terminal_approval_answer(aid: int, data: TerminalDecisionIn):
-    """The user answered in the terminal: record it so the app's card closes. 409 when the app answered first."""
+def terminal_approval_answer(aid: int, data: TerminalDecisionIn, request: Request):
+    """The user answered in the terminal: record it so the app's card closes. 409 when the app answered first.
+    A coding job the app started holds its own key and may never record an answer: nobody is at its keyboard."""
     from . import actions
+    from .security import _bearer_token, is_coding_job_key
 
+    if is_coding_job_key(_bearer_token(request)):
+        raise HTTPException(403, "A background job can't answer for you. Answer it in Needs you.")
     _terminal_row(aid)
     actions.decide(aid, data.approve, CHANNEL)
     return {"id": aid, "status": actions.approval(aid)["status"]}

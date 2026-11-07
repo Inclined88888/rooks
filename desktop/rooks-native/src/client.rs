@@ -3,6 +3,7 @@
 use serde_json::{json, Value};
 use ureq::Agent;
 
+use crate::chat::{self, Conversation, Turn};
 use crate::parse::{self, Account, JobRow, MailRow, ModelRow, SkillRow, TaskRow};
 
 #[derive(Clone)]
@@ -211,6 +212,54 @@ impl Client {
         Ok(())
     }
 
+    /// One turn, streamed. The caller reads `data:` lines until the service closes the body.
+    pub fn ask(
+        &self,
+        message: &str,
+        conversation_id: Option<i64>,
+    ) -> Result<Box<dyn std::io::Read + Send>, String> {
+        let mut body = json!({"message": message, "channel": "web"});
+        if let Some(cid) = conversation_id {
+            body["conversation_id"] = json!(cid);
+        }
+        let response = self
+            .prep(self.agent.post(&self.url("/api/assistant/chat")))
+            .set("Accept", "text/event-stream")
+            .send_json(body)
+            .map_err(ask_error)?;
+        Ok(Box::new(response.into_reader()))
+    }
+
+    /// Cancel the turn that is running in a chat. What was written stays.
+    pub fn stop_turn(&self, conversation_id: i64) -> Result<(), String> {
+        self.send(
+            "POST",
+            "/api/assistant/stop",
+            json!({"conversation_id": conversation_id}),
+        )?;
+        Ok(())
+    }
+
+    /// Yes or no to an action the service is holding.
+    pub fn decide(&self, approval: i64, approve: bool) -> Result<(), String> {
+        self.send(
+            "POST",
+            &format!("/api/approvals/{approval}"),
+            json!({"approve": approve}),
+        )?;
+        Ok(())
+    }
+
+    pub fn conversations(&self) -> Result<Vec<Conversation>, String> {
+        Ok(chat::conversations(&self.get("/api/conversations?channel=web")?))
+    }
+
+    pub fn transcript(&self, conversation_id: i64) -> Result<Vec<Turn>, String> {
+        Ok(chat::transcript(
+            &self.get(&format!("/api/conversations/{conversation_id}"))?,
+        ))
+    }
+
     /// Trade the desktop launch token for the session cookie the terminal expects.
     pub fn session_from_token(base: &str, token: &str) -> Result<String, String> {
         let agent = ureq::AgentBuilder::new().redirects(0).build();
@@ -224,10 +273,10 @@ impl Client {
         cookie_from_response(&response)
     }
 
-    /// Trade the bridge key from app.json for a session cookie when the service was already up.
+    /// Trade the window's own key (native.json) for a session cookie when the service was already up.
     pub fn session_from_key(base: &str, key: &str) -> Result<String, String> {
         if key.is_empty() {
-            return Err("No local bridge key.".into());
+            return Err("No sign in key for this window.".into());
         }
         let agent = ureq::AgentBuilder::new().redirects(0).build();
         let response = agent
@@ -240,6 +289,25 @@ impl Client {
             .call()
             .map_err(|e| e.to_string())?;
         cookie_from_response(&response)
+    }
+}
+
+/// The service answers a bad turn with a short reason. Show that, not the whole HTTP line.
+fn ask_error(err: ureq::Error) -> String {
+    match err {
+        ureq::Error::Status(code, response) => {
+            let body = response.into_string().unwrap_or_default();
+            let detail = serde_json::from_str::<Value>(&body)
+                .ok()
+                .and_then(|v| v.get("detail").and_then(|d| d.as_str()).map(str::to_string))
+                .unwrap_or(body);
+            if detail.trim().is_empty() {
+                format!("The local service said {code}.")
+            } else {
+                detail
+            }
+        }
+        other => other.to_string(),
     }
 }
 

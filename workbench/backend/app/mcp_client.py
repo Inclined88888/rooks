@@ -56,6 +56,12 @@ def _secret_keys(spec: dict) -> list[str]:
            [k for k in spec.get("headers", {}) if spec["headers"][k] == ""]
 
 
+def _scrubbed() -> dict:
+    from .security import scrub_env
+
+    return scrub_env(os.environ)
+
+
 class StdioServer:
     """JSON-RPC 2.0 over the child's stdin/stdout, one message per line (rooks-code port)."""
 
@@ -66,7 +72,7 @@ class StdioServer:
         if not exe:
             raise MCPError(f"command not found: {command}")
         self.proc = subprocess.Popen([exe, *(args or [])], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE, env={**os.environ, **(env or {})},
+                                     stderr=subprocess.PIPE, env={**_scrubbed(), **(env or {})},
                                      text=True, encoding="utf-8", bufsize=1)
         self._id = 0
         self._replies: queue.Queue = queue.Queue()

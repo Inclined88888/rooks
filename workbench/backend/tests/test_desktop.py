@@ -72,6 +72,27 @@ def test_local_session_mints_a_cookie_with_the_bridge_key(client, monkeypatch):
     assert "wb_session" in r.headers.get("set-cookie", "")
 
 
+def test_local_session_takes_the_native_key_not_the_shared_app_json_key(client, monkeypatch):
+    """The native window reads its own key from native.json and trades it for a cookie. The app.json key (the bridge
+    key the helpers, the terminal and anything able to read app.json share) never signs in or opens the account."""
+    from app import config, security
+    from starlette.testclient import TestClient
+
+    monkeypatch.setattr(config, "TOOLS_API_KEY", "t" * 30)
+    monkeypatch.setattr(config, "BROWSER_API_KEY", "b" * 30)
+    monkeypatch.setattr(config, "NATIVE_SIGNIN_KEY", "n" * 30)
+    monkeypatch.setattr(security, "_attempts", {})  # the wrong keys below must not throttle later tests
+    h = {"X-Workbench": "1"}
+    window = TestClient(client.app)
+    r = window.post("/api/desktop/local-session", headers={**h, "Authorization": f"Bearer {'n' * 30}"})
+    assert r.status_code == 200 and "wb_session" in r.headers.get("set-cookie", "")
+    assert window.get("/api/conversations").status_code == 200  # the window's calls ride on that cookie
+    bare = TestClient(client.app)
+    assert bare.post("/api/desktop/local-session", headers={**h, "Authorization": f"Bearer {'b' * 30}"}).status_code == 401
+    assert bare.get("/api/conversations", headers={"Authorization": f"Bearer {'b' * 30}"}).status_code == 401
+    assert bare.get("/api/conversations", headers={"Authorization": f"Bearer {'n' * 30}"}).status_code == 401
+
+
 def test_welcome_flag_is_reported_and_routes_the_session(client, desktop):
     from app import db
 

@@ -191,6 +191,48 @@ def write_app_link(url: str, key: str) -> Optional[Path]:
     return path
 
 
+# Same names as app.security.APP_SECRET_ENV (a test keeps the two equal). Helpers get none of these; each is handed
+# only the one key it needs.
+APP_SECRET_ENV = ("APP_SECRET", "TOOLS_API_KEY", "BROWSER_API_KEY", "DESK_API_KEY", "CODING_BRIDGE_KEY",
+                  "NATIVE_SIGNIN_KEY", "WORKBENCH_DESKTOP_TOKEN", "TRY_API_KEY", "ROOKS_TRY_API_KEY",
+                  "ROOKS_BROWSER_TOKEN", "ROOKS_DESK_TOKEN", "WORKBENCH_API_KEY", "BRIDGE_API_KEY")
+
+
+def helper_env(extra: dict) -> dict:
+    return {**{k: v for k, v in os.environ.items() if k not in APP_SECRET_ENV}, **extra}
+
+
+def native_link_path() -> Path:
+    """The native window's own file: its sign in key, next to app.json but never inside it."""
+    return app_link_path().with_name("native.json")
+
+
+def write_native_link(url: str, key: str) -> Optional[Path]:
+    """Written for the native Rooks window only (0600), removed when the app quits. The key changes every launch and
+    only mints a session cookie at /api/desktop/local-session on loopback; it is not a bearer anywhere."""
+    path = native_link_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp-native")
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
+            json.dump({"url": url, "key": key, "pid": os.getpid()}, f)
+        os.replace(tmp, path)
+    except OSError as e:
+        print(f"workbench: could not write {path}: {e}", file=sys.stderr)
+        return None
+
+    def remove():
+        try:
+            if json.loads(path.read_text()).get("pid") == os.getpid():
+                path.unlink()
+        except (OSError, ValueError):
+            pass
+
+    _CLEANUP.append(remove)
+    return path
+
+
 def _free_port() -> int:
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
@@ -224,8 +266,8 @@ def start_rooks_browser(app_url: str, key: str, log_dir: Path) -> Optional[str]:
     # A second visible browser at launch is what made the app feel heavy. The Browser page
     # still shows each step. Set ROOKS_BROWSER_HEADED=1 when you want that window too.
     headed = os.environ.get("ROOKS_BROWSER_HEADED") == "1"
-    env = {**os.environ, "ROOKS_BROWSER_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
-           "ROOKS_BROWSER_PROVIDER": os.environ.get("ROOKS_BROWSER_PROVIDER", "workbench")}
+    env = helper_env({"ROOKS_BROWSER_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
+                      "ROOKS_BROWSER_PROVIDER": os.environ.get("ROOKS_BROWSER_PROVIDER", "workbench")})
     args = [exe, "serve", "--port", str(port), "--exit-with-parent", "--headed" if headed else "--headless"]
     log = open(log_dir / "rooks-browser.log", "ab")  # noqa: SIM115 - lives as long as the child
     flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
@@ -273,8 +315,8 @@ def start_rooks_desk(app_url: str, key: str, log_dir: Path) -> Optional[str]:
         print("workbench: rooks-desk is not installed; the Computer page stays off", file=sys.stderr)
         return None
     port = _free_port()
-    env = {**os.environ, "ROOKS_DESK_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
-           "ROOKS_DESK_PROVIDER": os.environ.get("ROOKS_DESK_PROVIDER", "workbench")}
+    env = helper_env({"ROOKS_DESK_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
+                      "ROOKS_DESK_PROVIDER": os.environ.get("ROOKS_DESK_PROVIDER", "workbench")})
     args = [exe, "serve", "--port", str(port), "--exit-with-parent"]
     log = open(log_dir / "rooks-desk.log", "ab")  # noqa: SIM115 - lives as long as the child
     flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
@@ -345,6 +387,8 @@ def main(argv: list[str] | None = None) -> None:
     os.environ.setdefault("OLLAMA_URL", "http://127.0.0.1:11434")  # the native Ollama app's default address
     # The /v1 bridge (Rooks Code, Rooks Browser) and the browser service share this key; loopback only.
     os.environ.setdefault("BROWSER_API_KEY", bridge_key)
+    # The native window's sign in key: new every launch, kept out of app.json and out of every helper's environment.
+    os.environ["NATIVE_SIGNIN_KEY"] = secrets.token_urlsafe(32)
     app_url = f"http://127.0.0.1:{args.port}"
     import atexit
 
@@ -375,6 +419,7 @@ def main(argv: list[str] | None = None) -> None:
 
         threading.Thread(target=_agents, daemon=True, name="local-agents").start()
         write_app_link(app_url, os.environ["BROWSER_API_KEY"])
+        write_native_link(app_url, os.environ["NATIVE_SIGNIN_KEY"])
 
     print(f"workbench-server listening on http://127.0.0.1:{args.port} (secrets: {where})", flush=True)
     try:
