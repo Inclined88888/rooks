@@ -4,6 +4,36 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## 2026-11-07 · The session branches, integrated · branch integration/2026-11-07
+
+Merges feat/coworkers (#13) with fix/coworker-guards, fix/main-ci-green (#16) with claude/agents-on-ci-green, fix/install-blank-window (#19),
+fix/mobile-companion-lock-actions (#18), design/chat-controls (#17, which carries design/glass-shell #15), security/hardening-2026-11
+and fix/model-defaults-sync, with the unique pieces of fix/test-isolation-and-linux-sandbox (#14) ported onto #16. Each branch was reviewed
+and its serious findings fixed here. The entries below this one describe the security hardening and the Room's shell field in full.
+
+- **Coworkers.** Welcome has a fifth, skippable step ("What do you do?") and a Coworkers page proposes a small team for a line of work.
+  Scheduled and coworker runs no longer refuse a step that needs a yes: it waits in Needs you, the inbox says so, and a later yes
+  runs it once as that coworker. Asking the assistant to schedule something shows an approval card first. The app's own connector
+  (`/mcp`) no longer runs skill scripts outright: the call waits in Needs you, and the tools key cannot answer it.
+- **Glass navigation.** The left rail is a floating top bar with one sliding pill; phones get a floating dock. AI-cliché icons are
+  gone, Team's "AI runs" is "Split tasks", and the chat and three more pages draw the shared controls. Motion off, reduced motion,
+  high contrast and reduced transparency all get a solid, still bar. Owner's call to keep: `--glass-filter`, `--glass-shadow` and
+  `--dur-slide` in `workbench/frontend/src/tokens.css` revert it.
+- **Terminal containment on Linux.** `sandbox = "project"` now holds on Linux with bubblewrap (`install.sh` offers it with the other
+  helper apps). Without a working bubblewrap a command is refused before you are asked about it, never run uncontained. Windows has
+  no containment yet; the approval line says "not kept inside the project folder on Windows". `sandbox = "full"` is unchanged.
+- **Phone.** Allow, Decline and Answer on a Companion notification work from the lock screen; Answer takes typed text and never
+  answers for you. The phone's Companion calls now reach routes the server has (they went to a path that did not exist).
+- **Installs.** A fresh one-command install opens the app again: the committed web UI was missing its files, so every install from
+  `main` since 02:31 UTC today opened a blank window. The web UI is committed in full, CI fails when it is out of date, `--status`
+  checks the page's files, and the release zip ships the build it just made.
+- **Sign in.** The tools key no longer mints a window session; only the native window's own key does. Breaking only for something
+  outside this repository that used the tools key at `/api/desktop/local-session`.
+- **Models.** The terminal, browser and desk default to `claude-sonnet-5-5` like the app, send no temperature to Claude (current
+  models refuse one), and price the current Claude models.
+- **Analysis sandbox.** Calls into libc through `ctypes.pythonapi` are refused, not only newly opened libraries.
+- Migration: none. Rollback: `main` at 5579160. Secrets are unchanged; nothing needs rotating.
+
 ## 2026-11-07 · The Room says which shell it has; agent receipts are tested for secrets · branch claude/agents-on-ci-green
 
 Builds on `fix/main-ci-green` (its redaction resync and Git for Windows shell for the Room).

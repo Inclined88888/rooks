@@ -17,6 +17,22 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Scheduled later
 
+* **Rooks Browser app (branch `feat/browser-app`, 2026-11-07).** An Electron browser the agent drives, from the Computer and Browser
+  Control session, which ended at its usage limit after one commit and no pull request. Not merged: unreviewed and untested here
+  (its window settings read right: sandboxed views, context isolation, no Node, a fixed preload list). Review it on its own.
+* **Coworkers are set up in the app only.** The terminal and the browser can answer the job cards through Needs you but cannot
+  pick a line of work or propose a team (AGENTS.md parity rule). A `/team` terminal command over `/api/starters` would close it.
+* **The coworkers' live mail slice runs only where Dovecot is installed** (`test_starters.py`), so CI skips it. Install
+  `dovecot-imapd` in the backend job, or add a variant on the suite's mail fake.
+* **Windows: no containment for terminal commands.** The default mode runs them with the user's permissions and the approval line
+  says so. A Windows sandbox (AppContainer or a restricted token) is the real fix.
+* **The Companion token in `~/.rooks/companion.json`** is read by the notch app and by agent hooks and answers Companion requests,
+  so it sits inside the same operating-system-user boundary as the other 0600 files (docs/security/agent-credentials.md).
+* **Glass navigation is a design decision for the owner to confirm** (CHANGELOG 2026-11-07, integration entry).
+* **Haiku 5.5's long-prompt price tier** is priced in the terminal only; the app shows the catalog list price.
+* **The Workbench image push** (`ghcr.io/inclined88888/ai-workspace-workbench`) is denied: the package belongs to the old repository.
+  Fix on GitHub: the package's settings, Manage Actions access, add `rooks` with write.
+
 * **Claude Code launcher add-on (Item 116, decision D2).** Merged to `main` as an optional official CLI hand-off in `cli-launcher/` (Compose profile `claude-code`). Item 117 (Codex) is merged on the same transport. Still open: a maintainer has to validate live subscription login and a real prompt. Node stays in the add-on (R6).
 * **Idempotency across interleaved writes (item 28 follow up).** A model loop of the form A, B, A runs A twice, because a repeat is only recognised when no other change ran in between (so toggles keep working). Closing it needs per tool semantics (which writes are naturally idempotent). Design record 0001, "Idempotency keys".
 * **The web chat does not send an Idempotency-Key yet.** It never retries a request, so there is nothing to deduplicate; the CLI (item 84) should send one.
