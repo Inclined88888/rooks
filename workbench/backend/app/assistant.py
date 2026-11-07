@@ -79,6 +79,8 @@ class Ctx:
     blocked_hits: int = 0              # attempts to run a blocked call; the second one ends the turn
     work_mode: str = "chat"            # chat | plan | build — same names as the terminal
     live: object = None                # queue of watch events a long tool can publish while it runs
+    held_repeats: int = 0              # calls that asked again for an OK already waiting; one ends the turn (B3)
+    held_title: str = ""               # what that waiting request is, in Needs you's own words, for the turn's last line
 
     def trace(self) -> dict:
         return {"channel": self.channel, "conversation_id": self.conversation_id,
@@ -267,6 +269,81 @@ async def _use_computer(goal: str, max_steps: int = 12, dry_run: bool = False, c
             "note": "Waiting for your approval on the Computer page." if told else "Still working; watch it on the Computer page."}
 
 
+TOOL_USE_ROOM = "use_room"
+ROOM_CONFIRM = "This uses the Room, Rooks's own computer. In a private folder, commands run as you."
+ROOM_PROMPT = ("If they want to try something, install things, or work on files without touching this computer, call "
+               "use_room. It asks them first. A private folder runs commands as them; a private desktop or a Linux guest "
+               "keeps their desktop alone. Say what the Room really is from the result, and only say it is on when up "
+               "returned running.")
+
+
+def _room_enabled() -> bool:
+    """A real Room is here (design 0003, section 4, rule 6): never the drawn terminal."""
+    from . import room
+
+    return room.enabled()
+
+
+def _room_confirm(args: dict) -> str:
+    """Every use of the Room asks first, except a status check and a hand-off, which makes its own held request
+    (one yes, not two)."""
+    return "" if str(args.get("action") or "status").strip().lower() in ("status", "handoff") else ROOM_CONFIRM
+
+
+def _room_facts(st: dict) -> dict:
+    """What the Room really is, for the reply to repeat: never "a computer", always the label and how separate it is."""
+    return {"label": st.get("label") or "", "isolation": st.get("isolation") or "none", "screen": bool(st.get("screen")),
+            "pointer": bool(st.get("pointer")), "note": st.get("note") or "", "home": st.get("home")}
+
+
+async def _use_room(action: str = "status", command: str = "", goal: str = "", label: str = "", name: str = "",
+                    src: str = "", dest: str = "", request_id: str = "", timeout: int = 120, ctx: "Ctx | None" = None) -> dict:
+    """The Room: Rooks's own computer on this machine (design 0003). Every result says what the Room really is so the
+    reply can repeat it. up publishes a watch event for the Stage. handoff never copies on its own: it holds the copy
+    in Needs you, and the copy runs when a person says yes there (the held call runs back through here, with its
+    approved request id)."""
+    from . import room
+
+    action = (action or "status").strip().lower()
+    if not room.enabled():
+        return {"ok": False, "message": "The Room is not available on this computer."}
+    if action == "status":
+        return await room.perform("status")
+    if action == "up":
+        st = await room.perform("up")
+        on = bool(st.get("running"))
+        if on:
+            _publish_watch(ctx, "room", "room", goal or "The Room")
+        return {"running": on, **_room_facts(st), "error": None if on else "The Room did not start."}
+    if action == "down":
+        st = await room.perform("down")
+        return {"running": bool(st.get("running")), **_room_facts(st)}
+    if action == "run":
+        if not (command or "").strip():
+            return {"ok": False, "error": "Say what command to run in the Room."}
+        if not (await room.perform("status")).get("running"):  # only up starts it, so the Stage and the run log see it
+            return {"ok": False, "error": room.ROOM_OFF}
+        return await room.perform("run", {"command": command, "timeout": timeout})
+    if action == "checkpoint":
+        return await room.checkpoint(label or "")
+    if action == "reset":
+        return await room.reset_to(name or None)
+    if action == "handoff":
+        if request_id:
+            req = room.handoff_request(request_id)
+            if req and (req["src"], req["dest"]) == ((src or "").strip(), (dest or "").strip()):
+                return await room.perform_handoff(src, dest, request_id)  # pending: still held; approved: copies once
+        out = room.request_handoff(src, dest, conversation_id=ctx.conversation_id if ctx else None,
+                                   channel=ctx.channel if ctx else "web")
+        if out.get("already_asked") and ctx is not None:
+            from .needs_you import _title
+
+            ctx.held_repeats += 1  # the same file asked for twice: the turn stops asking (one request in Needs you)
+            ctx.held_title = _title(TOOL_USE_ROOM, {"action": "handoff", "src": src})
+        return out
+    return {"ok": False, "error": f"The Room cannot do {action}."}
+
+
 def _remember(content: str, kind: str = "fact", ctx: Ctx | None = None) -> dict:
     """Saved in the encrypted learn store (adapt.knowledge), shown on "What I know about you"."""
     from .adapt import knowledge
@@ -437,7 +514,7 @@ async def _send_email(to: str, subject: str, body: str, in_reply_to: str = "", a
     acct = (db.one("SELECT * FROM mail_accounts WHERE id = ?", account_id) if account_id
             else db.one("SELECT * FROM mail_accounts ORDER BY id LIMIT 1"))
     if not acct:
-        raise HTTPException(404, "No mail account connected in Workbench")
+        raise HTTPException(404, "No mailbox is connected yet. Connect one on the Mail page.")
     mid = await asyncio.to_thread(mail.send, acct, to, subject, body, in_reply_to or "")
     return {"sent": True, "from": acct["email"], "to": to, "subject": subject, "message_id": mid}
 
@@ -550,6 +627,18 @@ TOOLS: list[Tool] = [
          {"goal": S("the whole task, self contained"), "max_steps": I(), "dry_run": B("plan and describe only, change nothing")},
          _use_computer, ("goal",), effect="external", untrusted=True,
          confirm=lambda a: "This uses the computer in front of you."),
+    Tool("use_room", "Use the Room: Rooks's own computer on this machine (a private desktop, a Linux guest, or a private "
+         "folder and shell), never the person's own desktop. Call it when they want to try something, install things, or "
+         "work on files without touching this computer. Actions: status; up (start it; goal says what you will do there); "
+         "down; run (a shell command inside it); checkpoint (save a point; label); reset (start over from a saved point: "
+         "name, or the last one); handoff (copy a file out: src inside the Room, dest on this computer; it only asks the "
+         "person and never copies by itself). Every result says what the Room really is (label, isolation, screen): "
+         "repeat that, and never say the Room is on unless up returned running.",
+         {"action": S("status|up|down|run|checkpoint|reset|handoff"), "goal": S("for up: what you will do there"),
+          "command": S("for run"), "label": S("for checkpoint"), "name": S("for reset: the saved point; empty for the last one"),
+          "src": S("for handoff: the file inside the Room"), "dest": S("for handoff: where to put it on this computer")},
+         _use_room, ("action",), effect="external", untrusted=True, when=lambda ctx: _room_enabled(),
+         confirm=_room_confirm),
     # Memory
     Tool("remember", "Save a durable fact about the user. kind: profile (who they are), preference, or fact.",
          {"content": S(), "kind": S()}, lambda content, kind="fact", ctx=None: _remember(content, kind, ctx), ("content",),
@@ -679,6 +768,8 @@ def hold_reason(t: Tool, ctx: Ctx, args: dict) -> str:
             why = "This action needs your approval."
         if why:
             return why
+    if t.name == TOOL_USE_ROOM and str(args.get("action") or "").strip().lower() == "handoff":
+        return ""  # its copy always waits on a held request of its own in Needs you: one yes, not two
     if ctx.tainted and t.effect in GATED_EFFECTS:
         return HOLD_REASON
     if ctx.channel == "automation" and t.effect in GATED_EFFECTS:  # feat/v02-automations: triggered jobs always ask first
@@ -752,6 +843,10 @@ def _call_signature(name: str, raw_args: str) -> str:
 REPEAT_BLOCKED = ("Blocked: {name} with these exact arguments already failed {n} times in a row this turn "
                   "({error}). It will not be run again. Change the arguments or approach, ask the user, or answer "
                   "without it.")
+HELD_AGAIN = ("Not run: {name} is already waiting for the user's approval (request #{aid}). It was not asked for again. "
+              "Tell the user you are waiting for their answer, then stop.")
+HELD_AGAIN_FINAL = ("I need your OK first: {title}. I asked once and stopped instead of asking again; it is waiting for "
+                    "your answer in Needs you.")
 
 
 async def run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) -> tuple[bool, str]:
@@ -779,6 +874,23 @@ async def run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) -
         out += (f"\n[This exact call has now failed {n} times in a row with the same error and is blocked for the rest "
                 "of this turn. Try something different or tell the user what is wrong.]")
     return ok, out
+
+
+def _already_waiting(ctx: Ctx, name: str, args: dict) -> int | None:
+    """The id of a held call in this conversation with the same tool and arguments that nobody has answered yet."""
+    if not ctx.conversation_id:
+        return None
+    canon = json.dumps(args, sort_keys=True)
+    for a in actions.pending(ctx.conversation_id):
+        if a["tool"] != name:
+            continue
+        try:
+            theirs = json.loads(a["args"] or "{}")
+        except ValueError:
+            continue
+        if isinstance(theirs, dict) and json.dumps(theirs, sort_keys=True) == canon:
+            return a["id"]
+    return None
 
 
 async def _run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) -> tuple[bool, str]:
@@ -814,6 +926,16 @@ async def _run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) 
         return done(False, f"Invalid arguments: {e}", "bad_args")
     reason = "" if approved or TERMINAL_MAP.get(name) is t else hold_reason(t, ctx, args)
     if reason:
+        waiting = _already_waiting(ctx, name, args) if ctx.channel not in UNATTENDED else None
+        if waiting:  # B3: one approval per request, however often the model asks; the second ask ends the turn
+            from .needs_you import _title
+
+            ctx.held_repeats += 1
+            ctx.held_title = _title(name, args)
+            done(False, "", "duplicate", None, "", detail=f"the same call is already waiting for the user's OK as request #{waiting}; not asked again")
+            ctx.receipts[-1]["reason"] = reason
+            ctx.receipts[-1]["waiting"] = waiting
+            return False, HELD_AGAIN.format(name=name, aid=waiting)
         done(False, "", "denied" if ctx.channel in UNATTENDED else "held", payload=raw_args or "{}", detail=reason)
         ctx.receipts[-1]["reason"] = reason
         if ctx.channel not in UNATTENDED:
@@ -889,6 +1011,8 @@ def system_prompt(ctx: Ctx, user_text: str) -> str:
         "browser opens. Never say a work site is missing, and never tell them to add a site, instead of calling browse_web. "
         "If the user asks to use this computer, call use_computer. That asks them first. Do not say computer use is off.",
     ]
+    if _room_enabled():
+        parts.append(ROOM_PROMPT)
     if ctx.channel == "web":
         parts.append(
             "When you need the user to pick one of a few options, call offer_choices with a short question and "
@@ -942,6 +1066,17 @@ def system_prompt(ctx: Ctx, user_text: str) -> str:
 INTERRUPTED = "Error: not run. The turn was interrupted before this tool ran."
 CLAIM_NUDGE = ("[Automatic check, not from the user: your answer said \"{claim}\", but {why}. Fix it with the right tool "
                "call if the user asked for it, or answer again saying only what is actually true.]")
+NOTE_WRAP = "[Automatic note, not from the user: {text}]"  # how a system row in the record (a restart note) reads to the model
+# Compaction (B3): when the prompt does not fit the model, the oldest tool results are replaced by one line stubs that
+# still lead to the full result (tool_results.py), the budget is halved, and the call is made again, a few times.
+SHRINK_TRIES = 3
+STUB_MIN_CHARS = 600  # a shorter result is kept whole: a stub would save nothing
+STUB = ("[Result {rid} from {tool} ({chars:,} characters) was left out to fit the model's window. "
+        "Read it with read_tool_result(result_id=\"{rid}\") if you need it.]")
+LOST = "[A {chars:,} character result from {tool} was left out to fit the model's window and could not be kept.]"
+TOO_LONG = "This chat got too long for the model. Start a new chat or pick a model with more room."
+_STORED = re.compile(r"\[Result (\w+) from \S+ is [\d,]+ characters")  # a result tool_results.fit already stored
+_SHRINK: dict[tuple[int, str], int] = {}  # (conversation, model): how far the window had to shrink last time
 
 
 def _history(conversation_id: int, budget_chars: int = 300_000) -> list[dict]:
@@ -958,13 +1093,22 @@ def _cost(m: dict) -> int:
     return len(json.dumps(m, ensure_ascii=False))
 
 
-def _history_window(conversation_id: int, budget_chars: int = 300_000) -> tuple[list[dict], int | None]:
-    """The recent conversation as model messages, repaired and cut to fit the model's window, plus the id of the
-    first message kept (None when nothing was kept). Older messages are covered by compression's rolling summary.
+@dataclass
+class Window:
+    """The history as it goes to the model, and what was done to make it fit."""
+    messages: list[dict]
+    first_kept: int | None       # id of the first message kept (None when nothing was)
+    cut: bool = False            # rows were dropped to fit the character budget, not only the row cap
+    stubbed: int = 0             # tool results in the window replaced by a one line stub
+    left_out: int = 0            # rows of the loaded history not sent as they are: dropped plus stubbed
+
+
+def _window_rows(conversation_id: int) -> tuple[list[dict], list[int | None], list[str]]:
+    """The newest rows as model messages, repaired: (messages, message id per row, tool name per row).
 
     Repair: a turn interrupted between a tool call and its result (Stop button, closed tab, restart) would leave a call
     without an answer, which OpenAI and Anthropic reject on every later request. Missing results are filled in.
-    Budget: oldest messages go first, and the cut always lands on a user message so tool exchanges stay whole.
+    A system row (a note the app wrote into the record, such as a restart) reads to the model as an automatic note.
     """
     rows = db.all("SELECT * FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT ?", conversation_id, HISTORY_MESSAGES)[::-1]
     # feat/attachments: only the newest few images go as pixels; older ones become a one-line note
@@ -978,11 +1122,13 @@ def _history_window(conversation_id: int, budget_chars: int = 300_000) -> tuple[
                 left -= n
     out: list[dict] = []
     ids: list[int | None] = []
+    tools: list[str] = []
     pending: list[str] = []
 
     def close_pending() -> None:
         out.extend({"role": "tool", "tool_call_id": cid, "content": INTERRUPTED} for cid in pending)
         ids.extend(None for _ in pending)
+        tools.extend("" for _ in pending)
         pending.clear()
 
     for r in rows:
@@ -991,6 +1137,7 @@ def _history_window(conversation_id: int, budget_chars: int = 300_000) -> tuple[
                 pending.remove(r["tool_call_id"])
                 out.append({"role": "tool", "tool_call_id": r["tool_call_id"], "content": r["content"]})
                 ids.append(r["id"])
+                tools.append(r.get("name") or "")
             continue  # a result without its call (cut off by the window) is dropped
         close_pending()
         if r["role"] == "assistant":
@@ -999,24 +1146,107 @@ def _history_window(conversation_id: int, budget_chars: int = 300_000) -> tuple[
                 m["tool_calls"] = json.loads(r["tool_calls"])
                 pending = [tc["id"] for tc in m["tool_calls"]]
             out.append(m)
+        elif r["role"] == "system":
+            out.append({"role": "user", "content": NOTE_WRAP.format(text=r["content"])})
         elif r.get("attachments"):
             metas = json.loads(r["attachments"])
             out.append({"role": "user", "content": attachments.content_parts(r["content"], metas, r["id"] in pixels_for)})
         else:
             out.append({"role": "user", "content": r["content"]})
         ids.append(r["id"])
+        tools.append("")
     close_pending()
+    return out, ids, tools
+
+
+def _stub_tool_rows(conversation_id: int, out: list[dict], ids: list[int | None], tools: list[str], budget: int) -> set[int]:
+    """Compaction: replace the oldest long tool results with one line stubs until the rows fit the budget. Each result
+    is kept in tool_results first (or was already there), so read_tool_result still leads to it. The newest result is
+    what the model is acting on and stays whole. Returns the rows that were stubbed."""
+    total = sum(_cost(m) for m in out)
+    done: set[int] = set()
+    for i in [i for i, m in enumerate(out) if m["role"] == "tool"][:-1]:
+        if total <= budget:
+            break
+        m = out[i]
+        content = m.get("content") if isinstance(m.get("content"), str) else ""
+        if len(content) < STUB_MIN_CHARS:
+            continue
+        tool = tools[i] or "a tool"
+        stored = _STORED.search(content[:600])
+        rid = stored.group(1) if stored else tool_results.stash(conversation_id, ids[i], tool, content,
+                                                                content.startswith("[Untrusted content from"))
+        stub = STUB.format(rid=rid, tool=tool, chars=len(content)) if rid else LOST.format(tool=tool, chars=len(content))
+        new = {**m, "content": stub}
+        total -= _cost(m) - _cost(new)
+        out[i] = new
+        done.add(i)
+    return done
+
+
+def history_window(conversation_id: int, budget_chars: int = 300_000, shrink: int = 0) -> Window:
+    """The recent conversation as model messages, repaired and cut to fit the model's window. Older messages are
+    covered by compression's rolling summary.
+
+    Budget: oldest messages go first, and the cut always lands on a user message so tool exchanges stay whole.
+    shrink (compaction, B3): the budget is halved that many times and the oldest tool results are stubbed before
+    whole exchanges are dropped.
+    """
+    out, ids, tools = _window_rows(conversation_id)
     starts = [i for i, m in enumerate(out) if m["role"] == "user"]
     if not starts:
-        return [], None
-    used, keep_from = 0, starts[-1]
+        return Window([], None)
+    budget = max(0, budget_chars) >> max(0, shrink)
+    stubs = _stub_tool_rows(conversation_id, out, ids, tools, budget) if shrink else set()
+    used, keep_from, over_at = 0, starts[-1], None
     for i in range(len(out) - 1, -1, -1):
         used += _cost(out[i])
-        if used > budget_chars:
+        if used > budget:
+            over_at = i
             break
         if i in starts:
             keep_from = i
-    return out[keep_from:], ids[keep_from]
+    kept_stubs = sum(1 for i in stubs if i >= keep_from)
+    # cut: the budget stopped the walk at a row from the first exchange on. The rows the row cap leaves in front of
+    # the first user message (the tail of an older exchange) are dropped anyway, and are not a budget cut.
+    cut = over_at is not None and over_at >= starts[0]
+    return Window(out[keep_from:], ids[keep_from], cut=cut, stubbed=kept_stubs, left_out=keep_from + kept_stubs)
+
+
+def _history_window(conversation_id: int, budget_chars: int = 300_000, shrink: int = 0) -> tuple[list[dict], int | None]:
+    """history_window as (messages, id of the first message kept)."""
+    w = history_window(conversation_id, budget_chars, shrink)
+    return w.messages, w.first_kept
+
+
+def _summary_model(model: str | None) -> str | None:
+    return "auto:fast" if router.is_auto(model) else model
+
+
+async def _prompt(ctx: Ctx, model: str | None, system: str, specs: list[dict], budget: int, shrink: int,
+                  state: dict) -> tuple[str, Window, dict | None]:
+    """The system message with the rolling summary, and the history window, for one model call.
+
+    When the window had to drop rows to fit the character budget, or is being compacted, the summary of what fell out
+    is refreshed first and awaited, so the model sees it now rather than next turn (B3). When rows only fell past the
+    row cap, the refresh runs in the background, as before."""
+    cid = ctx.conversation_id
+    summary = compression.history_summary(cid) if compression.enabled() else None
+    note = ("\n\n" + compression.SUMMARY_NOTE + summary["summary"]) if summary else ""
+    window = history_window(cid, budget - len(system) - len(json.dumps(specs)) - len(note), shrink)
+    awaited = state.setdefault("awaited", set())  # compaction levels already summarised (or tried) this turn
+    if compression.enabled() and window.first_kept:
+        if (window.cut or shrink) and shrink not in awaited:
+            # Awaited once per compaction level per turn, whether it worked or not: a summariser that is slow or
+            # failing is not waited on again before every step. Later steps fall back to the background refresh.
+            if compression.needs_summary(cid, window.first_kept, minimum=1):
+                awaited.add(shrink)
+                if await compression.refresh_history_summary(cid, _summary_model(model), window.first_kept, minimum=1):
+                    summary = compression.history_summary(cid)
+                    note = "\n\n" + compression.SUMMARY_NOTE + summary["summary"]
+        elif not state.get("summarising") and compression.needs_summary(cid, window.first_kept):
+            state["summarising"] = _spawn(compression.refresh_history_summary(cid, _summary_model(model), window.first_kept))
+    return system + note, window, summary
 
 
 def new_conversation(channel: str, title: str = "New chat", external_id: str = "", agent_id: int | None = None) -> int:
@@ -1090,6 +1320,11 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
     if not ctx.skip_save:
         _save(ctx.conversation_id, "user", user_text, attachments=ctx.attachments)
     ctx.live = asyncio.Queue()
+    from . import restart  # B3: a turn that follows one cut off by a restart says so first
+
+    resumed_at = restart.resumed_from(ctx.conversation_id, ctx.turn_action_id)
+    if resumed_at:
+        yield {"type": "resumed", "reason": "restart", "at": resumed_at}
     if ctx.channel in ("web", "cli") and user_text.strip():
         from . import front_door
 
@@ -1111,10 +1346,9 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
     "SELECT 1 FROM (SELECT attachments FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT ?) "
     "WHERE attachments LIKE ? LIMIT 1", ctx.conversation_id, HISTORY_MESSAGES, '%"kind": "document"%'))  # json.dumps form
     budget = llm.context_chars(model)
-    summarising = None
+    shrink = _SHRINK.get((ctx.conversation_id, ctx.model), 0)  # how far the window had to shrink earlier in this chat
+    state: dict = {"summarising": None}
     nudged = False
-    cost = 0.0
-    final = ""
     cost = 0.0
     final = ""
     limit = max_steps(ctx.channel)
@@ -1163,42 +1397,54 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
                 yield {"type": "error", "error": f"{agent['name']} paused: {reason}", "budget": True}
                 return
         system = system_prompt(ctx, user_text)
-        summary = compression.history_summary(ctx.conversation_id) if compression.enabled() else None
-        if summary:
-            system += "\n\n" + compression.SUMMARY_NOTE + summary["summary"]
-        history, first_kept = _history_window(ctx.conversation_id, budget - len(system) - len(json.dumps(specs)))
-        if not summarising and compression.needs_summary(ctx.conversation_id, first_kept):
-            summarising = _spawn(compression.refresh_history_summary(
-                ctx.conversation_id, "auto:fast" if router.is_auto(model) else model, first_kept))
-        msgs = [{"role": "system", "content": system}, *history]
-        try:
-            from .adapters import ON_TEXT
-
-            pieces: asyncio.Queue = asyncio.Queue()
-            token = ON_TEXT.set(pieces.put_nowait)  # the answer streams in as the model writes it (models that can stream)
+        text, window, summary = await _prompt(ctx, model, system, specs, budget, shrink, state)
+        tries = 0
+        while True:  # B3: a prompt that does not fit is compacted and tried again, a few times, never fatal at once
+            msgs = [{"role": "system", "content": text}, *window.messages]
             try:
-                task = asyncio.ensure_future(llm.chat(model, msgs, specs, trace=ctx.trace()))
-            finally:
-                ON_TEXT.reset(token)  # only that call: background learning and later steps start clean
-            while not task.done() or not pieces.empty():
+                from .adapters import ON_TEXT
+
+                pieces: asyncio.Queue = asyncio.Queue()
+                token = ON_TEXT.set(pieces.put_nowait)  # the answer streams in as the model writes it (models that can stream)
                 try:
-                    yield {"type": "writing", "text": await asyncio.wait_for(pieces.get(), 0.25)}
-                except asyncio.TimeoutError:
-                    continue
-            res = task.result()
-            if res.get("router"):  # the smart router answered: say who, what it skipped, and what is left
-                yield {"type": "router", **res["router"]}
-        except asyncio.CancelledError:
-            yield _stopped(ctx)
-            raise
-        except HTTPException as e:
-            receipts.record_turn(ctx, "model_error", str(e.detail))
-            yield {"type": "error", "error": str(e.detail)}
-            done_so_far = receipts.summary(ctx.receipts)
-            if done_so_far:  # the model failed after tools changed things: say what is now true
-                _save(ctx.conversation_id, "assistant", done_so_far)
-                yield {"type": "message", "content": done_so_far}
-            return
+                    task = asyncio.ensure_future(llm.chat(model, msgs, specs, trace=ctx.trace()))
+                finally:
+                    ON_TEXT.reset(token)  # only that call: background learning and later steps start clean
+                while not task.done() or not pieces.empty():
+                    try:
+                        yield {"type": "writing", "text": await asyncio.wait_for(pieces.get(), 0.25)}
+                    except asyncio.TimeoutError:
+                        continue
+                res = task.result()
+                if res.get("router"):  # the smart router answered: say who, what it skipped, and what is left
+                    yield {"type": "router", **res["router"]}
+            except asyncio.CancelledError:
+                yield _stopped(ctx)
+                raise
+            except HTTPException as e:
+                too_long = router.prompt_too_long(e)
+                if too_long and tries < SHRINK_TRIES:
+                    # the prompt did not fit: compact the window (oldest tool results first), say so, and try again
+                    tries += 1
+                    text2, window2, summary2 = await _prompt(ctx, model, system, specs, budget, shrink + 1, state)
+                    if window2.left_out > window.left_out:
+                        shrink += 1
+                        yield {"type": "compacted", "dropped_rows": window2.left_out - window.left_out,
+                               "summary_words": len(((summary2 or {}).get("summary") or "").split())}
+                        text, window, summary = text2, window2, summary2
+                        specs = [t.spec() for t in available_tools(ctx)]  # read_tool_result, now that results are stored
+                        continue
+                detail = TOO_LONG if too_long else str(e.detail)
+                receipts.record_turn(ctx, "model_error", detail)
+                yield {"type": "error", "error": detail}
+                done_so_far = receipts.summary(ctx.receipts)
+                if done_so_far:  # the model failed after tools changed things: say what is now true
+                    _save(ctx.conversation_id, "assistant", done_so_far)
+                    yield {"type": "message", "content": done_so_far}
+                return
+            break
+        if shrink:
+            _SHRINK[(ctx.conversation_id, ctx.model)] = shrink  # the next turn starts from the window that fitted
         cost += (res["usd"] or 0) * 100
         msg = res["message"]
         calls = msg.get("tool_calls") or []
@@ -1210,7 +1456,7 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
                 db.run("UPDATE messages SET content = ? WHERE id = ?", final, mid)
                 receipts.record_turn(ctx, "empty_answer")
                 break
-            claim, why = receipts.unbacked_claim(final, ctx.receipts)
+            claim, why = receipts.unbacked_claim(final, ctx.receipts, conversation_id=ctx.conversation_id)
             if claim and not nudged:
                 # Never let an unconfirmed "done" reach the user: withdraw it and give the model one chance to act or correct it
                 nudged = True
@@ -1288,6 +1534,14 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
                     front_door.ping(f"I need a yes before I {fn['name'].replace('_', ' ')}. Open the chat to allow it or say no.")
                 yield {"type": "approval_required" if r["outcome"] == "held" else "approval_denied", "id": r["action_id"],
                        "tool": fn["name"], "args": fn["arguments"][:500], "effect": r["effect"], "reason": r.get("reason") or HOLD_REASON}
+        if ctx.held_repeats:  # it asked again for an OK that is already waiting: stop here instead of asking the model on
+            final = HELD_AGAIN_FINAL.format(title=ctx.held_title or "the step I asked about")
+            done_lines = [f"- {r['evidence']}" for r in ctx.receipts if r["verified"] is True and r["effect"] != "read"]
+            if done_lines:
+                final += "\n\nDone so far:\n" + "\n".join(done_lines)
+            _save(ctx.conversation_id, "assistant", final)
+            receipts.record_turn(ctx, "held")
+            break
         if ctx.blocked_hits >= 2:  # it was told the call is blocked and tried it again: stop instead of spinning
             final = ("I stopped because I kept retrying a step that failed the same way "
                      f"{REPEAT_LIMIT} times. " + (receipts.summary(ctx.receipts) or "Nothing was changed.") +

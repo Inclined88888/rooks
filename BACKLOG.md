@@ -27,8 +27,115 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
-## Found during work, not yet scheduled
+### Premium pass (2026-11-07): left undone, recorded at verification
 
+* **Page caching is partial.** Jobs, Tasks and reopened chats show cached data at once; Settings, Teach, Company and
+  Groups reload each visit, and Teach, Company and Groups keep their own pollers instead of the shared pulse.
+* **Legacy controls.** Some inner controls on Team, Channels and the trade pack still use the old `.btn` and `.input`
+  classes (already on the v3 tokens, not yet the primitives).
+* **Address bar routing.** Typing `/mcp` directly reaches the backend's MCP route and shows a plain error page; the app
+  links to `/extra-tools` and redirects `/mcp` only inside the app. Fix: a server side redirect for GET `/mcp` from a
+  browser, or rename the backend mount.
+* **Theme compatibility.** The backend, the phone app and saved settings still use the old theme ids; the web app maps
+  them (`themeSync.ts`: light to `gallery`, dark to `night`). `rooks-browser --theme` accepts only light, dark,
+  contrast and auto, not legacy names such as `cherry` (`ROOKS_THEME` does map them).
+* **Redaction copy drift (pre existing).** `rooks-browser` keeps a copy of the backend's `redact.py`; the backend gained
+  PEM and AWS patterns, so `rooks-browser/tests/test_units.py::test_redaction_is_a_verbatim_copy_of_workbench` fails at
+  the branch's base commit and at its tip.
+* **Terminal approvals with the bridge key (pre existing, not widened).** `/v1/rooks/approvals/{id}` lets a bridge key
+  record an answer to a terminal held row (`terminal:` request ids only). It runs nothing on the server, but a coding
+  job could record an answer to its own terminal prompt. Owner decision.
+* **Stored Terminal access token.** A coding job with shell access runs as the person and could read the token
+  `rooks login` stores; the read only bridge key closes the app's own routes, not a hostile local process.
+* **Not tested with a real model.** Every chat, Room and approval flow on this branch was tested with the scripted
+  harness model only; no provider key was available.
+* **Versions.** The terminal reports 0.1.0 (`rooks-code` package) while AGENTS.md calls the install 1.0.0.
+
+* **Four backend tests fail in the full run on `main` (b09f947) and on `feat/workroom`; each passes alone (verified
+  2026-11-07 at both commits).** `test_connect_mail_calendar::test_assistant_reads_and_drafts_with_microsoft`
+  (`assert False`), `test_desk::test_desk_emails_a_render_with_attachments` (`'a@work.example' == 'me@example.com'`),
+  `test_health::test_status_page_reports_every_part_and_the_worst_wins` (`'down' == 'ok'`) and
+  `test_lock_reset::test_forgotten_pin_can_be_replaced` (`429 == 200`, the in-memory login throttle) fail with the same
+  assertion at both commits. They are test isolation problems (state left by earlier tests), not environment
+  failures as earlier notes said. rooks-code's `test_project_sandbox` is environmental (`bwrap` is not installed in
+  the container). Fix or quarantine them on `main` with their own record.
+* **Compaction forgets its level on restart, and only one level per chat and model is kept (B3 of feat/workroom).**
+  `assistant._SHRINK` remembers in memory how far a chat's window had to shrink so the next turn starts there; after a
+  restart the first turn of such a chat pays one failed model call again before it compacts. Keeping the level in
+  `conversation_summaries` would remove that call. Also, a `prompt too long` answer from a provider that is really a
+  per-minute token limit (Groq's 413) is compacted rather than waited out; harmless, but it shrinks more than needed.
+  Older quirk left alone: any other provider 4xx (not 429, 401, 403 or 404) is classed as "not responding", because
+  `ProviderError` always carries 502. The `prompt too long` phrasings are tested only against fake servers.
+* **A restart note is a system row the thread does not show yet (B3 of feat/workroom).** `restart.py` writes
+  `role: system, name: restart` into the conversation ("Rooks restarted during this turn. These steps were cut off and
+  not run: ..."). The model reads it as an automatic note; `GET /api/conversations/{id}` returns it; the chat's
+  `rebuildTurns` ignores system rows. The thread still does not show it after lane F (`chat/Thread.tsx` keeps only
+  user and assistant rows; `rebuildTurns` has no system branch), so on reload a cut off turn carries no note; render
+  `role: system, name: restart` rows as a turn notice, the way the live `resumed` event is shown. The terminal
+  (`rooks`) does not show it either, and its shared loop passes the `resumed` and `compacted` events by in silence.
+* **Goals resumed after a restart run at once, side by side (B3 of feat/workroom).** `restart.resume_goals` starts
+  one turn per opted in goal when the app comes up, with no cap and before the person has seen the app; a limit (one
+  at a time, or a short delay) is a decision for the owner.
+* **The Room's pointer and keyboard steps are not in the run log (B2 of feat/workroom).** `/api/room` records up,
+  down, saved points, start over, commands and copies out (channel `room`); click, drag, scroll, type and key are not
+  recorded, because a person stepping in produces several a second and would swamp the log. Design 0003, section 4,
+  rule 4 says "every Room action"; decide whether to record them in batches (one row per step-in session) or to leave
+  them out and say so on the page.
+* **Done in B3: a repeated hand-off request no longer makes a second held item.** `room.request_handoff` joins a
+  pending request for the same file and place (`already_asked`), and the chat turn stops asking.
+* **The terminal's Room MCP server lets the calling agent set `approve: true` on handoff.** In the app, the copy out
+  of the Room waits for a person in Needs you. In the terminal, `rooks-try mcp` takes the agent's own flag; rooks-code
+  treats the server as untrusted, so its usual approval prompt is the only gate. Replace the flag with an MCP
+  elicitation question, as Rooks Desk does, so a person answers in the terminal too.
+* **The Room has no real screen on macOS and Windows yet.** Only the private folder and shell (and the drawn terminal
+  by name) work there; a virtual machine driver (Apple Virtualization or QEMU with a guest agent and an in-process
+  screen viewer) is the next driver behind the same interface. Design 0003 records this as out of scope for the branch.
+  The QEMU driver itself is untested here (no QEMU, no `/dev/kvm`): its screen and pointer need `vncdotool`, its
+  commands a guest agent. The `namespace` isolation is Linux only and needs unprivileged user namespaces.
+
+* **Presence polling fills the outbound audit log with loopback rows (R8 follow-up, found in B1 of feat/workroom).**
+  Every call to the desk and browser helpers on this computer is an `egress` row (effect `local`). The presence strip
+  polls every second; `needs_you` keeps the helpers' answer for five seconds, so with both helpers on an open app adds
+  about 35,000 local rows a day on top of Telegram's 2,880. Two ways out, both decisions for the owner: the retention
+  setting already listed above, or exempting loopback helper polls from the audit (they never leave the machine, and
+  `local_only` ignores them anyway). Until then the five second keep is the only brake. The same decision covers the
+  open Needs you sheet, which asks the helpers fresh every five seconds, and the Room's picture in `TRY_URL` mode,
+  where each frame is one audited request to the helper.
+* **A yes in Needs you starts the Room without opening the Stage (F2/F3 of feat/workroom).** `assistant.decide`
+  runs an approved `use_room up` with a `Ctx` that has no live queue, so `_publish_watch` sends no `watch` event and
+  the stored row is the plain '[I approved ...]' line, not the Room card; only an `up` that runs inside a turn opens
+  the Stage. Either publish to the conversation's open turn (or let the Room page's status store, which already shows
+  the Room as on, open the Stage) or say on the card that the Stage opens from the Room page.
+* **The terminal cannot see the presence line or the Needs you inbox (B1 of feat/workroom).** `GET /api/presence`
+  and `GET /api/needs-you` have no `/v1/rooks` route. The terminal's `/v1/rooks/approvals` only raises and answers
+  its own file and command approvals (request ids `terminal:`), which do show in the app's inbox; a Room hand-off or
+  any other held item is answered in the app only, and in the shared loop the terminal just prints that the tool is
+  waiting in the app. Decide whether `rooks` gets a bridge route for the inbox (and a `/needs` command) or whether
+  presence stays an app only feature; AGENTS.md says the surfaces must match.
+* **Frontend gaps left by F1 to F4 of feat/workroom.** On the chat page the first Tab reaches the composer, not the
+  skip link (`pages/Assistant.tsx` scrolls the thread end into view on every change). Approval cards print raw
+  arguments through `argsLine` (`chat/turns.ts`), ids included, and the Room's stored status shows its home folder
+  (`HIDDEN_KEY` lacks `home`); decide whether the card must show the exact arguments or a plain line. The Room's
+  picture is a full PNG every second with no diffing or frame rate control, and the isolation badge shows twice on
+  the Room page. The `TRY_URL` path to a separate `rooks-try serve` is tested only against a fake helper.
+* **Smaller open gaps from feat/workroom, one per line:**
+  * QUICKSTART.md does not name `rooks-try` (the Room), still says "All three use the same models" and lists only `rooks` and `rooks-browser` as uv tools (outside the docs lane of this branch).
+  * rooks-code/README.md does not say that `rooks-desk` and `rooks-try` are added as the untrusted MCP servers `desk` and `room`, nor the `[mcp] desk = false` / `room = false` and `ROOKS_DESK_MCP=0` / `ROOKS_TRY_MCP=0` switches (outside the docs lane of this branch).
+  * The Room's approval card gives one fixed reason for every Room action; building it from what the Room says it is (private folder, private desktop, guest) would be clearer (review finding honesty-copy-7, judged polish).
+  * A reloaded chat timeline has no tool arguments (the conversation rows carry only tool names), so a step reads "Using the Room" until opened and the run log fills it in.
+  * The step detail is drawn below the whole timeline with a caption, not under the step that was picked; the `Timeline` primitive has no slot for it.
+  * Conversation titles are clipped at about 80 characters when stored, with no ellipsis.
+  * History prints the raw model reference in "Default model changed to ..." (`history.py`), and the Tasks page prints due dates as ISO dates.
+  * The Room's double click is sent as two single clicks close together; the program in the Room decides whether it is a double click.
+  * The Stage's terminal surface only points to the terminal page; it does not embed the terminal.
+  * The browser and desktop surfaces on the Stage were not exercised live (no Rooks Browser or Rooks Desk in the build container).
+  * Only Studio and Lamp were captured on the new shell; Sunshine, Paper, Cherry, Neon, High contrast and Linen, the Beside screen picker and widths between 900 and 1280 px were not checked by eye; Automations was checked only with an empty list.
+  * The terminal window stays dark in both modes (`--screen-*` tokens and the xterm theme in `TerminalPage.tsx`); a terminal that follows Studio and Lamp needs both changed together.
+  * The no-hex guard does not catch named colour words.
+  * The `Tabs` primitive is built but no page uses it yet; `PackTrade.tsx` keeps its own small dictation hook instead of `DictateButton`.
+  * The desktop sidecar does not start `rooks-try serve`; the desktop app uses the Room in process.
+  * `test_needs_you::test_unknown_ids_are_404` gained a "GET is 200" precondition after it was found passing vacuously; the precondition was not re-run against the old code.
+  * No linter is installed in `~/.venvs/aiw` or `~/.venvs/rooks`; the branch's Python was byte-compiled and tested, not linted.
 * **Windows skill sandbox (AppContainer/Job objects).** macOS Seatbelt and Linux bubblewrap are implemented; Windows isolation is planned but not wired. `isolation_layers()` reports "Windows isolation not implemented (AppContainer/Job objects planned)". See docs/skills-security.md for the design.
 * **Deleted conversation ids are reused, and the run log follows the id.** `conversations.id` is a plain `INTEGER PRIMARY KEY`, so deleting the newest conversation lets SQLite give its id to the next one. `actions` rows are kept on delete (the ledger, R2) and still carry the old `conversation_id`. The new conversation's trace then shows the deleted one's turns and tool calls. Found by a test in feat/rea-p0-harness. Fix: `AUTOINCREMENT` on conversations (needs a table rebuild in a migration), or null `actions.conversation_id` on delete.
 * **Bridge tokens for other local tools (item 103, Phase 1).** `/v1` accepts only `BROWSER_API_KEY` today. Other OpenAI-only tools (editors, scripts) need user-created, revocable bridge tokens and streaming (`stream: true` is refused with 400 for now).

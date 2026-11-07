@@ -4,6 +4,125 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## 2026-11-07 · Premium pass: restraint · branch feat/workroom
+
+Design record: `docs/design/0003-workroom.md` section 6 (design system v3, restraint).
+
+- **Removed:** the thinking shimmer, word by word reply reveal, cursor trail, approval spring, drawn tick, working
+  border and every decorative glow; the Motion page; the Sunshine, Paper, Cherry, Neon, Linen, Gallery, Studio and Lamp
+  themes; the Bodoni serif.
+- **Look:** Light, Dark and High contrast; one sans family, mono only for code, commands and receipts; one type scale
+  (12/13/14/16/20/28), one 4 px grid, radius 6/10, hairline borders, one shadow for floating things only; neutral
+  colours with amber only for what is live or needs you. The only motion is a fade of 150 ms or less. The Room keeps a
+  still amber border while you have stepped in.
+- **Every page** rebuilt on the shared primitives with loading, empty and error states and a phone layout.
+- **Speed:** one pulse request carries presence, Needs you and job notices. Background requests a minute: chat 62 to
+  6, the Room 94 to 28, Jobs 48 to 10, Tasks 24 to 6. Pages warm on hover; Jobs, Tasks and chats reopen from cache.
+- **Keyboard:** everything in ⌘K with shortcut hints; `?` lists every shortcut; g then c, r, j, t, m or s moves
+  between Chat, Room, Jobs, Tasks, Mail and Settings.
+- **Terminal:** the same three themes, names and calm look; `/room`, `/needs`, `/jobs` and one `/help`. The terminal's
+  own sign in (Terminal access) can start the Room and answer Needs you; the app.json bridge key, which coding jobs the
+  app starts also hold, can only read them.
+- **Moved:** Extra tools is at `/extra-tools` (`/mcp` redirects); Packs is reachable again under More.
+- Migration: none. A saved theme maps to the nearest of the three. Rollback: check out the previous commit.
+
+## 2026-11-06 · The Workroom: presence, Needs you, the Room, reliability · branch feat/workroom
+
+Design record: `docs/design/0003-workroom.md` (binding for this branch). Packages: F1 to F4 (the app) and B1 to B3 (the service), listed in the order a person meets them.
+
+- **The Workroom shell and design system (F1).** One set of colour, type and spacing tokens with two modes, Studio
+  (light) and Lamp (dark); the older themes stay in Appearance as layers on top. A rail of pages with flyouts and a
+  More sheet, the presence line at the top with the Needs you pill, the Stage beside the chat, and a bar at the
+  bottom on phones, all built from one page list (`pages/registry.ts`) that also feeds the palette. Shared parts
+  (buttons, cards, tabs, sheets, toasts, the approval card, the Stage frame) live in `src/ui/`. The chat list is a
+  column inside the chat. The app calls itself Rooks. One main landmark, a skip link, focus rings everywhere, and
+  every sheet and flyout keeps focus inside and closes on Escape.
+- **The chat as a living record (F2).** Every turn keeps its step timeline after it finishes, with receipts and Undo
+  inline, one approval card everywhere, and a stored answer shown in plain words (no ids or raw JSON). A yes or no
+  given later closes the step it answers. The Room's steps read in plain words, and a watch event opens the Room on
+  the Stage.
+- **Presence (B1).** `GET /api/presence` says what the assistant is doing right now: its name, a mood (idle, thinking,
+  working, needs, done), the current step in plain words with the tool and a redacted summary of its arguments,
+  where it is working (chat, terminal, browser, desktop, Room), what it watches (mail, calendar, jobs, Room), how many
+  things need you, and the turns and jobs in flight. It reads state the app already keeps, never calls a model, asks
+  the helpers on this computer at most every five seconds (half a second per request), and is cached for one second.
+- **Needs you (B1, F3).** `GET /api/needs-you` is one inbox for everything waiting on you, newest first: held actions from
+  chat, jobs and schedules, jobs that ask before they start, and steps the desk and browser helpers paused on.
+  `POST /api/needs-you/{id}/approve` and `/deny` answer each item in the system it came from, exactly once: a second
+  answer is refused, so nothing is run twice from the inbox. Both routes need the signed in user.
+  In the app the inbox is a side sheet opened from the pill at the top, the phone bar and the Jobs page; it lists
+  every item with the one approval card, and a Room hand-off reads as what it is about, never by its request number.
+- **The Room (B2, F3).** The assistant's own computer is back in the app, honestly this time. It is the `rooks-try`
+  package: a Linux guest when QEMU and an image exist, a private desktop with a real terminal in it when Xvfb exists
+  (Linux), else a private folder and shell. The app side is `app/room.py` (`/api/room`: status, up, down, checkpoint,
+  reset, click, drag, scroll, type, key, run, handoff, screenshot) and the chat tool `use_room`, offered only when a
+  real driver is there; the terminal gets the same package as the MCP server `room`; the installer installs it when
+  the folder exists.
+  - What it says about itself: status carries `screen`, `pointer`, `isolation` (`none`, `namespace` or `vm`), a plain
+    label and a note, and `/api/surfaces` carries `room: {available, label, isolation}`. A picture is served only when
+    a real screen exists and the Room is on; the drawn terminal ("A drawing of a terminal") is never picked on its own,
+    has no pointer, and does not count as a Room for the chat tool. The private folder says "Commands run as you, in a
+    folder of its own. It is not a locked off computer."; on Linux its commands run in a private mount namespace (and
+    with no network when the Room is offline) when `unshare` works, which is what `namespace` means.
+  - What it keeps: saved points never collide in a name, the twenty newest are kept and status names the ones removed;
+    "Save a point" and "Start over" are checked against the store before they are reported done.
+  - What it never does alone: copying a file out of the Room holds a request in Needs you (`kind: room`) and copies
+    once, after a yes there or on the approval card; the chat tool cannot approve it. Every up, down, saved point,
+    start over, command and copy is a row in the run log on channel `room`; a refused request is on record too.
+  - For the Stage: `use_room` with `action: up` publishes a watch event `{surface: "room", job_id: "room", goal}`, and
+    the same card is saved with the reply. Presence reports `where: room` and watches the Room while it is on.
+  - The package itself: the nested desktop no longer starts a black canvas with the system Python; it starts a window
+    manager when one exists and otherwise a terminal that fills the screen, with this interpreter for any helper; a
+    command run in it sees the Room's display; the local HTTP helper compares its key in constant time, serves the last
+    picture without waiting behind a running command, and has drag and scroll.
+  - In the app (F3): a **Room** page and the Room on the Stage. The picture is drawn only while the Room is on and has
+    a real screen; Watch, Step in and Hand back appear only when clicks reach something real; without a screen the
+    page is a real command view. Save a point, Start over and Hand off a file are on the page; the rail shows a live
+    dot while the Room is on. Jobs and History are rebuilt on the shared parts, with Undo inline in History.
+- **Reliability people feel (B3).**
+  - A chat that got too long no longer dies on the model's context error. The error is recognised for what it is
+    (`prompt too long`, from OpenAI, Anthropic, Gemini and compatible servers, and Ollama's full window), the router
+    stops there instead of trying every other provider with the same prompt, and the turn compacts the window and
+    asks again, up to three times: the budget is halved, the oldest tool results become one line stubs that still
+    lead to the full result through `read_tool_result` (kept under `tool_results`, id `m<message>`), whole old
+    exchanges go only after that, and the chat gets a `compacted` event `{dropped_rows, summary_words}` each time.
+    When nothing can be left out, or three tries were not enough, the turn ends with "This chat got too long for the
+    model. Start a new chat or pick a model with more room." The record is never touched: every result stays whole in
+    the thread; only what the model is sent shrinks. The next turn in that chat starts from the window that fitted.
+  - The rolling summary is tool aware: tool rows are in it, one line each (the tool, ok or failed, the first 80
+    characters of its result), and a note the app wrote (a restart) as a note. When the window is already over budget
+    at the start of a turn, or is being compacted, the summary of what fell out is refreshed before the model is
+    asked, so it sees it now rather than next turn; otherwise the refresh runs in the background as before.
+  - A restart is reported honestly. Every turn still running when the app comes back is closed as interrupted
+    ("Rooks restarted during the turn") and its conversation gets a plain note as a system row ("Rooks restarted
+    during this turn. These steps were cut off and not run: ..."). The next turn in that conversation opens with a
+    `resumed` event `{reason: "restart", at}`. Goals that asked to carry on (`resume_on_restart`) are continued by a
+    task that starts with the app, one more round each as a normal turn (registered like any turn, so Stop works),
+    never past a held approval. Jobs keep their rule: paused, with Resume.
+  - Approvals are never duplicated. A call that is already waiting for your OK with the same arguments is not held
+    again: the model is told it is waiting (request number included) and the turn stops with an honest line ("I asked
+    once and stopped instead of asking again") instead of asking the model on; the run log records the repeat as
+    `duplicate` and the turn as `held`. The Room's hand-off does the same: a second ask for the same file and place
+    joins the request that is already in Needs you.
+  - The check that catches a false "I sent the email" no longer catches a true one. A send that ran in the turn, or
+    one you approved from the card or Needs you, backs the sentence; without one the reply is still withdrawn, with the
+    reason in plain words ("no email was sent in this conversation").
+- **Sweep (F4).** Colours come only from the tokens (no hex left in feature styles), one reduced motion rule that
+  Appearance also applies, two breakpoints (900 and 1280 px), one main landmark on every page, dead code removed, and
+  the theme picker previews the Workroom itself. Every page was checked in the shell on a laptop and a phone in both
+  modes.
+- **Outbound audit (R8, B1).** The helpers' health checks (browser, computer use) now go through the audited client;
+  `tests/test_egress.py::test_no_unaudited_network_library_in_the_app` passes again. The loopback port probe that
+  finds a free port for a helper is listed there with its reason (a bind sends nothing).
+- Migration: none (no schema version change, no data rewritten). The restart notes are ordinary rows in `messages`
+  (`role: system`, `name: restart`); compacted results reuse the `tool_results` table with ids `m<message id>`. New
+  settings `TRY_URL` and `TRY_API_KEY` are optional (a separate `rooks-try serve`); without them the Room runs in
+  process when the package is installed.
+- Rollback: check out the previous commit. Set `ROOKS_TRY_MCP=0` so the terminal stops adding the `room` server, and
+  ignore `/room` in the app (the tool is only offered while the package is installed; uninstall `rooks-try` to remove
+  it). Nothing in the database changes shape: held hand-offs are ordinary held actions and can be denied from Needs
+  you, the restart notes are plain messages the older code ignores, and the leftover `tool_results` rows are harmless.
+
 ## 2026-11-01 · Long tool results, step limit setting, repeat guard · branch feat/rea-p0-harness
 
 From the competitor review (P0 items 1, 2 and 4):

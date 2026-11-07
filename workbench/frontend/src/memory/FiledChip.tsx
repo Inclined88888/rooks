@@ -15,7 +15,7 @@ export function FiledChip({ kind, itemRef, initial }: { kind: string; itemRef: s
   if (!f) return null;
   const change = async (pid: number | null) => {
     setOpen(false);
-    setF(await api<Filing | null>(`/knowledge/filings/${f.id}/change`, { body: { project_id: pid } }));
+    try { setF(await api<Filing | null>(`/knowledge/filings/${f.id}/change`, { body: { project_id: pid } })); } catch { /* the chip keeps what it showed */ }
   };
   const showMenu = () => {
     setOpen((o) => !o);
@@ -23,7 +23,7 @@ export function FiledChip({ kind, itemRef, initial }: { kind: string; itemRef: s
   };
   return (
     <span className="kn-chip" title={f.reason ? `Because it ${f.reason}` : undefined}>
-      <FolderKanban size={13} /> Filed under <b>{f.project_name}</b>
+      <FolderKanban size={13} aria-hidden="true" /> Filed under <b>{f.project_name}</b>
       {f.status === "filed" && <>
         <button className="kn-link" onClick={() => api(`/knowledge/filings/${f.id}/ok`, { body: {} }).then(() => setF({ ...f, status: "confirmed", chip: `Filed under ${f.project_name}` }))}>Right</button>
         <button className="kn-link" onClick={showMenu} aria-expanded={open}>Change?</button>

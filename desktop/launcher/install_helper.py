@@ -165,6 +165,8 @@ def install_tools(src: Path, desk: bool = True) -> None:
     pkgs = ["rooks-code", "rooks-browser"]
     if desk and (src / "rooks-desk").exists():
         pkgs.append("rooks-desk")
+    if (src / "rooks-try").exists():
+        pkgs.append("rooks-try")
     for pkg in pkgs:
         run([uv(), "tool", "install", "--quiet", "--force", "--reinstall", "--python", "3.12", str(src / pkg)])
         say(f"{pkg}: installed")
@@ -460,6 +462,8 @@ def main() -> int:
     print("  3. After connecting a model, you land in Chat. Ask anything.")
     print("\nAlso installed:")
     extras = "   rooks-desk (computer use)" if not a.no_desk else ""
+    if (src / "rooks-try").exists():
+        extras += "   rooks-try (the Room)"
     print("  rooks (coding agent)   rooks-browser (browser agent)" + extras)
     if not a.no_desk:
         for line in desk_notes():

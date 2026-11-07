@@ -56,6 +56,18 @@ CHARS_PER_TOKEN = 3
 CLOUD_CONTEXT_CHARS = 300_000  # when the model catalog does not know the model
 MIN_CONTEXT_CHARS = 12_000
 THINK_RE = re.compile(r"<think>.*?</think>", re.S)
+# How providers say a prompt did not fit the model's window (OpenAI and compatible servers: context_length_exceeded,
+# "maximum context length"; Anthropic: "prompt is too long", and "input length and `max_tokens` exceed context limit"
+# when the reply's room tips it over; Gemini and others: "input too long", "tokens exceed";
+# Ollama, through OllamaNative.chat: "Start a new conversation"). The router turns it into one reason (B3).
+_TOO_LONG = re.compile(r"(context[_ ]length|too long|maximum context|input too long|tokens? exceeds?|exceeds? the (?:maximum|context|model)|"
+                       r"Start a new conversation|reduce (?:the length|your message)|request too large|too many tokens|"
+                       r"exceeds? (?:the )?context limit|decrease input length)", re.I)
+
+
+def too_long(text: str) -> bool:
+    """Whether a provider's error text says the prompt did not fit the model."""
+    return bool(_TOO_LONG.search(text or ""))
 
 
 def validate(auth_kind: str, protocol: str) -> None:
@@ -293,8 +305,9 @@ class ChatCompletions(Protocol):
             try:
                 return await self._chat_streamed(conn, secret, body, on_text)
             except ProviderError as e:
-                if e.upstream not in (400, 404, 415, 422):
-                    raise  # a server that refuses streaming with tools answers below the normal way
+                if e.upstream not in (400, 404, 415, 422) or too_long(e.body):
+                    raise  # a server that refuses streaming with tools answers below the normal way; a prompt that
+                    # did not fit will not fit unstreamed either
 
         data = (await _post(conn, f"{conn['base_url'].rstrip('/')}/chat/completions", body, self.headers(conn, secret), self.timeout)).json()
         msg = (data.get("choices") or [{}])[0].get("message") or {}

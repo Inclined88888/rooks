@@ -24,6 +24,7 @@ from . import compression  # AIW-Phase1: rolling compression of long chats
 from . import finetune, media  # noqa: E402 - phase 4
 from . import catalog  # noqa: E402 - model facts from models.dev
 from . import companion  # noqa: E402 - Companion: every agent's live steps, approvals and questions in one place
+from . import restart  # noqa: E402 - B3: a restart reported honestly; goals that opted in continue
 from .mcp_server import mcp, mcp_app
 from . import mcp_client_api  # noqa: E402 - feat/mcp-client: Workbench as an MCP client (the user's own servers)
 from .adapt import hooks as adapt_hooks, routes as adapt_routes  # adapt and learn (feat/learn-and-adapt)
@@ -71,7 +72,7 @@ async def lifespan(_: FastAPI):
     llm.seed_connections()
     catalog.refresh_in_background()  # newer model facts (context, price, vision) at most once a day
     api.recover_interrupted()
-    actions.recover()
+    restart.recover()  # B3: turns cut off by the restart are closed (actions.recover) and their chats are told
     company.recover()
     mobile.boot()
     loops = [asyncio.create_task(fn()) for fn in (api.calendar_loop, scheduler.loop, telegram.loop, company.loop, sites.loop)]
@@ -100,6 +101,7 @@ async def lifespan(_: FastAPI):
     tm = [(n, asyncio.create_task(fn())) for n, fn in tm_routes.background()]
     health.LOOPS.update(dict(tm))
     loops += [t for _, t in tm]
+    restart.start()  # B3: goals that asked to carry on after a restart continue now, in the background
     async with mcp.session_manager.run():
         yield
     mobile.lan_stop()
@@ -168,6 +170,15 @@ app.include_router(appearance.owner)  # the chosen look, shared with the phone a
 app.include_router(appearance.device)
 app.include_router(browser_proxy.router)
 app.include_router(desk_proxy.router)
+from . import room  # noqa: E402 - the Room (design 0003): Rooks's own computer inside the app
+
+app.include_router(room.router)
+app.include_router(room.terminal)  # /room in the terminal: status, start, stop, run
+from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): the presence strip and the Needs you inbox
+
+app.include_router(presence.router)
+app.include_router(presence.pulse_router)  # GET /api/pulse: presence, Needs you, job notices and revisions in one poll
+app.include_router(needs_you.router)
 app.include_router(work_api.router)  # Files (any file, analysis, sandboxed Python) and Sites (any website the user works in)
 app.include_router(skills_hub.router)  # Skills from GitHub behind the security gate
 app.include_router(mcp_client_api.router)  # feat/mcp-client: connect Workbench to the user's own MCP servers
@@ -177,6 +188,7 @@ app.include_router(adapt_routes.router)  # /api/learn: What I know about you, Sh
 adapt_hooks.register_tools()
 app.include_router(v02_api.router)  # feat/v02-automations: automations, jobs board, live documents
 app.include_router(v02_api.phone)
+app.include_router(v02_api.terminal)  # /jobs in the terminal reads the board
 auto_tools.register_tools()
 # feat/v02-anywhere-voice: Ask from anywhere, voice, meeting companion
 from . import anywhere, meetings, voice  # noqa: E402

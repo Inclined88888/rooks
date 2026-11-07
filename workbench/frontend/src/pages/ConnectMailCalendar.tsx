@@ -1,11 +1,15 @@
-import { AlertTriangle, CalendarDays, Check, ChevronRight, ExternalLink, Laptop, Loader2, Mail, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, CalendarDays, Check, ExternalLink, Laptop, Mail, RefreshCw, X } from "lucide-react";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
+import { Button, Card, ErrorState, IconButton, Input, Loading, Select, Tabs } from "../ui";
 import { useToast } from "../util";
 import "../connect.css";
+import { AppleMark, ProviderLogo, type Provider } from "./day/logos";
+import { Busy, CheckField, Disclosure, Notice, plainError, Steps } from "./day/parts";
 
-type Provider = "google" | "microsoft";
+export { ProviderLogo };
+
 type ProviderInfo = { configured: boolean; source: string; message: string; tenant: string; client_id_hint: string };
 type Linked = { id: number; provider: Provider; email: string; name: string; status: "connected" | "reauth"; last_error: string; mail_account_id: number | null; calendar_id: number | null };
 type MailAccount = { id: number; name: string; email: string; kind?: string; imap_host: string };
@@ -22,40 +26,14 @@ type MacAccount = { name: string; emails: string[]; enabled: boolean; type: stri
 const NAMES: Record<Provider, string> = { google: "Google", microsoft: "Microsoft" };
 const WHAT: Record<Provider, string> = { google: "Gmail and Google Calendar", microsoft: "Outlook, Hotmail, Microsoft 365 mail and calendar" };
 
-function AppleMark() {
-  return (
-    <svg className="logo" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="currentColor" d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.3 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7 2-1.1 2.8-2.2c.9-1.3 1.2-2.5 1.3-2.6-.1 0-2.4-.9-2.5-3.8zM14.5 6.2c.6-.8 1.1-1.9.9-3-1 .1-2.1.6-2.8 1.4-.6.7-1.2 1.8-1 2.9 1.1.1 2.2-.5 2.9-1.3z" />
-    </svg>
-  );
-}
-
-export function ProviderLogo({ provider }: { provider: Provider }) {
-  if (provider === "google") {
-    return (
-      <svg className="logo" viewBox="0 0 48 48" aria-hidden="true">
-        <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
-        <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z" />
-        <path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C.9 16.6 0 20.2 0 24s.9 7.4 2.6 10.7l7.9-6.1z" />
-        <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z" />
-      </svg>
-    );
-  }
-  return (
-    <svg className="logo" viewBox="0 0 23 23" aria-hidden="true">
-      <path fill="#f25022" d="M1 1h10v10H1z" /><path fill="#7fba00" d="M12 1h10v10H12z" />
-      <path fill="#00a4ef" d="M1 12h10v10H1z" /><path fill="#ffb900" d="M12 12h10v10H12z" />
-    </svg>
-  );
-}
-
 /** "Connect your mail & calendar": one sign-in with Google or Microsoft sets up both; other providers by app password. */
-export default function ConnectMailCalendar({ compact = false, onlyWhenEmpty = false, onChange }: { compact?: boolean; onlyWhenEmpty?: boolean; onChange?: () => void }) {
+export default function ConnectMailCalendar({ compact = false, onlyWhenEmpty = false, onChange, title = "Mail" }: { compact?: boolean; onlyWhenEmpty?: boolean; onChange?: () => void; title?: string }) {
   const [providers, setProviders] = useState<Record<Provider, ProviderInfo> | null>(null);
   const [linked, setLinked] = useState<Linked[]>([]);
   const [imap, setImap] = useState<MailAccount[]>([]);
   const [cals, setCals] = useState<Cal[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [unreachable, setUnreachable] = useState(false);
   const [pending, setPending] = useState<{ provider: Provider; url: string; state: string } | null>(null);
   const [pasted, setPasted] = useState("");
   const [error, setError] = useState("");
@@ -63,22 +41,25 @@ export default function ConnectMailCalendar({ compact = false, onlyWhenEmpty = f
   const toast = useToast();
 
   const load = async () => {
+    let failed = 0;
+    const miss = <T,>(v: T) => () => { failed += 1; return v; };
     const [p, l, m, c] = await Promise.all([
-      api<Record<Provider, ProviderInfo>>("/connect/providers").catch(() => null),
-      api<Linked[]>("/connect/accounts").catch(() => []),
-      api<MailAccount[]>("/mail/accounts").catch(() => []),
-      api<Cal[]>("/calendars").catch(() => []),
+      api<Record<Provider, ProviderInfo>>("/connect/providers").catch(miss(null)),
+      api<Linked[]>("/connect/accounts").catch(miss([] as Linked[])),
+      api<MailAccount[]>("/mail/accounts").catch(miss([] as MailAccount[])),
+      api<Cal[]>("/calendars").catch(miss([] as Cal[])),
     ]);
     setProviders(p); setLinked(l); setImap(m.filter((a) => !a.kind || a.kind === "imap" || a.kind === "mac")); setCals(c.filter((x) => x.kind === "caldav" || x.kind === "ics"));
+    setUnreachable(failed === 4);
     setLoaded(true);
   };
-  useEffect(() => { load(); return () => window.clearInterval(timer.current); }, []);
+  useEffect(() => { void load(); return () => window.clearInterval(timer.current); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finished = (s: { status: string; error?: string; email?: string }) => {
     if (s.status === "pending") return false;
     window.clearInterval(timer.current);
     setPending(null); setPasted("");
-    if (s.status === "connected") { toast.ok(`${s.email} is connected for mail and calendar`); load(); onChange?.(); }
+    if (s.status === "connected") { toast.ok(`${s.email} is connected for mail and calendar`); void load(); onChange?.(); }
     else setError(s.error || "That sign-in didn't finish. Try again.");
     return true;
   };
@@ -93,27 +74,26 @@ export default function ConnectMailCalendar({ compact = false, onlyWhenEmpty = f
       setPending({ provider, url: r.url, state: r.state });
       window.clearInterval(timer.current);
       timer.current = window.setInterval(async () => {
-        const s = await api<{ status: string; error?: string; email?: string }>(`/connect/status/${r.state}`).catch(() => null);
-        if (s) finished(s);
+        const st = await api<{ status: string; error?: string; email?: string }>(`/connect/status/${r.state}`).catch(() => null);
+        if (st) finished(st);
       }, 1500);
     } catch (e) {
-      const msg = (e as Error).message;
-      if ((e as { status?: number }).status === 409) setError(`Sign-in with ${NAMES[provider]} isn't ready on this computer. Type the email address below.`); else setError(msg);
+      if ((e as { status?: number }).status === 409) setError(`Sign-in with ${NAMES[provider]} isn't ready on this computer. Type the email address below.`); else setError(plainError(e));
     }
   };
 
   const completePasted = async () => {
-    const s = await api<{ status: string; error?: string; email?: string }>("/connect/complete", { body: { url: pasted.trim() } }).catch((e) => ({ status: "failed", error: (e as Error).message }));
-    finished(s);
+    const st = await api<{ status: string; error?: string; email?: string }>("/connect/complete", { body: { url: pasted.trim() } }).catch((e) => ({ status: "failed", error: plainError(e) }));
+    finished(st);
   };
 
   const disconnect = async (a: Linked) => {
     if (!confirm(`Disconnect ${a.email}? Its mail and calendar are removed from Rooks (nothing is deleted at ${NAMES[a.provider]}).`)) return;
-    try { const r = await api<{ note: string }>(`/connect/accounts/${a.id}`, { method: "DELETE" }); toast.ok(r.note); load(); onChange?.(); } catch (e) { toast.err(e); }
+    try { const r = await api<{ note: string }>(`/connect/accounts/${a.id}`, { method: "DELETE" }); toast.ok(r.note); void load(); onChange?.(); } catch (e) { toast.err(e); }
   };
   const removeImap = async (a: MailAccount) => {
     if (!confirm(`Disconnect ${a.email}?`)) return;
-    await api(`/mail/accounts/${a.id}`, { method: "DELETE" }).catch(toast.err); load(); onChange?.();
+    await api(`/mail/accounts/${a.id}`, { method: "DELETE" }).catch(toast.err); void load(); onChange?.();
   };
 
   if (onlyWhenEmpty && (!loaded || linked.length || imap.length || cals.length)) return null;
@@ -122,82 +102,84 @@ export default function ConnectMailCalendar({ compact = false, onlyWhenEmpty = f
   const openApple = async () => {
     setError("");
     try { await api("/mail/mac/settings", { method: "POST" }); }
-    catch (e) { setError((e as Error).message); }
+    catch (e) { setError(plainError(e)); }
   };
 
   return (
-    <div className="card col gap-lg" id="mail" style={compact ? { marginBottom: 16 } : undefined}>
-      <div className="row"><h2 className="grow">Mail</h2>
-        {anything && <button className="btn ghost sm icon" title="Refresh" onClick={load}><RefreshCw size={13} /></button>}</div>
-      <p className="muted" style={{ margin: 0 }}>Work mail uses that company's own sign-in. Nothing is sent until you say so.</p>
-      <div className="connect-buttons" aria-label="Companies">
-        {(["google", "microsoft"] as Provider[]).map((p) => (
-          <button key={p} className="btn connect-btn" disabled={!!pending} onClick={() => connect(p)} title={WHAT[p]}>
-            {pending?.provider === p ? <Loader2 size={16} className="spin" /> : <ProviderLogo provider={p} />} {NAMES[p]}
-          </button>
-        ))}
-        {ON_MAC && (
-          <button type="button" className="btn connect-btn" onClick={openApple} title="Apple">
-            <AppleMark /> Apple
-          </button>
-        )}
+    <Card as="section" className={`cmc${compact ? " is-compact" : ""}`} id="mail" aria-labelledby="cmc-title">
+      <div className="cmc-head">
+        <div className="cmc-titles">
+          <h2 id="cmc-title" className="cmc-title">{title}</h2>
+          <p className="cmc-line">Work mail uses that company's own sign-in. Nothing is sent until you say so.</p>
+        </div>
+        {anything && <IconButton label="Refresh" size="sm" onClick={() => void load()}><RefreshCw size={14} /></IconButton>}
       </div>
 
-      {anything && (
-        <div className="account-chips">
-          {linked.map((a) => (
-            <span key={`l${a.id}`} className={`account-chip ${a.status === "reauth" ? "reauth" : ""}`} title={a.last_error || `${a.name} · ${NAMES[a.provider]}`}>
-              <ProviderLogo provider={a.provider} />
-              <span className="truncate">{a.email}</span>
-              <span className="what">{[a.mail_account_id && "Mail", a.calendar_id && "Calendar"].filter(Boolean).join(" + ")}</span>
-              {a.status === "reauth"
-                ? <button className="btn sm" onClick={() => connect(a.provider, a.email)}><AlertTriangle size={12} /> Sign in again</button>
-                : <Check size={13} className="prio-1" />}
-              <button className="btn ghost sm icon" title="Disconnect" aria-label={`Disconnect ${a.email}`} onClick={() => disconnect(a)}><X size={12} /></button>
-            </span>
-          ))}
-          {imap.map((a) => (
-            <span key={`m${a.id}`} className="account-chip" title={a.imap_host}>
-              {a.kind === "mac" ? <Laptop size={13} /> : <Mail size={13} />}<span className="truncate">{a.email}</span><span className="what">{a.kind === "mac" ? "On this Mac" : "Mail"}</span>
-              <button className="btn ghost sm icon" title="Disconnect" aria-label={`Disconnect ${a.email}`} onClick={() => removeImap(a)}><X size={12} /></button>
-            </span>
-          ))}
-          {cals.map((c) => (
-            <Link key={`c${c.id}`} to="/calendar" className="account-chip" title="Manage on the Calendar page">
-              <CalendarDays size={13} style={{ color: c.color }} /><span className="truncate">{c.name}</span><span className="what">Calendar</span>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {pending && (
-        <div className="connect-pending">
-          <Loader2 size={16} className="spin" style={{ marginTop: 2 }} />
-          <div className="col grow" style={{ gap: 6 }}>
-            <div>Finish signing in with {NAMES[pending.provider]}, then come back here.</div>
-            <div className="row">
-              <a className="small" href={pending.url} target="_blank" rel="noreferrer">Open the sign-in page</a>
-              <div className="spacer" />
-              <button className="btn ghost sm" onClick={() => { window.clearInterval(timer.current); setPending(null); }}>Cancel</button>
-            </div>
-            <details className="connect-more">
-              <summary><ChevronRight size={12} /> Signed in on another device</summary>
-              <div className="row">
-                <input className="input grow" value={pasted} onChange={(e) => setPasted(e.target.value)} placeholder="Paste the page address" aria-label="Page address" />
-                <button className="btn sm" disabled={!pasted.includes("state=")} onClick={completePasted}>Finish</button>
-              </div>
-            </details>
+      {!loaded ? <Loading rows={2} label="Checking your mail accounts" /> : unreachable ? (
+        <ErrorState title="Your mail accounts did not load" line="The app did not answer. Check that it is running, then try again." onRetry={() => void load()} />
+      ) : (
+        <>
+          <div className="cmc-buttons" aria-label="Companies" role="group">
+            {(["google", "microsoft"] as Provider[]).map((p) => (
+              <Button key={p} className="cmc-btn" disabled={!!pending} onClick={() => void connect(p)} title={WHAT[p]} icon={<ProviderLogo provider={p} />}>
+                {pending?.provider === p ? `Waiting for ${NAMES[p]}…` : NAMES[p]}
+              </Button>
+            ))}
+            {ON_MAC && <Button className="cmc-btn" onClick={() => void openApple()} title="Apple" icon={<AppleMark />}>Apple</Button>}
           </div>
-        </div>
+
+          {anything && (
+            <ul className="cmc-accounts" aria-label="Connected">
+              {linked.map((a) => (
+                <li key={`l${a.id}`} className={`cmc-account${a.status === "reauth" ? " is-reauth" : ""}`} title={a.last_error || `${a.name} · ${NAMES[a.provider]}`}>
+                  <ProviderLogo provider={a.provider} />
+                  <span className="cmc-account-email">{a.email}</span>
+                  <span className="cmc-account-what">{[a.mail_account_id && "Mail", a.calendar_id && "Calendar"].filter(Boolean).join(" + ")}</span>
+                  {a.status === "reauth"
+                    ? <Button size="sm" icon={<AlertTriangle size={13} />} onClick={() => void connect(a.provider, a.email)}>Sign in again</Button>
+                    : <Check size={14} className="cmc-ok" aria-label="Connected" />}
+                  <IconButton label={`Disconnect ${a.email}`} size="sm" onClick={() => void disconnect(a)}><X size={13} /></IconButton>
+                </li>
+              ))}
+              {imap.map((a) => (
+                <li key={`m${a.id}`} className="cmc-account">
+                  {a.kind === "mac" ? <Laptop size={14} aria-hidden="true" /> : <Mail size={14} aria-hidden="true" />}
+                  <span className="cmc-account-email">{a.email}</span>
+                  <span className="cmc-account-what">{a.kind === "mac" ? "On this Mac" : "Mail"}</span>
+                  <IconButton label={`Disconnect ${a.email}`} size="sm" onClick={() => void removeImap(a)}><X size={13} /></IconButton>
+                </li>
+              ))}
+              {cals.map((c) => (
+                <li key={`c${c.id}`} className="cmc-account">
+                  <CalendarDays size={14} aria-hidden="true" />
+                  <Link to="/calendar" className="cmc-account-email" title="Manage on the Calendar page">{c.name}</Link>
+                  <span className="cmc-account-what">Calendar</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {pending && (
+            <Notice title={`Finish signing in with ${NAMES[pending.provider]}, then come back here.`}
+              actions={<Button variant="ghost" size="sm" onClick={() => { window.clearInterval(timer.current); setPending(null); }}>Cancel</Button>}>
+              <p><a className="cmc-link" href={pending.url} target="_blank" rel="noreferrer">Open the sign-in page <ExternalLink size={12} aria-hidden="true" /></a></p>
+              <Disclosure summary="Signed in on another device">
+                <div className="cmc-row">
+                  <Input className="cmc-grow" value={pasted} onChange={(e) => setPasted(e.target.value)} placeholder="Paste the page address" aria-label="Page address" />
+                  <Button size="sm" disabled={!pasted.includes("state=")} onClick={() => void completePasted()}>Finish</Button>
+                </div>
+              </Disclosure>
+            </Notice>
+          )}
+          {error && <ErrorState title="That did not connect" line={error} />}
+
+          {!compact && <OtherProvider onSuggest={(p, email) => void connect(p, email)} onAdded={() => { void load(); onChange?.(); }} />}
+          {compact && !oneClick.length && <Link className="ui-btn ui-btn-secondary cmc-self-start" to="/mail">Add an email address</Link>}
+
+          {!compact && <OwnRegistration providers={providers} onSaved={() => void load()} />}
+        </>
       )}
-      {error && <div className="alert err">{error}</div>}
-
-      {!compact && <OtherProvider onSuggest={(p, email) => connect(p, email)} onAdded={() => { load(); onChange?.(); }} />}
-      {compact && !oneClick.length && <Link className="btn" to="/mail">Add an email address</Link>}
-
-      {!compact && <OwnRegistration providers={providers} onSaved={load} />}
-      {toast.node}
-    </div>
+    </Card>
   );
 }
 
@@ -216,7 +198,7 @@ function signer(d: Detected | null): string {
 
 function PasswordShell({ mac, children }: { mac: boolean; children: ReactNode }) {
   if (!mac) return <>{children}</>;
-  return <details className="connect-more"><summary><ChevronRight size={12} /> Use a password instead</summary>{children}</details>;
+  return <Disclosure summary="Use a password instead">{children}</Disclosure>;
 }
 
 /** Opens the Mac's own account window (Google, Microsoft, Apple, Yahoo) and connects the address once it appears. */
@@ -229,7 +211,7 @@ function MacSignIn({ email, who, onAdded }: { email: string; who: string; onAdde
   const lower = email.toLowerCase();
 
   const look = async () => {
-    const r = await api<{ available: boolean; accounts: MacAccount[]; error?: string }>("/mail/mac").catch((e) => ({ available: false, accounts: [] as MacAccount[], error: (e as Error).message }));
+    const r = await api<{ available: boolean; accounts: MacAccount[]; error?: string }>("/mail/mac").catch((e) => ({ available: false, accounts: [] as MacAccount[], error: plainError(e) }));
     setAccounts(r.accounts);
     if (r.error) setError(r.error);
     return r;
@@ -243,7 +225,7 @@ function MacSignIn({ email, who, onAdded }: { email: string; who: string; onAdde
       toast.ok(`${email} is connected`);
       onAdded();
     } catch (e) {
-      setError((e as Error).message);
+      setError(plainError(e));
       setWaiting(false);
     }
   };
@@ -254,7 +236,7 @@ function MacSignIn({ email, who, onAdded }: { email: string; who: string; onAdde
     try {
       await api("/mail/mac/settings", { method: "POST" });
     } catch (e) {
-      setError((e as Error).message);
+      setError(plainError(e));
       setWaiting(false);
       return;
     }
@@ -271,26 +253,23 @@ function MacSignIn({ email, who, onAdded }: { email: string; who: string; onAdde
 
   const match = accounts?.find((a) => a.emails.some((x) => x.toLowerCase() === lower));
   return (
-    <div className="col" style={{ gap: 10 }}>
+    <div className="cmc-stack">
       {match?.enabled ? (
-        <div className="row wrap">
-          <Laptop size={15} /><span className="grow small"><strong>{email}</strong> is already signed in on this Mac.</span>
-          <button type="button" className="btn primary sm" onClick={() => finish(match.name)}>Connect</button>
+        <div className="cmc-row">
+          <Laptop size={15} aria-hidden="true" /><span className="cmc-grow cmc-small"><strong>{email}</strong> is already signed in on this Mac.</span>
+          <Button variant="primary" size="sm" onClick={() => void finish(match.name)}>Connect</Button>
         </div>
       ) : (
         <>
-          <button type="button" className="btn primary" style={{ alignSelf: "flex-start" }} disabled={waiting} onClick={start}>
-            {waiting ? <Loader2 size={15} className="spin" /> : null} Sign in with {who}
-          </button>
-          <div className="small muted">
+          <Button variant="primary" className="cmc-self-start" busy={waiting} onClick={() => void start()}>{waiting ? `Waiting for ${who}…` : `Sign in with ${who}`}</Button>
+          <p className="cmc-small cmc-muted">
             {waiting
               ? `Waiting for you to finish. In the window, choose Add Account, pick ${who}, and sign in as usual. Your password stays with ${who}.`
               : `A window from your Mac opens. Choose Add Account, pick ${who}, and sign in as usual. Your password stays with ${who}.`}
-          </div>
+          </p>
         </>
       )}
-      {error && <div className="alert err small">{error}</div>}
-      {toast.node}
+      {error && <Notice tone="danger">{error}</Notice>}
     </div>
   );
 }
@@ -327,7 +306,7 @@ function OtherProvider({ onSuggest, onAdded, plain = false }: { onSuggest: (p: P
       setShowServers(d.kind === "guess");
     } catch { setDet(null); } finally { setChecking(false); }
   };
-  useEffect(() => { const t = window.setTimeout(() => detect(email), 500); return () => window.clearTimeout(t); }, [email]);
+  useEffect(() => { const t = window.setTimeout(() => void detect(email), 500); return () => window.clearTimeout(t); }, [email]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = async (e?: FormEvent) => {
     e?.preventDefault();
@@ -344,7 +323,8 @@ function OtherProvider({ onSuggest, onAdded, plain = false }: { onSuggest: (p: P
       if (addCal && det?.caldav_url) {
         try {
           const found = await api<{ name: string; url: string }[]>("/calendars/discover", { body: { url: det.caldav_url, username, password: form.password } });
-          for (const c of found.slice(0, 8)) await api("/calendars", { body: { name: c.name, kind: "caldav", url: c.url, username, password: form.password, color: "#0ea5e9" } });
+          // no colour sent: the app gives a new calendar its default colour
+          for (const c of found.slice(0, 8)) await api("/calendars", { body: { name: c.name, kind: "caldav", url: c.url, username, password: form.password } });
           calNote = found.length ? ` and ${found.length} calendar${found.length === 1 ? "" : "s"}` : "";
         } catch { calNote = " (calendar couldn't be found; add it later from the Calendar page)"; }
       }
@@ -353,141 +333,132 @@ function OtherProvider({ onSuggest, onAdded, plain = false }: { onSuggest: (p: P
       setConnected({ email: email.trim(), calendar: det?.calendar_help ?? null });
       setDet(null); setEmail("");
       onAdded();
-    } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
+    } catch (err) { setError(plainError(err)); } finally { setBusy(false); }
   };
 
   return (
-    <form ref={formRef} className="card col" onSubmit={submit} style={{ background: "var(--panel-2)" }}>
-      {plain
-        ? <div className="row"><Mail size={15} /><h3 className="grow">Type your email address</h3><span className="muted small">Gmail, iCloud, Yahoo, Fastmail, AOL, Zoho, your own domain…</span></div>
-        : <div className="row"><Mail size={15} /><h3 className="grow">Your email</h3><span className="muted small">Gmail, Outlook, iCloud, Yahoo, and the rest</span></div>}
-      <div className="row">
-        <input className="input grow" required type="email" autoFocus placeholder="Your email address" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => detect()} />
-        {checking && <Loader2 size={15} className="spin" />}
+    <form ref={formRef} className="cmc-other" onSubmit={submit}>
+      <div className="cmc-other-head">
+        <Mail size={15} aria-hidden="true" />
+        <h3 className="cmc-sub">{plain ? "Type your email address" : "Your email"}</h3>
+        <span className="cmc-small cmc-muted">{plain ? "Gmail, iCloud, Yahoo, Fastmail, AOL, Zoho, your own domain…" : "Gmail, Outlook, iCloud, Yahoo, and the rest"}</span>
       </div>
+      <Input required type="email" autoFocus placeholder="Your email address" aria-label="Your email address" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => void detect()} />
+      {checking && <Busy>Looking up {email.split("@")[1] || "that address"}…</Busy>}
       {det?.kind === "one_click" && (
-        <div className="alert">
-          <div className="row wrap">
-            <ProviderLogo provider={det.provider!} />
-            <div className="grow">{det.workspace ? `${email.split("@")[1]} uses ${det.provider === "google" ? "Google Workspace" : "Microsoft 365"}.` : `That's a ${NAMES[det.provider!]} address.`} One click is easier, with no app password.</div>
-            <button type="button" className="btn sm primary" onClick={() => onSuggest(det.provider!, email.trim())}>Connect {NAMES[det.provider!]}</button>
-            {det.fallback && <button type="button" className="btn sm ghost" onClick={() => setDet(det.fallback!)}>Use an app password instead</button>}
-          </div>
-        </div>
+        <Notice actions={<>
+          <Button size="sm" variant="primary" onClick={() => onSuggest(det.provider!, email.trim())}>Connect {NAMES[det.provider!]}</Button>
+          {det.fallback && <Button size="sm" variant="ghost" onClick={() => setDet(det.fallback!)}>Use an app password instead</Button>}
+        </>}>
+          <p className="cmc-row"><ProviderLogo provider={det.provider!} /><span>{det.workspace ? `${email.split("@")[1]} uses ${det.provider === "google" ? "Google Workspace" : "Microsoft 365"}.` : `That's a ${NAMES[det.provider!]} address.`} One click is easier, with no app password.</span></p>
+        </Notice>
       )}
-      {det?.kind === "invalid" && email.includes("@") && <div className="alert err small">{det.message}</div>}
+      {det?.kind === "invalid" && email.includes("@") && <Notice tone="danger">{det.message}</Notice>}
       {det?.kind === "unavailable" && (
-        <div className="alert col" style={{ gap: 10 }}>
-          <div className="row"><ProviderLogo provider={det.provider!} /><strong className="grow">{det.label}</strong></div>
-          <div className="small">{det.message}</div>
+        <Notice title={<span className="cmc-row"><ProviderLogo provider={det.provider!} />{det.label}</span>}>
+          <p>{det.message}</p>
           {det.mac
             ? <MacSignIn email={email.trim()} who={signer(det)} onAdded={() => { setDet(null); setEmail(""); onAdded(); }} />
-            : det.steps && <ol className="connect-steps small">{det.steps.map((x) => <li key={x}>{x}</li>)}</ol>}
+            : det.steps && <Steps items={det.steps} />}
           {det.mac && det.steps && (
-            <details className="connect-more">
-              <summary><ChevronRight size={12} /> Only want your Outlook calendar?</summary>
-              <ol className="connect-steps small">{det.steps.map((x) => <li key={x}>{x}</li>)}</ol>
-              <Link className="btn sm" to="/calendar">Open Calendar</Link>
-            </details>
+            <Disclosure summary="Only want your Outlook calendar?">
+              <Steps items={det.steps} />
+              <Link className="ui-btn ui-btn-secondary ui-btn-sm" to="/calendar">Open Calendar</Link>
+            </Disclosure>
           )}
-          {!det.mac && <div><Link className="btn sm" to="/calendar">Open Calendar</Link></div>}
-        </div>
+          {!det.mac && <p><Link className="ui-btn ui-btn-secondary ui-btn-sm" to="/calendar">Open Calendar</Link></p>}
+        </Notice>
       )}
       {connected && (
-        <div className="alert ok col" style={{ gap: 8 }}>
-          <div className="row"><Check size={15} /><strong className="grow">{connected.email} is connected.</strong>
-            <button type="button" className="btn ghost sm icon" aria-label="Close" onClick={() => setConnected(null)}><X size={12} /></button></div>
+        <Notice tone="ok" title={`${connected.email} is connected.`} actions={<IconButton label="Close" size="sm" onClick={() => setConnected(null)}><X size={13} /></IconButton>}>
           {connected.calendar && (
             <>
-              <div className="small">Want your calendar too? It takes three steps:</div>
-              <ol className="connect-steps small">{connected.calendar.map((x) => <li key={x}>{x}</li>)}</ol>
-              <div className="row wrap"><a className="btn sm" href="https://calendar.google.com/calendar/r/settings" target="_blank" rel="noreferrer">Open Google Calendar settings <ExternalLink size={11} /></a>
-                <Link className="btn sm ghost" to="/calendar">Go to the Calendar page</Link></div>
+              <p>Want your calendar too? It takes three steps:</p>
+              <Steps items={connected.calendar} />
+              <p className="cmc-row cmc-wrap"><a className="ui-btn ui-btn-secondary ui-btn-sm" href="https://calendar.google.com/calendar/r/settings" target="_blank" rel="noreferrer">Open Google Calendar settings <ExternalLink size={12} aria-hidden="true" /></a>
+                <Link className="ui-btn ui-btn-ghost ui-btn-sm" to="/calendar">Go to the Calendar page</Link></p>
             </>
           )}
-        </div>
+        </Notice>
       )}
       {ON_MAC && det && det.kind !== "one_click" && det.kind !== "invalid" && det.kind !== "unavailable" && (
         <MacSignIn email={email.trim()} who={signer(det)} onAdded={() => { setDet(null); setEmail(""); onAdded(); }} />
       )}
       {det && det.app_password && det.app_password_url && det.kind !== "one_click" && det.kind !== "unavailable" && (
         <PasswordShell mac={ON_MAC}>
-        <div className="col" style={{ gap: 14 }}>
-          <div className="small muted">{brand(det)} needs an <strong>app password</strong>: a separate password just for this app. About a minute.</div>
-          <div className="row" style={{ alignItems: "flex-start", gap: 12 }}>
-            <span className="step-num">1</span>
-            <div className="col grow" style={{ gap: 6 }}>
-              <a className="btn primary" style={{ alignSelf: "flex-start" }} href={det.app_password_url} target="_blank" rel="noreferrer">Open {owner(det)}'s app password page <ExternalLink size={13} /></a>
-              {det.steps && <ul className="small muted" style={{ margin: 0, paddingLeft: 18 }}>{det.steps.map((x) => <li key={x}>{x.replace(/,? and paste it here\.?$/i, ".")}</li>)}</ul>}
-            </div>
-          </div>
-          <div className="row" style={{ alignItems: "flex-start", gap: 12 }}>
-            <span className="step-num">2</span>
-            <div className="col grow" style={{ gap: 6 }}>
-              <strong className="small">Paste the app password here</strong>
-              <div className="row">
-                <input className="input grow mono" type="password" autoComplete="off" placeholder="Paste it here" value={form.password}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setForm({ ...form, password: v });
-                    // a full app password (16 letters, any spaces or dashes) connects straight away
-                    if (v.replace(/[\s-]/g, "").length === 16 && form.imap_host && !busy) window.setTimeout(() => submit(), 50);
-                  }} />
-                <button type="button" className="btn primary" disabled={busy || !form.password} onClick={() => submit()}>{busy ? <Loader2 size={15} className="spin" /> : "Connect"}</button>
+          <div className="cmc-stack">
+            <p className="cmc-small cmc-muted">{brand(det)} needs an <strong>app password</strong>: a separate password just for this app. About a minute.</p>
+            <div className="cmc-step">
+              <span className="cmc-step-num" aria-hidden="true">1</span>
+              <div className="cmc-stack cmc-grow">
+                <a className="ui-btn ui-btn-primary cmc-self-start" href={det.app_password_url} target="_blank" rel="noreferrer">Open {owner(det)}'s app password page <ExternalLink size={13} aria-hidden="true" /></a>
+                {det.steps && <ul className="cmc-bullets">{det.steps.map((x) => <li key={x}>{x.replace(/,? and paste it here\.?$/i, ".")}</li>)}</ul>}
               </div>
-              {busy && <div className="small muted">Checking it with {brand(det)}…</div>}
             </div>
+            <div className="cmc-step">
+              <span className="cmc-step-num" aria-hidden="true">2</span>
+              <div className="cmc-stack cmc-grow">
+                <strong className="cmc-small">Paste the app password here</strong>
+                <div className="cmc-row">
+                  <Input className="cmc-grow cmc-mono" type="password" autoComplete="off" placeholder="Paste it here" aria-label="App password" value={form.password}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setForm({ ...form, password: v });
+                      // a full app password (16 letters, any spaces or dashes) connects straight away
+                      if (v.replace(/[\s-]/g, "").length === 16 && form.imap_host && !busy) window.setTimeout(() => void submit(), 50);
+                    }} />
+                  <Button variant="primary" busy={busy} disabled={!form.password} onClick={() => void submit()}>{busy ? "Connecting…" : "Connect"}</Button>
+                </div>
+                {busy && <Busy>Checking it with {brand(det)}…</Busy>}
+              </div>
+            </div>
+            {error && <ErrorState title="That did not connect" line={error} />}
+            <Disclosure summary="More options" open={showServers} onToggle={setShowServers}>
+              <div className="cmc-stack">
+                <Input placeholder="Your name on sent mail (optional)" aria-label="Your name on sent mail" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                {det.caldav_url && <CheckField checked={addCal} onChange={setAddCal}>Also add my calendars</CheckField>}
+                {det.username_hint && <p className="cmc-small cmc-muted">{det.username_hint}</p>}
+                <Input placeholder="Username (defaults to your email)" aria-label="Username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+              </div>
+            </Disclosure>
           </div>
-          {error && <div className="alert err">{error}</div>}
-          <details className="connect-more" open={showServers} onToggle={(e) => setShowServers((e.target as HTMLDetailsElement).open)}>
-            <summary><ChevronRight size={12} /> More options</summary>
-            <div className="col">
-              <input className="input" placeholder="Your name on sent mail (optional)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              {det.caldav_url && <label className="check small"><input type="checkbox" checked={addCal} onChange={(e) => setAddCal(e.target.checked)} /> Also add my calendars</label>}
-              {det.username_hint && <div className="muted small">{det.username_hint}</div>}
-              <input className="input" placeholder="Username (defaults to your email)" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
-            </div>
-          </details>
-        </div>
         </PasswordShell>
       )}
       {det && !(det.app_password && det.app_password_url) && det.kind !== "one_click" && det.kind !== "invalid" && det.kind !== "unavailable" && (
         <PasswordShell mac={ON_MAC}>
-        <>
-          {det.one_click_unavailable && <div className="small muted">{det.one_click_unavailable === "google" ? "Gmail" : NAMES[det.one_click_unavailable]} connects with an app password: a special password just for this app. It takes about a minute.</div>}
-          <div className="small"><strong>{det.label}</strong>{det.source === "guess" ? " · best guess" : det.source === "ispdb" ? " · settings found automatically" : ""}</div>
-          {det.steps && (
-            <div className="small">
-              {det.app_password ? <>This provider needs an <strong>app password</strong> (not your normal password):</> : null}
-              <ol className="connect-steps">{det.steps.map((s) => <li key={s}>{s}</li>)}</ol>
-              {det.app_password_url && <a href={det.app_password_url} target="_blank" rel="noreferrer">Open the app password page <ExternalLink size={11} /></a>}
-            </div>
-          )}
-          <div className="row wrap">
-            <input className="input grow" placeholder="Your name (shown on sent mail)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input className="input grow" type="password" autoComplete="off" placeholder={det.app_password ? "App password" : "Password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-          </div>
-          {det.caldav_url && <label className="check small"><input type="checkbox" checked={addCal} onChange={(e) => setAddCal(e.target.checked)} /> Also add my calendars ({det.caldav_url.replace("https://", "")})</label>}
-          <details className="connect-more" open={showServers} onToggle={(e) => setShowServers((e.target as HTMLDetailsElement).open)}>
-            <summary><ChevronRight size={12} /> Server settings{det.username_hint ? " and username" : ""}</summary>
-            <div className="col">
-              {det.username_hint && <div className="muted small">{det.username_hint}</div>}
-              <input className="input" placeholder="Username (defaults to your email)" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
-              <div className="row wrap">
-                <input className="input grow" placeholder="IMAP host" value={form.imap_host} onChange={(e) => setForm({ ...form, imap_host: e.target.value })} />
-                <input className="input" style={{ width: 90 }} type="number" value={form.imap_port} onChange={(e) => setForm({ ...form, imap_port: Number(e.target.value) })} />
-                <input className="input grow" placeholder="SMTP host" value={form.smtp_host} onChange={(e) => setForm({ ...form, smtp_host: e.target.value })} />
-                <input className="input" style={{ width: 90 }} type="number" value={form.smtp_port} onChange={(e) => setForm({ ...form, smtp_port: Number(e.target.value) })} />
-                <select className="input" style={{ width: 120 }} value={form.smtp_security} onChange={(e) => setForm({ ...form, smtp_security: e.target.value as "ssl" | "starttls" })}><option value="ssl">SSL</option><option value="starttls">STARTTLS</option></select>
+          <div className="cmc-stack">
+            {det.one_click_unavailable && <p className="cmc-small cmc-muted">{det.one_click_unavailable === "google" ? "Gmail" : NAMES[det.one_click_unavailable]} connects with an app password: a special password just for this app. It takes about a minute.</p>}
+            <p className="cmc-small"><strong>{det.label}</strong>{det.source === "guess" ? " · best guess" : det.source === "ispdb" ? " · settings found automatically" : ""}</p>
+            {det.steps && (
+              <div className="cmc-small">
+                {det.app_password ? <p>This provider needs an <strong>app password</strong> (not your normal password):</p> : null}
+                <Steps items={det.steps} />
+                {det.app_password_url && <a className="cmc-link" href={det.app_password_url} target="_blank" rel="noreferrer">Open the app password page <ExternalLink size={12} aria-hidden="true" /></a>}
               </div>
+            )}
+            <div className="cmc-pair">
+              <Input placeholder="Your name (shown on sent mail)" aria-label="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Input type="password" autoComplete="off" placeholder={det.app_password ? "App password" : "Password"} aria-label={det.app_password ? "App password" : "Password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </div>
-          </details>
-          {error && <div className="alert err">{error}</div>}
-          <div><button type="button" className="btn primary" disabled={busy || !form.password} onClick={() => submit()}>{busy ? <Loader2 size={15} className="spin" /> : "Test and connect"}</button></div>
-        </>
+            {det.caldav_url && <CheckField checked={addCal} onChange={setAddCal}>Also add my calendars</CheckField>}
+            <Disclosure summary={`Server settings${det.username_hint ? " and username" : ""}`} open={showServers} onToggle={setShowServers}>
+              <div className="cmc-stack">
+                {det.username_hint && <p className="cmc-small cmc-muted">{det.username_hint}</p>}
+                <Input placeholder="Username (defaults to your email)" aria-label="Username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+                <div className="cmc-servers">
+                  <Input placeholder="Incoming mail server" aria-label="Incoming mail server" value={form.imap_host} onChange={(e) => setForm({ ...form, imap_host: e.target.value })} />
+                  <Input className="cmc-port" type="number" aria-label="Incoming port" value={form.imap_port} onChange={(e) => setForm({ ...form, imap_port: Number(e.target.value) })} />
+                  <Input placeholder="Outgoing mail server" aria-label="Outgoing mail server" value={form.smtp_host} onChange={(e) => setForm({ ...form, smtp_host: e.target.value })} />
+                  <Input className="cmc-port" type="number" aria-label="Outgoing port" value={form.smtp_port} onChange={(e) => setForm({ ...form, smtp_port: Number(e.target.value) })} />
+                  <Select aria-label="Outgoing security" value={form.smtp_security} onChange={(e) => setForm({ ...form, smtp_security: e.target.value as "ssl" | "starttls" })}><option value="ssl">SSL</option><option value="starttls">STARTTLS</option></Select>
+                </div>
+              </div>
+            </Disclosure>
+            {error && <ErrorState title="That did not connect" line={error} />}
+            <Button variant="primary" className="cmc-self-start" busy={busy} disabled={!form.password} onClick={() => void submit()}>{busy ? "Testing…" : "Test and connect"}</Button>
+          </div>
         </PasswordShell>
       )}
-      {toast.node}
     </form>
   );
 }
@@ -507,23 +478,21 @@ function OwnRegistration({ providers, onSaved }: { providers: Record<Provider, P
   };
   const info = providers?.[p];
   return (
-    <details className="connect-more" id="own-registration">
-      <summary><ChevronRight size={12} /> Set up Google and Microsoft sign-in (one time, for whoever runs this app)</summary>
-      <form className="col" onSubmit={save}>
-        <div className="tabs">{(["google", "microsoft"] as Provider[]).map((k) => <button type="button" key={k} className={`tab ${p === k ? "active" : ""}`} onClick={() => setP(k)}>{NAMES[k]}</button>)}</div>
-        <div className="muted small">
+    <Disclosure id="own-registration" summary="Advanced: set up Google and Microsoft sign-in (one time, for whoever runs this app)">
+      <form className="cmc-stack" onSubmit={save}>
+        <Tabs label="Company" size="sm" value={p} onChange={(k) => setP(k as Provider)} items={(["google", "microsoft"] as Provider[]).map((k) => ({ id: k, label: NAMES[k] }))} />
+        <p className="cmc-small cmc-muted">
           {p === "google"
             ? "Create a Desktop app OAuth client in Google Cloud Console (APIs & Services > Credentials), enable the Gmail and Google Calendar APIs, and add yourself as a test user. Paste the client ID and its client secret."
             : "Register an app in the Microsoft Entra admin center (App registrations), add the Mobile and desktop platform with redirect URI http://localhost, and turn on Allow public client flows. No secret is needed."}
-          {" "}Steps: <span className="mono">docs/connect-google-microsoft.md</span>.
+          {" "}Steps: <span className="cmc-mono">docs/connect-google-microsoft.md</span>.
           {info && <> Currently: {info.source === "none" ? "not set up" : `${info.source} (${info.client_id_hint})`}.</>}
-        </div>
-        <input className="input mono" placeholder={p === "google" ? "1234-abc.apps.googleusercontent.com" : "Application (client) ID"} value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} />
-        {p === "google" && <input className="input mono" type="password" autoComplete="off" placeholder="Client secret (GOCSPX-…)" value={form.client_secret} onChange={(e) => setForm({ ...form, client_secret: e.target.value })} />}
-        {p === "microsoft" && <input className="input mono" placeholder="Tenant: common, consumers, organizations or your tenant ID" value={form.tenant} onChange={(e) => setForm({ ...form, tenant: e.target.value })} />}
-        <div className="row"><button className="btn sm">{form.client_id ? "Save registration" : "Use the built-in one"}</button></div>
+        </p>
+        <Input className="cmc-mono" aria-label="Client ID" placeholder={p === "google" ? "1234-abc.apps.googleusercontent.com" : "Application (client) ID"} value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} />
+        {p === "google" && <Input className="cmc-mono" type="password" autoComplete="off" aria-label="Client secret" placeholder="Client secret (GOCSPX-…)" value={form.client_secret} onChange={(e) => setForm({ ...form, client_secret: e.target.value })} />}
+        {p === "microsoft" && <Input className="cmc-mono" aria-label="Tenant" placeholder="Tenant: common, consumers, organizations or your tenant ID" value={form.tenant} onChange={(e) => setForm({ ...form, tenant: e.target.value })} />}
+        <div><Button type="submit" size="sm">{form.client_id ? "Save registration" : "Use the built-in one"}</Button></div>
       </form>
-      {toast.node}
-    </details>
+    </Disclosure>
   );
 }

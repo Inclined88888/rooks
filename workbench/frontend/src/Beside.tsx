@@ -16,6 +16,7 @@ import {
   screenPath,
   writeStoredBeside,
 } from "./besideLogic.mjs";
+import { narrowQuery } from "./shell/breakpoints";
 
 type BesideState = { entry: string; ratio: number };
 
@@ -153,15 +154,32 @@ function BesideExtraHost({ entry, renderRoutes }: { entry: string; renderRoutes:
   return <div className="beside-extra-body" ref={hostRef} />;
 }
 
+/** The Stage (shell/StageHost.tsx) uses the same split: a node on the right instead of a second screen. */
+export type StagePane = { node: ReactNode; label: string };
+let stageRatio = 0.5;
+const stageListeners = new Set<() => void>();
+function setStageRatio(ratio: number) {
+  const next = clampRatio(ratio);
+  if (next === stageRatio) return;
+  stageRatio = next;
+  stageListeners.forEach((fn) => fn());
+}
+function useStageRatio() {
+  return useSyncExternalStore((fn) => { stageListeners.add(fn); return () => { stageListeners.delete(fn); }; }, () => stageRatio, () => 0.5);
+}
+
 /**
- * The main screen, plus a second one when you ask for it.
+ * The main screen, plus a second one when you ask for it (or the Stage, when a surface is live).
  * The second screen has its own place, so links inside it do not replace the first.
  */
-export function BesideStage({ renderRoutes }: { renderRoutes: () => ReactNode }) {
+export function BesideStage({ renderRoutes, stage }: { renderRoutes: () => ReactNode; stage?: StagePane }) {
   const beside = useBeside();
+  const stageR = useStageRatio();
   const location = useLocation();
   const navigate = useNavigate();
   const bodyRef = useRef<HTMLDivElement>(null);
+  const ratio = stage ? stageR : beside?.ratio ?? 0.5;
+  const setRatio = stage ? setStageRatio : setBesideRatio;
 
   const drag = (e: ReactPointerEvent<HTMLDivElement>) => {
     const body = bodyRef.current;
@@ -170,11 +188,11 @@ export function BesideStage({ renderRoutes }: { renderRoutes: () => ReactNode })
     e.currentTarget.setPointerCapture(e.pointerId);
     const move = (ev: PointerEvent) => {
       const rect = body.getBoundingClientRect();
-      const stacked = window.matchMedia("(max-width: 900px)").matches;
-      const ratio = stacked
+      const stacked = window.matchMedia(narrowQuery).matches;
+      const r = stacked
         ? (ev.clientY - rect.top) / rect.height
         : (ev.clientX - rect.left) / rect.width;
-      setBesideRatio(ratio);
+      setRatio(r);
     };
     const up = () => {
       window.removeEventListener("pointermove", move);
@@ -195,32 +213,40 @@ export function BesideStage({ renderRoutes }: { renderRoutes: () => ReactNode })
   };
 
   const known = beside ? screenPath(beside.entry) : "";
-  const stacked = typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches;
+  const stacked = typeof window !== "undefined" && window.matchMedia(narrowQuery).matches;
+  const split = !!stage || !!beside;
 
   return (
     <div className="beside-stage">
-      <div className={`beside-body${beside ? " is-split" : ""}`} ref={bodyRef}>
-        <div className="beside-main" style={beside ? { flexGrow: beside.ratio, flexBasis: 0 } : undefined}>
+      <div className={`beside-body${split ? " is-split" : ""}`} ref={bodyRef}>
+        <div className="beside-main" style={split ? { flexGrow: ratio, flexBasis: 0 } : undefined}>
           <div className="route">
             <RoutesHost render={renderRoutes} />
           </div>
         </div>
-        {beside && (
+        {split && (
+          <div
+            className="beside-grip"
+            role="separator"
+            tabIndex={0}
+            aria-orientation={stacked ? "horizontal" : "vertical"}
+            aria-valuenow={Math.round(ratio * 100)}
+            aria-label="Drag to resize. Arrow keys change the size."
+            onPointerDown={drag}
+            onKeyDown={(e) => {
+              const step = e.shiftKey ? 0.08 : 0.04;
+              if (e.key === "ArrowLeft" || e.key === "ArrowUp") setRatio(ratio - step);
+              if (e.key === "ArrowRight" || e.key === "ArrowDown") setRatio(ratio + step);
+            }}
+          />
+        )}
+        {stage && (
+          <section className="beside-extra beside-stage-pane" aria-label={stage.label} style={{ flexGrow: 1 - ratio, flexBasis: 0 }}>
+            {stage.node}
+          </section>
+        )}
+        {beside && !stage && (
           <>
-            <div
-              className="beside-grip"
-              role="separator"
-              tabIndex={0}
-              aria-orientation={stacked ? "horizontal" : "vertical"}
-              aria-valuenow={Math.round((beside.ratio) * 100)}
-              aria-label="Drag to resize. Arrow keys change the size."
-              onPointerDown={drag}
-              onKeyDown={(e) => {
-                const step = e.shiftKey ? 0.08 : 0.04;
-                if (e.key === "ArrowLeft" || e.key === "ArrowUp") setBesideRatio(beside.ratio - step);
-                if (e.key === "ArrowRight" || e.key === "ArrowDown") setBesideRatio(beside.ratio + step);
-              }}
-            />
             <section className="beside-extra" aria-label={screenLabel(beside.entry)} style={{ flexGrow: 1 - beside.ratio, flexBasis: 0 }}>
               <header className="beside-extra-bar">
                 <label className="sr-only" htmlFor="beside-screen">Screen</label>

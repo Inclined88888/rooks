@@ -1,7 +1,9 @@
-import { ArrowRight, Check, Download, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowRight, Check, Download, ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { BrandMark, Brand } from "../brand";
+import { Badge, Button, Input, Loading } from "../ui";
+import { ButtonLink, Notice } from "./settings/index";
 
 const MARK: Record<"claude" | "codex" | "copilot", Brand | null> = { claude: "claude", codex: "chatgpt", copilot: null };
 
@@ -9,8 +11,8 @@ type PlanState = { installed: boolean; signed_in: boolean; account: string; can_
 type SignIn = { id: string; status: string; url: string; code: string; needs_code: boolean; error: string };
 
 /** A plan through the vendor's own app (Claude Code, Codex), all from here: install, sign in, start chatting. No terminal. */
-export default function PlanCard({ agent, title, blurb, onConnected, cta = "Start chatting" }: {
-  agent: "claude" | "codex" | "copilot"; title: string; blurb: string; onConnected: () => Promise<void> | void; cta?: string;
+export default function PlanCard({ agent, title, blurb, onConnected, cta = "Start chatting", nested }: {
+  agent: "claude" | "codex" | "copilot"; title: string; blurb: string; onConnected: () => Promise<void> | void; cta?: string; nested?: boolean;
 }) {
   const [st, setSt] = useState<PlanState | null>(null);
   const [busy, setBusy] = useState("");
@@ -54,52 +56,55 @@ export default function PlanCard({ agent, title, blurb, onConnected, cta = "Star
 
   const mark = MARK[agent];
   return (
-    <div className="sub-card on">
-      <div className="row" style={{ gap: 8 }}>{mark && <BrandMark name={mark} />}<strong className="sub-name">{title}</strong>{st?.signed_in && <span className="badge ok"><Check size={11} /> Signed in</span>}</div>
-      <p className="small muted">{blurb} {st && <a href={st.terms} target="_blank" rel="noreferrer">Terms</a>}</p>
-      {error && <div className="alert err">{error}</div>}
-      {!st ? <Loader2 size={14} className="spin" /> : busy ? (
-        <div className="row small"><Loader2 size={14} className="spin" /> {busy}</div>
+    <div className={`st-plan${nested ? " is-nested" : ""}`}>
+      <div className="st-plan-head">
+        {mark && <BrandMark name={mark} />}<span className="st-plan-name">{title}</span>
+        {st?.signed_in && <Badge tone="ok"><Check size={11} /> Signed in</Badge>}
+      </div>
+      <p className="st-small">{blurb} {st && <a className="st-link" href={st.terms} target="_blank" rel="noreferrer">Terms</a>}</p>
+      {error && <Notice tone="danger">{error}</Notice>}
+      {!st ? (error ? null : <Loading rows={1} label={`Checking ${title}`} />) : busy ? (
+        <p className="st-small" role="status">{busy}</p>
       ) : !st.installed ? (
         st.can_install ? (
-          <div className="row"><button className="btn primary" onClick={install}><Download size={15} /> Set up {st.name}</button></div>
+          <div><Button variant="primary" icon={<Download size={15} />} onClick={install}>Set up {st.name}</Button></div>
         ) : (
-          <div className="col small" style={{ gap: 6 }}>
-            <span>This needs Node.js first. It's free and installs like any other app.</span>
-            <div className="row">
-              <a className="btn sm" href="https://nodejs.org/en/download" target="_blank" rel="noreferrer">Get Node.js <ExternalLink size={12} /></a>
-              <button className="btn sm ghost" onClick={load}>I've installed it</button>
+          <div className="st-stack">
+            <p className="st-small">This needs Node.js first. It's free and installs like any other app.</p>
+            <div className="st-inline">
+              <ButtonLink size="sm" href="https://nodejs.org/en/download" icon={<ExternalLink size={12} />}>Get Node.js</ButtonLink>
+              <Button variant="ghost" size="sm" onClick={load}>I've installed it</Button>
             </div>
           </div>
         )
       ) : st.signed_in ? (
-        <div className="row">
-          <span className="small grow">{st.account ? `Signed in as ${st.account}` : `Signed in with your ${st.name} plan`}{st.quota ? <span className="muted"> · {st.quota}</span> : null}</span>
-          <button className="btn primary" onClick={go}>{cta} <ArrowRight size={16} /></button>
+        <div className="st-inline">
+          <span className="st-grow st-small">{st.account ? `Signed in as ${st.account}` : `Signed in with your ${st.name} plan`}{st.quota ? ` · ${st.quota}` : null}</span>
+          <Button variant="primary" onClick={go}>{cta} <ArrowRight size={16} /></Button>
         </div>
       ) : signin && signin.status === "waiting" ? (
-        <div className="col" style={{ gap: 8 }}>
+        <div className="st-stack">
           {signin.needs_code ? (
             <>
-              <ol className="small plan-steps"><li>Sign in on the page that just opened.</li><li>Copy the code it shows you.</li><li>Paste it here.</li></ol>
-              <div className="row">
-                <input className="input mono grow" value={code} onChange={(e) => setCode(e.target.value)} placeholder="Paste the code" autoFocus aria-label="Sign-in code" />
-                <button className="btn primary" disabled={code.trim().length < 4} onClick={sendCode}>Finish</button>
+              <ol className="st-ol"><li>Sign in on the page that just opened.</li><li>Copy the code it shows you.</li><li>Paste it here.</li></ol>
+              <div className="st-key">
+                <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Paste the code" autoFocus aria-label="Sign-in code" />
+                <Button variant="primary" disabled={code.trim().length < 4} onClick={sendCode}>Finish</Button>
               </div>
             </>
           ) : (
             <>
-              <span className="small">Sign in on the page that just opened and type this code:</span>
-              <div className="device-code mono" aria-label="One-time code">{signin.code}</div>
-              <span className="row small muted"><Loader2 size={13} className="spin" /> Waiting for you to approve it…</span>
+              <p className="st-p">Sign in on the page that just opened and type this code:</p>
+              <div className="st-code" aria-label="One-time code">{signin.code}</div>
+              <p className="st-small" role="status">Waiting for you to approve it…</p>
             </>
           )}
-          <a className="small" href={signin.url} target="_blank" rel="noreferrer">Open the sign-in page again</a>
+          <div><ButtonLink href={signin.url} variant="ghost" size="sm">Open the sign-in page again</ButtonLink></div>
         </div>
       ) : (
-        <div className="col" style={{ gap: 6 }}>
-          {signin?.status === "failed" && <div className="alert err">{signin.error || "Sign-in didn't finish. Try again."}</div>}
-          <div className="row"><button className="btn primary" onClick={start}>{mark && <BrandMark name={mark} />} Sign in with {st.name}</button></div>
+        <div className="st-stack">
+          {signin?.status === "failed" && <Notice tone="danger">{signin.error || "Sign-in didn't finish. Try again."}</Notice>}
+          <div><Button variant="primary" onClick={start}>Sign in with {st.name}</Button></div>
         </div>
       )}
     </div>

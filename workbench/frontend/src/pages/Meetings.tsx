@@ -4,11 +4,13 @@
  * decisions, and action items with owners and dates; the actions can go into Tasks, and the follow-up email is saved as
  * a draft for you to check and send yourself. Nothing is ever sent, and recording starts only after the consent notice.
  */
-import { ArrowLeft, Check, CheckSquare, Circle, Copy, FileUp, Loader2, Mail, Mic, NotebookPen, ShieldCheck, Square, Trash2, Users } from "lucide-react";
+import { Check, CheckSquare, Circle, Copy, FileUp, Mail, Mic, NotebookPen, Square, Trash2, Users } from "lucide-react";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../api";
-import { Empty, ModelSelect, relTime, SkeletonList, useModels, useToast } from "../util";
+import { ModelSelect, relTime, useModels, useToast } from "../util";
+import { Button, Card, EmptyState, ErrorState, IconButton, Input, List, Loading, Page, Row, Section, Select, Sheet, Textarea } from "../ui";
+import { Split, StatusText, plainError } from "./agents/kit";
 import { extFor, mimeType } from "../voice/engine";
 import { Action, actionMeta, clock, notesText } from "../voice/logic";
 import "../voice/voice.css";
@@ -55,19 +57,18 @@ function ConsentModal({ onStart, onClose }: { onStart: (title: string, system: b
   const [title, setTitle] = useState("");
   const [system, setSystem] = useState(true);
   return (
-    <div className="modal-back" onClick={onClose}>
-      <div className="modal card col" role="dialog" aria-modal="true" aria-labelledby="consent-title" onClick={(e) => e.stopPropagation()} style={{ gap: 14, maxWidth: 520 }}>
-        <div className="row"><ShieldCheck size={18} /><h2 id="consent-title">Before you record</h2></div>
-        <p className="small" style={{ margin: 0 }}>Tell everyone in the meeting that you're recording and taking notes, and give them the chance to say no. In many places it's the law to ask first.</p>
-        <label className="field">Meeting name <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Weekly catch-up" autoFocus /></label>
-        <label className="row small"><input type="checkbox" checked={system} onChange={(e) => setSystem(e.target.checked)} />
-          Also record the computer's sound, so I hear the other people on a video call <span className="faint">(you'll be asked to share a screen or tab with sound)</span></label>
-        <label className="row consent-check"><input type="checkbox" checked={told} onChange={(e) => setTold(e.target.checked)} /> <b>I've told everyone this meeting is being recorded</b></label>
-        <p className="small faint" style={{ margin: 0 }}>The sound is turned into text as we go and then thrown away. Only the transcript and notes are kept, on this computer.</p>
-        <div className="row"><div className="spacer" /><button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" disabled={!told} onClick={() => onStart(title, system)}><Mic size={14} /> Start recording</button></div>
+    <Sheet open onClose={onClose} title="Before you record" width={480}
+      footer={<div className="ag-bar"><span className="ag-bar-end"><Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" icon={<Mic size={14} />} disabled={!told} onClick={() => onStart(title, system)}>Start recording</Button></span></div>}>
+      <div className="ag-form">
+        <p className="ag-body">Tell everyone in the meeting that you're recording and taking notes, and give them the chance to say no. In many places it's the law to ask first.</p>
+        <Input label="Meeting name" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="For example Weekly catch-up" autoFocus />
+        <label className="ag-check"><input type="checkbox" checked={system} onChange={(e) => setSystem(e.target.checked)} />
+          <span>Also record the computer's sound, so I hear the other people on a video call<small>You'll be asked to share a screen or tab with sound.</small></span></label>
+        <label className="ag-check consent-check"><input type="checkbox" checked={told} onChange={(e) => setTold(e.target.checked)} /> <b>I've told everyone this meeting is being recorded</b></label>
+        <p className="ag-note">The sound is turned into text as we go and then thrown away. Only the transcript and notes are kept, on this computer.</p>
       </div>
-    </div>
+    </Sheet>
   );
 }
 
@@ -130,22 +131,22 @@ function Recorder({ meeting, system, onDone }: { meeting: Meeting; system: boole
   };
 
   return (
-    <div className="col gap-lg">
-      <div className="card recorder">
+    <div className="ag-stack-lg">
+      <Card className="recorder">
         <span className="rec-dot" aria-hidden="true" />
-        <div className="grow">
+        <div className="ag-grow">
           <div className="recorder-time">{clock(elapsed)}</div>
-          <div className="small muted">Recording “{meeting.title}”. Everyone should know.{pending > 0 ? ` Writing down the last ${pending * 30} seconds…` : ""}</div>
+          <p className="ag-note">Recording “{meeting.title}”. Everyone should know.{pending > 0 ? ` Writing down the last ${pending * 30} seconds…` : ""}</p>
         </div>
-        <button className="btn primary" onClick={stop} disabled={stopping}>{stopping ? <Loader2 size={14} className="spin" /> : <Square size={13} />} Stop and write notes</button>
-      </div>
-      {note && <div className="alert" role="status">{note}</div>}
-      <div className="card col transcript-live" aria-live="polite">
-        <div className="label">Live transcript</div>
-        {lines.length === 0 ? <div className="faint small">The first lines appear about half a minute in.</div>
-          : lines.map((l, i) => <div key={i} className="seg"><span className="seg-time mono faint">{clock(l.start)}</span> {l.text}</div>)}
-      </div>
-      {toast.node}
+        <Button variant="primary" icon={<Square size={14} />} onClick={stop} busy={stopping}>{stopping ? "Writing the notes…" : "Stop and write notes"}</Button>
+      </Card>
+      {note && <p className="ag-note mt-note" role="status">{note}</p>}
+      <Section title="Live transcript">
+        <div className="transcript-live" aria-live="polite">
+          {lines.length === 0 ? <p className="ag-note">The first lines appear about half a minute in.</p>
+            : lines.map((l, i) => <p key={i} className="mt-line"><span className="mt-time">{clock(l.start)}</span> {l.text}</p>)}
+        </div>
+      </Section>
     </div>
   );
 }
@@ -198,87 +199,85 @@ function Detail({ m, onChange, onDelete }: { m: Meeting; onChange: (m: Meeting) 
     setBusy("");
   };
   const rename = async (title: string) => {
-    if (title.trim() && title !== m.title) onChange(await api<Meeting>(`/meetings/${m.id}`, { method: "PATCH", body: { title } }));
+    if (title.trim() && title !== m.title) { try { onChange(await api<Meeting>(`/meetings/${m.id}`, { method: "PATCH", body: { title } })); } catch (e) { toast.err(e); } }
   };
 
   const templatePick = templates.length > 1 && (
-    <select className="input" style={{ width: "auto" }} value={template} onChange={(e) => setTemplate(e.target.value)} aria-label="Kind of meeting">
+    <Select className="mt-template" value={template} onChange={(e) => setTemplate(e.target.value)} aria-label="Kind of meeting">
       {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-    </select>
+    </Select>
   );
 
   return (
-    <div className="col gap-lg">
-      <div className="row wrap">
-        <input className="input meeting-title grow" defaultValue={m.title} key={m.id} onBlur={(e) => rename(e.target.value)} aria-label="Meeting name" />
-        <span className="faint small">{m.source === "recording" ? "Recorded" : m.source === "audio" ? "From a recording" : "From a transcript"} · {relTime(m.created_at)}{m.seconds ? ` · ${clock(m.seconds)}` : ""}</span>
-        <button className="btn ghost sm icon danger" onClick={onDelete} aria-label="Delete meeting"><Trash2 size={14} /></button>
+    <div className="ag-stack-lg">
+      <div className="ag-bar">
+        <input className="ui-input meeting-title ag-grow" defaultValue={m.title} key={m.id} onBlur={(e) => rename(e.target.value)} aria-label="Meeting name" />
+        <span className="ag-meta">{m.source === "recording" ? "Recorded" : m.source === "audio" ? "From a recording" : "From a transcript"} · {relTime(m.created_at)}{m.seconds ? ` · ${clock(m.seconds)}` : ""}</span>
+        <IconButton size="sm" label="Delete meeting" onClick={onDelete}><Trash2 size={14} /></IconButton>
       </div>
 
       {!n ? (
-        <div className="card col">
-          <div className="small muted">Ready to write the notes: a summary, what was decided, and who's doing what by when.</div>
-          <div className="row wrap"><div style={{ minWidth: 220 }}><ModelSelect value={model} onChange={setModel} models={models} /></div>
+        <Card className="ag-form">
+          <p className="ag-note">Ready to write the notes: a summary, what was decided, and who's doing what by when.</p>
+          <div className="ag-bar"><div className="rs-model"><ModelSelect value={model} onChange={setModel} models={models} /></div>
             {templatePick}
-            <button className="btn primary" onClick={summarise} disabled={!!busy}>{busy === "notes" ? <Loader2 size={14} className="spin" /> : <NotebookPen size={14} />} Write the notes</button></div>
-        </div>
+            <Button variant="primary" icon={<NotebookPen size={14} />} onClick={summarise} busy={busy === "notes"} disabled={!!busy && busy !== "notes"}>{busy === "notes" ? "Writing the notes…" : "Write the notes"}</Button></div>
+        </Card>
       ) : (
         <>
-          <section className="card col">
-            <div className="row"><h2 className="grow">Summary</h2>
-              <button className="btn ghost sm" onClick={() => navigator.clipboard.writeText(notesText(m.title, n)).then(() => toast.ok("Notes copied"))}><Copy size={13} /> Copy notes</button>
-              {templatePick}
-              <button className="btn ghost sm" onClick={summarise} disabled={!!busy}>{busy === "notes" ? <Loader2 size={13} className="spin" /> : null} Write again</button></div>
-            <p style={{ margin: 0 }}>{n.summary}</p>
-            {n.attendees.length > 0 && <div className="small muted row"><Users size={13} /> {n.attendees.join(", ")}</div>}
-            {n.notes.length > 0 && <><div className="label">Notes</div><ul className="meeting-list">{n.notes.map((x, i) => <li key={i}>{x}</li>)}</ul></>}
-            {n.decisions.length > 0 && <><div className="label">Decisions</div><ul className="meeting-list decisions">{n.decisions.map((x, i) => <li key={i}><Check size={13} /> {x}</li>)}</ul></>}
-          </section>
-
-          <section className="card col">
-            <div className="row"><CheckSquare size={16} /><h2 className="grow">Action items</h2></div>
-            {n.actions.length === 0 ? <div className="small faint">No action items came up.</div> : (
-              <>
-                {n.actions.map((a, i) => (
-                  <label key={i} className={`action-item ${a.task_id ? "added" : ""}`}>
-                    {a.task_id ? <Check size={15} className="ok" aria-label="In Tasks" /> :
-                      <input type="checkbox" checked={picked.has(i)} onChange={(e) => setPicked((p) => { const q = new Set(p); if (e.target.checked) q.add(i); else q.delete(i); return q; })} />}
-                    <span className="grow"><span>{a.task}</span><span className="small muted action-meta">{actionMeta(a)}</span></span>
-                  </label>
-                ))}
-                <div className="row wrap">
-                  <input className="input" style={{ width: 200 }} placeholder="Project (optional)" value={project} onChange={(e) => setProject(e.target.value)} aria-label="Project" />
-                  <button className="btn primary sm" onClick={addTasks} disabled={!!busy || picked.size === 0}>{busy === "tasks" ? <Loader2 size={13} className="spin" /> : <CheckSquare size={13} />} Add {picked.size || ""} to Tasks</button>
-                  <Link className="small" to="/tasks">Open Tasks</Link>
-                </div>
-              </>
-            )}
-          </section>
-
-          <section className="card col">
-            <div className="row"><Mail size={16} /><h2 className="grow">Follow-up email</h2></div>
-            <div className="small muted">I'll save this as a draft. I never send it: check it, then send it yourself from your mail.</div>
-            <input className="input" placeholder={n.attendees.length ? `To (e.g. the emails for ${n.attendees.slice(0, 2).join(", ")})` : "To (email addresses)"} value={to} onChange={(e) => setTo(e.target.value)} aria-label="To" />
-            <input className="input" value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject" />
-            <textarea className="input" rows={9} value={body} onChange={(e) => { setBody(e.target.value); setDraftSaved(false); }} aria-label="Email" />
-            <div className="row">
-              <button className="btn primary sm" onClick={saveDraft} disabled={!!busy || !body.trim()}>{busy === "draft" ? <Loader2 size={13} className="spin" /> : <Mail size={13} />} Save as draft</button>
-              {draftSaved && <span className="small" style={{ color: "var(--ok-text)" }}><Check size={13} /> Saved in Mail → Drafts (and your Gmail or Outlook drafts if connected). Not sent.</span>}
-              {draftSaved && <Link className="small" to="/mail">Open Mail</Link>}
+          <Section title="Summary" actions={<>
+            <Button size="sm" variant="ghost" icon={<Copy size={14} />} onClick={() => navigator.clipboard.writeText(notesText(m.title, n)).then(() => toast.ok("Notes copied"))}>Copy notes</Button>
+            {templatePick}
+            <Button size="sm" variant="ghost" onClick={summarise} busy={busy === "notes"} disabled={!!busy && busy !== "notes"}>{busy === "notes" ? "Writing…" : "Write again"}</Button></>}>
+            <div className="ag-stack">
+              <p className="ag-body">{n.summary}</p>
+              {n.attendees.length > 0 && <p className="ag-meta ag-bar"><Users size={14} aria-hidden="true" /> {n.attendees.join(", ")}</p>}
+              {n.notes.length > 0 && <><p className="ag-label">Notes</p><ul className="meeting-list">{n.notes.map((x, i) => <li key={i}>{x}</li>)}</ul></>}
+              {n.decisions.length > 0 && <><p className="ag-label">Decisions</p><ul className="meeting-list decisions">{n.decisions.map((x, i) => <li key={i}><Check size={14} aria-hidden="true" /> {x}</li>)}</ul></>}
             </div>
-          </section>
+          </Section>
+
+          <Section title="Action items">
+            {n.actions.length === 0 ? <p className="ag-note">No action items came up.</p> : (
+              <div className="ag-stack">
+                <div>
+                  {n.actions.map((a, i) => (
+                    <label key={i} className={`action-item ${a.task_id ? "added" : ""}`}>
+                      {a.task_id ? <Check size={16} className="ok" aria-label="In Tasks" /> :
+                        <input type="checkbox" checked={picked.has(i)} onChange={(e) => setPicked((p) => { const q = new Set(p); if (e.target.checked) q.add(i); else q.delete(i); return q; })} />}
+                      <span className="ag-grow"><span>{a.task}</span><span className="ag-meta action-meta">{actionMeta(a)}</span></span>
+                    </label>
+                  ))}
+                </div>
+                <div className="ag-bar">
+                  <div className="mt-project"><Input placeholder="Project (optional)" value={project} onChange={(e) => setProject(e.target.value)} aria-label="Project" /></div>
+                  <Button size="sm" variant="primary" icon={<CheckSquare size={14} />} onClick={addTasks} busy={busy === "tasks"} disabled={(!!busy && busy !== "tasks") || picked.size === 0}>{busy === "tasks" ? "Adding…" : `Add ${picked.size || ""} to Tasks`}</Button>
+                  <Link className="ag-meta" to="/tasks">Open Tasks</Link>
+                </div>
+              </div>
+            )}
+          </Section>
+
+          <Section title="Follow-up email" description="I'll save this as a draft. I never send it: check it, then send it yourself from your mail.">
+            <div className="ag-form">
+              <Input placeholder={n.attendees.length ? `To (for example the emails for ${n.attendees.slice(0, 2).join(", ")})` : "To (email addresses)"} value={to} onChange={(e) => setTo(e.target.value)} aria-label="To" />
+              <Input value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject" />
+              <Textarea rows={9} value={body} onChange={(e) => { setBody(e.target.value); setDraftSaved(false); }} aria-label="Email" />
+              <div className="ag-bar">
+                <Button size="sm" variant="primary" icon={<Mail size={14} />} onClick={saveDraft} busy={busy === "draft"} disabled={(!!busy && busy !== "draft") || !body.trim()}>{busy === "draft" ? "Saving…" : "Save as draft"}</Button>
+                {draftSaved && <span className="ag-meta ag-ok"><Check size={14} aria-hidden="true" /> Saved in Mail, Drafts (and your Gmail or Outlook drafts if connected). Not sent.</span>}
+                {draftSaved && <Link className="ag-meta" to="/mail">Open Mail</Link>}
+              </div>
+            </div>
+          </Section>
         </>
       )}
 
-      <section className="card col">
-        <button className="row nav-toggle" style={{ background: "none", border: 0, padding: 0, cursor: "pointer" }} onClick={() => setShowT((s) => !s)} aria-expanded={showT}>
-          <h2 className="grow" style={{ textAlign: "left" }}>Transcript</h2><span className="small muted">{showT ? "Hide" : "Show"}</span>
-        </button>
-        {showT && <div className="transcript">{(m.segments ?? []).map((s, i) => (
-          <div key={i} className="seg"><span className="seg-time mono faint">{clock(s.start)}</span> {s.speaker && <b>{s.speaker}: </b>}{s.text}</div>
+      <Section title="Transcript" actions={<Button size="sm" variant="ghost" onClick={() => setShowT((s) => !s)} aria-expanded={showT}>{showT ? "Hide" : "Show"}</Button>}>
+        {showT && <div className="transcript">{(m.segments ?? []).length === 0 ? <p className="ag-note">No transcript yet.</p> : (m.segments ?? []).map((s, i) => (
+          <p key={i} className="mt-line"><span className="mt-time">{clock(s.start)}</span> {s.speaker && <b>{s.speaker}: </b>}{s.text}</p>
         ))}</div>}
-      </section>
-      {toast.node}
+      </Section>
     </div>
   );
 }
@@ -287,6 +286,9 @@ export default function Meetings() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [list, setList] = useState<Meeting[] | null>(null);
+  const [listErr, setListErr] = useState<unknown>(null);
+  const [openErr, setOpenErr] = useState<unknown>(null);
+  const [again, setAgain] = useState(0);
   const [locked, setLocked] = useState("");
   const [current, setCurrent] = useState<Meeting | null>(null);
   const [consent, setConsent] = useState(false);
@@ -296,12 +298,14 @@ export default function Meetings() {
   const toast = useToast();
   const mid = id ? Number(id) : null;
 
-  const load = () => api<Meeting[]>("/meetings").then(setList).catch((e) => { if (e instanceof ApiError && e.status === 402) setLocked(e.message); else toast.err(e); setList([]); });
-  useEffect(() => { load(); }, []);
+  const load = () => api<Meeting[]>("/meetings").then((l) => { setList(l); setListErr(null); })
+    .catch((e) => { if (e instanceof ApiError && e.status === 402) { setLocked(e.message); setList([]); } else setListErr(e); });
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
+    setOpenErr(null);
     if (!mid) return setCurrent(null);
-    api<Meeting>(`/meetings/${mid}`).then(setCurrent).catch(toast.err);
-  }, [mid]);
+    api<Meeting>(`/meetings/${mid}`).then(setCurrent).catch(setOpenErr);
+  }, [mid, again]);
 
   const start = async (title: string, system: boolean) => {
     setConsent(false);
@@ -327,63 +331,46 @@ export default function Meetings() {
   };
   const remove = async () => {
     if (!current || !confirm(`Delete “${current.title}” and its notes? Tasks already added stay in Tasks.`)) return;
-    await api(`/meetings/${current.id}`, { method: "DELETE" });
+    try { await api(`/meetings/${current.id}`, { method: "DELETE" }); } catch (e) { toast.err(e); return; }
     navigate("/meetings");
     load();
   };
 
+  const desc = "Record a meeting or bring in a file. I write the notes, list who's doing what by when, and draft the follow-up email for you to send.";
   if (locked) {
     return (
-      <div className="page"><div className="page-head"><div><h1>Meetings</h1></div></div>
-        <Empty icon={<Users size={22} />} title="The meeting companion is part of Pro" hint="Record or bring in a meeting and get notes, decisions, action items and a follow-up email draft." /></div>
+      <Page className="ag-page" title="Meetings" description={desc}>
+        <EmptyState icon={<Users size={20} />} title="The meeting companion is part of Pro" line="Record or bring in a meeting and get notes, decisions, action items and a follow-up email draft." />
+      </Page>
     );
   }
 
   const isRecording = recording && recording.m.id === mid;
   return (
-    <div className={`split ${mid !== null ? "has-selection" : ""}`}>
-      <div className="split-list">
-        <div className="col" style={{ padding: "14px 12px 10px", gap: 10 }}>
-          <div className="row"><h2 className="grow">Meetings</h2></div>
-          <div className="row" style={{ gap: 6 }}>
-            <button className="btn primary sm grow" onClick={() => setConsent(true)} disabled={!!recording}><Circle size={12} fill="currentColor" /> Record</button>
-            <button className="btn sm grow" onClick={() => file.current?.click()} disabled={importing}>{importing ? <Loader2 size={13} className="spin" /> : <FileUp size={13} />} Bring in a file</button>
-            <input ref={file} type="file" hidden accept=".vtt,.srt,.txt,.md,.json,.docx,audio/*,video/*,.m4a,.mp3,.wav,.webm,.mp4" onChange={onImport} />
-          </div>
-        </div>
-        <div className="scroll">
-          {list === null && <SkeletonList rows={4} />}
-          {list?.length === 0 && <Empty icon={<Users size={22} />} title="No meetings yet" hint="Record one, or bring in a recording or a transcript from Zoom, Teams or Meet." />}
-          {list?.map((m) => (
-            <div key={m.id} className={`list-item ${m.id === mid ? "active" : ""}`} role="link" tabIndex={0} onClick={() => navigate(`/meetings/${m.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/meetings/${m.id}`); }}>
-              <div className="grow">
-                <div className="truncate" style={{ fontWeight: m.id === mid ? 550 : 450 }}>{m.status === "recording" && <span className="rec-dot sm" aria-label="Recording" />} {m.title}</div>
-                <div className="faint small truncate">{relTime(m.created_at)} · {m.status === "summarised" ? "Notes ready" : m.status === "recording" ? "Recording" : "Needs notes"}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="split-main">
-        <div className="toolbar">
-          <button className="btn ghost sm mobile-only" onClick={() => navigate("/meetings")} aria-label="Back to meetings"><ArrowLeft size={14} /></button>
-          <div className="toolbar-title truncate">{current?.title ?? "Meetings"}</div>
-        </div>
-        <div className="scroll" style={{ padding: "24px 28px 64px" }}>
-          <div style={{ maxWidth: 820, margin: "0 auto" }}>
-            {isRecording ? <Recorder meeting={recording.m} system={recording.system} onDone={(m) => { setRecording(null); setCurrent(m); load(); }} />
-              : current ? <Detail m={current} onChange={(m) => { setCurrent(m); load(); }} onDelete={remove} />
-              : <Empty hero icon={<Users size={24} />} title="Your meeting companion" hint="Record a meeting or bring in a file. I'll write the notes, list who's doing what by when, add those to Tasks, and draft the follow-up email for you to send.">
-                  <div className="row" style={{ justifyContent: "center", gap: 8 }}>
-                    <button className="btn primary" onClick={() => setConsent(true)}><Mic size={14} /> Record a meeting</button>
-                    <button className="btn" onClick={() => file.current?.click()}><FileUp size={14} /> Bring in a file</button>
-                  </div>
-                </Empty>}
-          </div>
-        </div>
-      </div>
+    <Page wide className="ag-page mt-page" title={current?.title && mid ? current.title : "Meetings"} kicker={mid ? "Meetings" : undefined} description={mid ? undefined : desc}
+      actions={<>
+        <Button variant="primary" icon={<Circle size={12} fill="currentColor" />} onClick={() => setConsent(true)} disabled={!!recording}>Record</Button>
+        <Button icon={<FileUp size={14} />} onClick={() => file.current?.click()} busy={importing}>{importing ? "Bringing it in…" : "Bring in a file"}</Button>
+        <input ref={file} type="file" hidden accept=".vtt,.srt,.txt,.md,.json,.docx,audio/*,video/*,.m4a,.mp3,.wav,.webm,.mp4" onChange={onImport} />
+      </>}>
+      <Split solo={!mid && list?.length === 0} list={
+        list === null ? (listErr ? <ErrorState title="Your meetings did not load" line={plainError(listErr)} onRetry={load} /> : <Loading rows={4} />)
+          : list.length === 0 ? <EmptyState icon={<Users size={20} />} title="No meetings yet" line="Record one, or bring in a recording or a transcript from Zoom, Teams or Meet." />
+          : <List className="ag-list" label="Meetings">
+            {list.map((m) => (
+              <Row key={m.id} active={m.id === mid} onClick={() => navigate(`/meetings/${m.id}`)} title={m.title}
+                meta={<StatusText live={m.status === "recording"}>{relTime(m.created_at)} · {m.status === "summarised" ? "Notes ready" : m.status === "recording" ? "Recording" : "Needs notes"}</StatusText>} />
+            ))}
+          </List>
+      }>
+        {isRecording ? <Recorder meeting={recording.m} system={recording.system} onDone={(m) => { setRecording(null); setCurrent(m); load(); }} />
+          : current ? <Detail m={current} onChange={(m) => { setCurrent(m); load(); }} onDelete={remove} />
+          : mid && openErr ? <ErrorState title="That meeting did not open" line={plainError(openErr)} onRetry={() => setAgain((n) => n + 1)} />
+          : mid ? <Loading rows={4} />
+          : <Card><EmptyState icon={<Users size={20} />} title={list?.length === 0 ? "No meetings yet" : "Your meeting companion"} line="Record a meeting or bring in a file, and I'll write the notes."
+              action={<Button variant="primary" icon={<Mic size={14} />} onClick={() => setConsent(true)}>Record a meeting</Button>} /></Card>}
+      </Split>
       {consent && <ConsentModal onStart={start} onClose={() => setConsent(false)} />}
-      {toast.node}
-    </div>
+    </Page>
   );
 }

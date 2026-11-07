@@ -52,8 +52,8 @@ def test_fixes_a_bug_with_approval_diff_command_and_receipt(project, fake):
     assert (project / "calc.py").read_text() == "def add(a, b):\n    return a + b\n"
     out = r.stdout
     assert "-    return a - b" in out and "+    return a + b" in out          # the diff was shown
-    assert "Apply this change? [y]es / [n]o / [a]lways this session:\ny" in out
-    assert "Run this command?" in out and "tests pass" in out
+    assert "Needs your OK: make this change.  [y] Approve  [n] Deny  [a] Approve for this session\ny" in out
+    assert "Needs your OK: run this command." in out and "tests pass" in out
     assert "Fixed add()" in out
     # the model saw every tool result, in order
     last = m.requests[-1]["body"]["messages"]
@@ -198,7 +198,7 @@ def test_mcp_stdio_server_tools(project, fake, tmp_path):
     r = run(project, m, stdin="y\n")
     assert r.returncode == 0, r.stderr
     assert "mcp__fake__shout" in {t["function"]["name"] for t in m.requests[0]["body"]["tools"]}
-    assert "Call this tool?" in r.stdout
+    assert "Needs your OK: use this tool." in r.stdout
     assert m.requests[1]["body"]["messages"][-1]["content"] == "HELLO MCP"
     listing = rooks(project, "mcp", "-C", str(project))
     assert "fake: 1 tools" in listing.stdout and "mcp__fake__shout" in listing.stdout

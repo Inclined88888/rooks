@@ -2,6 +2,8 @@
 import { Check, Sparkles, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
+import { Button } from "../ui";
+import "../pages/agents/agents.css";
 import "./memory.css";
 
 type Item = { id: number; day: string; title: string; detail: string; status: string };
@@ -17,25 +19,24 @@ export function ImprovedCard() {
   const decide = async (p: Item, choice: "approve" | "decline") => { await api(`/knowledge/improvements/${p.id}/${choice}`, { body: {} }); load(); };
   const runNow = async () => { setBusy(true); try { await api("/knowledge/improvements/run", { body: {} }); await load(); } finally { setBusy(false); } };
   return (
-    <section className="card kn-improved kn-enter" aria-label="What I improved" style={{ marginBottom: 24 }}>
-      <div className="row" style={{ alignItems: "center", gap: 10 }}>
-        <Sparkles size={17} style={{ color: "var(--accent-text)" }} />
-        <h3 style={{ margin: 0 }}>What I improved</h3>
-        <span className="muted small">{d.note ? `overnight, ${d.note.day}` : ""}</span>
-        <div className="spacer" style={{ flex: 1 }} />
-        <label className="row small muted" style={{ gap: 6, alignItems: "center" }} title={`Runs once a night while your computer is on and you've been away ${d.idle_minutes} minutes`}>
+    <section className="ui-card kn-improved" aria-label="What I improved">
+      <div className="ag-bar">
+        <Sparkles size={16} aria-hidden="true" className="kn-improved-icon" />
+        <h3 className="ag-h3">What I improved</h3>
+        <span className="ag-meta">{d.note ? `overnight, ${d.note.day}` : ""}</span>
+        <label className="ag-check ag-bar-end" title={`Runs once a night while your computer is on and you've been away ${d.idle_minutes} minutes`}>
           <input type="checkbox" checked={d.enabled} onChange={toggle} /> Get better overnight
         </label>
       </div>
-      <p style={{ margin: "10px 0 0" }}>{d.note ? d.note.detail : d.enabled ? "Tonight, while you're away, I'll look back over the day and get a little better at your work." : "Overnight improvement is off."}</p>
+      <p className="ag-body ag-gap-top">{d.note ? d.note.detail : d.enabled ? "Tonight, while you're away, I'll look back over the day and get a little better at your work." : "Overnight improvement is off."}</p>
       {d.proposals.map((p) => (
-        <div key={p.id} className="kn-proposal kn-enter">
-          <div style={{ flex: 1 }}><b>{p.title}?</b><div className="muted small">{p.detail} This changes how I act for you, so it's your call.</div></div>
-          <button className="btn sm primary" onClick={() => decide(p, "approve")}><Check size={14} /> Yes</button>
-          <button className="btn sm ghost" onClick={() => decide(p, "decline")}><X size={14} /> No thanks</button>
+        <div key={p.id} className="kn-proposal">
+          <div className="ag-grow"><b>{p.title}?</b><p className="ag-note">{p.detail} This changes how I act for you, so it's your call.</p></div>
+          <Button size="sm" variant="primary" icon={<Check size={14} />} onClick={() => decide(p, "approve")}>Yes</Button>
+          <Button size="sm" variant="ghost" icon={<X size={14} />} onClick={() => decide(p, "decline")}>No thanks</Button>
         </div>
       ))}
-      {!d.note && d.enabled && <button className="btn sm ghost" style={{ marginTop: 8 }} disabled={busy} onClick={runNow}>{busy ? "Looking back…" : "Do it now"}</button>}
+      {!d.note && d.enabled && <div className="ag-gap-top"><Button size="sm" variant="ghost" busy={busy} onClick={runNow}>{busy ? "Looking back…" : "Do it now"}</Button></div>}
     </section>
   );
 }

@@ -1,9 +1,7 @@
 import DOMPurify from "dompurify";
 import "katex/dist/katex.min.css";
-import { Check, X } from "lucide-react";
 import { MouseEvent, useEffect, useRef, useState } from "react";
 import { api, Model } from "./api";
-import { motionOff } from "./appearance";
 import { MERMAID_RE, renderMarkdownHtml, unesc } from "./markdown";
 
 // In non-browser contexts (tests) dompurify's default export is a factory whose product needs a real
@@ -106,25 +104,6 @@ export function Markdown({ text, className = "" }: { text: string; className?: s
           : <div key={i} dangerouslySetInnerHTML={{ __html: part }} />)}
     </div>
   );
-}
-
-const reducedMotion = motionOff;
-
-/** Reveals a freshly arrived answer progressively with a caret, like a live stream. Instant when motion is off or the OS asks for reduced motion. */
-export function StreamingMarkdown({ text, onDone }: { text: string; onDone?: () => void }) {
-  const [n, setN] = useState(() => (reducedMotion() ? text.length : 0));
-  const done = useRef(false);
-  useEffect(() => {
-    if (n >= text.length) {
-      if (!done.current) { done.current = true; onDone?.(); }
-      return;
-    }
-    // Finish in ~0.9s whatever the length, at least 3 chars a frame
-    const step = Math.max(3, Math.ceil(text.length / 54));
-    const raf = requestAnimationFrame(() => setN((x) => Math.min(text.length, x + step)));
-    return () => cancelAnimationFrame(raf);
-  }, [n, text]);
-  return <Markdown text={text.slice(0, n)} className={n < text.length ? "streaming" : ""} />;
 }
 
 export function Skeleton({ w = "100%", h = 12, style }: { w?: number | string; h?: number; style?: React.CSSProperties }) {
@@ -244,28 +223,9 @@ export function fmtTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-export function useToast() {
-  const [msg, setMsg] = useState<{ text: string; kind: "ok" | "err"; key: number } | null>(null);
-  const [leaving, setLeaving] = useState(false);
-  useEffect(() => {
-    if (!msg) return;
-    setLeaving(false);
-    const a = setTimeout(() => setLeaving(true), 3800);
-    const t = setTimeout(() => setMsg(null), 4000);
-    return () => { clearTimeout(a); clearTimeout(t); };
-  }, [msg]);
-  const node = msg ? (
-    <div key={msg.key} className={`toast ${msg.kind} ${leaving ? "leaving" : ""}`} role={msg.kind === "err" ? "alert" : "status"}>
-      <span className="toast-icon" aria-hidden="true">{msg.kind === "err" ? <X size={12} strokeWidth={3} /> : <Check size={12} strokeWidth={3} />}</span>
-      <span>{msg.text}</span>
-    </div>
-  ) : null;
-  return {
-    node,
-    ok: (text: string) => setMsg({ text, kind: "ok", key: Date.now() }),
-    err: (e: unknown) => setMsg({ text: e instanceof Error ? e.message : String(e), kind: "err", key: Date.now() }),
-  };
-}
+/** One toast stack for the app (ui/toast.ts): pages call useToast() and the stack mounted once in the shell shows it;
+ *  only the ask bar, which has no shell, renders toast.node itself. */
+export { useToast } from "./ui";
 
 export function Empty({ icon, title, hint, hero = false, children }: { icon?: React.ReactNode; title: string; hint?: string; hero?: boolean; children?: React.ReactNode }) {
   return (

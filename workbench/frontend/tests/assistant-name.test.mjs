@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const welcome = read("../src/pages/Welcome.tsx");
 const home = read("../src/pages/Dashboard.tsx");
-const chat = read("../src/pages/Assistant.tsx");
+const chat = ["../src/pages/Assistant.tsx", "../src/chat/Thread.tsx", "../src/chat/ThreadHeader.tsx", "../src/chat/Composer.tsx", "../src/chat/events.ts"].map(read).join("\n"); // the chat page is split (package F2)
 
 test("first run asks for a name and saves it", () => {
   assert.match(welcome, /What should I be called\?/);
@@ -26,7 +26,7 @@ test("Home greets by name and lists unread results beside still to do", () => {
 test("the main chat uses the assistant's name and real choice buttons", () => {
   assert.doesNotMatch(chat, />Workspace</);
   assert.match(chat, /\{who\}/);
-  assert.match(chat, /t === "choices"/);
+  assert.match(chat, /case "choices"/); // the typed reducer in chat/events.ts
   assert.match(chat, /className="chat-choices"/);
   assert.match(chat, /aria-label=\{c\.question \|\| "Quick replies"\}/);
 });

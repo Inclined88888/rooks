@@ -64,8 +64,9 @@ test("screen names stay the words people already see", () => {
 test("the shell keeps the second screen on its own route", () => {
   const beside = read("../src/Beside.tsx");
   const app = read("../src/App.tsx");
-  const side = read("../src/AgentsSidebar.tsx");
-  const assistant = read("../src/pages/Assistant.tsx");
+  const stage = read("../src/shell/StageHost.tsx"); // the Stage is built on the Beside split
+  const side = read("../src/chat/ChatList.tsx");
+  const assistant = ["../src/pages/Assistant.tsx", "../src/chat/ThreadHeader.tsx"].map(read).join("\n"); // the chat page is split (package F2)
   assert.doesNotMatch(beside, /Side by side/);
   assert.match(beside, /let current: BesideState \| null = null/);
   assert.match(beside, /One screen/);
@@ -77,7 +78,8 @@ test("the shell keeps the second screen on its own route", () => {
   assert.match(beside, /BesideExtraHost/);
   assert.match(beside, /safePath/);
   assert.match(beside, /Open \$\{label\} beside this/);
-  assert.match(app, /BesideStage/);
+  assert.match(app, /StageHost/);
+  assert.match(stage, /BesideStage/);
   assert.match(side, /Archive/);
   assert.match(side, /Delete/);
   assert.doesNotMatch(side, /BesideButton/);
@@ -86,4 +88,17 @@ test("the shell keeps the second screen on its own route", () => {
   assert.match(assistant, /mounted\.current/);
   assert.doesNotMatch(assistant, /window\.location\.pathname\.startsWith\("\/assistant"\)/);
   assert.doesNotMatch(assistant, /window\.location\.pathname === "\/assistant"/);
+});
+
+test("the Stage shows the Room, a browser, the desktop and the terminal through registered surfaces on the split", () => {
+  const surfaces = read("../src/stage/surfaces.tsx");
+  for (const s of ['"room"', '"browser"', '"desktop"', '"terminal"']) assert.ok(surfaces.includes(`registerStageSurface(${s}`), s);
+  assert.match(read("../src/App.tsx"), /registerStageSurfaces\(\)/, "registered when the app starts");
+  assert.match(read("../src/shell/StageHost.tsx"), /BesideStage/);
+  // a chat watch event opens the Stage; the card in the thread only opens it and shows no picture of its own
+  const cards = read("../src/chat/ResultCards.tsx");
+  assert.match(cards, /Open on the Stage/);
+  assert.doesNotMatch(cards, /<img/);
+  // the Stage closes with its own control
+  assert.match(surfaces, /closeStage|close\(\)/);
 });

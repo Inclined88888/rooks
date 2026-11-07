@@ -64,4 +64,4 @@ def test_first_run_offers_to_open_the_app_and_links_to_it(tmp_path, monkeypatch,
     assert cli.first_run_setup(tmp_path) is True
     assert calls == [["ai-workspace"]]
     out = capsys.readouterr().out
-    assert "Connect a model in its window" in out and "Linked to AI Workspace" in out
+    assert "Connect a model in its window" in out and "Linked to the Rooks app" in out

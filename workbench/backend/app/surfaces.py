@@ -80,7 +80,9 @@ def bearer_ok(request: Request) -> bool:
     row = db.one("SELECT token_hash, revoked FROM browser_tokens WHERE token_hash = ?", digest)
     if row and not row["revoked"] and hmac.compare_digest(row["token_hash"], digest):
         return True
-    # The desktop app's own key (app.json) lets the terminal on this machine talk as the same account.
+    # TOOLS_API_KEY, the app's own tools key (kept in the OS keychain by the desktop app). It is not the app.json key:
+    # app.json carries the bridge key (BROWSER_API_KEY), which opens /v1 and, with the terminal's channel, only the
+    # Workroom routes in security.require_user_or_terminal.
     app_key = getattr(config, "TOOLS_API_KEY", "") or ""
     return bool(app_key) and len(token) == len(app_key) and hmac.compare_digest(token, app_key)
 
@@ -88,10 +90,17 @@ def bearer_ok(request: Request) -> bool:
 def status() -> dict:
     computer = bool(getattr(config, "DESK_URL", "") and getattr(config, "DESK_API_KEY", ""))
     browser_agent = bool(getattr(config, "BROWSER_URL", "") and getattr(config, "BROWSER_API_KEY", ""))
+    try:
+        from . import room
+
+        room_info = room.describe()  # the Room says what it is: available, a plain label, and how separate it is
+    except Exception:  # noqa: BLE001
+        room_info = {"available": False, "label": "", "isolation": "none"}
     return {
         "local": True,
         "computer": computer,
         "browser_agent": browser_agent,
+        "room": room_info,
         "files": "this computer",
         "note": "" if computer else "Rooks stays on this computer. Chat and memory work in the browser. Using the screen or files here needs the desktop app on this same computer.",
     }

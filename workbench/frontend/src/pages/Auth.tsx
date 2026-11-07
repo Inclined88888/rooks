@@ -1,8 +1,10 @@
-import { ArrowRight, Check, Cpu, Download, KeyRound, Loader2, Lock } from "lucide-react";
+import { ArrowRight, Check, Download, Lock } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { api, saveBrowserToken, stream } from "../api";
 import type { Status } from "../App";
 import { PRODUCT } from "../product";
+import { Badge, Button, Input } from "../ui";
+import { Advanced, AuthActions, AuthCard, ButtonLink, Notice, Progress, SettingRow, SettingsGroup } from "./settings/index";
 
 const SUGGESTED = [
   { model: "qwen3:4b", note: "Fast all rounder, ~2.5 GB. Good on CPU." },
@@ -29,29 +31,23 @@ function Login({ onDone }: { onDone: () => void }) {
     }
   };
   return (
-    <form className="col gap-lg" onSubmit={submit}>
-      <div className="auth-brand">
-        <div className="wordmark lg" aria-hidden="true">{PRODUCT}</div>
-        <div>
-          <h1>Welcome back</h1>
-          <p className="muted">Use the PIN or password you created for {PRODUCT}. Gmail, Apple, Microsoft, ChatGPT and Claude are the next step, after this.</p>
-        </div>
+    <>
+      <form className="st-auth-form" onSubmit={submit}>
+        {error && <Notice tone="danger">{error}</Notice>}
+        <Input label="PIN or password" type="password" autoFocus autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Button type="submit" variant="primary" busy={busy} disabled={!password}>{busy ? "Signing in…" : "Sign in"}</Button>
+      </form>
+      <div className="st-auth-alt">
+        <PairCode busy={busy} onDone={onDone} onError={setError} />
+        <Button variant="ghost" disabled={busy} onClick={async () => {
+          if (!window.confirm("The old PIN can't be looked up. Set a new one? Your mail, notes and tasks stay.")) return;
+          setBusy(true);
+          setError("");
+          try { await api("/lock/reset", { method: "POST" }); onDone(); }
+          catch (err) { setError((err as Error).message); setBusy(false); }
+        }}>Forgot it? Set a new one</Button>
       </div>
-      {error && <div className="alert err">{error}</div>}
-      <label className="field">
-        PIN or password
-        <input className="input" type="password" autoFocus autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      </label>
-      <button className="btn primary" disabled={busy || !password}>{busy ? <Loader2 size={16} className="spin" /> : "Sign in"}</button>
-      <PairCode busy={busy} onDone={onDone} onError={setError} />
-      <button type="button" className="btn ghost" disabled={busy} onClick={async () => {
-        if (!window.confirm("The old PIN can't be looked up. Set a new one? Your mail, notes and tasks stay.")) return;
-        setBusy(true);
-        setError("");
-        try { await api("/lock/reset", { method: "POST" }); onDone(); }
-        catch (err) { setError((err as Error).message); setBusy(false); }
-      }}>Forgot it? Set a new one</button>
-    </form>
+    </>
   );
 }
 
@@ -59,7 +55,7 @@ function PairCode({ busy, onDone, onError }: { busy: boolean; onDone: () => void
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState("");
   const [working, setWorking] = useState(false);
-  if (!open) return <button type="button" className="btn ghost" disabled={busy} onClick={() => setOpen(true)}>I have a pairing code</button>;
+  if (!open) return <Button variant="ghost" disabled={busy} onClick={() => setOpen(true)}>I have a pairing code</Button>;
   const connect = async () => {
     setWorking(true);
     try {
@@ -73,11 +69,9 @@ function PairCode({ busy, onDone, onError }: { busy: boolean; onDone: () => void
     }
   };
   return (
-    <div className="col">
-      <label className="field">Pairing code
-        <input className="input" value={code} autoComplete="one-time-code" aria-label="Pairing code" placeholder="ABCD-EFGH" onChange={(e) => setCode(e.target.value)} />
-      </label>
-      <button type="button" className="btn" disabled={working || code.trim().length < 8} onClick={connect}>{working ? "Checking…" : "Connect this browser"}</button>
+    <div className="st-auth-form">
+      <Input label="Pairing code" hint="Made in Settings, Tools, on the computer Rooks runs on." value={code} autoComplete="one-time-code" placeholder="ABCD-EFGH" onChange={(e) => setCode(e.target.value)} />
+      <Button busy={working} disabled={code.trim().length < 8} onClick={connect}>{working ? "Checking…" : "Connect this browser"}</Button>
     </div>
   );
 }
@@ -125,60 +119,37 @@ function ModelsStep({ onNext }: { onNext: () => void }) {
   };
 
   return (
-    <div className="col gap-lg">
-      <div>
-        <h1>Connect models</h1>
-        <p className="muted">Local models run on this server through Ollama. Cloud providers are optional and can be added later in Settings.</p>
-      </div>
-      {error && <div className="alert err">{error}</div>}
-      <div className="card col">
-        <div className="row">
-          <Cpu size={16} />
-          <h3>Local models (Ollama)</h3>
-          <div className="spacer" />
-          {ollama === null ? <Loader2 size={14} className="spin" /> : ollama.online ? <span className="badge ok">Online</span> : <span className="badge danger">Offline</span>}
+    <>
+      {error && <Notice tone="danger">{error}</Notice>}
+      <SettingsGroup label="Models on this computer">
+        <SettingRow label="Models on this computer" help="Run through the free Ollama app.">
+          {ollama === null ? <span className="st-small" role="status">Checking…</span> : ollama.online ? <Badge tone="ok">Running</Badge> : <Button size="sm" onClick={check}>Check again</Button>}
+        </SettingRow>
+        {ollama?.online && SUGGESTED.map((s) => {
+          const have = ollama.models.some((m) => m === s.model || m === `${s.model}:latest`);
+          return (
+            <SettingRow key={s.model} label={s.model} help={s.note}>
+              {have ? <Badge tone="ok"><Check size={12} /> Installed</Badge> : (
+                <Button size="sm" icon={<Download size={14} />} busy={pulling === s.model} disabled={!!pulling} onClick={() => pull(s.model)}>{pulling === s.model ? `${progress.pct}%` : "Download"}</Button>
+              )}
+            </SettingRow>
+          );
+        })}
+        {pulling && <div className="st-row"><div className="st-grow"><Progress value={progress.pct} label={progress.status || "Downloading…"} /></div></div>}
+      </SettingsGroup>
+      <Advanced label="Cloud providers (optional)">
+        <Input label="OpenAI API key" type="password" value={keys.openai} onChange={(e) => setKeys({ ...keys, openai: e.target.value })} placeholder="sk-…" />
+        <Input label="Anthropic API key" type="password" value={keys.anthropic} onChange={(e) => setKeys({ ...keys, anthropic: e.target.value })} placeholder="sk-ant-…" />
+        <Input label="OpenRouter API key" hint="Free key. Models ending in :free cost nothing." type="password" value={keys.openrouter} onChange={(e) => setKeys({ ...keys, openrouter: e.target.value })} placeholder="sk-or-…" />
+        <Input label="Google Gemini API key" hint="Free tier from Google AI Studio. Google may use free tier prompts to improve its products." type="password" value={keys.gemini} onChange={(e) => setKeys({ ...keys, gemini: e.target.value })} placeholder="AIza…" />
+        <div className="st-form-actions">
+          <Button onClick={saveKeys} disabled={!Object.values(keys).some((k) => k.trim())}>Save keys</Button>
+          {saved && <Badge tone="ok"><Check size={12} /> Saved</Badge>}
         </div>
-        {ollama && !ollama.online && <div className="alert">Ollama is not reachable yet. It may still be starting. <button className="btn sm" onClick={check}>Retry</button></div>}
-        {ollama?.online &&
-          SUGGESTED.map((s) => {
-            const have = ollama.models.some((m) => m === s.model || m === `${s.model}:latest`);
-            return (
-              <div key={s.model} className="row">
-                <div className="grow">
-                  <div className="mono">{s.model}</div>
-                  <div className="muted small">{s.note}</div>
-                </div>
-                {have ? (
-                  <span className="badge ok"><Check size={12} /> Installed</span>
-                ) : (
-                  <button className="btn sm" disabled={!!pulling} onClick={() => pull(s.model)}>
-                    {pulling === s.model ? <Loader2 size={14} className="spin" /> : <Download size={14} />} {pulling === s.model ? `${progress.pct}%` : "Download"}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        {pulling && (
-          <div className="col">
-            <div className="progress"><div style={{ width: `${progress.pct}%` }} /></div>
-            <div className="muted small">{progress.status}</div>
-          </div>
-        )}
-      </div>
-      <div className="card col">
-        <div className="row"><KeyRound size={16} /><h3>Cloud providers (optional)</h3></div>
-        <label className="field">OpenAI API key<input className="input" type="password" value={keys.openai} onChange={(e) => setKeys({ ...keys, openai: e.target.value })} placeholder="sk-…" /></label>
-        <label className="field">Anthropic API key<input className="input" type="password" value={keys.anthropic} onChange={(e) => setKeys({ ...keys, anthropic: e.target.value })} placeholder="sk-ant-…" /></label>
-        <label className="field">OpenRouter API key<input className="input" type="password" value={keys.openrouter} onChange={(e) => setKeys({ ...keys, openrouter: e.target.value })} placeholder="sk-or-…" /><span className="faint small">Free key. Models ending in :free cost nothing.</span></label>
-        <label className="field">Google Gemini API key<input className="input" type="password" value={keys.gemini} onChange={(e) => setKeys({ ...keys, gemini: e.target.value })} placeholder="AIza…" /><span className="faint small">Free tier from aistudio.google.com. Google may use free tier prompts to improve its products.</span></label>
-        <div className="row">
-          <button className="btn" onClick={saveKeys} disabled={!Object.values(keys).some((k) => k.trim())}>Save keys</button>
-          {saved && <span className="badge ok"><Check size={12} /> Saved</span>}
-        </div>
-        <div className="muted small">Keys are stored encrypted on this computer and never shown again. You can change them any time in AI models.</div>
-      </div>
-      <button className="btn primary" onClick={onNext} disabled={!!pulling}>Continue <ArrowRight size={16} /></button>
-    </div>
+        <p className="st-small">Keys are stored encrypted on this computer and never shown again. You can change them any time in AI models.</p>
+      </Advanced>
+      <Button variant="primary" className="st-auth-full" onClick={onNext} disabled={!!pulling}>Continue <ArrowRight size={16} /></Button>
+    </>
   );
 }
 
@@ -190,7 +161,10 @@ export default function Auth({ status, onDone }: { status: Status; onDone: () =>
 
   if (status.setup_complete && step === 0) {
     return (
-      <div className="auth"><div><div className="card auth-card"><Login onDone={onDone} /></div><div className="auth-foot"><Lock size={12} /> On this computer. {PRODUCT} is not a shared service.</div></div></div>
+      <AuthCard title="Welcome back" line={`Use the PIN or password you created for ${PRODUCT}.`}
+        footer={<><Lock size={12} aria-hidden="true" /> On this computer. {PRODUCT} is not a shared service.</>}>
+        <Login onDone={onDone} />
+      </AuthCard>
     );
   }
 
@@ -201,7 +175,7 @@ export default function Auth({ status, onDone }: { status: Status; onDone: () =>
     setError("");
     try {
       await api("/setup", { body: { password: form.password, setup_code: form.setup_code, workspace_name: form.workspace_name, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "" } });
-      onDone();  // straight to the first-run welcome: look, then how to think (plans, free keys, keys, local)
+      onDone();  // straight to the first-run welcome: accounts, look, name, then how to think
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -209,49 +183,47 @@ export default function Auth({ status, onDone }: { status: Status; onDone: () =>
     }
   };
 
+  if (step === 1) {
+    return (
+      <AuthCard wide title="Connect models" line="Local models run on this computer through Ollama. Cloud providers are optional and can be added later in Settings.">
+        <ModelsStep onNext={() => setStep(2)} />
+      </AuthCard>
+    );
+  }
+  if (step === 2) {
+    return (
+      <AuthCard title="You're set" line="Connect mail and calendars any time under Settings.">
+        <ul className="st-checks">
+          <li><Check size={14} /> Your workspace: chat, mail, calendar, tasks, notes, files and research.</li>
+          {status.chat_url && <li><Check size={14} /> An optional chat window is ready. The first account you create there becomes its admin.</li>}
+          <li><Check size={14} /> In Chat, turn on the workspace tools (the + menu in the message box) so it can use your notes, tasks and calendar.</li>
+        </ul>
+        <AuthActions>
+          {status.chat_url && <ButtonLink href={status.chat_url}>Open the chat window</ButtonLink>}
+          <span className="st-grow" />
+          <Button variant="primary" onClick={onDone}>Open workspace <ArrowRight size={16} /></Button>
+        </AuthActions>
+      </AuthCard>
+    );
+  }
+
   return (
-    <div className="auth">
-      <div className="card auth-card" style={{ width: step === 1 ? "min(620px, 100%)" : undefined }}>
-        <div className="steps">{[0, 1, 2].map((i) => <span key={i} className={i <= step ? "on" : ""} />)}</div>
-        {step === 0 && (
-          <form className="col gap-lg" onSubmit={createAccount}>
-            <div className="auth-brand">
-              <div className="wordmark lg" aria-hidden="true">{PRODUCT}</div>
-              <p className="muted small" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
-              <div>
-                <h1>Set a PIN or password</h1>
-                <p className="muted">This locks {PRODUCT} on this computer. Your mail, notes and tasks stay. Next you can sign in with Gmail, Apple, Microsoft, ChatGPT or Claude.</p>
-              </div>
-            </div>
-            {error && <div className="alert err">{error}</div>}
-            {status.setup_code_required && (
-              <label className="field">
-                Setup code <span className="hint">Printed by ./setup.sh, also stored as SETUP_CODE in .env</span>
-                <input className="input mono" value={form.setup_code} onChange={(e) => setForm({ ...form, setup_code: e.target.value })} autoFocus />
-              </label>
-            )}
-            <label className="field">Workspace name<input className="input" value={form.workspace_name} onChange={(e) => setForm({ ...form, workspace_name: e.target.value })} /></label>
-            <label className="field">PIN or password <span className="hint">At least 6 characters</span>
-              <input className="input" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-            </label>
-            <label className="field">Type it again<input className="input" type="password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} /></label>
-            <button className="btn primary" disabled={busy || form.password.length < 6}>{busy ? <Loader2 size={16} className="spin" /> : <>Set PIN <ArrowRight size={16} /></>}</button>
-          </form>
+    <AuthCard title="Set a PIN or password"
+      line={`This locks ${PRODUCT} on this computer. Next you can sign in with Gmail, Apple, Microsoft, ChatGPT or Claude.`}
+      footer={<><Lock size={12} aria-hidden="true" /> On this computer. {PRODUCT} is not a shared service.</>}>
+      <form className="st-auth-form" onSubmit={createAccount}>
+        {error && <Notice tone="danger">{error}</Notice>}
+        {status.setup_code_required && (
+          <Input label="Setup code" hint="Printed when this app was installed." className="st-mono" value={form.setup_code} onChange={(e) => setForm({ ...form, setup_code: e.target.value })} autoFocus />
         )}
-        {step === 1 && <ModelsStep onNext={() => setStep(2)} />}
-        {step === 2 && (
-          <div className="col gap-lg">
-            <h1>You're set</h1>
-            <div className="col">
-              <div className="row"><Check size={16} className="prio-1" /> Your workspace: chat, mail, calendar, tasks, notes, files and research.</div>
-              <div className="row"><Check size={16} className="prio-1" /> Chat at <a href={status.chat_url} target="_blank" rel="noreferrer">{status.chat_url}</a>. The first account you create there becomes its admin.</div>
-              <div className="row"><Check size={16} className="prio-1" /> In Chat, turn on the workspace tools (the + menu in the message box) so it can use your notes, tasks and calendar.</div>
-            </div>
-            <div className="muted small">Connect mail and calendars any time under Settings.</div>
-            <button className="btn primary" onClick={onDone}>Open workspace <ArrowRight size={16} /></button>
-          </div>
-        )}
-      </div>
-    </div>
+        <Input label="PIN or password" hint="At least 6 characters." type="password" autoComplete="new-password" autoFocus={!status.setup_code_required}
+          value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        <Input label="Type it again" type="password" autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} />
+        <Advanced label="Name this workspace">
+          <Input label="Workspace name" value={form.workspace_name} onChange={(e) => setForm({ ...form, workspace_name: e.target.value })} />
+        </Advanced>
+        <Button type="submit" variant="primary" busy={busy} disabled={form.password.length < 6}>{busy ? "Setting it…" : <>Set PIN <ArrowRight size={16} /></>}</Button>
+      </form>
+    </AuthCard>
   );
 }

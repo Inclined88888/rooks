@@ -1,8 +1,10 @@
-import { ArrowRight, Check, ClipboardPaste, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, ClipboardPaste, ExternalLink, ShieldCheck } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { BrandMark } from "../brand";
+import { Badge, Button, Input, Loading } from "../ui";
 import PlanCard from "./PlanCard";
+import { Advanced, ButtonLink, Choice, Notice } from "./settings/index";
 
 /** Connecting a model without jargon, shared by the first-run welcome and Settings: sign in with a plan you already
  * pay for (ChatGPT, Claude), or paste a key and the provider is recognised from it. */
@@ -44,14 +46,14 @@ export function KeyField({ value, onChange, expect, autoFocus, onDetected }: {
     return () => window.removeEventListener("focus", onFocus);
   }, [value, fromClipboard]);
   return (
-    <div className="col" style={{ gap: 6 }}>
-      <div className="key-field">
-        <input className="input mono" type="password" autoFocus={autoFocus} autoComplete="off" spellCheck={false} value={value}
+    <div className="st-stack">
+      <div className="st-key">
+        <Input type="password" autoFocus={autoFocus} autoComplete="off" spellCheck={false} value={value}
           placeholder={expect ? `${expect}…` : "Paste your key"} aria-label="API key"
           onChange={(e) => { onChange(e.target.value); setFound(""); detect(e.target.value); }} />
-        <button type="button" className="btn sm ghost" onClick={() => fromClipboard(false)}><ClipboardPaste size={14} /> Paste</button>
+        <Button variant="ghost" size="sm" icon={<ClipboardPaste size={14} />} onClick={() => fromClipboard(false)}>Paste</Button>
       </div>
-      {found && <div className="muted small">{found}</div>}
+      {found && <p className="st-small">{found}</p>}
     </div>
   );
 }
@@ -94,39 +96,39 @@ export function ChatGPTCard({ onConnected, cta = "Start chatting" }: { sub: Sub;
   };
 
   return (
-    <div className="sub-card on">
-      <div className="row">
-        <BrandMark name="chatgpt" /><strong className="sub-name">ChatGPT</strong>
-        {status?.status === "connected" && <span className="badge ok"><Check size={11} /> Signed in</span>}
+    <div className="st-plan">
+      <div className="st-plan-head">
+        <BrandMark name="chatgpt" /><span className="st-plan-name">ChatGPT</span>
+        {status?.status === "connected" && <Badge tone="ok"><Check size={11} /> Signed in</Badge>}
       </div>
-      <p className="small muted">Use the ChatGPT plan you already pay for. In Chat, pick the model, then choose Chat or Code at the top.</p>
-      {error && <div className="alert err">{error}</div>}
-      {status?.status === "failed" && <div className="alert err">{status.error || "Sign-in didn't finish. Try again."}</div>}
+      <p className="st-small">Use the ChatGPT plan you already pay for. In Chat, pick the model, then choose Chat or Code at the top.</p>
+      {error && <Notice tone="danger">{error}</Notice>}
+      {status?.status === "failed" && <Notice tone="danger">{status.error || "Sign-in didn't finish. Try again."}</Notice>}
       {status?.status === "connected" ? (
-        <div className="row">
-          <span className="row small"><Check size={14} /> Signed in as {status.email || "your ChatGPT account"}</span>
-          <div className="spacer" />
-          <button className="btn primary" onClick={() => onConnected()}>{cta} <ArrowRight size={16} /></button>
+        <div className="st-inline">
+          <span className="st-grow st-small"><Check size={14} /> Signed in as {status.email || "your ChatGPT account"}</span>
+          <Button variant="primary" onClick={() => onConnected()}>{cta} <ArrowRight size={16} /></Button>
         </div>
       ) : state ? (
-        <div className="col" style={{ gap: 8 }}>
-          <div className="row small"><Loader2 size={14} className="spin" /> Waiting for you to finish in the browser…
-            <div className="spacer" /><a className="small" href={state.url} target="_blank" rel="noreferrer">Open again</a></div>
-          <details className="small">
-            <summary>Signed in on another device?</summary>
-            <div className="row" style={{ marginTop: 8 }}>
-              <input className="input mono grow" value={pasted} onChange={(e) => setPasted(e.target.value)} placeholder="Paste the address the browser ended on (http://127.0.0.1…)" />
-              <button className="btn sm" disabled={!pasted.includes("state=")} onClick={completePasted}>Finish</button>
+        <div className="st-stack">
+          <div className="st-inline">
+            <span className="st-grow st-small" role="status">Waiting for you to finish in the browser…</span>
+            <ButtonLink href={state.url} variant="ghost" size="sm">Open again</ButtonLink>
+          </div>
+          <Advanced label="Signed in on another device?">
+            <div className="st-key">
+              <Input value={pasted} onChange={(e) => setPasted(e.target.value)} aria-label="The address the browser ended on" placeholder="Paste the address the browser ended on" />
+              <Button size="sm" disabled={!pasted.includes("state=")} onClick={completePasted}>Finish</Button>
             </div>
-          </details>
+          </Advanced>
         </div>
       ) : (
-        <div className="row"><button className="btn primary" onClick={start}><BrandMark name="chatgpt" /> Sign in with ChatGPT</button></div>
+        <div><Button variant="primary" onClick={start}>Sign in with ChatGPT</Button></div>
       )}
-      <details className="small"><summary>Didn't work? Use ChatGPT through Codex instead</summary>
-        <PlanCard agent="codex" title="ChatGPT through Codex" onConnected={onConnected} cta={cta}
+      <Advanced label="Didn't work? Use ChatGPT through Codex instead">
+        <PlanCard agent="codex" title="ChatGPT through Codex" onConnected={onConnected} cta={cta} nested
           blurb="OpenAI's own Codex app, signed in with your ChatGPT plan. A bit slower than the direct sign-in above." />
-      </details>
+      </Advanced>
     </div>
   );
 }
@@ -140,16 +142,19 @@ export function SignInWithPlan({ onChange }: { onChange: () => void }) {
   const claude = subs?.find((s) => s.id === "claude" && s.available && s.via === "claude_code");
   const copilot = subs?.find((s) => s.id === "copilot" && s.available);
   const connected = (name: string) => async () => { setDone(name); onChange(); };
-  if (subs === null) return <Loader2 size={16} className="spin" />;
+  if (subs === null) return <Loading rows={2} label="Loading the plans you can sign in with" />;
   return (
-    <div className="col" style={{ gap: 0 }}>
-      {done && <div className="alert ok row"><Check size={14} /> {done} is connected. It now shows up in every model menu.</div>}
-      {chatgpt && <ChatGPTCard sub={chatgpt} onConnected={connected("ChatGPT")} cta="Use it" />}
-      {claude && <PlanCard agent="claude" title="Claude" onConnected={connected("Claude")} cta="Use it"
-        blurb="Use the Claude plan you already pay for. Sign-in opens in Anthropic's own app. In Chat, pick the model and the mode." />}
-      {copilot && <PlanCard agent="copilot" title="GitHub Copilot" onConnected={connected("GitHub Copilot")} cta="Use it"
-        blurb="Use the Copilot plan you already pay for. Sign-in opens in GitHub's own app." />}
-      {!chatgpt && !claude && !copilot && <div className="muted small">No plan sign-in is available in this build. Use a key below.</div>}
+    <div className="st-stack">
+      {done && <Notice tone="ok"><Check size={14} /> {done} is connected. It now shows up in every model menu.</Notice>}
+      {chatgpt || claude || copilot ? (
+        <div className="st-group">
+          {chatgpt && <ChatGPTCard sub={chatgpt} onConnected={connected("ChatGPT")} cta="Use it" />}
+          {claude && <PlanCard agent="claude" title="Claude" onConnected={connected("Claude")} cta="Use it"
+            blurb="Use the Claude plan you already pay for. Sign-in opens in Anthropic's own app. In Chat, pick the model and the mode." />}
+          {copilot && <PlanCard agent="copilot" title="GitHub Copilot" onConnected={connected("GitHub Copilot")} cta="Use it"
+            blurb="Use the Copilot plan you already pay for. Sign-in opens in GitHub's own app." />}
+        </div>
+      ) : <p className="st-small">No plan sign-in is available in this build. Use a key below.</p>}
     </div>
   );
 }
@@ -185,38 +190,25 @@ export function AddKey({ presets, info, onChange }: { presets: Record<string, Pr
     }
   };
   if (!choices.length) return null;
+  const pick = (k: string) => { setKind(k); setError(""); };
+  const label = (k: string, p: Preset) => `${p.name}${info[k]?.free ? " (free)" : ""}`;
   return (
-    <form className="col" style={{ gap: 10 }} onSubmit={submit}>
-      <div className="welcome-providers" role="radiogroup" aria-label="Provider">
-        {primary.map(([k, p]) => (
-          <button type="button" key={k} role="radio" aria-checked={k === kind} className={`welcome-choice ${k === kind ? "on" : ""}`}
-            onClick={() => { setKind(k); setError(""); }}>
-            {p.name}{info[k]?.free ? " (free)" : ""}
-          </button>
-        ))}
-      </div>
+    <form className="st-form" onSubmit={submit}>
+      <Choice label="Provider" value={primaryIds.includes(kind) ? kind : ""} onChange={pick} options={primary.map(([k, p]) => ({ id: k, label: label(k, p) }))} />
       {more.length > 0 && (
-        <details>
-          <summary className="small">More providers</summary>
-          <div className="welcome-providers" role="radiogroup" aria-label="More providers" style={{ marginTop: 8 }}>
-            {more.map(([k, p]) => (
-              <button type="button" key={k} role="radio" aria-checked={k === kind} className={`welcome-choice ${k === kind ? "on" : ""}`}
-                onClick={() => { setKind(k); setError(""); }}>
-                {p.name}{info[k]?.free ? " (free)" : ""}
-              </button>
-            ))}
-          </div>
-        </details>
+        <Advanced label="More providers" open={!primaryIds.includes(kind)}>
+          <Choice label="More providers" value={primaryIds.includes(kind) ? "" : kind} onChange={pick} options={more.map(([k, p]) => ({ id: k, label: label(k, p) }))} />
+        </Advanced>
       )}
-      {preset?.note && <div className="muted small">{preset.note}</div>}
-      {error && <div className="alert err">{error}</div>}
-      {added && <div className="alert ok row"><Check size={14} /> {added} is connected.</div>}
-      <div className="row wrap" style={{ alignItems: "flex-start" }}>
-        <div className="grow" style={{ minWidth: 260 }}><KeyField value={key} onChange={setKey} expect={info[kind]?.prefix} onDetected={onDetected} /></div>
-        {info[kind]?.url && <a className="btn" href={info[kind].url} target="_blank" rel="noreferrer">Get {/^[AEIOU]/i.test(preset.name) ? "an" : "a"} {preset.name} key <ExternalLink size={12} /></a>}
-        <button className="btn primary" disabled={busy || key.trim().length < 8}>{busy ? <><Loader2 size={15} className="spin" /> Checking…</> : "Connect"}</button>
+      {preset?.note && <p className="st-small">{preset.note}</p>}
+      {error && <Notice tone="danger">{error}</Notice>}
+      {added && <Notice tone="ok"><Check size={14} /> {added} is connected.</Notice>}
+      <KeyField value={key} onChange={setKey} expect={info[kind]?.prefix} onDetected={onDetected} />
+      <div className="st-form-actions">
+        <Button type="submit" variant="primary" busy={busy} disabled={key.trim().length < 8}>{busy ? "Checking…" : "Connect"}</Button>
+        {info[kind]?.url && <ButtonLink href={info[kind].url} icon={<ExternalLink size={13} />}>Get {/^[AEIOU]/i.test(preset.name) ? "an" : "a"} {preset.name} key</ButtonLink>}
       </div>
-      <div className="row muted small"><ShieldCheck size={14} /> The key is tested before it is saved, stays on this computer, and only goes to {preset?.name}.</div>
+      <p className="st-small st-inline"><ShieldCheck size={14} /> The key is tested before it is saved, stays on this computer, and only goes to {preset?.name}.</p>
     </form>
   );
 }
@@ -249,36 +241,38 @@ export function WebSearchSetup({ compact = false, onChange }: { compact?: boolea
       setBusy(false);
     }
   };
-  if (!st) return <Loader2 size={16} className="spin" />;
+  if (!st) return <Loading rows={1} label="Checking web search" />;
   if (st.provider && !change) {
     return (
-      <div className="row small">
-        <Check size={14} /> <span className="grow">Web search is on ({st.name}).</span>
-        {!compact && <button className="btn sm ghost" onClick={() => setChange(true)}>Change key</button>}
+      <div className="st-inline">
+        <span className="st-grow st-inline"><Check size={14} /> Web search is on ({st.name}).</span>
+        {!compact && <Button variant="ghost" size="sm" onClick={() => setChange(true)}>Change key</Button>}
       </div>
     );
   }
   return (
-    <form className="col" style={{ gap: 10 }} onSubmit={save}>
-      <div className="small">{compact ? "Web search is off. " : ""}Turn it on with a free Tavily key: 1,000 searches a month, no card, about a minute.</div>
-      <ol className="free-steps">
-        <li className={opened ? "done" : ""}>
-          <span className="free-n">1</span>
-          <span className="grow">Open Tavily and make a free account. Your key is on the first page after you sign up.</span>
-          <a className="btn sm" href={st.signup.tavily || "https://app.tavily.com/home"} target="_blank" rel="noreferrer" onClick={() => setOpened(true)}>Open Tavily <ExternalLink size={12} /></a>
+    <form className="st-form" onSubmit={save}>
+      <p className="st-p">{compact ? "Web search is off. " : ""}Turn it on with a free Tavily key: 1,000 searches a month, no card, about a minute.</p>
+      <ol className="st-steps">
+        <li className={opened ? "is-done" : ""}>
+          <span className="st-step-n">1</span>
+          <div className="st-step-body">
+            <span>Open Tavily and make a free account. Your key is on the first page after you sign up.</span>
+            <div><ButtonLink size="sm" href={st.signup.tavily || "https://app.tavily.com/home"} onClick={() => setOpened(true)} icon={<ExternalLink size={12} />}>Open Tavily</ButtonLink></div>
+          </div>
         </li>
         <li>
-          <span className="free-n">2</span>
-          <span className="grow col" style={{ gap: 8 }}>
+          <span className="st-step-n">2</span>
+          <div className="st-step-body">
             <span>Copy the key (it starts with tvly-), come back and paste it.</span>
             <KeyField value={key} onChange={setKey} expect="tvly-" />
-          </span>
+          </div>
         </li>
       </ol>
-      {error && <div className="alert err">{error}</div>}
-      <div className="row">
-        <button className="btn primary" disabled={busy || key.trim().length < 8}>{busy ? <><Loader2 size={15} className="spin" /> Testing…</> : "Turn on web search"}</button>
-        {change && <button type="button" className="btn ghost" onClick={() => setChange(false)}>Cancel</button>}
+      {error && <Notice tone="danger">{error}</Notice>}
+      <div className="st-form-actions">
+        <Button type="submit" variant="primary" busy={busy} disabled={key.trim().length < 8}>{busy ? "Testing…" : "Turn on web search"}</Button>
+        {change && <Button variant="ghost" onClick={() => setChange(false)}>Cancel</Button>}
       </div>
     </form>
   );

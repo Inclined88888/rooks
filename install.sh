@@ -12,6 +12,8 @@
 #   rooks-browser   Rooks Browser, the AI browser agent (uses your Chrome or Edge; else downloads Chromium)
 #   rooks-desk      Rooks Desk, computer use: your apps, terminal and files, asking before anything risky
 #                   (macOS: run `rooks-desk setup` once to grant Screen Recording + Accessibility)
+#   rooks-try       The Room, the assistant's own computer on this machine: a private desktop (Linux, needs Xvfb),
+#                   a Linux guest (QEMU), else a private folder and shell; it always says which it is
 # Only prerequisite: curl (preinstalled on macOS). Python 3.12 is fetched by uv (astral.sh) into your home folder.
 #
 # Options:  --no-start (don't open the app at the end)  --no-browser (skip the Chromium download)

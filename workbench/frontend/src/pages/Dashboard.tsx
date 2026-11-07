@@ -1,12 +1,13 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowUp, Bell, CalendarClock, CalendarDays, CheckSquare, FolderOpen,
   Inbox, MessageSquare, NotebookPen, Search,
 } from "lucide-react";
 import { api, CalEvent, Task } from "../api";
-import { AssistantFace } from "../AssistantFace";
+import { Button, Chip, EmptyState, ErrorState, IconButton, List, Loading, Menu, Page, Row, Section } from "../ui";
 import { fmtTime, Markdown, relTime, todayISO, useToast } from "../util";
+import { plainError } from "./day/parts";
 
 type Arrived = { project_id: number; name: string; what: string; kind: string };
 type Done = { id: number; title: string; body: string; source: string; created_at: string };
@@ -84,40 +85,30 @@ function pieces(data: Dash, today: string): Piece[] {
 
 export default function Dashboard(_: { chatUrl?: string }) {
   const [data, setData] = useState<Dash | null>(null);
+  const [problem, setProblem] = useState("");
   const [line, setLine] = useState("");
   const [pill, setPill] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
   const [openNote, setOpenNote] = useState<number | null>(null);
   const toast = useToast();
   const navigate = useNavigate();
   const field = useRef<HTMLInputElement>(null);
-  const moreRef = useRef<HTMLDivElement>(null);
   const today = todayISO();
 
-  const load = () => api<Dash>("/dashboard").then(setData).catch(toast.err);
-  useEffect(() => { load(); }, []);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    const onDown = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("mousedown", onDown);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("mousedown", onDown);
-    };
-  }, [open]);
+  const load = () => {
+    setProblem("");
+    return api<Dash>("/dashboard").then(setData).catch((e) => setProblem(plainError(e, "Your day did not load.")));
+  };
+  useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const left = data ? pieces(data, today) : [];
   const arrived = (data?.arrived ?? []).filter((item) => item.title);
   const who = data?.assistant_name || "Atlas";
   const asTask = /^add\s+/i.test(line.trim());
   const date = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+  const heading = "What should {who} do?".replace("{who}", who);
+  const didLabel = "{who} already did this".replace("{who}", who);
 
   const choose = (id: string, text: string) => {
-    setOpen(false);
     if (pill === id && line === text) {
       setPill(null);
       setLine("");
@@ -137,13 +128,13 @@ export default function Dashboard(_: { chatUrl?: string }) {
         await api("/tasks", { body: { title: text.replace(/^add\s+/i, ""), due: today } });
         setLine("");
         setPill(null);
-        load();
+        void load();
       } catch (err) {
         toast.err(err);
       }
       return;
     }
-    start(text);
+    void start(text);
   };
 
   const start = async (text: string) => {
@@ -156,90 +147,62 @@ export default function Dashboard(_: { chatUrl?: string }) {
   };
 
   return (
-    <div className="page home">
-      <div className="start-center">
-        <div className="home-greet">
-          <AssistantFace mood={arrived.length ? "done" : "idle"} name={who} />
-          <p className="desk-date">{date}</p>
-          <h1>What should {who} do?</h1>
-        </div>
+    <Page title={heading} kicker={date} className="day-page day-home">
+      <form className="day-home-ask" onSubmit={submit}>
+        <input
+          ref={field}
+          className="day-home-field"
+          value={line}
+          onChange={(e) => { setLine(e.target.value); if (pill && !STARTS.some((s) => s.text === e.target.value)) setPill(null); }}
+          placeholder="Ask anything, or give it a job"
+          aria-label="What should happen"
+        />
+        <IconButton type="submit" className="day-home-send" label={asTask ? "Add" : "Send"} disabled={!line.trim()}><ArrowUp size={16} /></IconButton>
+      </form>
 
-        <form className="home-add" onSubmit={submit}>
-          <input
-            ref={field}
-            value={line}
-            onChange={(e) => { setLine(e.target.value); if (pill && !STARTS.some((s) => s.text === e.target.value)) setPill(null); }}
-            placeholder="Ask anything, or give it a job"
-            aria-label="What should happen"
-          />
-          <button className="home-send" type="submit" disabled={!line.trim()} aria-label={asTask ? "Add" : "Send"}>
-            <ArrowUp size={16} />
-          </button>
-        </form>
-
-        <div className="start-actions">
-          {STARTS.map((s) => (
-            <button key={s.id} type="button" className={`start-chip${pill === s.id ? " on" : ""}`} aria-pressed={pill === s.id} onClick={() => choose(s.id, s.text)}>
-              <s.icon size={14} />
-              {s.label}
-            </button>
-          ))}
-          <div className="start-more" ref={moreRef}>
-            <button type="button" className={`start-chip${open ? " on" : ""}`} aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((v) => !v)}>
-              More
-            </button>
-            {open && (
-              <div className="start-menu" role="menu" aria-label="Everything else">
-                {MORE.map((item) => (
-                  <Link key={item.to} to={item.to} role="menuitem" onClick={() => setOpen(false)}>
-                    <item.icon size={16} />
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="day-home-starts" role="group" aria-label="Start with">
+        {STARTS.map((s) => (
+          <Chip key={s.id} active={pill === s.id} icon={<s.icon size={14} />} onClick={() => choose(s.id, s.text)}>{s.label}</Chip>
+        ))}
+        <Menu label="More places" align="start" items={MORE.map((item) => ({ id: item.to, label: item.label, icon: <item.icon size={16} />, onSelect: () => navigate(item.to) }))} />
       </div>
 
+      {data === null && !problem && <Loading rows={3} label="Loading your day" />}
+      {problem && <ErrorState title="Your day did not load" line={problem} onRetry={() => void load()} />}
+      {data && left.length === 0 && arrived.length === 0 && (
+        <EmptyState title="Nothing is waiting for you" line="Ask for anything above, or let it plan your day."
+          action={<Button size="sm" icon={<CalendarDays size={14} />} onClick={() => choose("day", STARTS[1].text)}>Plan my day</Button>} />
+      )}
       {(left.length > 0 || arrived.length > 0) && (
-        <div className={left.length > 0 && arrived.length > 0 ? "home-docks" : undefined}>
+        <div className={left.length > 0 && arrived.length > 0 ? "home-docks day-docks" : "day-docks"}>
           {left.length > 0 && (
-            <section className="left-dock" aria-label="Still to do">
-              <p>Still to do</p>
-              <ul>
+            <Section title="Still to do" className="day-dock">
+              <List label="Still to do">
                 {left.map((p) => (
-                  <li key={p.key}>
-                    <button type="button" onClick={() => start(p.ask)}>
-                      <span className="truncate">{p.line}</span>
-                      <small>{p.note}</small>
-                    </button>
-                  </li>
+                  <Row key={p.key} title={p.line} onClick={() => void start(p.ask)} actions={<span className={p.note === "Late" ? "day-when day-danger-text" : "day-when"}>{p.note}</span>} />
                 ))}
-              </ul>
-            </section>
+              </List>
+            </Section>
           )}
           {arrived.length > 0 && (
-            <section className="left-dock" aria-label={`${who} already did this`}>
-              <p>{who} already did this</p>
-              <ul>
+            <Section title={didLabel} className="day-dock">
+              <ul className="ui-list" aria-label={didLabel}>
                 {arrived.map((item) => (
-                  <li key={item.id}>
-                    <button type="button" aria-expanded={openNote === item.id} onClick={() => setOpenNote(openNote === item.id ? null : item.id)}>
-                      <span className="truncate">{item.title}</span>
-                      <small>{relTime(item.created_at)}</small>
+                  <li key={item.id} className="day-did">
+                    <button type="button" className="day-did-main" aria-expanded={openNote === item.id} onClick={() => setOpenNote(openNote === item.id ? null : item.id)}>
+                      <span className="day-did-title">{item.title}</span>
+                      <span className="day-when">{relTime(item.created_at)}</span>
                     </button>
                     {openNote === item.id
-                      ? <div className="home-note"><Markdown text={item.body} /></div>
-                      : <div className="home-note truncate">{item.body}</div>}
+                      ? <div className="day-did-note"><Markdown text={item.body} /></div>
+                      : <p className="day-did-note is-short">{item.body}</p>}
                   </li>
                 ))}
               </ul>
-            </section>
+            </Section>
           )}
         </div>
       )}
-      {toast.node}
-    </div>
+    </Page>
   );
 }

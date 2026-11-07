@@ -19,8 +19,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--offline", action="store_true", help="No network inside the room when the driver supports it")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("up", help="Start the Try Room")
-    sub.add_parser("down", help="Stop the Try Room")
+    sub.add_parser("up", help="Start the Room")
+    sub.add_parser("down", help="Stop the Room")
     sub.add_parser("status", help="Show driver and checkpoints")
     p_shot = sub.add_parser("screenshot", help="Save a PNG of the guest screen")
     p_shot.add_argument("-o", "--output", default="")
@@ -46,12 +46,12 @@ def main(argv: list[str] | None = None) -> int:
         serve(args.host, args.port, driver=args.driver, offline=args.offline)
         return 0
     if args.cmd == "prepare":
-        print("Try Room uses a Linux guest on every host (Mac, Windows, Linux).")
+        print("The Room uses a Linux guest on every host (Mac, Windows, Linux).")
         print("1. Install QEMU for your system.")
         print("2. Download a small Linux cloud image (Alpine or Debian) as qcow2.")
         print("3. Export it:  export ROOKS_TRY_IMAGE=/path/to/image.qcow2")
         print("4. Start:      rooks-try --driver qemu up")
-        print("Without an image, Linux hosts use a private nested desktop; everyone can use shell mode.")
+        print("Without an image, Linux hosts get a private desktop (Xvfb); everyone gets a private folder and shell.")
         return 0
 
     room = TryRoom(prefer=args.driver, offline=args.offline)

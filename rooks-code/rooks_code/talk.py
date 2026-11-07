@@ -14,7 +14,8 @@ import sys
 import urllib.error
 import urllib.request
 
-from . import config
+from . import config, words
+from .agent import RESUMED, SUMMARISED
 
 MOODS = {
     "writing": "(thinking)",
@@ -65,21 +66,21 @@ def _print_mood(kind: str, shown: set[str]) -> None:
 
 
 def _approve(link: dict, event: dict, tty: bool) -> None:
-    tool = str(event.get("tool") or "this").replace("_", " ")
+    step = words.plain_step(str(event.get("tool") or ""), event.get("args") or {})
     reason = event.get("reason") or ""
-    print(f"(needs you) {tool}. {reason}".rstrip(), flush=True)
+    print(f"Needs your OK: {step}. {reason}".rstrip(), flush=True)
     if not tty:
-        print("Open Rooks to allow it or say no. Nothing was sent.", flush=True)
+        print("It waits in Needs you in the app: Approve or Deny it there. Nothing was sent.", flush=True)
         return
     try:
-        answer = input("Allow this? [y/N] ").strip().lower()
+        answer = input("[y] Approve  [n] Deny: ").strip().lower()
     except EOFError:
         answer = ""
     allow = answer in ("y", "yes")
     try:
         _request(link, "POST", f"/api/approvals/{event.get('id')}", {"approve": allow})
     except (OSError, ValueError) as exc:
-        print(f"(needs you) could not send that answer: {exc}", flush=True)
+        print("Could not send that answer. It still waits in Needs you in the app.", flush=True)
 
 
 def turn(link: dict, message: str, conversation_id: int | None, tty: bool) -> int:
@@ -109,7 +110,11 @@ def turn(link: dict, message: str, conversation_id: int | None, tty: bool) -> in
                 elif kind in ("tool_call", "watch"):
                     _print_mood(kind, shown)
                     if kind == "tool_call":
-                        print(f"  {event.get('name', '')}".rstrip(), flush=True)
+                        print(f"  {words.plain_step(str(event.get('name') or ''), event.get('args') or {})}", flush=True)
+                elif kind == "resumed":  # the app restarted during this chat's last turn
+                    print(RESUMED, flush=True)
+                elif kind == "compacted":
+                    print(SUMMARISED, flush=True)
                 elif kind == "approval_required":
                     _print_mood(kind, shown)
                     needs = True
@@ -128,10 +133,15 @@ def turn(link: dict, message: str, conversation_id: int | None, tty: bool) -> in
                     return 1
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", "replace")[:300]
-        print(f"Rooks answered {exc.code}. {detail}", flush=True)
+        try:
+            said = json.loads(detail).get("detail")
+        except (ValueError, AttributeError):
+            said = None
+        print("The app did not accept this terminal's key." if exc.code in (401, 403)
+              else (said if isinstance(said, str) and said else "The app could not answer that."), flush=True)
         return 1
     except (OSError, ValueError) as exc:
-        print(f"Can't reach the Rooks on this computer: {exc}", flush=True)
+        print("Can't reach the Rooks app on this computer. Is it open?", flush=True)
         return 1
     return 2 if needs and not tty else 0
 

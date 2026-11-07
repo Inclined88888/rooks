@@ -1,4 +1,4 @@
-"""What every Try Room driver must do."""
+"""What every Room driver must do."""
 
 from __future__ import annotations
 
@@ -81,4 +81,9 @@ class Driver:
         raise NotImplementedError
 
     def supports_screen(self) -> bool:
+        """Whether this driver ever has a real picture to show. Status carries the live value as `screen`."""
+        return True
+
+    def supports_pointer(self) -> bool:
+        """Whether clicks and drags reach something real. A drawing has a screen and no pointer."""
         return True

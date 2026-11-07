@@ -1,74 +1,34 @@
-import {
-  Activity, Gauge, Bot, Brain, Building2, CalendarClock, CalendarDays, MessageSquare, CheckSquare, Globe, Columns3, ExternalLink, FileText, Home, Info, Mail, Menu, NotebookPen, Shield,
-  Code2, FolderOpen, Globe2, GraduationCap, ListTree, Monitor, Palette as PaletteIcon, Plug, Sparkles, Puzzle, Search, Settings as SettingsIcon,
-  Layers, // feat/v02-automations
-  AudioLines, Users, // feat/v02-anywhere-voice
-  UsersRound, // feat/team-lead
-} from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { CommandPalette } from "./Palette";
-import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
-import AgentsSidebar from "./AgentsSidebar";
-import { BesideStage } from "./Beside";
+import { CommandPalette } from "./Palette";
 import { PRODUCT } from "./product";
-import { TerminalKeeper, TerminalSlot } from "./terminalHost";
-import { EdgeGlow, transitionClick } from "./motion";
+import { TerminalKeeper } from "./terminalHost";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
 import Welcome, { AccountsStep } from "./pages/Welcome";
 import { AccountLayer } from "./ProGate";
 import DesktopBridge from "./DesktopBridge"; // feat/tauri-native: aiworkspace:// links + tray
 import JobNotifier from "./v02/JobNotifier"; // feat/v02-automations: desktop notifications for jobs
 import AskBar from "./pages/AskBar";
-import { FolderKanban, History as HistoryIcon } from "lucide-react"; // feat/v02-core
-import { LineChart as LineChartIcon } from "lucide-react"; // phase 3: Insights
-import { FileText as FileTextIcon, Lock as LockIcon, MessageCircle as MessageCircleIcon } from "lucide-react"; // feat/grok-style
-import { FlaskConical, Mic, SquareTerminal, UserRound, Video } from "lucide-react"; // one icon per meaning in the nav
-// Home, sign-in and the first welcome stay in the first load. Every other page loads when you open it.
-const Assistant = lazy(() => import("./pages/Assistant"));
-const Appearance = lazy(() => import("./pages/Appearance"));
-const MotionLab = lazy(() => import("./pages/Motion"));
-const Automations = lazy(() => import("./pages/Automations"));
-const Company = lazy(() => import("./pages/Company"));
-const Browser = lazy(() => import("./pages/Browser"));
-const Code = lazy(() => import("./pages/Code"));
-const Computer = lazy(() => import("./pages/Computer"));
-const CalendarPage = lazy(() => import("./pages/Calendar"));
-const Compare = lazy(() => import("./pages/Compare"));
-const Docs = lazy(() => import("./pages/Docs"));
-const FilesPage = lazy(() => import("./pages/Files"));
-const SitesPage = lazy(() => import("./pages/Sites"));
-const MailPage = lazy(() => import("./pages/Mail"));
-const Research = lazy(() => import("./pages/Research"));
-const Runs = lazy(() => import("./pages/Runs"));
-const Insights = lazy(() => import("./pages/Insights"));
-const FineTune = lazy(() => import("./pages/FineTune"));
-const Status = lazy(() => import("./pages/Status"));
-const Settings = lazy(() => import("./pages/Settings"));
-const About = lazy(() => import("./pages/About"));
-const Privacy = lazy(() => import("./pages/Privacy"));
-const Skills = lazy(() => import("./pages/Skills"));
-const Tasks = lazy(() => import("./pages/Tasks"));
-const Models = lazy(() => import("./pages/Models"));
-const AboutYou = lazy(() => import("./pages/AboutYou"));
-const Teach = lazy(() => import("./pages/Teach"));
-const Plan = lazy(() => import("./pages/Plan"));
-const JobsPage = lazy(() => import("./v02/Jobs"));
-const Meetings = lazy(() => import("./pages/Meetings"));
-const Talk = lazy(() => import("./pages/Talk"));
-const VoiceSettings = lazy(() => import("./pages/VoiceSettings"));
-const Projects = lazy(() => import("./pages/Projects"));
-const HistoryPage = lazy(() => import("./pages/History"));
-const McpServers = lazy(() => import("./pages/McpServers"));
-const Knowledge = lazy(() => import("./memory/Knowledge"));
-const Team = lazy(() => import("./team/Team"));
-const Teammates = lazy(() => import("./teammates/Teammates"));
-const Groups = lazy(() => import("./teammates/Groups"));
-const Vault = lazy(() => import("./teammates/Vault"));
-const PagesLib = lazy(() => import("./teammates/Pages"));
-const Channels = lazy(() => import("./teammates/Channels"));
-const Customize = lazy(() => import("./pages/Customize"));
+import { PAGES, palettePages, REDIRECTS, type PageEntry } from "./pages/registry";
+import { Rail } from "./shell/Rail";
+import { PresenceStrip } from "./shell/PresenceStrip";
+import { StageHost } from "./shell/StageHost";
+import { MobileBar } from "./shell/MobileBar";
+import { MoreSheet } from "./shell/MoreSheet";
+import { Loading, Page, ToastHost } from "./ui";
+import { pageComponent, warmWhenIdle } from "./pages/warm";
+import { createKeyReader, SHORTCUTS } from "./lib/shortcuts";
+import { IS_MAC, MOD_KEY } from "./keys";
+import { registerStageSurfaces } from "./stage/surfaces";
+import { NeedsYouSheet } from "./needs/NeedsYou";
+import { ShortcutsSheet, toggleShortcuts } from "./shell/ShortcutsSheet";
+
+export { MOD_KEY };
+
+// The Stage's surfaces (the Room, a browser job, a desk job, the terminal) draw themselves once registered.
+registerStageSurfaces();
 
 export type Status = {
   setup_complete: boolean;
@@ -91,77 +51,8 @@ export type Status = {
   needs_models?: boolean;
 };
 
-type NavItem = { to: string; label: string; icon: typeof Home; addon?: "browser" | "desk" };
-type NavGroup = { section?: string; collapsible?: boolean; items: NavItem[] };
-
-/**
- * Chat and Code on the rail. Settings holds the rest, including Customize.
- */
-const NAV: NavGroup[] = [
-  { items: [
-    { to: "/assistant", label: "Chat", icon: MessageSquare },
-    { to: "/code", label: "Code", icon: Code2 },
-  ] },
-  { section: "Workspace", collapsible: true, items: [
-    { to: "/home", label: "Home", icon: Home },
-    { to: "/mail", label: "Mail", icon: Mail },
-    { to: "/calendar", label: "Calendar", icon: CalendarDays },
-    { to: "/tasks", label: "Tasks", icon: CheckSquare },
-    { to: "/notes", label: "Notes", icon: NotebookPen },
-    { to: "/files", label: "Files", icon: FolderOpen },
-    { to: "/automations", label: "Automations", icon: CalendarClock },
-    { to: "/browser", label: "Browser", icon: Globe, addon: "browser" },
-    { to: "/computer", label: "Computer", icon: Monitor, addon: "desk" },
-    { to: "/terminal", label: "Terminal", icon: SquareTerminal },
-    { to: "/teach", label: "Show me how", icon: GraduationCap },
-    { to: "/knowledge", label: "Memory", icon: Brain },
-    { to: "/skills", label: "Skills", icon: Puzzle },
-    { to: "/team", label: "Team", icon: UsersRound },
-    { to: "/research", label: "Research", icon: Search },
-    { to: "/projects", label: "Projects", icon: FolderKanban },
-    { to: "/meetings", label: "Meetings", icon: Video },
-    { to: "/documents", label: "Documents", icon: FileText },
-    { to: "/pages", label: "Pages", icon: FileTextIcon },
-    { to: "/jobs", label: "Jobs", icon: Layers },
-    { to: "/teammates", label: "Teammates", icon: Users },
-    { to: "/channels", label: "Channels", icon: MessageCircleIcon },
-    { to: "/talk", label: "Talk", icon: AudioLines },
-    { to: "/vault", label: "Vault", icon: LockIcon },
-    { to: "/sites", label: "Sites", icon: Globe2 },
-  ] },
-  { section: "Settings", collapsible: true, items: [
-    { to: "/models", label: "AI models", icon: Gauge },
-    { to: "/settings", label: "Settings", icon: SettingsIcon },
-    { to: "/customize", label: "Customize", icon: Puzzle },
-    { to: "/about-you", label: "About you", icon: UserRound },
-    { to: "/voice", label: "Ask anywhere & voice", icon: Mic },
-    { to: "/appearance", label: "Appearance", icon: PaletteIcon },
-    { to: "/plan", label: "Your plan", icon: Sparkles },
-    { to: "/about", label: "About", icon: Info },
-    { to: "/privacy", label: "Privacy", icon: Shield },
-  ] },
-  { section: "Advanced", collapsible: true, items: [
-    { to: "/history", label: "History", icon: HistoryIcon },
-    { to: "/runs", label: "Run log", icon: ListTree },
-    { to: "/insights", label: "Insights", icon: LineChartIcon },
-    { to: "/compare", label: "Compare models", icon: Columns3 },
-    { to: "/fine-tune", label: "Fine-tune", icon: FlaskConical },
-    { to: "/company", label: "Company", icon: Building2 },
-    { to: "/status", label: "System status", icon: Activity },
-    { to: "/mcp", label: "Extra tools", icon: Plug },
-  ] },
-];
-
-const RAIL: { to: string; label: string; icon: typeof MessageSquare; match?: (path: string) => boolean }[] = [
-  { to: "/assistant", label: "Chat", icon: MessageSquare, match: (p) => p === "/assistant" || p.startsWith("/assistant/") },
-  { to: "/code", label: "Code", icon: Code2, match: (p) => p === "/code" || p.startsWith("/code/") },
-];
-
-const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-export const MOD_KEY = isMac ? "⌘" : "Ctrl";
-
-/** While Rooks Desk is driving the computer (from any page, chat or Rooks Code), the whole window's edge lights up. */
-function DeskGlow({ enabled }: { enabled: boolean }) {
+/** While Rooks Desk is driving the computer (from any page, chat or Rooks Code), a small still notice says so and offers Stop. */
+function DeskNotice({ enabled }: { enabled: boolean }) {
   const [job, setJob] = useState<{ id: string; goal: string } | null>(null);
   useEffect(() => {
     if (!enabled) return setJob(null);
@@ -174,95 +65,54 @@ function DeskGlow({ enabled }: { enabled: boolean }) {
     t = setTimeout(tick, 4000);
     return () => { stop = true; clearTimeout(t); };
   }, [enabled]);
-  return <EdgeGlow active={!!job} hotkey={isMac ? "⌃⌥Esc" : "Ctrl+Alt+Esc"}
-    onStop={job ? () => { api(`/desk/jobs/${job.id}/cancel`, { method: "POST" }).catch(() => undefined); setJob(null); } : undefined} />;
+  if (!job) return null;
+  return createPortal(
+    <div className="desk-notice" role="status">
+      <span className="desk-notice-dot" aria-hidden="true" />
+      <span>Rooks Desk is using your computer</span>
+      <kbd className="ui-kbd">{IS_MAC ? "⌃⌥Esc" : "Ctrl+Alt+Esc"}</kbd>
+      <button type="button" className="ui-btn ui-btn-secondary ui-btn-sm"
+        onClick={() => { api(`/desk/jobs/${job.id}/cancel`, { method: "POST" }).catch(() => undefined); setJob(null); }}>Stop</button>
+    </div>,
+    document.body,
+  );
 }
 
 function Boot() {
   return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">{PRODUCT}</div></div>;
 }
 
-function AppRoutes({ onChanged }: { onChanged: () => void }) {
+// Sign in, the first welcome and the ask bar stay in the first load. Every registered page is its own chunk, warmed on
+// hover and focus of any way to it (pages/warm.ts); a page whose chunk is here renders at once, else its frame shows
+// at once with a Loading state (no blank screen, no full screen wordmark) until the chunk arrives.
+function PageFrameLoading({ entry }: { entry: PageEntry }) {
+  if (entry.rail === "chat" || entry.rail === "room") return <div className="page-frame-loading"><Loading rows={4} label={`Opening ${entry.label}`} /></div>;
+  return <Page title={entry.label}><Loading rows={4} label={`Opening ${entry.label}`} /></Page>;
+}
+
+function PageElement({ entry, refresh }: { entry: PageEntry; refresh: () => void }) {
+  const { C, ready } = useMemo(() => pageComponent(entry), [entry]);
+  const props = typeof entry.props === "function" ? entry.props({ refresh }) : entry.props ?? {};
+  if (ready) return <C {...props} />;
+  return <Suspense fallback={<PageFrameLoading entry={entry} />}><C {...props} /></Suspense>;
+}
+
+/** Every route and redirect, from the page registry. */
+function AppRoutes({ refresh }: { refresh: () => void }) {
   return (
     <Routes>
-          <Route path="/" element={<Navigate to="/assistant" replace />} />
-          <Route path="/home" element={<Dashboard />} />
-          <Route path="/customize" element={<Customize />} />
-          <Route path="/connect" element={<Navigate to="/customize" replace />} />
-          <Route path="/assistant" element={<Assistant tab="chat" />} />
-          <Route path="/assistant/:id" element={<Assistant tab="chat" />} />
-          <Route path="/assistant-memory" element={<Assistant tab="memory" />} />
-          <Route path="/assistant-skills" element={<Navigate to="/skills" replace />} />
-          <Route path="/skills" element={<Skills />} />
-          <Route path="/mcp" element={<McpServers />} />{/* feat/mcp-client */}
-          <Route path="/about-you" element={<AboutYou />} />
-          <Route path="/knowledge" element={<Knowledge />} />{/* feat/memory-core */}
-          <Route path="/teach" element={<Teach />} />
-          <Route path="/teach/:id" element={<Teach />} />
-          <Route path="/packs" element={<Navigate to="/assistant" replace />} />
-          <Route path="/packs/*" element={<Navigate to="/assistant" replace />} />
-          <Route path="/appearance" element={<Appearance />} />
-          <Route path="/appearance/motion" element={<MotionLab />} />
-          <Route path="/models" element={<Models />} />
-          <Route path="/assistant-settings" element={<Assistant tab="settings" />} />
-          <Route path="/automations" element={<Automations />} />
-          <Route path="/teammates" element={<Teammates />} />{/* feat/grok-style */}
-          <Route path="/teammates/:id" element={<Teammates />} />{/* feat/grok-style */}
-          <Route path="/groups/:id" element={<Groups />} />{/* feat/grok-style */}
-          <Route path="/vault" element={<Vault />} />{/* feat/grok-style */}
-          <Route path="/pages" element={<PagesLib />} />{/* feat/grok-style */}
-          <Route path="/pages/:id" element={<PagesLib />} />{/* feat/grok-style */}
-          <Route path="/channels" element={<Channels />} />{/* feat/grok-style */}
-          <Route path="/jobs" element={<JobsPage />} />{/* feat/v02-automations */}
-          <Route path="/company" element={<Company />} />
-          <Route path="/research" element={<Research />} />
-          <Route path="/files" element={<FilesPage />} />
-          <Route path="/sites" element={<SitesPage />} />
-          <Route path="/research/:id" element={<Research />} />
-          <Route path="/code" element={<Code />} />
-          <Route path="/terminal" element={<TerminalSlot />} />
-          <Route path="/code/:id" element={<Code />} />
-          <Route path="/browser" element={<Browser />} />
-          <Route path="/browser/:id" element={<Browser />} />
-          <Route path="/computer" element={<Computer />} />
-          <Route path="/computer/:id" element={<Computer />} />
-          <Route path="/compare" element={<Compare />} />
-          <Route path="/projects" element={<Projects />} />{/* feat/v02-core */}
-          <Route path="/projects/:id" element={<Projects />} />{/* feat/v02-core */}
-          <Route path="/history" element={<HistoryPage />} />{/* feat/v02-core */}
-          <Route path="/runs" element={<Runs />} />
-          <Route path="/insights" element={<Insights />} />
-          <Route path="/fine-tune" element={<FineTune />} />
-          <Route path="/runs/:id" element={<Runs />} />
-          <Route path="/status" element={<Status />} />
-          <Route path="/notes" element={<Docs kind="note" />} />
-          <Route path="/notes/:id" element={<Docs kind="note" />} />
-          <Route path="/documents" element={<Docs kind="document" />} />
-          <Route path="/documents/:id" element={<Docs kind="document" />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/team" element={<Team />} />{/* feat/team-lead */}
-          <Route path="/team/people/:id" element={<Team />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/mail" element={<MailPage />} />
-          <Route path="/settings" element={<Settings onChanged={onChanged} />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/plan" element={<Plan />} />
-          {/* feat/v02-anywhere-voice */}
-          <Route path="/talk" element={<Talk />} />
-          <Route path="/meetings" element={<Meetings />} />
-          <Route path="/meetings/:id" element={<Meetings />} />
-          <Route path="/voice" element={<VoiceSettings />} />
-          <Route path="/welcome" element={<Navigate to="/assistant" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+      {REDIRECTS.map((r) => <Route key={`r-${r.from}`} path={r.from} element={<Navigate to={r.to} replace />} />)}
+      {PAGES.flatMap((p) => [p.path, ...(p.also ?? [])].map((path) => (
+        <Route key={path} path={path} element={<PageElement entry={p} refresh={refresh} />} />
+      )))}
+    </Routes>
   );
 }
 
 export default function App() {
   const [status, setStatus] = useState<Status | null>(null);
   const [error, setError] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -272,9 +122,9 @@ export default function App() {
       .then((s) => {
         setStatus(s);
         setError("");
-        // the product name on the sign-in screen and the desktop app, after the workspace's own name when it has one
+        // the product name, after the workspace's own name when it has one
         const own = (s.workspace_name || "").trim();
-        document.title = own && own !== "Rooks" && own !== PRODUCT ? `${own} · ${PRODUCT}` : PRODUCT;
+        document.title = own && own !== PRODUCT ? `${own} · ${PRODUCT}` : PRODUCT;
       })
       .catch((e) => setError(e.message));
   }, []);
@@ -289,26 +139,33 @@ export default function App() {
   useEffect(() => {
     (window as unknown as { __wbHandoff?: (d: string) => void }).__wbHandoff = (draft) => navigate("/assistant", { state: { draft, at: Date.now() } });
   }, [navigate]);
-  useEffect(() => setMenuOpen(false), [location.pathname]);
+  useEffect(() => setMoreOpen(false), [location.pathname]);
+  // Keyboard first (lib/shortcuts.ts is the one list): ⌘K/Ctrl+K the command menu, ? the shortcuts sheet, ⌘⇧O a new
+  // chat, g then c/r/j/t/m/s a page. Letters and ? are never taken while typing in a field. The chat reads its own.
   useEffect(() => {
+    const read = createKeyReader();
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setPaletteOpen((o) => !o);
-      }
+      if (e.defaultPrevented || e.isComposing) return;
+      const s = read(e, Date.now());
+      if (!s) return;
+      if (s.id === "palette") { e.preventDefault(); setPaletteOpen((o) => !o); return; }
+      if (document.querySelector('[aria-modal="true"]') && s.id !== "new-chat") return; // a sheet or menu is open: it has the keys
+      e.preventDefault();
+      if (s.id === "shortcuts") toggleShortcuts();
+      else if (s.id === "new-chat") { setPaletteOpen(false); navigate("/assistant", { state: { fresh: true } }); }
+      else if (s.to) navigate(s.to);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [navigate]);
 
-  const nav = useMemo(
-    () => NAV.map((g) => ({ ...g, items: g.items.filter((i) => !i.addon || (i.addon === "browser" && status?.browser_enabled) || (i.addon === "desk" && status?.desk_enabled)) })),
-    [status?.browser_enabled, status?.desk_enabled],
-  );
-  const palettePages = useMemo(
-    () => [...nav.flatMap((g) => g.items.map((i) => ({ to: i.to, label: i.label, icon: i.icon })))],
-    [nav],
-  );
+  const inShell = !!status?.signed_in && !!status.setup_complete;
+  useEffect(() => (inShell ? warmWhenIdle(SHORTCUTS.flatMap((s) => (s.to ? [s.to] : []))) : undefined), [inShell]);
+
+  const pages = useMemo(() => palettePages(status).map((p) => ({ to: p.path, label: p.label, icon: p.icon })), [status]);
+  const openSearch = useCallback(() => setPaletteOpen(true), []);
+  const openMore = useCallback(() => setMoreOpen(true), []);
+  const closeMore = useCallback(() => setMoreOpen(false), []);
 
   if (error) return <div className="auth"><div className="card auth-card col"><div className="alert err" role="alert">Cannot reach the app: {error}</div><button className="btn" onClick={refresh}>Try again</button></div></div>;
   if (!status) return <Boot />;
@@ -318,7 +175,7 @@ export default function App() {
     }
     return <Auth status={status} onDone={refresh} />;
   }
-  if (location.pathname === "/ask-bar") return <AskBar />; // feat/v02-anywhere-voice: the floating window, no sidebar
+  if (location.pathname === "/ask-bar") return <AskBar />; // feat/v02-anywhere-voice: the floating window, no shell
   if (status.welcome_pending || ((status.desktop || status.needs_models) && !status.welcome_done)) {
     return <Welcome onDone={() => { refresh(); navigate("/assistant", { replace: true }); }} />;
   }
@@ -331,79 +188,34 @@ export default function App() {
   }
 
   const ownName = (status.workspace_name || "").trim();
-  const shellName = !ownName || ownName === "Rooks" || ownName === PRODUCT ? PRODUCT : ownName;
+  const shellName = !ownName || ownName === PRODUCT ? PRODUCT : ownName;
+  const onChat = location.pathname === "/assistant" || location.pathname.startsWith("/assistant/");
 
   return (
     <div className="shell shell-agents">
-      <AgentsSidebar
-        workspaceName={shellName}
-        onSearch={() => setPaletteOpen(true)}
-        onMore={() => setMenuOpen(true)}
-      />
-
-      {menuOpen && (
-        <>
-          <div className="modal-back rail-scrim" onClick={() => setMenuOpen(false)} />
-          <aside className="more-drawer agents-more" aria-label="More pages">
-            <div className="more-head">
-              <strong className="truncate">{shellName}</strong>
-              <button type="button" className="btn ghost sm" onClick={() => setPaletteOpen(true)}>
-                <Search size={14} /> Search <span className="kbd">{MOD_KEY}K</span>
-              </button>
-            </div>
-            <div className="more-scroll">
-              {nav.filter((g) => g.section).map((g, gi) => {
-                const items = g.items.filter((i) => !RAIL.some((r) => r.to === i.to));
-                const extras = g.section === "Advanced" && (status.chat_url || status.paperclip_url || status.hermes_url);
-                if (!items.length && !extras) return null;
-                return (
-                  <div key={g.section ?? gi} className="more-group">
-                    <div className="more-section">{g.section}</div>
-                    {items.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        className="more-link"
-                        onClick={transitionClick(() => navigate(item.to))}
-                      >
-                        <item.icon size={16} />
-                        <span className="truncate">{item.label}</span>
-                      </NavLink>
-                    ))}
-                    {g.section === "Advanced" && (
-                      <>
-                        {status.chat_url && <a className="more-link" href={status.chat_url} target="_blank" rel="noreferrer"><MessageSquare size={16} /> Open WebUI <ExternalLink size={12} style={{ marginLeft: "auto" }} /></a>}
-                        {status.paperclip_url && <a className="more-link" href={status.paperclip_url} target="_blank" rel="noreferrer"><Building2 size={16} /> Paperclip <ExternalLink size={12} style={{ marginLeft: "auto" }} /></a>}
-                        {status.hermes_url && <a className="more-link" href={status.hermes_url} target="_blank" rel="noreferrer"><Bot size={16} /> Hermes agent <ExternalLink size={12} style={{ marginLeft: "auto" }} /></a>}
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </aside>
-        </>
-      )}
-
-      <main className="main agents-main">
-        <div className="mobile-bar">
-          <button className="btn ghost icon" onClick={() => setMenuOpen(true)} aria-label="Open menu" aria-expanded={menuOpen}><Menu size={18} /></button>
-          <strong className="truncate grow">{shellName}</strong>
-          <button className="btn ghost icon" onClick={() => setPaletteOpen(true)} aria-label="Search or jump to"><Search size={17} /></button>
-        </div>
-        <BesideStage renderRoutes={() => (
-          <Suspense fallback={<Boot />}>
-            <AppRoutes onChanged={refresh} />
-          </Suspense>
-        )} />
-      </main>
+      <a className="skip-link" href={onChat ? "#thread" : "#main"}>{onChat ? "Skip to the conversation" : "Skip to the page"}</a>
+      <Rail status={status} name={shellName} onMore={openMore} onSearch={openSearch} />
+      <div className="shell-main">
+        <PresenceStrip />
+        <main id="main" className="main agents-main" tabIndex={-1}>
+          <StageHost renderRoutes={() => (
+            <Suspense fallback={<Boot />}>
+              <AppRoutes refresh={refresh} />
+            </Suspense>
+          )} />
+        </main>
+      </div>
+      <MobileBar onMore={openMore} />
+      <MoreSheet open={moreOpen} onClose={closeMore} status={status} name={shellName} onSearch={openSearch} />
 
       <TerminalKeeper />
-
-      <DeskGlow enabled={!!status.desk_enabled} />
+      <DeskNotice enabled={!!status.desk_enabled} />
       <JobNotifier />{/* feat/v02-automations */}<DesktopBridge />{/* feat/tauri-native */}
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} pages={palettePages} />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} pages={pages} />
       <AccountLayer />
+      <NeedsYouSheet />
+      <ShortcutsSheet />
+      <ToastHost />
     </div>
   );
 }

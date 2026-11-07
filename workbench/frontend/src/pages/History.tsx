@@ -1,15 +1,20 @@
-// feat/v02-core: Action history. Everything the assistant, automations and helpers did, with one-tap undo.
-import { AlertTriangle, CalendarDays, Check, CheckSquare, Cog, Download, FileText, FolderKanban, Globe2, History as HistoryIcon, Mail, MessageSquare,
-  Monitor, NotebookPen, Puzzle, Brain, Search, ShieldAlert, Undo2, Workflow, Eye } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+/**
+ * History: everything the assistant, automations and helpers did, newest first, with one-tap undo (the same history
+ * API the result cards in the chat use). Built on the primitives: Undo is a Button, "Can't undo" a Badge with the
+ * fix beside it, and each row opens the chat it came from.
+ */
+import { AlertTriangle, Brain, CalendarDays, Check, CheckSquare, Cog, Download, Eye, FileText, FolderKanban, Globe2, History as HistoryIcon, Mail,
+  MessageSquare, Monitor, NotebookPen, Puzzle, ShieldAlert, Undo2, Workflow } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api";
-import { Empty, relTime, SkeletonList, useToast } from "../util";
-import "../v02/v02.css";
+import { Badge, Button, Card, Chip, EmptyState, ErrorState, Input, Loading, Page, Section } from "../ui";
+import { relTime, useToast } from "../util";
+import { CheckField, plainError } from "./day/parts";
 
 export type Entry = { id: string; at: string; category: string; who: string; title: string; detail: string; tool: string; conversation_id: number | null;
   status: string; fix: string; fix_prompt: string; undone_at: string | null; undo: { available: boolean; confirm: string; reversible: boolean; note: string } };
-type Page = { entries: Entry[]; categories: Record<string, string>; export_allowed: boolean; next_before: string | null };
+type HistoryPage = { entries: Entry[]; categories: Record<string, string>; export_allowed: boolean; next_before: string | null };
 
 const ICON: Record<string, typeof Check> = { chat: MessageSquare, note: NotebookPen, task: CheckSquare, calendar: CalendarDays, email: Mail, file: FileText,
   memory: Brain, skill: Puzzle, automation: Workflow, site: Globe2, computer: Monitor, project: FolderKanban, setting: Cog, approval: ShieldAlert, lookup: Eye, other: HistoryIcon };
@@ -26,20 +31,36 @@ function dayLabel(iso: string) {
 export default function History() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [page, setPage] = useState<Page | null>(null);
+  const [page, setPage] = useState<HistoryPage | null>(null);
+  const [problem, setProblem] = useState("");
   const [cat, setCat] = useState("");
   const [q, setQ] = useState("");
   const [lookups, setLookups] = useState(false);
   const [busy, setBusy] = useState("");
   const [asking, setAsking] = useState<Entry | null>(null);
+  // The confirm takes focus when it appears (so it is announced and "Yes, undo" is one key away); Keep it or Escape
+  // puts focus back on the entry's own Undo button.
+  const yesRef = useRef<HTMLButtonElement>(null);
+  const askingId = asking?.id;
+  useEffect(() => { if (askingId) yesRef.current?.focus(); }, [askingId]);
+  const keepIt = () => {
+    const from = asking?.id;
+    setAsking(null);
+    if (from) window.setTimeout(() => document.querySelector<HTMLElement>(`[data-undo-for="${CSS.escape(String(from))}"]`)?.focus(), 0);
+  };
 
   const params = useCallback((extra: Record<string, string> = {}) => new URLSearchParams({ ...(cat ? { category: cat } : {}), ...(q ? { q } : {}), ...(lookups ? { lookups: "true" } : {}), ...extra }).toString(), [cat, q, lookups]);
-  const load = useCallback(() => api<Page>(`/history?${params()}`).then(setPage).catch(toast.err), [params]); // eslint-disable-line react-hooks/exhaustive-deps
+  const load = useCallback(() => {
+    setProblem("");
+    return api<HistoryPage>(`/history?${params()}`).then(setPage).catch((e) => setProblem(plainError(e, "Your history did not load.")));
+  }, [params]);
   useEffect(() => { const t = setTimeout(load, 150); return () => clearTimeout(t); }, [load]);
   const more = async () => {
     if (!page?.next_before) return;
-    const r = await api<Page>(`/history?${params({ before: page.next_before })}`);
-    setPage({ ...r, entries: [...page.entries, ...r.entries] });
+    try {
+      const r = await api<HistoryPage>(`/history?${params({ before: page.next_before })}`);
+      setPage({ ...r, entries: [...page.entries, ...r.entries] });
+    } catch (e) { toast.err(e); }
   };
 
   const undo = async (e: Entry, confirmed = false) => {
@@ -67,73 +88,71 @@ export default function History() {
     if (g && g[0] === d) g[1].push(e); else groups.push([d, [e]]);
   }
   return (
-    <div className="page v02">
-      {toast.node}
-      <div className="page-head">
-        <div>
-          <div className="v02-kicker">Everything that happened</div>
-          <h1>History</h1>
-          <p className="muted">What the assistant, your automations and helpers did, newest first. Undo what can be undone in one tap; for the rest, here's how to fix it.</p>
+    <Page title="History" kicker="Everything that happened" className="day-page"
+      description="What the assistant, your automations and helpers did, newest first. Undo what can be undone in one tap; for the rest, here is how to fix it."
+      actions={(
+        <>
+          <Button size="sm" icon={<Download size={14} />} onClick={() => exportAs("csv")}>Spreadsheet</Button>
+          <Button size="sm" icon={<Download size={14} />} onClick={() => exportAs("pdf")}>PDF</Button>
+        </>
+      )}>
+      <div className="day-filters">
+        <Input className="day-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search your history" aria-label="Search your history" />
+        <div className="day-chips" role="group" aria-label="Show">
+          {FILTERS.map((f) => <Chip key={f} active={cat === f} onClick={() => setCat(f)}>{f ? page?.categories[f] ?? f : "Everything"}</Chip>)}
         </div>
-        <div className="row">
-          <button className="btn sm" onClick={() => exportAs("csv")}><Download size={14} /> Spreadsheet</button>
-          <button className="btn sm" onClick={() => exportAs("pdf")}><Download size={14} /> PDF</button>
-        </div>
-      </div>
-
-      <div className="row wrap v02-filters">
-        <div className="input-icon v02-search">
-          <Search size={14} className="faint" aria-hidden="true" />
-          <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search your history" aria-label="Search your history" />
-        </div>
-        <div className="v02-chips" role="tablist" aria-label="Show">
-          {FILTERS.map((f) => <button key={f} role="tab" aria-selected={cat === f} className={`v02-chip ${cat === f ? "on" : ""}`} onClick={() => setCat(f)}>{f ? page?.categories[f] ?? f : "Everything"}</button>)}
-        </div>
-        <label className="row small muted"><input type="checkbox" checked={lookups} onChange={(e) => setLookups(e.target.checked)} /> Include look-ups</label>
+        <CheckField checked={lookups} onChange={setLookups}>Include look-ups</CheckField>
       </div>
 
       {asking && (
-        <div className="card v02-confirm" role="alertdialog" aria-label="Confirm undo">
-          <AlertTriangle size={18} aria-hidden="true" />
-          <div className="grow"><b>Undo “{asking.title}”?</b><div className="small">{asking.undo.confirm}</div></div>
-          <button className="btn primary sm" disabled={busy === asking.id} onClick={() => undo(asking, true)}>Yes, undo</button>
-          <button className="btn ghost sm" onClick={() => setAsking(null)}>Keep it</button>
-        </div>
+        <Card className="day-confirm" role="alertdialog" aria-label="Confirm undo" aria-describedby="history-confirm-text"
+          onKeyDown={(ev: ReactKeyboardEvent) => { if (ev.key === "Escape") { ev.preventDefault(); keepIt(); } }}>
+          <AlertTriangle size={18} aria-hidden="true" className="day-warn-icon" />
+          <div className="day-grow" id="history-confirm-text"><p className="day-confirm-title">Undo “{asking.title}”?</p><p className="day-hint">{asking.undo.confirm}</p></div>
+          <div className="day-actions">
+            <Button ref={yesRef} variant="primary" size="sm" busy={busy === asking.id} onClick={() => void undo(asking, true)}>Yes, undo</Button>
+            <Button variant="ghost" size="sm" onClick={keepIt}>Keep it</Button>
+          </div>
+        </Card>
       )}
 
-      {page === null && <div className="card"><SkeletonList rows={6} /></div>}
-      {page && !page.entries.length && <div className="card"><Empty icon={<HistoryIcon size={24} />} title={q || cat ? "Nothing matches" : "Nothing yet"} hint={q || cat ? undefined : "When the assistant does something for you, it shows up here."} /></div>}
-      {groups.map(([day, rows]) => (
-        <section key={day} className="v02-day">
-          <h3 className="v02-day-head">{day}</h3>
-          <div className="card flush">
+      {page === null && !problem && <Loading rows={6} label="Loading your history" />}
+      {problem && <ErrorState title="History did not load" line={problem} onRetry={() => void load()} />}
+      {page && !problem && !page.entries.length && (
+        <EmptyState icon={<HistoryIcon size={24} />} title={q || cat ? "Nothing matches." : "Nothing yet."}
+          line={q || cat ? "Try other words, or show everything." : "When the assistant does something for you, it shows up here."}
+          action={q || cat ? <Button size="sm" onClick={() => { setQ(""); setCat(""); }}>Show everything</Button> : undefined} />
+      )}
+      {!problem && groups.map(([day, rows]) => (
+        <Section key={day} title={day} className="day-history-day">
+          <ul className="ui-list" aria-label={day}>
             {rows.map((e) => {
               const Icon = ICON[e.category] ?? HistoryIcon;
               return (
-                <div key={e.id} className={`v02-entry ${e.status}`}>
-                  <span className={`v02-icon c-${e.category}`} aria-hidden="true"><Icon size={14} /></span>
-                  <div className="grow" style={{ minWidth: 0 }}>
-                    <div className="v02-entry-title">{e.title}</div>
-                    <div className="small faint">{e.who} · {new Date(e.at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} · {relTime(e.at)}
-                      {e.conversation_id && <> · <a href={`/assistant/${e.conversation_id}`} onClick={(ev) => { ev.preventDefault(); navigate(`/assistant/${e.conversation_id}`); }}>Open chat</a></>}
-                    </div>
-                    {e.detail && <div className="small muted v02-detail">{e.detail}</div>}
-                    {e.status === "undone" && <div className="small v02-undone"><Undo2 size={12} /> Undone {e.undone_at ? relTime(e.undone_at) : ""}{e.undo.note ? `: ${e.undo.note}` : ""}</div>}
-                    {e.status === "undo_failed" && <div className="small v02-late">Couldn't undo: {e.undo.note}</div>}
-                    {e.fix && <div className="small v02-fix"><b>Can't undo.</b> {e.fix}</div>}
-                    {e.status === "waiting" && <a className="small" href={`/assistant/${e.conversation_id ?? ""}`} onClick={(ev) => { ev.preventDefault(); navigate(`/assistant/${e.conversation_id ?? ""}`); }}>Review it</a>}
+                <li key={e.id} className={`day-entry is-${e.status}`}>
+                  <span className="day-entry-icon" aria-hidden="true"><Icon size={14} /></span>
+                  <div className="day-entry-text">
+                    <p className="day-entry-title">{e.title}</p>
+                    <p className="day-entry-meta">{e.who} · {new Date(e.at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} · {relTime(e.at)}
+                      {e.conversation_id && <> · <Link className="day-link" to={`/assistant/${e.conversation_id}`}>Open chat</Link></>}
+                    </p>
+                    {e.detail && <p className="day-entry-detail">{e.detail}</p>}
+                    {e.status === "undone" && <p className="day-entry-undone"><Undo2 size={12} aria-hidden="true" /> Undone {e.undone_at ? relTime(e.undone_at) : ""}{e.undo.note ? `: ${e.undo.note}` : ""}</p>}
+                    {e.status === "undo_failed" && <p className="day-entry-detail day-danger-text">Couldn't undo: {e.undo.note}</p>}
+                    {e.fix && <p className="day-entry-fix"><Badge tone="warn">Can't undo</Badge> <span>{e.fix}</span></p>}
+                    {e.status === "waiting" && <Link className="day-link" to={`/assistant/${e.conversation_id ?? ""}`}>Review it</Link>}
                   </div>
-                  <div className="v02-entry-actions">
-                    {e.undo.available && <button className="btn sm" disabled={busy === e.id} onClick={() => (e.undo.confirm ? setAsking(e) : undo(e))}><Undo2 size={13} /> Undo</button>}
-                    {e.fix_prompt && <button className="btn ghost sm" onClick={() => navigate("/assistant", { state: { draft: e.fix_prompt } })}>Help me fix it</button>}
+                  <div className="day-entry-actions">
+                    {e.undo.available && <Button size="sm" data-undo-for={e.id} icon={<Undo2 size={13} />} busy={busy === e.id} onClick={() => (e.undo.confirm ? setAsking(e) : void undo(e))}>Undo</Button>}
+                    {e.fix_prompt && <Button size="sm" variant="ghost" onClick={() => navigate("/assistant", { state: { draft: e.fix_prompt } })}>Help me fix it</Button>}
                   </div>
-                </div>
+                </li>
               );
             })}
-          </div>
-        </section>
+          </ul>
+        </Section>
       ))}
-      {page?.next_before && <div className="row" style={{ justifyContent: "center" }}><button className="btn ghost" onClick={more}>Show older</button></div>}
-    </div>
+      {page?.next_before && !problem && <div className="day-center"><Button variant="ghost" onClick={() => void more()}>Show older</Button></div>}
+    </Page>
   );
 }

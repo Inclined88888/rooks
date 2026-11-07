@@ -48,6 +48,18 @@ def fit(conversation_id: int | None, tool: str, out: str, untrusted: bool) -> st
             + kept[-TAIL_CHARS:])
 
 
+def stash(conversation_id: int | None, message_id: int | None, tool: str, out: str, untrusted: bool) -> str | None:
+    """Keep a tool result that is being left out of the model's window to make a long chat fit (assistant.py,
+    compaction). The id comes from the message, so a later turn finds the same row instead of storing it again.
+    None when there is nowhere to keep it."""
+    if not conversation_id or not message_id:
+        return None
+    rid = f"m{int(message_id)}"
+    db.run("INSERT OR IGNORE INTO tool_results(id, conversation_id, tool, untrusted, content, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+           rid, conversation_id, tool, int(untrusted), out[:STORE_CHARS], db.now())
+    return rid
+
+
 def _row(conversation_id: int | None, result_id: str) -> dict | None:
     if not conversation_id or not isinstance(result_id, str) or not result_id.isalnum():
         return None

@@ -13,7 +13,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import images, providers
+from . import images, providers, words
 from .extras import BUILD_TOOLS, READ_ONLY, Extras, project_instructions
 from .extras import NAMES as EXTRA_NAMES
 from .extras import SPECS as EXTRA_SPECS
@@ -65,6 +65,8 @@ COMPACT_AT = 0.7
 KEEP_TURNS = 2  # the newest user prompts (with their tool calls and results) always stay word for word
 # Proactive pruning: when a single tool result exceeds this many chars, shorten it immediately
 PRUNE_TOOL_RESULT_AT = 8000
+RESUMED = "Picked up after a restart"  # the app's words for its `resumed` event
+SUMMARISED = "Earlier parts of this chat were summarised to fit"  # ... and for `compacted`, here or in the app
 DELEGATION_WAIT_S = 900  # one shared-loop turn, including time the user takes to approve a change
 BRIDGE_LOCAL = {"read_file", "list_files", "search", "edit_file", "write_file", "run_command"}  # run here, not in the app
 # Tail budget: keep last N tool results unpruned
@@ -256,7 +258,7 @@ class Agent:
         after = self._estimate()
         self.log.add("compaction", "ok", parent=self._turn, detail=f"{len(old)} messages summarised, ~{before:,} to ~{after:,} tokens"
                      + (f" ({reason})" if reason else ""))
-        self.ui.tool_note(f"compacted the conversation: ~{before:,} to ~{after:,} tokens")
+        self._notice(f"{SUMMARISED} (about {before:,} to {after:,} tokens)")
         return True
 
     def _shrink_tool_results(self, keep_last: int = TAIL_TOOL_RESULTS, limit: int = PRUNE_TOOL_RESULT_AT) -> bool:
@@ -408,7 +410,7 @@ class Agent:
         return answer
 
     def uses_shared_loop(self) -> bool:
-        """Connected to the AI Workspace app, linked to one of its conversations, and not a sub-agent.
+        """Connected to the Rooks app, linked to one of its conversations, and not a sub-agent.
         ROOKS_SHARED_LOOP=0 keeps the local loop (the app still receives the finished turn via /v1/rooks/turn)."""
         return (os.environ.get("ROOKS_SHARED_LOOP", "1") != "0" and not self.sub and self.s.provider == "workbench"
                 and bool(self.s.base_url and self.s.api_key and getattr(self.ui, "conversation_id", None)))
@@ -451,9 +453,16 @@ class Agent:
                             # already closed the step, so this result is dropped and the stream ends with "stopped"
                             self.ui.tool_note(f"{call.name} finished after the turn was stopped; result not sent")
                     elif kind == "tool_call" and ev.get("name") not in BRIDGE_LOCAL:
-                        self.ui.tool_note(f"{ev.get('name')} (app)", read=True)
+                        step = words.plain_step(ev.get("name", ""), ev.get("args") or {})
+                        self._working(step)
+                        self.ui.tool_note(step, read=True)
                     elif kind == "approval_required":
-                        self.ui.tool_note(f"{ev.get('tool')} is waiting for your OK in the app (Approvals): {ev.get('reason', '')}")
+                        step = words.plain_step(ev.get("tool", ""), ev.get("args") or {})
+                        self._notice(f"Needs your OK in the app, under Needs you: {ev.get('reason') or step}", needs_you=True)
+                    elif kind == "resumed":  # the app restarted during the last turn here; it says so, and so does this
+                        self._notice(RESUMED)
+                    elif kind == "compacted":
+                        self._notice(SUMMARISED)
                     elif kind == "writing" and self._streaming():
                         self.ui.stream(ev.get("text", ""))
                     elif kind == "message":
@@ -536,6 +545,19 @@ class Agent:
         assert last_error is not None
         raise last_error  # the original error, with its status, so callers explain it the same way as before
 
+    def _notice(self, text: str, needs_you: bool = False) -> None:
+        """One quiet line about the conversation itself, said the same way the app says it."""
+        notice = getattr(self.ui, "notice", None)
+        if notice is not None:
+            notice(text, needs_you=needs_you) if needs_you else notice(text)
+        else:
+            self.ui.tool_note(text)
+
+    def _working(self, text: str) -> None:
+        working = getattr(self.ui, "working", None)
+        if working is not None:
+            working(text)
+
     def _streaming(self) -> bool:
         return bool(getattr(self.s, "stream", False)) and getattr(self.ui, "can_stream", lambda: False)()
 
@@ -596,6 +618,7 @@ class Agent:
             self.log.finish(action, "denied", detail=blocked[:500])
             self.ui.tool_note(f"stopped by a project hook: {blocked[:200]}")
             return f"Error: a project hook stopped this ({blocked}). Do not retry it unless the user says to.", "denied"
+        self._working(words.plain_step(call.name, call.arguments))
         if plan.effect != "read":
             self.ui.show_plan(plan)
             if self.s.dry_run:

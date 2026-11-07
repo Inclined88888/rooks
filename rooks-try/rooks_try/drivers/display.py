@@ -1,4 +1,8 @@
-"""A private screen drawn on this computer. No extra program, and not the person's own desktop."""
+"""A drawing of a terminal. Not a screen: a picture the app paints, with no pointer behind it.
+
+It exists for tests and for computers with nothing better, and only by name (ROOKS_TRY_DRIVER=display): the automatic
+choice never picks it. Typing runs the line in the private folder through the shell driver; clicks do nothing and say so.
+"""
 
 from __future__ import annotations
 
@@ -7,9 +11,13 @@ from pathlib import Path
 
 from .. import store
 from .base import Driver, DriverInfo
-from .shell import ShellDriver
+from .shell import ShellDriver, isolation_level
 
 _W, _H = 1280, 720
+LABEL = "A drawing of a terminal"
+NOTE = "A picture the app draws, not a real screen. Typing runs commands as you, in a folder of its own."
+ROOM_OFF = "The Room is off. Start it first."
+NO_POINTER = "This is a drawing of a terminal. It has no pointer."
 
 
 def _font(size: int):
@@ -29,7 +37,7 @@ def _font(size: int):
 
 
 class DisplayDriver(Driver):
-    """A screen of our own: a desktop and a window, updated when you click or type."""
+    """A painted terminal: the lines typed so far and their output, repainted on every key."""
 
     name = "display"
 
@@ -50,18 +58,18 @@ class DisplayDriver(Driver):
     def info(self) -> DriverInfo:
         ok = self.available()
         detail = (
-            "A separate screen on this computer. Your own desktop stays alone."
+            "A picture of a terminal the app draws. Only used when chosen by name, for tests."
             if ok
-            else "A separate screen needs the picture library."
+            else "The drawing needs the picture library."
         )
-        return DriverInfo("display", "Separate screen", ok, detail)
+        return DriverInfo("display", LABEL, ok, detail)
 
     def up(self) -> dict:
         home = store.guest_home()
         (home / "Desktop").mkdir(exist_ok=True)
         self._lines = [
-            "Virtual computer",
-            "This screen is not your Mac. Click it, then type.",
+            LABEL,
+            "Type a line and press Return. It runs as you, in the room's folder.",
             "",
         ]
         self._input = ""
@@ -89,31 +97,32 @@ class DisplayDriver(Driver):
             "driver": self.name,
             "running": running,
             "screen": True,
+            "pointer": False,
+            "isolation": isolation_level(),
             "width": _W,
             "height": _H,
             "home": str(store.guest_home()),
             "offline": self.offline,
-            "label": "A separate screen on this computer",
+            "label": LABEL,
+            "note": NOTE,
             "last_checkpoint": state.get("last_checkpoint"),
         }
 
     def screenshot(self, path: Path) -> Path:
-        self._ensure_up()
+        if self._image is None or not self.status().get("running"):  # a picture never starts the Room; only up does
+            raise RuntimeError(ROOM_OFF)
         path.parent.mkdir(parents=True, exist_ok=True)
         self._image.save(path)
         return path
 
     def click(self, x: int, y: int, button: str = "left", count: int = 1) -> dict:
-        self._ensure_up()
-        return {"ok": True, "x": int(x), "y": int(y), "button": button}
+        return {"ok": False, "error": NO_POINTER}
 
     def drag(self, x1: int, y1: int, x2: int, y2: int) -> dict:
-        self._ensure_up()
-        return {"ok": True, "from": [int(x1), int(y1)], "to": [int(x2), int(y2)]}
+        return {"ok": False, "error": NO_POINTER}
 
     def scroll(self, x: int, y: int, dy: int = -3) -> dict:
-        self._ensure_up()
-        return {"ok": True, "x": int(x), "y": int(y), "dy": int(dy)}
+        return {"ok": False, "error": NO_POINTER}
 
     def type_text(self, text: str) -> dict:
         self._ensure_up()
@@ -145,13 +154,16 @@ class DisplayDriver(Driver):
         self._ensure_up()
         return self._shell.run(command, timeout=timeout)
 
+    def supports_pointer(self) -> bool:
+        return False
+
     def _ensure_up(self) -> None:
         if self._image is None or not self.status().get("running"):
             self.up()
 
     def _enter(self) -> None:
         command = self._input
-        self._lines.append("virtual@computer:~$ " + command)
+        self._lines.append("room:~$ " + command)
         self._input = ""
         if command.strip():
             result = self._shell.run(command, timeout=20)
@@ -170,10 +182,10 @@ class DisplayDriver(Driver):
         draw.rectangle((36, 32, _W - 36, 78), fill=(42, 45, 54))
         title = _font(18)
         body = _font(16)
-        draw.text((56, 46), "Virtual computer", fill=(236, 237, 240), font=title)
+        draw.text((56, 46), LABEL, fill=(236, 237, 240), font=title)
         y = 96
         for line in self._lines[-22:]:
             draw.text((56, y), line, fill=(214, 218, 224), font=body)
             y += 24
-        draw.text((56, y), "virtual@computer:~$ " + self._input + "▌", fill=(244, 244, 246), font=body)
+        draw.text((56, y), "room:~$ " + self._input + "▌", fill=(244, 244, 246), font=body)
         self._image = img

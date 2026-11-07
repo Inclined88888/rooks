@@ -172,6 +172,9 @@ def card_from(name: str, result, arguments=None) -> dict | None:
             "job_id": str(data["job_id"]), "goal": str(args.get("goal") or "")[:200],
             "status": data.get("status") or "",
         }
+    if name == "use_room" and (args.get("action") or "") == "up" and data.get("running"):
+        return {"kind": "watch", "surface": "room", "job_id": "room", "goal": str(args.get("goal") or "The Room")[:200],
+                "status": "running"}
     files = data.get("files") if isinstance(data.get("files"), list) else []
     if name == "use_computer" and files:
         return {"kind": "file", "files": [str(f) for f in files[:8]]}

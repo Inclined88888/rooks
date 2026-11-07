@@ -1,11 +1,13 @@
-import { CircleStop, FolderOpen, Loader2, Monitor, OctagonX, Play, ShieldAlert, ShieldCheck, Trash2, XCircle } from "lucide-react";
+// Computer (Rooks Desk): a task, your apps and files, the steps on the one Timeline. Premium pass (package C).
+import { CheckCircle2, CircleStop, FolderOpen, Monitor, OctagonX, Play, ShieldAlert, Trash2, XCircle } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
-import { Tracer } from "../Tracer";
-import { CursorOverlay, DoneTick, LiveShot, parsePointer, Pointer } from "../motion";
+import { LiveShot } from "../motion";
 import { SurfaceNote } from "../SurfaceNote";
-import { Empty, Markdown, ModelSelect, useModels, useToast } from "../util";
+import { Markdown, ModelSelect, useModels, useToast } from "../util";
+import { ApprovalCard, Badge, Button, Card, Chip, EmptyState, ErrorState, IconButton, Input, List, Loading, Page, Row, Section, Textarea, Timeline, type TimelineStep } from "../ui";
+import { Gate, Split, StatusText, plainError, useLoad } from "./agents/kit";
 
 type JobSummary = { id: string; goal: string; provider: string; model: string; status: string; source: string; created_at: number; dry_run: boolean };
 type Step = {
@@ -44,8 +46,10 @@ const active = (s: string) => s === "queued" || s === "running" || s === "waitin
 
 function ago(ts: number) {
   const s = Date.now() / 1000 - ts;
-  return s < 60 ? "just now" : s < 3600 ? `${Math.floor(s / 60)}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : new Date(ts * 1000).toLocaleDateString();
+  return s < 60 ? "just now" : s < 3600 ? `${Math.floor(s / 60)} min ago` : s < 86400 ? `${Math.floor(s / 3600)} h ago` : new Date(ts * 1000).toLocaleDateString();
 }
+const STATUS: Record<string, string> = { queued: "Waiting to start", running: "Working", waiting: "Waiting for you", done: "Done", error: "Stopped", cancelled: "Stopped" };
+const word = (s: string) => STATUS[s] ?? s;
 
 function describe(s: Step) {
   const a = s.args || {};
@@ -53,32 +57,45 @@ function describe(s: Step) {
   return `${s.action}${bits.length ? ` · ${bits.join(" · ")}` : ""}`;
 }
 
+/** The desk steps as the one Timeline: what it did, what you said no to or went wrong, and what it is on now. */
+export function deskTimeline(job: Pick<Job, "steps" | "status" | "pending_approvals">): TimelineStep[] {
+  const steps: TimelineStep[] = job.steps.map((s) => ({
+    id: s.step, text: describe(s), state: s.status === "denied" || s.status === "error" ? "failed" : "ok",
+  }));
+  if ((job.pending_approvals || []).length || job.status === "waiting") steps.push({ id: "held", text: "Waiting for your answer", state: "held" });
+  else if (active(job.status)) steps.push({ id: "next", text: steps.length ? `Working on step ${steps.length + 1}` : "Looking at the screen", state: "running" });
+  return steps;
+}
+
 export default function Computer() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { models } = useModels();
   const [desk, setDesk] = useState<DeskStatus | null>(null);
-  const [jobs, setJobs] = useState<JobSummary[]>([]);
+  const jobsState = useLoad(() => api<JobSummary[]>("/desk/jobs"), []);
+  const jobs = jobsState.data ?? [];
   const [job, setJob] = useState<Job | null>(null);
+  const [openErr, setOpenErr] = useState<unknown>(null);
+  const [tick, setTick] = useState(0);
   const [shotKey, setShotKey] = useState(0);
   const [openStep, setOpenStep] = useState<number | null>(null);
-  const [shotSize, setShotSize] = useState<[number, number]>([0, 0]);
   const [form, setForm] = useState({ goal: "", model: "", max_steps: 12, dry_run: false, approve: [] as string[] });
   const [lists, setLists] = useState<{ folders: string; allow_apps: string } | null>(null);
   const [turn, setTurn] = useState<{ reason?: string } | null>(null);
   const toast = useToast();
 
-  const loadJobs = () => api<JobSummary[]>("/desk/jobs").then(setJobs).catch(toast.err);
+  const loadJobs = jobsState.reload;
   const loadDesk = () => api<DeskStatus>("/desk/status").then((d) => {
     setDesk(d);
     setLists((l) => l ?? { folders: d.policy.folders.join("\n"), allow_apps: d.policy.allow_apps.join(", ") });
   }).catch(toast.err);
-  useEffect(() => { loadDesk(); loadJobs(); }, []);
+  useEffect(() => { loadDesk(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     api<{ reason?: string }>("/desk/handoff").then((h) => setTurn(h?.reason ? h : null)).catch(() => {});
   }, []);
 
   useEffect(() => {
+    setOpenErr(null); setOpenStep(null);
     if (!id) return setJob(null);
     let stop = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -86,17 +103,17 @@ export default function Computer() {
       try {
         const j = await api<Job>(`/desk/jobs/${id}`);
         if (stop) return;
-        setJob(j);
+        setJob(j); setOpenErr(null);
         setShotKey((k) => k + 1);
         if (active(j.status)) timer = setTimeout(poll, 1000);
         else loadJobs();
       } catch (e) {
-        toast.err(e);
+        if (!stop) setOpenErr(e);
       }
     };
     poll();
     return () => { stop = true; clearTimeout(timer); };
-  }, [id]);
+  }, [id, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const answer = async (a: Approval, approve: boolean) => {
     try {
@@ -123,8 +140,9 @@ export default function Computer() {
       toast.err(e);
     }
   };
+  const cancel = async (jid: string) => { try { await api(`/desk/jobs/${jid}/cancel`, { method: "POST" }); } catch (e) { toast.err(e); } };
   const remove = async (jid: string) => {
-    await api(`/desk/jobs/${jid}`, { method: "DELETE" });
+    try { await api(`/desk/jobs/${jid}`, { method: "DELETE" }); } catch (e) { toast.err(e); return; }
     if (job?.id === jid) navigate("/computer");
     loadJobs();
   };
@@ -145,167 +163,146 @@ export default function Computer() {
   const missing = Object.entries(desk?.permissions || {}).filter(([, p]) => !p.ok);
   const anyRunning = jobs.some((j) => active(j.status)) || (job && active(job.status));
 
+  const picked = job?.steps.find((s) => s.step === openStep) ?? null;
+  const hotkey = desk?.hotkey || "Ctrl+Alt+Esc";
+
   return (
-    <div className="page wide" style={{ maxWidth: 1400 }}>
-      <div className="page-head">
-        <div>
-          <h1>Computer</h1>
-          <p className="muted">Describe a task and watch it use your apps, files and terminal to do it. It asks you first before anything that matters, and Stop everything halts it at once.</p>
-        </div>
-        <button className="btn danger" onClick={stopAll} title={`Or press ${desk?.hotkey || "Ctrl+Alt+Esc"} anywhere`} disabled={!anyRunning}>
-          <OctagonX size={16} /> Stop everything
-        </button>
-      </div>
-      {turn?.reason && (
-        <div className="card" style={{ marginBottom: 12 }}>
-          <strong>Your turn</strong>
-          <p style={{ margin: "6px 0 0" }}>{turn.reason}</p>
-          <p className="muted small" style={{ margin: "6px 0 0" }}>Finish this step on this computer. I will not type a password or click for you.</p>
-        </div>
-      )}
+    <Page wide className="ag-page br-page" title="Computer"
+      description="Describe a task and watch it use your apps, files and terminal to do it. It asks you first before anything that matters, and Stop everything halts it at once."
+      actions={<Button variant="danger" icon={<OctagonX size={16} />} onClick={stopAll} title={`Or press ${hotkey} anywhere`} disabled={!anyRunning}>Stop everything</Button>}>
+      <div className="ag-stack-lg">
+        {turn?.reason && (
+          <Card className="cm-turn">
+            <h3 className="ag-h3">Your turn</h3>
+            <p className="ag-body">{turn.reason}</p>
+            <p className="ag-note">Finish this step on this computer. I will not type a password or click for you.</p>
+          </Card>
+        )}
 
-      <SurfaceNote />
-      {desk && !desk.ok && <div className="alert err" style={{ marginBottom: 16 }}>Rooks Desk cannot see this screen: {desk.error}</div>}
-      {missing.length > 0 && <PermissionSteps missing={missing.map(([k]) => k)} platform={desk?.platform}
-        onRecheck={loadDesk} />}
+        <SurfaceNote />
+        {desk && !desk.ok && <ErrorState title="Rooks Desk cannot see this screen" line={desk.error || "Check the screen permissions, then try again."} onRetry={loadDesk} />}
+        {missing.length > 0 && <PermissionSteps missing={missing.map(([k]) => k)} platform={desk?.platform} onRecheck={loadDesk} />}
 
-      <form className="card col" onSubmit={start} style={{ marginBottom: 16 }}>
-        <textarea className="input" rows={3} value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })}
-          placeholder="e.g. Open the text editor, write my packing list and save it in Documents" />
-        <div className="row wrap">
-          {EXAMPLES.map((ex) => <button type="button" key={ex} className="btn sm ghost" onClick={() => setForm({ ...form, goal: ex })}>{ex.slice(0, 52)}…</button>)}
-        </div>
-        <div className="row wrap">
-          <div style={{ width: 260 }}><ModelSelect value={form.model} onChange={(model) => setForm({ ...form, model })} models={models} /></div>
-          <label className="row small muted">Stop after
-            <input className="input" type="number" min={1} max={16} style={{ width: 80 }} value={form.max_steps} onChange={(e) => setForm({ ...form, max_steps: Math.min(16, Math.max(1, Number(e.target.value) || 12)) })} />
-          </label>
-          <label className="row small"><input type="checkbox" checked={form.dry_run} onChange={(e) => setForm({ ...form, dry_run: e.target.checked })} /> Dry run (look and plan, change nothing)</label>
-          <button className="btn primary" disabled={form.goal.trim().length < 3}><Play size={15} /> Start</button>
-        </div>
-        <div className="row wrap small">
-          <span className="muted">Don't ask me this time before it:</span>
-          {SKIP_ASKING.map(([cat, label]) => (
-            <label key={cat} className="row small"><input type="checkbox" checked={form.approve.includes(cat)}
-              onChange={(e) => setForm({ ...form, approve: e.target.checked ? [...form.approve, cat] : form.approve.filter((c) => c !== cat) })} /> {label}</label>
-          ))}
-          <span className="faint">Sign-ins, passwords and risky commands still ask.</span>
-        </div>
-        <div className="faint small">It stops after the number you set. It does not run without a limit.</div>
-        <div className="muted small">
-          While it works you see a red frame around the screen. Move the mouse to the top-left corner, press <span className="mono">{desk?.hotkey || "Ctrl+Alt+Esc"}</span> or
-          Stop to halt it at once. Models that can see screenshots work best (free: Gemini Flash, Groq Llama 4 / Qwen 3.8); others read the window's accessibility text.
-        </div>
-      </form>
-
-      <div style={{ display: "grid", gridTemplateColumns: "300px minmax(0,1fr)", gap: 16 }} className="research-layout">
-        <div className="col gap-lg" style={{ alignSelf: "start" }}>
-          <div className="card flush">
-            {jobs.length === 0 && <Empty icon={<Monitor size={22} />} title="No tasks yet" />}
-            {jobs.map((j) => (
-              <div key={j.id} className={`list-item has-tracer ${job?.id === j.id ? "active" : ""}`} onClick={() => navigate(`/computer/${j.id}`)}>
-                <Tracer active={active(j.status)} />
-                <div className="grow">
-                  <div className="truncate">{j.goal}</div>
-                  <div className="row small faint">{active(j.status) && <Loader2 size={11} className="spin" />}{j.status}{j.dry_run ? " · dry run" : ""} · {j.source} · {ago(j.created_at)}</div>
-                </div>
-                <button className="btn ghost sm icon" aria-label="Delete" onClick={(e) => { e.stopPropagation(); remove(j.id); }}><Trash2 size={13} /></button>
-              </div>
-            ))}
-          </div>
-          {lists && (
-            <div className="card col">
-              <h3 className="row"><FolderOpen size={15} /> What it may touch</h3>
-              <label className="col small">Folders it can read and write without asking (one per line)
-                <textarea className="input mono small" rows={4} value={lists.folders} onChange={(e) => setLists({ ...lists, folders: e.target.value })} />
-              </label>
-              <label className="col small">Apps it can use without asking (comma separated; empty = any except password managers)
-                <input className="input" value={lists.allow_apps} onChange={(e) => setLists({ ...lists, allow_apps: e.target.value })} placeholder="Text Editor, Terminal, AutoCAD" />
-              </label>
-              <button className="btn sm" onClick={saveLists}>Save</button>
-              <div className="faint small">Always asks: commands, files elsewhere, emails and messages, purchases, logins. Never: password fields.</div>
+        <Card as="section" aria-label="New task">
+          <form className="ag-form" onSubmit={start}>
+            <Textarea aria-label="The task" rows={3} value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })}
+              placeholder="For example: open the text editor, write my packing list and save it in Documents" />
+            {!form.goal && <div className="ag-bar">
+              <span className="ag-meta">Try</span>
+              {EXAMPLES.map((ex) => <Chip key={ex} title={ex} onClick={() => setForm({ ...form, goal: ex })}>{ex.slice(0, 52)}…</Chip>)}
+            </div>}
+            <div className="ag-bar">
+              <div className="rs-model"><ModelSelect value={form.model} onChange={(model) => setForm({ ...form, model })} models={models} /></div>
+              <div className="br-steps"><Input type="number" aria-label="Stop after this many steps" min={1} max={16} value={form.max_steps} onChange={(e) => setForm({ ...form, max_steps: Math.min(16, Math.max(1, Number(e.target.value) || 12)) })} /></div>
+              <span className="ag-meta">steps</span>
+              <label className="ag-check"><input type="checkbox" checked={form.dry_run} onChange={(e) => setForm({ ...form, dry_run: e.target.checked })} /> Dry run (look and plan, change nothing)</label>
+              <span className="ag-bar-end"><Button type="submit" variant="primary" icon={<Play size={14} />} disabled={form.goal.trim().length < 3}>Start</Button></span>
             </div>
-          )}
-        </div>
-        <div>
-          {!job && (
-            <div className="card col">
-              <Empty icon={<Monitor size={26} />} title="Start a task or pick one" hint="Chat and Rooks Code can use your computer too; their tasks show up here." />
-              {desk?.ok && <img src={`/api/desk/screen?k=${shotKey}`} alt="Your screen now" style={{ width: "100%", borderRadius: 8, border: "1px solid var(--border)" }} />}
-            </div>
-          )}
-          {job && (
-            <div className="col gap-lg">
-              <div className="card col has-tracer">
-                <Tracer active={active(job.status)} label="Using your computer" />
-                <div className="row" style={{ alignItems: "flex-start" }}>
-                  <h2 className="grow">{job.goal}</h2>
-                  {active(job.status) && <button className="btn sm" onClick={() => api(`/desk/jobs/${job.id}/cancel`, { method: "POST" })}><CircleStop size={14} /> Stop</button>}
-                </div>
-                <div className="row small muted wrap">
-                  <span className={`badge ${job.status === "done" ? (job.result?.success ? "ok" : "warn") : job.status === "error" ? "danger" : job.status === "waiting" ? "warn" : "accent"}`}>{job.status === "waiting" ? "waiting for you" : job.status}</span>
-                  {job.dry_run && <span className="badge">dry run</span>}
-                  <span className="mono">{job.provider}{job.result?.model ? `/${job.result.model}` : job.model ? `/${job.model}` : ""}</span>
-                  {job.result && <span>{job.result.steps} steps · {job.result.duration_s}s</span>}
-                </div>
-                {job.error && <div className="alert err">{job.error}</div>}
-                {(job.pending_approvals || []).map((a) => (
-                  <div key={a.id} className="alert col spring-in" style={{ gap: 6, borderColor: "var(--accent)" }}>
-                    <strong className="row"><ShieldAlert size={15} /> Allow this? {CATEGORY[a.category] || a.category}</strong>
-                    <div>{a.summary}</div>
-                    {a.detail && <pre className="mono small" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{a.detail}</pre>}
-                    <div className="row">
-                      <button className="btn sm primary" onClick={() => answer(a, true)}><ShieldCheck size={14} /> Allow once</button>
-                      <button className="btn sm" onClick={() => answer(a, false)}>Deny</button>
-                    </div>
-                  </div>
+            <fieldset className="cm-skip">
+              <legend className="ag-meta">Don't ask me this time before it:</legend>
+              {SKIP_ASKING.map(([cat, label]) => (
+                <label key={cat} className="ag-check"><input type="checkbox" checked={form.approve.includes(cat)}
+                  onChange={(e) => setForm({ ...form, approve: e.target.checked ? [...form.approve, cat] : form.approve.filter((c) => c !== cat) })} /> {label}</label>
+              ))}
+              <span className="ag-note">Sign-ins, passwords and risky commands still ask.</span>
+            </fieldset>
+            <p className="ag-note">
+              It stops after the number you set. It does not run without a limit. While it works you see a frame around the screen.
+              Move the mouse to the top-left corner, press <kbd className="ag-mono">{hotkey}</kbd> or Stop to halt it at once.
+              Models that can see pictures of the screen work best; others read the window's text.
+            </p>
+          </form>
+        </Card>
+
+        <Split list={
+          <div className="ag-stack-lg">
+            <Gate state={jobsState} rows={4}>{(list) => list.length === 0
+              ? <EmptyState icon={<Monitor size={20} />} title="No tasks yet" line="Start one above. Chat and Rooks Code can use your computer too." />
+              : <List className="ag-list" label="Tasks">
+                {list.map((j) => (
+                  <Row key={j.id} active={job?.id === j.id} onClick={() => navigate(`/computer/${j.id}`)} title={j.goal}
+                    meta={<StatusText live={active(j.status)}>{word(j.status)}{j.dry_run ? " · dry run" : ""} · {j.source} · {ago(j.created_at)}</StatusText>}
+                    actions={<IconButton size="sm" label="Delete this task" onClick={() => remove(j.id)}><Trash2 size={14} /></IconButton>} />
                 ))}
-                {job.result && (
-                  <>
-                    <div className="row">{job.result.success ? <DoneTick size={18} label="Finished" /> : <XCircle size={16} className="prio-2" />}
-                      <strong>{job.result.stopped ? `Stopped: ${job.result.stopped}` : job.result.success ? "Rooks Desk reports success" : job.result.done ? "Finished without success" : "Stopped at the step limit"}</strong></div>
-                    <div className="muted small">This is the agent's own claim. Check the last screen, files and steps below.</div>
-                    {job.result.final ? <Markdown text={job.result.final} /> : <div className="muted">No final answer.</div>}
-                    {job.result.files.length > 0 && <div className="small"><span className="faint">Files: </span><span className="mono">{job.result.files.join(", ")}</span></div>}
-                    {job.result.denied.length > 0 && <div className="small"><span className="faint">You said no to: </span>{job.result.denied.join("; ")}</div>}
-                  </>
-                )}
-              </div>
-              <div className="grid two">
-                <div className="card col">
-                  <h3>{active(job.status) ? "Live screen" : "Last screen"}</h3>
-                  {job.has_screenshot ? (
-                    <LiveShot src={`/api/desk/jobs/${job.id}/screenshot?k=${shotKey}`} alt="Screen" scanning={job.status === "running"} onSize={(w, h) => setShotSize((o) => (o[0] === w && o[1] === h ? o : [w, h]))}>
-                      {active(job.status) && <CursorOverlay points={job.steps.map((s) => parsePointer(s.result, s.action, shotSize[0], shotSize[1])).filter((p): p is Pointer => !!p)} />}
-                    </LiveShot>)
-                    : <div className="muted small">{active(job.status) ? "Looking at the screen…" : "No screenshot."}</div>}
-                  {job.live?.output && active(job.status) && <pre className="mono small" style={{ maxHeight: 220, overflow: "auto", background: "var(--code-bg)", padding: 8, borderRadius: 6 }}>{job.live.output}</pre>}
-                </div>
-                <div className="card col step-list timeline">
-                  <h3>Thinking and actions</h3>
-                  {job.steps.length === 0 && <div className="muted small">{active(job.status) ? <span className="row"><Loader2 size={13} className="spin" /> Looking at the screen</span> : "No steps recorded."}</div>}
-                  {job.steps.map((s) => (
-                    <div key={s.step} className={`col${s.status === "denied" || s.status === "error" ? " failed" : ""}`} style={{ gap: 4, borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
-                      <div className="row small"><span className="badge">{s.step}</span><strong className="grow mono" style={{ wordBreak: "break-word" }}>{describe(s)}</strong>
-                        {s.status && s.status !== "ok" && <span className={`badge ${s.status === "denied" || s.status === "error" ? "danger" : "warn"}`}>{s.status}</span>}</div>
-                      {s.thought && <div className="small"><span className="faint">Thinking: </span>{s.thought}</div>}
-                      {s.result && <div className="muted small" style={{ wordBreak: "break-word" }}>{s.result}</div>}
-                      {s.output && <pre className="mono small" style={{ maxHeight: 160, overflow: "auto", margin: 0, whiteSpace: "pre-wrap" }}>{s.output}</pre>}
-                      <div className="faint small truncate">{s.app}{s.title && s.title !== s.app ? ` · ${s.title}` : ""}</div>
-                      {openStep === s.step
-                        ? <img src={`/api/desk/jobs/${job.id}/screenshot/${s.step}`} alt={`Step ${s.step}`} onClick={() => setOpenStep(null)} style={{ width: "100%", borderRadius: 6, border: "1px solid var(--border)", cursor: "zoom-out" }} />
-                        : <img src={`/api/desk/jobs/${job.id}/screenshot/${s.step}`} alt={`Step ${s.step}`} loading="lazy" onClick={() => setOpenStep(s.step)} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} style={{ width: 160, borderRadius: 6, border: "1px solid var(--border)", cursor: "zoom-in" }} />}
-                    </div>
-                  ))}
-                  {active(job.status) && job.steps.length > 0 && <div className="muted small row"><Loader2 size={13} className="spin" /> {job.status === "waiting" ? "Waiting for your answer" : `Working on step ${job.steps.length + 1}…`}</div>}
-                </div>
-              </div>
-            </div>
+              </List>}
+            </Gate>
+            {lists && (
+              <Card as="section" className="ag-form" aria-labelledby="cm-touch-h">
+                <h3 id="cm-touch-h" className="ag-h3 ag-bar"><FolderOpen size={16} aria-hidden="true" /> What it may touch</h3>
+                <Textarea label="Folders it can read and write without asking (one per line)" className="ag-mono" rows={4} value={lists.folders} onChange={(e) => setLists({ ...lists, folders: e.target.value })} />
+                <Input label="Apps it can use without asking" hint="Separate with commas. Empty means any app except password managers." value={lists.allow_apps} onChange={(e) => setLists({ ...lists, allow_apps: e.target.value })} placeholder="Text Editor, Terminal, AutoCAD" />
+                <div><Button size="sm" onClick={saveLists}>Save</Button></div>
+                <p className="ag-note">Always asks: commands, files elsewhere, emails and messages, purchases, logins. Never: password fields.</p>
+              </Card>
+            )}
+          </div>
+        }>
+          {!id && (
+            <Card className="ag-stack">
+              <EmptyState icon={<Monitor size={20} />} title="Start a task or pick one" line="Chat and Rooks Code can use your computer too; their tasks show up here." />
+              {desk?.ok && <img className="ag-shot" src={`/api/desk/screen?k=${shotKey}`} alt="Your screen now" />}
+            </Card>
           )}
-        </div>
+          {id && !job && !openErr && <Card><Loading rows={4} /></Card>}
+          {id && !job && !!openErr && <ErrorState title="That task did not open" line={plainError(openErr)} onRetry={() => setTick((t) => t + 1)} />}
+          {job && <>
+            <Card as="article" className="ag-stack">
+              {active(job.status) && <span className="sr-only" role="status">Using your computer</span>}
+              <div className="ag-panel-head">
+                <h2 className="ag-title ag-grow">{job.goal}</h2>
+                {active(job.status) && <Button size="sm" icon={<CircleStop size={14} />} onClick={() => cancel(job.id)}>Stop</Button>}
+              </div>
+              <div className="ag-bar ag-meta">
+                <Badge tone={job.status === "done" ? (job.result?.success ? "ok" : "warn") : job.status === "error" ? "danger" : job.status === "waiting" ? "warn" : active(job.status) ? "live" : "neutral"}>{word(job.status)}</Badge>
+                {job.dry_run && <Badge>Dry run</Badge>}
+                {job.result && <span>{job.result.steps} steps · {job.result.duration_s}s</span>}
+              </div>
+              {job.error && <ErrorState title="The task stopped" line={job.error} />}
+              {(job.pending_approvals || []).map((a) => (
+                <ApprovalCard key={a.id} title={`Allow this? ${CATEGORY[a.category] || a.category}`} detail={a.summary}
+                  effect={a.category === "message" ? "send" : a.category === "shell" || a.category === "danger" ? "command" : a.category.startsWith("file") ? "write" : "external"}
+                  command={a.detail || undefined} onApprove={() => answer(a, true)} onDeny={() => answer(a, false)} />
+              ))}
+              {job.result && (
+                <div className="ag-stack">
+                  <div className="ag-bar">{job.result.success ? <CheckCircle2 size={16} className="ag-ok" aria-hidden="true" /> : <XCircle size={16} className="br-warn" aria-hidden="true" />}
+                    <strong>{job.result.stopped ? `Stopped: ${job.result.stopped}` : job.result.success ? "Rooks Desk reports success" : job.result.done ? "Finished without success" : "Stopped at the step limit"}</strong></div>
+                  <p className="ag-note">This is the agent's own claim. Check the last screen, files and steps below.</p>
+                  {job.result.final ? <Markdown text={job.result.final} /> : <p className="ag-note">No final answer.</p>}
+                  {job.result.files.length > 0 && <p className="ag-meta">Files: <span className="ag-mono">{job.result.files.join(", ")}</span></p>}
+                  {job.result.denied.length > 0 && <p className="ag-meta">You said no to: {job.result.denied.join("; ")}</p>}
+                </div>
+              )}
+              <details className="ag-advanced"><summary>Advanced</summary><p className="ag-meta ag-mono">{job.provider}{job.result?.model ? `/${job.result.model}` : job.model ? `/${job.model}` : ""}</p></details>
+            </Card>
+            <div className="ag-two br-work">
+              <Section title={active(job.status) ? "Live screen" : "Last screen"}>
+                {job.has_screenshot ? <LiveShot src={`/api/desk/jobs/${job.id}/screenshot?k=${shotKey}`} alt="Screen" />
+                  : <p className="ag-note">{active(job.status) ? "Looking at the screen…" : "No picture of the screen."}</p>}
+                {job.live?.output && active(job.status) && <pre className="ag-pre ag-gap-top">{job.live.output}</pre>}
+              </Section>
+              <Section title="Thinking and actions">
+                {job.steps.length === 0 && !active(job.status) && <p className="ag-note">No steps recorded.</p>}
+                <Timeline label="Computer steps" steps={deskTimeline(job)} current={openStep ?? undefined}
+                  onPick={(sid) => typeof sid === "number" && setOpenStep(openStep === sid ? null : sid)} />
+                {picked && (
+                  <div className="ag-panel is-sunken ag-stack ag-gap-top" aria-label={`Step ${picked.step}`}>
+                    {picked.status && picked.status !== "ok" && <div><Badge tone={picked.status === "denied" || picked.status === "error" ? "danger" : "warn"}>{picked.status === "denied" ? "You said no" : picked.status === "error" ? "Went wrong" : picked.status}</Badge></div>}
+                    {picked.thought && <p className="ag-body"><span className="ag-meta">Thinking: </span>{picked.thought}</p>}
+                    {picked.result && <p className="ag-note">{picked.result}</p>}
+                    {picked.output && <pre className="ag-pre">{picked.output}</pre>}
+                    <p className="ag-meta">{picked.app}{picked.title && picked.title !== picked.app ? ` · ${picked.title}` : ""}</p>
+                    <img className="ag-shot" src={`/api/desk/jobs/${job.id}/screenshot/${picked.step}`} alt={`The screen at step ${picked.step}`} loading="lazy"
+                      onError={(e) => { e.currentTarget.hidden = true; }} />
+                  </div>
+                )}
+                {job.steps.length > 0 && !picked && <p className="ag-note ag-gap-top">Pick a step to see what it saw and did.</p>}
+              </Section>
+            </div>
+          </>}
+        </Split>
       </div>
-      {toast.node}
-    </div>
+    </Page>
   );
 }
 
@@ -318,34 +315,34 @@ function PermissionSteps({ missing, platform, onRecheck }: { missing: string[]; 
   const ask = async () => { await api("/desk/permissions/request", { method: "POST" }).catch(() => undefined); setAsked(true); onRecheck(); };
   const open = (which: "screen" | "input") => api("/desk/permissions/open", { body: { which } }).catch(() => undefined);
   if (platform && platform !== "darwin") {
-    return <div className="alert" style={{ marginBottom: 16 }}>This computer has not allowed screen control yet. {missing.join(", ")}</div>;
+    return <ErrorState title="This computer has not allowed screen control yet" line={`Still needed: ${missing.join(", ")}.`} onRetry={onRecheck} />;
   }
   return (
-    <div className="card col" style={{ marginBottom: 16, gap: 10 }}>
-      <strong className="row"><ShieldAlert size={15} /> One-time setup: let it see and use your screen</strong>
-      <div className="small muted">macOS asks you to allow this once. Nothing happens on your screen until you start a task.</div>
+    <Card as="section" className="ag-stack" aria-labelledby="cm-perm-h">
+      <h3 id="cm-perm-h" className="ag-h3 ag-bar"><ShieldAlert size={16} aria-hidden="true" /> One-time setup: let it see and use your screen</h3>
+      <p className="ag-note">macOS asks you to allow this once. Nothing happens on your screen until you start a task.</p>
       <ol className="free-steps">
         <li className={asked ? "done" : ""}>
           <span className="free-n">1</span>
           <span className="grow">Ask macOS for permission. Click Allow (or Open System Settings) in the boxes that pop up.</span>
-          <button className="btn sm primary" onClick={ask}>Ask macOS</button>
+          <Button size="sm" variant="primary" onClick={ask}>Ask macOS</Button>
         </li>
         {screen && <li>
           <span className="free-n">2</span>
           <span className="grow">In <strong>Screen &amp; System Audio Recording</strong>, switch on <strong>AI Workspace</strong> (or python, if that's what's listed).</span>
-          <button className="btn sm" onClick={() => open("screen")}>Open it</button>
+          <Button size="sm" onClick={() => open("screen")}>Open it</Button>
         </li>}
         {control && <li>
           <span className="free-n">{screen ? 3 : 2}</span>
           <span className="grow">In <strong>Accessibility</strong>, switch on the same app.</span>
-          <button className="btn sm" onClick={() => open("input")}>Open it</button>
+          <Button size="sm" onClick={() => open("input")}>Open it</Button>
         </li>}
         <li>
           <span className="free-n">{1 + (screen ? 1 : 0) + (control ? 1 : 0) + 1}</span>
           <span className="grow">macOS applies it after a restart: quit AI Workspace and open it again, then check.</span>
-          <button className="btn sm ghost" onClick={onRecheck}>Check again</button>
+          <Button size="sm" variant="ghost" onClick={onRecheck}>Check again</Button>
         </li>
       </ol>
-    </div>
+    </Card>
   );
 }

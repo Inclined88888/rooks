@@ -1,6 +1,22 @@
-# AI Workspace
+# Rooks
 
-A self hosted AI workspace in **one light container**. Chat with an assistant that remembers you and learns skills, plus notes, documents, tasks, calendar, mail, research with sources, scheduled reports, a company of AI agents with budgets, and model comparison. Runs on Anthropic, OpenAI, OpenRouter or any OpenAI compatible provider, or local models.
+Rooks is a self hosted AI workspace in **one light container**. Chat with an assistant that remembers you and learns skills, plus notes, documents, tasks, calendar, mail, research with sources, scheduled reports, a company of AI agents with budgets, and model comparison. Runs on Anthropic, OpenAI, OpenRouter or any OpenAI compatible provider, or local models.
+
+## The Workroom and the Room
+
+* **The Workroom** is how the app is laid out: a rail of pages on the left, a line at the top that says what the
+  assistant is doing right now, the chat in the middle, and the Stage beside it, which shows whatever the assistant is
+  using at that moment.
+* **The Room** is the assistant's own computer on this machine, so it can try things without touching your desktop: a
+  private desktop on Linux, a Linux guest with QEMU, or else a private folder and shell. It always says which one it
+  is, and it shows a picture only when it has a real screen. You can watch it, step in, hand it back, save a point and
+  start over. In the app, a file leaves the Room only after you say yes.
+* **Needs you** is one inbox for everything waiting on you (chat, jobs, the Room, the browser and computer agents),
+  at the top of the app. Answering there runs it once.
+* **The desktop app** is the same app in its own window. The Rust window in `desktop/rooks-native` is only the
+  floating Ask palette (design record 0003, decision W1), not a second app.
+
+In the installer, the app command and the download files still carry the older name AI Workspace.
 
 **The core is Workbench:** FastAPI + SQLite + React, one image (248 MB of unpacked layers, measured by CI), about 100 MB of RAM at idle (measured on the backend process; real use depends on traffic). No GPU, no database server, no extra containers. A small VPS with 1 GB of RAM or a Mac laptop runs it.
 
@@ -33,8 +49,9 @@ curl -fsSL https://raw.githubusercontent.com/Inclined88888/rooks/main/install.sh
 irm https://raw.githubusercontent.com/Inclined88888/rooks/main/install.ps1 | iex
 ```
 
-This installs three commands for your user only (no admin password): `ai-workspace` (the app, in its own window),
-`rooks` (terminal coding agent) and `rooks-browser` (AI browser agent). The only prerequisite is `curl` (built into macOS
+This installs five commands for your user only (no admin password): `ai-workspace` (the app, in its own window),
+`rooks` (terminal coding agent), `rooks-browser` (AI browser agent), `rooks-desk` (computer use) and `rooks-try` (the
+Room, the assistant's own computer on this machine). The only prerequisite is `curl` (built into macOS
 and Windows 10/11). Run it again to upgrade; your chats, keys and settings are kept.
 
 Something wrong? `ai-workspace --status` checks the app and its web UI, and `ai-workspace --logs` prints the log
@@ -129,7 +146,7 @@ Native Ollama uses the Mac GPU; the `local-models` add-on would run on CPU insid
 * **Tools.** Notes (search, read, create, append), tasks, calendar (agenda, create event), mail (search, read, save draft; send only after you approve each email), web search and page reading, the browser agent when that add-on is on, memory, skills and schedules. Each tool step shows live in the chat.
 * **Memory.** After a conversation it quietly extracts durable facts about you (profile, preferences, facts), at most 5 per conversation, skipping duplicates. Relevant ones are injected into every new conversation. You can also say "remember that…" or "forget…". Review and edit everything under **Memory & skills**. Turn learning off in Assistant settings.
 * **Skills.** When a task took 3 or more tool calls, it can save the procedure as a named skill and improve it on later use. Skills are listed to the model and loaded on demand, so they cost almost nothing until used.
-* **Approvals.** Web pages and email can contain instructions written by someone else (prompt injection). Once a conversation has read either, actions that leave the workspace or change the assistant's future behaviour (remember, forget, save a skill, schedule a task, create a calendar event, browse, delegate) are held until you approve them in the chat, with `ws approve <id>`, or refused outright in unattended runs (schedules, company agents). Sending an email and sending calendar invitations are always held for approval, even in a clean conversation. Web and email content is labelled as untrusted for the model, and skills are never learned from such turns. This narrows the damage an injection can do; it does not make the model immune to it.
+* **Approvals.** Web pages and email can contain instructions written by someone else (prompt injection). Once a conversation has read either, actions that leave the workspace or change the assistant's future behaviour (remember, forget, save a skill, schedule a task, create a calendar event, browse, delegate) are held until you approve them in the chat, with `ws approve <id>`, or refused outright in unattended runs (schedules, company agents). Sending an email and sending calendar invitations are always held for approval, even in a clean conversation. Web and email content is labelled as untrusted for the model, and skills are never learned from such turns. This narrows the damage an injection can do; it does not make the model immune to it. Everything waiting on you, from chat, jobs, the Room and the browser and computer agents, is in one inbox, **Needs you**, at the top of the app; answering there runs it once.
 * **Receipts.** Every change the assistant makes is checked in the database after the tool runs (the task, note, event, draft, memory, skill or schedule must exist as asked), and the chat shows what was confirmed. If an answer says something was done and nothing confirms it, the answer is withdrawn and the model gets one chance to act or correct itself; if it still is not true you see it marked **Not verified**.
 * **Reliability record.** Every tool call and every answer is recorded per model, so you can see how a model really performs with your tools: the model menu shows the share of tool calls that worked, and `ws reliability` adds false claims caught. To measure a local model before relying on it: `cd workbench/backend && python bench/local_tasks.py --model qwen3:4b` (50 everyday requests, each checked against the database).
 * **History.** Every conversation is full text searchable, by you and by the assistant (`search_history`).
@@ -175,7 +192,7 @@ enforced, and every action is written to a receipt you can import into Workbench
 nor Docker.
 
 ```sh
-uv tool install "git+https://github.com/Inclined88888/ai-workspace#subdirectory=rooks-code"
+uv tool install "git+https://github.com/Inclined88888/rooks#subdirectory=rooks-code"
 cd your-project && rooks -P ollama -m qwen2.5:7b
 ```
 
@@ -315,6 +332,24 @@ in five steps:
   * `rooks-desk "task"`;
   * `rooks-desk mcp` (Rooks Code adds it automatically).
   * It can use other MCP servers too, such as an AutoCAD one ([recipe](rooks-desk/docs/AUTOCAD.md)).
+
+### The Room: the assistant's own computer (no add-on needed)
+
+The Room (`rooks-try`) is a computer of its own for the assistant, on this machine, so it can try things without
+touching your desktop. It always says what it is: on Linux with Xvfb a private desktop with a real terminal in it; with
+QEMU and a Linux image a Linux guest; anywhere else a private folder and shell ("Commands run as you, in a folder of its
+own. It is not a locked off computer."). A picture is shown only when the Room has a real screen.
+
+* **What you can do.** Watch it on the **Room** page or on the Stage beside the chat, step in with your own mouse and
+  keyboard, hand back, save a point, start over from one. Copying a file out of the Room waits for your yes in
+  **Needs you**. Every start, stop, saved point, command and copy is in the run log.
+* **How you reach it:**
+  * the app's **Room** page and the Stage;
+  * the assistant's `use_room` tool;
+  * `rooks-try up`, `rooks-try run "..."`, `rooks-try checkpoint`, `rooks-try reset`, `rooks-try down`;
+  * `rooks-try mcp` (Rooks Code adds it automatically as the server `room`).
+
+Details: [rooks-try/README.md](rooks-try/README.md).
 
 ## Models and providers
 

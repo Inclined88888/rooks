@@ -28,7 +28,7 @@ import httpx
 from fastapi import HTTPException
 
 from . import catalog, db
-from .adapters import CAPTURE, ProviderError
+from .adapters import CAPTURE, ProviderError, too_long
 
 AUTO = {"auto": None, "auto:fast": "fast", "auto:strong": "strong"}
 AUTO_LABELS = {"auto": "Auto (picks per task)", "auto:fast": "Auto · fast", "auto:strong": "Auto · strong"}
@@ -331,6 +331,9 @@ def _cool(conn: dict, until: float, reason: str) -> None:
 _DAILY = re.compile(r"(per ?day|perday|daily|\brpd\b|\btpd\b|requests per day|tokens per day|usage_limit_exceeded|"
                     r"usage_unavailable|free_tier_requests)", re.I)
 _RATE = re.compile(r"(resource_exhausted|rate.?limit|quota|too many requests|429)", re.I)
+# The prompt did not fit the model's window (B3). It is the conversation's fault, not the provider's: no other provider
+# would take it either, so the router stops there and the assistant shrinks the window and tries again.
+PROMPT_TOO_LONG = "prompt too long"
 
 
 def classify(err: Exception) -> tuple[str, float, bool]:
@@ -350,11 +353,18 @@ def classify(err: Exception) -> tuple[str, float, bool]:
         return "busy (rate limited)", after if after is not None else 30, True
     if upstream in (401, 403) or status == 401:
         return ("needs you to sign in again" if status == 401 and upstream is None else "key rejected"), 3600, True
+    if kind not in ("timeout", "unreachable") and too_long(body):  # before the 5xx rule: Ollama reports it as a 502
+        return PROMPT_TOO_LONG, 0, False
     if upstream == 404:
         return "model not available", 0, True
     if kind in ("timeout", "unreachable") or (upstream or 0) >= 500 or status in (502, 503, 504):
         return "not responding", after if after is not None else 30, True
     return "refused the request", 0, True
+
+
+def prompt_too_long(err: Exception) -> bool:
+    """Whether a failed model call means the prompt did not fit (any provider, any protocol, the Ollama window check)."""
+    return classify(err)[0] == PROMPT_TOO_LONG
 
 
 def note_fail(conn: dict, err: Exception) -> str:
@@ -474,6 +484,8 @@ async def chat(ref: str, messages: list[dict], tools: list[dict] | None = None, 
         except (ProviderError, HTTPException) as e:
             reason = note_fail(conn, e)
             tried.append({"provider": conn["name"], "model": model, "reason": reason})
+            if reason == PROMPT_TOO_LONG:
+                raise  # the prompt is the problem: the assistant shrinks it and comes back, to this same provider
             nxt = _next_model(conn, model, reason, tier, vision=msgs is not text)
             if nxt and (conn["id"], nxt) not in {(c["id"], m) for c, m, _ in plan}:
                 plan.insert(i, (conn, nxt, msgs))
@@ -544,6 +556,9 @@ async def stream(ref: str, messages: list[dict], trace: dict | None = None) -> A
             return
         reason = note_fail(conn, failure or ProviderError(502, "no answer", kind="unreachable"))
         tried.append({"provider": conn["name"], "model": model, "reason": reason})
+        if reason == PROMPT_TOO_LONG:  # no other provider would take it either
+            yield {"error": str(getattr(failure, "detail", "") or "The prompt is too long for the model."), "router": {"fallbacks": tried}}
+            return
         nxt = _next_model(conn, model, reason, tier)
         if nxt and (conn["id"], nxt) not in {(c["id"], m) for c, m in plan}:
             plan.insert(i, (conn, nxt))

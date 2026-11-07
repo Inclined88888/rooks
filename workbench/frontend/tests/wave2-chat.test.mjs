@@ -4,8 +4,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
-const chat = read("../src/pages/Assistant.tsx");
-const app = read("../src/App.tsx");
+const chat = ["../src/pages/Assistant.tsx", "../src/chat/Thread.tsx", "../src/chat/ThreadHeader.tsx", "../src/chat/Composer.tsx", "../src/chat/events.ts"].map(read).join("\n"); // the chat page is split (package F2)
+const app = read("../src/pages/registry.ts"); // the one page registry App.tsx builds the nav from
 const research = read("../src/pages/Research.tsx");
 const skills = read("../src/pages/Skills.tsx");
 
@@ -23,10 +23,10 @@ test("Chat has modes, an approval strip, and a diff", () => {
   assert.match(chat, /DiffView/);
 });
 
-test("Chat and Code are the rail modes; Customize sits with settings", () => {
-  assert.match(app, /to: "\/assistant", label: "Chat"/);
-  assert.match(app, /to: "\/code", label: "Code"/);
-  assert.match(app, /to: "\/customize", label: "Customize"/);
+test("Chat is on the rail, Code is a page; Customize sits with settings", () => {
+  assert.match(app, /path: "\/assistant", label: "Chat", icon: \w+, rail: "chat"/);
+  assert.match(app, /path: "\/code", label: "Code"/);
+  assert.match(app, /path: "\/customize", label: "Customize", icon: \w+, section: "Settings"/);
   const settings = app.indexOf('label: "Settings"');
   const customize = app.indexOf('label: "Customize"');
   assert.ok(settings > 0 && customize > settings);

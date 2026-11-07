@@ -1,59 +1,79 @@
-import { Check, CheckSquare, Flag, Loader2, ListTree, Plus, Trash2 } from "lucide-react";
+import { Check, CheckSquare, ChevronDown, Flag, ListTree, Plus, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { api, Task } from "../api";
-import { Empty, ModelSelect, SkeletonList, todayISO, useModels, useToast } from "../util";
+import { loadCached, peekCached, putCached } from "../lib/cache";
+import { Badge, Button, Card, EmptyState, ErrorState, Input, Loading, Page, Section, Select, Tabs, Textarea } from "../ui";
+import { todayISO, useModels, useToast } from "../util";
+import { ModelPicker, plainError } from "./day/parts";
 
 const PRIO = ["None", "Low", "Medium", "High"];
 
 function TaskRow({ task, onChange, onDelete }: { task: Task; onChange: (t: Task) => void; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(task);
+  const toast = useToast();
   useEffect(() => setDraft(task), [task]);
   const today = todayISO();
+  const done = task.status === "done";
 
-  const patch = async (body: Partial<Task> & { clear_due?: boolean }) => onChange(await api<Task>(`/tasks/${task.id}`, { method: "PATCH", body }));
+  const patch = async (body: Partial<Task> & { clear_due?: boolean }) => {
+    try { onChange(await api<Task>(`/tasks/${task.id}`, { method: "PATCH", body })); } catch (e) { toast.err(e); }
+  };
   const save = () => patch({ title: draft.title, notes: draft.notes, priority: draft.priority, project: draft.project, ...(draft.due ? { due: draft.due } : { clear_due: true }) });
+  const late = !done && !!task.due && task.due < today;
 
   return (
-    <div className={`task ${task.status === "done" ? "done" : ""}`}>
-      <button className={`circle ${task.status === "done" ? "done" : ""}`} onClick={() => patch({ status: task.status === "done" ? "todo" : "done" })} aria-label="Toggle done">
-        {task.status === "done" && <Check size={12} />}
-      </button>
-      <div className="grow col" style={{ gap: 4 }}>
-        <div className="row" onClick={() => setOpen(!open)} style={{ cursor: "pointer" }}>
-          <span className="title grow">{task.title}</span>
-          {task.priority > 0 && <Flag size={13} className={`prio-${task.priority}`} />}
-          {task.project && <span className="badge">{task.project}</span>}
-          {task.due && <span className={`badge ${task.status !== "done" && task.due < today ? "danger" : task.due === today ? "warn" : ""}`}>{task.due === today ? "Today" : task.due}</span>}
-        </div>
-        {task.notes && !open && <div className="muted small truncate">{task.notes}</div>}
-        {open && (
-          <div className="col" style={{ paddingTop: 6 }}>
-            <input className="input" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
-            <textarea className="input" rows={3} value={draft.notes} placeholder="Notes" onChange={(e) => setDraft({ ...draft, notes: e.target.value })} />
-            <div className="row wrap">
-              <input className="input" type="date" style={{ width: 160 }} value={draft.due ?? ""} onChange={(e) => setDraft({ ...draft, due: e.target.value || null })} />
-              <select className="input" style={{ width: 130 }} value={draft.priority} onChange={(e) => setDraft({ ...draft, priority: Number(e.target.value) })}>
-                {PRIO.map((p, i) => <option key={p} value={i}>{p} priority</option>)}
-              </select>
-              <input className="input" style={{ width: 160 }} placeholder="Project" value={draft.project} onChange={(e) => setDraft({ ...draft, project: e.target.value })} />
-              <select className="input" style={{ width: 130 }} value={task.status} onChange={(e) => patch({ status: e.target.value as Task["status"] })}>
-                <option value="todo">To do</option><option value="doing">In progress</option><option value="done">Done</option>
-              </select>
-              <div className="spacer" />
-              <button className="btn ghost sm danger" onClick={onDelete}><Trash2 size={14} /></button>
-              <button className="btn primary sm" onClick={async () => { await save(); setOpen(false); }}>Save</button>
-            </div>
-          </div>
-        )}
+    <li className={`day-task${done ? " is-done" : ""}`}>
+      <div className="day-task-line">
+        <button type="button" className={`day-tick${done ? " is-done" : ""}`} onClick={() => void patch({ status: done ? "todo" : "done" })}
+          aria-pressed={done} aria-label={done ? `Mark "${task.title}" not done` : `Mark "${task.title}" done`}>
+          {done && <Check size={12} strokeWidth={3} />}
+        </button>
+        <button type="button" className="day-task-main" onClick={() => setOpen(!open)} aria-expanded={open}>
+          <span className="day-task-title">{task.title}</span>
+          {task.notes && !open && <span className="day-task-notes">{task.notes}</span>}
+        </button>
+        <span className="day-task-tags">
+          {task.priority > 0 && <span className={`day-prio is-${task.priority}`} title={`${PRIO[task.priority]} priority`}><Flag size={13} aria-hidden="true" /><span className="sr-only">{PRIO[task.priority]} priority</span></span>}
+          {task.project && <Badge>{task.project}</Badge>}
+          {task.due && <Badge tone={late ? "danger" : task.due === today && !done ? "warn" : "neutral"}>{task.due === today ? "Today" : task.due}</Badge>}
+          <ChevronDown size={14} aria-hidden="true" className={`day-task-chev${open ? " is-open" : ""}`} />
+        </span>
       </div>
-    </div>
+      {open && (
+        <div className="day-task-edit">
+          <Input label="Task" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+          <Textarea label="Notes" rows={3} value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} />
+          <div className="day-form-grid">
+            <Input label="Due" type="date" value={draft.due ?? ""} onChange={(e) => setDraft({ ...draft, due: e.target.value || null })} />
+            <Select label="Priority" value={draft.priority} onChange={(e) => setDraft({ ...draft, priority: Number(e.target.value) })}>
+              {PRIO.map((p, i) => <option key={p} value={i}>{p}</option>)}
+            </Select>
+            <Input label="Project" value={draft.project} onChange={(e) => setDraft({ ...draft, project: e.target.value })} />
+            <Select label="Status" value={task.status} onChange={(e) => void patch({ status: e.target.value as Task["status"] })}>
+              <option value="todo">To do</option><option value="doing">In progress</option><option value="done">Done</option>
+            </Select>
+          </div>
+          <div className="day-form-foot">
+            <Button variant="danger" size="sm" icon={<Trash2 size={14} />} onClick={onDelete}>Delete</Button>
+            <Button variant="primary" size="sm" onClick={async () => { await save(); setOpen(false); }}>Save</Button>
+          </div>
+        </div>
+      )}
+    </li>
   );
 }
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  // The last list shows at once on a return visit and is asked again in the background (lib/cache.ts).
+  const [tasks, setTasksNow] = useState<Task[]>(() => peekCached<Task[]>("tasks") ?? []);
+  const setTasks = (next: Task[] | ((l: Task[]) => Task[])) => setTasksNow((cur) => {
+    const v = typeof next === "function" ? next(cur) : next;
+    putCached("tasks", v);
+    return v;
+  });
+  const [loaded, setLoaded] = useState(() => peekCached<Task[]>("tasks") !== undefined);
+  const [problem, setProblem] = useState("");
   const [title, setTitle] = useState("");
   const [due, setDue] = useState("");
   const [filter, setFilter] = useState<"open" | "done" | "all">("open");
@@ -64,10 +84,13 @@ export default function Tasks() {
   const { models } = useModels();
   const toast = useToast();
 
-  const load = () => api<Task[]>("/tasks").then(setTasks).catch(toast.err).finally(() => setLoaded(true));
+  const load = () => {
+    setProblem("");
+    return loadCached("tasks", () => api<Task[]>("/tasks")).then(setTasks).catch((e) => setProblem(plainError(e, "Your tasks did not load."))).finally(() => setLoaded(true));
+  };
   useEffect(() => {
-    load();
-  }, []);
+    void load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const add = async (e: FormEvent) => {
     e.preventDefault();
@@ -111,50 +134,51 @@ export default function Tasks() {
 
   const update = (t: Task) => setTasks((l) => l.map((x) => (x.id === t.id ? t : x)));
   const remove = async (id: number) => {
-    await api(`/tasks/${id}`, { method: "DELETE" });
-    setTasks((l) => l.filter((x) => x.id !== id));
+    try {
+      await api(`/tasks/${id}`, { method: "DELETE" });
+      setTasks((l) => l.filter((x) => x.id !== id));
+    } catch (e) { toast.err(e); }
   };
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <div><h1>Tasks</h1><p className="muted">Chat can read, add and complete these.</p></div>
-        <div className="spacer" />
-        <div className="tabs">
-          {(["open", "done", "all"] as const).map((f) => <button key={f} className={`tab ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>{f[0].toUpperCase() + f.slice(1)}</button>)}
+    <Page title="Tasks" description="Chat can read, add and complete these." className="day-page"
+      actions={(
+        <>
+          <Tabs label="Show" value={filter} onChange={(f) => setFilter(f as typeof filter)} items={[{ id: "open", label: "Open" }, { id: "done", label: "Done" }, { id: "all", label: "All" }]} />
+          {projects.length > 0 && (
+            <Select aria-label="Project" className="day-project-filter" value={project} onChange={(e) => setProject(e.target.value)}>
+              <option value="">All projects</option>
+              {projects.map((p) => <option key={p}>{p}</option>)}
+            </Select>
+          )}
+        </>
+      )}>
+      <Card className="day-add">
+        <form className="day-add-row" onSubmit={add}>
+          <Input className="day-grow" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add a task and press Enter" aria-label="New task" />
+          <Input type="date" className="day-date" value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date" />
+          <Button type="submit" variant="primary" icon={<Plus size={16} />} disabled={!title.trim()}>Add</Button>
+        </form>
+        <div className="day-add-row day-add-ai">
+          <ListTree size={16} aria-hidden="true" className="day-muted-icon" />
+          <Input className="day-grow" value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="Break a goal into tasks, e.g. plan a team offsite in March" aria-label="A goal to break into tasks" />
+          <ModelPicker value={model} onChange={setModel} models={models} />
+          <Button disabled={goal.trim().length < 3} busy={busy} onClick={breakdown}>{busy ? "Breaking it down…" : "Break down"}</Button>
         </div>
-        {projects.length > 0 && (
-          <select className="input" style={{ width: 160 }} value={project} onChange={(e) => setProject(e.target.value)}>
-            <option value="">All projects</option>
-            {projects.map((p) => <option key={p}>{p}</option>)}
-          </select>
-        )}
-      </div>
+      </Card>
 
-      <form className="card row wrap" onSubmit={add} style={{ marginBottom: 12 }}>
-        <input className="input grow" style={{ minWidth: 200 }} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add a task and press Enter" />
-        <input className="input" type="date" style={{ width: 160 }} value={due} onChange={(e) => setDue(e.target.value)} />
-        <button className="btn primary" disabled={!title.trim()}><Plus size={16} /> Add</button>
-      </form>
-
-      <div className="card row wrap" style={{ marginBottom: 20 }}>
-        <ListTree size={16} className="prio-1" />
-        <input className="input grow" style={{ minWidth: 200 }} value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="Break a goal into tasks, e.g. 'Plan a team offsite in March'" />
-        <div style={{ width: 180 }}><ModelSelect value={model} onChange={setModel} models={models} /></div>
-        <button className="btn" disabled={goal.trim().length < 3 || busy} onClick={breakdown}>{busy ? <Loader2 size={15} className="spin" /> : "Break down"}</button>
-      </div>
-
-      {!loaded && <div className="card flush"><SkeletonList rows={4} avatar /></div>}
-      {loaded && visible.length === 0 && <Empty icon={<CheckSquare size={24} />} title={filter === "done" ? "Nothing completed yet" : "All clear"} />}
-      <div className="col gap-lg">
-        {groups.filter(([, l]) => l.length).map(([name, list]) => (
-          <div key={name}>
-            <div className="row" style={{ marginBottom: 6 }}><h3 className={name === "Overdue" ? "prio-3" : ""}>{name}</h3><span className="faint small">{list.length}</span></div>
-            <div className="card flush">{list.map((t) => <TaskRow key={t.id} task={t} onChange={update} onDelete={() => remove(t.id)} />)}</div>
-          </div>
-        ))}
-      </div>
-      {toast.node}
-    </div>
+      {!loaded && <Loading rows={5} label="Loading tasks" />}
+      {loaded && problem && <ErrorState title="Tasks did not load" line={problem} onRetry={() => void load()} />}
+      {loaded && !problem && visible.length === 0 && (
+        <EmptyState icon={<CheckSquare size={24} />} title={filter === "done" ? "Nothing completed yet" : "All clear"}
+          line={filter === "done" ? "Tasks you finish show up here." : "Add a task above, or ask in Chat."}
+          action={filter === "done" ? <Button size="sm" onClick={() => setFilter("open")}>Show open tasks</Button> : undefined} />
+      )}
+      {groups.filter(([, l]) => l.length).map(([name, list]) => (
+        <Section key={name} title={name} actions={<span className={`day-count${name === "Overdue" ? " day-danger-text" : ""}`}>{list.length}</span>} className="day-task-group">
+          <ul className="day-tasks" aria-label={name}>{list.map((t) => <TaskRow key={t.id} task={t} onChange={update} onDelete={() => void remove(t.id)} />)}</ul>
+        </Section>
+      ))}
+    </Page>
   );
 }

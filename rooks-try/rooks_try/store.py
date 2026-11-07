@@ -1,4 +1,4 @@
-"""Where the Try Room keeps its private home, checkpoints and config."""
+"""Where the Room keeps its private home, checkpoints and config."""
 
 from __future__ import annotations
 
@@ -7,6 +7,8 @@ import os
 import shutil
 import time
 from pathlib import Path
+
+MAX_CHECKPOINTS = 20  # saved points kept; the oldest go first, and status says which went
 
 
 def root() -> Path:
@@ -59,18 +61,36 @@ def save_state(data: dict) -> None:
 
 
 def checkpoint(label: str = "") -> dict:
-    """Copy the guest home into a named restore point."""
+    """Copy the guest home into a named restore point. Names never collide: a second point in the same second gets a
+    counter. Beyond MAX_CHECKPOINTS the oldest points are removed and named in the result and in the state."""
     stamp = time.strftime("%Y%m%dT%H%M%S")
-    name = f"{stamp}-{_safe(label) or 'save'}"
+    base = f"{stamp}-{_safe(label) or 'save'}"
+    name, n = base, 1
+    while (checkpoints_dir() / name).exists():
+        n += 1
+        name = f"{base}-{n:02d}"
     dest = checkpoints_dir() / name
-    if dest.exists():
-        shutil.rmtree(dest)
     shutil.copytree(guest_home(), dest, symlinks=True, dirs_exist_ok=False)
     meta = {"name": name, "label": label or "save", "created": stamp, "path": str(dest)}
     state = load_state()
     state["last_checkpoint"] = meta
+    meta["removed"] = _prune(state, stamp)
     save_state(state)
     return meta
+
+
+def _prune(state: dict, stamp: str) -> list[str]:
+    names = sorted(p.name for p in checkpoints_dir().iterdir() if p.is_dir())
+    removed: list[str] = []
+    while len(names) > MAX_CHECKPOINTS:
+        oldest = names.pop(0)
+        shutil.rmtree(checkpoints_dir() / oldest, ignore_errors=True)
+        removed.append(oldest)
+    if removed:
+        earlier = state.get("pruned") if isinstance(state.get("pruned"), dict) else {}
+        kept = [n for n in (earlier.get("removed") or []) if isinstance(n, str)]
+        state["pruned"] = {"removed": (kept + removed)[-MAX_CHECKPOINTS:], "at": stamp}
+    return removed
 
 
 def restore(name: str | None = None) -> dict:

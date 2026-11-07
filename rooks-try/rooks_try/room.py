@@ -1,7 +1,8 @@
-"""Try Room facade used by the CLI, MCP server and HTTP API."""
+"""The Room facade used by the CLI, MCP server and HTTP API."""
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -15,6 +16,7 @@ from .drivers.qemu import QemuDriver
 from .drivers.shell import ShellDriver
 
 _DRIVERS = {"qemu": QemuDriver, "nested": NestedDriver, "display": DisplayDriver, "shell": ShellDriver}
+_KEEP_SAVED = {"qemu", "nested"}  # a real guest stays what it was; a saved drawing or folder is not kept by "auto"
 
 
 class TryRoom:
@@ -28,8 +30,7 @@ class TryRoom:
             state = store.load_state()
             prefer = self.prefer
             saved = state.get("driver")
-            # A saved private folder is replaced by a screen. A real guest stays what it was.
-            if prefer == "auto" and saved in {"qemu", "nested", "display"}:
+            if prefer == "auto" and saved in _KEEP_SAVED:
                 prefer = saved
             self._driver = pick(prefer=prefer, offline=self.offline)
         return self._driver
@@ -41,9 +42,16 @@ class TryRoom:
         return self.driver().up()
 
     def down(self) -> dict:
+        """Stop whatever runs. A saved real guest (or the one asked for by name) is stopped through its own driver;
+        a saved drawing or folder is stopped but never adopted, so the next Start picks again."""
         name = store.load_state().get("driver")
-        if name in _DRIVERS:
+        if name in _DRIVERS and (name in _KEEP_SAVED or name == self.prefer):
             self._driver = _DRIVERS[name](offline=self.offline)
+            return self._driver.down()
+        if name in _DRIVERS:
+            result = _DRIVERS[name](offline=self.offline).down()
+            self._driver = None
+            return result
         if self._driver:
             return self._driver.down()
         return {"running": False}
@@ -52,9 +60,13 @@ class TryRoom:
         try:
             st = self.driver().status()
         except Exception as exc:  # noqa: BLE001
-            st = {"running": False, "error": str(exc)}
+            st = {"running": False, "screen": False, "pointer": False, "isolation": "none", "error": str(exc)}
+        state = store.load_state()
         st["drivers"] = self.drivers()
-        st["checkpoints"] = store.list_checkpoints()[:10]
+        st["checkpoints"] = store.list_checkpoints()
+        st["checkpoint_limit"] = store.MAX_CHECKPOINTS
+        st["pruned"] = state.get("pruned") if isinstance(state.get("pruned"), dict) else None
+        st["last_restore"] = state.get("last_restore")
         return st
 
     def checkpoint(self, label: str = "") -> dict:
@@ -95,26 +107,38 @@ class TryRoom:
         return self.driver().run(command, timeout=timeout)
 
     def handoff(self, src: str, dest: str, approve: bool = False) -> dict:
-        """Copy a file from the Try Room home to a host path. Needs approve=True."""
+        """Copy a file from the Room's home to a host path. Needs approve=True: the caller answers for a person."""
         if not approve:
             return {
                 "ok": False,
                 "needs_approval": True,
-                "summary": f"Copy {src} from the Try Room to {dest} on this computer?",
+                "summary": f"Copy {src} from the Room to {dest} on this computer?",
             }
         home = store.guest_home().resolve()
         source = (home / src).resolve() if not Path(src).is_absolute() else Path(src).resolve()
         if home not in source.parents and source != home:
-            return {"ok": False, "error": "That file is not inside the Try Room."}
+            return {"ok": False, "error": "That file is not inside the Room."}
         if not source.exists():
-            return {"ok": False, "error": "No such file in the Try Room."}
+            return {"ok": False, "error": "No such file in the Room."}
         target = Path(dest).expanduser().resolve()
+        if source.is_dir() and not _stays_inside(source, home):
+            return {"ok": False, "error": "That folder links to files outside the Room."}
         target.parent.mkdir(parents=True, exist_ok=True)
         if source.is_dir():
-            shutil.copytree(source, target, dirs_exist_ok=True)
+            shutil.copytree(source, target, symlinks=True, dirs_exist_ok=True)  # links stay links, never content
         else:
             shutil.copy2(source, target)
         return {"ok": True, "from": str(source), "to": str(target)}
+
+
+def _stays_inside(folder: Path, home: Path) -> bool:
+    """True when nothing in the folder (a link included) leads outside the Room's home."""
+    for base, dirs, files in os.walk(folder):
+        for entry in [*dirs, *files]:
+            target = (Path(base) / entry).resolve()
+            if target != home and home not in target.parents:
+                return False
+    return True
 
 
 def _disk_snapshot(name: str, apply: bool) -> bool:

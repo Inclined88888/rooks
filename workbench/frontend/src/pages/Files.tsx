@@ -1,10 +1,11 @@
-import { BarChart3, Code2, Download, FileSearch, FileText, FolderOpen, GitCompare, ImagePlus, Loader2, MessageSquare, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, Code2, Download, FileSearch, FileText, FolderOpen, ImagePlus, MessageSquare, Trash2, Upload } from "lucide-react";
 import { DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { SurfaceNote } from "../SurfaceNote";
-import { Empty, Markdown, relTime, useToast } from "../util";
-import "../work.css";
+import { Badge, Button, Card, EmptyState, ErrorState, IconButton, Input, List, Loading, Page, Row, Section, Select, Tabs, Textarea } from "../ui";
+import { Markdown, relTime, useToast } from "../util";
+import { Busy, Notice, plainError, Split } from "./day/parts";
 
 type WorkFile = { id: number; name: string; kind: string; size: number; summary: string; source: string; notes: string[]; created_at: string };
 type Chunk = { loc: string; text: string };
@@ -34,21 +35,13 @@ function HelperApps({ initial }: { initial?: Helpers }) {
   if (!h || (h.missing.length === 0 && h.log.length === 0)) return null;
   const install = () => api<Helpers>("/files/helpers/install", { method: "POST" }).then(setH).catch(() => undefined);
   return (
-    <div className="card work-helpers" role="status">
-      {h.missing.length > 0 ? (
-        <p>
-          {h.missing.length === 1 ? "One free helper app is" : "Some free helper apps are"} not installed yet, so a few files are read with less detail:{" "}
-          {h.missing.map((m, i) => <span key={m.key}>{i > 0 && ", "}<b>{m.label}</b> ({m.why})</span>)}.
-        </p>
-      ) : <p>All helper apps are installed.</p>}
-      {h.log.length > 0 && <div className="muted small">{h.log.join(" ")}</div>}
-      {h.error && <div className="muted small">{h.error}</div>}
-      {h.missing.length > 0 && (
-        <button className="btn sm primary" disabled={h.installing} onClick={install}>
-          {h.installing ? <><Loader2 size={14} className="spin" /> Installing…</> : "Install"}
-        </button>
-      )}
-    </div>
+    <Notice className="day-gap"
+      title={h.missing.length > 0 ? `${h.missing.length === 1 ? "One free helper app is" : "Some free helper apps are"} not installed yet, so a few files are read with less detail` : "All helper apps are installed."}
+      actions={h.missing.length > 0 ? <Button size="sm" variant="primary" busy={h.installing} onClick={install}>{h.installing ? "Installing…" : "Install"}</Button> : undefined}>
+      {h.missing.length > 0 && <p>{h.missing.map((m, i) => <span key={m.key}>{i > 0 && ", "}<b>{m.label}</b> ({m.why})</span>)}.</p>}
+      {h.log.length > 0 && <p>{h.log.join(" ")}</p>}
+      {h.error && <p>{h.error}</p>}
+    </Notice>
   );
 }
 
@@ -107,26 +100,29 @@ function MakeImage({ onMade, onError }: { onMade: (fileId: number) => void; onEr
     setBusy(false);
   };
   return (
-    <div className="card row wrap" style={{ marginBottom: 12, gap: 8 }}>
-      <ImagePlus size={16} />
-      <input className="input grow" style={{ minWidth: 240 }} placeholder="Describe an image to create (uses your image provider; usually costs a few cents)"
-        value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => e.key === "Enter" && make()} maxLength={4000} />
-      <select className="input" style={{ width: "auto" }} value={size} onChange={(e) => setSize(e.target.value)} aria-label="Shape">
-        <option value="square">Square</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option>
-      </select>
-      {providers.length > 1 && (
-        <select className="input" style={{ width: "auto" }} value={conn} onChange={(e) => setConn(e.target.value ? Number(e.target.value) : "")} aria-label="Provider">
-          <option value="">{providers[0].name} · {providers[0].model}</option>
-          {providers.slice(1).map((p) => <option key={p.connection_id} value={p.connection_id}>{p.name} · {p.model}</option>)}
-        </select>
-      )}
-      <button className="btn primary sm" onClick={make} disabled={busy || !prompt.trim()}>{busy ? <Loader2 size={14} className="spin" /> : null} Create image</button>
-    </div>
+    <Card padding="sm" className="day-gap">
+      <form className="day-add-row" onSubmit={(e) => { e.preventDefault(); void make(); }}>
+        <ImagePlus size={16} aria-hidden="true" className="day-muted-icon" />
+        <Input className="day-grow" aria-label="Describe an image to create" placeholder="Describe an image to create (uses your image provider; usually costs a few cents)"
+          value={prompt} onChange={(e) => setPrompt(e.target.value)} maxLength={4000} />
+        <Select className="day-auto" value={size} onChange={(e) => setSize(e.target.value)} aria-label="Shape">
+          <option value="square">Square</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option>
+        </Select>
+        {providers.length > 1 && (
+          <Select className="day-auto" value={conn} onChange={(e) => setConn(e.target.value ? Number(e.target.value) : "")} aria-label="Provider">
+            <option value="">{providers[0].name} · {providers[0].model}</option>
+            {providers.slice(1).map((p) => <option key={p.connection_id} value={p.connection_id}>{p.name} · {p.model}</option>)}
+          </Select>
+        )}
+        <Button type="submit" variant="primary" size="sm" busy={busy} disabled={!prompt.trim()}>{busy ? "Creating…" : "Create image"}</Button>
+      </form>
+    </Card>
   );
 }
 
 export default function Files() {
-  const [list, setList] = useState<WorkFile[]>([]);
+  const [list, setList] = useState<WorkFile[] | null>(null);
+  const [problem, setProblem] = useState("");
   const [sel, setSel] = useState<Detail | null>(null);
   const [busy, setBusy] = useState("");
   const [over, setOver] = useState(false);
@@ -142,8 +138,11 @@ export default function Files() {
   const pickDir = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  const load = useCallback(() => api<WorkFile[]>("/files").then(setList).catch(toast.err), []); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); api<Caps>("/files/capabilities").then(setCaps).catch(() => undefined); }, [load]);
+  const load = useCallback(() => {
+    setProblem("");
+    return api<WorkFile[]>("/files").then(setList).catch((e) => { setList((l) => l ?? []); setProblem(plainError(e, "Your files did not load.")); });
+  }, []);
+  useEffect(() => { void load(); api<Caps>("/files/capabilities").then(setCaps).catch(() => undefined); }, [load]);
 
   const open = async (id: number) => {
     setBusy("open"); setAnalysis(null); setCmp(null); setRun(null); setTab("read");
@@ -159,10 +158,10 @@ export default function Files() {
     }
     setBusy("");
     await load();
-    if (last) { toast.ok(items.length > 1 ? `${items.length} files added` : `${last.name} added`); open(last.id); }
+    if (last) { toast.ok(items.length > 1 ? `${items.length} files added` : `${last.name} added`); void open(last.id); }
   };
 
-  const onDrop = async (e: DragEvent) => { e.preventDefault(); setOver(false); addAll(await dropped(e)); };
+  const onDrop = async (e: DragEvent) => { e.preventDefault(); setOver(false); void addAll(await dropped(e)); };
 
   const doAnalyse = async () => {
     if (!sel) return;
@@ -188,134 +187,150 @@ export default function Files() {
   const remove = async (id: number) => {
     await api(`/files/${id}`, { method: "DELETE" }).catch(toast.err);
     if (sel?.id === id) setSel(null);
-    load();
+    void load();
   };
   const ask = () => sel && navigate("/assistant", { state: { draft: `About my file “${sel.name}” (file ${sel.id}): ` } });
   const missing = caps ? [...Object.entries(caps.readers).filter(([, v]) => !v).map(([k]) => k), ...Object.entries(caps.apps).filter(([k, v]) => !v && !/^(LibreOffice|Tesseract|FFmpeg)/.test(k)).map(([k]) => k)] : [];
+  const choose = () => pick.current?.click();
+  const pickTab = (t: string) => {
+    if (t === "numbers") { if (sel?.extract.tables.length) void doAnalyse(); return; }
+    setTab(t as typeof tab);
+  };
+
+  const listPane = (
+    <div className="day-split-scroll">
+      {list === null && <Loading rows={6} label="Loading files" />}
+      {list !== null && problem && <div className="day-pad"><ErrorState title="Files did not load" line={problem} onRetry={() => void load()} /></div>}
+      {list !== null && !problem && list.length === 0 && (
+        <EmptyState icon={<FileText size={22} />} title="No files yet" line="Anything you drop in shows here." action={<Button size="sm" icon={<Upload size={14} />} onClick={choose}>Choose files</Button>} />
+      )}
+      {list !== null && list.length > 0 && (
+        <List label="Files">
+          {list.map((f) => (
+            <Row key={f.id} active={sel?.id === f.id} onClick={() => void open(f.id)} title={f.name}
+              meta={`${f.kind} · ${KB(f.size)} · ${f.source.startsWith("site:") ? "from a site" : relTime(f.created_at)}`}
+              actions={<IconButton label={`Remove ${f.name}`} size="sm" onClick={() => void remove(f.id)}><Trash2 size={14} /></IconButton>} />
+          ))}
+        </List>
+      )}
+    </div>
+  );
+
+  const mainPane = !sel ? (
+    busy === "open" ? <div className="day-pad"><Loading rows={4} label="Opening the file" /></div>
+      : <EmptyState icon={<FileSearch size={24} />} title="Pick a file to see what is inside" line="Then ask about it in Chat, check the numbers, compare versions or run a calculation." />
+  ) : (
+    <div className="day-detail">
+      <header className="day-detail-head">
+        <IconButton className="day-phone-only" label="Back to the list" size="sm" onClick={() => setSel(null)}><ArrowLeft size={16} /></IconButton>
+        <div className="day-detail-titles">
+          <h2 className="day-detail-title">{sel.name}</h2>
+          {sel.summary && <p className="day-detail-meta">{sel.summary}</p>}
+        </div>
+        <div className="day-actions">
+          <Button variant="primary" size="sm" icon={<MessageSquare size={14} />} onClick={ask}>Ask about it</Button>
+          <a className="ui-btn ui-btn-secondary ui-btn-sm" href={`/api/files/${sel.id}/download`}><Download size={14} aria-hidden="true" /> Original</a>
+        </div>
+      </header>
+      {[...sel.notes, ...sel.extract.notes].filter((n, i, a) => a.indexOf(n) === i).map((n) => <Notice key={n} tone="warn">{n}</Notice>)}
+      <div className="day-tabs-row">
+        <Tabs label="What to do with this file" value={tab} onChange={pickTab}
+          items={[{ id: "read", label: "What it says" }, ...(sel.extract.tables.length ? [{ id: "numbers", label: "Numbers" }] : []), { id: "compare", label: "Compare" }, { id: "python", label: "Calculate" }]} />
+      </div>
+
+      {tab === "read" && (
+        <div className="day-stack">
+          <div className="day-actions"><Button size="sm" onClick={() => void doReport("docx")}>Word summary</Button><Button size="sm" onClick={() => void doReport("pdf")}>PDF summary</Button></div>
+          {sel.inside.length > 0 && (
+            <Section title="Inside">
+              <List label="Inside">{sel.inside.map((x, i) => <Row key={i} title={x.name} meta={x.summary} />)}</List>
+            </Section>
+          )}
+          {sel.extract.tables.slice(0, 3).map((t, i) => <TableView key={i} t={t} />)}
+          <div className="day-passages">
+            {sel.extract.chunks.slice(0, 120).map((c, i) => <div key={i} className="day-passage"><Badge>{c.loc}</Badge><Markdown text={c.text.slice(0, 3000)} /></div>)}
+          </div>
+        </div>
+      )}
+
+      {tab === "numbers" && !analysis && <Loading rows={3} label="Working out the numbers" />}
+      {tab === "numbers" && analysis && analysis.sheets.map((sh) => (
+        <Section key={sh.sheet} title={sh.sheet}
+          description={`${sh.rows.toLocaleString()} rows · ${sh.columns} columns${sh.duplicate_rows ? ` · ${sh.duplicate_rows} duplicate rows` : ""}${sh.formulas?.count ? ` · ${sh.formulas.count} formulas` : ""}${sh.note ? `. ${sh.note}` : ""}`}>
+          {sh.chart && <img className="day-chart" src={`/api/files/${sh.chart.file}/download`} alt={sh.chart.title} />}
+          <div className="day-table-wrap"><table className="day-table"><thead><tr><th>Column</th><th>Type</th><th>Filled</th><th>Total</th><th>Average</th><th>Lowest</th><th>Highest</th><th>Most common</th></tr></thead>
+            <tbody>{sh.column_summary.map((c) => <tr key={c.column}><td>{c.column}</td><td>{c.type}</td><td>{c.filled}{c.missing ? ` (${c.missing} empty)` : ""}</td><td>{fmt(c.sum)}</td><td>{fmt(c.mean)}</td>
+              <td>{fmt(c.min ?? c.earliest)}</td><td>{fmt(c.max ?? c.latest)}</td><td>{c.most_common ? Object.keys(c.most_common).slice(0, 3).join(", ") : ""}</td></tr>)}</tbody></table></div>
+        </Section>
+      ))}
+
+      {tab === "compare" && (
+        <div className="day-stack">
+          <div className="day-add-row">
+            <Select label="Compare an older version with this one" className="day-grow" value={cmpWith} onChange={(e) => setCmpWith(Number(e.target.value))}>
+              <option value={0}>Choose a file…</option>
+              {(list ?? []).filter((f) => f.id !== sel.id).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+            </Select>
+          </div>
+          <div className="day-actions">
+            <Button variant="primary" size="sm" disabled={!cmpWith} onClick={() => void doCompare(false)}>Show changes</Button>
+            <Button size="sm" disabled={!cmpWith} onClick={() => void doCompare(true)}>Word redline</Button>
+          </div>
+          {cmp && <>
+            <p className="day-hint">{cmp.summary}</p>
+            {cmp.report && <a className="ui-btn ui-btn-secondary ui-btn-sm day-self-start" href={cmp.report.download}><Download size={14} aria-hidden="true" /> Download the redline</a>}
+            {cmp.text_changes.map((c, i) => <div key={i} className="day-passage"><Badge>{c.where_after || c.where_before}</Badge> <span className="day-hint">{c.change}</span>
+              <div className="redline day-redline" dangerouslySetInnerHTML={{ __html: c.redline }} /></div>)}
+            {cmp.cell_changes.slice(0, 100).map((c, i) => <p key={i} className="day-cell-change">{c.table} {c.cell || c.change}: <del>{fmt(c.before)}</del> → <ins>{fmt(c.after)}</ins></p>)}
+          </>}
+        </div>
+      )}
+
+      {tab === "python" && (
+        <div className="day-stack">
+          <p className="day-hint">Runs on this computer with pandas, numpy, matplotlib and sympy, without internet. This file is in <code>inputs/</code>; charts appear below.</p>
+          <Textarea className="day-mono" rows={8} value={code} onChange={(e) => setCode(e.target.value)} spellCheck={false} aria-label="Calculation" />
+          <div className="day-actions"><Button variant="primary" size="sm" icon={<Code2 size={14} />} onClick={() => void doRun()}>Run</Button>{run && <span className="day-hint">{run.isolation}</span>}</div>
+          {run && <>
+            {run.stdout && <pre className="day-out">{run.stdout}</pre>}
+            {run.error && <Notice tone="danger" title="The calculation stopped"><pre className="day-out">{run.error.split("\n").slice(-6).join("\n")}</pre></Notice>}
+            {run.outputs.map((o) => /\.(png|jpe?g|svg)$/i.test(o.name) ? <img key={o.id} className="day-chart" src={o.url} alt={o.name} /> : <a key={o.id} className="ui-btn ui-btn-secondary ui-btn-sm day-self-start" href={o.url}><Download size={14} aria-hidden="true" /> {o.name}</a>)}
+          </>}
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div className="page work">
-      {toast.node}
-      <div className="page-head">
-        <div><h1>Files</h1><p className="muted">Drop in anything: spreadsheets, Word, PDFs, slides, emails, zips, drawings, photos, data or code. It is read on this computer; only the text you ask about goes to your model.</p></div>
-      </div>
+    <Page title="Files" wide className="day-page"
+      description="Drop in anything: spreadsheets, Word, PDFs, slides, emails, zips, photos, data or code. It is read on this computer; only the text you ask about goes to your model."
+      actions={<Button variant="primary" icon={<Upload size={15} />} onClick={choose}>Add files</Button>}>
       <SurfaceNote />
-
       <HelperApps initial={caps?.helpers} />
-      <MakeImage onMade={(id) => { load(); open(id); }} onError={toast.err} />
-      <div className={`work-drop ${over ? "over" : ""}`} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={onDrop}
-        onClick={() => pick.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && pick.current?.click()}>
-        <Upload size={22} />
-        <div><strong>Drop files or a folder here</strong><div className="muted small">or click to choose files</div></div>
-        <button type="button" className="btn sm" onClick={(e) => { e.stopPropagation(); pickDir.current?.click(); }}><FolderOpen size={14} /> Choose a folder</button>
-        <input ref={pick} type="file" multiple hidden onChange={(e) => addAll(Array.from(e.target.files || []).map((f) => ({ file: f, name: f.name })))} />
-        <input ref={pickDir} type="file" multiple hidden {...{ webkitdirectory: "" }} onChange={(e) => addAll(Array.from(e.target.files || []).map((f) => ({ file: f, name: f.webkitRelativePath || f.name })))} />
+      <MakeImage onMade={(id) => { void load(); void open(id); }} onError={toast.err} />
+      <div className={`day-drop${over ? " is-over" : ""}`} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={onDrop}
+        onClick={choose} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), choose())}>
+        <Upload size={20} aria-hidden="true" className="day-muted-icon" />
+        <div className="day-drop-text"><strong>Drop files or a folder here</strong><span className="day-hint">or click to choose files</span></div>
+        <Button size="sm" icon={<FolderOpen size={14} />} onClick={(e) => { e.stopPropagation(); pickDir.current?.click(); }}>Choose a folder</Button>
+        <input ref={pick} type="file" multiple hidden onChange={(e) => void addAll(Array.from(e.target.files || []).map((f) => ({ file: f, name: f.name })))} />
+        <input ref={pickDir} type="file" multiple hidden {...{ webkitdirectory: "" }} onChange={(e) => void addAll(Array.from(e.target.files || []).map((f) => ({ file: f, name: f.webkitRelativePath || f.name })))} />
       </div>
-      {busy && busy !== "open" && <div className="row muted work-busy"><Loader2 size={15} className="spin" /> {busy}</div>}
-
-      <div className="work-layout">
-        <div className="card flush work-list">
-          {!list.length && <div className="pad"><Empty icon={<FileText size={22} />} title="No files yet" hint="Anything you drop in shows here." /></div>}
-          {list.map((f) => (
-            <div key={f.id} className={`work-item ${sel?.id === f.id ? "on" : ""}`} onClick={() => open(f.id)}>
-              <div className="grow">
-                <div className="truncate">{f.name}</div>
-                <div className="small faint truncate">{f.kind} · {KB(f.size)} · {f.source.startsWith("site:") ? "from a site" : relTime(f.created_at)}</div>
-              </div>
-              <button className="btn ghost sm icon" aria-label={`Remove ${f.name}`} onClick={(e) => { e.stopPropagation(); remove(f.id); }}><Trash2 size={13} /></button>
-            </div>
-          ))}
-        </div>
-
-        <div className="work-main">
-          {!sel && <div className="card"><Empty icon={<FileSearch size={24} />} title="Pick a file to see what is inside" hint="Then ask about it in Chat, check the numbers, compare versions or run a calculation." /></div>}
-          {sel && (
-            <div className="card col gap-lg">
-              <div className="row wrap" style={{ alignItems: "flex-start" }}>
-                <div className="grow"><h2>{sel.name}</h2><div className="muted">{sel.summary}</div></div>
-                <button className="btn primary sm" onClick={ask}><MessageSquare size={14} /> Ask about it</button>
-                <a className="btn sm" href={`/api/files/${sel.id}/download`}><Download size={14} /> Original</a>
-              </div>
-              {[...sel.notes, ...sel.extract.notes].filter((n, i, a) => a.indexOf(n) === i).map((n) => <div key={n} className="alert warn small">{n}</div>)}
-              <div className="tabs">
-                <button className={`tab ${tab === "read" ? "active" : ""}`} onClick={() => setTab("read")}><FileText size={14} /> What it says</button>
-                <button className={`tab ${tab === "numbers" ? "active" : ""}`} onClick={doAnalyse} disabled={!sel.extract.tables.length}><BarChart3 size={14} /> Numbers</button>
-                <button className={`tab ${tab === "compare" ? "active" : ""}`} onClick={() => setTab("compare")}><GitCompare size={14} /> Compare</button>
-                <button className={`tab ${tab === "python" ? "active" : ""}`} onClick={() => setTab("python")}><Code2 size={14} /> Calculate</button>
-              </div>
-
-              {tab === "read" && (
-                <div className="col gap">
-                  <div className="row wrap"><button className="btn sm" onClick={() => doReport("docx")}>Word summary</button><button className="btn sm" onClick={() => doReport("pdf")}>PDF summary</button></div>
-                  {sel.inside.length > 0 && <div className="col"><h3>Inside</h3>{sel.inside.map((x, i) => <div key={i} className="small"><strong>{x.name}</strong> <span className="muted">{x.summary}</span></div>)}</div>}
-                  {sel.extract.tables.slice(0, 3).map((t, i) => <TableView key={i} t={t} />)}
-                  <div className="col work-passages">
-                    {sel.extract.chunks.slice(0, 120).map((c, i) => <div key={i} className="work-passage"><span className="badge">{c.loc}</span><Markdown text={c.text.slice(0, 3000)} /></div>)}
-                  </div>
-                </div>
-              )}
-
-              {tab === "numbers" && analysis && analysis.sheets.map((s) => (
-                <div key={s.sheet} className="col gap">
-                  <h3>{s.sheet} <span className="muted small">{s.rows.toLocaleString()} rows · {s.columns} columns{s.duplicate_rows ? ` · ${s.duplicate_rows} duplicate rows` : ""}{s.formulas?.count ? ` · ${s.formulas.count} formulas` : ""}</span></h3>
-                  {s.note && <div className="muted small">{s.note}</div>}
-                  {s.chart && <img className="work-chart" src={`/api/files/${s.chart.file}/download`} alt={s.chart.title} />}
-                  <div className="work-table-wrap"><table className="work-table"><thead><tr><th>Column</th><th>Type</th><th>Filled</th><th>Total</th><th>Average</th><th>Lowest</th><th>Highest</th><th>Most common</th></tr></thead>
-                    <tbody>{s.column_summary.map((c) => <tr key={c.column}><td>{c.column}</td><td>{c.type}</td><td>{c.filled}{c.missing ? ` (${c.missing} empty)` : ""}</td><td>{fmt(c.sum)}</td><td>{fmt(c.mean)}</td>
-                      <td>{fmt(c.min ?? c.earliest)}</td><td>{fmt(c.max ?? c.latest)}</td><td className="small">{c.most_common ? Object.keys(c.most_common).slice(0, 3).join(", ") : ""}</td></tr>)}</tbody></table></div>
-                </div>
-              ))}
-
-              {tab === "compare" && (
-                <div className="col gap">
-                  <div className="row wrap">
-                    <span className="muted">Compare an older version</span>
-                    <select className="input" style={{ width: 260 }} value={cmpWith} onChange={(e) => setCmpWith(Number(e.target.value))}>
-                      <option value={0}>Choose a file…</option>
-                      {list.filter((f) => f.id !== sel.id).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-                    </select>
-                    <span className="muted">with this one</span>
-                    <button className="btn primary sm" disabled={!cmpWith} onClick={() => doCompare(false)}>Show changes</button>
-                    <button className="btn sm" disabled={!cmpWith} onClick={() => doCompare(true)}>Word redline</button>
-                  </div>
-                  {cmp && <>
-                    <div className="muted">{cmp.summary}</div>
-                    {cmp.report && <a className="btn sm" href={cmp.report.download}><Download size={14} /> Download the redline</a>}
-                    {cmp.text_changes.map((c, i) => <div key={i} className="work-passage"><span className="badge">{c.where_after || c.where_before}</span> <span className="small muted">{c.change}</span>
-                      <div className="redline" dangerouslySetInnerHTML={{ __html: c.redline }} /></div>)}
-                    {cmp.cell_changes.slice(0, 100).map((c, i) => <div key={i} className="small">{c.table} {c.cell || c.change}: <del>{fmt(c.before)}</del> → <ins>{fmt(c.after)}</ins></div>)}
-                  </>}
-                </div>
-              )}
-
-              {tab === "python" && (
-                <div className="col gap">
-                  <div className="muted small">Runs on this computer with pandas, numpy, matplotlib and sympy, without internet. This file is in <code>inputs/</code>; charts appear below.</div>
-                  <textarea className="input mono" rows={8} value={code} onChange={(e) => setCode(e.target.value)} spellCheck={false} />
-                  <div className="row"><button className="btn primary sm" onClick={doRun}><Code2 size={14} /> Run</button>{run && <span className="small faint">{run.isolation}</span>}</div>
-                  {run && <>
-                    {run.stdout && <pre className="work-out">{run.stdout}</pre>}
-                    {run.error && <div className="alert err small"><pre className="work-out">{run.error.split("\n").slice(-6).join("\n")}</pre></div>}
-                    {run.outputs.map((o) => /\.(png|jpe?g|svg)$/i.test(o.name) ? <img key={o.id} className="work-chart" src={o.url} alt={o.name} /> : <a key={o.id} className="btn sm" href={o.url}><Download size={14} /> {o.name}</a>)}
-                  </>}
-                </div>
-              )}
-            </div>
-          )}
-          {missing.length > 0 && <div className="muted small work-caps">Not installed on this computer, so some files are read with less detail: {missing.join(", ")}.</div>}
-        </div>
-      </div>
-    </div>
+      {busy && busy !== "open" && <Busy>{busy}</Busy>}
+      {list !== null && !problem && list.length === 0 && !sel
+        ? <EmptyState icon={<FileText size={24} />} title="No files yet" line="Anything you drop in shows here." action={<Button icon={<Upload size={14} />} onClick={choose}>Choose files</Button>} />
+        : <Split label="Files" picked={!!sel} list={listPane} main={mainPane} />}
+      {missing.length > 0 && <p className="day-hint day-caps">Not installed on this computer, so some files are read with less detail: {missing.join(", ")}.</p>}
+    </Page>
   );
 }
 
 function TableView({ t }: { t: Table }) {
   const rows = (t.rows as unknown[]).slice(0, 25).map((r) => (Array.isArray(r) ? r : t.columns.map((c) => (r as Record<string, unknown>)[c])));
   return (
-    <div className="col">
-      <h3>{t.name} {t.n_rows ? <span className="muted small">{t.n_rows.toLocaleString()} rows</span> : null}</h3>
-      <div className="work-table-wrap"><table className="work-table"><thead><tr>{t.columns.slice(0, 20).map((c, i) => <th key={i}>{c}</th>)}</tr></thead>
+    <Section title={t.name} description={t.n_rows ? `${t.n_rows.toLocaleString()} rows` : undefined}>
+      <div className="day-table-wrap"><table className="day-table"><thead><tr>{t.columns.slice(0, 20).map((c, i) => <th key={i}>{c}</th>)}</tr></thead>
         <tbody>{rows.map((r, i) => <tr key={i}>{(r as unknown[]).slice(0, 20).map((v, j) => <td key={j}>{fmt(v)}</td>)}</tr>)}</tbody></table></div>
-    </div>
+    </Section>
   );
 }

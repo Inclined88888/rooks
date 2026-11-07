@@ -135,10 +135,12 @@ def test_ollama_uses_native_api_with_a_real_context_window(client, fake_url):
     call = next(e for e in ev if e["type"] == "tool_call")
     assert call["from_text"] is True and any(t["title"] == "Text task" for t in client.get("/api/tasks").json())
 
-    # a full window is an error, never a silently truncated answer
+    # a full window is an error, never a silently truncated answer: nothing here can be compacted (one short message),
+    # so the turn ends with the plain "too long" message (B3), and the half answer never reaches the user
     OLLAMA_SCRIPT[:] = [{"content": "answer from half a prompt", "_prompt_tokens": llm.OLLAMA_NUM_CTX}]
     ev = events(client.post("/api/assistant/chat", json={"message": "x", "model": f"{pid}/qwen3:4b"}))
-    assert any(e["type"] == "error" and "window" in e["error"] for e in ev)
+    assert any(e["type"] == "error" and "too long" in e["error"] for e in ev)
+    assert not any(e["type"] == "message" and "half a prompt" in e["content"] for e in ev)
     client.delete(f"/api/providers/{pid}")
 
 

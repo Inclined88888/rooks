@@ -1,15 +1,15 @@
-import { ArrowLeft, ArrowRight, Check, Cloud, Cpu, Download, ExternalLink, KeyRound, Loader2, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Cloud, Cpu, Download, ExternalLink, KeyRound, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api, stream } from "../api";
 import { BrandMark } from "../brand";
 import PlanCard from "./PlanCard";
 import { ChatGPTCard, KEY_ORDER, KeyField, KeyInfo, Preset, Sub, Validation } from "./ModelSignIn";
 import { ThemeGrid, TypeChoices } from "../ThemePicker";
-import { Tracer } from "../Tracer";
 import { saveAppearanceRemote } from "../themeSync";
 import { readAppearance } from "../appearance";
 import { AssistantFace } from "../AssistantFace";
-import { PRODUCT } from "../product";
+import { Badge, Button, EmptyState, Input, Loading } from "../ui";
+import { Advanced, AuthActions, AuthCard, ButtonLink, Choice, Notice, Progress, SettingRow, SettingsGroup } from "./settings/index";
 
 /** First run: "Choose how to think". Cloud is the default (nothing heavy runs on this computer); the smart router
  * then uses whatever was connected and falls back when a free tier runs out. */
@@ -39,8 +39,10 @@ async function finishCloud() {
 }
 
 function Back({ onBack }: { onBack: () => void }) {
-  return <button type="button" className="btn ghost" onClick={onBack}><ArrowLeft size={16} /> Back</button>;
+  return <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={onBack}>Back</Button>;
 }
+
+const TRUST = <><ShieldCheck size={13} aria-hidden="true" /> Keys stay on this computer · <ListChecks size={13} aria-hidden="true" /> Every action is logged</>;
 
 const FREE = [
   { id: "gemini", name: "Google Gemini", blurb: "Flash and Flash-Lite. A Google account is all you need.", steps: "Sign in, then Create API key." },
@@ -77,51 +79,43 @@ function FreeStep({ info, onBack, onDone }: { info: Record<string, KeyInfo>; onB
   const done = connected.length > 0;
 
   return (
-    <form className="col gap-lg" onSubmit={connect}>
-      <div>
-        <div className="kicker">Free cloud</div>
-        <h1>A free key, two minutes</h1>
-        <p className="muted">Both are free with daily limits. Add both and the app switches to the other one when a limit is hit.</p>
-      </div>
-      {error && <div className="alert err">{error}</div>}
-      <div className="free-grid" role="radiogroup" aria-label="Free provider">
-        {FREE.map((f) => (
-          <button type="button" key={f.id} role="radio" aria-checked={pick === f.id} className={`free-card ${pick === f.id ? "on" : ""}`}
-            onClick={() => { setPick(f.id); setKey(""); setOpened(false); }}>
-            <span className="row" style={{ gap: 8 }}><strong>{f.name}</strong>{connected.includes(f.id) && <span className="badge ok"><Check size={11} /> Connected</span>}</span>
-            <span className="small muted">{f.blurb}</span>
-            <span className="tiny muted">{info[f.id]?.limits}</span>
-          </button>
-        ))}
-      </div>
-      {!connected.includes(pick) && (
-        <ol className="free-steps">
-          <li className={opened ? "done" : ""}>
-            <span className="free-n">1</span>
-            <span className="grow">Open the {p.name} key page. {p.steps}</span>
-            <a className="btn sm" href={info[pick]?.url} target="_blank" rel="noreferrer" onClick={() => setOpened(true)}>Open <ExternalLink size={12} /></a>
-          </li>
-          <li>
-            <span className="free-n">2</span>
-            <span className="grow col" style={{ gap: 8 }}>
-              <span>Copy the key, come back, and paste it here.</span>
-              <KeyField value={key} onChange={setKey} expect={info[pick]?.prefix} onDetected={onDetected} />
-            </span>
-          </li>
-        </ol>
-      )}
-      <div className="row muted small"><ShieldCheck size={14} /> Keys stay in this computer's keychain and only go to the provider they're for.</div>
-      <div className="row">
-        <Back onBack={onBack} />
-        <div className="spacer" />
-        {done && other && !key && <button type="button" className="btn ghost" onClick={() => setPick(other.id)}>Add {other.name} too</button>}
-        {key.trim().length >= 8 ? (
-          <button className="btn primary" disabled={busy}>{busy ? <><Loader2 size={16} className="spin" /> Checking key…</> : <>Check & connect <ArrowRight size={16} /></>}</button>
-        ) : (
-          <button type="button" className="btn primary" disabled={!done || busy} onClick={async () => { await finishCloud(); onDone(); }}>Start chatting <ArrowRight size={16} /></button>
+    <AuthCard step="Step 4 of 4" title="A free key, two minutes" footer={TRUST}
+      line="Both are free with daily limits. Add both and the app switches to the other one when a limit is hit.">
+      <form className="st-auth-form" onSubmit={connect}>
+        {error && <Notice tone="danger">{error}</Notice>}
+        <Choice label="Free provider" value={pick} onChange={(id) => { setPick(id); setKey(""); setOpened(false); }}
+          options={FREE.map((f) => ({ id: f.id, label: connected.includes(f.id) ? `${f.name} · connected` : f.name }))} />
+        <p className="st-small">{p.blurb}{info[pick]?.limits ? ` ${info[pick].limits}` : ""}</p>
+        {connected.includes(pick) ? <Notice tone="ok"><Check size={14} /> {p.name} is connected.</Notice> : (
+          <ol className="st-steps">
+            <li className={opened ? "is-done" : ""}>
+              <span className="st-step-n">1</span>
+              <div className="st-step-body">
+                <span>Open the {p.name} key page. {p.steps}</span>
+                <div><ButtonLink size="sm" href={info[pick]?.url} onClick={() => setOpened(true)} icon={<ExternalLink size={12} />}>Open the key page</ButtonLink></div>
+              </div>
+            </li>
+            <li>
+              <span className="st-step-n">2</span>
+              <div className="st-step-body">
+                <span>Copy the key, come back, and paste it here.</span>
+                <KeyField value={key} onChange={setKey} expect={info[pick]?.prefix} onDetected={onDetected} />
+              </div>
+            </li>
+          </ol>
         )}
-      </div>
-    </form>
+        <AuthActions>
+          <Back onBack={onBack} />
+          <span className="st-grow" />
+          {done && other && !key && <Button variant="ghost" onClick={() => setPick(other.id)}>Add {other.name} too</Button>}
+          {key.trim().length >= 8 ? (
+            <Button type="submit" variant="primary" busy={busy}>{busy ? "Checking key…" : <>Check and connect <ArrowRight size={16} /></>}</Button>
+          ) : (
+            <Button variant="primary" disabled={!done || busy} onClick={async () => { await finishCloud(); onDone(); }}>Start chatting <ArrowRight size={16} /></Button>
+          )}
+        </AuthActions>
+      </form>
+    </AuthCard>
   );
 }
 
@@ -146,28 +140,32 @@ export function AccountsStep({ onNext }: { onNext: () => void }) {
     onNext();
   };
   return (
-    <div className="col gap-lg">
-      <div className="accounts-head">
-        <div>
-          <h1>Sign in with the accounts you already use</h1>
-          <p className="muted">Optional. Each one opens that company's own window. You can connect them later.</p>
+    <AuthCard step="Step 1 of 4" title="Sign in with the accounts you already use"
+      line="Optional. Each one opens that company's own window. You can connect them later.">
+      {note && <Notice>{note}</Notice>}
+      <div className="st-stack">
+        <p className="st-small">Mail and calendar</p>
+        <div className="st-signins">
+          <Button icon={<BrandMark name="google" />} onClick={() => openWindow("Google")}>Gmail</Button>
+          <Button icon={<BrandMark name="microsoft" />} onClick={() => openWindow("Microsoft")}>Microsoft</Button>
+          <Button icon={<BrandMark name="apple" />} onClick={() => openWindow("Apple")}>Apple</Button>
         </div>
-        <button type="button" className="btn" onClick={go}>Skip for now</button>
       </div>
-      {note && <div className="alert">{note}</div>}
-      <div className="signin-picks">
-        <button type="button" className="btn" onClick={() => openWindow("Google")}><BrandMark name="google" /> Gmail</button>
-        <button type="button" className="btn" onClick={() => openWindow("Microsoft")}><BrandMark name="microsoft" /> Microsoft</button>
-        <button type="button" className="btn" onClick={() => openWindow("Apple")}><BrandMark name="apple" /> Apple</button>
-      </div>
-      {chatgpt && <ChatGPTCard sub={chatgpt} onConnected={go} cta="Continue" />}
-      {claude && <PlanCard agent="claude" title="Claude" onConnected={go} cta="Continue"
-        blurb="Opens Claude's own sign-in. Use the plan you already pay for." />}
-      <div className="row">
-        <div className="spacer" />
-        <button type="button" className="btn" onClick={go}>Skip for now</button>
-      </div>
-    </div>
+      {subs === null ? <Loading rows={1} label="Checking the plans you can sign in with" /> : (chatgpt || claude) && (
+        <div className="st-stack">
+          <p className="st-small">AI plans you already pay for</p>
+          <div className="st-group">
+            {chatgpt && <ChatGPTCard sub={chatgpt} onConnected={go} cta="Continue" />}
+            {claude && <PlanCard agent="claude" title="Claude" onConnected={go} cta="Continue"
+              blurb="Opens Claude's own sign-in. Use the plan you already pay for." />}
+          </div>
+        </div>
+      )}
+      <AuthActions>
+        <span className="st-grow" />
+        <Button variant="primary" onClick={go}>Skip for now <ArrowRight size={16} /></Button>
+      </AuthActions>
+    </AuthCard>
   );
 }
 
@@ -182,39 +180,34 @@ function SubscriptionStep({ onBack, onDone, onKey }: { onBack: () => void; onDon
   const start = async () => { await finishCloud(); onDone(); };
 
   return (
-    <div className="col gap-lg">
-      <div>
-        <div className="kicker">Your subscription</div>
-        <h1>Sign in with your plan</h1>
-        <p className="muted">No API key needed. Use the plan you already pay for, where the provider allows it.</p>
-      </div>
-      {subs === null && <Loader2 size={16} className="spin" />}
-      {claude && <PlanCard agent="claude" title="Claude" onConnected={start}
-        blurb="Use the Claude plan you already pay for. Sign-in opens in Anthropic's own app." />}
-      {chatgpt && <ChatGPTCard sub={chatgpt} onConnected={start} />}
-      {copilot && <PlanCard agent="copilot" title="GitHub Copilot" onConnected={start}
-        blurb="Use the Copilot plan you already pay for. Sign-in opens in GitHub's own app." />}
+    <AuthCard step="Step 4 of 4" title="Sign in with your plan" footer={TRUST}
+      line="No API key needed. Use the plan you already pay for, where the provider allows it.">
+      {subs === null ? <Loading rows={2} label="Checking the plans you can sign in with" /> : (
+        chatgpt || claude || copilot ? (
+          <div className="st-group">
+            {claude && <PlanCard agent="claude" title="Claude" onConnected={start}
+              blurb="Use the Claude plan you already pay for. Sign-in opens in Anthropic's own app." />}
+            {chatgpt && <ChatGPTCard sub={chatgpt} onConnected={start} />}
+            {copilot && <PlanCard agent="copilot" title="GitHub Copilot" onConnected={start}
+              blurb="Use the Copilot plan you already pay for. Sign-in opens in GitHub's own app." />}
+          </div>
+        ) : <EmptyState title="No plan sign-in here yet" line="Use a free key or paste a key instead." action={<Button onClick={onBack}>Choose another way</Button>} />
+      )}
       {!!subs?.some((s) => !s.available) && (
-        <details className="other-plans">
-          <summary>Other plans: not available yet</summary>
-          <div className="col" style={{ gap: 0 }}>
+        <Advanced label="Other plans: not available yet">
+          <div className="st-group">
             {subs?.filter((s) => !s.available).map((s) => (
-              <div key={s.id} className="sub-card off">
-                <div className="row">
-                  <strong className="sub-name">{s.name}</strong>
-                  <span className="badge">Not available yet</span>
-                  <div className="spacer" />
-                  <span className="tiny muted">{s.plans}</span>
-                </div>
-                <p className="small muted">{s.detail} <a href={s.source} target="_blank" rel="noreferrer">Why</a></p>
-                <div><button className="btn sm ghost" onClick={() => onKey(s.id === "claude" ? "anthropic" : s.id === "grok" ? "xai" : "gemini")}>Use a {s.name === "Gemini" ? "free Gemini" : s.name} key instead <ArrowRight size={13} /></button></div>
+              <div key={s.id} className="st-plan">
+                <div className="st-plan-head"><span className="st-plan-name">{s.name}</span><Badge>Not available yet</Badge></div>
+                <p className="st-small">{s.plans ? `${s.plans}. ` : ""}{s.detail} <a className="st-link" href={s.source} target="_blank" rel="noreferrer">Why</a></p>
+                <div><Button size="sm" variant="ghost" onClick={() => onKey(s.id === "claude" ? "anthropic" : s.id === "grok" ? "xai" : "gemini")}>Use a {s.name === "Gemini" ? "free Gemini" : s.name} key instead <ArrowRight size={13} /></Button></div>
               </div>
             ))}
           </div>
-        </details>
+        </Advanced>
       )}
-      <div className="row"><Back onBack={onBack} /></div>
-    </div>
+      <AuthActions><Back onBack={onBack} /></AuthActions>
+    </AuthCard>
   );
 }
 
@@ -260,41 +253,32 @@ function KeyStep({ presets, info, initial, onBack, onDone }: {
   };
 
   return (
-    <form className="col gap-lg" onSubmit={submit}>
-      <div>
-        <div className="kicker">API keys</div>
-        <h1>Paste your keys</h1>
-        <p className="muted">Paste any key and the provider is recognised. Add as many as you like; the app uses them in turn.</p>
-      </div>
-      {error && <div className="alert err">{error}</div>}
-      {added.length > 0 && <div className="row small"><Check size={14} /> Connected: {added.join(", ")}</div>}
-      <div className="welcome-providers" role="radiogroup" aria-label="Provider">
-        {choices.map(([k, p]) => (
-          <button type="button" key={k} role="radio" aria-checked={k === kind} className={`welcome-choice ${k === kind ? "on" : ""}`} onClick={() => setKind(k)}>
-            {k === "compatible" ? "Any OpenAI-compatible URL" : p.name}
-          </button>
-        ))}
-      </div>
-      {preset?.note && <div className="muted small">{preset.note}</div>}
-      {compatible && (
-        <label className="field">Server address<input className="input mono" value={baseUrl} placeholder={preset.base_url} onChange={(e) => setBaseUrl(e.target.value)} /></label>
-      )}
-      <label className="field">
-        <span>API key {compatible && <span className="hint">Optional for local servers</span>}</span>
-        <KeyField value={key} onChange={setKey} autoFocus onDetected={compatible ? undefined : onDetected} />
-        {info[kind]?.url && <a className="small" href={info[kind].url} target="_blank" rel="noreferrer">Get {/^[AEIOU]/i.test(preset.name) ? "an" : "a"} {preset.name} key <ExternalLink size={11} /></a>}
-      </label>
-      <div className="row muted small"><ShieldCheck size={14} /> Your key stays on this computer (in the system keychain where available) and is only sent to {preset?.name}.</div>
-      <div className="row">
-        <Back onBack={onBack} />
-        <div className="spacer" />
-        {key.trim().length >= 8 || (compatible && baseUrl) ? (
-          <button className="btn primary" disabled={busy}>{busy ? <><Loader2 size={16} className="spin" /> Checking key…</> : <>Check & connect <ArrowRight size={16} /></>}</button>
-        ) : (
-          <button type="button" className="btn primary" disabled={!added.length} onClick={async () => { await finishCloud(); onDone(); }}>Start chatting <ArrowRight size={16} /></button>
-        )}
-      </div>
-    </form>
+    <AuthCard step="Step 4 of 4" title="Paste your keys" footer={TRUST}
+      line="Paste any key and the provider is recognised. Add as many as you like; the app uses them in turn.">
+      <form className="st-auth-form" onSubmit={submit}>
+        {error && <Notice tone="danger">{error}</Notice>}
+        {added.length > 0 && <Notice tone="ok"><Check size={14} /> Connected: {added.join(", ")}</Notice>}
+        <Choice label="Provider" value={kind} onChange={setKind}
+          options={choices.map(([k, p]) => ({ id: k, label: k === "compatible" ? "Any compatible address" : p.name }))} />
+        {preset?.note && <p className="st-small">{preset.note}</p>}
+        {compatible && <Input label="Server address" className="st-mono" value={baseUrl} placeholder={preset.base_url} onChange={(e) => setBaseUrl(e.target.value)} />}
+        <div className="st-stack">
+          <span className="ui-field-label">API key{compatible ? " (optional for local servers)" : ""}</span>
+          <KeyField value={key} onChange={setKey} autoFocus onDetected={compatible ? undefined : onDetected} />
+          {info[kind]?.url && <a className="st-link st-small" href={info[kind].url} target="_blank" rel="noreferrer">Get {/^[AEIOU]/i.test(preset.name) ? "an" : "a"} {preset.name} key <ExternalLink size={11} aria-hidden="true" /></a>}
+        </div>
+        <p className="st-small">Your key stays on this computer (in the system keychain where available) and is only sent to {preset?.name}.</p>
+        <AuthActions>
+          <Back onBack={onBack} />
+          <span className="st-grow" />
+          {key.trim().length >= 8 || (compatible && baseUrl) ? (
+            <Button type="submit" variant="primary" busy={busy}>{busy ? "Checking key…" : <>Check and connect <ArrowRight size={16} /></>}</Button>
+          ) : (
+            <Button variant="primary" disabled={!added.length} onClick={async () => { await finishCloud(); onDone(); }}>Start chatting <ArrowRight size={16} /></Button>
+          )}
+        </AuthActions>
+      </form>
+    </AuthCard>
   );
 }
 
@@ -335,47 +319,33 @@ function OllamaStep({ preset, onBack, onDone }: { preset: Preset; onBack: () => 
   };
 
   return (
-    <div className="col gap-lg">
-      <div>
-        <h1>Use Ollama on this computer</h1>
-        <p className="muted">Free and private: models run on your own machine and nothing leaves it.</p>
-      </div>
-      {error && <div className="alert err">{error}</div>}
-      <div className="card col">
-        <div className="row">
-          <Cpu size={16} /> <strong>Ollama</strong>
-          <div className="spacer" />
-          {state === null ? <Loader2 size={14} className="spin" /> : state.online ? <span className="badge ok">Running</span> : <span className="badge danger">Not found</span>}
-        </div>
-        {state && !state.online && (
-          <div className="col">
-            <div className="muted small">Install the free Ollama app, open it, then check again.</div>
-            <div className="row">
-              <a className="btn sm" href="https://ollama.com/download" target="_blank" rel="noreferrer"><Download size={14} /> Get Ollama</a>
-              <button className="btn sm ghost" onClick={check}>Check again</button>
-            </div>
-          </div>
+    <AuthCard step="Step 4 of 4" title="Use Ollama on this computer" line="Free and private: models run on your own machine and nothing leaves it.">
+      {error && <Notice tone="danger">{error}</Notice>}
+      <SettingsGroup>
+        <SettingRow label="Ollama" help={state === null ? "Checking…" : state.online ? "Running on this computer." : "Install the free Ollama app, open it, then check again."}>
+          {state === null ? null : state.online ? <Badge tone="ok">Running</Badge> : (
+            <>
+              <ButtonLink size="sm" href="https://ollama.com/download" icon={<Download size={14} />}>Get Ollama</ButtonLink>
+              <Button size="sm" variant="ghost" onClick={check}>Check again</Button>
+            </>
+          )}
+        </SettingRow>
+        {state?.online && (
+          <SettingRow label="A model" help={state.models.length ? `${state.models.length} model${state.models.length > 1 ? "s" : ""} installed.` : `No models yet. ${STARTER_MODEL} is a good first one (about 2.5 GB).`}>
+            {!state.models.length && pct === null && <Button size="sm" icon={<Download size={14} />} onClick={pull}>Download {STARTER_MODEL}</Button>}
+            {state.models.length > 0 && <Check size={16} aria-hidden="true" />}
+          </SettingRow>
         )}
-        {state?.online && !state.models.length && (
-          <div className="col">
-            <div className="muted small">No models yet. {STARTER_MODEL} is a good first one (about 2.5 GB).</div>
-            {pct === null ? (
-              <button className="btn sm" onClick={pull}><Download size={14} /> Download {STARTER_MODEL}</button>
-            ) : (
-              <div className="progress" aria-label="Download progress"><div style={{ width: `${pct}%` }} /></div>
-            )}
-          </div>
-        )}
-        {state?.online && state.models.length > 0 && <div className="row small"><Check size={14} /> {state.models.length} model{state.models.length > 1 ? "s" : ""} installed</div>}
-      </div>
-      <div className="row">
-        <button className="btn ghost" onClick={onBack}><ArrowLeft size={16} /> Back</button>
-        <div className="spacer" />
-        <button className="btn primary" disabled={busy || !state?.online || !state.models.length} onClick={connect}>
-          {busy ? <Loader2 size={16} className="spin" /> : <>Start chatting <ArrowRight size={16} /></>}
-        </button>
-      </div>
-    </div>
+        {pct !== null && <div className="st-row"><div className="st-grow"><Progress value={pct} label={`Downloading ${STARTER_MODEL}: ${pct}%`} /></div></div>}
+      </SettingsGroup>
+      <AuthActions>
+        <Back onBack={onBack} />
+        <span className="st-grow" />
+        <Button variant="primary" busy={busy} disabled={!state?.online || !state.models.length} onClick={connect}>
+          {busy ? "Connecting…" : <>Start chatting <ArrowRight size={16} /></>}
+        </Button>
+      </AuthActions>
+    </AuthCard>
   );
 }
 
@@ -408,29 +378,20 @@ function NameStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }
   };
 
   return (
-    <form className="col gap-lg" onSubmit={(e) => { e.preventDefault(); void save(); }}>
-      <div className="welcome-hero">
-        <div className="kicker">First run · 2 of 4</div>
-        <AssistantFace mood="idle" name={chosen || "Atlas"} size={84} pleasedAt={pleasedAt} />
-        <div className="wordmark xl">{PRODUCT}</div>
-        <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
-        <h1 className="welcome-title">What should I be called?</h1>
-        <p className="muted">This is the name on Home and in chat. You can change it later in Assistant settings.</p>
-      </div>
-      {error && <div className="alert err">{error}</div>}
-      <label className="field">
-        Name
-        <input className="input" value={name} maxLength={40} autoFocus aria-label="Assistant name"
-          placeholder="Atlas" onChange={(e) => setName(e.target.value)} />
-      </label>
-      <div className="row">
-        <Back onBack={onBack} />
-        <div className="spacer" />
-        <button className="btn primary" disabled={busy}>
-          {busy ? <Loader2 size={16} className="spin" /> : <>{chosen ? `Call me ${chosen}` : "Keep the name Atlas"} <ArrowRight size={16} /></>}
-        </button>
-      </div>
-    </form>
+    <AuthCard step="Step 3 of 4" title="What should I be called?" line="This is the name on Home and in chat. You can change it later in Assistant settings.">
+      <form className="st-auth-form" onSubmit={(e) => { e.preventDefault(); void save(); }}>
+        <div className="st-face"><AssistantFace mood="idle" name={chosen || "Atlas"} size={64} pleasedAt={pleasedAt} /></div>
+        {error && <Notice tone="danger">{error}</Notice>}
+        <Input label="Name" value={name} maxLength={40} autoFocus placeholder="Atlas" onChange={(e) => setName(e.target.value)} />
+        <AuthActions>
+          <Back onBack={onBack} />
+          <span className="st-grow" />
+          <Button type="submit" variant="primary" busy={busy}>
+            {busy ? "Saving…" : <>{chosen ? `Call me ${chosen}` : "Keep the name Atlas"} <ArrowRight size={16} /></>}
+          </Button>
+        </AuthActions>
+      </form>
+    </AuthCard>
   );
 }
 
@@ -445,84 +406,67 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
       .catch(() => setPresets({}));
   }, []);
   const back = () => setStep("choose");
-  const welcomeWide = step === "look";
-  const stepIndex = step === "accounts" ? 0 : step === "look" ? 1 : step === "name" ? 2 : 3;
 
   return (
-    <div className="auth welcome">
-      <div className={`card auth-card welcome-card${welcomeWide ? " wide" : ""}`} key={step}>
-        <div className="steps">{[0, 1, 2, 3].map((i) => <span key={i} className={i <= stepIndex ? "on" : ""} />)}</div>
-        {step === "accounts" && <AccountsStep onNext={() => setStep("look")} />}
-        {step === "name" && <NameStep onBack={() => setStep("look")} onNext={() => setStep("choose")} />}
-        {step === "look" && (
-          <div className="col gap-lg">
-            <div className="welcome-hero">
-              <div className="kicker">First run · 1 of 4</div>
-              <div className="wordmark xl">{PRODUCT}</div>
-              <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
-              <h1 className="welcome-title">Pick your look</h1>
-              <p className="muted">Tap a theme and everything changes straight away, including the browser, the terminal and your phone. You can change it any time in Appearance.</p>
-            </div>
-            <ThemeGrid />
-            <TypeChoices />
-            <div className="composer has-tracer look-sample">
-              <div className="fake-input">This is how it looks while I'm working…</div>
-              <Tracer active />
-            </div>
-            <div className="look-actions">
-              <span className="small muted">Standard is the everyday look. The others are here if you want them.</span>
-              <button className="btn primary" onClick={() => { saveAppearanceRemote(readAppearance()); setStep("name"); }}>Continue <ArrowRight size={14} /></button>
-            </div>
-          </div>
-        )}
-        {step === "choose" && (
-          <div className="col gap-lg">
-            <div className="welcome-hero">
-              <div className="kicker">First run · 3 of 4</div>
-              <div className="wordmark xl">{PRODUCT}</div>
-              <p className="muted" style={{ margin: "8px 0 0" }}>Your own workspace and assistant.</p>
-              <h1 className="welcome-title">Choose how to think</h1>
-              <p className="muted">The thinking happens in the cloud, so your computer stays cool and quiet. You can add more ways later.</p>
-            </div>
-            <div className="col" style={{ gap: 10 }}>
-              <button className="welcome-option recommended" onClick={() => setStep("free")} disabled={!presets}>
-                <Cloud size={20} />
-                <span className="grow">
-                  <span className="row" style={{ gap: 10 }}><strong>Free cloud</strong><span className="tag-rec">Recommended</span></span>
-                  <span className="muted small">A free Gemini or Groq key. Two minutes, no card.</span>
+    <div key={step} className="st-welcome">
+      {step === "accounts" && <AccountsStep onNext={() => setStep("look")} />}
+      {step === "name" && <NameStep onBack={() => setStep("look")} onNext={() => setStep("choose")} />}
+      {step === "look" && (
+        <AuthCard wide step="Step 2 of 4" title="Pick your look" line="Everything changes straight away, including the browser, the terminal and your phone. You can change it any time in Appearance.">
+          <ThemeGrid />
+          <TypeChoices />
+          <AuthActions>
+            <span className="st-small st-grow">Light is the everyday look.</span>
+            <Button variant="primary" onClick={() => { saveAppearanceRemote(readAppearance()); setStep("name"); }}>Continue <ArrowRight size={14} /></Button>
+          </AuthActions>
+        </AuthCard>
+      )}
+      {step === "choose" && (
+        <AuthCard step="Step 4 of 4" title="Choose how to think" footer={TRUST}
+          line="The thinking happens in the cloud, so your computer stays cool and quiet. You can add more ways later.">
+          {!presets ? <Loading rows={3} label="Loading the ways to connect" /> : (
+            <div className="st-options">
+              <button type="button" className="st-option" onClick={() => setStep("free")}>
+                <span className="st-option-icon"><Cloud size={20} /></span>
+                <span className="st-option-text">
+                  <span className="st-option-title">Free cloud <Badge>Recommended</Badge></span>
+                  <span className="st-option-line">A free Gemini or Groq key. Two minutes, no card.</span>
                 </span>
-                <ArrowRight size={16} />
+                <ArrowRight size={16} className="st-option-go" aria-hidden="true" />
               </button>
-              <button className="welcome-option" onClick={() => setStep("subscription")} disabled={!presets}>
-                <Sparkles size={20} />
-                <span className="grow"><strong>Sign in with your subscription</strong><span className="muted small">ChatGPT, Claude, or GitHub Copilot: sign in with the plan you already pay for. No key needed.</span></span>
-                <ArrowRight size={16} />
-              </button>
-              <button className="welcome-option" onClick={() => { setKeyPreset(undefined); setStep("key"); }} disabled={!presets}>
-                <KeyRound size={20} />
-                <span className="grow"><strong>Paste API keys</strong><span className="muted small">OpenAI, Anthropic, xAI, Google, Groq, OpenRouter, Mistral, DeepSeek, or any compatible URL.</span></span>
-                <ArrowRight size={16} />
-              </button>
-              <button className="welcome-option quiet" onClick={() => setStep("ollama")} disabled={!presets?.ollama}>
-                <Cpu size={20} />
-                <span className="grow">
-                  <span className="row" style={{ gap: 10 }}><strong>Local Ollama</strong><span className="tag-adv">Advanced</span></span>
-                  <span className="muted small">Private and offline. Models run on your machine. Needs a strong computer; it will run warm.</span>
+              <button type="button" className="st-option" onClick={() => setStep("subscription")}>
+                <span className="st-option-icon"><Sparkles size={20} /></span>
+                <span className="st-option-text">
+                  <span className="st-option-title">Sign in with your subscription</span>
+                  <span className="st-option-line">ChatGPT, Claude, or GitHub Copilot: the plan you already pay for. No key needed.</span>
                 </span>
-                <ArrowRight size={16} />
+                <ArrowRight size={16} className="st-option-go" aria-hidden="true" />
+              </button>
+              <button type="button" className="st-option" onClick={() => { setKeyPreset(undefined); setStep("key"); }}>
+                <span className="st-option-icon"><KeyRound size={20} /></span>
+                <span className="st-option-text">
+                  <span className="st-option-title">Paste API keys</span>
+                  <span className="st-option-line">OpenAI, Anthropic, xAI, Google, Groq, OpenRouter, Mistral, DeepSeek, or any compatible server.</span>
+                </span>
+                <ArrowRight size={16} className="st-option-go" aria-hidden="true" />
+              </button>
+              <button type="button" className="st-option" onClick={() => setStep("ollama")} disabled={!presets.ollama}>
+                <span className="st-option-icon"><Cpu size={20} /></span>
+                <span className="st-option-text">
+                  <span className="st-option-title">Local Ollama <Badge>Advanced</Badge></span>
+                  <span className="st-option-line">Private and offline. Needs a strong computer; it will run warm.</span>
+                </span>
+                <ArrowRight size={16} className="st-option-go" aria-hidden="true" />
               </button>
             </div>
-            <div className="welcome-trust">
-              <span><ShieldCheck size={13} /> Keys stay on this computer</span>
-              <span><ListChecks size={13} /> Every action is logged</span>
-            </div>
-          </div>
-        )}
-        {step === "free" && <FreeStep info={info} onBack={back} onDone={onDone} />}
-        {step === "subscription" && <SubscriptionStep onBack={back} onDone={onDone} onKey={(p) => { setKeyPreset(p); setStep(p === "gemini" ? "free" : "key"); }} />}
-        {step === "key" && presets && <KeyStep presets={presets} info={info} initial={keyPreset} onBack={back} onDone={onDone} />}
-        {step === "ollama" && presets?.ollama && <OllamaStep preset={presets.ollama} onBack={back} onDone={onDone} />}
-      </div>
+          )}
+          <AuthActions><Back onBack={() => setStep("name")} /></AuthActions>
+        </AuthCard>
+      )}
+      {step === "free" && <FreeStep info={info} onBack={back} onDone={onDone} />}
+      {step === "subscription" && <SubscriptionStep onBack={back} onDone={onDone} onKey={(p) => { setKeyPreset(p); setStep(p === "gemini" ? "free" : "key"); }} />}
+      {step === "key" && presets && <KeyStep presets={presets} info={info} initial={keyPreset} onBack={back} onDone={onDone} />}
+      {step === "ollama" && presets?.ollama && <OllamaStep preset={presets.ollama} onBack={back} onDone={onDone} />}
     </div>
   );
 }
