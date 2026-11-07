@@ -230,9 +230,14 @@ describe('lockActions decisionFor (Companion categories)', () => {
     expect(result).toEqual({ kind: 'open', path: '/companion' });
   });
 
-  it('returns companion decision for question answer', () => {
-    const result = decisionFor('answer', { kind: 'companion', request_id: 'q1', request_kind: 'question' });
-    expect(result).toEqual({ kind: 'companion', id: 'q1', decision: 'answer', answer: 'yes' });
+  it('sends the typed reply for question answer', () => {
+    const result = decisionFor('answer', { kind: 'companion', request_id: 'q1', request_kind: 'question' }, '  dev ');
+    expect(result).toEqual({ kind: 'companion', id: 'q1', decision: 'answer', answer: 'dev' });
+  });
+
+  it('never answers for the user: no typed reply opens the question', () => {
+    expect(decisionFor('answer', { kind: 'companion', request_id: 'q1', request_kind: 'question' })).toEqual({ kind: 'open', path: '/companion' });
+    expect(decisionFor('answer', { kind: 'companion', request_id: 'q1', request_kind: 'question' }, '   ')).toEqual({ kind: 'open', path: '/companion' });
   });
 
   it('returns companion decision for question decline', () => {

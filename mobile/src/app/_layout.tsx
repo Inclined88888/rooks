@@ -18,6 +18,9 @@ import { routeFor } from '@/lib/push';
 import { handleLockAction } from '@/lib/lockActions'; // feat/grok-style
 import { confirmWithBiometrics } from '@/lib/guard'; // feat/grok-style
 
+/** Notification buttons that act from the lock screen (approvals and Companion). Anything else just opens the app. */
+const LOCK_ACTIONS = new Set(['approve', 'decline', 'allow', 'deny', 'answer']);
+
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function Shell() {
@@ -39,14 +42,17 @@ function Shell() {
     const open = (r: Notifications.NotificationResponse | null) => {
       // feat/grok-style: Approve / Decline straight from the lock screen, with Face ID first
       const data = r?.notification.request.content.data as Record<string, unknown> | undefined;
-      if (r && ['approve', 'decline', 'allow', 'deny', 'answer'].includes(r.actionIdentifier)) {
+      if (r && LOCK_ACTIONS.has(r.actionIdentifier)) {
         handleLockAction(r.actionIdentifier, data, {
           confirm: confirmWithBiometrics,
           decide: async (id, approve) => { if (!clientRef.current) throw new Error('not paired'); return clientRef.current.decide(id, approve); },
-          companionDecide: async (id, decision, answer) => { if (!clientRef.current) throw new Error('not paired'); return clientRef.current.companionDecide(id, decision, answer); },
+          companionDecide: async (id, decision, answer) => {
+            if (!clientRef.current) throw new Error('not paired');
+            return clientRef.current.companionDecide(id, decision, answer);
+          },
           open: (p) => router.push(p as never),
           notify: (title, body) => Notifications.scheduleNotificationAsync({ content: { title, body }, trigger: null }),
-        }).catch(() => undefined);
+        }, r.userText).catch(() => undefined);
         return;
       }
       const to = routeFor(r?.notification.request.content.data as Record<string, unknown> | undefined);
