@@ -163,4 +163,5 @@ Section 7, item 2: put the app's MCP server and the persistent tools behind `hol
 
 1. `tests/test_approval_gaps.py` (3 tests). All 3 failed on the previous commit: the schedule was created without a yes, and the skill script ran at once.
 2. `tests/test_v02_core.py::test_memory_and_schedule_undo` now approves the held schedule before checking History. That is the intended change of behaviour.
-3. Terminal (`rooks-code`): 203 passed, 1 failed. The failure, `test_project_sandbox_blocks_a_write_outside_the_folder`, also fails on clean `main` in this container (the tests run as root, and the project sandbox does not stop root writing outside the folder). Not caused by this change; not fixed here.
+3. Backend, full suite on this increment: 830 passed, 5 failed, 1 skipped. The 5 are the same 5 that fail on clean `main` (section 1). No new failures.
+4. Terminal (`rooks-code`): 203 passed, 1 failed. The failure, `test_project_sandbox_blocks_a_write_outside_the_folder`, also fails on clean `main` in this container (the tests run as root, and the project sandbox does not stop root writing outside the folder). Not caused by this change; not fixed here.
