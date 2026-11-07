@@ -25,7 +25,7 @@ PROVIDERS: dict[str, dict] = {
                   "headers": {"X-Workbench-Channel": "rooks-code"}, "app": True},
     "openai": {"kind": "openai", "base_url": "https://api.openai.com/v1", "key_env": "OPENAI_API_KEY", "model": "gpt-4.1-mini"},
     "anthropic": {"kind": "anthropic", "base_url": "https://api.anthropic.com/v1", "key_env": "ANTHROPIC_API_KEY",
-                  "model": "claude-sonnet-4-5"},
+                  "model": "claude-sonnet-5-5"},
     "openrouter": {"kind": "openai", "base_url": "https://openrouter.ai/api/v1", "key_env": "OPENROUTER_API_KEY",
                    "model": "openai/gpt-4.1-mini"},
     "ollama": {"kind": "openai", "base_url": "http://localhost:11434/v1", "key_env": "", "model": "qwen2.5:7b",
