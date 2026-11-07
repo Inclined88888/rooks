@@ -27,10 +27,10 @@ export function SettingsTab() {
         <h3>Basics</h3>
         <div className="row wrap">
           <label className="field grow">Assistant name<input className="ui-input" value={f.assistant_name} onChange={(e) => setF({ ...f, assistant_name: e.target.value })} /></label>
-          <label className="field grow">Timezone (schedules follow it)<input className="ui-input" value={f.timezone} onChange={(e) => setF({ ...f, timezone: e.target.value })} placeholder={browserTz} /></label>
+          <label className="field grow">Time zone (schedules follow it)<input className="ui-input" value={f.timezone} onChange={(e) => setF({ ...f, timezone: e.target.value })} placeholder={browserTz} /></label>
         </div>
         <div className="row">
-          {f.timezone !== browserTz && <button className="ui-btn ui-btn-sm ui-btn-ghost" onClick={() => setF({ ...f, timezone: browserTz })}>Use {browserTz}</button>}
+          {f.timezone !== browserTz && <button className="ui-btn ui-btn-sm ui-btn-ghost" onClick={() => setF({ ...f, timezone: browserTz })}>Use this computer's time zone</button>}
           <div className="spacer" />
           <button className="ui-btn ui-btn-primary" onClick={() => put({ assistant_name: f.assistant_name, timezone: f.timezone })}>Save</button>
         </div>
