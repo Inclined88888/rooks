@@ -1,10 +1,11 @@
 """Company: you are the board. Agents sit in an org chart, work on tasks with the assistant's tools, delegate to
-from __future__ import annotations
 their reports, and stop when their monthly budget runs out.
 
 A single worker runs one queued task at a time (keeps the box light and spend predictable). Delegation is limited
 in depth so agents cannot spawn work forever.
 """
+
+from __future__ import annotations
 
 import asyncio
 import logging
@@ -67,7 +68,16 @@ async def run_task(task_id: int) -> None:
     conv = t["conversation_id"] or assistant.new_conversation("agent", f"{agent['name']}: {t['title']}", str(task_id), agent["id"])
     db.run("UPDATE agent_tasks SET status = 'running', conversation_id = ?, updated_at = ? WHERE id = ?", conv, db.now(), task_id)
     ctx = assistant.Ctx(channel="agent", conversation_id=conv, agent=agent, task_id=task_id)
-    text, events = await assistant.ask(ctx, f"Task #{task_id}: {t['title']}\n\n{t['description'] or ''}".strip())
+    try:
+        text, events = await assistant.ask(ctx, f"Task #{task_id}: {t['title']}\n\n{t['description'] or ''}".strip())
+    except Exception as e:  # noqa: BLE001 - the task must end with an outcome, never stay "running"
+        # Not re-queued: the turn may already have done things (written files, saved drafts), and running it again
+        # from the start on the next restart would repeat them. The board sees it failed and can start it again.
+        log.warning("company task %s failed: %s", task_id, e)
+        text, events = "It stopped because of an error before it finished. Start it again to retry.", []
+        db.run("UPDATE agent_tasks SET status = 'failed', result = ?, updated_at = ? WHERE id = ?", text, db.now(), task_id)
+        scheduler.deliver(f"{agent['name']} failed: {t['title']}", text, "inbox", f"task:{task_id}")
+        return
     budget_stop = any(e.get("budget") for e in events)
     status = "blocked" if budget_stop else ("failed" if text.startswith("Error:") else "done")
     db.run("UPDATE agent_tasks SET status = ?, result = ?, updated_at = ? WHERE id = ?", status, text, db.now(), task_id)

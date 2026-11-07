@@ -925,9 +925,10 @@ async def _run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) 
                              "evidence": evidence, "ref": ref, "action_id": aid})
         return ok, out
 
-    if not t or not t.when(ctx):
-        return done(False, f"Unknown tool {name}", "unknown_tool")
     from .teammates import hooks as tm_hooks  # feat/grok-style: teammates never send; a send becomes a draft the user sends
+
+    if not t or not t.when(ctx) or not tm_hooks.allows(ctx, t):  # a teammate runs only the tools it was offered
+        return done(False, f"Unknown tool {name}", "unknown_tool")
 
     drafted = tm_hooks.as_draft(name, raw_args, ctx)  # feat/grok-style
     if drafted:

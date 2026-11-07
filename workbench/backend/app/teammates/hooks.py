@@ -59,6 +59,14 @@ def filter_tools(ctx, tools: list) -> list:
         return tools
 
 
+def allows(ctx, tool) -> bool:
+    """assistant.run_tool: a teammate runs only the tools it was offered (filter_tools), so naming a hidden tool, made
+    up or asked for by a page it read, does nothing. A send stays allowed here because as_draft turns it into a draft."""
+    if tool.name in SEND_TOOLS:
+        return True
+    return any(x.name == tool.name for x in filter_tools(ctx, [tool]))
+
+
 def _draft_message(channel: str, to: str, body: str, subject: str = "", ctx=None) -> dict:
     from . import outbox, store
 
