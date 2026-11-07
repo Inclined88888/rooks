@@ -20,9 +20,9 @@ site rules, approvals and receipts as the agent in Chrome. Design and security m
   the run reads as denied inside the agent's tab, the same as asking for it. The control channel refuses a private tab
   and never takes a private tab that is in front. The app's local-address and host-pattern rules give the same answers
   as the Python agent's for every reserved range and for `[...]` patterns, and the parity test now guards them. Typing
-  a LAN or link-local address, or `[::1]`, opens it over plain http like `localhost`. The task helper gets no key,
-  token, secret or password from the app's environment, only its own token: model keys come from the app's settings,
-  not from the terminal you started the app in. Panel messages are plain sentences with the technical reason under
+  a LAN or link-local address, or `[::1]`, opens it over plain http like `localhost`. The task helper gets none of the app's
+  secrets and no other key, token, secret or password from the app's environment, only its own token and the model keys
+  it reads itself (such as a key for OpenAI or Anthropic exported in the terminal you started the app in). Panel messages are plain sentences with the technical reason under
   "Details". CI runs the app's tests on Linux under a virtual display, and `scripts/test-all.sh` runs them when `npm`
   and `xvfb-run` are present.
 - Migration: none. Rollback: previous commit. No secrets changed.

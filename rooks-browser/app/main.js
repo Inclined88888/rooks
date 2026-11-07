@@ -28,6 +28,8 @@ const SECRET_ENV = new Set(["APP_SECRET", "TOOLS_API_KEY", "BROWSER_API_KEY", "D
   "WORKBENCH_DESKTOP_TOKEN", "TRY_API_KEY", "ROOKS_TRY_API_KEY", "ROOKS_BROWSER_TOKEN", "ROOKS_DESK_TOKEN", "WORKBENCH_API_KEY",
   "BRIDGE_API_KEY"]);
 const SECRET_SUFFIX = /(_API_KEY|_TOKEN|_SECRET|_PASSWORD)$/i;
+// The helper is the model client: the keys its own providers read (rooks_browser/llm.py PROVIDERS) are meant for it.
+const MODEL_KEYS = new Set(["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "GROQ_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"]);
 const ASK_PERMISSIONS = new Set(["media", "geolocation", "notifications", "midi", "midiSysex", "pointerLock", "openExternal",
   "clipboard-read", "display-capture", "idle-detection", "window-management", "speaker-selection", "storage-access"]);
 
@@ -408,11 +410,13 @@ function freePort() {
 }
 
 /** The helper's environment: this process's, without the app's secrets and without any key, token or password
- * meant for something else. It gets its own token and reads model keys from the app, as the terminal agents do. */
+ * meant for something else. It gets its own token; the model keys it reads itself (OPENAI_API_KEY and the like)
+ * pass through, and with the Rooks app running it uses the app's models through app.json, as the terminal does. */
 function helperEnv() {
   const env = {};
   for (const [k, v] of Object.entries(process.env)) {
-    if (SECRET_ENV.has(k.toUpperCase()) || SECRET_SUFFIX.test(k)) continue;
+    const name = k.toUpperCase();
+    if (!MODEL_KEYS.has(name) && (SECRET_ENV.has(name) || SECRET_SUFFIX.test(k))) continue;
     env[k] = v;
   }
   env.ROOKS_BROWSER_TOKEN = helper.token;

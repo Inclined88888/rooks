@@ -162,15 +162,17 @@ test("the task helper gets no secrets from the app's environment, and its errors
   const { app, ui, control } = await launch({
     ROOKS_BROWSER_CMD: JSON.stringify([process.execPath, join(APP, "test", "fake_helper.mjs"), dump]),
     // what the app's own process may hold: the app's secrets, model keys and tokens meant for other programs
-    APP_SECRET: "app-secret-value", TOOLS_API_KEY: "tools-key-value", OPENAI_API_KEY: "sk-not-for-the-helper",
+    APP_SECRET: "app-secret-value", TOOLS_API_KEY: "tools-key-value", OPENAI_API_KEY: "sk-the-helpers-own-model-key",
     GITHUB_TOKEN: "gh-token-value", WEBHOOK_SECRET: "hook-secret-value", DB_PASSWORD: "db-password-value",
     ROOKS_BROWSER_TOKEN: "a-stale-token-from-another-run", ROOKS_BROWSER_HOME: "/tmp/rooks-home-for-this-test",
   });
   try {
     assert.equal(control.helper_error, "");
     const env = JSON.parse(readFileSync(dump, "utf8"));
-    for (const k of ["APP_SECRET", "TOOLS_API_KEY", "OPENAI_API_KEY", "GITHUB_TOKEN", "WEBHOOK_SECRET", "DB_PASSWORD"]) {
+    for (const k of ["APP_SECRET", "TOOLS_API_KEY", "GITHUB_TOKEN", "WEBHOOK_SECRET", "DB_PASSWORD"]) {
       assert.equal(k in env, false, `${k} reached the helper`);
+    }
+    assert.equal(env.OPENAI_API_KEY, "sk-the-helpers-own-model-key");  // the helper is the model client: its own keys pass
     }
     assert.equal(env.ROOKS_BROWSER_TOKEN, control.helper_token);  // its own token, not the stale one
     for (const k of ["PATH", "HOME"]) assert.ok(env[k], `${k} missing`);
