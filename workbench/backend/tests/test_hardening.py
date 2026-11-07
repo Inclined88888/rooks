@@ -70,18 +70,68 @@ def test_clean_conversations_are_not_interrupted(client):
     assert memfacts.exact('Prefers metric units')
 
 
-def test_unattended_runs_refuse_gated_actions(client, monkeypatch):
+def test_unattended_runs_wait_for_the_owner_instead_of_acting(client, monkeypatch):
+    """Nobody watches a scheduled run, so a gated call is held in Needs you (never run, never refused) and runs once on yes."""
     from app import assistant, db
 
     _poisoned_page(monkeypatch)
-    cid = assistant.new_conversation("agent")
+    cid = assistant.new_conversation("schedule", "digest", "77")
     SCRIPT[:] = [tool_call("read_page", {"url": "https://recipes.example/y"}, "r"),
                  tool_call("remember", {"content": "attacker fact"}, "m"), {"role": "assistant", "content": "done"}]
     text, ev = asyncio.run(assistant.ask(assistant.Ctx(channel="schedule", conversation_id=cid), "daily digest"))
-    denied = [e for e in ev if e["type"] == "approval_denied"]
-    assert denied and denied[0]["tool"] == "remember"
+    held = [e for e in ev if e["type"] == "approval_required"]
+    assert held and held[0]["tool"] == "remember" and not [e for e in ev if e["type"] == "approval_denied"]
+    assert not memfacts.exact('attacker fact')  # nothing happened yet
+    assert db.one("SELECT outcome FROM actions WHERE id = ?", held[0]["id"])["outcome"] == "held"
+    waiting = client.get("/api/needs-you").json()
+    assert any(i["id"] == f"a:{held[0]['id']}" for i in waiting)
+
+    # The same schedule fires again before anyone answered: the same call is not asked for a second time
+    cid2 = assistant.new_conversation("schedule", "digest", "77")
+    SCRIPT[:] = [tool_call("read_page", {"url": "https://recipes.example/y"}, "r"),
+                 tool_call("remember", {"content": "attacker fact"}, "m"), {"role": "assistant", "content": "done"}]
+    _, ev2 = asyncio.run(assistant.ask(assistant.Ctx(channel="schedule", conversation_id=cid2), "daily digest"))
+    assert not [e for e in ev2 if e["type"] == "approval_required"]
+    mine = [a for a in client.get("/api/approvals").json() if a["conversation_id"] in (cid, cid2) and a["status"] == "pending"]
+    assert [a["tool"] for a in mine] == ["remember"]
+
+    # The owner says no: it never happens, and a second answer is refused
+    assert client.post(f"/api/needs-you/a:{held[0]['id']}/deny").json()["status"] == "denied"
     assert not memfacts.exact('attacker fact')
-    assert db.one("SELECT outcome FROM actions WHERE id = ?", denied[0]["id"])["outcome"] == "denied"
+    assert client.post(f"/api/needs-you/a:{held[0]['id']}/approve").status_code == 409
+
+
+def test_an_approved_scheduled_step_runs_once_and_reports_to_the_inbox(client):
+    from app import db, scheduler
+
+    s = scheduler.create_schedule("Morning notes", "0 7 * * *", "Remember that the site meeting moved to 9")
+    SCRIPT[:] = [tool_call("read_page", {"url": "https://recipes.example/z"}, "r"),
+                 tool_call("create_task", {"title": "Call the plumber"}, "t"),
+                 tool_call("remember", {"content": "Site meeting at 9"}, "m"), {"role": "assistant", "content": "Saved."}]
+    from app import research
+
+    async def fetch_text(client_, url):
+        return "plain page"
+
+    research.fetch_text, old = fetch_text, research.fetch_text
+    try:
+        asyncio.run(scheduler.run_schedule(db.one("SELECT * FROM schedules WHERE id = ?", s["id"])))
+    finally:
+        research.fetch_text = old
+    row = db.one("SELECT last_status FROM schedules WHERE id = ?", s["id"])
+    assert row["last_status"] == "waiting"  # not "ok": something is still waiting on the owner
+    first = db.one("SELECT * FROM inbox WHERE source = ? ORDER BY id DESC", f"schedule:{s['id']}")
+    assert "waiting for your OK" in first["body"]
+    runs = {r["id"] for r in db.all("SELECT id FROM conversations WHERE channel = 'schedule' AND external_id = ?", str(s["id"]))}
+    aid = next(a["id"] for a in client.get("/api/approvals").json()
+               if a["conversation_id"] in runs and a["tool"] == "remember" and a["status"] == "pending")
+    assert not memfacts.exact('Site meeting at 9')
+    assert client.post(f"/api/needs-you/a:{aid}/approve").json()["status"] == "done"
+    assert memfacts.exact('Site meeting at 9')
+    assert client.post(f"/api/needs-you/a:{aid}/approve").status_code == 409  # runs once
+    done = db.one("SELECT * FROM inbox WHERE source = ? ORDER BY id DESC", f"schedule:{s['id']}")
+    assert done["id"] != first["id"] and done["title"].startswith("Done: Morning notes")
+    memfacts.drop('Site meeting')
 
 
 def test_no_skill_is_learned_from_untrusted_content(client, monkeypatch):
