@@ -215,6 +215,7 @@ def _shape(st: dict, available: bool = True) -> dict:
         "note": st.get("note") or "",
         "driver": st.get("driver"),          # advanced only
         "home": st.get("home"),              # advanced only
+        "shell": st.get("shell"),            # advanced only: "sh", or "cmd" (Windows Command Prompt); the terminal sees the same
         "offline": bool(st.get("offline")),
         "last_checkpoint": st.get("last_checkpoint"),
         "checkpoints": st.get("checkpoints") or [],
