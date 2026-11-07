@@ -70,12 +70,16 @@ def test_default_claude_model_matches_app_browser_and_desk():
     app = repo / "workbench" / "backend" / "app" / "llm.py"
     if not app.exists():
         pytest.skip("not a full checkout")
-    want = re.search(r'"api\.anthropic\.com":\s*"(claude-[^"]+)"', app.read_text()).group(1)
+    m = re.search(r'"api\.anthropic\.com":\s*"(claude-[^"]+)"', app.read_text())
+    assert m, "the app's preferred Anthropic model is not where this test looks (workbench/backend/app/llm.py)"
+    want = m.group(1)
     assert config.PROVIDERS["anthropic"]["model"] == want
     for sub in ("rooks-browser/rooks_browser/llm.py", "rooks-desk/rooks_desk/llm.py", "browser-agent/src/browser_agent/llm.py"):
-        text = (repo / sub).read_text()
-        got = re.search(r'\("anthropic",\s*"Anthropic Claude",\s*\("ANTHROPIC_API_KEY",\),\s*"(claude-[^"]+)"', text).group(1)
-        assert got == want, f"{sub} defaults to {got}, the app to {want}"
+        if not (repo / sub).exists():
+            continue  # a partial checkout
+        found = re.search(r'\("anthropic",\s*"Anthropic Claude",\s*\("ANTHROPIC_API_KEY",\),\s*"(claude-[^"]+)"', (repo / sub).read_text())
+        assert found, f"{sub}: the Anthropic default is not where this test looks"
+        assert found.group(1) == want, f"{sub} defaults to {found.group(1)}, the app to {want}"
 
 
 def test_trusted_folders(tmp_path):
