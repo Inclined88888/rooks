@@ -40,6 +40,10 @@ bump. Until a release is called, everything accumulates under `Unreleased`.
 
 ## [Unreleased]
 
+### Added
+
+- Agents can post a full message in the chat, report or comparison table included, right above a question or the Kanban planner, so you see everything before you choose.
+
 ### Known issues
 
 - Onboarding form details are still in English outside English and French; the step titles are translated.
