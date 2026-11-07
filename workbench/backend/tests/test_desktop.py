@@ -50,12 +50,15 @@ def test_desktop_session_needs_the_launch_token(client, desktop):
     assert "wb_session" in r.headers.get("set-cookie", "")
 
 
-def test_local_session_mints_a_cookie_with_the_bridge_key(client, monkeypatch):
-    """Native window on a service already running: trade app.json key for wb_session."""
-    from app import config
+def test_local_session_refuses_the_tools_key_and_a_wrong_key(client, monkeypatch):
+    """Native window on a service already running: only the native key (native.json) trades for wb_session. The tools
+    key used to work here too; it is handed to add-ons and the Room's server, so it must not."""
+    from app import config, security
     from starlette.testclient import TestClient
 
     monkeypatch.setattr(config, "TOOLS_API_KEY", "k" * 30)
+    monkeypatch.setattr(config, "NATIVE_SIGNIN_KEY", "n" * 30)
+    monkeypatch.setattr(security, "_attempts", {})  # three refusals here must not trip the throttle for later tests
     # Same CSRF header the native shell sends on every write (main.py guard).
     h = {"X-Workbench": "1"}
     anon = TestClient(client.app)
@@ -64,10 +67,8 @@ def test_local_session_mints_a_cookie_with_the_bridge_key(client, monkeypatch):
         "/api/desktop/local-session",
         headers={**h, "Authorization": "Bearer wrong-key-xxxxxxxxxxxxxxxx"},
     ).status_code == 401
-    r = anon.post(
-        "/api/desktop/local-session",
-        headers={**h, "Authorization": f"Bearer {'k' * 30}"},
-    )
+    assert anon.post("/api/desktop/local-session", headers={**h, "Authorization": f"Bearer {'k' * 30}"}).status_code == 401
+    r = anon.post("/api/desktop/local-session", headers={**h, "Authorization": f"Bearer {'n' * 30}"})
     assert r.status_code == 200 and r.json() == {"ok": True}
     assert "wb_session" in r.headers.get("set-cookie", "")
 

@@ -18,6 +18,7 @@ FAIL CLOSED: sandbox-exec missing or profile fails -> refuse with a clear messag
 
 from __future__ import annotations
 
+import functools
 import json
 import os
 import secrets
@@ -85,7 +86,9 @@ def _hook(event, args):
         addr = args[1]
         if isinstance(addr, tuple) and not _net:
             _report("network", f"connect to {addr[0]}:{addr[1]}", str(addr[0])); raise PermissionError("blocked by skill sandbox: network")
-    elif event in ("subprocess.Popen", "os.system", "os.exec", "os.posix_spawn", "os.spawn", "ctypes.dlopen") and not _shell:
+    elif event == "ctypes.dlopen" and not _shell:
+        _report("shell", "load a system library (ctypes)", "shell"); raise PermissionError("blocked by skill sandbox: shell")
+    elif event in ("subprocess.Popen", "os.system", "os.exec", "os.posix_spawn", "os.spawn") and not _shell:
         _report("shell", f"run a program ({str(args[0])[:80] if args else event})", "shell"); raise PermissionError("blocked by skill sandbox: shell")
 sys.addaudithook(_hook)
 sys.argv = _cfg["argv"]
@@ -124,7 +127,9 @@ def _limits():  # runs in the child before exec (POSIX only)
     os.setsid()
 
 
+@functools.lru_cache(maxsize=1)
 def _bwrap_ok() -> bool:
+    """One probe per process: hold_reason asks on every skill script and run_python call."""
     if not (sys.platform.startswith("linux") and shutil.which("bwrap")):
         return False
     try:

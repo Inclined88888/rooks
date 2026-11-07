@@ -13,7 +13,7 @@ enforces this; no client is trusted to hold back.
 | Credential | Who is given it | What the server lets it do |
 | --- | --- | --- |
 | Session cookie (`wb_session`) | The person's browser or app window after sign in | Everything the person can do |
-| `TOOLS_API_KEY` | The backend (keychain or the 0600 `.desktop-secrets.json`); on a server install, the add-ons for `/tools` and `/mcp` | Not an account login: `surfaces.bearer_ok` refuses it (security hardening, 2026-11-07), so `/api` is closed to it. Opens `/tools` and `/mcp`; mints a window session on loopback (`api.desktop_local_session`) |
+| `TOOLS_API_KEY` | The backend (keychain or the 0600 `.desktop-secrets.json`); on a server install, the add-ons for `/tools` and `/mcp` | Not an account login: `surfaces.bearer_ok` refuses it and `/api/desktop/local-session` no longer takes it (security hardening, 2026-11-07), so `/api` is closed to it. Opens `/tools` and `/mcp` only |
 | `NATIVE_SIGNIN_KEY` (new) | The native Rooks window only, through `native.json` (0600, next to `app.json`, new every launch, removed on quit) | One thing: mint a session cookie at `/api/desktop/local-session` on loopback. Not a bearer anywhere |
 | Terminal access token | The person's `rooks` after `rooks login` | Chat (`require_user_or_cli`) and the seven Workroom routes, including answering Needs you and acting in the Room |
 | `BROWSER_API_KEY` (`app.json`) | The terminal, the browser and desk helpers | `/v1`; with the terminal's channel header, reads the Workroom routes only; records the person's y/n on terminal prompts |

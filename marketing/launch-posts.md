@@ -28,12 +28,12 @@ Everything heavier (SearXNG, a browser agent, Ollama-in-Docker, Open WebUI, …)
 Install is one command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Inclined88888/ai-workspace/main/install-server.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Inclined88888/rooks/main/install-server.sh | bash
 ```
 
 There's also a company of agents with real controls: per-agent monthly budgets in cents, checked before every model call, delegation depth capped at 3, and a Kanban board. A mission-control dashboard is on the roadmap (Phase 3).
 
-Repo: https://github.com/Inclined88888/ai-workspace — the README carries an honest tested/untested table, and the measured numbers are published and reproducible.
+Repo: https://github.com/Inclined88888/rooks — the README carries an honest tested/untested table, and the measured numbers are published and reproducible.
 
 ## 2. Blog / Reddit launch post
 
@@ -59,4 +59,4 @@ Most self-hosted AI stacks ask you to wire together a chat UI, an agent framewor
 
 More channels are coming as scoped, allowlisted add-ons — Signal, WhatsApp, Discord, Slack (Phase 4). Telegram already ships in the core.
 
-Try it: https://github.com/Inclined88888/ai-workspace
+Try it: https://github.com/Inclined88888/rooks

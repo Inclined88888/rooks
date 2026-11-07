@@ -116,6 +116,10 @@ def test_sandbox_blocks_network_and_private_files(client):
     # ctypes reaches libc directly (system, open, connect) and skips every Python level check
     r = compute.run(f"import ctypes\nctypes.CDLL(None).system(b'cat {config.DB_PATH} > /dev/null')")
     assert r["status"] != "ok", r
+    # ctypes.pythonapi is made before the hook is installed (numpy imports ctypes), so a call through it must be
+    # caught at the call, not only when a library is opened
+    r = compute.run("import ctypes\nctypes.pythonapi.system(b'echo PYTHONAPI-escaped')")
+    assert r["status"] != "ok" and "PYTHONAPI-escaped" not in r.get("stdout", ""), r
 
 
 def test_run_python_gets_the_file_even_when_the_model_names_it_instead_of_passing_its_id(client):

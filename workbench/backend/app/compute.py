@@ -41,7 +41,9 @@ def _hook(event, args):
             raise PermissionError("The sandbox can only read its input files: " + p)
     elif event in ("socket.getaddrinfo", "socket.connect", "socket.bind") :
         raise PermissionError("No network in the analysis sandbox")
-    elif event in ("subprocess.Popen", "os.system", "os.exec", "os.posix_spawn", "os.spawn", "os.fork", "ctypes.dlopen") and not (event == "ctypes.dlopen" and _cfg.get("allow_dlopen")):
+    elif event in ("subprocess.Popen", "os.system", "os.exec", "os.posix_spawn", "os.spawn", "os.fork", "ctypes.dlopen", "ctypes.dlsym", "ctypes.call_function") and not (event == "ctypes.dlopen" and _cfg.get("allow_dlopen")):
+        # ctypes.pythonapi exists before this hook is installed (numpy imports ctypes), so calls through it are
+        # audited too (dlsym, call_function), not only new libraries (dlopen)
         raise PermissionError("The analysis sandbox cannot start other programs")
 os.environ["MPLBACKEND"] = "Agg"
 try:
