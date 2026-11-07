@@ -7,7 +7,7 @@ import difflib
 import fnmatch
 import hashlib
 import json
-import functools
+import ntpath
 import os
 import re
 import shutil
@@ -204,16 +204,61 @@ def diff(old: str, new: str, rel: str) -> str:
 NOT_CONTAINED_ON_WINDOWS = "not kept inside the project folder on Windows"
 
 
-@functools.lru_cache(maxsize=8)
+_BWRAP_OK: set[tuple[str, ...]] = set()
+
+
 def _bwrap_problem(prefix: tuple[str, ...]) -> str:
-    """One trial run of bubblewrap with these settings: "" when it works, else the first line it printed."""
+    """One trial run of bubblewrap with these settings: "" when it works, else the first line it printed. The trial runs
+    /bin/sh, the program every real command needs (NixOS and Guix have no /bin/true). Only a success is remembered, so a
+    machine that is fixed (or a one-off failure) does not keep commands refused until rooks restarts."""
+    if prefix in _BWRAP_OK:
+        return ""
     try:
-        r = subprocess.run([*prefix, "/bin/true"], capture_output=True, text=True, timeout=20, stdin=subprocess.DEVNULL)
+        r = subprocess.run([*prefix, "/bin/sh", "-c", ":"], capture_output=True, text=True, timeout=20,
+                           stdin=subprocess.DEVNULL)
     except (OSError, subprocess.TimeoutExpired) as e:
         return str(e)[:200]
     if r.returncode == 0:
+        _BWRAP_OK.add(prefix)
         return ""
     return ((r.stderr or r.stdout).strip().splitlines() or [f"exit code {r.returncode}"])[0][:200]
+
+
+def _namespaces_blocked(problem: str) -> bool:
+    """bubblewrap's own words when the kernel will not give it a user namespace (Ubuntu 24.04's default)."""
+    p = problem.lower()
+    return any(w in p for w in ("uid map", "namespace", "permission denied", "operation not permitted"))
+
+
+def _windows_shell() -> str:
+    """cmd.exe the way subprocess's own shell=True finds it: %ComSpec%, else System32's, and always a full path, so a
+    cmd.exe sitting in the project (or wherever rooks was started) is never the one that runs."""
+    comspec = os.environ.get("ComSpec") or os.environ.get("COMSPEC")
+    if not comspec:
+        comspec = ntpath.join(os.environ.get("SystemRoot", ""), "System32", "cmd.exe")
+    if not ntpath.isabs(comspec):
+        raise ToolError("Cannot find the Windows command shell (cmd.exe). Check the ComSpec and SystemRoot settings.")
+    return comspec
+
+
+def _run_windows(cmdline: str, cwd: Path, timeout: int) -> subprocess.CompletedProcess:
+    """subprocess.run with shell=True's executable, but a timeout ends cmd.exe and everything it started. subprocess.run
+    kills only cmd.exe and then waits with no limit for the pipes, which a child still running (a dev server, a hung
+    test) holds open, so rooks itself would hang."""
+    p = subprocess.Popen(cmdline, executable=_windows_shell(), cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         stdin=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace",
+                         creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+    try:
+        out, err = p.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        subprocess.run(["taskkill", "/F", "/T", "/PID", str(p.pid)], capture_output=True, stdin=subprocess.DEVNULL)
+        p.kill()
+        try:
+            out, err = p.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            out, err = "", ""
+        raise subprocess.TimeoutExpired(cmdline, timeout, output=out, stderr=err) from None
+    return subprocess.CompletedProcess(cmdline, p.returncode, out, err)
 
 
 class Toolbox:
@@ -473,9 +518,11 @@ class Toolbox:
         neither works. Windows has no containment yet, so there the command runs as the user and the approval line says
         so (NOT_CONTAINED_ON_WINDOWS). Full mode is an ordinary shell everywhere."""
         if sys.platform == "win32":
-            # One string, as subprocess's own shell=True builds it. A list would be joined with quotes escaped as \",
-            # which cmd.exe does not understand: "C:\path\python.exe" x.py would become a program it cannot find.
-            return f'{os.environ.get("COMSPEC") or "cmd.exe"} /s /c "{cmd}"'
+            # One string, exactly as subprocess's own shell=True builds it. A list would be joined with quotes escaped
+            # as \", which cmd.exe does not understand. No /s: with it cmd.exe strips the quotes from a lone quoted
+            # path ("C:\Users\Jo Smith\x.exe"); without it those stay, and any longer quoted command loses only the
+            # outer pair, the same as with /s.
+            return f'{_windows_shell()} /c "{cmd}"'
         argv = ["/bin/sh", "-c", cmd]
         if self.sandbox != "project":
             return argv
@@ -524,9 +571,10 @@ class Toolbox:
         out += ["--chdir", str(Path(self.root).resolve())]
         problem = _bwrap_problem(tuple(out))
         if problem:
+            hint = ("On Ubuntu 24.04 and later, unprivileged user namespaces are switched off by default. Allow them, or "
+                    if _namespaces_blocked(problem) else "Fix that, or ")
             raise ToolError("This computer cannot keep commands inside the project folder: bubblewrap says "
-                            f"\"{problem}\". On Ubuntu 24.04 and later, unprivileged user namespaces are switched off "
-                            "by default. Allow them, or set sandbox = \"full\" to run commands without that limit.")
+                            f"\"{problem}\". {hint}set sandbox = \"full\" to run commands without that limit.")
         return [*out, *argv]
 
     def _run_command(self, a: dict) -> Plan:
@@ -538,8 +586,11 @@ class Toolbox:
 
         def run():
             try:
-                r = subprocess.run(argv, cwd=self.root, capture_output=True, text=True, timeout=timeout,
-                                   encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
+                if sys.platform == "win32":
+                    r = _run_windows(argv, self.root, timeout)
+                else:
+                    r = subprocess.run(argv, cwd=self.root, capture_output=True, text=True, timeout=timeout,
+                                       encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
             except subprocess.TimeoutExpired as e:
                 out = (e.stdout or "") + (e.stderr or "") if isinstance(e.stdout, str) else ""
                 raise ToolError(f"timed out after {timeout}s\n{_clip(out)}") from None

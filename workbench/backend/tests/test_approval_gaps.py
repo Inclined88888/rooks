@@ -87,17 +87,25 @@ def test_an_approved_step_of_a_coworker_runs_as_that_coworker(client):
 
     boss = client.post("/api/company/agents", json={"name": "Gap boss", "title": "Lead"}).json()
     rep = client.post("/api/company/agents", json={"name": "Gap report", "title": "Analyst"}).json()
-    db.run("UPDATE agents SET reports_to = ? WHERE id = ?", boss["id"], rep["id"])
-    boss_row = db.one("SELECT * FROM agents WHERE id = ?", boss["id"])
-    conv = assistant.new_conversation("agent", "Gap boss: plan", "gap-task", boss["id"])
-    ctx = assistant.Ctx(channel="agent", conversation_id=conv, agent=boss_row, tainted=True)
-    ok, out = asyncio.run(assistant.run_tool("delegate_task", json.dumps({"agent_name": "Gap report", "title": "Count the beans",
-                                                                           "description": "all of them"}), ctx))
-    assert not ok and ctx.receipts[-1]["outcome"] == "held", out
-    aid = ctx.receipts[-1]["action_id"]
-    r = client.post(f"/api/needs-you/a:{aid}/approve").json()
-    assert r["status"] == "done" and "Unknown tool" not in (r.get("result") or ""), r
-    assert db.one("SELECT 1 AS x FROM agent_tasks WHERE title = 'Count the beans' AND agent_id = ?", rep["id"])
+    # The app's company worker (company.loop, every 10 s) runs any queued task of an active coworker as a full turn.
+    # Left queued, this one ran during the next test files, took their scripted replies and saved a user message of its
+    # own (test_assistant, test_attachments failed about one run in three). A paused report still gets the task queued,
+    # which is what this test checks, and the worker never runs it.
+    db.run("UPDATE agents SET reports_to = ?, status = 'paused', paused_reason = 'test' WHERE id = ?", boss["id"], rep["id"])
+    try:
+        boss_row = db.one("SELECT * FROM agents WHERE id = ?", boss["id"])
+        conv = assistant.new_conversation("agent", "Gap boss: plan", "gap-task", boss["id"])
+        ctx = assistant.Ctx(channel="agent", conversation_id=conv, agent=boss_row, tainted=True)
+        ok, out = asyncio.run(assistant.run_tool("delegate_task", json.dumps({"agent_name": "Gap report", "title": "Count the beans",
+                                                                               "description": "all of them"}), ctx))
+        assert not ok and ctx.receipts[-1]["outcome"] == "held", out
+        aid = ctx.receipts[-1]["action_id"]
+        r = client.post(f"/api/needs-you/a:{aid}/approve").json()
+        assert r["status"] == "done" and "Unknown tool" not in (r.get("result") or ""), r
+        assert db.one("SELECT 1 AS x FROM agent_tasks WHERE title = 'Count the beans' AND agent_id = ?", rep["id"])
+    finally:
+        db.run("DELETE FROM agent_tasks WHERE agent_id IN (?, ?)", boss["id"], rep["id"])
+        db.run("DELETE FROM agents WHERE id IN (?, ?)", rep["id"], boss["id"])
 
 
 def test_turning_a_proposed_job_on_from_the_automations_page_answers_its_card(client):
