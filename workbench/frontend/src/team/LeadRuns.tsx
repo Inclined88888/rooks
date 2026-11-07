@@ -33,11 +33,11 @@ export default function LeadRuns() {
     return () => clearInterval(t);
   }, [live, load]);
 
-  if (err && !runs) return <ErrorState title="The AI runs did not load" line={plainError(err)} onRetry={load} />;
+  if (err && !runs) return <ErrorState title="Split tasks did not load" line={plainError(err)} onRetry={load} />;
   if (!runs) return <Loading rows={3} />;
-  if (!runs.length) return <EmptyState icon={<ListTree size={20} />} title="No AI team runs yet" line="Ask in chat for something with several parts, like comparing three suppliers; each run shows here." />;
+  if (!runs.length) return <EmptyState icon={<ListTree size={20} />} title="No split tasks yet" line="Ask in chat for something with several parts, like comparing three suppliers. Each part runs side by side and shows here." />;
   return (
-    <section className="col gap" aria-label="AI team runs" aria-live="polite">
+    <section className="col gap" aria-label="Split tasks" aria-live="polite">
       {runs.map((r, i) => {
         const done = r.subtasks.filter((s) => !LIVE.has(s.status)).length;
         const isOpen = open[r.id] ?? (i === 0 || LIVE.has(r.status));  // the newest and any live run start open

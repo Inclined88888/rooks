@@ -163,7 +163,7 @@ export function AccountsStep({ onNext }: { onNext: () => void }) {
       )}
       <AuthActions>
         <span className="st-grow" />
-        <Button variant="primary" onClick={go}>Skip for now <ArrowRight size={16} /></Button>
+        <Button onClick={go}>Skip for now <ArrowRight size={16} /></Button>
       </AuthActions>
     </AuthCard>
   );
