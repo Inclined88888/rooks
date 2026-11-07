@@ -3,7 +3,7 @@ import { api } from "../api";
 import { Badge, Button, ErrorState, Input, Loading, Section, Select } from "../ui";
 import { useToast } from "../util";
 import ConnectMailCalendar from "./ConnectMailCalendar";
-import { ButtonLink, SettingRow, SettingsGroup } from "./settings";
+import { ButtonLink, SettingRow, SettingsGroup } from "./settings/index";
 
 type Preset = { name: string; auth_kind: string; protocol: string; base_url: string };
 type CatalogueEntry = {

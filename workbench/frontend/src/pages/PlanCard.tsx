@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { BrandMark, Brand } from "../brand";
 import { Badge, Button, Input, Loading } from "../ui";
-import { ButtonLink, Notice } from "./settings";
+import { ButtonLink, Notice } from "./settings/index";
 
 const MARK: Record<"claude" | "codex" | "copilot", Brand | null> = { claude: "claude", codex: "chatgpt", copilot: null };
 

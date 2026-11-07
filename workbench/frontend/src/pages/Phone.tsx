@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import { Button, ErrorState, Input, Loading } from "../ui";
 import { useToast } from "../util";
-import { Advanced, Notice, SettingRow, SettingsGroup, Switch } from "./settings";
+import { Advanced, Notice, SettingRow, SettingsGroup, Switch } from "./settings/index";
 
 type Lan = { available: boolean; enabled: boolean; running: boolean; port: number; addresses: string[]; error: string };
 type Pairing = { code: string; expires_in: number; urls: string[]; qr: string; qr_svg: string; lan: Lan; relay_url: string };

@@ -5,7 +5,7 @@ import { Button, EmptyState, ErrorState, IconButton, Input, Loading, Page, Secti
 import { errorText } from "../ui/toast";
 import { relTime, useToast } from "../util";
 import { Fact, groupFacts, sourceLabel } from "../learn/text";
-import { SettingRow, SettingsGroup, Switch } from "./settings";
+import { SettingRow, SettingsGroup, Switch } from "./settings/index";
 
 type Settings = { memory: boolean; memory_in_chat: boolean; notice_patterns: boolean; suggest: boolean };
 type Work = { kind: string; label: string; times: number };

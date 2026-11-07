@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { api } from "../api";
 import { Badge, EmptyState, Page, Tabs } from "../ui";
-import { ButtonLink } from "./settings";
+import { ButtonLink } from "./settings/index";
 
 type Status = {
   browser_enabled?: boolean;

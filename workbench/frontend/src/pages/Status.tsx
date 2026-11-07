@@ -4,7 +4,7 @@ import { api } from "../api";
 import { Badge, Button, ErrorState, Loading, Page, Section } from "../ui";
 import { errorText } from "../ui/toast";
 import { relTime } from "../util";
-import { Advanced, Notice, SettingRow, SettingsGroup } from "./settings";
+import { Advanced, Notice, SettingRow, SettingsGroup } from "./settings/index";
 
 // Health of every moving part (backend health.py). Checked only when this page asks: no background probes (R8).
 type Check = { name: string; kind: string; status: "ok" | "degraded" | "down" | "off"; detail: string; latency_ms: number };

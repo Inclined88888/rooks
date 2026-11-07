@@ -5,7 +5,7 @@ import { Badge, Button, EmptyState, ErrorState, IconButton, Loading, Page, Secti
 import { errorText } from "../ui/toast";
 import { quotaText, resetTime, RouterQuota, useToast } from "../util";
 import { Providers } from "./Settings";
-import { Advanced, Notice, SettingRow, SettingsGroup, Switch } from "./settings";
+import { Advanced, Notice, SettingRow, SettingsGroup, Switch } from "./settings/index";
 
 /** The smart router, laid out: who answers first, which model each provider uses for quick and for hard jobs,
  * and how much free quota is left. */

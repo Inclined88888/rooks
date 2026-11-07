@@ -4,7 +4,7 @@ import { api } from "../api";
 import { Badge, Button, EmptyState, ErrorState, IconButton, Input, Loading, Page, Section, Select } from "../ui";
 import { errorText } from "../ui/toast";
 import { useToast } from "../util";
-import { Advanced, SettingRow, SettingsGroup, Switch } from "./settings";
+import { Advanced, SettingRow, SettingsGroup, Switch } from "./settings/index";
 
 // feat/mcp-client: the user's own MCP servers. Tools they add show up in the assistant as mcp__<server>__<tool>;
 // everything a server answers is treated as untrusted third-party content.

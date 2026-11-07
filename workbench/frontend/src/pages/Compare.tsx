@@ -3,7 +3,7 @@ import { FormEvent, useRef, useState } from "react";
 import { stream, StreamEvent } from "../api";
 import { Button, EmptyState, IconButton, Loading, Page, Textarea } from "../ui";
 import { Markdown, ModelSelect, useModels, useToast } from "../util";
-import { ButtonLink, Notice } from "./settings";
+import { ButtonLink, Notice } from "./settings/index";
 
 type Turn = { role: "user" | "assistant"; content: string };
 type Column = { id: number; model: string; history: Turn[]; live: string; thinking: string; busy: boolean; error: string; stats: { ms?: number; first?: number | null; tokens?: number } };

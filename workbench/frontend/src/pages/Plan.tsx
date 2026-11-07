@@ -7,7 +7,7 @@ import {
   skipSetup, startEmail, startOAuth, teamCheckout, useAccount,
 } from "../account";
 import { Badge, Button, ErrorState, Input, Loading, Page, Section } from "../ui";
-import { Advanced, AuthCard, Notice, SettingRow, SettingsGroup } from "./settings";
+import { Advanced, AuthCard, Notice, SettingRow, SettingsGroup } from "./settings/index";
 
 const PLANS = [
   { id: "free", name: "Free", price: "A$0", blurb: "The whole app with your own keys or Ollama. Forever." },

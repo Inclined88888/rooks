@@ -9,7 +9,7 @@ import { ModelSelect, useModels, useToast } from "../util";
 import ConnectSection from "./ConnectSection";
 import { AddKey, KeyInfo, SignInWithPlan, WebSearchSetup } from "./ModelSignIn";
 import { PhoneCard } from "./Phone";
-import { Advanced, ButtonLink, CategoryNav, Notice, Progress, SettingRow, SettingsGroup, Switch } from "./settings";
+import { Advanced, ButtonLink, CategoryNav, Notice, Progress, SettingRow, SettingsGroup, Switch } from "./settings/index";
 import { SETTINGS_SECTIONS as SECTIONS } from "./settings/sections";
 
 type DesktopInfo = { desktop: boolean; data_dir: string; secret_backend: string };
