@@ -23,6 +23,19 @@ banner in the page says what it is doing, and it outlines the element it is abou
 
 ![Headed run](docs/headed-run.png)
 
+## The browser app (preview)
+
+`app/` is Rooks Browser as a browser of its own: tabs, an address bar, private tabs, and an **Ask Rooks** panel that
+can read the page you are on or do a task in it while you watch. It runs this same agent, with the same site rules and
+approvals, in your tab instead of a separate Chrome. Press **Stop**, Esc, or type in the page to take over.
+
+```
+cd rooks-browser/app && npm install && npm start      # needs the rooks-browser command (below) for tasks
+```
+
+It never opens Chromium's remote debugging port; the agent reaches the tab through a token protected channel on this
+computer only. Design, security model and what is not done yet: `docs/design/0005-rooks-browser-app.md`.
+
 ## Install
 
 You need Python 3.11+ and either Google Chrome, Microsoft Edge, or Playwright's bundled Chromium.

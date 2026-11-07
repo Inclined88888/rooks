@@ -80,6 +80,11 @@ class Jobs:
                             workbench_db=os.getenv("ROOKS_BROWSER_WORKBENCH_DB"))
         llm.resolve(provider)  # fail fast on a bad provider
         jid = uuid.uuid4().hex[:12]
+        e = data.get("electron")
+        if e:  # the Rooks Browser app's own tab. Its token lives only in the run's settings, never in the job record.
+            if not isinstance(e, dict) or not e.get("url") or not e.get("token"):
+                raise ValueError("electron needs url and token")
+            s.electron = {"url": str(e["url"]), "token": str(e["token"]), "tab": e.get("tab"), "job": jid}
         now = time.time()
         job = {"id": jid, "goal": goal, "provider": llm.resolve(provider), "model": s.model or "", "status": "queued", "source": source,
                "created_at": now, "updated_at": now, "max_steps": s.max_steps, "allowed_domains": s.allow, "steps": [],
