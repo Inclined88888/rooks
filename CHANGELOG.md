@@ -4,6 +4,28 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## 2026-11-07 · Premium pass: restraint · branch feat/workroom
+
+Design record: `docs/design/0003-workroom.md` section 6 (design system v3, restraint).
+
+- **Removed:** the thinking shimmer, word by word reply reveal, cursor trail, approval spring, drawn tick, working
+  border and every decorative glow; the Motion page; the Sunshine, Paper, Cherry, Neon, Linen, Gallery, Studio and Lamp
+  themes; the Bodoni serif.
+- **Look:** Light, Dark and High contrast; one sans family, mono only for code, commands and receipts; one type scale
+  (12/13/14/16/20/28), one 4 px grid, radius 6/10, hairline borders, one shadow for floating things only; neutral
+  colours with amber only for what is live or needs you. The only motion is a fade of 150 ms or less. The Room keeps a
+  still amber border while you have stepped in.
+- **Every page** rebuilt on the shared primitives with loading, empty and error states and a phone layout.
+- **Speed:** one pulse request carries presence, Needs you and job notices. Background requests a minute: chat 62 to
+  6, the Room 94 to 28, Jobs 48 to 10, Tasks 24 to 6. Pages warm on hover; Jobs, Tasks and chats reopen from cache.
+- **Keyboard:** everything in ⌘K with shortcut hints; `?` lists every shortcut; g then c, r, j, t, m or s moves
+  between Chat, Room, Jobs, Tasks, Mail and Settings.
+- **Terminal:** the same three themes, names and calm look; `/room`, `/needs`, `/jobs` and one `/help`. The terminal's
+  own sign in (Terminal access) can start the Room and answer Needs you; the app.json bridge key, which coding jobs the
+  app starts also hold, can only read them.
+- **Moved:** Extra tools is at `/extra-tools` (`/mcp` redirects); Packs is reachable again under More.
+- Migration: none. A saved theme maps to the nearest of the three. Rollback: check out the previous commit.
+
 ## 2026-11-06 · The Workroom: presence, Needs you, the Room, reliability · branch feat/workroom
 
 Design record: `docs/design/0003-workroom.md` (binding for this branch). Packages: F1 to F4 (the app) and B1 to B3 (the service), listed in the order a person meets them.

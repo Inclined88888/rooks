@@ -144,7 +144,7 @@ function Installed({ onAdd }: { onAdd: () => void }) {
 
   return (
     <div>
-      <Section title="Your skills" actions={<Button size="sm" icon={<Github size={14} />} onClick={onAdd}>Add a skill</Button>}>
+      <Section title="Added from the internet">
         <Gate state={items} rows={3}>{(list) => list.length === 0 ? (
           <EmptyState icon={<Puzzle size={20} />} title="Nothing added yet" line="Paste a link to a folder of instructions, or search. I check each one before you decide."
             action={<Button variant="primary" icon={<Github size={14} />} onClick={onAdd}>Add a skill</Button>} />
@@ -191,7 +191,7 @@ function Installed({ onAdd }: { onAdd: () => void }) {
           </div>
         )}</Gate>
       </Section>
-      <Section title="Your own skills">
+      <Section title="Learned or written here">
         <SkillsTab />
       </Section>
     </div>
