@@ -109,3 +109,38 @@ What is not proven by this increment:
 6. Coworker board on real state from `jobs`, `actions` and `schedules`.
 7. Workspaces: schema, isolation tests, then UI.
 8. Navigation: Home, Chat, Workspaces, Teams, Activity, Settings, mapped onto `pages/registry.ts`.
+
+## 8. Stage report: increment 1 (2026-11-07)
+
+### Source changes
+
+1. `assistant.py`: unattended runs (`schedule`, `agent`) hold a gated call in Needs you instead of refusing it. A repeat of the same held call from a later run of the same schedule is not asked again. When a held call from a schedule is answered, the outcome goes to the inbox under that schedule (`_report_unattended`).
+2. `scheduler.py`: a run with a held step records `last_status = "waiting"` and the app itself, not the model, appends "Not done yet, waiting for your OK in Needs you" to the inbox entry.
+3. `starters.py` (new): profession catalogue (construction, business, personal), proposal, apply (coworkers in `agents`, jobs in `schedules`, all off), job cards, remove. Tables `starter_setups`, `starter_items`.
+4. `needs_you.py`: job cards appear as `s:<schedule id>`. Yes turns the job on, and is refused while its connection is missing. No removes the job.
+5. Frontend: Welcome step 4 of 5 "What do you do?" (optional, skippable); the Coworkers page (`/coworkers`, More sheet, Workspace).
+
+### Test results
+
+1. Backend, full suite on commit c375aec: 827 passed, 5 failed, 1 skipped. The 5 failures are the same 5 that fail on clean `main` (section 1). No new failures.
+2. New backend tests: `test_hardening.py` (2 replaced 1; both failed on the old code first), `test_starters.py` (3).
+3. Frontend: type check clean, build clean, `npm test` 256 passed.
+4. Real user workflow, run by hand in a browser against the built app on a fresh database: first run up to the model step, then the Coworkers page. Created the team, saw both jobs marked not ready with no approve button, connected a mailbox through the app's own app password form, saw the approve buttons appear, approved one job and declined the other. Result: the job shows On with the next run Monday 9 November 07:00 in the workspace timezone. No console errors.
+
+### What was real and what was not
+
+1. **Real:** the mail server. Dovecot 2.3 on 127.0.0.1 with TLS. The app's IMAP code logged in, listed and read a message appended over IMAP, and a wrong password was refused by the server.
+2. **Not real:** the model. The coworker run in `test_starters.py` uses the suite's scripted model. No real model ran the job in this session.
+3. **Not tested:** any public mail provider, ServiceM8, Xero, Procore, Google or Microsoft. The catalogue says so on each entry.
+
+### Remaining limitations
+
+1. Coworkers have no per coworker tool list yet. A scheduled run offers the full tool set; the approval gate is what limits it.
+2. `schedule_task`, `delegate_task`, `save_skill`, `remember`, `watch_site` and `run_skill_script` still run without a yes on a clean conversation, and the app's own MCP server still skips approval (section 3, items 3 and 4).
+3. The Needs you pill refreshes on its poll (up to 10 seconds), not right after an answer on another page.
+4. The `/api/schedules` PATCH route can still turn a job on without the connection check. It is owner only, but it skips the card.
+5. Only three professions. The other six in the brief are not in the catalogue yet.
+
+### Next dependency
+
+Section 7, item 2: put the app's MCP server and the persistent tools behind `hold_reason`. A coworker that can schedule its own jobs is the largest open risk.
