@@ -4,7 +4,7 @@ import { api, saveBrowserToken, stream } from "../api";
 import type { Status } from "../App";
 import { PRODUCT } from "../product";
 import { Badge, Button, Input } from "../ui";
-import { Advanced, AuthActions, AuthCard, ButtonLink, Notice, Progress, SettingRow, SettingsGroup } from "./settings";
+import { Advanced, AuthActions, AuthCard, ButtonLink, Notice, Progress, SettingRow, SettingsGroup } from "./settings/index";
 
 const SUGGESTED = [
   { model: "qwen3:4b", note: "Fast all rounder, ~2.5 GB. Good on CPU." },

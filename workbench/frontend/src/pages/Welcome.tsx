@@ -9,7 +9,7 @@ import { saveAppearanceRemote } from "../themeSync";
 import { readAppearance } from "../appearance";
 import { AssistantFace } from "../AssistantFace";
 import { Badge, Button, EmptyState, Input, Loading } from "../ui";
-import { Advanced, AuthActions, AuthCard, ButtonLink, Choice, Notice, Progress, SettingRow, SettingsGroup } from "./settings";
+import { Advanced, AuthActions, AuthCard, ButtonLink, Choice, Notice, Progress, SettingRow, SettingsGroup } from "./settings/index";
 
 /** First run: "Choose how to think". Cloud is the default (nothing heavy runs on this computer); the smart router
  * then uses whatever was connected and falls back when a free tier runs out. */

@@ -5,7 +5,7 @@ import { api } from "../api";
 import { Badge, Button, EmptyState, ErrorState, List, Loading, Page, Row, Select, Stat, Tabs } from "../ui";
 import { errorText } from "../ui/toast";
 import { relTime } from "../util";
-import { ButtonLink, Notice } from "./settings";
+import { ButtonLink, Notice } from "./settings/index";
 
 // One row of the run log (backend actions.py). Text fields are already redacted on the server.
 type Action = {

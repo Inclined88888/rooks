@@ -4,7 +4,7 @@ import { api } from "../api";
 import { Badge, Button, EmptyState, ErrorState, IconButton, Input, Loading, Page, Section, Select } from "../ui";
 import { errorText } from "../ui/toast";
 import { relTime, useToast } from "../util";
-import { SettingsGroup } from "./settings";
+import { SettingsGroup } from "./settings/index";
 
 // Phase 4: fine-tuning. Datasets come from your own chats (user/assistant text only, redacted); training runs on a
 // provider that offers it, because this container has no GPU. The finished model shows up in every model picker.

@@ -1,6 +1,6 @@
 import { PRODUCT, PRODUCT_LINE } from "../product";
 import { Page, Section } from "../ui";
-import { ButtonLink } from "./settings";
+import { ButtonLink } from "./settings/index";
 import "./settings/settings.css";
 
 /** Where the work lives, and the only times it leaves this computer. */

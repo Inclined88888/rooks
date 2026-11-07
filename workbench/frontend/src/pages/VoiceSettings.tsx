@@ -13,7 +13,7 @@ import { DictateButton } from "../voice/DictateButton";
 import { isMac, speak, systemVoices, voiceStatus, VoiceStatus } from "../voice/engine";
 import { accelFromEvent, accelLabel } from "../voice/logic";
 import "../voice/voice.css";
-import { Advanced, ButtonLink, Notice, SettingRow, SettingsGroup, Switch } from "./settings";
+import { Advanced, ButtonLink, Notice, SettingRow, SettingsGroup, Switch } from "./settings/index";
 
 type AnySettings = { grab_selection: boolean; screenshot: boolean; shortcut: string; desk: boolean; desktop: boolean; tier: string };
 type ShortcutInfo = { shortcut: string; default: string; enabled: boolean; registered: boolean };

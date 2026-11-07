@@ -4,7 +4,7 @@ import { api } from "../api";
 import { BrandMark } from "../brand";
 import { Badge, Button, Input, Loading } from "../ui";
 import PlanCard from "./PlanCard";
-import { Advanced, ButtonLink, Choice, Notice } from "./settings";
+import { Advanced, ButtonLink, Choice, Notice } from "./settings/index";
 
 /** Connecting a model without jargon, shared by the first-run welcome and Settings: sign in with a plan you already
  * pay for (ChatGPT, Claude), or paste a key and the provider is recognised from it. */

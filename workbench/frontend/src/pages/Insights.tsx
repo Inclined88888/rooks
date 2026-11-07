@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { EmptyState, ErrorState, Loading, Page, Section, Stat, Tabs } from "../ui";
 import { errorText } from "../ui/toast";
-import { SettingRow, SettingsGroup } from "./settings";
+import { SettingRow, SettingsGroup } from "./settings/index";
 
 // Phase 3: trends from the run log (GET /api/usage/daily). Zero dependencies: bars are plain SVG.
 type Day = { day: string; calls: number; failures: number; tokens_in: number; tokens_out: number; usd: number | null; unpriced: number; avg_ms: number; p95_ms: number };
