@@ -1,4 +1,4 @@
-# The one-command install on a real Mac (Apple Silicon, macos-14), straight from this branch the way a user runs it, then
+# The one-command install on a real Mac (Apple Silicon, macos-15), straight from this branch the way a user runs it, then
 # proves the app window shows the UI (one-time sign-in link, rendered in Chrome) and that --status/--logs work.
 name: macOS window
 
@@ -18,8 +18,8 @@ concurrency:
 
 jobs:
   window:
-    name: One-command install + window (macos-14)
-    runs-on: macos-14
+    name: One-command install + window (macos-15)
+    runs-on: macos-15
     timeout-minutes: 40
     env:
       REF: ${{ github.head_ref || github.ref_name }}
