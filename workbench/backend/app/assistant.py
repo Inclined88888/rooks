@@ -1672,8 +1672,13 @@ async def decide(action_id: int, approve: bool, channel: str = "web") -> dict:
     if not approve:
         _save(a["conversation_id"], "user", f"[I denied request #{action_id}: {a['tool']}. Do not do it.]")
         return actions.approval(action_id)
-    conv = db.one("SELECT model FROM conversations WHERE id = ?", a["conversation_id"])
-    ctx = Ctx(channel=channel, conversation_id=a["conversation_id"], turn_action_id=decision)
+    conv = db.one("SELECT model, agent_id FROM conversations WHERE id = ?", a["conversation_id"])
+    # A step a coworker left waiting runs as that coworker: its tools (delegate_task, list_team) and its name on the
+    # record. Without this the approved step ran as nobody and an agent-only tool came back "Unknown tool".
+    agent = db.one("SELECT * FROM agents WHERE id = ?", conv["agent_id"]) if conv and conv.get("agent_id") else None
+    task = db.one("SELECT id FROM agent_tasks WHERE conversation_id = ? ORDER BY id DESC LIMIT 1", a["conversation_id"]) if agent else None
+    ctx = Ctx(channel=channel, conversation_id=a["conversation_id"], turn_action_id=decision, agent=agent,
+              task_id=task["id"] if task else None)
     ctx.model = (conv or {}).get("model") or ""
     ok, out = await run_tool(a["tool"], actions.raw_args(action_id), ctx, approved=True)
     run = ctx.receipts[-1]
@@ -1686,18 +1691,23 @@ async def decide(action_id: int, approve: bool, channel: str = "web") -> dict:
 
 
 def _report_unattended(conversation_id: int, tool: str, ok: bool, out: str) -> None:
-    """A step a scheduled run left waiting was answered later: tell the inbox how it went, under the same schedule."""
+    """A step a scheduled run or a coworker's task left waiting was answered later: tell the inbox how it went, under
+    the same schedule or task."""
     conv = db.one("SELECT channel, external_id, title FROM conversations WHERE id = ?", conversation_id)
-    if not conv or conv["channel"] != "schedule" or not conv["external_id"]:
-        return
-    s = db.one("SELECT name, deliver FROM schedules WHERE id = ?", conv["external_id"])
-    if not s:
+    if not conv or conv["channel"] not in ("schedule", "agent") or not conv["external_id"]:
         return
     from . import scheduler
 
     step = tool.replace("_", " ")
     body = (f"You approved: {step}. It is done.\n\n{out[:1500]}" if ok else f"You approved: {step}, but it did not work.\n\n{out[:1500]}")
-    scheduler.deliver(f"{'Done' if ok else 'Failed'}: {s['name']}", body, s["deliver"], f"schedule:{conv['external_id']}")
+    if conv["channel"] == "schedule":
+        s = db.one("SELECT name, deliver FROM schedules WHERE id = ?", conv["external_id"])
+        if s:
+            scheduler.deliver(f"{'Done' if ok else 'Failed'}: {s['name']}", body, s["deliver"], f"schedule:{conv['external_id']}")
+        return
+    t = db.one("SELECT title FROM agent_tasks WHERE id = ?", conv["external_id"])
+    if t:
+        scheduler.deliver(f"{'Done' if ok else 'Failed'}: {t['title']}", body, "inbox", f"task:{conv['external_id']}")
 
 
 async def ask(ctx: Ctx, text: str, model: str | None = None) -> tuple[str, list[dict]]:

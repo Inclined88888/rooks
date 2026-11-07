@@ -57,3 +57,64 @@ def test_the_mcp_server_says_no_when_the_owner_says_no(client, monkeypatch):
     out = asyncio.run(mcp_server.run_skill_script("pdf-tools", "scripts/wipe.py", []))
     assert client.post(f"/api/needs-you/a:{out['request']}/deny").json()["status"] == "denied"
     assert ran == []
+
+
+def test_the_tools_key_cannot_answer_a_held_request(client, monkeypatch):
+    """The MCP server's client holds TOOLS_API_KEY. If that key also opened the account, the same program could say yes
+    to its own held request. It is not a login (surfaces.bearer_ok), so the answer must come from a person."""
+    import os
+
+    from fastapi.testclient import TestClient
+
+    from app import main, mcp_server, skills_hub
+
+    ran = []
+    monkeypatch.setattr(skills_hub, "run_script", lambda *a, **k: ran.append(a) or {"ok": True})
+    out = asyncio.run(mcp_server.run_skill_script("pdf-tools", "scripts/self-approve.py", []))
+    bot = TestClient(main.app, headers={"X-Workbench": "1", "Authorization": f"Bearer {os.environ['TOOLS_API_KEY']}"})
+    assert bot.post(f"/api/needs-you/a:{out['request']}/approve").status_code == 401
+    assert bot.post(f"/api/approvals/{out['request']}", json={"approve": True}).status_code == 401
+    assert ran == []
+    assert client.post(f"/api/needs-you/a:{out['request']}/deny").json()["status"] == "denied"
+
+
+def test_an_approved_step_of_a_coworker_runs_as_that_coworker(client):
+    """A coworker's run holds delegate_task (untrusted content was in play). The owner's yes used to run the step as
+    nobody, so the agent-only tool came back "Unknown tool". It runs as the coworker and the task is queued."""
+    import json
+
+    from app import assistant, db
+
+    boss = client.post("/api/company/agents", json={"name": "Gap boss", "title": "Lead"}).json()
+    rep = client.post("/api/company/agents", json={"name": "Gap report", "title": "Analyst"}).json()
+    db.run("UPDATE agents SET reports_to = ? WHERE id = ?", boss["id"], rep["id"])
+    boss_row = db.one("SELECT * FROM agents WHERE id = ?", boss["id"])
+    conv = assistant.new_conversation("agent", "Gap boss: plan", "gap-task", boss["id"])
+    ctx = assistant.Ctx(channel="agent", conversation_id=conv, agent=boss_row, tainted=True)
+    ok, out = asyncio.run(assistant.run_tool("delegate_task", json.dumps({"agent_name": "Gap report", "title": "Count the beans",
+                                                                           "description": "all of them"}), ctx))
+    assert not ok and ctx.receipts[-1]["outcome"] == "held", out
+    aid = ctx.receipts[-1]["action_id"]
+    r = client.post(f"/api/needs-you/a:{aid}/approve").json()
+    assert r["status"] == "done" and "Unknown tool" not in (r.get("result") or ""), r
+    assert db.one("SELECT 1 AS x FROM agent_tasks WHERE title = 'Count the beans' AND agent_id = ?", rep["id"])
+
+
+def test_turning_a_proposed_job_on_from_the_automations_page_answers_its_card(client):
+    """PATCH /api/schedules used to switch a setup's job on with no check; it goes through the card, so a job whose
+    connection is missing stays off with a plain reason."""
+    setup = client.post("/api/starters/apply", json={"profession": "business"}).json()
+    try:
+        page = client.get("/api/starters/business").json()
+        job = next(j for j in page["schedules"] if j["state"] == "waiting" and j["missing"])
+        r = client.patch(f"/api/schedules/{job['schedule_id']}", json={"enabled": True})
+        assert r.status_code == 409, r.text
+        assert "Connect" in r.json()["detail"]
+        assert client.get("/api/schedules").json()  # still listed
+        from app import db
+        assert db.one("SELECT enabled FROM schedules WHERE id = ?", job["schedule_id"])["enabled"] == 0
+        assert any(i["id"] == f"s:{job['schedule_id']}" for i in client.get("/api/needs-you").json())  # card still there
+    finally:
+        client.delete("/api/starters/business")
+    assert setup
+

@@ -107,7 +107,7 @@ export default function Coworkers() {
                     <p className="cw-line">{j.card.requester} will run this once you connect what it needs.</p>
                     <p className="cw-meta cw-warn">{j.missing.join(" ")}</p>
                     <div className="cw-actions">
-                      <Button variant="ghost" size="sm" busy={busy === `s${j.schedule_id}`} onClick={() => void answer(j.schedule_id, false)}>Not now</Button>
+                      <Button variant="ghost" size="sm" busy={busy === `s${j.schedule_id}`} onClick={() => void answer(j.schedule_id, false)}>Remove this job</Button>
                     </div>
                   </Card>
                 ) : j.state === "waiting" ? (

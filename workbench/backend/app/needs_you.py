@@ -153,7 +153,7 @@ def _setup_item(v: dict) -> dict:
         detail += " " + " ".join(v["missing"])
     return {"id": f"s:{v['schedule_id']}", "kind": "schedule", "title": f"{c.get('requester', '')} asks to run {c.get('action', v['name'])}",
             "detail": detail, "since": v["since"], "conversation_id": None, "job_id": None, "actions": ACTIONS,
-            "card": c, "missing": v["missing"]}
+            "effect": "schedule", "card": c, "missing": v["missing"]}
 
 
 def _jobs_waiting_to_start() -> list[dict]:

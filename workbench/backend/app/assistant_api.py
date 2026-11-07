@@ -507,6 +507,13 @@ def toggle_schedule(sid: int, data: ScheduleToggle):
     s = db.one("SELECT * FROM schedules WHERE id = ?", sid)
     if not s:
         raise HTTPException(404, "Not found")
+    from . import starters  # a job a profession setup proposed: turning it on answers its card (refused while its connection is missing)
+
+    starters._ensure()
+    card = db.one("SELECT approved_at FROM starter_items WHERE kind = 'schedule' AND ref_id = ?", sid)
+    if data.enabled and card and card["approved_at"] is None:
+        starters.decide(sid, True)
+        return db.one("SELECT * FROM schedules WHERE id = ?", sid)
     db.run("UPDATE schedules SET enabled = ?, next_run = ? WHERE id = ?", int(data.enabled), scheduler.next_run(s["cron"]), sid)
     return db.one("SELECT * FROM schedules WHERE id = ?", sid)
 

@@ -30,7 +30,7 @@ router = APIRouter(prefix="/api/starters", tags=["starters"], dependencies=[Depe
 # How an integration reaches the service. Plain words for the card; the key goes under Advanced.
 KINDS = {
     "native": "Built into the app",
-    "official_api": "Uses the service's own public API with your key",
+    "official_api": "Connects to the service directly, with your own key",
     "official_mcp": "The service publishes its own connector; you add it yourself",
     "community_mcp": "Only community connectors exist; not checked by us",
     "browser": "Done in a browser the assistant drives, with your OK",
@@ -51,13 +51,13 @@ GOOGLE_MS = {"key": "google_microsoft", "name": "Google or Microsoft 365 (mail a
              "tested": "Tested with a stand in service. This copy of the app needs its sign in set up first (Advanced).",
              "page": "/mail"}
 SERVICEM8 = {"key": "servicem8", "name": "ServiceM8", "kind": "official_api", "state": "needs_setup",
-             "what": "Sends a quote or invoice you approved to ServiceM8 as a job, with your own API key.",
-             "tested": "Tested against a stand in for ServiceM8's API, never a real account.", "page": "/packs/trade",
+             "what": "Sends a quote or invoice you approved to ServiceM8 as a job, with your own key.",
+             "tested": "Tested against a stand in for ServiceM8, never a real account.", "page": "/packs/trade",
              "source": "developer.servicem8.com/docs/authentication"}
 XERO = {"key": "xero", "name": "Xero", "kind": "official_api", "state": "needs_setup",
         "what": "Sends an invoice you approved to Xero as a draft, through a Custom Connection you create in Xero.",
-        "tested": "Tested against a stand in for Xero's API, never a real account. Xero also publishes its own connector "
-                  "(xero-mcp-server) that you can add under Advanced.",
+        "tested": "Tested against a stand in for Xero, never a real account. Xero also publishes its own connector that "
+                  "you can add under Advanced.",
         "page": "/packs/trade", "source": "github.com/XeroAPI/xero-mcp-server"}
 PROCORE = {"key": "procore", "name": "Procore", "kind": "community_mcp", "state": "not_built",
            "what": "Procore has a developer API. The app has no Procore connection, and the only connectors found are "
