@@ -24,6 +24,7 @@ describe('jobs board', () => {
   });
   it('a job push opens the board', () => {
     expect(routeFor({ kind: 'job', id: 4 })).toBe('/jobs');
+    expect(routeFor({ kind: 'companion', request_id: 'abc' })).toBe('/companion');
   });
   it('the Share box sends links as urls', () => {
     expect(shareBody(' https://example.com/a ')).toEqual({ text: '', url: 'https://example.com/a' });

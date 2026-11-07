@@ -90,7 +90,7 @@ function ChatMenu({ showRoutines, onRoutines, cid, busy, onTerminal, onBeside, o
   const go = (fn: () => void) => () => { fn(); setOpen(false); };
   return (
     <div className="chat-menu">
-      <button type="button" className={`btn ghost sm icon${open ? " on" : ""}`} aria-label="More" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <button type="button" className={`ui-btn ui-btn-ghost ui-btn-sm ui-btn-square${open ? " on" : ""}`} aria-label="More" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <Ellipsis size={16} />
       </button>
       {open && (

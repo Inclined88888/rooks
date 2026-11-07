@@ -113,6 +113,13 @@ def test_sandbox_blocks_network_and_private_files(client):
     assert r["status"] != "ok"
     r = compute.run("import subprocess\nsubprocess.run(['ls'])")
     assert r["status"] != "ok"
+    # ctypes reaches libc directly (system, open, connect) and skips every Python level check
+    r = compute.run(f"import ctypes\nctypes.CDLL(None).system(b'cat {config.DB_PATH} > /dev/null')")
+    assert r["status"] != "ok", r
+    # ctypes.pythonapi is made before the hook is installed (numpy imports ctypes), so a call through it must be
+    # caught at the call, not only when a library is opened
+    r = compute.run("import ctypes\nctypes.pythonapi.system(b'echo PYTHONAPI-escaped')")
+    assert r["status"] != "ok" and "PYTHONAPI-escaped" not in r.get("stdout", ""), r
 
 
 def test_run_python_gets_the_file_even_when_the_model_names_it_instead_of_passing_its_id(client):
@@ -130,3 +137,27 @@ def test_run_python_gets_the_file_even_when_the_model_names_it_instead_of_passin
     assert expected in json.dumps(run(code=code, file_ids="ledger_test.csv"))  # a name instead of an id
     assert expected in json.dumps(run(code=code, file_ids=str(f["id"])))      # the id, as before
     analysis.remove(f["id"])
+
+
+def test_run_python_asks_first_in_a_tainted_chat_without_an_os_sandbox(client, monkeypatch):
+    from app import assistant, compute
+
+    t = assistant.TOOL_MAP["run_python"]
+    clean = assistant.Ctx(channel="web", conversation_id=1)
+    tainted = assistant.Ctx(channel="web", conversation_id=1, tainted=True)
+    monkeypatch.setattr(compute, "os_sandboxed", lambda: False)
+    assert assistant.hold_reason(t, clean, {"code": "print(1)"}) == ""
+    assert assistant.hold_reason(t, tainted, {"code": "print(1)"}) == assistant.HOLD_REASON
+    monkeypatch.setattr(compute, "os_sandboxed", lambda: True)
+    assert assistant.hold_reason(t, tainted, {"code": "print(1)"}) == ""
+
+
+def test_an_svg_from_email_cannot_run_script_on_the_app_origin(client):
+    from app import analysis
+
+    f = analysis.add("invoice.svg", b'<svg xmlns="http://www.w3.org/2000/svg"><script>fetch("/api/settings")</script></svg>', source="email")
+    r = client.get(f"/api/files/{f['id']}/download")
+    assert r.status_code == 200
+    csp = r.headers["content-security-policy"]
+    assert "sandbox" in csp and "default-src 'none'" in csp and "script-src" not in csp
+    assert r.headers["x-content-type-options"] == "nosniff"

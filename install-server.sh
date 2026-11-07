@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One command install for AI Workspace:
 #
-#   curl -fsSL https://raw.githubusercontent.com/Inclined88888/ai-workspace/main/install-server.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Inclined88888/rooks/main/install-server.sh | bash
 #
 # Pass setup options after `bash -s --`:
 #
@@ -11,7 +11,7 @@
 # Running it again upgrades in place: code is updated, .env, secrets and data are kept.
 # Settings (environment variables):
 #   AI_WORKSPACE_DIR   install folder            (default: ~/ai-workspace)
-#   AI_WORKSPACE_REPO  GitHub owner/repo         (default: Inclined88888/ai-workspace)
+#   AI_WORKSPACE_REPO  GitHub owner/repo         (default: Inclined88888/rooks)
 #   AI_WORKSPACE_REF   branch or tag             (default: main)
 # Works with the bash 3.2 that ships with macOS.
 
@@ -19,7 +19,7 @@
 main() {
   set -euo pipefail
 
-  local repo=${AI_WORKSPACE_REPO:-Inclined88888/ai-workspace}
+  local repo=${AI_WORKSPACE_REPO:-Inclined88888/rooks}
   local ref=${AI_WORKSPACE_REF:-main}
   local dir=${AI_WORKSPACE_DIR:-$HOME/ai-workspace}
   local url="https://github.com/$repo.git"

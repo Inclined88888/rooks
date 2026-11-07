@@ -216,7 +216,11 @@ def test_memory_and_schedule_undo(clean):
     SCRIPT[:] = [tool_call("remember", {"content": "Prefers invoices on Fridays"}),
                  tool_call("schedule_task", {"name": "Friday invoices", "cron": "0 9 * * 5", "prompt": "Remind me to send invoices"}, "c2"),
                  {"role": "assistant", "content": "ok"}]
-    chat(c, "remember and schedule")
+    _, ev = chat(c, "remember and schedule")
+    # a new schedule waits for the owner's yes (tests/test_approval_gaps.py); approved, it is in History like before
+    held = [e for e in ev if e["type"] == "approval_required"]
+    assert [h["tool"] for h in held] == ["schedule_task"]
+    assert c.post(f"/api/approvals/{held[0]['id']}", json={"approve": True}).json()["status"] == "done"
     m = _entry(c, "Remembered “Prefers invoices on Fridays”")
     s = _entry(c, "Set up automation “Friday invoices”")
     c.post(f"/api/history/{m['id']}/undo", json={})

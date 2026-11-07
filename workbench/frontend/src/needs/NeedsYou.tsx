@@ -71,7 +71,7 @@ export function NeedsYouList() {
       setItems((xs) => (xs ?? []).filter((x) => x.id !== item.id));
       setFocusAt(at);
       if (r?.status === "failed") { const text = r.result || "That did not work."; setSaid(text); toast.err(new Error(text)); }
-      else { const text = decidedWords(approve, r?.status); setSaid(text); toast.ok(text); }
+      else { const text = decidedWords(approve, r?.status, item.kind); setSaid(text); toast.ok(text); }
     } catch (e) {
       if (e instanceof ApiError && (e.status === 409 || e.status === 404)) {
         setSaid("That one was already answered.");

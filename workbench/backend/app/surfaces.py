@@ -80,11 +80,10 @@ def bearer_ok(request: Request) -> bool:
     row = db.one("SELECT token_hash, revoked FROM browser_tokens WHERE token_hash = ?", digest)
     if row and not row["revoked"] and hmac.compare_digest(row["token_hash"], digest):
         return True
-    # TOOLS_API_KEY, the app's own tools key (kept by the desktop app with its other secrets). It is not the app.json
-    # key: app.json carries the bridge key (BROWSER_API_KEY), which opens /v1 and, with the terminal's channel, only
-    # reads the Workroom routes in security.require_user_or_terminal. The native window's key is not a bearer either.
-    app_key = getattr(config, "TOOLS_API_KEY", "") or ""
-    return bool(app_key) and len(token) == len(app_key) and hmac.compare_digest(token, app_key)
+    # Only paired browser tokens. TOOLS_API_KEY is not accepted here: Docker hands it to the add-ons (chat app,
+    # Paperclip, Hermes) for /tools and /mcp, and as an account login it let injected text in any of them approve held
+    # actions. The bridge key (app.json) and the native window's key are not account logins either.
+    return False
 
 
 def status() -> dict:

@@ -1,4 +1,4 @@
-import { Brain, Download, RefreshCw, Trash2, X } from "lucide-react";
+import { Download, MessagesSquare, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import { Badge, Button, EmptyState, ErrorState, IconButton, Input, Loading, Page, Section, Select } from "../ui";
@@ -59,7 +59,7 @@ export default function FineTune() {
             <Button variant="ghost" size="sm" onClick={() => setPicked(new Set(convs.map((c) => c.id)))}>All</Button>
             <Button variant="ghost" size="sm" onClick={() => setPicked(new Set())}>None</Button>
           </>}>
-            {!convs.length ? <EmptyState icon={<Brain size={22} />} title="No conversations yet" line="Chat with the assistant first; answered conversations show here." /> : (
+            {!convs.length ? <EmptyState icon={<MessagesSquare size={22} />} title="No conversations yet" line="Chat with the assistant first; answered conversations show here." /> : (
               <div className="st-stack">
                 <div className="st-group st-picklist">
                   {convs.map((c) => (

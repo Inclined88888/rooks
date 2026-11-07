@@ -1,5 +1,5 @@
 // feat/team-lead: the team lead's place. Assign in plain English, see who's doing what, approve what goes out.
-import { AlertTriangle, Bell, CalendarRange, Check, ChevronLeft, Inbox, LayoutGrid, Lock, Plus, Send, Settings2, Sparkles, Sun, Trash2, UserRound, Users, X } from "lucide-react";
+import { AlertTriangle, Bell, CalendarRange, Check, ChevronLeft, Inbox, LayoutGrid, Lightbulb, ListTree, Lock, Plus, Send, Settings2, Sun, Trash2, UserPlus, UserRound, Users, X } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api";
@@ -19,7 +19,7 @@ const TABS = [
   { id: "workload", label: "Workload", icon: Users },
   { id: "timeline", label: "Timeline", icon: CalendarRange },
   { id: "today", label: "Today's plan", icon: Sun },
-  { id: "runs", label: "AI runs", icon: Sparkles },
+  { id: "runs", label: "Split tasks", icon: ListTree },
   { id: "settings", label: "Settings", icon: Settings2 },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
@@ -91,8 +91,8 @@ function AssignBar({ team }: { team: TeamCtx }) {
   };
   return (
     <form className="team-assign card" onSubmit={go}>
-      <Sparkles size={18} aria-hidden="true" className="team-assign-icon" />
-      <input className="input grow" value={text} onChange={(e) => setText(e.target.value)} aria-label="Give someone a task"
+      <UserPlus size={18} aria-hidden="true" className="team-assign-icon" />
+      <input className="ui-input grow" value={text} onChange={(e) => setText(e.target.value)} aria-label="Give someone a task"
         placeholder="Give Sam the Smith St quote by Friday, urgent" />
       <Button type="submit" variant="primary" icon={<Plus size={14} />} busy={busy} disabled={!text.trim()}>{busy ? "Assigning…" : "Assign"}</Button>
     </form>
@@ -115,7 +115,7 @@ function Approvals({ d, team }: { d: Overview; team: TeamCtx }) {
     <section className="team-approvals" aria-label="Waiting for you">
       <h2 className="team-h2">Waiting for you <Badge tone="accent" className="team-needs">{cards.length}</Badge></h2>
       <div className="team-cards">{shown}</div>
-      {cards.length > 6 && <button className="btn ghost sm team-more" onClick={() => setAll(!all)}>{all ? "Show fewer" : `Show all ${cards.length}`}</button>}
+      {cards.length > 6 && <button className="ui-btn ui-btn-ghost ui-btn-sm team-more" onClick={() => setAll(!all)}>{all ? "Show fewer" : `Show all ${cards.length}`}</button>}
     </section>
   );
 }
@@ -123,12 +123,12 @@ function Approvals({ d, team }: { d: Overview; team: TeamCtx }) {
 export function SuggestionCard({ s, team }: { s: Suggestion; team: TeamCtx }) {
   return (
     <article className="team-card sug">
-      <div className="team-card-kind"><Sparkles size={12} aria-hidden="true" /> {s.kind === "rebalance" ? "Even out the load" : s.kind === "next" ? "Next up" : "Who should do it"}</div>
+      <div className="team-card-kind"><Lightbulb size={12} aria-hidden="true" /> {s.kind === "rebalance" ? "Even out the load" : s.kind === "next" ? "Next up" : "Who should do it"}</div>
       <div className="team-card-title">{s.headline}</div>
       <div className="small muted">{s.reason}</div>
       <div className="row team-card-actions">
-        <button className="btn primary sm" onClick={() => team.act(() => api(`/team/suggestions/${s.id}/approve`, { method: "POST" }), "Done")}><Check size={13} /> Yes</button>
-        <button className="btn ghost sm" onClick={() => team.act(() => api(`/team/suggestions/${s.id}/dismiss`, { method: "POST" }))}>Not now</button>
+        <button className="ui-btn ui-btn-primary ui-btn-sm" onClick={() => team.act(() => api(`/team/suggestions/${s.id}/approve`, { method: "POST" }), "Done")}><Check size={13} /> Yes</button>
+        <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => team.act(() => api(`/team/suggestions/${s.id}/dismiss`, { method: "POST" }))}>Not now</button>
       </div>
     </article>
   );
@@ -140,13 +140,13 @@ function MessageCard({ o, to, team }: { o: OutboxItem; to: string; team: TeamCtx
   return (
     <article className="team-card msg">
       <div className="team-card-kind"><Send size={12} aria-hidden="true" /> {o.kind === "nudge" ? "Check-in" : o.kind === "plan" ? "Today's plan" : "New task"} · {CHANNEL_LABEL[o.channel] ?? o.channel} to {to}</div>
-      {edit ? <textarea className="input" rows={4} value={body} onChange={(e) => setBody(e.target.value)} aria-label="Message" />
+      {edit ? <textarea className="ui-input" rows={4} value={body} onChange={(e) => setBody(e.target.value)} aria-label="Message" />
         : <div className="team-msg-body">{o.body}</div>}
       <div className="small faint">{o.why}</div>
       <div className="row team-card-actions">
-        <button className="btn primary sm" onClick={() => team.act(() => api(`/team/outbox/${o.id}/approve`, { body: edit ? { body } : {} }), "Sent")}><Send size={13} /> Send</button>
-        <button className="btn ghost sm" onClick={() => setEdit(!edit)}>{edit ? "Done editing" : "Edit"}</button>
-        <button className="btn ghost sm" onClick={() => team.act(() => api(`/team/outbox/${o.id}/cancel`, { method: "POST" }))}><X size={13} /> Don't send</button>
+        <button className="ui-btn ui-btn-primary ui-btn-sm" onClick={() => team.act(() => api(`/team/outbox/${o.id}/approve`, { body: edit ? { body } : {} }), "Sent")}><Send size={13} /> Send</button>
+        <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => setEdit(!edit)}>{edit ? "Done editing" : "Edit"}</button>
+        <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => team.act(() => api(`/team/outbox/${o.id}/cancel`, { method: "POST" }))}><X size={13} /> Don't send</button>
       </div>
     </article>
   );
@@ -162,13 +162,13 @@ function ReplyCard({ r, team, tasks }: { r: Reply; team: TeamCtx; tasks: Task[] 
       <blockquote className="team-quote small">{r.text.slice(0, 240)}</blockquote>
       <div className="row team-card-actions">
         {!r.task_id && tasks.length > 0 && (
-          <select className="input sm" aria-label="Which task" value={pick} onChange={(e) => setPick(e.target.value ? Number(e.target.value) : "")}>
+          <select className="ui-select ui-control-sm" aria-label="Which task" value={pick} onChange={(e) => setPick(e.target.value ? Number(e.target.value) : "")}>
             <option value="">Which task?</option>
             {tasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
           </select>
         )}
-        {pick !== "" && <button className="btn primary sm" onClick={apply}><Check size={13} /> Update the task</button>}
-        <button className="btn ghost sm" onClick={() => team.act(() => api(`/team/replies/${r.id}/dismiss`, { method: "POST" }))}>Ignore</button>
+        {pick !== "" && <button className="ui-btn ui-btn-primary ui-btn-sm" onClick={apply}><Check size={13} /> Update the task</button>}
+        <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => team.act(() => api(`/team/replies/${r.id}/dismiss`, { method: "POST" }))}>Ignore</button>
       </div>
     </article>
   );
@@ -194,10 +194,10 @@ function TaskCard({ t, team, members }: { t: Task; team: TeamCtx; members: Membe
       {t.status !== "todo" && t.status !== "done" && <div className="team-progress" aria-label={`${t.percent}% done`}><span style={{ width: `${t.percent}%` }} /></div>}
       <RiskTag t={t} />
       <div className="row team-task-actions">
-        <select className="input sm" value={t.status} aria-label="Status" onChange={(e) => set({ status: e.target.value as Task["status"] })}>
+        <select className="ui-select ui-control-sm" value={t.status} aria-label="Status" onChange={(e) => set({ status: e.target.value as Task["status"] })}>
           {Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <select className="input sm" value={t.assignee_id ?? ""} aria-label="Who" onChange={(e) => set({ assignee_id: e.target.value ? Number(e.target.value) : null })}>
+        <select className="ui-select ui-control-sm" value={t.assignee_id ?? ""} aria-label="Who" onChange={(e) => set({ assignee_id: e.target.value ? Number(e.target.value) : null })}>
           <option value="">Nobody yet</option>
           {members.map((m) => <option key={m.id} value={m.id}>{m.first_name}</option>)}
         </select>
@@ -314,7 +314,7 @@ function TodayPlan({ team }: { team: TeamCtx }) {
           <h2 className="team-h2">What everyone should do today</h2>
           <div className="small muted">{niceDate(plan.date)}: late and due-today work first, then what's under way, up to each person's hours.</div>
         </div>
-        <button className="btn primary" disabled={!ready} onClick={() => team.act(() => api("/team/plan/send", { method: "POST" }), "Plans are waiting for your OK above")}>
+        <button className="ui-btn ui-btn-primary" disabled={!ready} onClick={() => team.act(() => api("/team/plan/send", { method: "POST" }), "Plans are waiting for your OK above")}>
           <Send size={14} /> Get {ready} plan{ready === 1 ? "" : "s"} ready to send
         </button>
       </div>
@@ -348,21 +348,21 @@ function MemberForm({ team, onDone, m }: { team: TeamCtx; onDone: () => void; m?
     <form className="card col gap team-member-form" onSubmit={save}>
       <h3>{m ? `Edit ${m.first_name}` : "Add someone"}</h3>
       <div className="team-form-grid">
-        <label className="col small">Name<input className="input" autoFocus value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Sam Rivera" /></label>
-        <label className="col small">Role<input className="input" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })} placeholder="Estimator, paralegal, lab tech" /></label>
-        <label className="col small span2">What they're good at<input className="input" value={f.skills} onChange={(e) => setF({ ...f, skills: e.target.value })} placeholder="quotes, wiring, contracts, PCR" /></label>
-        <label className="col small">Email<input className="input" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
-        <label className="col small">Mobile<input className="input" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></label>
-        <label className="col small">Telegram (chat id or @name)<input className="input" value={f.telegram} onChange={(e) => setF({ ...f, telegram: e.target.value })} /></label>
+        <label className="col small">Name<input className="ui-input" autoFocus value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Sam Rivera" /></label>
+        <label className="col small">Role<input className="ui-input" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })} placeholder="Estimator, paralegal, lab tech" /></label>
+        <label className="col small span2">What they're good at<input className="ui-input" value={f.skills} onChange={(e) => setF({ ...f, skills: e.target.value })} placeholder="quotes, wiring, contracts, PCR" /></label>
+        <label className="col small">Email<input className="ui-input" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
+        <label className="col small">Mobile<input className="ui-input" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></label>
+        <label className="col small">Telegram (chat id or @name)<input className="ui-input" value={f.telegram} onChange={(e) => setF({ ...f, telegram: e.target.value })} /></label>
         <label className="col small">Send their tasks by
-          <select className="input" value={f.channel} onChange={(e) => setF({ ...f, channel: e.target.value })}>{Object.entries(CHANNEL_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          <select className="ui-select" value={f.channel} onChange={(e) => setF({ ...f, channel: e.target.value })}>{Object.entries(CHANNEL_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
         </label>
-        <label className="col small">Hours a week<input className="input" type="number" min={1} max={80} value={f.hours_per_week} onChange={(e) => setF({ ...f, hours_per_week: Number(e.target.value) })} /></label>
+        <label className="col small">Hours a week<input className="ui-input" type="number" min={1} max={80} value={f.hours_per_week} onChange={(e) => setF({ ...f, hours_per_week: Number(e.target.value) })} /></label>
         <fieldset className="col small span2 team-days"><legend>Days they work</legend>
           <div className="row">{days.map((x) => <label key={x} className="row small"><input type="checkbox" checked={f.work_days.includes(x)} onChange={(e) => setF({ ...f, work_days: e.target.checked ? [...f.work_days, x] : f.work_days.filter((y) => y !== x) })} /> {x[0].toUpperCase() + x.slice(1)}</label>)}</div>
         </fieldset>
       </div>
-      <div className="row"><button className="btn primary" disabled={!f.name.trim()}>{m ? "Save" : "Add"}</button><button type="button" className="btn ghost" onClick={onDone}>Cancel</button></div>
+      <div className="row"><button className="ui-btn ui-btn-primary" disabled={!f.name.trim()}>{m ? "Save" : "Add"}</button><button type="button" className="ui-btn ui-btn-ghost" onClick={onDone}>Cancel</button></div>
     </form>
   );
 }
@@ -400,7 +400,7 @@ function SettingsTab({ d, team }: { d: Overview; team: TeamCtx }) {
       <section className="card col gap">
         <h3 className="team-h3">Who's on the team</h3>
         {d.members.map((m) => <div key={m.id} className="row team-person-row"><Link to={`/team/people/${m.id}`} className="grow">{m.name}</Link><span className="small faint">{m.role} · {CHANNEL_LABEL[m.channel]}</span></div>)}
-        {adding ? <MemberForm team={team} onDone={() => setAdding(false)} /> : <div><button className="btn sm" onClick={() => setAdding(true)}><Plus size={13} /> Add someone</button></div>}
+        {adding ? <MemberForm team={team} onDone={() => setAdding(false)} /> : <div><button className="ui-btn ui-btn-sm" onClick={() => setAdding(true)}><Plus size={13} /> Add someone</button></div>}
       </section>
       <section className="card col gap">
         <h3 className="team-h3">What I may do without asking</h3>
@@ -409,24 +409,24 @@ function SettingsTab({ d, team }: { d: Overview; team: TeamCtx }) {
         <Toggle on={s.auto_nudge} label="Check in on late or stuck work by myself" hint="At most one check-in a day per task." onChange={(v) => put({ auto_nudge: v })} />
         <Toggle on={s.auto_assign} label="Give out work using my suggestions" hint="Only to people who work that day and have room." onChange={(v) => put({ auto_assign: v })} />
         <label className="row small">Summary for you
-          <select className="input sm" value={s.digest} onChange={(e) => put({ digest: e.target.value })}><option value="daily">Every afternoon</option><option value="weekly">Friday afternoon</option><option value="off">Off</option></select>
+          <select className="ui-select ui-control-sm" value={s.digest} onChange={(e) => put({ digest: e.target.value })}><option value="daily">Every afternoon</option><option value="weekly">Friday afternoon</option><option value="off">Off</option></select>
         </label>
       </section>
       <section className="card col gap">
         <h3 className="team-h3">Reading replies</h3>
         <Toggle on={s.read_inbox} label="Read my team's replies in my inbox" hint="Only mail from people on the team is opened." onChange={(v) => put({ read_inbox: v })} />
         <Toggle on={s.replies_review} label="Check replies before they change a task" hint="Recommended: an email's sender can be faked." onChange={(v) => put({ replies_review: v })} />
-        <div className="row"><button className="btn sm" onClick={() => team.act(() => api("/team/replies/check", { method: "POST" }), "Checked")}><Inbox size={13} /> Check now</button></div>
+        <div className="row"><button className="ui-btn ui-btn-sm" onClick={() => team.act(() => api("/team/replies/check", { method: "POST" }), "Checked")}><Inbox size={13} /> Check now</button></div>
       </section>
       <section className="card col gap">
         <h3 className="team-h3">Text messages (Twilio)</h3>
         <p className="small muted">{s.sms.configured ? `Texts go from ${s.sms.from}.` : "Use your own Twilio account to text people and read their replies. Costs are on your Twilio bill."}</p>
         <div className="team-form-grid">
-          <input className="input" placeholder="Account SID (AC…)" value={sms.sid} onChange={(e) => setSms({ ...sms, sid: e.target.value })} aria-label="Twilio Account SID" />
-          <input className="input" type="password" placeholder="Auth token" value={sms.token} onChange={(e) => setSms({ ...sms, token: e.target.value })} aria-label="Twilio auth token" />
-          <input className="input" placeholder="Twilio number (+61…)" value={sms.from_number} onChange={(e) => setSms({ ...sms, from_number: e.target.value })} aria-label="Twilio number" />
+          <input className="ui-input" placeholder="Account SID (AC…)" value={sms.sid} onChange={(e) => setSms({ ...sms, sid: e.target.value })} aria-label="Twilio Account SID" />
+          <input className="ui-input" type="password" placeholder="Auth token" value={sms.token} onChange={(e) => setSms({ ...sms, token: e.target.value })} aria-label="Twilio auth token" />
+          <input className="ui-input" placeholder="Twilio number (+61…)" value={sms.from_number} onChange={(e) => setSms({ ...sms, from_number: e.target.value })} aria-label="Twilio number" />
         </div>
-        <div><button className="btn sm" onClick={() => team.act(() => api("/team/sms", { method: "PUT", body: { sid: sms.sid || undefined, token: sms.token || undefined, from_number: sms.from_number } }), "Saved")}>Save</button></div>
+        <div><button className="ui-btn ui-btn-sm" onClick={() => team.act(() => api("/team/sms", { method: "PUT", body: { sid: sms.sid || undefined, token: sms.token || undefined, from_number: sms.from_number } }), "Saved")}>Save</button></div>
       </section>
       <section className="card col gap">
         <h3 className="team-h3">Jira, Asana and Trello</h3>
@@ -435,12 +435,12 @@ function SettingsTab({ d, team }: { d: Overview; team: TeamCtx }) {
           <div key={k} className="team-tracker">
             <div className="row"><strong className="grow">{k[0].toUpperCase() + k.slice(1)}</strong><span className="small faint">{s.trackers[k].connected ? `Connected${s.trackers[k].last_sync ? ` · synced ${relTime(s.trackers[k].last_sync)}` : ""}` : "Not connected"}</span></div>
             <div className="team-form-grid">{FIELDS[k].map(([f, label]) => (
-              <input key={f} className="input" aria-label={label} placeholder={s.trackers[k].fields[f] === "set" ? "•••• saved" : label} type={f === "token" || f === "key" ? "password" : "text"}
+              <input key={f} className="ui-input" aria-label={label} placeholder={s.trackers[k].fields[f] === "set" ? "•••• saved" : label} type={f === "token" || f === "key" ? "password" : "text"}
                 value={tr[k][f] ?? (s.trackers[k].fields[f] !== "set" ? s.trackers[k].fields[f] ?? "" : "")} onChange={(e) => setTr({ ...tr, [k]: { ...tr[k], [f]: e.target.value } })} />))}
             </div>
             <div className="row">
-              <button className="btn sm" onClick={() => team.act(() => api(`/team/trackers/${k}`, { method: "PUT", body: tr[k] }), "Saved")}>Save</button>
-              {s.trackers[k].connected && <button className="btn sm" onClick={() => team.act(async () => { const r = await api<{ added: number; updated: number }>(`/team/trackers/${k}/sync`, { method: "POST" }); team.toast.ok(`${r.added} added, ${r.updated} updated`); })}>Sync now</button>}
+              <button className="ui-btn ui-btn-sm" onClick={() => team.act(() => api(`/team/trackers/${k}`, { method: "PUT", body: tr[k] }), "Saved")}>Save</button>
+              {s.trackers[k].connected && <button className="ui-btn ui-btn-sm" onClick={() => team.act(async () => { const r = await api<{ added: number; updated: number }>(`/team/trackers/${k}/sync`, { method: "POST" }); team.toast.ok(`${r.added} added, ${r.updated} updated`); })}>Sync now</button>}
             </div>
           </div>
         ))}

@@ -135,3 +135,33 @@ def test_token_required_when_set():
 def test_public_bind_needs_token():
     with pytest.raises(SystemExit):
         server.serve("0.0.0.0", 0, "")
+
+
+def _raw(base, method, path, body, headers):
+    req = urllib.request.Request(base + path, data=body, method=method, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status
+    except urllib.error.HTTPError as e:
+        return e.code
+
+
+@pytest.mark.parametrize("headers", [
+    {"Origin": "https://evil.example", "Content-Type": "application/json"},
+    {"Origin": "null", "Content-Type": "application/json"},
+    {"Sec-Fetch-Site": "cross-site", "Content-Type": "application/json"},
+])
+def test_a_cross_site_browser_request_is_refused_without_a_token(api, headers):
+    base, _ = api
+    assert _raw(base, "POST", "/api/jobs", json.dumps({"goal": "x", "hold": True}).encode(), headers) == 401
+
+
+def test_a_simple_request_content_type_is_refused(api):
+    base, _ = api
+    # text/plain is CORS safelisted, so a page could send it with no preflight. The goal is a real one: a one letter
+    # goal is refused for its own reason, which hid the old server accepting "text/plain;charset=json".
+    req = urllib.request.Request(base + "/api/jobs", data=b'{"goal": "open example.com", "hold": true}', method="POST",
+                                 headers={"Content-Type": "text/plain;charset=json"})
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(req, timeout=30)
+    assert e.value.code == 400 and "application/json" in e.value.read().decode()

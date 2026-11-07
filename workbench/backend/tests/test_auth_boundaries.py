@@ -206,10 +206,11 @@ def test_the_native_window_signs_in_with_its_own_key(client, keys):
     assert a.get("/api/conversations").status_code == 200  # the cookie is a normal session
 
 
-def test_the_tools_key_still_signs_the_window_in(client, keys):
-    """Unchanged from main: the keychain held tools key also mints a window session on this computer."""
+def test_the_tools_key_does_not_sign_the_window_in(client, keys):
+    """The tools key is handed to add-ons and the Room's own server. It is not an account login anywhere, so it must
+    not mint a window session either (it did on main, on loopback): only the native key does."""
     r = anon(client).post("/api/desktop/local-session", headers={"Authorization": f"Bearer {TOOLS}", **W})
-    assert r.status_code == 200
+    assert r.status_code == 401 and "wb_session" not in r.headers.get("set-cookie", "")
 
 
 def test_no_native_key_configured_means_no_sign_in_with_an_empty_bearer(client, keys, monkeypatch):

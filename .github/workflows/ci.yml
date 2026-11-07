@@ -30,7 +30,8 @@ jobs:
             workbench/backend/requirements.txt
             workbench/backend/requirements-dev.txt
             workbench/backend/requirements-files.txt
-      - run: pip install -r requirements.txt -r requirements-dev.txt -r requirements-files.txt
+            rooks-try/pyproject.toml
+      - run: pip install -r requirements.txt -r requirements-dev.txt -r requirements-files.txt -e ../../rooks-try  # the Room, as the desktop install has it
       - name: Legacy database migration (schema v0 fixture from main 1a725f9)
         run: python -m pytest -q tests/test_actions.py -k migration
       - name: Full test suite
@@ -45,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-14, windows-2022]
+        os: [ubuntu-24.04, macos-15, windows-2022]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -56,6 +57,13 @@ jobs:
         with:
           python-version: "3.11"  # the minimum supported version (tomllib)
       - run: python -m pip install -e ".[dev]"  # pytest, plus prompt_toolkit and rich so the terminal UI tests run
+      - name: Bubblewrap, which keeps project-mode commands inside the folder on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q bubblewrap
+          # Ubuntu 24.04 switches off unprivileged user namespaces, which bwrap needs; print why, then allow them
+          bwrap --ro-bind / / /bin/true || sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          bwrap --ro-bind / / /bin/true
       - name: Tests, including the fake-model end-to-end run and the interactive terminal
         run: python -m pytest -q
       - name: Installs as a command and runs
@@ -84,6 +92,14 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npx tsc --noEmit -p .
       - run: npm run build
+      - run: npm test
+      - name: The committed web UI is the one the source builds (the one-command install ships it as is)
+        run: |
+          if [ -n "$(git status --porcelain dist)" ]; then
+            echo "workbench/frontend/dist is out of date. Run 'npm run build' in workbench/frontend and commit the dist folder."
+            git status --porcelain dist | head -20
+            exit 1
+          fi
 
   vscode-extension:
     name: VS Code extension tests
@@ -153,7 +169,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-14, windows-2022]
+        os: [ubuntu-24.04, macos-15, windows-2022]
     defaults:
       run:
         working-directory: rooks-browser
@@ -183,7 +199,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-14, windows-2022]
+        os: [ubuntu-24.04, macos-15, windows-2022]
     defaults:
       run:
         working-directory: rooks-desk
@@ -224,7 +240,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-14, windows-2022]
+        os: [ubuntu-24.04, macos-15, windows-2022]
     defaults:
       run:
         working-directory: rooks-try
@@ -311,7 +327,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-14, windows-2022]
+        os: [ubuntu-24.04, macos-15, windows-2022]
     env:
       PYTHONUTF8: "1"
     steps:

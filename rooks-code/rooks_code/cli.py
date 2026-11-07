@@ -187,7 +187,7 @@ def parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="rooks", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("prompt", nargs="*", help="one prompt to run, then exit; omit for an interactive session")
     ap.add_argument("-P", "--provider", help=f"one of {', '.join(config.PROVIDERS)} or a [providers.NAME] from the config")
-    ap.add_argument("-m", "--model", help="model id, e.g. gpt-4.1-mini, claude-sonnet-4-5, qwen2.5:7b")
+    ap.add_argument("-m", "--model", help="model id, e.g. gpt-4.1-mini, claude-sonnet-5-5, qwen2.5:7b")
     ap.add_argument("--base-url", help="API base URL (for openai-compatible servers)")
     ap.add_argument("-C", "--cwd", help="project folder (default: current folder)")
     ap.add_argument("-y", "--yes", action="store_true", help="approve every edit and command without asking")
@@ -247,7 +247,7 @@ def pick_project(root: Path, ask=input, say=print) -> Path | None:
     options = project_candidates(home)
     say(f"  You are in {root}, not a project folder. Pick one:")
     for i, p in enumerate(options, 1):
-        shown = "~/" + str(p.relative_to(home)) if p.is_relative_to(home) else str(p)
+        shown = "~/" + p.relative_to(home).as_posix() if p.is_relative_to(home) else str(p)
         say(f"  {i}  {shown}")
     say("  Or type a folder path (~ works).  Enter = stay here.  q = quit")
     for _ in range(5):

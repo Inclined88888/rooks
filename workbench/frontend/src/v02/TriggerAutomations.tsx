@@ -1,6 +1,6 @@
 // Trigger automations (feat/v02-automations): "When X happens, do Y, ask me first", from plain English or a simple builder.
 // Premium pass (package C): built on the primitives; styles in pages/agents/automations.css.
-import { ArrowRight, Play, Sparkles, Trash2, Zap } from "lucide-react";
+import { ArrowRight, Check, Play, Trash2, Zap } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
@@ -96,7 +96,7 @@ export default function TriggerAutomations() {
               <Input label="Say it in your own words" value={text} onChange={(e) => setText(e.target.value)} disabled={atLimit}
                 placeholder="When an invoice email arrives, save the PDF to Invoices and add it to my spreadsheet" />
               <div className="ag-bar">
-                <Button type="submit" variant="primary" icon={<Sparkles size={14} />} disabled={!text.trim() || atLimit} busy={busy === "parse"}>{busy === "parse" ? "Setting it up…" : "Set it up"}</Button>
+                <Button type="submit" variant="primary" icon={<Check size={14} />} disabled={!text.trim() || atLimit} busy={busy === "parse"}>{busy === "parse" ? "Setting it up…" : "Set it up"}</Button>
                 <Button variant="ghost" disabled={atLimit} onClick={() => { setDraft({ ...BLANK }); setBuilder(true); }}>Or build it step by step</Button>
               </div>
               <div className="au-examples" aria-label="Examples">

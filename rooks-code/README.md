@@ -16,7 +16,7 @@ only (ROOKS_PLAIN=1 forces it).
 
 | | Recommended | Alternatives |
 |---|---|---|
-| macOS | `brew install uv` then `uv tool install "git+https://github.com/Inclined88888/ai-workspace#subdirectory=rooks-code"` | `pipx install ...` (same URL) |
+| macOS | `brew install uv` then `uv tool install "git+https://github.com/Inclined88888/rooks#subdirectory=rooks-code"` | `pipx install ...` (same URL) |
 | Windows | `winget install astral-sh.uv` then the same `uv tool install` line (PowerShell) | `py -m pip install --user ...` |
 | Linux | `curl -LsSf https://astral.sh/uv/install.sh \| sh` then the same `uv tool install` line | `pipx install ...` |
 
@@ -38,7 +38,7 @@ cd your-project
 rooks                                  # interactive session
 rooks "make the failing test pass"     # one prompt, prints the answer, exits 1 if it did not finish
 rooks -P ollama -m qwen2.5:7b    # local and offline (ollama pull qwen2.5:7b first)
-rooks -P anthropic -m claude-sonnet-4-5   # needs ANTHROPIC_API_KEY
+rooks -P anthropic -m claude-sonnet-5-5   # needs ANTHROPIC_API_KEY
 rooks -P openai -m gpt-4.1-mini        # needs OPENAI_API_KEY
 rooks -P openrouter -m deepseek/deepseek-chat   # needs OPENROUTER_API_KEY
 rooks -P openai-compatible --base-url http://localhost:8000/v1 -m my-model
@@ -110,7 +110,7 @@ Keys are never stored: each provider names the environment variable that holds i
 
 ```toml
 provider = "anthropic"
-model = "claude-sonnet-4-5"
+model = "claude-sonnet-5-5"
 max_usd = 2.0
 trusted_folders = ["~/code/sandbox"]
 
@@ -138,7 +138,13 @@ calls are asked about like commands. Only stdio servers are supported so far; HT
   general instruct model, or a hosted model, for real work.
 * In the interactive terminal, answers appear formatted once complete (a "Working" line with a timer shows progress);
   plain mode (`ROOKS_PLAIN=1`) streams token by token in a terminal; piped output arrives whole.
-* No sandbox: approved commands run with your user's permissions. Approval, dry run and trusted folders are the controls.
+* Commands are kept inside the project folder by default (`sandbox = "project"`): on macOS with the built in
+  `sandbox-exec`, on Linux with bubblewrap (`bwrap`, for example `sudo apt install bubblewrap`). They can still read
+  the whole computer and use the network; only writes are limited, to the project and the temp folder. On Linux
+  without a working `bwrap` a command is refused with a note before you are asked about it, never run uncontained.
+  Windows has no containment yet: commands run with your user's permissions and the approval line says so.
+  `sandbox = "full"` runs them with your user's permissions everywhere; then approval, dry run and trusted folders
+  are the controls.
 * MCP over HTTP/SSE and prompt caching are not implemented yet.
 * Skills are learned only through the AI Workspace app; on its own Rooks learns facts, not procedures.
 

@@ -26,10 +26,17 @@ def test_a_chat_can_be_archived_and_deleted(client):
 def test_work_mail_puts_admin_skills_first(client):
     from app import db
 
-    db.run(
+    aid = db.run(
         "INSERT INTO mail_accounts (name, email, imap_host, imap_port, smtp_host, smtp_port, username, password_enc, life_role) "
         "VALUES ('Work', 'a@work.example', 'mail.example', 993, 'mail.example', 465, 'a@work.example', '', 'work')"
     )
+    try:
+        _admin_skills_first(client)
+    finally:  # the app is shared by every test: a mail account left here becomes everyone's first account
+        db.run("DELETE FROM mail_accounts WHERE id = ?", aid)
+
+
+def _admin_skills_first(client):
     body = client.get("/api/skills/store").json()
     names = [s["name"] for s in body["skills"] if s["for_you"]]
     assert "Admin day" in names

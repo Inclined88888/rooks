@@ -164,7 +164,7 @@ export default function App() {
 
   const pages = useMemo(() => palettePages(status).map((p) => ({ to: p.path, label: p.label, icon: p.icon })), [status]);
   const openSearch = useCallback(() => setPaletteOpen(true), []);
-  const openMore = useCallback(() => setMoreOpen(true), []);
+  const openMore = useCallback(() => setMoreOpen((o) => !o), []); // the More button toggles its menu
   const closeMore = useCallback(() => setMoreOpen(false), []);
 
   if (error) return <div className="auth"><div className="card auth-card col"><div className="alert err" role="alert">Cannot reach the app: {error}</div><button className="btn" onClick={refresh}>Try again</button></div></div>;
@@ -177,7 +177,7 @@ export default function App() {
   }
   if (location.pathname === "/ask-bar") return <AskBar />; // feat/v02-anywhere-voice: the floating window, no shell
   if (status.welcome_pending || ((status.desktop || status.needs_models) && !status.welcome_done)) {
-    return <Welcome onDone={() => { refresh(); navigate("/assistant", { replace: true }); }} />;
+    return <Welcome onDone={(work) => { refresh(); navigate(work.length ? `/coworkers?pick=${work.join(",")}` : "/assistant", { replace: true }); }} />;
   }
   if (!status.signins_offered) {
     return (

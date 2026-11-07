@@ -1,5 +1,5 @@
 // feat/v02-core: Projects with memory. One place per job, client, matter or course.
-import { Archive, ArrowLeft, Bell, Brain, CalendarClock, Check, FileText, FolderKanban, Globe2, Link2, Mail, MessageSquare, NotebookPen, Plus, Trash2, UserRound, X } from "lucide-react";
+import { Archive, ArrowLeft, Bell, BookMarked, CalendarClock, Check, FileText, FolderKanban, Globe2, Link2, Mail, MessageSquare, NotebookPen, Plus, Trash2, UserRound, X } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
@@ -190,7 +190,7 @@ export default function Projects() {
       {!SECTIONS.some((s) => sel.items[s.kind]?.length) && <EmptyState className="day-empty-sm" title="Nothing here yet" line="Add a person, a deadline or a note." action={<Button size="sm" icon={<NotebookPen size={14} />} onClick={() => setAdding("note")}>Add a note</Button>} />}
 
       {sel.facts.length > 0 && (
-        <Section title="What I know that relates" actions={<Link className="day-link" to="/about-you"><Brain size={14} aria-hidden="true" /> Edit in What I know</Link>}>
+        <Section title="What I know that relates" actions={<Link className="day-link" to="/about-you"><BookMarked size={14} aria-hidden="true" /> Edit in What I know</Link>}>
           <List label="What I know that relates">{sel.facts.map((f) => <Row key={f.id} title={<span className="day-wrap">{f.content}</span>} />)}</List>
         </Section>
       )}

@@ -145,3 +145,23 @@ def test_xml_namespaces_are_not_network(tmp_path):
         'import httpx\nhttpx.get("https://api.example.net/upload")\n')
     perms = skill_scan.permissions(tmp_path, {})
     assert perms["network"] == ["api.example.net"]
+
+
+def test_skill_python_cannot_reach_libc_through_ctypes_without_the_shell_grant(client, tmp_path):
+    from app import skill_sandbox
+
+    (tmp_path / "x.py").write_text("import ctypes\nctypes.CDLL(None).system(b'true')\nprint('escaped')\n")
+    r = skill_sandbox.run(tmp_path, "x.py")
+    assert "escaped" not in r["stdout"]
+    assert "shell" in {v["kind"] for v in r["violations"]}
+
+
+def test_skill_scripts_always_ask_when_there_is_no_os_sandbox(client, monkeypatch):
+    from app import assistant, skill_sandbox
+
+    t = assistant.TOOL_MAP["run_skill_script"]
+    clean = assistant.Ctx(channel="web", conversation_id=1)
+    monkeypatch.setattr(skill_sandbox, "os_sandboxed", lambda: False)
+    assert assistant.hold_reason(t, clean, {"skill": "s", "script": "x.py"}) == assistant.WEAK_SANDBOX_REASON
+    monkeypatch.setattr(skill_sandbox, "os_sandboxed", lambda: True)
+    assert assistant.hold_reason(t, clean, {"skill": "s", "script": "x.py"}) == ""

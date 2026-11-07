@@ -58,12 +58,27 @@ class Steps(llm.ScriptedModel):
     def __init__(self, script):
         super().__init__(script)
 
+    waits = 0
+
     def complete(self, system, user, image_b64=None):
         if "previous session did not end normally" in user:
             self.prompts.append(user)
             return llm.Reply('{"thought": "an unexpected dialog; do not restore", "action": "click", "args": {"id": %d}}'
                              % find(user, r"button 'No'"))
+        nxt = self.script[0] if self.script else None
+        expects = getattr(nxt, "expects", None)
+        if expects and expects not in user and self.waits < 5:
+            # A window that has not opened yet (the save dialog after ctrl+s on a slow runner): a person waits a moment
+            self.prompts.append(user)
+            self.waits += 1
+            return llm.Reply('{"thought": "waiting for %s to open", "action": "wait", "args": {"seconds": 1}}' % expects)
         return super().complete(system, user, image_b64)
+
+
+def expecting(text, fn):
+    """A scripted step that needs `text` on screen; Steps waits for it (a few seconds at most) before running it."""
+    fn.expects = text
+    return fn
 
 
 def find(prompt, pattern):
@@ -102,7 +117,7 @@ def test_editor_write_and_save(work):
         return {"thought": "no Save button listed; Enter saves", "action": "hotkey", "args": {"keys": "enter"}}
 
     script = [{"action": "open_app", "args": {"name": "mousepad", "wait": 2.5}}, type_in_editor,
-              {"action": "hotkey", "args": {"keys": "ctrl+s"}}, save_name, click_save, {"action": "wait", "args": {"seconds": 1}},
+              {"action": "hotkey", "args": {"keys": "ctrl+s"}}, expecting("Save As", save_name), click_save, {"action": "wait", "args": {"seconds": 1}},
               {"action": "done", "args": {"answer": f"saved {target}", "success": True}}]
     m = real_model() or Steps(script)
     res = runner.run_task(f"Open Mousepad, type exactly this text:\n{text}\nand save it as {target}", runner.Settings(max_steps=15),

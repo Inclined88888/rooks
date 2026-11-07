@@ -31,7 +31,7 @@ from urllib.parse import urlsplit
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 
-from . import actions, browser_proxy, config, db, desk_proxy, jobs
+from . import actions, browser_proxy, config, db, desk_proxy, jobs, starters
 from .security import require_user_or_terminal
 
 log = logging.getLogger("needs_you")
@@ -145,6 +145,17 @@ def _browser_item(job: dict, ap: dict) -> dict:
             "actions": ACTIONS}
 
 
+def _setup_item(v: dict) -> dict:
+    """A job a profession setup proposed, waiting for its first yes (feat/coworkers). Yes turns it on; no removes it."""
+    c = v["card"]
+    detail = f"Reads: {c.get('reads', '')} Changes: {c.get('changes', '')} You get: {c.get('result', '')}"
+    if v["missing"]:
+        detail += " " + " ".join(v["missing"])
+    return {"id": f"s:{v['schedule_id']}", "kind": "schedule", "title": f"{c.get('requester', '')} asks to run {c.get('action', v['name'])}",
+            "detail": detail, "since": v["since"], "conversation_id": None, "job_id": None, "actions": ACTIONS,
+            "effect": "schedule", "card": c, "missing": v["missing"]}
+
+
 def _jobs_waiting_to_start() -> list[dict]:
     jobs.ensure()
     rows = db.all("SELECT * FROM jobs WHERE status = 'waiting' AND needs = 'start' ORDER BY id DESC")
@@ -226,6 +237,7 @@ async def helper_items(fresh: bool = False) -> list[dict]:
 async def items() -> list[dict]:
     out = [_action_item(a) for a in actions.pending()]  # newest first already
     out += [_job_item(j) for j in _jobs_waiting_to_start()]
+    out += [_setup_item(v) for v in starters.waiting()]
     out += await helper_items(fresh=True)  # a person opening the inbox sees the helpers as they are now
     return sorted(out, key=lambda i: i["since"] or "", reverse=True)  # stable: ties keep newest-first order
 
@@ -233,7 +245,7 @@ async def items() -> list[dict]:
 async def count() -> int:
     jobs.ensure()
     starts = db.one("SELECT COUNT(*) AS n FROM jobs WHERE status = 'waiting' AND needs = 'start'")["n"]
-    return actions.pending_count() + starts + len(await helper_items())
+    return actions.pending_count() + starts + len(starters.waiting()) + len(await helper_items())
 
 
 @router.get("")
@@ -259,6 +271,9 @@ async def decide(item_id: str, answer: str):
     if kind == "j" and plain_number:
         j = jobs.approve_start(int(rest), approve)  # 404 unknown, 409 not waiting to start
         return {"id": item_id, "status": status, "job": {"id": j["id"], "status": j["status"], "detail": j["detail"]}}
+    if kind == "s" and plain_number:
+        r = starters.decide(int(rest), approve)  # 404 unknown, 409 answered already or its connection is missing
+        return {"id": item_id, "status": r["status"], "result": r.get("next_run") or ""}
     if kind in ("d", "b"):
         job_id, _, aid = rest.partition(":")
         if not job_id or not aid:

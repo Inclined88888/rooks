@@ -57,7 +57,7 @@ export const SIZES = { min: 12, max: 18 };
 
 // Base sizes at 14px, the same numbers tokens.css declares; every text token scales with the slider.
 const TEXT_TOKENS: [string, number][] = [["--text-2xs", 12], ["--text-xs", 12], ["--text-sm", 13], ["--text-md", 14], ["--text-lg", 16],
-  ["--text-xl", 20], ["--text-2xl", 28], ["--text-3xl", 28], ["--text-4xl", 28], ["--text-thread", 16], ["--text-mono", 13], ["--text-rail", 12]];
+  ["--text-xl", 20], ["--text-2xl", 28], ["--text-3xl", 28], ["--text-4xl", 28], ["--text-thread", 16], ["--text-mono", 13]];
 
 export function readAppearance(): Appearance {
   try {

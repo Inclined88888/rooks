@@ -20,9 +20,19 @@ from typing import Callable
 PRICES: dict[str, tuple[float, float]] = {
     "gpt-4.1": (2.0, 8.0), "gpt-4.1-mini": (0.4, 1.6), "gpt-4.1-nano": (0.1, 0.4), "gpt-4o": (2.5, 10.0),
     "gpt-4o-mini": (0.15, 0.6), "o4-mini": (1.1, 4.4), "gpt-5": (1.25, 10.0), "gpt-5-mini": (0.25, 2.0),
+    "claude-fable-5-1": (10.0, 50.0), "claude-fable-5": (10.0, 50.0),
+    "claude-opus-5-5": (4.0, 20.0), "claude-opus-5": (5.0, 25.0), "claude-opus-4-8": (5.0, 25.0),
+    "claude-opus-4-7": (5.0, 25.0), "claude-opus-4-6": (5.0, 25.0),
+    "claude-sonnet-5-5": (2.0, 10.0), "claude-sonnet-5": (2.0, 10.0), "claude-sonnet-4-6": (3.0, 15.0),
+    "claude-haiku-5-5": (0.1, 0.5),
     "claude-sonnet-4-5": (3.0, 15.0), "claude-sonnet-4": (3.0, 15.0), "claude-opus-4-1": (15.0, 75.0),
     "claude-haiku-4-5": (1.0, 5.0), "claude-3-5-haiku": (0.8, 4.0),
     "deepseek-chat": (0.27, 1.1), "deepseek-reasoner": (0.55, 2.19),
+}
+
+# Models whose price rises once one request's input passes a size: name -> (input tokens, [input, output] above it)
+PRICE_TIERS: dict[str, tuple[int, tuple[float, float]]] = {
+    "claude-haiku-5-5": (100_000, (0.5, 2.5)),
 }
 
 
@@ -169,8 +179,20 @@ def price(model: str, overrides: dict, local: bool) -> tuple[float, float] | Non
     return None
 
 
+def _tier(model: str, tokens_in: int) -> tuple[float, float] | None:
+    bare = model.split("/")[-1]
+    for name in sorted(PRICE_TIERS, key=len, reverse=True):
+        if bare == name or bare.startswith(name + "-"):
+            above, p = PRICE_TIERS[name]
+            return p if tokens_in > above else None
+    return None
+
+
 def cost(model: str, tokens_in: int, tokens_out: int, overrides: dict, local: bool) -> float | None:
+    """Cost of one request. tokens_in is that request's input, so a long prompt tier applies per request."""
     p = price(model, overrides, local)
+    if p is not None and not local and model not in overrides:
+        p = _tier(model, tokens_in) or p
     return None if p is None else round((tokens_in * p[0] + tokens_out * p[1]) / 1_000_000, 6)
 
 

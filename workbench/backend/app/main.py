@@ -21,6 +21,7 @@ egress.install()  # before anything connects: every outbound request is in the a
 from . import actions, api, appearance, assistant_api, bridge, browser_proxy, cli_agents_api, company, plan_signin, config, connect, db, desk_proxy, health, llm, mobile, scheduler, sites, skills_hub, telegram, work_api  # noqa: E402
 from . import terminal_pty  # noqa: E402 - #7 app terminal
 from . import compression  # AIW-Phase1: rolling compression of long chats
+from . import starters  # noqa: E402 - feat/coworkers
 from . import finetune, media  # noqa: E402 - phase 4
 from . import catalog  # noqa: E402 - model facts from models.dev
 from . import companion  # noqa: E402 - Companion: every agent's live steps, approvals and questions in one place
@@ -179,6 +180,7 @@ from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): th
 app.include_router(presence.router)
 app.include_router(presence.pulse_router)  # GET /api/pulse: presence, Needs you, job notices and revisions in one poll
 app.include_router(needs_you.router)
+app.include_router(starters.router)  # feat/coworkers: profession setups, coworkers and job cards (design record 0004)
 app.include_router(work_api.router)  # Files (any file, analysis, sandboxed Python) and Sites (any website the user works in)
 app.include_router(skills_hub.router)  # Skills from GitHub behind the security gate
 app.include_router(mcp_client_api.router)  # feat/mcp-client: connect Workbench to the user's own MCP servers

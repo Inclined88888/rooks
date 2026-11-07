@@ -7,11 +7,13 @@ cd "$(git rev-parse --show-toplevel)"
 out=${1:-dist/ai-workspace-$(cat VERSION).zip}
 mkdir -p "$(dirname "$out")"
 out=$(cd "$(dirname "$out")" && pwd)/$(basename "$out")
-[ -f workbench/frontend/dist/index.html ] || (cd workbench/frontend && npm ci --no-audit --no-fund && npm run build)
+# Always build: a dist/ that merely has index.html can be stale or missing files, and the zip would open blank.
+(cd workbench/frontend && npm ci --no-audit --no-fund && npm run build)
 tmp=$(mktemp -d)
 name=ai-workspace-$(cat VERSION)
 git archive --format=tar --prefix="$name/" HEAD | tar -x -C "$tmp"
 mkdir -p "$tmp/$name/workbench/frontend"
+rm -rf "$tmp/$name/workbench/frontend/dist"  # git archive carries the committed copy; the zip ships the build just made
 cp -R workbench/frontend/dist "$tmp/$name/workbench/frontend/dist"
 rm -f "$out"
 # zip with the executable bits kept (install.sh), using Python so `zip` need not be installed
