@@ -1,6 +1,7 @@
 import { Check, CheckSquare, ChevronDown, Flag, ListTree, Plus, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { api, Task } from "../api";
+import { loadCached, peekCached, putCached } from "../lib/cache";
 import { Badge, Button, Card, EmptyState, ErrorState, Input, Loading, Page, Section, Select, Tabs, Textarea } from "../ui";
 import { todayISO, useModels, useToast } from "../util";
 import { ModelPicker, plainError } from "./day/parts";
@@ -64,8 +65,14 @@ function TaskRow({ task, onChange, onDelete }: { task: Task; onChange: (t: Task)
 }
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  // The last list shows at once on a return visit and is asked again in the background (lib/cache.ts).
+  const [tasks, setTasksNow] = useState<Task[]>(() => peekCached<Task[]>("tasks") ?? []);
+  const setTasks = (next: Task[] | ((l: Task[]) => Task[])) => setTasksNow((cur) => {
+    const v = typeof next === "function" ? next(cur) : next;
+    putCached("tasks", v);
+    return v;
+  });
+  const [loaded, setLoaded] = useState(() => peekCached<Task[]>("tasks") !== undefined);
   const [problem, setProblem] = useState("");
   const [title, setTitle] = useState("");
   const [due, setDue] = useState("");
@@ -79,7 +86,7 @@ export default function Tasks() {
 
   const load = () => {
     setProblem("");
-    return api<Task[]>("/tasks").then(setTasks).catch((e) => setProblem(plainError(e, "Your tasks did not load."))).finally(() => setLoaded(true));
+    return loadCached("tasks", () => api<Task[]>("/tasks")).then(setTasks).catch((e) => setProblem(plainError(e, "Your tasks did not load."))).finally(() => setLoaded(true));
   };
   useEffect(() => {
     void load();

@@ -133,10 +133,12 @@ test("the Room never draws a picture unless it is running with a real screen, an
   const page = maybe("../src/room/RoomPage.tsx");
   assert.match(page, /RoomView/);
   assert.match(maybe("../src/pages/Room.tsx"), /room\/RoomPage/, "the /room route is the new page");
-  // the status comes from one shared store, polled every 5 s and 15 s when hidden
+  // the status comes from one shared store on the shared poller: 5 s while a turn works there, 30 s while quiet, none
+  // while the tab is hidden (the cadence itself is run in speed.test.mjs)
   const store = maybe("../src/room/status.ts");
   assert.match(store, /\/room\/status/);
-  assert.match(store, /document\.hidden \? 15000 : 5000/);
+  assert.match(store, /createPoller\(/);
+  assert.match(store, /if \(hidden\) return null;/);
   // no technical words on the screen
   for (const src of [view, stage, page]) {
     assert.doesNotMatch(src, />[^<]*\b(driver|namespace|OAuth|MCP|UTC|Workbench)\b[^<]*</, "plain words only");

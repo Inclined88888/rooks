@@ -1,7 +1,9 @@
-import { Bot, Building2, ExternalLink, MessageSquare, Search } from "lucide-react";
+import { Bot, Building2, ExternalLink, Keyboard, MessageSquare, Search } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { MOD_KEY } from "../keys";
 import { morePages, type StatusLike } from "../pages/registry";
+import { warmProps } from "../pages/warm";
+import { openShortcuts } from "./ShortcutsSheet";
 import { Button, Kbd, Sheet } from "../ui";
 
 type Links = StatusLike & { chat_url?: string; paperclip_url?: string; hermes_url?: string };
@@ -13,7 +15,12 @@ export function MoreSheet({ open, onClose, status, name, onSearch }: { open: boo
   const extras = status && (status.chat_url || status.paperclip_url || status.hermes_url);
   return (
     <Sheet open={open} onClose={onClose} title={name} side="left" width={300}
-      footer={<Button variant="ghost" size="sm" icon={<Search size={14} />} onClick={() => { onClose(); onSearch(); }}>Search or jump to <Kbd>{MOD_KEY}K</Kbd></Button>}>
+      footer={(
+        <>
+          <Button variant="ghost" size="sm" icon={<Search size={14} />} onClick={() => { onClose(); onSearch(); }}>Search or jump to <Kbd>{MOD_KEY}K</Kbd></Button>
+          <Button variant="ghost" size="sm" icon={<Keyboard size={14} />} onClick={() => { onClose(); openShortcuts(); }}>Keyboard shortcuts <Kbd>?</Kbd></Button>
+        </>
+      )}>
       {groups.map((g) => (
         <div key={g.section} className="more-group">
           <div className="more-section">{g.section}</div>
@@ -21,7 +28,7 @@ export function MoreSheet({ open, onClose, status, name, onSearch }: { open: boo
             const on = location.pathname === p.path || location.pathname.startsWith(`${p.path}/`);
             return (
               <NavLink key={p.path} to={p.path} className={`more-link${on ? " is-active" : ""}`} aria-current={on ? "page" : undefined}
-                onClick={onClose}>
+                onClick={onClose} {...warmProps(p.path)}>
                 <p.icon size={16} aria-hidden="true" />
                 <span className="truncate">{p.label}</span>
               </NavLink>

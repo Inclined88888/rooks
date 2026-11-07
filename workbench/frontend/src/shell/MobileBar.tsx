@@ -1,6 +1,7 @@
 import { AlertTriangle, Laptop, Layers, MessageSquare, MoreHorizontal } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { openNeedsYou } from "../needs/store";
+import { warmProps } from "../pages/warm";
 import { roomOn, usePresence } from "./presence";
 
 /**
@@ -12,13 +13,13 @@ export function MobileBar({ onMore }: { onMore: () => void }) {
   const cls = ({ isActive }: { isActive: boolean }) => `mobile-item${isActive ? " is-active" : ""}`;
   return (
     <nav className="mobile-nav" aria-label="Main">
-      <NavLink to="/assistant" className={cls}><MessageSquare size={20} aria-hidden="true" /><span>{"Chat"}</span></NavLink>
-      <NavLink to="/room" className={cls}>
+      <NavLink to="/assistant" className={cls} {...warmProps("/assistant")}><MessageSquare size={20} aria-hidden="true" /><span>{"Chat"}</span></NavLink>
+      <NavLink to="/room" className={cls} {...warmProps("/room")}>
         <Laptop size={20} aria-hidden="true" />
         <span>{"Room"}</span>
         {roomOn(p) && <><span className="mobile-live" aria-hidden="true" /><span className="sr-only">, on</span></>}
       </NavLink>
-      <NavLink to="/jobs" className={cls} end><Layers size={20} aria-hidden="true" /><span>{"Jobs"}</span></NavLink>
+      <NavLink to="/jobs" className={cls} {...warmProps("/jobs")} end><Layers size={20} aria-hidden="true" /><span>{"Jobs"}</span></NavLink>
       <button type="button" className={`mobile-item${p.needs_you ? " has-count" : ""}`} onClick={() => openNeedsYou()} aria-label={`Needs you: ${p.needs_you}`} aria-haspopup="dialog">
         <AlertTriangle size={20} aria-hidden="true" />
         <span>{"Needs you"}</span>

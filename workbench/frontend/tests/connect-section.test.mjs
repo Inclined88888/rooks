@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const connect = read("../src/pages/ConnectSection.tsx");
-const settings = read("../src/pages/Settings.tsx");
+const settings = read("../src/pages/Settings.tsx") + read("../src/pages/settings/sections.ts"); // the categories are shared with the command menu
 const mail = read("../src/pages/ConnectMailCalendar.tsx");
 
 test("Connect is one settings section with sign-in, a key, and a tool from GitHub", () => {

@@ -10,19 +10,7 @@ import ConnectSection from "./ConnectSection";
 import { AddKey, KeyInfo, SignInWithPlan, WebSearchSetup } from "./ModelSignIn";
 import { PhoneCard } from "./Phone";
 import { Advanced, ButtonLink, CategoryNav, Notice, Progress, SettingRow, SettingsGroup, Switch } from "./settings";
-
-/** The settings categories, in the order of the left list (plain words, no protocol names). */
-const SECTIONS: { id: string; label: string; line: string }[] = [
-  { id: "general", label: "General", line: "The workspace name, the model new chats use, and how you sign in." },
-  { id: "agents", label: "Agents", line: "The chat assistant, asking from anywhere, voice, and your phone." },
-  { id: "models", label: "Models", line: "Sign in with a plan, paste a key, or run a model on this computer." },
-  { id: "tools", label: "Tools", line: "Outside tools, this computer and the browser, and opening Rooks elsewhere." },
-  { id: "skills", label: "Skills & rules", line: "Saved ways of working, standing instructions, and memory." },
-  { id: "apps", label: "Connect", line: "Mail and calendar, a key you already have, and tools." },
-  { id: "appearance", label: "Appearance", line: "Light, dark or high contrast, the typeface and text size." },
-  { id: "privacy", label: "Privacy", line: "What stays on this computer, and what leaves only when you say yes." },
-  { id: "advanced", label: "Advanced", line: "Prices, usage, and the system pages." },
-];
+import { SETTINGS_SECTIONS as SECTIONS } from "./settings/sections";
 
 type DesktopInfo = { desktop: boolean; data_dir: string; secret_backend: string };
 type SettingsData = { workspace_name: string; default_model: string; chat_url: string; tools_url: string; model_catalog_refresh: boolean; model_catalog_env: boolean };
@@ -443,7 +431,7 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
           <>
             <Section title="Tools">
               <SettingsGroup>
-                <Go primary label="Extra tools" help="Outside tools you add yourself. Their actions still ask before they leave this computer." to="/mcp" />
+                <Go primary label="Extra tools" help="Outside tools you add yourself. Their actions still ask before they leave this computer." to="/extra-tools" />
                 <Go label="Computer" help="Let the assistant click and type on this machine, when you allow it." to="/computer" />
                 <Go label="Browser" help="Let the assistant work in a browser, when you allow it." to="/browser" />
                 <Go label="Customize tools" help="Every tool in one list." to="/customize?tab=tools" />

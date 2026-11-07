@@ -1,10 +1,14 @@
 /**
- * The Room's status, from one shared poller: GET /api/room/status every 5 s (15 s when the tab is hidden) while any
- * part of the app shows it (the rail's live dot, the bottom bar, the Room page and the Stage). An action on the Room
- * calls refreshRoomStatus() so the screen follows it at once instead of waiting for the next tick.
+ * The Room's status, from one shared poller (lib/poller.ts) while any part of the app shows it (the Room page and the
+ * Stage). The shell's pulse already says whether the Room runs and whether a turn works there, so this asks
+ * GET /api/room/status only every 30 s while the Room is quiet, every 5 s while a turn works in it, never while the tab
+ * is hidden, and at once when the pulse says the Room started, stopped or got busy. An action on the Room calls
+ * refreshRoomStatus() so the screen follows it at once instead of waiting for the next tick.
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { api, ApiError } from "../api";
+import { createPoller } from "../lib/poller";
+import { busy, getPresence, roomOn, subscribePresence, type Presence } from "../shell/presence";
 import { NOT_HERE_LINE, type RoomStatus } from "./words";
 
 export type RoomState = RoomStatus & {
@@ -19,13 +23,35 @@ const START: RoomState = {
   label: "", note: "", checkpoints: [], last_checkpoint: null, error: null,
 };
 
+export const ROOM_STATUS_QUIET_MS = 30000;
+export const ROOM_STATUS_BUSY_MS = 5000;
+
+/** A turn or a job is working in the Room right now (from the pulse). */
+export function roomBusy(p: Pick<Presence, "where" | "mood" | "running">): boolean {
+  return p.where === "room" && busy(p);
+}
+
+export const FRAME_LIVE_MS = 1000;
+export const FRAME_WATCH_MS = 3000;
+
+/**
+ * How long until the next frame of the Room's screen: about one a second while you have stepped in or a turn works in
+ * the Room, one every 3 s while you only watch a quiet Room, and none while the tab is hidden (the next frame is asked
+ * when it is shown again).
+ */
+export function frameEvery(o: { captured: boolean; busy: boolean; hidden: boolean }): number | null {
+  if (o.hidden) return null;
+  return o.captured || o.busy ? FRAME_LIVE_MS : FRAME_WATCH_MS;
+}
+
+/** How often the Room's status is asked: null while the tab is hidden (asked again when it is shown). */
+export function roomStatusEvery(p: Pick<Presence, "where" | "mood" | "running">, hidden: boolean): number | null {
+  if (hidden) return null;
+  return roomBusy(p) ? ROOM_STATUS_BUSY_MS : ROOM_STATUS_QUIET_MS;
+}
+
 let state: RoomState = START;
 const listeners = new Set<() => void>();
-let users = 0;
-let timer: ReturnType<typeof setTimeout> | undefined;
-let inflight = false;
-let wanted = false;
-
 function set(next: RoomState) {
   state = next;
   for (const fn of listeners) fn();
@@ -48,39 +74,32 @@ function fromWire(w: RoomStatus): RoomState {
   };
 }
 
-function schedule() {
-  clearTimeout(timer);
-  if (users > 0) timer = setTimeout(() => void tick(), document.hidden ? 15000 : 5000);
-}
-
-async function tick(): Promise<void> {
-  if (inflight) { wanted = true; return; }
-  inflight = true;
+async function load(): Promise<void> {
   try {
     const w = await api<RoomStatus>("/room/status");
     set(fromWire(w));
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) set({ ...START, checked: true, reachable: true, available: false, label: NOT_HERE_LINE });
     else set({ ...state, checked: true, reachable: false });
-  } finally {
-    inflight = false;
-    if (wanted) { wanted = false; void tick(); } else schedule();
   }
 }
 
+const poller = createPoller({ load, every: (hidden) => roomStatusEvery(getPresence(), hidden) });
+
+/** The pulse says the Room started or stopped (it disagrees with the last status), or a turn began or ended there. */
+let lastBusy = roomBusy(getPresence());
+subscribePresence(() => {
+  const p = getPresence();
+  if (p.stub || poller.users() === 0) return;
+  const b = roomBusy(p);
+  const moved = b !== lastBusy || (state.checked && state.available && roomOn(p) !== state.running);
+  lastBusy = b;
+  if (moved) void poller.refresh();
+});
+
 /** Ask now (after Start, Stop, Save a point, Start over) instead of at the next tick. */
 export function refreshRoomStatus(): Promise<void> {
-  clearTimeout(timer);
-  return tick();
-}
-
-function start() {
-  users += 1;
-  if (users === 1) { clearTimeout(timer); void tick(); }
-  return () => {
-    users -= 1;
-    if (users === 0) clearTimeout(timer);
-  };
+  return poller.refresh();
 }
 
 export function subscribeRoomStatus(fn: () => void): () => void {
@@ -94,7 +113,7 @@ export function getRoomStatus(): RoomState {
 
 /** Poll while at least one component shows the Room. */
 export function useRoomStatus(): RoomState {
-  useEffect(() => start(), []);
+  useEffect(() => poller.start(), []);
   return useSyncExternalStore(subscribeRoomStatus, getRoomStatus, getRoomStatus);
 }
 

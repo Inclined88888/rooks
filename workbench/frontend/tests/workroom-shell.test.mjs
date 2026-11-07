@@ -63,7 +63,7 @@ test("one page registry drives routes, rail, flyouts, the More sheet and the pal
   for (const path of ["/assistant", "/room", "/jobs", "/mail", "/calendar", "/tasks", "/knowledge", "/skills", "/files", "/notes", "/documents", "/sites", "/projects", "/settings", "/history", "/runs", "/appearance", "/terminal", "/teach", "/customize"]) {
     assert.ok(registry.includes(`path: "${path}"`), `${path} registered`);
   }
-  for (const redirect of ['from: "/connect"', 'from: "/assistant-skills"', 'from: "/packs"', 'from: "/welcome"']) assert.ok(registry.includes(redirect), redirect);
+  for (const redirect of ['from: "/connect"', 'from: "/assistant-skills"', 'from: "/packs/*"', 'from: "/mcp"', 'from: "/welcome"']) assert.ok(registry.includes(redirect), redirect);
   for (const shell of ["./shell/Rail", "./shell/PresenceStrip", "./shell/StageHost", "./shell/MobileBar"]) assert.ok(app.includes(shell), shell);
 });
 

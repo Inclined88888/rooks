@@ -31,7 +31,7 @@ const ROWS: Row[] = [
   { id: "mail", tab: "apps", title: "Mail", blurb: "Gmail, Outlook, or Apple Mail.", to: "/settings?section=apps", icon: Mail },
   { id: "calendar", tab: "apps", title: "Calendar", blurb: "See your day and make events.", to: "/calendar", icon: CalendarDays },
   { id: "models", tab: "tools", title: "AI models", blurb: "Claude, ChatGPT, Gemini, or a model on this computer.", to: "/models", icon: Sparkles, action: "Connect" },
-  { id: "extra", tab: "tools", title: "Extra tools", blurb: "Outside tools you add yourself.", to: "/mcp", icon: Wrench, action: "Add" },
+  { id: "extra", tab: "tools", title: "Extra tools", blurb: "Outside tools you add yourself.", to: "/extra-tools", icon: Wrench, action: "Add" },
   { id: "computer", tab: "tools", title: "Computer", blurb: "Click and type on this machine when you allow it.", to: "/computer", icon: Monitor, ready: (s) => s?.desk_enabled },
   { id: "browser", tab: "tools", title: "Browser", blurb: "Open sites and do work in a browser for you.", to: "/browser", icon: Globe, ready: (s) => s?.browser_enabled },
   { id: "terminal", tab: "tools", title: "Terminal", blurb: "The same assistant when you skip the window.", to: "/terminal", icon: SquareTerminal },

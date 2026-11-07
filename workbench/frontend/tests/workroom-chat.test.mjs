@@ -264,10 +264,15 @@ test("the thread header shows the project, the model, effort and Check answers a
 });
 
 test("Esc stops a running turn, Ctrl/Cmd+Shift+O starts a chat, Ctrl/Cmd+/ focuses the composer", () => {
+  // one shortcut list (lib/shortcuts.ts): the chat reads Esc and Ctrl/Cmd+/ from it, the shell reads Ctrl/Cmd+Shift+O
   const page = read("../src/pages/Assistant.tsx");
-  assert.match(page, /e\.key === "Escape"[^\n]*stopTurn|stopTurn\(\)[^\n]*Escape/);
-  assert.match(page, /shiftKey[^\n]*"o"/);
-  assert.match(page, /e\.key === "\/"/);
+  const list = read("../src/lib/shortcuts.ts");
+  assert.match(page, /isShortcut\("stop", e\)\) \{ e\.preventDefault\(\); void stopTurnRef\.current\(\)/);
+  assert.match(page, /isShortcut\("focus-composer", e\)\) \{ e\.preventDefault\(\); composerRef\.current\?\.focus\(\)/);
+  assert.match(list, /id: "new-chat", keys: \["Mod", "Shift", "O"\]/);
+  assert.match(list, /id: "focus-composer", keys: \["Mod", "\/"\]/);
+  assert.match(list, /id: "stop", keys: \["Esc"\]/);
+  assert.match(read("../src/App.tsx"), /s\.id === "new-chat"\) \{[^\n]*navigate\("\/assistant", \{ state: \{ fresh: true \} \}\)/);
 });
 
 test("a new chat gets a greeting line, three suggestion chips and the Needs you count", () => {

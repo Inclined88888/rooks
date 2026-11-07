@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKe
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { MOD_KEY } from "../keys";
 import { isActive, railItems, SETTINGS_PAGE, type GroupId, type RailItem, type StatusLike } from "../pages/registry";
+import { warmPath, warmProps } from "../pages/warm";
 import { useFocusTrap } from "../ui";
 import { roomOn, usePresence } from "./presence";
 
@@ -32,7 +33,7 @@ export function Rail({ status, onMore, onSearch, name }: { status: StatusLike | 
         <MoreHorizontal size={20} aria-hidden="true" />
         <span className="rail-label">More</span>
       </button>
-      <NavLink to={SETTINGS_PAGE.path} className={({ isActive: on }) => `rail-item${on ? " is-active" : ""}`}>
+      <NavLink to={SETTINGS_PAGE.path} className={({ isActive: on }) => `rail-item${on ? " is-active" : ""}`} {...warmProps(SETTINGS_PAGE.path)}>
         <SETTINGS_PAGE.icon size={20} aria-hidden="true" />
         <span className="rail-label">{SETTINGS_PAGE.label}</span>
       </NavLink>
@@ -46,7 +47,7 @@ function RailLink({ item, pathname, live }: { item: RailItem; pathname: string; 
   const page = item.page!;
   const on = isActive(page, pathname);
   return (
-    <NavLink to={page.path} className={`rail-item${on ? " is-active" : ""}`} aria-current={on ? "page" : undefined} end={false}>
+    <NavLink to={page.path} className={`rail-item${on ? " is-active" : ""}`} aria-current={on ? "page" : undefined} end={false} {...warmProps(page.path)}>
       <item.icon size={20} aria-hidden="true" />
       <span className="rail-label">{item.label}</span>
       {live && <><span className="rail-live" aria-hidden="true" /><span className="sr-only">, on</span></>}
@@ -77,6 +78,7 @@ function RailGroup({ item, pathname, open, onToggle, onClose }: { item: RailItem
   return (
     <div className="rail-group" ref={wrap}>
       <button type="button" className={`rail-item${anyActive ? " is-active" : ""}${open ? " is-open" : ""}`} onClick={onToggle}
+        onPointerEnter={() => item.pages.forEach((p) => warmPath(p.path))} onFocus={() => item.pages.forEach((p) => warmPath(p.path))}
         aria-haspopup="menu" aria-expanded={open} aria-controls={id}>
         <item.icon size={20} aria-hidden="true" />
         <span className="rail-label">{item.label}</span>
@@ -88,7 +90,7 @@ function RailGroup({ item, pathname, open, onToggle, onClose }: { item: RailItem
           {item.pages.map((p) => {
             const on = isActive(p, pathname);
             return (
-              <a key={p.path} href={p.path} role="menuitem" className={`rail-flyout-link${on ? " is-active" : ""}`} aria-current={on ? "page" : undefined}
+              <a key={p.path} href={p.path} role="menuitem" className={`rail-flyout-link${on ? " is-active" : ""}`} aria-current={on ? "page" : undefined} {...warmProps(p.path)}
                 onClick={(e) => { e.preventDefault(); onClose(); navigate(p.path); }}>
                 <p.icon size={16} aria-hidden="true" />
                 <span>{p.label}</span>

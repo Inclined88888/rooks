@@ -16,9 +16,13 @@ import { openBeside } from "../Beside";
 import { ChatList } from "../chat/ChatList"; // the Chats column: recent chats, archive, projects
 import { matches, narrowQuery, useMediaQuery, wideQuery } from "../shell/breakpoints";
 import { openStage, surfaceOf } from "../shell/StageHost";
+import { refreshPresence, useRevs } from "../shell/presence";
+import { loadCached, peekCached, putCached } from "../lib/cache";
 import { emptyTurn, parseEvent, reduceTurn, type Approval, type Offer, type TurnState, type Watch } from "../chat/events";
 import { adoptServerIds, mergeSteps, rebuildTurns, stepTitle, type Row } from "../chat/turns";
 import { Thread, type Fresh } from "../chat/Thread";
+import { followBehavior, isPinned } from "../chat/scroll";
+import { isShortcut } from "../lib/shortcuts";
 import { Composer } from "../chat/Composer";
 import { ThreadHeader } from "../chat/ThreadHeader";
 import { EmptyChat } from "../chat/EmptyChat";
@@ -30,6 +34,9 @@ import { SettingsTab } from "../chat/tabs/SettingsTab";
 import type { Conv, Msg, WorkMode } from "../chat/types";
 import { motionOff } from "../appearance";
 import "../chat/chat.css";
+
+/** While a call is held in this chat it is also asked this often (else only when the pulse says something moved). */
+const HELD_POLL_MS = 15000;
 
 export { SkillsTab };
 
@@ -193,24 +200,40 @@ function Chat() {
   const loadConvs = () => api<Conv[]>("/conversations").then(setConvs).catch(toast.err);
   useEffect(() => { loadConvs(); }, []);
   const loadConv = (id: number) => {
-    api<{ messages: Row[]; model: string }>(`/conversations/${id}`).then((c) => {
+    loadCached(`conv:${id}`, () => api<{ messages: Row[]; model: string }>(`/conversations/${id}`)).then((c) => {
       setMessages((cur) => mergeLoaded(cur, fromRows(c.messages, viaByReply.current)));
       setModel(c.model || "");
     }).catch(toast.err);
     api<Approval[]>(`/approvals?conversation_id=${id}`).then(setApprovals).catch(toast.err);
   };
-  // Approvals raised elsewhere (the rooks terminal on this conversation) show up while the chat is open
+  // Approvals raised elsewhere (the rooks terminal on this conversation) show up while the chat is open. A turn in this
+  // tab says so itself (its approval_required event); for the rest the shell's pulse says when a call was held or
+  // answered anywhere (its `held` revision), and only while something is held here is it also asked every 15 s.
+  const loadApprovals = (id: number) => api<Approval[]>(`/approvals?conversation_id=${id}`).then((list) => setApprovals((cur) => {
+    const ids = new Set(list.map((a) => a.id));
+    const same = cur.length === list.length && cur.every((a) => ids.has(a.id));
+    return same ? cur : list;
+  })).catch(() => {});
+  const holding = approvals.length > 0;
   useEffect(() => {
-    if (!cid) return;
-    const t = setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      api<Approval[]>(`/approvals?conversation_id=${cid}`).then((list) => setApprovals((cur) => {
-        const ids = new Set(list.map((a) => a.id));
-        const same = cur.length === list.length && cur.every((a) => ids.has(a.id));
-        return same ? cur : list;
-      })).catch(() => {});
-    }, 3000);
+    if (!cid || !holding) return;
+    const t = setInterval(() => { if (document.visibilityState === "visible") void loadApprovals(cid); }, HELD_POLL_MS);
     return () => clearInterval(t);
+  }, [cid, holding]);
+  // Replies that arrived another way (the terminal on this conversation, a job) join the thread: asked when the
+  // pulse's `chats` revision moves, not on a timer.
+  const loadOthers = (id: number) => api<{ messages: Row[] }>(`/conversations/${id}`).then((c) => {
+    setMessages((cur) => {
+      const known = new Set(cur.map((m) => m.id));
+      const said = new Set(cur.filter((m) => m.role === "assistant").map((m) => m.content));
+      const extra = fromRows(c.messages, viaByReply.current).filter((m) => m.role === "assistant" && !known.has(m.id) && !said.has(m.content));
+      return extra.length ? [...cur, ...extra] : cur;
+    });
+  }).catch(() => undefined);
+  useRevs((r, before) => {
+    if (!cid || busyRef.current) return;
+    if (r.held !== before.held) void loadApprovals(cid);
+    if (r.chats !== before.chats) void loadOthers(cid);
   }, [cid]);
   useEffect(() => {
     // Opening the chat list while a reply is still being written must not wipe it.
@@ -219,6 +242,9 @@ function Chat() {
     setEditing(null);
     setOpenSteps({});
     if (!cid) return setMessages([]);
+    // A chat you open again shows what it showed last time at once; the stored rows replace it when they arrive.
+    const kept = peekCached<{ messages: Row[]; model: string }>(`conv:${cid}`);
+    if (kept) { setMessages((cur) => mergeLoaded(cur, fromRows(kept.messages, viaByReply.current))); setModel(kept.model || ""); }
     loadConv(cid);
   }, [cid]);
 
@@ -231,7 +257,20 @@ function Chat() {
     } catch (e) { toast.err(e); }
   };
   // reduced motion (Appearance or the OS setting) jumps instead of animating the scroll on every streamed word
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: motionOff() ? "auto" : "smooth" }); }, [messages, live?.steps.length, live?.draft.length]);
+  // The thread stays pinned to the newest line while a reply streams in, unless you scrolled up to read (chat/scroll.ts).
+  // Sending something pins it again.
+  const pinnedRef = useRef(true);
+  useEffect(() => {
+    const el = endRef.current?.closest(".chat-scroll");
+    if (!el) return;
+    const onScroll = () => { pinnedRef.current = isPinned(el); };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [cid, messages.length > 0]);
+  useEffect(() => {
+    if (!pinnedRef.current) return;
+    endRef.current?.scrollIntoView({ behavior: followBehavior(busyRef.current, motionOff()), block: "end" });
+  }, [messages, live?.steps.length, live?.draft.length]);
 
   /** A job started on a surface: the Stage shows it (the Room, a browser, the desktop). */
   const openWatch = (w: Watch) => {
@@ -242,7 +281,8 @@ function Chat() {
   /** Once the turn is done, the fresh messages take the ids the server stored them under (same keys, nothing re-mounts). */
   const adoptIds = async (id: number) => {
     try {
-      const c = await api<{ messages: Row[] }>(`/conversations/${id}`);
+      const c = await api<{ messages: Row[]; model: string }>(`/conversations/${id}`);
+      putCached(`conv:${id}`, c);
       if (!mounted.current) return;
       setMessages((cur) => adoptServerIds(cur, c.messages));
     } catch { /* the next load names them */ }
@@ -259,6 +299,7 @@ function Chat() {
     const turn0 = emptyTurn(cid);
     liveRef.current = turn0;
     setLive(turn0);
+    pinnedRef.current = true; // what you just sent, and the reply to it, are shown
     if (opts.echo) {
       const uid = Date.now();
       setMessages((m) => [...m, { id: uid, key: `t${uid}`, role: "user", content: msg, tool_calls: [], name: "", attachments: opts.files }]);
@@ -276,7 +317,7 @@ function Chat() {
       liveRef.current = next;
       setLive(next);
       switch (ev.type) {
-        case "start": newId = ev.conversation_id; break;
+        case "start": newId = ev.conversation_id; void refreshPresence(); break; // the strip says "Thinking" now, not at the next tick
         case "approval_required": {
           setApprovals((a) => (a.some((x) => x.id === ev.approval.id) ? a : [...a, ev.approval]));
           if (inBackground()) void notify("Needs your OK", `${stepTitle(ev.approval.tool, ev.approval.args)}: ${ev.approval.reason || "waiting for your OK"}`, { tag: "approval" });
@@ -319,6 +360,7 @@ function Chat() {
     setBusy(false);
     setLive(null);
     liveRef.current = null;
+    void refreshPresence();
     if (!stopped && lastReply && inBackground()) void notify("Reply ready", lastReply.replace(/\s+/g, " ").slice(0, 160), { tag: "reply" });
     loadConvs();
     const doneCid = newId || cid;
@@ -380,14 +422,13 @@ function Chat() {
   const newChat = () => navigate("/assistant", { state: { fresh: true } });
   const focusComposer = () => composerRef.current?.focus();
 
-  // Keyboard: Esc stops a running turn, Ctrl/⌘+Shift+O starts a chat, Ctrl/⌘+/ goes to the message box.
+  // Keyboard, from the one shortcut list (lib/shortcuts.ts): Esc stops a running turn, Ctrl/⌘+/ goes to the message box.
+  // Ctrl/⌘+Shift+O (a new chat) works on every page, so the shell reads it.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
-      const mod = e.metaKey || e.ctrlKey;
-      if (e.key === "Escape" && busyRef.current) { e.preventDefault(); void stopTurnRef.current(); return; }
-      if (mod && e.shiftKey && !e.altKey && e.key.toLowerCase() === "o") { e.preventDefault(); navigate("/assistant", { state: { fresh: true } }); return; }
-      if (mod && !e.shiftKey && !e.altKey && e.key === "/") { e.preventDefault(); composerRef.current?.focus(); }
+      if (busyRef.current && isShortcut("stop", e)) { e.preventDefault(); void stopTurnRef.current(); return; }
+      if (isShortcut("focus-composer", e)) { e.preventDefault(); composerRef.current?.focus(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -419,23 +460,6 @@ function Chat() {
     if (!showRoutines) return;
     api<{ routines: Routine[] }>("/assistant/routines").then((r) => setRoutines(r.routines)).catch(toast.err);
   }, [showRoutines]);
-  // Replies that arrived another way (the terminal on this conversation, a job) join the thread
-  useEffect(() => {
-    if (!cid) return;
-    const t = window.setInterval(() => {
-      if (busyRef.current || document.visibilityState !== "visible") return;
-      api<{ messages: Row[] }>(`/conversations/${cid}`).then((c) => {
-        setMessages((cur) => {
-          const known = new Set(cur.map((m) => m.id));
-          const said = new Set(cur.filter((m) => m.role === "assistant").map((m) => m.content));
-          const extra = fromRows(c.messages, viaByReply.current).filter((m) => m.role === "assistant" && !known.has(m.id) && !said.has(m.content));
-          return extra.length ? [...cur, ...extra] : cur;
-        });
-      }).catch(() => undefined);
-    }, 8000);
-    return () => window.clearInterval(t);
-  }, [cid]);
-
   const title = cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat");
   const emptyLine = approvals.length > 0 ? "Something is waiting for your approval." : broken || undefined;
 

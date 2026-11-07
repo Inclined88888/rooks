@@ -267,7 +267,8 @@ test("each reply's actions are shown on touch screens", () => {
 });
 
 test("reduced motion stops the thread's animated scroll", () => {
-  assert.match(read("../src/pages/Assistant.tsx"), /scrollIntoView\(\{ behavior: motionOff\(\) \? "auto" : "smooth" \}\)/);
+  assert.match(read("../src/pages/Assistant.tsx"), /scrollIntoView\(\{ behavior: followBehavior\(busyRef\.current, motionOff\(\)\)/);
+  assert.match(read("../src/chat/scroll.ts"), /return streaming \|\| motionOff \? "auto" : "smooth";/);
 });
 
 test("the working state is announced once: the thread is not a live region and the thinking line is quiet", () => {

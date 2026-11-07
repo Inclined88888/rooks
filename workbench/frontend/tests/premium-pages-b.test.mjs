@@ -80,7 +80,9 @@ test("no inline colour, no inline hex, no spinner without words, no old card and
 
 test("Settings is a calm settings app: a category list, a select on the phone, rows with help, a normal Password row", () => {
   const s = read("pages/Settings.tsx");
-  for (const id of ["general", "agents", "models", "tools", "skills", "apps", "appearance", "privacy", "advanced"]) assert.match(s, new RegExp(`id: "${id}"`), id);
+  const sections = read("pages/settings/sections.ts"); // shared with the command menu, which opens each section
+  assert.match(s, /SETTINGS_SECTIONS as SECTIONS/);
+  for (const id of ["general", "agents", "models", "tools", "skills", "apps", "appearance", "privacy", "advanced"]) assert.match(sections, new RegExp(`id: "${id}"`), id);
   assert.match(s, /<CategoryNav\b/, "the left category list");
   const nav = read("pages/settings/CategoryNav.tsx");
   assert.match(nav, /<Select\b/, "a select on the phone");

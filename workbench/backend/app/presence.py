@@ -289,3 +289,32 @@ async def presence(fresh: bool = False):
     """The presence strip: name, mood, the current step in plain words, where it happens, what is watched, how many
     things need you, and what is running. `fresh=true` skips the one second cache."""
     return await snapshot(fresh)
+
+
+# --- the pulse: one poll for the whole shell (design 0003, section 6, principle 4) -------------------------------------
+pulse_router = APIRouter(prefix="/api/pulse", dependencies=[Depends(require_user)])
+
+
+def revisions() -> dict:
+    """Small strings that change when the thing they stand for changes, so an open page refreshes only then: `chats`
+    moves when a message lands or a chat is renamed, archived or removed anywhere (the terminal, a job, the phone);
+    `held` moves when a call is held or answered. Two indexed MAX/COUNT reads, no decrypting."""
+    c = db.one("SELECT COALESCE(MAX(id), 0) AS m FROM messages")["m"]
+    v = db.one("SELECT COUNT(*) AS n, COALESCE(MAX(updated_at), '') AS u FROM conversations")
+    h = db.one(f"SELECT COUNT(*) AS n, COALESCE(MAX(id), 0) AS m FROM ({actions._PENDING})")
+    return {"chats": f"{c}.{v['n']}.{v['u']}", "held": f"{h['n']}.{h['m']}"}
+
+
+@pulse_router.get("")
+async def pulse(after: int | None = None):
+    """Presence, the Needs you count, job notices after `after` and the revisions, in one answer. Without `after` (the
+    first look) no old notice is sent, only the cursor to ask from next time."""
+    p = await snapshot()
+    jobs.ensure()
+    if after is None or after < 0:
+        last = db.one("SELECT COALESCE(MAX(id), 0) AS m FROM job_notices")["m"]
+        notes: list[dict] = []
+    else:
+        notes = jobs.notices(after)
+        last = notes[-1]["id"] if notes else after
+    return {"presence": p, "needs_you": p.get("needs_you", 0), "notices": notes, "notices_after": last, "revs": revisions()}

@@ -6,8 +6,8 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity, AudioLines, Brain, Building2, CalendarClock, CalendarDays, CheckSquare, Code2, Columns3, FileText, FlaskConical,
-  FolderKanban, FolderOpen, Gauge, Globe, Globe2, GraduationCap, History, Home, Info, Laptop, Layers, LineChart, ListTree, Lock,
-  Mail, MessageCircle, MessageSquare, Mic, Monitor, NotebookPen, Palette, Plug, Search, Settings, Shield, SlidersHorizontal,
+  FolderKanban, FolderOpen, Gauge, Globe, Globe2, GraduationCap, Hammer, History, Home, Info, Laptop, Layers, LineChart, ListTree, Lock,
+  Mail, MessageCircle, MessageSquare, Mic, Monitor, NotebookPen, Package, Palette, Plug, Scale, Search, Settings, Shield, SlidersHorizontal,
   Sparkles, SquareTerminal, UserRound, Users, UsersRound, Video, Wand2,
 } from "lucide-react";
 import type { ComponentType } from "react";
@@ -94,6 +94,7 @@ export const PAGES: PageEntry[] = [
   { path: "/channels", label: "Channels", icon: MessageCircle, section: "Workspace", load: () => import("../teammates/Channels") },
   { path: "/talk", label: "Talk", icon: AudioLines, section: "Workspace", load: () => import("./Talk") },
   { path: "/vault", label: "Vault", icon: Lock, section: "Workspace", load: () => import("../teammates/Vault") },
+  { path: "/packs", label: "Packs", icon: Package, section: "Workspace", load: () => import("./Packs") },
 
   // ---- More: Settings ----
   { path: "/models", label: "AI models", icon: Gauge, section: "Settings", load: () => import("./Models") },
@@ -112,9 +113,14 @@ export const PAGES: PageEntry[] = [
   { path: "/fine-tune", label: "Fine-tune", icon: FlaskConical, section: "Advanced", load: () => import("./FineTune") },
   { path: "/company", label: "Company", icon: Building2, section: "Advanced", load: () => import("./Company") },
   { path: "/status", label: "System status", icon: Activity, section: "Advanced", load: () => import("./Status") },
-  { path: "/mcp", label: "Extra tools", icon: Plug, section: "Advanced", load: () => import("./McpServers") },
+  // /mcp itself belongs to the service (the MCP endpoint), so a page there would be answered by the service on a reload
+  { path: "/extra-tools", label: "Extra tools", icon: Plug, section: "Advanced", load: () => import("./McpServers") },
 
   // ---- routes without a place in the nav (reached from inside pages) ----
+  // the packs' own pages: opened from the Packs page, from a pack's result in chat ("/packs/trade?doc=…") and from ⌘K
+  { path: "/packs/legal", label: "Legal pack", icon: Scale, load: () => import("./PackLegal") },
+  { path: "/packs/study", label: "Study pack", icon: GraduationCap, load: () => import("./PackStudy") },
+  { path: "/packs/trade", label: "Trade pack", icon: Hammer, load: () => import("./PackTrade") },
   { path: "/assistant-memory", label: "Chat memory", icon: Brain, load: () => import("./Assistant"), props: { tab: "memory" }, palette: false },
   { path: "/assistant-settings", label: "Chat settings", icon: Settings, load: () => import("./Assistant"), props: { tab: "settings" }, palette: false },
   { path: "/groups/:id", label: "Group", icon: Users, load: () => import("../teammates/Groups"), palette: false },
@@ -124,8 +130,8 @@ export const REDIRECTS: Redirect[] = [
   { from: "/", to: "/assistant" },
   { from: "/connect", to: "/customize" },
   { from: "/assistant-skills", to: "/skills" },
-  { from: "/packs", to: "/assistant" },
-  { from: "/packs/*", to: "/assistant" },
+  { from: "/packs/*", to: "/packs" },
+  { from: "/mcp", to: "/extra-tools" },
   { from: "/welcome", to: "/assistant" },
   { from: "*", to: "/" },
 ];

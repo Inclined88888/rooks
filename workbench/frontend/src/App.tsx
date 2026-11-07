@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
@@ -17,10 +17,13 @@ import { PresenceStrip } from "./shell/PresenceStrip";
 import { StageHost } from "./shell/StageHost";
 import { MobileBar } from "./shell/MobileBar";
 import { MoreSheet } from "./shell/MoreSheet";
-import { ToastHost } from "./ui";
+import { Loading, Page, ToastHost } from "./ui";
+import { pageComponent, warmWhenIdle } from "./pages/warm";
+import { createKeyReader, SHORTCUTS } from "./lib/shortcuts";
 import { IS_MAC, MOD_KEY } from "./keys";
 import { registerStageSurfaces } from "./stage/surfaces";
 import { NeedsYouSheet } from "./needs/NeedsYou";
+import { ShortcutsSheet, toggleShortcuts } from "./shell/ShortcutsSheet";
 
 export { MOD_KEY };
 
@@ -79,18 +82,19 @@ function Boot() {
   return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">{PRODUCT}</div></div>;
 }
 
-// Sign in, the first welcome and the ask bar stay in the first load. Every registered page loads when you open it.
-const LAZY = new Map<PageEntry, ComponentType<Record<string, unknown>>>();
-function lazyFor(entry: PageEntry): ComponentType<Record<string, unknown>> {
-  let c = LAZY.get(entry);
-  if (!c) { c = lazy(entry.load) as ComponentType<Record<string, unknown>>; LAZY.set(entry, c); }
-  return c;
+// Sign in, the first welcome and the ask bar stay in the first load. Every registered page is its own chunk, warmed on
+// hover and focus of any way to it (pages/warm.ts); a page whose chunk is here renders at once, else its frame shows
+// at once with a Loading state (no blank screen, no full screen wordmark) until the chunk arrives.
+function PageFrameLoading({ entry }: { entry: PageEntry }) {
+  if (entry.rail === "chat" || entry.rail === "room") return <div className="page-frame-loading"><Loading rows={4} label={`Opening ${entry.label}`} /></div>;
+  return <Page title={entry.label}><Loading rows={4} label={`Opening ${entry.label}`} /></Page>;
 }
 
 function PageElement({ entry, refresh }: { entry: PageEntry; refresh: () => void }) {
-  const C = lazyFor(entry);
+  const { C, ready } = useMemo(() => pageComponent(entry), [entry]);
   const props = typeof entry.props === "function" ? entry.props({ refresh }) : entry.props ?? {};
-  return <C {...props} />;
+  if (ready) return <C {...props} />;
+  return <Suspense fallback={<PageFrameLoading entry={entry} />}><C {...props} /></Suspense>;
 }
 
 /** Every route and redirect, from the page registry. */
@@ -136,16 +140,27 @@ export default function App() {
     (window as unknown as { __wbHandoff?: (d: string) => void }).__wbHandoff = (draft) => navigate("/assistant", { state: { draft, at: Date.now() } });
   }, [navigate]);
   useEffect(() => setMoreOpen(false), [location.pathname]);
+  // Keyboard first (lib/shortcuts.ts is the one list): ⌘K/Ctrl+K the command menu, ? the shortcuts sheet, ⌘⇧O a new
+  // chat, g then c/r/j/t/m/s a page. Letters and ? are never taken while typing in a field. The chat reads its own.
   useEffect(() => {
+    const read = createKeyReader();
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setPaletteOpen((o) => !o);
-      }
+      if (e.defaultPrevented || e.isComposing) return;
+      const s = read(e, Date.now());
+      if (!s) return;
+      if (s.id === "palette") { e.preventDefault(); setPaletteOpen((o) => !o); return; }
+      if (document.querySelector('[aria-modal="true"]') && s.id !== "new-chat") return; // a sheet or menu is open: it has the keys
+      e.preventDefault();
+      if (s.id === "shortcuts") toggleShortcuts();
+      else if (s.id === "new-chat") { setPaletteOpen(false); navigate("/assistant", { state: { fresh: true } }); }
+      else if (s.to) navigate(s.to);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [navigate]);
+
+  const inShell = !!status?.signed_in && !!status.setup_complete;
+  useEffect(() => (inShell ? warmWhenIdle(SHORTCUTS.flatMap((s) => (s.to ? [s.to] : []))) : undefined), [inShell]);
 
   const pages = useMemo(() => palettePages(status).map((p) => ({ to: p.path, label: p.label, icon: p.icon })), [status]);
   const openSearch = useCallback(() => setPaletteOpen(true), []);
@@ -199,6 +214,7 @@ export default function App() {
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} pages={pages} />
       <AccountLayer />
       <NeedsYouSheet />
+      <ShortcutsSheet />
       <ToastHost />
     </div>
   );

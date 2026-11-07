@@ -66,7 +66,8 @@ test("the rail's Room item is live while the Room runs, and Needs you on the bot
   assert.match(rail, /roomOn\(usePresence\(\)\)/, "the dot comes from the presence answer, not a second poller");
   assert.match(rail, /rail-live/);
   assert.match(store, /\/room\/status/);
-  assert.match(store, /document\.hidden \? 15000 : 5000/, "one poller: 5 s, 15 s when hidden");
+  // one shared poller (lib/poller.ts), paced by the pulse and stopped while the tab is hidden (speed.test.mjs runs it)
+  assert.match(store, /createPoller\(\{ load, every: \(hidden\) => roomStatusEvery\(getPresence\(\), hidden\) \}\)/, "one poller, visibility aware");
   assert.match(bar, /openNeedsYou\(\)/);
   assert.doesNotMatch(bar, /navigate\("\/jobs#needs-you"\)/, "the bar opens the sheet instead of leaving the page");
   assert.match(bar, /roomOn\(p\)/, "the bar's Room item carries the same live dot");

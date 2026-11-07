@@ -2,12 +2,16 @@ import { Archive, ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, Trash
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
+import { useRevs } from "../shell/presence";
 import { IconButton, useFocusTrap, useToast } from "../ui";
 import "./chat.css";
 
 type Conv = { id: number; title: string; channel: string; updated_at: string; model: string; archived?: number };
 type Project = { id: number; name: string; kind: string; status: string; last_used_at?: string | null; updated_at?: string; counts?: Record<string, number> };
 type ProjectList = { projects: Project[]; active_id: number | null };
+
+/** The open column asks again this often on its own (chats also follow the pulse's `chats` revision at once). */
+const CHATLIST_POLL_MS = 60000;
 
 /** Compact age: 23h, 44m */
 export function shortAgo(iso: string | null | undefined): string {
@@ -91,17 +95,22 @@ export function ChatList({ open, id = "chat-list", floating = false, onClose }: 
   };
   const reloadChats = () => api<Conv[]>(query()).then(setConvs);
 
+  // Asked when the column opens, when the pulse says a chat changed anywhere (its `chats` revision), and once a minute
+  // while it stays open and the tab is visible (for projects, which have no revision). Never while it is closed.
+  const loadRef = useRef<() => void>(() => undefined);
   useEffect(() => {
-    if (!open) return;
+    if (!open) { loadRef.current = () => undefined; return; }
     let stop = false;
     const load = () => {
       api<Conv[]>(query()).then((r) => { if (!stop) setConvs(r); }).catch(() => undefined);
       api<ProjectList>("/projects").then((r) => { if (!stop) setProjects(r); }).catch(() => undefined);
     };
+    loadRef.current = () => { if (!stop) api<Conv[]>(query()).then((r) => { if (!stop) setConvs(r); }).catch(() => undefined); };
     load();
-    const t = window.setInterval(() => { if (document.visibilityState === "visible") load(); }, 10000);
+    const t = window.setInterval(() => { if (document.visibilityState === "visible") load(); }, CHATLIST_POLL_MS);
     return () => { stop = true; clearInterval(t); };
   }, [q, location.key, archivedView, open]);
+  useRevs((r, before) => { if (r.chats !== before.chats) loadRef.current(); }, []);
 
   const activeProjectId = projects?.active_id ?? null;
   const projectRows = useMemo(() => projects?.projects ?? [], [projects]);

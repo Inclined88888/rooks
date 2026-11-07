@@ -13,11 +13,11 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type Keyboard
 import { Link, useNavigate } from "react-router-dom";
 import { api, fetchFrame } from "../api";
 import { openNeedsYou } from "../needs/store";
-import { refreshPresence } from "../shell/presence";
+import { getPresence, refreshPresence, subscribePresence } from "../shell/presence";
 import { openStage } from "../shell/StageHost";
 import { Badge, Button, EmptyState, IconButton, Input, Select, useToast } from "../ui";
 import { errorText } from "../ui/toast";
-import { refreshRoomStatus, useRoomStatus, type RoomState } from "./status";
+import { frameEvery, refreshRoomStatus, roomBusy, useRoomStatus, type RoomState } from "./status";
 import {
   commandViewLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, pointLine, roomScreenLive, RUN_TIMEOUT_S, toScreenPoint, wheelSteps,
   type Checkpoint, type Point, type Size,
@@ -177,26 +177,41 @@ function RoomPicture({ captured, onRelease }: { captured: boolean; onRelease: ()
   const typeTimer = useRef<number | undefined>(undefined);
   const lastWheel = useRef(0);
 
-  // The next frame is fetched off screen every second (every 5 s when the tab is hidden) and swapped in once it has
-  // loaded, so the screen never blinks. A frame that fails means the Room changed: ask its status again.
-  // Frames are fetched with the same sign-in as every other call (a paired browser has a token, not a cookie).
+  // The next frame is fetched off screen and swapped in once it has loaded, so the screen never blinks: about one a
+  // second while you have stepped in or a turn works in the Room, one every 3 s while you only watch, none while the tab
+  // is hidden (frameEvery). A frame is never asked while the one before it is still loading. A frame that fails means
+  // the Room changed: ask its status again. Frames are fetched with the same sign-in as every other call (a paired
+  // browser has a token, not a cookie).
+  const capturedRef = useRef(captured);
+  capturedRef.current = captured;
+  const kick = useRef<() => void>(() => undefined);
   useEffect(() => {
     let stop = false;
     let timer: number | undefined;
     let shown = "";
+    let loading = false;
+    const later = (ms: number | null) => {
+      window.clearTimeout(timer);
+      timer = ms === null ? undefined : window.setTimeout(next, ms);
+    };
+    const cadence = () => frameEvery({ captured: capturedRef.current, busy: roomBusy(getPresence()), hidden: document.hidden });
     const failed = () => {
+      loading = false;
       if (stop) return;
       setStale(true);
       void refreshRoomStatus();
-      timer = window.setTimeout(next, 3000);
+      later(document.hidden ? null : 3000);
     };
-    const next = () => {
-      if (stop) return;
+    function next() {
+      if (stop || loading) return; // the previous frame has not finished loading: skip this one
+      if (document.hidden) { later(null); return; }
+      loading = true;
       fetchFrame(`/room/screenshot?k=${Date.now()}`).then((blob) => {
-        if (stop) return;
+        if (stop) { loading = false; return; }
         const url = URL.createObjectURL(blob);
         const im = new Image();
         im.onload = () => {
+          loading = false;
           if (stop) { URL.revokeObjectURL(url); return; }
           const before = shown;
           shown = url;
@@ -204,15 +219,29 @@ function RoomPicture({ captured, onRelease }: { captured: boolean; onRelease: ()
           if (before) window.setTimeout(() => URL.revokeObjectURL(before), 0);
           setNatural((n) => (n.width === im.naturalWidth && n.height === im.naturalHeight ? n : { width: im.naturalWidth, height: im.naturalHeight }));
           setStale(false);
-          timer = window.setTimeout(next, document.hidden ? 5000 : 1000);
+          later(cadence());
         };
         im.onerror = () => { URL.revokeObjectURL(url); failed(); };
         im.src = url;
       }, failed);
-    };
+    }
+    // Back on the tab, stepping in, or a turn starting in the Room: the next frame comes now, at the faster pace.
+    kick.current = () => { if (!stop && !loading) { window.clearTimeout(timer); next(); } };
+    const onVisible = () => { if (!document.hidden) kick.current(); };
+    document.addEventListener("visibilitychange", onVisible);
+    let wasBusy = roomBusy(getPresence());
+    const unsub = subscribePresence(() => {
+      const b = roomBusy(getPresence());
+      if (b && !wasBusy) kick.current();
+      wasBusy = b;
+    });
     next();
-    return () => { stop = true; window.clearTimeout(timer); if (shown) URL.revokeObjectURL(shown); };
+    return () => {
+      stop = true; window.clearTimeout(timer); document.removeEventListener("visibilitychange", onVisible); unsub();
+      if (shown) URL.revokeObjectURL(shown);
+    };
   }, []);
+  useEffect(() => { if (captured) kick.current(); }, [captured]);
 
   const send = useCallback((path: string, body: Record<string, unknown>) => {
     api<{ ok?: boolean; error?: string } | null>(path, { body })

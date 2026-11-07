@@ -233,7 +233,7 @@ export default function ConnectSection({ onChange }: { onChange?: () => void }) 
             <SettingsGroup label="Tools">
               {catalogue.map((entry) => <ToolRow key={entry.name} entry={entry} added={on.has(entry.name)} onAdded={reload} />)}
               <SettingRow label="Something else" help="From GitHub, nothing is installed until you approve it.">
-                <ButtonLink size="sm" to="/mcp">Add your own</ButtonLink>
+                <ButtonLink size="sm" to="/extra-tools">Add your own</ButtonLink>
                 <ButtonLink size="sm" to="/skills?tab=add">From GitHub</ButtonLink>
               </SettingRow>
             </SettingsGroup>

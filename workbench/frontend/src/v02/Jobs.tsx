@@ -5,18 +5,22 @@
  * pill links to /jobs#needs-you, and that element opens the same sheet.
  */
 import { Bell, Check, CircleStop, Inbox, Pause, Play, RotateCcw, Trash2, X } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { api } from "../api";
 import { argsLine, stepTitle } from "../chat/turns";
 import { openNeedsYou } from "../needs/store";
 import { usePresence } from "../shell/presence";
 import { ApprovalCard, Badge, Button, Card, Chip, EmptyState, ErrorState, IconButton, Loading, Page, Textarea, type Tone } from "../ui";
+import { useCached } from "../lib/cache";
 import { relTime, useToast } from "../util";
 import { LiveMarkdown } from "./LiveBlocks";
 import { jobControls, jobLabel } from "./live";
 import "./v02.css";
 import { plainError } from "../pages/day/parts";
+
+export const JOBS_BUSY_MS = 3000;
+export const JOBS_QUIET_MS = 15000;
 
 export type Approval = { id: number; tool: string; args: string; reason: string; status: string; effect?: string };
 export type Job = {
@@ -40,7 +44,9 @@ const VERB: Record<string, { label: string; icon: typeof Play }> = {
 const TONE: Record<string, Tone> = { running: "live", waiting: "accent", done: "ok", failed: "danger" };
 
 export default function JobsPage() {
-  const [board, setBoard] = useState<Board | null>(null);
+  // The last board shows at once on a return visit and is asked again in the background (lib/cache.ts).
+  const cached = useCached<Board>("jobs:board", () => api<Board>("/jobs"));
+  const board = cached.data ?? null;
   const [problem, setProblem] = useState("");
   const [prompt, setPrompt] = useState("");
   const [kind, setKind] = useState("chat");
@@ -51,12 +57,18 @@ export default function JobsPage() {
   const presence = usePresence();
   const location = useLocation();
 
-  const load = () => api<Board>("/jobs").then((b) => { setBoard(b); setProblem(""); }).catch((e) => setProblem(plainError(e, "The board did not load.")));
+  const load = () => cached.refresh();
+  useEffect(() => { setProblem(cached.error ? plainError(cached.error, "The board did not load.") : ""); }, [cached.error]);
+  // Every 3 s while a job runs or waits to start, every 15 s while the board is quiet, never while the tab is hidden;
+  // at once when the shell's pulse says a job started, finished or needs you.
+  const active = (board?.running.length ?? 0) > 0 || presence.running.jobs > 0;
   useEffect(() => {
-    void load();
-    const t = setInterval(() => { if (!document.hidden) void load(); }, 2500);
+    const t = setInterval(() => { if (!document.hidden) void load(); }, active ? JOBS_BUSY_MS : JOBS_QUIET_MS);
     return () => clearInterval(t);
-  }, []);
+  }, [active]);
+  const pulseKey = `${presence.running.jobs}:${presence.needs_you}`;
+  const seenKey = useRef(pulseKey);
+  useEffect(() => { if (seenKey.current !== pulseKey) { seenKey.current = pulseKey; void load(); } }, [pulseKey]);
   // the presence pill and the bottom bar link here as /jobs#needs-you: that lands in the inbox sheet
   useEffect(() => { if (location.hash === "#needs-you") openNeedsYou(); }, [location.hash]);
 

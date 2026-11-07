@@ -177,6 +177,7 @@ app.include_router(room.terminal)  # /room in the terminal: status, start, stop,
 from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): the presence strip and the Needs you inbox
 
 app.include_router(presence.router)
+app.include_router(presence.pulse_router)  # GET /api/pulse: presence, Needs you, job notices and revisions in one poll
 app.include_router(needs_you.router)
 app.include_router(work_api.router)  # Files (any file, analysis, sandboxed Python) and Sites (any website the user works in)
 app.include_router(skills_hub.router)  # Skills from GitHub behind the security gate
