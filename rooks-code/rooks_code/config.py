@@ -204,7 +204,7 @@ class Settings:
     effort: str = ""                     # how hard a plan's model thinks (low, medium, high); "" = the plan's default
     learn: bool = True                   # remember facts and learn skills (through the app: shared with chat)
     mode: str = "build"                  # chat talks, plan reads, build can change files and run commands
-    sandbox: str = "project"             # project keeps command writes inside the folder; full does not
+    sandbox: str = "project"             # project keeps command writes inside the folder (macOS seatbelt, Linux bwrap; refused where neither works); full does not
     hook_before_tool: str = ""           # optional script path from rooks.toml [hooks] before_tool
     lint_after_edit: bool = False        # run linter/tests after edits and feed errors back
     root: Path = field(default_factory=Path.cwd)

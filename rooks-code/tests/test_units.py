@@ -209,19 +209,69 @@ def test_loop_detection_read_heavy(tmp_path):
     assert result.loop_type == "read_heavy"
 
 
+def _contained() -> bool:
+    from conftest import _can_contain
+    return _can_contain()
+
+
 def test_project_sandbox_blocks_a_write_outside_the_folder(tmp_path):
-    """A command may change files in the project. It may not write outside it, even into the home folder."""
+    """A command may change files in the project. It may not write outside it, even into the home folder.
+    Where it cannot be contained it is refused: it never runs uncontained."""
+    from rooks_code.tools import ToolError
     outside = Path.home() / f".rooks-escape-{tmp_path.name}.txt"
     outside.unlink(missing_ok=True)
     tb = Toolbox(tmp_path)
     tb.sandbox = "project"
-    result = tb.prepare("run_command", {"command": f"echo pwned > '{outside}'"}).apply()[0]
     try:
+        try:
+            result = tb.prepare("run_command", {"command": f"echo pwned > '{outside}'"}).apply()[0]
+        except ToolError as e:
+            assert not _contained(), f"refused although this machine can contain commands: {e}"
+            result = str(e)
         assert not outside.exists(), result
-        tb.prepare("run_command", {"command": "echo ok > inside.txt"}).apply()
-        assert (tmp_path / "inside.txt").read_text().strip() == "ok"
+        if _contained():
+            tb.prepare("run_command", {"command": "echo ok > inside.txt"}).apply()
+            assert (tmp_path / "inside.txt").read_text().strip() == "ok"
     finally:
         outside.unlink(missing_ok=True)
+
+
+def test_project_sandbox_refuses_without_bubblewrap(tmp_path, monkeypatch):
+    """Linux without bwrap: refuse in plain words and say how to fix it. Nothing runs."""
+    import shutil
+    import sys
+    from rooks_code import tools
+    monkeypatch.setattr(sys, "platform", "linux")
+    real_which = shutil.which
+    monkeypatch.setattr(tools.shutil, "which", lambda n, *a, **k: None if n == "bwrap" else real_which(n, *a, **k))
+    tb = Toolbox(tmp_path, sandbox="project")
+    with pytest.raises(tools.ToolError, match="Install bubblewrap"):
+        tb.prepare("run_command", {"command": "echo ok > inside.txt"}).apply()
+    assert not (tmp_path / "inside.txt").exists()
+
+
+def test_project_sandbox_refuses_when_bubblewrap_is_not_allowed(tmp_path, monkeypatch):
+    import sys
+    from rooks_code import tools
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setattr(tools.shutil, "which", lambda n, *a, **k: "/usr/bin/bwrap" if n == "bwrap" else "/bin/sh")
+    monkeypatch.setattr(tools, "_bwrap_works", lambda b: False)
+    with pytest.raises(tools.ToolError, match="does not allow it"):
+        Toolbox(tmp_path, sandbox="project")._command_argv("true")
+
+
+def test_project_sandbox_refuses_on_windows(tmp_path, monkeypatch):
+    import sys
+    from rooks_code import tools
+    monkeypatch.setattr(sys, "platform", "win32")
+    with pytest.raises(tools.ToolError, match='sandbox = "full"'):
+        Toolbox(tmp_path, sandbox="project")._command_argv("echo hi")
+
+
+def test_full_sandbox_is_an_ordinary_shell(tmp_path):
+    import sys
+    argv = Toolbox(tmp_path, sandbox="full")._command_argv("echo hi")
+    assert argv[-1] == "echo hi" and "bwrap" not in argv[0] and "sandbox-exec" not in argv[0]
 
 
 def test_edit_fuzzy_matching_whitespace(tmp_path):
