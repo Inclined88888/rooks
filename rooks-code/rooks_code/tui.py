@@ -721,6 +721,8 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         workroom.room_command(agent, ui, rest)
     elif cmd == "/needs":
         workroom.needs_command(agent, ui, rest)
+    elif cmd == "/team":
+        workroom.team_command(agent, ui, rest)
     elif cmd == "/model":
         if rest or not isinstance(ui, RichUI) or not pick_model(agent, ui):
             model_command(agent, ui, rest)
