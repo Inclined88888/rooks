@@ -20,6 +20,9 @@ import { confirmWithBiometrics } from '@/lib/guard'; // feat/grok-style
 
 /** Notification buttons that act from the lock screen (approvals and Companion). Anything else just opens the app. */
 const LOCK_ACTIONS = new Set(['approve', 'decline', 'allow', 'deny', 'answer']);
+/** Responses already acted on: the last response is read again on every mount, and the listener can deliver the same
+ *  one, which would ask for Face ID twice and report the second try as failed (the request is already answered). */
+const handledResponses = new Set<string>();
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -42,6 +45,11 @@ function Shell() {
     const open = (r: Notifications.NotificationResponse | null) => {
       // feat/grok-style: Approve / Decline straight from the lock screen, with Face ID first
       const data = r?.notification.request.content.data as Record<string, unknown> | undefined;
+      const key = r?.notification.request.identifier;
+      if (key) {
+        if (handledResponses.has(key)) return;
+        handledResponses.add(key);
+      }
       if (r && LOCK_ACTIONS.has(r.actionIdentifier)) {
         handleLockAction(r.actionIdentifier, data, {
           confirm: confirmWithBiometrics,

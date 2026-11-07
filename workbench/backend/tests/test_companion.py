@@ -132,3 +132,29 @@ def test_phone_push_for_a_request_gets_the_lock_screen_buttons(client, monkeypat
     assert sent[0]["request_title"] == "Run npm test"
     cats = [push.messages("t", "b", d)[0].get("categoryId") for d in sent]
     assert cats == ["companion-permission", "companion-question"]
+
+
+def test_a_paired_phone_decides_through_the_routes_the_phone_app_calls(client):
+    """The phone app's Companion tab and lock-screen buttons call /api/companion/... with the paired device token. They
+    used to call /api/mobile/companion/..., which the server never had, so every Allow, Decline and Answer ended in a
+    404 and the tab could not load."""
+    from fastapi.testclient import TestClient
+
+    from app import main
+    from test_mobile import _pair
+
+    auth = _token(client)
+    q = client.post("/api/companion/requests", json={"tool": "codex", "session": "ph1", "kind": "question",
+                                                     "title": "Which branch?", "options": ["main", "dev"]}, headers=auth).json()
+    phone = TestClient(main.app, headers={"X-Workbench": "1"})  # no session cookie: only what a phone has
+    token, _ = _pair(client, phone)
+    h = {"Authorization": f"Bearer {token}"}
+    assert phone.get("/api/mobile/companion/state", headers=h).status_code == 404  # the path the app wrongly used
+    state = phone.get("/api/companion/state", headers=h)
+    assert state.status_code == 200, state.text
+    assert any(r["id"] == q["id"] for r in state.json()["requests"]), state.json()
+    r = phone.post(f"/api/companion/requests/{q['id']}/decide", json={"decision": "answer", "answer": "dev"}, headers=h)
+    assert r.status_code == 200, r.text
+    after = client.get("/api/companion/state", headers=auth).json()
+    assert all(x["id"] != q["id"] for x in after["requests"]), "answered from the phone, so no longer pending"
+

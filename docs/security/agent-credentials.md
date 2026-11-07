@@ -45,7 +45,10 @@ as the same operating system user and reads files that user can read. Verified o
 the scrubbed environment has none of the secrets in its environment, but it can still read
 `.desktop-secrets.json` (`APP_SECRET`, `TOOLS_API_KEY`) and `native.json` from disk, both 0600 and owned by the same
 user. A coding job, a model CLI or an MCP server with shell access can therefore reach full access if it sets out to.
-The same holds for a Terminal access token stored by `rooks login` (keychain on macOS and Windows, or a 0600 file).
+The same holds for a Terminal access token stored by `rooks login` (keychain on macOS and Windows, or a 0600 file), and
+for the Companion token in `~/.rooks/companion.json` (0600): the notch app and the agent hooks share it, and it answers
+`/api/companion/requests/{id}/decide`, so a coding agent that reads that file could answer its own Companion request.
+Splitting it would not help while the full token must stay on disk for the notch app.
 
 Closing that needs operating system isolation, not another key:
 

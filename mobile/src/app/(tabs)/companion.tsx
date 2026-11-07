@@ -1,6 +1,6 @@
 /** Companion: one live view of every AI agent on your computer, with approvals and questions you can answer from here. */
 import React, { useState, useMemo } from 'react';
-import { Pressable, RefreshControl, ScrollView, View, Text as RNText } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, TextInput, View, Text as RNText } from 'react-native';
 import { CompanionState, CompanionRequest, CompanionAgent } from '@/lib/api';
 import { useRemote, setApprovalsCount } from '@/lib/hooks';
 import { useSession } from '@/lib/session';
@@ -47,6 +47,7 @@ export function CompanionRequestCard({
   const [busy, setBusy] = useState<'allow' | 'deny' | 'always' | 'answer' | ''>('');
   const [err, setErr] = useState('');
   const [done, setDone] = useState<CompanionRequest | null>(null);
+  const [reply, setReply] = useState(''); // a free-text question is answered with what you type, never a default
 
   const isPermission = request.kind === 'permission';
   const canAlways = isPermission && request.always;
@@ -162,17 +163,23 @@ export function CompanionRequestCard({
                   />
                 ))
               ) : (
-                <View style={{ flexDirection: 'row', gap: space[2] }}>
+                <View style={{ flexDirection: 'row', gap: space[2], alignItems: 'center' }}>
+                  <TextInput
+                    value={reply}
+                    onChangeText={setReply}
+                    placeholder="Your answer"
+                    placeholderTextColor={c.faint}
+                    accessibilityLabel="Your answer"
+                    editable={!busy}
+                    style={{ ...type.body, flex: 1, color: c.ink, borderWidth: hairline, borderColor: c.border, borderRadius: 10,
+                      paddingHorizontal: space[2], paddingVertical: space[1] }}
+                  />
                   <Btn
-                    label="Answer"
+                    label="Send"
                     kind="ink"
-                    style={{ flex: 1 }}
                     busy={busy === 'answer'}
-                    disabled={!!busy}
-                    onPress={() => {
-                      // For free-text answers, we'd need a modal. For now just use a default.
-                      decide('answer', 'yes');
-                    }}
+                    disabled={!!busy || !reply.trim()}
+                    onPress={() => decide('answer', reply.trim())}
                   />
                 </View>
               )}

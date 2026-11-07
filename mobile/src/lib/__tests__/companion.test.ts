@@ -187,33 +187,6 @@ describe('confirmWithBiometrics (auth gating)', () => {
   });
 });
 
-describe('Companion decision logic (reducer-style)', () => {
-  type CompanionDecision = { decision: 'allow' | 'deny' | 'always' | 'answer'; answer?: string };
-
-  function canDecideWithoutBiometrics(decision: CompanionDecision['decision']): boolean {
-    // Deny never needs biometrics
-    if (decision === 'deny') return true;
-    // Allow, Always, Answer need biometrics
-    return false;
-  }
-
-  it('Deny never requires biometrics', () => {
-    expect(canDecideWithoutBiometrics('deny')).toBe(true);
-  });
-
-  it('Allow requires biometrics', () => {
-    expect(canDecideWithoutBiometrics('allow')).toBe(false);
-  });
-
-  it('Always requires biometrics', () => {
-    expect(canDecideWithoutBiometrics('always')).toBe(false);
-  });
-
-  it('Answer requires biometrics', () => {
-    expect(canDecideWithoutBiometrics('answer')).toBe(false);
-  });
-});
-
 describe('lockActions decisionFor (Companion categories)', () => {
   it('returns companion decision for permission allow', () => {
     const result = decisionFor('allow', { kind: 'companion', request_id: 'abc123', request_kind: 'permission' });
