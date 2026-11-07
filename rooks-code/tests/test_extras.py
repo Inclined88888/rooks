@@ -239,7 +239,7 @@ def test_mcp_add_only_records_the_server():
     again, listed = config.mcp_plain("list", servers)
     assert again["notes"]["command"] == "npx" and "notes:" in listed
     # /mcp in the terminal uses this and does not start the command
-    src = (Path(__file__).resolve().parents[1] / "rooks_code" / "tui.py").read_text()
+    src = (Path(__file__).resolve().parents[1] / "rooks_code" / "tui.py").read_text(encoding="utf-8")
     assert 'cmd == "/mcp"' in src and "mcp_plain" in src
 
 

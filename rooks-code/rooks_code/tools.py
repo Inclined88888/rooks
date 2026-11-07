@@ -457,7 +457,11 @@ class Toolbox:
         shell = "cmd.exe" if sys.platform == "win32" else "/bin/sh"
         flag = "/c" if sys.platform == "win32" else "-c"
         argv = [shell, flag, cmd]
-        if self.sandbox != "project" or sys.platform != "darwin":
+        if self.sandbox != "project":
+            return argv
+        if sys.platform.startswith("linux"):
+            return self._bwrap_argv(argv)
+        if sys.platform != "darwin":
             return argv
         seatbelt = shutil.which("sandbox-exec")
         if not seatbelt:
@@ -483,6 +487,21 @@ class Toolbox:
             '(allow file-write* (subpath "/dev"))',
         ])
         return [seatbelt, "-p", profile, *argv]
+
+    def _bwrap_argv(self, argv: list[str]) -> list[str]:
+        """Linux: the whole system read-only, the project folder, the temp folders and devices writable (as on macOS)."""
+        bwrap = shutil.which("bwrap")
+        if not bwrap:
+            raise ToolError("This computer cannot keep commands inside the project folder. Install bubblewrap "
+                            "(the bwrap command), or set sandbox = \"full\" to run commands without that limit.")
+        writable = [str(Path(self.root).resolve())]
+        for t in (os.environ.get("TMPDIR"), "/tmp", "/var/tmp"):
+            if t and os.path.isdir(t):
+                writable.append(str(Path(t).resolve()))
+        out = [bwrap, "--die-with-parent", "--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev"]
+        for w in dict.fromkeys(writable):
+            out += ["--bind", w, w]
+        return [*out, "--chdir", str(Path(self.root).resolve()), *argv]
 
     def _run_command(self, a: dict) -> Plan:
         cmd = a.get("command")

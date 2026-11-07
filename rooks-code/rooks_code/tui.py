@@ -444,9 +444,13 @@ def banner(agent, ui: RichUI) -> None:
     branch = git_branch(agent.root)
     home = str(Path.home())
     folder = str(agent.root).replace(home, "~", 1) if str(agent.root).startswith(home) else str(agent.root)
+    head = f" {__version__}  ·  {short_model(s)}  ·  "
+    tail = (f" on {branch}" if branch else "") + "  ·  /help for commands and keys"
+    room = (ui.console.width or 80) - len("Rooks") - len(head) - len(tail)
+    if len(folder) > room:  # a long folder loses its middle, never the way to /help
+        folder = "…" + folder[-max(room - 1, 12):]
     line = Text("Rooks", style="bold")
-    line.append(f" {__version__}  ·  {short_model(s)}  ·  {folder}" + (f" on {branch}" if branch else "")
-                + "  ·  /help for commands and keys", style=dim)
+    line.append(head + folder + tail, style=dim)
     ui.console.print(line, overflow="ellipsis", no_wrap=True)
     ui.console.print()
 

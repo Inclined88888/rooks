@@ -7,7 +7,7 @@ jest.mock('expo-local-authentication', () => ({
 
 import { CompanionState, CompanionRequest, CompanionAgent, CompanionAgentStep } from '../api';
 import { confirmWithBiometrics } from '../guard';
-import { decisionFor, COMPANION_PERMISSION_CATEGORY, COMPANION_QUESTION_CATEGORY } from '../lockActions';
+import { decisionFor, handleLockAction, COMPANION_PERMISSION_CATEGORY, COMPANION_QUESTION_CATEGORY } from '../lockActions';
 import * as LocalAuthentication from 'expo-local-authentication';
 
 describe('Companion types', () => {
@@ -259,5 +259,45 @@ describe('lockActions decisionFor (Companion categories)', () => {
   it('exports companion category constants', () => {
     expect(COMPANION_PERMISSION_CATEGORY).toBe('companion-permission');
     expect(COMPANION_QUESTION_CATEGORY).toBe('companion-question');
+  });
+});
+describe('handleLockAction (Companion from the lock screen)', () => {
+  const deps = (ok: boolean, withCompanion = true) => {
+    const log: string[] = [];
+    return {
+      log,
+      confirm: async () => ({ ok }),
+      decide: async (id: number, approve: boolean) => { log.push(`decide ${id} ${approve}`); },
+      companionDecide: withCompanion
+        ? async (id: string, decision: string, answer?: string) => { log.push(`companion ${id} ${decision} ${answer ?? ''}`.trim()); }
+        : undefined,
+      open: (p: string) => { log.push(`open ${p}`); },
+      notify: async (title: string) => { log.push(`notify ${title}`); },
+    };
+  };
+  const permission = { kind: 'companion', request_id: 'abc123', request_kind: 'permission', tool: 'run_command' };
+
+  it('allows a permission through the companion route, never the approvals route', async () => {
+    const d = deps(true);
+    expect(await handleLockAction('allow', permission, d)).toBe('allowed');
+    expect(d.log).toEqual(['companion abc123 allow', 'notify Allowed']);
+  });
+
+  it('declines a question as deny', async () => {
+    const d = deps(true);
+    expect(await handleLockAction('decline', { kind: 'companion', request_id: 'q1', request_kind: 'question' }, d)).toBe('declined');
+    expect(d.log).toEqual(['companion q1 deny', 'notify Declined']);
+  });
+
+  it('opens Companion when the face check fails', async () => {
+    const d = deps(false);
+    expect(await handleLockAction('allow', permission, d)).toBe('not-confirmed');
+    expect(d.log).toEqual(['open /companion']);
+  });
+
+  it('opens Companion when no companion route is wired', async () => {
+    const d = deps(true, false);
+    expect(await handleLockAction('allow', permission, d)).toBe('opened');
+    expect(d.log).toEqual(['open /companion']);
   });
 });

@@ -64,6 +64,16 @@ def wrapped(command: str, home: Path, offline: bool = False) -> list[str] | None
     return ["unshare", flags, "--", "sh", "-c", _WRAP, "room", str(home), os.path.expanduser("~"), command]
 
 
+def windows_sh() -> str | None:
+    """Git for Windows' bash, so a room command means the same thing on every computer. Never WSL's bash.exe, which
+    would run the command in a different Linux system with a different home."""
+    git = shutil.which("git")
+    candidates = [Path(git).resolve().parents[1] / "bin" / "bash.exe"] if git else []
+    candidates += [Path(os.environ.get(v, "")) / "Git" / "bin" / "bash.exe" for v in ("ProgramFiles", "ProgramW6432")
+                   if os.environ.get(v)]
+    return next((str(c) for c in candidates if c.is_file()), None)
+
+
 def _kill_tree(proc: subprocess.Popen) -> None:
     try:
         if os.name == "posix":
@@ -141,6 +151,8 @@ class ShellDriver(Driver):
         home = store.guest_home()
         env = self._env(home, env_extra)
         argv = wrapped(command, home, self.offline)
+        if argv is None and sys.platform == "win32" and (sh := windows_sh()):
+            argv = [sh, "-c", command]
         try:
             proc = subprocess.Popen(
                 argv if argv else command,

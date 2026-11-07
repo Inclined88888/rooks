@@ -79,6 +79,8 @@ export async function registerApprovalCategory(n: { setNotificationCategoryAsync
 export type LockDeps = {
   confirm: (what: string) => Promise<{ ok: boolean; reason?: string }>;
   decide: (id: number, approve: boolean) => Promise<unknown>;
+  /** Companion requests (permission or question). Without it, a companion action opens the Companion screen. */
+  companionDecide?: (id: string, decision: 'allow' | 'deny' | 'answer', answer?: string) => Promise<unknown>;
   open: (path: string) => void;
   notify: (title: string, body: string) => Promise<unknown> | void;
 };
@@ -90,6 +92,20 @@ export async function handleLockAction(actionIdentifier: string, data: Record<st
   if (!d) return 'ignored';
   if (d.kind === 'open') { deps.open(d.path); return 'opened'; }
   const what = String(data?.tool ?? 'this action').replace(/_/g, ' ');
+  if (d.kind === 'companion') {
+    if (!deps.companionDecide) { deps.open('/companion'); return 'opened'; }
+    const yes = d.decision !== 'deny';
+    const g = await deps.confirm(`${yes ? 'Allow' : 'Decline'}: ${what}`);
+    if (!g.ok) { deps.open('/companion'); return 'not-confirmed'; }
+    try {
+      await deps.companionDecide(d.id, d.decision, d.answer);
+      await deps.notify(yes ? 'Allowed' : 'Declined', what);
+      return yes ? 'allowed' : 'declined';
+    } catch {
+      deps.open('/companion');
+      return 'failed';
+    }
+  }
   const g = await deps.confirm(`${d.approve ? 'Approve' : 'Decline'}: ${what}`);
   if (!g.ok) { deps.open('/approvals'); return 'not-confirmed'; }
   try {
