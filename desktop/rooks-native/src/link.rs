@@ -132,11 +132,28 @@ pub fn ensure() -> Result<Link, String> {
 
 static HOLD: Mutex<Option<Started>> = Mutex::new(None);
 
-/// Fill in a session cookie when the service was already up (app.json has the key, not a launch token).
+/// The native window's own file, next to app.json: the key that signs this window in. The app writes it fresh every
+/// launch for this window only; app.json's key is shared with the terminal and helpers and never signs in.
+pub fn native_json_path() -> PathBuf {
+    app_json_path().with_file_name("native.json")
+}
+
+/// The sign in key from native.json for the service at `url`, or empty when there is none for it.
+pub fn native_key(path: &Path, url: &str) -> String {
+    match read_link(path) {
+        Some(native) if native.url == url => native.key,
+        _ => String::new(),
+    }
+}
+
+/// Fill in a session cookie when the service was already up: trade native.json's key for one.
 fn with_cookie(mut link: Link) -> Link {
-    if link.cookie.is_empty() && !link.key.is_empty() {
-        if let Ok(cookie) = crate::client::Client::session_from_key(&link.url, &link.key) {
-            link.cookie = cookie;
+    if link.cookie.is_empty() {
+        let key = native_key(&native_json_path(), &link.url);
+        if !key.is_empty() {
+            if let Ok(cookie) = crate::client::Client::session_from_key(&link.url, &key) {
+                link.cookie = cookie;
+            }
         }
     }
     link
@@ -325,6 +342,20 @@ mod tests {
         let link = read_link(&path).unwrap();
         assert_eq!(link.url, "http://127.0.0.1:9");
         assert_eq!(link.key, "abc");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn the_window_signs_in_with_native_json_not_app_json() {
+        let dir = std::env::temp_dir().join(format!("rooks-native-key-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let native = dir.join("native.json");
+        assert_eq!(native_key(&native, "http://127.0.0.1:9"), "");
+        fs::write(&native, r#"{"url":"http://127.0.0.1:9","key":"native-key"}"#).unwrap();
+        assert_eq!(native_key(&native, "http://127.0.0.1:9"), "native-key");
+        // A file left by another service is not used for this one.
+        assert_eq!(native_key(&native, "http://127.0.0.1:10"), "");
         let _ = fs::remove_dir_all(&dir);
     }
 }

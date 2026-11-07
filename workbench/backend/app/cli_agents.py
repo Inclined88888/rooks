@@ -112,7 +112,9 @@ def find_binary(agent: str) -> str | None:
 
 
 def child_env(agent: str) -> dict[str, str]:
-    env = {k: v for k, v in os.environ.items() if k not in AGENTS[agent]["strip_env"]}
+    from .security import scrub_env
+
+    env = {k: v for k, v in scrub_env(os.environ).items() if k not in AGENTS[agent]["strip_env"]}
     env["PATH"] = os.pathsep.join([env.get("PATH", ""), *_extra_dirs()])
     env.setdefault("NO_COLOR", "1")
     return env
@@ -488,10 +490,8 @@ def _workbench_origin() -> str:
 def coding_bridge_key() -> str:
     """A key the terminal agent can use to call this app. Never put this in a run log or on screen."""
     import secrets
-    if config.BROWSER_API_KEY:
-        return config.BROWSER_API_KEY
-    if config.DESK_API_KEY:
-        return config.DESK_API_KEY
+    # Always its own key, never the app.json or desk key: the server tells a coding job apart by it (no Workroom, no
+    # answers to terminal prompts) and a job can be cut off without touching the person's terminal or the helpers.
     if not config.CODING_BRIDGE_KEY:
         config.CODING_BRIDGE_KEY = secrets.token_urlsafe(32)
     return config.CODING_BRIDGE_KEY

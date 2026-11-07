@@ -176,6 +176,12 @@ def check_bridge_key(token: str) -> bool:
     return bool(token) and any(hmac.compare_digest(token, k) for k in keys)
 
 
+def is_coding_job_key(token: str) -> bool:
+    """The key coding jobs the app starts are given (cli_agents.coding_bridge_key). It is always its own key."""
+    key = config.CODING_BRIDGE_KEY or ""
+    return bool(token) and bool(key) and hmac.compare_digest(token, key)
+
+
 def require_user_or_terminal(request: Request) -> None:
     """The signed in user, or the rooks terminal on this computer with its own key: only for the Workroom routes the
     terminal's /room, /needs and /jobs use (room status/up/down/run, Needs you, the Jobs board). The Terminal access
@@ -193,7 +199,7 @@ def require_user_or_terminal(request: Request) -> None:
     # (or its model through its shell) could approve its own request in Needs you or run in the Room without a yes.
     # Answering and acting need the Terminal access token, which a person creates, or a signed in session.
     if (request.method == "GET" and request.headers.get("x-workbench-channel") == "rooks-code"
-            and check_bridge_key(token)):
+            and check_bridge_key(token) and not is_coding_job_key(token)):
         return
     raise HTTPException(status_code=401, detail="Not signed in")
 
@@ -204,18 +210,25 @@ def check_bearer(request: Request) -> bool:
     return bool(token) and hmac.compare_digest(token, config.TOOLS_API_KEY)
 
 
-def check_app_key(request: Request) -> bool:
-    """The key this install hands out in app.json. The sidecar writes the bridge key (BROWSER_API_KEY) there; a
-    plain backend has only TOOLS_API_KEY. Either one is a per-install random secret kept in the keychain and only
-    ever presented over loopback, so both unlock the same account."""
-    auth = request.headers.get("authorization", "")
-    token = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
-    if len(token) < 20:
-        return False
-    for key in (getattr(config, "TOOLS_API_KEY", "") or "", getattr(config, "BROWSER_API_KEY", "") or ""):
-        if key and len(key) == len(token) and hmac.compare_digest(token, key):
-            return True
-    return False
+def check_native_key(request: Request) -> bool:
+    """The native Rooks window's own sign in key (NATIVE_SIGNIN_KEY). The sidecar writes it only to native.json, which
+    only the window reads; it is never put in app.json, in a helper's or a coding job's environment, or accepted as a
+    bearer anywhere. It is good for one thing: minting a session cookie at /api/desktop/local-session on loopback."""
+    key = getattr(config, "NATIVE_SIGNIN_KEY", "") or ""
+    token = _bearer_token(request)
+    return bool(key) and len(token) >= 20 and len(token) == len(key) and hmac.compare_digest(token, key)
+
+
+# The app's own secrets. No child process the app starts (coding jobs, model CLIs, MCP servers, helpers) inherits
+# them: a background agent holding one could sign in as the person, forge a session or approve its own request.
+APP_SECRET_ENV = ("APP_SECRET", "TOOLS_API_KEY", "BROWSER_API_KEY", "DESK_API_KEY", "CODING_BRIDGE_KEY",
+                  "NATIVE_SIGNIN_KEY", "WORKBENCH_DESKTOP_TOKEN", "TRY_API_KEY", "ROOKS_TRY_API_KEY",
+                  "ROOKS_BROWSER_TOKEN", "ROOKS_DESK_TOKEN", "WORKBENCH_API_KEY", "BRIDGE_API_KEY")
+
+
+def scrub_env(env) -> dict:
+    """A copy of env without the app's own secrets; the caller adds back the one key a child is meant to have."""
+    return {k: v for k, v in env.items() if k not in APP_SECRET_ENV}
 
 
 def require_tool_key(request: Request) -> None:

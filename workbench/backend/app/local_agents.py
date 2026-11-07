@@ -25,6 +25,13 @@ _PROC: subprocess.Popen | None = None
 _DESK: subprocess.Popen | None = None
 
 
+def helper_env(key: str, extra: dict) -> dict:
+    """A helper's environment: none of the app's own secrets, only the one key it is given."""
+    from .security import scrub_env
+
+    return {**scrub_env(os.environ), **extra, "WORKBENCH_API_KEY": key}
+
+
 def _installed() -> str | None:
     if os.environ.get("ROOKS_BROWSER_BIN"):
         p = Path(os.environ["ROOKS_BROWSER_BIN"])
@@ -78,8 +85,8 @@ def _start(exe: str) -> bool:
     port = _port()
     url = f"http://127.0.0.1:{port}"
     app_url = os.environ.get("WORKBENCH_URL") or "http://127.0.0.1:8000"
-    env = {**os.environ, "ROOKS_BROWSER_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
-           "ROOKS_BROWSER_PROVIDER": os.environ.get("ROOKS_BROWSER_PROVIDER", "workbench")}
+    env = helper_env(key, {"ROOKS_BROWSER_TOKEN": key, "WORKBENCH_URL": app_url,
+                           "ROOKS_BROWSER_PROVIDER": os.environ.get("ROOKS_BROWSER_PROVIDER", "workbench")})
     # A visible Chrome at idle is the window that sits there loading. The Browser page shows the steps.
     headed = os.environ.get("ROOKS_BROWSER_HEADED") == "1"
     log_dir = Path(config.DATA_DIR)
@@ -143,8 +150,8 @@ def _start_desk(exe: str) -> bool:
     port = _port()
     url = f"http://127.0.0.1:{port}"
     app_url = os.environ.get("WORKBENCH_URL") or "http://127.0.0.1:8000"
-    env = {**os.environ, "ROOKS_DESK_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
-           "ROOKS_DESK_PROVIDER": os.environ.get("ROOKS_DESK_PROVIDER", "workbench")}
+    env = helper_env(key, {"ROOKS_DESK_TOKEN": key, "WORKBENCH_URL": app_url,
+                           "ROOKS_DESK_PROVIDER": os.environ.get("ROOKS_DESK_PROVIDER", "workbench")})
     log_dir = Path(config.DATA_DIR)
     log_dir.mkdir(parents=True, exist_ok=True)
     log = open(log_dir / "rooks-desk.log", "ab")  # noqa: SIM115 - lives with the child

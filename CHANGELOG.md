@@ -4,6 +4,17 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## 2026-11-07 · Separate keys for the native window, background jobs and helpers · branch integration/auth-native-workroom
+
+- The native window signs in with its own key (`NATIVE_SIGNIN_KEY`, written each launch to `native.json`, 0600, never
+  to `app.json`); it only mints a session on loopback and is not a bearer. The shared `app.json` key (PR #10's sign in)
+  no longer signs in or opens the account.
+- Coding jobs get their own key, never the `app.json` key: `/v1` only, no Workroom, no answers to terminal prompts.
+- Coding jobs, model CLIs, user MCP servers and the browser and desk helpers no longer inherit the app's secrets
+  (`APP_SECRET`, `TOOLS_API_KEY`, the bridge keys) from its environment. This hole existed on `main`.
+- Record: `docs/security/agent-credentials.md`. Migration: none; the sidecar writes `native.json` on the next launch.
+  Rollback: previous commit (restores the shared key sign in).
+
 ## 2026-11-07 · Premium pass: restraint · branch feat/workroom
 
 Design record: `docs/design/0003-workroom.md` section 6 (design system v3, restraint).

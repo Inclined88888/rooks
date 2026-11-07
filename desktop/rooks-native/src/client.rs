@@ -273,10 +273,10 @@ impl Client {
         cookie_from_response(&response)
     }
 
-    /// Trade the bridge key from app.json for a session cookie when the service was already up.
+    /// Trade the window's own key (native.json) for a session cookie when the service was already up.
     pub fn session_from_key(base: &str, key: &str) -> Result<String, String> {
         if key.is_empty() {
-            return Err("No local bridge key.".into());
+            return Err("No sign in key for this window.".into());
         }
         let agent = ureq::AgentBuilder::new().redirects(0).build();
         let response = agent

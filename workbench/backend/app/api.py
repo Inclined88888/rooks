@@ -17,7 +17,7 @@ from .adapters import ALLOWED, validate
 from .db import OFFICIAL_HOSTS
 from .redact import redact, redact_obj
 from .security import (
-    COOKIE, check_app_key, check_bearer, check_session, decrypt, encrypt, forget_connection_secret, hash_password, make_session,
+    COOKIE, check_bearer, check_native_key, check_session, decrypt, encrypt, forget_connection_secret, hash_password, make_session,
     require_user, store_connection_secret, throttle, verify_password,
 )
 
@@ -165,15 +165,15 @@ def desktop_session(token: str, request: Request):
     return response
 
 
-# Native window attaching to a service that is already up: app.json has the bridge key, not a launch token.
-# Loopback only. Same key already unlocks the other APIs via Bearer; this just mints the cookie the terminal needs.
+# Native window attaching to a service that is already up: it reads native.json (its own key, written only for it by the
+# sidecar) and trades that key for a session cookie here. Loopback only. The shared app.json key never signs in.
 @public.post("/desktop/local-session")
 def desktop_local_session(request: Request, response: Response):
     host = request.client.host if request.client else ""
     if host not in ("127.0.0.1", "::1", "localhost", "testclient"):
         throttle(host or "?")
         raise HTTPException(403, "Only on this computer")
-    if not check_app_key(request):
+    if not (check_native_key(request) or check_bearer(request)):
         throttle(host or "?")
         raise HTTPException(401, "Invalid key")
     if db.get_setting("setup_complete") != "1":
