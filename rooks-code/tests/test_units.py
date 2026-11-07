@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -37,6 +38,41 @@ def test_prices():
     assert providers.price("whatever", {}, True) == (0.0, 0.0)
     assert providers.price("mystery", {}, False) is None
     assert providers.cost("mystery", 10, 10, {"mystery": [1, 2]}, False) == 0.00003
+
+
+def test_prices_current_claude_models():
+    # Anthropic list prices per million tokens [input, output]
+    assert providers.price("claude-fable-5-1", {}, False) == (10.0, 50.0)
+    assert providers.price("claude-opus-5-5", {}, False) == (4.0, 20.0)
+    assert providers.price("claude-opus-5", {}, False) == (5.0, 25.0)
+    assert providers.price("claude-sonnet-5-5", {}, False) == (2.0, 10.0)
+    assert providers.price("claude-sonnet-4-6", {}, False) == (3.0, 15.0)
+    assert providers.price("claude-haiku-5-5", {}, False) == (0.1, 0.5)
+    # the default model must have a price, or every rooks run on it shows cost unknown
+    assert providers.price(config.PROVIDERS["anthropic"]["model"], {}, False) is not None
+
+
+def test_haiku_5_5_long_prompt_tier():
+    # above 100K input tokens in one request Haiku 5.5 costs $0.50 / $2.50, not the base rate
+    assert providers.cost("claude-haiku-5-5", 100_000, 1_000, {}, False) == round((100_000 * 0.1 + 1_000 * 0.5) / 1e6, 6)
+    assert providers.cost("claude-haiku-5-5", 150_000, 1_000, {}, False) == round((150_000 * 0.5 + 1_000 * 2.5) / 1e6, 6)
+    # a user override wins over the tier
+    assert providers.cost("claude-haiku-5-5", 150_000, 0, {"claude-haiku-5-5": [1, 1]}, False) == 0.15
+
+
+def test_default_claude_model_matches_app_browser_and_desk():
+    """AGENTS.md: the terminal, the browser and the app must match. The app's preferred Anthropic model is the source."""
+    import pathlib
+    repo = pathlib.Path(__file__).resolve().parents[2]
+    app = repo / "workbench" / "backend" / "app" / "llm.py"
+    if not app.exists():
+        pytest.skip("not a full checkout")
+    want = re.search(r'"api\.anthropic\.com":\s*"(claude-[^"]+)"', app.read_text()).group(1)
+    assert config.PROVIDERS["anthropic"]["model"] == want
+    for sub in ("rooks-browser/rooks_browser/llm.py", "rooks-desk/rooks_desk/llm.py", "browser-agent/src/browser_agent/llm.py"):
+        text = (repo / sub).read_text()
+        got = re.search(r'\("anthropic",\s*"Anthropic Claude",\s*\("ANTHROPIC_API_KEY",\),\s*"(claude-[^"]+)"', text).group(1)
+        assert got == want, f"{sub} defaults to {got}, the app to {want}"
 
 
 def test_trusted_folders(tmp_path):

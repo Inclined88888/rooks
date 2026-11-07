@@ -38,7 +38,7 @@ cd your-project
 rooks                                  # interactive session
 rooks "make the failing test pass"     # one prompt, prints the answer, exits 1 if it did not finish
 rooks -P ollama -m qwen2.5:7b    # local and offline (ollama pull qwen2.5:7b first)
-rooks -P anthropic -m claude-sonnet-4-5   # needs ANTHROPIC_API_KEY
+rooks -P anthropic -m claude-sonnet-5-5   # needs ANTHROPIC_API_KEY
 rooks -P openai -m gpt-4.1-mini        # needs OPENAI_API_KEY
 rooks -P openrouter -m deepseek/deepseek-chat   # needs OPENROUTER_API_KEY
 rooks -P openai-compatible --base-url http://localhost:8000/v1 -m my-model
@@ -110,7 +110,7 @@ Keys are never stored: each provider names the environment variable that holds i
 
 ```toml
 provider = "anthropic"
-model = "claude-sonnet-4-5"
+model = "claude-sonnet-5-5"
 max_usd = 2.0
 trusted_folders = ["~/code/sandbox"]
 
