@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -257,6 +258,9 @@ def _contained() -> bool:
     return _can_contain()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows has no containment yet; the approval line says so "
+                    "(test_windows_project_mode_runs_but_says_it_is_not_contained). Single quotes made cmd.exe fail to parse the "
+                    "path here, so this passed on Windows without anything being contained.")
 def test_project_sandbox_blocks_a_write_outside_the_folder(tmp_path):
     """A command may change files in the project. It may not write outside it, even into the home folder. Where this
     machine cannot contain it (Linux without a working bubblewrap) it is refused before approval, never run uncontained."""
@@ -515,4 +519,60 @@ def test_windows_commands_keep_their_quotes(tmp_path, monkeypatch):
     tb = Toolbox(tmp_path)
     for mode in ("project", "full"):
         tb.sandbox = mode
-        assert tb._command_argv(cmd) == r'C:\Windows\system32\cmd.exe /s /c ""C:\Program Files\Python\python.exe" test_calc.py"'
+        assert tb._command_argv(cmd) == r'C:\Windows\system32\cmd.exe /c ""C:\Program Files\Python\python.exe" test_calc.py"'
+    # A lone quoted path keeps its quotes (cmd.exe's first rule, which /s would switch off): a user name with a space
+    lone = r'"C:\Users\Jo Smith\proj\.venv\Scripts\pytest.exe"'
+    assert tb._command_argv(lone) == r'C:\Windows\system32\cmd.exe /c ""C:\Users\Jo Smith\proj\.venv\Scripts\pytest.exe""'
+
+
+def test_windows_shell_is_a_full_path_never_one_found_in_the_project(monkeypatch):
+    """As subprocess's own shell=True: %ComSpec%, else System32's cmd.exe. Never a bare "cmd.exe", which Windows would
+    look for in the current folder first."""
+    from rooks_code import tools
+    for k in ("ComSpec", "COMSPEC"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("SystemRoot", r"C:\Windows")
+    assert tools._windows_shell() == r"C:\Windows\System32\cmd.exe"
+    monkeypatch.delenv("SystemRoot")
+    with pytest.raises(ToolError, match="Windows command shell"):
+        tools._windows_shell()
+
+
+def test_bubblewrap_check_runs_the_shell_and_remembers_only_success(tmp_path, monkeypatch):
+    """The trial runs /bin/sh (NixOS has no /bin/true), and a failure is tried again next time, so fixing the machine
+    (or a one-off failure) does not keep every command refused until rooks restarts."""
+    from rooks_code import tools
+    calls = []
+    results = iter([1, 0, 0])
+
+    def fake_run(argv, **kw):
+        calls.append(argv)
+        rc = next(results)
+        return subprocess.CompletedProcess(argv, rc, "", "" if rc == 0 else "bwrap: setting up uid map: Permission denied")
+    monkeypatch.setattr(tools.subprocess, "run", fake_run)
+    prefix = ("bwrap", "--ro-bind", "/", "/", "--chdir", str(tmp_path))
+    tools._BWRAP_OK.discard(prefix)
+    assert "uid map" in tools._bwrap_problem(prefix)        # blocked
+    assert tools._bwrap_problem(prefix) == ""               # fixed: tried again, works
+    assert tools._bwrap_problem(prefix) == ""               # remembered: no third trial
+    assert len(calls) == 2 and calls[0][-3:] == ["/bin/sh", "-c", ":"]
+    tools._BWRAP_OK.discard(prefix)
+
+
+def test_bubblewrap_hint_names_namespaces_only_when_that_is_the_problem():
+    from rooks_code import tools
+    assert tools._namespaces_blocked("bwrap: setting up uid map: Permission denied")
+    assert tools._namespaces_blocked("bwrap: No permissions to create new namespace")
+    assert not tools._namespaces_blocked("bwrap: execvp /bin/sh: No such file or directory")
+
+
+def test_a_timeout_returns_even_when_the_command_left_a_child_running(tmp_path):
+    """A command that starts something long-lived (a dev server, a hung test) must not hang rooks past its timeout.
+    On Windows, subprocess.run killed only cmd.exe and then waited with no limit for pipes the child still held."""
+    import time
+    child = "import subprocess, sys, time; subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(20)']); time.sleep(20)"
+    plan = Toolbox(tmp_path, sandbox="full").prepare("run_command", {"command": f'"{sys.executable}" -c "{child}"', "timeout": 2})
+    start = time.monotonic()
+    with pytest.raises(ToolError, match="timed out after 2s"):
+        plan.apply()
+    assert time.monotonic() - start < 12
