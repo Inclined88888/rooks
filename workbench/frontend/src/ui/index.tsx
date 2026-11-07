@@ -459,6 +459,7 @@ export function Timeline({ steps, label = "Steps", onPick, current }: { steps: T
 /* ---------------------------------------------------------------- ApprovalCard: the one approval card */
 const EFFECT_LINE: Record<string, string> = {
   persistent: "This would change how the assistant behaves from now on.",
+  schedule: "Once on, it runs by itself at the times shown until you turn it off.",
   write: "This changes a file on your computer.",
   command: "This runs a command on your computer.",
   send: "This sends something to someone outside this app.",

@@ -5,10 +5,10 @@
  */
 import type { LucideIcon } from "lucide-react";
 import {
-  Activity, AudioLines, Brain, Building2, CalendarClock, CalendarDays, CheckSquare, Code2, Columns3, FileText, FlaskConical,
-  FolderKanban, FolderOpen, Gauge, Globe, Globe2, GraduationCap, Hammer, History, Home, Info, Laptop, Layers, LineChart, ListTree, Lock,
+  Activity, AudioLines, BookMarked, Building2, CalendarClock, CalendarDays, CheckSquare, Code2, CreditCard, Columns3, FileText, FlaskConical,
+  FolderKanban, FolderOpen, Gauge, Globe, Globe2, GraduationCap, Hammer, History, Home, Info, Laptop, Layers, LineChart, ListChecks, ListTree, Lock,
   Mail, MessageCircle, MessageSquare, Mic, Monitor, NotebookPen, Package, Palette, Plug, Scale, Search, Settings, Shield, SlidersHorizontal,
-  Sparkles, SquareTerminal, UserRound, Users, UsersRound, Video, Wand2,
+  SquareTerminal, UserRound, Users, UsersRound, Video,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -67,8 +67,8 @@ export const PAGES: PageEntry[] = [
   { path: "/tasks", label: "Tasks", icon: CheckSquare, group: "day", load: () => import("./Tasks") },
 
   // ---- Memory: facts, skills, what it noticed ----
-  { path: "/knowledge", label: "Memory", icon: Brain, group: "memory", load: () => import("../memory/Knowledge") },
-  { path: "/skills", label: "Skills", icon: Wand2, group: "memory", load: () => import("./Skills") },
+  { path: "/knowledge", label: "Memory", icon: BookMarked, group: "memory", load: () => import("../memory/Knowledge") },
+  { path: "/skills", label: "Skills", icon: ListChecks, group: "memory", load: () => import("./Skills") },
   { path: "/about-you", label: "About you", icon: UserRound, group: "memory", load: () => import("./AboutYou") },
   { path: "/teach", label: "Show me how", icon: GraduationCap, group: "memory", load: () => import("./Teach"), also: ["/teach/:id"] },
 
@@ -94,6 +94,7 @@ export const PAGES: PageEntry[] = [
   { path: "/channels", label: "Channels", icon: MessageCircle, section: "Workspace", load: () => import("../teammates/Channels") },
   { path: "/talk", label: "Talk", icon: AudioLines, section: "Workspace", load: () => import("./Talk") },
   { path: "/vault", label: "Vault", icon: Lock, section: "Workspace", load: () => import("../teammates/Vault") },
+  { path: "/coworkers", label: "Coworkers", icon: UsersRound, section: "Workspace", load: () => import("./Coworkers") },  // feat/coworkers
   { path: "/packs", label: "Packs", icon: Package, section: "Workspace", load: () => import("./Packs") },
 
   // ---- More: Settings ----
@@ -101,7 +102,7 @@ export const PAGES: PageEntry[] = [
   { path: "/customize", label: "Customize", icon: SlidersHorizontal, section: "Settings", load: () => import("./Customize") },
   { path: "/voice", label: "Ask anywhere & voice", icon: Mic, section: "Settings", load: () => import("./VoiceSettings") },
   { path: "/appearance", label: "Appearance", icon: Palette, section: "Settings", load: () => import("./Appearance") },
-  { path: "/plan", label: "Your plan", icon: Sparkles, section: "Settings", load: () => import("./Plan") },
+  { path: "/plan", label: "Your plan", icon: CreditCard, section: "Settings", load: () => import("./Plan") },
   { path: "/about", label: "About", icon: Info, section: "Settings", load: () => import("./About") },
   { path: "/privacy", label: "Privacy", icon: Shield, section: "Settings", load: () => import("./Privacy") },
 
@@ -121,7 +122,7 @@ export const PAGES: PageEntry[] = [
   { path: "/packs/legal", label: "Legal pack", icon: Scale, load: () => import("./PackLegal") },
   { path: "/packs/study", label: "Study pack", icon: GraduationCap, load: () => import("./PackStudy") },
   { path: "/packs/trade", label: "Trade pack", icon: Hammer, load: () => import("./PackTrade") },
-  { path: "/assistant-memory", label: "Chat memory", icon: Brain, load: () => import("./Assistant"), props: { tab: "memory" }, palette: false },
+  { path: "/assistant-memory", label: "Chat memory", icon: BookMarked, load: () => import("./Assistant"), props: { tab: "memory" }, palette: false },
   { path: "/assistant-settings", label: "Chat settings", icon: Settings, load: () => import("./Assistant"), props: { tab: "settings" }, palette: false },
   { path: "/groups/:id", label: "Group", icon: Users, load: () => import("../teammates/Groups"), palette: false },
 ];
@@ -140,7 +141,7 @@ export const REDIRECTS: Redirect[] = [
 export const RAIL_ORDER: RailId[] = ["chat", "room", "jobs", "day", "memory", "library"];
 export const RAIL_GROUPS: Record<GroupId, { label: string; icon: LucideIcon }> = {
   day: { label: "Day", icon: CalendarDays },
-  memory: { label: "Memory", icon: Brain },
+  memory: { label: "Memory", icon: BookMarked },
   library: { label: "Library", icon: FolderOpen },
 };
 

@@ -1,3 +1,7 @@
+import os
+import re
+import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -37,6 +41,45 @@ def test_prices():
     assert providers.price("whatever", {}, True) == (0.0, 0.0)
     assert providers.price("mystery", {}, False) is None
     assert providers.cost("mystery", 10, 10, {"mystery": [1, 2]}, False) == 0.00003
+
+
+def test_prices_current_claude_models():
+    # Anthropic list prices per million tokens [input, output]
+    assert providers.price("claude-fable-5-1", {}, False) == (10.0, 50.0)
+    assert providers.price("claude-opus-5-5", {}, False) == (4.0, 20.0)
+    assert providers.price("claude-opus-5", {}, False) == (5.0, 25.0)
+    assert providers.price("claude-sonnet-5-5", {}, False) == (2.0, 10.0)
+    assert providers.price("claude-sonnet-4-6", {}, False) == (3.0, 15.0)
+    assert providers.price("claude-haiku-5-5", {}, False) == (0.1, 0.5)
+    # the default model must have a price, or every rooks run on it shows cost unknown
+    assert providers.price(config.PROVIDERS["anthropic"]["model"], {}, False) is not None
+
+
+def test_haiku_5_5_long_prompt_tier():
+    # above 100K input tokens in one request Haiku 5.5 costs $0.50 / $2.50, not the base rate
+    assert providers.cost("claude-haiku-5-5", 100_000, 1_000, {}, False) == round((100_000 * 0.1 + 1_000 * 0.5) / 1e6, 6)
+    assert providers.cost("claude-haiku-5-5", 150_000, 1_000, {}, False) == round((150_000 * 0.5 + 1_000 * 2.5) / 1e6, 6)
+    # a user override wins over the tier
+    assert providers.cost("claude-haiku-5-5", 150_000, 0, {"claude-haiku-5-5": [1, 1]}, False) == 0.15
+
+
+def test_default_claude_model_matches_app_browser_and_desk():
+    """AGENTS.md: the terminal, the browser and the app must match. The app's preferred Anthropic model is the source."""
+    import pathlib
+    repo = pathlib.Path(__file__).resolve().parents[2]
+    app = repo / "workbench" / "backend" / "app" / "llm.py"
+    if not app.exists():
+        pytest.skip("not a full checkout")
+    m = re.search(r'"api\.anthropic\.com":\s*"(claude-[^"]+)"', app.read_text())
+    assert m, "the app's preferred Anthropic model is not where this test looks (workbench/backend/app/llm.py)"
+    want = m.group(1)
+    assert config.PROVIDERS["anthropic"]["model"] == want
+    for sub in ("rooks-browser/rooks_browser/llm.py", "rooks-desk/rooks_desk/llm.py", "browser-agent/src/browser_agent/llm.py"):
+        if not (repo / sub).exists():
+            continue  # a partial checkout
+        found = re.search(r'\("anthropic",\s*"Anthropic Claude",\s*\("ANTHROPIC_API_KEY",\),\s*"(claude-[^"]+)"', (repo / sub).read_text())
+        assert found, f"{sub}: the Anthropic default is not where this test looks"
+        assert found.group(1) == want, f"{sub} defaults to {found.group(1)}, the app to {want}"
 
 
 def test_trusted_folders(tmp_path):
@@ -209,19 +252,64 @@ def test_loop_detection_read_heavy(tmp_path):
     assert result.loop_type == "read_heavy"
 
 
+def _contained() -> bool:
+    from conftest import _can_contain
+    return _can_contain()
+
+
 def test_project_sandbox_blocks_a_write_outside_the_folder(tmp_path):
-    """A command may change files in the project. It may not write outside it, even into the home folder."""
+    """A command may change files in the project. It may not write outside it, even into the home folder. Where this
+    machine cannot contain it (Linux without a working bubblewrap) it is refused before approval, never run uncontained."""
     outside = Path.home() / f".rooks-escape-{tmp_path.name}.txt"
     outside.unlink(missing_ok=True)
     tb = Toolbox(tmp_path)
     tb.sandbox = "project"
-    result = tb.prepare("run_command", {"command": f"echo pwned > '{outside}'"}).apply()[0]
     try:
+        try:
+            result = tb.prepare("run_command", {"command": f"echo pwned > '{outside}'"}).apply()[0]
+        except ToolError as e:
+            assert not _contained(), f"refused although this machine can contain commands: {e}"
+            result = str(e)
         assert not outside.exists(), result
-        tb.prepare("run_command", {"command": "echo ok > inside.txt"}).apply()
-        assert (tmp_path / "inside.txt").read_text().strip() == "ok"
+        if _contained():
+            tb.prepare("run_command", {"command": "echo ok > inside.txt"}).apply()
+            assert (tmp_path / "inside.txt").read_text().strip() == "ok"
     finally:
         outside.unlink(missing_ok=True)
+
+
+def test_project_sandbox_refuses_without_bubblewrap_before_asking(tmp_path, monkeypatch):
+    """Linux without bwrap: refused in plain words, with the way to fix it, when the command is prepared, so nobody is
+    asked to approve a command that can never run. Nothing runs."""
+    from rooks_code import tools
+    monkeypatch.setattr(sys, "platform", "linux")
+    real_which = shutil.which
+    monkeypatch.setattr(tools.shutil, "which", lambda n, *a, **k: None if n == "bwrap" else real_which(n, *a, **k))
+    tb = Toolbox(tmp_path, sandbox="project")
+    with pytest.raises(ToolError, match="Install bubblewrap"):
+        tb.prepare("run_command", {"command": "echo ok > inside.txt"})
+    assert not (tmp_path / "inside.txt").exists()
+
+
+def test_full_sandbox_is_an_ordinary_shell(tmp_path):
+    argv = Toolbox(tmp_path, sandbox="full")._command_argv("echo hi")
+    if isinstance(argv, str):  # Windows: one cmd.exe string
+        assert argv.endswith('"echo hi"') and "bwrap" not in argv and "sandbox-exec" not in argv
+    else:
+        assert argv[-1] == "echo hi" and "bwrap" not in argv[0] and "sandbox-exec" not in argv[0]
+
+
+def test_windows_project_mode_runs_but_says_it_is_not_contained(tmp_path, monkeypatch):
+    """Windows has no containment yet. Rather than refuse every command (a fresh install would lose them) or pretend,
+    the approval line says plainly that the command is not kept inside the folder. Full mode says nothing."""
+    from rooks_code import tools
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setenv("COMSPEC", r"C:\Windows\system32\cmd.exe")
+    tb = Toolbox(tmp_path, sandbox="project")
+    plan = tb.prepare("run_command", {"command": "echo hi"})
+    assert tools.NOT_CONTAINED_ON_WINDOWS in plan.preview and plan.preview.startswith("$ echo hi")
+    tb.sandbox = "full"
+    assert tools.NOT_CONTAINED_ON_WINDOWS not in tb.prepare("run_command", {"command": "echo hi"}).preview
 
 
 def test_edit_fuzzy_matching_whitespace(tmp_path):
@@ -397,3 +485,34 @@ def test_repo_map_skips_the_home_folder(monkeypatch, tmp_path):
     (tmp_path / "a.py").write_text("def f():\n    pass\n")
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     assert RepoMap(tmp_path).get_repo_map() == ""
+
+
+def test_project_sandbox_says_why_when_bubblewrap_cannot_start(tmp_path, monkeypatch):
+    """bwrap installed but blocked (Ubuntu 24.04 user namespaces): refuse with its reason, never run unconfined."""
+    if not sys.platform.startswith("linux"):
+        pytest.skip("bubblewrap is the Linux sandbox")
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    (fake / "bwrap").write_text("#!/bin/sh\necho 'bwrap: setting up uid map: Permission denied' >&2\nexit 1\n")
+    (fake / "bwrap").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake}{os.pathsep}{os.environ['PATH']}")
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    tb = Toolbox(proj)
+    tb.sandbox = "project"
+    with pytest.raises(ToolError) as e:
+        tb._command_argv("echo hi")
+    assert "uid map: Permission denied" in str(e.value) and 'sandbox = "full"' in str(e.value)
+
+
+def test_windows_commands_keep_their_quotes(tmp_path, monkeypatch):
+    """cmd.exe gets the command as typed. A list would be joined with quotes escaped as \\", which cmd.exe reads as part
+    of the program name, so "C:\\Program Files\\x\\python.exe" test.py could never run."""
+    from rooks_code import tools
+    monkeypatch.setattr(tools.sys, "platform", "win32")
+    monkeypatch.setenv("COMSPEC", r"C:\Windows\system32\cmd.exe")
+    cmd = r'"C:\Program Files\Python\python.exe" test_calc.py'
+    tb = Toolbox(tmp_path)
+    for mode in ("project", "full"):
+        tb.sandbox = mode
+        assert tb._command_argv(cmd) == r'C:\Windows\system32\cmd.exe /s /c ""C:\Program Files\Python\python.exe" test_calc.py"'

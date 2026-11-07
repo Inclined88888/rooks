@@ -64,6 +64,28 @@ def wrapped(command: str, home: Path, offline: bool = False) -> list[str] | None
     return ["unshare", flags, "--", "sh", "-c", _WRAP, "room", str(home), os.path.expanduser("~"), command]
 
 
+def windows_sh() -> str | None:
+    """Git for Windows' bash, so a room command means the same thing on every computer. Never WSL's bash.exe, which
+    would run the command in a different Linux system with a different home."""
+    git = shutil.which("git")
+    candidates = [Path(git).resolve().parents[1] / "bin" / "bash.exe"] if git else []
+    candidates += [Path(os.environ.get(v, "")) / "Git" / "bin" / "bash.exe" for v in ("ProgramFiles", "ProgramW6432")
+                   if os.environ.get(v)]
+    return next((str(c) for c in candidates if c.is_file()), None)
+
+
+CMD_NOTE = "Commands run in Windows Command Prompt, not a Unix shell. Install Git for Windows to get one."
+
+
+def shell_kind(windows: bool | None = None, sh: str | None = None) -> str:
+    """What runs a room command: "sh" (a POSIX shell) or "cmd" (Windows Command Prompt, when Git for Windows is
+    missing). Command Prompt reads `a; b` as one command and still exits 0, so status and every result say which."""
+    windows = sys.platform == "win32" if windows is None else windows
+    if not windows:
+        return "sh"
+    return "sh" if (windows_sh() if sh is None else sh) else "cmd"
+
+
 def _kill_tree(proc: subprocess.Popen) -> None:
     try:
         if os.name == "posix":
@@ -113,8 +135,9 @@ class ShellDriver(Driver):
             "isolation": isolation_level(),
             "home": str(store.guest_home()),
             "offline": self.offline,
+            "shell": shell_kind(),
             "label": LABEL,
-            "note": NOTE,
+            "note": NOTE if shell_kind() == "sh" else f"{NOTE} {CMD_NOTE}",
             "last_checkpoint": state.get("last_checkpoint"),
         }
 
@@ -141,6 +164,10 @@ class ShellDriver(Driver):
         home = store.guest_home()
         env = self._env(home, env_extra)
         argv = wrapped(command, home, self.offline)
+        sh = windows_sh() if argv is None and sys.platform == "win32" else None
+        if sh:
+            argv = [sh, "-c", command]
+        kind = "cmd" if argv is None and sys.platform == "win32" else "sh"
         try:
             proc = subprocess.Popen(
                 argv if argv else command,
@@ -153,21 +180,23 @@ class ShellDriver(Driver):
                 start_new_session=True,
             )
         except OSError as exc:
-            return {"ok": False, "code": 127, "stdout": "", "stderr": "", "error": str(exc), "isolation": isolation_level()}
+            return {"ok": False, "code": 127, "stdout": "", "stderr": "", "error": str(exc), "isolation": isolation_level(),
+                    "shell": kind}
         try:
             out, err = proc.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
             _kill_tree(proc)
             out, err = proc.communicate()
             return {"ok": False, "error": f"Timed out after {timeout}s", "stdout": (out or "")[-8000:],
-                    "stderr": (err or "")[-4000:], "code": 124, "isolation": isolation_level()}
+                    "stderr": (err or "")[-4000:], "code": 124, "isolation": isolation_level(), "shell": kind}
         return {
             "ok": proc.returncode == 0,
             "code": proc.returncode,
             "stdout": (out or "")[-8000:],
             "stderr": (err or "")[-4000:],
-            "note": RAN_NOTE,
+            "note": RAN_NOTE if kind == "sh" else f"{RAN_NOTE} {CMD_NOTE}",
             "isolation": isolation_level(),
+            "shell": kind,
         }
 
     def _env(self, home: Path, extra: dict | None) -> dict:

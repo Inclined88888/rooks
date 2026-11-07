@@ -22,7 +22,7 @@ export type NeedsItem = {
   args?: string | null;
 };
 
-const KIND_WORD: Record<string, string> = { approval: "Chat", room: "Room", job: "Job", desktop: "Computer", browser: "Browser" };
+const KIND_WORD: Record<string, string> = { approval: "Chat", room: "Room", job: "Job", desktop: "Computer", browser: "Browser", schedule: "Coworker" };
 
 /** Where the item comes from, as the badge says it. */
 export function kindWord(kind: string): string {
@@ -55,6 +55,7 @@ export function linkFor(item: Pick<NeedsItem, "kind" | "conversation_id" | "job_
   if (item.kind === "desktop") return job ? { to: `/computer/${job}`, label: "Open computer" } : null;
   if (item.kind === "browser") return job ? { to: `/browser/${job}`, label: "Open browser" } : null;
   if (item.kind === "job") return { to: "/jobs", label: "Open jobs" };
+  if (item.kind === "schedule") return { to: "/coworkers", label: "Open coworkers" };
   if (item.conversation_id) return { to: `/assistant/${item.conversation_id}`, label: "Open chat" };
   return null;
 }
@@ -87,8 +88,8 @@ export function commandFor(item: Pick<NeedsItem, "kind" | "args">): string {
 }
 
 /** What the toast says after an answer, from the service's status for a held call. */
-export function decidedWords(approve: boolean, status: string | undefined): string {
-  if (!approve) return "Skipped.";
+export function decidedWords(approve: boolean, status: string | undefined, kind?: string): string {
+  if (!approve) return kind === "schedule" ? "Removed. Nothing else changed." : "Skipped.";
   if (status === "done") return "Done.";
   if (status === "approved") return "Approved. Rooks carries on.";
   return "Done.";

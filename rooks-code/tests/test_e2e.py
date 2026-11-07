@@ -53,7 +53,8 @@ def test_fixes_a_bug_with_approval_diff_command_and_receipt(project, fake):
     out = r.stdout
     assert "-    return a - b" in out and "+    return a + b" in out          # the diff was shown
     assert "Needs your OK: make this change.  [y] Approve  [n] Deny  [a] Approve for this session\ny" in out
-    assert "Needs your OK: run this command." in out and "tests pass" in out
+    assert "Needs your OK: run this command." in out, out  # the whole output: pytest would cut the middle
+    assert "tests pass" in out, out
     assert "Fixed add()" in out
     # the model saw every tool result, in order
     last = m.requests[-1]["body"]["messages"]

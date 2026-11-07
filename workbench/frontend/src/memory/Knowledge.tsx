@@ -1,6 +1,6 @@
 // feat/memory-core: Memory - people, project knowledge, what I know (with sources, scopes and why), decisions, tidy-up.
 // Premium pass (package C): built on the primitives, with a loading, an empty and an error state on every tab.
-import { ArrowLeft, Brain, Check, FolderKanban, HelpCircle, Lock, Pin, PinOff, Search, Trash2, UserRound, X } from "lucide-react";
+import { ArrowLeft, BookMarked, Check, FolderKanban, HelpCircle, Lock, Pin, PinOff, Search, Trash2, UserRound, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
@@ -60,7 +60,7 @@ function Memories({ toast }: { toast: ReturnType<typeof useToast> }) {
   };
   return (
     <Gate state={mems} rows={5}>{(list) => !list.length
-      ? <EmptyState icon={<Brain size={20} />} title="Nothing remembered yet" line="As we work I'll keep the useful bits here, with where each one came from." />
+      ? <EmptyState icon={<BookMarked size={20} />} title="Nothing remembered yet" line="As we work I'll keep the useful bits here, with where each one came from." />
       : <div className="ag-stack">
         <div className="kn-search"><Search size={15} aria-hidden="true" /><Input aria-label="Find a memory" placeholder="Find a memory" value={q} onChange={(e) => setQ(e.target.value)} /></div>
         {!groups.length && <p className="ag-note">Nothing matches “{q}”.</p>}

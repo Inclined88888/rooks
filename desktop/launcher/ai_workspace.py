@@ -211,10 +211,19 @@ def handoff_url(url: str, token: str) -> str | None:
 
 
 def ui_ok(url: str) -> bool:
-    """The web UI is there (a backend without its built web UI would open a blank window)."""
+    """The web UI is there and complete: the page and every script and style it names. A copy with the page but
+    without its hashed files opens as a blank window (every fresh install from main did, 2026-11-07), and --status
+    used to call that "ok"."""
     try:
         with urllib.request.urlopen(f"{url}/", timeout=5) as r:
-            return b'<div id="root"' in r.read(20000)
+            html = r.read(20000).decode("utf-8", "replace")
+        if '<div id="root"' not in html:
+            return False
+        for name in re.findall(r'(?:src|href)="(/assets/[^"?#]+)"', html):
+            with urllib.request.urlopen(f"{url}{name}", timeout=5) as r:
+                if r.status != 200 or not r.read(2):
+                    return False
+        return True
     except OSError:
         return False
 

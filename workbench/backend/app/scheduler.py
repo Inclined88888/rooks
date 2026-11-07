@@ -61,10 +61,15 @@ async def run_schedule(s: dict) -> str:
     agent = db.one("SELECT * FROM agents WHERE id = ?", s["agent_id"]) if s["agent_id"] else None
     conv = assistant.new_conversation("schedule", f"{s['name']} ({assistant.local_now():%d %b %H:%M})", str(s["id"]), s["agent_id"])
     ctx = assistant.Ctx(channel="schedule", conversation_id=conv, agent=agent)
-    text, _ = await assistant.ask(ctx, f"[Scheduled task: {s['name']}]\n{s['prompt']}")
-    status = "error" if text.startswith("Error:") else "ok"
-    db.run("UPDATE schedules SET last_run = ?, last_status = ? WHERE id = ?", db.now(), status if status == "ok" else text[:300], s["id"])
-    deliver(s["name"], text or "(no output)", s["deliver"], f"schedule:{s['id']}")
+    text, events = await assistant.ask(ctx, f"[Scheduled task: {s['name']}]\n{s['prompt']}")
+    held = [e for e in events if e["type"] == "approval_required"]
+    status = "error" if text.startswith("Error:") else "waiting" if held else "ok"
+    db.run("UPDATE schedules SET last_run = ?, last_status = ? WHERE id = ?", db.now(), text[:300] if status == "error" else status, s["id"])
+    body = text or "(no output)"
+    if held:  # said by the app, not left to the model: the owner must know a step did not happen
+        steps = ", ".join(sorted({e["tool"].replace("_", " ") for e in held}))
+        body += f"\n\nNot done yet, waiting for your OK in Needs you: {steps}."
+    deliver(s["name"], body, s["deliver"], f"schedule:{s['id']}")
     return text
 
 

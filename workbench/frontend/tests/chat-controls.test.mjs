@@ -33,7 +33,7 @@ test("a sent user message can be edited inline and resent", () => {
 });
 
 test("the composer swaps Send for Stop while the assistant works", () => {
-  assert.match(chat, /\{busy\s*\?\s*<button type="button" className="btn send" onClick=\{onStop\}/);
+  assert.match(chat, /\{busy\s*\?\s*<button type="button" className="ui-btn send" onClick=\{onStop\}/);
   assert.match(chat, /onStop=\{\(\) => void stopTurn\(\)\}/, "the composer's Stop is the page's stopTurn");
-  assert.match(chat, /: <button className="btn primary send" disabled=\{\(!text\.trim\(\) && !att\.ready\.length\) \|\| att\.uploading\} aria-label="Send">/);
+  assert.match(chat, /: <button className="ui-btn ui-btn-primary send" disabled=\{\(!text\.trim\(\) && !att\.ready\.length\) \|\| att\.uploading\} aria-label="Send">/);
 });

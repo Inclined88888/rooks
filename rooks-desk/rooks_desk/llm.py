@@ -39,7 +39,7 @@ class ProviderInfo:
 
 PROVIDERS = {p.name: p for p in [
     ProviderInfo("openai", "OpenAI", ("OPENAI_API_KEY",), "gpt-4.1-mini", "Vision on by default."),
-    ProviderInfo("anthropic", "Anthropic Claude", ("ANTHROPIC_API_KEY",), "claude-sonnet-4-5", "Vision on by default."),
+    ProviderInfo("anthropic", "Anthropic Claude", ("ANTHROPIC_API_KEY",), "claude-sonnet-5-5", "Vision on by default."),
     ProviderInfo("openrouter", "OpenRouter", ("OPENROUTER_API_KEY",), "openai/gpt-4.1-mini", "Any OpenRouter model id; :free models work."),
     ProviderInfo("groq", "Groq (free key at console.groq.com)", ("GROQ_API_KEY",), "qwen/qwen3.8-27b",
                  "Fast. qwen/qwen3.8-27b and meta-llama/llama-4-scout-17b-16e-instruct can see screenshots; openai/gpt-oss-120b is text only (accessibility tree)."),
@@ -336,7 +336,8 @@ class AnthropicChat(_HTTP):
         content: list = [{"type": "text", "text": user}]
         if image_b64:
             content.insert(0, {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": image_b64}})
-        body = {"model": self.model, "max_tokens": 1500, "system": system, "temperature": 0,
+        # temperature is deliberately not sent: current Claude models reject a non-default value (same as the app)
+        body = {"model": self.model, "max_tokens": 1500, "system": system,
                 "messages": [{"role": "user", "content": content}]}
         d = self._post(f"{self.base_url}/v1/messages", body, {"x-api-key": self.api_key, "anthropic-version": "2023-06-01"})
         text = "".join(b.get("text", "") for b in d.get("content", []) if b.get("type") == "text")

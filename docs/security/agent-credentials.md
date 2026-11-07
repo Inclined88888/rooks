@@ -13,7 +13,7 @@ enforces this; no client is trusted to hold back.
 | Credential | Who is given it | What the server lets it do |
 | --- | --- | --- |
 | Session cookie (`wb_session`) | The person's browser or app window after sign in | Everything the person can do |
-| `TOOLS_API_KEY` | Nobody else: the backend only (keychain or the 0600 `.desktop-secrets.json`) | Full access as a bearer (`surfaces.bearer_ok`); mints a window session on loopback |
+| `TOOLS_API_KEY` | The backend (keychain or the 0600 `.desktop-secrets.json`); on a server install, the add-ons for `/tools` and `/mcp` | Not an account login: `surfaces.bearer_ok` refuses it and `/api/desktop/local-session` no longer takes it (security hardening, 2026-11-07), so `/api` is closed to it. Opens `/tools` and `/mcp` only |
 | `NATIVE_SIGNIN_KEY` (new) | The native Rooks window only, through `native.json` (0600, next to `app.json`, new every launch, removed on quit) | One thing: mint a session cookie at `/api/desktop/local-session` on loopback. Not a bearer anywhere |
 | Terminal access token | The person's `rooks` after `rooks login` | Chat (`require_user_or_cli`) and the seven Workroom routes, including answering Needs you and acting in the Room |
 | `BROWSER_API_KEY` (`app.json`) | The terminal, the browser and desk helpers | `/v1`; with the terminal's channel header, reads the Workroom routes only; records the person's y/n on terminal prompts |
@@ -45,7 +45,10 @@ as the same operating system user and reads files that user can read. Verified o
 the scrubbed environment has none of the secrets in its environment, but it can still read
 `.desktop-secrets.json` (`APP_SECRET`, `TOOLS_API_KEY`) and `native.json` from disk, both 0600 and owned by the same
 user. A coding job, a model CLI or an MCP server with shell access can therefore reach full access if it sets out to.
-The same holds for a Terminal access token stored by `rooks login` (keychain on macOS and Windows, or a 0600 file).
+The same holds for a Terminal access token stored by `rooks login` (keychain on macOS and Windows, or a 0600 file), and
+for the Companion token in `~/.rooks/companion.json` (0600): the notch app and the agent hooks share it, and it answers
+`/api/companion/requests/{id}/decide`, so a coding agent that reads that file could answer its own Companion request.
+Splitting it would not help while the full token must stay on disk for the notch app.
 
 Closing that needs operating system isolation, not another key:
 

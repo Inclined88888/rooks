@@ -48,6 +48,11 @@
 .ui-btn-danger { background: transparent; border-color: var(--color-danger); color: var(--color-danger-text); }
 .ui-btn-danger:hover:not(:disabled) { background: var(--color-danger-soft); }
 .ui-btn.is-busy { cursor: progress; }
+.ui-btn-ghost.ui-btn-danger { border-color: transparent; }
+.ui-btn-square { width: 36px; padding: 0; }
+.ui-btn-square.ui-btn-sm { width: 28px; }
+/* a compact input or select for dense rows (task actions, table cells) */
+.ui-control-sm { height: 28px; padding-left: var(--space-2); font-size: var(--text-sm); }
 
 .ui-iconbtn {
   display: inline-grid; place-items: center; width: 36px; height: 36px; flex: none;

@@ -166,14 +166,15 @@ def desktop_session(token: str, request: Request):
 
 
 # Native window attaching to a service that is already up: it reads native.json (its own key, written only for it by the
-# sidecar) and trades that key for a session cookie here. Loopback only. The shared app.json key never signs in.
+# sidecar) and trades that key for a session cookie here. Loopback only. Neither the shared app.json key nor the tools
+# key (handed to add-ons and the Room's server) signs in: the native key is the only way in without a password.
 @public.post("/desktop/local-session")
 def desktop_local_session(request: Request, response: Response):
     host = request.client.host if request.client else ""
     if host not in ("127.0.0.1", "::1", "localhost", "testclient"):
         throttle(host or "?")
         raise HTTPException(403, "Only on this computer")
-    if not (check_native_key(request) or check_bearer(request)):
+    if not check_native_key(request):
         throttle(host or "?")
         raise HTTPException(401, "Invalid key")
     if db.get_setting("setup_complete") != "1":

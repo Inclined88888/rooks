@@ -125,11 +125,37 @@ def portable_node(cache: Path) -> tuple[str, dict]:
     return str(bindir / ("npm.cmd" if WIN else "npm")), env
 
 
+def missing_web_files(dist: Path) -> list[str]:
+    """Files the built web UI asks for that are not there. Empty means the prebuilt copy is complete.
+
+    A built UI is index.html plus hashed files under assets/. index.html names the entry script and style; the scripts
+    load the rest by name ("./Page-hash.js" between chunks, "assets/Page-hash.css" for preloads). A copy with a missing
+    file opens as a blank window, so it is treated as not built at all.
+    """
+    import re
+
+    index = dist / "index.html"
+    if not index.is_file():
+        return ["index.html"]
+    assets = dist / "assets"
+    wanted = set(re.findall(r'(?:src|href)="/assets/([^"?#]+)"', index.read_text(encoding="utf-8", errors="replace")))
+    if not wanted:
+        return ["index.html (names no script)"]
+    for js in assets.glob("*.js") if assets.is_dir() else []:
+        text = js.read_text(encoding="utf-8", errors="replace")
+        wanted.update(re.findall(r'["\'`]\./([\w.-]+\.(?:js|css))["\'`]', text))
+        wanted.update(re.findall(r'["\'`]assets/([\w.-]+\.(?:js|css))["\'`]', text))
+    return sorted(f"assets/{n}" for n in wanted if not (assets / n).is_file())
+
+
 def ensure_frontend(src: Path, home: Path) -> None:
-    dist = src / "workbench" / "frontend" / "dist" / "index.html"
-    if dist.exists():
+    dist = src / "workbench" / "frontend" / "dist"
+    missing = missing_web_files(dist)
+    if not missing:
         say("web UI: prebuilt")
         return
+    if (dist / "index.html").exists():
+        say(f"web UI: the prebuilt copy is incomplete ({len(missing)} files missing), building it instead")
     npm, env = shutil.which("npm"), {**os.environ, "npm_config_update_notifier": "false"}
     fetched = False
     if not npm:
@@ -137,8 +163,8 @@ def ensure_frontend(src: Path, home: Path) -> None:
             npm, env = portable_node(home / "cache")
             fetched = True
         except Exception as e:  # noqa: BLE001 - explain and stop
-            sys.exit(f"This copy has no prebuilt web UI and Node.js could not be fetched ({e}). Use the release zip, or "
-                     "install Node.js 20+ (nodejs.org) and run the installer again.")
+            sys.exit(f"The web UI in this copy is missing or incomplete, and Node.js could not be fetched ({e}). Use the "
+                     "release zip, or install Node.js 20+ (nodejs.org) and run the installer again.")
     log_file = home / "logs" / "frontend-build.log"
     say(f"web UI: building (one or two minutes, log: {log_file})…")
     fe = src / "workbench" / "frontend"

@@ -16,10 +16,10 @@ claim reproducible dependency resolution of upstream Docker/npm/pip packages.
 After downloading artifacts using a trusted current GitHub CLI with `gh attestation verify` support:
 
 ```sh
-gh attestation verify ai-workspace-v0.1.0.tar.gz --repo Inclined88888/ai-workspace \
-  --signer-workflow Inclined88888/ai-workspace/.github/workflows/release.yml
-gh attestation verify ws --repo Inclined88888/ai-workspace \
-  --signer-workflow Inclined88888/ai-workspace/.github/workflows/release.yml
+gh attestation verify ai-workspace-v0.1.0.tar.gz --repo Inclined88888/rooks \
+  --signer-workflow Inclined88888/rooks/.github/workflows/release.yml
+gh attestation verify ws --repo Inclined88888/rooks \
+  --signer-workflow Inclined88888/rooks/.github/workflows/release.yml
 sha256sum -c SHA256SUMS
 ```
 

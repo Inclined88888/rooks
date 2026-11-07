@@ -38,8 +38,8 @@ export function Composer({ text, onText, busy, att, onSend, onStop, composerRef 
           {/* one mic: local or cloud speech to text with the browser as a fallback, drawn as the voice orb */}
           <DictateButton orb disabled={busy} onText={(t) => { onText((text ? text + " " : "") + t); composerRef.current?.focus(); }} />
           {busy
-            ? <button type="button" className="btn send" onClick={onStop} aria-label="Stop" title="Stop; what was written so far is kept (Esc)"><Square size={15} /></button>
-            : <button className="btn primary send" disabled={(!text.trim() && !att.ready.length) || att.uploading} aria-label="Send">Send</button>}
+            ? <button type="button" className="ui-btn send" onClick={onStop} aria-label="Stop" title="Stop; what was written so far is kept (Esc)"><Square size={15} /></button>
+            : <button className="ui-btn ui-btn-primary send" disabled={(!text.trim() && !att.ready.length) || att.uploading} aria-label="Send">Send</button>}
         </div>
       </div>
     </form>

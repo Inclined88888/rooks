@@ -25,7 +25,7 @@ PROVIDERS: dict[str, dict] = {
                   "headers": {"X-Workbench-Channel": "rooks-code"}, "app": True},
     "openai": {"kind": "openai", "base_url": "https://api.openai.com/v1", "key_env": "OPENAI_API_KEY", "model": "gpt-4.1-mini"},
     "anthropic": {"kind": "anthropic", "base_url": "https://api.anthropic.com/v1", "key_env": "ANTHROPIC_API_KEY",
-                  "model": "claude-sonnet-4-5"},
+                  "model": "claude-sonnet-5-5"},
     "openrouter": {"kind": "openai", "base_url": "https://openrouter.ai/api/v1", "key_env": "OPENROUTER_API_KEY",
                    "model": "openai/gpt-4.1-mini"},
     "ollama": {"kind": "openai", "base_url": "http://localhost:11434/v1", "key_env": "", "model": "qwen2.5:7b",
@@ -204,7 +204,7 @@ class Settings:
     effort: str = ""                     # how hard a plan's model thinks (low, medium, high); "" = the plan's default
     learn: bool = True                   # remember facts and learn skills (through the app: shared with chat)
     mode: str = "build"                  # chat talks, plan reads, build can change files and run commands
-    sandbox: str = "project"             # project keeps command writes inside the folder; full does not
+    sandbox: str = "project"             # project keeps command writes inside the folder (macOS seatbelt, Linux bwrap; refused where neither works; Windows runs uncontained and says so); full does not
     hook_before_tool: str = ""           # optional script path from rooks.toml [hooks] before_tool
     lint_after_edit: bool = False        # run linter/tests after edits and feed errors back
     root: Path = field(default_factory=Path.cwd)

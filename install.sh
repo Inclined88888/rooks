@@ -26,16 +26,18 @@
 # Run it again to upgrade. Your chats, keys and settings are kept. Uninstall: QUICKSTART.md.
 # Works with the bash 3.2 that ships with macOS.
 
-# Tesseract (scanned pages), FFmpeg (video details), LibreOffice (old .doc/.xls/.ppt). Never fails the install.
+# Tesseract (scanned pages), FFmpeg (video details), LibreOffice (old .doc/.xls/.ppt), and on Linux bubblewrap, which
+# keeps the terminal's commands inside the project folder (without it the terminal refuses them). Never fails the install.
 optional_helpers() {
   local answer=$1 missing="" cmd=""
   command -v tesseract >/dev/null 2>&1 || missing="$missing tesseract"
   command -v ffprobe >/dev/null 2>&1 || missing="$missing ffmpeg"
   { command -v soffice || command -v libreoffice || [ -d /Applications/LibreOffice.app ]; } >/dev/null 2>&1 || missing="$missing libreoffice"
+  if [ "$(uname -s)" = Linux ]; then command -v bwrap >/dev/null 2>&1 || missing="$missing bubblewrap"; fi
   [ -n "$missing" ] || return 0
   case "$answer" in no|0|false) return 0 ;; esac
   if [ "$answer" = ask ] && [ -r /dev/tty ] && [ -t 1 ]; then
-    printf '\nOptional: install free helper apps so Files can read more (%s)? [Y/n] ' "${missing# }"
+    printf '\nOptional: install free helper apps so Files can read more and the terminal keeps commands in your project (%s)? [Y/n] ' "${missing# }"
     local reply=""
     read -r -t 30 reply </dev/tty || reply=""
     case "$reply" in n|N|no|No) printf '  Skipped. The Files page can install them later.\n'; return 0 ;; esac
@@ -55,12 +57,13 @@ optional_helpers() {
     case "$missing" in *tesseract*) pkgs="$pkgs tesseract-ocr" ;; esac
     case "$missing" in *ffmpeg*) pkgs="$pkgs ffmpeg" ;; esac
     case "$missing" in *libreoffice*) pkgs="$pkgs libreoffice-core libreoffice-writer libreoffice-calc libreoffice-impress" ;; esac
+    case "$missing" in *bubblewrap*) pkgs="$pkgs bubblewrap" ;; esac
     printf '  Installing helper apps (optional):%s…\n' "$pkgs"
     # shellcheck disable=SC2086
     sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq $pkgs >/dev/null 2>&1 \
       || printf '  Helper apps skipped (install failed). The Files page can retry.\n'
   else
-    printf '  Helper apps skipped (needs an admin password). To add them:  sudo apt install tesseract-ocr ffmpeg libreoffice\n'
+    printf '  Helper apps skipped (needs an admin password). To add them:  sudo apt install tesseract-ocr ffmpeg libreoffice bubblewrap\n'
   fi
   return 0
 }

@@ -1,5 +1,5 @@
 // B1: the AI team lead's sub-agent runs as a tree: the goal, each read-only sub-task with its job, and the synthesis.
-import { ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronRight, ListTree } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
@@ -33,11 +33,11 @@ export default function LeadRuns() {
     return () => clearInterval(t);
   }, [live, load]);
 
-  if (err && !runs) return <ErrorState title="The AI runs did not load" line={plainError(err)} onRetry={load} />;
+  if (err && !runs) return <ErrorState title="Split tasks did not load" line={plainError(err)} onRetry={load} />;
   if (!runs) return <Loading rows={3} />;
-  if (!runs.length) return <EmptyState icon={<Sparkles size={20} />} title="No AI team runs yet" line="Ask in chat for something with several parts, like comparing three suppliers; each run shows here." />;
+  if (!runs.length) return <EmptyState icon={<ListTree size={20} />} title="No split tasks yet" line="Ask in chat for something with several parts, like comparing three suppliers. Each part runs side by side and shows here." />;
   return (
-    <section className="col gap" aria-label="AI team runs" aria-live="polite">
+    <section className="col gap" aria-label="Split tasks" aria-live="polite">
       {runs.map((r, i) => {
         const done = r.subtasks.filter((s) => !LIVE.has(s.status)).length;
         const isOpen = open[r.id] ?? (i === 0 || LIVE.has(r.status));  // the newest and any live run start open

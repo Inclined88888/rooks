@@ -1,6 +1,6 @@
 // Live documents in replies (feat/v02-automations): docs, sheets with formulas and charts the user can edit in place,
 // ask the assistant to change, and export. Edits are kept on this device, per message and block.
-import { BarChart3, Check, Download, FileText, Loader2, Pencil, Plus, RotateCcw, Sparkles, Table2 } from "lucide-react";
+import { BarChart3, Check, Download, FileText, Loader2, Pencil, PencilLine, Plus, RotateCcw, Table2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import { Markdown } from "../util";
@@ -135,7 +135,7 @@ export function LiveBlock({ kind, initial, storeKey = "" }: { kind: LiveKind; in
         {edited && <span className="live-edited">Edited</span>}
         <span className="grow" />
         <button className="btn ghost sm" onClick={() => setEditing((e) => !e)} aria-pressed={editing}>{editing ? <><Check size={13} /> Done</> : <><Pencil size={13} /> Edit</>}</button>
-        <button className="btn ghost sm" onClick={() => setAsking((a) => !a)} aria-expanded={asking}><Sparkles size={13} /> Ask to change</button>
+        <button className="btn ghost sm" onClick={() => setAsking((a) => !a)} aria-expanded={asking}><PencilLine size={13} /> Ask to change</button>
         {edited && <button className="btn ghost sm icon" title="Back to the original" aria-label="Back to the original" onClick={() => setData(initial)}><RotateCcw size={13} /></button>}
       </figcaption>
 

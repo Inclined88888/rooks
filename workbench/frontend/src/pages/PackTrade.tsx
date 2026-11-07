@@ -117,25 +117,25 @@ function NewQuote({ s, onMade, onErr }: { s: Settings; onMade: (d: Doc) => void;
   return (
     <div className="ui-card pk-stack">
       <div className="pk-head"><h2 className="ag-h3">New quote</h2></div>
-      <textarea className="input" rows={4} value={desc} onChange={(e) => setDesc(e.target.value)} aria-label="Describe the job"
+      <textarea className="ui-input" rows={4} value={desc} onChange={(e) => setDesc(e.target.value)} aria-label="Describe the job"
         placeholder={"Describe the job, or list lines like:\nReplace switchboard\n3 x downlights @ 45\n2 hours labour"} />
       <div className="row wrap">
         {dict.supported ? (
-          <button className={`btn ${dict.on ? "pk-rec" : ""}`} onClick={dict.on ? dict.stop : dict.start}>
+          <button className={`ui-btn ${dict.on ? "pk-rec" : ""}`} onClick={dict.on ? dict.stop : dict.start}>
             {dict.on ? <><Square size={14} /> Stop voice note</> : <><Mic size={14} /> Record a voice note</>}
           </button>
         ) : <span className="pk-small muted">Voice notes need Chrome, Edge or Safari. You can paste a transcript instead.</span>}
       </div>
-      {(transcript || !dict.supported) && <textarea className="input" rows={2} value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Voice note transcript" aria-label="Voice note transcript" />}
+      {(transcript || !dict.supported) && <textarea className="ui-input" rows={2} value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Voice note transcript" aria-label="Voice note transcript" />}
       <FilePick label="Site photo (optional)" accept="image/*" value={photo} onChange={setPhoto} files={files.filter((f) => /\.(jpe?g|png|heic|webp)$/i.test(f.name))} onAdded={reload} />
       <div className="ag-two">
-        <input className="input" placeholder="Customer name" value={cust.name} onChange={(e) => setCust({ ...cust, name: e.target.value })} />
-        <input className="input" placeholder="Customer email" value={cust.email} onChange={(e) => setCust({ ...cust, email: e.target.value })} />
-        <input className="input" placeholder="Phone" value={cust.phone} onChange={(e) => setCust({ ...cust, phone: e.target.value })} />
-        <input className="input" placeholder="Site address" value={cust.address} onChange={(e) => setCust({ ...cust, address: e.target.value })} />
+        <input className="ui-input" placeholder="Customer name" value={cust.name} onChange={(e) => setCust({ ...cust, name: e.target.value })} />
+        <input className="ui-input" placeholder="Customer email" value={cust.email} onChange={(e) => setCust({ ...cust, email: e.target.value })} />
+        <input className="ui-input" placeholder="Phone" value={cust.phone} onChange={(e) => setCust({ ...cust, phone: e.target.value })} />
+        <input className="ui-input" placeholder="Site address" value={cust.address} onChange={(e) => setCust({ ...cust, address: e.target.value })} />
       </div>
       <div className="row">
-        <button className="btn primary" disabled={busy || (!desc.trim() && !transcript.trim() && !photo)} onClick={go}>{busy ? "Pricing…" : "Draft quote"}</button>
+        <button className="ui-btn ui-btn-primary" disabled={busy || (!desc.trim() && !transcript.trim() && !photo)} onClick={go}>{busy ? "Pricing…" : "Draft quote"}</button>
         <span className="pk-small muted">Labour {money(Number(s.labour_rate), s.currency_symbol)}/{String(s.labour_unit)} · materials +{s.materials_markup}% · {s.tax_registered ? `${s.tax_name} ${s.tax_rate}%` : `no ${s.tax_name}`}</span>
       </div>
     </div>
@@ -177,19 +177,19 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
         <tbody>
           {lines.map((l, i) => (
             <tr key={i}>
-              <td><select className="pk-w-kind input" value={l.kind} onChange={(e) => set(i, "kind", e.target.value)} aria-label="Type">
+              <td><select className="pk-w-kind ui-select" value={l.kind} onChange={(e) => set(i, "kind", e.target.value)} aria-label="Type">
                 <option value="labour">Labour</option><option value="materials">Materials</option><option value="other">Other</option></select></td>
-              <td><input className="pk-desc input" value={l.description} onChange={(e) => set(i, "description", e.target.value)} aria-label="Description" />
+              <td><input className="pk-desc ui-input" value={l.description} onChange={(e) => set(i, "description", e.target.value)} aria-label="Description" />
                 {l.estimate && <Badge tone="warn">Estimate</Badge>}</td>
-              <td><input className="pk-w-qty input num" type="number" step="any" value={l.qty} onChange={(e) => set(i, "qty", Number(e.target.value))} aria-label="Quantity" /></td>
-              <td><input className="pk-w-unit input" value={l.unit} onChange={(e) => set(i, "unit", e.target.value)} aria-label="Unit" /></td>
-              <td><input className="pk-w-cost input num" type="number" step="any" value={l.unit_cost} onChange={(e) => set(i, "unit_cost", Number(e.target.value))} aria-label="Unit cost" /></td>
-              <td><button className="btn ghost icon sm" aria-label="Remove line" onClick={() => setLines(lines.filter((_, j) => j !== i))}><Trash2 size={13} /></button></td>
+              <td><input className="pk-w-qty ui-input num" type="number" step="any" value={l.qty} onChange={(e) => set(i, "qty", Number(e.target.value))} aria-label="Quantity" /></td>
+              <td><input className="pk-w-unit ui-input" value={l.unit} onChange={(e) => set(i, "unit", e.target.value)} aria-label="Unit" /></td>
+              <td><input className="pk-w-cost ui-input num" type="number" step="any" value={l.unit_cost} onChange={(e) => set(i, "unit_cost", Number(e.target.value))} aria-label="Unit cost" /></td>
+              <td><button className="ui-btn ui-btn-ghost ui-btn-square ui-btn-sm" aria-label="Remove line" onClick={() => setLines(lines.filter((_, j) => j !== i))}><Trash2 size={13} /></button></td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="row"><button className="btn sm" onClick={() => setLines([...lines, { kind: "materials", description: "", qty: 1, unit: "each", unit_cost: 0 }])}><Plus size={12} /> Add line</button></div>
+      <div className="row"><button className="ui-btn ui-btn-sm" onClick={() => setLines([...lines, { kind: "materials", description: "", qty: 1, unit: "each", unit_cost: 0 }])}><Plus size={12} /> Add line</button></div>
       <div className="pk-totals">
         <span className="muted">Labour</span><span>{money(live.labour, s.currency_symbol)}</span>
         <span className="muted">Materials (incl. markup)</span><span>{money(live.materials, s.currency_symbol)}</span>
@@ -199,14 +199,14 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
         <span className="grand">Total</span><span className="grand">{money(live.total, s.currency_symbol)}</span>
       </div>
       <div className="row wrap">
-        <button className="btn primary" disabled={!dirty || busy === "save"} onClick={() => save()}>Save</button>
-        <button className="btn" disabled={dirty || !!busy} onClick={() => run("pdf", async () => { const f = await api<{ download: string }>(`/packs/trade/docs/${id}/pdf`, { method: "POST" }); download(f.download); })}>{busy === "pdf" ? "Making…" : "PDF"}</button>
-        {d.kind === "quote" && <button className="btn" disabled={dirty || !!busy} onClick={() => run("inv", async () => { const x = await api<Doc>(`/packs/trade/docs/${id}/invoice`, { method: "POST" }); onChanged(); onOpen(x.id); toast.ok(`Invoice ${x.number} made`); })}>Turn into invoice</button>}
-        {d.kind === "invoice" && <button className="btn" disabled={!!busy} onClick={() => run("rem", async () => setDrafts(await api(`/packs/trade/docs/${id}/reminders`, { method: "POST" })))}>Payment reminders</button>}
-        {d.kind === "invoice" && d.status !== "paid" && <button className="btn ghost" onClick={() => save({ status: "paid" })}>Mark paid</button>}
-        {d.status === "draft" && <button className="btn ghost" onClick={() => save({ status: "sent" })}>I've sent it</button>}
+        <button className="ui-btn ui-btn-primary" disabled={!dirty || busy === "save"} onClick={() => save()}>Save</button>
+        <button className="ui-btn" disabled={dirty || !!busy} onClick={() => run("pdf", async () => { const f = await api<{ download: string }>(`/packs/trade/docs/${id}/pdf`, { method: "POST" }); download(f.download); })}>{busy === "pdf" ? "Making…" : "PDF"}</button>
+        {d.kind === "quote" && <button className="ui-btn" disabled={dirty || !!busy} onClick={() => run("inv", async () => { const x = await api<Doc>(`/packs/trade/docs/${id}/invoice`, { method: "POST" }); onChanged(); onOpen(x.id); toast.ok(`Invoice ${x.number} made`); })}>Turn into invoice</button>}
+        {d.kind === "invoice" && <button className="ui-btn" disabled={!!busy} onClick={() => run("rem", async () => setDrafts(await api(`/packs/trade/docs/${id}/reminders`, { method: "POST" })))}>Payment reminders</button>}
+        {d.kind === "invoice" && d.status !== "paid" && <button className="ui-btn ui-btn-ghost" onClick={() => save({ status: "paid" })}>Mark paid</button>}
+        {d.status === "draft" && <button className="ui-btn ui-btn-ghost" onClick={() => save({ status: "sent" })}>I've sent it</button>}
         <span className="ag-grow" />
-        {["servicem8", "xero"].map((t) => <button key={t} className="btn ghost sm" disabled={dirty || !!busy}
+        {["servicem8", "xero"].map((t) => <button key={t} className="ui-btn ui-btn-ghost ui-btn-sm" disabled={dirty || !!busy}
           onClick={() => run("push", async () => setPush(await api(`/packs/trade/push/${t}/preview`, { body: { document_id: id } })))}>{t === "xero" ? "Xero…" : "ServiceM8…"}</button>)}
       </div>
       {drafts && (
@@ -217,8 +217,8 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
               <div className="row"><Badge>{r.tone}{r.tone === drafts.suggested ? " · suggested" : ""}</Badge><strong>{r.subject}</strong>{r.send_on && <span className="pk-end pk-small muted">send from {r.send_on}</span>}</div>
               <pre>{r.body}</pre>
               <div className="row">
-                <button className="btn sm" onClick={() => { copy(`Subject: ${r.subject}\n\n${r.body}`); toast.ok("Copied"); }}>Copy</button>
-                {r.to && <a className="btn sm ghost" href={`mailto:${encodeURIComponent(r.to)}?subject=${encodeURIComponent(r.subject)}&body=${encodeURIComponent(r.body)}`}>Open in my email</a>}
+                <button className="ui-btn ui-btn-sm" onClick={() => { copy(`Subject: ${r.subject}\n\n${r.body}`); toast.ok("Copied"); }}>Copy</button>
+                {r.to && <a className="ui-btn ui-btn-sm ui-btn-ghost" href={`mailto:${encodeURIComponent(r.to)}?subject=${encodeURIComponent(r.subject)}&body=${encodeURIComponent(r.body)}`}>Open in my email</a>}
               </div>
             </div>
           ))}
@@ -231,12 +231,12 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
           {!push.connected && push.how && <p>{push.how}</p>}
           <details><summary className="pk-small muted">Exactly what would be sent</summary><pre className="pk-code">{JSON.stringify(push.would_send, null, 2)}</pre></details>
           <div className="row">
-            {push.connected && push.approval_code && <button className="btn primary" disabled={busy === "send"} onClick={() => run("send", async () => {
+            {push.connected && push.approval_code && <button className="ui-btn ui-btn-primary" disabled={busy === "send"} onClick={() => run("send", async () => {
               const t = push.target.toLowerCase().includes("xero") ? "xero" : "servicem8";
               await api(`/packs/trade/push/${t}/send`, { body: { document_id: id, approval_code: push.approval_code } });
               setPush(null); toast.ok(`Sent to ${push.target} as a draft`);
             })}>Send to {push.target}</button>}
-            <button className="btn ghost" onClick={() => setPush(null)}>{push.connected ? "Cancel" : "Close"}</button>
+            <button className="ui-btn ui-btn-ghost" onClick={() => setPush(null)}>{push.connected ? "Cancel" : "Close"}</button>
           </div>
         </div>
       )}
@@ -269,16 +269,16 @@ function SettingsForm({ s, onSaved, onErr }: { s: Settings; onSaved: (s: Setting
             <label key={k} className="row"><input type="checkbox" checked={!!v[k]} onChange={(e) => setV({ ...v, [k]: e.target.checked })} /> {label}</label>
           ) : (
             <label key={k} className="pk-tight pk-stack"><span className="pk-flat label">{label}</span>
-              <input className="input" type={kind} step="any" value={String(v[k] ?? "")} onChange={(e) => setV({ ...v, [k]: kind === "number" ? Number(e.target.value) : e.target.value })} />
+              <input className="ui-input" type={kind} step="any" value={String(v[k] ?? "")} onChange={(e) => setV({ ...v, [k]: kind === "number" ? Number(e.target.value) : e.target.value })} />
               {k === "abn" && abn && !abnValid(abn) && <span className="pk-err">That ABN doesn't pass the check. Look it up at abr.business.gov.au.</span>}
             </label>
           ))}
         </div>
         <label className="pk-tight pk-stack"><span className="pk-flat label">How to pay (on invoices and reminders)</span>
-          <textarea className="input" rows={3} value={String(v.payment_details ?? "")} onChange={(e) => setV({ ...v, payment_details: e.target.value })} placeholder="BSB 000-000, Account 1234 5678, or a payment link" /></label>
+          <textarea className="ui-input" rows={3} value={String(v.payment_details ?? "")} onChange={(e) => setV({ ...v, payment_details: e.target.value })} placeholder="BSB 000-000, Account 1234 5678, or a payment link" /></label>
         <div className="pk-tight pk-stack"><span className="pk-flat label">Logo</span>
           <FilePick label="No logo" accept="image/png,image/jpeg" value={(v.logo_file_id as number) || null} onChange={(id) => setV({ ...v, logo_file_id: id })} files={files.filter((f) => /\.(png|jpe?g)$/i.test(f.name))} onAdded={reload} /></div>
-        <div className="row"><button className="btn primary" onClick={async () => { try { onSaved(await api<Settings>("/packs/trade/settings", { method: "PUT", body: v })); } catch (e) { onErr(e); } }}>Save</button></div>
+        <div className="row"><button className="ui-btn ui-btn-primary" onClick={async () => { try { onSaved(await api<Settings>("/packs/trade/settings", { method: "PUT", body: v })); } catch (e) { onErr(e); } }}>Save</button></div>
       </div>
       <div className="ui-card pk-stack">
         <div className="pk-head"><h2 className="ag-h3">ServiceM8 and Xero (optional)</h2></div>
@@ -287,11 +287,11 @@ function SettingsForm({ s, onSaved, onErr }: { s: Settings; onSaved: (s: Setting
           <div key={t} className="pk-draft">
             <div className="row"><strong>{p.name}</strong><Badge tone={p.connected ? "ok" : "neutral"}>{p.connected ? "Connected" : "Not connected"}</Badge></div>
             <p className="pk-flat pk-small muted">{p.how}</p>
-            {p.fields.map((f) => <input key={f} className="input mono" type="password" autoComplete="off" placeholder={p.connected ? "•••••••• saved" : f.replace("_", " ")}
+            {p.fields.map((f) => <input key={f} className="ui-input mono" type="password" autoComplete="off" placeholder={p.connected ? "•••••••• saved" : f.replace("_", " ")}
               value={keys[t]?.[f] ?? ""} onChange={(e) => setKeys({ ...keys, [t]: { ...keys[t], [f]: e.target.value } })} aria-label={`${p.name} ${f}`} />)}
             <div className="row">
-              <button className="btn sm" onClick={async () => { try { setPush(await api<PushStatus>(`/packs/trade/push/${t}`, { method: "PUT", body: keys[t] ?? {} })); setKeys({ ...keys, [t]: {} }); } catch (e) { onErr(e); } }}>Save</button>
-              {p.connected && <button className="btn sm ghost danger" onClick={async () => { try { setPush(await api<PushStatus>(`/packs/trade/push/${t}`, { method: "PUT", body: {} })); } catch (e) { onErr(e); } }}>Disconnect</button>}
+              <button className="ui-btn ui-btn-sm" onClick={async () => { try { setPush(await api<PushStatus>(`/packs/trade/push/${t}`, { method: "PUT", body: keys[t] ?? {} })); setKeys({ ...keys, [t]: {} }); } catch (e) { onErr(e); } }}>Save</button>
+              {p.connected && <button className="ui-btn ui-btn-sm ui-btn-ghost ui-btn-danger" onClick={async () => { try { setPush(await api<PushStatus>(`/packs/trade/push/${t}`, { method: "PUT", body: {} })); } catch (e) { onErr(e); } }}>Disconnect</button>}
             </div>
           </div>
         ))}

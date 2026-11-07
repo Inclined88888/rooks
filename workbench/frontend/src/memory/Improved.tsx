@@ -1,5 +1,5 @@
 // feat/memory-core: "What I improved" on Home - last night's note, suggestions you approve, and the on/off switch.
-import { Check, Sparkles, X } from "lucide-react";
+import { Check, TrendingUp, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import { Button } from "../ui";
@@ -21,7 +21,7 @@ export function ImprovedCard() {
   return (
     <section className="ui-card kn-improved" aria-label="What I improved">
       <div className="ag-bar">
-        <Sparkles size={16} aria-hidden="true" className="kn-improved-icon" />
+        <TrendingUp size={16} aria-hidden="true" className="kn-improved-icon" />
         <h3 className="ag-h3">What I improved</h3>
         <span className="ag-meta">{d.note ? `overnight, ${d.note.day}` : ""}</span>
         <label className="ag-check ag-bar-end" title={`Runs once a night while your computer is on and you've been away ${d.idle_minutes} minutes`}>

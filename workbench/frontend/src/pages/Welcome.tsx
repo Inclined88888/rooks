@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, Cloud, Cpu, Download, ExternalLink, KeyRound, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Briefcase, Check, Cloud, Cpu, Download, ExternalLink, KeyRound, ListChecks, ShieldCheck } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api, stream } from "../api";
 import { BrandMark } from "../brand";
@@ -79,7 +79,7 @@ function FreeStep({ info, onBack, onDone }: { info: Record<string, KeyInfo>; onB
   const done = connected.length > 0;
 
   return (
-    <AuthCard step="Step 4 of 4" title="A free key, two minutes" footer={TRUST}
+    <AuthCard step="Step 5 of 5" title="A free key, two minutes" footer={TRUST}
       line="Both are free with daily limits. Add both and the app switches to the other one when a limit is hit.">
       <form className="st-auth-form" onSubmit={connect}>
         {error && <Notice tone="danger">{error}</Notice>}
@@ -140,7 +140,7 @@ export function AccountsStep({ onNext }: { onNext: () => void }) {
     onNext();
   };
   return (
-    <AuthCard step="Step 1 of 4" title="Sign in with the accounts you already use"
+    <AuthCard step="Step 1 of 5" title="Sign in with the accounts you already use"
       line="Optional. Each one opens that company's own window. You can connect them later.">
       {note && <Notice>{note}</Notice>}
       <div className="st-stack">
@@ -163,7 +163,7 @@ export function AccountsStep({ onNext }: { onNext: () => void }) {
       )}
       <AuthActions>
         <span className="st-grow" />
-        <Button variant="primary" onClick={go}>Skip for now <ArrowRight size={16} /></Button>
+        <Button onClick={go}>Skip for now <ArrowRight size={16} /></Button>
       </AuthActions>
     </AuthCard>
   );
@@ -180,7 +180,7 @@ function SubscriptionStep({ onBack, onDone, onKey }: { onBack: () => void; onDon
   const start = async () => { await finishCloud(); onDone(); };
 
   return (
-    <AuthCard step="Step 4 of 4" title="Sign in with your plan" footer={TRUST}
+    <AuthCard step="Step 5 of 5" title="Sign in with your plan" footer={TRUST}
       line="No API key needed. Use the plan you already pay for, where the provider allows it.">
       {subs === null ? <Loading rows={2} label="Checking the plans you can sign in with" /> : (
         chatgpt || claude || copilot ? (
@@ -253,7 +253,7 @@ function KeyStep({ presets, info, initial, onBack, onDone }: {
   };
 
   return (
-    <AuthCard step="Step 4 of 4" title="Paste your keys" footer={TRUST}
+    <AuthCard step="Step 5 of 5" title="Paste your keys" footer={TRUST}
       line="Paste any key and the provider is recognised. Add as many as you like; the app uses them in turn.">
       <form className="st-auth-form" onSubmit={submit}>
         {error && <Notice tone="danger">{error}</Notice>}
@@ -319,7 +319,7 @@ function OllamaStep({ preset, onBack, onDone }: { preset: Preset; onBack: () => 
   };
 
   return (
-    <AuthCard step="Step 4 of 4" title="Use Ollama on this computer" line="Free and private: models run on your own machine and nothing leaves it.">
+    <AuthCard step="Step 5 of 5" title="Use Ollama on this computer" line="Free and private: models run on your own machine and nothing leaves it.">
       {error && <Notice tone="danger">{error}</Notice>}
       <SettingsGroup>
         <SettingRow label="Ollama" help={state === null ? "Checking…" : state.online ? "Running on this computer." : "Install the free Ollama app, open it, then check again."}>
@@ -378,7 +378,7 @@ function NameStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }
   };
 
   return (
-    <AuthCard step="Step 3 of 4" title="What should I be called?" line="This is the name on Home and in chat. You can change it later in Assistant settings.">
+    <AuthCard step="Step 3 of 5" title="What should I be called?" line="This is the name on Home and in chat. You can change it later in Assistant settings.">
       <form className="st-auth-form" onSubmit={(e) => { e.preventDefault(); void save(); }}>
         <div className="st-face"><AssistantFace mood="idle" name={chosen || "Atlas"} size={64} pleasedAt={pleasedAt} /></div>
         {error && <Notice tone="danger">{error}</Notice>}
@@ -395,8 +395,44 @@ function NameStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }
   );
 }
 
-export default function Welcome({ onDone }: { onDone: () => void }) {
-  const [step, setStep] = useState<"accounts" | "look" | "name" | "choose" | "free" | "subscription" | "key" | "ollama">("accounts");
+type Work = { id: string; label: string; blurb: string };
+
+/** Step 4 (feat/coworkers): what you do. Optional, several allowed; the team itself is proposed after the last step
+ * on the Coworkers page, where nothing is created until you say so. */
+function WorkStep({ picked, onPick, onBack, onNext }: { picked: string[]; onPick: (ids: string[]) => void; onBack: () => void; onNext: () => void }) {
+  const [list, setList] = useState<Work[] | null>(null);
+  useEffect(() => { api<{ professions: Work[] }>("/starters").then((r) => setList(r.professions)).catch(() => setList([])); }, []);
+  const flip = (id: string) => onPick(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
+  return (
+    <AuthCard step="Step 4 of 5" title="What do you do?"
+      line="Pick any that fit and I will suggest a small team for that work. You can change it later, or skip this.">
+      {!list ? <Loading rows={2} label="Loading" /> : (
+        <div className="st-options" role="group" aria-label="Lines of work">
+          {list.map((w) => (
+            <button key={w.id} type="button" className="st-option" aria-pressed={picked.includes(w.id)} onClick={() => flip(w.id)}>
+              <span className="st-option-icon">{picked.includes(w.id) ? <Check size={20} /> : <Briefcase size={20} />}</span>
+              <span className="st-option-text">
+                <span className="st-option-title">{w.label}</span>
+                <span className="st-option-line">{w.blurb}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      <AuthActions>
+        <Back onBack={onBack} />
+        <span className="st-grow" />
+        <Button variant="ghost" onClick={() => { onPick([]); onNext(); }}>Skip</Button>
+        <Button variant="primary" disabled={!picked.length} onClick={onNext}>Continue <ArrowRight size={14} /></Button>
+      </AuthActions>
+    </AuthCard>
+  );
+}
+
+export default function Welcome({ onDone: finished }: { onDone: (work: string[]) => void }) {
+  const [step, setStep] = useState<"accounts" | "look" | "name" | "work" | "choose" | "free" | "subscription" | "key" | "ollama">("accounts");
+  const [work, setWork] = useState<string[]>([]);
+  const onDone = () => finished(work);
   const [keyPreset, setKeyPreset] = useState<string>();
   const [presets, setPresets] = useState<Record<string, Preset> | null>(null);
   const [info, setInfo] = useState<Record<string, KeyInfo>>({});
@@ -410,9 +446,10 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
   return (
     <div key={step} className="st-welcome">
       {step === "accounts" && <AccountsStep onNext={() => setStep("look")} />}
-      {step === "name" && <NameStep onBack={() => setStep("look")} onNext={() => setStep("choose")} />}
+      {step === "name" && <NameStep onBack={() => setStep("look")} onNext={() => setStep("work")} />}
+      {step === "work" && <WorkStep picked={work} onPick={setWork} onBack={() => setStep("name")} onNext={() => setStep("choose")} />}
       {step === "look" && (
-        <AuthCard wide step="Step 2 of 4" title="Pick your look" line="Everything changes straight away, including the browser, the terminal and your phone. You can change it any time in Appearance.">
+        <AuthCard wide step="Step 2 of 5" title="Pick your look" line="Everything changes straight away, including the browser, the terminal and your phone. You can change it any time in Appearance.">
           <ThemeGrid />
           <TypeChoices />
           <AuthActions>
@@ -422,7 +459,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
         </AuthCard>
       )}
       {step === "choose" && (
-        <AuthCard step="Step 4 of 4" title="Choose how to think" footer={TRUST}
+        <AuthCard step="Step 5 of 5" title="Choose how to think" footer={TRUST}
           line="The thinking happens in the cloud, so your computer stays cool and quiet. You can add more ways later.">
           {!presets ? <Loading rows={3} label="Loading the ways to connect" /> : (
             <div className="st-options">
@@ -435,7 +472,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
                 <ArrowRight size={16} className="st-option-go" aria-hidden="true" />
               </button>
               <button type="button" className="st-option" onClick={() => setStep("subscription")}>
-                <span className="st-option-icon"><Sparkles size={20} /></span>
+                <span className="st-option-icon"><BadgeCheck size={20} /></span>
                 <span className="st-option-text">
                   <span className="st-option-title">Sign in with your subscription</span>
                   <span className="st-option-line">ChatGPT, Claude, or GitHub Copilot: the plan you already pay for. No key needed.</span>
@@ -460,7 +497,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
               </button>
             </div>
           )}
-          <AuthActions><Back onBack={() => setStep("name")} /></AuthActions>
+          <AuthActions><Back onBack={() => setStep("work")} /></AuthActions>
         </AuthCard>
       )}
       {step === "free" && <FreeStep info={info} onBack={back} onDone={onDone} />}
