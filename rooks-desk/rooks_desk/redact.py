@@ -1,4 +1,4 @@
-# Vendored verbatim from workbench/backend/app/redact.py (tests/test_units.py keeps the copy identical).
+# Vendored verbatim from workbench/backend/app/redact.py (tests/test_redact_copy.py keeps the copy identical).
 """Secrets never reach a log sink: every log record is redacted when it is created, whatever logger made it (R7).
 
 Installed once at import of the app (main.py). Call sites need nothing. Patterns grow here, not at call sites.
@@ -25,6 +25,11 @@ _PATTERNS = [
     (re.compile(r"\b(Bearer|Basic|Token)\s+[A-Za-z0-9._~+/=-]{8,}", re.I), r"\1 <redacted>"),
     # JSON Web Tokens (OAuth access and id tokens)
     (re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"), "<redacted:jwt>"),
+    # PEM private keys (SSH, TLS, PGP): the whole block, header to footer
+    (re.compile(r"-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY(?: BLOCK)?-----[\s\S]*?-----END (?:[A-Z0-9]+ )*PRIVATE KEY(?: BLOCK)?-----"),
+     "<redacted:private-key>"),
+    # AWS access key ids (long-term AKIA, temporary ASIA), shape as in gitleaks' aws-access-token rule
+    (re.compile(r"\b(?:AKIA|ASIA|ABIA|ACCA)[0-9A-Z]{16}\b"), "<redacted:aws-key>"),
     # Provider keys by their published prefixes: OpenAI/Anthropic/OpenRouter (sk-), Google (AIza), GitHub, Slack, Tavily,
     # and Workbench's own terminal token (wb_)
     (re.compile(r"\b(?:sk-(?:ant-|or-v1-|proj-)?[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{35}|gh[pousr]_[A-Za-z0-9]{36,}|"

@@ -46,6 +46,7 @@ export function routeFor(data: Record<string, unknown> | undefined): string | nu
   if (!data) return null;
   if (data.kind === 'approval') return '/approvals';
   if (data.kind === 'job') return '/jobs'; // feat/v02-automations: jobs board
+  if (data.kind === 'companion') return '/companion';
   if (data.kind === 'run') {
     if (typeof data.conversation_id === 'number') return `/chat/${data.conversation_id}`;
     if (typeof data.id === 'number') return `/run/${data.id}`;

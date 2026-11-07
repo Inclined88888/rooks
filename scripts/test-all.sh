@@ -39,8 +39,10 @@ if [[ ! -x "$PY" ]]; then
   uv venv -q -p 3.12 "$VENV" || exit 1
 fi
 VIRTUAL_ENV="$VENV" uv pip install -q -r workbench/backend/requirements.txt -r workbench/backend/requirements-dev.txt \
-  -r workbench/backend/requirements-files.txt "prompt_toolkit>=3.0.43" "rich>=13.7" && ok "dependencies" || bad "dependencies"
+  -r workbench/backend/requirements-files.txt "prompt_toolkit>=3.0.43" "rich>=13.7" \
+  "mss>=9" "Pillow>=10" "python-xlib>=0.33; sys_platform == 'linux'" && ok "dependencies" || bad "dependencies"
 # prompt_toolkit and rich are Rooks Code's interactive terminal (rooks-code/pyproject.toml): without them its tests skip
+# mss, Pillow and python-xlib are the Try Room's screen capture (rooks-try/pyproject.toml): without them its tests fail
 
 step "Backend (workbench/backend)"
 EXTRA=(); $QUICK && EXTRA=(-k "not sandbox and not run_python")

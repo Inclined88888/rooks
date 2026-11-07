@@ -94,6 +94,26 @@ def _seatbelt_path(path) -> str:
     return str(path).replace("\\", "\\\\").replace('"', "")
 
 
+NO_CONTAINMENT = ("This computer cannot keep commands inside the project folder{why}. Install bubblewrap (the bwrap "
+                  "command) to keep them contained, or set sandbox = \"full\" in the settings to run commands without "
+                  "that protection.")
+NO_CONTAINMENT_WINDOWS = ("This computer cannot keep commands inside the project folder on Windows yet. Set "
+                          "sandbox = \"full\" in the settings to run commands without that protection.")
+_BWRAP_WORKS: dict[str, bool] = {}
+
+
+def _bwrap_works(bwrap: str) -> bool:
+    """bwrap can be installed and still be refused a namespace (a container, or a distribution that restricts them)."""
+    if bwrap not in _BWRAP_WORKS:
+        try:
+            r = subprocess.run([bwrap, "--ro-bind", "/", "/", "--dev", "/dev", "true"], capture_output=True, timeout=10,
+                               stdin=subprocess.DEVNULL)
+            _BWRAP_WORKS[bwrap] = r.returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            _BWRAP_WORKS[bwrap] = False
+    return _BWRAP_WORKS[bwrap]
+
+
 def _clip(text: str, limit: int = MAX_OUTPUT) -> str:
     if len(text) <= limit:
         return text
@@ -457,8 +477,12 @@ class Toolbox:
         shell = "cmd.exe" if sys.platform == "win32" else "/bin/sh"
         flag = "/c" if sys.platform == "win32" else "-c"
         argv = [shell, flag, cmd]
-        if self.sandbox != "project" or sys.platform != "darwin":
+        if self.sandbox != "project":
             return argv
+        if sys.platform.startswith("linux"):
+            return self._bwrap_argv(argv)
+        if sys.platform != "darwin":  # no containment for Windows yet: refuse rather than pretend
+            raise ToolError(NO_CONTAINMENT_WINDOWS)
         seatbelt = shutil.which("sandbox-exec")
         if not seatbelt:
             raise ToolError("This computer cannot keep commands inside the project folder.")
@@ -483,6 +507,21 @@ class Toolbox:
             '(allow file-write* (subpath "/dev"))',
         ])
         return [seatbelt, "-p", profile, *argv]
+
+    def _bwrap_argv(self, argv: list[str]) -> list[str]:
+        """Linux project mode: the whole system read only, writable only the project, the temp folder and /dev.
+        Network stays on, as on macOS. Without a working bwrap the command is refused, never run uncontained."""
+        bwrap = shutil.which("bwrap")
+        if not bwrap:
+            raise ToolError(NO_CONTAINMENT.format(why=""))
+        if not _bwrap_works(bwrap):
+            raise ToolError(NO_CONTAINMENT.format(why=" (bubblewrap is installed but this system does not allow it)"))
+        out = [bwrap, "--die-with-parent", "--ro-bind", "/", "/", "--dev", "/dev"]
+        writable = ["/tmp", os.environ.get("TMPDIR") or "/tmp", str(self.root)]
+        for w in dict.fromkeys(os.path.realpath(x) for x in writable):
+            if os.path.isdir(w):
+                out += ["--bind", w, w]
+        return [*out, "--chdir", str(self.root), "--", *argv]
 
     def _run_command(self, a: dict) -> Plan:
         cmd = a.get("command")
