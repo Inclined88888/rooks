@@ -173,7 +173,6 @@ test("the task helper gets no secrets from the app's environment, and its errors
       assert.equal(k in env, false, `${k} reached the helper`);
     }
     assert.equal(env.OPENAI_API_KEY, "sk-the-helpers-own-model-key");  // the helper is the model client: its own keys pass
-    }
     assert.equal(env.ROOKS_BROWSER_TOKEN, control.helper_token);  // its own token, not the stale one
     for (const k of ["PATH", "HOME"]) assert.ok(env[k], `${k} missing`);
     assert.equal(env.ROOKS_BROWSER_HOME, "/tmp/rooks-home-for-this-test");  // ordinary settings pass through
