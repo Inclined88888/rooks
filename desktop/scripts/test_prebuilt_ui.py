@@ -15,7 +15,7 @@ sys.path.insert(0, str(REPO / "desktop" / "launcher"))
 import install_helper  # noqa: E402
 
 INDEX = '<html><head><script type="module" src="/assets/index-A1.js"></script>' \
-        '<link rel="stylesheet" href="/assets/index-B2.css"></head></html>'
+        '<link rel="stylesheet" href="/assets/index-B2.css"></head><body><div id="root"></div></body></html>'
 ENTRY = 'const P=()=>import("./Page-C3.js");const d=["assets/Page-D4.css"];'
 
 
@@ -71,3 +71,33 @@ def test_the_committed_web_ui_is_complete():
     """What the one-command install downloads from main. If this fails, rebuild (npm run build in workbench/frontend)
     and commit the whole workbench/frontend/dist folder."""
     assert install_helper.missing_web_files(REPO / "workbench" / "frontend" / "dist") == []
+
+
+def _serve(dist: Path):
+    """A throwaway web server for the dist folder, as the backend serves it."""
+    import functools
+    import http.server
+    import threading
+
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(dist))
+    handler.log_message = lambda *a, **k: None  # type: ignore[attr-defined]
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv, f"http://127.0.0.1:{srv.server_address[1]}"
+
+
+def test_the_launcher_status_sees_an_incomplete_web_ui(tmp_path):
+    """ai_workspace --status said 'web UI: ok' for the very copy that opened blank: it only looked for the page."""
+    import ai_workspace
+
+    srv, url = _serve(build(tmp_path, skip="index-A1.js"))
+    try:
+        assert ai_workspace.ui_ok(url) is False
+    finally:
+        srv.shutdown()
+    srv, url = _serve(build(tmp_path / "ok"))
+    try:
+        assert ai_workspace.ui_ok(url) is True
+    finally:
+        srv.shutdown()
+

@@ -163,8 +163,8 @@ def ensure_frontend(src: Path, home: Path) -> None:
             npm, env = portable_node(home / "cache")
             fetched = True
         except Exception as e:  # noqa: BLE001 - explain and stop
-            sys.exit(f"This copy has no prebuilt web UI and Node.js could not be fetched ({e}). Use the release zip, or "
-                     "install Node.js 20+ (nodejs.org) and run the installer again.")
+            sys.exit(f"The web UI in this copy is missing or incomplete, and Node.js could not be fetched ({e}). Use the "
+                     "release zip, or install Node.js 20+ (nodejs.org) and run the installer again.")
     log_file = home / "logs" / "frontend-build.log"
     say(f"web UI: building (one or two minutes, log: {log_file})…")
     fe = src / "workbench" / "frontend"

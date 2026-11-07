@@ -13,6 +13,7 @@ tmp=$(mktemp -d)
 name=ai-workspace-$(cat VERSION)
 git archive --format=tar --prefix="$name/" HEAD | tar -x -C "$tmp"
 mkdir -p "$tmp/$name/workbench/frontend"
+rm -rf "$tmp/$name/workbench/frontend/dist"  # git archive carries the committed copy; the zip ships the build just made
 cp -R workbench/frontend/dist "$tmp/$name/workbench/frontend/dist"
 rm -f "$out"
 # zip with the executable bits kept (install.sh), using Python so `zip` need not be installed
