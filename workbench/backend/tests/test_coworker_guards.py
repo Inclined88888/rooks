@@ -16,6 +16,11 @@ def quiet_learning(monkeypatch):
         return []
 
     monkeypatch.setattr(knowledge, "model_json", nothing)
+    yield
+    # The scripted model's log is shared by the whole suite: a later test that reads the first call with tools must
+    # not find a teammate's filtered list here (test_assistant.py::test_chat_runs_tools_and_answers did).
+    CALLS.clear()
+    SCRIPT[:] = []
 
 
 def _mate(c, **kw):
