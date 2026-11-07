@@ -23,3 +23,5 @@ c655cb9d4efe90978e072f43fda38afcc744d0ad:workbench/backend/tests/test_redact.py:
 2c0646049cf648a64d8c632579db7d46c5ed653b:workbench/backend/tests/test_workspace.py:generic-api-key:256
 17784a13148e54e9ea2fa23a2ac533fedff021ca:workbench/backend/tests/test_hardening.py:aws-access-token:104
 17784a13148e54e9ea2fa23a2ac533fedff021ca:workbench/backend/tests/test_models.py:generic-api-key:306
+# Reviewed 2026-11-07: a made-up key in the auth boundary tests on integration/auth-native-workroom (CI scans every branch).
+84ddfc34eae1db6ea011a08391d422f5e12c79f0:workbench/backend/tests/test_auth_boundaries.py:generic-api-key:147
