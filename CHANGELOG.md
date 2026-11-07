@@ -122,6 +122,17 @@ Design record: `docs/design/0003-workroom.md` (binding for this branch). Package
   ignore `/room` in the app (the tool is only offered while the package is installed; uninstall `rooks-try` to remove
   it). Nothing in the database changes shape: held hand-offs are ordinary held actions and can be denied from Needs
   you, the restart notes are plain messages the older code ignores, and the leftover `tool_results` rows are harmless.
+## 2026-11-06 · Ask in the native window; the bridge key signs in · branch feat/native-ask
+
+- **Ask.** The native Rooks window (`desktop/rooks-native`, 0.4.0) can give Rooks a task. Home has a box; the rail has
+  an Ask page with the transcript, recent chats, and a composer. The reply streams in as it is written; each tool shows
+  as one short line; an `approval_required` event becomes an Allow / No card; Stop calls `POST /api/assistant/stop`.
+  Thoughts, receipts and cards never leave the service.
+- **Fix: the native window could not attach to a running service.** `workbench_server.py` writes the bridge key
+  (`BROWSER_API_KEY`) into `app.json`, but `POST /api/desktop/local-session` and bearer auth compared it with
+  `TOOLS_API_KEY`, so a second window always got `401 Invalid key`. New `security.check_app_key` accepts either key
+  (both per-install random secrets, loopback only); `local-session` and `surfaces.bearer_ok` use it.
+- Migration: none. Data: none. Rollback: revert the commit.
 
 ## 2026-11-01 · Long tool results, step limit setting, repeat guard · branch feat/rea-p0-harness
 

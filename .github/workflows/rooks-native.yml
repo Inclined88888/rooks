@@ -30,16 +30,16 @@ jobs:
         include:
           - name: Linux .deb
             os: ubuntu-22.04
-            artifact: rooks-native_0.3.0_amd64.deb
+            artifact: rooks-native_0.4.0_amd64.deb
           - name: macOS Apple silicon
             os: macos-15
-            artifact: Rooks_0.3.0_aarch64.dmg
+            artifact: Rooks_0.4.0_aarch64.dmg
           - name: macOS Intel
             os: macos-15-intel
-            artifact: Rooks_0.3.0_x86_64.dmg
+            artifact: Rooks_0.4.0_x86_64.dmg
           - name: Windows installer
             os: windows-2022
-            artifact: Rooks_0.3.0_x64.msi
+            artifact: Rooks_0.4.0_x64.msi
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - uses: dtolnay/rust-toolchain@1.99.1

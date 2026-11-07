@@ -20,6 +20,7 @@ fn inter(weight: Weight) -> Font {
     }
 }
 
+use rooks_native::chat::{self, Approval, Chat, Conversation, Event, Turn};
 use rooks_native::copy::{self, BODY, HEADLINE, KICKER, PRODUCT};
 use rooks_native::fit::{self, Profile, Suggestion};
 use rooks_native::parse::{self, ConnectorRow, JobRow, MailRow, ModelRow, SkillRow, TaskRow};
@@ -78,6 +79,13 @@ struct App {
     term_draft: String,
     browser: Vec<JobRow>,
     code: Vec<JobRow>,
+    ask_draft: String,
+    chat: Option<Chat>,
+    conversation: Option<i64>,
+    turns: Vec<Turn>,
+    writing: String,
+    held: Vec<Approval>,
+    conversations: Vec<Conversation>,
 }
 
 #[derive(Debug, Clone)]
@@ -120,6 +128,15 @@ enum Message {
         approve: bool,
     },
     DoneOp(Result<(), String>),
+    AskDraft(String),
+    AskSend,
+    AskTick,
+    AskStop,
+    NewChat,
+    OpenChat(i64),
+    Chats(Result<Vec<Conversation>, String>),
+    Transcript(Result<Vec<Turn>, String>),
+    Decide { id: i64, approve: bool },
 }
 
 fn palette() -> iced::theme::Palette {
@@ -226,6 +243,13 @@ impl App {
             term_draft: String::new(),
             browser: Vec::new(),
             code: Vec::new(),
+            ask_draft: String::new(),
+            chat: None,
+            conversation: None,
+            turns: Vec::new(),
+            writing: String::new(),
+            held: Vec::new(),
+            conversations: Vec::new(),
         };
         let task = if known {
             Task::perform(async { rooks_native::link::ensure() }, Message::Connected)
@@ -240,11 +264,14 @@ impl App {
     }
 
     fn subscription(state: &Self) -> Subscription<Message> {
+        let mut ticks = Vec::new();
         if state.term.is_some() {
-            iced::time::every(Duration::from_millis(300)).map(|_| Message::TermTick)
-        } else {
-            Subscription::none()
+            ticks.push(iced::time::every(Duration::from_millis(300)).map(|_| Message::TermTick));
         }
+        if state.chat.is_some() {
+            ticks.push(iced::time::every(Duration::from_millis(120)).map(|_| Message::AskTick));
+        }
+        Subscription::batch(ticks)
     }
 
     fn update(state: &mut Self, message: Message) -> Task<Message> {
@@ -407,7 +434,125 @@ impl App {
                 state.task_draft.clear();
                 state.load(state.screen)
             }
+            Message::AskDraft(value) => {
+                state.ask_draft = value;
+                Task::none()
+            }
+            Message::AskSend => {
+                let message = state.ask_draft.trim().to_string();
+                if message.is_empty() || state.chat.is_some() {
+                    return Task::none();
+                }
+                let Some(client) = state.client.clone() else {
+                    state.banner = "The local service is not connected yet.".into();
+                    return Task::none();
+                };
+                state.ask_draft.clear();
+                state.banner.clear();
+                state.screen = "ask";
+                state.turns.push(Turn {
+                    role: "you".into(),
+                    content: message.clone(),
+                });
+                state.writing.clear();
+                state.chat = Some(Chat::send(client, message, state.conversation));
+                Task::none()
+            }
+            Message::AskTick => {
+                let Some(chat) = &state.chat else {
+                    return Task::none();
+                };
+                // Read the flag first: the thread pushes its last event before it sets the flag,
+                // so a drain after a true flag has everything.
+                let finished = chat.finished();
+                let events = chat.drain();
+                let mut done = false;
+                for event in events {
+                    match event {
+                        Event::Start { conversation_id } => {
+                            state.conversation = Some(conversation_id)
+                        }
+                        Event::Writing(piece) => state.writing.push_str(&piece),
+                        Event::Tool(name) => state.turns.push(Turn {
+                            role: "tool".into(),
+                            content: chat::tool_line(&name),
+                        }),
+                        Event::Approval(approval) => state.held.push(approval),
+                        Event::Message(content) => {
+                            state.writing.clear();
+                            if !content.trim().is_empty() {
+                                state.turns.push(Turn {
+                                    role: "rooks".into(),
+                                    content,
+                                });
+                            }
+                        }
+                        Event::Error(error) => state.turns.push(Turn {
+                            role: "error".into(),
+                            content: error,
+                        }),
+                        Event::Done { conversation_id } => {
+                            if conversation_id > 0 {
+                                state.conversation = Some(conversation_id);
+                            }
+                            done = true;
+                        }
+                    }
+                }
+                if done || finished {
+                    if !state.writing.trim().is_empty() {
+                        let partial = std::mem::take(&mut state.writing);
+                        state.turns.push(Turn {
+                            role: "rooks".into(),
+                            content: partial,
+                        });
+                    }
+                    state.chat = None;
+                    return state.load_chats();
+                }
+                Task::none()
+            }
+            Message::AskStop => {
+                let Some(cid) = state.conversation else {
+                    state.chat = None;
+                    return Task::none();
+                };
+                state.with_client(move |client, _| client.stop_turn(cid))
+            }
+            Message::NewChat => {
+                state.conversation = None;
+                state.turns.clear();
+                state.writing.clear();
+                state.held.clear();
+                state.chat = None;
+                Task::none()
+            }
+            Message::OpenChat(id) => {
+                if state.chat.is_some() {
+                    return Task::none();
+                }
+                state.conversation = Some(id);
+                state.held.clear();
+                state.writing.clear();
+                let Some(client) = state.client.clone() else {
+                    return Task::none();
+                };
+                Task::perform(async move { client.transcript(id) }, Message::Transcript)
+            }
+            Message::Chats(result) => state.take(result, |app, value| app.conversations = value),
+            Message::Transcript(result) => state.take(result, |app, value| app.turns = value),
+            Message::Decide { id, approve } => {
+                state.held.retain(|held| held.id != id);
+                state.with_client(move |client, _| client.decide(id, approve))
+            }
         }
+    }
+
+    fn load_chats(&self) -> Task<Message> {
+        let Some(client) = self.client.clone() else {
+            return Task::none();
+        };
+        Task::perform(async move { client.conversations() }, Message::Chats)
     }
 
     fn take<T>(
@@ -444,6 +589,20 @@ impl App {
         };
         let allow = self.prefs.send_prompts_to_provider;
         match screen {
+            "ask" => {
+                let list = client.clone();
+                let mut tasks = vec![Task::perform(
+                    async move { list.conversations() },
+                    Message::Chats,
+                )];
+                if let Some(cid) = self.conversation {
+                    tasks.push(Task::perform(
+                        async move { client.transcript(cid) },
+                        Message::Transcript,
+                    ));
+                }
+                Task::batch(tasks)
+            }
             "home" => Task::perform(
                 async move {
                     let notices = client.notices().unwrap_or_default();
@@ -672,6 +831,7 @@ impl App {
         }
         page = match self.screen {
             "home" => self.home(page),
+            "ask" => self.ask(page),
             "customize" => self.customize(page),
             "skills" => self.skills(page),
             "connectors" => self.connectors(page),
@@ -701,6 +861,20 @@ impl App {
         let has_work = !self.notices.is_empty() || open > 0;
         page = page.push(text("Home").size(26).font(inter(Weight::Semibold)));
         page = page.push(text(fit::greeting(&profile)).size(16));
+        page = page.push(
+            row![
+                text_input("What do you want done?", &self.ask_draft)
+                    .on_input(Message::AskDraft)
+                    .on_submit(Message::AskSend)
+                    .size(16)
+                    .padding(14),
+                button(text("Ask"))
+                    .style(button::primary)
+                    .padding([14, 20])
+                    .on_press(Message::AskSend),
+            ]
+            .spacing(8),
+        );
         page = page.push(text(fit::home_guide(has_work)).size(16));
         page = page.push(text("Suggested for you").size(18));
         for item in fit::suggestions(&profile).into_iter().take(4) {
@@ -971,7 +1145,20 @@ impl App {
                     .on_press(Message::OpenTerm),
             );
         } else {
-            page = page.push(text(&self.term_text).size(14));
+            page = page.push(
+                container(text(&self.term_text).size(13).font(Font::MONOSPACE))
+                    .width(Length::Fill)
+                    .padding(14)
+                    .style(|_theme| container::Style {
+                        background: Some(Background::Color(ink())),
+                        text_color: Some(paper()),
+                        border: Border {
+                            radius: 10.0.into(),
+                            ..Border::default()
+                        },
+                        ..container::Style::default()
+                    }),
+            );
             page = page.push(
                 row![
                     text_input("Type a command", &self.term_draft)
@@ -986,6 +1173,173 @@ impl App {
             );
         }
         page
+    }
+
+    fn ask<'a>(
+        &'a self,
+        mut page: iced::widget::Column<'a, Message>,
+    ) -> iced::widget::Column<'a, Message> {
+        let busy = self.chat.is_some();
+        let mut head = row![
+            text("Ask").size(26).font(inter(Weight::Semibold)),
+            iced::widget::horizontal_space(),
+        ]
+        .align_y(Alignment::Center)
+        .spacing(8);
+        if self.conversation.is_some() || !self.turns.is_empty() {
+            let mut fresh = button(text("New chat")).style(quiet_style);
+            if !busy {
+                fresh = fresh.on_press(Message::NewChat);
+            }
+            head = head.push(fresh);
+        }
+        page = page.push(head);
+        page = page.push(
+            text("Say what you want done. Rooks reads, plans and does it here. Anything that sends, pays or signs in stops and waits for you.")
+                .size(16),
+        );
+
+        let mut transcript = column![].spacing(10);
+        if self.turns.is_empty() && self.writing.is_empty() {
+            transcript = transcript.push(
+                text("Nothing yet. Try: find the invoice from Ada, or draft a reply to the last mail.")
+                    .size(15),
+            );
+        }
+        for turn in &self.turns {
+            transcript = transcript.push(self.bubble(&turn.role, &turn.content));
+        }
+        if !self.writing.is_empty() {
+            transcript = transcript.push(self.bubble("rooks", &self.writing));
+        } else if busy {
+            transcript = transcript.push(text("Working…").size(14));
+        }
+        for held in &self.held {
+            let id = held.id;
+            transcript = transcript.push(
+                container(
+                    column![
+                        text(chat::approval_line(held)).size(15),
+                        text(&held.args).size(13).font(Font::MONOSPACE),
+                        row![
+                            button(text("Allow"))
+                                .style(button::primary)
+                                .on_press(Message::Decide { id, approve: true }),
+                            button(text("No"))
+                                .style(quiet_style)
+                                .on_press(Message::Decide { id, approve: false }),
+                        ]
+                        .spacing(8),
+                    ]
+                    .spacing(8),
+                )
+                .width(Length::Fill)
+                .padding(14)
+                .style(|theme: &Theme| container::Style {
+                    background: Some(Background::Color(accent_wash())),
+                    border: Border {
+                        color: theme.palette().primary,
+                        width: 1.0,
+                        radius: 12.0.into(),
+                    },
+                    ..container::Style::default()
+                }),
+            );
+        }
+
+        let mut sidebar = column![text("Recent").size(13)].spacing(4).width(220);
+        if self.conversations.is_empty() {
+            sidebar = sidebar.push(text("No chats yet.").size(14));
+        }
+        for item in self.conversations.iter().take(12) {
+            let on = self.conversation == Some(item.id);
+            let mut link = button(
+                column![text(&item.title).size(14), text(&item.updated).size(11)].spacing(2),
+            )
+            .width(Length::Fill)
+            .padding([6, 8])
+            .style(nav_style(on));
+            if !on && !busy {
+                link = link.on_press(Message::OpenChat(item.id));
+            }
+            sidebar = sidebar.push(link);
+        }
+
+        page = page.push(
+            row![
+                container(transcript).width(Length::Fill),
+                sidebar
+            ]
+            .spacing(24),
+        );
+
+        let mut send = button(text(if busy { "Working…" } else { "Send" }))
+            .style(button::primary)
+            .padding([12, 18]);
+        if !busy {
+            send = send.on_press(Message::AskSend);
+        }
+        let mut composer = row![
+            text_input("What do you want done?", &self.ask_draft)
+                .on_input(Message::AskDraft)
+                .on_submit(Message::AskSend)
+                .size(16)
+                .padding(12),
+            send,
+        ]
+        .spacing(8);
+        if busy {
+            composer = composer.push(
+                button(text("Stop"))
+                    .style(quiet_style)
+                    .padding([12, 18])
+                    .on_press(Message::AskStop),
+            );
+        }
+        page.push(composer)
+    }
+
+    fn bubble(&self, role: &str, content: &str) -> Element<'_, Message> {
+        let (label, body_size, filled) = match role {
+            "you" => ("You", 16, true),
+            "rooks" => ("Rooks", 16, true),
+            "error" => ("Stopped", 15, true),
+            _ => ("", 13, false),
+        };
+        if !filled {
+            return container(text(content.to_string()).size(body_size))
+                .padding([2, 14])
+                .into();
+        }
+        let is_you = role == "you";
+        let is_error = role == "error";
+        container(
+            column![
+                text(label).size(12),
+                text(content.to_string()).size(body_size)
+            ]
+            .spacing(4),
+        )
+        .width(Length::Fill)
+        .padding(14)
+        .style(move |theme: &Theme| container::Style {
+            background: Some(Background::Color(if is_you {
+                Color::from_rgb(0.93, 0.94, 0.95)
+            } else {
+                paper()
+            })),
+            border: Border {
+                color: if is_error {
+                    theme.palette().danger
+                } else {
+                    hairline()
+                },
+                width: 1.0,
+                radius: 12.0.into(),
+            },
+            ..container::Style::default()
+        })
+        .into()
     }
 
     fn jobs<'a>(

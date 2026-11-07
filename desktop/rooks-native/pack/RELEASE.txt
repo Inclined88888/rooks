@@ -1,14 +1,16 @@
-This is the new Rooks window, version 0.3.0. It is separate from the AI Workspace installers.
+This is the new Rooks window, version 0.4.0. It is separate from the AI Workspace installers.
 
 The first time you open it, Rooks asks what you do, what you already use, and where you want help. Those answers stay on this computer. Later launches go straight to the workplace.
+
+New in 0.4.0: Ask. Type what you want done on Home or in Ask, and Rooks answers in this window as it writes. Each tool it uses shows as one short line. Anything that sends, pays or signs in stops and waits for Allow or No. Stop ends a turn and keeps what was written. Recent chats sit on the side. The terminal now uses a fixed-width font on a dark panel.
 
 The app you already use still works. This window talks to the Rooks service on your computer. If that service is not running, open the app you already use, or run ai-workspace, then open Rooks. When the service is already up, Rooks signs this window in with the local bridge key so the terminal works the same as when Rooks started the service itself.
 
 Mac: open the disk image, drag Rooks to Applications, then open it. The first time, if the Mac says it cannot be opened, right-click Rooks and choose Open. Use the aarch64 image on Apple silicon, and the x86_64 image on an Intel Mac.
 
-Linux: sudo apt install ./rooks-native_0.3.0_amd64.deb
+Linux: sudo apt install ./rooks-native_0.4.0_amd64.deb
 Then open Rooks from the app menu, or run rooks-native.
 
-Windows: run Rooks_0.3.0_x64.msi. Rooks appears in the Start menu. It does not need an administrator password.
+Windows: run Rooks_0.4.0_x64.msi. Rooks appears in the Start menu. It does not need an administrator password.
 
 Sending a prompt to a cloud provider is off until you turn it on in Customize. A model on this computer stays available.

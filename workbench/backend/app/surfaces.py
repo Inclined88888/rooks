@@ -80,11 +80,10 @@ def bearer_ok(request: Request) -> bool:
     row = db.one("SELECT token_hash, revoked FROM browser_tokens WHERE token_hash = ?", digest)
     if row and not row["revoked"] and hmac.compare_digest(row["token_hash"], digest):
         return True
-    # TOOLS_API_KEY, the app's own tools key (kept in the OS keychain by the desktop app). It is not the app.json key:
-    # app.json carries the bridge key (BROWSER_API_KEY), which opens /v1 and, with the terminal's channel, only the
-    # Workroom routes in security.require_user_or_terminal.
-    app_key = getattr(config, "TOOLS_API_KEY", "") or ""
-    return bool(app_key) and len(token) == len(app_key) and hmac.compare_digest(token, app_key)
+    # The desktop app's own key (app.json) lets the terminal on this machine talk as the same account.
+    from .security import check_app_key
+
+    return check_app_key(request)
 
 
 def status() -> dict:
