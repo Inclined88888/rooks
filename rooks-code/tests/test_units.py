@@ -417,3 +417,16 @@ def test_project_sandbox_says_why_when_bubblewrap_cannot_start(tmp_path, monkeyp
     with pytest.raises(ToolError) as e:
         tb._command_argv("echo hi")
     assert "uid map: Permission denied" in str(e.value) and 'sandbox = "full"' in str(e.value)
+
+
+def test_windows_commands_keep_their_quotes(tmp_path, monkeypatch):
+    """cmd.exe gets the command as typed. A list would be joined with quotes escaped as \\", which cmd.exe reads as part
+    of the program name, so "C:\\Program Files\\x\\python.exe" test.py could never run."""
+    from rooks_code import tools
+    monkeypatch.setattr(tools.sys, "platform", "win32")
+    monkeypatch.setenv("COMSPEC", r"C:\Windows\system32\cmd.exe")
+    cmd = r'"C:\Program Files\Python\python.exe" test_calc.py'
+    tb = Toolbox(tmp_path)
+    for mode in ("project", "full"):
+        tb.sandbox = mode
+        assert tb._command_argv(cmd) == r'C:\Windows\system32\cmd.exe /s /c ""C:\Program Files\Python\python.exe" test_calc.py"'

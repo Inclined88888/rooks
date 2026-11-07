@@ -465,11 +465,13 @@ class Toolbox:
         old = p.read_text(encoding="utf-8") if p.exists() else ""
         return self._write_plan(p, old, content, "wrote" if p.exists() else "created")
 
-    def _command_argv(self, cmd: str) -> list[str]:
+    def _command_argv(self, cmd: str) -> list[str] | str:
         """Project mode keeps writes inside the folder. Full mode is an ordinary shell."""
-        shell = "cmd.exe" if sys.platform == "win32" else "/bin/sh"
-        flag = "/c" if sys.platform == "win32" else "-c"
-        argv = [shell, flag, cmd]
+        if sys.platform == "win32":
+            # One string, as subprocess's own shell=True builds it. A list would be joined with quotes escaped as \",
+            # which cmd.exe does not understand: "C:\path\python.exe" x.py would become a program it cannot find.
+            return f'{os.environ.get("COMSPEC") or "cmd.exe"} /s /c "{cmd}"'
+        argv = ["/bin/sh", "-c", cmd]
         if self.sandbox != "project":
             return argv
         if sys.platform.startswith("linux"):
