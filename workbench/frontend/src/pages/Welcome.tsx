@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BadgeCheck, Check, Cloud, Cpu, Download, ExternalLink, KeyRound, ListChecks, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Briefcase, Check, Cloud, Cpu, Download, ExternalLink, KeyRound, ListChecks, ShieldCheck } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api, stream } from "../api";
 import { BrandMark } from "../brand";
@@ -410,7 +410,7 @@ function WorkStep({ picked, onPick, onBack, onNext }: { picked: string[]; onPick
         <div className="st-options" role="group" aria-label="Lines of work">
           {list.map((w) => (
             <button key={w.id} type="button" className="st-option" aria-pressed={picked.includes(w.id)} onClick={() => flip(w.id)}>
-              <span className="st-option-icon">{picked.includes(w.id) ? <Check size={20} /> : <Sparkles size={20} />}</span>
+              <span className="st-option-icon">{picked.includes(w.id) ? <Check size={20} /> : <Briefcase size={20} />}</span>
               <span className="st-option-text">
                 <span className="st-option-title">{w.label}</span>
                 <span className="st-option-line">{w.blurb}</span>

@@ -267,20 +267,18 @@ describe('lockActions decisionFor (Companion categories)', () => {
   });
 });
 describe('handleLockAction (Companion from the lock screen)', () => {
-  const deps = (ok: boolean, withCompanion = true) => {
+  const deps = (ok: boolean) => {
     const log: string[] = [];
     return {
       log,
       confirm: async () => ({ ok }),
       decide: async (id: number, approve: boolean) => { log.push(`decide ${id} ${approve}`); },
-      companionDecide: withCompanion
-        ? async (id: string, decision: string, answer?: string) => { log.push(`companion ${id} ${decision} ${answer ?? ''}`.trim()); }
-        : undefined,
+      companionDecide: async (id: string, decision: string, answer?: string) => { log.push(`companion ${id} ${decision} ${answer ?? ''}`.trim()); },
       open: (p: string) => { log.push(`open ${p}`); },
       notify: async (title: string) => { log.push(`notify ${title}`); },
     };
   };
-  const permission = { kind: 'companion', request_id: 'abc123', request_kind: 'permission', tool: 'run_command' };
+  const permission = { kind: 'companion', request_id: 'abc123', request_kind: 'permission', request_title: 'Run a command' };
 
   it('allows a permission through the companion route, never the approvals route', async () => {
     const d = deps(true);
@@ -300,9 +298,9 @@ describe('handleLockAction (Companion from the lock screen)', () => {
     expect(d.log).toEqual(['open /companion']);
   });
 
-  it('opens Companion when no companion route is wired', async () => {
-    const d = deps(true, false);
-    expect(await handleLockAction('allow', permission, d)).toBe('opened');
+  it('never answers a question on the user\'s behalf: an empty reply opens the app', async () => {
+    const d = deps(true);
+    expect(await handleLockAction('answer', { kind: 'companion', request_id: 'q2', request_kind: 'question' }, d, '  ')).toBe('opened');
     expect(d.log).toEqual(['open /companion']);
   });
 });
