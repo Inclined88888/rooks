@@ -772,6 +772,11 @@ def hold_reason(t: Tool, ctx: Ctx, args: dict) -> str:
         return ""  # its copy always waits on a held request of its own in Needs you: one yes, not two
     if ctx.tainted and t.effect in GATED_EFFECTS:
         return HOLD_REASON
+    if ctx.tainted and t.name == "run_python":
+        from . import compute
+
+        if not compute.os_sandboxed():
+            return HOLD_REASON
     if ctx.channel == "automation" and t.effect in GATED_EFFECTS:  # feat/v02-automations: triggered jobs always ask first
         return AUTOMATION_REASON
     from .adapt import hooks as adapt_hooks  # routines created from a suggestion never act outside on their own

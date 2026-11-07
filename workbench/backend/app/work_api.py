@@ -95,7 +95,14 @@ def download(fid: int):
         raise HTTPException(404, "The file is gone.")
     media = mimetypes.guess_type(p.name)[0] or "application/octet-stream"
     inline = media.startswith("image/") or media == "application/pdf"
-    return FileResponse(p, media_type=media, filename=f["name"], content_disposition_type="inline" if inline else "attachment")
+    # Files arrive from email and websites. Shown inline, an SVG with script would run on the app's own origin with the
+    # owner's session: forbid script and requests and sandbox it. (Not for PDF: browsers refuse to show a sandboxed PDF,
+    # and their viewers do not run PDF script on the page's origin.)
+    headers = {"X-Content-Type-Options": "nosniff"}
+    if media != "application/pdf":
+        headers["Content-Security-Policy"] = "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox"
+    return FileResponse(p, media_type=media, filename=f["name"], content_disposition_type="inline" if inline else "attachment",
+                        headers=headers)
 
 
 @router.delete("/files/{fid}")

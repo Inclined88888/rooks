@@ -21,3 +21,16 @@ companion/macos/.build/
 # Local desktop installers (too large for git)
 dist-installers/
 desktop/rooks-native/target/
+
+# Secrets and local data: never commit (see SECURITY_TOOLING.md)
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.db
+*.sqlite
+*.sqlite3
+app_secret
+tools_api_key

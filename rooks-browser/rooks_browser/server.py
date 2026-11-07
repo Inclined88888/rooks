@@ -233,7 +233,20 @@ def make_handler(jobs: Jobs, token: str):
             self.end_headers()
             self.wfile.write(data)
 
+        def _cross_site(self) -> bool:
+            # A web page can reach 127.0.0.1 with a simple request (no CORS preflight). Browsers always label those:
+            # refuse any request a browser marks as coming from another site, whatever the token mode.
+            if (self.headers.get("Sec-Fetch-Site") or "none").lower() not in ("none", "same-origin"):
+                return True
+            origin = self.headers.get("Origin")
+            if origin is None:
+                return False
+            o = urlsplit(origin)
+            return not (o.scheme in ("http", "https") and o.netloc == (self.headers.get("Host") or ""))
+
         def _authorised(self) -> bool:
+            if self._cross_site():
+                return False
             if token:
                 h = self.headers.get("Authorization", "")
                 return h.lower().startswith("bearer ") and hmac.compare_digest(h[7:], token)
@@ -245,7 +258,7 @@ def make_handler(jobs: Jobs, token: str):
             n = int(self.headers.get("Content-Length") or 0)
             if n > 1_000_000:
                 raise ValueError("body too large")
-            if n and "json" not in (self.headers.get("Content-Type") or ""):
+            if n and (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() != "application/json":
                 raise ValueError("send Content-Type: application/json")
             return json.loads(self.rfile.read(n) or b"{}") if n else {}
 
