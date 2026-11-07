@@ -40,3 +40,6 @@ tools_api_key
 
 # TypeScript's incremental build cache (tsc -b rewrites it on every build)
 *.tsbuildinfo
+
+# Scratch worktrees made by Claude Code review agents
+.claude/worktrees/
