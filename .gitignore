@@ -37,3 +37,6 @@ desktop/rooks-native/target/
 *.sqlite3
 app_secret
 tools_api_key
+
+# TypeScript's incremental build cache (tsc -b rewrites it on every build)
+*.tsbuildinfo

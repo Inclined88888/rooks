@@ -91,6 +91,14 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npx tsc --noEmit -p .
       - run: npm run build
+      - run: npm test
+      - name: The committed web UI is the one the source builds (the one-command install ships it as is)
+        run: |
+          if [ -n "$(git status --porcelain dist)" ]; then
+            echo "workbench/frontend/dist is out of date. Run 'npm run build' in workbench/frontend and commit the dist folder."
+            git status --porcelain dist | head -20
+            exit 1
+          fi
 
   vscode-extension:
     name: VS Code extension tests
