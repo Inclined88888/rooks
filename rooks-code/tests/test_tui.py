@@ -107,7 +107,7 @@ def test_app_models_read_as_auto_and_auto_is_listed_first(tmp_path):
     from rooks_code import cli
 
     s = type("S", (), {"model": "default", "provider": "workbench"})()
-    assert tui.model_label(s, "#999").startswith("Auto  ") and "AI Workspace app" in tui.model_label(s, "#999")
+    assert tui.model_label(s, "#999").startswith("Auto  ") and "the Rooks app" in tui.model_label(s, "#999")
 
     class Model:
         model = "default"

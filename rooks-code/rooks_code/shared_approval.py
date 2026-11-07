@@ -83,7 +83,7 @@ def ask(ui, plan, show_prompt, read_line) -> str:
     link = Link.of(ui)
     aid = link.create(plan) if link else None
     if aid:
-        ui.p(ui.c("dim", f"  Also waiting in the app (Approvals #{aid}). Answer here or there."))
+        ui.p(ui.c("dim", "  Also waiting in Needs you in the app. Answer here or there."))
     show_prompt()
     if not aid or link is None:
         return _local(ui, show_prompt, read_line)

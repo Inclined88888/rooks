@@ -398,7 +398,7 @@ class _SubUI:
         return "n"
 
     def __getattr__(self, name):
-        if name in ("assistant", "footer", "stream", "stream_end", "show_plan", "tool_result", "thinking", "todos"):
+        if name in ("assistant", "footer", "stream", "stream_end", "show_plan", "tool_result", "thinking", "todos", "working"):
             return lambda *a, **k: None
         return getattr(self.ui, name)
 

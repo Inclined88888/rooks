@@ -28,7 +28,7 @@ def test_an_app_conversation_continues_in_the_terminal_and_comes_back(project, a
         r = rooks(project, "-P", "workbench", "--handoff", code["code"], "what is the deadline", env=env)
         out = r.stdout + r.stderr
         assert r.returncode == 0, out
-        assert f"Continuing app conversation #{cid}" in out
+        assert "Continuing a chat from the app: remember the deadline is Friday" in out and f"#{cid}" not in out
         assert "You said the deadline is Friday." in out  # the terminal turn saw the web history
 
         msgs = app.call("GET", f"/api/conversations/{cid}")["messages"]

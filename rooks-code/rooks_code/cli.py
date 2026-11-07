@@ -40,7 +40,7 @@ import urllib.request
 import json as _json
 from pathlib import Path
 
-from . import __version__, config, receipts
+from . import __version__, config, receipts, words
 from . import theme as term_theme
 from .undo import ChangeSets
 
@@ -79,6 +79,14 @@ class UI:
     def can_stream(self) -> bool:
         return self.out.isatty() if hasattr(self.out, "isatty") else False
 
+    def notice(self, text: str, needs_you: bool = False) -> None:
+        """One quiet line about the conversation itself (picked up after a restart, summarised to fit, an OK waiting)."""
+        self.p(self.c("accent" if needs_you else "dim", f"  {text}"))
+
+    def working(self, text: str) -> None:
+        """What is happening now, in plain words (shown on the working line)."""
+        self.activity = text
+
     def todos(self, items: list[dict]) -> None:
         """The agent's checklist, shown whenever it changes."""
         marks = {"done": self.c("ok", "✓"), "doing": self.c("accent", "▸"), "pending": self.c("dim", "○")}
@@ -102,7 +110,7 @@ class UI:
         self.p(self.c("2", f"  {'→' if read else '·'} {text}"))
 
     def show_plan(self, plan) -> None:
-        self.p(self.c("accent", f"  ● {plan.summary}"))
+        self.p(f"  ● {plan.summary}")
         if plan.preview:
             for line in plan.preview.rstrip("\n").splitlines()[:400]:
                 code = "32" if line.startswith("+") and not line.startswith("+++") else (
@@ -112,13 +120,13 @@ class UI:
     def ask(self, plan) -> str:
         from . import shared_approval
 
-        label = {"write": "Apply this change", "command": "Run this command", "external": "Call this tool"}[plan.effect]
-        prompt = f"  {label}? [y]es / [n]o / [a]lways this session: "
+        label = ASK_LABELS[plan.effect]
+        prompt = f"  {self.c('accent', 'Needs your OK')}: {label}.  [y] Approve  [n] Deny  [a] Approve for this session "
 
         def show():
             # A live terminal keeps the question on the same line. Piped output (the app) needs a newline so the question is visible.
             shown = prompt if self.out.isatty() else prompt.rstrip() + "\n"
-            self.out.write(self.c("36", shown))
+            self.out.write(shown)
             self.out.flush()
 
         def read():
@@ -143,20 +151,15 @@ class UI:
             self.p(f"    {mark}" + (f"  {result.splitlines()[0]}" if plan.effect != "command" and result else ""))
 
     def thinking(self, on: bool) -> None:
+        """One static line while the model works, cleared when it answers. No animation."""
         if not self.color:
             return
-        if on:
+        if on and not self._spin:
             self._spin = threading.Event()
-            stop = self._spin
-
-            def spin():
-                frames, i = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏", 0
-                while not stop.wait(0.1):
-                    self.out.write(f"\r{frames[i % 10]} thinking"); self.out.flush(); i += 1
-                self.out.write("\r" + " " * 12 + "\r"); self.out.flush()
-            threading.Thread(target=spin, daemon=True).start()
-        elif self._spin:
-            self._spin.set(); time.sleep(0.12); self._spin = None
+            self.out.write("\r\033[2K" + self.c("dim", "  Working…")); self.out.flush()
+        elif not on and self._spin:
+            self._spin = None
+            self.out.write("\r\033[2K"); self.out.flush()
 
     def footer(self, totals: dict, s, undo: bool) -> None:
         cost = "cost unknown" if totals["cost_unknown"] else f"${totals['usd']:.4f}"
@@ -168,6 +171,16 @@ class UI:
         cost = "" if totals["cost_unknown"] or s.provider == "workbench" else f" · {cost}"
         self.p(self.c("2", f"  {short_model(s)} · {totals['tokens_in'] + totals['tokens_out']:,} tokens{cost}"
                            f"{' · cap ' + ' / '.join(cap) if cap else ''}{' · /undo available' if undo else ''}"))
+
+
+ASK_LABELS = {"write": "make this change", "command": "run this command", "external": "use this tool"}
+
+
+def _theme_arg(value: str) -> str:
+    name = term_theme.normalise(value)
+    if not name:
+        raise argparse.ArgumentTypeError("use auto, light, dark or contrast")
+    return name
 
 
 def parser() -> argparse.ArgumentParser:
@@ -189,7 +202,9 @@ def parser() -> argparse.ArgumentParser:
     ap.add_argument("--conversation", metavar="ID", type=int, help="continue app conversation ID (provider workbench)")
     ap.add_argument("--no-stream", action="store_true", help="print each answer when it is complete")
     ap.add_argument("--no-color", action="store_true")
-    ap.add_argument("--theme", choices=term_theme.THEMES, help="terminal colours (default: the theme chosen in AI Workspace, or $ROOKS_THEME)")
+    ap.add_argument("--theme", type=_theme_arg, metavar="{auto,light,dark,contrast}",
+                    help="terminal colours: the app's Light, Dark or High contrast, or auto to match the terminal "
+                         "(default: the theme chosen in the app, or $ROOKS_THEME)")
     ap.add_argument("--version", action="version", version=f"rooks {__version__}")
     return ap
 
@@ -299,7 +314,7 @@ def main(argv: list[str] | None = None) -> int:
     if (args.handoff or args.conversation) and s.provider != "workbench":
         ui.error("--handoff and --conversation continue an app conversation: use --provider workbench (rooks login)")
         return 1
-    # Create or get Workbench conversation for cross-surface approval tracking
+    # Link to (or create) the app's chat for this session, so approvals and the turn show in both places
     if s.provider == "workbench" and s.base_url and s.api_key:
         ui.base_url = s.base_url.rstrip("/")
         ui.api_key = s.api_key
@@ -330,13 +345,13 @@ def main(argv: list[str] | None = None) -> int:
                 resp = _json.loads(r.read())
             ui.conversation_id = resp.get("conversation_id")
             if target:
-                ui.p(ui.c("2", f"  Continuing app conversation #{ui.conversation_id}: {resp.get('title') or ''}"))
-            ui.p(ui.c("2", f"  Linked to Workbench conversation #{ui.conversation_id}"))
+                ui.p(ui.c("2", f"  Continuing a chat from the app: {resp.get('title') or 'untitled'}"))
+            ui.p(ui.c("2", "  Linked to the app's chat: this conversation shows there too."))
         except (urllib.error.URLError, urllib.error.HTTPError, ValueError, OSError) as e:
             if args.handoff or args.conversation:  # asked for that conversation: never quietly start a new one
                 ui.error(f"could not open app conversation: {e}")
                 return 1
-            ui.p(ui.c("33", f"  Could not link to Workbench conversation: {e}"))
+            ui.p(ui.c("33", "  Could not link to the app's chat, so this conversation stays in the terminal."))
             ui.conversation_id = None
             ui.base_url = None
             ui.api_key = None
@@ -368,16 +383,7 @@ def main(argv: list[str] | None = None) -> int:
         agent.close()
 
 
-HELP = """/undo        put back the files changed by the last prompt
-/cost        tokens and cost so far
-/dry-run     toggle dry run          /yes   toggle auto-approve
-/model       list the provider's models; /model N or /model NAME switches
-/effort      how hard a plan's model thinks: /effort low, medium, high or auto
-/provider P  switch provider (openai, anthropic, nvidia, workbench, ...), keeping the conversation
-/compact     summarise the conversation so far to free the context window
-/receipt     path of this session's receipt
-/image P [Q] ask about a picture (or mention @shot.png in a prompt)
-/clear       forget the conversation /exit  quit (or Ctrl-D)"""
+HELP = words.help_text()  # the same list the full terminal shows
 
 
 def load_session(root: Path, session: str | None) -> tuple[list[dict], str]:
@@ -615,11 +621,9 @@ def repl(agent, ui: UI) -> int:
         return tui.run(agent, ui)
     s = agent.s
     mode = " · trusted folder" if s.trusted() else ""
-    mode += " · DRY RUN" if s.dry_run else ""
-    mode += " · auto-approve" if s.auto_approve else ""
-    tools = len(agent.tool_specs())
-    ui.p(ui.c("1", f"rooks {__version__}") + ui.c("2", f" · {s.provider}/{s.model} · {agent.root}{mode} · {tools} tools"))
-    ui.p(ui.c("2", "Type a task, /help for commands, Ctrl-D to quit."))
+    mode += " · dry run" if s.dry_run else ""
+    mode += " · auto-accept" if s.auto_approve else ""
+    ui.p(ui.c("1", f"Rooks {__version__}") + ui.c("2", f" · {short_model(s)} · {agent.root}{mode} · /help for commands and keys"))
     while True:
         try:
             if sys.stdin.isatty():
@@ -640,50 +644,16 @@ def repl(agent, ui: UI) -> int:
         line = line.strip()
         if not line:
             continue
+        if line == "?" or (not line.startswith("/") and "/" + line.lower() in words.COMMANDS):
+            line = "/help" if line == "?" else "/" + line.lower()  # "model" means /model, as in the full terminal
         if line.startswith("/"):
             cmd, _, rest = line.partition(" ")
-            if cmd in ("/exit", "/quit"):
+            cmd = words.ALIASES.get(cmd.lower(), cmd.lower())
+            if cmd == "/exit":
                 return 0
-            if cmd == "/help":
-                ui.p(HELP)
-            elif cmd == "/undo":
-                ui.p(undo_text(agent.changes))
-            elif cmd == "/cost":
-                t = agent.log.totals()
-                ui.p(f"{t['tokens_in']:,} in + {t['tokens_out']:,} out tokens, "
-                     f"{'cost unknown' if t['cost_unknown'] else '$%.4f' % t['usd']}, {t['model_calls']} model calls")
-            elif cmd == "/dry-run":
-                s.dry_run = not s.dry_run
-                ui.p(f"dry run {'on' if s.dry_run else 'off'}")
-            elif cmd == "/yes":
-                s.auto_approve = not s.auto_approve
-                ui.p(f"auto-approve {'on' if s.auto_approve else 'off'}")
-            elif cmd == "/model":
-                model_command(agent, ui, rest)
-                s = agent.s
-            elif cmd == "/effort":
-                effort_command(agent, ui, rest)
-                s = agent.s
-            elif cmd == "/provider":
-                provider_command(agent, ui, rest)
-                s = agent.s
-            elif cmd == "/compact":
-                ui.p("" if agent.compact("asked with /compact") else "nothing to compact yet")
-            elif cmd == "/receipt":
-                ui.p(str(agent.log.path))
-            elif cmd == "/image":
-                from .images import image_command
-
-                prompt, err = image_command(rest, agent.root)
-                if err:
-                    ui.p(err)
-                else:
-                    agent.run(prompt)
-            elif cmd == "/clear":
-                agent.messages.clear()
-                ui.p("conversation cleared")
-            else:
-                ui.p(f"unknown command {cmd}; /help lists them")
+            from . import tui  # the one command list; works without prompt_toolkit and rich
+            tui.command(agent, ui, cmd, rest.strip())
+            s = agent.s
             continue
         agent.run(line)
 

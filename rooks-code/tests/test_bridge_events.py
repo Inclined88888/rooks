@@ -28,7 +28,7 @@ def _run(tmp_path, monkeypatch, events) -> list[str]:
     a = Agent(settings(tmp_path), ui, model=FakeModel([]))
     monkeypatch.setattr(agent_mod.urllib.request, "urlopen", lambda req, timeout=None: _Stream(events))
     a.run_via_bridge("carry on")
-    return [str(args[0]) for name, args in ui.out if name == "tool_note"]
+    return [str(args[0]) for name, args in ui.out if name in ("tool_note", "notice")]
 
 
 def test_the_terminal_says_the_app_restarted_and_compacted(tmp_path, monkeypatch):
@@ -38,8 +38,8 @@ def test_the_terminal_says_the_app_restarted_and_compacted(tmp_path, monkeypatch
         {"type": "message", "content": "ok"},
         {"type": "done", "outcome": "no_claim"},
     ])
-    assert any("restarted" in n for n in notes), notes
-    assert any("compacted" in n and "7" in n for n in notes), notes
+    assert "Picked up after a restart" in notes, notes
+    assert "Earlier parts of this chat were summarised to fit" in notes, notes
 
 
 def test_a_held_step_points_at_needs_you(tmp_path, monkeypatch):
@@ -47,5 +47,14 @@ def test_a_held_step_points_at_needs_you(tmp_path, monkeypatch):
         {"type": "approval_required", "id": 3, "tool": "send_email", "reason": "Sending needs your OK."},
         {"type": "done", "outcome": "held"},
     ])
-    held = [n for n in notes if "waiting for your OK" in n]
-    assert held and "Needs you" in held[0] and "Approvals" not in held[0]
+    held = [n for n in notes if "Needs your OK" in n]
+    assert held and "Needs you" in held[0] and "Approvals" not in held[0] and "send_email" not in held[0]
+
+
+def test_a_step_the_app_runs_is_said_in_plain_words(tmp_path, monkeypatch):
+    notes = _run(tmp_path, monkeypatch, [
+        {"type": "tool_call", "name": "search_email", "args": '{"query": "invoice"}'},
+        {"type": "message", "content": "ok"},
+        {"type": "done", "outcome": "no_claim"},
+    ])
+    assert "Looking through mail: invoice" in notes and not any("(app)" in n for n in notes), notes
