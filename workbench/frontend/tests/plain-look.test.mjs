@@ -34,10 +34,11 @@ test("no AI-cliché icons are imported from lucide-react", () => {
 });
 
 // One set of controls: these pages are on the shared ui-btn / ui-input / ui-select classes, not the legacy ones.
-test("Team, Channels and the trade pack use the shared controls, not the legacy .btn and .input", () => {
+test("Team, Channels, the trade pack and the chat use the shared controls, not the legacy .btn and .input", () => {
   const legacy = /className=(?:"|\{`)(?:[^"`]*\s)?(btn|input)(?=[\s"`$])/;
   const found = [];
-  for (const f of ["src/team/Team.tsx", "src/teammates/Channels.tsx", "src/pages/PackTrade.tsx"]) {
+  for (const f of ["src/team/Team.tsx", "src/teammates/Channels.tsx", "src/pages/PackTrade.tsx", "src/chat/Thread.tsx", "src/chat/Composer.tsx",
+    "src/chat/ThreadHeader.tsx", "src/chat/tabs/SettingsTab.tsx", "src/chat/tabs/SkillsTab.tsx", "src/chat/tabs/MemoryTab.tsx"]) {
     readFileSync(root + f, "utf8").split("\n").forEach((line, i) => { if (legacy.test(line)) found.push(`${f}:${i + 1}`); });
   }
   assert.deepEqual(found, [], `use ui-btn / ui-input / ui-select:\n${found.join("\n")}`);

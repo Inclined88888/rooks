@@ -120,7 +120,7 @@ function ChoiceButtons({ c, onPick }: { c: Choices; onPick: (s: string) => void 
   return (
     <div className="chat-choices" role="group" aria-label={c.question || "Quick replies"}>
       {c.options.map((o) => (
-        <button key={o} type="button" className="btn sm" onClick={() => onPick(o)}>{o}</button>
+        <button key={o} type="button" className="ui-btn ui-btn-sm" onClick={() => onPick(o)}>{o}</button>
       ))}
     </div>
   );
@@ -152,23 +152,23 @@ function MessageFeedback({ msg }: { msg: Msg }) {
   return (
     <div className="msg-feedback">
       <div className="row" style={{ gap: 2 }}>
-        <button className={`btn ghost sm icon${rating > 0 ? " on" : ""}`} aria-pressed={rating > 0} aria-label="Good answer" title="Good answer" disabled={busy} onClick={() => thumb(1)}><ThumbsUp size={13} /></button>
-        <button className={`btn ghost sm icon${rating < 0 ? " on" : ""}`} aria-pressed={rating < 0} aria-label="Not right" title="Not right" disabled={busy} onClick={() => thumb(-1)}><ThumbsDown size={13} /></button>
-        <button className="btn ghost sm icon" title="Fix this" aria-label="Fix this" disabled={busy} onClick={() => setMode(mode === "edit" ? "" : "edit")}><Pencil size={13} /></button>
+        <button className={`ui-btn ui-btn-ghost ui-btn-sm ui-btn-square${rating > 0 ? " on" : ""}`} aria-pressed={rating > 0} aria-label="Good answer" title="Good answer" disabled={busy} onClick={() => thumb(1)}><ThumbsUp size={13} /></button>
+        <button className={`ui-btn ui-btn-ghost ui-btn-sm ui-btn-square${rating < 0 ? " on" : ""}`} aria-pressed={rating < 0} aria-label="Not right" title="Not right" disabled={busy} onClick={() => thumb(-1)}><ThumbsDown size={13} /></button>
+        <button className="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square" title="Fix this" aria-label="Fix this" disabled={busy} onClick={() => setMode(mode === "edit" ? "" : "edit")}><Pencil size={13} /></button>
         {note && <span className="muted small" role="status">{note}</span>}
       </div>
       {mode === "why" && (
         <div className="row" style={{ gap: 6, marginTop: 6 }}>
-          <input className="input grow" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="What should I do differently? (optional)" aria-label="What should I do differently?" />
-          <button className="btn sm primary" disabled={busy} onClick={() => send({ rating: -1, comment })}>Send</button>
+          <input className="ui-input grow" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="What should I do differently? (optional)" aria-label="What should I do differently?" />
+          <button className="ui-btn ui-btn-sm ui-btn-primary" disabled={busy} onClick={() => send({ rating: -1, comment })}>Send</button>
         </div>
       )}
       {mode === "edit" && (
         <div className="col" style={{ gap: 6, marginTop: 6 }}>
-          <textarea className="input" rows={6} value={edited} onChange={(e) => setEdited(e.target.value)} aria-label="Your version" />
+          <textarea className="ui-input" rows={6} value={edited} onChange={(e) => setEdited(e.target.value)} aria-label="Your version" />
           <div className="row" style={{ gap: 6 }}>
-            <button className="btn sm primary" disabled={busy || edited.trim() === msg.content.trim()} onClick={() => send({ rating, edited })}>Save my version</button>
-            <button className="btn sm ghost" onClick={() => setMode("")}>Cancel</button>
+            <button className="ui-btn ui-btn-sm ui-btn-primary" disabled={busy || edited.trim() === msg.content.trim()} onClick={() => send({ rating, edited })}>Save my version</button>
+            <button className="ui-btn ui-btn-sm ui-btn-ghost" onClick={() => setMode("")}>Cancel</button>
           </div>
         </div>
       )}
@@ -188,12 +188,12 @@ function UserMessage({ m, p }: { m: Msg; p: ThreadProps }) {
     return (
       <div className="msg user">
         <div className="col" style={{ gap: 6, alignItems: "flex-end" }}>
-          <textarea className="input" rows={3} value={p.editText} aria-label="Edit message" autoFocus
+          <textarea className="ui-input" rows={3} value={p.editText} aria-label="Edit message" autoFocus
             onChange={(e) => p.onEditChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); p.onEditSave(m); } if (e.key === "Escape") p.onEditCancel(); }} />
           <div className="row" style={{ gap: 6 }}>
-            <button className="btn sm primary" disabled={p.busy || !p.editText.trim()} onClick={() => p.onEditSave(m)}>Send</button>
-            <button className="btn sm ghost" onClick={p.onEditCancel}>Cancel</button>
+            <button className="ui-btn ui-btn-sm ui-btn-primary" disabled={p.busy || !p.editText.trim()} onClick={() => p.onEditSave(m)}>Send</button>
+            <button className="ui-btn ui-btn-sm ui-btn-ghost" onClick={p.onEditCancel}>Cancel</button>
           </div>
         </div>
       </div>
@@ -206,7 +206,7 @@ function UserMessage({ m, p }: { m: Msg; p: ThreadProps }) {
           <MessageAttachments items={m.attachments} />
           {m.content && <div className="bubble-user">{m.content}</div>}
         </div>
-        <button className="btn ghost sm icon msg-edit" aria-label="Edit and resend" title="Edit and resend" disabled={p.busy}
+        <button className="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square msg-edit" aria-label="Edit and resend" title="Edit and resend" disabled={p.busy}
           onClick={() => p.onEditStart(m)}><Pencil size={12} /></button>
       </div>
     </div>
@@ -262,7 +262,7 @@ function ReplyMessage({ m, p, askedAt, isLast }: { m: Msg; p: ThreadProps; asked
             <MessageFeedback msg={m} />
             <CheckThis cid={p.cid} content={body} fresh={fromHere} />
             {isLast && !p.busy && (
-              <button className="btn ghost sm icon" aria-label="Regenerate reply" title="Answer again" onClick={p.onRegenerate}><RotateCcw size={13} /></button>
+              <button className="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square" aria-label="Regenerate reply" title="Answer again" onClick={p.onRegenerate}><RotateCcw size={13} /></button>
             )}
           </div>
         )}
