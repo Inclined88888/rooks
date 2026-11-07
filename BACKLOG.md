@@ -24,8 +24,6 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   person is not yet read as a takeover (typing and the address bar are). Download by URL fetches without the tab's cookies, so a
   file behind a sign-in cannot be saved that way. The receipt has no per-host resource rows (the Chrome driver adds one per host).
   macOS and Windows are untested; CI runs the app's tests on Linux only.
-* **Coworkers are set up in the app only.** The terminal and the browser can answer the job cards through Needs you but cannot
-  pick a line of work or propose a team (AGENTS.md parity rule). A `/team` terminal command over `/api/starters` would close it.
 * **The coworkers' live mail slice runs only where Dovecot is installed** (`test_starters.py`), so CI skips it. Install
   `dovecot-imapd` in the backend job, or add a variant on the suite's mail fake.
 * **Windows: no containment for terminal commands.** The default mode runs them with the user's permissions and the approval line
