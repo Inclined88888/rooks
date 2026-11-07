@@ -32,6 +32,7 @@
 <aside id="panel" class="panel" hidden aria-label="Ask Rooks">
   <h2>Ask Rooks</h2>
   <p class="muted" id="helper">Starting the task helper…</p>
+  <details class="muted small" id="helperdetails" hidden><summary>Details</summary><p id="helperdetail"></p></details>
   <form id="task" class="task">
     <textarea id="goal" rows="3" placeholder="Ask about this page, or tell me what to do in it" aria-label="Your request"></textarea>
     <div class="row">
@@ -45,6 +46,7 @@
     <ol id="steps" class="steps"></ol>
     <div id="approvals"></div>
     <p id="answer" class="answer" hidden></p>
+    <details class="muted small" id="answerdetails" hidden><summary>Details</summary><p id="answerdetail"></p></details>
   </section>
 </aside>
 <script src="app.js"></script>

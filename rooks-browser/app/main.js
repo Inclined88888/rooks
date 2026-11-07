@@ -19,10 +19,15 @@ const http = require("node:http");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
 const policy = require("./policy.js");
+const { normalise, HOME } = require("./address.js");
 
 const UI_TOP = 88;            // tab strip + address bar, in CSS pixels (ui/style.css keeps the same numbers)
-const HOME = "about:blank";
 const SAFE_PERMISSIONS = new Set(["fullscreen", "clipboard-sanitized-write"]);
+// The app's own secrets (workbench/backend/app/security.py APP_SECRET_ENV): never handed to the task helper's process.
+const SECRET_ENV = new Set(["APP_SECRET", "TOOLS_API_KEY", "BROWSER_API_KEY", "DESK_API_KEY", "CODING_BRIDGE_KEY", "NATIVE_SIGNIN_KEY",
+  "WORKBENCH_DESKTOP_TOKEN", "TRY_API_KEY", "ROOKS_TRY_API_KEY", "ROOKS_BROWSER_TOKEN", "ROOKS_DESK_TOKEN", "WORKBENCH_API_KEY",
+  "BRIDGE_API_KEY"]);
+const SECRET_SUFFIX = /(_API_KEY|_TOKEN|_SECRET|_PASSWORD)$/i;
 const ASK_PERMISSIONS = new Set(["media", "geolocation", "notifications", "midi", "midiSysex", "pointerLock", "openExternal",
   "clipboard-read", "display-capture", "idle-detection", "window-management", "speaker-selection", "storage-access"]);
 
@@ -37,18 +42,27 @@ if (process.env.ROOKS_BROWSER_TEST_NO_SANDBOX === "1") {
 
 let win = null;
 let panelWidth = 0;            // the side panel's width, reported by the UI
-const tabs = new Map();        // id -> { id, view, private, partition, lastStatus }
+const tabs = new Map();        // id -> { id, view, private, partition, lastStatus, failed: { url, why } | null }
 let activeId = null;
 let nextId = 1;
 let privateCount = 0;
 const granted = new Map();     // `${origin} ${permission}` -> true, for this run only
 const insecureOk = new Set();  // hosts the user chose to open over plain http this run
+if (process.env.ROOKS_BROWSER_CONTROL_FILE && process.env.ROOKS_BROWSER_TEST_GRANTS) {
+  // Tests only (they also set the control file): permissions "already granted" this run, to show the agent's tab never gets them.
+  try { for (const g of JSON.parse(process.env.ROOKS_BROWSER_TEST_GRANTS)) granted.set(String(g), true); } catch { /* none */ }
+}
 
 // The agent's hold on one tab while a job runs.
-let agent = null;              // { tab, policy, stopped, reason, blocked: [], downloads: [], dir, job }
+let agent = null;              // { tab, policy, stopped, reason, blocked: [], downloads: [], navs: [], seq, dir, job }
 let pendingJob = null;         // the job the side panel just started, until its agent claims the tab
 const control = { port: 0, token: crypto.randomBytes(32).toString("hex") };
-const helper = { port: 0, token: crypto.randomBytes(32).toString("hex"), proc: null, error: "" };
+const helper = { port: 0, token: crypto.randomBytes(32).toString("hex"), proc: null, error: "", detail: "" };
+
+/** True while the agent drives this page's tab: no permissions, every request checked, the person can take over. */
+function driven(wc) {
+  return Boolean(agent && !agent.stopped && wc && tabs.get(agent.tab)?.view.webContents === wc);
+}
 
 // --- tabs ------------------------------------------------------------------------------------------------------------
 function partitionFor(isPrivate) {
@@ -63,7 +77,7 @@ function harden(ses) {
   ses.setPermissionRequestHandler((wc, permission, callback, details) => {
     const origin = safeOrigin(details.requestingUrl || wc.getURL());
     if (SAFE_PERMISSIONS.has(permission)) return callback(true);
-    if (agent && agent.tab && tabs.get(agent.tab)?.view.webContents === wc) return callback(false);  // never while the agent drives
+    if (driven(wc)) return callback(false);  // never while the agent drives
     if (granted.get(`${origin} ${permission}`)) return callback(true);
     if (!ASK_PERMISSIONS.has(permission) || !win) return callback(false);
     const what = { media: "use your camera or microphone", geolocation: "know your location", notifications: "show notifications",
@@ -76,7 +90,13 @@ function harden(ses) {
         callback(response === 1);
       }).catch(() => callback(false));
   });
-  ses.setPermissionCheckHandler((wc, permission, origin) => SAFE_PERMISSIONS.has(permission) || granted.get(`${safeOrigin(origin)} ${permission}`) === true);
+  ses.setPermissionCheckHandler((wc, permission, origin) => {
+    // A page also *reads* its permissions (Notification.permission, the Permissions API) through this handler, so a
+    // permission the person granted earlier must read as denied in the agent's tab too, as the request handler says.
+    if (SAFE_PERMISSIONS.has(permission)) return true;
+    if (driven(wc)) return false;
+    return granted.get(`${safeOrigin(origin)} ${permission}`) === true;
+  });
   ses.webRequest.onBeforeRequest((details, callback) => {
     const t = agent && !agent.stopped ? tabs.get(agent.tab) : null;
     if (t && details.webContentsId === t.view.webContents.id) {
@@ -85,7 +105,7 @@ function harden(ses) {
       const isPage = details.resourceType === "mainFrame" || details.resourceType === "subFrame";
       const [ok, why] = policy.check(isPage ? agent.policy : { deny: agent.policy.deny }, details.url);
       if (!ok) {
-        if (isPage) agent.blocked.push({ url: details.url, why, method: details.method });
+        if (isPage) agent.blocked.push({ seq: agent.seq++, url: details.url, why, method: details.method });
         return callback({ cancel: true });
       }
     }
@@ -127,7 +147,7 @@ function newTab(url = HOME, isPrivate = false, partition = null) {
   });
   harden(view.webContents.session);
   const id = nextId++;
-  const tab = { id, view, private: isPrivate, partition: part, lastStatus: 0 };
+  const tab = { id, view, private: isPrivate, partition: part, lastStatus: 0, failed: null };
   tabs.set(id, tab);
   const wc = view.webContents;
   wc.setWindowOpenHandler(({ url: u }) => {
@@ -137,7 +157,10 @@ function newTab(url = HOME, isPrivate = false, partition = null) {
   wc.on("will-attach-webview", (e) => e.preventDefault());
   wc.on("did-navigate", (_e, u, code) => {
     tab.lastStatus = code || 0;
-    if (agent && agent.tab === id && !agent.stopped) agent.navs.push({ url: u, status: code || 0 });  // the receipt's page rows
+    if (tab.failed?.pending) { tab.failed.pending = false; return; }  // our "could not open" page arrived: the address stays the one that failed
+    tab.failed = null;
+    if (/^(data|blob):/i.test(u)) return;  // not a page the tab visited
+    if (agent && agent.tab === id && !agent.stopped) agent.navs.push({ seq: agent.seq++, url: u, status: code || 0 });  // the receipt's page rows
   });
   for (const ev of ["page-title-updated", "did-start-loading", "did-stop-loading", "did-navigate", "did-navigate-in-page"]) {
     wc.on(ev, () => sendTabs());
@@ -145,6 +168,7 @@ function newTab(url = HOME, isPrivate = false, partition = null) {
   wc.on("did-fail-load", (_e, code, desc, failedUrl, isMain) => {
     if (!isMain || code === -3) return;  // -3: aborted (a redirect or our own block)
     const blocked = agent && agent.tab === id && agent.blocked.length ? agent.blocked[agent.blocked.length - 1].why : "";
+    tab.failed = { url: failedUrl, why: blocked || desc, pending: true };
     const page = errorPage(failedUrl, blocked || desc, !blocked && failedUrl.startsWith("https://"));
     wc.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(page)}`, { baseURLForDataURL: "" }).catch(() => {});
   });
@@ -166,14 +190,11 @@ function errorPage(url, why, offerHttp) {
 ${offerHttp ? "<p>The site may not support a secure connection. You can try the address bar with http:// at your own risk.</p>" : ""}`;
 }
 
-function normalise(raw) {
-  const s = String(raw || "").trim();
-  if (!s) return HOME;
-  if (/^(https?|file|about|data):/i.test(s)) return s;
-  if (/^[\w-]+(\.[\w-]+)+(:\d+)?(\/.*)?$/.test(s) || /^localhost(:\d+)?(\/.*)?$/.test(s)) {
-    return (/^(localhost|127\.|10\.|192\.168\.)/.test(s) ? "http://" : "https://") + s;
-  }
-  return "https://duckduckgo.com/?q=" + encodeURIComponent(s);  // a search: DuckDuckGo keeps no search history
+/** The address a tab shows: the one that failed while our "could not open" page is up, never that page's data: URL. */
+function shownUrl(t) {
+  if (t.failed) return t.failed.url;
+  const url = t.view.webContents.getURL();
+  return url === HOME ? "" : url;
 }
 
 function activate(id) {
@@ -205,9 +226,11 @@ function layout() {
 
 function tabInfo(t) {
   const wc = t.view.webContents;
-  const url = wc.getURL();
-  return { id: t.id, title: wc.getTitle() || url || "New tab", url: url === HOME ? "" : url, loading: wc.isLoading(),
-    private: t.private, secure: url.startsWith("https://") || url === "" || url === HOME || url.startsWith("data:"),
+  const url = shownUrl(t);
+  return { id: t.id, title: wc.getTitle() || url || "New tab", url, loading: wc.isLoading(), private: t.private,
+    // The lock says what the page in front of the person is: "Secure" only for a page that really came over https.
+    secure: !t.failed && (url === "" || url.startsWith("https://") || url.startsWith("data:")),
+    state: t.failed ? "Could not open" : "",
     canBack: wc.navigationHistory.canGoBack(), canForward: wc.navigationHistory.canGoForward(),
     agent: Boolean(agent && agent.tab === t.id && !agent.stopped) };
 }
@@ -242,6 +265,8 @@ function agentTab(id) {
   return t;
 }
 
+const agentUrl = (t) => (t.failed ? "" : shownUrl(t));  // what the agent is told: nowhere while "could not open" is up
+
 function waitLoaded(wc, ms = 15000) {
   return new Promise((resolve) => {
     if (!wc.isLoading()) return setTimeout(resolve, 150);
@@ -261,10 +286,14 @@ async function synthetic(fn) {
 const routes = {
   "POST /agent/start": async (b) => {
     if (agent && !agent.stopped) throw Object.assign(new Error("Another task is using a tab."), { code: 409 });
-    let id = Number(b.tab) || activeId;
-    if (b.new_tab || !tabs.has(id)) id = newTab(HOME, false).id;
+    let id = Number(b.tab) || 0;
+    if (id && tabs.get(id)?.private) {  // the panel refuses too: nothing from a private tab is handed to a model
+      throw Object.assign(new Error("Tasks do not run in private tabs."), { code: 403 });
+    }
+    if (!id) id = activeId;
+    if (b.new_tab || !tabs.has(id) || tabs.get(id).private) id = newTab(HOME, false).id;  // a private tab in front: a fresh normal one
     agent = { tab: id, policy: { allow: b.policy?.allow || [], deny: b.policy?.deny || [], block_private: Boolean(b.policy?.block_private) },
-      stopped: false, reason: "", blocked: [], downloads: [], navs: [], dir: String(b.downloads || path.join(app.getPath("downloads"), "Rooks")),
+      stopped: false, reason: "", blocked: [], downloads: [], navs: [], seq: 1, dir: String(b.downloads || path.join(app.getPath("downloads"), "Rooks")),
       job: b.job || pendingJob, syntheticUntil: 0 };
     pendingJob = null;
     activate(id);
@@ -275,8 +304,10 @@ const routes = {
     if (!agent) return { stopped: true, reason: "No task." };
     const t = tabs.get(agent.tab);
     const wc = t?.view.webContents;
-    return { tab: agent.tab, stopped: agent.stopped, reason: agent.reason, url: wc ? wc.getURL() : "", title: wc ? wc.getTitle() : "",
-      status: t?.lastStatus || 0, blocked: agent.blocked, downloads: agent.downloads, navs: agent.navs, tabs: tabs.size };
+    // While our "could not open" page is up the tab is nowhere: url is empty and `failed` says what did not open.
+    return { tab: agent.tab, stopped: agent.stopped, reason: agent.reason, url: t ? (t.failed ? "" : shownUrl(t)) : "", title: wc ? wc.getTitle() : "",
+      failed: t?.failed ? { url: t.failed.url, why: t.failed.why } : null, status: t?.lastStatus || 0,
+      blocked: agent.blocked, downloads: agent.downloads, navs: agent.navs, tabs: tabs.size };
   },
   "POST /tab/eval": async (b) => {
     const t = agentTab(b.tab);
@@ -290,22 +321,22 @@ const routes = {
     const t = agentTab(b.tab);
     const n = agent.blocked.length;
     try { await t.view.webContents.loadURL(String(b.url)); } catch (e) {
-      if (agent.blocked.length > n) return { url: t.view.webContents.getURL(), blocked: agent.blocked[agent.blocked.length - 1].why };
-      if (!/ERR_ABORTED/.test(String(e))) return { url: t.view.webContents.getURL(), error: String(e.message || e).split("\n")[0] };
+      if (agent.blocked.length > n) return { url: agentUrl(t), blocked: agent.blocked[agent.blocked.length - 1].why };
+      if (!/ERR_ABORTED/.test(String(e))) return { url: agentUrl(t), error: String(e.message || e).split("\n")[0] };
     }
     await waitLoaded(t.view.webContents);
-    return { url: t.view.webContents.getURL(), status: t.lastStatus };
+    return { url: agentUrl(t), status: t.lastStatus };
   },
   "POST /tab/back": async (b) => {
     const t = agentTab(b.tab);
     if (t.view.webContents.navigationHistory.canGoBack()) t.view.webContents.navigationHistory.goBack();
     await waitLoaded(t.view.webContents);
-    return { url: t.view.webContents.getURL() };
+    return { url: agentUrl(t) };
   },
   "POST /tab/wait": async (b) => {
     const t = agentTab(b.tab);
     await waitLoaded(t.view.webContents, Math.min(Number(b.ms) || 8000, 30000));
-    return { url: t.view.webContents.getURL() };
+    return { url: agentUrl(t) };
   },
   "POST /tab/screenshot": async (b) => {
     const t = agentTab(b.tab);
@@ -323,7 +354,7 @@ const routes = {
     });
     await new Promise((r) => setTimeout(r, 120));
     await waitLoaded(wc);
-    return { url: wc.getURL() };
+    return { url: agentUrl(t) };
   },
   "POST /tab/insert": async (b) => {
     const t = agentTab(b.tab);
@@ -341,7 +372,7 @@ const routes = {
     });
     await new Promise((r) => setTimeout(r, 120));
     await waitLoaded(wc);
-    return { url: wc.getURL() };
+    return { url: agentUrl(t) };
   },
 };
 
@@ -376,33 +407,62 @@ function freePort() {
   });
 }
 
+/** The helper's environment: this process's, without the app's secrets and without any key, token or password
+ * meant for something else. It gets its own token and reads model keys from the app, as the terminal agents do. */
+function helperEnv() {
+  const env = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (SECRET_ENV.has(k.toUpperCase()) || SECRET_SUFFIX.test(k)) continue;
+    env[k] = v;
+  }
+  env.ROOKS_BROWSER_TOKEN = helper.token;
+  return env;
+}
+
+function helperFailed(error, detail) {  // a plain sentence for the panel; the code or signal under "Details"
+  if (!helper.error) { helper.error = error; helper.detail = String(detail || ""); }
+}
+
 async function startHelper() {
   let cmd = ["rooks-browser"];
   try { if (process.env.ROOKS_BROWSER_CMD) cmd = JSON.parse(process.env.ROOKS_BROWSER_CMD); } catch { /* keep the default */ }
   helper.port = await freePort();
-  const env = { ...process.env, ROOKS_BROWSER_TOKEN: helper.token };
   try {
     helper.proc = spawn(cmd[0], [...cmd.slice(1), "serve", "--port", String(helper.port), "--exit-with-parent"],
-      { env, stdio: ["pipe", "ignore", "pipe"], windowsHide: true });
-  } catch (e) { helper.error = String(e.message || e); return; }
-  helper.proc.on("error", (e) => { helper.error = `The task helper did not start (${e.code || e.message}). Install it with the Rooks installer.`; });
+      { env: helperEnv(), stdio: ["pipe", "ignore", "pipe"], windowsHide: true });
+  } catch (e) { helperFailed("The task helper could not be started.", e.code || e.message); return; }
+  helper.proc.on("error", (e) => helperFailed(e.code === "ENOENT" ? "The task helper is not installed. Run the Rooks installer."
+    : "The task helper could not be started.", e.code || e.message));
   helper.proc.stderr.on("data", (d) => { helper.log = (String(helper.log || "") + d).slice(-4000); });
-  helper.proc.on("exit", (code) => { if (!helper.error) helper.error = `The task helper stopped (exit ${code}).`; helper.proc = null; });
+  helper.proc.on("exit", (code, sig) => { helperFailed("The task helper stopped.", sig ? `signal ${sig}` : `exit code ${code}`); helper.proc = null; });
   for (let i = 0; i < 100; i += 1) {
     try { if ((await fetch(`http://127.0.0.1:${helper.port}/healthz`)).ok) return; } catch { /* not up yet */ }
     if (helper.error) return;
     await new Promise((r) => setTimeout(r, 100));
   }
-  helper.error = helper.error || "The task helper did not answer.";
+  helperFailed("The task helper did not answer.", "no reply on its port within 10 seconds");
+}
+
+class HelperError extends Error {  // a plain message for the panel; the helper's own words under "Details"
+  constructor(message, detail) { super(message); this.detail = String(detail || ""); }
 }
 
 async function helperCall(method, p, body) {
-  if (helper.error && !helper.proc) throw new Error(helper.error);
-  const r = await fetch(`http://127.0.0.1:${helper.port}${p}`, { method, body: body ? JSON.stringify(body) : undefined,
-    headers: { Authorization: `Bearer ${helper.token}`, ...(body ? { "Content-Type": "application/json" } : {}) } });
+  if (helper.error && !helper.proc) throw new HelperError(helper.error, helper.detail);
+  let r;
+  try {
+    r = await fetch(`http://127.0.0.1:${helper.port}${p}`, { method, body: body ? JSON.stringify(body) : undefined,
+      headers: { Authorization: `Bearer ${helper.token}`, ...(body ? { "Content-Type": "application/json" } : {}) } });
+  } catch (e) { throw new HelperError("The task helper did not answer.", e.message || e); }
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
+  if (!r.ok) throw new HelperError("The task helper refused this.", data.detail || `status ${r.status}`);
   return data;
+}
+
+/** The side panel gets a plain answer or { problem, detail }: an exception over the bridge would only carry raw text.
+ * (Not "error": a job record has an `error` field of its own.) */
+async function forPanel(fn) {
+  try { return await fn(); } catch (e) { return { problem: String(e.message || e), detail: e instanceof HelperError ? e.detail : "" }; }
 }
 
 // --- the UI page's messages (ui/preload.js lists them) ----------------------------------------------------------------
@@ -428,14 +488,13 @@ function wireUi() {
   on("tab:reload", () => tabs.get(activeId)?.view.webContents.reload());
   on("ui:panel", (width) => { panelWidth = Math.max(0, Math.min(Number(width) || 0, 720)); layout(); });
   on("ui:ready", () => sendTabs());
-  on("task:status", () => ({ ready: Boolean(helper.proc) && !helper.error, error: helper.error }));
-  on("task:start", async (goal, mode) => {
+  on("task:status", () => ({ ready: Boolean(helper.proc) && !helper.error, error: helper.error, detail: helper.detail }));
+  on("task:start", (goal, mode) => forPanel(async () => {
     if (agent && !agent.stopped) throw new Error("A task is already running. Stop it first.");
     const t = tabs.get(activeId);
     if (!t) throw new Error("Open a tab first.");
     if (t.private) throw new Error("Tasks do not run in private tabs, so nothing you do there is handed to a model.");
-    const url = t.view.webContents.getURL();
-    const here = url && url !== HOME ? url : null;
+    const here = t.failed ? null : agentUrl(t) || null;
     const ask = mode === "ask";
     const body = { goal: ask ? `Answer from this page only, without opening other sites: ${goal}` : String(goal),
       start_url: null, max_steps: ask ? 6 : 25, source: "rooks-browser-app",
@@ -444,10 +503,10 @@ function wireUi() {
     const job = await helperCall("POST", "/api/jobs", body);
     if (agent && agent.tab === t.id && !agent.stopped) agent.job = job.id; else pendingJob = job.id;  // either order
     return job;
-  });
-  on("task:get", (id) => helperCall("GET", `/api/jobs/${encodeURIComponent(id)}`));
-  on("task:answer", (id, approvalId, approve) =>
-    helperCall("POST", `/api/jobs/${encodeURIComponent(id)}/approvals/${encodeURIComponent(approvalId)}`, { approve: Boolean(approve) }));
+  }));
+  on("task:get", (id) => forPanel(() => helperCall("GET", `/api/jobs/${encodeURIComponent(id)}`)));
+  on("task:answer", (id, approvalId, approve) => forPanel(() =>
+    helperCall("POST", `/api/jobs/${encodeURIComponent(id)}/approvals/${encodeURIComponent(approvalId)}`, { approve: Boolean(approve) })));
   on("task:stop", () => stopAgent("You stopped it."));
   on("open:external", (url) => { if (/^https:\/\//.test(String(url))) shell.openExternal(String(url)); });
 }
@@ -485,7 +544,7 @@ app.whenReady().then(async () => {
   await win.loadFile(path.join(__dirname, "ui", "index.html"));
   newTab(process.env.ROOKS_BROWSER_START_URL || HOME);
   await startHelper();
-  win?.webContents.send("helper", { ready: !helper.error, error: helper.error });
+  win?.webContents.send("helper", { ready: !helper.error, error: helper.error, detail: helper.detail });
   if (process.env.ROOKS_BROWSER_CONTROL_FILE) {  // tests read where the channels are; owner only
     fs.writeFileSync(process.env.ROOKS_BROWSER_CONTROL_FILE, JSON.stringify({ url: `http://127.0.0.1:${control.port}`,
       token: control.token, tab: activeId, helper: `http://127.0.0.1:${helper.port}`, helper_token: helper.token,

@@ -20,7 +20,7 @@ function renderTabs() {
   const box = $("tabs");
   box.replaceChildren(...state.tabs.map((t) => {
     const b = el("div", { class: `tab${t.id === state.active ? " active" : ""}${t.private ? " private" : ""}`, role: "tab",
-      "aria-selected": String(t.id === state.active), tabindex: "0", title: t.title,
+      "aria-selected": String(t.id === state.active), tabindex: "0", title: t.title, "data-id": String(t.id),
       onclick: () => window.rooks.activate(t.id), onkeydown: (e) => { if (e.key === "Enter") window.rooks.activate(t.id); } },
       t.private ? el("span", { class: "badge" }, "Private") : null,
       t.agent ? el("span", { class: "badge ai-badge" }, "Rooks") : null,
@@ -32,7 +32,7 @@ function renderTabs() {
   if (t && document.activeElement !== $("url")) $("url").value = t.url;
   $("back").disabled = !t?.canBack;
   $("forward").disabled = !t?.canForward;
-  $("lock").textContent = t && t.url ? (t.secure ? "Secure" : "Not secure") : "";
+  $("lock").textContent = t && t.url ? (t.state || (t.secure ? "Secure" : "Not secure")) : "";  // state: "Could not open"
   $("lock").className = `lock${t && t.url && !t.secure ? " insecure" : ""}`;
   const driving = state.agent && !state.agent.stopped;
   $("driving").hidden = !driving;
@@ -46,7 +46,22 @@ window.rooks.onHelper((h) => showHelper(h));
 function showHelper(h) {
   $("helper").textContent = h.ready ? "Ready. I work in the tab you are looking at." : (h.error || "The task helper is not running.");
   $("helper").classList.toggle("warn", !h.ready);
+  details("helperdetails", h.ready ? "" : h.detail);
   for (const b of $("task").querySelectorAll("button")) b.disabled = !h.ready;
+}
+
+function details(id, text) {  // the technical reason, folded away under "Details"; plain words stay on the page
+  $(id).hidden = !text;
+  $(id).open = false;
+  $(id.replace(/s$/, "")).textContent = text || "";
+}
+
+function showProblem(title, message, detail) {
+  $("run").hidden = false;
+  $("runtitle").textContent = title;
+  $("answer").hidden = false;
+  $("answer").textContent = message;
+  details("answerdetails", detail);
 }
 
 $("addr").addEventListener("submit", (e) => { e.preventDefault(); window.rooks.go($("url").value); $("url").blur(); });
@@ -73,27 +88,25 @@ $("task").addEventListener("submit", async (e) => {
   e.preventDefault();
   const goal = $("goal").value.trim();
   if (goal.length < 3) return;
-  try {
-    job = await window.rooks.startTask(goal, mode);
-    $("run").hidden = false;
-    $("runtitle").textContent = mode === "ask" ? "Reading this page" : "Working";
-    $("steps").replaceChildren();
-    $("approvals").replaceChildren();
-    $("answer").hidden = true;
-    clearInterval(poll);
-    poll = setInterval(refresh, 700);
-  } catch (err) {
-    $("run").hidden = false;
-    $("runtitle").textContent = "Not started";
-    $("answer").hidden = false;
-    $("answer").textContent = String(err.message || err).replace(/^Error invoking remote method '[^']+': (Error: )?/, "");
-  }
+  let started;
+  try { started = await window.rooks.startTask(goal, mode); } catch { started = { problem: "The task could not be started." }; }
+  if (!started || started.problem) return showProblem("Not started", started?.problem || "The task could not be started.", started?.detail);
+  job = started;
+  $("run").hidden = false;
+  $("runtitle").textContent = mode === "ask" ? "Reading this page" : "Working";
+  $("steps").replaceChildren();
+  $("approvals").replaceChildren();
+  $("answer").hidden = true;
+  details("answerdetails", "");
+  clearInterval(poll);
+  poll = setInterval(refresh, 700);
 });
 
 async function refresh() {
   if (!job) return;
   let j;
   try { j = await window.rooks.getTask(job.id); } catch { return; }
+  if (!j || j.problem) return;  // the helper did not answer this time; the next poll asks again
   $("steps").replaceChildren(...(j.steps || []).map((s) => el("li", { class: s.status === "ok" ? "" : "bad" },
     el("strong", {}, s.next_goal || (s.actions || []).map((a) => a.action || a.name).join(", ") || "Looking"),
     s.result ? el("span", { class: "muted small" }, ` ${s.result}`) : null)));
@@ -109,8 +122,11 @@ async function refresh() {
     clearInterval(poll);
     $("runtitle").textContent = { done: "Finished", error: "Did not finish", cancelled: "Stopped" }[j.status];
     $("answer").hidden = false;
-    const final = j.result?.final || j.error || (j.status === "cancelled" ? "You stopped the task." : "");
+    // The helper's own error text is technical (what a page or a model said); it goes under "Details", not on the page.
+    const final = j.result?.final || (j.status === "error" ? "The task ran into a problem and did not finish."
+      : j.status === "cancelled" ? "You stopped the task." : "");
     $("answer").textContent = final ? `${final}\n\nThis is Rooks' own account of what it did; the steps above show the pages it used.` : "";
+    details("answerdetails", j.status === "error" ? j.error : "");
   }
 }
 

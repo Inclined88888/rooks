@@ -147,6 +147,43 @@ def test_the_browser_itself_enforces_the_site_rules(app, site):
     call(app, "POST", "/agent/end", {})
 
 
+def test_a_blocked_page_is_one_blocked_row_never_the_apps_own_error_page(app, site, tmp_path):
+    """A page script sends the agent's tab somewhere the job's rules refuse. The receipt gets the blocked row and
+    nothing else: the "could not open" page the app shows in its place is the app's own, not a page the tab
+    visited, so no data: address appears anywhere, and the tab reads as nowhere until it moves on."""
+    from rooks_browser.electron import ElectronBrowser
+    from rooks_browser.policy import SitePolicy
+    from rooks_browser.receipts import RunLog
+
+    log = RunLog(tmp_path / "home")
+    control = {"url": app["url"], "token": app["token"], "tab": app["tab"]}
+    other = site.replace("127.0.0.1", "localhost")  # the same test shop under a name the rules refuse
+
+    async def go():
+        async with ElectronBrowser(policy=SitePolicy(deny=["localhost"]), log=log, control=control) as b:
+            await b._eval(f"() => {{ location.href = '{other}/products.html'; }}")
+            await asyncio.sleep(1.5)
+            st = await b._sync()
+            first = (st, b.page.url, list(b.blocked))
+            # Now a refused page and then an allowed one before the next look: the receipt keeps that order
+            await b._eval(f"() => {{ location.href = '{other}/widget.html'; }}")
+            await asyncio.sleep(1.5)
+            await b._eval(f"() => {{ location.href = '{site}/index.html'; }}")
+            await asyncio.sleep(1.5)
+            await b._sync()
+            return first, b.page.url
+
+    (st, page_url, blocked), final_url = asyncio.run(go())
+    rows = [(r["outcome"], r["args"].rsplit("/", 1)[-1]) for r in receipts.read(log.path)
+            if r["kind"] == "egress" and r["tool"] == "browser.page"]
+    assert rows == [("blocked", "products.html"), ("blocked", "widget.html"), ("ok", "index.html")]
+    assert "data:" not in json.dumps(receipts.read(log.path))
+    assert blocked and "deny list" in blocked[0][1]
+    assert "data:" not in json.dumps(st)
+    assert page_url == "" and st["failed"]["url"].endswith("products.html") and "deny list" in st["failed"]["why"]
+    assert final_url.endswith("index.html")
+
+
 def test_the_control_channel_refuses_pages_strangers_and_stopped_tasks(app, site):
     assert call(app, "GET", "/agent/state", token="")[0] == 401
     assert call(app, "GET", "/agent/state", token="x" * 64)[0] == 401

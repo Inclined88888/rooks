@@ -87,14 +87,18 @@ class ElectronBrowser:
     async def _sync(self) -> dict:
         """Bring the receipt up to date with what the tab did: pages visited, pages blocked, files saved."""
         st = await self._call("GET", "/agent/state")
-        self.page.url = st.get("url") or ""
-        for n in st.get("navs", [])[self._navs_seen:]:
-            code = int(n.get("status") or 0)
-            self.log.egress("GET", n["url"], "ok" if code < 400 else f"http_{code}", 0, self.parent, tool="page")
+        self.page.url = st.get("url") or ""  # empty while the app shows its own "could not open" page
+        # Pages visited and pages blocked, in the order they happened (the app numbers them), so a blocked page is a
+        # blocked row and nothing else: the app's own "could not open" page is never a visited page.
+        new = [("nav", n) for n in st.get("navs", [])[self._navs_seen:]] + [("blocked", b) for b in st.get("blocked", [])[self._blocked_seen:]]
+        for kind, row in sorted(new, key=lambda kr: int(kr[1].get("seq") or 0)):
+            if kind == "nav":
+                code = int(row.get("status") or 0)
+                self.log.egress("GET", row["url"], "ok" if code < 400 else f"http_{code}", 0, self.parent, tool="page")
+            else:
+                self.blocked.append((row["url"], row["why"]))
+                self.log.egress(row.get("method") or "GET", row["url"], "blocked", 0, self.parent, tool="page", error=row["why"])
         self._navs_seen = len(st.get("navs", []))
-        for b in st.get("blocked", [])[self._blocked_seen:]:
-            self.blocked.append((b["url"], b["why"]))
-            self.log.egress(b.get("method") or "GET", b["url"], "blocked", 0, self.parent, tool="page", error=b["why"])
         self._blocked_seen = len(st.get("blocked", []))
         downloads = st.get("downloads", [])
         for d in downloads[self._downloads_seen:]:
