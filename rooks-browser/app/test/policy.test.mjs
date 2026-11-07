@@ -14,6 +14,10 @@ test("local and private addresses: same answers as Python's is_local", () => {
   for (const [host, want] of Object.entries(cases.is_local)) assert.equal(policy.isLocal(host), want, host);
 });
 
+test("host patterns: same matches as Python's fnmatch, character classes included", () => {
+  for (const [host, pattern, want] of cases.match) assert.equal(policy.match(host, pattern), want, `${host} ~ ${pattern}`);
+});
+
 test("allow, deny and service mode: same verdicts and reasons as SitePolicy.check", () => {
   for (const [p, url, [ok, why]] of cases.check) {
     const [gotOk, gotWhy] = policy.check(p, url);
