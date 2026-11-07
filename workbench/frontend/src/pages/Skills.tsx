@@ -1,8 +1,12 @@
+// Skills: installed, the store, add from GitHub with the security check, and activity. Premium pass (package C):
+// built on the primitives, every list with a loading, an empty and an error state, and a phone layout.
 import { ArrowRight, Check, ExternalLink, Github, KeyRound, Lock, Puzzle, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, X } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { FormEvent, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, stream } from "../api";
-import { Empty, relTime, useToast } from "../util";
+import { relTime, useToast } from "../util";
+import { Badge, Button, Card, EmptyState, ErrorState, IconButton, Input, List, Page, Row, Section, Tabs } from "../ui";
+import { Gate, plainError, useLoad } from "./agents/kit";
 import { SkillsTab } from "./Assistant";
 
 // ---------------------------------------------------------------------------------------------------- types
@@ -47,27 +51,17 @@ export default function Skills() {
   const [params, setParams] = useSearchParams();
   const tab = (params.get("tab") as "installed" | "store" | "add" | "activity") || "installed";
   const go = (t: string) => setParams(t === "installed" ? {} : { tab: t }, { replace: true });
-  const [pending, setPending] = useState(0);
-  useEffect(() => { api<PermRequest[]>("/hub/requests").then((r) => setPending(r.length)).catch(() => {}); }, [tab]);
+  const pending = useLoad(() => api<PermRequest[]>("/hub/requests").then((r) => r.length), [tab]);
 
   return (
-    <div className="page" style={{ maxWidth: 1040 }}>
-      <div className="page-head">
-        <div className="grow">
-          <h1>Skills</h1>
-          <p className="muted">Teach me a new trick. I check anything you add before it can run.</p>
-        </div>
-        <div className="tabs" role="tablist">
-          {([["installed", "Installed"], ["store", "Store"], ["add", "Add"], ["activity", pending ? `Activity · ${pending}` : "Activity"]] as const).map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={tab === id} className={`tab ${tab === id ? "active" : ""}`} onClick={() => go(id)}>{label}</button>
-          ))}
-        </div>
-      </div>
+    <Page className="ag-page sk-page" title="Skills" description="Teach me a new trick. I check anything you add before it can run."
+      actions={<Tabs label="Skills" value={tab} onChange={go}
+        items={[{ id: "installed", label: "Installed" }, { id: "store", label: "Store" }, { id: "add", label: "Add" }, { id: "activity", label: "Activity", count: pending.data || undefined }]} />}>
       {tab === "installed" && <Installed onAdd={() => go("store")} />}
       {tab === "store" && <StoreTab onAdded={() => go("installed")} />}
       {tab === "add" && <AddFromGitHub onInstalled={() => go("installed")} />}
-      {tab === "activity" && <ActivityTab onChange={setPending} />}
-    </div>
+      {tab === "activity" && <ActivityTab onChange={(n) => pending.set(n)} />}
+    </Page>
   );
 }
 
@@ -77,87 +71,57 @@ type StoreConnector = { id: string; name: string; blurb: string; to: string; on:
 
 function StoreTab({ onAdded }: { onAdded: () => void }) {
   const toast = useToast();
+  const navigate = useNavigate();
   const [, setParams] = useSearchParams();
-  const [data, setData] = useState<{ skills: StoreSkill[]; connectors: StoreConnector[] } | null>(null);
-  const load = () => api<{ skills: StoreSkill[]; connectors: StoreConnector[] }>("/skills/store").then(setData).catch(toast.err);
-  useEffect(() => { load(); }, []);
+  const store = useLoad(() => api<{ skills: StoreSkill[]; connectors: StoreConnector[] }>("/skills/store"), []);
   const add = async (id: string) => {
     try {
       await api(`/skills/store/${id}`, { method: "POST", body: {} });
       toast.ok("Skill added");
-      await load();
+      store.reload();
     } catch (e) { toast.err(e); }
   };
-  if (!data) return <div className="card"><div className="skeleton" style={{ height: 14, width: "40%" }} /></div>;
-  const forYou = data.skills.filter((s) => s.for_you);
-  const show = forYou.length ? forYou : data.skills.slice(0, 3);
   return (
-    <div className="col gap-lg">
-      <section className="col">
-        <h3 style={{ margin: 0 }}>For you</h3>
-        <p className="muted small">These follow how you already use this. Work mail brings administration skills forward.</p>
-        <div className="card flush">
-          {show.map((s) => (
-            <div key={s.id} className="sk-row">
-              <div className="row" style={{ alignItems: "flex-start" }}>
-                <div className="grow col" style={{ gap: 4 }}>
-                  <strong>{s.name}</strong>
-                  <div className="muted small">{s.description}</div>
-                  <div className="small faint">{s.why}</div>
-                </div>
-                {s.added
-                  ? <button className="btn sm" onClick={onAdded}>Added</button>
-                  : <button className="btn primary sm" onClick={() => add(s.id)}>Add</button>}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="col">
-        <h3 style={{ margin: 0 }}>Connectors</h3>
-        <div className="card flush">
-          {data.connectors.map((c) => (
-            <Link key={c.id} to={c.to} className="sk-row row" style={{ textDecoration: "none" }}>
-              <span className="grow col" style={{ gap: 2 }}>
-                <strong>{c.name}</strong>
-                <span className="muted small">{c.blurb}</span>
-              </span>
-              <span className="small">{c.on ? "On" : "Connect"}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-      <section className="col">
-        <div className="row">
-          <h3 className="grow" style={{ margin: 0 }}>All skills</h3>
-          <button className="btn sm" onClick={() => setParams({ tab: "add" })}>Copy from a project</button>
-        </div>
-        <div className="card flush">
-          {data.skills.map((s) => (
-            <div key={s.id} className="sk-row row">
-              <span className="grow col" style={{ gap: 2 }}>
-                <strong>{s.name}</strong>
-                <span className="muted small">{s.description}</span>
-              </span>
-              {s.added
-                ? <span className="small muted">Added</span>
-                : <button className="btn sm" onClick={() => add(s.id)}>Add</button>}
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
+    <Gate state={store} rows={5}>{(data) => {
+      const forYou = data.skills.filter((s) => s.for_you);
+      const show = forYou.length ? forYou : data.skills.slice(0, 3);
+      if (!data.skills.length && !data.connectors.length) return <EmptyState icon={<Puzzle size={20} />} title="The store is empty" line="Copy a skill from a project instead." action={<Button onClick={() => setParams({ tab: "add" })}>Copy from a project</Button>} />;
+      return <>
+        <Section title="For you" description="These follow how you already use this. Work mail brings administration skills forward.">
+          <List className="ag-list" label="For you">
+            {show.map((s) => (
+              <Row key={s.id} title={s.name} meta={<>{s.description}<br />{s.why}</>}
+                actions={s.added ? <Button size="sm" onClick={onAdded}>Added</Button> : <Button size="sm" variant="primary" onClick={() => add(s.id)}>Add</Button>} />
+            ))}
+          </List>
+        </Section>
+        <Section title="Connectors">
+          <List className="ag-list" label="Connectors">
+            {data.connectors.map((c) => (
+              <Row key={c.id} title={c.name} meta={c.blurb} onClick={() => navigate(c.to)} actions={c.on ? <Badge tone="ok">On</Badge> : <Button size="sm" onClick={() => navigate(c.to)}>Connect</Button>} />
+            ))}
+          </List>
+        </Section>
+        <Section title="All skills" actions={<Button size="sm" onClick={() => setParams({ tab: "add" })}>Copy from a project</Button>}>
+          <List className="ag-list" label="All skills">
+            {data.skills.map((s) => (
+              <Row key={s.id} title={s.name} meta={s.description}
+                actions={s.added ? <span className="ag-meta">Added</span> : <Button size="sm" onClick={() => add(s.id)}>Add</Button>} />
+            ))}
+          </List>
+        </Section>
+      </>;
+    }}</Gate>
   );
 }
 
 // ---------------------------------------------------------------------------------------------------- installed
 function Installed({ onAdd }: { onAdd: () => void }) {
-  const [items, setItems] = useState<HubSkill[] | null>(null);
+  const items = useLoad(() => api<HubSkill[]>("/hub/skills").then((r) => r.filter((s) => s.status === "installed" || s.status === "disabled")), []);
   const [open, setOpen] = useState<number | null>(null);
   const [updating, setUpdating] = useState<{ id: number; stages: Record<StageId, StageState>; result?: HubSkill; upToDate?: boolean; error?: string } | null>(null);
   const toast = useToast();
-  const load = () => api<HubSkill[]>("/hub/skills").then((r) => setItems(r.filter((s) => s.status === "installed" || s.status === "disabled"))).catch(toast.err);
-  useEffect(() => { load(); }, []);
+  const load = items.reload;
 
   const toggle = async (s: HubSkill) => {
     try { await api(`/hub/skills/${s.id}/${s.status === "installed" ? "disable" : "enable"}`, { method: "POST" }); load(); } catch (e) { toast.err(e); }
@@ -169,67 +133,67 @@ function Installed({ onAdd }: { onAdd: () => void }) {
   const update = async (s: HubSkill) => {
     let st = blankStages();
     setUpdating({ id: s.id, stages: st });
-    await stream(`/hub/skills/${s.id}/update`, {}, (e) => {
-      if (e.error) setUpdating((u) => u && { ...u, error: String(e.error) });
-      else if (e.done) setUpdating((u) => u && { ...u, upToDate: !!e.up_to_date, result: e.up_to_date ? undefined : (e.skill as HubSkill) });
-      else if (e.stage) { st = { ...st, [e.stage as StageId]: { status: e.status as StageState["status"], detail: String(e.detail ?? "") } }; setUpdating((u) => u && { ...u, stages: st }); }
-    });
+    try {
+      await stream(`/hub/skills/${s.id}/update`, {}, (e) => {
+        if (e.error) setUpdating((u) => u && { ...u, error: String(e.error) });
+        else if (e.done) setUpdating((u) => u && { ...u, upToDate: !!e.up_to_date, result: e.up_to_date ? undefined : (e.skill as HubSkill) });
+        else if (e.stage) { st = { ...st, [e.stage as StageId]: { status: e.status as StageState["status"], detail: String(e.detail ?? "") } }; setUpdating((u) => u && { ...u, stages: st }); }
+      });
+    } catch (e) { setUpdating((u) => u && { ...u, error: plainError(e) }); }
   };
 
-  if (!items) return <div className="card"><div className="skeleton" style={{ height: 14, width: "40%" }} /></div>;
   return (
-    <div className="col gap-lg">
-      <section className="col">
-        <div className="row"><h3 className="grow" style={{ margin: 0 }}>Your skills</h3><button className="btn sm" onClick={onAdd}><Github size={13} /> Add a skill</button></div>
-        {items.length === 0 ? (
-          <Empty icon={<Puzzle size={24} />} title="No skills yet"
-            hint="Paste a link to a folder of instructions, or search. I check each one before you decide.">
-            <button className="btn primary" onClick={onAdd}><Github size={14} /> Add a skill</button>
-          </Empty>
+    <div>
+      <Section title="Your skills" actions={<Button size="sm" icon={<Github size={14} />} onClick={onAdd}>Add a skill</Button>}>
+        <Gate state={items} rows={3}>{(list) => list.length === 0 ? (
+          <EmptyState icon={<Puzzle size={20} />} title="Nothing added yet" line="Paste a link to a folder of instructions, or search. I check each one before you decide."
+            action={<Button variant="primary" icon={<Github size={14} />} onClick={onAdd}>Add a skill</Button>} />
         ) : (
-          <div className="card flush">
-            {items.map((s) => (
-              <div key={s.id} className="sk-row">
-                <div className="row" style={{ alignItems: "flex-start" }}>
-                  <div className="grow col" style={{ gap: 4 }}>
-                    <div className="row" style={{ gap: 8 }}>
-                      <strong className="mono">{s.name}</strong>
-                      <RiskBadge level={s.risk} />
-                      {s.kind === "mcp" && <span className="badge">Add-on</span>}
-                      {s.status === "disabled" && <span className="badge">Off</span>}
+          <div className="sk-list">
+            {list.map((s) => {
+              const checking = updating?.id === s.id && !updating.result && !updating.upToDate && !updating.error;
+              return (
+                <div key={s.id} className="sk-item">
+                  <div className="sk-item-head">
+                    <div className="ag-stack sk-item-text">
+                      <div className="ag-bar">
+                        <strong className="sk-name">{s.name}</strong>
+                        <RiskBadge level={s.risk} />
+                        {s.kind === "mcp" && <Badge>Add-on</Badge>}
+                        {s.status === "disabled" && <Badge>Off</Badge>}
+                      </div>
+                      <p className="ag-note">{s.description || "No description"}</p>
+                      <details className="sk-advanced">
+                        <summary className="faint">Advanced</summary>
+                        <p className="ag-meta ag-mono">{s.owner}/{s.repo}{s.path ? `/${s.path}` : ""} @ {s.commit_sha.slice(0, 10)} · installed {relTime(s.installed_at || s.updated_at)}</p>
+                      </details>
+                      <p className="ag-note">{grantSummary(s.granted)}</p>
                     </div>
-                    <div className="muted small">{s.description || "No description"}</div>
-                    <details className="small">
-                      <summary className="faint">Advanced</summary>
-                      <div className="faint small mono">{s.owner}/{s.repo}{s.path ? `/${s.path}` : ""} @ {s.commit_sha.slice(0, 10)} · installed {relTime(s.installed_at || s.updated_at)}</div>
-                    </details>
-                    <div className="small">{grantSummary(s.granted)}</div>
+                    <div className="ag-bar sk-item-actions">
+                      <Button size="sm" icon={<RefreshCw size={14} />} onClick={() => update(s)} busy={checking}>{checking ? "Checking…" : "Check for update"}</Button>
+                      <Button size="sm" onClick={() => toggle(s)}>{s.status === "installed" ? "Turn off" : "Turn on"}</Button>
+                      <IconButton size="sm" label={`Uninstall ${s.name}`} onClick={() => remove(s)}><Trash2 size={14} /></IconButton>
+                    </div>
                   </div>
-                  <div className="row" style={{ gap: 6 }}>
-                    <button className="btn sm" onClick={() => update(s)} disabled={updating?.id === s.id && !updating.result && !updating.upToDate && !updating.error}><RefreshCw size={13} /> Check for update</button>
-                    <button className="btn sm" onClick={() => toggle(s)}>{s.status === "installed" ? "Turn off" : "Turn on"}</button>
-                    <button className="btn ghost sm danger" aria-label={`Uninstall ${s.name}`} onClick={() => remove(s)}><Trash2 size={13} /></button>
-                  </div>
+                  <button type="button" className="sk-link" onClick={() => setOpen(open === s.id ? null : s.id)}>{open === s.id ? "Hide report" : "Show security report"}</button>
+                  {open === s.id && <ReportView r={s.report} />}
+                  {updating?.id === s.id && (
+                    <div className="ag-stack ag-gap-top">
+                      {updating.upToDate && <p className="ag-note ag-ok">Already up to date with {s.ref}.</p>}
+                      {updating.error && <ErrorState title="The update check stopped" line={updating.error} onRetry={() => update(s)} />}
+                      {!updating.upToDate && !updating.error && <Stepper stages={updating.stages} />}
+                      {updating.result && <Review skill={updating.result} onDone={() => { setUpdating(null); load(); }} />}
+                    </div>
+                  )}
                 </div>
-                <button className="link-btn small" onClick={() => setOpen(open === s.id ? null : s.id)}>{open === s.id ? "Hide report" : "Show security report"}</button>
-                {open === s.id && <ReportView r={s.report} />}
-                {updating?.id === s.id && (
-                  <div className="col" style={{ marginTop: 12 }}>
-                    {updating.upToDate && <div className="alert ok">Already up to date with {s.ref}.</div>}
-                    {updating.error && <div className="alert err">{updating.error}</div>}
-                    {!updating.upToDate && !updating.error && <Stepper stages={updating.stages} />}
-                    {updating.result && <Review skill={updating.result} onDone={() => { setUpdating(null); load(); }} />}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
-        )}
-      </section>
-      <section className="col">
-        <h3 style={{ margin: 0 }}>Your own skills</h3>
+        )}</Gate>
+      </Section>
+      <Section title="Your own skills">
         <SkillsTab />
-      </section>
+      </Section>
     </div>
   );
 }
@@ -255,9 +219,8 @@ function AddFromGitHub({ onInstalled }: { onInstalled: () => void }) {
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<SearchHit[] | null>(null);
   const [searching, setSearching] = useState(false);
-  const [settings, setSettings] = useState<HubSettings | null>(null);
-  const toast = useToast();
-  useEffect(() => { api<HubSettings>("/hub/settings").then(setSettings).catch(() => {}); }, []);
+  const [searchErr, setSearchErr] = useState<unknown>(null);
+  const settings = useLoad(() => api<HubSettings>("/hub/settings"), []);
 
   const check = async (target: string) => {
     const u = target.trim();
@@ -275,83 +238,77 @@ function AddFromGitHub({ onInstalled }: { onInstalled: () => void }) {
           if (e.status === "choose") setChoices(e.choices as Choice[]);
         }
       });
-    } catch (e) { setError(String((e as Error).message || e)); }
+    } catch (e) { setError(plainError(e)); }
     setRunning(false);
   };
   const submit = (e: FormEvent) => { e.preventDefault(); check(url); };
-  const search = async (e: FormEvent) => {
-    e.preventDefault();
-    setSearching(true);
-    try { setHits(await api<SearchHit[]>(`/hub/search?q=${encodeURIComponent(q)}`)); } catch (err) { toast.err(err); }
+  const runSearch = async () => {
+    setSearching(true); setSearchErr(null);
+    try { setHits(await api<SearchHit[]>(`/hub/search?q=${encodeURIComponent(q)}`)); } catch (err) { setSearchErr(err); }
     setSearching(false);
   };
+  const search = (e: FormEvent) => { e.preventDefault(); runSearch(); };
 
   return (
-    <div className="col gap-lg">
-      <form className="card col" onSubmit={submit}>
-        <label className="label" htmlFor="sk-url">Paste a link</label>
-        <div className="row">
-          <input id="sk-url" className="input mono grow" value={url} onChange={(e) => setUrl(e.target.value)} spellCheck={false}
-            placeholder="https://github.com/owner/repo/tree/main/skills/my-skill" />
-          <button className="btn primary" disabled={!url.trim() || running}>{running ? "Checking…" : <>Check it <ArrowRight size={14} /></>}</button>
-        </div>
-        <p className="faint small" style={{ margin: 0 }}>A folder of instructions. Nothing is installed until you say so.</p>
-        <details className="small"><summary className="faint">Advanced</summary><p className="faint small" style={{ margin: "6px 0 0" }}>Accepts a GitHub folder with a SKILL.md, or an MCP server. I scan it and trial-run it before you decide.</p></details>
-      </form>
+    <div className="ag-stack-lg">
+      <Card as="section">
+        <form className="ag-form" onSubmit={submit}>
+          <Input label="Paste a link" className="ag-mono" value={url} onChange={(e) => setUrl(e.target.value)} spellCheck={false}
+            placeholder="A link to a folder on GitHub" hint="A folder of instructions. Nothing is installed until you say so." />
+          <div className="ag-bar">
+            <Button type="submit" variant="primary" disabled={!url.trim()} busy={running} icon={running ? undefined : <ArrowRight size={14} />}>{running ? "Checking…" : "Check it"}</Button>
+          </div>
+          <details className="sk-advanced"><summary className="faint">Advanced</summary><p className="ag-note">Accepts a GitHub folder with a SKILL.md, or an MCP server. I scan it and trial-run it before you decide.</p></details>
+        </form>
+      </Card>
 
       {stages && (
-        <section className="col">
+        <section className="ag-stack" aria-label="Security check">
           <Stepper stages={stages} />
-          {error && <div className="alert err" role="alert">{error}</div>}
+          {error && <ErrorState title="The check stopped" line={error} onRetry={() => check(url)} />}
           {choices && (
-            <div className="card flush">
-              <div className="sk-row"><strong>This repository holds {choices.length} skills. Which one?</strong></div>
-              {choices.map((c) => (
-                <div key={c.path} className="sk-row row">
-                  <span className="mono grow">{c.name}</span><span className="faint small mono truncate" style={{ maxWidth: 320 }}>{c.path}</span>
-                  <button className="btn sm" onClick={() => check(c.url)}>Check this one</button>
-                </div>
-              ))}
-            </div>
+            <Section title={`This repository holds ${choices.length} skills. Which one?`}>
+              <List className="ag-list">
+                {choices.map((c) => <Row key={c.path} title={c.name} meta={<span className="ag-mono">{c.path}</span>} actions={<Button size="sm" onClick={() => check(c.url)}>Check this one</Button>} />)}
+              </List>
+            </Section>
           )}
           {result && <Review skill={result} onDone={(installed) => { setStages(null); setResult(null); setUrl(""); if (installed) onInstalled(); }} />}
         </section>
       )}
 
       {!stages && (
-        <section className="col">
-          <form className="row" onSubmit={search}>
-            <div className="input-icon grow"><Search size={14} /><input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search, for example pdf or spreadsheet" aria-label="Search for skills" /></div>
-            <button className="btn" disabled={searching}>{searching ? "Searching…" : "Search"}</button>
+        <section className="ag-stack" aria-label="Search for skills">
+          <form className="ag-bar" onSubmit={search}>
+            <div className="sk-search ag-grow"><Search size={14} aria-hidden="true" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search, for example pdf or spreadsheet" aria-label="Search for skills" /></div>
+            <Button type="submit" busy={searching}>{searching ? "Searching…" : "Search"}</Button>
           </form>
-          {hits === null ? (
-            <details className="small">
+          {searchErr ? <ErrorState title="The search did not finish" line={plainError(searchErr)} onRetry={runSearch} />
+            : hits === null ? (
+            <details className="sk-advanced">
               <summary className="faint">Advanced</summary>
-              <p className="faint small" style={{ margin: "6px 0 0" }}>
-                {settings?.has_token ? "Searching SKILL.md files and repositories tagged agent-skills, claude-skills or mcp-server." : "Searches repositories tagged agent-skills, claude-skills or mcp-server. Add a GitHub token below to search inside repositories too."}
+              <p className="ag-note">
+                {settings.data?.has_token ? "Searching SKILL.md files and repositories tagged agent-skills, claude-skills or mcp-server." : "Searches repositories tagged agent-skills, claude-skills or mcp-server. Add a GitHub token below to search inside repositories too."}
               </p>
             </details>
           ) : hits.length === 0 ? (
-            <Empty icon={<Search size={22} />} title="Nothing found" hint="Try a broader word, or paste the link if you already know where the skill lives." />
+            <EmptyState icon={<Search size={20} />} title="Nothing found" line="Try a broader word, or paste the link if you already know where the skill lives." />
           ) : (
-            <div className="card flush">
+            <List className="ag-list" label="Search results">
               {hits.map((h) => (
-                <div key={h.url} className="sk-row row" style={{ alignItems: "flex-start" }}>
-                  <div className="grow col" style={{ gap: 2 }}>
-                    <div className="row" style={{ gap: 8 }}><strong className="mono">{h.name}</strong>{h.kind === "mcp" && <span className="badge">Add-on</span>}{h.stars != null && <span className="faint small">★ {h.stars}</span>}</div>
-                    <span className="faint small mono">{h.full_name}{h.path ? `/${h.path}` : ""}</span>
-                    {h.description && <span className="muted small">{h.description}</span>}
-                  </div>
-                  <a className="btn ghost sm" href={h.url} target="_blank" rel="noreferrer" aria-label="Open on GitHub"><ExternalLink size={13} /></a>
-                  <button className="btn sm" onClick={() => check(h.url)}>Check</button>
-                </div>
+                <Row key={h.url} title={<>{h.name}{h.kind === "mcp" ? " · Add-on" : ""}{h.stars != null ? ` · ★ ${h.stars}` : ""}</>}
+                  meta={<><span className="ag-mono">{h.full_name}{h.path ? `/${h.path}` : ""}</span>{h.description && <><br />{h.description}</>}</>}
+                  actions={<>
+                    <a className="ui-iconbtn ui-iconbtn-sm" href={h.url} target="_blank" rel="noreferrer" aria-label="Open on GitHub" title="Open on GitHub"><ExternalLink size={14} /></a>
+                    <Button size="sm" onClick={() => check(h.url)}>Check</Button>
+                  </>} />
               ))}
-            </div>
+            </List>
           )}
         </section>
       )}
 
-      {settings && <HubSettingsCard settings={settings} onSaved={setSettings} />}
+      {settings.data && <HubSettingsCard settings={settings.data} onSaved={settings.set} />}
     </div>
   );
 }
@@ -364,20 +321,19 @@ function HubSettingsCard({ settings, onSaved }: { settings: HubSettings; onSaved
     try { onSaved(await api<HubSettings>("/hub/settings", { method: "PUT", body: { token: value } })); setTok(""); toast.ok(value ? "Token saved, encrypted" : "Token removed"); } catch (e) { toast.err(e); }
   };
   return (
-    <details className="card sk-settings" open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
-      <summary><span className="grow">How checking works</span><span className="faint small">{settings.has_token ? "GitHub token set" : "No GitHub token"}</span></summary>
-      <div className="col" style={{ marginTop: 12 }}>
-        <p className="small muted" style={{ margin: 0 }}>
+    <details className="ui-card sk-settings" open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+      <summary><span className="ag-grow">How checking works</span><span className="ag-meta">{settings.has_token ? "GitHub token set" : "No GitHub token"}</span></summary>
+      <div className="ag-form ag-gap-top">
+        <p className="ag-note">
           Scanners: {settings.scanners.length > 1 ? settings.scanners.join(", ") : "built-in rules only (install semgrep, bandit, gitleaks or osv-scanner and they're used too)"}.
           Sandbox: {settings.isolation.join(", ")}.
         </p>
-        <label className="label" htmlFor="sk-token" style={{ marginBottom: 0 }}>GitHub token (optional)</label>
-        <div className="row">
-          <input id="sk-token" className="input mono grow" type="password" autoComplete="off" value={tok} onChange={(e) => setTok(e.target.value)} placeholder={settings.has_token ? "•••••••• saved" : "Only needs public read access"} />
-          <button className="btn" disabled={!tok.trim()} onClick={() => save(tok)}><KeyRound size={13} /> Save</button>
-          {settings.has_token && <button className="btn ghost" onClick={() => save("")}>Remove</button>}
+        <div className="ag-bar sk-token">
+          <Input label="GitHub token (optional)" className="ag-mono" type="password" autoComplete="off" value={tok} onChange={(e) => setTok(e.target.value)} placeholder={settings.has_token ? "•••••••• saved" : "Only needs public read access"} />
+          <Button icon={<KeyRound size={14} />} disabled={!tok.trim()} onClick={() => save(tok)}>Save</Button>
+          {settings.has_token && <Button variant="ghost" onClick={() => save("")}>Remove</Button>}
         </div>
-        <p className="faint small" style={{ margin: 0 }}>Raises GitHub's rate limit and lets search look inside repositories. Stored encrypted on this machine.</p>
+        <p className="ag-note">Raises GitHub's rate limit and lets search look inside repositories. Stored encrypted on this machine.</p>
       </div>
     </details>
   );
@@ -391,10 +347,10 @@ function Stepper({ stages }: { stages: Record<StageId, StageState> }) {
         const st = stages[s.id];
         return (
           <li key={s.id} className={`sk-step is-${st.status}`} aria-current={st.status === "running" ? "step" : undefined}>
-            <span className="sk-num mono">{st.status === "done" ? <Check size={12} strokeWidth={3} /> : String(i + 1).padStart(2, "0")}</span>
-            <span className="col" style={{ gap: 2, minWidth: 0 }}>
+            <span className="sk-num">{st.status === "done" ? <Check size={12} strokeWidth={3} aria-label="Done" /> : i + 1}</span>
+            <span className="sk-step-text">
               <span className="sk-step-label">{s.label}</span>
-              <span className="sk-step-detail small">{st.detail || (st.status === "waiting" ? "Waiting" : "")}</span>
+              <span className="sk-step-detail">{st.detail || (st.status === "waiting" ? "Waiting" : st.status === "running" ? "Working" : "")}</span>
             </span>
           </li>
         );
@@ -432,7 +388,7 @@ function Review({ skill, onDone }: { skill: HubSkill; onDone: (installed: boolea
     try {
       await api(`/hub/skills/${skill.id}/install`, { body: { grants: { network: pick("network"), files: pick("files"), env: pick("env"), tools: pick("tools"), shell: !!grant.shell }, confirm: typed } });
       onDone(true);
-    } catch (e) { setErr(String((e as Error).message || e)); }
+    } catch (e) { setErr(plainError(e)); }
     setBusy(false);
   };
   const reject = async () => {
@@ -449,20 +405,20 @@ function Review({ skill, onDone }: { skill: HubSkill; onDone: (installed: boolea
   ], [p]);
 
   return (
-    <div className={`card sk-review risk-${skill.risk}`}>
+    <div className={`ui-card ui-card-pad-none sk-review risk-${skill.risk}`}>
       <div className="sk-verdict">
-        {high ? <ShieldAlert size={22} /> : <ShieldCheck size={22} />}
-        <div className="grow">
-          <p className="kicker" style={{ margin: 0 }}>Security report · {skill.kind === "mcp" ? "Add-on" : "Skill"}</p>
-          <h2 style={{ margin: "2px 0 0" }}><span className="mono" style={{ fontSize: "0.8em" }}>{skill.name}</span> · {RISK_COPY[skill.risk]}</h2>
+        {high ? <ShieldAlert size={20} aria-hidden="true" /> : <ShieldCheck size={20} aria-hidden="true" />}
+        <div className="ag-grow">
+          <p className="ag-meta">Security report · {skill.kind === "mcp" ? "Add-on" : "Skill"}</p>
+          <h2 className="ag-title"><span className="ag-mono">{skill.name}</span> · {RISK_COPY[skill.risk]}</h2>
         </div>
-        <a className="btn ghost sm" href={`https://github.com/${r.source.owner}/${r.source.repo}/tree/${r.source.sha}/${r.source.path}`} target="_blank" rel="noreferrer">
-          <Github size={13} /> {r.source.sha.slice(0, 10)}
+        <a className="ui-btn ui-btn-ghost ui-btn-sm" href={`https://github.com/${r.source.owner}/${r.source.repo}/tree/${r.source.sha}/${r.source.path}`} target="_blank" rel="noreferrer">
+          <Github size={14} aria-hidden="true" /> Source
         </a>
       </div>
       <div className="sk-body">
-        {skill.description && <p className="muted" style={{ margin: "0 0 14px" }}>{skill.description}</p>}
-        <p className="label">Why {RISK_COPY[skill.risk].split(" ·")[0].toLowerCase()}</p>
+        {skill.description && <p className="ag-note">{skill.description}</p>}
+        <p className="ag-label ag-gap-top">Why {RISK_COPY[skill.risk].split(" ·")[0].toLowerCase()}</p>
         <ul className="sk-reasons">{r.risk.reasons.map((x) => <li key={x}>{x}</li>)}</ul>
         {r.diff && <DiffView d={r.diff} />}
         <ReportView r={r} />
@@ -470,32 +426,32 @@ function Review({ skill, onDone }: { skill: HubSkill; onDone: (installed: boolea
 
       <div className="sk-approve">
         {items.length > 0 ? (
-          <fieldset className="col" style={{ border: "none", padding: 0, margin: 0, gap: 8 }}>
-            <legend className="label">Allow it to</legend>
+          <fieldset className="sk-grants">
+            <legend className="ag-label">Allow it to</legend>
             {items.map((it) => (
-              <label key={it.key} className="check">
-                <input type="checkbox" checked={!!grant[it.key]} onChange={(e) => setGrant({ ...grant, [it.key]: e.target.checked })} /> {it.text}{it.isNew && <span className="badge risk medium" style={{ marginLeft: 8 }}>New in this update</span>}
+              <label key={it.key} className="ag-check">
+                <input type="checkbox" checked={!!grant[it.key]} onChange={(e) => setGrant({ ...grant, [it.key]: e.target.checked })} /> {it.text}{it.isNew && <Badge tone="warn">New in this update</Badge>}
               </label>
             ))}
-            <p className="faint small" style={{ margin: 0 }}>Anything you leave unticked, or anything it tries that isn't listed, is blocked and asks you first.</p>
+            <p className="ag-note">Anything you leave unticked, or anything it tries that isn't listed, is blocked and asks you first.</p>
           </fieldset>
         ) : r.trial.violations.length ? (
-          <p className="small" style={{ margin: 0 }}><Lock size={12} /> Declares no extra access, but its trial run tried more. Those attempts stay blocked; if they happen after install, you'll be asked.</p>
-        ) : <p className="small" style={{ margin: 0 }}><Lock size={12} /> Needs no extra access: no internet, no files outside its folder, no programs.</p>}
+          <p className="ag-note"><Lock size={12} aria-hidden="true" /> Declares no extra access, but its trial run tried more. Those attempts stay blocked; if they happen after install, you'll be asked.</p>
+        ) : <p className="ag-note"><Lock size={12} aria-hidden="true" /> Needs no extra access: no internet, no files outside its folder, no programs.</p>}
 
         {high && (
           <div className="sk-block" role="alert">
-            <p style={{ margin: 0 }}><strong>Blocked by default.</strong> This skill did something dangerous in the checks above.
-              If you wrote it or fully trust it, type <code className="mono">{phrase}</code> to override.</p>
-            <input className="input mono" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={phrase} aria-label="Type the override phrase" spellCheck={false} />
+            <p className="ag-body"><strong>Blocked by default.</strong> This skill did something dangerous in the checks above.
+              If you wrote it or fully trust it, type <code className="ag-mono">{phrase}</code> to override.</p>
+            <Input className="ag-mono" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={phrase} aria-label="Type the override phrase" spellCheck={false} />
           </div>
         )}
-        {err && <div className="alert err">{err}</div>}
-        <div className="row">
-          <button className={`btn ${high ? "danger-solid" : "primary"}`} disabled={busy || !unlocked} onClick={install}>
+        {err && <p className="ag-err" role="alert">{err}</p>}
+        <div className="ag-bar">
+          <Button variant={high ? "danger" : "primary"} disabled={!unlocked} busy={busy} onClick={install}>
             {busy ? "Installing…" : high ? "Install anyway" : skill.update_of ? "Approve update" : "Approve and install"}
-          </button>
-          <button className="btn ghost" onClick={reject}><X size={14} /> {skill.update_of ? "Keep current version" : high ? "Discard" : "Don't install"}</button>
+          </Button>
+          <Button variant="ghost" icon={<X size={14} />} onClick={reject}>{skill.update_of ? "Keep current version" : high ? "Discard" : "Don't install"}</Button>
         </div>
       </div>
     </div>
@@ -503,8 +459,11 @@ function Review({ skill, onDone }: { skill: HubSkill; onDone: (installed: boolea
 }
 
 function RiskBadge({ level }: { level: Risk["level"] }) {
-  return <span className={`badge risk ${level}`}>{level === "high" ? "High risk" : level === "medium" ? "Medium risk" : "Low risk"}</span>;
+  return <Badge tone={level === "high" ? "danger" : level === "medium" ? "warn" : "neutral"}>{level === "high" ? "High risk" : level === "medium" ? "Medium risk" : "Low risk"}</Badge>;
 }
+
+const SEV_TONE = { critical: "danger", high: "danger", medium: "warn", low: "neutral" } as const;
+const SEV_WORD = { critical: "Critical", high: "High", medium: "Medium", low: "Low" } as const;
 
 function ReportView({ r }: { r: Report }) {
   const findings = [...r.injection.map((f) => ({ ...f, where: "Instructions" })), ...r.static.map((f) => ({ ...f, where: "Code" }))];
@@ -512,43 +471,41 @@ function ReportView({ r }: { r: Report }) {
   findings.sort((a, b) => order[a.severity] - order[b.severity]);
   return (
     <div className="sk-report">
-      <div className="sk-cols">
+      <div className="ag-two sk-cols">
         <div>
-          <p className="label">What it can touch</p>
+          <p className="ag-label">What it can touch</p>
           <ul className="sk-plain">{r.permissions_plain.map((x) => <li key={x}>{x}</li>)}</ul>
-          {r.permissions.undeclared.length > 0 && <p className="small" style={{ color: "var(--danger-text)" }}>Not declared by the author: {r.permissions.undeclared.join(", ")}</p>}
+          {r.permissions.undeclared.length > 0 && <p className="ag-err">Not declared by the author: {r.permissions.undeclared.join(", ")}</p>}
         </div>
         <div>
-          <p className="label">Sealed trial run · {r.trial.status}</p>
-          {r.trial.note && <p className="small muted" style={{ marginTop: 0 }}>{r.trial.note}</p>}
-          {r.trial.runs.length === 0 && !r.trial.note && <p className="small muted" style={{ marginTop: 0 }}>Instructions only. Nothing to run.</p>}
+          <p className="ag-label">Sealed trial run · {r.trial.status}</p>
+          {r.trial.note && <p className="ag-note">{r.trial.note}</p>}
+          {r.trial.runs.length === 0 && !r.trial.note && <p className="ag-note">Instructions only. Nothing to run.</p>}
           {r.trial.runs.map((run, i) => (
             <div key={i} className="sk-run">
-              <div className="row small"><span className="mono grow">{run.script}</span><span className="faint">{run.status === "failed" && !run.violations?.length ? "ran" : run.status}{run.exit != null ? ` · exit ${run.exit}` : ""}</span></div>
-              {run.violations.map((v, j) => <div key={j} className="sk-violation small"><X size={11} strokeWidth={3} /> Blocked {v.kind.replace("-", " ")}: <span className="mono">{v.target || v.what}</span></div>)}
-              {run.stdout.trim() && <pre className="sk-pre">{run.stdout.trim().slice(0, 400)}</pre>}
+              <div className="ag-bar ag-meta"><span className="ag-mono ag-grow">{run.script}</span><span>{run.status === "failed" && !run.violations?.length ? "ran" : run.status}{run.exit != null ? ` · exit ${run.exit}` : ""}</span></div>
+              {run.violations.map((v, j) => <p key={j} className="sk-violation"><X size={12} strokeWidth={3} aria-hidden="true" /> Blocked {v.kind.replace("-", " ")}: <span className="ag-mono">{v.target || v.what}</span></p>)}
+              {run.stdout.trim() && <pre className="ag-pre">{run.stdout.trim().slice(0, 400)}</pre>}
             </div>
           ))}
         </div>
       </div>
-      <p className="label" style={{ marginTop: 18 }}>Findings · {findings.length || "none"}</p>
+      <p className="ag-label ag-section-gap">Findings · {findings.length || "none"}</p>
       {findings.length > 0 && (
-        <table className="sk-findings">
-          <tbody>
-            {findings.slice(0, 40).map((f, i) => (
-              <tr key={i}>
-                <td><span className={`sev ${f.severity}`}>{f.severity}</span></td>
-                <td>
-                  <div>{f.message}</div>
-                  <div className="faint small mono">{f.where} · {f.file}{f.line ? `:${f.line}` : ""}{f.tool ? ` · ${f.tool}` : ""}</div>
-                  {f.snippet && <code className="sk-snippet">{f.snippet}</code>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ul className="sk-findings">
+          {findings.slice(0, 40).map((f, i) => (
+            <li key={i}>
+              <Badge tone={SEV_TONE[f.severity]}>{SEV_WORD[f.severity]}</Badge>
+              <div className="ag-grow">
+                <p className="ag-body">{f.message}</p>
+                <p className="ag-meta ag-mono">{f.where} · {f.file}{f.line ? `:${f.line}` : ""}{f.tool ? ` · ${f.tool}` : ""}</p>
+                {f.snippet && <code className="sk-snippet">{f.snippet}</code>}
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
-      <p className="faint small" style={{ marginBottom: 0 }}>Checked {r.files.length} files at {r.source.owner}/{r.source.repo}@{r.source.sha.slice(0, 12)} with {[...new Set(["built-in rules", ...r.scanners])].join(", ")}.</p>
+      <p className="ag-note ag-gap-top">Checked {r.files.length} files at {r.source.owner}/{r.source.repo}@{r.source.sha.slice(0, 12)} with {[...new Set(["built-in rules", ...r.scanners])].join(", ")}.</p>
     </div>
   );
 }
@@ -557,69 +514,55 @@ function DiffView({ d }: { d: Diff }) {
   const none = !d.added.length && !d.removed.length && !d.changed.length;
   return (
     <div className="sk-diff">
-      <p className="label">What changed since your version</p>
-      {none ? <p className="small muted">No file changes.</p> : (
-        <p className="small" style={{ marginTop: 0 }}>
+      <p className="ag-label">What changed since your version</p>
+      {none ? <p className="ag-note">No file changes.</p> : (
+        <p className="ag-note">
           {d.added.length > 0 && <>Added {d.added.join(", ")}. </>}
           {d.removed.length > 0 && <>Removed {d.removed.join(", ")}. </>}
           {d.changed.length > 0 && <>Changed {d.changed.join(", ")}.</>}
         </p>
       )}
-      {d.permissions.map((x) => <div key={x} className="sk-violation small">{x}</div>)}
+      {d.permissions.map((x) => <p key={x} className="sk-violation">{x}</p>)}
       {d.patches.map((p, i) => (
-        <pre key={i} className="sk-pre sk-patch">{p.split("\n").map((ln, j) => <span key={j} className={ln.startsWith("+") && !ln.startsWith("+++") ? "add" : ln.startsWith("-") && !ln.startsWith("---") ? "del" : ""}>{ln + "\n"}</span>)}</pre>
+        <pre key={i} className="ag-pre sk-patch">{p.split("\n").map((ln, j) => <span key={j} className={ln.startsWith("+") && !ln.startsWith("+++") ? "add" : ln.startsWith("-") && !ln.startsWith("---") ? "del" : ""}>{ln + "\n"}</span>)}</pre>
       ))}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------------------------------- activity
+const when = (iso: string) => new Date(iso.endsWith("Z") || iso.includes("+") ? iso : iso + "Z").toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
 function ActivityTab({ onChange }: { onChange: (n: number) => void }) {
-  const [reqs, setReqs] = useState<PermRequest[] | null>(null);
-  const [log, setLog] = useState<AuditRow[] | null>(null);
+  const reqs = useLoad(() => api<PermRequest[]>("/hub/requests").then((r) => { onChange(r.length); return r; }), []);
+  const log = useLoad(() => api<AuditRow[]>("/hub/audit"), []);
   const toast = useToast();
-  const load = () => {
-    api<PermRequest[]>("/hub/requests").then((r) => { setReqs(r); onChange(r.length); }).catch(toast.err);
-    api<AuditRow[]>("/hub/audit").then(setLog).catch(toast.err);
-  };
-  useEffect(() => { load(); }, []);
   const decide = async (id: number, allow: boolean) => {
-    try { await api(`/hub/requests/${id}/${allow ? "allow" : "deny"}`, { method: "POST" }); load(); } catch (e) { toast.err(e); }
+    try { await api(`/hub/requests/${id}/${allow ? "allow" : "deny"}`, { method: "POST" }); reqs.reload(); log.reload(); } catch (e) { toast.err(e); }
   };
   return (
-    <div className="col gap-lg">
-      <section className="col">
-        <h3 style={{ margin: 0 }}>Waiting for you</h3>
-        {reqs && reqs.length === 0 && <p className="muted small" style={{ margin: 0 }}>Nothing waiting. When a skill tries something you didn't allow, it's stopped and shows up here.</p>}
-        {reqs && reqs.length > 0 && (
-          <div className="card flush">
-            {reqs.map((r) => (
-              <div key={r.id} className="sk-row row">
-                <ShieldAlert size={16} style={{ color: "var(--accent)" }} />
-                <div className="grow col" style={{ gap: 2 }}>
-                  <span><strong className="mono">{r.skill_name}</strong> tried to {r.kind === "network" ? "connect to" : r.kind.replace("-", " ")} <span className="mono">{r.target || r.what}</span></span>
-                  <span className="faint small">{relTime(r.created_at)} · {r.what}</span>
-                </div>
-                <button className="btn sm" onClick={() => decide(r.id, true)}>Allow from now on</button>
-                <button className="btn ghost sm" onClick={() => decide(r.id, false)}>Keep blocked</button>
-              </div>
+    <div>
+      <Section title="Waiting for you">
+        <Gate state={reqs} rows={2}>{(list) => list.length === 0
+          ? <p className="ag-note">Nothing waiting. When a skill tries something you didn't allow, it's stopped and shows up here.</p>
+          : <List className="ag-list" label="Waiting for you">
+            {list.map((r) => (
+              <Row key={r.id} leading={<ShieldAlert size={16} className="sk-needs" />}
+                title={<><span className="ag-mono">{r.skill_name}</span> tried to {r.kind === "network" ? "connect to" : r.kind.replace("-", " ")} <span className="ag-mono">{r.target || r.what}</span></>}
+                meta={`${relTime(r.created_at)} · ${r.what}`}
+                actions={<><Button size="sm" onClick={() => decide(r.id, true)}>Allow from now on</Button><Button size="sm" variant="ghost" onClick={() => decide(r.id, false)}>Keep blocked</Button></>} />
             ))}
-          </div>
-        )}
-      </section>
-      <section className="col">
-        <h3 style={{ margin: 0 }}>Audit log</h3>
-        {log && log.length === 0 && <p className="muted small" style={{ margin: 0 }}>Every check, install, update, permission decision and uninstall is recorded here.</p>}
-        {log && log.length > 0 && (
-          <table className="sk-audit">
-            <tbody>
-              {log.map((a) => (
-                <tr key={a.id}><td className="faint small mono nowrap">{new Date(a.created_at.endsWith("Z") || a.created_at.includes("+") ? a.created_at : a.created_at + "Z").toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td><td className="mono nowrap">{a.skill_name}</td><td><span className="badge">{a.event}</span></td><td className="small muted">{a.detail}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+          </List>}
+        </Gate>
+      </Section>
+      <Section title="Audit log">
+        <Gate state={log} rows={4}>{(rows) => rows.length === 0
+          ? <EmptyState title="Nothing recorded yet" line="Every check, install, update, permission decision and uninstall is recorded here." />
+          : <List className="ag-list" label="Audit log">
+            {rows.map((a) => <Row key={a.id} title={<>{a.skill_name} <Badge>{a.event}</Badge></>} meta={<>{when(a.created_at)}{a.detail ? ` · ${a.detail}` : ""}</>} />)}
+          </List>}
+        </Gate>
+      </Section>
     </div>
   );
 }

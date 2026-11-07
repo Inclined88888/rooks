@@ -1,71 +1,74 @@
 /* ==========================================================================
-   Skills page: GitHub install, the security stepper and the report.
-   Reads like a printed inspection sheet: numbered stages, hairline rules,
-   one cherry colour for anything that stopped the line.
+   Skills page (premium pass, package C): the installed list, the security check and the report.
+   Neutral first; danger colour only for what stopped the line. Tokens only.
    ========================================================================== */
-.sk-row { padding: 14px 18px; border-bottom: 1px solid var(--border); }
-.sk-row:last-child { border-bottom: none; }
-.link-btn { background: none; border: none; padding: 0; margin-top: 8px; color: var(--accent-text); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 3px; }
-.input-icon { position: relative; display: flex; align-items: center; }
-.input-icon > svg { position: absolute; left: 12px; color: var(--faint); pointer-events: none; }
-.input-icon > .input { padding-left: 34px; width: 100%; }
-.btn.danger-solid { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
-.btn.danger-solid:hover:not(:disabled) { filter: brightness(0.92); }
+.sk-list { display: flex; flex-direction: column; border-top: var(--border-w) solid var(--color-border); }
+.sk-item { padding: var(--space-4) 0; border-bottom: var(--border-w) solid var(--color-border); }
+.sk-item-head { display: flex; gap: var(--space-4); align-items: flex-start; }
+.sk-item-text { flex: 1; min-width: 0; gap: var(--space-1); }
+.sk-item-actions { flex: none; justify-content: flex-end; }
+.sk-name { font-size: var(--text-md); font-weight: var(--weight-medium); color: var(--color-ink); overflow-wrap: anywhere; }
+.sk-link { background: none; border: 0; padding: 0; margin-top: var(--space-2); color: var(--color-ink); cursor: pointer; font: inherit; font-size: var(--text-sm); text-decoration: underline; text-underline-offset: 3px; }
+.sk-advanced summary { cursor: pointer; font-size: var(--text-sm); color: var(--color-ink-muted); }
+.sk-advanced p { margin-top: var(--space-1); }
+.sk-search { position: relative; display: flex; align-items: center; }
+.sk-search > svg { position: absolute; left: var(--space-3); color: var(--color-ink-muted); pointer-events: none; }
+.sk-search .ui-input { padding-left: 34px; }
+.sk-token { align-items: flex-end; }
+.sk-token .ui-field { flex: 1; min-width: 200px; }
+.sk-needs { color: var(--color-accent); }
+/* "Install anyway": AboutYou also uses this solid danger button */
+.btn.danger-solid { background: var(--color-danger); border-color: var(--color-danger); color: var(--color-on-danger); }
+.btn.danger-solid:hover:not(:disabled) { background: var(--color-danger-hover); }
 
-/* Stepper: six numbered stages in two rows of three; the live one wears the tracer */
-.sk-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--rule); border-left: 1px solid var(--border); }
-.sk-step { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--panel); min-height: 74px; transition: background-color var(--dur) var(--ease-out); }
-.sk-num { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--border-strong); font-size: 11px; color: var(--muted); }
-.sk-step-label { font-weight: 650; font-size: var(--text-sm); }
-.sk-step-detail { color: var(--muted); overflow-wrap: anywhere; }
-.sk-step.is-waiting { color: var(--faint); background: transparent; }
-.sk-step.is-waiting .sk-step-label { color: var(--faint); font-weight: 500; }
-.sk-step.is-running .sk-num { border-color: var(--accent); color: var(--accent-text); }
-.sk-step.is-done .sk-num { background: var(--ink-btn); border-color: var(--ink-btn); color: var(--on-ink); }
-.sk-step.is-choose .sk-num { border-color: var(--accent); color: var(--accent-text); }
+/* Stepper: six numbered stages, three to a row; the one working now carries the live mark */
+.sk-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; background: var(--color-surface); }
+.sk-step { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-3) var(--space-4); border-right: var(--border-w) solid var(--color-border); border-bottom: var(--border-w) solid var(--color-border); min-height: 72px; }
+.sk-step:nth-child(3n) { border-right: 0; }
+.sk-step:nth-last-child(-n+3) { border-bottom: 0; }
+.sk-num { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; border: var(--border-w) solid var(--color-border-strong); font-size: var(--text-xs); color: var(--color-ink-muted); font-variant-numeric: tabular-nums; }
+.sk-step-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sk-step-label { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-ink); }
+.sk-step-detail { font-size: var(--text-sm); color: var(--color-ink-muted); overflow-wrap: anywhere; }
+.sk-step.is-waiting .sk-step-label { color: var(--color-ink-muted); font-weight: var(--weight-regular); }
+.sk-step.is-running .sk-num, .sk-step.is-choose .sk-num { border-color: var(--color-accent); color: var(--color-accent-text); }
+.sk-step.is-done .sk-num { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary); }
 
 /* Verdict card */
-.sk-review { padding: 0; overflow: hidden; }
-.sk-body { padding: 0 22px 6px; }
-.sk-verdict { display: flex; gap: 14px; align-items: center; margin: 0 0 18px; padding: 18px 22px; border-bottom: 1px solid var(--rule); }
-.sk-review.risk-low .sk-verdict { background: var(--blue-soft); }
-.sk-review.risk-medium .sk-verdict { background: var(--warn-soft); }
-.sk-review.risk-high .sk-verdict { background: var(--danger); color: var(--on-danger); }
-.sk-review.risk-high .sk-verdict .kicker { color: var(--on-danger); opacity: 0.85; }
-.sk-review.risk-high .sk-verdict .btn { color: var(--on-danger); }
-.sk-reasons { margin: 0 0 18px; padding-left: 18px; }
+.sk-verdict { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; padding: var(--space-4) var(--space-5); border-bottom: var(--border-w) solid var(--color-border); }
+.sk-review.risk-medium .sk-verdict { background: var(--color-warning-soft); }
+.sk-review.risk-high .sk-verdict { background: var(--color-danger-soft); }
+.sk-review.risk-high .sk-verdict > svg { color: var(--color-danger-text); }
+.sk-body { padding: var(--space-4) var(--space-5); }
+.sk-reasons { margin: 0 0 var(--space-4); padding-left: var(--space-5); font-size: var(--text-md); }
 .sk-reasons li { margin: 2px 0; }
-.sk-review.risk-high .sk-reasons li::marker { color: var(--danger); }
-.sk-approve { margin-top: 18px; padding: 18px 22px 22px; border-top: 1px solid var(--rule); background: var(--panel-2); display: flex; flex-direction: column; gap: 14px; }
-.sk-block { border: 1px solid var(--danger); background: var(--danger-soft); color: var(--text); padding: 14px; display: flex; flex-direction: column; gap: 10px; font-size: var(--text-sm); }
-.sk-block code { background: var(--panel); padding: 1px 6px; border: 1px solid var(--border); }
+.sk-approve { padding: var(--space-4) var(--space-5) var(--space-5); border-top: var(--border-w) solid var(--color-border); background: var(--color-surface-sunken); display: flex; flex-direction: column; gap: var(--space-3); }
+.sk-grants { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.sk-block { border: var(--border-w) solid var(--color-danger); background: var(--color-danger-soft); border-radius: var(--radius-sm); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
 
 /* Report */
-.sk-report { margin-top: 4px; }
-.sk-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-.sk-plain { margin: 0; padding-left: 18px; font-size: var(--text-sm); }
-.sk-plain li { margin: 3px 0; }
-.sk-run { border-top: 1px solid var(--border); padding: 8px 0; }
-.sk-violation { color: var(--danger-text); display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-.sk-pre { margin: 6px 0 0; padding: 8px 10px; background: var(--code-bg); font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow: auto; }
-.sk-pre.sk-patch { max-height: 420px; }
-.sk-patch .add { color: var(--ok-text); background: var(--ok-soft); display: inline; }
-.sk-patch .del { color: var(--danger-text); background: var(--danger-soft); display: inline; }
-.sk-findings, .sk-audit { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
-.sk-findings td, .sk-audit td { border-top: 1px solid var(--border); padding: 10px 8px 10px 0; vertical-align: top; }
-.sk-findings td:first-child { width: 84px; }
-.sk-snippet { display: block; margin-top: 4px; font-family: var(--mono); font-size: 12px; color: var(--muted); overflow-wrap: anywhere; white-space: pre-wrap; }
-.sev { font-size: var(--text-2xs); font-weight: 700; letter-spacing: var(--track); text-transform: uppercase; padding: 2px 6px; border: 1px solid currentColor; }
-.sev.critical { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
-.sev.high { color: var(--danger-text); }
-.sev.medium { color: var(--warn-text); }
-.sev.low { color: var(--muted); }
-.sk-diff { border: 1px solid var(--border-strong); padding: 14px; margin-bottom: 18px; }
-.badge.risk.low { background: var(--blue-soft); border-color: transparent; color: var(--text); }
-.badge.risk.medium { color: var(--warn-text); border-color: currentColor; }
-.badge.risk.high { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
-.sk-settings summary { display: flex; align-items: center; cursor: pointer; font-weight: 650; list-style: none; }
+.sk-report { margin-top: var(--space-2); }
+.sk-cols { gap: var(--space-6); }
+.sk-plain { margin: 0; padding-left: var(--space-5); font-size: var(--text-sm); }
+.sk-plain li { margin: 2px 0; }
+.sk-run { border-top: var(--border-w) solid var(--color-border); padding: var(--space-2) 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.sk-violation { margin: 0; color: var(--color-danger-text); display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.sk-patch { max-height: 420px; }
+.sk-patch .add { color: var(--color-success-text); background: var(--color-success-soft); }
+.sk-patch .del { color: var(--color-danger-text); background: var(--color-danger-soft); }
+.sk-findings { list-style: none; margin: 0; padding: 0; border-top: var(--border-w) solid var(--color-border); }
+.sk-findings li { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-3) 0; border-bottom: var(--border-w) solid var(--color-border); }
+.sk-snippet { display: block; margin-top: var(--space-1); font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-ink-muted); overflow-wrap: anywhere; white-space: pre-wrap; }
+.sk-diff { border: var(--border-w) solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
+.sk-settings summary { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; font-size: var(--text-md); font-weight: var(--weight-medium); list-style: none; }
 .sk-settings summary::-webkit-details-marker { display: none; }
-@media (max-width: 900px) { .sk-steps { grid-template-columns: 1fr; } .sk-cols { grid-template-columns: 1fr; } }
 
-.sk-audit .nowrap { white-space: nowrap; padding-right: 18px; }
+@media (max-width: 900px) {
+  .sk-steps { grid-template-columns: minmax(0, 1fr); }
+  .sk-step { border-right: 0; border-bottom: var(--border-w) solid var(--color-border); min-height: 0; }
+  .sk-step:nth-last-child(-n+3) { border-bottom: var(--border-w) solid var(--color-border); }
+  .sk-step:last-child { border-bottom: 0; }
+  .sk-item-head { flex-direction: column; gap: var(--space-2); }
+  .sk-item-actions { justify-content: flex-start; }
+  .sk-page .ui-page-actions { width: 100%; overflow-x: auto; }
+}

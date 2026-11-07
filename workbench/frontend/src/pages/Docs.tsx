@@ -1,8 +1,10 @@
-import { ArrowLeft, Eye, FileText, Loader2, NotebookPen, Pencil, Pin, Plus, PenLine, Search, Trash2, X } from "lucide-react";
+import { ArrowLeft, FileText, NotebookPen, PenLine, Pin, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, Doc, stream } from "../api";
-import { Empty, Markdown, ModelSelect, relTime, SkeletonList, useModels, useToast } from "../util";
+import { Button, Card, EmptyState, ErrorState, IconButton, Input, List, Loading, Page, Row, Select, Tabs } from "../ui";
+import { Markdown, relTime, useModels, useToast } from "../util";
+import { ModelPicker, plainError, Split } from "./day/parts";
 
 const ACTIONS = [
   { id: "improve", label: "Improve writing" },
@@ -14,7 +16,7 @@ const ACTIONS = [
   { id: "outline", label: "Draft outline" },
 ] as const;
 
-function Editor({ doc, onSaved, onDeleted }: { doc: Doc; onSaved: (d: Doc) => void; onDeleted: () => void }) {
+function Editor({ doc, onSaved, onDeleted, onBack }: { doc: Doc; onSaved: (d: Doc) => void; onDeleted: () => void; onBack: () => void }) {
   const [title, setTitle] = useState(doc.title);
   const [body, setBody] = useState(doc.body);
   const [tags, setTags] = useState(doc.tags);
@@ -47,7 +49,7 @@ function Editor({ doc, onSaved, onDeleted }: { doc: Doc; onSaved: (d: Doc) => vo
       }
     }, 700);
     return () => clearTimeout(t);
-  }, [title, body, tags]);
+  }, [title, body, tags]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const runAssist = async (action: string) => {
     const el = textRef.current;
@@ -79,64 +81,63 @@ function Editor({ doc, onSaved, onDeleted }: { doc: Doc; onSaved: (d: Doc) => vo
     setAssist(null);
   };
 
-  const togglePin = async () => onSaved(await api<Doc>(`/docs/${doc.id}`, { method: "PATCH", body: { pinned: !doc.pinned } }));
+  const togglePin = async () => {
+    try { onSaved(await api<Doc>(`/docs/${doc.id}`, { method: "PATCH", body: { pinned: !doc.pinned } })); } catch (e) { toast.err(e); }
+  };
   const remove = async () => {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
-    await api(`/docs/${doc.id}`, { method: "DELETE" });
-    onDeleted();
+    try { await api(`/docs/${doc.id}`, { method: "DELETE" }); onDeleted(); } catch (e) { toast.err(e); }
   };
   const words = body.trim() ? body.trim().split(/\s+/).length : 0;
+  const status = saving === "saving" ? "Saving…" : saving === "pending" ? "Edited" : saving === "saved" ? "Saved" : "";
 
   return (
-    <>
-      <div className="toolbar">
-        <button className="btn ghost sm icon mobile-only" onClick={onDeleted} aria-label="Back"><ArrowLeft size={15} /></button>
-        <div className="tabs">
-          <button className={`tab ${!preview ? "active" : ""}`} onClick={() => setPreview(false)}><Pencil size={13} /> Write</button>
-          <button className={`tab ${preview ? "active" : ""}`} onClick={() => setPreview(true)}><Eye size={13} /> Preview</button>
-        </div>
-        <div style={{ width: 180 }}><ModelSelect value={model} onChange={setModel} models={models} /></div>
-        <select className="input" style={{ width: 170 }} value="" onChange={(e) => e.target.value && runAssist(e.target.value)}>
-          <option value="">Assist…</option>
+    <div className="day-doc">
+      <div className="day-doc-bar" role="toolbar" aria-label="Writing tools">
+        <IconButton className="day-phone-only" label="Back to the list" size="sm" onClick={onBack}><ArrowLeft size={16} /></IconButton>
+        <Tabs label="Write or preview" size="sm" value={preview ? "preview" : "write"} onChange={(v) => setPreview(v === "preview")} items={[{ id: "write", label: "Write" }, { id: "preview", label: "Preview" }]} />
+        <ModelPicker value={model} onChange={setModel} models={models} />
+        <Select aria-label="Writing help" className="day-assist-pick" value="" onChange={(e) => e.target.value && void runAssist(e.target.value)}>
+          <option value="">Writing help…</option>
           {ACTIONS.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
-        </select>
-        <div className="spacer" />
-        <span className="faint small">{saving === "saving" ? "Saving…" : saving === "pending" ? "Edited" : saving === "saved" ? "Saved" : ""} · {words} words</span>
-        <button className={`btn ghost sm icon ${doc.pinned ? "prio-1" : ""}`} onClick={togglePin} title="Pin"><Pin size={15} /></button>
-        <button className="btn ghost sm icon danger" onClick={remove} title="Delete"><Trash2 size={15} /></button>
+        </Select>
+        <span className="day-grow" />
+        <span className="day-hint day-doc-status" aria-live="polite">{status}{status ? " · " : ""}{words} words</span>
+        <IconButton label={doc.pinned ? "Unpin" : "Pin"} size="sm" active={!!doc.pinned} onClick={() => void togglePin()}><Pin size={15} /></IconButton>
+        <IconButton label="Delete" size="sm" onClick={() => void remove()}><Trash2 size={15} /></IconButton>
       </div>
-      <div style={{ padding: "24px 32px", maxWidth: 860, width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-        <input className="editor-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" />
-        <input className="input" style={{ border: "none", padding: 0, height: 24, background: "transparent", color: "var(--muted)" }} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Add tags, comma separated" />
-        <div className="row">
-          <input className="input grow" value={instruction} onChange={(e) => setInstruction(e.target.value)} placeholder="Describe an edit, e.g. 'make it more formal' or 'add a conclusion'"
-            onKeyDown={(e) => { if (e.key === "Enter" && instruction.trim()) runAssist("custom"); }} />
-          <button className="btn" disabled={!instruction.trim()} onClick={() => runAssist("custom")}><PenLine size={15} /> Apply</button>
-        </div>
+      <div className="day-doc-page">
+        <input className="day-doc-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" aria-label="Title" />
+        <input className="day-doc-tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Add tags, comma separated" aria-label="Tags" />
+        <form className="day-add-row" onSubmit={(e) => { e.preventDefault(); if (instruction.trim()) void runAssist("custom"); }}>
+          <Input className="day-grow" value={instruction} onChange={(e) => setInstruction(e.target.value)} aria-label="Describe an edit"
+            placeholder="Describe an edit, e.g. make it more formal, or add a conclusion" />
+          <Button type="submit" icon={<PenLine size={15} />} disabled={!instruction.trim()}>Apply</Button>
+        </form>
         {assist && (
-          <div className="card col" style={{ borderColor: "var(--accent)" }}>
-            <div className="row">
-              <PenLine size={15} className="prio-1" />
+          <Card className="day-assist-result" aria-busy={assist.busy || undefined}>
+            <div className="day-assist-head">
               <strong>{ACTIONS.find((a) => a.id === assist.action)?.label ?? "Custom edit"}</strong>
-              {assist.busy && <Loader2 size={14} className="spin" />}
-              <div className="spacer" />
-              <button className="btn ghost sm icon" onClick={() => { abortRef.current?.abort(); setAssist(null); }}><X size={15} /></button>
+              {assist.busy && <span className="day-hint" role="status">{assist.thinking && !assist.result ? "Thinking…" : "Writing…"}</span>}
+              <span className="day-grow" />
+              <IconButton label="Close" size="sm" onClick={() => { abortRef.current?.abort(); setAssist(null); }}><X size={15} /></IconButton>
             </div>
             <Markdown text={assist.result.replace(/<think>[\s\S]*?(<\/think>|$)/g, "") || (assist.thinking ? "*Thinking…*" : "…")} />
             {!assist.busy && assist.result && (
-              <div className="row">
-                <button className="btn primary sm" onClick={() => apply("replace")}>{assist.action === "continue" ? "Insert" : "Replace"}</button>
-                {assist.action !== "continue" && <button className="btn sm" onClick={() => apply("insert")}>Insert below</button>}
-                <button className="btn ghost sm" onClick={() => setAssist(null)}>Discard</button>
+              <div className="day-actions">
+                <Button variant="primary" size="sm" onClick={() => apply("replace")}>{assist.action === "continue" ? "Insert" : "Replace"}</Button>
+                {assist.action !== "continue" && <Button size="sm" onClick={() => apply("insert")}>Insert below</Button>}
+                <Button variant="ghost" size="sm" onClick={() => setAssist(null)}>Discard</Button>
               </div>
             )}
-          </div>
+          </Card>
         )}
-        {preview ? <Markdown text={body || "*Nothing here yet.*"} /> : (
-          <textarea ref={textRef} className="editor-body" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Start writing. Markdown supported. Select text before using AI assist to work on just that part." />
+        {preview ? <Markdown className="day-doc-preview" text={body || "*Nothing here yet.*"} /> : (
+          <textarea ref={textRef} className="day-doc-body" value={body} onChange={(e) => setBody(e.target.value)} aria-label="Text"
+            placeholder="Start writing. Markdown works. Select text before using writing help to work on just that part." />
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -145,63 +146,76 @@ export default function Docs({ kind }: { kind: "note" | "document" }) {
   const navigate = useNavigate();
   const [list, setList] = useState<Doc[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [problem, setProblem] = useState("");
   const [q, setQ] = useState("");
   const [current, setCurrent] = useState<Doc | null>(null);
   const toast = useToast();
   const base = kind === "note" ? "/notes" : "/documents";
   const Icon = kind === "note" ? NotebookPen : FileText;
+  const plural = kind === "note" ? "Notes" : "Documents";
 
-  const load = () => api<Doc[]>(`/docs?kind=${kind}&q=${encodeURIComponent(q)}`).then(setList).catch(toast.err).finally(() => setLoaded(true));
+  const load = () => {
+    setProblem("");
+    return api<Doc[]>(`/docs?kind=${kind}&q=${encodeURIComponent(q)}`).then(setList)
+      .catch((e) => setProblem(plainError(e, `Your ${plural.toLowerCase()} did not load.`))).finally(() => setLoaded(true));
+  };
   useEffect(() => {
     const t = setTimeout(load, 200);
     return () => clearTimeout(t);
-  }, [q, kind]);
+  }, [q, kind]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!id) return setCurrent(null);
     api<Doc>(`/docs/${id}`).then(setCurrent).catch(() => navigate(base));
-  }, [id, kind]);
+  }, [id, kind]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const create = async () => {
-    const d = await api<Doc>("/docs", { body: { kind, title: kind === "note" ? "New note" : "Untitled document" } });
-    setList((l) => [d, ...l]);
-    navigate(`${base}/${d.id}`);
+    try {
+      const d = await api<Doc>("/docs", { body: { kind, title: kind === "note" ? "New note" : "Untitled document" } });
+      setList((l) => [d, ...l]);
+      navigate(`${base}/${d.id}`);
+    } catch (e) { toast.err(e); }
   };
+  const newLabel = kind === "note" ? "New note" : "New document";
 
-  return (
-    <div className={`split ${current ? "has-selection" : ""}`}>
-      <div className="split-list">
-        <div className="col" style={{ padding: 14, borderBottom: "1px solid var(--border)" }}>
-          <div className="row">
-            <h2 className="grow">{kind === "note" ? "Notes" : "Documents"}</h2>
-            <button className="btn primary sm" onClick={create}><Plus size={14} /> New</button>
-          </div>
-          <div className="row" style={{ position: "relative" }}>
-            <Search size={14} className="faint" style={{ position: "absolute", left: 10 }} />
-            <input className="input" style={{ paddingLeft: 30 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" />
-          </div>
-        </div>
-        <div className="scroll">
-          {!loaded && <SkeletonList rows={4} />}
-          {loaded && list.length === 0 && <Empty icon={<Icon size={22} />} title={q ? "No matches" : `No ${kind}s yet`} />}
-          {list.map((d) => (
-            <div key={d.id} className={`list-item ${current?.id === d.id ? "active" : ""}`} onClick={() => navigate(`${base}/${d.id}`)} style={{ alignItems: "flex-start" }}>
-              <div className="grow">
-                <div className="row"><strong className="truncate grow">{d.title}</strong>{!!d.pinned && <Pin size={12} className="prio-1" />}</div>
-                <div className="muted small truncate">{d.preview?.replace(/[#*_>`]/g, "") || "Empty"}</div>
-                <div className="row small faint">{relTime(d.updated_at)}{d.tags && <span className="truncate">· {d.tags}</span>}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+  const listPane = (
+    <>
+      <div className="day-split-tools">
+        <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${plural.toLowerCase()}`} aria-label={`Search ${plural.toLowerCase()}`} />
       </div>
-      <div className="split-main">
-        {current ? (
-          <Editor key={current.id} doc={current} onSaved={(d) => { setCurrent(d); setList((l) => l.map((x) => (x.id === d.id ? { ...x, ...d, preview: d.body.slice(0, 240) } : x))); }}
-            onDeleted={() => { setCurrent(null); navigate(base); load(); }} />
-        ) : (
-          <Empty icon={<Icon size={28} />} title={`Select or create a ${kind}`} hint={kind === "document" ? "Longer writing lives here. Research reports can be saved here too." : "Quick thoughts, meeting notes, ideas. Chat can search these and add to them."} />
+      <div className="day-split-scroll">
+        {!loaded && <Loading rows={5} label={`Loading ${plural.toLowerCase()}`} />}
+        {loaded && problem && <div className="day-pad"><ErrorState title={`${plural} did not load`} line={problem} onRetry={() => void load()} /></div>}
+        {loaded && !problem && list.length === 0 && (
+          <EmptyState icon={<Icon size={22} />} title={q ? "No matches" : `No ${kind}s yet`} line={q ? "Try other words." : undefined}
+            action={q ? <Button size="sm" onClick={() => setQ("")}>Clear the search</Button> : <Button size="sm" icon={<Plus size={14} />} onClick={() => void create()}>{newLabel}</Button>} />
+        )}
+        {list.length > 0 && !problem && (
+          <List label={plural}>
+            {list.map((d) => (
+              <Row key={d.id} active={current?.id === d.id} onClick={() => navigate(`${base}/${d.id}`)}
+                title={<>{d.title}{!!d.pinned && <Pin size={12} aria-label="Pinned" className="day-pin" />}</>}
+                meta={`${relTime(d.updated_at)}${d.tags ? ` · ${d.tags}` : ""} · ${d.preview?.replace(/[#*_>`]/g, "").trim() || "Empty"}`} />
+            ))}
+          </List>
         )}
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <Page title={plural} wide className="day-page"
+      description={kind === "document" ? "Longer writing lives here. Research reports can be saved here too." : "Quick thoughts, meeting notes, ideas. Chat can search these and add to them."}
+      actions={<Button variant="primary" icon={<Plus size={15} />} onClick={() => void create()}>{newLabel}</Button>}>
+      {loaded && !problem && !q && list.length === 0 && !current
+        ? <EmptyState icon={<Icon size={24} />} title={`No ${kind}s yet`} line={kind === "note" ? "Write one here, or ask in Chat to take a note." : "Write one here, or save a research report."}
+            action={<Button icon={<Plus size={14} />} onClick={() => void create()}>{newLabel}</Button>} />
+        : <Split label={plural} picked={!!current} list={listPane} className="day-split-doc"
+        main={current ? (
+          <Editor key={current.id} doc={current} onSaved={(d) => { setCurrent(d); setList((l) => l.map((x) => (x.id === d.id ? { ...x, ...d, preview: d.body.slice(0, 240) } : x))); }}
+            onDeleted={() => { setCurrent(null); navigate(base); void load(); }} onBack={() => { setCurrent(null); navigate(base); }} />
+        ) : (
+          <EmptyState icon={<Icon size={24} />} title={`Pick a ${kind} or start a new one`} action={<Button size="sm" icon={<Plus size={14} />} onClick={() => void create()}>{newLabel}</Button>} />
+        )} />}
+    </Page>
   );
 }

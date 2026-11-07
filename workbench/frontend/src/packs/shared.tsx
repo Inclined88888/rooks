@@ -1,7 +1,9 @@
 // Shared bits for the pack pages (feat/v02-packs).
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import "../pages/agents/agents.css";
 import { ApiError, api } from "../api";
+import { Button, Card, Select } from "../ui";
 
 export type WorkFile = { id: number; name: string; kind: string };
 
@@ -29,11 +31,11 @@ export function FilePick({ value, onChange, accept, label, files, onAdded }: {
   const [err, setErr] = useState("");
   return (
     <div className="pk-filepick">
-      <select className="input" aria-label={label} value={value ?? ""} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}>
+      <Select aria-label={label} value={value ?? ""} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}>
         <option value="">{label}</option>
         {files.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-      </select>
-      <label className="btn">
+      </Select>
+      <label className="ui-btn ui-btn-secondary">
         {busy ? "Adding…" : "Add from computer"}
         <input type="file" hidden accept={accept} onChange={async (e) => {
           const f = e.target.files?.[0];
@@ -55,23 +57,23 @@ export function PackGate({ error, packId, name }: { error: unknown; packId: stri
   const [adding, setAdding] = useState(false);
   const [msg, setMsg] = useState("");
   if (status === 402) {
-    return <div className="pk-gate card"><p className="kicker">Pro</p><h2 className="pk-serif">{name} is part of Pro</h2>
-      <p className="muted">{(error as Error).message}</p><Link className="btn primary" to="/settings">Go to Account</Link></div>;
+    return <Card className="pk-gate"><p className="ag-meta">Pro</p><h2 className="ag-title">{name} is part of Pro</h2>
+      <p className="ag-note">{(error as Error).message}</p><div><Link className="ui-btn ui-btn-primary" to="/settings">Go to Account</Link></div></Card>;
   }
   return (
-    <div className="pk-gate card">
-      <p className="kicker">Pack</p>
-      <h2 className="pk-serif">Add the {name} to use this page</h2>
-      <p className="muted">It adds a few skills and shortcuts. Each one goes through the same security check as skills from GitHub.</p>
-      <div className="row">
-        <button className="btn primary" disabled={adding} onClick={async () => {
+    <Card className="pk-gate">
+      <p className="ag-meta">Pack</p>
+      <h2 className="ag-title">Add the {name} to use this page</h2>
+      <p className="ag-note">It adds a few skills and shortcuts. Each one goes through the same security check as skills from GitHub.</p>
+      <div className="ag-bar">
+        <Button variant="primary" busy={adding} onClick={async () => {
           setAdding(true); setMsg("");
           try { await api(`/packs/${packId}/add`, { method: "POST" }); window.location.reload(); } catch (x) { setMsg((x as Error).message); setAdding(false); }
-        }}>{adding ? "Checking and adding…" : `Add ${name}`}</button>
-        <Link className="btn ghost" to="/packs">All packs</Link>
+        }}>{adding ? "Checking and adding…" : `Add ${name}`}</Button>
+        <Link className="ui-btn ui-btn-ghost" to="/packs">All packs</Link>
       </div>
       {msg && <p className="pk-err">{msg}</p>}
-    </div>
+    </Card>
   );
 }
 

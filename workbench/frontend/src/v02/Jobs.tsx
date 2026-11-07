@@ -4,18 +4,19 @@
  * approvals, clear finished, notifications). The Needs you column is also the way into the inbox sheet: the presence
  * pill links to /jobs#needs-you, and that element opens the same sheet.
  */
-import { Bell, Check, CircleStop, Inbox, Loader2, Pause, Play, RotateCcw, Trash2, X } from "lucide-react";
+import { Bell, Check, CircleStop, Inbox, Pause, Play, RotateCcw, Trash2, X } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { api } from "../api";
 import { argsLine, stepTitle } from "../chat/turns";
 import { openNeedsYou } from "../needs/store";
 import { usePresence } from "../shell/presence";
-import { ApprovalCard, Badge, Button, Card, Chip, EmptyState, IconButton, type Tone } from "../ui";
+import { ApprovalCard, Badge, Button, Card, Chip, EmptyState, ErrorState, IconButton, Loading, Page, Textarea, type Tone } from "../ui";
 import { relTime, useToast } from "../util";
 import { LiveMarkdown } from "./LiveBlocks";
 import { jobControls, jobLabel } from "./live";
 import "./v02.css";
+import { plainError } from "../pages/day/parts";
 
 export type Approval = { id: number; tool: string; args: string; reason: string; status: string; effect?: string };
 export type Job = {
@@ -40,6 +41,7 @@ const TONE: Record<string, Tone> = { running: "live", waiting: "accent", done: "
 
 export default function JobsPage() {
   const [board, setBoard] = useState<Board | null>(null);
+  const [problem, setProblem] = useState("");
   const [prompt, setPrompt] = useState("");
   const [kind, setKind] = useState("chat");
   const [busy, setBusy] = useState("");
@@ -49,7 +51,7 @@ export default function JobsPage() {
   const presence = usePresence();
   const location = useLocation();
 
-  const load = () => api<Board>("/jobs").then(setBoard).catch(toast.err);
+  const load = () => api<Board>("/jobs").then((b) => { setBoard(b); setProblem(""); }).catch((e) => setProblem(plainError(e, "The board did not load.")));
   useEffect(() => {
     void load();
     const t = setInterval(() => { if (!document.hidden) void load(); }, 2500);
@@ -79,8 +81,8 @@ export default function JobsPage() {
     <Card key={j.id} as="article" padding="sm" className={`job-card job-${j.status}`}>
       <div className="job-top">
         <span className="job-kind">{KIND_NAME[j.kind] ?? j.kind}</span>
-        <Badge tone={TONE[j.status] ?? "neutral"}>{j.status === "running" && <Loader2 size={11} className="spin" aria-hidden="true" />}{jobLabel(j.status, j.needs)}</Badge>
-        <span className="grow" />
+        <Badge tone={TONE[j.status] ?? "neutral"}>{jobLabel(j.status, j.needs)}</Badge>
+        <span className="job-grow" />
         <span className="job-when">{relTime(j.updated_at)}</span>
       </div>
       <button type="button" className="job-title" onClick={() => setOpen(open === j.id ? null : j.id)} aria-expanded={open === j.id}>{j.title}</button>
@@ -114,26 +116,24 @@ export default function JobsPage() {
   ];
 
   return (
-    <div className="page jobs-page">
-      <div className="page-head">
-        <div><h1>Jobs</h1><p>Hand off longer work and keep going. Jobs run in the background and ask you before anything is sent, posted, paid, deleted or changed outside the app.</p></div>
-        <div className="row wrap">
+    <Page title="Jobs" wide className="day-page"
+      description="Hand off longer work and keep going. Jobs run in the background and ask you before anything is sent, posted, paid, deleted or changed outside the app."
+      actions={(
+        <>
           <Button icon={<Inbox size={15} />} onClick={() => openNeedsYou()} aria-haspopup="dialog">
-            Needs you{presence.needs_you > 0 && <Badge tone="accent">{presence.needs_you}</Badge>}
+            Needs you{presence.needs_you > 0 && <Badge tone="accent" className="day-needs-count">{presence.needs_you}</Badge>}
           </Button>
           {perm !== "granted" && typeof Notification !== "undefined" && <Button icon={<Bell size={15} />} onClick={() => void askPerm()}>Notify me</Button>}
-        </div>
-      </div>
-
+        </>
+      )}>
       <Card as="section" className="job-new" aria-label="New job">
         <form className="job-new-form" onSubmit={add}>
-          <textarea className="ui-input job-new-text" rows={2} value={prompt} onChange={(e) => setPrompt(e.target.value)}
+          <Textarea className="job-new-text" rows={2} value={prompt} onChange={(e) => setPrompt(e.target.value)}
             placeholder="What should I work on? e.g. Compare the three quotes in my Files and draft a reply to the cheapest" aria-label="New job" />
-          <div className="row wrap">
+          <div className="job-new-row">
             <div className="job-kinds" role="group" aria-label="Where it works">
               {KINDS.map((k) => <Chip key={k.v} active={kind === k.v} onClick={() => setKind(k.v)}>{k.label}</Chip>)}
             </div>
-            <span className="grow" />
             <Button type="submit" variant="primary" icon={<Play size={14} />} disabled={!prompt.trim()}>Start job</Button>
           </div>
           {board && (
@@ -144,17 +144,19 @@ export default function JobsPage() {
         </form>
       </Card>
 
-      {!board ? <p className="job-loading" role="status"><Loader2 size={15} className="spin" aria-hidden="true" /> Loading the board…</p> : (
+      {problem && <ErrorState title="The board did not load" line={problem} onRetry={() => void load()} />}
+      {!board && !problem && <Loading rows={4} label="Loading the board" />}
+      {board && (
         <div className="job-board">
           {cols.map((c) => (
             <section key={c.key} className={`job-col col-${c.key}`} aria-label={c.title}>
               <header className="job-col-head">
                 <h2>{c.title}</h2><span className="job-count">{board[c.key].length}</span>
-                <span className="grow" />
+                <span className="job-grow" />
                 {c.key === "you" && <Button id="needs-you" size="sm" variant="ghost" icon={<Inbox size={13} />} onClick={() => openNeedsYou()} aria-haspopup="dialog">Open the inbox</Button>}
                 {c.key === "done" && board.done.length > 0 && <IconButton label="Clear finished jobs" size="sm" onClick={() => void clear()}><Trash2 size={13} /></IconButton>}
               </header>
-              <div className="job-col-hint">{c.hint}</div>
+              <p className="job-col-hint">{c.hint}</p>
               {board[c.key].length === 0
                 ? <EmptyState className="job-empty" title={c.empty} />
                 : board[c.key].map(card)}
@@ -162,6 +164,6 @@ export default function JobsPage() {
           ))}
         </div>
       )}
-    </div>
+    </Page>
   );
 }

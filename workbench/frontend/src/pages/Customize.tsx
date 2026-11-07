@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
-  Brain, CalendarDays, Code2, Globe, Mail, Monitor, Plus, Puzzle, Sparkles, SquareTerminal, Wrench,
+  Brain, CalendarDays, ChevronRight, Code2, Globe, Mail, Monitor, Puzzle, Settings, Sparkles, SquareTerminal, Wrench,
 } from "lucide-react";
 import { api } from "../api";
+import { Badge, EmptyState, Page, Tabs } from "../ui";
+import { ButtonLink } from "./settings";
 
 type Status = {
   browser_enabled?: boolean;
@@ -24,7 +26,7 @@ type Row = {
   action?: string;
 };
 
-/** Cursor Customize clone: chip tabs + flat rows. Skills and tools connect later. */
+/** Tabs and one list of rows: each opens the page where that thing is set up. */
 const ROWS: Row[] = [
   { id: "mail", tab: "apps", title: "Mail", blurb: "Gmail, Outlook, or Apple Mail.", to: "/settings?section=apps", icon: Mail },
   { id: "calendar", tab: "apps", title: "Calendar", blurb: "See your day and make events.", to: "/calendar", icon: CalendarDays },
@@ -59,49 +61,34 @@ export default function Customize() {
   const rows = ROWS.filter((r) => r.tab === tab);
 
   return (
-    <div className="cursor-customize">
-      <header className="cursor-customize-head">
-        <div>
-          <h1>Customize</h1>
-          <p className="muted">Apps, tools, skills and rules in one place. Connect what you need; leave the rest for later.</p>
-        </div>
-        <Link className="btn" to="/settings"><Plus size={14} /> Open settings</Link>
-      </header>
-
-      <div className="cursor-chips" role="tablist" aria-label="Customize">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            className={`cursor-chip${tab === t.id ? " on" : ""}`}
-            onClick={() => setParams(t.id === "tools" ? {} : { tab: t.id }, { replace: true })}
-          >
-            {t.label}
-          </button>
-        ))}
+    <Page title="Customize" description="Apps, tools, skills and rules in one place. Connect what you need; leave the rest for later." className="st-page"
+      actions={<ButtonLink size="sm" to="/settings" icon={<Settings size={14} />}>Open settings</ButtonLink>}>
+      <div className="st-tabs-row">
+        <Tabs label="Customize" items={TABS} value={tab} onChange={(id) => setParams(id === "tools" ? {} : { tab: id }, { replace: true })} />
       </div>
-
-      <div className="cursor-list" role="tabpanel">
-        {rows.length === 0 && <p className="muted small" style={{ padding: 16 }}>Nothing here yet.</p>}
-        {rows.map((r) => {
-          const Icon = r.icon;
-          const ready = r.ready?.(status);
-          return (
-            <Link key={r.id} to={r.to} className="cursor-row">
-              <span className="cursor-row-icon" aria-hidden><Icon size={16} /></span>
-              <span className="grow">
-                <strong>{r.title}</strong>
-                <span className="small muted">{r.blurb}</span>
-              </span>
-              {ready === true && <span className="cursor-status on">On</span>}
-              {ready === false && <span className="cursor-status">Off</span>}
-              {ready === undefined && <span className="btn sm ghost">{r.action || "Open"}</span>}
-            </Link>
-          );
-        })}
+      <div role="tabpanel" aria-labelledby={`tab-${tab}`}>
+        {rows.length === 0 ? <EmptyState title="Nothing here yet" line="Things you connect show up in this list." /> : (
+          <div className="st-group">
+            {rows.map((r) => {
+              const Icon = r.icon;
+              const ready = r.ready?.(status);
+              return (
+                <Link key={r.id} to={r.to} className="st-row-link">
+                  <span className="st-row-icon" aria-hidden="true"><Icon size={16} /></span>
+                  <span className="st-item-text">
+                    <span className="st-row-label">{r.title}</span>
+                    <span className="st-row-help">{r.blurb}</span>
+                  </span>
+                  {ready === true && <Badge tone="ok">On</Badge>}
+                  {ready === false && <Badge>Off</Badge>}
+                  {ready === undefined && r.action && <span className="st-small">{r.action}</span>}
+                  <ChevronRight size={16} className="st-row-go" aria-hidden="true" />
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
-    </div>
+    </Page>
   );
 }

@@ -1,46 +1,29 @@
-/* feat/memory-core: memory pages. Theme variables only, so every theme (Sunshine first) works. */
-.kn .kn-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--rule); margin: 4px 0 18px; flex-wrap: wrap; }
-.kn .kn-tabs button { background: none; border: 0; padding: 9px 14px; color: var(--muted); font: inherit; cursor: pointer; border-bottom: 2px solid transparent; }
-.kn .kn-tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
-.kn .kn-tabs .count { background: var(--accent-soft); color: var(--accent-text); border-radius: 999px; padding: 0 7px; margin-left: 6px; font-size: 12px; }
-.kn .kn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
-.kn .kn-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: none;
-  text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-out); }
-.kn .kn-card:hover { border-color: var(--border-strong); }
-.kn .kn-card h4 { margin: 0 0 4px; font-size: 15px; }
-.kn .kn-sub { color: var(--muted); font-size: 13px; }
-.kn .kn-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--rule); }
-.kn .kn-row:last-child { border-bottom: 0; }
-.kn .kn-row .grow { flex: 1; min-width: 0; }
-.kn .kn-tag { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; background: var(--panel-2); color: var(--muted); margin-right: 6px; }
-.kn .kn-tag.sensitive { background: var(--danger-soft); color: var(--danger-text); }
-.kn .kn-tag.pinned { background: var(--accent-soft); color: var(--accent-text); }
-.kn .kn-why { margin-top: 8px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--panel-2); font-size: 13.5px; color: var(--text); }
-.kn .kn-conflict { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
-.kn .kn-conflict .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
-.kn .kn-conflict .pair > div { background: var(--panel); border-radius: var(--radius-sm); padding: 10px 12px; border: 1px solid var(--border); }
-.kn .kn-detail { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 22px; box-shadow: var(--shadow-float); margin-bottom: 18px; }
-.kn .kn-section { margin-top: 22px; }
-.kn .kn-section h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin: 0 0 8px; }
-.kn-enter { animation: ui-fade var(--dur-fade) var(--ease-out) both; }
-.kn-enter:nth-child(2) { } .kn-enter:nth-child(3) { } .kn-enter:nth-child(4) { }
-:root[data-motion="off"] .kn-enter, :root[data-motion="off"] .kn .kn-card { animation: none; transition: none; }
-.kn-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--accent-text); background: var(--accent-soft);
-  border-radius: 999px; padding: 3px 10px; }
-.kn-chip b { font-weight: 600; }
-.kn-link { background: none; border: 0; padding: 0 2px; color: var(--accent-text); text-decoration: underline; cursor: pointer; font: inherit; }
-.kn-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; display: flex; flex-direction: column; min-width: 200px; background: var(--panel);
-  border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--shadow-float); padding: 4px; }
-.kn-menu button { background: none; border: 0; text-align: left; padding: 7px 10px; border-radius: var(--radius-xs); font: inherit; color: var(--text); cursor: pointer; }
-.kn-menu button:hover { background: var(--panel-2); }
-.kn-improved { border-left: 3px solid var(--accent); }
-.kn-proposal { display: flex; gap: 10px; align-items: center; margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--accent-soft); }
+/* Memory (feat/memory-core), premium pass: tokens only, neutral first; the layout pieces live in pages/agents/agents.css. */
+.kn-tabs { margin-bottom: var(--space-6); max-width: 100%; overflow-x: auto; }
+.kn-search { position: relative; display: flex; align-items: center; }
+.kn-search > svg { position: absolute; left: var(--space-3); color: var(--color-ink-muted); pointer-events: none; }
+.kn-search .ui-input { padding-left: 36px; }
+.kn-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.kn-why { flex-basis: 100%; margin-top: var(--space-1); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface-sunken); color: var(--color-ink); font-size: var(--text-sm); }
+.kn-conflict .ag-panel { font-size: var(--text-md); }
+.kn-source { width: auto; min-width: 160px; }
 
-/* B2 graph walk */
-.graph-walk-controls { flex-wrap: wrap; align-items: flex-end; margin-bottom: 8px; }
-.graph-walk-controls .field { min-width: 140px; }
-.graph-hop { margin-top: 10px; }
-.graph-list { list-style: none; margin: 0; padding: 0; }
-.graph-list .kn-row { align-items: center; gap: 8px; flex-wrap: wrap; }
-.graph-path { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--text-xs); color: var(--muted); }
-.graph-step { display: inline-flex; align-items: center; gap: 4px; }
+/* "Filed under X, change?" */
+.kn-chip { position: relative; display: inline-flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; font-size: var(--text-sm); color: var(--color-ink-muted);
+  background: var(--color-surface); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-full); padding: 2px var(--space-3); }
+.kn-chip b { font-weight: var(--weight-medium); color: var(--color-ink); }
+.kn-link { background: none; border: 0; padding: 0 2px; color: var(--color-ink); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font: inherit; }
+.kn-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 30; display: flex; flex-direction: column; min-width: 200px; background: var(--color-surface-raised);
+  border: var(--border-w) solid var(--color-border); border-radius: var(--radius-sm); box-shadow: var(--shadow-float); padding: var(--space-1); animation: ui-fade var(--dur-fade) var(--ease-out) both; }
+.kn-menu button { background: none; border: 0; text-align: left; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font: inherit; font-size: var(--text-md); color: var(--color-ink); cursor: pointer; }
+.kn-menu button:hover { background: var(--color-bg-hover); }
+
+/* "What I improved" on Home */
+.kn-improved { margin-bottom: var(--space-6); }
+.kn-improved-icon { color: var(--color-ink-muted); }
+.kn-proposal { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-top: var(--space-3); padding: var(--space-3); border-radius: var(--radius-sm);
+  border: var(--border-w) solid var(--color-border); background: var(--color-surface-sunken); }
+
+/* Connections (graph walk) */
+.graph-path { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); color: var(--color-ink-muted); }
+.graph-step { display: inline-flex; align-items: center; gap: var(--space-1); }

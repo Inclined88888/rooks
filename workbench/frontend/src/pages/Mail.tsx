@@ -1,8 +1,10 @@
-import { ArrowLeft, Inbox, Loader2, Mail, PenSquare, RefreshCw, Reply, Search, PenLine, Send, Trash2, X } from "lucide-react";
+import { ArrowLeft, Inbox, PenLine, PenSquare, RefreshCw, Reply, Send, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api, stream } from "../api";
-import { Empty, ModelSelect, relTime, useModels, useToast } from "../util";
+import { Button, Card, EmptyState, ErrorState, IconButton, Input, List, Loading, Page, Row, Select, Tabs, Textarea } from "../ui";
+import { relTime, useModels, useToast } from "../util";
 import ConnectMailCalendar from "./ConnectMailCalendar";
+import { ModelPicker, plainError, Split } from "./day/parts";
 
 type Account = { id: number; name: string; email: string; life_role?: "work" | "personal" | "other" };
 const ROLE_LABEL: Record<string, string> = { work: "Work", personal: "Personal", other: "Other" };
@@ -10,6 +12,8 @@ type Summary = { uid: string; from: string; subject: string; date: string; unrea
 type Message = Summary & { reply_to: string; to: string; cc: string; message_id: string; body: string };
 type Draft = { id: number; account_id: number | null; to_addr: string; subject: string; body: string; in_reply_to: string; updated_at: string };
 type Compose = { to: string; subject: string; body: string; in_reply_to: string; draft_id?: number; original?: string };
+
+const sender = (from: string) => from.replace(/<.*>/, "").trim() || from;
 
 function Composer({ account, initial, onClose, onSent }: { account: Account; initial: Compose; onClose: () => void; onSent: () => void }) {
   const [c, setC] = useState(initial);
@@ -47,21 +51,33 @@ function Composer({ account, initial, onClose, onSent }: { account: Account; ini
   };
 
   return (
-    <div className="card col" style={{ margin: 20 }}>
-      <div className="row"><h3 className="grow">{c.in_reply_to ? "Reply" : "New message"} <span className="faint small">from {account.email}</span></h3><button className="btn ghost sm icon" onClick={onClose}><X size={15} /></button></div>
-      <input className="input" placeholder="To" value={c.to} onChange={(e) => setC({ ...c, to: e.target.value })} />
-      <input className="input" placeholder="Subject" value={c.subject} onChange={(e) => setC({ ...c, subject: e.target.value })} />
-      <div className="row wrap">
-        <PenLine size={15} className="prio-1" />
-        <input className="input grow" style={{ minWidth: 180 }} placeholder="What should it say? e.g. 'accept, suggest Thursday 2pm'" value={intent} onChange={(e) => setIntent(e.target.value)} />
-        <div style={{ width: 170 }}><ModelSelect value={model} onChange={setModel} models={models} /></div>
-        <button className="btn" onClick={draft} disabled={drafting}>{drafting ? <Loader2 size={15} className="spin" /> : "Draft with AI"}</button>
-      </div>
-      <textarea className="input" rows={12} value={c.body} onChange={(e) => setC({ ...c, body: e.target.value })} placeholder="Write your message" />
-      <div className="row">
-        <span className="muted small">AI drafts can contain [placeholders]. Read before sending.</span>
-        <div className="spacer" />
-        <button className="btn primary" disabled={sending || !c.to.trim() || !c.body.trim() || drafting} onClick={send}>{sending ? <Loader2 size={15} className="spin" /> : <Send size={15} />} Send</button>
+    <div className="day-detail">
+      <header className="day-detail-head">
+        <IconButton className="day-phone-only" label="Back to the list" size="sm" onClick={onClose}><ArrowLeft size={16} /></IconButton>
+        <div className="day-detail-titles">
+          <h2 className="day-detail-title">{c.in_reply_to ? "Reply" : "New message"}</h2>
+          <p className="day-detail-meta">From {account.email}</p>
+        </div>
+        <IconButton label="Close" size="sm" onClick={onClose}><X size={16} /></IconButton>
+      </header>
+      <div className="day-form">
+        <Input label="To" value={c.to} onChange={(e) => setC({ ...c, to: e.target.value })} />
+        <Input label="Subject" value={c.subject} onChange={(e) => setC({ ...c, subject: e.target.value })} />
+        <Card padding="sm" className="day-assist">
+          <div className="day-assist-row">
+            <PenLine size={16} aria-hidden="true" className="day-muted-icon" />
+            <Input className="day-grow" aria-label="What should it say?" placeholder="What should it say? e.g. accept, suggest Thursday 2pm" value={intent} onChange={(e) => setIntent(e.target.value)} />
+          </div>
+          <div className="day-assist-row">
+            <ModelPicker value={model} onChange={setModel} models={models} />
+            <Button onClick={draft} busy={drafting}>{drafting ? "Drafting…" : "Draft with AI"}</Button>
+          </div>
+        </Card>
+        <Textarea label="Message" rows={12} value={c.body} onChange={(e) => setC({ ...c, body: e.target.value })} placeholder="Write your message" />
+        <div className="day-form-foot">
+          <p className="day-hint">AI drafts can contain [placeholders]. Read before sending.</p>
+          <Button variant="primary" icon={<Send size={15} />} busy={sending} disabled={!c.to.trim() || !c.body.trim() || drafting} onClick={send}>{sending ? "Sending…" : "Send"}</Button>
+        </div>
       </div>
     </div>
   );
@@ -69,6 +85,7 @@ function Composer({ account, initial, onClose, onSent }: { account: Account; ini
 
 export default function MailPage() {
   const [accounts, setAccounts] = useState<Account[] | null>(null);
+  const [accountsError, setAccountsError] = useState("");
   const [account, setAccount] = useState<Account | null>(null);
   const [view, setView] = useState<"inbox" | "drafts">("inbox");
   const [list, setList] = useState<Summary[]>([]);
@@ -80,9 +97,13 @@ export default function MailPage() {
   const [compose, setCompose] = useState<Compose | null>(null);
   const toast = useToast();
 
-  useEffect(() => {
-    api<Account[]>("/mail/accounts").then((a) => { setAccounts(a); setAccount(a[0] ?? null); }).catch(toast.err);
-  }, []);
+  const loadAccounts = () => {
+    setAccountsError("");
+    return api<Account[]>("/mail/accounts").then((a) => { setAccounts(a); setAccount(a[0] ?? null); })
+      .catch((e) => setAccountsError(plainError(e, "Your mail accounts did not load.")));
+  };
+  useEffect(() => { void loadAccounts(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const load = async () => {
     if (!account) return;
     setLoading(true);
@@ -91,14 +112,14 @@ export default function MailPage() {
       if (view === "inbox") setList(await api<Summary[]>(`/mail/${account.id}/messages?q=${encodeURIComponent(q)}`));
       else setDrafts(await api<Draft[]>("/mail/drafts"));
     } catch (e) {
-      const msg = e instanceof Error ? e.message.trim() : "";
-      setProblem(!msg || /^\d{3}\b/.test(msg) || /gateway timeout/i.test(msg) ? "Mail did not answer in time." : msg);
+      const m = e instanceof Error ? e.message.trim() : "";
+      setProblem(!m || /^\d{3}\b/.test(m) || /gateway timeout/i.test(m) ? "Mail did not answer in time." : m);
       if (view === "inbox") setList([]);
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => { load(); }, [account, view]);
+  useEffect(() => { void load(); }, [account, view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const open = async (uid: string) => {
     setCompose(null);
@@ -112,108 +133,120 @@ export default function MailPage() {
       body: `\n\nOn ${msg.date}, ${msg.from} wrote:\n${quoted}`, original: `From: ${msg.from}\nSubject: ${msg.subject}\n\n${msg.body.slice(0, 20000)}`,
     });
   };
+  const setRole = async (life_role: Account["life_role"]) => {
+    if (!account) return;
+    try {
+      await api(`/mail/accounts/${account.id}`, { method: "PATCH", body: { life_role } });
+      const next = { ...account, life_role };
+      setAccount(next);
+      setAccounts((all) => (all || []).map((a) => (a.id === account.id ? next : a)));
+    } catch (err) { toast.err(err); }
+  };
+  const removeDraft = async (d: Draft) => {
+    try { await api(`/mail/drafts/${d.id}`, { method: "DELETE" }); void load(); } catch (e) { toast.err(e); }
+  };
+  const newMessage = () => { setMsg(null); setCompose({ to: "", subject: "", body: "", in_reply_to: "" }); };
 
-  if (accounts === null) return null;
+  const description = "Read and answer your mail here. Nothing is sent until you say so.";
+  if (accounts === null) {
+    return (
+      <Page title="Mail" description={description} className="day-page">
+        {accountsError ? <ErrorState title="Mail did not load" line={accountsError} onRetry={() => void loadAccounts()} /> : <Loading rows={6} label="Loading mail" />}
+      </Page>
+    );
+  }
   if (!account) {
     return (
-      <div className="page">
-        <div style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
-          <ConnectMailCalendar onChange={() => api<Account[]>("/mail/accounts").then((a) => { setAccounts(a); setAccount(a[0] ?? null); }).catch(() => undefined)} />
-        </div>
-      </div>
+      <Page title="Mail" description="Connect an email address and your mail shows up here." className="day-page">
+        <ConnectMailCalendar title="Connect your email" onChange={() => api<Account[]>("/mail/accounts").then((a) => { setAccounts(a); setAccount(a[0] ?? null); }).catch(() => undefined)} />
+      </Page>
     );
   }
 
-  const selected = !!(msg || compose);
-  return (
-    <div className={`split ${selected ? "has-selection" : ""}`} style={{ gridTemplateColumns: "360px 1fr" }}>
-      <div className="split-list">
-        <div className="col" style={{ padding: 14, borderBottom: "1px solid var(--border)" }}>
-          <div className="row">
-            {accounts.length > 1 ? (
-              <select className="input grow" value={account.id} onChange={(e) => setAccount(accounts.find((a) => a.id === Number(e.target.value))!)}>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {ROLE_LABEL[a.life_role || "other"]}: {a.email}
-                  </option>
-                ))}
-              </select>
-            ) : <strong className="grow truncate">{ROLE_LABEL[account.life_role || "other"]}: {account.email}</strong>}
-            <select
-              className="input"
-              title="Is this work or personal mail?"
-              value={account.life_role || "other"}
-              onChange={async (e) => {
-                const life_role = e.target.value as Account["life_role"];
-                try {
-                  await api(`/mail/accounts/${account.id}`, { method: "PATCH", body: { life_role } });
-                  const next = { ...account, life_role };
-                  setAccount(next);
-                  setAccounts((all) => (all || []).map((a) => (a.id === account.id ? next : a)));
-                } catch (err) { toast.err(err); }
-              }}
-            >
-              <option value="work">Work</option>
-              <option value="personal">Personal</option>
-              <option value="other">Other</option>
-            </select>
-            <button className="btn ghost sm icon" onClick={load} title="Refresh">{loading ? <Loader2 size={14} className="spin" /> : <RefreshCw size={14} />}</button>
-            <button className="btn primary sm" onClick={() => { setMsg(null); setCompose({ to: "", subject: "", body: "", in_reply_to: "" }); }}><PenSquare size={14} /></button>
-          </div>
-          <div className="tabs">
-            <button className={`tab ${view === "inbox" ? "active" : ""}`} onClick={() => setView("inbox")}><Inbox size={13} /> Inbox</button>
-            <button className={`tab ${view === "drafts" ? "active" : ""}`} onClick={() => setView("drafts")}>Drafts</button>
-          </div>
-          {view === "inbox" && (
-            <form className="row" onSubmit={(e) => { e.preventDefault(); load(); }} style={{ position: "relative" }}>
-              <Search size={14} className="faint" style={{ position: "absolute", left: 10 }} />
-              <input className="input" style={{ paddingLeft: 30 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search mail, press Enter" />
-            </form>
-          )}
-        </div>
-        <div className="scroll">
-          {view === "inbox" && !loading && problem && <p className="muted" style={{ padding: 16 }} role="status">{problem}</p>}
-          {view === "inbox" && !loading && !problem && list.length === 0 && <Empty icon={<Inbox size={22} />} title="No messages" />}
-          {view === "inbox" && list.map((m) => (
-            <div key={m.uid} className={`list-item ${msg?.uid === m.uid ? "active" : ""}`} onClick={() => open(m.uid)} style={{ alignItems: "flex-start" }}>
-              {m.unread ? <span className="dot" style={{ background: "var(--accent)", marginTop: 7 }} /> : <span className="dot" />}
-              <div className="grow">
-                <div className="row"><span className={`truncate grow ${m.unread ? "" : "muted"}`} style={{ fontWeight: m.unread ? 600 : 500 }}>{m.from.replace(/<.*>/, "").trim() || m.from}</span><span className="faint small">{m.date ? relTime(m.date) : ""}</span></div>
-                <div className="truncate small">{m.subject}</div>
-              </div>
-            </div>
-          ))}
-          {view === "drafts" && drafts.length === 0 && <Empty icon={<PenSquare size={22} />} title="No drafts" hint="Chat saves drafts here. Nothing is sent until you say so." />}
-          {view === "drafts" && drafts.map((d) => (
-            <div key={d.id} className="list-item" style={{ alignItems: "flex-start" }} onClick={() => { setMsg(null); setCompose({ to: d.to_addr, subject: d.subject, body: d.body, in_reply_to: d.in_reply_to, draft_id: d.id }); }}>
-              <div className="grow">
-                <div className="truncate"><strong>{d.subject || "(no subject)"}</strong></div>
-                <div className="muted small truncate">To {d.to_addr} · {relTime(d.updated_at)}</div>
-              </div>
-              <button className="btn ghost sm icon" onClick={async (e) => { e.stopPropagation(); await api(`/mail/drafts/${d.id}`, { method: "DELETE" }); load(); }}><Trash2 size={13} /></button>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="split-main">
-        {compose ? (
-          <Composer key={compose.draft_id ?? compose.in_reply_to ?? "new"} account={account} initial={compose} onClose={() => setCompose(null)} onSent={() => { setCompose(null); load(); }} />
-        ) : msg ? (
-          <div style={{ padding: "20px 28px", maxWidth: 900 }}>
-            <div className="row" style={{ marginBottom: 12 }}>
-              <button className="btn ghost sm icon mobile-only" onClick={() => setMsg(null)}><ArrowLeft size={15} /></button>
-              <h2 className="grow">{msg.subject || "(no subject)"}</h2>
-              <button className="btn primary sm" onClick={reply}><Reply size={14} /> Reply</button>
-            </div>
-            <div className="muted small">From {msg.from}</div>
-            <div className="muted small">To {msg.to}{msg.cc ? ` · Cc ${msg.cc}` : ""}</div>
-            <div className="faint small" style={{ marginBottom: 16 }}>{msg.date}</div>
-            <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{msg.body || <span className="muted">(No text content)</span>}</div>
-          </div>
-        ) : (
-          <Empty icon={<Mail size={28} />} title="Select a message" />
+  const picked = !!(msg || compose);
+  const listPane = (
+    <>
+      <div className="day-split-tools">
+        <Tabs label="Mail folders" size="sm" value={view} onChange={(v) => setView(v as "inbox" | "drafts")}
+          items={[{ id: "inbox", label: "Inbox" }, { id: "drafts", label: "Drafts", count: drafts.length || undefined }]} />
+        {view === "inbox" && (
+          <form role="search" onSubmit={(e) => { e.preventDefault(); void load(); }}>
+            <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search mail, press Enter" aria-label="Search mail" />
+          </form>
         )}
       </div>
-    </div>
+      <div className="day-split-scroll">
+        {loading && <Loading rows={6} label={view === "inbox" ? "Loading mail" : "Loading drafts"} />}
+        {!loading && problem && <div className="day-pad"><ErrorState title="Mail did not load" line={problem} onRetry={() => void load()} /></div>}
+        {!loading && !problem && view === "inbox" && (list.length === 0
+          ? <EmptyState icon={<Inbox size={22} />} title={q ? "No mail matches that" : "No messages"} line={q ? "Try other words, or clear the search." : "New mail shows up here."}
+              action={<Button size="sm" icon={<RefreshCw size={14} />} onClick={() => void load()}>Check again</Button>} />
+          : (
+            <List label="Inbox">
+              {list.map((m) => (
+                <Row key={m.uid} active={msg?.uid === m.uid} onClick={() => void open(m.uid)} className={m.unread ? "day-unread" : undefined}
+                  leading={<span className={m.unread ? "day-dot is-live" : "day-dot"} />}
+                  title={<>{sender(m.from)}{m.unread && <span className="sr-only"> (unread)</span>}</>}
+                  meta={m.subject || "(no subject)"}
+                  actions={m.date ? <span className="day-when">{relTime(m.date)}</span> : undefined} />
+              ))}
+            </List>
+          ))}
+        {!loading && !problem && view === "drafts" && (drafts.length === 0
+          ? <EmptyState icon={<PenSquare size={22} />} title="No drafts" line="Chat saves drafts here. Nothing is sent until you say so." action={<Button size="sm" onClick={newMessage}>Write a message</Button>} />
+          : (
+            <List label="Drafts">
+              {drafts.map((d) => (
+                <Row key={d.id} active={compose?.draft_id === d.id} title={d.subject || "(no subject)"} meta={`To ${d.to_addr} · ${relTime(d.updated_at)}`}
+                  onClick={() => { setMsg(null); setCompose({ to: d.to_addr, subject: d.subject, body: d.body, in_reply_to: d.in_reply_to, draft_id: d.id }); }}
+                  actions={<IconButton label={`Delete draft ${d.subject || ""}`.trim()} size="sm" onClick={() => void removeDraft(d)}><Trash2 size={14} /></IconButton>} />
+              ))}
+            </List>
+          ))}
+      </div>
+    </>
+  );
+
+  const mainPane = compose ? (
+    <Composer key={compose.draft_id ?? compose.in_reply_to ?? "new"} account={account} initial={compose} onClose={() => setCompose(null)} onSent={() => { setCompose(null); void load(); }} />
+  ) : msg ? (
+    <article className="day-detail">
+      <header className="day-detail-head">
+        <IconButton className="day-phone-only" label="Back to the list" size="sm" onClick={() => setMsg(null)}><ArrowLeft size={16} /></IconButton>
+        <div className="day-detail-titles">
+          <h2 className="day-detail-title">{msg.subject || "(no subject)"}</h2>
+          <p className="day-detail-meta">From {msg.from}</p>
+          <p className="day-detail-meta">To {msg.to}{msg.cc ? ` · Cc ${msg.cc}` : ""}</p>
+          <p className="day-detail-meta">{msg.date}</p>
+        </div>
+        <Button variant="primary" size="sm" icon={<Reply size={14} />} onClick={reply}>Reply</Button>
+      </header>
+      <div className="day-mail-body">{msg.body || <span className="day-hint">(No text content)</span>}</div>
+    </article>
+  ) : (
+    <EmptyState title="Pick a message to read it" line="Or start a new one." action={<Button size="sm" icon={<PenSquare size={14} />} onClick={newMessage}>New message</Button>} />
+  );
+
+  return (
+    <Page title="Mail" description={description} wide className="day-page"
+      actions={(
+        <>
+          {accounts.length > 1 ? (
+            <Select aria-label="Mail account" className="day-account" value={account.id} onChange={(e) => setAccount(accounts.find((a) => a.id === Number(e.target.value))!)}>
+              {accounts.map((a) => <option key={a.id} value={a.id}>{ROLE_LABEL[a.life_role || "other"]}: {a.email}</option>)}
+            </Select>
+          ) : <span className="day-account-name" title={account.email}>{account.email}</span>}
+          <Select aria-label="Is this work or personal mail?" title="Is this work or personal mail?" className="day-role" value={account.life_role || "other"}
+            onChange={(e) => void setRole(e.target.value as Account["life_role"])}>
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+            <option value="other">Other</option>
+          </Select>
+          <IconButton label="Check for new mail" onClick={() => void load()} disabled={loading}><RefreshCw size={16} /></IconButton>
+          <Button variant="primary" icon={<PenSquare size={15} />} onClick={newMessage}>New message</Button>
+        </>
+      )}>
+      <Split label="Mail" picked={picked} list={listPane} main={mainPane} />
+    </Page>
   );
 }

@@ -1,9 +1,12 @@
-import { CheckCircle2, CircleStop, Globe, Loader2, Play, Trash2, XCircle } from "lucide-react";
+// Browser agent: a goal, a real browser, the steps on the one Timeline. Premium pass (package C).
+import { CheckCircle2, CircleStop, Globe, Play, Trash2, XCircle } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { LiveShot } from "../motion";
-import { Empty, Markdown, ModelSelect, useModels, useToast } from "../util";
+import { Markdown, ModelSelect, useModels, useToast } from "../util";
+import { ApprovalCard, Badge, Button, Card, Chip, EmptyState, ErrorState, IconButton, Input, List, Loading, Page, Row, Section, Textarea, Timeline, type TimelineStep } from "../ui";
+import { Gate, Split, StatusText, plainError, useLoad } from "./agents/kit";
 
 type JobSummary = { id: string; goal: string; provider: string; model: string; status: string; source: string; created_at: number };
 type Step = { step: number; url: string; title: string; evaluation: string; next_goal: string; actions: Record<string, unknown>[]; result?: string; status?: string; has_screenshot?: boolean };
@@ -27,7 +30,20 @@ const active = (s: string) => s === "queued" || s === "running";
 
 function ago(ts: number) {
   const s = Date.now() / 1000 - ts;
-  return s < 60 ? "just now" : s < 3600 ? `${Math.floor(s / 60)}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : new Date(ts * 1000).toLocaleDateString();
+  return s < 60 ? "just now" : s < 3600 ? `${Math.floor(s / 60)} min ago` : s < 86400 ? `${Math.floor(s / 3600)} h ago` : new Date(ts * 1000).toLocaleDateString();
+}
+const STATUS: Record<string, string> = { queued: "Waiting to start", running: "Working", waiting: "Needs your OK", done: "Done", error: "Stopped", cancelled: "Stopped" };
+const word = (s: string) => STATUS[s] ?? s;
+
+/** The steps as the one Timeline: done steps, a step that went wrong, and the one being worked on now. */
+export function browserTimeline(job: Pick<Job, "steps" | "status" | "pending_approvals">): TimelineStep[] {
+  const steps: TimelineStep[] = job.steps.map((s) => ({
+    id: s.step, text: s.next_goal || s.title || `Step ${s.step}`,
+    state: !s.status || s.status === "ok" ? "ok" : "failed",
+  }));
+  if ((job.pending_approvals || []).length) steps.push({ id: "held", text: "Waiting for your OK before it goes on", state: "held" });
+  else if (active(job.status)) steps.push({ id: "next", text: steps.length ? `Thinking about step ${steps.length + 1}` : "Waiting for the first step", state: "running" });
+  return steps;
 }
 
 export default function Browser() {
@@ -35,20 +51,22 @@ export default function Browser() {
   const navigate = useNavigate();
   const { models } = useModels();
   const [usage, setUsage] = useState<{ used: number; limit: number } | null>(null);
-  const [jobs, setJobs] = useState<JobSummary[]>([]);
+  const jobs = useLoad(() => api<JobSummary[]>("/browser/jobs"), []);
   const [job, setJob] = useState<Job | null>(null);
+  const [openErr, setOpenErr] = useState<unknown>(null);
+  const [tick, setTick] = useState(0);
   const [shotKey, setShotKey] = useState(0);
   const [openStep, setOpenStep] = useState<number | null>(null);
   const [form, setForm] = useState({ goal: "", provider: "", model: "", max_steps: 8, domains: "" });
   const toast = useToast();
 
-  const loadJobs = () => api<JobSummary[]>("/browser/jobs").then(setJobs).catch(toast.err);
+  const loadJobs = jobs.reload;
   useEffect(() => {
-    api<{ usage: { used: number; limit: number } }>("/browser/providers").then((r) => setUsage(r.usage)).catch(toast.err);
-    loadJobs();
+    api<{ usage: { used: number; limit: number } }>("/browser/providers").then((r) => setUsage(r.usage)).catch(() => undefined);
   }, []);
 
   useEffect(() => {
+    setOpenErr(null); setOpenStep(null);
     if (!id) return setJob(null);
     let stop = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -56,17 +74,17 @@ export default function Browser() {
       try {
         const j = await api<Job>(`/browser/jobs/${id}`);
         if (stop) return;
-        setJob(j);
+        setJob(j); setOpenErr(null);
         setShotKey((k) => k + 1);
         if (active(j.status)) timer = setTimeout(poll, 1200);
         else loadJobs();
       } catch (e) {
-        toast.err(e);
+        if (!stop) setOpenErr(e);
       }
     };
     poll();
     return () => { stop = true; clearTimeout(timer); };
-  }, [id]);
+  }, [id, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const answer = async (a: Approval, approve: boolean) => {
     if (!job) return;
@@ -92,122 +110,111 @@ export default function Browser() {
       toast.err(err);
     }
   };
-  const cancel = async () => { await api(`/browser/jobs/${job!.id}/cancel`, { method: "POST" }); };
+  const cancel = async () => { try { await api(`/browser/jobs/${job!.id}/cancel`, { method: "POST" }); } catch (e) { toast.err(e); } };
   const remove = async (jid: string) => {
-    await api(`/browser/jobs/${jid}`, { method: "DELETE" });
+    try { await api(`/browser/jobs/${jid}`, { method: "DELETE" }); } catch (e) { toast.err(e); return; }
     if (job?.id === jid) navigate("/browser");
     loadJobs();
   };
 
+  const picked = job?.steps.find((s) => s.step === openStep) ?? null;
+  const modelName = (() => { const m = job?.result?.model || job?.model || ""; return !m || m === "default" || m.startsWith("auto") ? "Auto" : m.split("/").pop(); })();
+
   return (
-    <div className="page wide" style={{ maxWidth: 1400 }}>
-      <div className="page-head">
-        <div><h1>Browser agent</h1><p className="muted">Describe a goal. The agent opens a real browser, clicks, types and reads until it is done.</p></div>
-      </div>
-
-      <form className="card col" onSubmit={start} style={{ marginBottom: 16 }}>
-        <textarea className="input" rows={3} value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} placeholder="e.g. Find three remote software engineer roles on weworkremotely.com" />
-        {!form.goal && (
-          <div className="row wrap example-chips">
-            <span className="small faint">Try</span>
-            {EXAMPLES.map((ex) => <button type="button" key={ex} className="example-chip" title={ex} onClick={() => setForm({ ...form, goal: ex })}>{ex.length > 44 ? ex.slice(0, 42) + "…" : ex}</button>)}
-          </div>
-        )}
-        <div className="row wrap">
-          <div style={{ width: 260 }}><ModelSelect value={form.model} onChange={(model) => setForm({ ...form, model })} models={models} /></div>
-          <label className="row small muted">Stop after
-            <input className="input" type="number" min={1} max={12} style={{ width: 80 }} value={form.max_steps} onChange={(e) => setForm({ ...form, max_steps: Math.min(12, Math.max(1, Number(e.target.value) || 8)) })} />
-          </label>
-          <input className="input grow" style={{ minWidth: 200 }} value={form.domains} onChange={(e) => setForm({ ...form, domains: e.target.value })} placeholder="Only these sites (optional): *.pcpartpicker.com, …" />
-          <button className="btn primary" disabled={form.goal.trim().length < 3}><Play size={15} /> Run</button>
-        </div>
-        <div className="faint small" title="It stops after this many actions. It does not keep going on its own.">
-          It stops after the number you set. It does not run without a limit. Models that can see pictures work best.
-          {usage && usage.limit ? <> {usage.used} of {usage.limit} browser steps used this month.</> : null}
-        </div>
-      </form>
-
-      {jobs.length === 0 && !job && <div className="card"><Empty icon={<Globe size={26} />} title="No runs yet" hint="Start one above. Chat can use this browser too." /></div>}
-      <div style={{ display: jobs.length === 0 && !job ? "none" : "grid", gridTemplateColumns: "300px minmax(0,1fr)", gap: 16 }} className="research-layout">
-        <div className="card flush" style={{ alignSelf: "start" }}>
-          {jobs.map((j) => (
-            <div key={j.id} className={`list-item ${job?.id === j.id ? "active" : ""}`} onClick={() => navigate(`/browser/${j.id}`)}>
-              <div className="grow">
-                <div className="truncate">{j.goal}</div>
-                <div className="row small faint">{active(j.status) && <Loader2 size={11} className="spin" />}{j.status}{j.source && j.source !== "api" ? ` · from ${j.source}` : ""} · {ago(j.created_at)}</div>
+    <Page wide className="ag-page br-page" title="Browser agent" description="Describe a goal. The agent opens a real browser, clicks, types and reads until it is done.">
+      <div className="ag-stack-lg">
+        <Card as="section" aria-label="New run">
+          <form className="ag-form" onSubmit={start}>
+            <Textarea aria-label="The goal" rows={3} value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} placeholder="For example: find three remote software engineer roles on weworkremotely.com" />
+            {!form.goal && (
+              <div className="ag-bar">
+                <span className="ag-meta">Try</span>
+                {EXAMPLES.map((ex) => <Chip key={ex} title={ex} onClick={() => setForm({ ...form, goal: ex })}>{ex.length > 44 ? ex.slice(0, 42) + "…" : ex}</Chip>)}
               </div>
-              <button className="btn ghost sm icon" onClick={(e) => { e.stopPropagation(); remove(j.id); }}><Trash2 size={13} /></button>
+            )}
+            <div className="ag-bar">
+              <div className="rs-model"><ModelSelect value={form.model} onChange={(model) => setForm({ ...form, model })} models={models} /></div>
+              <div className="br-steps"><Input type="number" aria-label="Stop after this many steps" min={1} max={12} value={form.max_steps} onChange={(e) => setForm({ ...form, max_steps: Math.min(12, Math.max(1, Number(e.target.value) || 8)) })} /></div>
+              <span className="ag-meta">steps</span>
+              <div className="ag-grow br-domains"><Input value={form.domains} onChange={(e) => setForm({ ...form, domains: e.target.value })} aria-label="Only these sites" placeholder="Only these sites (optional): *.pcpartpicker.com, …" /></div>
+              <Button type="submit" variant="primary" icon={<Play size={14} />} disabled={form.goal.trim().length < 3}>Run</Button>
             </div>
-          ))}
-        </div>
-        <div>
-          {!job && <div className="card"><Empty icon={<Globe size={26} />} title="Pick a run or start one" hint="Chat can use this browser too." /></div>}
-          {job && (
-            <div className="col gap-lg">
-              <div className="card col">
-                {active(job.status) && <span className="sr-only" role="status">Browser agent is working</span>}
-                <div className="row" style={{ alignItems: "flex-start" }}>
-                  <h2 className="grow">{job.goal}</h2>
-                  {active(job.status) && <button className="btn sm" onClick={cancel}><CircleStop size={14} /> Stop</button>}
+            <p className="ag-note">
+              It stops after the number you set. It does not run without a limit. Models that can see pictures work best.
+              {usage && usage.limit ? <> {usage.used} of {usage.limit} browser steps used this month.</> : null}
+            </p>
+          </form>
+        </Card>
+
+        <Split solo={!id && jobs.data?.length === 0} list={
+          <Gate state={jobs} rows={4}>{(list) => list.length === 0
+            ? <EmptyState icon={<Globe size={20} />} title="No runs yet" line="Start one above. Chat can use this browser too." />
+            : <List className="ag-list" label="Runs">
+              {list.map((j) => (
+                <Row key={j.id} active={job?.id === j.id} onClick={() => navigate(`/browser/${j.id}`)} title={j.goal}
+                  meta={<StatusText live={active(j.status)}>{word(j.status)}{j.source && j.source !== "api" ? ` · from ${j.source}` : ""} · {ago(j.created_at)}</StatusText>}
+                  actions={<IconButton size="sm" label="Delete this run" onClick={() => remove(j.id)}><Trash2 size={14} /></IconButton>} />
+              ))}
+            </List>}
+          </Gate>
+        }>
+          {!id && <Card><EmptyState icon={<Globe size={20} />} title={jobs.data?.length === 0 ? "No runs yet" : "Pick a run or start one"} line={jobs.data?.length === 0 ? "Start one above. Chat can use this browser too." : "Chat can use this browser too."} /></Card>}
+          {id && !job && !openErr && <Card><Loading rows={4} /></Card>}
+          {id && !job && !!openErr && <ErrorState title="That run did not open" line={plainError(openErr)} onRetry={() => setTick((t) => t + 1)} />}
+          {job && <>
+            <Card as="article" className="ag-stack">
+              {active(job.status) && <span className="sr-only" role="status">Browser agent is working</span>}
+              <div className="ag-panel-head">
+                <h2 className="ag-title ag-grow">{job.goal}</h2>
+                {active(job.status) && <Button size="sm" icon={<CircleStop size={14} />} onClick={cancel}>Stop</Button>}
+              </div>
+              <div className="ag-bar ag-meta">
+                <Badge tone={job.status === "done" ? (job.result?.success ? "ok" : "warn") : job.status === "error" ? "danger" : active(job.status) ? "live" : "neutral"}>{word(job.status)}</Badge>
+                <span>{modelName}</span>
+                {job.result && <span>{job.result.steps} steps · {job.result.duration_s}s</span>}
+                {job.allowed_domains.length > 0 && <span>only {job.allowed_domains.join(", ")}</span>}
+              </div>
+              {job.error && <ErrorState title="The run stopped" line={job.error} />}
+              {(job.pending_approvals || []).map((a) => (
+                <ApprovalCard key={a.id} title={`The agent is waiting for you: ${a.label}`} detail={a.description} effect="external" command={a.url}
+                  onApprove={() => answer(a, true)} onDeny={() => answer(a, false)} />
+              ))}
+              {job.result && (
+                <div className="ag-stack">
+                  <div className="ag-bar">{job.result.success ? <CheckCircle2 size={16} className="ag-ok" aria-hidden="true" /> : <XCircle size={16} className="br-warn" aria-hidden="true" />}<strong>{job.result.success ? "Agent reports success" : job.result.done ? "Agent finished but did not report success" : "Stopped at the step limit"}</strong></div>
+                  <p className="ag-note">This is the agent's own claim. Check it against the last screen and the steps; small models can invent answers.</p>
+                  {job.result.final ? <Markdown text={job.result.final} /> : <p className="ag-note">No final answer.</p>}
                 </div>
-                <div className="row small muted wrap">
-                  <span className={`badge ${job.status === "done" ? (job.result?.success ? "ok" : "warn") : job.status === "error" ? "danger" : "accent"}`}>{job.status}</span>
-                  <span>{(() => { const m = job.result?.model || job.model || ""; return !m || m === "default" || m.startsWith("auto") ? "Auto" : m.split("/").pop(); })()}</span>
-                  {job.result && <span>{job.result.steps} steps · {job.result.duration_s}s</span>}
-                  {job.allowed_domains.length > 0 && <span>only {job.allowed_domains.join(", ")}</span>}
-                </div>
-                {job.error && <div className="alert err">{job.error}</div>}
-                {(job.pending_approvals || []).map((a) => (
-                  <div key={a.id} className="alert col" style={{ gap: 6 }}>
-                    <strong>The agent is waiting for you: {a.label}</strong>
-                    <div className="small">{a.description}</div>
-                    <div className="faint small mono truncate">{a.url}</div>
-                    <div className="row">
-                      <button className="btn sm primary" onClick={() => answer(a, true)}>Allow this once</button>
-                      <button className="btn sm" onClick={() => answer(a, false)}>Deny</button>
-                    </div>
+              )}
+            </Card>
+            <div className="ag-two br-work">
+              <Section title={active(job.status) ? "Live view" : "Last screen"}>
+                {job.has_screenshot ? <LiveShot src={`/api/browser/jobs/${job.id}/screenshot?k=${shotKey}`} alt="Browser screenshot" />
+                  : <p className="ag-note">{active(job.status) ? "Starting the browser…" : "No picture of the screen."}</p>}
+              </Section>
+              <Section title="Steps">
+                {job.steps.length === 0 && job.status === "waiting" && <p className="ag-note">Waiting for your approval. Nothing has been clicked or sent.</p>}
+                {job.steps.length === 0 && !active(job.status) && job.status !== "waiting" && <p className="ag-note">No steps recorded.</p>}
+                <Timeline label="Browser steps" steps={browserTimeline(job)} current={openStep ?? undefined}
+                  onPick={(sid) => typeof sid === "number" && setOpenStep(openStep === sid ? null : sid)} />
+                {picked && (
+                  <div className="ag-panel is-sunken ag-stack ag-gap-top" aria-label={`Step ${picked.step}`}>
+                    {picked.evaluation && <p className="ag-body"><span className="ag-meta">Thinking: </span>{picked.evaluation}</p>}
+                    {picked.result && <p className="ag-note">{picked.result}</p>}
+                    {picked.title && <p className="ag-meta">{picked.title}</p>}
+                    {picked.has_screenshot && <img className="ag-shot" src={`/api/browser/jobs/${job.id}/screenshot/${picked.step}`} alt={`The screen at step ${picked.step}`} loading="lazy" />}
+                    <details className="ag-advanced">
+                      <summary>Advanced</summary>
+                      <pre className="ag-pre">{[picked.url, ...picked.actions.map((a) => { const [name, args] = Object.entries(a)[0] || ["", {}]; return `${name}${args && Object.keys(args as object).length ? ` ${JSON.stringify(args)}` : ""}`; })].filter(Boolean).join("\n")}</pre>
+                    </details>
                   </div>
-                ))}
-                {job.result && (
-                  <>
-                    <div className="row">{job.result.success ? <CheckCircle2 size={16} className="ok-icon" aria-label="Finished" /> : <XCircle size={16} className="prio-2" />}<strong>{job.result.success ? "Agent reports success" : job.result.done ? "Agent finished but did not report success" : "Stopped at the step limit"}</strong></div>
-                    <div className="muted small">This is the agent's own claim. Check it against the last screen and the steps; small models can invent answers.</div>
-                    {job.result.final ? <Markdown text={job.result.final} /> : <div className="muted">No final answer.</div>}
-                  </>
                 )}
-              </div>
-              <div className="grid two">
-                <div className="card col">
-                  <h3>{active(job.status) ? "Live view" : "Last screen"}</h3>
-                  {job.has_screenshot ? <LiveShot src={`/api/browser/jobs/${job.id}/screenshot?k=${shotKey}`} alt="Browser screenshot" />
-                    : <div className="muted small">{active(job.status) ? "Starting browser…" : "No screenshot."}</div>}
-                </div>
-                <div className="card col step-list timeline">
-                  <h3>Steps</h3>
-                  {job.steps.length === 0 && <div className="muted small">{job.status === "waiting" ? "Waiting for your approval. Nothing has been clicked or sent." : active(job.status) ? <span className="row"><Loader2 size={13} className="spin" /> Waiting for the first step</span> : "No steps recorded."}</div>}
-                  {job.steps.map((s) => (
-                    <div key={s.step} className="col" style={{ gap: 4, borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
-                      <div className="row small"><span className="badge">{s.step}</span><strong className="grow">{s.next_goal || "…"}</strong>
-                        {s.status && s.status !== "ok" && <span className="badge warn">{s.status}</span>}</div>
-                      {s.evaluation && <div className="small"><span className="faint">Thinking: </span>{s.evaluation}</div>}
-                      {s.actions.map((a, i) => {
-                        const [name, args] = Object.entries(a)[0] || ["", {}];
-                        return <div key={i} className="faint small mono" style={{ wordBreak: "break-word" }}>{name}{args && Object.keys(args as object).length ? ` ${JSON.stringify(args)}` : ""}</div>;
-                      })}
-                      {s.result && <div className="muted small">{s.result}</div>}
-                      <div className="faint small truncate">{s.title ? `${s.title} · ` : ""}{s.url}</div>
-                      {s.has_screenshot && (openStep === s.step
-                        ? <img src={`/api/browser/jobs/${job.id}/screenshot/${s.step}`} alt={`Step ${s.step}`} onClick={() => setOpenStep(null)} style={{ width: "100%", borderRadius: 6, border: "1px solid var(--border)", cursor: "zoom-out" }} />
-                        : <img src={`/api/browser/jobs/${job.id}/screenshot/${s.step}`} alt={`Step ${s.step}`} loading="lazy" onClick={() => setOpenStep(s.step)} style={{ width: 160, borderRadius: 6, border: "1px solid var(--border)", cursor: "zoom-in" }} />)}
-                    </div>
-                  ))}
-                  {active(job.status) && job.steps.length > 0 && <div className="muted small row"><Loader2 size={13} className="spin" /> Thinking about step {job.steps.length + 1}…</div>}
-                </div>
-              </div>
+                {job.steps.length > 0 && !picked && <p className="ag-note ag-gap-top">Pick a step to see what it saw and did.</p>}
+              </Section>
             </div>
-          )}
-        </div>
+          </>}
+        </Split>
       </div>
-    </div>
+    </Page>
   );
 }

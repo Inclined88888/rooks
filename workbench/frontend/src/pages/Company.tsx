@@ -1,8 +1,12 @@
+// Company: you are the board. Mission, an org chart of agents, a task board, spend caps. Premium pass (package C).
 import { Building2, Pause, Play, Plus, Trash2, UserPlus, X } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import { Empty, Markdown, ModelSelect, relTime, useModels, useToast } from "../util";
+import { Markdown, ModelSelect, relTime, useModels, useToast } from "../util";
+import { Badge, Button, Card, EmptyState, IconButton, Input, Page, Section, Select, Sheet, Textarea } from "../ui";
+import { Gate, useLoad } from "./agents/kit";
+import "./agents/company.css";
 
 type Agent = { id: number; name: string; title: string; reports_to: number | null; model: string; instructions: string; monthly_budget_cents: number;
   monthly_token_limit: number; status: string; paused_reason: string; month: { cents: number; tokens: number; unpriced_calls: number } };
@@ -17,17 +21,17 @@ function OrgNode({ agent, all, onEdit }: { agent: Agent; all: Agent[]; onEdit: (
   const reports = all.filter((a) => a.reports_to === agent.id);
   const pct = agent.monthly_budget_cents ? Math.min(100, (agent.month.cents / agent.monthly_budget_cents) * 100) : 0;
   return (
-    <div className="col" style={{ alignItems: "center", gap: 10 }}>
-      <div className="card" style={{ width: 200, padding: 12, cursor: "pointer", borderColor: agent.status === "paused" ? "var(--danger)" : undefined }} onClick={() => onEdit(agent)}>
-        <div className="row"><strong className="grow truncate">{agent.name}</strong>{agent.status === "paused" && <span className="badge danger">paused</span>}</div>
-        <div className="muted small truncate">{agent.title || "Team member"}</div>
-        <div className="faint small" style={{ marginTop: 6 }}>
+    <div className="co-node">
+      <button type="button" className={`co-person${agent.status === "paused" ? " is-paused" : ""}`} onClick={() => onEdit(agent)}>
+        <span className="co-person-head"><strong className="ag-grow">{agent.name}</strong>{agent.status === "paused" && <Badge tone="danger">Paused</Badge>}</span>
+        <span className="ag-meta">{agent.title || "Team member"}</span>
+        <span className="ag-meta ag-num">
           {agent.monthly_budget_cents ? `$${(agent.month.cents / 100).toFixed(2)} of $${(agent.monthly_budget_cents / 100).toFixed(2)}` : `$${(agent.month.cents / 100).toFixed(2)} · no money cap`}
-        </div>
-        {agent.monthly_budget_cents > 0 && <div className="progress" style={{ marginTop: 4 }}><div style={{ width: `${pct}%`, background: pct >= 80 ? "var(--danger)" : undefined }} /></div>}
-      </div>
+        </span>
+        {agent.monthly_budget_cents > 0 && <span className={`co-bar${pct >= 80 ? " is-high" : ""}`} aria-hidden="true"><span style={{ width: `${pct}%` }} /></span>}
+      </button>
       {reports.length > 0 && (
-        <div className="row" style={{ alignItems: "flex-start", gap: 16, borderTop: "1px solid var(--border-strong)", paddingTop: 10 }}>
+        <div className="co-reports">
           {reports.map((r) => <OrgNode key={r.id} agent={r} all={all} onEdit={onEdit} />)}
         </div>
       )}
@@ -36,7 +40,8 @@ function OrgNode({ agent, all, onEdit }: { agent: Agent; all: Agent[]; onEdit: (
 }
 
 export default function Company() {
-  const [data, setData] = useState<Overview>({ mission: "", agents: [], tasks: [] });
+  const overview = useLoad(() => api<Overview>("/company").then((d) => { setMission((m) => m || d.mission); return d; }), []);
+  const data = overview.data ?? { mission: "", agents: [], tasks: [] };
   const [mission, setMission] = useState("");
   const [edit, setEdit] = useState<(typeof blank & { id?: number }) | null>(null);
   const [task, setTask] = useState({ title: "", description: "", agent_id: 0 });
@@ -44,8 +49,8 @@ export default function Company() {
   const { models } = useModels();
   const toast = useToast();
 
-  const load = () => api<Overview>("/company").then((d) => { setData(d); setMission((m) => m || d.mission); }).catch(toast.err);
-  useEffect(() => { load(); const t = setInterval(load, 5000); return () => clearInterval(t); }, []);
+  const load = overview.reload;
+  useEffect(() => { const t = setInterval(load, 5000); return () => clearInterval(t); }, [load]);
 
   const saveAgent = async (e: FormEvent) => {
     e.preventDefault();
@@ -62,110 +67,104 @@ export default function Company() {
   };
   const patchTask = async (t: Task, body: Record<string, unknown>) => { try { await api(`/company/tasks/${t.id}`, { method: "PATCH", body }); load(); } catch (e) { toast.err(e); } };
   const setStatus = async (a: Agent, status: string) => { try { await api(`/company/agents/${a.id}/status`, { body: { status } }); load(); } catch (e) { toast.err(e); } };
+  const act = async (fn: () => Promise<unknown>) => { try { await fn(); load(); } catch (e) { toast.err(e); } };
 
   const roots = data.agents.filter((a) => !a.reports_to || !data.agents.some((b) => b.id === a.reports_to));
   const spend = data.agents.reduce((s, a) => s + a.month.cents, 0);
   const unpriced = data.agents.some((a) => a.month.unpriced_calls > 0 && a.monthly_budget_cents > 0);
+  const editing = edit?.id ? data.agents.find((x) => x.id === edit.id) : undefined;
 
   return (
-    <div className="page wide" style={{ maxWidth: 1400 }}>
-      <div className="page-head">
-        <div><h1>Company</h1><p className="muted">You are the board. Set the mission, hire agents, assign work, cap spend. One task runs at a time.</p></div>
-        <div className="spacer" />
-        <span className="badge">${(spend / 100).toFixed(2)} this month</span>
-        <button className="btn primary" onClick={() => setEdit({ ...blank })}><UserPlus size={15} /> Hire</button>
-      </div>
-
-      <div className="card col" style={{ marginBottom: 16 }}>
-        <h3>Mission</h3>
-        <div className="row">
-          <textarea className="input grow" rows={2} value={mission} onChange={(e) => setMission(e.target.value)} placeholder="What is this company trying to achieve?" />
-          <button className="btn" disabled={mission === data.mission} onClick={async () => { await api("/company/mission", { method: "PUT", body: { mission } }); toast.ok("Mission saved"); load(); }}>Save</button>
-        </div>
-      </div>
-      {unpriced && <div className="alert" style={{ marginBottom: 16 }}>Some agents use a model with no price set, so their money budget cannot be enforced. Set prices in Settings → Usage (OpenRouter models are priced automatically), or give them a token limit.</div>}
-
-      <div className="card" style={{ marginBottom: 16, overflowX: "auto" }}>
-        <h3 style={{ marginBottom: 12 }}>Org chart</h3>
-        {data.agents.length === 0 ? <Empty icon={<Building2 size={24} />} title="No one hired yet" hint="Hire a CEO, then people who report to them." /> : (
-          <div className="row" style={{ alignItems: "flex-start", justifyContent: "center", gap: 24, minWidth: "fit-content" }}>
-            {roots.map((r) => <OrgNode key={r.id} agent={r} all={data.agents} onEdit={(a) => setEdit({ ...a })} />)}
+    <Page wide className="ag-page co-page" title="Company" description="You are the board. Set the mission, hire agents, assign work, cap spend. One task runs at a time."
+      actions={<><Badge>${(spend / 100).toFixed(2)} this month</Badge><Button variant="primary" icon={<UserPlus size={16} />} onClick={() => setEdit({ ...blank })}>Hire</Button></>}>
+      <Gate state={overview} rows={5}>{() => <>
+        <Section title="Mission">
+          <div className="ag-bar co-mission">
+            <div className="ag-grow"><Textarea aria-label="Mission" rows={2} value={mission} onChange={(e) => setMission(e.target.value)} placeholder="What is this company trying to achieve?" /></div>
+            <Button disabled={mission === data.mission} onClick={() => act(async () => { await api("/company/mission", { method: "PUT", body: { mission } }); toast.ok("Mission saved"); })}>Save</Button>
           </div>
-        )}
-      </div>
+          {unpriced && <p className="ag-note co-warn">Some agents use a model with no price set, so their money budget cannot be enforced. Set prices in Settings, Usage (some models are priced automatically), or give them a token limit.</p>}
+        </Section>
 
-      <div className="card col" style={{ marginBottom: 16 }}>
-        <h3>New task</h3>
-        <div className="row wrap">
-          <input className="input grow" style={{ minWidth: 220 }} placeholder="Task title" value={task.title} onChange={(e) => setTask({ ...task, title: e.target.value })} />
-          <select className="input" style={{ width: 200 }} value={task.agent_id} onChange={(e) => setTask({ ...task, agent_id: Number(e.target.value) })}>
-            <option value={0}>Unassigned</option>
-            {data.agents.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.title || "agent"})</option>)}
-          </select>
-          <button className="btn" disabled={!task.title.trim()} onClick={() => addTask(false)}><Plus size={14} /> Add</button>
-          <button className="btn primary" disabled={!task.title.trim() || !task.agent_id} onClick={() => addTask(true)}><Play size={14} /> Add and start</button>
-        </div>
-        <textarea className="input" rows={2} placeholder="Details (optional)" value={task.description} onChange={(e) => setTask({ ...task, description: e.target.value })} />
-      </div>
+        <Section title="Org chart">
+          {data.agents.length === 0
+            ? <EmptyState icon={<Building2 size={20} />} title="No one hired yet" line="Hire a CEO, then people who report to them." action={<Button variant="primary" icon={<UserPlus size={16} />} onClick={() => setEdit({ ...blank })}>Hire</Button>} />
+            : <div className="co-chart"><div className="co-roots">{roots.map((r) => <OrgNode key={r.id} agent={r} all={data.agents} onEdit={(a) => setEdit({ ...a })} />)}</div></div>}
+        </Section>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(220px, 1fr))", gap: 12, overflowX: "auto" }}>
-        {COLUMNS.map(([label, statuses]) => {
-          const list = data.tasks.filter((t) => statuses.includes(t.status));
-          return (
-            <div key={label} className="col" style={{ minWidth: 220 }}>
-              <div className="row"><h3 className="grow">{label}</h3><span className="faint small">{list.length}</span></div>
-              {list.map((t) => (
-                <div key={t.id} className="card col" style={{ padding: 10, gap: 6 }}>
-                  <div className="row" style={{ alignItems: "flex-start" }}>
-                    <strong className="grow" style={{ cursor: "pointer" }} onClick={() => setOpen(open === t.id ? null : t.id)}>{t.title}</strong>
-                    <button className="btn ghost sm icon" onClick={async () => { await api(`/company/tasks/${t.id}`, { method: "DELETE" }); load(); }}><X size={12} /></button>
-                  </div>
-                  <div className="faint small">{t.agent_name ?? "unassigned"} · {t.created_by === "board" ? "from you" : "delegated"} · {relTime(t.updated_at)}</div>
-                  {open === t.id && (t.result ? <Markdown text={t.result} /> : <div className="muted small">{t.description || "No details."}</div>)}
-                  {open === t.id && t.conversation_id && <Link className="small" to={`/assistant/${t.conversation_id}`}>Open work log</Link>}
-                  {["todo", "failed", "blocked", "done"].includes(t.status) && t.agent_id && (
-                    <button className="btn sm" onClick={() => patchTask(t, { status: "queued" })}><Play size={12} /> {t.status === "todo" ? "Start" : "Run again"}</button>
-                  )}
-                </div>
-              ))}
+        <Section title="New task">
+          <Card className="ag-form">
+            <div className="ag-bar">
+              <div className="ag-grow co-title"><Input aria-label="Task title" placeholder="Task title" value={task.title} onChange={(e) => setTask({ ...task, title: e.target.value })} /></div>
+              <Select aria-label="Who does it" className="co-who" value={task.agent_id} onChange={(e) => setTask({ ...task, agent_id: Number(e.target.value) })}>
+                <option value={0}>Unassigned</option>
+                {data.agents.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.title || "agent"})</option>)}
+              </Select>
+              <Button icon={<Plus size={14} />} disabled={!task.title.trim()} onClick={() => addTask(false)}>Add</Button>
+              <Button variant="primary" icon={<Play size={14} />} disabled={!task.title.trim() || !task.agent_id} onClick={() => addTask(true)}>Add and start</Button>
             </div>
-          );
-        })}
-      </div>
+            <Textarea aria-label="Details" rows={2} placeholder="Details (optional)" value={task.description} onChange={(e) => setTask({ ...task, description: e.target.value })} />
+          </Card>
+        </Section>
 
-      {edit && (
-        <div className="modal-back" onClick={() => setEdit(null)}>
-          <form className="modal col gap-lg" onClick={(e) => e.stopPropagation()} onSubmit={saveAgent}>
-            <div className="row"><h2 className="grow">{edit.id ? `Edit ${edit.name}` : "Hire an agent"}</h2><button type="button" className="btn ghost sm icon" onClick={() => setEdit(null)}><X size={15} /></button></div>
-            <div className="row">
-              <label className="field grow">Name<input className="input" required value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></label>
-              <label className="field grow">Role<input className="input" placeholder="CEO, CTO, Engineer…" value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></label>
+        <Section title="Work">
+          <div className="co-board">
+            {COLUMNS.map(([label, statuses]) => {
+              const list = data.tasks.filter((t) => statuses.includes(t.status));
+              return (
+                <section key={label} className="co-col" aria-label={label}>
+                  <div className="co-col-head"><h3 className="ag-h3 ag-grow">{label}</h3><span className={`ag-meta ag-num${label === "Needs you" && list.length ? " co-needs" : ""}`}>{list.length}</span></div>
+                  {list.length === 0 && <p className="ag-note co-none">Nothing here.</p>}
+                  {list.map((t) => (
+                    <article key={t.id} className="co-task">
+                      <div className="co-task-head">
+                        <button type="button" className="co-task-title" aria-expanded={open === t.id} onClick={() => setOpen(open === t.id ? null : t.id)}>{t.title}</button>
+                        <IconButton size="sm" label={`Delete ${t.title}`} onClick={() => act(() => api(`/company/tasks/${t.id}`, { method: "DELETE" }))}><X size={14} /></IconButton>
+                      </div>
+                      <p className="ag-meta">{t.agent_name ?? "Unassigned"} · {t.created_by === "board" ? "from you" : "delegated"} · {relTime(t.updated_at)}</p>
+                      {open === t.id && (t.result ? <Markdown text={t.result} /> : <p className="ag-note">{t.description || "No details."}</p>)}
+                      {open === t.id && t.conversation_id && <Link className="ag-meta" to={`/assistant/${t.conversation_id}`}>Open work log</Link>}
+                      {["todo", "failed", "blocked", "done"].includes(t.status) && t.agent_id && (
+                        <div><Button size="sm" icon={<Play size={14} />} onClick={() => patchTask(t, { status: "queued" })}>{t.status === "todo" ? "Start" : "Run again"}</Button></div>
+                      )}
+                    </article>
+                  ))}
+                </section>
+              );
+            })}
+          </div>
+        </Section>
+      </>}</Gate>
+
+      <Sheet open={!!edit} onClose={() => setEdit(null)} title={edit?.id ? `Edit ${edit.name}` : "Hire an agent"} width={480}
+        footer={edit && <div className="ag-bar">
+          {edit.id && <IconButton label={`Remove ${edit.name}`} onClick={() => { if (confirm(`Remove ${edit.name}? Their reports move up to the board.`)) act(async () => { await api(`/company/agents/${edit.id}`, { method: "DELETE" }); setEdit(null); }); }}><Trash2 size={16} /></IconButton>}
+          {editing && (editing.status === "paused"
+            ? <Button icon={<Play size={14} />} onClick={() => setStatus(editing, "active")}>Resume</Button>
+            : <Button icon={<Pause size={14} />} onClick={() => setStatus(editing, "paused")}>Pause</Button>)}
+          <span className="ag-bar-end"><Button type="submit" form="co-agent-form" variant="primary">{edit.id ? "Save" : "Hire"}</Button></span>
+        </div>}>
+        {edit && (
+          <form id="co-agent-form" className="ag-form" onSubmit={saveAgent}>
+            <div className="ag-two">
+              <Input label="Name" required value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
+              <Input label="Role" placeholder="CEO, CTO, Engineer…" value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} />
             </div>
-            <label className="field">Reports to
-              <select className="input" value={edit.reports_to ?? 0} onChange={(e) => setEdit({ ...edit, reports_to: Number(e.target.value) || null })}>
-                <option value={0}>The board (you)</option>
-                {data.agents.filter((a) => a.id !== edit.id).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-            </label>
-            <label className="field">Model<ModelSelect value={edit.model} onChange={(v) => setEdit({ ...edit, model: v })} models={models} /></label>
-            <label className="field">Instructions<textarea className="input" rows={4} value={edit.instructions} onChange={(e) => setEdit({ ...edit, instructions: e.target.value })} placeholder="Responsibilities, standards, what to escalate to the board" /></label>
-            <div className="row">
-              <label className="field grow">Monthly budget (USD)<input className="input" type="number" min={0} step={0.5} value={edit.monthly_budget_cents / 100} onChange={(e) => setEdit({ ...edit, monthly_budget_cents: Math.round(Number(e.target.value) * 100) })} /></label>
-              <label className="field grow">Monthly token limit (0 = none)<input className="input" type="number" min={0} step={10000} value={edit.monthly_token_limit} onChange={(e) => setEdit({ ...edit, monthly_token_limit: Number(e.target.value) })} /></label>
+            <Select label="Reports to" value={edit.reports_to ?? 0} onChange={(e) => setEdit({ ...edit, reports_to: Number(e.target.value) || null })}>
+              <option value={0}>The board (you)</option>
+              {data.agents.filter((a) => a.id !== edit.id).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </Select>
+            <div className="ui-field"><span className="ui-field-label">Model</span><ModelSelect value={edit.model} onChange={(v) => setEdit({ ...edit, model: v })} models={models} /></div>
+            <Textarea label="Instructions" rows={4} value={edit.instructions} onChange={(e) => setEdit({ ...edit, instructions: e.target.value })} placeholder="Responsibilities, standards, what to escalate to the board" />
+            <div className="ag-two">
+              <Input label="Monthly budget (USD)" type="number" min={0} step={0.5} value={edit.monthly_budget_cents / 100} onChange={(e) => setEdit({ ...edit, monthly_budget_cents: Math.round(Number(e.target.value) * 100) })} />
+              <Input label="Monthly token limit" hint="0 means no limit" type="number" min={0} step={10000} value={edit.monthly_token_limit} onChange={(e) => setEdit({ ...edit, monthly_token_limit: Number(e.target.value) })} />
             </div>
-            <div className="muted small">The agent is paused automatically when it reaches either limit. Checks run before each model call, so a limit can be passed by at most one call.</div>
-            <div className="row">
-              {edit.id && <button type="button" className="btn ghost danger" onClick={async () => { if (confirm(`Remove ${edit.name}? Their reports move up to the board.`)) { await api(`/company/agents/${edit.id}`, { method: "DELETE" }); setEdit(null); load(); } }}><Trash2 size={14} /></button>}
-              {edit.id && (() => { const a = data.agents.find((x) => x.id === edit.id); return a ? (a.status === "paused"
-                ? <button type="button" className="btn" onClick={() => setStatus(a, "active")}><Play size={14} /> Resume</button>
-                : <button type="button" className="btn" onClick={() => setStatus(a, "paused")}><Pause size={14} /> Pause</button>) : null; })()}
-              <div className="spacer" />
-              <button className="btn primary">{edit.id ? "Save" : "Hire"}</button>
-            </div>
-            {edit.id && data.agents.find((x) => x.id === edit.id)?.paused_reason && <div className="alert err">{data.agents.find((x) => x.id === edit.id)?.paused_reason}</div>}
+            <p className="ag-note">The agent is paused automatically when it reaches either limit. Checks run before each model call, so a limit can be passed by at most one call.</p>
+            {editing?.paused_reason && <p className="ag-err">{editing.paused_reason}</p>}
           </form>
-        </div>
-      )}
-    </div>
+        )}
+      </Sheet>
+    </Page>
   );
 }

@@ -6,6 +6,9 @@ import { api } from "../api";
 import { type Line, type TradeSettings, abnValid, money, previewTotals, statusLabel } from "../packs/logic";
 import { FilePick, PackGate, copy, download, useFiles } from "../packs/shared";
 import { useToast } from "../util";
+import { ApiError } from "../api";
+import { Badge, Card, EmptyState, ErrorState, Loading, Page, Tabs } from "../ui";
+import { plainError } from "./agents/kit";
 import "../packs/packs.css";
 
 type Settings = TradeSettings & Record<string, string | number | boolean | null>;
@@ -46,61 +49,54 @@ export default function PackTrade() {
   const [gate, setGate] = useState<unknown>(null);
   const [s, setS] = useState<Settings | null>(null);
   const [docs, setDocs] = useState<Doc[]>([]);
+  const [err, setErr] = useState<unknown>(null);
   const toast = useToast();
   const sel = Number(params.get("doc")) || null;
 
   const load = useCallback(async () => {
     try {
       const [st, ds] = await Promise.all([api<Settings>("/packs/trade/settings"), api<Doc[]>("/packs/trade/docs")]);
-      setS(st); setDocs(ds); setGate(null);
-    } catch (e) { setGate(e); }
+      setS(st); setDocs(ds); setGate(null); setErr(null);
+    } catch (e) { if (e instanceof ApiError && (e.status === 402 || e.status === 409)) setGate(e); else setErr(e); }
   }, []);
   useEffect(() => { load(); }, [load]);
 
-  if (gate) return <div className="page"><PackGate error={gate} packId="trade" name="Trade pack" /></div>;
-  if (!s) return <div className="page"><p className="muted">Loading…</p></div>;
+  const head = { kicker: "Trade pack", title: "Quotes and invoices", description: "From a site photo, a voice note or a few lines to a priced quote, then an invoice. Nothing is sent for you." };
+  if (gate) return <Page className="ag-page" {...head}><PackGate error={gate} packId="trade" name="Trade pack" /></Page>;
+  if (err && !s) return <Page className="ag-page" {...head}><ErrorState title="The Trade pack did not open" line={plainError(err)} onRetry={load} /></Page>;
+  if (!s) return <Page className="ag-page" {...head}><Loading rows={4} /></Page>;
   const pick = (id: number | null) => setParams(id ? { doc: String(id) } : {});
 
   return (
-    <div className="page wide" style={{ maxWidth: 1240 }}>
-      <div className="page-head">
-        <div>
-          <p className="kicker">Trade pack</p>
-          <h1>Quotes &amp; invoices</h1>
-          <p className="muted">From a site photo, a voice note or a few lines to a priced quote, then an invoice. Nothing is sent for you.</p>
-        </div>
-        <div className="tabs" role="tablist" style={{ marginLeft: "auto" }}>
-          <button role="tab" aria-selected={tab === "work"} className={`tab ${tab === "work" ? "active" : ""}`} onClick={() => setTab("work")}>Quotes &amp; invoices</button>
-          <button role="tab" aria-selected={tab === "settings"} className={`tab ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}>Your business</button>
-        </div>
-      </div>
+    <Page wide className="ag-page pk-page" {...head}
+      actions={<Tabs label="Trade pack" value={tab} onChange={(v) => setTab(v as "work" | "settings")} items={[{ id: "work", label: "Quotes and invoices" }, { id: "settings", label: "Your business" }]} />}>
       {tab === "settings" ? <SettingsForm s={s} onSaved={(x) => { setS(x); toast.ok("Saved"); }} onErr={toast.err} /> : (
         <div className={`pk-two ${sel ? "open" : ""}`}>
           <div className="pk-stack">
             <NewQuote s={s} onMade={(d) => { load(); pick(d.id); toast.ok(`Quote ${d.number} drafted`); }} onErr={toast.err} />
-            <div className="card">
-              <div className="card-head"><h2>Your quotes and invoices</h2></div>
-              {!docs.length ? <p className="muted">Nothing yet. Draft your first quote above.</p> : (
+            <Card>
+              <h2 className="ag-h3">Your quotes and invoices</h2>
+              {!docs.length ? <EmptyState title="Nothing yet" line="Draft your first quote above." /> : (
                 <div className="pk-list">
                   {docs.map((d) => (
                     <button key={d.id} className={`pk-item ${sel === d.id ? "active" : ""}`} onClick={() => pick(d.id)}>
-                      <span className="badge">{d.kind === "quote" ? "Quote" : "Invoice"}</span>
-                      <span className="mono" style={{ fontSize: 12 }}>{d.number}</span>
+                      <Badge>{d.kind === "quote" ? "Quote" : "Invoice"}</Badge>
+                      <span className="pk-small mono">{d.number}</span>
                       <span className="grow">{d.customer.name || "No customer"} · {d.title}</span>
-                      <span className={`badge ${d.overdue_days > 0 && d.status !== "paid" ? "warn" : d.status === "paid" ? "ok" : ""}`}>{statusLabel(d.kind, d.status, d.overdue_days)}</span>
+                      <Badge tone={d.overdue_days > 0 && d.status !== "paid" ? "warn" : d.status === "paid" ? "ok" : "neutral"}>{statusLabel(d.kind, d.status, d.overdue_days)}</Badge>
                       <span className="num">{money(d.totals.total, s.currency_symbol)}</span>
                     </button>
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           </div>
           {sel ? <DocEditor key={sel} id={sel} s={s} onChanged={load} onOpen={pick} toast={toast} /> : (
-            <div className="card"><p className="muted">Pick a quote or invoice to edit it, make the PDF or write reminders.</p></div>
+            <Card><EmptyState title="Pick a quote or invoice" line="Edit it, make the PDF or write reminders." /></Card>
           )}
         </div>
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -119,8 +115,8 @@ function NewQuote({ s, onMade, onErr }: { s: Settings; onMade: (d: Doc) => void;
     setBusy(false);
   };
   return (
-    <div className="card pk-stack">
-      <div className="card-head"><h2>New quote</h2></div>
+    <div className="ui-card pk-stack">
+      <div className="pk-head"><h2 className="ag-h3">New quote</h2></div>
       <textarea className="input" rows={4} value={desc} onChange={(e) => setDesc(e.target.value)} aria-label="Describe the job"
         placeholder={"Describe the job, or list lines like:\nReplace switchboard\n3 x downlights @ 45\n2 hours labour"} />
       <div className="row wrap">
@@ -128,11 +124,11 @@ function NewQuote({ s, onMade, onErr }: { s: Settings; onMade: (d: Doc) => void;
           <button className={`btn ${dict.on ? "pk-rec" : ""}`} onClick={dict.on ? dict.stop : dict.start}>
             {dict.on ? <><Square size={14} /> Stop voice note</> : <><Mic size={14} /> Record a voice note</>}
           </button>
-        ) : <span className="muted" style={{ fontSize: 12 }}>Voice notes need Chrome, Edge or Safari. You can paste a transcript instead.</span>}
+        ) : <span className="pk-small muted">Voice notes need Chrome, Edge or Safari. You can paste a transcript instead.</span>}
       </div>
       {(transcript || !dict.supported) && <textarea className="input" rows={2} value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Voice note transcript" aria-label="Voice note transcript" />}
       <FilePick label="Site photo (optional)" accept="image/*" value={photo} onChange={setPhoto} files={files.filter((f) => /\.(jpe?g|png|heic|webp)$/i.test(f.name))} onAdded={reload} />
-      <div className="grid two">
+      <div className="ag-two">
         <input className="input" placeholder="Customer name" value={cust.name} onChange={(e) => setCust({ ...cust, name: e.target.value })} />
         <input className="input" placeholder="Customer email" value={cust.email} onChange={(e) => setCust({ ...cust, email: e.target.value })} />
         <input className="input" placeholder="Phone" value={cust.phone} onChange={(e) => setCust({ ...cust, phone: e.target.value })} />
@@ -140,7 +136,7 @@ function NewQuote({ s, onMade, onErr }: { s: Settings; onMade: (d: Doc) => void;
       </div>
       <div className="row">
         <button className="btn primary" disabled={busy || (!desc.trim() && !transcript.trim() && !photo)} onClick={go}>{busy ? "Pricing…" : "Draft quote"}</button>
-        <span className="muted" style={{ fontSize: 12 }}>Labour {money(Number(s.labour_rate), s.currency_symbol)}/{String(s.labour_unit)} · materials +{s.materials_markup}% · {s.tax_registered ? `${s.tax_name} ${s.tax_rate}%` : `no ${s.tax_name}`}</span>
+        <span className="pk-small muted">Labour {money(Number(s.labour_rate), s.currency_symbol)}/{String(s.labour_unit)} · materials +{s.materials_markup}% · {s.tax_registered ? `${s.tax_name} ${s.tax_rate}%` : `no ${s.tax_name}`}</span>
       </div>
     </div>
   );
@@ -152,9 +148,11 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
   const [drafts, setDrafts] = useState<{ drafts: Draft[]; suggested: string; note: string } | null>(null);
   const [push, setPush] = useState<{ target: string; connected: boolean; would_send: unknown; approval_code?: string; how?: string; note: string } | null>(null);
   const [busy, setBusy] = useState("");
-  useEffect(() => { api<Doc>(`/packs/trade/docs/${id}`).then((x) => { setD(x); setLines(x.items); }).catch(toast.err); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [openErr, setOpenErr] = useState<unknown>(null);
+  const [again, setAgain] = useState(0);
+  useEffect(() => { setOpenErr(null); api<Doc>(`/packs/trade/docs/${id}`).then((x) => { setD(x); setLines(x.items); }).catch(setOpenErr); }, [id, again]);
   const live = useMemo(() => previewTotals(lines, s), [lines, s]);
-  if (!d) return <div className="card"><p className="muted">Loading…</p></div>;
+  if (!d) return <Card>{openErr ? <ErrorState title="That did not open" line={plainError(openErr)} onRetry={() => setAgain((n) => n + 1)} /> : <Loading rows={4} />}</Card>;
   const dirty = JSON.stringify(lines) !== JSON.stringify(d.items);
   const run = async <T,>(name: string, f: () => Promise<T>) => { setBusy(name); try { return await f(); } catch (e) { toast.err(e); } finally { setBusy(""); } };
   const set = (i: number, k: keyof Line, v: string | number) => setLines(lines.map((l, j) => (j === i ? { ...l, [k]: v, estimate: k === "unit_cost" || k === "qty" ? false : l.estimate } : l)));
@@ -163,14 +161,14 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
     setD(x); setLines(x.items); onChanged(); toast.ok("Saved");
   });
   return (
-    <div className="card pk-stack">
-      <div className="row" style={{ justifyContent: "space-between" }}>
+    <div className="ui-card pk-stack">
+      <div className="pk-between row">
         <div>
-          <p className="kicker" style={{ margin: 0 }}>{d.kind === "quote" ? "Quote" : "Invoice"} {d.number}</p>
-          <h2 className="pk-serif">{d.title}</h2>
-          <p className="muted" style={{ margin: 0, fontSize: 12 }}>{d.customer.name || "No customer"} · issued {d.issued_on} · {d.kind === "quote" ? "valid until" : "due"} {d.due_on}</p>
+          <p className="pk-flat kicker">{d.kind === "quote" ? "Quote" : "Invoice"} {d.number}</p>
+          <h2 className="ag-title">{d.title}</h2>
+          <p className="pk-flat pk-small muted">{d.customer.name || "No customer"} · issued {d.issued_on} · {d.kind === "quote" ? "valid until" : "due"} {d.due_on}</p>
         </div>
-        <span className="badge">{statusLabel(d.kind, d.status, d.overdue_days)}</span>
+        <Badge>{statusLabel(d.kind, d.status, d.overdue_days)}</Badge>
       </div>
       {!!d.questions?.length && <div className="pk-notice"><strong>Check before sending:</strong> {d.questions.join(" ")}</div>}
       {d.photo_note && <p className="pk-err">{d.photo_note}</p>}
@@ -179,13 +177,13 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
         <tbody>
           {lines.map((l, i) => (
             <tr key={i}>
-              <td><select className="input" style={{ width: 112 }} value={l.kind} onChange={(e) => set(i, "kind", e.target.value)} aria-label="Type">
+              <td><select className="pk-w-kind input" value={l.kind} onChange={(e) => set(i, "kind", e.target.value)} aria-label="Type">
                 <option value="labour">Labour</option><option value="materials">Materials</option><option value="other">Other</option></select></td>
-              <td style={{ width: "100%" }}><input className="input" style={{ width: "100%", minWidth: 160 }} value={l.description} onChange={(e) => set(i, "description", e.target.value)} aria-label="Description" />
-                {l.estimate && <span className="badge warn" style={{ marginTop: 2 }}>estimate</span>}</td>
-              <td><input className="input num" style={{ width: 64 }} type="number" step="any" value={l.qty} onChange={(e) => set(i, "qty", Number(e.target.value))} aria-label="Quantity" /></td>
-              <td><input className="input" style={{ width: 70 }} value={l.unit} onChange={(e) => set(i, "unit", e.target.value)} aria-label="Unit" /></td>
-              <td><input className="input num" style={{ width: 90 }} type="number" step="any" value={l.unit_cost} onChange={(e) => set(i, "unit_cost", Number(e.target.value))} aria-label="Unit cost" /></td>
+              <td><input className="pk-desc input" value={l.description} onChange={(e) => set(i, "description", e.target.value)} aria-label="Description" />
+                {l.estimate && <Badge tone="warn">Estimate</Badge>}</td>
+              <td><input className="pk-w-qty input num" type="number" step="any" value={l.qty} onChange={(e) => set(i, "qty", Number(e.target.value))} aria-label="Quantity" /></td>
+              <td><input className="pk-w-unit input" value={l.unit} onChange={(e) => set(i, "unit", e.target.value)} aria-label="Unit" /></td>
+              <td><input className="pk-w-cost input num" type="number" step="any" value={l.unit_cost} onChange={(e) => set(i, "unit_cost", Number(e.target.value))} aria-label="Unit cost" /></td>
               <td><button className="btn ghost icon sm" aria-label="Remove line" onClick={() => setLines(lines.filter((_, j) => j !== i))}><Trash2 size={13} /></button></td>
             </tr>
           ))}
@@ -207,7 +205,7 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
         {d.kind === "invoice" && <button className="btn" disabled={!!busy} onClick={() => run("rem", async () => setDrafts(await api(`/packs/trade/docs/${id}/reminders`, { method: "POST" })))}>Payment reminders</button>}
         {d.kind === "invoice" && d.status !== "paid" && <button className="btn ghost" onClick={() => save({ status: "paid" })}>Mark paid</button>}
         {d.status === "draft" && <button className="btn ghost" onClick={() => save({ status: "sent" })}>I've sent it</button>}
-        <span style={{ flex: 1 }} />
+        <span className="ag-grow" />
         {["servicem8", "xero"].map((t) => <button key={t} className="btn ghost sm" disabled={dirty || !!busy}
           onClick={() => run("push", async () => setPush(await api(`/packs/trade/push/${t}/preview`, { body: { document_id: id } })))}>{t === "xero" ? "Xero…" : "ServiceM8…"}</button>)}
       </div>
@@ -216,7 +214,7 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
           <p className="pk-notice">{drafts.note}</p>
           {drafts.drafts.map((r) => (
             <div key={r.id} className="pk-draft">
-              <div className="row"><span className={`badge ${r.tone === drafts.suggested ? "accent" : ""}`}>{r.tone}{r.tone === drafts.suggested ? " · suggested" : ""}</span><strong style={{ fontSize: 13 }}>{r.subject}</strong>{r.send_on && <span className="muted" style={{ marginLeft: "auto", fontSize: 12 }}>send from {r.send_on}</span>}</div>
+              <div className="row"><Badge>{r.tone}{r.tone === drafts.suggested ? " · suggested" : ""}</Badge><strong>{r.subject}</strong>{r.send_on && <span className="pk-end pk-small muted">send from {r.send_on}</span>}</div>
               <pre>{r.body}</pre>
               <div className="row">
                 <button className="btn sm" onClick={() => { copy(`Subject: ${r.subject}\n\n${r.body}`); toast.ok("Copied"); }}>Copy</button>
@@ -229,9 +227,9 @@ function DocEditor({ id, s, onChanged, onOpen, toast }: { id: number; s: Setting
       {push && (
         <div className="pk-draft">
           <strong>{push.connected ? `Send to ${push.target}?` : `${push.target} is not connected`}</strong>
-          <p className="muted" style={{ margin: 0, fontSize: 12 }}>{push.note}</p>
-          {!push.connected && push.how && <p style={{ margin: 0, fontSize: 12 }}>{push.how}</p>}
-          <details><summary className="muted" style={{ fontSize: 12 }}>Exactly what would be sent</summary><pre className="pk-code">{JSON.stringify(push.would_send, null, 2)}</pre></details>
+          <p className="pk-flat pk-small muted">{push.note}</p>
+          {!push.connected && push.how && <p>{push.how}</p>}
+          <details><summary className="pk-small muted">Exactly what would be sent</summary><pre className="pk-code">{JSON.stringify(push.would_send, null, 2)}</pre></details>
           <div className="row">
             {push.connected && push.approval_code && <button className="btn primary" disabled={busy === "send"} onClick={() => run("send", async () => {
               const t = push.target.toLowerCase().includes("xero") ? "xero" : "servicem8";
@@ -264,36 +262,36 @@ function SettingsForm({ s, onSaved, onErr }: { s: Settings; onSaved: (s: Setting
   const abn = String(v.abn || "");
   return (
     <div className="pk-two">
-      <div className="card pk-stack">
-        <div className="card-head"><h2>Your business</h2></div>
-        <div className="grid two">
+      <div className="ui-card pk-stack">
+        <div className="pk-head"><h2 className="ag-h3">Your business</h2></div>
+        <div className="ag-two">
           {FIELDS.map(([k, label, kind]) => kind === "bool" ? (
-            <label key={k} className="row" style={{ gap: 8 }}><input type="checkbox" checked={!!v[k]} onChange={(e) => setV({ ...v, [k]: e.target.checked })} /> {label}</label>
+            <label key={k} className="row"><input type="checkbox" checked={!!v[k]} onChange={(e) => setV({ ...v, [k]: e.target.checked })} /> {label}</label>
           ) : (
-            <label key={k} className="pk-stack" style={{ gap: 4 }}><span className="label" style={{ margin: 0 }}>{label}</span>
+            <label key={k} className="pk-tight pk-stack"><span className="pk-flat label">{label}</span>
               <input className="input" type={kind} step="any" value={String(v[k] ?? "")} onChange={(e) => setV({ ...v, [k]: kind === "number" ? Number(e.target.value) : e.target.value })} />
               {k === "abn" && abn && !abnValid(abn) && <span className="pk-err">That ABN doesn't pass the check. Look it up at abr.business.gov.au.</span>}
             </label>
           ))}
         </div>
-        <label className="pk-stack" style={{ gap: 4 }}><span className="label" style={{ margin: 0 }}>How to pay (on invoices and reminders)</span>
+        <label className="pk-tight pk-stack"><span className="pk-flat label">How to pay (on invoices and reminders)</span>
           <textarea className="input" rows={3} value={String(v.payment_details ?? "")} onChange={(e) => setV({ ...v, payment_details: e.target.value })} placeholder="BSB 000-000, Account 1234 5678, or a payment link" /></label>
-        <div className="pk-stack" style={{ gap: 4 }}><span className="label" style={{ margin: 0 }}>Logo</span>
+        <div className="pk-tight pk-stack"><span className="pk-flat label">Logo</span>
           <FilePick label="No logo" accept="image/png,image/jpeg" value={(v.logo_file_id as number) || null} onChange={(id) => setV({ ...v, logo_file_id: id })} files={files.filter((f) => /\.(png|jpe?g)$/i.test(f.name))} onAdded={reload} /></div>
         <div className="row"><button className="btn primary" onClick={async () => { try { onSaved(await api<Settings>("/packs/trade/settings", { method: "PUT", body: v })); } catch (e) { onErr(e); } }}>Save</button></div>
       </div>
-      <div className="card pk-stack">
-        <div className="card-head"><h2>ServiceM8 and Xero (optional)</h2></div>
-        <p className="muted" style={{ margin: 0 }}>Only if you use them. Your keys stay encrypted on this computer, and nothing is sent until you check the preview and press Send each time.</p>
+      <div className="ui-card pk-stack">
+        <div className="pk-head"><h2 className="ag-h3">ServiceM8 and Xero (optional)</h2></div>
+        <p className="pk-flat muted">Only if you use them. Your keys stay encrypted on this computer, and nothing is sent until you check the preview and press Send each time.</p>
         {push && Object.entries(push).map(([t, p]) => (
           <div key={t} className="pk-draft">
-            <div className="row"><strong>{p.name}</strong><span className={`badge ${p.connected ? "ok" : ""}`}>{p.connected ? "Connected" : "Not connected"}</span></div>
-            <p className="muted" style={{ margin: 0, fontSize: 12 }}>{p.how}</p>
+            <div className="row"><strong>{p.name}</strong><Badge tone={p.connected ? "ok" : "neutral"}>{p.connected ? "Connected" : "Not connected"}</Badge></div>
+            <p className="pk-flat pk-small muted">{p.how}</p>
             {p.fields.map((f) => <input key={f} className="input mono" type="password" autoComplete="off" placeholder={p.connected ? "•••••••• saved" : f.replace("_", " ")}
               value={keys[t]?.[f] ?? ""} onChange={(e) => setKeys({ ...keys, [t]: { ...keys[t], [f]: e.target.value } })} aria-label={`${p.name} ${f}`} />)}
             <div className="row">
               <button className="btn sm" onClick={async () => { try { setPush(await api<PushStatus>(`/packs/trade/push/${t}`, { method: "PUT", body: keys[t] ?? {} })); setKeys({ ...keys, [t]: {} }); } catch (e) { onErr(e); } }}>Save</button>
-              {p.connected && <button className="btn sm ghost danger" onClick={async () => setPush(await api<PushStatus>(`/packs/trade/push/${t}`, { method: "PUT", body: {} }))}>Disconnect</button>}
+              {p.connected && <button className="btn sm ghost danger" onClick={async () => { try { setPush(await api<PushStatus>(`/packs/trade/push/${t}`, { method: "PUT", body: {} })); } catch (e) { onErr(e); } }}>Disconnect</button>}
             </div>
           </div>
         ))}

@@ -4,12 +4,13 @@
  * answering approval requests out loud. A spoken "yes" never skips the card: the card is on screen first, the words are
  * checked again on the server, and anything but a clear yes ("yes, send it") is asked again or treated as no.
  */
-import { Ear, Loader2, Mic, MicOff, Square, Volume2, VolumeX } from "lucide-react";
+import { Ear, Mic, MicOff, Square, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, stream } from "../api";
 import { Markdown, useToast } from "../util";
-import { ApprovalCard } from "../ui";
+import { ApprovalCard, Button, Card, EmptyState, ErrorState, Loading, Page, Section } from "../ui";
+import { plainError } from "./agents/kit";
 import { argsLine, stepTitle } from "../chat/turns";
 import { listenOnce, Mic as MicT, openMic, osDictationHint, speak, stopSpeaking, voiceStatus, VoiceStatus, watchBargeIn } from "../voice/engine";
 import { afterWake } from "../voice/logic";
@@ -34,6 +35,7 @@ export default function Talk() {
   const [level, setLevel] = useState(0);
   const [approval, setApproval] = useState<Approval | null>(null);
   const [cid, setCid] = useState<number | null>(null);
+  const [stErr, setStErr] = useState<unknown>(null);
   const toast = useToast();
   const run = useRef(0); // bumps to stop the loop
   const mic = useRef<MicT | null>(null);
@@ -43,7 +45,8 @@ export default function Talk() {
   const tapped = useRef(new Set<number>()); // approvals answered with the card's buttons while I was listening
   muteRef.current = mute;
 
-  useEffect(() => { voiceStatus().then(setSt).catch(toast.err); return () => stop(); }, []);
+  const loadStatus = () => { setStErr(null); voiceStatus().then(setSt).catch(setStErr); };
+  useEffect(() => { loadStatus(); return () => stop(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pro = st?.features.voice_conversation?.allowed ?? false;
   const add = (role: Turn["role"], text: string) => setTurns((t) => [...t, { id: Date.now() + Math.random(), role, text }]);
@@ -192,53 +195,55 @@ export default function Talk() {
   const lastAssistant = [...turns].reverse().find((t) => t.role === "assistant");
 
   return (
-    <div className="page talk-page">
-      <div className="page-head">
-        <div><h1>Talk</h1><p className="muted">Talk to your workspace instead of typing. Ask, plan, and get things done out loud.</p></div>
-      </div>
-
-      <section className="card talk-stage" aria-live="polite">
+    <Page className="ag-page talk-page" title="Talk" description="Talk to your workspace instead of typing. Ask, plan, and get things done out loud.">
+      {stErr && !st ? <ErrorState title="Voice did not start" line={plainError(stErr)} onRetry={loadStatus} /> : !st ? <Loading rows={3} label="Getting the microphone ready" /> : <>
+      <Card as="section" className="talk-stage" aria-live="polite">
         <button type="button" className={`talk-orb ${phase}`} style={{ ["--level" as string]: String(Math.min(level * 14, 1)) }}
           onClick={() => (on ? stop() : pro ? start("conversation") : pushToTalk())} aria-label={on ? "Stop" : "Start talking"}>
-          {phase === "thinking" ? <Loader2 size={34} className="spin" /> : phase === "speaking" ? <Volume2 size={34} /> : on ? <Square size={28} /> : <Mic size={34} />}
+          {phase === "speaking" ? <Volume2 size={32} aria-hidden="true" /> : on ? <Square size={28} aria-hidden="true" /> : <Mic size={32} aria-hidden="true" />}
         </button>
         <div className="talk-phase">{PHASE[phase]}</div>
-        {interim && <div className="talk-interim muted">{interim}</div>}
-        {!on && lastAssistant && <div className="talk-last small muted truncate">{lastAssistant.text.slice(0, 160)}</div>}
-        <div className="row wrap" style={{ justifyContent: "center", gap: 8 }}>
-          {!on && pro && <button className="btn sm" onClick={() => start("wake")} disabled={!st?.wake_ok}
-            title={st?.wake_ok ? `Say "${st.settings.wake_phrase}" to start` : "The wake word only listens on this computer. Turn on Whisper in Settings → Voice."}><Ear size={14} /> Wake word mode</button>}
-          {!on && !pro && <button className="btn sm" onClick={pushToTalk}><Mic size={14} /> Push to talk</button>}
-          <button className="btn ghost sm" onClick={() => { setMute((x) => !x); if (!mute) stopSpeaking(); }} aria-pressed={mute}>
-            {mute ? <VolumeX size={14} /> : <Volume2 size={14} />} {mute ? "Voice replies off" : "Voice replies on"}
-          </button>
-          {on && <button className="btn ghost sm" onClick={stop}><MicOff size={14} /> Stop</button>}
+        {interim && <p className="talk-interim ag-note">{interim}</p>}
+        {!on && lastAssistant && <p className="talk-last ag-note">{lastAssistant.text.slice(0, 160)}</p>}
+        <div className="ag-bar talk-controls">
+          {!on && pro && <Button size="sm" icon={<Ear size={14} />} onClick={() => start("wake")} disabled={!st?.wake_ok}
+            title={st?.wake_ok ? `Say "${st.settings.wake_phrase}" to start` : "The wake word only listens on this computer. Turn on Whisper in Settings, Voice."}>Wake word mode</Button>}
+          {!on && !pro && <Button size="sm" icon={<Mic size={14} />} onClick={pushToTalk}>Push to talk</Button>}
+          <Button size="sm" variant="ghost" icon={mute ? <VolumeX size={14} /> : <Volume2 size={14} />} onClick={() => { setMute((x) => !x); if (!mute) stopSpeaking(); }} aria-pressed={mute}>
+            {mute ? "Voice replies off" : "Voice replies on"}
+          </Button>
+          {on && <Button size="sm" variant="ghost" icon={<MicOff size={14} />} onClick={stop}>Stop</Button>}
         </div>
-        {mode === "wake" && phase === "waiting" && <div className="small faint">Say “{st?.settings.wake_phrase}”, then your question. Say “stop listening” when you're done.</div>}
-      </section>
+        {mode === "wake" && phase === "waiting" && <p className="ag-note">Say “{st?.settings.wake_phrase}”, then your question. Say “stop listening” when you're done.</p>}
+      </Card>
 
       {approval && (
-        <ApprovalCard title={stepTitle(approval.tool, approval.args)} effect={approval.effect}
+        <ApprovalCard className="talk-approval" title={stepTitle(approval.tool, approval.args)} effect={approval.effect}
           detail={`${approval.reason ? approval.reason + " " : ""}${pro ? "Say “yes, send it” or “no”, or tap a button. Anything unclear is asked again." : "Tap a button to answer."}`}
           command={argsLine(approval.args) || undefined}
           onApprove={() => decideByTap(approval, true)} onDeny={() => decideByTap(approval, false)} />
       )}
 
-      {turns.length > 0 && (
-        <section className="talk-log" aria-label="Conversation">
-          {turns.map((t) => t.role === "user"
-            ? <div key={t.id} className="msg user"><div className="bubble-user">{t.text}</div></div>
-            : t.role === "note" ? <div key={t.id} className="talk-note small faint">{t.text}</div>
-            : <div key={t.id} className="msg"><div className="msg-body"><Markdown text={t.text} /></div></div>)}
-          {cid && <Link className="small" to={`/assistant/${cid}`}>Open this conversation in Chat</Link>}
-        </section>
-      )}
+      <Section title="Conversation" className="ag-section-gap">
+        {turns.length === 0 ? <EmptyState title="Nothing said yet" line="Press the microphone and ask something; the conversation shows here." /> : (
+          <div className="talk-log" aria-label="Conversation">
+            {turns.map((t) => t.role === "user"
+              ? <div key={t.id} className="talk-turn is-user">{t.text}</div>
+              : t.role === "note" ? <p key={t.id} className="talk-note ag-note">{t.text}</p>
+              : <div key={t.id} className="talk-turn"><Markdown text={t.text} /></div>)}
+            {cid && <Link className="ag-meta" to={`/assistant/${cid}`}>Open this conversation in Chat</Link>}
+          </div>
+        )}
+      </Section>
 
-      <section className="card col talk-info small">
-        {st && <div>Listening with {engineName}. Change it in <Link to="/voice">Voice settings</Link>.</div>}
-        {st?.engine === "browser" && <div className="muted">If listening doesn't start, use your computer's own dictation: {osDictationHint()}, in any text box.</div>}
-        {!pro && st && <div className="muted">Free includes dictation and push to talk. Hands-free conversation, the wake word and spoken approvals are part of Pro.</div>}
-      </section>
-    </div>
+      <Section title="How it listens">
+        <div className="ag-stack">
+          <p className="ag-note">Listening with {engineName}. Change it in <Link to="/voice">Voice settings</Link>.</p>
+          {st.engine === "browser" && <p className="ag-note">If listening doesn't start, use your computer's own dictation: {osDictationHint()}, in any text box.</p>}
+          {!pro && <p className="ag-note">Free includes dictation and push to talk. Hands-free conversation, the wake word and spoken approvals are part of Pro.</p>}
+        </div>
+      </Section>
+      </>}
+    </Page>
   );
 }

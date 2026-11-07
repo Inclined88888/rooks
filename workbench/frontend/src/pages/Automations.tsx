@@ -1,7 +1,11 @@
-import { CalendarClock, Inbox as InboxIcon, Loader2, Play, Plus, Trash2 } from "lucide-react";
+// Automations: "when this happens, do that", scheduled reports and their inbox. Premium pass (package C): primitives,
+// a loading, an empty and an error state for each list, and one column on a phone.
+import { CalendarClock, Inbox as InboxIcon, Play, Plus, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { api } from "../api";
-import { Empty, Markdown, relTime, useToast } from "../util";
+import { Markdown, relTime, useToast } from "../util";
+import { Button, Card, EmptyState, IconButton, Input, List, Page, Row, Section, Select, Textarea } from "../ui";
+import { Gate, useLoad } from "./agents/kit";
 import TriggerAutomations from "../v02/TriggerAutomations"; // feat/v02-automations
 
 type Schedule = { id: number; name: string; cron: string; prompt: string; deliver: string; enabled: number; next_run: string | null; last_run: string | null; last_status: string };
@@ -28,15 +32,14 @@ function OfferWhen() {
     catch (e) { toast.err(e); }
   };
   return (
-    <label className="row small" style={{ marginBottom: 16, gap: 10 }}>
-      <span>Ask to save a task</span>
-      <select className="input sm" aria-label="When to offer an automation" value={when} onChange={(e) => pick(e.target.value)}>
+    <div className="au-offer">
+      <Select label="Ask to save a task" value={when} onChange={(e) => pick(e.target.value)}>
         <option value="2">After I've done it twice</option>
         <option value="3">After I've done it three times</option>
         <option value="always">Every time</option>
         <option value="off">Don't ask</option>
-      </select>
-    </label>
+      </Select>
+    </div>
   );
 }
 
@@ -53,18 +56,15 @@ function describe(cron: string): string {
 }
 
 export default function Automations() {
-  const [data, setData] = useState<{ timezone: string; schedules: Schedule[] }>({ timezone: "", schedules: [] });
-  const [inbox, setInbox] = useState<{ unread: number; items: Item[] }>({ unread: 0, items: [] });
+  const sched = useLoad(() => api<{ timezone: string; schedules: Schedule[] }>("/schedules"), []);
+  const inbox = useLoad(() => api<{ unread: number; items: Item[] }>("/inbox"), []);
   const [form, setForm] = useState({ name: "", cron: "0 8 * * *", prompt: "", deliver: "inbox" });
   const [running, setRunning] = useState(0);
   const [open, setOpen] = useState<number | null>(null);
   const toast = useToast();
 
-  const load = () => {
-    api<typeof data>("/schedules").then(setData).catch(toast.err);
-    api<typeof inbox>("/inbox").then(setInbox).catch(toast.err);
-  };
-  useEffect(() => { load(); }, []);
+  const load = () => { sched.reload(); inbox.reload(); };
+  const act = async (fn: () => Promise<unknown>) => { try { await fn(); load(); } catch (e) { toast.err(e); } };
 
   const add = async (e: FormEvent) => {
     e.preventDefault();
@@ -78,71 +78,70 @@ export default function Automations() {
   };
 
   return (
-    <div className="page" style={{ maxWidth: 1000 }}>
-      <div className="page-head"><div><h1>Automations</h1><p className="muted">Show me once where to look, and I can check it each morning. Plan my day opens those places, sees what's new, and writes the plan.</p></div></div>
-      <OfferWhen />
+    <Page wide className="ag-page au-page" title="Automations"
+      description="Show me once where to look, and I can check it each morning. Plan my day opens those places, sees what's new, and writes the plan."
+      actions={<OfferWhen />}>
       <TriggerAutomations />{/* feat/v02-automations: "when X happens, do Y" */}
-      <h2 className="trig-sub">Scheduled reports</h2>
 
-      <form className="card col" onSubmit={add} style={{ marginBottom: 16 }}>
-        <div className="row wrap">
-          <span className="small muted">Quick start:</span>
-          {PRESETS.map((p) => <button type="button" key={p.label} className="btn sm" onClick={() => setForm({ ...form, name: p.name, cron: p.cron, prompt: p.prompt })}>{p.label}</button>)}
-        </div>
-        <div className="row wrap">
-          <input className="input grow" style={{ minWidth: 180 }} required placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <span className="muted small">{describe(form.cron)}</span>
-          <select className="input" style={{ width: 130 }} value={form.deliver} onChange={(e) => setForm({ ...form, deliver: e.target.value })}>
-            <option value="inbox">Inbox</option><option value="telegram">Inbox + Telegram</option>
-          </select>
-        </div>
-        <textarea className="input" rows={3} required placeholder="What should the assistant do each time?" value={form.prompt} onChange={(e) => setForm({ ...form, prompt: e.target.value })} />
-        <details>
-          <summary className="small muted">Advanced</summary>
-          <label className="field small">Schedule pattern
-            <input className="input mono" required value={form.cron} onChange={(e) => setForm({ ...form, cron: e.target.value })} aria-label="Schedule pattern" />
-          </label>
-        </details>
-        <div className="row"><span className="muted small grow">Each run asks the assistant to do this. Keep ones that run often short.</span><button className="btn primary"><Plus size={15} /> Schedule</button></div>
-      </form>
+      <Section title="Scheduled reports">
+        <Card as="section" aria-label="New scheduled report">
+          <form className="ag-form" onSubmit={add}>
+            <div className="ag-bar">
+              <span className="ag-meta">Quick start:</span>
+              {PRESETS.map((p) => <Button size="sm" key={p.label} onClick={() => setForm({ ...form, name: p.name, cron: p.cron, prompt: p.prompt })}>{p.label}</Button>)}
+            </div>
+            <div className="ag-form-row">
+              <Input label="Name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} hint={describe(form.cron)} />
+              <Select label="Send it to" value={form.deliver} onChange={(e) => setForm({ ...form, deliver: e.target.value })}>
+                <option value="inbox">Inbox</option><option value="telegram">Inbox + Telegram</option>
+              </Select>
+            </div>
+            <Textarea label="What should the assistant do each time?" rows={3} required value={form.prompt} onChange={(e) => setForm({ ...form, prompt: e.target.value })} />
+            <details className="au-advanced">
+              <summary>Advanced</summary>
+              <Input label="Schedule pattern" className="ag-mono" required value={form.cron} onChange={(e) => setForm({ ...form, cron: e.target.value })} />
+            </details>
+            <div className="ag-bar"><span className="ag-note ag-grow">Each run asks the assistant to do this. Keep ones that run often short.</span><Button type="submit" variant="primary" icon={<Plus size={14} />}>Schedule</Button></div>
+          </form>
+        </Card>
 
-      <div className="grid two">
-        <div className="col">
-          <div className="row"><CalendarClock size={16} /><h2>Schedules</h2></div>
-          {data.schedules.length === 0 && <div className="card"><Empty icon={<CalendarClock size={22} />} title="Nothing scheduled" hint="Try the daily report preset." /></div>}
-          <div className="card flush">
-            {data.schedules.map((s) => (
-              <div key={s.id} className="col" style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", gap: 4 }}>
-                <div className="row">
-                  <input type="checkbox" checked={!!s.enabled} onChange={async () => { await api(`/schedules/${s.id}`, { method: "PATCH", body: { enabled: !s.enabled } }); load(); }} />
-                  <strong className="grow truncate">{s.name}</strong>
-                  <button className="btn sm" disabled={running === s.id} onClick={() => runNow(s)}>{running === s.id ? <Loader2 size={13} className="spin" /> : <Play size={13} />} Run now</button>
-                  <button className="btn ghost sm icon" onClick={async () => { if (confirm(`Delete ${s.name}?`)) { await api(`/schedules/${s.id}`, { method: "DELETE" }); load(); } }}><Trash2 size={13} /></button>
-                </div>
-                <div className="muted small">{describe(s.cron)} · {s.deliver === "telegram" ? "Inbox + Telegram" : "Inbox"}{s.enabled && s.next_run ? ` · next ${new Date(s.next_run).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })}` : ""}</div>
-                {s.last_status && s.last_status !== "ok" && <div className="small" style={{ color: "var(--danger)" }}>{s.last_status}</div>}
-              </div>
-            ))}
-          </div>
+        <div className="ag-two au-cols ag-section-gap">
+          <section aria-labelledby="au-sched-h">
+            <div className="ag-bar au-col-head"><CalendarClock size={16} aria-hidden="true" /><h3 id="au-sched-h" className="ag-h3">Schedules</h3></div>
+            <Gate state={sched} rows={3}>{(d) => d.schedules.length === 0
+              ? <EmptyState icon={<CalendarClock size={20} />} title="Nothing scheduled" line="Try the daily report preset above." />
+              : <List className="ag-list" label="Schedules">
+                {d.schedules.map((s) => (
+                  <Row key={s.id} title={s.name}
+                    leading={<input type="checkbox" aria-label={s.enabled ? `Turn off ${s.name}` : `Turn on ${s.name}`} checked={!!s.enabled} onChange={() => act(() => api(`/schedules/${s.id}`, { method: "PATCH", body: { enabled: !s.enabled } }))} />}
+                    meta={<>{describe(s.cron)} · {s.deliver === "telegram" ? "Inbox + Telegram" : "Inbox"}{s.enabled && s.next_run ? ` · next ${new Date(s.next_run).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })}` : ""}
+                      {s.last_status && s.last_status !== "ok" && <span className="ag-err"> · {s.last_status}</span>}</>}
+                    actions={<>
+                      <Button size="sm" icon={<Play size={14} />} busy={running === s.id} onClick={() => runNow(s)}>{running === s.id ? "Running…" : "Run now"}</Button>
+                      <IconButton size="sm" label={`Delete ${s.name}`} onClick={() => { if (confirm(`Delete ${s.name}?`)) act(() => api(`/schedules/${s.id}`, { method: "DELETE" })); }}><Trash2 size={14} /></IconButton>
+                    </>} />
+                ))}
+              </List>}
+            </Gate>
+          </section>
+          <section aria-labelledby="au-inbox-h">
+            <div className="ag-bar au-col-head"><InboxIcon size={16} aria-hidden="true" /><h3 id="au-inbox-h" className="ag-h3 ag-grow">Inbox</h3>
+              {(inbox.data?.unread ?? 0) > 0 && <Button size="sm" onClick={() => act(() => api("/inbox/read", { method: "POST" }))}>Mark {inbox.data?.unread} read</Button>}</div>
+            <Gate state={inbox} rows={3}>{(d) => d.items.length === 0
+              ? <EmptyState icon={<InboxIcon size={20} />} title="Nothing here yet" line="Scheduled results show up here." />
+              : <List className="ag-list" label="Inbox">
+                {d.items.map((i) => (
+                  <Row key={i.id} onClick={() => setOpen(open === i.id ? null : i.id)} active={open === i.id}
+                    leading={!i.read ? <span className="ag-dot is-live" aria-label="Unread" /> : undefined}
+                    title={i.title}
+                    meta={open === i.id ? <span className="au-body"><Markdown text={i.body} /></span> : <span className="au-snippet">{relTime(i.created_at)} · {i.body}</span>}
+                    actions={<IconButton size="sm" label={`Delete ${i.title}`} onClick={() => act(() => api(`/inbox/${i.id}`, { method: "DELETE" }))}><Trash2 size={14} /></IconButton>} />
+                ))}
+              </List>}
+            </Gate>
+          </section>
         </div>
-        <div className="col">
-          <div className="row"><InboxIcon size={16} /><h2 className="grow">Inbox</h2>{inbox.unread > 0 && <button className="btn sm" onClick={async () => { await api("/inbox/read", { method: "POST" }); load(); }}>Mark {inbox.unread} read</button>}</div>
-          {inbox.items.length === 0 && <div className="card"><Empty icon={<InboxIcon size={22} />} title="Empty" hint="Scheduled results show up here." /></div>}
-          <div className="card flush">
-            {inbox.items.map((i) => (
-              <div key={i.id} className="col" style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", gap: 4 }}>
-                <div className="row" style={{ cursor: "pointer" }} onClick={() => setOpen(open === i.id ? null : i.id)}>
-                  {!i.read && <span className="dot" style={{ background: "var(--accent)" }} />}
-                  <strong className="grow truncate">{i.title}</strong>
-                  <span className="faint small">{relTime(i.created_at)}</span>
-                  <button className="btn ghost sm icon" onClick={async (e) => { e.stopPropagation(); await api(`/inbox/${i.id}`, { method: "DELETE" }); load(); }}><Trash2 size={13} /></button>
-                </div>
-                {open === i.id ? <Markdown text={i.body} /> : <div className="muted small truncate">{i.body}</div>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+      </Section>
+    </Page>
   );
 }

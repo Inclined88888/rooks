@@ -74,8 +74,8 @@ test("the rail's Room item is live while the Room runs, and Needs you on the bot
 
 test("code keeps the real terminal, browser and computer", () => {
   assert.match(code, /TerminalSlot/);
-  assert.match(code, />Browser</);
-  assert.match(code, />Computer</);
+  assert.match(code, /(>|label: ")Browser(<|")/); // a tab of the Code desk (premium pass: the Tabs primitive)
+  assert.match(code, /(>|label: ")Computer(<|")/);
   assert.doesNotMatch(code, /Virtual computer/);
   assert.doesNotMatch(code, /TryRoomPage/);
   assert.doesNotMatch(registry, /path: "\/try"/);

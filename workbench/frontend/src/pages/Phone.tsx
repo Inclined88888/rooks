@@ -1,7 +1,9 @@
-import { Smartphone, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
+import { Button, ErrorState, Input, Loading } from "../ui";
 import { useToast } from "../util";
+import { Advanced, Notice, SettingRow, SettingsGroup, Switch } from "./settings";
 
 type Lan = { available: boolean; enabled: boolean; running: boolean; port: number; addresses: string[]; error: string };
 type Pairing = { code: string; expires_in: number; urls: string[]; qr: string; qr_svg: string; lan: Lan; relay_url: string };
@@ -35,6 +37,7 @@ export function PhoneCard() {
   const [cfg, setCfg] = useState<MobileSettings | null>(null);
   const [relay, setRelay] = useState("");
   const [blocked, setBlocked] = useState("");
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => {
     setDevices(await api<Device[]>("/mobile/devices"));
@@ -42,7 +45,8 @@ export function PhoneCard() {
     setCfg(s);
     setRelay(s.relay_url);
   }, []);
-  useEffect(() => { load().catch(() => undefined); }, [load]);
+  const retry = useCallback(() => { setFailed(false); load().catch(() => setFailed(true)); }, [load]);
+  useEffect(() => { retry(); }, [retry]);
 
   useEffect(() => {
     if (!pair) return;
@@ -95,69 +99,64 @@ export function PhoneCard() {
     catch (e) { toast.err(e); }
   };
 
+  if (failed && !cfg) return <ErrorState title="Phone settings did not load" line="The app did not answer. Try again in a moment." onRetry={retry} />;
+  if (!cfg) return <Loading rows={2} label="Loading phone settings" />;
+
   return (
-    <div className="card col gap-lg" id="phone">
-      <div className="row"><Smartphone size={16} /><h2>Phone</h2></div>
-      {cfg && <p className="muted" style={{ margin: 0 }}>{statusLine(cfg, devices)}</p>}
-      {blocked && <div className="alert">{blocked}</div>}
-      {pair ? (
-        <div className="phone-pair">
-          <div className="phone-qr" dangerouslySetInnerHTML={{ __html: pair.qr_svg }} aria-label="Pairing code" />
-          <div className="col gap">
-            <div className="phone-code mono">{pair.code}</div>
-            <p className="muted small" style={{ margin: 0 }}>
-              Open Rooks on the phone and scan this. The phone should be on this Wi-Fi.
-              {pair.relay_url ? " It can also reach this computer from somewhere else." : ""}
-              {" "}Expires in {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}.
-            </p>
-            <div><button type="button" className="btn ghost sm" onClick={() => setPair(null)}>Cancel</button></div>
-          </div>
-        </div>
-      ) : (
-        <div><button type="button" className="btn primary" onClick={start}>Pair a phone</button></div>
-      )}
-
-      {devices.length > 0 && (
-        <div className="card flush">
-          {devices.map((d) => (
-            <div key={d.id} className="list-item">
-              <div className="grow">
-                <div><strong>{d.name}</strong> <span className="muted small">{d.platform || "phone"}{d.push ? " · notifications on" : ""}</span></div>
-                <div className="muted small">Paired {when(d.created_at)} · last seen {when(d.last_seen)}</div>
+    <div className="st-stack" id="phone">
+      <SettingsGroup>
+        <SettingRow label="Pair a phone" help={statusLine(cfg, devices)}>
+          {!pair && <Button variant="primary" size="sm" onClick={start}>Pair a phone</Button>}
+        </SettingRow>
+        {blocked && <div className="st-row"><Notice>{blocked}</Notice></div>}
+        {pair && (
+          <div className="st-row">
+            <div className="st-pair">
+              <div className="st-qr" dangerouslySetInnerHTML={{ __html: pair.qr_svg }} role="img" aria-label="Pairing code to scan" />
+              <div className="st-stack st-grow">
+                <span className="st-pair-code">{pair.code}</span>
+                <p className="st-small">
+                  Open Rooks on the phone and scan this. The phone should be on this Wi-Fi.
+                  {pair.relay_url ? " It can also reach this computer from somewhere else." : ""}
+                  {" "}Expires in {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}.
+                </p>
+                <div><Button variant="ghost" size="sm" onClick={() => setPair(null)}>Cancel</Button></div>
               </div>
-              <button type="button" className="btn ghost danger sm" onClick={() => revoke(d)}><Trash2 size={13} /> Unpair</button>
             </div>
-          ))}
-        </div>
-      )}
-
-      {cfg && devices.length > 0 && (
-        <label className="row small">
-          <input type="checkbox" checked={cfg.push_enabled} onChange={(e) => save({ push_enabled: e.target.checked }).catch(toast.err)} />
-          Tell this phone when something needs you
-        </label>
-      )}
-
-      {cfg && (
-        <details className="settings-more">
-          <summary>Advanced</summary>
-          <div className="col gap" style={{ marginTop: 12 }}>
-            {cfg.lan.available && (
-              <label className="row small">
-                <input type="checkbox" checked={cfg.lan.enabled} onChange={(e) => save({ lan_enabled: e.target.checked }).catch(toast.err)} />
-                Allow a phone on this Wi-Fi
-                <span className="muted">{cfg.lan.running ? "On" : cfg.lan.error ? "Didn't start" : "Off"}</span>
-              </label>
-            )}
-            <label className="field small">Private address <span className="hint">Only if you already have one the phone can open.</span>
-              <div className="row">
-                <input className="input grow" value={relay} placeholder="https://" onChange={(e) => setRelay(e.target.value)} aria-label="Private address" />
-                <button type="button" className="btn" disabled={relay === cfg.relay_url} onClick={() => save({ relay_url: relay }).catch(toast.err)}>Save</button>
-              </div>
-            </label>
           </div>
-        </details>
-      )}
+        )}
+        {devices.map((d) => (
+          <div key={d.id} className="st-item">
+            <div className="st-item-text">
+              <span className="st-item-title">{d.name} <span className="st-item-meta">{d.platform || "phone"}{d.push ? " · notifications on" : ""}</span></span>
+              <span className="st-item-meta">Paired {when(d.created_at)} · last seen {when(d.last_seen)}</span>
+            </div>
+            <span className="st-item-actions"><Button variant="danger" size="sm" icon={<Trash2 size={13} />} onClick={() => revoke(d)}>Unpair</Button></span>
+          </div>
+        ))}
+        {devices.length > 0 && (
+          <SettingRow label="Notifications" help="Tell this phone when something needs you.">
+            <Switch checked={cfg.push_enabled} onChange={(on) => { save({ push_enabled: on }).catch(toast.err); }} label="Tell this phone when something needs you" />
+          </SettingRow>
+        )}
+        <div className="st-row">
+          <Advanced>
+            {cfg.lan.available && (
+              <SettingRow label="Allow a phone on this Wi-Fi" help={cfg.lan.running ? "On" : cfg.lan.error ? "Didn't start" : "Off"}>
+                <Switch checked={cfg.lan.enabled} onChange={(on) => { save({ lan_enabled: on }).catch(toast.err); }} label="Allow a phone on this Wi-Fi" />
+              </SettingRow>
+            )}
+            <div className="st-stack">
+              <span className="st-row-label">Private address</span>
+              <span className="st-small">Only if you already have one the phone can open.</span>
+              <div className="st-key">
+                <Input value={relay} placeholder="https://" onChange={(e) => setRelay(e.target.value)} aria-label="Private address" />
+                <Button disabled={relay === cfg.relay_url} onClick={() => { save({ relay_url: relay }).catch(toast.err); }}>Save</Button>
+              </div>
+            </div>
+          </Advanced>
+        </div>
+      </SettingsGroup>
     </div>
   );
 }

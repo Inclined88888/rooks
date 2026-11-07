@@ -1,7 +1,9 @@
-import { Clock, Columns3, Copy, Loader2, Plus, RotateCcw, Send, Square, X } from "lucide-react";
+import { Clock, Columns3, Copy, Plus, RotateCcw, Send, Square, X } from "lucide-react";
 import { FormEvent, useRef, useState } from "react";
 import { stream, StreamEvent } from "../api";
-import { Empty, Markdown, ModelSelect, useModels, useToast } from "../util";
+import { Button, EmptyState, IconButton, Loading, Page, Textarea } from "../ui";
+import { Markdown, ModelSelect, useModels, useToast } from "../util";
+import { ButtonLink, Notice } from "./settings";
 
 type Turn = { role: "user" | "assistant"; content: string };
 type Column = { id: number; model: string; history: Turn[]; live: string; thinking: string; busy: boolean; error: string; stats: { ms?: number; first?: number | null; tokens?: number } };
@@ -56,53 +58,56 @@ export default function Compare() {
   const busy = cols.some((c) => c.busy);
 
   return (
-    <div className="page wide">
-      <div className="page-head">
-        <div><h1>Compare models</h1><p className="muted">Send the same prompt to several models and read the answers side by side. Each column keeps its own conversation.</p></div>
-        <div className="spacer" />
-        <button className="btn" onClick={() => setShowSystem(!showSystem)}>System prompt</button>
-        <button className="btn" onClick={reset} disabled={busy}><RotateCcw size={15} /> Reset</button>
-        <button className="btn" disabled={cols.length >= 4} onClick={() => setCols([...cols, blank()])}><Plus size={15} /> Column</button>
-      </div>
-      {showSystem && <textarea className="input" rows={3} style={{ marginBottom: 12 }} value={system} onChange={(e) => setSystem(e.target.value)} placeholder="Optional system prompt applied to every model" />}
-      {!loading && models.length === 0 && <div className="alert" style={{ marginBottom: 12 }}>No models found. Download a local model or add a provider in Settings.</div>}
-
-      <div className="compare-cols">
-        {cols.map((col) => (
-          <div key={col.id} className="card compare-col">
-            <div className="row" style={{ marginBottom: 8 }}>
-              <div className="grow"><ModelSelect value={col.model} onChange={(v) => update(col.id, (c) => ({ ...c, model: v }))} models={models} allowDefault={false} /></div>
-              {cols.length > 1 && <button className="btn ghost sm icon" onClick={() => { aborts.current.get(col.id)?.abort(); setCols(cols.filter((c) => c.id !== col.id)); }}><X size={15} /></button>}
-            </div>
-            <div className="out">
-              {col.history.length === 0 && !col.busy && <Empty icon={<Columns3 size={20} />} title={col.model ? "Ready" : "Pick a model"} />}
-              {col.history.map((t, i) => t.role === "user"
-                ? <div key={i} className="bubble-user">{t.content}</div>
-                : <div key={i} style={{ position: "relative" }}><Markdown text={t.content} /><button className="btn ghost sm icon" title="Copy" onClick={() => navigator.clipboard.writeText(t.content)} style={{ position: "absolute", top: -4, right: 0 }}><Copy size={12} /></button></div>)}
-              {col.thinking && (
-                <details className="thinking" open={col.busy && !col.live}>
-                  <summary className="muted small">{col.busy && !col.live ? "Thinking…" : "Show reasoning"}</summary>
-                  <div className="muted small" style={{ whiteSpace: "pre-wrap" }}>{col.thinking}</div>
-                </details>
-              )}
-              {col.busy && (col.live ? <Markdown text={clean(col.live) || "…"} /> : !col.thinking && <div className="row muted"><Loader2 size={14} className="spin" /> Waiting for first token</div>)}
-              {col.error && <div className="alert err">{col.error}</div>}
-            </div>
-            {(col.stats.ms || col.busy) && (
-              <div className="row small faint" style={{ borderTop: "1px solid var(--border)", paddingTop: 8, marginTop: 8 }}>
-                <Clock size={12} />
-                {col.stats.ms ? <>{(col.stats.ms / 1000).toFixed(1)}s total{col.stats.first ? ` · ${(col.stats.first / 1000).toFixed(1)}s to first token` : ""}{col.stats.tokens ? ` · ${col.stats.tokens} tokens · ${Math.round(col.stats.tokens / (col.stats.ms / 1000))} tok/s` : ""}</> : "running…"}
+    <Page title="Compare models" wide className="st-page"
+      description="Send the same prompt to several models and read the answers side by side. Each column keeps its own conversation."
+      actions={<>
+        <Button size="sm" variant={showSystem ? "secondary" : "ghost"} aria-pressed={showSystem} onClick={() => setShowSystem(!showSystem)}>System prompt</Button>
+        <Button size="sm" icon={<RotateCcw size={14} />} onClick={reset} disabled={busy}>Reset</Button>
+        <Button size="sm" icon={<Plus size={14} />} disabled={cols.length >= 4} onClick={() => setCols([...cols, blank()])}>Column</Button>
+      </>}>
+      {showSystem && <div className="st-gap-b"><Textarea label="System prompt" rows={3} value={system} onChange={(e) => setSystem(e.target.value)} placeholder="Optional instructions applied to every model" /></div>}
+      {loading ? <Loading rows={2} label="Loading models" /> : models.length === 0 ? (
+        <EmptyState icon={<Columns3 size={22} />} title="No models to compare yet" line="Connect a model in Settings, or download one to this computer." action={<ButtonLink to="/settings?section=models">Open model settings</ButtonLink>} />
+      ) : (
+        <>
+          <div className="st-compare">
+            {cols.map((col) => (
+              <div key={col.id} className="st-compare-col">
+                <div className="st-key">
+                  <div className="st-grow"><ModelSelect value={col.model} onChange={(v) => update(col.id, (c) => ({ ...c, model: v }))} models={models} allowDefault={false} /></div>
+                  {cols.length > 1 && <IconButton size="sm" label="Remove this column" onClick={() => { aborts.current.get(col.id)?.abort(); setCols(cols.filter((c) => c.id !== col.id)); }}><X size={15} /></IconButton>}
+                </div>
+                <div className="st-compare-out" aria-live="polite">
+                  {col.history.length === 0 && !col.busy && <p className="st-small">{col.model ? "Ready. Ask below." : "Pick a model."}</p>}
+                  {col.history.map((t, i) => t.role === "user"
+                    ? <div key={i} className="st-compare-user">{t.content}</div>
+                    : <div key={i} className="st-compare-answer"><Markdown text={t.content} /><IconButton size="sm" label="Copy" onClick={() => navigator.clipboard.writeText(t.content)}><Copy size={12} /></IconButton></div>)}
+                  {col.thinking && (
+                    <details className="st-thinking" open={col.busy && !col.live}>
+                      <summary>{col.busy && !col.live ? "Thinking…" : "Show reasoning"}</summary>
+                      <div className="st-thinking-text">{col.thinking}</div>
+                    </details>
+                  )}
+                  {col.busy && (col.live ? <Markdown text={clean(col.live) || "…"} /> : !col.thinking && <p className="st-small" role="status">Waiting for the first word…</p>)}
+                  {col.error && <Notice tone="danger">{col.error}</Notice>}
+                </div>
+                {(col.stats.ms || col.busy) && (
+                  <div className="st-compare-stats">
+                    <Clock size={12} aria-hidden="true" />
+                    {col.stats.ms ? <>{(col.stats.ms / 1000).toFixed(1)}s total{col.stats.first ? ` · ${(col.stats.first / 1000).toFixed(1)}s to first word` : ""}{col.stats.tokens ? ` · ${col.stats.tokens} tokens · ${Math.round(col.stats.tokens / (col.stats.ms / 1000))} per second` : ""}</> : "Running…"}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
-        ))}
-      </div>
 
-      <form className="card row" onSubmit={send} style={{ marginTop: 12, position: "sticky", bottom: 12 }}>
-        <textarea className="input grow" rows={2} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Ask all models… (Enter to send, Shift+Enter for a new line)"
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
-        {busy ? <button type="button" className="btn" onClick={stopAll}><Square size={15} /> Stop</button> : <button className="btn primary" disabled={!prompt.trim()}><Send size={15} /> Send</button>}
-      </form>
-    </div>
+          <form className="st-compare-ask" onSubmit={send}>
+            <Textarea rows={2} aria-label="Ask all models" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Ask all models… (Enter to send, Shift+Enter for a new line)"
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
+            {busy ? <Button icon={<Square size={15} />} onClick={stopAll}>Stop</Button> : <Button type="submit" variant="primary" icon={<Send size={15} />} disabled={!prompt.trim()}>Send</Button>}
+          </form>
+        </>
+      )}
+    </Page>
   );
 }

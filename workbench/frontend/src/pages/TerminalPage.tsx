@@ -3,9 +3,10 @@
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
-import { Plus, SquareTerminal, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { publishTerminals } from "../terminalHost";
+import { Button, Page } from "../ui";
 import "../work.css";
 
 const MAX = 6;
@@ -43,24 +44,22 @@ function Shell({ active, hold, label, onPhase, onSend }: {
   useEffect(() => {
     if (!box.current) return;
     const css = getComputedStyle(document.documentElement);
+    const tok = (name: string) => css.getPropertyValue(name).trim() || undefined;
+    // The dark screen is on purpose; its colours are the --screen tokens in tokens.css. Blue, magenta and cyan are xterm's own.
     const term = new Terminal({
       cursorBlink: true, fontSize: 13, scrollback: 5000, screenReaderMode: true,
-      fontFamily: css.getPropertyValue("--mono").trim() || "ui-monospace, Menlo, monospace",
+      fontFamily: tok("--font-mono") || "ui-monospace, Menlo, monospace",
       theme: {
-        background: "#1c1c1e",
-        foreground: "#f5f5f7",
-        cursor: "#f5f5f7",
-        cursorAccent: "#1c1c1e",
-        selectionBackground: "#3a3a3c",
-        black: "#1c1c1e",
-        brightBlack: "#8e8e93",
-        red: "#ff5f57",
-        green: "#28c840",
-        yellow: "#febc2e",
-        blue: "#0a84ff",
-        magenta: "#bf5af2",
-        cyan: "#64d2ff",
-        white: "#f5f5f7",
+        background: tok("--screen-bg"),
+        foreground: tok("--screen-ink"),
+        cursor: tok("--screen-ink"),
+        cursorAccent: tok("--screen-bg"),
+        selectionBackground: tok("--screen-border"),
+        black: tok("--screen-bg"),
+        red: tok("--screen-dot-close"),
+        green: tok("--screen-dot-max"),
+        yellow: tok("--screen-dot-min"),
+        white: tok("--screen-ink"),
       },
     });
     const fit = new FitAddon();
@@ -118,10 +117,10 @@ function Shell({ active, hold, label, onPhase, onSend }: {
 
   return (
     <div className={`terminal-pane${active ? "" : " is-hidden"}`} aria-hidden={!active}>
-      <div role="status" aria-live="polite" className="small">{phase === "connecting" ? "Connecting…" : phase === "closed" ? why : ""}</div>
+      <div role="status" aria-live="polite" className="terminal-phase">{phase === "connecting" ? "Connecting…" : phase === "closed" ? why : ""}</div>
       <div ref={box} className="terminal-box" aria-label={label} />
       {phase === "closed" && (
-        <button type="button" className="btn sm" onClick={() => setGen((n) => n + 1)}>Reopen this terminal</button>
+        <div className="terminal-reopen"><Button size="sm" onClick={() => setGen((n) => n + 1)}>Reopen this terminal</Button></div>
       )}
     </div>
   );
@@ -136,7 +135,7 @@ function TabChip({ pane, active, over, onPick, onRename, onClose, onDragStart, o
   const [draft, setDraft] = useState(pane.name);
   const commit = () => { setEditing(false); onRename(draft); setDraft((d) => d.trim() || pane.name); };
   return (
-    <div className={`tab terminal-tab${active ? " active" : ""}${over ? " is-over" : ""}`}
+    <div className={`terminal-tab${active ? " is-active" : ""}${over ? " is-over" : ""}`}
       draggable={!editing}
       onDragStart={(e) => { e.dataTransfer.setData("text/plain", String(pane.id)); e.dataTransfer.effectAllowed = "move"; onDragStart(); }}
       onDragOver={(e) => { e.preventDefault(); onDragOver(); }}
@@ -227,28 +226,21 @@ export default function TerminalPage({ bare = false, parked = false }: { bare?: 
   };
 
   return (
-    <div className="page terminal-page">
-      <div className="page-head row">
-        {!bare && <SquareTerminal size={18} aria-hidden />}
-        {!bare && <h1 className="grow">Terminal</h1>}
-        {bare && <span className="grow" />}
-        <button className="btn sm" onClick={() => senders.current.get(active)?.("rooks")} disabled={phase !== "open"} title="Start the coding assistant in this terminal">Start coding</button>
-      </div>
-      <div className="muted small">Drag a name to move it. Double-click a name to rename it. Each one keeps running when you leave for chat or settings. Up to six.</div>
-      <div className="terminal-tabs">
-        <div className="tabs" role="tablist" aria-label="Terminals">
-          {panes.map((p) => (
-            <TabChip key={p.id} pane={p} active={p.id === active} over={over === p.id}
-              onPick={() => setActive(p.id)} onRename={(name) => rename(p.id, name)} onClose={() => close(p.id)}
-              onDragStart={() => { dragId.current = p.id; }}
-              onDragOver={() => setOver(p.id)}
-              onDrop={() => { if (dragId.current != null) move(dragId.current, p.id); dragId.current = null; setOver(null); }}
-              onDragEnd={() => { dragId.current = null; setOver(null); }} />
-          ))}
-        </div>
-        <button type="button" className="btn sm" onClick={add} disabled={full} title={full ? "Six terminals can run at once. Close one to open another." : "Open another shell. The ones already open keep running."}>
-          <Plus size={14} /> New terminal
-        </button>
+    <Page wide className={`ag-page terminal-page${bare ? " is-bare" : ""}`} title="Terminal"
+      description="Drag a name to move it. Double-click a name to rename it. Each one keeps running when you leave for chat or settings. Up to six."
+      actions={<>
+        <Button size="sm" onClick={() => senders.current.get(active)?.("rooks")} disabled={phase !== "open"} title="Start the coding assistant in this terminal">Start coding</Button>
+        <Button size="sm" icon={<Plus size={14} />} onClick={add} disabled={full} title={full ? "Six terminals can run at once. Close one to open another." : "Open another shell. The ones already open keep running."}>New terminal</Button>
+      </>}>
+      <div className="terminal-tabs" role="tablist" aria-label="Terminals">
+        {panes.map((p) => (
+          <TabChip key={p.id} pane={p} active={p.id === active} over={over === p.id}
+            onPick={() => setActive(p.id)} onRename={(name) => rename(p.id, name)} onClose={() => close(p.id)}
+            onDragStart={() => { dragId.current = p.id; }}
+            onDragOver={() => setOver(p.id)}
+            onDrop={() => { if (dragId.current != null) move(dragId.current, p.id); dragId.current = null; setOver(null); }}
+            onDragEnd={() => { dragId.current = null; setOver(null); }} />
+        ))}
       </div>
       <div className="terminal-screen">
         <div className="terminal-screen-bar">
@@ -263,6 +255,6 @@ export default function TerminalPage({ bare = false, parked = false }: { bare?: 
           ))}
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
