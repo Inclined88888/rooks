@@ -1,5 +1,5 @@
 // feat/v02-core: small pieces shared by Projects, History and Checked answers.
-import { Sparkles } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 import { ApiError } from "../api";
 
 export const UPGRADE_TEXT: Record<string, string> = {
@@ -14,7 +14,7 @@ export const isUpgrade = (e: unknown) => e instanceof ApiError && e.status === 4
 export function UpgradeCard({ feature, onClose }: { feature: keyof typeof UPGRADE_TEXT | string; onClose?: () => void }) {
   return (
     <div className="card v02-upgrade" role="status">
-      <Sparkles size={18} aria-hidden="true" />
+      <BadgeCheck size={18} aria-hidden="true" />
       <div className="grow">
         <div className="v02-kicker">Pro</div>
         <div>{UPGRADE_TEXT[feature] ?? "This is part of Pro."}</div>

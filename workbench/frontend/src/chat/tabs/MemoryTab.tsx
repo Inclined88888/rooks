@@ -1,4 +1,4 @@
-import { Brain, Trash2 } from "lucide-react";
+import { BookMarked, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { api } from "../../api";
 import { Empty, relTime, useToast } from "../../util";
@@ -29,7 +29,7 @@ export function MemoryTab() {
         <button className="btn primary" disabled={form.content.trim().length < 3}>Add</button>
       </form>
       <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search memories" />
-      {items.length === 0 && <Empty icon={<Brain size={24} />} title="Nothing remembered yet" hint="Chat normally; it learns as you go." />}
+      {items.length === 0 && <Empty icon={<BookMarked size={24} />} title="Nothing remembered yet" hint="Chat normally; it learns as you go." />}
       {groups.filter(([, l]) => l.length).map(([title, list]) => (
         <div key={title}>
           <h3 style={{ marginBottom: 6 }}>{title}</h3>

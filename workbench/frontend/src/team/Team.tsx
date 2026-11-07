@@ -1,5 +1,5 @@
 // feat/team-lead: the team lead's place. Assign in plain English, see who's doing what, approve what goes out.
-import { AlertTriangle, Bell, CalendarRange, Check, ChevronLeft, Inbox, LayoutGrid, Lock, Plus, Send, Settings2, Sparkles, Sun, Trash2, UserRound, Users, X } from "lucide-react";
+import { AlertTriangle, Bell, CalendarRange, Check, ChevronLeft, Inbox, LayoutGrid, Lightbulb, ListTree, Lock, Plus, Send, Settings2, Sun, Trash2, UserPlus, UserRound, Users, X } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api";
@@ -19,7 +19,7 @@ const TABS = [
   { id: "workload", label: "Workload", icon: Users },
   { id: "timeline", label: "Timeline", icon: CalendarRange },
   { id: "today", label: "Today's plan", icon: Sun },
-  { id: "runs", label: "AI runs", icon: Sparkles },
+  { id: "runs", label: "AI runs", icon: ListTree },
   { id: "settings", label: "Settings", icon: Settings2 },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
@@ -91,7 +91,7 @@ function AssignBar({ team }: { team: TeamCtx }) {
   };
   return (
     <form className="team-assign card" onSubmit={go}>
-      <Sparkles size={18} aria-hidden="true" className="team-assign-icon" />
+      <UserPlus size={18} aria-hidden="true" className="team-assign-icon" />
       <input className="input grow" value={text} onChange={(e) => setText(e.target.value)} aria-label="Give someone a task"
         placeholder="Give Sam the Smith St quote by Friday, urgent" />
       <Button type="submit" variant="primary" icon={<Plus size={14} />} busy={busy} disabled={!text.trim()}>{busy ? "Assigning…" : "Assign"}</Button>
@@ -123,7 +123,7 @@ function Approvals({ d, team }: { d: Overview; team: TeamCtx }) {
 export function SuggestionCard({ s, team }: { s: Suggestion; team: TeamCtx }) {
   return (
     <article className="team-card sug">
-      <div className="team-card-kind"><Sparkles size={12} aria-hidden="true" /> {s.kind === "rebalance" ? "Even out the load" : s.kind === "next" ? "Next up" : "Who should do it"}</div>
+      <div className="team-card-kind"><Lightbulb size={12} aria-hidden="true" /> {s.kind === "rebalance" ? "Even out the load" : s.kind === "next" ? "Next up" : "Who should do it"}</div>
       <div className="team-card-title">{s.headline}</div>
       <div className="small muted">{s.reason}</div>
       <div className="row team-card-actions">

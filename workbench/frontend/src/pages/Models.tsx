@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Cloud, Cpu, KeyRound, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowUp, BadgeCheck, Cloud, Cpu, KeyRound, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Badge, Button, EmptyState, ErrorState, IconButton, Loading, Page, Section, Select } from "../ui";
@@ -96,7 +96,7 @@ export default function Models() {
                       <span className="st-route-n">{i + 1}</span>
                       <div className="st-route-main">
                         <div className="st-route-head">
-                          {r.auth_kind === "oauth_subscription" || r.auth_kind === "cli_subscription" ? <Sparkles size={15} /> : r.local ? <Cpu size={15} /> : r.free ? <Cloud size={15} /> : <KeyRound size={15} />}
+                          {r.auth_kind === "oauth_subscription" || r.auth_kind === "cli_subscription" ? <BadgeCheck size={15} /> : r.local ? <Cpu size={15} /> : r.free ? <Cloud size={15} /> : <KeyRound size={15} />}
                           <span className="st-plan-name">{r.name}</span>
                           <Badge tone={r.free ? "ok" : "neutral"}>{kindLabel(r)}</Badge>
                           {r.quota.cooling_until && <Badge tone="warn">Resting until {resetTime(r.quota.cooling_until)} · {r.quota.cooling_reason}</Badge>}

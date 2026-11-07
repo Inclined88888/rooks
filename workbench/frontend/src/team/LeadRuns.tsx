@@ -1,5 +1,5 @@
 // B1: the AI team lead's sub-agent runs as a tree: the goal, each read-only sub-task with its job, and the synthesis.
-import { ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronRight, ListTree } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
@@ -35,7 +35,7 @@ export default function LeadRuns() {
 
   if (err && !runs) return <ErrorState title="The AI runs did not load" line={plainError(err)} onRetry={load} />;
   if (!runs) return <Loading rows={3} />;
-  if (!runs.length) return <EmptyState icon={<Sparkles size={20} />} title="No AI team runs yet" line="Ask in chat for something with several parts, like comparing three suppliers; each run shows here." />;
+  if (!runs.length) return <EmptyState icon={<ListTree size={20} />} title="No AI team runs yet" line="Ask in chat for something with several parts, like comparing three suppliers; each run shows here." />;
   return (
     <section className="col gap" aria-label="AI team runs" aria-live="polite">
       {runs.map((r, i) => {

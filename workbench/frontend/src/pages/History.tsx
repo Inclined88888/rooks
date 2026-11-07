@@ -3,8 +3,9 @@
  * API the result cards in the chat use). Built on the primitives: Undo is a Button, "Can't undo" a Badge with the
  * fix beside it, and each row opens the chat it came from.
  */
-import { AlertTriangle, Brain, CalendarDays, Check, CheckSquare, Cog, Download, Eye, FileText, FolderKanban, Globe2, History as HistoryIcon, Mail,
-  MessageSquare, Monitor, NotebookPen, Puzzle, ShieldAlert, Undo2, Workflow } from "lucide-react";
+import {
+  AlertTriangle, BookMarked, CalendarDays, Check, CheckSquare, Cog, Download, Eye, FileText, FolderKanban, Globe2, History as HistoryIcon, Mail, MessageSquare, Monitor, NotebookPen, Puzzle, ShieldAlert, Undo2, Workflow,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api";
@@ -17,7 +18,7 @@ export type Entry = { id: string; at: string; category: string; who: string; tit
 type HistoryPage = { entries: Entry[]; categories: Record<string, string>; export_allowed: boolean; next_before: string | null };
 
 const ICON: Record<string, typeof Check> = { chat: MessageSquare, note: NotebookPen, task: CheckSquare, calendar: CalendarDays, email: Mail, file: FileText,
-  memory: Brain, skill: Puzzle, automation: Workflow, site: Globe2, computer: Monitor, project: FolderKanban, setting: Cog, approval: ShieldAlert, lookup: Eye, other: HistoryIcon };
+  memory: BookMarked, skill: Puzzle, automation: Workflow, site: Globe2, computer: Monitor, project: FolderKanban, setting: Cog, approval: ShieldAlert, lookup: Eye, other: HistoryIcon };
 const FILTERS = ["", "chat", "note", "task", "calendar", "email", "file", "site", "computer", "automation", "memory", "setting", "approval"];
 
 function dayLabel(iso: string) {
