@@ -177,7 +177,7 @@ export default function App() {
   }
   if (location.pathname === "/ask-bar") return <AskBar />; // feat/v02-anywhere-voice: the floating window, no shell
   if (status.welcome_pending || ((status.desktop || status.needs_models) && !status.welcome_done)) {
-    return <Welcome onDone={() => { refresh(); navigate("/assistant", { replace: true }); }} />;
+    return <Welcome onDone={(work) => { refresh(); navigate(work.length ? `/coworkers?pick=${work.join(",")}` : "/assistant", { replace: true }); }} />;
   }
   if (!status.signins_offered) {
     return (

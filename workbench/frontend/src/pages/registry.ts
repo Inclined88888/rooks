@@ -94,6 +94,7 @@ export const PAGES: PageEntry[] = [
   { path: "/channels", label: "Channels", icon: MessageCircle, section: "Workspace", load: () => import("../teammates/Channels") },
   { path: "/talk", label: "Talk", icon: AudioLines, section: "Workspace", load: () => import("./Talk") },
   { path: "/vault", label: "Vault", icon: Lock, section: "Workspace", load: () => import("../teammates/Vault") },
+  { path: "/coworkers", label: "Coworkers", icon: UsersRound, section: "Workspace", load: () => import("./Coworkers") },  // feat/coworkers
   { path: "/packs", label: "Packs", icon: Package, section: "Workspace", load: () => import("./Packs") },
 
   // ---- More: Settings ----
