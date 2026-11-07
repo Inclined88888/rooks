@@ -176,13 +176,13 @@ function ReplyCard({ r, team, tasks }: { r: Reply; team: TeamCtx; tasks: Task[] 
 
 function RiskTag({ t }: { t: Task }) {
   if (!t.risk) return null;
-  return <span className={`team-risk  ${t.risk.level}`}><AlertTriangle size={11} aria-hidden="true" /> {t.risk.label}</span>;
+  return <span className={`team-risk ${t.risk.level}`}><AlertTriangle size={11} aria-hidden="true" /> {t.risk.label}</span>;
 }
 
 function TaskCard({ t, team, members }: { t: Task; team: TeamCtx; members: Member[] }) {
   const set = (body: Partial<Task>) => team.act(() => api(`/team/tasks/${t.id}`, { method: "PATCH", body }));
   return (
-    <div className={`team-task  ${t.status}${t.risk ? "risky" : ""}`}>
+    <div className={`team-task ${t.status} ${t.risk ? "risky" : ""}`}>
       <div className="row team-task-top">
         <span className="team-task-title grow">{t.title}</span>
         {t.priority >= 2 && <span className="team-prio">{PRIORITY_LABEL[t.priority]}</span>}
@@ -229,7 +229,7 @@ function Board({ d, team }: { d: Overview; team: TeamCtx }) {
             <header className="team-col-head">
               <h3>{c.link ? <Link to={c.link}>{c.title}</Link> : c.title} <Badge>{c.tasks.length}</Badge></h3>
               {c.sub && <div className="small faint">{c.sub}</div>}
-              {c.load >= 0 && <div className={`team-load  ${c.load > 100 ? "over" : ""}`}><span style={{ width: `${Math.min(100, c.load)}%` }} /></div>}
+              {c.load >= 0 && <div className={`team-load ${c.load > 100 ? "over" : ""}`}><span style={{ width: `${Math.min(100, c.load)}%` }} /></div>}
             </header>
             {c.tasks.map((t) => <TaskCard key={t.id} t={t} team={team} members={d.members} />)}
             {!c.tasks.length && <div className="small faint team-empty-col">Nothing here</div>}
@@ -249,7 +249,7 @@ function Workload({ d }: { d: Overview }) {
         <div key={m.id} className="team-wl-row">
           <Link to={`/team/people/${m.id}`} className="team-wl-name truncate">{m.name}</Link>
           <div className="team-wl-track" role="img" aria-label={`${m.name}: ${m.load.percent}% booked`}>
-            <span className={`team-wl-bar  ${m.load.percent > 100 ? "over" : m.load.percent < 50 ? "light" : ""}`} style={{ width: `${(100 * Math.min(m.load.percent, max)) / max}%` }} />
+            <span className={`team-wl-bar ${m.load.percent > 100 ? "over" : m.load.percent < 50 ? "light" : ""}`} style={{ width: `${(100 * Math.min(m.load.percent, max)) / max}%` }} />
             <span className="team-wl-full" style={{ left: `${(100 * 100) / max}%` }} aria-hidden="true" />
           </div>
           <div className="team-wl-num small"><strong>{m.load.percent}%</strong> <span className="faint">{m.load.hours}h of {m.load.capacity}h · {m.load.open} open</span></div>
@@ -273,7 +273,7 @@ function Timeline({ d }: { d: Overview }) {
     <div className="card flush team-gantt" style={{ ["--days" as string]: days }}>
       <div className="team-g-row team-g-head">
         <div className="team-g-label small faint">Project / task</div>
-        <div className="team-g-grid">{ticks.map((x) => <div key={x} className={`team-g-tick  ${x === today ? "now" : ""}${[0, 6].includes(new Date(x + "T00:00:00").getDay()) ? "wkend" : ""}`}>{new Date(x + "T00:00:00").getDate()}</div>)}</div>
+        <div className="team-g-grid">{ticks.map((x) => <div key={x} className={`team-g-tick ${x === today ? "now" : ""} ${[0, 6].includes(new Date(x + "T00:00:00").getDay()) ? "wkend" : ""}`}>{new Date(x + "T00:00:00").getDate()}</div>)}</div>
       </div>
       {groups.map(([proj, ts]) => (
         <div key={proj} className="team-g-group">
@@ -285,7 +285,7 @@ function Timeline({ d }: { d: Overview }) {
                 <div className="team-g-label truncate small">{t.title} <span className="faint">· {t.assignee_id ? names[t.assignee_id] : "nobody"}</span></div>
                 <div className="team-g-grid">
                   <span className="team-g-today" style={{ left: `calc(${daysBetween(from, today)} * 100% / var(--days))` }} aria-hidden="true" />
-                  {b && <span className={`team-g-bar  ${t.status}${t.risk?.level ?? ""}`} title={`${t.title}${t.due ? ` · due ${t.due}` : ""}`}
+                  {b && <span className={`team-g-bar ${t.status} ${t.risk?.level ?? ""}`} title={`${t.title}${t.due ? ` · due ${t.due}` : ""}`}
                     style={{ left: `calc(${b.left} * 100% / var(--days))`, width: `calc(${b.width} * 100% / var(--days))` }}>
                     <span style={{ width: `${t.percent}%` }} />
                   </span>}
@@ -320,7 +320,7 @@ function TodayPlan({ team }: { team: TeamCtx }) {
       </div>
       <div className="team-plan">
         {plan.people.map((p) => (
-          <article key={p.member.id} className={`card team-plan-person  ${p.working ? "" : "off"}`}>
+          <article key={p.member.id} className={`card team-plan-person ${p.working ? "" : "off"}`}>
             <header className="row"><Link to={`/team/people/${p.member.id}`} className="team-plan-name grow">{p.member.name}</Link>
               {p.load && <span className="small faint">{p.load.percent}% booked</span>}</header>
             {!p.working ? <div className="small faint">Not working today</div> : !p.tasks.length ? <div className="small faint">Nothing on. Give them something from “Not given out”.</div> : (
@@ -484,7 +484,7 @@ function PersonPage({ id, team }: { id: number; team: TeamCtx }) {
         <section className="card">
           <h3 className="team-h3">Load</h3>
           <div className="team-big">{p.load.percent}%</div>
-          <div className={`team-load  ${p.load.percent > 100 ? "over" : ""}`}><span style={{ width: `${Math.min(100, p.load.percent)}%` }} /></div>
+          <div className={`team-load ${p.load.percent > 100 ? "over" : ""}`}><span style={{ width: `${Math.min(100, p.load.percent)}%` }} /></div>
           <div className="small muted">{p.load.hours}h left on {p.load.open} open task{p.load.open === 1 ? "" : "s"}, {p.load.capacity}h a week</div>
           {!!p.away.length && <><h3 className="team-h3 mt">Away</h3>{p.away.map((a, i) => <div key={i} className="small">{niceDate(a.from)} – {niceDate(a.to)} {a.note}</div>)}</>}
         </section>

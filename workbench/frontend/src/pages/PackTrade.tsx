@@ -71,7 +71,7 @@ export default function PackTrade() {
     <Page wide className="ag-page pk-page" {...head}
       actions={<Tabs label="Trade pack" value={tab} onChange={(v) => setTab(v as "work" | "settings")} items={[{ id: "work", label: "Quotes and invoices" }, { id: "settings", label: "Your business" }]} />}>
       {tab === "settings" ? <SettingsForm s={s} onSaved={(x) => { setS(x); toast.ok("Saved"); }} onErr={toast.err} /> : (
-        <div className={`pk-two  ${sel ? "open" : ""}`}>
+        <div className={`pk-two ${sel ? "open" : ""}`}>
           <div className="pk-stack">
             <NewQuote s={s} onMade={(d) => { load(); pick(d.id); toast.ok(`Quote ${d.number} drafted`); }} onErr={toast.err} />
             <Card>
@@ -79,7 +79,7 @@ export default function PackTrade() {
               {!docs.length ? <EmptyState title="Nothing yet" line="Draft your first quote above." /> : (
                 <div className="pk-list">
                   {docs.map((d) => (
-                    <button key={d.id} className={`pk-item  ${sel === d.id ? "active" : ""}`} onClick={() => pick(d.id)}>
+                    <button key={d.id} className={`pk-item ${sel === d.id ? "active" : ""}`} onClick={() => pick(d.id)}>
                       <Badge>{d.kind === "quote" ? "Quote" : "Invoice"}</Badge>
                       <span className="pk-small mono">{d.number}</span>
                       <span className="grow">{d.customer.name || "No customer"} · {d.title}</span>

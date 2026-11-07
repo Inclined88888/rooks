@@ -35,7 +35,7 @@ export function Rail({ status, onMore, onSearch, name }: { status: StatusLike | 
     window.addEventListener("resize", measure);
     document.fonts?.ready.then(measure).catch(() => {});
     return () => window.removeEventListener("resize", measure);
-  }, [location.pathname, items.length]);
+  }, [location.pathname, items.length, open]); // an open group gains its label at <=1280px, so re-measure then too
   const settingsOn = isActive(SETTINGS_PAGE, location.pathname);
   return (
     <header className="topbar">

@@ -222,7 +222,6 @@ html[data-mode="contrast"] {
   --text-4xl: 28px;
   --text-thread: 16px;     /* the conversation body, line height 1.65 */
   --text-mono: 13px;       /* steps, receipts, the terminal */
-  --text-rail: 12px;       /* rail and bottom bar labels */
 
   --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
