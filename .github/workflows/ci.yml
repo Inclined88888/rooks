@@ -60,7 +60,9 @@ jobs:
       - run: python -m pip install -e ".[dev]"  # pytest, plus prompt_toolkit and rich so the terminal UI tests run
       - name: Bubblewrap, so the project sandbox is tested for real on Linux (not only its refusal)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends bubblewrap
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends bubblewrap
+          bwrap --ro-bind / / --dev /dev true  # fails the job if this runner refuses it, so a pass is never only the refusal path
       - name: Tests, including the fake-model end-to-end run and the interactive terminal
         run: python -m pytest -q
       - name: Installs as a command and runs
