@@ -4,6 +4,19 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## 2026-11-07 · The Room says which shell it has; agent receipts are tested for secrets · branch claude/agents-on-ci-green
+
+Builds on `fix/main-ci-green` (its redaction resync and Git for Windows shell for the Room).
+
+- **The Room on Windows without Git for Windows** still runs commands in Command Prompt, which reads `a; b` as one
+  command and exits 0. Status and every result now carry `shell` (`"sh"` or `"cmd"`), with a plain note in the `cmd`
+  case, and the Room's run tool tells the model so.
+- Rooks Desk gets the redaction copy guard Rooks Browser already had, and both agents get a test that a receipt never
+  stores a private key or an AWS key id.
+- `scripts/test-all.sh` runs the rooks-browser and rooks-desk suites (CI already did). Playwright's Chromium download
+  is optional there.
+- Migration: none. Rollback: previous commit.
+
 ## 2026-11-07 · Separate keys for the native window, background jobs and helpers · branch integration/auth-native-workroom
 
 - The native window signs in with its own key (`NATIVE_SIGNIN_KEY`, written each launch to `native.json`, 0600, never

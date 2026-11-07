@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Run every test suite in the repo. Provider keys are hidden from the tests, so nothing calls a real model.
 #
-#   scripts/test-all.sh            backend, Rooks Code, frontend, scorecard selftest, compose files
+#   scripts/test-all.sh            backend, Rooks Code, Try Room, browser and computer agents, frontend, scorecard selftest,
+#                                  compose files
 #   scripts/test-all.sh --quick    skip the frontend build and the backend suite's slow sandbox tests
 #   scripts/test-all.sh --live     also run the 11 hard benchmark tasks against a real model (NVIDIA_API_KEY)
 #
@@ -58,6 +59,17 @@ step "Rooks Code (rooks-code)"
 
 step "Try Room (rooks-try)"
 (cd rooks-try && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore tests) && ok "try-room" || bad "try-room"
+
+# The browser and computer agents (CI runs them on Linux, macOS and Windows). Without these steps a backend change
+# (its redaction patterns, say) could leave their vendored copies behind and only CI would notice.
+step "Browser and computer agents (rooks-browser, rooks-desk)"
+VIRTUAL_ENV="$VENV" uv pip install -q -e "rooks-browser[dev]" -e "rooks-desk[dev]" && ok "agent dependencies" || bad "agent dependencies"
+# Playwright's own Chromium is optional: the tests fall back to Chrome, Edge or a Chromium already on this computer
+"$PY" -m playwright install chromium >/dev/null 2>&1 \
+  || echo "note: could not download Playwright's Chromium; the browser tests use Chrome, Edge or a Chromium already on this computer"
+(cd rooks-browser && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore) && ok "rooks-browser" || bad "rooks-browser"
+# Real-screen tests stay opt in (ROOKS_DESK_E2E=1 with a display, as in rooks-desk/tests/test_e2e_linux.py)
+(cd rooks-desk && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore) && ok "rooks-desk" || bad "rooks-desk"
 
 if ! $QUICK; then
   step "Frontend (workbench/frontend: typecheck, build, tests)"
