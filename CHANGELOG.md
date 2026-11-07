@@ -16,6 +16,22 @@ Builds on `fix/main-ci-green` (its redaction resync and Git for Windows shell fo
 - `scripts/test-all.sh` runs the rooks-browser and rooks-desk suites (CI already did). Playwright's Chromium download
   is optional there.
 - Migration: none. Rollback: previous commit.
+## 2026-11-07 · Security hardening · branch security/hardening-2026-11
+
+- Breaking (Docker): the Workbench image no longer trusts `X-Forwarded-For` from any client. Behind a reverse proxy,
+  set `FORWARDED_ALLOW_IPS` to its address. `SETUP_CODE` now reaches the container, so first run setup asks for it.
+  Rebuild or pull the image: the old one still trusts every client.
+- Breaking: `TOOLS_API_KEY` no longer opens the account (`/api`). It still opens `/tools` and `/mcp` for the add-ons.
+- Skill scripts ask before every run where bubblewrap is not available (Docker, macOS, Windows); in an unattended run
+  (a scheduled job, a coworker, another program through the app's connector) the run waits in Needs you. `run_python` asks in a conversation with untrusted content on those systems. Both sandboxes
+  block `ctypes`.
+- Output from MCP tools keeps the conversation marked untrusted on later turns.
+- Files open with a sandboxed content policy, so an SVG from an email cannot run script.
+- `rooks-desk serve` and `rooks-browser serve` refuse requests a browser marks as cross site and anything not sent as
+  `application/json`.
+- Docs and installers point at `Inclined88888/rooks`.
+- If a Docker install was ever reachable from the network or other containers: reset the password and rotate the
+  keys it held. Migration: none. Rollback: previous commit.
 
 ## 2026-11-07 · Separate keys for the native window, background jobs and helpers · branch integration/auth-native-workroom
 

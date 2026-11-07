@@ -135,3 +135,28 @@ def test_token_required_when_set():
 def test_public_bind_needs_token():
     with pytest.raises(SystemExit):
         server.serve("0.0.0.0", 0, "")
+
+
+def _raw(base, method, path, body, headers):
+    req = urllib.request.Request(base + path, data=body, method=method, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status
+    except urllib.error.HTTPError as e:
+        return e.code
+
+
+@pytest.mark.parametrize("headers", [
+    {"Origin": "https://evil.example", "Content-Type": "application/json"},
+    {"Origin": "null", "Content-Type": "application/json"},
+    {"Sec-Fetch-Site": "cross-site", "Content-Type": "application/json"},
+])
+def test_a_cross_site_browser_request_is_refused_without_a_token(api, headers):
+    base, _ = api
+    assert _raw(base, "POST", "/api/jobs", json.dumps({"goal": "x", "hold": True}).encode(), headers) == 401
+
+
+def test_a_simple_request_content_type_is_refused(api):
+    base, _ = api
+    # text/plain is CORS safelisted, so a page could send it with no preflight
+    assert _raw(base, "POST", "/api/jobs", b'{"goal": "x", "hold": true}', {"Content-Type": "text/plain;charset=json"}) == 400

@@ -26,6 +26,7 @@ def api():
             data = r.read()
             return data if raw else json.loads(data)
 
+    call.base = base
     yield call, scripts, b, jobs
     srv.shutdown()
 
@@ -117,3 +118,20 @@ def test_show_me_how_recording_notes_apps_and_hides_sign_in_titles(api, monkeypa
     assert all("Sign in" not in e.get("title", "") for e in apps)
     with pytest.raises(urllib.error.HTTPError):
         call("GET", "/api/recordings/nope")
+
+
+@pytest.mark.parametrize("headers", [
+    {"Origin": "https://evil.example", "Content-Type": "text/plain;charset=json"},
+    {"Sec-Fetch-Site": "cross-site", "Content-Type": "application/json"},
+    {"Content-Type": "text/plain;charset=json"},
+])
+def test_a_web_page_cannot_change_the_policy(api, headers):
+    import urllib.error
+    call, *_ = api
+    before = call("GET", "/api/settings")
+    req = urllib.request.Request(call.base + "/api/settings", method="POST",
+                                 data=json.dumps({"safe_commands": ["curl", "bash"], "folders": ["/"]}).encode(), headers=headers)
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(req, timeout=10)
+    assert e.value.code in (400, 401)
+    assert call("GET", "/api/settings") == before

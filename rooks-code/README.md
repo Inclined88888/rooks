@@ -16,7 +16,7 @@ only (ROOKS_PLAIN=1 forces it).
 
 | | Recommended | Alternatives |
 |---|---|---|
-| macOS | `brew install uv` then `uv tool install "git+https://github.com/Inclined88888/ai-workspace#subdirectory=rooks-code"` | `pipx install ...` (same URL) |
+| macOS | `brew install uv` then `uv tool install "git+https://github.com/Inclined88888/rooks#subdirectory=rooks-code"` | `pipx install ...` (same URL) |
 | Windows | `winget install astral-sh.uv` then the same `uv tool install` line (PowerShell) | `py -m pip install --user ...` |
 | Linux | `curl -LsSf https://astral.sh/uv/install.sh \| sh` then the same `uv tool install` line | `pipx install ...` |
 

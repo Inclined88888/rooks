@@ -35,9 +35,14 @@ def test_pairing_code_opens_the_same_account(client):
     assert main == again
 
 
-def test_the_desktop_key_is_the_same_account(client):
+def test_the_shared_tools_key_does_not_open_the_account(client):
+    """TOOLS_API_KEY is handed to the add-ons (chat app, Paperclip, Hermes) for /tools and /mcp. If it also opened /api,
+    text injected into any of them could approve its own held actions or pair a phone."""
     import os
 
     key = os.environ["TOOLS_API_KEY"]
     anon = _anon(client)
-    assert anon.get("/api/assistant/main", headers={"Authorization": f"Bearer {key}"}).status_code == 200
+    h = {"Authorization": f"Bearer {key}"}
+    for path in ("/api/assistant/main", "/api/settings", "/api/providers"):
+        assert anon.get(path, headers=h).status_code == 401, path
+    assert anon.post("/api/mobile/pair/start", headers={**h, "X-Workbench": "1"}).status_code == 401
