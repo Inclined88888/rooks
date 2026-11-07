@@ -20,8 +20,6 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Rooks Browser app (branch `feat/browser-app`, 2026-11-07).** An Electron browser the agent drives, from the Computer and Browser
   Control session, which ended at its usage limit after one commit and no pull request. Not merged: unreviewed and untested here
   (its window settings read right: sandboxed views, context isolation, no Node, a fixed preload list). Review it on its own.
-* **Coworkers are set up in the app only.** The terminal and the browser can answer the job cards through Needs you but cannot
-  pick a line of work or propose a team (AGENTS.md parity rule). A `/team` terminal command over `/api/starters` would close it.
 * **The coworkers' live mail slice runs only where Dovecot is installed** (`test_starters.py`), so CI skips it. Install
   `dovecot-imapd` in the backend job, or add a variant on the suite's mail fake.
 * **Windows: no containment for terminal commands.** The default mode runs them with the user's permissions and the approval line
