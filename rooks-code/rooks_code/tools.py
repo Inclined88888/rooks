@@ -7,6 +7,7 @@ import difflib
 import fnmatch
 import hashlib
 import json
+import functools
 import os
 import re
 import shutil
@@ -198,6 +199,18 @@ def diff(old: str, new: str, rel: str) -> str:
                                  f"a/{rel}" if old else "/dev/null", f"b/{rel}")
     out = "".join(l if l.endswith("\n") else l + "\n\\ No newline at end of file\n" for l in lines)
     return out or "(no change)\n"
+
+
+@functools.lru_cache(maxsize=8)
+def _bwrap_problem(prefix: tuple[str, ...]) -> str:
+    """One trial run of bubblewrap with these settings: "" when it works, else the first line it printed."""
+    try:
+        r = subprocess.run([*prefix, "/bin/true"], capture_output=True, text=True, timeout=20, stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return str(e)[:200]
+    if r.returncode == 0:
+        return ""
+    return ((r.stderr or r.stdout).strip().splitlines() or [f"exit code {r.returncode}"])[0][:200]
 
 
 class Toolbox:
@@ -452,12 +465,18 @@ class Toolbox:
         old = p.read_text(encoding="utf-8") if p.exists() else ""
         return self._write_plan(p, old, content, "wrote" if p.exists() else "created")
 
-    def _command_argv(self, cmd: str) -> list[str]:
+    def _command_argv(self, cmd: str) -> list[str] | str:
         """Project mode keeps writes inside the folder. Full mode is an ordinary shell."""
-        shell = "cmd.exe" if sys.platform == "win32" else "/bin/sh"
-        flag = "/c" if sys.platform == "win32" else "-c"
-        argv = [shell, flag, cmd]
-        if self.sandbox != "project" or sys.platform != "darwin":
+        if sys.platform == "win32":
+            # One string, as subprocess's own shell=True builds it. A list would be joined with quotes escaped as \",
+            # which cmd.exe does not understand: "C:\path\python.exe" x.py would become a program it cannot find.
+            return f'{os.environ.get("COMSPEC") or "cmd.exe"} /s /c "{cmd}"'
+        argv = ["/bin/sh", "-c", cmd]
+        if self.sandbox != "project":
+            return argv
+        if sys.platform.startswith("linux"):
+            return self._bwrap_argv(argv)
+        if sys.platform != "darwin":
             return argv
         seatbelt = shutil.which("sandbox-exec")
         if not seatbelt:
@@ -483,6 +502,27 @@ class Toolbox:
             '(allow file-write* (subpath "/dev"))',
         ])
         return [seatbelt, "-p", profile, *argv]
+
+    def _bwrap_argv(self, argv: list[str]) -> list[str]:
+        """Linux: the whole system read-only, the project folder, the temp folders and devices writable (as on macOS)."""
+        bwrap = shutil.which("bwrap")
+        if not bwrap:
+            raise ToolError("This computer cannot keep commands inside the project folder. Install bubblewrap "
+                            "(the bwrap command), or set sandbox = \"full\" to run commands without that limit.")
+        writable = [str(Path(self.root).resolve())]
+        for t in (os.environ.get("TMPDIR"), "/tmp", "/var/tmp"):
+            if t and os.path.isdir(t):
+                writable.append(str(Path(t).resolve()))
+        out = [bwrap, "--die-with-parent", "--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev"]
+        for w in dict.fromkeys(writable):
+            out += ["--bind", w, w]
+        out += ["--chdir", str(Path(self.root).resolve())]
+        problem = _bwrap_problem(tuple(out))
+        if problem:
+            raise ToolError("This computer cannot keep commands inside the project folder: bubblewrap says "
+                            f"\"{problem}\". On Ubuntu 24.04 and later, unprivileged user namespaces are switched off "
+                            "by default. Allow them, or set sandbox = \"full\" to run commands without that limit.")
+        return [*out, *argv]
 
     def _run_command(self, a: dict) -> Plan:
         cmd = a.get("command")

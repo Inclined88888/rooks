@@ -1,8 +1,10 @@
 """A forgotten PIN cannot be read back. On this computer it can be replaced, and the work stays."""
 
 
-def test_forgotten_pin_can_be_replaced(client):
-    from app import db
+def test_forgotten_pin_can_be_replaced(client, monkeypatch):
+    from app import db, security
+
+    monkeypatch.setattr(security, "_attempts", {})  # earlier tests' sign-ins share the throttle window; start clean
 
     try:
         r = client.post("/api/lock/reset")

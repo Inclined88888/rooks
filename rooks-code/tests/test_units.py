@@ -1,3 +1,5 @@
+import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -397,3 +399,34 @@ def test_repo_map_skips_the_home_folder(monkeypatch, tmp_path):
     (tmp_path / "a.py").write_text("def f():\n    pass\n")
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     assert RepoMap(tmp_path).get_repo_map() == ""
+
+
+def test_project_sandbox_says_why_when_bubblewrap_cannot_start(tmp_path, monkeypatch):
+    """bwrap installed but blocked (Ubuntu 24.04 user namespaces): refuse with its reason, never run unconfined."""
+    if not sys.platform.startswith("linux"):
+        pytest.skip("bubblewrap is the Linux sandbox")
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    (fake / "bwrap").write_text("#!/bin/sh\necho 'bwrap: setting up uid map: Permission denied' >&2\nexit 1\n")
+    (fake / "bwrap").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake}{os.pathsep}{os.environ['PATH']}")
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    tb = Toolbox(proj)
+    tb.sandbox = "project"
+    with pytest.raises(ToolError) as e:
+        tb._command_argv("echo hi")
+    assert "uid map: Permission denied" in str(e.value) and 'sandbox = "full"' in str(e.value)
+
+
+def test_windows_commands_keep_their_quotes(tmp_path, monkeypatch):
+    """cmd.exe gets the command as typed. A list would be joined with quotes escaped as \\", which cmd.exe reads as part
+    of the program name, so "C:\\Program Files\\x\\python.exe" test.py could never run."""
+    from rooks_code import tools
+    monkeypatch.setattr(tools.sys, "platform", "win32")
+    monkeypatch.setenv("COMSPEC", r"C:\Windows\system32\cmd.exe")
+    cmd = r'"C:\Program Files\Python\python.exe" test_calc.py'
+    tb = Toolbox(tmp_path)
+    for mode in ("project", "full"):
+        tb.sandbox = mode
+        assert tb._command_argv(cmd) == r'C:\Windows\system32\cmd.exe /s /c ""C:\Program Files\Python\python.exe" test_calc.py"'

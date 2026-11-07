@@ -37,6 +37,17 @@ def test_the_header_is_one_quiet_line(tmp_path):
     assert not LOUD.search(out.getvalue())
 
 
+def test_a_long_folder_never_hides_help(tmp_path):
+    deep = tmp_path.joinpath(*(["a_rather_long_folder_name"] * 6))
+    deep.mkdir(parents=True)
+    out = io.StringIO()
+    ui = tui.RichUI(out=out, color=False)
+    ui.console.width = 120
+    tui.banner(_agent(deep), ui)
+    lines = [l for l in out.getvalue().splitlines() if l.strip()]
+    assert len(lines) == 1 and "/help" in lines[0] and "fake-model" in lines[0], lines
+
+
 def test_the_working_line_is_static_and_says_what_is_happening():
     out = io.StringIO()
     ui = tui.RichUI(out=out, color=True)
@@ -114,6 +125,6 @@ def test_steps_are_said_in_plain_words_like_the_app():
 
 
 def test_no_emoji_or_old_names_in_what_the_terminal_says():
-    src = "".join((Path(tui.__file__).parent / f).read_text() for f in ("tui.py", "cli.py", "words.py", "workroom.py", "talk.py"))
+    src = "".join((Path(tui.__file__).parent / f).read_text(encoding="utf-8") for f in ("tui.py", "cli.py", "words.py", "workroom.py", "talk.py"))
     assert "⏺" not in src and "♜" not in src and "⠀" not in src  # record button, rook, spinner
     assert "Workbench conversation" not in src and "Approvals #" not in src

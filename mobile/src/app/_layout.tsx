@@ -39,10 +39,11 @@ function Shell() {
     const open = (r: Notifications.NotificationResponse | null) => {
       // feat/grok-style: Approve / Decline straight from the lock screen, with Face ID first
       const data = r?.notification.request.content.data as Record<string, unknown> | undefined;
-      if (r && (r.actionIdentifier === 'approve' || r.actionIdentifier === 'decline')) {
+      if (r && ['approve', 'decline', 'allow', 'deny', 'answer'].includes(r.actionIdentifier)) {
         handleLockAction(r.actionIdentifier, data, {
           confirm: confirmWithBiometrics,
           decide: async (id, approve) => { if (!clientRef.current) throw new Error('not paired'); return clientRef.current.decide(id, approve); },
+          companionDecide: async (id, decision, answer) => { if (!clientRef.current) throw new Error('not paired'); return clientRef.current.companionDecide(id, decision, answer); },
           open: (p) => router.push(p as never),
           notify: (title, body) => Notifications.scheduleNotificationAsync({ content: { title, body }, trigger: null }),
         }).catch(() => undefined);

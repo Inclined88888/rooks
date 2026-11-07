@@ -247,7 +247,7 @@ def pick_project(root: Path, ask=input, say=print) -> Path | None:
     options = project_candidates(home)
     say(f"  You are in {root}, not a project folder. Pick one:")
     for i, p in enumerate(options, 1):
-        shown = "~/" + str(p.relative_to(home)) if p.is_relative_to(home) else str(p)
+        shown = "~/" + p.relative_to(home).as_posix() if p.is_relative_to(home) else str(p)
         say(f"  {i}  {shown}")
     say("  Or type a folder path (~ works).  Enter = stay here.  q = quit")
     for _ in range(5):
