@@ -75,7 +75,9 @@ The signed in app is one surface with four regions. Nothing else is a top level 
 * **Stage** (the right pane, built on the existing `Beside` split): the live view of whatever Rooks is using now. For the Room it shows the real screen when the driver has one, a real command view when it does not, with the driver named in plain words ("A private desktop on this computer", "A private folder and shell"). Controls: Watch (default), Step in (your mouse and keyboard go to the Room; the edge glows), Hand back, Save a point, Start over, Hand off a file (asks first). Closed by default when nothing is live; opens itself when a job starts on a surface.
 * **Composer**: unchanged in function; dictation orb, attachments, model and effort become proper menus inside it; the working border (Tracer) stays.
 
-Phones and narrow windows (below 900 px): the rail becomes a bottom bar (Chat, Room, Jobs, Needs you, More); the Stage stacks under the thread.
+**Glass navigation (2026-11-07, owner's decision).** The rail above is now drawn as a floating glass bar across the top: the mark and the presence line on the left; one frosted pill in the centre holding Chat, Room, Jobs and the Day, Memory and Library groups, with a solid pill that slides to the current tab; round glass buttons for search, More and Settings on the right. At 1280 px and under, the pill keeps only the current tab's name (the others are icons with a tooltip). Groups open a glass menu below their tab. More opens a glass menu under its button with the sections side by side. The same registry, focus traps and Escape behaviour as before.
+
+Phones and narrow windows (below 900 px): a floating glass dock replaces the top bar: Chat, Room, Jobs and More in one pill (the current one widens to show its name) and Needs you in its own circle with the count; the presence line sits above the page; More is a side sheet; the Stage stacks under the thread.
 
 ## 4. Honesty rules for the Room
 
@@ -100,9 +102,10 @@ Premium pass, 2026-11-07, at the owner's request ("as premium as Claude in look 
 
 1. **Neutral first.** Surfaces, text and controls are neutral greys. The primary button is ink on paper (dark fill, light text), not a colour.
 2. **One accent, used rarely, so it means something.** Amber marks only things that are live or need the person: the Room's live dot and step in border, the Needs you count, an unread or running marker. Never a decorative fill, never a page title, never a whole button.
-3. **Motion explains, never decorates.** The only motion is an opacity fade of 150 ms or less when something appears or disappears (a sheet, a menu, a toast, a new row). Nothing slides, springs, shimmers, draws, trails, pulses or glows. The one exception is a calm, static (not animated) amber border on the Room while the person has stepped in. Text replies are shown as they stream from the model, never replayed word by word. Reduced motion turns the fades off.
+3. **Motion explains, never decorates.** Besides the one slide of the navigation pill to the current tab (260 ms, `--dur-slide`), the only motion is an opacity fade of 150 ms or less when something appears or disappears (a sheet, a menu, a toast, a new row). Nothing slides, springs, shimmers, draws, trails, pulses or glows. The one exception is a calm, static (not animated) amber border on the Room while the person has stepped in. Text replies are shown as they stream from the model, never replayed word by word. Reduced motion turns the fades off.
 4. **Speed is the premium feature.** A reply starts drawing on the first token; pages render their frame at once and fill in; one poller per kind of data.
-5. **Keyboard first.** Every page and every action is reachable from ⌘K; every shortcut is listed in ⌘K and in the ⋯ menu.
+5. **Glass is for navigation only.** The top bar, its menus, the phone dock and the round buttons are frosted glass (`--glass-*` tokens, one recipe per theme). Pages, cards, forms and the thread stay solid so text is never read through a blur. High contrast draws them solid with a 2 px ink border and an ink active tab; "reduce transparency" and browsers without blur get a solid surface. `tests/glass.test.mjs` enforces all of this.
+6. **Keyboard first.** Every page and every action is reachable from ⌘K; every shortcut is listed in ⌘K and in the ⋯ menu.
 
 ### Themes
 

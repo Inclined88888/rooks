@@ -1,4 +1,4 @@
-import { Brain, Check, Pencil, Pin, PinOff, Plus, Search, Trash2, X } from "lucide-react";
+import { Check, Pencil, Pin, PinOff, Plus, Search, Trash2, UserRound, X } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { Button, EmptyState, ErrorState, IconButton, Input, Loading, Page, Section, Select, Textarea } from "../ui";
@@ -95,7 +95,7 @@ export default function AboutYou() {
           {failed && !data ? <ErrorState title="What I know did not load" line={failed} onRetry={() => load()} />
             : !data ? <Loading rows={4} label="Loading what I know" />
             : !groups.length && !data.legacy.length ? (
-              <EmptyState icon={<Brain size={22} />} title={q ? "Nothing matches that" : "Nothing yet"}
+              <EmptyState icon={<UserRound size={22} />} title={q ? "Nothing matches that" : "Nothing yet"}
                 line={q ? "Try another word." : "Chat, share a file or show me a task, and what I learn will appear here."} />
             ) : null}
 

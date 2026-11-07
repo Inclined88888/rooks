@@ -35,8 +35,8 @@ function MoreChannel({ name, title, st, fields, test, pickMate, save, children }
       {children}
       {pickMate(st.teammate, (n) => save(`/channels/${name}`, { teammate_id: n }))}
       {st.error && <p className="ag-err">{st.error}</p>}
-      <div className="tm-row"><button className="btn primary sm" onClick={() => save(`/channels/${name}`, body())}>Save</button>
-        {test && <button className="btn ghost sm" onClick={() => save(`/channels/${name}/test`, {}, "POST")}>Test connection</button>}</div>
+      <div className="tm-row"><button className="ui-btn ui-btn-primary ui-btn-sm" onClick={() => save(`/channels/${name}`, body())}>Save</button>
+        {test && <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => save(`/channels/${name}/test`, {}, "POST")}>Test connection</button>}</div>
     </Wizard>
   </Card>;
 }
@@ -46,8 +46,8 @@ function Wizard({ steps, children }: { steps: string[]; children: React.ReactNod
   const [i, setI] = useState(0);
   return <div className="tm-wizard">
     <ol>{steps.map((s, n) => <li key={n} className={n === i ? "on" : n < i ? "done" : ""}><button type="button" aria-current={n === i ? "step" : undefined} onClick={() => setI(n)}>{s}</button></li>)}</ol>
-    <div className="tm-row"><button className="btn ghost sm" disabled={i === 0} onClick={() => setI(i - 1)}>Back</button>
-      <button className="btn ghost sm" disabled={i >= steps.length - 1} onClick={() => setI(i + 1)}>Next step</button></div>
+    <div className="tm-row"><button className="ui-btn ui-btn-ghost ui-btn-sm" disabled={i === 0} onClick={() => setI(i - 1)}>Back</button>
+      <button className="ui-btn ui-btn-ghost ui-btn-sm" disabled={i >= steps.length - 1} onClick={() => setI(i + 1)}>Next step</button></div>
     {children}
   </div>;
 }
@@ -94,15 +94,15 @@ export default function Channels() {
       <div className="tm-card-head"><b>Slack</b><Badge>{st.slack.configured ? (st.slack.running ? "Connected" : "Set up") : "Not set up"}</Badge></div>
       <Wizard steps={st.slack.steps}>
         <details className="ag-advanced"><summary>App manifest</summary><pre className="tm-pre">{JSON.stringify(st.slack.manifest, null, 2)}</pre>
-          <button className="btn ghost sm" onClick={() => navigator.clipboard.writeText(JSON.stringify(st.slack.manifest, null, 2))}>Copy manifest</button></details>
+          <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => navigator.clipboard.writeText(JSON.stringify(st.slack.manifest, null, 2))}>Copy manifest</button></details>
         <Input label="Bot token (xoxb-…)" type="password" autoComplete="off" value={slack.bot_token} onChange={(e) => setSlack({ ...slack, bot_token: e.target.value })} />
         <Input label="App-level token (xapp-…)" type="password" autoComplete="off" value={slack.app_token} onChange={(e) => setSlack({ ...slack, app_token: e.target.value })} />
         <Input label="Your Slack member IDs (comma separated)" value={slack.allowed_users} onChange={(e) => setSlack({ ...slack, allowed_users: e.target.value })} />
         {pickMate(st.slack.teammate, (n) => save("/channels/slack", { teammate_id: n }))}
         {st.slack.error && <p className="ag-err">{st.slack.error}</p>}
-        <div className="tm-row"><button className="btn primary sm" onClick={() => save("/channels/slack", {
+        <div className="tm-row"><button className="ui-btn ui-btn-primary ui-btn-sm" onClick={() => save("/channels/slack", {
           ...(slack.bot_token ? { bot_token: slack.bot_token } : {}), ...(slack.app_token ? { app_token: slack.app_token } : {}), allowed_users: slack.allowed_users })}>Save</button>
-          <button className="btn ghost sm" onClick={() => save("/channels/slack/test", {}, "POST")}>Test connection</button></div>
+          <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => save("/channels/slack/test", {}, "POST")}>Test connection</button></div>
       </Wizard>
     </Card>
     <Card as="section" className="tm-card wide">
@@ -113,8 +113,8 @@ export default function Channels() {
         {pickMate(st.discord.teammate, (n) => save("/channels/discord", { teammate_id: n }))}
         {st.discord.invite_url && <p className="tm-muted"><a href={st.discord.invite_url} target="_blank" rel="noreferrer">Invite the bot to a server</a> (DMs work without one). It answers DMs and messages that @mention it.</p>}
         {st.discord.error && <p className="ag-err">{st.discord.error}</p>}
-        <div className="tm-row"><button className="btn primary sm" onClick={() => save("/channels/discord", { ...(dc.bot_token ? { bot_token: dc.bot_token } : {}), allowed_users: dc.allowed_users })}>Save</button>
-          <button className="btn ghost sm" onClick={() => save("/channels/discord/test", {}, "POST")}>Test connection</button></div>
+        <div className="tm-row"><button className="ui-btn ui-btn-primary ui-btn-sm" onClick={() => save("/channels/discord", { ...(dc.bot_token ? { bot_token: dc.bot_token } : {}), allowed_users: dc.allowed_users })}>Save</button>
+          <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => save("/channels/discord/test", {}, "POST")}>Test connection</button></div>
       </Wizard>
     </Card>
     <Card as="section" className="tm-card wide">
@@ -124,7 +124,7 @@ export default function Channels() {
         <Input label="Your Telegram user IDs" value={tg.allowed_users} onChange={(e) => setTg({ ...tg, allowed_users: e.target.value })} />
         {pickMate(st.telegram.teammate, (n) => save("/channels/telegram", { teammate_id: n }))}
         {st.telegram.error && <p className="ag-err">{st.telegram.error}</p>}
-        <button className="btn primary sm" onClick={() => save("/channels/telegram", { ...(tg.bot_token ? { bot_token: tg.bot_token } : {}), allowed_users: tg.allowed_users })}>Save</button>
+        <button className="ui-btn ui-btn-primary ui-btn-sm" onClick={() => save("/channels/telegram", { ...(tg.bot_token ? { bot_token: tg.bot_token } : {}), allowed_users: tg.allowed_users })}>Save</button>
       </Wizard>
     </Card>
     <MoreChannel name="matrix" title="Matrix" st={st.matrix} test pickMate={pickMate} save={save} fields={[
@@ -158,7 +158,7 @@ export default function Channels() {
       <Input label="Relay address (https)" value={relay} placeholder="https://relay.example.com" onChange={(e) => setRelay(e.target.value)} />
       {link.relay.error && <p className="ag-err">{link.relay.error}</p>}
       <Textarea label="Folders your phone can browse (one per line, read only)" rows={3} value={folders} onChange={(e) => setFolders(e.target.value)} />
-      <button className="btn primary sm" onClick={() => save("/link", { relay_url: relay, shared_folders: folders.split("\n").map((x) => x.trim()).filter(Boolean) })}>Save</button>
+      <button className="ui-btn ui-btn-primary ui-btn-sm" onClick={() => save("/link", { relay_url: relay, shared_folders: folders.split("\n").map((x) => x.trim()).filter(Boolean) })}>Save</button>
       <p className="tm-muted">To link a phone, open the Phone page and scan the pairing code with Rooks.</p>
     </Card>
   </Page>;

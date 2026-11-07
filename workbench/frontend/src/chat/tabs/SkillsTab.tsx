@@ -24,13 +24,13 @@ export function SkillsTab() {
   return (
     <div className="col gap-lg">
       <div className="row"><p className="muted grow" style={{ margin: 0 }}>Procedures written here or learned by the assistant after complex tasks. Edit, disable or add your own.</p>
-        <button className="btn" onClick={() => setDraft({ id: 0, name: "", description: "", steps: "", uses: 0, source: "user", enabled: 1 })}><Plus size={14} /> Skill</button></div>
+        <button className="ui-btn" onClick={() => setDraft({ id: 0, name: "", description: "", steps: "", uses: 0, source: "user", enabled: 1 })}><Plus size={14} /> Skill</button></div>
       {draft && (
         <div className="card col">
-          <input className="input mono" disabled={!!draft.id} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="short-kebab-name" />
-          <input className="input" value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="When to use it" />
-          <textarea className="input mono" rows={8} value={draft.steps} onChange={(e) => setDraft({ ...draft, steps: e.target.value })} placeholder={"1. ...\n2. ..."} />
-          <div className="row"><button className="btn primary" onClick={save}>Save</button><button className="btn ghost" onClick={() => setDraft(null)}>Cancel</button></div>
+          <input className="ui-input mono" disabled={!!draft.id} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="short-kebab-name" />
+          <input className="ui-input" value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="When to use it" />
+          <textarea className="ui-input mono" rows={8} value={draft.steps} onChange={(e) => setDraft({ ...draft, steps: e.target.value })} placeholder={"1. ...\n2. ..."} />
+          <div className="row"><button className="ui-btn ui-btn-primary" onClick={save}>Save</button><button className="ui-btn ui-btn-ghost" onClick={() => setDraft(null)}>Cancel</button></div>
         </div>
       )}
       {items.length === 0 && !draft && <Empty icon={<BookOpen size={24} />} title="No skills yet" hint="Ask for something multi step, like 'plan my week from my calendar and tasks'." />}
@@ -47,9 +47,9 @@ export function SkillsTab() {
               <>
                 <Markdown text={s.steps} />
                 <div className="row">
-                  <button className="btn sm" onClick={() => setDraft(s)}>Edit</button>
-                  <button className="btn sm" onClick={async () => { await api(`/skills/${s.id}`, { method: "PUT", body: { ...s, enabled: !s.enabled } }); load(); }}>{s.enabled ? "Disable" : "Enable"}</button>
-                  <button className="btn ghost sm danger" onClick={async () => { if (confirm(`Delete skill ${s.name}?`)) { await api(`/skills/${s.id}`, { method: "DELETE" }); load(); } }}><Trash2 size={13} /></button>
+                  <button className="ui-btn ui-btn-sm" onClick={() => setDraft(s)}>Edit</button>
+                  <button className="ui-btn ui-btn-sm" onClick={async () => { await api(`/skills/${s.id}`, { method: "PUT", body: { ...s, enabled: !s.enabled } }); load(); }}>{s.enabled ? "Disable" : "Enable"}</button>
+                  <button className="ui-btn ui-btn-ghost ui-btn-sm ui-btn-danger" onClick={async () => { if (confirm(`Delete skill ${s.name}?`)) { await api(`/skills/${s.id}`, { method: "DELETE" }); load(); } }}><Trash2 size={13} /></button>
                 </div>
               </>
             )}

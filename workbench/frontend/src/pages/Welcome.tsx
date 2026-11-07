@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, Cloud, Cpu, Download, ExternalLink, KeyRound, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Check, Cloud, Cpu, Download, ExternalLink, KeyRound, ListChecks, ShieldCheck } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api, stream } from "../api";
 import { BrandMark } from "../brand";
@@ -163,7 +163,7 @@ export function AccountsStep({ onNext }: { onNext: () => void }) {
       )}
       <AuthActions>
         <span className="st-grow" />
-        <Button variant="primary" onClick={go}>Skip for now <ArrowRight size={16} /></Button>
+        <Button onClick={go}>Skip for now <ArrowRight size={16} /></Button>
       </AuthActions>
     </AuthCard>
   );
@@ -435,7 +435,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
                 <ArrowRight size={16} className="st-option-go" aria-hidden="true" />
               </button>
               <button type="button" className="st-option" onClick={() => setStep("subscription")}>
-                <span className="st-option-icon"><Sparkles size={20} /></span>
+                <span className="st-option-icon"><BadgeCheck size={20} /></span>
                 <span className="st-option-text">
                   <span className="st-option-title">Sign in with your subscription</span>
                   <span className="st-option-line">ChatGPT, Claude, or GitHub Copilot: the plan you already pay for. No key needed.</span>

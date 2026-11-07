@@ -3,6 +3,9 @@
    Three themes keyed on html[data-mode]: light (also the fallback before data-mode is set), dark, and contrast
    (High contrast, light based). appearance.tsx sets data-mode; "Match my computer" resolves to light or dark.
    Neutral first: the primary button is ink on paper. The accent (amber) marks only what is live or needs the person.
+   Glass (--glass-*) is for the navigation layer only: the top bar, its menus, the phone dock, the chat box. Every
+   page, card and form stays solid so text is never read through a blur. High contrast and reduced transparency
+   swap the glass for a solid surface.
    Every text pair is AA, computed from this file by tests/premium-foundation.test.mjs.
    Import this FIRST in main.tsx.
    ========================================================================== */
@@ -51,6 +54,16 @@ html[data-mode="light"] {
   --color-code-title: #1F4FB8;
   --color-code-type: #5B3AA8;
   --color-scrim: rgba(26, 26, 25, 0.32);
+  /* Glass (navigation, its menus, the chat box, floating buttons only; pages and cards stay solid) */
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-bg-strong: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(255, 255, 255, 0.78);
+  --glass-edge: rgba(26, 26, 25, 0.08);
+  --glass-shadow: 0 10px 30px -8px rgba(26, 26, 25, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --glass-pill: #FFFFFF;
+  --glass-pill-ink: #1A1A19;
+  --glass-pill-shadow: 0 2px 10px rgba(26, 26, 25, 0.14);
+  --glass-filter: blur(22px) saturate(170%);
   color-scheme: light;
 }
 
@@ -97,6 +110,15 @@ html[data-mode="dark"] {
   --color-code-title: #8DB4F5;
   --color-code-type: #C3B1F2;
   --color-scrim: rgba(0, 0, 0, 0.55);
+  --glass-bg: rgba(38, 38, 38, 0.6);
+  --glass-bg-strong: rgba(30, 30, 30, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-edge: rgba(0, 0, 0, 0.4);
+  --glass-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-pill: #EDEDEC;
+  --glass-pill-ink: #161616;
+  --glass-pill-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  --glass-filter: blur(22px) saturate(160%);
   color-scheme: dark;
 }
 
@@ -135,6 +157,16 @@ html[data-mode="contrast"] {
   --color-on-danger: #FFFFFF;
   --color-code-bg: #F2F2F2;
   --color-scrim: rgba(0, 0, 0, 0.6);
+  /* High contrast: no see-through glass; solid white, 2 px ink border, ink active tab */
+  --glass-bg: #FFFFFF;
+  --glass-bg-strong: #FFFFFF;
+  --glass-border: #000000;
+  --glass-edge: #000000;
+  --glass-shadow: 0 0 0 0 transparent;
+  --glass-pill: #000000;
+  --glass-pill-ink: #FFFFFF;
+  --glass-pill-shadow: 0 0 0 0 transparent;
+  --glass-filter: none;
   --border-w: 2px;
   --focus-w: 3px;
   color-scheme: light;
@@ -219,8 +251,13 @@ html[data-mode="contrast"] {
   --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
+  /* The glass navigation's one slide: the active pill moves to the picked tab. Motion off and reduced motion stop it. */
+  --dur-slide: 260ms;
+  --ease-slide: cubic-bezier(0.2, 0.8, 0.2, 1);
+
   /* Layout */
-  --rail-w: 64px;
+  --topbar-h: 68px;               /* the floating glass navigation bar (desktop) */
+  --dock-h: 64px;                 /* the floating glass bar on phones */
   --presence-h: 44px;
   --header-h: 48px;
   --max-content-width: 760px;      /* chat message width */
@@ -266,4 +303,12 @@ html[data-mode="contrast"] {
   --dur-2: var(--dur-normal);
   --dur-3: var(--dur-slow);
   --dur-med: var(--dur-normal);
+}
+
+/* Glass falls back to a solid surface when the person asks for less transparency, or the browser cannot blur. */
+@media (prefers-reduced-transparency: reduce) {
+  :root, html[data-mode] { --glass-bg: var(--color-surface); --glass-bg-strong: var(--color-surface); --glass-filter: none; --glass-border: var(--color-border-strong); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root, html[data-mode] { --glass-bg: var(--glass-bg-strong); }
 }

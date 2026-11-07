@@ -5,7 +5,7 @@
  * Moving onto a page warms its chunk, so it opens at once.
  */
 import {
-  Brain, Contrast, CornerDownLeft, Github, Inbox, Keyboard, LucideIcon, MessageSquare, Moon, Pause, Play, Plus, Power, Search, Settings, Sun, Type,
+  BookMarked, Contrast, CornerDownLeft, Github, Inbox, Keyboard, LucideIcon, MessageSquare, Moon, Pause, Play, Plus, Power, Search, Settings, Sun, Type,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -80,7 +80,7 @@ export function paletteActions(o: {
       : { id: "room-start", label: "Start the Room", group: "Actions", icon: Power, keywords: "room computer on turn on", run: () => void room(true) },
     { id: "needs-you", label: "Open Needs you", group: "Actions", icon: Inbox, keywords: "approvals waiting ok inbox", run: () => openNeedsYou() },
     { id: "search-chats", label: "Search chats", group: "Actions", icon: MessageSquare, keywords: "find conversation history", stay: true, run: () => o.setScope("chats") },
-    { id: "search-everything", label: "Search memory, files and notes", group: "Actions", icon: Brain, keywords: "find knowledge remember people projects", stay: true, run: () => o.setScope("everything") },
+    { id: "search-everything", label: "Search memory, files and notes", group: "Actions", icon: BookMarked, keywords: "find knowledge remember people projects", stay: true, run: () => o.setScope("everything") },
     { id: "shortcuts", label: "Keyboard shortcuts", group: "Actions", icon: Keyboard, keywords: "keys help hotkeys", keys: shortcut("shortcuts"), run: () => openShortcuts() },
     { id: "add-skill", label: "Add a skill from GitHub", group: "Actions", icon: Github, keywords: "install skill plugin", to: "/skills", run: () => navigate("/skills?tab=add") },
     ...THEMES.map((t) => ({ id: `theme-${t.id}`, label: t.id === "auto" ? "Theme: match my computer" : `${t.label} theme`, group: "Appearance", icon: t.id === "dark" ? Moon : t.id === "contrast" ? Contrast : Sun, keywords: "appearance colour color dark light contrast", run: () => setAppearance({ theme: t.id }) })),
@@ -127,7 +127,7 @@ export function CommandPalette({ open, onClose, pages }: { open: boolean; onClos
 
   const hitItems = hits.map((h): PaletteItem => {
     const to = (KIND_ROUTE[h.kind] ?? (() => "/knowledge"))(h.ref);
-    return { id: `kn-${h.kind}-${h.ref}`, label: h.title || h.kind, group: "Your stuff", icon: Brain, hint: HIT_WORD[h.kind] ?? h.kind, to, run: () => navigate(to) };
+    return { id: `kn-${h.kind}-${h.ref}`, label: h.title || h.kind, group: "Your stuff", icon: BookMarked, hint: HIT_WORD[h.kind] ?? h.kind, to, run: () => navigate(to) };
   });
   const chatItems = chats.map((c): PaletteItem => ({ id: `chat-${c.id}`, label: c.title || "Chat", group: "Chats", icon: MessageSquare, hint: "Chat", to: `/assistant/${c.id}`, run: () => navigate(`/assistant/${c.id}`) }));
 

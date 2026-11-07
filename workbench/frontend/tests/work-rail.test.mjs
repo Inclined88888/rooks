@@ -14,9 +14,9 @@ const chat = ["../src/pages/Assistant.tsx", "../src/chat/Thread.tsx", "../src/ch
 const beside = read("../src/Beside.tsx");
 const shell = read("../src/shell/shell.css");
 
-test("the chat has no default mail and tasks column: the shell is a 64px rail and the page", () => {
+test("the chat has no default mail and tasks column: the shell is the glass top bar over the page", () => {
   assert.doesNotMatch(app, /AgentsContext/);
-  assert.match(shell, /grid-template-columns: var\(--rail-w\) minmax\(0, 1fr\);/);
+  assert.match(shell, /\.shell \{ display: flex; flex-direction: column;/);
   assert.doesNotMatch(shell, /minmax\(0, 1fr\) 248px/);
 });
 
