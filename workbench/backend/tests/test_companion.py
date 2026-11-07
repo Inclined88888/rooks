@@ -113,3 +113,22 @@ def test_drop_adds_file_and_returns_prompt(client):
     auth = _token(client)
     out = client.post("/api/companion/drop", params={"name": "notes.txt"}, content=b"Quarterly plan: ship Companion.", headers=auth).json()
     assert out["file"]["name"] == "notes.txt" and "notes.txt" in out["prompt"] and out["open"].startswith("/chat?")
+
+
+def test_phone_push_for_a_request_gets_the_lock_screen_buttons(client, monkeypatch):
+    """A pending request reaches the phone as kind "companion" with its category, so Allow / Deny / Answer show up."""
+    from app import companion, push
+
+    sent: list[dict] = []
+    monkeypatch.setattr(push, "notify", lambda title, body, **data: sent.append(data) or 1)
+    monkeypatch.setattr(push, "enabled", lambda: True)
+    monkeypatch.setattr(push, "tokens", lambda: ["ExponentPushToken[x]"])
+    companion.create_request(companion.RequestIn(tool="codex", session="p1", kind="permission", title="Run npm test",
+                                                 action="bash", target="npm test"))
+    companion.create_request(companion.RequestIn(tool="codex", session="p1", kind="question", title="Which branch?",
+                                                 options=["main", "dev"]))
+    assert [d["kind"] for d in sent] == ["companion", "companion"]
+    assert [d["request_kind"] for d in sent] == ["permission", "question"]
+    assert sent[0]["request_title"] == "Run npm test"
+    cats = [push.messages("t", "b", d)[0].get("categoryId") for d in sent]
+    assert cats == ["companion-permission", "companion-question"]

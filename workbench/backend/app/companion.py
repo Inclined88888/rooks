@@ -242,9 +242,9 @@ def _notify_phone(r: dict) -> None:
         push.notify(
             f"{r['agent']} needs you",
             body[:180],
-            type="companion",
+            kind="companion",  # push.messages picks the lock-screen buttons from this and request_kind
             request_id=r["id"],
-            kind=r["kind"],
+            request_title=r["title"][:120],
             options=r["options"][:4],
             request_kind=r["kind"],  # "permission" or "question" for categoryId
         )
