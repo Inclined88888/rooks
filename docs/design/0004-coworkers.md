@@ -144,3 +144,23 @@ What is not proven by this increment:
 ### Next dependency
 
 Section 7, item 2: put the app's MCP server and the persistent tools behind `hold_reason`. A coworker that can schedule its own jobs is the largest open risk.
+
+## 9. Stage report: increment 2, approval gaps (2026-11-07)
+
+### Source changes
+
+1. `assistant.py`: `schedule_task` always needs the owner's yes (`confirm`, `SCHEDULE_ASK_REASON`), on every channel. A sentence the owner types ("every morning at 6 ...") is still saved directly by `front_door.py`, because that is the owner asking and no third party text reaches it.
+2. `assistant.py`: a new `mcp` channel, treated as unattended. Any call with an `external` or `persistent` effect from it is held (`MCP_SERVER_REASON`).
+3. `mcp_server.py`: `run_skill_script` no longer runs on the bearer key alone. It goes through `assistant.run_tool` on the `mcp` channel, waits in Needs you, returns `{"status": "waiting", "request": N}`, asks once however often the client repeats it, and runs once on yes. Arguments are joined with `shlex.join` and split back by the same `shlex.split` the chat tool uses, so arguments with spaces survive.
+
+### Deliberately not changed
+
+1. `remember`, `save_skill`, `watch_site`: still need a yes only once untrusted content is in the conversation. `test_clean_conversations_are_not_interrupted` pins that, and a fact or skill the owner asks for in a clean chat is not autonomous work.
+2. `delegate_task`: only offered to Company agents, whose runs are on the `agent` channel and now hold gated calls (increment 1).
+3. The other MCP server tools (notes, tasks, events without attendees, drafts, reads) are local, reversible writes or reads, the same effects that need no yes in chat.
+
+### Tests
+
+1. `tests/test_approval_gaps.py` (3 tests). All 3 failed on the previous commit: the schedule was created without a yes, and the skill script ran at once.
+2. `tests/test_v02_core.py::test_memory_and_schedule_undo` now approves the held schedule before checking History. That is the intended change of behaviour.
+3. Terminal (`rooks-code`): 203 passed, 1 failed. The failure, `test_project_sandbox_blocks_a_write_outside_the_folder`, also fails on clean `main` in this container (the tests run as root, and the project sandbox does not stop root writing outside the folder). Not caused by this change; not fixed here.
