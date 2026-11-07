@@ -11,6 +11,9 @@ fix/mobile-companion-lock-actions (#18), design/chat-controls (#17, which carrie
 and fix/model-defaults-sync, with the unique pieces of fix/test-isolation-and-linux-sandbox (#14) ported onto #16. Each branch was reviewed
 and its serious findings fixed here. The entries below this one describe the security hardening and the Room's shell field in full.
 
+- **Coworkers in the terminal.** `/team` shows your coworkers and the lines of work, `/team set up construction` shows the
+  team Rooks proposes, `/team create construction` makes it (its jobs wait in `/needs`), `/team remove construction` removes it.
+  The app.json key only reads; creating or removing a team needs the terminal's own sign in (Settings, Terminal access).
 - **Coworkers.** Welcome has a fifth, skippable step ("What do you do?") and a Coworkers page proposes a small team for a line of work.
   Scheduled and coworker runs no longer refuse a step that needs a yes: it waits in Needs you, the inbox says so, and a later yes
   runs it once as that coworker. Asking the assistant to schedule something shows an approval card first. The app's own connector

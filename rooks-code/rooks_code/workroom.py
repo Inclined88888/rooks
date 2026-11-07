@@ -218,3 +218,88 @@ def app_jobs(agent, ui) -> None:
         ui.p(ui.c("dim", "    No jobs running in the app."))
     for j, state in rows[:20]:
         ui.p(f"    {j.get('title') or 'A job'}  " + (ui.c("accent", state) if state != "running" else ui.c("dim", state)))
+
+
+# --- /team: coworkers, the same as the app's Coworkers page --------------------------------------------------------------
+TEAM_USE = "  /team shows your coworkers  ·  /team set up LINE  ·  /team create LINE  ·  /team remove LINE"
+JOB_STATE = {"on": "on", "waiting": "waiting for your OK", "off": "off"}
+
+
+def team_command(agent, ui, rest: str = "") -> None:
+    """Coworkers from the terminal: the lines of work, the team the app proposes for one, creating and removing it.
+    The app does the work and records it like a click on its Coworkers page; creating or removing a team needs the
+    terminal's own sign in (the app.json key only reads). Every job a team gets starts off and waits in Needs you."""
+    parts = rest.strip().split()
+    if [x.lower() for x in parts[:2]] == ["set", "up"]:
+        verb, line = "set up", (parts[2].lower() if len(parts) > 2 else "")
+    else:
+        verb, line = (parts[0].lower() if parts else ""), (parts[1].lower() if len(parts) > 1 else "")
+    link = link_of(agent)
+    if not link:
+        ui.p("  Coworkers live in the Rooks app. Open the app on this computer, then try /team again.")
+        return
+    try:
+        if not verb:
+            _team_overview(ui, link)
+        elif verb == "set up" and line:
+            _team_proposal(ui, link, line)
+        elif verb == "create" and line:
+            call(link, "POST", "/api/starters/apply", {"profession": line})
+            ui.p(f"  Your team is ready. Each job waits for your OK before it runs: /needs shows them.")
+        elif verb == "remove" and line:
+            call(link, "DELETE", f"/api/starters/{urllib.parse.quote(line)}")
+            ui.p("  Removed. Your mail, tasks, drafts and chats are kept.")
+        else:
+            ui.p(TEAM_USE)
+    except Refused:
+        ui.p(OLDER_APP.format(what="change your coworkers", where="open Coworkers"))
+    except Unreachable:
+        ui.p(UNREACHABLE)
+    except Said as e:
+        ui.p(f"  {e}")
+
+
+def _team_overview(ui, link: dict) -> None:
+    cat = call(link, "GET", "/api/starters")
+    profs = cat.get("professions") or [] if isinstance(cat, dict) else []
+    mine = [p for p in profs if p.get("set_up")]
+    if not mine:
+        ui.p("  No coworkers yet. Pick a line of work and Rooks proposes a small team for it.")
+    for p in mine:
+        st = call(link, "GET", f"/api/starters/{urllib.parse.quote(str(p['id']))}")
+        ui.p("  " + ui.c("accent", st.get("label") or p.get("label") or p["id"]))
+        for a in st.get("team") or []:
+            paused = "" if a.get("status", "active") == "active" else "  " + ui.c("warn", "paused")
+            ui.p(f"    {a.get('name')}  " + ui.c("dim", a.get("title") or "") + paused)
+        for j in st.get("schedules") or []:
+            state = JOB_STATE.get(j.get("state"), j.get("state") or "")
+            missing = " ".join(j.get("missing") or [])
+            ui.p(f"    {j.get('name')}  " + ui.c("dim", state + (f"  {missing}" if missing else "")))
+    others = [p for p in profs if not p.get("set_up")]
+    if others:
+        ui.p("  Lines of work you can set up:")
+        for p in others:
+            ui.p(f"    {p['id']:<14}" + ui.c("dim", p.get("label") or ""))
+        ui.p(ui.c("dim", "  /team set up NAME (the first word of a line) shows the team Rooks proposes. The app's Coworkers page shows the same."))
+
+
+def _team_proposal(ui, link: dict, line: str) -> None:
+    out = call(link, "POST", "/api/starters/proposal", {"professions": [line]})
+    for p in out.get("professions") or []:
+        ui.p("  " + ui.c("accent", p.get("label") or line))
+        for m in p.get("team") or []:
+            lead = "  leads the team" if m.get("role") == "coordinator" else ""
+            ui.p(f"    {m.get('name')}  " + ui.c("dim", (m.get("title") or "") + lead))
+        for s in p.get("schedules") or []:
+            c = s.get("card") or {}
+            ui.p(f"    {s.get('name')}  " + ui.c("dim", s.get("plain_time") or ""))
+            if c.get("reads") or c.get("changes"):
+                ui.p(ui.c("dim", f"      Reads: {c.get('reads', '')} Changes: {c.get('changes', '')}"))
+            if s.get("missing"):
+                ui.p(ui.c("warn", "      Needs first: " + " ".join(s["missing"])))
+    for i in out.get("integrations") or []:
+        ui.p(ui.c("dim", f"    Connects to {i.get('name')}: {i.get('state_label') or ''}"))
+    if out.get("costs"):
+        ui.p(ui.c("dim", "  " + out["costs"]))
+    ui.p(f"  If that looks right: /team create {line}. Jobs start off and each waits for your OK in Needs you.")
+

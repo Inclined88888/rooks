@@ -86,6 +86,11 @@ def test_the_app_json_bridge_key_reads_but_never_acts(tmp_path):
         out = io.StringIO()
         workroom.app_jobs(_agent(a.url, BRIDGE), UI(out=out, err=out, color=False))
         assert "In the app" in out.getvalue() and "can't" not in out.getvalue(), out.getvalue()
+        # Coworkers: the key reads the lines of work, but a proposal and a team need the terminal's own sign in
+        assert "construction" in _say(workroom.team_command, a.url, BRIDGE)
+        for rest in ("set up construction", "create construction"):
+            said = _say(workroom.team_command, a.url, BRIDGE, rest)
+            assert "Terminal access" in said and "ready" not in said and "401" not in said, said
     finally:
         a.close()
 
@@ -96,4 +101,26 @@ def test_a_wrong_key_is_said_plainly(app, monkeypatch):
     for fn in (workroom.needs_command, workroom.room_command):
         text = _say(fn, app.url, "w" * 40)
         assert "401" not in text and "Not signed in" not in text and "in the app" in text, text
+
+
+def test_team_sets_up_a_line_of_work_from_the_terminal(app):
+    """The app's Coworkers page from the terminal (AGENTS.md: the terminal and the app must match): the lines of work,
+    the team Rooks proposes for one, creating it, its jobs waiting in Needs you, and removing it again."""
+    token = setup(app, "http://127.0.0.1:9/v1")
+    listed = _say(workroom.team_command, app.url, token)
+    assert "No coworkers yet" in listed and "construction" in listed and "Construction and trades" in listed, listed
+    shown = _say(workroom.team_command, app.url, token, "set up construction")
+    assert "leads the team" in shown and "/team create construction" in shown and "Needs you" in shown, shown
+    assert "not in the list" in _say(workroom.team_command, app.url, token, "set up astronaut")
+    made = _say(workroom.team_command, app.url, token, "create construction")
+    assert "ready" in made and "/needs" in made, made
+    again = _say(workroom.team_command, app.url, token)
+    assert "Construction and trades" in again and "waiting for your OK" in again and "No coworkers yet" not in again, again
+    needs = _say(workroom.needs_command, app.url, token)
+    assert "asks to run" in needs, needs  # the same cards the app shows, answerable with /needs approve N
+    assert "already set up" in _say(workroom.team_command, app.url, token, "create construction")
+    removed = _say(workroom.team_command, app.url, token, "remove construction")
+    assert "Removed" in removed, removed
+    assert "No coworkers yet" in _say(workroom.team_command, app.url, token)
+    assert "/team set up LINE" in _say(workroom.team_command, app.url, token, "dance")
 
