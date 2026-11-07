@@ -201,6 +201,9 @@ def diff(old: str, new: str, rel: str) -> str:
     return out or "(no change)\n"
 
 
+NOT_CONTAINED_ON_WINDOWS = "not kept inside the project folder on Windows"
+
+
 @functools.lru_cache(maxsize=8)
 def _bwrap_problem(prefix: tuple[str, ...]) -> str:
     """One trial run of bubblewrap with these settings: "" when it works, else the first line it printed."""
@@ -466,7 +469,9 @@ class Toolbox:
         return self._write_plan(p, old, content, "wrote" if p.exists() else "created")
 
     def _command_argv(self, cmd: str) -> list[str] | str:
-        """Project mode keeps writes inside the folder. Full mode is an ordinary shell."""
+        """Project mode keeps writes inside the folder: sandbox-exec on macOS, bubblewrap on Linux, and a refusal where
+        neither works. Windows has no containment yet, so there the command runs as the user and the approval line says
+        so (NOT_CONTAINED_ON_WINDOWS). Full mode is an ordinary shell everywhere."""
         if sys.platform == "win32":
             # One string, as subprocess's own shell=True builds it. A list would be joined with quotes escaped as \",
             # which cmd.exe does not understand: "C:\path\python.exe" x.py would become a program it cannot find.
@@ -529,10 +534,10 @@ class Toolbox:
         if not isinstance(cmd, str) or not cmd.strip():
             raise ToolError("command is required")
         timeout = max(1, min(3600, int(a.get("timeout") or self.command_timeout)))
+        argv = self._command_argv(cmd)  # refused here, before anyone is asked to approve a command that could never run
 
         def run():
             try:
-                argv = self._command_argv(cmd)
                 r = subprocess.run(argv, cwd=self.root, capture_output=True, text=True, timeout=timeout,
                                    encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
             except subprocess.TimeoutExpired as e:
@@ -541,4 +546,7 @@ class Toolbox:
             out = (r.stdout or "") + (("\n" if r.stdout and r.stderr else "") + r.stderr if r.stderr else "")
             return f"exit code {r.returncode}\n{_clip(out)}", None, f"exit code {r.returncode}"
         shell = "cmd.exe" if sys.platform == "win32" else "sh"
-        return Plan("command", f"run: {cmd}", f"$ {cmd}    ({shell}, cwd {self.root}, timeout {timeout}s)", run)
+        where = f"{shell}, cwd {self.root}, timeout {timeout}s"
+        if sys.platform == "win32" and self.sandbox == "project":
+            where += f"; {NOT_CONTAINED_ON_WINDOWS}"
+        return Plan("command", f"run: {cmd}", f"$ {cmd}    ({where})", run)

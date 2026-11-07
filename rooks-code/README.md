@@ -138,7 +138,13 @@ calls are asked about like commands. Only stdio servers are supported so far; HT
   general instruct model, or a hosted model, for real work.
 * In the interactive terminal, answers appear formatted once complete (a "Working" line with a timer shows progress);
   plain mode (`ROOKS_PLAIN=1`) streams token by token in a terminal; piped output arrives whole.
-* No sandbox: approved commands run with your user's permissions. Approval, dry run and trusted folders are the controls.
+* Commands are kept inside the project folder by default (`sandbox = "project"`): on macOS with the built in
+  `sandbox-exec`, on Linux with bubblewrap (`bwrap`, for example `sudo apt install bubblewrap`). They can still read
+  the whole computer and use the network; only writes are limited, to the project and the temp folder. On Linux
+  without a working `bwrap` a command is refused with a note before you are asked about it, never run uncontained.
+  Windows has no containment yet: commands run with your user's permissions and the approval line says so.
+  `sandbox = "full"` runs them with your user's permissions everywhere; then approval, dry run and trusted folders
+  are the controls.
 * MCP over HTTP/SSE and prompt caching are not implemented yet.
 * Skills are learned only through the AI Workspace app; on its own Rooks learns facts, not procedures.
 

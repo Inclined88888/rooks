@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -247,19 +248,64 @@ def test_loop_detection_read_heavy(tmp_path):
     assert result.loop_type == "read_heavy"
 
 
+def _contained() -> bool:
+    from conftest import _can_contain
+    return _can_contain()
+
+
 def test_project_sandbox_blocks_a_write_outside_the_folder(tmp_path):
-    """A command may change files in the project. It may not write outside it, even into the home folder."""
+    """A command may change files in the project. It may not write outside it, even into the home folder. Where this
+    machine cannot contain it (Linux without a working bubblewrap) it is refused before approval, never run uncontained."""
     outside = Path.home() / f".rooks-escape-{tmp_path.name}.txt"
     outside.unlink(missing_ok=True)
     tb = Toolbox(tmp_path)
     tb.sandbox = "project"
-    result = tb.prepare("run_command", {"command": f"echo pwned > '{outside}'"}).apply()[0]
     try:
+        try:
+            result = tb.prepare("run_command", {"command": f"echo pwned > '{outside}'"}).apply()[0]
+        except ToolError as e:
+            assert not _contained(), f"refused although this machine can contain commands: {e}"
+            result = str(e)
         assert not outside.exists(), result
-        tb.prepare("run_command", {"command": "echo ok > inside.txt"}).apply()
-        assert (tmp_path / "inside.txt").read_text().strip() == "ok"
+        if _contained():
+            tb.prepare("run_command", {"command": "echo ok > inside.txt"}).apply()
+            assert (tmp_path / "inside.txt").read_text().strip() == "ok"
     finally:
         outside.unlink(missing_ok=True)
+
+
+def test_project_sandbox_refuses_without_bubblewrap_before_asking(tmp_path, monkeypatch):
+    """Linux without bwrap: refused in plain words, with the way to fix it, when the command is prepared, so nobody is
+    asked to approve a command that can never run. Nothing runs."""
+    from rooks_code import tools
+    monkeypatch.setattr(sys, "platform", "linux")
+    real_which = shutil.which
+    monkeypatch.setattr(tools.shutil, "which", lambda n, *a, **k: None if n == "bwrap" else real_which(n, *a, **k))
+    tb = Toolbox(tmp_path, sandbox="project")
+    with pytest.raises(ToolError, match="Install bubblewrap"):
+        tb.prepare("run_command", {"command": "echo ok > inside.txt"})
+    assert not (tmp_path / "inside.txt").exists()
+
+
+def test_full_sandbox_is_an_ordinary_shell(tmp_path):
+    argv = Toolbox(tmp_path, sandbox="full")._command_argv("echo hi")
+    if isinstance(argv, str):  # Windows: one cmd.exe string
+        assert argv.endswith('"echo hi"') and "bwrap" not in argv and "sandbox-exec" not in argv
+    else:
+        assert argv[-1] == "echo hi" and "bwrap" not in argv[0] and "sandbox-exec" not in argv[0]
+
+
+def test_windows_project_mode_runs_but_says_it_is_not_contained(tmp_path, monkeypatch):
+    """Windows has no containment yet. Rather than refuse every command (a fresh install would lose them) or pretend,
+    the approval line says plainly that the command is not kept inside the folder. Full mode says nothing."""
+    from rooks_code import tools
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setenv("COMSPEC", r"C:\Windows\system32\cmd.exe")
+    tb = Toolbox(tmp_path, sandbox="project")
+    plan = tb.prepare("run_command", {"command": "echo hi"})
+    assert tools.NOT_CONTAINED_ON_WINDOWS in plan.preview and plan.preview.startswith("$ echo hi")
+    tb.sandbox = "full"
+    assert tools.NOT_CONTAINED_ON_WINDOWS not in tb.prepare("run_command", {"command": "echo hi"}).preview
 
 
 def test_edit_fuzzy_matching_whitespace(tmp_path):
