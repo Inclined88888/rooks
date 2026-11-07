@@ -4,6 +4,29 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## 2026-11-07 · Rooks Browser app (preview) · branch feat/browser-app-landing
+
+A browser of our own that the browser agent can drive: `rooks-browser/app`, an Electron window with tabs, an address bar,
+private tabs and an **Ask Rooks** panel that reads the page you are on or does a task in it while you watch, with the same
+site rules, approvals and receipts as the agent in Chrome. Design and security model: `docs/design/0005-rooks-browser-app.md`.
+
+- **Start it** with `cd rooks-browser/app && npm install && npm start`. Tasks need the `rooks-browser` command on this
+  computer (the Rooks installer puts it there); without it the panel says so and browsing still works.
+- **Preview only.** It is not in the installers, the desktop app or the Room yet, and it has been tested on Linux only
+  (macOS and Windows are untried). BACKLOG lists what is still missing.
+- **What the review changed before landing.** A page the rules refuse is one blocked row in the receipt, never the app's
+  own "could not open" page as a visited page, and rows keep the order things happened. After a page fails the address
+  bar keeps the address that failed and says "Could not open", never "Secure". A permission you allowed a site earlier in
+  the run reads as denied inside the agent's tab, the same as asking for it. The control channel refuses a private tab
+  and never takes a private tab that is in front. The app's local-address and host-pattern rules give the same answers
+  as the Python agent's for every reserved range and for `[...]` patterns, and the parity test now guards them. Typing
+  a LAN or link-local address, or `[::1]`, opens it over plain http like `localhost`. The task helper gets none of the app's
+  secrets and no other key, token, secret or password from the app's environment, only its own token and the model keys
+  it reads itself (such as a key for OpenAI or Anthropic exported in the terminal you started the app in). Panel messages are plain sentences with the technical reason under
+  "Details". CI runs the app's tests on Linux under a virtual display, and `scripts/test-all.sh` runs them when `npm`
+  and `xvfb-run` are present.
+- Migration: none. Rollback: previous commit. No secrets changed.
+
 ## 2026-11-07 · The session branches, integrated · branch integration/2026-11-07
 
 Merges feat/coworkers (#13) with fix/coworker-guards, fix/main-ci-green (#16) with claude/agents-on-ci-green, fix/install-blank-window (#19),

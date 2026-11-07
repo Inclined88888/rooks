@@ -191,7 +191,28 @@ jobs:
         if: runner.os != 'Linux'
         run: python -m playwright install chromium
       - run: python -m rooks_browser doctor
-      - run: python -m pytest -q
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        if: runner.os == 'Linux'
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: rooks-browser/app/package-lock.json
+      - name: The Rooks Browser app, a preview (Linux only, tested under a virtual display)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb
+          # Chromium's sandbox needs unprivileged user namespaces, which Ubuntu 24.04 switches off (the app then dies with
+          # "The SUID sandbox helper binary was found, but is not configured correctly"); allow them, as the terminal job does
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          cd app && npm ci --no-audit --no-fund && node node_modules/electron/install.js
+          xvfb-run -a node --test test/*.test.mjs
+      - name: Tests (under a virtual display, so the app's own tests in test_electron_app.py run too)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a python -m pytest -q
+      - name: Tests
+        if: runner.os != 'Linux'
+        run: python -m pytest -q
 
   rooks-desk:
     name: Rooks Desk (${{ matrix.os }})

@@ -17,9 +17,13 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Scheduled later
 
-* **Rooks Browser app (branch `feat/browser-app`, 2026-11-07).** An Electron browser the agent drives, from the Computer and Browser
-  Control session, which ended at its usage limit after one commit and no pull request. Not merged: unreviewed and untested here
-  (its window settings read right: sandboxed views, context isolation, no Node, a fixed preload list). Review it on its own.
+* **Rooks Browser app: what the preview still lacks** (`rooks-browser/app`, landed from `feat/browser-app` after review, CHANGELOG
+  2026-11-07). It starts with `npm start` only: no packaging or installer entry, no code signing, so it is not in `install.sh`,
+  the desktop app or the Room yet. No tracker blocking. "Ask about this page" is a job through the task helper (the page's text
+  goes to a model the same way a task does), not a local read. The agent's clicks are synthetic mouse events; a real click by the
+  person is not yet read as a takeover (typing and the address bar are). Download by URL fetches without the tab's cookies, so a
+  file behind a sign-in cannot be saved that way. The receipt has no per-host resource rows (the Chrome driver adds one per host).
+  macOS and Windows are untested; CI runs the app's tests on Linux only.
 * **The coworkers' live mail slice runs only where Dovecot is installed** (`test_starters.py`), so CI skips it. Install
   `dovecot-imapd` in the backend job, or add a variant on the suite's mail fake.
 * **Windows: no containment for terminal commands.** The default mode runs them with the user's permissions and the approval line

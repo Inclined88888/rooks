@@ -69,7 +69,16 @@ VIRTUAL_ENV="$VENV" uv pip install -q -e "rooks-browser[dev]" -e "rooks-desk[dev
 # Playwright's own Chromium is optional: the tests fall back to Chrome, Edge or a Chromium already on this computer
 "$PY" -m playwright install chromium >/dev/null 2>&1 \
   || echo "note: could not download Playwright's Chromium; the browser tests use Chrome, Edge or a Chromium already on this computer"
-(cd rooks-browser && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore) && ok "rooks-browser" || bad "rooks-browser"
+# Under a virtual display when there is no screen, so the Rooks Browser app's tests (tests/test_electron_app.py) run too
+XVFB=(); [[ "$(uname -s)" == Linux && -z "${DISPLAY:-}" ]] && command -v xvfb-run >/dev/null && XVFB=(xvfb-run -a)
+(cd rooks-browser && ${XVFB[@]+"${XVFB[@]}"} "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore) && ok "rooks-browser" || bad "rooks-browser"
+# The Rooks Browser app (rooks-browser/app, Electron, a preview): its own tests need npm and a virtual display
+if command -v npm >/dev/null && command -v xvfb-run >/dev/null; then
+  (cd rooks-browser/app && { [[ -x node_modules/electron/dist/electron ]] || { npm ci --silent --no-audit --no-fund && node node_modules/electron/install.js; }; } \
+    && xvfb-run -a node --test test/*.test.mjs 2>&1 | tail -3) && ok "browser-app" || bad "browser-app"
+else
+  echo "note: npm or xvfb-run is not installed, so the Rooks Browser app's tests (rooks-browser/app) were skipped"
+fi
 # Real-screen tests stay opt in (ROOKS_DESK_E2E=1 with a display, as in rooks-desk/tests/test_e2e_linux.py)
 (cd rooks-desk && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore) && ok "rooks-desk" || bad "rooks-desk"
 
