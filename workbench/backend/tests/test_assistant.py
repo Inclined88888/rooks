@@ -134,6 +134,8 @@ def test_renaming_the_assistant_renames_the_default_teammate(client):
 
     db.set_setting("assistant_name", "Atlas")
     store.seed_default()
+    # Through the API, so the default teammate is renamed too: an earlier test may have renamed it to Sam
+    assert client.put("/api/assistant/settings", json={"assistant_name": "Atlas"}).status_code == 200
     client.post("/api/teammates", json={"name": "Sam"})
     assert client.put("/api/assistant/settings", json={"assistant_name": "Sam"}).status_code == 200
     mates = {t["name"]: t for t in client.get("/api/teammates").json()["teammates"]}
