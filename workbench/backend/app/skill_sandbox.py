@@ -85,7 +85,7 @@ def _hook(event, args):
         addr = args[1]
         if isinstance(addr, tuple) and not _net:
             _report("network", f"connect to {addr[0]}:{addr[1]}", str(addr[0])); raise PermissionError("blocked by skill sandbox: network")
-    elif event in ("subprocess.Popen", "os.system", "os.exec", "os.posix_spawn", "os.spawn") and not _shell:
+    elif event in ("subprocess.Popen", "os.system", "os.exec", "os.posix_spawn", "os.spawn", "ctypes.dlopen") and not _shell:
         _report("shell", f"run a program ({str(args[0])[:80] if args else event})", "shell"); raise PermissionError("blocked by skill sandbox: shell")
 sys.addaudithook(_hook)
 sys.argv = _cfg["argv"]
@@ -131,6 +131,13 @@ def _bwrap_ok() -> bool:
         return subprocess.run(["bwrap", "--ro-bind", "/", "/", "--unshare-net", "true"], capture_output=True, timeout=5).returncode == 0
     except (subprocess.SubprocessError, OSError):
         return False
+
+
+def os_sandboxed() -> bool:
+    """True only where the OS walls the script off from the user's files and network: bubblewrap on Linux. The unshare
+    and plain process fallbacks, Windows, and the macOS profile (it allows by default and denies a list) leave the
+    user's files reachable, so there every script run needs the user's OK."""
+    return _bwrap_ok()
 
 
 def _seatbelt_ok() -> bool:

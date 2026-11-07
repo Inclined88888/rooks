@@ -39,8 +39,10 @@ those files still exist. Known gaps are listed at the end rather than hidden.
    mode is provable from the run log (`app/egress.py`, enforced by `tests/test_egress.py`).
 7. **Third party code.** Skills and MCP servers are pinned to a commit, scanned, trial run with no grants, risk rated,
    approved per permission, and run in a sandbox (Seatbelt on macOS, bubblewrap on Linux, audit hooks for Python)
-   with only the granted permissions (`app/skills_hub.py`, `app/skill_scan.py`, `app/skill_sandbox.py`). The sandbox
-   fails closed.
+   with only the granted permissions (`app/skills_hub.py`, `app/skill_scan.py`, `app/skill_sandbox.py`). Only
+   bubblewrap counts as a real wall: where it is missing (Docker, macOS, Windows, Linux without bwrap) every skill
+   script run and every `run_python` call in a conversation with untrusted content waits for the owner's OK
+   (`assistant.hold_reason`, `skill_sandbox.os_sandboxed`). The Python audit hook blocks `ctypes` in both sandboxes.
 8. **Coding agents.** `cli_agents.py` runs the owner's own `claude` or `codex` with provider keys stripped from the
    environment; edits and commands go through per action approval.
 9. **Release integrity.** Release artifacts carry Sigstore build provenance (`.github/workflows/release.yml`). Desktop
@@ -56,6 +58,12 @@ those files still exist. Known gaps are listed at the end rather than hidden.
 * **Native installers are unsigned** until Apple and Windows signing certificates are configured
   (`docs/desktop-release.md`). Verify the SHA256SUMS and provenance instead.
 * **DNS lookups are not recorded** by the egress log.
+* **The macOS skill profile allows by default** and denies a list of paths, so it is not a filesystem wall. Skill
+  scripts there ask before every run until it is deny by default.
+* **Reading is not held after taint.** Once untrusted content is in the conversation, `read_file` and `read_page` still
+  run without asking, so injected text could read a local file and put it in a page address.
+* **Add-on keys.** `TOOLS_API_KEY` opens `/tools` and `/mcp` for the add-ons; it is no longer an account login. Its
+  MCP tools are still reachable by any add-on that holds it.
 * **Approval fatigue.** Approvals protect only if the owner reads them.
 
 ## Out of scope

@@ -7,7 +7,7 @@ distrust each other. The full trust model is in [docs/security/THREAT-MODEL.md](
 ## Report a vulnerability
 
 Report privately through a GitHub Security Advisory:
-https://github.com/Inclined88888/ai-workspace/security/advisories/new
+https://github.com/Inclined88888/rooks/security/advisories/new
 
 Do not open a public issue or pull request that describes an unpatched vulnerability, an exploit path, a secret or a
 working proof of concept. Public reports are hidden and moved to the private process.

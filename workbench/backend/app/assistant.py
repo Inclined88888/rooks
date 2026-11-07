@@ -768,6 +768,11 @@ def hold_reason(t: Tool, ctx: Ctx, args: dict) -> str:
             why = "This action needs your approval."
         if why:
             return why
+    if t.name == "run_skill_script":
+        from . import skill_sandbox
+
+        if not skill_sandbox.os_sandboxed():
+            return WEAK_SANDBOX_REASON
     if t.name == TOOL_USE_ROOM and str(args.get("action") or "").strip().lower() == "handoff":
         return ""  # its copy always waits on a held request of its own in Needs you: one yes, not two
     if ctx.tainted and t.effect in GATED_EFFECTS:
@@ -788,6 +793,7 @@ def hold_reason(t: Tool, ctx: Ctx, args: dict) -> str:
 
 AUTOMATION_REASON = "An automation started this, so anything that sends or changes something outside the app waits for the user's OK."  # feat/v02-automations
 MCP_ASK_REASON = "It runs a tool on a connected MCP server, which can change things outside the app, so it needs the user's OK."
+WEAK_SANDBOX_REASON = "This computer cannot fully wall off a skill's script from your files, so each run needs your OK."
 ALWAYS_ASK_REASON = "It changes something on a website, which always needs the user's OK."
 LEARNED_ROUTINE_REASON = "This routine was set up from a suggestion, so it never sends or changes anything outside on its own."
 
@@ -1345,7 +1351,8 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
     specs = [t.spec() for t in available_tools(ctx)]
     ctx.tainted = ctx.tainted or bool(db.one(
     f"SELECT 1 FROM (SELECT name FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT ?) "
-    f"WHERE name IN ({','.join('?' * len(UNTRUSTED_TOOLS))}) LIMIT 1", ctx.conversation_id, HISTORY_MESSAGES, *UNTRUSTED_TOOLS))
+    f"WHERE name IN ({','.join('?' * len(UNTRUSTED_TOOLS))}) OR name LIKE 'mcp\\_\\_%' ESCAPE '\\' LIMIT 1",
+    ctx.conversation_id, HISTORY_MESSAGES, *UNTRUSTED_TOOLS))  # MCP tools are added at run time, so they are not in the set
     # feat/attachments: an attached document's text is third party content, like a web page or an email
     ctx.tainted = ctx.tainted or attachments.has_documents(ctx.attachments) or bool(db.one(
     "SELECT 1 FROM (SELECT attachments FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT ?) "
@@ -1659,7 +1666,7 @@ async def decide(action_id: int, approve: bool, channel: str = "web") -> dict:
     actions.finish(run["action_id"], run["outcome"], detail=out[:2000])
     # The result stays labelled untrusted (run_tool prefixes it) and keeps the tool name, so the conversation stays tainted
     _save(a["conversation_id"], "user", f"[I approved request #{action_id}: {a['tool']}. Result: {out[:2000]}]",
-          name=a["tool"] if a["tool"] in UNTRUSTED_TOOLS else "")
+          name=a["tool"] if a["tool"] in UNTRUSTED_TOOLS or a["tool"].startswith("mcp__") else "")
     return actions.approval(action_id)
 
 
