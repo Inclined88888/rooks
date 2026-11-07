@@ -166,7 +166,7 @@ test("faint ink is never used for text: labels, ages, placeholders and the .fain
   assert.match(shell, /\.more-section \{[^}]*color: var\(--muted\)/);
   assert.match(strip(read("../src/ui/ui.css")), /\.ui-input::placeholder \{ color: var\(--color-ink-muted\)/);
   assert.match(strip(read("../src/room/room.css")), /\.room-advanced-list dt \{ color: var\(--color-ink-muted\)/);
-  assert.match(strip(read("../src/motion/signature.css")), /\.thinking-time \{[^}]*color: var\(--muted\)/);
+  assert.match(strip(read("../src/styles.css")), /\.thinking-time \{[^}]*color: var\(--muted\)/);
   const styles = strip(read("../src/styles.css"));
   assert.match(styles, /\.faint \{ color: var\(--muted\); \}/);
   assert.match(styles, /\.input::placeholder \{ color: var\(--muted\)/);
@@ -210,21 +210,24 @@ test("the model and effort chips keep a visible focus ring", () => {
   assert.match(strip(read("../src/chat/chat.css")), /\.chat-chip-select select\.input:focus-visible \{[^}]*outline: 2px solid var\(--color-border-focus\)/);
 });
 
-test("the live colour is never the only edge: the Room's focus ring, the stage edge and the dots carry ink", () => {
+test("the live colour is never the only signal: the Room's focus ring is ink, and live states also say so in words", () => {
   const room = strip(read("../src/room/room.css"));
-  assert.match(room, /\.room-screen:focus-visible \{[^}]*outline: 2px solid var\(--color-border-focus\)/);
+  assert.match(room, /\.room-screen:focus-visible \{[^}]*outline: var\(--focus-w\) solid var\(--color-border-focus\)/);
   const ui = strip(read("../src/ui/ui.css"));
-  assert.match(ui, /\.ui-timeline-dot\.is-running \{[^}]*box-shadow: 0 0 0 1px var\(--color-ink\)/);
-  assert.match(ui, /\.ui-stage\.is-captured \{[^}]*var\(--color-ink\)/);
-  assert.match(strip(read("../src/shell/shell.css")), /\.rail-live, \.mobile-live \{[^}]*box-shadow: 0 0 0 1px var\(--color-ink\)/);
+  // design system v3: stepping in is a calm, static 2 px accent border, and the status line says it in words
+  assert.match(ui, /\.ui-stage\.is-captured \{ border: 2px solid var\(--color-accent\); \}/);
+  const prim = read("../src/ui/index.tsx");
+  assert.match(prim, /Your mouse and keyboard go to/);
+  assert.match(prim, /running: "Working"/, "a running step's dot is also read out as Working");
+  assert.match(prim, /\{live \? "Live" : "Off"\}/, "the stage badge says Live in words");
 });
 
 test("pseudo-elements are never put inside :is() (the browser drops them)", () => {
-  for (const f of ["../src/ui/ui.css", "../src/motion/signature.css", "../src/motion.css", "../src/voice/voice.css"]) {
+  for (const f of ["../src/ui/ui.css", "../src/styles.css", "../src/voice/voice.css"]) {
     const css = strip(read(f));
     for (const m of css.matchAll(/:is\(([^)]*)\)/g)) assert.doesNotMatch(m[1], /::/, `${f}: ${m[0]}`);
   }
-  assert.match(strip(read("../src/ui/ui.css")), /:root\[data-motion="off"\] \.ui-badge-live::before/);
+  assert.match(strip(read("../src/ui/ui.css")), /:root\[data-motion="off"\] \*::before/);
 });
 
 test("the stage's status line stays mounted, names Escape, and says Handed back", async () => {

@@ -1,5 +1,5 @@
 /* ---- Cloud models: first-run "Choose how to think", the Models page, and the "via" line under answers ---- */
-.welcome-title { margin: 0; font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 4.4vw, 40px); letter-spacing: -0.01em; line-height: 1.05; }
+.welcome-title { margin: 0; font-family: var(--font); font-weight: 400; font-size: clamp(30px, 4.4vw, 40px); letter-spacing: -0.01em; line-height: 1.05; }
 .welcome-title::after { content: ""; display: block; width: 36px; height: 2px; margin: 14px auto 0; background: var(--accent); }
 .welcome-option.recommended strong { font-style: italic; }
 .welcome-option.quiet { padding-top: 14px; padding-bottom: 14px; }
@@ -18,7 +18,7 @@
   font: inherit; color: var(--text); position: relative;
 }
 .free-card + .free-card { padding-left: 16px; border-left: 1px solid var(--border); }
-.free-card strong { font-family: var(--serif); font-weight: 500; font-size: 20px; }
+.free-card strong { font-family: var(--font); font-weight: 500; font-size: 20px; }
 .free-card.on strong { color: var(--accent-text); font-style: italic; }
 .free-card.on::before { content: ""; position: absolute; top: -1px; left: 0; right: 16px; height: 3px; background: var(--accent); }
 .free-card + .free-card.on::before { left: 16px; right: 0; }
@@ -26,7 +26,7 @@
 .free-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .free-steps li { display: flex; align-items: flex-start; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .free-steps li .grow { padding-top: 3px; }
-.free-n { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--rule); font-family: var(--serif); font-size: 15px; font-style: italic; }
+.free-n { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--rule); font-family: var(--font); font-size: 15px; }
 .free-steps li.done .free-n { background: var(--ink-btn); color: var(--on-ink); border-color: var(--ink-btn); }
 .key-field { display: flex; gap: 6px; align-items: center; }
 .key-field .input { flex: 1; }
@@ -34,24 +34,24 @@
 .sub-card { padding: 16px 0; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
 .sub-card.on { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
 .sub-card p { margin: 0; line-height: 1.5; }
-.sub-name { font-family: var(--serif); font-weight: 500; font-size: 20px; }
+.sub-name { font-family: var(--font); font-weight: 500; font-size: 20px; }
 .sub-card.off .sub-name { color: var(--muted); }
 .sub-card .tiny { font-size: 11px; letter-spacing: 0.04em; }
 
 /* Models page */
-.models-page .lede { margin: 2px 0 0; max-width: 620px; font-family: var(--serif); font-style: italic; font-size: 19px; line-height: 1.45; color: var(--muted); }
+.models-page .lede { margin: 2px 0 0; max-width: 620px; font-family: var(--font); font-size: 19px; line-height: 1.45; color: var(--muted); }
 .tier-strip { display: grid; grid-template-columns: 1fr 1fr; border-top: 2px solid var(--rule); border-bottom: 1px solid var(--rule); margin: 18px 0 8px; }
 .tier-strip > div { display: flex; flex-direction: column; gap: 2px; padding: 14px 0; }
 .tier-strip > div + div { padding-left: 20px; border-left: 1px solid var(--border); }
 .tier-strip .kicker { margin: 0; }
-.tier-strip strong { font-family: var(--serif); font-weight: 500; font-size: 24px; }
+.tier-strip strong { font-family: var(--font); font-weight: 500; font-size: 24px; }
 .route-list { list-style: none; padding: 0; margin: 0 0 18px; }
 .route-item { display: grid; grid-template-columns: 54px 1fr auto; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--border); align-items: start; }
 .route-item.off { opacity: 0.5; }
-.route-n { font-family: var(--serif); font-size: 30px; font-style: italic; line-height: 1; color: var(--faint); }
+.route-n { font-family: var(--font); font-size: 30px; line-height: 1; color: var(--faint); }
 .route-item:first-child .route-n { color: var(--accent-text); }
 .route-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.route-name { font-family: var(--serif); font-weight: 500; font-size: 21px; }
+.route-name { font-family: var(--font); font-weight: 500; font-size: 21px; }
 .route-models { display: flex; gap: 18px; flex-wrap: wrap; }
 .route-model { display: flex; flex-direction: column; gap: 4px; min-width: 220px; }
 .route-model .kicker { margin: 0; }
@@ -69,7 +69,7 @@
 .via-who b { font-weight: 650; color: var(--text); }
 .via-tier { text-transform: uppercase; letter-spacing: 0.12em; font-size: 9.5px; font-weight: 700; border: 1px solid var(--border-strong); padding: 1px 6px; }
 .via-quota::before, .via-skip::before { content: "·"; margin-right: 10px; color: var(--faint); }
-.via-skip { color: var(--accent-text); font-style: italic; font-family: var(--serif); font-size: 13px; }
+.via-skip { color: var(--accent-text); font-family: var(--font); font-size: 13px; }
 @media (max-width: 900px) {
   .free-grid, .tier-strip { grid-template-columns: 1fr; }
   .free-card + .free-card, .tier-strip > div + div { padding-left: 0; border-left: none; border-top: 1px solid var(--border); }

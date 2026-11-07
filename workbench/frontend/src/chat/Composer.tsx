@@ -5,7 +5,6 @@
 import { Square } from "lucide-react";
 import { useState, type FormEvent, type RefObject } from "react";
 import { AttachButton, filesFrom, PendingChips, useAttachments } from "../Attachments";
-import { Tracer } from "../Tracer";
 import { DictateButton } from "../voice/DictateButton";
 
 export type ComposerProps = {
@@ -22,11 +21,10 @@ export function Composer({ text, onText, busy, att, onSend, onStop, composerRef 
   const [dropping, setDropping] = useState(false);
   return (
     <form className="composer-wrap agents-composer-wrap" onSubmit={onSend}>
-      <div className={`composer agents-composer has-tracer${busy ? " is-working" : ""}${dropping ? " drop-target" : ""}`}
+      <div className={`composer agents-composer${busy ? " is-working" : ""}${dropping ? " drop-target" : ""}`}
         onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setDropping(true); } }}
         onDragLeave={() => setDropping(false)}
         onDrop={(e) => { const f = filesFrom(e.dataTransfer); setDropping(false); if (f.length) { e.preventDefault(); att.add(f); } }}>
-        <Tracer active={busy} />
         <PendingChips items={att.items} onRemove={att.remove} />
         <textarea ref={composerRef} rows={1} value={text} aria-label="Message"
           onChange={(e) => { onText(e.target.value); const t = e.target; t.style.height = "auto"; t.style.height = `${Math.min(240, t.scrollHeight)}px`; }}

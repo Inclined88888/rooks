@@ -1,5 +1,5 @@
 /**
- * A new chat: the greeting line (Bodoni, by the time of day), one sentence, three things to do built from the
+ * A new chat: the greeting line (by the time of day), one sentence, three things to do built from the
  * person's own routines and the automation examples, and how many things need them right now.
  */
 import { AlertTriangle } from "lucide-react";

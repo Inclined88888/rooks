@@ -1,110 +1,146 @@
 /* ==========================================================================
-   Rooks design tokens v2: "Paper and Ink, with a saffron signal" (docs/design/0003-workroom.md, section 6).
-   Two first class themes keyed on html[data-mode]: Studio (light) and Lamp (dark). appearance.tsx sets data-mode
-   from the chosen theme ("auto" resolves to one of the two at runtime and follows the system). The older
-   data-theme ids (sunshine, paper, cherry, neon, contrast, linen) layer their own colours on top in themes.css and
-   sunshine.css; everything else (type, radius, spacing, shadow, motion, layout) comes from here.
-   Import this FIRST in main.tsx. Contrast figures are for the stated pairs (checked in tests/workroom-tokens.test.mjs).
+   Rooks design tokens v3: "restraint" (docs/design/0003-workroom.md, section 6).
+   Three themes keyed on html[data-mode]: light (also the fallback before data-mode is set), dark, and contrast
+   (High contrast, light based). appearance.tsx sets data-mode; "Match my computer" resolves to light or dark.
+   Neutral first: the primary button is ink on paper. The accent (amber) marks only what is live or needs the person.
+   Every text pair is AA, computed from this file by tests/premium-foundation.test.mjs.
+   Import this FIRST in main.tsx.
    ========================================================================== */
 
-/* ---- Studio (light): the default, also the fallback before data-mode is set ---- */
+/* ---- Light ---- */
 :root,
 html[data-mode="light"] {
-  --color-bg: #FAF8F3;
-  --color-bg-hover: #F3F0E8;
-  --color-bg-active: #EBE7DC;
+  --color-bg: #FAFAF9;
+  --color-bg-hover: #F1F1EF;
+  --color-bg-active: #E9E8E5;
   --color-surface: #FFFFFF;
   --color-surface-raised: #FFFFFF;
-  --color-surface-sunken: #F3F0E8;
-  --color-border: #E6E1D6;
-  --color-border-strong: #D2CBBB;
-  --color-border-focus: #7A4F00;      /* the focus ring: accent text, 6.7:1 on bg */
-  --color-ink: #1B1A17;
-  --color-ink-muted: #5F5A50;         /* 6.5:1 on bg */
-  --color-ink-faint: #948E82;         /* 3.1:1, non text only */
-  --color-accent: #F2B705;            /* saffron: solid fills, with on-accent ink */
-  --color-accent-hover: #DBA504;
-  --color-accent-soft: #FFF3CC;
-  --color-accent-text: #7A4F00;       /* 6.7:1 on bg */
-  --color-on-accent: #1B1A17;         /* 9.6:1 on accent */
-  --color-live: #F2B705;              /* the one colour that always means "live" */
-  --color-success: #1E7F4F;
-  --color-success-hover: #196B43;
-  --color-success-soft: #E3F3EA;
-  --color-success-text: #14532D;
-  --color-warning: #B45309;
-  --color-warning-hover: #9A4707;
-  --color-warning-soft: #FBEBD8;
-  --color-warning-text: #7C3A05;
-  --color-danger: #C0392B;
-  --color-danger-hover: #A33224;
-  --color-danger-soft: #F9E3E0;
-  --color-danger-text: #7F1D1D;
-  --color-code-bg: #F3F0E8;
-  --color-code-keyword: #7A4F00;      /* syntax colours on code-bg: all 6:1 or better */
-  --color-code-string: #14532D;
-  --color-code-number: #7C3A05;
-  --color-code-title: #1D4ED8;
-  --color-code-type: #6D28D9;
-  --color-on-danger: #FFFFFF;         /* ink on a solid danger fill */
-  --color-scrim: rgba(27, 26, 23, 0.45);
-
-  --shadow-1: 0 1px 2px rgba(27, 26, 23, 0.05), 0 1px 1px rgba(27, 26, 23, 0.03);
-  --shadow-2: 0 1px 2px rgba(27, 26, 23, 0.05), 0 6px 18px -6px rgba(27, 26, 23, 0.12);
-  --shadow-3: 0 2px 4px rgba(27, 26, 23, 0.05), 0 14px 28px -10px rgba(27, 26, 23, 0.16);
-  --shadow-4: 0 24px 48px -24px rgba(27, 26, 23, 0.24);
+  --color-surface-sunken: #F4F4F2;
+  --color-border: #E7E6E3;
+  --color-border-strong: #D4D3CF;
+  --color-border-focus: #1A1A19;
+  --color-ink: #1A1A19;
+  --color-ink-muted: #5E5D59;
+  --color-ink-faint: #8F8E89;         /* non text only */
+  --color-primary: #1A1A19;           /* the primary button: ink on paper */
+  --color-primary-hover: #33332F;
+  --color-on-primary: #FFFFFF;
+  --color-accent: #C98A00;            /* live, needs you: nothing else */
+  --color-accent-hover: #B37B00;
+  --color-accent-soft: #FBF1DA;
+  --color-accent-text: #7A5300;
+  --color-on-accent: #1A1A19;
+  --color-live: #C98A00;
+  --color-success: #2F7D4F;
+  --color-success-hover: #276A43;
+  --color-success-soft: #E7F2EB;
+  --color-success-text: #1E5A37;
+  --color-warning: #A85F06;
+  --color-warning-hover: #8F5105;
+  --color-warning-soft: #FBEFDF;
+  --color-warning-text: #7A4300;
+  --color-danger: #B3372B;
+  --color-danger-hover: #9A2F25;
+  --color-danger-soft: #F9E7E4;
+  --color-danger-text: #82231A;
+  --color-on-danger: #FFFFFF;
+  --color-code-bg: #F4F4F2;
+  --color-code-keyword: #7A5300;
+  --color-code-string: #1E5A37;
+  --color-code-number: #7A4300;
+  --color-code-title: #1F4FB8;
+  --color-code-type: #5B3AA8;
+  --color-scrim: rgba(26, 26, 25, 0.32);
   color-scheme: light;
 }
 
-/* ---- Lamp (dark) ---- */
+/* ---- Dark ---- */
 html[data-mode="dark"] {
-  --color-bg: #141210;
-  --color-bg-hover: #221E19;
-  --color-bg-active: #2A2520;
-  --color-surface: #1C1915;
-  --color-surface-raised: #221E19;
-  --color-surface-sunken: #0F0E0C;
-  --color-border: #2E2A24;
-  --color-border-strong: #3D382F;
-  --color-border-focus: #F6C84C;      /* 11.8:1 on bg */
-  --color-ink: #F2EDE3;
-  --color-ink-muted: #B0A89A;         /* 7.9:1 on bg */
-  --color-ink-faint: #756E62;         /* 3.7:1, non text only */
-  --color-accent: #F2B705;
-  --color-accent-hover: #F6C84C;
-  --color-accent-soft: #2E2410;
-  --color-accent-text: #F6C84C;       /* 11.8:1 on bg */
-  --color-on-accent: #141210;         /* 10.3:1 on accent */
-  --color-live: #F2B705;
-  --color-success: #4ADE80;
-  --color-success-hover: #6EE7A0;
-  --color-success-soft: #0F2A1A;
-  --color-success-text: #86EFAC;
-  --color-warning: #FBBF24;
-  --color-warning-hover: #FCD34D;
-  --color-warning-soft: #2E2410;
-  --color-warning-text: #FDE68A;
-  --color-danger: #F87171;
-  --color-danger-hover: #FCA5A5;
-  --color-danger-soft: #3A1A1A;
-  --color-danger-text: #FCA5A5;
-  --color-code-bg: #0F0E0C;
-  --color-code-keyword: #93C5FD;
-  --color-code-string: #86EFAC;
-  --color-code-number: #FDE047;
-  --color-code-title: #60A5FA;
-  --color-code-type: #C4B5FD;
-  --color-on-danger: #141210;
-  --color-scrim: rgba(0, 0, 0, 0.6);
-
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 1px rgba(0, 0, 0, 0.2);
-  --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 18px -6px rgba(0, 0, 0, 0.5);
-  --shadow-3: 0 2px 4px rgba(0, 0, 0, 0.35), 0 14px 28px -10px rgba(0, 0, 0, 0.6);
-  --shadow-4: 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+  --color-bg: #161616;
+  --color-bg-hover: #202020;
+  --color-bg-active: #2A2A2A;
+  --color-surface: #1E1E1E;
+  --color-surface-raised: #242424;
+  --color-surface-sunken: #121212;
+  --color-border: #2E2E2E;
+  --color-border-strong: #3C3C3C;
+  --color-border-focus: #EDEDEC;
+  --color-ink: #EDEDEC;
+  --color-ink-muted: #A3A29E;
+  --color-ink-faint: #6E6D69;         /* non text only */
+  --color-primary: #EDEDEC;
+  --color-primary-hover: #D6D6D4;
+  --color-on-primary: #161616;
+  --color-accent: #E3A82B;
+  --color-accent-hover: #E9B949;
+  --color-accent-soft: #2B2414;
+  --color-accent-text: #E9B949;
+  --color-on-accent: #161616;
+  --color-live: #E3A82B;
+  --color-success: #5FBF85;
+  --color-success-hover: #78CC98;
+  --color-success-soft: #15261C;
+  --color-success-text: #8FD8AB;
+  --color-warning: #E3A82B;
+  --color-warning-hover: #E9B949;
+  --color-warning-soft: #2B2414;
+  --color-warning-text: #F0C870;
+  --color-danger: #E5735F;
+  --color-danger-hover: #EC8C7B;
+  --color-danger-soft: #2E1B17;
+  --color-danger-text: #F2A193;
+  --color-on-danger: #161616;
+  --color-code-bg: #121212;
+  --color-code-keyword: #E9B949;
+  --color-code-string: #8FD8AB;
+  --color-code-number: #F0C870;
+  --color-code-title: #8DB4F5;
+  --color-code-type: #C3B1F2;
+  --color-scrim: rgba(0, 0, 0, 0.55);
   color-scheme: dark;
 }
 
-/* ---- Fixed colours, the same in both modes: the terminal window is a dark screen on purpose (TerminalPage.tsx
+/* ---- High contrast: light based, black text, 2 px borders, a 3 px focus ring ---- */
+html[data-mode="contrast"] {
+  --color-bg: #FFFFFF;
+  --color-bg-hover: #EDEDED;
+  --color-bg-active: #E0E0E0;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FFFFFF;
+  --color-surface-sunken: #F2F2F2;
+  --color-border: #000000;
+  --color-border-strong: #000000;
+  --color-border-focus: #000000;
+  --color-ink: #000000;
+  --color-ink-muted: #262626;
+  --color-ink-faint: #595959;
+  --color-primary: #000000;
+  --color-primary-hover: #262626;
+  --color-on-primary: #FFFFFF;
+  --color-accent: #8A5A00;
+  --color-accent-hover: #6E4800;
+  --color-accent-soft: #FFF1CC;
+  --color-accent-text: #573800;
+  --color-on-accent: #FFFFFF;
+  --color-live: #8A5A00;
+  --color-success: #1B5E36;
+  --color-success-soft: #E3F1E8;
+  --color-success-text: #0E3F22;
+  --color-warning: #7A4300;
+  --color-warning-soft: #FCEBD5;
+  --color-warning-text: #5A3100;
+  --color-danger: #8C1D13;
+  --color-danger-soft: #FBE3DF;
+  --color-danger-text: #6B140C;
+  --color-on-danger: #FFFFFF;
+  --color-code-bg: #F2F2F2;
+  --color-scrim: rgba(0, 0, 0, 0.6);
+  --border-w: 2px;
+  --focus-w: 3px;
+  color-scheme: light;
+}
+
+/* ---- Fixed colours, the same in every mode: the terminal window is a dark screen on purpose (TerminalPage.tsx
    paints xterm with the same values), and the companies' sign-in marks sit on a white tile as their guidelines ask. ---- */
 :root {
   --screen-bg: #1C1C1E;
@@ -117,79 +153,89 @@ html[data-mode="dark"] {
   --brand-tile: #FFFFFF;
 }
 
-/* ---- Everything that is not a colour (theme independent) ---- */
+/* ---- Everything that is not a colour ---- */
 :root {
-  /* Shape: 8 / 12 / 16. Cards 12, composer and stage frame 16, chips full. */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* Shape: 6 (controls), 10 (cards, sheets, composer, stage frame), full (chips, pills). */
+  --radius-xs: 6px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 10px;
   --radius-full: 999px;
+  --border-w: 1px;
+  --focus-w: 2px;
 
-  /* Spacing: the 4px scale only */
+  /* Spacing: one 4 px grid, 4 8 12 16 24 32 48 64 (space-5 and space-10 are older names on the same grid) */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
-  --space-5: 20px;
+  --space-5: 24px;
   --space-6: 24px;
   --space-8: 32px;
-  --space-10: 40px;
+  --space-10: 48px;
   --space-12: 48px;
+  --space-16: 64px;
 
-  /* Type: Hanken Grotesk at a 14px base. The Appearance slider scales every --text-* token from these numbers
-     (appearance.tsx TEXT_TOKENS), so size 14 renders exactly these values. */
-  --text-2xs: 10.5px;
+  /* Type: one sans (Hanken Grotesk), JetBrains Mono for code only. The scale is 12 13 14 16 20 28 and nothing else;
+     the older names (2xs, 3xl, 4xl, thread, mono, rail) point at the nearest step. The Appearance slider scales every
+     --text-* token from these numbers (appearance.tsx TEXT_TOKENS), so size 14 renders exactly these values. */
+  --text-2xs: 12px;
   --text-xs: 12px;
   --text-sm: 13px;
   --text-md: 14px;
   --text-lg: 16px;
   --text-xl: 20px;
   --text-2xl: 28px;
-  --text-3xl: 40px;
-  --text-4xl: 56px;
-  --text-thread: 15px;     /* the conversation body, line height 1.6 */
-  --text-mono: 12.5px;     /* steps, receipts, the presence line, the terminal */
-  --text-rail: 11px;       /* rail and bottom bar labels, weight 600, tracking 0.02em */
+  --text-3xl: 28px;
+  --text-4xl: 28px;
+  --text-thread: 16px;     /* the conversation body, line height 1.65 */
+  --text-mono: 13px;       /* steps, receipts, the terminal */
+  --text-rail: 12px;       /* rail and bottom bar labels */
 
   --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-serif: "Bodoni Moda Variable", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
-  --leading-tight: 1.1;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-heading: 600;
+
+  --leading-tight: 1.2;
   --leading-snug: 1.35;
   --leading-normal: 1.5;
-  --leading-relaxed: 1.6;
+  --leading-relaxed: 1.65;
 
   --tracking-tight: -0.01em;
   --tracking-normal: 0;
-  --tracking-wide: 0.02em;
+  --tracking-wide: 0;
 
-  /* Motion (the signature moments have their own scale in motion/tokens.css) */
+  /* Depth: hairlines carry structure; one shadow, only on what floats (menus, sheets, the palette, toasts). */
+  --shadow-float: 0 8px 24px -12px rgb(0 0 0 / .18);
+
+  /* Motion: the one fade (ui/ui.css, ui-fade), 150 ms or less. Reduced motion turns it off. */
   --dur-fast: 100ms;
-  --dur-normal: 150ms;
-  --dur-slow: 200ms;
+  --dur-fade: 120ms;
+  --dur-normal: 120ms;
+  --dur-slow: 150ms;
   --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Layout */
   --rail-w: 64px;
   --presence-h: 44px;
-  --sidebar-w: 240px;              /* older themes still set it; nothing in the shell reads it */
   --header-h: 48px;
   --max-content-width: 760px;      /* chat message width */
+  --max-read-width: 880px;         /* reading pages */
   --max-page-width: 1120px;
 
   /* Breakpoints. CSS custom properties cannot be read inside @media, so these are documentation and the values
-     for JavaScript (shell/breakpoints.ts); the shell stylesheets write the same two numbers, 900px and 1280px,
-     and nothing else. */
+     for JavaScript (shell/breakpoints.ts); the stylesheets write the same two numbers, 900px and 1280px. */
   --bp-narrow: 900px;
   --bp-wide: 1280px;
 }
 
 /* ---- Focus: one visible ring that no component cancels ---- */
 :focus-visible {
-  outline: 2px solid var(--color-border-focus);
+  outline: var(--focus-w) solid var(--color-border-focus);
   outline-offset: 2px;
   box-shadow: none;
   border-radius: var(--radius-xs);
@@ -197,8 +243,8 @@ html[data-mode="dark"] {
 
 /* ---- Selection ---- */
 ::selection {
-  background: var(--color-accent-soft);
-  color: var(--color-accent-text);
+  background: var(--color-bg-active);
+  color: var(--color-ink);
 }
 
 /* ---- Scrollbar ---- */

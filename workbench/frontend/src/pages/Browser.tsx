@@ -1,9 +1,8 @@
-import { CircleStop, Globe, Loader2, Play, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, CircleStop, Globe, Loader2, Play, Trash2, XCircle } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
-import { Tracer } from "../Tracer";
-import { DoneTick, LiveShot } from "../motion";
+import { LiveShot } from "../motion";
 import { Empty, Markdown, ModelSelect, useModels, useToast } from "../util";
 
 type JobSummary = { id: string; goal: string; provider: string; model: string; status: string; source: string; created_at: number };
@@ -132,8 +131,7 @@ export default function Browser() {
       <div style={{ display: jobs.length === 0 && !job ? "none" : "grid", gridTemplateColumns: "300px minmax(0,1fr)", gap: 16 }} className="research-layout">
         <div className="card flush" style={{ alignSelf: "start" }}>
           {jobs.map((j) => (
-            <div key={j.id} className={`list-item has-tracer ${job?.id === j.id ? "active" : ""}`} onClick={() => navigate(`/browser/${j.id}`)}>
-              <Tracer active={active(j.status)} />
+            <div key={j.id} className={`list-item ${job?.id === j.id ? "active" : ""}`} onClick={() => navigate(`/browser/${j.id}`)}>
               <div className="grow">
                 <div className="truncate">{j.goal}</div>
                 <div className="row small faint">{active(j.status) && <Loader2 size={11} className="spin" />}{j.status}{j.source && j.source !== "api" ? ` · from ${j.source}` : ""} · {ago(j.created_at)}</div>
@@ -146,8 +144,8 @@ export default function Browser() {
           {!job && <div className="card"><Empty icon={<Globe size={26} />} title="Pick a run or start one" hint="Chat can use this browser too." /></div>}
           {job && (
             <div className="col gap-lg">
-              <div className="card col has-tracer">
-                <Tracer active={active(job.status)} label="Browser agent is working" />
+              <div className="card col">
+                {active(job.status) && <span className="sr-only" role="status">Browser agent is working</span>}
                 <div className="row" style={{ alignItems: "flex-start" }}>
                   <h2 className="grow">{job.goal}</h2>
                   {active(job.status) && <button className="btn sm" onClick={cancel}><CircleStop size={14} /> Stop</button>}
@@ -172,7 +170,7 @@ export default function Browser() {
                 ))}
                 {job.result && (
                   <>
-                    <div className="row">{job.result.success ? <DoneTick size={18} label="Finished" /> : <XCircle size={16} className="prio-2" />}<strong>{job.result.success ? "Agent reports success" : job.result.done ? "Agent finished but did not report success" : "Stopped at the step limit"}</strong></div>
+                    <div className="row">{job.result.success ? <CheckCircle2 size={16} className="ok-icon" aria-label="Finished" /> : <XCircle size={16} className="prio-2" />}<strong>{job.result.success ? "Agent reports success" : job.result.done ? "Agent finished but did not report success" : "Stopped at the step limit"}</strong></div>
                     <div className="muted small">This is the agent's own claim. Check it against the last screen and the steps; small models can invent answers.</div>
                     {job.result.final ? <Markdown text={job.result.final} /> : <div className="muted">No final answer.</div>}
                   </>
@@ -181,7 +179,7 @@ export default function Browser() {
               <div className="grid two">
                 <div className="card col">
                   <h3>{active(job.status) ? "Live view" : "Last screen"}</h3>
-                  {job.has_screenshot ? <LiveShot src={`/api/browser/jobs/${job.id}/screenshot?k=${shotKey}`} alt="Browser screenshot" scanning={active(job.status)} />
+                  {job.has_screenshot ? <LiveShot src={`/api/browser/jobs/${job.id}/screenshot?k=${shotKey}`} alt="Browser screenshot" />
                     : <div className="muted small">{active(job.status) ? "Starting browser…" : "No screenshot."}</div>}
                 </div>
                 <div className="card col step-list timeline">

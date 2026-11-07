@@ -139,7 +139,7 @@ function Home() {
       </section>
 
       <section className="learn-section">
-        <h2 style={{ fontFamily: "var(--serif)", fontWeight: 500 }}>Things you've shown me</h2>
+        <h2 style={{ fontFamily: "var(--font)", fontWeight: 500 }}>Things you've shown me</h2>
         {!items.length && <Empty title="Nothing yet" hint="When you show me a task it appears here, ready to repeat." />}
         {items.map((p) => (
           <button key={p.id} className="learn-pb" onClick={() => nav(`/teach/${p.id}`)}>
@@ -226,7 +226,7 @@ function PlaybookView({ id }: { id: number }) {
       {note && <div className="learn-note" role="status" style={{ marginBottom: 16 }}>{note}</div>}
 
       <section className="learn-section">
-        <h2 style={{ fontFamily: "var(--serif)", fontWeight: 500 }}>Steps</h2>
+        <h2 style={{ fontFamily: "var(--font)", fontWeight: 500 }}>Steps</h2>
         <ol className="learn-steps">
           {steps.map((s, i) => (
             <li key={i}>
@@ -261,7 +261,7 @@ function PlaybookView({ id }: { id: number }) {
 
       {!edit && (
         <section className="learn-section">
-          <h2 style={{ fontFamily: "var(--serif)", fontWeight: 500 }}>Do it now</h2>
+          <h2 style={{ fontFamily: "var(--font)", fontWeight: 500 }}>Do it now</h2>
           {!!pb.params.length && (
             <div className="learn-fields">
               {pb.params.map((p) => (

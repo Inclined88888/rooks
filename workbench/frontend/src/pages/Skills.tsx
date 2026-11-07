@@ -2,7 +2,6 @@ import { ArrowRight, Check, ExternalLink, Github, KeyRound, Lock, Puzzle, Refres
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, stream } from "../api";
-import { Tracer } from "../Tracer";
 import { Empty, relTime, useToast } from "../util";
 import { SkillsTab } from "./Assistant";
 
@@ -391,8 +390,7 @@ function Stepper({ stages }: { stages: Record<StageId, StageState> }) {
       {STAGES.map((s, i) => {
         const st = stages[s.id];
         return (
-          <li key={s.id} className={`sk-step has-tracer is-${st.status}`} aria-current={st.status === "running" ? "step" : undefined}>
-            <Tracer active={st.status === "running"} />
+          <li key={s.id} className={`sk-step is-${st.status}`} aria-current={st.status === "running" ? "step" : undefined}>
             <span className="sk-num mono">{st.status === "done" ? <Check size={12} strokeWidth={3} /> : String(i + 1).padStart(2, "0")}</span>
             <span className="col" style={{ gap: 2, minWidth: 0 }}>
               <span className="sk-step-label">{s.label}</span>

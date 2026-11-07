@@ -129,7 +129,7 @@ function Chat() {
   const busyRef = useRef(false);
   const [busySince, setBusySince] = useState(0);
   const [model, setModel] = useState("");
-  const exit = useExit<number>(200);
+  const exit = useExit<number>(120);
   const { models, defaultRef } = useModels();
   const [broken, setBroken] = useState("");
   const [effort, setEffort] = useEffort();

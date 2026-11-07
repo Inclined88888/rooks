@@ -1,12 +1,12 @@
 /* feat/team-lead: Team board, workload, timeline, today's plan, person page. Theme variables only, so every theme
    (Sunshine default, Paper, Cherry & Ink, Neon, Dark, High contrast) restyles it. Motion only under data-motion="full". */
 .team { max-width: 1320px; }
-.team-h2 { font-family: var(--serif); font-size: var(--text-xl); margin: 0 0 8px; display: flex; align-items: baseline; gap: 8px; }
+.team-h2 { font-family: var(--font); font-size: var(--text-xl); margin: 0 0 8px; display: flex; align-items: baseline; gap: 8px; }
 .team-h3 { font-size: var(--text-2xs); font-weight: 650; letter-spacing: var(--track); text-transform: uppercase; margin: 0 0 8px; display: flex; align-items: center; gap: 6px; }
 .team-h3.mt { margin-top: 16px; }
 .team-stats { display: flex; gap: 22px; align-items: flex-end; }
 .team-stat { display: flex; flex-direction: column; align-items: flex-end; }
-.team-stat-n { font-family: var(--serif); font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+.team-stat-n { font-family: var(--font); font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
 .team-stat.warn .team-stat-n { color: var(--warn-text); }
 
 .team-assign { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 18px; border-color: var(--border-strong); }
@@ -19,7 +19,7 @@
 .team-card.msg { border-left-color: var(--text); }
 .team-card.reply { border-left-color: var(--ok); }
 .team-card-kind { display: flex; align-items: center; gap: 5px; font-size: var(--text-2xs); letter-spacing: var(--track); text-transform: uppercase; color: var(--muted); }
-.team-card-title { font-family: var(--serif); font-size: var(--text-lg); line-height: 1.25; overflow-wrap: anywhere; }
+.team-card-title { font-family: var(--font); font-size: var(--text-lg); line-height: 1.25; overflow-wrap: anywhere; }
 .team-card-actions { gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .team-msg-body { white-space: pre-wrap; font-size: var(--text-sm); background: var(--panel-2); padding: 8px 10px; max-height: 160px; overflow: auto; }
 .team-quote { margin: 0; padding: 6px 10px; border-left: 2px solid var(--border-strong); color: var(--muted); white-space: pre-wrap; }
@@ -35,7 +35,7 @@
 .team-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 14px; overflow-x: auto; padding-bottom: 8px; align-items: start; }
 .team-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .team-col-head { border-bottom: 2px solid var(--text); padding-bottom: 6px; display: flex; flex-direction: column; gap: 3px; }
-.team-col-head h3 { font-family: var(--serif); font-size: var(--text-lg); margin: 0; display: flex; gap: 8px; align-items: baseline; }
+.team-col-head h3 { font-family: var(--font); font-size: var(--text-lg); margin: 0; display: flex; gap: 8px; align-items: baseline; }
 .team-col-head a { color: inherit; }
 .team-empty-col { padding: 10px 2px; }
 .team-load { height: 4px; background: var(--panel-3); overflow: hidden; }
@@ -61,7 +61,7 @@
 
 .team-workload { display: flex; flex-direction: column; gap: 14px; }
 .team-wl-row { display: grid; grid-template-columns: 160px 1fr 210px; gap: 14px; align-items: center; }
-.team-wl-name { font-family: var(--serif); font-size: var(--text-lg); color: inherit; }
+.team-wl-name { font-family: var(--font); font-size: var(--text-lg); color: inherit; }
 .team-wl-track { position: relative; height: 22px; background: var(--panel-2); }
 .team-wl-bar { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
 .team-wl-bar.light { background: var(--ok); }
@@ -77,7 +77,7 @@
 .team-g-tick { font-size: var(--text-2xs); text-align: center; padding: 6px 0; color: var(--muted); border-left: 1px solid var(--border); font-variant-numeric: tabular-nums; }
 .team-g-tick.wkend { background: var(--panel-3); }
 .team-g-tick.now { color: var(--on-accent); background: var(--accent); font-weight: 700; }
-.team-g-proj { padding: 10px 12px 4px; font-family: var(--serif); font-size: var(--text-md); border-bottom: 1px solid var(--border); background: var(--panel); }
+.team-g-proj { padding: 10px 12px 4px; font-family: var(--font); font-size: var(--text-md); border-bottom: 1px solid var(--border); background: var(--panel); }
 .team-g-today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); opacity: 0.5; }
 .team-g-bar { position: absolute; top: 7px; height: 16px; background: var(--panel-3); border: 1px solid var(--border-strong); overflow: hidden; }
 .team-g-bar > span { display: block; height: 100%; background: var(--accent); }
@@ -89,7 +89,7 @@
 .team-plan-head { align-items: center; gap: 14px; margin-bottom: 12px; }
 .team-plan { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .team-plan-person.off { opacity: 0.6; }
-.team-plan-name { font-family: var(--serif); font-size: var(--text-lg); color: inherit; }
+.team-plan-name { font-family: var(--font); font-size: var(--text-lg); color: inherit; }
 .team-plan-list { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
 .team-unassigned { margin-top: 12px; }
 
@@ -109,10 +109,10 @@
 .team-member-form { margin-bottom: 14px; }
 
 .team-person-head { align-items: center; gap: 18px; }
-.team-avatar { width: 64px; height: 64px; display: grid; place-items: center; font-family: var(--serif); font-size: 32px; background: var(--accent); color: var(--on-accent); flex: none; }
+.team-avatar { width: 64px; height: 64px; display: grid; place-items: center; font-family: var(--font); font-size: 32px; background: var(--accent); color: var(--on-accent); flex: none; }
 .team-skills { gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .team-person-grid { display: grid; grid-template-columns: 260px 1fr 1fr; gap: 14px; align-items: start; }
-.team-big { font-family: var(--serif); font-size: 56px; line-height: 1; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+.team-big { font-family: var(--font); font-size: 56px; line-height: 1; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
 .team-update { padding: 4px 0; border-bottom: 1px solid var(--border); }
 
 @media (max-width: 900px) {
@@ -125,13 +125,10 @@
 }
 
 /* motion: cards settle in, bars grow; only when motion is full (Appearance applies the OS reduce-motion setting as off) */
-:root[data-motion="full"] .team-view { animation: team-in var(--dur) var(--ease-out) both; }
-:root[data-motion="full"] .team-card, :root[data-motion="full"] .team-task { animation: team-in var(--dur) var(--ease-out) both; }
-:root[data-motion="full"] .team-wl-bar, :root[data-motion="full"] .team-load span, :root[data-motion="full"] .team-g-bar > span { transform-origin: left; animation: team-grow calc(var(--dur) * 2) var(--ease-out) both; }
-:root[data-motion="full"] .team-task, :root[data-motion="full"] .team-card { transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
-:root[data-motion="full"] .team-task:hover, :root[data-motion="full"] .team-card:hover { transform: translateY(calc(var(--lift, 2px) * -1)); }
-@keyframes team-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@keyframes team-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+:root[data-motion="full"] .team-view { animation: ui-fade var(--dur-fade) var(--ease-out) both; }
+:root[data-motion="full"] .team-card, :root[data-motion="full"] .team-task { animation: ui-fade var(--dur-fade) var(--ease-out) both; }
+:root[data-motion="full"] .team-wl-bar, :root[data-motion="full"] .team-load span, :root[data-motion="full"] .team-g-bar > span { transform-origin: left; animation: none; }
+:root[data-motion="full"] .team-task, :root[data-motion="full"] .team-card { transition: border-color var(--dur-fast) var(--ease-out); }
 .team-more { margin-top: 10px; }
 @media (max-width: 900px) {
   .team-assign { flex-wrap: wrap; }

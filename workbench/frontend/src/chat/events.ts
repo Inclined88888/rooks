@@ -260,7 +260,7 @@ function lastCall(steps: Step[], name: string): number {
   return -1;
 }
 
-/** One line for the thinking shimmer: the newest step that is still running, else the newest step. */
+/** One line for the thinking line: the newest step that is still running, else the newest step. */
 export function currentLine(steps: Step[]): string | undefined {
   for (let i = steps.length - 1; i >= 0; i--) if (steps[i].state === "running") return steps[i].text;
   return steps.length ? steps[steps.length - 1].text : undefined;

@@ -5,7 +5,6 @@ import { BrandMark } from "../brand";
 import PlanCard from "./PlanCard";
 import { ChatGPTCard, KEY_ORDER, KeyField, KeyInfo, Preset, Sub, Validation } from "./ModelSignIn";
 import { ThemeGrid, TypeChoices } from "../ThemePicker";
-import { Tracer } from "../Tracer";
 import { saveAppearanceRemote } from "../themeSync";
 import { readAppearance } from "../appearance";
 import { AssistantFace } from "../AssistantFace";
@@ -465,12 +464,8 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
             </div>
             <ThemeGrid />
             <TypeChoices />
-            <div className="composer has-tracer look-sample">
-              <div className="fake-input">This is how it looks while I'm working…</div>
-              <Tracer active />
-            </div>
             <div className="look-actions">
-              <span className="small muted">Standard is the everyday look. The others are here if you want them.</span>
+              <span className="small muted">Light is the everyday look. You can change it any time.</span>
               <button className="btn primary" onClick={() => { saveAppearanceRemote(readAppearance()); setStep("name"); }}>Continue <ArrowRight size={14} /></button>
             </div>
           </div>

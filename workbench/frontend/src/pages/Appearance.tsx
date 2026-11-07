@@ -1,13 +1,11 @@
 import { RotateCcw } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ACCENTS, DEFAULTS, FONTS, SIZES, resolveTheme, useAppearance } from "../appearance";
+import { DEFAULTS, FONTS, SIZES, useAppearance } from "../appearance";
 import { ThemeGrid } from "../ThemePicker";
-import { Tracer } from "../Tracer";
-import { Badge, Button, Presence } from "../ui";
+import { Badge, Button, Page, Presence, Section } from "../ui";
 import { usePresence } from "../shell/presence";
 
-/** One panel, six choices, all live. Nothing here needs explaining twice. */
+/** One panel, five choices, all live. Nothing here needs explaining twice. */
 export default function Appearance() {
   const [a, set] = useAppearance();
   const presence = usePresence();
@@ -23,96 +21,61 @@ export default function Appearance() {
   const isDefault = JSON.stringify(a) === JSON.stringify(DEFAULTS);
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <div className="grow">
-          <p className="kicker">Settings</p>
-          <h1>Appearance</h1>
-          <p className="muted">Changes apply straight away and are saved on this device.</p>
-        </div>
-        <button className="btn ghost sm" disabled={isDefault} onClick={() => set(DEFAULTS)}><RotateCcw size={13} /> Reset</button>
-      </div>
+    <Page title="Appearance" description="Changes apply straight away and are saved on this device." wide
+      actions={<Button variant="ghost" size="sm" icon={<RotateCcw size={13} />} disabled={isDefault} onClick={() => set(DEFAULTS)}>Reset</Button>}>
       <div className="ap-grid">
         <div>
-          <section className="ap-section" aria-labelledby="ap-theme">
-            <h3 id="ap-theme">Theme</h3>
+          <Section title="Theme">
             <ThemeGrid />
-          </section>
+          </Section>
 
-          <section className="ap-section" aria-labelledby="ap-font">
-            <h3 id="ap-font">Typeface</h3>
-            <div className="ap-options" role="radiogroup" aria-labelledby="ap-font">
-              {FONTS.map((f) => (
-                <button key={f.id} type="button" role="radio" aria-checked={a.font === f.id} className="ap-option" onClick={() => set({ font: f.id })}>
-                  <span className="ap-type" style={{ fontFamily: f.display }}>Ag</span>
-                  <span className="name" style={{ fontFamily: f.body }}>{f.label}</span>
-                  <span className="note">{f.note}</span>
-                </button>
-              ))}
-            </div>
-          </section>
+          <Section title="Typeface">
+            <Seg label="Typeface" value={a.font} onChange={(v) => set({ font: v })} options={FONTS.map((f) => [f.id, f.label])} />
+          </Section>
 
-          <section className="ap-section" aria-labelledby="ap-size">
-            <div className="row"><h3 id="ap-size" className="grow" style={{ margin: 0 }}>Text size</h3><span className="mono">{a.size}px</span></div>
-            <div className="row" style={{ marginTop: 12, gap: 14 }}>
+          <Section title="Text size" actions={<span className="mono">{a.size}px</span>}>
+            <div className="row" style={{ gap: 12 }}>
               <span className="small muted" aria-hidden="true">A</span>
-              <input className="ap-range" type="range" min={SIZES.min} max={SIZES.max} step={1} value={a.size} aria-labelledby="ap-size"
+              <input className="ap-range" type="range" min={SIZES.min} max={SIZES.max} step={1} value={a.size} aria-label="Text size"
                 onChange={(e) => set({ size: Number(e.target.value) })} />
               <span className="muted" style={{ fontSize: 20 }} aria-hidden="true">A</span>
             </div>
-          </section>
+          </Section>
 
-          <section className="ap-section" aria-labelledby="ap-density">
-            <h3 id="ap-density">Spacing</h3>
+          <Section title="Spacing">
             <Seg label="Spacing" value={a.density} onChange={(v) => set({ density: v })}
               options={[["comfortable", "Comfortable"], ["compact", "Compact"]]} />
-          </section>
+          </Section>
 
-          <section className="ap-section" aria-labelledby="ap-motion">
-            <h3 id="ap-motion">Motion</h3>
-            <Seg label="Motion" value={a.motion} onChange={(v) => set({ motion: v })} options={[["full", "Full"], ["subtle", "Calm"], ["off", "Off"]]} />
-            <p className="small muted" style={{ margin: "10px 0 0" }}>
-              {osReduced ? "Your computer asks for reduced motion, so nothing moves whatever you pick here."
-                : a.motion === "full" ? "Pages glide into each other, replies arrive word by word, cards settle on a spring and the window's edge lights up while I use your computer."
-                : a.motion === "subtle" ? "Calm motion: the same moments as gentle fades. Nothing slides, bounces or spins."
-                : "Nothing moves. Work in progress shows a still red outline."}
+          <Section title="Motion">
+            <Seg label="Motion" value={a.motion} onChange={(v) => set({ motion: v })} options={[["full", "On"], ["off", "Off"]]} />
+            <p className="small muted" style={{ margin: "8px 0 0" }}>
+              {osReduced ? "Your computer asks for reduced motion, so nothing fades whatever you pick here."
+                : a.motion === "full" ? "Menus, sheets and new rows fade in quickly. Nothing slides, bounces or glows."
+                : "Nothing moves. Things appear and disappear at once."}
             </p>
-            <Link to="/appearance/motion" className="btn sm" style={{ marginTop: 10 }}>See every animation</Link>
-          </section>
-
-          <section className="ap-section" aria-labelledby="ap-accent" style={{ borderBottom: "none" }}>
-            <h3 id="ap-accent">Accent</h3>
-            {["neon", "contrast"].includes(resolveTheme(a.theme)) && <p className="small muted" style={{ margin: "0 0 10px" }}>This theme keeps its own accent so everything stays easy to read.</p>}
-            <div className="ap-swatches" role="radiogroup" aria-labelledby="ap-accent">
-              {ACCENTS.map((c) => (
-                <button key={c.id} type="button" role="radio" aria-checked={a.accent === c.id} aria-label={c.label} title={c.label}
-                  className="ap-swatch" onClick={() => set({ accent: c.id })}><span style={{ background: c.color }} /></button>
-              ))}
-            </div>
-          </section>
+          </Section>
         </div>
 
         <aside className="ap-preview" aria-label="Preview">
           <p className="label">Preview</p>
           <div className="frame">
-            {/* the shell's own parts, so what you pick is what you get: the presence strip, a greeting, the buttons, the composer */}
+            {/* the shell's own parts, so what you pick is what you get: the presence line, a heading, the buttons, the composer */}
             <Presence className="ap-presence" name={presence.name} mood="working" doing="Reading 3 emails" needsYou={2} onNeedsYou={() => undefined} />
             <h2>Good morning.</h2>
             <p className="muted" style={{ margin: 0 }}>Three tasks are due and the Smith St quote is waiting for your OK. Want a plan for today?</p>
             <div className="row">
-              <Button size="sm">Plan my day</Button>
+              <Button size="sm" variant="primary">Plan my day</Button>
               <Button size="sm" variant="secondary">Later</Button>
               <Badge tone="live">Live</Badge>
-              <Badge tone="accent">2 new</Badge>
             </div>
-            <div className="composer has-tracer">
-              <div className="fake-input">Thinking about your week…</div>
-              <Tracer active />
+            <div className="composer">
+              <div className="fake-input">Ask anything…</div>
             </div>
           </div>
         </aside>
       </div>
-    </div>
+    </Page>
   );
 }
 

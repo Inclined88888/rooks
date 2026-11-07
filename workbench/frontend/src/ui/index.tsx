@@ -2,10 +2,11 @@
  * Rooks UI primitives (docs/design/0003-workroom.md, section 6). Small, typed, tokens only (ui.css), sensible aria.
  * Pages outside the shell keep their old className strings; new shell work uses these.
  */
-import { AlertTriangle, Check, CircleDashed, Hand, Minus, X } from "lucide-react";
+import { AlertTriangle, Check, CircleDashed, Hand, Minus, MoreHorizontal, X } from "lucide-react";
 import {
   forwardRef, useEffect, useId, useRef, useSyncExternalStore,
-  type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject, type SelectHTMLAttributes,
+  useState,
+  type ButtonHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject, type SelectHTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
 import { AssistantFace, type Mood } from "../AssistantFace";
@@ -18,7 +19,7 @@ const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boo
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: "sm" | "md"; icon?: ReactNode; busy?: boolean };
 
-/** Primary is saffron with ink text; secondary an outline; ghost bare; danger for the one destructive act. 36px, sm 28px. */
+/** Primary is ink on paper (never the accent); secondary an outline; ghost bare; danger for the one destructive act. 36px, sm 28px. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant = "secondary", size = "md", icon, busy, className, children, type = "button", disabled, ...rest }, ref,
 ) {
@@ -42,6 +43,45 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
   );
 });
 
+/* ---------------------------------------------------------------- Page, Section */
+/** Every page: the heading (28), one line of description, the actions, and the content width (880 to read, full for boards). */
+export function Page({ title, description, actions, kicker, wide, children, className }: {
+  title: string; description?: ReactNode; actions?: ReactNode; kicker?: string; wide?: boolean; children: ReactNode; className?: string;
+}) {
+  return (
+    <div className={cx("ui-page", wide && "ui-page-wide", className)}>
+      <header className="ui-page-head">
+        <div className="ui-page-titles">
+          {kicker && <p className="ui-page-kicker">{kicker}</p>}
+          <h1 className="ui-page-title">{title}</h1>
+          {description && <p className="ui-page-desc">{description}</p>}
+        </div>
+        {actions && <div className="ui-page-actions">{actions}</div>}
+      </header>
+      {children}
+    </div>
+  );
+}
+
+/** A titled part of a page, separated by a hairline. */
+export function Section({ title, description, actions, children, className }: {
+  title?: string; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string;
+}) {
+  const id = useId();
+  return (
+    <section className={cx("ui-section", className)} aria-labelledby={title ? id : undefined}>
+      {(title || actions) && (
+        <div className="ui-section-head">
+          {title && <h2 id={id} className="ui-section-title">{title}</h2>}
+          {actions && <div className="ui-section-actions">{actions}</div>}
+        </div>
+      )}
+      {description && <p className="ui-section-desc">{description}</p>}
+      {children}
+    </section>
+  );
+}
+
 /* ---------------------------------------------------------------- Card */
 export function Card({ children, className, padding = "md", as: Tag = "div", ...rest }: { children: ReactNode; className?: string; padding?: "none" | "sm" | "md"; as?: "div" | "section" | "article" } & Record<string, unknown>) {
   return <Tag className={cx("ui-card", padding !== "md" && `ui-card-pad-${padding}`, className)} {...rest}>{children}</Tag>;
@@ -60,6 +100,22 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({ l
       <span className="ui-field-label">{label}</span>
       {control}
       {hint && <span className="ui-field-hint" id={`${inputId}-hint`}>{hint}</span>}
+    </label>
+  );
+});
+
+export type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string; hint?: string };
+
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea({ label, hint, className, id, rows = 4, ...rest }, ref) {
+  const own = useId();
+  const areaId = id ?? own;
+  const control = <textarea ref={ref} id={areaId} rows={rows} className={cx("ui-input ui-textarea", className)} aria-describedby={hint ? `${areaId}-hint` : undefined} {...rest} />;
+  if (!label) return control;
+  return (
+    <label className="ui-field" htmlFor={areaId}>
+      <span className="ui-field-label">{label}</span>
+      {control}
+      {hint && <span className="ui-field-hint" id={`${areaId}-hint`}>{hint}</span>}
     </label>
   );
 });
@@ -184,6 +240,103 @@ export function Sheet({ open, onClose, title, side = "right", children, footer, 
   );
 }
 
+/* ---------------------------------------------------------------- Menu */
+export type MenuItem = { id: string; label: string; icon?: ReactNode; onSelect: () => void; danger?: boolean; disabled?: boolean; hint?: string };
+
+/** A ⋯ button that opens a short list of actions. Arrow keys move, Enter picks, Escape closes and focus returns. */
+export function Menu({ label, items, icon, align = "end", className }: { label: string; items: MenuItem[]; icon?: ReactNode; align?: "start" | "end"; className?: string }) {
+  const [open, setOpen] = useState(false);
+  const pop = useRef<HTMLDivElement>(null);
+  const close = () => setOpen(false);
+  useFocusTrap(pop, open, close);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => { if (!pop.current?.parentElement?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", away);
+    return () => document.removeEventListener("mousedown", away);
+  }, [open]);
+  const onKey = (e: ReactKeyboardEvent) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const list = [...(pop.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? [])];
+    const at = list.indexOf(document.activeElement as HTMLElement);
+    list[(at + (e.key === "ArrowDown" ? 1 : -1) + list.length) % list.length]?.focus();
+  };
+  return (
+    <span className={cx("ui-menu", className)}>
+      <IconButton label={label} size="sm" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{icon ?? <MoreHorizontal size={16} />}</IconButton>
+      {open && (
+        <div ref={pop} className={cx("ui-menu-pop", `ui-menu-${align}`)} role="menu" aria-label={label} tabIndex={-1} onKeyDown={onKey}>
+          {items.map((it) => (
+            <button key={it.id} type="button" role="menuitem" className={cx("ui-menu-item", it.danger && "is-danger")} disabled={it.disabled}
+              onClick={() => { close(); it.onSelect(); }}>
+              {it.icon && <span className="ui-menu-icon" aria-hidden="true">{it.icon}</span>}
+              <span className="ui-menu-label">{it.label}</span>
+              {it.hint && <span className="ui-menu-hint">{it.hint}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </span>
+  );
+}
+
+/* ---------------------------------------------------------------- List, Row */
+/** The one list. Rows are separated by hairlines; the list itself has no shadow. */
+export function List({ label, children, className }: { label?: string; children: ReactNode; className?: string }) {
+  return <ul className={cx("ui-list", className)} aria-label={label}>{children}</ul>;
+}
+
+/** The one list row: an optional leading mark, the title, a meta line, trailing actions. With onClick the title is the button. */
+export function Row({ title, meta, leading, actions, onClick, active, className }: {
+  title: ReactNode; meta?: ReactNode; leading?: ReactNode; actions?: ReactNode; onClick?: () => void; active?: boolean; className?: string;
+}) {
+  const body = (
+    <>
+      {leading && <span className="ui-row-leading" aria-hidden="true">{leading}</span>}
+      <span className="ui-row-text">
+        <span className="ui-row-title">{title}</span>
+        {meta && <span className="ui-row-meta">{meta}</span>}
+      </span>
+    </>
+  );
+  return (
+    <li className={cx("ui-row", onClick && "is-button", active && "is-active", className)} aria-current={active || undefined}>
+      {onClick ? <button type="button" className="ui-row-main" onClick={onClick}>{body}</button> : <span className="ui-row-main">{body}</span>}
+      {actions && <span className="ui-row-actions">{actions}</span>}
+    </li>
+  );
+}
+
+/* ---------------------------------------------------------------- Loading, ErrorState */
+/** Static skeleton rows while a page fills in. No sheen, no pulse. */
+export function Loading({ rows = 3, label = "Loading" }: { rows?: number; label?: string }) {
+  return (
+    <div className="ui-loading" role="status" aria-label={label}>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="ui-loading-row" aria-hidden="true">
+          <span className="ui-loading-bar" style={{ width: `${[56, 72, 44, 64][i % 4]}%` }} />
+          <span className="ui-loading-bar is-meta" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** What went wrong in plain words, and Try again. */
+export function ErrorState({ title = "That did not load", line, onRetry, className }: { title?: string; line?: string; onRetry?: () => void; className?: string }) {
+  return (
+    <div className={cx("ui-error", className)} role="alert">
+      <AlertTriangle size={18} aria-hidden="true" className="ui-error-icon" />
+      <div className="ui-error-text">
+        <p className="ui-error-title">{title}</p>
+        {line && <p className="ui-error-line">{line}</p>}
+      </div>
+      {onRetry && <Button size="sm" onClick={onRetry}>Try again</Button>}
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------- Toast */
 function ToastStack({ hostId }: { hostId: symbol }) {
   const items = useSyncExternalStore(subscribeToasts, getToasts, getToasts);
@@ -231,7 +384,7 @@ export function useToast() {
 }
 
 /* ---------------------------------------------------------------- EmptyState, Stat */
-/** One Bodoni line, one sentence, one action. */
+/** One line, one sentence, one action. */
 export function EmptyState({ title, line, action, icon, className }: { title: string; line?: string; action?: ReactNode; icon?: ReactNode; className?: string }) {
   return (
     <div className={cx("ui-empty", className)}>
@@ -278,7 +431,7 @@ export function Receipt({ state, evidence, className }: { state: ReceiptState; e
 export type TimelineStep = { id: string | number; text: string; state: "running" | "ok" | "failed" | "held"; receipt?: { state: ReceiptState; evidence?: string } };
 const STEP_WORD: Record<TimelineStep["state"], string> = { running: "Working", ok: "Done", failed: "Failed", held: "Needs your OK" };
 
-/** Step rows with the drawing line (motion/signature.css draws each segment as it arrives). */
+/** Step rows joined by a still line. */
 export function Timeline({ steps, label = "Steps", onPick, current }: { steps: TimelineStep[]; label?: string; onPick?: (id: TimelineStep["id"]) => void; current?: TimelineStep["id"] }) {
   if (!steps.length) return null;
   return (
@@ -318,7 +471,7 @@ export function ApprovalCard({ title, detail, effect, command, diff, onApprove, 
 }) {
   const id = useId();
   return (
-    <section className={cx("ui-approval spring-in", className)} aria-labelledby={id} aria-busy={busy || undefined}>
+    <section className={cx("ui-approval", className)} aria-labelledby={id} aria-busy={busy || undefined}>
       <div className="ui-approval-head">
         <Hand size={15} aria-hidden="true" />
         <span className="ui-approval-kicker">Needs your OK</span>
@@ -342,7 +495,7 @@ export function capturedLine(captured: boolean, wasCaptured: boolean, place: str
   if (captured) return `Your mouse and keyboard go to ${place}. Press Escape or Hand back to stop.`;
   return wasCaptured ? "Handed back." : "";
 }
-/** 16px frame, live edge, controls bar. `captured` means your mouse and keyboard go to the surface: the edge glows. */
+/** 10px frame, controls bar. `captured` means your mouse and keyboard go to the surface: a still 2px accent border shows it. */
 export function StageFrame({ title, label, live, captured, controls, children, className }: {
   title: string; label: string; live: boolean; captured: boolean; controls: ReactNode; children: ReactNode; className?: string;
 }) {

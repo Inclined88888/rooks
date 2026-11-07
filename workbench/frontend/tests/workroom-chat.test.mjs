@@ -222,10 +222,11 @@ test("the thread draws each turn's timeline with receipts and the one approval c
   assert.match(thread, /DiffView/);
   assert.doesNotMatch(thread, /role="alertdialog"/, "an inline card is not a modal dialog");
   assert.doesNotMatch(thread, /Approve .*\?/, "copy is Needs your OK, from the primitive");
+  // design system v3: text is shown as it streams from the model, never replayed word by word
   const motion = read("../src/motion/index.tsx");
-  assert.match(motion, /export function StreamText\(\{ text, onDone, from/, "StreamText can start after the text already shown");
+  assert.doesNotMatch(motion, /StreamText|wordsAt/);
   const live = read("../src/v02/LiveBlocks.tsx");
-  assert.match(live, /from/, "LiveMarkdown hands the reveal start down");
+  assert.match(live, /if \(!hasLive\) return <Markdown text=\{text\} \/>;/, "a streaming reply renders as Markdown at once");
 });
 
 test("jobs and talk use the same approval card as the chat", () => {
@@ -275,7 +276,7 @@ test("a new chat gets a greeting line, three suggestion chips and the Needs you 
   assert.match(empty, /suggestionChips/);
   assert.match(empty, /needs_you|needsYou/);
   const css = strip(read("../src/chat/chat.css"));
-  assert.match(css, /--font-serif|var\(--serif\)/, "the greeting is the Bodoni line");
+  assert.match(css, /\.chat-empty-title \{[^}]*font-family: var\(--font-sans\)/, "the greeting is the sans heading (Bodoni is gone)");
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "chat.css has no hex colours");
   assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, "chat.css has no literal colours");
 });

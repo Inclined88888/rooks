@@ -2,8 +2,8 @@
 .pk-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--rule); border-left: 1px solid var(--border); }
 .pk-tile { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 28px 24px 24px; background: var(--panel); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 360px; transition: background var(--dur) var(--ease-out); }
 .pk-tile:hover { background: var(--panel-2); }
-.pk-num { font-family: var(--serif); font-size: var(--text-4xl); line-height: 1; color: var(--accent); font-style: italic; }
-.pk-serif { font-family: var(--serif); font-weight: 500; font-size: var(--text-2xl); line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
+.pk-num { font-family: var(--font); font-size: var(--text-4xl); line-height: 1; color: var(--accent); }
+.pk-serif { font-family: var(--font); font-weight: 500; font-size: var(--text-2xl); line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
 .pk-tile ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: var(--text-sm); }
 .pk-tile li::before { content: "— "; color: var(--faint); }
 .pk-tile .pk-foot { margin-top: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -24,7 +24,7 @@
 .pk-lines td .input { height: 30px; }
 .pk-lines .num { text-align: right; font-variant-numeric: tabular-nums; }
 .pk-totals { display: grid; grid-template-columns: 1fr auto; gap: 4px 24px; justify-content: end; font-variant-numeric: tabular-nums; font-size: var(--text-sm); }
-.pk-totals .grand { font-family: var(--serif); font-size: var(--text-xl); border-top: 1px solid var(--rule); padding-top: 6px; }
+.pk-totals .grand { font-family: var(--font); font-size: var(--text-xl); border-top: 1px solid var(--rule); padding-top: 6px; }
 .pk-list { display: grid; gap: 0; border-top: 1px solid var(--border); }
 .pk-item { display: flex; gap: 12px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--border); background: none; border-left: 0; border-right: 0; border-top: 0; text-align: left; color: var(--text); cursor: pointer; font: inherit; width: 100%; }
 .pk-item:hover, .pk-item.active { background: var(--panel-2); }
@@ -37,27 +37,27 @@
 .pk-timeline { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 1px solid var(--rule); display: grid; gap: 14px; }
 .pk-timeline li { position: relative; }
 .pk-timeline li::before { content: ""; position: absolute; left: -22px; top: 6px; width: 7px; height: 7px; background: var(--accent); }
-.pk-timeline .d { font-family: var(--serif); font-size: var(--text-lg); }
+.pk-timeline .d { font-family: var(--font); font-size: var(--text-lg); }
 /* Flashcard review */
 .pk-card { perspective: 1200px; width: 100%; max-width: 640px; margin: 0 auto; }
 .pk-card-inner { position: relative; min-height: 280px; transform-style: preserve-3d; transition: transform var(--dur-slow) var(--ease-out); }
 .pk-card.flipped .pk-card-inner { transform: rotateY(180deg); }
 .pk-face { position: absolute; inset: 0; backface-visibility: hidden; display: grid; place-items: center; text-align: center; padding: 32px; background: var(--panel); border: 1px solid var(--rule); }
 .pk-face.back { transform: rotateY(180deg); }
-.pk-face .q { font-family: var(--serif); font-size: var(--text-2xl); line-height: 1.2; }
+.pk-face .q { font-family: var(--font); font-size: var(--text-2xl); line-height: 1.2; }
 .pk-face .src { position: absolute; bottom: 10px; left: 0; right: 0; font-size: var(--text-2xs); color: var(--faint); }
 .pk-grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 640px; margin: 16px auto 0; }
 .pk-grades .btn { height: auto; padding: 10px 6px; flex-direction: column; display: flex; gap: 2px; }
 .pk-grades .btn small { font-size: 10px; color: var(--muted); text-transform: none; letter-spacing: 0; }
 .pk-step { padding: 10px 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 28px 1fr; gap: 8px; }
-.pk-step .n { font-family: var(--serif); color: var(--accent); font-size: var(--text-lg); }
+.pk-step .n { font-family: var(--font); color: var(--accent); font-size: var(--text-lg); }
 .pk-check { display: inline-flex; gap: 6px; align-items: center; font-size: var(--text-xs); }
 .pk-check.ok { color: var(--ok-text); }
 .pk-check.bad { color: var(--danger-text); }
 .pk-rec { color: var(--danger-text); }
-:root[data-motion="full"] .pk-tile { animation: page-turn 300ms var(--ease-out) both; }
-:root[data-motion="full"] .pk-tile:nth-child(2) { animation-delay: 60ms; }
-:root[data-motion="full"] .pk-tile:nth-child(3) { animation-delay: 120ms; }
+:root[data-motion="full"] .pk-tile { animation: ui-fade var(--dur-fade) var(--ease-out) both; }
+:root[data-motion="full"] .pk-tile:nth-child(2) { }
+:root[data-motion="full"] .pk-tile:nth-child(3) { }
 :root[data-motion="off"] :is(.pk-tile, .pk-card-inner) { animation: none !important; transition: none !important; }
 :root[data-motion="off"] .pk-card.flipped .pk-face.front { visibility: hidden; }
 @media (max-width: 900px) {

@@ -10,11 +10,6 @@ import "./appearance.css";
 import "./code.css";
 import "./skills.css";
 import "./models.css";
-import "./motion.css";
-import "./sunshine.css";
-import "./themes.css";
-import "./motion/tokens.css";
-import "./motion/signature.css";
 import { applyTo, readAppearance } from "./appearance";
 import { startThemeSync } from "./themeSync";
 

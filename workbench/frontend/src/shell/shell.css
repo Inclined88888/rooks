@@ -1,6 +1,6 @@
 /* ==========================================================================
    The Workroom shell (docs/design/0003-workroom.md, section 3): rail, presence strip, thread host, stage, bottom bar.
-   Tokens only: no literal colours. The two breakpoints are 900px (--bp-narrow) and 1280px (--bp-wide); custom
+   Design system v3: neutral first; the accent only on the live dot and the Needs you count. Tokens only: no literal colours. The two breakpoints are 900px (--bp-narrow) and 1280px (--bp-wide); custom
    properties cannot be used inside @media, so those two numbers appear here as literals and nowhere else.
    ========================================================================== */
 
@@ -11,8 +11,8 @@
 /* ---- Skip link ---- */
 .skip-link {
   position: absolute; left: var(--space-2); top: -48px; z-index: 200; padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: var(--text-sm); text-decoration: none;
-  box-shadow: var(--shadow-3);
+  border-radius: var(--radius-sm); background: var(--color-primary); color: var(--color-on-primary); font-weight: 500; font-size: var(--text-sm); text-decoration: none;
+  box-shadow: var(--shadow-float);
 }
 .skip-link:focus-visible { top: var(--space-2); }
 
@@ -24,10 +24,10 @@
 }
 .rail-mark {
   display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: var(--space-2); flex: none;
-  border: 0; border-radius: 10px; background: var(--accent); color: var(--on-accent);
-  font-family: var(--serif); font-size: 19px; font-weight: 600; line-height: 1; cursor: pointer;
+  border: 0; border-radius: var(--radius-sm); background: var(--color-primary); color: var(--color-on-primary);
+  font-family: var(--font-sans); font-size: var(--text-lg); font-weight: 600; line-height: 1; cursor: pointer;
 }
-.rail-mark:hover { background: var(--accent-hover); }
+.rail-mark:hover { background: var(--color-primary-hover); }
 .rail-group { position: relative; }
 .rail-item {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
@@ -36,22 +36,22 @@
   transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 .rail-item:hover { background: var(--panel-2); color: var(--text); text-decoration: none; }
-.rail-item.is-active, .rail-item[aria-current="page"] { background: var(--accent-soft); color: var(--accent-text); }
+.rail-item.is-active, .rail-item[aria-current="page"] { background: var(--panel-3); color: var(--text); }
 .rail-item.is-open { background: var(--panel-3); color: var(--text); }
-.rail-label { font-size: var(--text-rail); font-weight: 600; letter-spacing: 0.02em; line-height: 1; white-space: nowrap; }
+.rail-label { font-size: var(--text-rail); font-weight: 500; line-height: 1; white-space: nowrap; }
 .rail-chev { position: absolute; right: 5px; top: 50%; margin-top: -5px; color: var(--faint); }
 /* the Room is on: a live dot on its rail item and its bottom bar item */
-.rail-live, .mobile-live { position: absolute; top: 7px; right: 13px; width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 1px var(--color-ink), 0 0 0 3px var(--panel); animation: ui-live 1.6s var(--ease-in-out) infinite; }
+.rail-live, .mobile-live { position: absolute; top: 7px; right: 13px; width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 2px var(--panel); }
 .mobile-live { top: 6px; right: calc(50% - 16px); }
 .rail-spacer { flex: 1; min-height: var(--space-2); }
 .rail-search:focus-visible { position: static; width: auto; height: auto; margin: 0; clip: auto; overflow: visible; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: var(--text-xs); }
 .rail-flyout {
   position: absolute; left: calc(100% + 6px); top: 0; z-index: 40; min-width: 208px;
   padding: var(--space-1); border-radius: var(--radius-md); background: var(--panel); border: 1px solid var(--border);
-  box-shadow: var(--shadow-2); display: flex; flex-direction: column; outline: none;
-  animation: shell-pop var(--dur-normal) var(--ease-out) both;
+  box-shadow: var(--shadow-float); display: flex; flex-direction: column; outline: none;
+  animation: ui-fade var(--dur-fade) var(--ease-out) both;
 }
-.rail-flyout-title { padding: 6px 10px 4px; font-size: var(--text-2xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.rail-flyout-title { padding: 8px 8px 4px; font-size: var(--text-xs); font-weight: 500; color: var(--muted); }
 .rail-flyout-link {
   display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: var(--radius-sm);
   color: var(--text); font-size: var(--text-sm); font-weight: 500; text-decoration: none; white-space: nowrap;
@@ -59,9 +59,8 @@
 .rail-flyout-link svg { color: var(--faint); flex: none; }
 .rail-flyout-link:hover { background: var(--panel-2); text-decoration: none; }
 .rail-flyout-link:hover svg { color: var(--text); }
-.rail-flyout-link.is-active { background: var(--accent-soft); color: var(--accent-text); }
-.rail-flyout-link.is-active svg { color: var(--accent-text); }
-@keyframes shell-pop { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
+.rail-flyout-link.is-active { background: var(--panel-3); color: var(--text); }
+.rail-flyout-link.is-active svg { color: var(--text); }
 
 /* ---- Presence strip ---- */
 .presence-strip { flex: none; height: var(--presence-h); border-bottom: 1px solid var(--border); background: var(--bg); min-width: 0; }
@@ -72,7 +71,7 @@
 
 /* ---- More sheet lists ---- */
 .more-group { margin-bottom: var(--space-3); }
-.more-section { padding: var(--space-2) var(--space-3) var(--space-1); font-size: var(--text-2xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.more-section { padding: var(--space-2) var(--space-3) var(--space-1); font-size: var(--text-xs); font-weight: 500; color: var(--muted); }
 .more-link {
   display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-sm);
   color: var(--text); font-size: var(--text-sm); font-weight: 500; text-decoration: none;
@@ -80,8 +79,8 @@
 .more-link svg { color: var(--faint); flex: none; }
 .more-link:hover { background: var(--panel-2); text-decoration: none; }
 .more-link:hover svg { color: var(--text); }
-.more-link.is-active { background: var(--accent-soft); color: var(--accent-text); }
-.more-link.is-active svg { color: var(--accent-text); }
+.more-link.is-active { background: var(--panel-3); color: var(--text); }
+.more-link.is-active svg { color: var(--text); }
 .more-ext { margin-left: auto; }
 
 /* ---- Bottom bar (phones and narrow windows) ---- */
@@ -95,12 +94,11 @@
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   min-height: 44px; border: 0; background: transparent; color: var(--muted); text-decoration: none; font: inherit; cursor: pointer;
 }
-.mobile-item span { font-size: var(--text-rail); font-weight: 600; letter-spacing: 0.02em; line-height: 1; }
-.mobile-item.is-active { color: var(--accent-text); }
-.mobile-item.has-count { color: var(--accent-text); }
+.mobile-item span { font-size: var(--text-rail); font-weight: 500; line-height: 1; }
+.mobile-item.is-active { color: var(--text); }
 .mobile-count {
   position: absolute; top: 4px; left: calc(50% + 6px); min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-full);
-  background: var(--accent); color: var(--on-accent); font-size: var(--text-2xs) !important; font-weight: 700; display: grid; place-items: center;
+  background: var(--accent); color: var(--on-accent); font-size: var(--text-xs) !important; font-weight: 500; display: grid; place-items: center;
 }
 
 /* ---- Wide windows (--bp-wide): the Chats column opens by default (the chat page reads the same number from
@@ -121,5 +119,11 @@
   .stage-pane { padding: var(--space-2); }
 }
 
-/* ---- Motion off ---- */
-:root[data-motion="off"] :is(.rail-flyout, .rail-live, .mobile-live) { animation: none; }
+/* ---- Rooks Desk is using the computer (App.tsx DeskNotice): a still notice at the top, with Stop ---- */
+.desk-notice {
+  position: fixed; top: var(--space-3); left: 50%; z-index: 81; transform: translateX(-50%); display: inline-flex; align-items: center; gap: var(--space-2);
+  max-width: calc(100vw - 32px); white-space: nowrap; padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+  border-radius: var(--radius-full); background: var(--color-surface-raised); color: var(--text); border: 1px solid var(--border-strong);
+  font-size: var(--text-sm); box-shadow: var(--shadow-float); animation: ui-fade var(--dur-fade) var(--ease-out) both;
+}
+.desk-notice-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--live); flex: none; }

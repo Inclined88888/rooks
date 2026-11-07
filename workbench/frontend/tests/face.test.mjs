@@ -28,14 +28,14 @@ test("naming or thanks is a small reaction, not every message", () => {
   assert.match(face, /pleasedAt/);
 });
 
-test("the face uses theme colours and five moods, and stays original", () => {
+test("the face uses neutral theme colours and five still moods, and stays original", () => {
   for (const mood of ["idle", "thinking", "working", "done", "needs"]) {
     assert.match(css, new RegExp(`\\.mood-${mood}`));
   }
-  assert.match(css, /var\(--accent-soft\)/);
-  assert.match(css, /var\(--accent\)/);
-  assert.match(css, /@keyframes face-breathe/);
-  assert.match(css, /@keyframes face-hello/);
+  // design system v3: the face is neutral (the accent is kept for live and needs you) and does not breathe or sway
+  assert.match(css, /\.face-body \{ fill: var\(--panel-3\)/);
+  assert.doesNotMatch(css, /@keyframes face-/);
+  assert.doesNotMatch(css, /\.mood-[a-z]+ \{ animation/);
   assert.match(face, /eyes-happy/);
   assert.doesNotMatch(`${face}\n${css}`, /clippy|duo|grok|blob/i);
 });

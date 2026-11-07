@@ -5,7 +5,7 @@
 .live { margin: 4px 0; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
 .live-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .live-kind { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-2xs); letter-spacing: var(--track); text-transform: uppercase; color: var(--muted); }
-.live-title { font-family: var(--serif); font-size: var(--text-md); min-width: 0; }
+.live-title { font-family: var(--font); font-size: var(--text-md); min-width: 0; }
 .live-edited { font-size: var(--text-2xs); padding: 1px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); }
 .live-body { padding: 12px; }
 .live-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 12px; border-top: 1px solid var(--border); background: var(--panel-2); }
@@ -40,7 +40,7 @@
 @media (max-width: 900px) { .job-board { grid-template-columns: 1fr; } }
 .job-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .job-col-head { display: flex; align-items: baseline; gap: 8px; border-bottom: 2px solid var(--text); padding-bottom: 4px; }
-.job-col-head h2 { font-family: var(--serif); font-size: var(--text-xl); margin: 0; }
+.job-col-head h2 { font-family: var(--font); font-size: var(--text-xl); margin: 0; }
 .col-you .job-col-head { border-color: var(--accent); }
 .job-count { font-family: var(--mono); font-size: var(--text-xs); color: var(--muted); }
 .job-col-hint { margin-top: -6px; }
@@ -51,7 +51,7 @@
 .job-top { display: flex; align-items: center; gap: 6px; }
 .job-kind { font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: var(--track); color: var(--muted); }
 .job-when { font-size: var(--text-xs); color: var(--muted); white-space: nowrap; }
-.job-title { all: unset; cursor: pointer; font-family: var(--serif); font-size: var(--text-lg); line-height: 1.25; overflow-wrap: anywhere; }
+.job-title { all: unset; cursor: pointer; font-family: var(--font); font-size: var(--text-lg); line-height: 1.25; overflow-wrap: anywhere; }
 .job-title:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
 .job-detail { font-size: var(--text-sm); color: var(--muted); overflow-wrap: anywhere; }
 .job-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -68,17 +68,16 @@
 .job-empty .ui-empty-title { font-size: var(--text-lg); }
 .job-col-head .ui-btn, .job-col-head .ui-iconbtn { align-self: center; }
 .job-pill { position: fixed; right: 18px; bottom: 18px; z-index: 60; display: flex; align-items: flex-start; gap: 4px; max-width: 360px;
-  background: var(--panel); border: 1px solid var(--border-strong); border-left: 4px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow-4);
-  padding: 10px 6px 10px 12px; animation: job-pill-in var(--dur) var(--ease-out); }
+  background: var(--panel); border: 1px solid var(--border-strong); border-left: 4px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow-float);
+  padding: 10px 6px 10px 12px; animation: ui-fade var(--dur-fade) var(--ease-out) both; }
 .job-pill.finished { border-left-color: var(--ok); }
 .job-pill.failed { border-left-color: var(--danger); }
 .job-pill-main { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 2px; flex: 1; }
-@keyframes job-pill-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* --- trigger automations ----------------------------------------------------------------------------------------------- */
 .trig { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
 .trig-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.trig-head h2 { display: inline-flex; align-items: center; gap: 8px; font-family: var(--serif); font-size: var(--text-2xl); margin: 0; }
+.trig-head h2 { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font); font-size: var(--text-2xl); margin: 0; }
 .trig-ask { display: flex; flex-direction: column; gap: 10px; }
 .trig-label { font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: var(--track); color: var(--muted); }
 .trig-ask .input { font-size: var(--text-md); }
@@ -106,7 +105,7 @@
 
 :root[data-motion="off"] .job-pill { animation: none; }
 :root[data-motion="off"] .job-card, :root[data-motion="off"] .trig-example { transition: none; }
-.trig-sub { font-family: var(--serif); font-size: var(--text-xl); margin: 8px 0 10px; }
+.trig-sub { font-family: var(--font); font-size: var(--text-xl); margin: 8px 0 10px; }
 
 /* feat/v02-core: Projects, History, Checked answers. Theme tokens only (every theme restyles it); movement follows motion.css. */
 .v02-kicker { font-size: var(--text-2xs); letter-spacing: var(--track); text-transform: uppercase; font-weight: 700; color: var(--accent-text); }
@@ -154,7 +153,7 @@
 .v02-switch { position: relative; max-width: 220px; }
 .v02-switch > .btn { max-width: 220px; }
 .v02-switch-on { color: var(--accent-text); }
-.v02-menu { position: absolute; z-index: 30; top: calc(100% + 4px); right: 0; min-width: 220px; padding: 4px; display: flex; flex-direction: column; box-shadow: var(--shadow-2); }
+.v02-menu { position: absolute; z-index: 30; top: calc(100% + 4px); right: 0; min-width: 220px; padding: 4px; display: flex; flex-direction: column; box-shadow: var(--shadow-float); }
 .v02-menu-item { text-align: left; padding: 7px 10px; background: none; border: 0; color: var(--text); font: inherit; cursor: pointer; border-radius: var(--radius-sm); }
 .v02-menu-item:hover, .v02-menu-item.on { background: var(--panel-2); }
 .v02-check-toggle.on { background: var(--accent-soft); color: var(--accent-text); border-color: var(--accent); }
@@ -174,4 +173,4 @@
 .v02-claim-detail blockquote { margin: 6px 0; padding-left: 10px; border-left: 2px solid var(--rule); }
 .v02-sources { margin: 6px 0 0; padding-left: 20px; }
 .v02-sources li { margin: 3px 0; }
-:root[data-motion="full"] .v02-checked, :root[data-motion="full"] .v02-entry { animation: page-turn 260ms var(--ease-out) both; }
+:root[data-motion="full"] .v02-checked, :root[data-motion="full"] .v02-entry { animation: ui-fade var(--dur-fade) var(--ease-out) both; }

@@ -47,7 +47,6 @@ export function DictateButton({ onText, size = 15, className = "btn ghost sm ico
   };
   const stop = () => abort.current?.abort();
 
-  const lvl = Math.min(level * 14, 1);
   const handlers = {
     onPointerDown: () => { if (state === "idle") { downAt.current = Date.now(); start(); } else if (state === "listening") stop(); },
     onPointerUp: () => { if (downAt.current && Date.now() - downAt.current > 600) stop(); downAt.current = 0; },
@@ -59,13 +58,9 @@ export function DictateButton({ onText, size = 15, className = "btn ghost sm ico
   return (
     <span className="dictate" data-state={state}>
       {orb ? (
-        <button type="button" className={`voice-orb${state === "listening" ? " on" : ""}`} disabled={disabled && state === "idle"}
-          aria-label={state === "listening" ? "Stop listening" : label} title={title} aria-pressed={state === "listening"}
-          style={{ ["--lvl" as string]: lvl.toFixed(3) } as React.CSSProperties} {...handlers}>
-          <span className="orb-halo" aria-hidden="true" />
-          <span className="orb-core" aria-hidden="true" />
-          {state === "working" ? <Loader2 size={14} className="spin orb-mic" /> :
-            <svg className="orb-mic" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>}
+        <button type="button" className={`dictate-mic${state === "listening" ? " on" : ""}`} disabled={disabled && state === "idle"}
+          aria-label={state === "listening" ? "Stop listening" : label} title={title} aria-pressed={state === "listening"} {...handlers}>
+          {state === "working" ? <Loader2 size={15} /> : state === "listening" ? <Square size={12} /> : <Mic size={15} />}
         </button>
       ) : (
       <button type="button" className={className} aria-label={state === "listening" ? "Stop listening" : label} title={title}

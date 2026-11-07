@@ -1,10 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
+import { createPortal } from "react-dom";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import { CommandPalette } from "./Palette";
 import { PRODUCT } from "./product";
 import { TerminalKeeper } from "./terminalHost";
-import { EdgeGlow } from "./motion";
 import Auth from "./pages/Auth";
 import Welcome, { AccountsStep } from "./pages/Welcome";
 import { AccountLayer } from "./ProGate";
@@ -48,8 +48,8 @@ export type Status = {
   needs_models?: boolean;
 };
 
-/** While Rooks Desk is driving the computer (from any page, chat or Rooks Code), the whole window's edge lights up. */
-function DeskGlow({ enabled }: { enabled: boolean }) {
+/** While Rooks Desk is driving the computer (from any page, chat or Rooks Code), a small still notice says so and offers Stop. */
+function DeskNotice({ enabled }: { enabled: boolean }) {
   const [job, setJob] = useState<{ id: string; goal: string } | null>(null);
   useEffect(() => {
     if (!enabled) return setJob(null);
@@ -62,8 +62,17 @@ function DeskGlow({ enabled }: { enabled: boolean }) {
     t = setTimeout(tick, 4000);
     return () => { stop = true; clearTimeout(t); };
   }, [enabled]);
-  return <EdgeGlow active={!!job} hotkey={IS_MAC ? "⌃⌥Esc" : "Ctrl+Alt+Esc"}
-    onStop={job ? () => { api(`/desk/jobs/${job.id}/cancel`, { method: "POST" }).catch(() => undefined); setJob(null); } : undefined} />;
+  if (!job) return null;
+  return createPortal(
+    <div className="desk-notice" role="status">
+      <span className="desk-notice-dot" aria-hidden="true" />
+      <span>Rooks Desk is using your computer</span>
+      <kbd className="ui-kbd">{IS_MAC ? "⌃⌥Esc" : "Ctrl+Alt+Esc"}</kbd>
+      <button type="button" className="ui-btn ui-btn-secondary ui-btn-sm"
+        onClick={() => { api(`/desk/jobs/${job.id}/cancel`, { method: "POST" }).catch(() => undefined); setJob(null); }}>Stop</button>
+    </div>,
+    document.body,
+  );
 }
 
 function Boot() {
@@ -185,7 +194,7 @@ export default function App() {
       <MoreSheet open={moreOpen} onClose={closeMore} status={status} name={shellName} onSearch={openSearch} />
 
       <TerminalKeeper />
-      <DeskGlow enabled={!!status.desk_enabled} />
+      <DeskNotice enabled={!!status.desk_enabled} />
       <JobNotifier />{/* feat/v02-automations */}<DesktopBridge />{/* feat/tauri-native */}
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} pages={pages} />
       <AccountLayer />

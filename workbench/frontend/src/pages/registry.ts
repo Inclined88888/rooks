@@ -117,7 +117,6 @@ export const PAGES: PageEntry[] = [
   // ---- routes without a place in the nav (reached from inside pages) ----
   { path: "/assistant-memory", label: "Chat memory", icon: Brain, load: () => import("./Assistant"), props: { tab: "memory" }, palette: false },
   { path: "/assistant-settings", label: "Chat settings", icon: Settings, load: () => import("./Assistant"), props: { tab: "settings" }, palette: false },
-  { path: "/appearance/motion", label: "Motion", icon: Palette, load: () => import("./Motion"), palette: false },
   { path: "/groups/:id", label: "Group", icon: Users, load: () => import("../teammates/Groups"), palette: false },
 ];
 

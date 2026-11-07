@@ -322,7 +322,7 @@ export function Thread(p: ThreadProps) {
           const diff = (a.tool === "edit_file" || a.tool === "write_file") ? extractDiffFromArgs(a.args) : null;
           const command = a.effect === "command" && !diff ? commandOf(a.args) : "";
           return (
-            <ApprovalCard key={a.id} className={p.leaving(a.id) ? "leaving-out" : undefined}
+            <ApprovalCard key={a.id} className={p.leaving(a.id) ? "is-leaving" : undefined}
               title={stepTitle(a.tool, a.args)} detail={a.reason || undefined} effect={a.effect}
               command={command || (!diff ? argsLine(a.args) || undefined : undefined)}
               diff={diff ? <DiffView diff={diff} compact /> : undefined}

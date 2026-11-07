@@ -22,10 +22,10 @@ const tsxFiles = walk("src", [".tsx", ".ts"]);
 
 test("the OS reduced-motion setting is honoured by one rule, and Appearance turns motion off for it", () => {
   const where = cssFiles.filter((f) => /prefers-reduced-motion/.test(strip(read(`../${f}`))));
-  assert.deepEqual(where, ["src/motion/tokens.css"], "prefers-reduced-motion appears in motion/tokens.css and nowhere else");
-  const tokens = strip(read("../src/motion/tokens.css"));
-  assert.equal((tokens.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 1, "one blanket rule");
-  assert.match(tokens, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\*, \*::before, \*::after\s*\{[^}]*animation-duration: 1ms !important/);
+  assert.deepEqual(where, ["src/ui/ui.css"], "prefers-reduced-motion appears in ui/ui.css, beside the one fade, and nowhere else");
+  const ui = strip(read("../src/ui/ui.css"));
+  assert.equal((ui.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 1, "one blanket rule");
+  assert.match(ui, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\*, \*::before, \*::after\s*\{[^}]*animation: none !important/);
   // the still states are written once, against data-motion="off"; Appearance sets that for the OS setting too
   const appearance = read("../src/appearance.tsx");
   assert.match(appearance, /prefers-reduced-motion: reduce/, "applyTo reads the OS setting");
@@ -62,12 +62,10 @@ test("one main landmark: the shell's; the teammates pages are sections inside it
 test("the dead files and copies are gone: theme shim, char-based stream, the second dictation, toast fallbacks", () => {
   assert.ok(!exists("../src/theme.tsx"), "theme.tsx (unused shim) is deleted");
   const util = read("../src/util.tsx");
-  assert.doesNotMatch(util, /StreamingMarkdown/, "StreamText in motion/index.tsx is the one reveal");
+  assert.doesNotMatch(util, /StreamingMarkdown/, "no character by character reveal");
   const motion = read("../src/motion/index.tsx");
   assert.doesNotMatch(motion, /useDictation|dictationSupported/, "DictateButton (voice/DictateButton.tsx) covers dictation");
-  const page = read("../src/pages/Motion.tsx");
-  assert.match(page, /DictateButton/, "the Motion page tries your voice through the one mic button");
-  assert.doesNotMatch(page, /useDictation/);
+  assert.ok(!exists("../src/pages/Motion.tsx"), "the Motion page is gone (design system v3: nothing decorative to preview)");
   // {toast.node} is a no-op inside the shell (ToastHost is mounted once); only the ask bar, which has no shell, keeps it
   const withNode = tsxFiles.filter((f) => /\btoast\.node\b/.test(read(`../${f}`).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "")));
   assert.deepEqual(withNode, ["src/pages/AskBar.tsx"], "no {toast.node} renders left inside the shell");
@@ -103,25 +101,14 @@ function tokenOf(blockText, name) {
 
 test("theme cards preview the Workroom shell in each theme's own colours", () => {
   const picker = read("../src/ThemePicker.tsx");
-  for (const part of ["mini-rail", "mini-presence", "mini-thread", "mini-stage"]) assert.match(picker, new RegExp(part), `the mini draws the ${part}`);
+  for (const part of ["mini-rail", "mini-presence", "mini-thread"]) assert.match(picker, new RegExp(part), `the mini draws the ${part}`);
   assert.doesNotMatch(picker, /className="side"/, "no drawing of the old 256px sidebar");
-  assert.match(picker, /Needs you|Plan my day/, "the mini shows the shell's own words");
   const tokens = strip(read("../src/tokens.css"));
-  const themes = strip(read("../src/themes.css"));
-  const sunshine = strip(read("../src/sunshine.css"));
-  const source = {
-    gallery: block(tokens, 'html[data-mode="light"]'),
-    night: block(tokens, 'html[data-mode="dark"]'),
-    sunshine: block(sunshine, ':root[data-theme="sunshine"]'),
-    paper: block(themes, ':root[data-theme="paper"]'),
-    cherry: block(themes, ':root[data-theme="cherry"]'),
-    neon: block(themes, ':root[data-theme="neon"]'),
-    contrast: block(themes, ':root[data-theme="contrast"]'),
-  };
+  const source = { LIGHT: block(tokens, 'html[data-mode="light"]'), DARK: block(tokens, 'html[data-mode="dark"]'), CONTRAST: block(tokens, 'html[data-mode="contrast"]') };
   const appearance = read("../src/appearance.tsx");
-  const map = { paper: "--color-bg", panel: "--color-surface", text: "--color-ink", muted: "--color-ink-muted", accent: "--color-accent", onAccent: "--color-on-accent", border: "--color-border" };
+  const map = { paper: "--color-bg", panel: "--color-surface", text: "--color-ink", muted: "--color-ink-muted", border: "--color-border", live: "--color-live" };
   for (const [id, css] of Object.entries(source)) {
-    const m = appearance.match(new RegExp(`id: "${id}"[\\s\\S]*?swatch: \\{([^}]*)\\}`));
+    const m = appearance.match(new RegExp(`const ${id} = \\{([^}]*)\\}`));
     assert.ok(m, `swatch for ${id}`);
     const swatch = Object.fromEntries([...m[1].matchAll(/(\w+): "(#[0-9a-f]{6})"/gi)].map((x) => [x[1], x[2].toLowerCase()]));
     for (const [key, token] of Object.entries(map)) assert.equal(swatch[key], tokenOf(css, token), `${id}.${key} is ${token}`);

@@ -1,9 +1,8 @@
-import { CircleStop, FolderOpen, Loader2, Monitor, OctagonX, Play, ShieldAlert, ShieldCheck, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, CircleStop, FolderOpen, Loader2, Monitor, OctagonX, Play, ShieldAlert, ShieldCheck, Trash2, XCircle } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
-import { Tracer } from "../Tracer";
-import { CursorOverlay, DoneTick, LiveShot, parsePointer, Pointer } from "../motion";
+import { LiveShot } from "../motion";
 import { SurfaceNote } from "../SurfaceNote";
 import { Empty, Markdown, ModelSelect, useModels, useToast } from "../util";
 
@@ -62,7 +61,6 @@ export default function Computer() {
   const [job, setJob] = useState<Job | null>(null);
   const [shotKey, setShotKey] = useState(0);
   const [openStep, setOpenStep] = useState<number | null>(null);
-  const [shotSize, setShotSize] = useState<[number, number]>([0, 0]);
   const [form, setForm] = useState({ goal: "", model: "", max_steps: 12, dry_run: false, approve: [] as string[] });
   const [lists, setLists] = useState<{ folders: string; allow_apps: string } | null>(null);
   const [turn, setTurn] = useState<{ reason?: string } | null>(null);
@@ -203,8 +201,7 @@ export default function Computer() {
           <div className="card flush">
             {jobs.length === 0 && <Empty icon={<Monitor size={22} />} title="No tasks yet" />}
             {jobs.map((j) => (
-              <div key={j.id} className={`list-item has-tracer ${job?.id === j.id ? "active" : ""}`} onClick={() => navigate(`/computer/${j.id}`)}>
-                <Tracer active={active(j.status)} />
+              <div key={j.id} className={`list-item ${job?.id === j.id ? "active" : ""}`} onClick={() => navigate(`/computer/${j.id}`)}>
                 <div className="grow">
                   <div className="truncate">{j.goal}</div>
                   <div className="row small faint">{active(j.status) && <Loader2 size={11} className="spin" />}{j.status}{j.dry_run ? " · dry run" : ""} · {j.source} · {ago(j.created_at)}</div>
@@ -236,8 +233,8 @@ export default function Computer() {
           )}
           {job && (
             <div className="col gap-lg">
-              <div className="card col has-tracer">
-                <Tracer active={active(job.status)} label="Using your computer" />
+              <div className="card col">
+                {active(job.status) && <span className="sr-only" role="status">Using your computer</span>}
                 <div className="row" style={{ alignItems: "flex-start" }}>
                   <h2 className="grow">{job.goal}</h2>
                   {active(job.status) && <button className="btn sm" onClick={() => api(`/desk/jobs/${job.id}/cancel`, { method: "POST" })}><CircleStop size={14} /> Stop</button>}
@@ -250,7 +247,7 @@ export default function Computer() {
                 </div>
                 {job.error && <div className="alert err">{job.error}</div>}
                 {(job.pending_approvals || []).map((a) => (
-                  <div key={a.id} className="alert col spring-in" style={{ gap: 6, borderColor: "var(--accent)" }}>
+                  <div key={a.id} className="alert col" style={{ gap: 6 }}>
                     <strong className="row"><ShieldAlert size={15} /> Allow this? {CATEGORY[a.category] || a.category}</strong>
                     <div>{a.summary}</div>
                     {a.detail && <pre className="mono small" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{a.detail}</pre>}
@@ -262,7 +259,7 @@ export default function Computer() {
                 ))}
                 {job.result && (
                   <>
-                    <div className="row">{job.result.success ? <DoneTick size={18} label="Finished" /> : <XCircle size={16} className="prio-2" />}
+                    <div className="row">{job.result.success ? <CheckCircle2 size={16} className="ok-icon" aria-label="Finished" /> : <XCircle size={16} className="prio-2" />}
                       <strong>{job.result.stopped ? `Stopped: ${job.result.stopped}` : job.result.success ? "Rooks Desk reports success" : job.result.done ? "Finished without success" : "Stopped at the step limit"}</strong></div>
                     <div className="muted small">This is the agent's own claim. Check the last screen, files and steps below.</div>
                     {job.result.final ? <Markdown text={job.result.final} /> : <div className="muted">No final answer.</div>}
@@ -275,9 +272,7 @@ export default function Computer() {
                 <div className="card col">
                   <h3>{active(job.status) ? "Live screen" : "Last screen"}</h3>
                   {job.has_screenshot ? (
-                    <LiveShot src={`/api/desk/jobs/${job.id}/screenshot?k=${shotKey}`} alt="Screen" scanning={job.status === "running"} onSize={(w, h) => setShotSize((o) => (o[0] === w && o[1] === h ? o : [w, h]))}>
-                      {active(job.status) && <CursorOverlay points={job.steps.map((s) => parsePointer(s.result, s.action, shotSize[0], shotSize[1])).filter((p): p is Pointer => !!p)} />}
-                    </LiveShot>)
+                    <LiveShot src={`/api/desk/jobs/${job.id}/screenshot?k=${shotKey}`} alt="Screen" />)
                     : <div className="muted small">{active(job.status) ? "Looking at the screen…" : "No screenshot."}</div>}
                   {job.live?.output && active(job.status) && <pre className="mono small" style={{ maxHeight: 220, overflow: "auto", background: "var(--code-bg)", padding: 8, borderRadius: 6 }}>{job.live.output}</pre>}
                 </div>

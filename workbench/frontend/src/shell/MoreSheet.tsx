@@ -1,7 +1,6 @@
 import { Bot, Building2, ExternalLink, MessageSquare, Search } from "lucide-react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { MOD_KEY } from "../keys";
-import { transitionClick } from "../motion";
 import { morePages, type StatusLike } from "../pages/registry";
 import { Button, Kbd, Sheet } from "../ui";
 
@@ -9,7 +8,6 @@ type Links = StatusLike & { chat_url?: string; paperclip_url?: string; hermes_ur
 
 /** Every other page, grouped, in a side sheet with a focus trap. Built from the page registry. */
 export function MoreSheet({ open, onClose, status, name, onSearch }: { open: boolean; onClose: () => void; status: Links | null; name: string; onSearch: () => void }) {
-  const navigate = useNavigate();
   const location = useLocation();
   const groups = morePages(status);
   const extras = status && (status.chat_url || status.paperclip_url || status.hermes_url);
@@ -23,7 +21,7 @@ export function MoreSheet({ open, onClose, status, name, onSearch }: { open: boo
             const on = location.pathname === p.path || location.pathname.startsWith(`${p.path}/`);
             return (
               <NavLink key={p.path} to={p.path} className={`more-link${on ? " is-active" : ""}`} aria-current={on ? "page" : undefined}
-                onClick={transitionClick(() => { onClose(); navigate(p.path); })}>
+                onClick={onClose}>
                 <p.icon size={16} aria-hidden="true" />
                 <span className="truncate">{p.label}</span>
               </NavLink>
