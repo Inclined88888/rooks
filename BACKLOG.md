@@ -27,13 +27,38 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
-* **Four backend tests fail on `main` and on `feat/workroom` for reasons outside the branch (recorded in B3).**
-  `test_connect_mail_calendar::test_assistant_reads_and_drafts_with_microsoft`,
-  `test_desk::test_desk_emails_a_render_with_attachments`,
-  `test_health::test_status_page_reports_every_part_and_the_worst_wins` (passes alone; order dependent inside the
-  full run) and `test_lock_reset::test_forgotten_pin_can_be_replaced` are environment or pre existing failures
-  (design 0003, section 7). rooks-code's `test_project_sandbox` needs `bwrap`, which this container lacks. None of
-  them touch the Workroom packages; fix or quarantine them on `main` with their own record.
+### Premium pass (2026-11-07): left undone, recorded at verification
+
+* **Page caching is partial.** Jobs, Tasks and reopened chats show cached data at once; Settings, Teach, Company and
+  Groups reload each visit, and Teach, Company and Groups keep their own pollers instead of the shared pulse.
+* **Legacy controls.** Some inner controls on Team, Channels and the trade pack still use the old `.btn` and `.input`
+  classes (already on the v3 tokens, not yet the primitives).
+* **Address bar routing.** Typing `/mcp` directly reaches the backend's MCP route and shows a plain error page; the app
+  links to `/extra-tools` and redirects `/mcp` only inside the app. Fix: a server side redirect for GET `/mcp` from a
+  browser, or rename the backend mount.
+* **Theme compatibility.** The backend, the phone app and saved settings still use the old theme ids; the web app maps
+  them (`themeSync.ts`: light to `gallery`, dark to `night`). `rooks-browser --theme` accepts only light, dark,
+  contrast and auto, not legacy names such as `cherry` (`ROOKS_THEME` does map them).
+* **Redaction copy drift (pre existing).** `rooks-browser` keeps a copy of the backend's `redact.py`; the backend gained
+  PEM and AWS patterns, so `rooks-browser/tests/test_units.py::test_redaction_is_a_verbatim_copy_of_workbench` fails at
+  the branch's base commit and at its tip.
+* **Terminal approvals with the bridge key (pre existing, not widened).** `/v1/rooks/approvals/{id}` lets a bridge key
+  record an answer to a terminal held row (`terminal:` request ids only). It runs nothing on the server, but a coding
+  job could record an answer to its own terminal prompt. Owner decision.
+* **Stored Terminal access token.** A coding job with shell access runs as the person and could read the token
+  `rooks login` stores; the read only bridge key closes the app's own routes, not a hostile local process.
+* **Not tested with a real model.** Every chat, Room and approval flow on this branch was tested with the scripted
+  harness model only; no provider key was available.
+* **Versions.** The terminal reports 0.1.0 (`rooks-code` package) while AGENTS.md calls the install 1.0.0.
+
+* **Four backend tests fail in the full run on `main` (b09f947) and on `feat/workroom`; each passes alone (verified
+  2026-11-07 at both commits).** `test_connect_mail_calendar::test_assistant_reads_and_drafts_with_microsoft`
+  (`assert False`), `test_desk::test_desk_emails_a_render_with_attachments` (`'a@work.example' == 'me@example.com'`),
+  `test_health::test_status_page_reports_every_part_and_the_worst_wins` (`'down' == 'ok'`) and
+  `test_lock_reset::test_forgotten_pin_can_be_replaced` (`429 == 200`, the in-memory login throttle) fail with the same
+  assertion at both commits. They are test isolation problems (state left by earlier tests), not environment
+  failures as earlier notes said. rooks-code's `test_project_sandbox` is environmental (`bwrap` is not installed in
+  the container). Fix or quarantine them on `main` with their own record.
 * **Compaction forgets its level on restart, and only one level per chat and model is kept (B3 of feat/workroom).**
   `assistant._SHRINK` remembers in memory how far a chat's window had to shrink so the next turn starts there; after a
   restart the first turn of such a chat pays one failed model call again before it compacts. Keeping the level in

@@ -167,8 +167,17 @@ def test_timezone_validation(client):
     assert client.put("/api/assistant/settings", json={"timezone": "Australia/Sydney"}).json()["timezone"] == "Australia/Sydney"
 
 
-def test_company_delegation_and_budget_pause(client):
+def test_company_delegation_and_budget_pause(client, monkeypatch):
     from app import company, db
+
+    # The app's background worker (company.loop, every 10 s) picks up queued tasks on its own. Keep it out of this
+    # test so a delegated task stays queued until the test runs it; the test drives run_task directly.
+    run_task = company.run_task
+
+    async def _worker_paused(task_id: int) -> None:
+        return None
+
+    monkeypatch.setattr(company, "run_task", _worker_paused)
 
     ceo = client.post("/api/company/agents", json={"name": "Ava", "title": "CEO", "monthly_budget_cents": 0, "monthly_token_limit": 100000}).json()
     eng = client.post("/api/company/agents", json={"name": "Kai", "title": "Engineer", "reports_to": ceo["id"], "monthly_token_limit": 1000}).json()
@@ -181,13 +190,13 @@ def test_company_delegation_and_budget_pause(client):
                       if "nurse rostering" in msgs[0]["content"] and "Ava" in msgs[0]["content"] else {"role": "assistant", "content": "NO CONTEXT"}),
         {"role": "assistant", "content": "Roadmap drafted; Kai is estimating."},
     ]
-    asyncio.run(company.run_task(t["id"]))
+    asyncio.run(run_task(t["id"]))
     tasks = {x["title"]: x for x in client.get("/api/company").json()["tasks"]}
     assert tasks["Draft the roadmap"]["status"] == "done"
     assert tasks["Estimate effort"]["status"] == "queued" and tasks["Estimate effort"]["agent_name"] == "Kai"
     # Budgets are checked before each model call, so one call (1500 tokens) may overshoot the 1000 limit; the next check pauses him
     SCRIPT[:] = [tool_call("list_tasks", {}), {"role": "assistant", "content": "never reached"}]
-    asyncio.run(company.run_task(tasks["Estimate effort"]["id"]))
+    asyncio.run(run_task(tasks["Estimate effort"]["id"]))
     kai = db.one("SELECT * FROM agents WHERE id = ?", eng["id"])
     assert kai["status"] == "paused" and "token limit" in kai["paused_reason"]
     assert db.one("SELECT status FROM agent_tasks WHERE id = ?", tasks["Estimate effort"]["id"])["status"] == "blocked"
