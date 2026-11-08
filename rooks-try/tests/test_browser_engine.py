@@ -224,6 +224,7 @@ def test_the_address_bar_rules_match_rooks_browser():
     assert rb.normalise(None) == rb.HOME_PAGE
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file addresses; the Room browser is off on Windows (design 0007)")
 def test_file_addresses_outside_the_rooms_home_and_the_apps_own_address_are_refused(tmp_path):
     home = tmp_path / "home"
     (home / "Desktop").mkdir(parents=True)
