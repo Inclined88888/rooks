@@ -49,15 +49,18 @@ room should show a picture only when `screen` is true and input controls only wh
 It finds an engine (the Room's own checked build, Playwright's Chromium, the system's Chromium but never the Snap one,
 then Chrome or Edge used only as an engine with the Room's own profile), starts it headless over a pipe (never a
 debugging port, never with its sandbox off), keeps its profile in `<Room home>/.room-browser/profile`, and on Linux with
-`bwrap` runs it with the Room's home over yours and no network when the Room is offline. Every request is checked: a
-file outside the Room's home and the app's own address are refused. Downloads land in the Room's `Downloads`. A saved
+`bwrap` runs it with the Room's home over yours and no network when the Room is offline (without bwrap, an offline
+Room's browser goes through a proxy that answers nothing). Every request is checked: a file outside the Room's home and
+the app's own address (loopback, `localhost`, names ending in `.localhost`, with or without a dot at the end) are
+refused. Downloads land in the Room's `Downloads`. A saved
 point leaves the browser's caches out. The app drives it (`/api/room/browser`); without bwrap it runs as you.
 
 `rooks_try.page_rules` is what the assistant may do in it without a second yes: rooks-browser's element snapshot and
 `classify` (kept the same by parity tests), plus a fresh look at one element (by its number, at a point, or the focused
 one, with whether its form has card fields and whether the point is on another site's frame) and the elements in view.
 In the app: the Room's Browser window, `use_room` browse, page, shot, click, type, scroll, key, back and tabs, and the
-rooks terminal's `/room browse`, `/room tabs` and `/room page`.
+rooks terminal's `/room browse`, `/room tabs` and `/room page` (with the terminal's own sign in, `rooks login`: the
+helpers' shared key never reads the Room's browser).
 
 ## MCP tools
 

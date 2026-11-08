@@ -15,7 +15,8 @@ loosened (check_flags refuses all four). The profile is `<Room home>/.room-brows
 100 MB. On Linux with bwrap, the browser runs behind it: the Room's home over the person's home path, an unprivileged id
 inside (Chromium will not start as root without switching its sandbox off, which we never do), the engine bound
 read-only at a fixed place when it lies under the person's home, no network when the Room is offline. Without bwrap
-(macOS, or Linux without it) it runs as the person, in the Room's home, with no outer wall, and the app says so.
+(macOS, or Linux without it) it runs as the person, in the Room's home, with no outer wall, and the app says so; an
+offline Room's browser then goes through a proxy that answers nothing (a closed door, not a wall).
 
 Session drives one running browser: tabs (eight at most, the person's and the assistant's together), the address bar's
 rules (normalise, the same as rooks-browser's app/address.js), back, forward, reload, page text, screenshots, the live
@@ -295,6 +296,10 @@ def chrome_flags(home: Path, platform: str | None = None) -> list[str]:
     return flags
 
 
+OFFLINE_FLAGS = ["--proxy-server=http://127.0.0.1:9", "--proxy-bypass-list=<-loopback>",
+                 "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"]
+
+
 def check_flags(argv: list[str]) -> None:
     """Refuse an argv with a debugging port, Chromium's sandbox off, web security off or file access loosened."""
     for a in argv:
@@ -339,7 +344,9 @@ def launch_argv(engine: Engine, room_home: Path, *, person_home: Path | None = N
     binary = os.path.realpath(engine.path) if os.path.exists(engine.path) else engine.path
     step = [sys.executable, "-I", "-c", _PIPE_STEP, str(fds[0]), str(fds[1])]
     if not bwrap:
-        argv = step + [binary, *chrome_flags(room_home)]
+        # no wall to take the network away: an offline Room's browser is pointed at a proxy that answers nothing,
+        # loopback included (the Room's proxy variables alone are not read by Chrome on macOS)
+        argv = step + [binary, *chrome_flags(room_home), *(OFFLINE_FLAGS if offline else [])]
         check_flags(argv)
         return argv, room_home
     uid = os.getuid() if uid is None else uid
@@ -446,7 +453,8 @@ class Rules:
             return False
         if port not in self.app_ports:
             return False
-        host = (u.hostname or "").lower().strip("[]")
+        # a name with a dot at the end (localhost., foo.localhost.) is the same name to Chromium's resolver
+        host = (u.hostname or "").lower().strip("[]").rstrip(".")
         if host == "localhost" or host.endswith(".localhost"):
             return True
         try:
@@ -456,7 +464,7 @@ class Rules:
         except ValueError:
             pass
         if self._own is None:
-            self._own = _own_addresses()
+            self._own = {a.rstrip(".") for a in _own_addresses()}
         return host in self._own
 
     def refused(self, url: str) -> str | None:
@@ -471,6 +479,9 @@ class Rules:
         pats = [{"urlPattern": "file://*", "requestStage": "Request"}]
         for port in sorted(self.app_ports):
             pats.append({"urlPattern": f"*:{port}/*", "requestStage": "Request"})
+            # Chromium writes an address on its scheme's own port without the port, so `*:80/*` never sees it
+            for scheme in {80: ("http", "ws"), 443: ("https", "wss")}.get(port, ()):
+                pats.append({"urlPattern": f"{scheme}://*", "requestStage": "Request"})
         return pats
 
 

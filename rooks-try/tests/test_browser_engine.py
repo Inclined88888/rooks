@@ -445,3 +445,46 @@ def test_real_a_tab_is_named_by_its_page_title_after_a_form_post(session, tmp_pa
         assert urllib.parse.urlsplit(s.tab(tid).url).netloc not in s.tab(tid).title
     finally:
         srv.shutdown()
+
+
+# --- review findings: names with a trailing dot, the default ports, an offline Room without bwrap ------------------------------
+def test_a_trailing_dot_still_names_this_computer(tmp_path):
+    """Chromium resolves `localhost.` and `foo.localhost.` to loopback, so the rule must refuse them too."""
+    rule = rb.Rules(home=tmp_path, app_ports={8950})
+    for host in ("localhost.", "foo.localhost.", "LOCALHOST.", "localhost..", "127.0.0.1.", "0.0.0.0."):
+        assert rule.refused(f"http://{host}:8950/healthz") == rb.APP_ADDRESS, host
+    assert rule.refused("http://example.com.:8950/") is None  # a site elsewhere with a dot at the end is just a site
+
+
+def test_an_app_on_a_default_port_is_matched_without_a_port_in_the_address(tmp_path):
+    """Chromium drops :80 and :443 from an address, so a pattern with the port would never see the request."""
+    pats = {p["urlPattern"] for p in rb.Rules(home=tmp_path, app_ports={80, 443}).patterns()}
+    assert {"http://*", "ws://*", "https://*", "wss://*"} <= pats, pats
+    assert rb.Rules(home=tmp_path, app_ports={80}).refused("http://localhost/api/room/status") == rb.APP_ADDRESS
+    assert rb.Rules(home=tmp_path, app_ports={443}).refused("https://127.0.0.1/") == rb.APP_ADDRESS
+
+
+def test_an_offline_room_without_bwrap_still_has_no_network(tmp_path):
+    """Without bwrap (macOS, or Linux without it) offline used to be only the Room's proxy variables, which Chrome on
+    macOS does not read: the browser itself is pointed at a proxy that answers nothing, loopback included."""
+    room_home = tmp_path / "try" / "home"
+    room_home.mkdir(parents=True)
+    engine = rb.Engine("/opt/chromium/chrome", "system")
+    off, _ = rb.launch_argv(engine, room_home, person_home=tmp_path / "me", offline=True, bwrap=None, fds=(7, 8))
+    assert any(a.startswith("--proxy-server=") for a in off), off
+    assert "--proxy-bypass-list=<-loopback>" in off
+    assert "--force-webrtc-ip-handling-policy=disable_non_proxied_udp" in off
+    rb.check_flags(off)
+    on, _ = rb.launch_argv(engine, room_home, person_home=tmp_path / "me", offline=False, bwrap=None, fds=(7, 8))
+    assert not any(a.startswith("--proxy-server=") for a in on)
+
+
+@needs_chromium
+@pytest.mark.skipif(os.getuid() == 0, reason="Chromium will not start as root without bwrap's ordinary id inside")
+def test_real_offline_without_bwrap_loads_nothing(session, served):
+    start, _home = session
+    s = start(offline=True, bwrap=False)
+    assert not s.walled
+    tab = s.new_tab()
+    s.navigate(tab, f"http://127.0.0.1:{served}/", wait=True, timeout=10)
+    assert "the app itself" not in s.page_text(tab)
