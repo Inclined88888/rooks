@@ -33,6 +33,33 @@ def work_dir() -> Path:
     return path
 
 
+PROFILE = """# Rooks put this here so tools you install in the Room are found. Edit it as you like.
+PATH="$HOME/.local/bin:$HOME/bin:$HOME/.cargo/bin:$PATH"; export PATH
+if [ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc"; fi
+if [ -n "$BASH_VERSION" ]; then PROMPT_COMMAND='printf "\\033]7777;%s\\007" "$?"'"${PROMPT_COMMAND:+;$PROMPT_COMMAND}"; fi
+"""
+ZPROFILE = """# Rooks put this here so tools you install in the Room are found. Edit it as you like.
+PATH="$HOME/.local/bin:$HOME/bin:$HOME/.cargo/bin:$PATH"; export PATH
+precmd() { printf "\\033]7777;%s\\007" "$?"; }
+"""
+
+
+def seed_home(home: Path | None = None) -> list[str]:
+    """Give the Room's home a login profile, only where there is none: the Room's own bin folders on the PATH (so what
+    an installer puts in ~/.local/bin is found by the next shell and the next command), and, after every command in a
+    terminal, an invisible marker with its exit code that the app reads and strips. Never overwrites the person's own
+    files. Returns the names written."""
+    home = home or guest_home()
+    written = []
+    for name, text in ((".profile", PROFILE), (".zprofile", ZPROFILE)):
+        path = home / name
+        if path.exists() or path.is_symlink():
+            continue
+        path.write_text(text)
+        written.append(name)
+    return written
+
+
 def checkpoints_dir() -> Path:
     path = root() / "checkpoints"
     path.mkdir(parents=True, exist_ok=True)

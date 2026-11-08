@@ -73,7 +73,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(401, {"detail": "Not signed in"})
         path = urlparse(self.path).path
         if path == "/api/status":  # only reads; never waits behind a running command (the app gives up after 10 s)
-            return self._json(200, {"version": __version__, **self.room.status()})
+            # The app's Room terminals and Files need the Room on the app's own computer; through this helper the
+            # app offers the Commands window instead (design 0006, section 3.5).
+            return self._json(200, {"version": __version__, **self.room.status(), "can": {"terminal": False, "files": False}})
         if path == "/api/screenshot":
             return self._screenshot()
         return self._json(404, {"detail": "Not found"})

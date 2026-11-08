@@ -182,6 +182,10 @@ class QemuDriver(Driver):
             "error": "This Linux guest has no command connection yet.",
         }
 
+    def terminal_argv(self, home: Path) -> None:
+        """A separate computer: its shell is inside it, not on this one (a serial or ssh console is a follow-up)."""
+        return None
+
     def _vnc_cmd(self, args: list[str]) -> dict:
         if not shutil.which("vncdotool"):
             return {"ok": False, "error": "Install vncdotool to drive the QEMU screen, or use the nested driver on Linux."}

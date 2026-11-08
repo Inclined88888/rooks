@@ -30,6 +30,10 @@ _SECRET_NAMES = {"APP_SECRET", "TOOLS_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API
 # hidden once the bind is in place, so HOME then moves to the person's home path, which now shows the room's home.
 _WRAP = ('cd "$1" || exit 1; if [ -d "$2" ] && [ "$1" != "$2" ] && mount --bind "$1" "$2" 2>/dev/null; then '
          '[ -d "$1" ] || export HOME="$2"; fi; exec sh -c "$3"')
+# The same, ending in the person's own shell as a login shell, so the Room's ~/.profile (and ~/.bashrc, ~/.zprofile)
+# is read and what an installer put on the PATH there is found by the next command (design 0006, section 4.2).
+_WRAP_LOGIN = _WRAP[: -len('exec sh -c "$3"')] + 'exec "${SHELL:-/bin/sh}" -lc "$3"'
+LOGIN_SHELL = 'exec "${SHELL:-/bin/sh}" -l'
 _NAMESPACES: bool | None = None
 
 
@@ -62,6 +66,46 @@ def wrapped(command: str, home: Path, offline: bool = False) -> list[str] | None
         return None
     flags = "-Urm" + ("n" if offline else "")
     return ["unshare", flags, "--", "sh", "-c", _WRAP, "room", str(home), os.path.expanduser("~"), command]
+
+
+def login_argv(home: Path, offline: bool = False) -> list[str]:
+    """A login shell inside the Room: in its private mount namespace when there is one (the Room's home over the
+    person's home path, no network when offline), else started in the Room's home. The app's Room terminals, the
+    terminal on a private desktop and the rooks terminal's /room shell all use this one."""
+    argv = wrapped(LOGIN_SHELL, home, offline)
+    if argv:
+        return argv
+    return ["sh", "-c", 'cd "$1" && exec "${SHELL:-/bin/sh}" -l', "room", str(home)]
+
+
+def run_argv(command: str, home: Path, offline: bool = False) -> list[str] | None:
+    """How a quick command runs in the Room: through a login shell, so it sees the Room's profile and PATH. None means
+    Windows Command Prompt (run with shell=True), which has no profile."""
+    if namespaces_available():
+        return ["unshare", "-Urm" + ("n" if offline else ""), "--", "sh", "-c", _WRAP_LOGIN, "room", str(home),
+                os.path.expanduser("~"), command]
+    if sys.platform == "win32":
+        sh = windows_sh()
+        return [sh, "-lc", command] if sh else None
+    return ["sh", "-c", 'cd "$1" && exec "${SHELL:-/bin/sh}" -lc "$2"', "room", str(home), command]
+
+
+def room_env(home: Path, offline: bool = False, base: dict | None = None) -> dict:
+    """The environment of everything that runs in the Room: HOME is the Room's home, the Room's own bin folders come
+    first on the PATH, the host's secrets are left out, and when offline every proxy points nowhere."""
+    env = dict(os.environ if base is None else base)
+    env["HOME"] = str(home)
+    env["ROOKS_TRY"] = "1"
+    for key in list(env):  # host secrets the agent must not leak into experiments
+        upper = key.upper()
+        if upper.endswith(("_API_KEY", "_TOKEN", "_SECRET", "_PASSWORD")) or upper in _SECRET_NAMES:
+            env.pop(key, None)
+    if offline:  # belt and braces next to the empty network namespace: proxy-aware programs stop at once
+        for key in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"):
+            env[key] = "http://127.0.0.1:9"
+    bins = os.pathsep.join(str(home / p) for p in (".local/bin", "bin", ".cargo/bin"))
+    env["PATH"] = bins + os.pathsep + env["PATH"] if env.get("PATH") else bins
+    return env
 
 
 def windows_sh() -> str | None:
@@ -114,6 +158,7 @@ class ShellDriver(Driver):
         home = store.guest_home()
         (home / "Desktop").mkdir(exist_ok=True)
         (home / "Downloads").mkdir(exist_ok=True)
+        store.seed_home(home)
         state = store.load_state()
         state.update({"driver": self.name, "running": True, "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
         store.save_state(state)
@@ -160,14 +205,12 @@ class ShellDriver(Driver):
         return {"ok": False, "error": "This room has no screen to type on."}
 
     def run(self, command: str, timeout: float = 120, env_extra: dict | None = None) -> dict:
-        """Run a shell command in the room's home, as the person. `env_extra` is for the display of a nested room."""
+        """Run a shell command in the room's home, as the person, through a login shell (the Room's profile and PATH).
+        `env_extra` is for the display of a nested room."""
         home = store.guest_home()
         env = self._env(home, env_extra)
-        argv = wrapped(command, home, self.offline)
-        sh = windows_sh() if argv is None and sys.platform == "win32" else None
-        if sh:
-            argv = [sh, "-c", command]
-        kind = "cmd" if argv is None and sys.platform == "win32" else "sh"
+        argv = run_argv(command, home, self.offline)
+        kind = "cmd" if argv is None else "sh"
         try:
             proc = subprocess.Popen(
                 argv if argv else command,
@@ -200,20 +243,14 @@ class ShellDriver(Driver):
         }
 
     def _env(self, home: Path, extra: dict | None) -> dict:
-        env = os.environ.copy()
-        env["HOME"] = str(home)
-        env["ROOKS_TRY"] = "1"
-        # Drop host secrets the agent must not leak into experiments.
-        for key in list(env):
-            upper = key.upper()
-            if upper.endswith(("_API_KEY", "_TOKEN", "_SECRET", "_PASSWORD")) or upper in _SECRET_NAMES:
-                env.pop(key, None)
-        if self.offline:  # belt and braces next to the empty network namespace: proxy-aware programs stop at once
-            for key in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"):
-                env[key] = "http://127.0.0.1:9"
+        env = room_env(home, self.offline)
         for key, value in (extra or {}).items():
             env[str(key)] = str(value)
         return env
+
+    def terminal_argv(self, home: Path) -> list[str] | None:
+        """The Room's terminal: a login shell inside it. None on Windows, where the app has no pseudo terminal."""
+        return None if sys.platform == "win32" else login_argv(home, self.offline)
 
     def supports_screen(self) -> bool:
         return False
