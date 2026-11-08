@@ -29,7 +29,6 @@ import { EmptyChat } from "../chat/EmptyChat";
 import { refreshHistory } from "../chat/ResultCards";
 import { forgetRuns } from "../chat/receipts";
 import { MemoryTab } from "../chat/tabs/MemoryTab";
-import { SkillsTab } from "../chat/tabs/SkillsTab";
 import { SettingsTab } from "../chat/tabs/SettingsTab";
 import type { Conv, Msg, WorkMode } from "../chat/types";
 import { motionOff } from "../appearance";
@@ -37,8 +36,6 @@ import "../chat/chat.css";
 
 /** While a call is held in this chat it is also asked this often (else only when the pulse says something moved). */
 const HELD_POLL_MS = 15000;
-
-export { SkillsTab };
 
 const CHATLIST_KEY = "rooks.chatlist";
 /** The Chats column is open by default above the wide breakpoint; the toggle in the thread header is remembered. */
@@ -537,17 +534,16 @@ function Chat() {
   );
 }
 
-export default function Assistant({ tab }: { tab: "chat" | "memory" | "skills" | "settings" }) {
+export default function Assistant({ tab }: { tab: "chat" | "memory" | "settings" }) {
   const navigate = useNavigate();
   if (tab === "chat") return <Chat />;
   return (
     <div className="page" style={{ maxWidth: 720 }}>
       <div className="page-head">
         <button type="button" className="btn ghost sm" onClick={() => navigate("/assistant")}><ArrowLeft size={14} /> Chat</button>
-        <h1 className="grow">{tab === "memory" ? "Memory" : tab === "skills" ? "Skills" : "Chat settings"}</h1>
+        <h1 className="grow">{tab === "memory" ? "Memory" : "Chat settings"}</h1>
       </div>
       {tab === "memory" && <MemoryTab />}
-      {tab === "skills" && <SkillsTab />}
       {tab === "settings" && <SettingsTab />}
     </div>
   );

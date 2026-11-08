@@ -14,7 +14,7 @@ export const BESIDE_SCREENS = Object.freeze([
   { id: "browser", label: "Browser", path: "/browser" },
   { id: "desktop", label: "Desktop", path: "/computer" },
   { id: "automations", label: "Automations", path: "/automations" },
-  { id: "customize", label: "Customize", path: "/customize" },
+  { id: "settings", label: "Settings", path: "/settings" },
 ]);
 
 /** A useful second screen for the page you are on. */

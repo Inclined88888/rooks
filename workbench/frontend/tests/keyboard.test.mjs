@@ -149,7 +149,7 @@ test("every page the app links to has a route: the packs, and Extra tools away f
     const pack = JSON.parse(readFileSync(new URL(`../../backend/app/packs/bundles/${id}/pack.json`, import.meta.url), "utf8"));
     assert.ok(registry.pageAt(pack.page), `${id} pack page ${pack.page}`);
   }
-  for (const f of ["../src/pages/Customize.tsx", "../src/pages/Settings.tsx", "../src/pages/ConnectSection.tsx"]) assert.doesNotMatch(read(f), /to[=:] ?"\/mcp"/, f);
+  for (const f of ["../src/pages/Settings.tsx", "../src/pages/ConnectSection.tsx"]) assert.doesNotMatch(read(f), /to[=:] ?"\/mcp"/, f);
   const main = readFileSync(new URL("../../backend/app/main.py", import.meta.url), "utf8");
   assert.match(main, /path\.startswith\(\("api\/", "tools\/", "mcp", "v1\/"\)\)/, "the service keeps /mcp and /tools for itself");
 });

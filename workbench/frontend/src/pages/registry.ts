@@ -7,7 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Activity, AudioLines, BookMarked, Building2, CalendarClock, CalendarDays, CheckSquare, Code2, CreditCard, Columns3, FileText, FlaskConical,
   FolderKanban, FolderOpen, Gauge, Globe, Globe2, GraduationCap, Hammer, History, Home, Info, Laptop, Layers, LineChart, ListChecks, ListTree, Lock,
-  Mail, MessageCircle, MessageSquare, Mic, Monitor, NotebookPen, Package, Palette, Plug, Scale, Search, Settings, Shield, SlidersHorizontal,
+  Mail, MessageCircle, MessageSquare, Mic, Monitor, NotebookPen, Package, Palette, Plug, Scale, Search, Settings, Shield,
   SquareTerminal, UserRound, Users, UsersRound, Video,
 } from "lucide-react";
 import type { ComponentType } from "react";
@@ -99,7 +99,6 @@ export const PAGES: PageEntry[] = [
 
   // ---- More: Settings ----
   { path: "/models", label: "AI models", icon: Gauge, section: "Settings", load: () => import("./Models") },
-  { path: "/customize", label: "Customize", icon: SlidersHorizontal, section: "Settings", load: () => import("./Customize") },
   { path: "/voice", label: "Ask anywhere & voice", icon: Mic, section: "Settings", load: () => import("./VoiceSettings") },
   { path: "/appearance", label: "Appearance", icon: Palette, section: "Settings", load: () => import("./Appearance") },
   { path: "/plan", label: "Your plan", icon: CreditCard, section: "Settings", load: () => import("./Plan") },
@@ -129,7 +128,8 @@ export const PAGES: PageEntry[] = [
 
 export const REDIRECTS: Redirect[] = [
   { from: "/", to: "/assistant" },
-  { from: "/connect", to: "/customize" },
+  { from: "/connect", to: "/settings" },
+  { from: "/customize", to: "/settings" },  // the Customize page only linked to other pages; Settings has them all
   { from: "/assistant-skills", to: "/skills" },
   { from: "/packs/*", to: "/packs" },
   { from: "/mcp", to: "/extra-tools" },

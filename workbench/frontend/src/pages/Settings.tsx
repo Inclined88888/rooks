@@ -434,7 +434,6 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
                 <Go primary label="Extra tools" help="Outside tools you add yourself. Their actions still ask before they leave this computer." to="/extra-tools" />
                 <Go label="Computer" help="Let the assistant click and type on this machine, when you allow it." to="/computer" />
                 <Go label="Browser" help="Let the assistant work in a browser, when you allow it." to="/browser" />
-                <Go label="Customize tools" help="Every tool in one list." to="/customize?tab=tools" />
               </SettingsGroup>
             </Section>
             <Section title="Another device">
@@ -449,7 +448,6 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
               <Go primary label="Skills" help="Saved ways of working. Add more whenever you like." to="/skills" />
               <Go label="About you" help="Standing instructions and what it already knows about you." to="/about-you" />
               <Go label="Memory" help="Everything it remembers, in one place." to="/knowledge" />
-              <Go label="Customize" help="One place for apps, tools, skills and rules." to="/customize" />
             </SettingsGroup>
           </Section>
         )}

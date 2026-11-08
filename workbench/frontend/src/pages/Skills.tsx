@@ -1,13 +1,12 @@
 // Skills: installed, the store, add from GitHub with the security check, and activity. Premium pass (package C):
 // built on the primitives, every list with a loading, an empty and an error state, and a phone layout.
-import { ArrowRight, Check, ExternalLink, Github, KeyRound, Lock, Puzzle, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, X } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { ArrowRight, BookOpen, Check, ExternalLink, Github, KeyRound, Lock, Puzzle, Plus, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, X } from "lucide-react";
+import { FormEvent, Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, stream } from "../api";
-import { relTime, useToast } from "../util";
-import { Badge, Button, Card, EmptyState, ErrorState, IconButton, Input, List, Page, Row, Section, Tabs } from "../ui";
+import { Markdown, relTime, useToast } from "../util";
+import { Badge, Button, Card, EmptyState, ErrorState, IconButton, Input, List, Loading, Page, Row, Section, Tabs, Textarea } from "../ui";
 import { Gate, plainError, useLoad } from "./agents/kit";
-import { SkillsTab } from "./Assistant";
 
 // ---------------------------------------------------------------------------------------------------- types
 type Finding = { rule: string; severity: "critical" | "high" | "medium" | "low"; category: string; message: string; file: string; line: number; snippet: string; tool?: string };
@@ -192,7 +191,7 @@ function Installed({ onAdd }: { onAdd: () => void }) {
         )}</Gate>
       </Section>
       <Section title="Learned or written here">
-        <SkillsTab />
+        <LearnedSkills />
       </Section>
     </div>
   );
@@ -563,6 +562,78 @@ function ActivityTab({ onChange }: { onChange: (n: number) => void }) {
           </List>}
         </Gate>
       </Section>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------- learned or written here
+type LearnedSkill = { id: number; name: string; description: string; steps: string; uses: number; source: string; enabled: number };
+
+/** Skills written here or learned by the assistant after complex tasks (formerly the chat's Skills tab, which had no route). */
+function LearnedSkills() {
+  const [items, setItems] = useState<LearnedSkill[] | null>(null);
+  const [failed, setFailed] = useState("");
+  const [open, setOpen] = useState<number | null>(null);
+  const [draft, setDraft] = useState<LearnedSkill | null>(null);
+  const toast = useToast();
+  const load = () => api<LearnedSkill[]>("/skills").then((r) => { setItems(r.filter((s) => s.source !== "github")); setFailed(""); })
+    .catch((e) => setFailed(plainError(e)));
+  useEffect(() => { load(); }, []);
+  const save = async () => {
+    if (!draft) return;
+    try {
+      if (draft.id) await api(`/skills/${draft.id}`, { method: "PUT", body: { ...draft, enabled: !!draft.enabled } });
+      else await api("/skills", { body: { ...draft, enabled: true } });
+      setDraft(null); load();
+    } catch (e) { toast.err(e); }
+  };
+  const toggle = async (s: LearnedSkill) => {
+    try { await api(`/skills/${s.id}`, { method: "PUT", body: { ...s, enabled: !s.enabled } }); load(); } catch (e) { toast.err(e); }
+  };
+  const remove = async (s: LearnedSkill) => {
+    if (!confirm(`Delete the skill ${s.name}?`)) return;
+    try { await api(`/skills/${s.id}`, { method: "DELETE" }); load(); } catch (e) { toast.err(e); }
+  };
+  return (
+    <div className="ag-stack">
+      <div className="ag-bar">
+        <p className="ag-note ag-grow">Ways of working written here, or learned by the assistant after a long task. Edit, turn off or add your own.</p>
+        <Button size="sm" icon={<Plus size={14} />} onClick={() => setDraft({ id: 0, name: "", description: "", steps: "", uses: 0, source: "user", enabled: 1 })}>Add a skill</Button>
+      </div>
+      {draft && (
+        <Card className="ag-stack">
+          <Input label="Name" disabled={!!draft.id} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="weekly-plan" />
+          <Input label="When to use it" value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+          <Textarea label="Steps" rows={8} value={draft.steps} onChange={(e) => setDraft({ ...draft, steps: e.target.value })} placeholder={"1. ...\n2. ..."} />
+          <div className="ag-bar">
+            <Button variant="primary" onClick={save}>Save</Button>
+            <Button variant="ghost" onClick={() => setDraft(null)}>Cancel</Button>
+          </div>
+        </Card>
+      )}
+      {failed ? <ErrorState title="Skills did not load" line={failed} onRetry={load} />
+        : items === null ? <Loading rows={2} />
+        : items.length === 0 && !draft ? <EmptyState icon={<BookOpen size={20} />} title="No skills yet" line="Ask for something with several steps, like 'plan my week from my calendar and tasks'." />
+        : (
+          <List label="Learned or written here">
+            {items.map((s) => (
+              <Fragment key={s.id}>
+                <Row title={s.name} meta={s.description} onClick={() => setOpen(open === s.id ? null : s.id)} active={open === s.id}
+                  actions={<><Badge>{s.source === "auto" ? "learned" : "yours"}</Badge><span className="ag-meta">used {s.uses}×</span></>} />
+                {open === s.id && (
+                  <li className="ag-panel is-sunken ag-stack">
+                    <Markdown text={s.steps} />
+                    <div className="ag-bar">
+                      <Button size="sm" onClick={() => setDraft(s)}>Edit</Button>
+                      <Button size="sm" onClick={() => toggle(s)}>{s.enabled ? "Turn off" : "Turn on"}</Button>
+                      <IconButton label={`Delete ${s.name}`} onClick={() => remove(s)}><Trash2 size={14} /></IconButton>
+                    </div>
+                  </li>
+                )}
+              </Fragment>
+            ))}
+          </List>
+        )}
     </div>
   );
 }

@@ -40,7 +40,7 @@ function withParts(file, seen = new Set()) {
 }
 
 const CODE = [
-  ...PAGES, "src/v02/TriggerAutomations.tsx", "src/memory/FiledChip.tsx", "src/memory/GraphWalk.tsx", "src/memory/Improved.tsx",
+  ...PAGES, "src/v02/TriggerAutomations.tsx", "src/memory/FiledChip.tsx", "src/memory/GraphWalk.tsx",
   "src/memory/YourData.tsx", "src/team/LeadRuns.tsx", "src/packs/shared.tsx",
   ...(existsSync(root + "src/pages/agents") ? readdirSync(root + "src/pages/agents").filter((f) => /\.tsx?$/.test(f)).map((f) => `src/pages/agents/${f}`) : []),
 ];

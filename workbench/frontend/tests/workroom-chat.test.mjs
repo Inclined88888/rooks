@@ -199,12 +199,13 @@ test("a new chat greets by the time of day and offers three things to do", () =>
 });
 
 // ---------------------------------------------------------------------------------------------- the source
-test("the chat page is split: thread, composer, result cards, header, empty state and the three tabs", () => {
-  for (const f of ["Thread.tsx", "Composer.tsx", "ResultCards.tsx", "ThreadHeader.tsx", "EmptyChat.tsx", "tabs/MemoryTab.tsx", "tabs/SkillsTab.tsx", "tabs/SettingsTab.tsx"]) {
+test("the chat page is split: thread, composer, result cards, header, empty state and the two tabs", () => {
+  for (const f of ["Thread.tsx", "Composer.tsx", "ResultCards.tsx", "ThreadHeader.tsx", "EmptyChat.tsx", "tabs/MemoryTab.tsx", "tabs/SettingsTab.tsx"]) {
     assert.ok(exists(`../src/chat/${f}`), `src/chat/${f} exists`);
   }
   const page = read("../src/pages/Assistant.tsx");
-  assert.match(page, /export \{ SkillsTab \}/, "the Skills page keeps importing SkillsTab from the chat page");
+  // the old Skills tab had no route; its list lives on the Skills page now ("Learned or written here")
+  assert.match(read("../src/pages/Skills.tsx"), /function LearnedSkills\(\)/);
   assert.match(page, /<Thread/);
   assert.match(page, /<Composer/);
   assert.match(page, /<ThreadHeader/);
