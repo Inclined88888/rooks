@@ -7,9 +7,33 @@ version and the merge commit on `main`.
 ## Unreleased · Workplace cleanup · branch cleanup/workplace
 
 The cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the old browser
-agent, move old reports into `docs/history/`, and hide developer features behind Advanced (hidden, not deleted). No
-schema change, nothing to migrate in the app. Rollback: revert the branch's commits.
+agent, move old reports into `docs/history/`, hide developer features behind Advanced (hidden, not deleted), and call
+the product Rooks on every normal screen. No schema change; one connection row is renamed (below). Rollback: revert
+the branch's commits.
 
+- **Rooks on every normal screen** (section g.4, contradiction 3). The server's pages and messages say Rooks instead of
+  "AI Workspace" or "Workbench": the page a used sign-in link shows, the Google and Microsoft Connect results, the
+  name to give an app password (iCloud, Yahoo, Gmail), the Apple Mail and Mac steps, the backup's readme, calendar
+  exports, Slack and Discord set-up, shared teammate pages, and the descriptions of the email-draft tool. The Computer
+  page's Mac steps say to switch on Rooks. When an organisation must approve the sign-in, the message also gives the
+  old name, because Google and Microsoft still list the sign-in app as AI Workspace until it is renamed there.
+  Internal names are unchanged: `aiworkspace://` links, `~/.ai-workspace`, the `ai-workspace` command,
+  `AI_WORKSPACE_*` and `WORKBENCH_*` settings, the `X-Workbench` header, Docker project and image names.
+  - **Wake phrase.** A new install listens for "hey rooks". Anyone who never changed it keeps waking it with "hey
+    workspace" too; a phrase of your own (Settings, Voice) works as before and replaces both.
+  - **Data on upgrade:** a hosted-models connection named "AI Workspace Cloud" is renamed "Rooks Cloud" the next time
+    the plan is checked, keeping its id, history and default model. Rollback: after reverting, rename the row back to
+    "AI Workspace Cloud", or the old code adds a second connection beside it.
+  - **Docker server:** a new install is called Rooks (`WORKSPACE_NAME`, Open WebUI's title, the search server's name,
+    the tool server's name in Open WebUI). An existing `.env` keeps its `WORKSPACE_NAME`; change it there to rename.
+  - **Tests:** `workbench/backend/tests/test_rooks_name.py` scans the server's strings, the built screens and the Docker
+    defaults for the old names, with an explicit allow list (all six tests failed on the tree before); a wake phrase
+    test in `workbench/frontend/tests/anywhere-voice.test.mjs` (failed before).
+- **Modules named after old branches carry their purpose** (section g.4): `v02_api.py` is `automations_api.py`,
+  `v02_hooks.py` is `projects_hooks.py`, `v02_mobile.py` is `projects_mobile.py`, `features_v02.py` is
+  `plan_tiers.py`. Every route keeps its method and path (700 compared before and after). The model catalog builder
+  moved out of the app to `scripts/build_model_catalog.py` (run it with the app's Python; it used to be
+  `python -m app.catalog_build`).
 - **Developer tools are hidden behind one switch** (section g.3). The Terminal, Code (coding jobs), the run log,
   Insights, System status, Compare models, Fine-tune, Extra tools, Packs and the Trade, Legal and Study pack pages are
   no longer in the More sheet or the command menu (none was on the top bar or in its menus), and the More sheet no

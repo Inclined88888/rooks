@@ -348,7 +348,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | adapters.py | One class per provider type, plus running the person's own Claude Code, Codex or Copilot | live |
 | router.py | "Auto" model choice: fast or strong model, quotas, cool-downs, fallback | live |
 | catalog.py | Model facts (context size, price, vision) from a bundled list, refreshed daily | live |
-| catalog_build.py | A build tool that makes the bundled model list; not used when the app runs | live (tool) |
+| (scripts/build_model_catalog.py) | A build tool that makes the bundled model list; moved out of the app (g.4a) | live (tool) |
 | compression.py | Summaries of long chats that no longer fit | live |
 | tool_results.py | Keeps long tool results so the model can read the rest later | live |
 | attachments.py | Chat images and documents from the app, Telegram and the terminal | live |
@@ -410,7 +410,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | jobs.py | Background jobs board with notices and questions | live |
 | auto_tools.py | Assistant tools for automations, jobs and live documents | live |
 | livedocs.py | Editable sheets, charts and documents inside replies | live |
-| v02_api.py | Routes for automations, jobs and live documents (named after a branch) | live |
+| automations_api.py | Routes for automations, jobs and live documents (was v02_api.py) | live |
 | company.py | AI agents in an org chart with budgets working a task queue | duplicate |
 | starters.py | A proposed set of coworkers and schedules for a line of work | live |
 | team/ (store, routes, engine, lead, replies, outbox, parse, sms, memory, loop, tools) | A team lead's board for human staff: tasks, plan, nudges by mail, Telegram or text, sub-agents | live |
@@ -470,7 +470,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | anywhere.py | A global shortcut that asks about selected text in any app | live |
 | voice.py | Dictation, spoken approvals and speech | live |
 | meetings.py | Record or import a meeting; notes, decisions, tasks, follow-up draft | live |
-| v02_mobile.py | Phone views of projects, history undo and checked answers | live |
+| projects_mobile.py | Phone views of projects, history undo and checked answers (was v02_mobile.py) | live |
 | appearance.py | The chosen look, shared with phone and terminal | live |
 
 **Files, work sites, projects and research**
@@ -486,7 +486,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | projects.py | Projects that hold files, sites, chats, notes and people | live |
 | history.py | One timeline of everything done, with undo and export | live |
 | checked.py | Checked answers: lists sources and verifies claims | live |
-| v02_hooks.py | Installs projects, history and checked answers (named after a branch) | live |
+| projects_hooks.py | Installs projects, history and checked answers (was v02_hooks.py) | live |
 | research.py | Deep research: search, read pages, write a cited report | live |
 | search.py | Web search through Brave, Tavily or a search server | live |
 | media.py | Image generation saved to Files | live |
@@ -501,7 +501,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | egress.py | Records every outbound connection; shown on the Privacy page | live |
 | keychain.py | Provider keys in the computer's keychain on the desktop build | live |
 | account.py | Sign-in to a Rooks cloud service and paid plan checks; the cloud does not exist in this build | half built |
-| features_v02.py | Which plan each feature belongs to | live |
+| plan_tiers.py | Which plan each feature belongs to (was features_v02.py) | live |
 
 ### e.2 The screens (`workbench/frontend/src`)
 
@@ -745,6 +745,18 @@ Advanced. Routes are built from every page, so each address still opens.
 | "AI Workspace" on screens (sign-in error page, Connect results, mail app-password name, Apple Mail, "AI Workspace Cloud", backup readme, calendar exports, Computer page, desktop app name, search server name, default workspace name), and the wake phrase "hey workspace" | Rooks | The product is Rooks; mixed names confuse people | Medium. Renaming the desktop app makes the computer treat it as a new app (permissions, keychain); the Google and Microsoft sign-in apps are registered under the old name. |
 | Stale status lines in design records 0003 to 0006, the native app plan, decision record 0001, docs/README "100 reasons", README sections, SECURITY.md versions table | Corrected text | See section i | None |
 
+### g.4a Done on branch `cleanup/workplace`
+
+| Item | Outcome |
+|---|---|
+| "AI Workspace", "Workbench" and "hey workspace" on the server's screens and messages | Rooks: the sign-in link page, Connect results, the mail app-password names, Apple Mail and Mac steps, "Rooks Cloud" (the old "AI Workspace Cloud" connection row is renamed once and keeps its id), the backup readme, calendar exports, Slack and Discord set-up, teammate pages and templates, the terminal's closing reason, tool descriptions. The admin approval message also says "its old name, AI Workspace", because the Google and Microsoft sign-in apps are still registered under it. |
+| Computer page, wake phrase | The Mac screen recording steps say Rooks. New installs listen for "hey rooks"; with the default phrase "hey workspace" still wakes it; a phrase of the person's own replaces both. |
+| Docker install defaults | `WORKSPACE_NAME` defaults to Rooks (compose, `.env.example`, `setup.sh`), the search server is "Rooks Search", Open WebUI lists the tool server as Rooks. An existing `.env` keeps its value. |
+| Guard | `workbench/backend/tests/test_rooks_name.py` scans every non-docstring string in the server, the built screens and the Docker defaults; an allow list names the three internal or honest exceptions. |
+| v02_api, v02_hooks, v02_mobile, features_v02 | Renamed automations_api, projects_hooks, projects_mobile, plan_tiers. All 700 routes keep method and path. |
+| catalog_build.py | Moved to `scripts/build_model_catalog.py`. |
+| Not done here | The desktop app's name (the room-browser branch renames it), the Google and Microsoft sign-in registrations (the owner, in their consoles), the `rooks`, Rooks Browser and Rooks Desk help texts, the phone app, the VS Code add-on, `cli/ws`, the README and quick start, and the split of api.py: BACKLOG.md. |
+
 ### g.5 Keep as they are
 
 | Path | Why |
@@ -782,7 +794,7 @@ Ranked by how soon a workplace buyer would notice. Each line names the existing 
 | 13 | **Zoho** beyond mail | Zoho Mail through app passwords only | `mail_autodetect.py` already knows Zoho; CRM, Desk and Projects would sit beside `team/trackers.py` |
 | 14 | **Developer surfaces out of the way** | Terminal and Code in the Workspace menu; Plan and Build coding modes in chat | `pages/registry.ts` (one list decides where every page appears) |
 | 15 | **Phone app, notch app and VS Code add-on that IT can hand out** | Phone app runs through a developer tool; the others are built by hand | `mobile/`, `companion/macos`, `vscode-extension` |
-| 16 | **Workplace pricing and copy** | Prices in Australian dollars, Trade, Legal and Study packs, small-business examples | `features_v02.py`, `pages/Plan.tsx`, packs |
+| 16 | **Workplace pricing and copy** | Prices in Australian dollars, Trade, Legal and Study packs, small-business examples | `plan_tiers.py`, `pages/Plan.tsx`, packs |
 
 ---
 
@@ -792,7 +804,7 @@ Plain list, most visible first.
 
 1. **"Mail is draft-only, it never sends."** Said in `docs/README.md` (points 16 and 57) and in the marketing posts. The code sends mail after a yes (`mail.py`, `cloud_mail.py`, Rooks Desk's send-mail).
 2. **The Claude Code add-on "not built yet".** Said in the README. Running the person's own Claude Code, Codex or Copilot works today (`adapters.py`), and `docs/CLAUDE-CODE.md` describes it.
-3. **The product name.** README is titled Rooks and the server's default name is Rooks, but the desktop app is named "AI Workspace", the Docker setup's default name is "AI Workspace", sign-in and mail screens say "AI Workspace", and the wake phrase is "hey workspace". The quick start guide is titled "AI Workspace".
+3. **The product name.** README is titled Rooks and the server's default name is Rooks, but the desktop app is named "AI Workspace", the Docker setup's default name is "AI Workspace", sign-in and mail screens say "AI Workspace", and the wake phrase is "hey workspace". The quick start guide is titled "AI Workspace". *Partly fixed on `cleanup/workplace` (g.4a): the server's screens, the Computer page, the wake phrase and the Docker default say Rooks; the desktop app's name is the room-browser branch's, and the quick start is still to do.*
 4. **Supported versions.** `SECURITY.md` lists `integration/v0.3`; the install line is `main` at 1.0.6. It also promises a signed updater, while the README says signing and updates are off until the keys exist.
 5. **Licence.** `PROGRESS-desktop.md` says MIT; the licence file says proprietary.
 6. **Design records say "not merged".** Records 0003 (Workroom), 0004 (Coworkers) and 0005 (Rooks Browser app) say not merged or not shipped; all are on `main`. Record 0006 still says "design record" though the Room desk is built.

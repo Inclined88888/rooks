@@ -63,6 +63,31 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Old reports keep their old paths inside.** Files in `docs/history/` mention `docs/evidence/` and `scripts/audit/`
   as they were; `docs/history/README.md` maps them.
 
+### Rooks names: what the rename step left (branch cleanup/workplace)
+
+* **The owner must rename the sign-in apps in the Google and Microsoft consoles.** The Google Cloud OAuth client and
+  the Microsoft Entra app registration used by `connect.py` (and `oauth_clients.py`) are still called "AI Workspace",
+  so the consent screen and an IT admin's list show that name. Until then the admin approval message in `connect.py`
+  (`ADMIN_NEEDED`) also gives the old name. After the rename, drop "(the sign-in page may still show its old name,
+  AI Workspace)" and its entry in `ALLOWED` in `workbench/backend/tests/test_rooks_name.py`.
+* **For the room-browser branch:** the desktop app's product name, window title and release titles
+  (`tauri.conf.json`, `.github/workflows/desktop.yml`, `desktop/launcher/*`, `install.sh`) are that branch's. The
+  Computer page and `mac_mail.py` now tell Mac users to switch on "Rooks" in Privacy & Security; that matches what
+  macOS lists only once the app itself is called Rooks, so ship the two together. Renaming the app makes macOS treat it
+  as a new app (screen recording, automation and keychain permissions are asked again); say so in that release's notes.
+  `api.py`'s used-sign-in-link page and launcher message were changed here to that branch's exact words; merging it
+  will still conflict in `desktop_handoff` (it also adds `shell`): take that branch's version.
+* **Other surfaces still say "AI Workspace" or "Workbench"** (not scanned by `test_rooks_name.py`, which covers the
+  server and the built screens): the `rooks`, Rooks Browser and Rooks Desk help texts (`--db` "Workbench database",
+  "the AI Workspace app"), the phone app (pairing screen title and steps, the default name), the VS Code add-on,
+  `cli/ws`, `companion/macos`, `setup.sh`'s other lines and `install-server.sh`, `install.ps1`, `QUICKSTART.md` (its
+  title), the README and most docs, and many code comments and docstrings. Extend the scan to each when it is renamed.
+* **Slack and Discord bots made before the rename keep their name.** The manifest for a new Slack app says Rooks;
+  an existing one is renamed in Slack's app settings by its owner.
+* **Split `api.py`** into auth_api, providers_api, day_api, mail_api and research_api (section g.4), keeping every
+  path. Left for later: the room-browser branch is changing `api.py` (desktop shell choice), so splitting now would
+  turn its merge into a rewrite.
+
 ### Other scheduled items
 
 * **Rooks Browser app: what the preview still lacks** (`rooks-browser/app`, landed from `feat/browser-app` after review, CHANGELOG
