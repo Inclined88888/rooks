@@ -80,6 +80,11 @@ class Driver:
     def run(self, command: str, timeout: float = 120) -> dict:
         raise NotImplementedError
 
+    def terminal_argv(self, home: Path) -> list[str] | None:
+        """The login shell a terminal opens inside the Room, on this computer. None when the Room has no shell here
+        (a separate computer, a drawing)."""
+        return None
+
     def supports_screen(self) -> bool:
         """Whether this driver ever has a real picture to show. Status carries the live value as `screen`."""
         return True

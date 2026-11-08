@@ -80,6 +80,7 @@ ROOM_TITLES: dict[str, tuple[str, str]] = {  # use_room action: (title, the argu
     "reset": ("Start the Room over", "name"),
     "status": ("Check the Room", ""),
     "handoff": ("Copy a file out of the Room", "src"),
+    "start": ("Start in the Room's terminal", "command"),
 }
 
 

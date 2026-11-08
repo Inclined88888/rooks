@@ -22,6 +22,7 @@ NOTE = "Rooks restarted during this turn."
 CUT = " These steps were cut off and not run: {steps}. Anything after them was not done."
 MAYBE_RAN = " These steps may have run before the restart; check History to see: {steps}."
 NOTHING_CUT = " The reply was cut short; nothing after that point was done."
+ROOM_ENDED = " Terminals in the Room ended; their files are still there."  # design 0006, section 5
 _TASKS: set[asyncio.Task] = set()
 
 
@@ -75,6 +76,17 @@ def note_for(cut: list[str], maybe_ran: list[str] | None = None) -> str:
     return out
 
 
+def _room_terminals_ended() -> bool:
+    """Whether Room terminals were open when the app stopped (they ended with it; their files stay)."""
+    try:
+        from . import room_terminal
+
+        return room_terminal.ended_at_restart() > 0
+    except Exception as e:  # noqa: BLE001 - the note never fails on the Room
+        log.debug("room terminals unknown at restart: %s", e.__class__.__name__)
+        return False
+
+
 def interrupt_running_turns() -> list[dict]:
     """At startup: close every turn still marked running (actions.recover) and write the note into its conversation.
     Returns what was done, one entry per turn: turn_id, conversation_id, cut (tool names), message_id."""
@@ -82,13 +94,14 @@ def interrupt_running_turns() -> list[dict]:
 
     rows = db.all("SELECT id, conversation_id FROM actions WHERE kind = 'turn' AND outcome = 'running' ORDER BY id")
     actions.recover()
+    room_ended = ROOM_ENDED if rows and _room_terminals_ended() else ""
     out = []
     for r in rows:
         cid = r["conversation_id"]
         if not cid or not db.one("SELECT id FROM conversations WHERE id = ?", cid):
             continue
         cut, maybe = _cut_steps(cid, r["id"])
-        mid = assistant._save(cid, "system", note_for(cut, maybe), name=NOTE_NAME)
+        mid = assistant._save(cid, "system", note_for(cut, maybe) + room_ended, name=NOTE_NAME)
         out.append({"turn_id": r["id"], "conversation_id": cid, "cut": cut, "maybe_ran": maybe, "message_id": mid})
     return out
 

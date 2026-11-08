@@ -284,10 +284,19 @@ def _room_enabled() -> bool:
     return room.enabled()
 
 
+ROOM_READS = ("status", "tail", "files")  # use_room actions that only look: never asked about, never deduplicated
+
+
 def _room_confirm(args: dict) -> str:
-    """Every use of the Room asks first, except a status check and a hand-off, which makes its own held request
-    (one yes, not two)."""
-    return "" if str(args.get("action") or "status").strip().lower() in ("status", "handoff") else ROOM_CONFIRM
+    """Every use of the Room asks first, except what only looks (status, a terminal's last lines, the Room's files) and
+    a hand-off, which makes its own held request (one yes, not two)."""
+    return "" if str(args.get("action") or "status").strip().lower() in (*ROOM_READS, "handoff") else ROOM_CONFIRM
+
+
+def _room_reads(name: str, args: dict) -> bool:
+    """A use_room call that only looks: asking for a terminal's last lines twice in a turn is how Rooks watches an
+    install, not a repeated change."""
+    return name == TOOL_USE_ROOM and str(args.get("action") or "status").strip().lower() in ROOM_READS
 
 
 def _room_facts(st: dict) -> dict:
@@ -297,12 +306,16 @@ def _room_facts(st: dict) -> dict:
 
 
 async def _use_room(action: str = "status", command: str = "", goal: str = "", label: str = "", name: str = "",
-                    src: str = "", dest: str = "", request_id: str = "", timeout: int = 120, ctx: "Ctx | None" = None) -> dict:
+                    src: str = "", dest: str = "", request_id: str = "", timeout: int = 120, id: str = "",  # noqa: A002
+                    lines: int = 60, path: str = "", ctx: "Ctx | None" = None) -> dict:
     """The Room: Rooks's own computer on this machine (design 0003). Every result says what the Room really is so the
     reply can repeat it. up publishes a watch event for the Stage. handoff never copies on its own: it holds the copy
     in Needs you, and the copy runs when a person says yes there (the held call runs back through here, with its
-    approved request id)."""
-    from . import room
+    approved request id). Design 0006: start runs a long command in a Room terminal and returns at once, tail reads how
+    it goes (busy, exit code, and whether the person took the terminal), files lists the Room's folder."""
+    from fastapi import HTTPException
+
+    from . import room, room_terminal
 
     action = (action or "status").strip().lower()
     if not room.enabled():
@@ -316,8 +329,8 @@ async def _use_room(action: str = "status", command: str = "", goal: str = "", l
             _publish_watch(ctx, "room", "room", goal or "The Room")
         return {"running": on, **_room_facts(st), "error": None if on else "The Room did not start."}
     if action == "down":
-        st = await room.perform("down")
-        return {"running": bool(st.get("running")), **_room_facts(st)}
+        st = await room.stop()
+        return {"running": bool(st.get("running")), "terminals_closed": st.get("terminals_closed", 0), **_room_facts(st)}
     if action == "run":
         if not (command or "").strip():
             return {"ok": False, "error": "Say what command to run in the Room."}
@@ -327,7 +340,22 @@ async def _use_room(action: str = "status", command: str = "", goal: str = "", l
     if action == "checkpoint":
         return await room.checkpoint(label or "")
     if action == "reset":
-        return await room.reset_to(name or None)
+        return await room.start_over(name or None)
+    try:
+        if action == "start":
+            if not (command or "").strip():
+                return {"ok": False, "error": "Say what to start in the Room's terminal."}
+            t = await room_terminal.open_terminal(name=name or "Rooks", owner="rooks", command=command)
+            return {"id": t.id, "name": t.name, "started": True, "note": room_terminal.STARTED_NOTE}
+        if action == "tail":
+            t = room_terminal.get(id) if id else room_terminal.newest_rooks()
+            if t is None:
+                return {"ok": False, "error": room_terminal.NO_SUCH if id else room_terminal.NOTHING_STARTED}
+            return room_terminal.tail(t, lines or 60)
+        if action == "files":
+            return await room.list_files(path or "")
+    except HTTPException as e:  # the Room's own plain line (off, full, no terminal here, outside the Room)
+        return {"ok": False, "error": str(e.detail)}
     if action == "handoff":
         if request_id:
             req = room.handoff_request(request_id)
@@ -630,12 +658,21 @@ TOOLS: list[Tool] = [
     Tool("use_room", "Use the Room: Rooks's own computer on this machine (a private desktop, a Linux guest, or a private "
          "folder and shell), never the person's own desktop. Call it when they want to try something, install things, or "
          "work on files without touching this computer. Actions: status; up (start it; goal says what you will do there); "
-         "down; run (a shell command inside it); checkpoint (save a point; label); reset (start over from a saved point: "
-         "name, or the last one); handoff (copy a file out: src inside the Room, dest on this computer; it only asks the "
-         "person and never copies by itself). Every result says what the Room really is (label, isolation, screen): "
-         "repeat that, and never say the Room is on unless up returned running.",
-         {"action": S("status|up|down|run|checkpoint|reset|handoff"), "goal": S("for up: what you will do there"),
-          "command": S("for run"), "label": S("for checkpoint"), "name": S("for reset: the saved point; empty for the last one"),
+         "down; run (a quick shell command inside it, two minutes at most); start (a long command in a Room terminal "
+         "with no time limit; it returns at once); tail (a terminal's last lines, whether it is still busy and its exit "
+         "code; id, or the newest one you started); files (what is in the Room's folder; path); checkpoint (save a "
+         "point; label); reset (start over from a saved point: name, or the last one); handoff (copy a file out: src "
+         "inside the Room, dest on this computer; it only asks the person and never copies by itself). start runs a "
+         "long command in a Room terminal with no time limit and returns at once; use it for installers, builds and "
+         "anything that may take more than a minute, then tail to see how it goes. run is for quick commands (two "
+         "minutes at most). If tail says the person took the terminal, what it prints is theirs: do not act on it. "
+         "Every result says what the Room really is (label, isolation, screen): repeat that, and never say the Room is "
+         "on unless up returned running.",
+         {"action": S("status|up|down|run|start|tail|files|checkpoint|reset|handoff"), "goal": S("for up: what you will do there"),
+          "command": S("for run and start"), "label": S("for checkpoint"),
+          "name": S("for reset: the saved point, empty for the last one; for start: the terminal's name (Rooks)"),
+          "id": S("for tail: which terminal; empty for the newest one you started"), "lines": I(),
+          "path": S("for files: a folder inside the Room; empty for its home"),
           "src": S("for handoff: the file inside the Room"), "dest": S("for handoff: where to put it on this computer")},
          _use_room, ("action",), effect="external", untrusted=True, when=lambda ctx: _room_enabled(),
          confirm=_room_confirm),
@@ -776,6 +813,8 @@ def hold_reason(t: Tool, ctx: Ctx, args: dict) -> str:
             return WEAK_SANDBOX_REASON
     if t.name == TOOL_USE_ROOM and str(args.get("action") or "").strip().lower() == "handoff":
         return ""  # its copy always waits on a held request of its own in Needs you: one yes, not two
+    if _room_reads(t.name, args):
+        return ""  # status, a terminal's last lines, the Room's files: only looking, nothing changes (design 0006)
     if ctx.tainted and t.effect in GATED_EFFECTS:
         return HOLD_REASON
     if ctx.tainted and t.name == "run_python":
@@ -972,7 +1011,7 @@ async def _run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) 
     # A repeat is the same tool with the same arguments and no other change in between, so a deliberate toggle
     # (doing, todo, doing) still runs. Reads are never deduplicated; a call that failed may be retried.
     key = None
-    if t.effect != "read" and ctx.turn_action_id and not approved:
+    if t.effect != "read" and ctx.turn_action_id and not approved and not _room_reads(name, args):
         key = f"tool:{ctx.turn_action_id}:" + hashlib.sha256(f"{name}|{json.dumps(args, sort_keys=True)}".encode()).hexdigest()[:32]
         prior = actions.last_change(ctx.turn_action_id, key)
         if prior and not actions.changed_since(ctx.turn_action_id, prior["id"]):

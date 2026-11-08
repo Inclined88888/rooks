@@ -4,6 +4,35 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## 2026-11-08 · The Room as a small computer · branch feat/room-desktop
+
+The Room keeps what you do in it. Design record: `docs/design/0006-room-desktop.md`. This entry was written by the
+backend lane; the Room page's desk and the terminal's `/room` verbs land in the same branch from their own lanes.
+
+- **A terminal that stays.** The Room has real terminals: a login shell inside the Room's own folder, kept on this
+  computer's app while you go to chat and back, with its text there again when you return. Nothing run in one has a
+  time limit, so a long installer finishes. Up to four at a time, apart from the app's own terminal.
+- **What you install is found.** Every shell and every quick command in the Room reads the Room's own profile, and
+  the Room's `~/.local/bin`, `~/bin` and `~/.cargo/bin` come first on its PATH, so a tool an installer put there works
+  in the next terminal and in the assistant's next command. The Room writes `~/.profile` and `~/.zprofile` once, only
+  when they are missing; it never changes yours.
+- **Files.** The Room's folder can be looked through whether the Room is on or off; nothing in it is changed from there.
+- **Stop and Start over close the terminals first** and say how many. Stopped terminals stay listed with their text;
+  after Start over one new terminal opens. A restart of the app ends them too, and a chat that was cut off by it says
+  "Terminals in the Room ended; their files are still there."
+- **The assistant can start long work in the Room** (`use_room` start, then tail to watch it, files to look) and says
+  honestly whether it is still running and how it ended. A terminal the assistant works in takes no typing until you
+  press Take this one, so your keys are never read as its output. A quick command still stops after two minutes and now
+  says "Stopped after 120 seconds. For something long, start it in a Room terminal."
+- **The run log** records each terminal opening and closing, every command Rooks starts and how it ended, and lines
+  sent from a phone or `/room send`; what you type in a terminal is not recorded, only "You used the terminal for N min".
+- **The rooks terminal reaches more of the Room** with its Terminal access token: its terminals, Files, Save a point,
+  Start over and Hand off (a hand-off still waits for your yes in Needs you). The app.json key still only reads.
+- Migration: none; the schema is unchanged. The Room's terminals keep their text in the Room's folder
+  (`~/.ai-workspace/try-room/work/terminals`, at most 2 MB each). Rollback: previous commit; the seeded `~/.profile` and
+  `~/.zprofile` in the Room's home stay and are harmless. No secrets changed; a Room terminal gets none of the app's
+  secrets and no key, token, secret or password from its environment.
+
 ## 2026-11-07 · Rooks Browser app (preview) · branch feat/browser-app-landing
 
 A browser of our own that the browser agent can drive: `rooks-browser/app`, an Electron window with tabs, an address bar,

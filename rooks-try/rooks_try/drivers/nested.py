@@ -18,7 +18,7 @@ from pathlib import Path
 
 from .. import store
 from .base import Driver, DriverInfo, stop_pid
-from .shell import ShellDriver, isolation_level, wrapped
+from .shell import ShellDriver, isolation_level, login_argv, room_env
 
 LABEL = "A private desktop on this computer"
 NOTE = "A screen of its own on this computer. Commands run as you, in a folder of its own."
@@ -60,6 +60,7 @@ class NestedDriver(Driver):
         self.down()
         home = store.guest_home()
         (home / "Desktop").mkdir(exist_ok=True)
+        store.seed_home(home)
         log = store.root() / "nested.log"
         xvfb = subprocess.Popen(
             ["Xvfb", self._display, "-screen", "0", SCREEN, "-nolisten", "tcp"],
@@ -71,9 +72,8 @@ class NestedDriver(Driver):
         self._xvfb_pid = xvfb.pid
         if not self._wait_for_display(xvfb):
             raise RuntimeError("The room's display did not start. See nested.log in the Room folder.")
-        env = os.environ.copy()
+        env = room_env(home, self.offline)  # the Room's PATH first, no host secrets; and the Room's display
         env["DISPLAY"] = self._display
-        env["HOME"] = str(home)
         self._env = env
         self._start_desktop(env, home)
         state = store.load_state()
@@ -279,18 +279,15 @@ class NestedDriver(Driver):
                 self._procs.append(self._spawn([manager], env))
         xterm = shutil.which("xterm")
         if xterm:
-            self._terminal = self._spawn([xterm, *TERMINAL_ARGS, "-e", *self._login_shell(home)], env, cwd=home)
+            self._terminal = self._spawn([xterm, *TERMINAL_ARGS, "-e", *self.terminal_argv(home)], env, cwd=home)
             self._procs.append(self._terminal)
         elif not terminal_only:
             self._procs.append(self._spawn_canvas(env))
 
-    def _login_shell(self, home: Path) -> list[str]:
-        """The shell inside the terminal, with the same isolation the shell driver gives a command."""
-        inner = 'exec "${SHELL:-/bin/sh}"'
-        argv = wrapped(inner, home, self.offline)
-        if argv:
-            return argv
-        return ["sh", "-c", 'cd "$1" && exec "${SHELL:-/bin/sh}"', "room", str(home)]
+    def terminal_argv(self, home: Path) -> list[str]:
+        """The shell inside the terminal on this desktop, and in the app's Room terminals: the Room's login shell, with
+        the same isolation the shell driver gives a command and the same profile."""
+        return login_argv(home, self.offline)
 
     def _spawn_canvas(self, env: dict) -> subprocess.Popen:
         """A plain labelled window on the room's display (a real window, not a picture), with this interpreter."""
