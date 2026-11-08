@@ -619,12 +619,12 @@ def dismiss(pid: int, kind: str, ref: str) -> dict:
 
 # Context for the assistant ----------------------------------------------------------------------------------------
 def related_facts(p: dict, limit: int = 6) -> list[dict]:
-    """What the learn store knows that relates to this project (encrypted facts, BM25 over their words)."""
+    """What the one memory store knows that relates to this project (encrypted facts, BM25 over keyed words)."""
     try:
-        from .adapt import knowledge
+        from .knowledge import facts
 
         q = " ".join([p["name"], p["keywords"].replace(",", " "), p["description"][:200]])
-        return [{"id": f["id"], "content": f["content"], "category": f["category"]} for f in knowledge.search(q, limit)]
+        return [{"id": f["id"], "content": f["content"], "category": f["category"]} for f in facts.search(q, limit)]
     except Exception as e:  # noqa: BLE001
         log.debug("facts unavailable: %s", e)
         return []

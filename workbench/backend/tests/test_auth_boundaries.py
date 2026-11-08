@@ -64,7 +64,7 @@ def test_a_shared_key_never_mints_a_session(client, keys, key):
 @pytest.mark.parametrize("key", SHARED)
 def test_a_shared_key_never_opens_the_account(client, keys, key):
     a = anon(client)
-    for path in ("/api/conversations", "/api/settings", "/api/approvals", "/api/memories"):
+    for path in ("/api/conversations", "/api/settings", "/api/approvals", "/api/knowledge/memories"):
         assert a.get(path, headers={"Authorization": f"Bearer {key}"}).status_code == 401, path
 
 

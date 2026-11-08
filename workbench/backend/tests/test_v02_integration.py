@@ -68,7 +68,7 @@ def test_unattended_runners_respect_the_plan(client, monkeypatch):
     assert e.value.status_code == 402
     # background learning after a chat turn does nothing on Free
     mined = []
-    monkeypatch.setattr(adapt_hooks.knowledge, "mine_conversation", lambda cid: mined.append(cid))
+    monkeypatch.setattr(adapt_hooks.facts, "mine_conversation", lambda cid: mined.append(cid))
     asyncio.run(adapt_hooks.after_turn(1, "chat"))
     assert not mined
     # a computer-use job queued by an automation fails politely instead of driving the screen

@@ -32,9 +32,9 @@ def context(q: str = ""):
     block = ""
     if learn.enabled():
         try:
-            from .adapt import knowledge
+            from .knowledge import facts
 
-            block = knowledge.context_block(q[:2000]) if q.strip() else ""
+            block = facts.context_block(q[:2000]) if q.strip() else ""
         except Exception:  # noqa: BLE001 - context is a help, never a reason for the terminal to fail
             block = ""
     skills = db.all("SELECT name, description FROM skills WHERE enabled = 1 ORDER BY uses DESC, updated_at DESC LIMIT 30")
@@ -43,11 +43,12 @@ def context(q: str = ""):
 
 @router.get("/memory")
 def memory():
-    """What the app knows about the user (the terminal's /memory), newest and pinned first."""
-    from .adapt import knowledge
+    """What the app knows about the user (the terminal's /memory): the same rows as the Memory page, pinned and
+    newest first."""
+    from .knowledge import facts
 
-    facts = [{"content": f["content"], "category": f.get("category", "")} for f in knowledge.all_facts()[:40]]
-    return {"facts": facts, "learning": learn.enabled()}
+    known = [{"id": f["id"], "content": f["content"], "category": f["category"]} for f in facts.all_facts(40)]
+    return {"facts": known, "learning": learn.enabled()}
 
 
 @router.get("/history")
@@ -174,10 +175,10 @@ class ForgetIn(BaseModel):
 
 @router.post("/forget")
 def forget(data: ForgetIn):
-    """Drop memories that contain these words. Chat then stops seeing them too."""
-    from .adapt import knowledge
+    """Drop memories that contain these words. Chat and the Memory page then stop seeing them too."""
+    from .knowledge import facts
 
-    return {"forgotten": knowledge.forget_matching(data.text)}
+    return {"forgotten": facts.forget_matching(data.text)}
 
 
 class DraftMailIn(BaseModel):

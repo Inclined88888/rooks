@@ -1,11 +1,11 @@
-"""What the assistant remembers now lives in the encrypted learn store; tests read it through these helpers."""
+"""What the assistant remembers lives in the one memory store (knowledge/facts.py); tests read it through these helpers."""
 
 
 
 def _k():
-    from app.adapt import knowledge  # imported late: the app needs the test environment first
+    from app.knowledge import facts  # imported late: the app needs the test environment first
 
-    return knowledge
+    return facts
 
 
 def like(text: str) -> list[dict]:

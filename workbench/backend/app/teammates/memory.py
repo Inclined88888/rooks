@@ -4,7 +4,7 @@ Everything teammates need from memory goes through these four functions, so the 
 feat/memory-core (app/knowledge/: scopes per assistant/team, hybrid recall) can replace this local store by changing only
 this file. Until then a teammate's own notes live in tm_notes, encrypted with the workspace key.
 
-Scopes: "own"    = this teammate's notes + the shared facts about you every teammate knows (adapt store)
+Scopes: "own"    = this teammate's notes + the shared facts about you every teammate knows (the one memory store)
         "shared" = also notes every other teammate saved.
 """
 

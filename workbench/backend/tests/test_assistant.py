@@ -34,9 +34,9 @@ def test_chat_runs_tools_and_answers(client):
 
 
 def test_memory_is_learned_and_used_next_time(client):
-    # learned into the encrypted "What I know about you" store (adapt/knowledge.py), profile facts are pinned
-    mems = wait_for(lambda: [m for m in client.get("/api/learn/facts").json()["facts"] if "nurse" in m["content"]])
-    assert mems and mems[0]["category"] == "about" and mems[0]["pinned"]
+    # learned into the one memory store (knowledge/facts.py) the Memory page shows; profile facts are pinned
+    mems = wait_for(lambda: [m for m in client.get("/api/knowledge/memories").json() if "nurse" in m["content"]])
+    assert mems and mems[0]["tier"] == "profile" and mems[0]["pinned"] and mems[0]["source_kind"] == "chat"
     CALLS.clear()
     SCRIPT[:] = [{"role": "assistant", "content": "hello"}]
     events(client.post("/api/assistant/chat", json={"message": "hi"}))
@@ -223,9 +223,9 @@ def test_cli_token_auth(client):
 
     token = client.post("/api/cli-token").json()["token"]
     anon = TestClient(main.app)
-    assert anon.get("/api/memories").status_code == 401
-    assert anon.get("/api/memories", headers={"Authorization": f"Bearer {token}"}).status_code == 200
-    assert anon.get("/api/memories", headers={"Authorization": "Bearer wrong"}).status_code == 401
+    assert anon.get("/api/skills").status_code == 401
+    assert anon.get("/api/skills", headers={"Authorization": f"Bearer {token}"}).status_code == 200
+    assert anon.get("/api/skills", headers={"Authorization": "Bearer wrong"}).status_code == 401
 
 
 def test_web_search_tool_only_offered_when_search_is_set_up(monkeypatch):

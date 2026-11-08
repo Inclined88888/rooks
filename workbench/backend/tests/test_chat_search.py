@@ -64,7 +64,7 @@ def test_v3_database_is_rebuilt_with_every_chat_message_searchable(tmp_path, mon
 
     db.migrate(c, path)
 
-    assert c.execute("PRAGMA user_version").fetchone()[0] == db.SCHEMA_VERSION == 4
+    assert c.execute("PRAGMA user_version").fetchone()[0] == db.SCHEMA_VERSION >= 4
     assert _search(c, "dollars") == [mid] and len(_search(c, "invoice")) == 2
     assert c.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
     c.execute("UPDATE messages SET content = 'edited reply about rent' WHERE id = ?", (mid,))

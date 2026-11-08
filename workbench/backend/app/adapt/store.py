@@ -1,5 +1,6 @@
 """Tables for the adapt package. Created on first use, so db.py stays untouched. Text a person would not want on disk
-in plain form (facts, recordings, playbooks, lessons) is encrypted with the workspace key (security.encrypt)."""
+in plain form (recordings, playbooks, lessons) is encrypted with the workspace key (security.encrypt). Facts about the
+person live in the one memory store (knowledge/facts.py)."""
 
 import json
 import threading
@@ -8,20 +9,6 @@ from .. import db
 from ..security import decrypt, encrypt
 
 SCHEMA = """
-CREATE TABLE IF NOT EXISTS adapt_facts (
-  id INTEGER PRIMARY KEY,
-  content_enc TEXT NOT NULL,
-  category TEXT NOT NULL DEFAULT 'fact',        -- about | work | people | preference | format | fact
-  source TEXT NOT NULL DEFAULT 'chat',          -- chat | file | task | teach | feedback | user
-  evidence_enc TEXT NOT NULL DEFAULT '',        -- where it was learned (a short quote or file name)
-  confidence REAL NOT NULL DEFAULT 0.7,
-  pinned INTEGER NOT NULL DEFAULT 0,            -- always in context
-  uses INTEGER NOT NULL DEFAULT 0,
-  fingerprint TEXT NOT NULL DEFAULT '',         -- normalised words, for de-duplication without decrypting everything
-  conversation_id INTEGER,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
-);
 CREATE TABLE IF NOT EXISTS adapt_recordings (
   id INTEGER PRIMARY KEY,
   surface TEXT NOT NULL DEFAULT 'browser',      -- browser | desktop | narration

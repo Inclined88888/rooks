@@ -16,7 +16,8 @@ from zoneinfo import ZoneInfo
 from fastapi import HTTPException
 
 from .. import db
-from . import knowledge, store
+from ..knowledge import facts
+from . import store
 
 # kind: (label, what a routine does, keywords). Order matters: the first kind with the most hits wins.
 KINDS: dict[str, tuple[str, str, tuple[str, ...]]] = {
@@ -203,7 +204,7 @@ def accept(sid: int, cron: str | None = None) -> dict:
     db.run("UPDATE adapt_suggestions SET status = 'accepted', schedule_id = ?, updated_at = ? WHERE id = ?", sched["id"], db.now(), sid)
     if s["playbook_id"]:
         db.run("UPDATE adapt_playbooks SET schedule_id = ? WHERE id = ?", sched["id"], s["playbook_id"])
-    knowledge.add(f"Asked the assistant to take over {label(s['kind'])} on a schedule", "work", "task")
+    facts.add(f"Asked the assistant to take over {label(s['kind'])} on a schedule", "work", "task")
     return db.one("SELECT * FROM adapt_suggestions WHERE id = ?", sid) | {"schedule": sched}
 
 

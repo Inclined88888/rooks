@@ -14,7 +14,8 @@ import re
 from fastapi import HTTPException
 
 from .. import db
-from . import knowledge, playbooks, store
+from ..knowledge import facts
+from . import playbooks, store
 
 TARGETS = ("message", "run", "playbook", "note", "draft", "other")
 
@@ -81,7 +82,7 @@ async def record(target_kind: str, target_id: str = "", rating: int = 0, origina
     about = "format"
     if not lessons and edited.strip() and original.strip() and edited.strip() != original.strip():
         try:
-            out = await knowledge.model_json(LESSON_PROMPT, f"ASSISTANT VERSION:\n{original[:6000]}\n\nPERSON'S VERSION:\n{edited[:6000]}", model, "feedback")
+            out = await facts.model_json(LESSON_PROMPT, f"ASSISTANT VERSION:\n{original[:6000]}\n\nPERSON'S VERSION:\n{edited[:6000]}", model, "feedback")
             if isinstance(out, dict) and isinstance(out.get("lesson"), str) and out["lesson"].strip():
                 lessons.append(out["lesson"].strip()[:300])
                 about = out.get("about") if out.get("about") in ("preference", "format", "work") else "preference"
@@ -101,7 +102,7 @@ async def record(target_kind: str, target_id: str = "", rating: int = 0, origina
             playbooks.add_note(playbook_id, lesson)
             where = f"playbook:{playbook_id}"
         else:
-            f = knowledge.add(lesson, about, "feedback", evidence=(edited or comment)[:200], confidence=0.9) if knowledge.learning_on() else None
+            f = facts.add(lesson, about, "feedback", evidence=(edited or comment)[:200], confidence=0.9) if facts.learning_on() else None
             where = f"fact:{f['id']}" if f else ""
         db.run("INSERT INTO adapt_lessons(target_kind, target_id, rating, lesson_enc, applied_to, created_at) VALUES (?, ?, ?, ?, ?, ?)",
                target_kind, str(target_id), rating, store.seal(lesson), where, db.now())

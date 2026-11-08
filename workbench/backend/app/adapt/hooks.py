@@ -5,20 +5,16 @@ from __future__ import annotations
 import logging
 
 from .. import db
-from . import jobs, knowledge, store
+from ..knowledge import facts
+from . import jobs, store
 
 log = logging.getLogger("adapt")
 
 
 def context(user_text: str) -> list[str]:
-    """Extra system prompt parts for this turn (assistant.system_prompt)."""
+    """Extra system prompt parts for this turn (assistant.system_prompt). What is known about the person is not here:
+    the one memory block comes from knowledge/live.py."""
     parts: list[str] = []
-    try:
-        block = knowledge.context_block(user_text or "")
-        if block:
-            parts.append(block)
-    except Exception as e:  # noqa: BLE001 - never break a chat turn
-        log.warning("adapt context failed: %s", e)
     try:
         shown = _shown()
         if shown:
@@ -44,12 +40,6 @@ def _shown() -> str:
     return "\n".join(lines)
 
 
-def memory_replaces_legacy() -> bool:
-    """learn.py asks this: conversations are mined into the encrypted store instead of the old plaintext memories table.
-    Always true; the "Learn about me" switch (adapt_memory) then decides whether anything is learned at all."""
-    return True
-
-
 async def after_turn(conv_id: int, channel: str) -> None:
     """Run by learn._after (inside its one-at-a-time lock): learn facts, log the work, look for routines to suggest."""
     from .. import account
@@ -57,7 +47,7 @@ async def after_turn(conv_id: int, channel: str) -> None:
     if not account.allowed("learning"):  # integration/v0.2: background learning is Pro (unlocked while billing is off)
         return
     try:
-        await knowledge.mine_conversation(conv_id)
+        await facts.mine_conversation(conv_id)
     except Exception as e:  # noqa: BLE001
         log.warning("adapt memory failed for conversation %s: %s", conv_id, e)
     try:

@@ -1,7 +1,6 @@
 """Item 21: the run log as a trace. Every turn lists with its totals and opens as a tree of model calls, tool calls
 and approval decisions, read from the one actions table (R2) and never exposing encrypted raw arguments (R7)."""
 
-import memfacts
 import json
 
 from conftest import SCRIPT, events, tool_call
@@ -34,7 +33,9 @@ def test_a_turn_lists_with_totals_and_opens_as_its_tree(client):
 def test_an_approval_nests_under_the_held_call(client, monkeypatch):
     _poisoned_page(monkeypatch)
     SCRIPT[:] = [tool_call("read_page", {"url": "https://recipes.example/pasta"}, "r"),
-                 tool_call("remember", {"content": "Trace secret sk-proj-TRACEabcdefghijklmnopqrstuv", "kind": "fact"}, "m"),
+                 # a key in the arguments, to show the trace redacts them (memory itself refuses keys: test_one_memory.py)
+                 tool_call("schedule_task", {"name": "Trace check", "cron": "0 9 * * 5",
+                                             "prompt": "Check the report with sk-proj-TRACEabcdefghijklmnopqrstuv"}, "m"),
                  {"role": "assistant", "content": "Needs your approval."}]
     ev = events(client.post("/api/assistant/chat", json={"message": "read https://recipes.example/pasta"}))
     held = next(e for e in ev if e["type"] == "approval_required")
@@ -45,12 +46,12 @@ def test_an_approval_nests_under_the_held_call(client, monkeypatch):
     assert call["outcome"] == "held"
     [decision] = call["children"]
     assert decision["kind"] == "decision" and decision["outcome"] == "approved"
-    assert [c["kind"] for c in decision["children"]] == ["tool_call"] and decision["children"][0]["tool"] == "remember"
+    assert [c["kind"] for c in decision["children"]] == ["tool_call"] and decision["children"][0]["tool"] == "schedule_task"
     # the trace shows redacted arguments only; encrypted raw arguments never leave the server
     body = json.dumps(tree) + json.dumps(client.get("/api/runs", params={"limit": 200}).json())
     assert "payload_enc" not in body and "TRACEabcdef" not in body
     from app import db
-    memfacts.drop('Trace secret')
+    db.run("DELETE FROM schedules WHERE name = 'Trace check'")
 
 
 def test_filters_and_paging(client):

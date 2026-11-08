@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from ..security import require_user
-from . import backup, crypto, export_all, graph, importers, improve, live, memory, schema
+from . import backup, crypto, export_all, facts, graph, importers, improve, live, memory, schema
 from .recall import recall as _recall_fn, search_all
 
 router = APIRouter(prefix="/api/knowledge", dependencies=[Depends(require_user)])
@@ -46,6 +46,12 @@ class LinkIn(BaseModel):
 @router.get("/memories")
 def list_memories(tier: str | None = None, status: str = "active"):
     return memory.list_(tier=tier, status=status)
+
+
+@router.post("/memories/forget-all")
+def forget_all_memories():
+    """"Forget everything" on the Memory page: every memory about you and your work (a teammate's own notes stay)."""
+    return facts.forget_everything()
 
 
 @router.post("/memories")

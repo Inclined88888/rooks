@@ -10,7 +10,7 @@ from conftest import SCRIPT, events, tool_call
 @pytest.fixture(autouse=True)
 def quiet_learning(monkeypatch):
     """Background memory mining must not eat the scripted chat replies."""
-    from app.adapt import knowledge
+    from app.knowledge import facts as knowledge
 
     async def nothing(*a, **k):
         return []
@@ -225,7 +225,7 @@ def test_memory_and_schedule_undo(clean):
     s = _entry(c, "Set up automation “Friday invoices”")
     c.post(f"/api/history/{m['id']}/undo", json={})
     c.post(f"/api/history/{s['id']}/undo", json={})
-    assert not any("Fridays" in f["content"] for f in c.get("/api/learn/facts").json()["facts"])
+    assert not any("Fridays" in m["content"] for m in c.get("/api/knowledge/memories").json())
     from app import db
 
     assert db.one("SELECT 1 FROM schedules WHERE name = 'Friday invoices'") is None

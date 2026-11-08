@@ -375,24 +375,27 @@ async def _use_room(action: str = "status", command: str = "", goal: str = "", l
 
 
 def _remember(content: str, kind: str = "fact", ctx: Ctx | None = None) -> dict:
-    """Saved in the encrypted learn store (adapt.knowledge), shown on "What I know about you"."""
-    from .adapt import knowledge
+    """Saved in the one memory store (knowledge/facts.py): the Memory page, the terminal and the next prompt see it.
+    A newer fact about the same thing (where they live, where they work) replaces the older one."""
+    from .knowledge import facts
 
-    knowledge.migrate_legacy()
     kind = kind if kind in ("profile", "fact", "preference") else "fact"
-    f = knowledge.add(content, kind, "assistant", confidence=0.9, pinned=kind == "profile",
-                      conversation_id=ctx.conversation_id if ctx else None)
+    f = facts.add(content, kind, "chat", confidence=0.9, pinned=kind == "profile",
+                  conversation_id=ctx.conversation_id if ctx else None)
     if not f:
         return {"saved": None, "note": "Already known; nothing new saved."}
-    return {"saved": f["id"]}
+    out = {"saved": f["id"]}
+    if f["outcome"] == "superseded":
+        out["note"] = "This replaces what was known before about the same thing."
+    elif f["outcome"] == "conflict":
+        out["note"] = "This disagrees with something the user said themselves, so it waits on the Memory page for them to choose."
+    return out
 
 
 def _forget(memory_id: int) -> dict:
-    from .adapt import knowledge
+    from .knowledge import facts
 
-    knowledge.migrate_legacy()
-    knowledge.delete(memory_id)
-    return {"deleted": memory_id}
+    return facts.delete(memory_id)
 
 
 def _any_words(text: str) -> str:
@@ -421,11 +424,10 @@ def explore_graph(name: str, direction: str = "both", rel: str = "", depth: int 
 
 
 def search_memories(query: str, limit: int = 8) -> list[dict]:
-    from .adapt import knowledge
+    from .knowledge import facts
 
-    knowledge.migrate_legacy()
     return [{"id": f["id"], "content": f["content"], "kind": f["category"], "updated_at": f["updated_at"]}
-            for f in knowledge.search(query, limit)]
+            for f in facts.search(query, limit)]
 
 
 def search_history(query: str, limit: int = 8) -> list[dict]:
@@ -1095,12 +1097,6 @@ def system_prompt(ctx: Ctx, user_text: str) -> str:
         parts.append("Mode: build. Carry the task through with tools. Still wait for approval before sending mail, purchases, or anything destructive.")
     if ctx.channel in ("telegram", "slack", "discord", "whatsapp", "signal", "matrix", "email"):
         parts.append("This message came from a chat app. You share the same memory and skills as Chat in the app. Prefer drafts. Never send mail or spend money without approval.")
-    from .adapt import knowledge  # what the assistant knows lives in the encrypted learn store (old rows moved once)
-
-    try:
-        knowledge.migrate_legacy()
-    except Exception:  # noqa: BLE001 - never break a chat turn
-        pass
     from .adapt import hooks as adapt_hooks  # adapt and learn: what the assistant has learned about this person
 
     parts.extend(adapt_hooks.context(user_text))
@@ -1110,7 +1106,7 @@ def system_prompt(ctx: Ctx, user_text: str) -> str:
     from . import projects_hooks  # feat/v02-core: project context and check mode
 
     parts.extend(projects_hooks.context(ctx, user_text))  # feat/v02-core
-    from .knowledge import live as knowledge_live  # feat/memory-core: budgeted memories (sensitive ones only for local models)
+    from .knowledge import live as knowledge_live  # the one memory block (sensitive memories only for local models)
 
     parts.extend(knowledge_live.context(ctx, user_text))  # feat/memory-core
     from .teammates import hooks as tm_hooks  # feat/grok-style: which teammate answers, its persona and own memory

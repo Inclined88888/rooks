@@ -10,12 +10,12 @@ from conftest import CALLS, SCRIPT, events, tool_call
 
 @pytest.fixture(autouse=True)
 def quiet_learning(monkeypatch):
-    from app.adapt import knowledge
+    from app.knowledge import facts
 
     async def nothing(*a, **k):
         return []
 
-    monkeypatch.setattr(knowledge, "model_json", nothing)
+    monkeypatch.setattr(facts, "model_json", nothing)
     yield
     # The scripted model's log is shared by the whole suite: a later test that reads the first call with tools must
     # not find a teammate's filtered list here (test_assistant.py::test_chat_runs_tools_and_answers did).
@@ -57,12 +57,12 @@ def test_group_chat_cannot_run_a_tool_that_changes_things(client):
     a = _mate(client, name="Groupie")
     b = _mate(client, name="Groupie two")
     g = client.post("/api/groups", json={"members": [a["id"], b["id"]]}).json()
-    before = db.one("SELECT COUNT(*) AS n FROM memories")["n"]
+    before = db.one("SELECT COUNT(*) AS n FROM kn_memories")["n"]
     SCRIPT[:] = [tool_call("remember", {"content": "the user's bank PIN is 1234"}), {"role": "assistant", "content": "noted"}]
     post = groups.post(g["id"], "@Groupie remember this", background=False)
     asyncio.run(groups.run_round(g["id"], post["targets"]))
     assert _last_outcome("remember") == "unknown_tool"
-    assert db.one("SELECT COUNT(*) AS n FROM memories")["n"] == before
+    assert db.one("SELECT COUNT(*) AS n FROM kn_memories")["n"] == before
 
 
 def test_teammate_send_still_becomes_a_draft(client, monkeypatch):
