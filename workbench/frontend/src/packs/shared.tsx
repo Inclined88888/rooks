@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import "../pages/agents/agents.css";
 import { ApiError, api } from "../api";
 import { Button, Card, Select } from "../ui";
+import { download as saveFile } from "../desktop";
 
 export type WorkFile = { id: number; name: string; kind: string };
 
@@ -82,7 +83,7 @@ export function NotAdvice({ text }: { text: string }) {
 }
 
 export function download(url: string) {
-  window.open(url, "_blank", "noopener");
+  saveFile(url); // a download link: saved to Downloads in the Rooks app too (WebKit opens no window.open)
 }
 
 export function copy(text: string) {

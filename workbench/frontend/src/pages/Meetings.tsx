@@ -52,10 +52,16 @@ async function upload(path: string, blob: Blob) {
   return body;
 }
 
+/** Recording the computer's sound needs screen sharing with sound, which the Rooks app's webview (WebKit) and some
+ *  browsers do not have. Then only the microphone is offered, and the page says why. */
+export const canShareSound = () => typeof navigator !== "undefined" && !!navigator.mediaDevices?.getDisplayMedia;
+export const NO_SOUND = "Recording the computer's sound needs Chrome. The microphone works.";
+
 function ConsentModal({ onStart, onClose }: { onStart: (title: string, system: boolean) => void; onClose: () => void }) {
   const [told, setTold] = useState(false);
   const [title, setTitle] = useState("");
-  const [system, setSystem] = useState(true);
+  const sound = canShareSound();
+  const [system, setSystem] = useState(sound);
   return (
     <Sheet open onClose={onClose} title="Before you record" width={480}
       footer={<div className="ag-bar"><span className="ag-bar-end"><Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -63,8 +69,10 @@ function ConsentModal({ onStart, onClose }: { onStart: (title: string, system: b
       <div className="ag-form">
         <p className="ag-body">Tell everyone in the meeting that you're recording and taking notes, and give them the chance to say no. In many places it's the law to ask first.</p>
         <Input label="Meeting name" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="For example Weekly catch-up" autoFocus />
-        <label className="ag-check"><input type="checkbox" checked={system} onChange={(e) => setSystem(e.target.checked)} />
-          <span>Also record the computer's sound, so I hear the other people on a video call<small>You'll be asked to share a screen or tab with sound.</small></span></label>
+        {sound ? (
+          <label className="ag-check"><input type="checkbox" checked={system} onChange={(e) => setSystem(e.target.checked)} />
+            <span>Also record the computer's sound, so I hear the other people on a video call<small>You'll be asked to share a screen or tab with sound.</small></span></label>
+        ) : <p className="ag-note" role="note">{NO_SOUND}</p>}
         <label className="ag-check consent-check"><input type="checkbox" checked={told} onChange={(e) => setTold(e.target.checked)} /> <b>I've told everyone this meeting is being recorded</b></label>
         <p className="ag-note">The sound is turned into text as we go and then thrown away. Only the transcript and notes are kept, on this computer.</p>
       </div>

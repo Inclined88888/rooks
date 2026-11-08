@@ -7,6 +7,7 @@ import { useToast } from "../util";
 import "../connect.css";
 import { AppleMark, ProviderLogo, type Provider } from "./day/logos";
 import { Busy, CheckField, Disclosure, Notice, plainError, Steps } from "./day/parts";
+import { openExternal } from "../desktop";
 
 export { ProviderLogo };
 
@@ -70,7 +71,7 @@ export default function ConnectMailCalendar({ compact = false, onlyWhenEmpty = f
     if (info && !info.configured) { setError(`Sign-in with ${NAMES[provider]} isn't ready on this computer. Type the email address below.`); return; }
     try {
       const r = await api<{ url: string; state: string; opened: boolean }>(`/connect/${provider}/start`, { body: { login_hint: hint } });
-      if (!r.opened) window.open(r.url, "_blank", "noopener");
+      if (!r.opened) void openExternal(r.url);
       setPending({ provider, url: r.url, state: r.state });
       window.clearInterval(timer.current);
       timer.current = window.setInterval(async () => {

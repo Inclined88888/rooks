@@ -10,7 +10,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { api, stream, type StreamEvent } from "../api";
 import { useEffort, useModels, useToast, type RouterInfo } from "../util";
 import { useExit } from "../motion";
-import { askNotifyPermission, inBackground, notify } from "../desktop"; // feat/tauri-native
+import { askNotifyPermission, copyLater, inBackground, notify } from "../desktop"; // feat/tauri-native
 import { useAttachments, type Att } from "../Attachments"; // feat/attachments
 import { openBeside } from "../Beside";
 import { ChatList } from "../chat/ChatList"; // the Chats column: recent chats, archive, projects
@@ -472,9 +472,11 @@ function Chat() {
           workMode={workMode} onMode={chooseMode} codeDepth={codeDepth.current}
           model={model} onModel={setModel} models={models} defaultRef={defaultRef} isPlan={isPlan} effort={effort} onEffort={setEffort}
           busy={busy} showRoutines={showRoutines} onRoutines={() => { setShowRoutines((v) => !v); setRoutines(null); }}
-          onTerminal={() => api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } })
-            .then((h) => { navigator.clipboard?.writeText(h.command); toast.ok(`Copied: ${h.command}`); })
-            .catch(toast.err)}
+          onTerminal={() => {
+            // copyLater: the copy starts in the click, so WebKit (the Rooks app) allows it after the server answers
+            const command = api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } }).then((h) => h.command);
+            void copyLater(command).then((ok) => command.then((c) => toast.ok(ok ? `Copied: ${c}` : `Run this in a terminal: ${c}`))).catch(toast.err);
+          }}
           onBeside={async () => {
             try {
               const accounts = await api<{ id: number }[]>("/mail/accounts");

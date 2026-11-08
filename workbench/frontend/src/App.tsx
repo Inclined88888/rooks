@@ -24,6 +24,7 @@ import { IS_MAC, MOD_KEY } from "./keys";
 import { registerStageSurfaces } from "./stage/surfaces";
 import { NeedsYouSheet } from "./needs/NeedsYou";
 import { ShortcutsSheet, toggleShortcuts } from "./shell/ShortcutsSheet";
+import { ShellChoiceBar } from "./shell/ShellChoiceBar";
 
 export { MOD_KEY };
 
@@ -196,6 +197,7 @@ export default function App() {
       <a className="skip-link" href={onChat ? "#thread" : "#main"}>{onChat ? "Skip to the conversation" : "Skip to the page"}</a>
       <Rail status={status} name={shellName} onMore={openMore} onSearch={openSearch} />
       <div className="shell-main">
+        <ShellChoiceBar />
         <PresenceStrip />
         <main id="main" className="main agents-main" tabIndex={-1}>
           <StageHost renderRoutes={() => (

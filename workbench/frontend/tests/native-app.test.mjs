@@ -84,6 +84,23 @@ test("the Rooks app can open links and save files", () => {
   assert.ok(caps.permissions.includes("allow-open-external"));
   const buildRs = read("../../../desktop/src-tauri/build.rs");
   assert.match(buildRs, /"open_external"/);
-  const lib = read("../../../desktop/src-tauri/src/lib.rs");
+  const lib = read("../../../desktop/src-tauri/src/lib.rs") + maybe("../../../desktop/src-tauri/src/webkit.rs");
   assert.match(lib, /on_download/);
+});
+
+test("in the Rooks app, new-window links and download links go through the bridge", () => {
+  const desktop = read("../src/desktop.ts");
+  assert.match(desktop, /export function routeLinks\(/);
+  assert.match(desktop, /a\[target=_blank\]|target="_blank"|target === "_blank"/);
+  assert.match(desktop, /hasAttribute\("download"\)/);
+  assert.match(read("../src/main.tsx"), /routeLinks\(/);
+});
+
+test("a copy that waits for the server uses a ClipboardItem with a promise", () => {
+  const desktop = read("../src/desktop.ts");
+  assert.match(desktop, /export (async )?function copyLater\(/);
+  assert.match(desktop, /new ClipboardItem\(/);
+  assert.match(read("../src/team/Team.tsx"), /copyLater\(/);
+  assert.match(read("../src/pages/Assistant.tsx"), /copyLater\(/);
+  assert.doesNotMatch(read("../src/team/Team.tsx"), /await team\.act[^\n]*clipboard\?*\.writeText/);
 });

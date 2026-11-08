@@ -4,6 +4,7 @@ import { api } from "../api";
 import { BrandMark, Brand } from "../brand";
 import { Badge, Button, Input, Loading } from "../ui";
 import { ButtonLink, Notice } from "./settings/index";
+import { openExternal } from "../desktop";
 
 const MARK: Record<"claude" | "codex" | "copilot", Brand | null> = { claude: "claude", codex: "chatgpt", copilot: null };
 
@@ -35,7 +36,7 @@ export default function PlanCard({ agent, title, blurb, onConnected, cta = "Star
   const start = () => act("Opening the sign-in…", async () => {
     const s = await api<SignIn>(`/plans/${agent}/signin`, { method: "POST" });
     setSignin(s);
-    if (s.url) window.open(s.url, "_blank", "noopener");
+    if (s.url) void openExternal(s.url);
     window.clearInterval(timer.current);
     timer.current = window.setInterval(async () => {
       const n = await api<SignIn>(`/plans/signin/${s.id}`).catch(() => null);
