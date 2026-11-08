@@ -4,6 +4,41 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · Workplace cleanup · branch cleanup/workplace
+
+The first step of the cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the
+old browser agent, move old reports into `docs/history/`. Coding features are hidden later, not deleted. No schema
+change, nothing to migrate in the app. Rollback: revert the branch's commits.
+
+- **Removed: 375 files, 3,226 text lines, 40,578,218 bytes** (measured with git against `f837498`): 347 old
+  screenshots (40 MB, tracked although `.gitignore` excludes the folder), draft launch posts with claims that are false
+  today, two stale root reports, a script that only ran in one developer's folder, three screens nothing could open,
+  and the old `browser-agent/`.
+- **Screens.** The Customize page is gone: `/customize` and the old `/connect` link open Settings, which has every row
+  it linked to. The chat's unreachable Skills tab is gone; its list of learned and hand-written skills is still on the
+  Skills page ("Learned or written here"), now with loading, empty and error states. The unused "What I improved" card
+  is gone. A test fails if any link, menu entry or redirect in the app points at a page that does not exist.
+- **Desktop app.** Settings, Desktop app no longer lists three "coming soon" helpers that will not ship that way.
+- **Server.** `GET` and `PUT /api/trade` are gone (no screen called them); a saved trade is still shown.
+- **Docker server: the `browser` add-on is now Rooks Browser.** Action needed on a server install: run
+  `./setup.sh` again (or `docker compose build browser && docker compose up -d`) so the new image is built. It is the
+  same agent and approvals as the desktop app: a sensitive step waits for a yes on the Browser page or in Needs you. It
+  needs `BROWSER_API_KEY` (setup.sh already makes one) and refuses localhost, the LAN and the stack's own hosts.
+  - **Paperclip, Hermes and Open WebUI no longer get a browser tool or the browser key.** That key answers approvals,
+    and those add-ons run agents on their own. Browse from Workbench's chat instead. An existing Hermes setup may still
+    list a `browser` tool server that no longer answers; remove it in the Hermes dashboard. `setup.sh` clears the old
+    Open WebUI entry.
+  - `BROWSER_MONTHLY_STEP_LIMIT` is gone (Rooks Browser has no monthly cap); each job still stops after 50 steps at
+    most, and model calls are counted in Workbench's usage.
+- **Old audits and evidence** (`docs/AUDIT.md`, `PHASE0-GATE.md`, `ROOKS-FINISH-REPORT.md`, `docs/evidence`,
+  `docs/night`, `scripts/audit`) moved to `docs/history/`, with links fixed.
+- **Tests.** `workbench/backend/tests/test_repo_cleanup.py` (removed files stay removed, the browser add-on is Rooks
+  Browser in service mode, Paperclip and Hermes never get the shared key, no CI job for the old agent),
+  `workbench/frontend/tests/removed-pages.test.mjs` (no removed screen, no link to a page that does not exist), a unit
+  test in `desktop/src-tauri/src/sidecars.rs`, and `test_customer_filing.py` for the trade routes. Each failed on the
+  tree before its change. The new CI job `browser-image` builds the add-on image and checks its health check and token;
+  the image was not built locally (no Docker daemon here).
+
 ## Unreleased · Phase 1a: terminal safety · branch phase-1a/terminal-safety
 
 No schema change, nothing to migrate. Rollback: revert the branch's commits.

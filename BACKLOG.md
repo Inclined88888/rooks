@@ -17,6 +17,36 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Scheduled later
 
+### Workplace cleanup: what the delete step left (branch cleanup/workplace)
+
+* **For the room-browser branch** (out of scope here because that branch is changing these files): nothing in
+  `desktop/src-tauri/tauri.conf.json`, `desktop/launcher/*`, `install.sh`, the logo and icons,
+  `workbench/frontend/src/room/*`, `rooks-try/rooks_try/browser.py` or `workbench/backend/app/room_browser.py` refers
+  to anything removed here (checked with git grep). They still need the rename to Rooks (section g.4): the desktop app's
+  product name "AI Workspace" in `tauri.conf.json`, and the merge of `browser_proxy.py`, `local_agents.py` and
+  `handoff.py` into the Room browser (g.2).
+* **Settings, Desktop app shows the helper's raw name and a technical line** ("workbench", "Workbench backend: chat,
+  run log, approvals, budgets, MCP server", from `desktop/src-tauri/src/sidecars.rs`). Plain words with the Rooks
+  rename step.
+* **A browser for Paperclip, Hermes and Open WebUI.** They lost the old agent's `/mcp` and `/tools` endpoints, because
+  the browser key also answers approvals. Giving them one again needs an HTTP MCP endpoint on `rooks-browser serve`
+  with its own key that can start jobs but never answer approvals, and approvals answered by a person in Workbench.
+* **No monthly cap on browser steps.** The old agent had `BROWSER_MONTHLY_STEP_LIMIT`; Rooks Browser caps each job at
+  50 steps, and `/v1` has no budget of its own. Add a cap in Workbench (it sees every browser model call) if wanted.
+* **The browser add-on image is not measured.** It was not built in this session (no Docker daemon); the `browser-image`
+  CI job builds it and checks the health check and token. Put its size in the README table after the first run.
+* **"What I improved" has no screen.** `memory/Improved.tsx` was deleted unused; `/api/knowledge/improvements` still
+  runs. Decide whether Home (to be "Today") shows it, or hide the routes.
+* **The trade setting cannot be set any more.** `/api/trade` had no caller; Home and the status answer still read a
+  saved trade. Settle it with the Trade, Legal and Study packs (g.3).
+* **The sidecar unit test does not run in CI.** `cargo test --offline sidecars` in `desktop/src-tauri` needs a
+  placeholder `binaries/workbench-server-<target>` file; no workflow runs `cargo test` for the desktop app.
+* **Undecided by the owner:** `cli-launcher/` and `pages/Code.tsx` (hiding Code behind Advanced is the next step).
+* **Old reports keep their old paths inside.** Files in `docs/history/` mention `docs/evidence/` and `scripts/audit/`
+  as they were; `docs/history/README.md` maps them.
+
+### Other scheduled items
+
 * **Rooks Browser app: what the preview still lacks** (`rooks-browser/app`, landed from `feat/browser-app` after review, CHANGELOG
   2026-11-07). It starts with `npm start` only: no packaging or installer entry, no code signing, so it is not in `install.sh`,
   the desktop app or the Room yet. No tracker blocking. "Ask about this page" is a job through the task helper (the page's text

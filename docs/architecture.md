@@ -657,6 +657,28 @@ This is a proposal. Nothing is deleted by this document. "Hide behind Advanced" 
 
 Counted from `main` with git. 40.5 MB is 40,516,226 bytes; screenshots/ alone is 40,476,156 bytes (328 pictures, 5 videos, 3 animations and a few notes).
 
+### g.1a Done on branch `cleanup/workplace`
+
+Status of the "Delete" table and the history move from g.2, measured with git against `f837498` (this document's own
+commit on the branch).
+
+| Item | Outcome |
+|---|---|
+| screenshots/, marketing/launch-posts.md, PROGRESS-desktop.md, ai-workspace-audit-report.md, scripts/test_vertical_slice.py | Deleted. `docs/motion.md` no longer points at the recordings (it also named an animation gallery page that does not exist; fixed). A test fails if screenshots/ is tracked again. |
+| pages/Customize.tsx | Deleted. `/customize` and the old `/connect` link redirect to Settings; the two Settings rows that linked to it are gone; Settings replaces it in the Beside list. |
+| chat/tabs/SkillsTab.tsx | Deleted, with a correction to the table above: the chat tab itself had no route, but the Skills page showed the same component ("Learned or written here"). That list now lives in `pages/Skills.tsx` as `LearnedSkills`, on the shared parts with loading, empty and error states. |
+| memory/Improved.tsx | Deleted. The improvements routes stay; whether Home shows the card is in BACKLOG.md. |
+| sidecars.rs placeholder rows | Deleted, with a unit test that every listed helper is enabled and in `bundle.externalBin`. |
+| `/api/trade` routes | Deleted with `projects.set_trade`. A saved trade is still read by Home and the status answer. |
+| browser-agent/ | Deleted after the Docker `browser` add-on became Rooks Browser (`rooks-browser/Dockerfile`, service mode). Paperclip, Hermes and Open WebUI no longer get `BROWSER_API_KEY` or a browser tool: that key answers approvals, and those add-ons run agents on their own. The CI job now builds and checks the add-on image. |
+| Old audits and evidence | Moved to `docs/history/` with a README; links fixed. |
+| cli-launcher/, pages/Code.tsx | Left alone: the owner has not decided them. Hiding Code is the next step. |
+
+Totals removed: 375 files (347 under screenshots/, 21 under browser-agent/, 4 root files and scripts, 3 screens),
+3,226 text lines in those files (336 of them are pictures, videos or other binary files with no lines), and
+40,578,218 bytes. Contradictions 5, 9, 10, 16 and 21 in section i no longer apply; 12 and 13 are smaller (one
+browser agent now).
+
 ### g.2 Merge
 
 | Path | Into | Why | Risk |
