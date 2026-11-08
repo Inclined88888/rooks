@@ -230,3 +230,35 @@ def test_system_prompt_lists_the_project_root(project, fake):
     run(project, m)
     system = m.requests[0]["body"]["messages"][0]["content"]
     assert "calc.py, test_calc.py" in system and ".rooks" not in system
+
+
+def _asks(project):
+    server = Path(__file__).with_name("fake_mcp_asks.py")
+    (project / ".mcp.json").write_text(json.dumps({"mcpServers": {"room": {"command": sys.executable, "args": [str(server)]}}}))
+
+
+def test_an_mcp_servers_question_is_answered_by_the_person_in_the_terminal(project, fake):
+    """rooks-try's handoff asks the person through MCP elicitation; rooks puts that question to the person, even with
+    --yes (which approves the agent's own steps, never a question meant for the person)."""
+    _asks(project)
+    m = fake([openai_reply("", [("mcp__room__copy_out", {"src": "notes.txt"})]), openai_reply("Done.")])
+    r = run(project, m, "--yes", stdin="y\n")
+    assert r.returncode == 0, r.stderr
+    assert "Copy notes.txt out of the Room?" in r.stdout
+    assert m.requests[1]["body"]["messages"][-1]["content"] == "COPIED notes.txt"
+
+
+def test_a_no_to_an_mcp_servers_question_copies_nothing(project, fake):
+    _asks(project)
+    m = fake([openai_reply("", [("mcp__room__copy_out", {"src": "notes.txt"})]), openai_reply("Done.")])
+    r = run(project, m, "--yes", stdin="n\n")
+    assert r.returncode == 0, r.stderr
+    assert m.requests[1]["body"]["messages"][-1]["content"] == "NOT COPIED: the person said no"
+
+
+def test_with_no_keyboard_an_mcp_servers_question_is_a_no(project, fake):
+    _asks(project)
+    m = fake([openai_reply("", [("mcp__room__copy_out", {"src": "notes.txt"})]), openai_reply("Done.")])
+    r = run(project, m, "--yes", stdin="")
+    assert r.returncode == 0, r.stderr
+    assert m.requests[1]["body"]["messages"][-1]["content"] == "NOT COPIED: the person said no"

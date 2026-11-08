@@ -4,6 +4,23 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · Phase 1a: terminal safety · branch phase-1a/terminal-safety
+
+No schema change, nothing to migrate. Rollback: revert the branch's commits.
+
+- **Only a person answers a terminal's question.** The open app's own key (app.json), Rooks Desk's key and a coding
+  job's key can no longer record an answer to a question the `rooks` terminal asked: any program on this computer can
+  read app.json, a command the agent ran included, so it could have said yes to its own question. An answer typed in
+  the terminal is recorded in the app with the Terminal access token (`rooks login`); without it the answer still
+  stands in the terminal and the app's card closes. A question from a coding job the app started is answered in the
+  app only, not even with the token. Breaking for scripts that answered `/v1/rooks/approvals/{id}` with the app.json
+  key: they get "Only you can answer this" (403) now.
+- **The Room asks you before a file leaves it, in the terminal too.** `rooks-try mcp`'s `handoff` no longer takes
+  `approve: true` from the agent calling it. The server asks the person itself (MCP elicitation, as Rooks Desk does),
+  and `rooks` now puts such a question to you, also with `--yes`, and mirrors it to Needs you. A program that cannot
+  ask gets "waiting for a person" and nothing is copied. The same goes for Rooks Desk's questions in `rooks`: a
+  sensitive step it used to refuse there (the terminal could not ask) is now put to you.
+
 ## 2026-11-08 · The Room as a small computer · branch feat/room-desktop
 
 The Room keeps what you do in it. Design record: `docs/design/0006-room-desktop.md`. This entry was written by the

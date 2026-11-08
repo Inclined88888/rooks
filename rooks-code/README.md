@@ -83,6 +83,11 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
 * **Approval by default.** Reading and searching run freely. Every edit is shown as a diff and every command in full,
   then you answer `y`, `n` or `a` (always, for this session). A denied action is reported to the model, which is told not
   to retry it. With no terminal input the answer is "no".
+* **Only you answer, here or in the app.** Linked to the app, each question also waits in Needs you. An answer typed
+  here is recorded in the app only with your Terminal access token (`rooks login`); the open app's own key never
+  records one, because any program on this computer can read it, a command the agent ran included. Without the token
+  your answer here still stands and the app's card closes. A question from a coding job the app started is answered in
+  the app only.
 * **Trusted folders.** `trusted_folders = ["~/code/my-app"]` in the config lets edits and commands in those folders (and
   below) run without asking. `--yes` does the same for one run.
 * **Dry run.** `--dry-run` (or `/dry-run`) shows everything that would change and applies nothing.
@@ -129,6 +134,10 @@ trusted = false                  # true: its tools run without asking
 
 A project's `.mcp.json` (`{"mcpServers": {...}}`, the format Claude Code and Cursor use) is picked up too. MCP tool
 calls are asked about like commands. Only stdio servers are supported so far; HTTP/SSE servers are skipped with a notice.
+When a server asks you something itself while a tool runs (MCP elicitation: the Room asks before a file leaves it,
+Rooks Desk before a sensitive step), the question is put to you, never to the model, and is mirrored to Needs you when
+the app is linked. `--yes`, trusted folders and `a` do not answer it; with no keyboard and no answer in the app it is a
+no. Only yes or no questions are answered; a server asking for anything else is declined.
 
 ## Limits (honest)
 

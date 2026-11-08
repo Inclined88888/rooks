@@ -114,7 +114,8 @@ class Agent:
         self.changes = ChangeSets(self.root)
         self.sub = sub  # a sub-agent (the task tool): no MCP servers, no learning; tools depend on sub_mode
         self.sub_mode = sub_mode if sub else "explore"  # explore|plan = read-only; build = edits under parent approvals
-        self.mcp = MCPManager(settings.mcp_servers, str(self.root), warn=ui.warn) if settings.mcp_servers and not sub else None
+        self.mcp = (MCPManager(settings.mcp_servers, str(self.root), warn=ui.warn, elicit=self._mcp_question)
+                    if settings.mcp_servers and not sub else None)
         self.messages: list[dict] = list(messages or [])
         self.always: set[str] = set()  # effects approved for the rest of the session ("a" at the prompt)
         self.budget = Budget(settings.max_tokens, settings.max_usd, settings.model, settings.prices, settings.local)
@@ -685,6 +686,29 @@ class Agent:
         if proc.returncode == 0:
             return ""
         return (proc.stderr or proc.stdout or "blocked by before_tool").strip()[:500]
+
+    def _mcp_question(self, server: str, tool: str, params: dict) -> dict:
+        """An MCP server asks the person (elicitation), e.g. rooks-try before a file leaves the Room. The person answers
+        here or in the app's Needs you, never the model, and --yes or "a" do not answer it: they approve the agent's own
+        steps. Only a yes or no question is answered; a form this terminal cannot fill is declined."""
+        schema = params.get("requestedSchema") or {}
+        props = schema.get("properties") or {}
+        flags = [k for k, v in props.items() if isinstance(v, dict) and v.get("type") == "boolean"]
+        if len(flags) != 1 or set(schema.get("required") or []) - set(flags):
+            self.ui.tool_note(f"{server} asked a question this terminal cannot answer, so it was declined")
+            return {"action": "decline"}
+        message = re.sub(r"[\x00-\x1f\x7f]+", " ", str(params.get("message") or "")).strip()[:300]
+        plan = Plan("external", f"{server} asks you: {message or 'go ahead?'}", "", lambda: ("", None, ""))
+        plan.tool = f"mcp__{server}__{tool}" if tool else f"mcp__{server}"
+        self.ui.show_plan(plan)
+        try:
+            answer = self.ui.ask(plan)
+        except (EOFError, KeyboardInterrupt):
+            answer = "n"
+        yes = answer in ("y", "a")  # "a" is one yes here: a question is never approved for the session
+        self.log.add("decision", "approved" if yes else "denied", parent=self._turn, tool=plan.tool,
+                     detail=f"question from {server}: {message[:200]}")
+        return {"action": "accept", "content": {flags[0]: True}} if yes else {"action": "decline"}
 
     def _mcp(self, server, tool: str, arguments: dict):
         ok, text = server.call(tool, arguments)
