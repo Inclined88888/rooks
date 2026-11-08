@@ -191,6 +191,7 @@ def _say(fn, agent, rest=""):
 @pytest.fixture(autouse=True)
 def no_app_running(monkeypatch):
     monkeypatch.setattr("rooks_code.config.app_link", lambda: {})
+    monkeypatch.setattr(workroom, "_SEEN", {"working": False, "last_rooks": None})  # what an earlier test saw
 
 
 def test_without_the_app_the_room_and_needs_you_say_so_plainly():
