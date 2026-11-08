@@ -460,10 +460,17 @@ def plan_connection(preset: str, create: bool) -> dict | None:
     return db.one("SELECT * FROM connections WHERE id = ?", cid)
 
 
-def managed_connection(name: str, base_url: str, secret: str, enabled: bool, models: str = "") -> int | None:
-    """A connection the app manages itself (the AI Workspace Cloud hosted models): OpenAI compatible chat completions,
-    found by name. Disabling keeps the row so no history or default model reference is lost."""
+def managed_connection(name: str, base_url: str, secret: str, enabled: bool, models: str = "",
+                       previous_name: str = "") -> int | None:
+    """A connection the app manages itself (the Rooks Cloud hosted models): OpenAI compatible chat completions,
+    found by name. Disabling keeps the row so no history or default model reference is lost. A row still called
+    `previous_name` (the name before a rename) is renamed to `name` first, keeping its id."""
     row = db.one("SELECT id FROM connections WHERE name = ? AND auth_kind = 'api_key' AND protocol = 'chat_completions'", name)
+    if row is None and previous_name:
+        row = db.one("SELECT id FROM connections WHERE name = ? AND auth_kind = 'api_key' AND protocol = 'chat_completions'",
+                     previous_name)
+        if row:
+            db.run("UPDATE connections SET name = ? WHERE id = ?", name, row["id"])
     if not enabled:
         if row:
             db.run("UPDATE connections SET enabled = 0 WHERE id = ?", row["id"])

@@ -286,13 +286,11 @@ def _sync_cloud_connection(enabled: bool) -> None:
     """The hosted models show up as a normal model connection, keyed by the account session."""
     from . import llm
 
-    # Before the product was Rooks this row was "AI Workspace Cloud": rename it once, so it keeps its id (history,
+    # Before the product was Rooks this row was "AI Workspace Cloud": it is renamed once and keeps its id (history,
     # default model) instead of a second connection appearing beside it.
-    if not db.one("SELECT id FROM connections WHERE name = ?", CLOUD_CONNECTION_NAME):
-        db.run("UPDATE connections SET name = ? WHERE name = ? AND auth_kind = 'api_key' AND protocol = 'chat_completions'",
-               CLOUD_CONNECTION_NAME, LEGACY_CLOUD_CONNECTION_NAME)
     base = cloud_url()
-    llm.managed_connection(CLOUD_CONNECTION_NAME, f"{base}/v1", _session(), enabled and bool(base), "auto,fast,smart")
+    llm.managed_connection(CLOUD_CONNECTION_NAME, f"{base}/v1", _session(), enabled and bool(base), "auto,fast,smart",
+                           previous_name=LEGACY_CLOUD_CONNECTION_NAME)
 
 
 # ---------- routes ----------
