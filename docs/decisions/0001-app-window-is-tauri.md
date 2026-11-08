@@ -2,6 +2,13 @@
 
 Status: accepted (2026-11-04). Replaces the earlier wording "app window = the same UI in a Chrome --app window".
 
+**Later records (note added 2026-11-08).** Design record 0003 (decision W1) keeps this decision: the React app in the
+Tauri shell is the one desktop UI, and `desktop/rooks-native` is only the floating Ask palette, not a second app.
+Design record 0007 (`docs/design/0007-room-browser-and-native-app.md`, section 2, written on the room-browser branch)
+goes further: the Tauri app is installed by default, the launcher never opens Chrome or Edge without asking, and the
+app is named Rooks. Until that branch is merged, the one-command install skips the desktop app by default
+(`--native no`, "that release is the old app") and opens the Chrome or Edge window described below.
+
 ## Decision
 
 The third surface ("app window") is the native Tauri v2 app, AI Workspace.app (desktop/src-tauri). It starts the

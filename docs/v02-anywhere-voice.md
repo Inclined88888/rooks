@@ -1,6 +1,7 @@
 # Ask from anywhere, voice, and meeting notes (v0.2)
 
-Branch `feat/v02-anywhere-voice`. Plain-English guide first, technical notes after.
+In the app on `main` (built on branch `feat/v02-anywhere-voice`). Plain-English guide first, technical notes after.
+The Free and Pro labels below are the planned tiers; plan checks are off, so everything here is open today.
 
 ## What you get
 
@@ -14,7 +15,7 @@ Branch `feat/v02-anywhere-voice`. Plain-English guide first, technical notes aft
 
 ### Voice
 - **Dictation (Free):** the microphone button in Chat. Click to talk (it stops when you stop), or hold it down and let go.
-- **Talk (Pro):** a hands-free conversation on the Talk page. Optional wake word ("hey workspace", changeable) when speech recognition runs on your computer. Start speaking while it's talking and it stops to listen (barge-in). Say "stop listening" to end.
+- **Talk (Pro):** a hands-free conversation on the Talk page. Optional wake word ("hey rooks", changeable; "hey workspace" still works while the default is kept) when speech recognition runs on your computer. Start speaking while it's talking and it stops to listen (barge-in). Say "stop listening" to end.
 - **Approvals out loud:** when the assistant wants to send, post, pay or delete, the usual approval card appears **and** it asks you out loud. Only a clear "yes, send it" approves; "no", "wait", "maybe", questions and anything muddled are not a yes. The computer checks your words again before anything runs. You can always tap the card instead.
 - **Speech to text:** on your computer (faster-whisper, private, if installed) → a cloud service (if you've added a key) → your browser/OS dictation.
 - **Reading out:** your computer's voices (free, offline) or an optional cloud voice.

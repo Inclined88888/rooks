@@ -1,6 +1,6 @@
 # Rooks native app — plan
 
-Status: draft for the owner. Nothing in this document is built. The app that ships today stays as it is until you accept a milestone.
+Status: superseded; kept as a record. The first milestone was built: `desktop/rooks-native`, an iced window with no web view (pull request #9, now version 0.4.0, with its own build in `.github/workflows/rooks-native.yml`). Design record 0003 (decision W1, 2026-11-06) then chose the React app in the Tauri shell as the one interface; the iced window stays only as the floating Ask palette and gets no new screens. Design record 0007 (on the room-browser branch, section 2) makes the Tauri app Rooks's own program. Read those for the current direction; the rest of this plan is not being built.
 
 This replaces the idea of restyling the current desktop window. That window is a website drawn inside a system web view. The rebuild is a new window, with its own UI, and no web view under it.
 

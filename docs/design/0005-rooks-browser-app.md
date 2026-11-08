@@ -1,6 +1,6 @@
 # 0005: Rooks Browser, our own browser
 
-Status: first increment on branch `feat/browser-app` (2026-11-07). Not merged, not in the installers yet.
+Status: first increment built on branch `feat/browser-app` (2026-11-07) and merged to `main` as `rooks-browser/app` (pull request #25). It is a preview: not in the installers, and nothing in the app starts it (docs/architecture.md, g.3). The Room's own browser (design record 0007, on the room-browser branch) is a separate surface.
 
 ## 1. What the owner asked for
 

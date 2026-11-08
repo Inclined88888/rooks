@@ -1,19 +1,21 @@
-# AI Workspace docs
+# Rooks docs
 
 A self hosted AI workspace in one light container. Start with the [README](../README.md) for install and a tour of the features.
 
+- [How Rooks is built: parts, data flows, stores, cleanup](architecture.md)
 - [API reference](API.md)
 - Old audits and evidence (snapshots, kept as a record): [security audit](history/AUDIT.md), [Phase 0 gate](history/PHASE0-GATE.md), [history folder](history/)
 - [Releases](RELEASES.md)
 - [Connect Google and Microsoft (OAuth setup)](connect-google-microsoft.md)
-- Design notes: [run log and connections](design/0001-run-log-and-connections.md), [adapters](design/0002-adapters.md)
+- Design notes: [run log and connections](design/0001-run-log-and-connections.md), [adapters](design/0002-adapters.md), [the Workroom](design/0003-workroom.md), [coworkers](design/0004-coworkers.md), [the Rooks Browser app](design/0005-rooks-browser-app.md), [the Room as a small computer](design/0006-room-desktop.md); decision: [the app window](decisions/0001-app-window-is-tauri.md)
 - Competitive decode (learn, don’t copy): [competitive/decode.md](competitive/decode.md)
 
 ---
 
-# 100 reasons people pick AI Workspace
+# 100 reasons people pick Rooks
 
-> Items marked **(Phase N)** are on the roadmap, not shipped. Everything else is in the product today.
+> Items marked **(Phase N)** are on the roadmap, not shipped. Everything else is in the product today. Checked against
+> the code on 8 November 2026; items that had become false were corrected, and shipped roadmap items lost their marker.
 
 ## Weight and footprint
 
@@ -34,8 +36,8 @@ A self hosted AI workspace in one light container. Start with the [README](../RE
 12. No wiring six services together before you get value.
 13. Notes with AI writing assist are built in.
 14. Tasks are built in.
-15. Calendar is built in (ICS read, CalDAV read+create, local).
-16. Mail is built in (IMAP/SMTP) with draft-only safety.
+15. Calendar is built in (Google and Outlook read+create, ICS read, CalDAV read+create, local).
+16. Mail is built in (Google, Microsoft, IMAP/SMTP); the assistant sends an email only after your yes.
 17. Research with citations is built in.
 18. Side-by-side model comparison is built in.
 19. Searchable history across every conversation is built in.
@@ -47,19 +49,19 @@ A self hosted AI workspace in one light container. Start with the [README](../RE
 22. Capped at 5 durable items per turn so memory doesn't bloat.
 23. 40-character minimum stops trivial messages polluting memory.
 24. Deduplication is built in.
-25. Recall uses FTS5 bm25 — no vector database required.
+25. Recall uses SQLite FTS5 bm25, plus local vectors and a graph when present, all in one file — no vector database server.
 26. Relevant memories are injected into the system prompt.
 27. Memory can be switched off entirely.
-28. Memory is exportable and importable as JSON — yours to keep. **(Phase 2)**
-29. Memory scopes for personal, project, and company. **(Phase 2)**
-30. A memory card shows what the AI recalls, with edit and forget inline. **(Phase 2)**
+28. Memory can be exported (JSON or a zip) and imported — yours to keep.
+29. Memory has scopes (shared, one coworker, a team, private) and can belong to a project.
+30. The Memory page shows what the AI knows, with correct, why and forget inline.
 
 ## Skills you can see and control
 
 31. Skills are auto-saved after 3+ tool calls in a turn.
 32. Skills are listed in the system prompt and loaded on demand.
-33. Manual skill creation: name, template, optional tool allowlist. **(Phase 2)**
-34. A skills gallery to browse and edit. **(Phase 2)**
+33. You can write a skill yourself: a name, a description and the steps.
+34. A Skills page to browse, install and edit skills.
 35. Skills triggerable from the API and CLI without a chat turn. **(Phase 2)**
 36. Delegated agents can auto-load a named skill. **(Phase 3)**
 37. Skills are plain text — inspectable, portable, diffable.
@@ -88,8 +90,8 @@ A self hosted AI workspace in one light container. Start with the [README](../RE
 54. Session cookie auth.
 55. CLI bearer token stored only as a SHA256 hash.
 56. Telegram user-ID allowlist.
-57. Mail is draft-only — it never sends.
-58. No shell tool enabled by default.
+57. Mail never goes out on its own: each email waits for your yes.
+58. No unguarded shell: the assistant runs commands in the Room (its own computer) or a sandbox, and on your computer only after your yes.
 59. Tool step limit of 12 per turn.
 60. Tool timeout of 180 seconds.
 61. Scheduled runs cannot create schedules.
@@ -97,7 +99,7 @@ A self hosted AI workspace in one light container. Start with the [README](../RE
 
 ## Privacy and local-first
 
-63. Everything stays inside your container.
+63. Your data stays on your computer or your own server; only what you send to a cloud model leaves it.
 64. SQLite local file — no external database.
 65. No telemetry.
 66. No account required.
@@ -129,10 +131,10 @@ A self hosted AI workspace in one light container. Start with the [README](../RE
 
 ## Channels
 
-86. Telegram bot built in (long polling, allowlist, encrypted token).
-87. Signal as an optional add-on with an allowlist. **(Phase 4)**
-88. WhatsApp as an optional add-on with an allowlist. **(Phase 4)**
-89. Discord and Slack as thin, scoped adapters. **(Phase 4)**
+86. Telegram, Slack and Discord built in (outgoing connections, no public address, allowlist, encrypted token).
+87. Signal built in, through your own signal-cli-rest-api, with an allowlist.
+88. WhatsApp built in (Business Cloud API, signed webhooks), with an allowlist.
+89. Matrix and tagged email as channels too, with the same allowlists.
 
 ## Install and ops
 
@@ -152,4 +154,4 @@ A self hosted AI workspace in one light container. Start with the [README](../RE
 ## Credibility
 
 99. Measured numbers are published, reproducible, and updated when they drift.
-100. The README carries an honest tested/untested table, and the compare page states rivals' strengths plainly.
+100. The README's Known limits say plainly what is not done or not tested, and the competitive notes state rivals' strengths plainly.

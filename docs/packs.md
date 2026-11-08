@@ -1,8 +1,12 @@
-# Packs: Trade, Legal and Study (feat/v02-packs)
+# Packs: Trade, Legal and Study
+
+In the app on `main` (built on branch `feat/v02-packs`). For workplace teams the packs are hidden, not removed: the Packs
+page and the three pack pages are listed only when Settings, Advanced, **Show developer tools** is on, and their
+addresses still open.
 
 Packs are optional bundles of skills, templates and pages for one kind of work. The assistant stays general: a pack only
-adds shortcuts, and they show up only once the pack is added. Open **Packs** in the sidebar (under *Your work*) and press
-**Add**. One click installs the whole pack, or nothing if any part fails. **Remove** takes the shortcuts away and leaves
+adds shortcuts, and they show up only once the pack is added. Open **Packs** (under Advanced, with developer tools shown)
+and press **Add**. One click installs the whole pack, or nothing if any part fails. **Remove** takes the shortcuts away and leaves
 your quotes, cards and notes where they were.
 
 | Pack | Tier | What you get |
@@ -12,8 +16,8 @@ your quotes, cards and notes where they were.
 | Study & research | Free (lab notebook is Pro) | Flashcards with spaced repetition, worked maths checked with sympy, references (BibTeX, RIS, DOI, Zotero) and a lab notebook. |
 
 Tiers are declared in `workbench/backend/app/plan_tiers.py` (`FEATURE_TIERS`). The check goes through
-`packs.registry.allowed()`. That uses `account.allowed()` when the accounts branch is present, and otherwise allows
-everything.
+`packs.registry.allowed()`, which asks `plan_tiers.allowed()` and through it `account.py`. Plan checks are off unless a
+build sets `AIW_PLAN_CHECKS=1`, and even then nothing is locked until billing is live, so today every pack is open.
 
 ## Safety
 

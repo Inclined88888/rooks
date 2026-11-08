@@ -1,6 +1,6 @@
 # 0004: Coworkers. One assistant, a team behind it.
 
-Status: research done, first increment on branch `feat/coworkers` (2026-11-07). Not merged.
+Status: research done; increments 1 and 2 (sections 8 and 9) built on branch `feat/coworkers` (2026-11-07) and merged to `main` with the 2026-11-07 integration (pull request #20), and the terminal's `/team` with pull request #23. Increments 3 onwards (section 7) are not built.
 
 Evidence for every claim below is in three reports, written from the code and tests rather than the docs:
 
@@ -12,7 +12,7 @@ The labels mean this. **Works**: code plus passing tests. **Untested**: code, no
 
 ## 1. Corrections to the brief
 
-1. The brief names `Inclined88888/ai-workspace` and the branch `integration/v0.3`. AGENTS.md says the install line is `Inclined88888/rooks`, branch `main`, and that the old repo must not be merged. This work starts from `rooks` `main` at 4ccddba. `SECURITY.md:10` still points at the old repo and branch; that is a doc bug.
+1. The brief names `Inclined88888/ai-workspace` and the branch `integration/v0.3`. AGENTS.md says the install line is `Inclined88888/rooks`, branch `main`, and that the old repo must not be merged. This work starts from `rooks` `main` at 4ccddba. `SECURITY.md:10` still points at the old repo and branch; that is a doc bug (fixed later on branch `cleanup/workplace`).
 2. Baseline on clean `main` in a Linux container: backend 823 passed, 5 failed, 1 skipped. Four failures pass alone, so the suite leaks state between tests (`test_connect_mail_calendar::test_assistant_reads_and_drafts_with_microsoft`, `test_desk::test_desk_emails_a_render_with_attachments`, `test_health::test_status_page_reports_every_part_and_the_worst_wins`, `test_lock_reset::test_forgotten_pin_can_be_replaced`). The fifth, `test_room::test_a_private_desktop_has_a_real_screen`, fails because `mss` is declared in `rooks-try/pyproject.toml` but `scripts/test-all.sh` never installs it.
 
 ## 2. Licensing
