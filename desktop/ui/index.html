@@ -15,6 +15,7 @@
       -webkit-font-smoothing: antialiased; -webkit-user-select: none; user-select: none; }
     main { height: 100%; display: grid; place-items: center; text-align: center; padding: 32px; }
     .stack { display: flex; flex-direction: column; align-items: center; animation: fade 240ms cubic-bezier(.25,.1,.25,1) both; }
+    .mark { display: block; margin: 0 0 20px; }
     .kicker { font-size: 10.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--red-text); margin: 0 0 22px; }
     h1 { margin: 0; font-family: var(--serif); font-weight: 450; font-size: 52px; line-height: 1; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; font-variation-settings: "opsz" 96; }
     .rule { width: 280px; height: 1px; margin: 26px 0 18px; background: var(--rule); position: relative; overflow: hidden; }
@@ -30,6 +31,12 @@
 <body>
   <main id="root">
     <div class="stack">
+      <svg class="mark" viewBox="64 64 896 896" width="56" height="56" aria-hidden="true">
+        <defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A28"/><stop offset="1" stop-color="#161615"/></linearGradient></defs>
+        <rect x="64" y="64" width="896" height="896" rx="208" fill="url(#t)"/>
+        <path fill="#FAFAF9" d="M288 248A24 24 0 0 1 312 224H379V336H467V224H557V336H645V224H712A24 24 0 0 1 736 248V760A48 48 0 0 1 688 808H336A48 48 0 0 1 288 760Z"/>
+        <path fill="#E3A82B" d="M448 808V624A64 64 0 0 1 576 624V808Z"/>
+      </svg>
       <div class="kicker">Desktop edition</div>
       <h1>Rooks</h1>
       <div class="rule" aria-hidden="true"></div>
