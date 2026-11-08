@@ -272,7 +272,8 @@ def test_four_terminals_at_most_counted_apart_from_the_app_terminal(client, on):
     for n in range(4):
         assert _open(client)["name"] == f"Terminal {n + 1}"
     r = client.post("/api/room/terminals", json={})
-    assert r.status_code == 429 and r.json()["detail"] == "Four terminals can be open in the Room. Close one to open another."
+    assert r.status_code == 429
+    assert r.json()["detail"] == "Four terminals are in the Room, ended ones included. Close one to open another."
     assert terminal_pty._open == before  # the app terminal's six are its own
     listed = client.get("/api/room/terminals").json()
     assert listed["max"] == 4 and len(listed["terminals"]) == 4 and listed["terminals"][0]["shell"]
@@ -389,12 +390,14 @@ def test_the_chat_tool_starts_tails_and_lists_files(client, on):
 def test_the_exit_code_marker_is_cut_out_even_when_a_read_splits_it():
     from app.room_terminal import _split_marks
 
-    stream = b"out\r\n\x1b]7777;127\x07$ \x1b[1mbold\x1b[0m"
-    for cut in range(len(stream) + 1):  # every place a read can end
-        clean, codes, carry = _split_marks(stream[:cut])
-        clean2, codes2, carry2 = _split_marks(carry + stream[cut:])
-        assert clean + clean2 + carry2 == b"out\r\n$ \x1b[1mbold\x1b[0m", cut
-        assert codes + codes2 == [127], cut
+    nonce = "0123456789abcdef0123456789abcdef"
+    for mark, want in ((b"\x1b]7777;127\x07", (127, None)), (f"\x1b]7777;127;{nonce}\x07".encode(), (127, nonce))):
+        stream = b"out\r\n" + mark + b"$ \x1b[1mbold\x1b[0m"
+        for cut in range(len(stream) + 1):  # every place a read can end
+            clean, codes, carry = _split_marks(stream[:cut])
+            clean2, codes2, carry2 = _split_marks(carry + stream[cut:])
+            assert clean + clean2 + carry2 == b"out\r\n$ \x1b[1mbold\x1b[0m", cut
+            assert codes + codes2 == [want], cut
 
 
 def test_a_room_terminal_has_none_of_the_apps_secrets_and_the_rooms_path(client, on, monkeypatch):

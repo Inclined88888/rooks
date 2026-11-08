@@ -18,7 +18,7 @@ from pathlib import Path
 
 from .. import store
 from .base import Driver, DriverInfo, stop_pid
-from .shell import ShellDriver, isolation_level, login_argv, room_env
+from .shell import ShellDriver, host_which, isolation_level, login_argv, room_env
 
 LABEL = "A private desktop on this computer"
 NOTE = "A screen of its own on this computer. Commands run as you, in a folder of its own."
@@ -63,7 +63,7 @@ class NestedDriver(Driver):
         store.seed_home(home)
         log = store.root() / "nested.log"
         xvfb = subprocess.Popen(
-            ["Xvfb", self._display, "-screen", "0", SCREEN, "-nolisten", "tcp"],
+            [host_which("Xvfb") or "Xvfb", self._display, "-screen", "0", SCREEN, "-nolisten", "tcp"],
             stdout=log.open("ab"),
             stderr=subprocess.STDOUT,
             start_new_session=True,
@@ -72,7 +72,8 @@ class NestedDriver(Driver):
         self._xvfb_pid = xvfb.pid
         if not self._wait_for_display(xvfb):
             raise RuntimeError("The room's display did not start. See nested.log in the Room folder.")
-        env = room_env(home, self.offline)  # the Room's PATH first, no host secrets; and the Room's display
+        # No host secrets, the computer's own PATH (the Room's bins come first only inside its shell), the Room's display
+        env = room_env(home, self.offline)
         env["DISPLAY"] = self._display
         self._env = env
         self._start_desktop(env, home)
@@ -274,10 +275,10 @@ class NestedDriver(Driver):
         """A window manager when one is installed, and a terminal that fills the screen. Without a terminal on this
         computer, a plain labelled window keeps the screen from being an empty frame."""
         if not terminal_only:
-            manager = next((shutil.which(n) for n in WINDOW_MANAGERS if shutil.which(n)), None)
+            manager = next((host_which(n) for n in WINDOW_MANAGERS if host_which(n)), None)
             if manager:
                 self._procs.append(self._spawn([manager], env))
-        xterm = shutil.which("xterm")
+        xterm = host_which("xterm")
         if xterm:
             self._terminal = self._spawn([xterm, *TERMINAL_ARGS, "-e", *self.terminal_argv(home)], env, cwd=home)
             self._procs.append(self._terminal)

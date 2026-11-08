@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import urllib.error
@@ -88,6 +90,24 @@ HONEST_LINE = "Commands run as you, in a folder of its own. It is not a locked o
 VM_LINE = "A separate computer. Commands run inside it, apart from your files."
 OFF_KEPT = "The Room is off. Everything in it is kept."
 NOT_HERE = "  The Room's terminal opens in the app on this computer."
+SWITCHED_OFF = "  Terminals are switched off in Settings."
+LINK_WORDS = {"outside": "link, leads outside the Room", "broken": "link, leads nowhere"}
+# What /room tail prints is plain text: a program in the Room never switches modes in, retitles or writes the clipboard
+# of this terminal. The app strips these too; an older app may not.
+_ESCAPES = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b[\]P_^X][^\x07\x1b]*(?:\x07|\x1b\\?|$)|\x1b[ -/]*[0-~]|\x1b$"
+                      r"|[\x80-\x9f]")
+_CONTROLS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+
+def plain(text: str) -> str:
+    """A terminal's text as plain lines: escape sequences out, carriage returns settled as a screen shows them."""
+    out = []
+    for line in _ESCAPES.sub("", text).replace("\r\n", "\n").split("\n"):
+        shown = ""
+        for part in line.split("\r"):
+            shown = part + shown[len(part):]
+        out.append(_CONTROLS.sub("", shown))
+    return "\n".join(out)
 CUT_OFF = "Stopped after 120 seconds. For something long: /room open COMMAND"
 ROOM_USE = ("  /room start  ·  /room stop  ·  /room open COMMAND  ·  /room tail  ·  /room files  ·  /room points  ·  /room shell"
             "  ·  /help lists every one")
@@ -276,7 +296,7 @@ def _room_tail(ui, link: dict, name: str) -> None:
     out = call(link, "GET", f"/api/room/terminals/{_tid(t)}/tail?lines={TAIL_LINES}")
     label = t.get("name") or "The terminal"
     ui.p(ui.c("dim", f"  {label}  ·  last lines"))
-    for line in str(out.get("text") or "").splitlines()[-TAIL_LINES:]:
+    for line in plain(str(out.get("text") or "")).splitlines()[-TAIL_LINES:]:
         ui.p(ui.c("dim", "    ") + line)
     if t.get("owner") == "rooks":
         _SEEN["working"] = bool(out.get("alive") and out.get("busy"))
@@ -367,7 +387,8 @@ def _room_files(ui, link: dict, where: str) -> None:
     width = min(max(len(str(e.get("name") or "")) for e in entries), 40)
     for e in entries:
         kind = e.get("kind")
-        meta = "folder" if kind == "folder" else "link" if kind == "link" else _size(e.get("size"))
+        meta = ("folder" if kind == "folder" else LINK_WORDS.get(str(e.get("why")), "link") if kind == "link"
+                else _size(e.get("size")))
         ui.p(f"    {str(e.get('name') or ''):<{width}}  {meta:<9}  " + ui.c("dim", _when(e.get("modified"))))
     if out.get("truncated"):
         ui.p(ui.c("dim", "  Showing the first 500. Use the terminal to see more."))
@@ -461,12 +482,39 @@ def _on_this_computer(url: str) -> bool:
     return host in ("localhost", "::1") or host.startswith("127.")
 
 
+def _from_this_computer(argv: list, env: dict, home: Path) -> tuple[list, dict]:
+    """The program that starts the Room's shell by its full path on this computer, and a PATH without the Room's
+    folders: a program in the Room can write its own bin folders, and what starts the Room runs before its walls are up.
+    (rooks-try does this itself now; an older one put the Room's bins first and named the program bare.)"""
+    roots = [os.path.realpath(home)] + ([os.path.realpath(home.parent)] if home.name == "home" else [])
+
+    def host(path: str) -> str:
+        keep = []
+        for p in (path or "").split(os.pathsep):
+            real = os.path.realpath(p) if p and os.path.isabs(p) else ""
+            if real and not any(real == r or real.startswith(r.rstrip(os.sep) + os.sep) for r in roots) and p not in keep:
+                keep.append(p)
+        return os.pathsep.join(keep)
+
+    env = {**env, "PATH": host(env.get("PATH", "")) or host(os.environ.get("PATH", "")) or os.defpath}
+    exe = str(argv[0])
+    if not os.path.isabs(exe) or not host(os.path.dirname(exe)):
+        found = shutil.which(os.path.basename(exe), path=host(os.environ.get("PATH", "")) or os.defpath)
+        if not found:
+            raise OSError(f"{os.path.basename(exe)} not found")
+        argv = [found, *argv[1:]]
+    return list(argv), env
+
+
 def _room_shell(ui, link: dict) -> None:
     """The Room's own login shell in this terminal: the same wrapper, home and profile the app's Room terminal uses
     (rooks_try's login_argv and room_env). A child process, so Rooks comes back after exit."""
     st = call(link, "GET", "/api/room/status")
     home = st.get("home")
     shell = None
+    if (st.get("can") or {}).get("terminal_off_reason") == "switched_off":  # the app's words, the same switch
+        ui.p(SWITCHED_OFF)
+        return
     if (st.get("can") or {}).get("terminal") and home and _on_this_computer(link["url"]):
         try:
             shell = importlib.import_module("rooks_try.drivers.shell")
@@ -479,8 +527,12 @@ def _room_shell(ui, link: dict) -> None:
         ui.p("  The Room is off. Start it first: /room start")
         return
     offline = bool(st.get("offline"))
-    argv = shell.login_argv(Path(home), offline)
-    env = shell.room_env(Path(home), offline)
+    try:
+        argv, env = _from_this_computer(shell.login_argv(Path(home), offline), shell.room_env(Path(home), offline),
+                                        Path(home))
+    except OSError:
+        ui.p("  The Room's shell could not start here." + NOT_HERE)
+        return
     ui.p(ui.c("dim", "  A shell inside the Room. What you install here stays. Type exit to come back to Rooks."))
     try:
         subprocess.call(argv, env=env)

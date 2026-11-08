@@ -227,9 +227,12 @@ def _shape(st: dict, available: bool = True) -> dict:
         "checkpoint_limit": st.get("checkpoint_limit"),
         "pruned": st.get("pruned"),
         "error": st.get("error"),
-        # design 0006: what this Room can do here, and its terminals (the in-process Room fills these in)
-        "can": {"terminal": False, "files": False},
+        # design 0006: what this Room can do here (and why it has no terminal: "switched_off" in Settings, "helper",
+        # "windows", or None when there is no reason to give), and its terminals (the in-process Room fills these in).
+        # terminal_count is the one count: live and ended, what the cap of terminal_max counts.
+        "can": {"terminal": False, "files": False, "terminal_off_reason": None},
         "terminals": [],
+        "terminal_count": 0,
         "terminal_max": TERMINAL_MAX,
     }
 
@@ -292,7 +295,9 @@ async def perform(action: str, body: dict | None = None) -> dict:
         if action == "status":
             st = (await _remote("GET", "/api/status", timeout=10)).json()
             _REMOTE = (time.monotonic(), st)
-            return _shape(st)
+            out = _shape(st)
+            out["can"]["terminal_off_reason"] = "helper"  # a helper's Room has no terminal hosted here yet
+            return out
         out = (await _remote("POST", f"/api/{action}", body)).json()
         if action in ("up", "down") and isinstance(out, dict) and "running" in out:
             _REMOTE = (time.monotonic(), out)
@@ -309,6 +314,7 @@ async def perform(action: str, body: dict | None = None) -> dict:
 
             out["can"] = await asyncio.to_thread(room_files.can, room.driver(), False)
             out["terminals"] = room_terminal.listing()
+            out["terminal_count"] = len(out["terminals"])
         return _cut_note(action, out, body)
     except HTTPException:
         raise
