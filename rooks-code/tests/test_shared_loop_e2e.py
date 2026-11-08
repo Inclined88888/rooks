@@ -277,7 +277,7 @@ def test_an_edit_denied_in_the_app_is_not_made(project, app):
                   env={"WORKBENCH_URL": app.url, "WORKBENCH_API_KEY": token})
         t.join(5)
         out = r.stdout + r.stderr
-        assert r.returncode == 0, out
+        assert r.returncode == 3, out  # a denied change: the job was not done as asked (README, exit codes)
         assert "Denied in the app." in out
         assert (project / "calc.py").read_text() == "def add(a, b):\n    return a - b\n"
     finally:

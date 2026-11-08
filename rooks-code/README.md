@@ -51,14 +51,59 @@ rooks -P codex "fix the build"         # delegate to your own signed-in Codex (y
 what it does. Edits and commands are still asked about first (`--yes` = accept edits, `--dry-run` = show what would
 change and change nothing); Rooks never handles a key or token for them. See [../docs/CLAUDE-CODE.md](../docs/CLAUDE-CODE.md).
 
-A one-shot run (`rooks "task"`, also with piped input) ends with an exit code a script can check:
+A one-shot run (`rooks "task"`, also with piped input) and a headless run (`rooks -p`, below) end with an exit code a
+script can check:
 
 | Code | Means |
 | --- | --- |
 | `0` | finished |
 | `1` | did not finish: the model could not answer, the step limit or a cap was reached, or a checked change failed |
-| `2` | cannot start: no key for the provider, or bad arguments |
-| `3` | a change or command was denied: you typed `n`, there was no input to answer with, a permission rule never allows it, or a project hook stopped it |
+| `2` | cannot start: no key for the provider, no task given, or bad arguments |
+| `3` | a change or command was denied: you typed `n`, there was no input to answer with (in a headless run, nobody can answer), a permission rule never allows it, or a project hook stopped it |
+
+### Headless: scripts and CI
+
+```sh
+rooks -p "make the failing test pass"                       # prints the answer; exit code as above
+echo "make the failing test pass" | rooks -p                # the task piped in (read until the pipe closes)
+rooks -p --output-format json "what does calc.py do?"       # one JSON object at the end
+rooks -p --output-format stream-json "fix the build"        # one JSON object per line, per event
+```
+
+`rooks -p` runs one task and never waits for input. A step that would need your OK (an edit, a command, an MCP tool, an
+MCP server's question to you) is denied at once and reported, and the run exits with code `3`. Only what you set up
+beforehand lets a step run: a permission rule (`[permissions] allow` in `rooks.toml`, or a trusted folder's
+`.rooks/settings.json`), a trusted folder, or `--yes` (approves the agent's own steps; an MCP server's question to you
+is still denied). Deny rules refuse in every mode. A headless run never asks whether to trust a folder, and is not
+linked to a chat in the app, so nothing waits in Needs you. With `-p`, a task given on the command line is used and
+standard input is not read; `-` or no task reads it from the pipe.
+
+* `--output-format text` (the default): the answer alone on standard output; each step and each denial, briefly, on
+  standard error.
+* `--output-format json`: one object: `result` (the answer), `session_id` (the receipt in `.rooks/runs`, and
+  `rooks --resume ID` continues it), `turns` (model calls), `tokens`, `cost_usd` (`null` when the price is unknown),
+  `denied` (each step not done: `tool`, `summary`, `by` = `headless`, `rule` or `hook`), `exit_code`, `error`,
+  `outcome` and `duration_ms`.
+* `--output-format stream-json`: one object per line: `start`, `assistant` (text), `tool_call`, `tool_result` (paired
+  by `id`), `approval_asked`, `approval_denied`, `notice`, and last `end`, which carries the same fields as the json
+  result. A helper's steps (the task tool) have `"helper": true`.
+
+Both are described by a JSON Schema in the package, [rooks_code/schema/headless.schema.json](rooks_code/schema/headless.schema.json)
+(`#/$defs/result` and `#/$defs/event`); the tests validate every line against it. Keys, tokens, emails and phone
+numbers are hidden in headless output, as in the receipts. `json` and `stream-json` imply `-p`.
+
+From Python, the same run in-process, with the same result object:
+
+```python
+from rooks_code import sdk
+
+res = sdk.run("make the failing test pass", cwd="path/to/project", on_event=print)  # also provider=, model=, yes=, ...
+print(res.exit_code, res.result, res.denied, res.to_dict())
+```
+
+`rooks_code.sdk.run` never reads standard input or prints; each event reaches `on_event` as a dict, and a bad setup
+comes back as `exit_code` 2 with `error` in plain words instead of an exception. `rooks -P claude-code` and `-P codex`
+are not headless here: use their own (`claude -p`, `codex exec`).
 
 Inside a session type `/` for the command menu (every command with what it does) and `@` to pick a file:
 

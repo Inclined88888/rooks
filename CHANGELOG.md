@@ -8,6 +8,20 @@ version and the merge commit on `main`.
 
 No schema change, nothing to migrate. Rollback: revert the branch's commits.
 
+- **Headless `rooks` for scripts and CI.** `rooks -p "task"` (or the task piped in: `echo "task" | rooks -p`) runs one
+  task and never waits for input: a step that would need your OK (an edit, a command, an MCP tool, an MCP server's
+  question to you) is denied at once, reported, and the run exits with code 3. Only what you set up beforehand lets a
+  step run: a permission rule, a trusted folder, or `--yes` (which still never answers an MCP server's question to
+  you). A headless run is not linked to an app chat, so nothing waits in Needs you. `--output-format text` (the answer
+  on stdout, steps and denials on stderr), `json` (one result: answer, session id, model calls, tokens, cost, what was
+  denied and why, exit code) or `stream-json` (one event per line: start, assistant text, tool call, tool result,
+  approval asked, approval denied, notice, end). Both are described by `rooks-code/rooks_code/schema/headless.schema.json`.
+  Keys, tokens, emails and phone numbers are hidden in this output, as in the receipts. Exit codes: 0 done, 1 not
+  finished or an error, 2 bad usage or cannot start, 3 something was denied. `rooks_code.sdk.run(prompt, cwd=...,
+  on_event=...)` is the same run in-process for Python scripts, returning the same result object; `rooks -p` uses it.
+  `-P claude-code` and `-P codex` are refused in headless mode (use `claude -p` or `codex exec`). Tests:
+  `rooks-code/tests/test_headless.py` (each failed before the change; scripted fake model, no real model key).
+  `rooks-code[dev]` now needs `jsonschema` for that test.
 - **Only a person answers a terminal's question.** The open app's own key (app.json), Rooks Desk's key and a coding
   job's key can no longer record an answer to a question the `rooks` terminal asked: any program on this computer can
   read app.json, a command the agent ran included, so it could have said yes to its own question. An answer typed in

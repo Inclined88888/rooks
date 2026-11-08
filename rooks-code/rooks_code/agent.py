@@ -3,6 +3,7 @@ back, and repeat until it answers without asking for a tool, hits the step limit
 
 from __future__ import annotations
 
+import itertools
 import json
 import os
 import platform
@@ -77,6 +78,7 @@ DELEGATION_WAIT_S = 900  # one shared-loop turn, including time the user takes t
 BRIDGE_LOCAL = {"read_file", "list_files", "search", "edit_file", "write_file", "run_command"}  # run here, not in the app
 # Tail budget: keep last N tool results unpruned
 TAIL_TOOL_RESULTS = 4
+_STEPS = itertools.count(1)  # tool steps in this process, for the ids of headless events
 
 SUMMARY_SYSTEM = ("You compress a coding session so it can continue. Write a dense summary of the conversation below for "
                   "the agent that continues it: the user's goals and preferences, files read or changed (exact paths), "
@@ -607,7 +609,27 @@ class Agent:
     def _streaming(self) -> bool:
         return bool(getattr(self.s, "stream", False)) and getattr(self.ui, "can_stream", lambda: False)()
 
+    def _emit(self, kind: str, **data) -> None:
+        """One event for a UI that takes them (a headless run, sdk.py): a tool call, its result, a denied step."""
+        event = getattr(self.ui, "event", None)
+        if callable(event):
+            event({"type": kind, **data})
+
+    def _deny(self, tool: str, summary: str, by: str) -> None:
+        """A step was refused (by a permission rule, a project hook, or an answer): it counts for the exit code and
+        is reported."""
+        self.denials += 1
+        self._emit("approval_denied", tool=tool, summary=words.wanted_step(summary), by=by)
+
     def _call(self, call: providers.ToolCall, turn: int) -> tuple[str, str]:
+        """Run one tool call and report it (tool_call, then tool_result) to a UI that takes events."""
+        step = f"step-{next(_STEPS)}"  # pairs the two events; a model's own call ids repeat across replies
+        self._emit("tool_call", id=step, tool=call.name, args=call.arguments if isinstance(call.arguments, dict) else {})
+        result, outcome = self._run_call(call, turn)
+        self._emit("tool_result", id=step, tool=call.name, outcome=outcome, result=result)
+        return result, outcome
+
+    def _run_call(self, call: providers.ToolCall, turn: int) -> tuple[str, str]:
         """Run one tool call through prepare -> approve -> apply -> verify. Returns (result for the model, outcome)."""
         args_text = json.dumps(call.arguments, ensure_ascii=False)
         if call.bad_json:
@@ -661,14 +683,14 @@ class Agent:
                               from_text=int(call.from_text))
         rule = self.perms.check_call(call.name, call.arguments, plan, mcp_tool)
         if rule.verdict == "deny":
-            self.denials += 1
+            self._deny(call.name, plan.summary, "rule")
             self.log.finish(action, "denied", detail=f"a permission rule never allows this: {rule.rule.text if rule.rule else ''}"[:500])
             self.ui.tool_note(f"not allowed by a permission rule ({permissions.plain(rule.rule)}): {plan.summary}")
             return (f"Error: the user's permission rules never allow this ({plan.summary}). Do not retry it or work around "
                     f"it; say so in your answer."), "denied"
         blocked = self._project_hook(call.name, plan.effect, call.arguments)
         if blocked:
-            self.denials += 1
+            self._deny(call.name, plan.summary, "hook")
             self.log.finish(action, "denied", detail=blocked[:500])
             self.ui.tool_note(f"stopped by a project hook: {blocked[:200]}")
             return f"Error: a project hook stopped this ({blocked}). Do not retry it unless the user says to.", "denied"
@@ -707,7 +729,7 @@ class Agent:
                     if said:
                         self.ui.tool_note(said)
                 if decision == "denied":
-                    self.denials += 1
+                    self._deny(call.name, plan.summary, "answer")
                     self.log.finish(action, "denied")
                     return f"The user denied this ({plan.summary}). Do not retry it; ask or try another approach.", "denied"
         else:
@@ -777,6 +799,8 @@ class Agent:
         yes = answer in ("y", "a")  # "a" is one yes here: a question is never approved for the session
         self.log.add("decision", "approved" if yes else "denied", parent=self._turn, tool=plan.tool,
                      detail=f"question from {server}: {message[:200]}")
+        if not yes:  # reported, but not counted: an interactive one-shot run ends as before (the server was told no)
+            self._emit("approval_denied", tool=plan.tool, summary=plan.summary, by="answer")
         return {"action": "accept", "content": {flags[0]: True}} if yes else {"action": "decline"}
 
     def _mcp(self, server, tool: str, arguments: dict):

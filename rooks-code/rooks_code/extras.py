@@ -393,6 +393,11 @@ class _SubUI:
     def tool_note(self, text, read=False):
         self.ui.tool_note("  ↳ " + text, read=read) if hasattr(self.ui, "tool_note") else None
 
+    def event(self, ev):
+        """A helper's steps reach a headless run's events too, marked as the helper's."""
+        if callable(getattr(self.ui, "event", None)):
+            self.ui.event({**ev, "helper": True})
+
     def ask(self, plan):
         if self.allow_writes and hasattr(self.ui, "ask"):
             return self.ui.ask(plan)

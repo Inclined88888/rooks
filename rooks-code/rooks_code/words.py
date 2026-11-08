@@ -240,3 +240,13 @@ def plain_step(name: str, args=None) -> str:
     """A tool call, said the way a person would. Never the raw name or the raw arguments."""
     say = _SAY.get(name or "")
     return say(args or {}) if say else "Working"
+
+
+_WANTED = {"edited": "edit", "wrote": "write", "created": "create"}
+
+
+def wanted_step(summary: str) -> str:
+    """A change's summary as a step not yet taken ("edited calc.py" -> "edit calc.py"), for a step that was asked about
+    or denied: the receipt's past tense would read as if it had been done."""
+    first, sep, rest = (summary or "").partition(" ")
+    return f"{_WANTED[first]}{sep}{rest}" if first in _WANTED else summary

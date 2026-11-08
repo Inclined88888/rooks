@@ -3,6 +3,8 @@ or local Ollama / LM Studio (works fully offline).
 
   rooks                         interactive session in the current folder
   rooks "fix the failing test"  one prompt, then exit (exit 0 done, 1 not finished, 2 cannot start, 3 a change was denied)
+  rooks -p "task"               headless, for scripts and CI: never waits for input; a step that needs an OK is denied
+  echo "task" | rooks -p        ... the task piped in; --output-format text|json|stream-json
   rooks -c                      continue the last session in this folder (--resume ID for an older one)
   rooks login                   connect a model: paste a key, or point at your Rooks app server
   rooks undo                    put back the files changed by the last prompt
@@ -210,8 +212,88 @@ def parser() -> argparse.ArgumentParser:
     ap.add_argument("--theme", type=_theme_arg, metavar="{auto,light,dark,contrast}",
                     help="terminal colours: the app's Light, Dark or High contrast, or auto to match the terminal "
                          "(default: the theme chosen in the app, or $ROOKS_THEME)")
+    ap.add_argument("-p", "--print", dest="headless", action="store_true",
+                    help="headless, for scripts and CI: run the task (or the task piped in) and exit; never waits for "
+                         "input, and a step that needs an OK is denied unless a rule, a trusted folder or --yes allows it")
+    ap.add_argument("--output-format", choices=OUTPUT_FORMATS, default=None,
+                    help="what a headless run prints: text (the answer), json (one result object) or stream-json "
+                         "(one event per line); json and stream-json imply -p")
     ap.add_argument("--version", action="version", version=f"rooks {__version__}")
     return ap
+
+
+OUTPUT_FORMATS = ("text", "json", "stream-json")
+
+
+def _isatty(stream) -> bool:
+    try:
+        return bool(stream) and stream.isatty()
+    except (AttributeError, ValueError, OSError):  # closed or missing (rooks started with stdin closed)
+        return False
+
+
+def _piped_task() -> str:
+    """The task piped to rooks -p: all of standard input, read until it closes. Never from a terminal."""
+    if sys.stdin is None or _isatty(sys.stdin):
+        return ""
+    try:
+        return sys.stdin.read()
+    except (OSError, ValueError, UnicodeDecodeError):
+        return ""
+
+
+def headless_main(args, root: Path) -> int:
+    """rooks -p: one task through sdk.run, printed as text, json or stream-json. Exit code as in sdk.py."""
+    from . import sdk
+
+    fmt = args.output_format or "text"
+    out, err = sys.stdout, sys.stderr
+
+    def say(text: str) -> None:
+        print(text, file=err, flush=True)
+
+    def text_event(ev: dict) -> None:  # text: the answer alone on stdout; what happened, briefly, on stderr
+        kind = ev["type"]
+        if kind == "tool_call" and not ev.get("helper"):
+            say(f"  · {words.plain_step(ev['tool'], ev.get('args') or {})}")
+        elif kind == "approval_denied":
+            why = {"headless": "nobody can answer a headless run", "rule": "a permission rule never allows it",
+                   "hook": "a project hook stopped it", "answer": "the answer was no"}[ev["by"]]
+            say(f"  ✗ Not done: {why}: {ev['summary']}")
+        elif kind == "notice" and ev["level"] != "info":
+            say(f"  ! {ev['text']}")
+
+    def json_line(ev: dict) -> None:
+        out.write(_json.dumps(ev, ensure_ascii=False) + "\n")
+        out.flush()
+
+    if args.handoff or args.conversation:
+        res = sdk.Result(sdk.EXIT_SETUP, error="a headless run does not continue a chat from the app; leave out "
+                                                "--handoff and --conversation")
+    elif args.prompt and args.prompt != ["-"]:
+        res = None
+    else:
+        args.prompt = [_piped_task()]
+        res = None
+    if res is None:
+        res = sdk.run(" ".join(args.prompt).strip(), cwd=root, provider=args.provider, model=args.model,
+                      base_url=args.base_url, yes=args.yes, dry_run=args.dry_run, max_usd=args.max_usd,
+                      max_tokens=args.max_tokens, max_steps=args.max_steps, mcp=not args.no_mcp, resume=args.resume,
+                      continue_last=args.cont, on_event={"stream-json": json_line, "text": text_event}.get(fmt))
+    elif fmt == "stream-json":
+        json_line(res.to_dict("end"))
+    if fmt == "json":
+        json_line(res.to_dict())
+    elif fmt == "text":
+        if res.result.strip():
+            out.write(sdk.redact(res.result.strip()) + "\n")
+            out.flush()
+        if res.error:
+            say(f"rooks: {res.error}")
+        if res.denied:
+            say(f"  {len(res.denied)} step(s) were not done. To let a headless run do them, allow them with a rule in "
+                f"rooks.toml [permissions], or pass --yes.")
+    return res.exit_code
 
 
 # Folders searched for projects when rooks starts in the home folder. Desktop, Documents and Downloads are left out on
@@ -285,12 +367,14 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] in SUBCOMMANDS:
         return subcommand(argv[0], argv[1:])
     args = parser().parse_args(argv)
-    if args.prompt in (["code"], ["chat"]):
+    if args.prompt in (["code"], ["chat"]) and not (args.headless or args.output_format):
         args.prompt = []  # "rooks code" means open Rooks Code, not "run the task 'code'" (which read the whole folder)
     root = Path(args.cwd or os.getcwd()).resolve()
     if not root.is_dir():
         sys.exit(f"rooks: {root} is not a folder")
-    interactive = not args.prompt and sys.stdin.isatty() and sys.stdout.isatty()
+    if args.headless or args.output_format in ("json", "stream-json"):
+        return headless_main(args, root)
+    interactive = not args.prompt and _isatty(sys.stdin) and _isatty(sys.stdout)
     # Started in the home folder (or /): a request would crawl everything there, so ask for the project first.
     if interactive and root in (Path.home().resolve(), Path(root.anchor)):
         picked = pick_project(root)
@@ -396,11 +480,8 @@ def main(argv: list[str] | None = None) -> int:
 
 HELP = words.help_text()  # the same list the full terminal shows
 
-# One-shot exit codes (rooks "task"), listed in the README: scripts and CI tell them apart.
-EXIT_OK = 0          # finished
-EXIT_UNFINISHED = 1  # did not finish: model error, step limit, a cap reached, a change whose check failed
-EXIT_SETUP = 2       # cannot start: no key for the provider, bad arguments
-EXIT_DENIED = 3      # a change or command was denied (you typed n, no input to answer, a permission rule, or a hook)
+# One-shot exit codes (rooks "task", and rooks -p through sdk.py), listed in the README: scripts and CI tell them apart.
+from .sdk import EXIT_DENIED, EXIT_OK, EXIT_SETUP, EXIT_UNFINISHED  # noqa: E402,F401  (one list, sdk.py)
 
 
 def load_session(root: Path, session: str | None) -> tuple[list[dict], str]:
