@@ -235,7 +235,7 @@ Things to know:
 * **Model picker.** The new agent form defaults to Paperclip's "AI connection" catalog (OpenRouter models). To use local or Zen models, type the id with "Enter custom model…", e.g. `ollama/qwen3:8b` or `opencode/big-pickle`.
 * **OpenCode free tier is rate limited.** In testing, an unauthenticated request reached Zen and was refused with "Free usage limit reached". Create a free account at opencode.ai and set `OPENCODE_API_KEY` for a dependable allowance. Some free models may use your prompts for training; check each model's terms on [opencode.ai/docs/zen](https://opencode.ai/docs/zen).
 * **Free and local models cost $0**, so Paperclip budgets only bite on paid providers. They still burn CPU or GPU time; small local models are weak at multi step agent work.
-* **Telemetry.** The Paperclip add-on explicitly sets `PAPERCLIP_TELEMETRY_DISABLED=1` and `DO_NOT_TRACK=1`, which override upstream file preferences, plus `OTEL_SDK_DISABLED=true`. Recreate it after upgrading (`docker compose up -d --force-recreate paperclip`). See [Phase 0 checks](docs/PHASE0-GATE.md) for scope and verification.
+* **Telemetry.** The Paperclip add-on explicitly sets `PAPERCLIP_TELEMETRY_DISABLED=1` and `DO_NOT_TRACK=1`, which override upstream file preferences, plus `OTEL_SDK_DISABLED=true`. Recreate it after upgrading (`docker compose up -d --force-recreate paperclip`). See [Phase 0 checks](docs/history/PHASE0-GATE.md) for scope and verification.
 * **Data** lives in the `ai-workspace_paperclip` volume (embedded Postgres with hourly backups, agent workspaces, uploads, secrets key).
 
 ### Hermes Agent (`hermes` add-on)

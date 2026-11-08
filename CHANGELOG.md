@@ -695,7 +695,7 @@ secret rotation or manual SQL is needed. Existing schema-v2 installations are un
 
 No schema/key migration. Recreate enabled Paperclip containers to apply its new
 environment. Roll back the image/client if needed; preserve volumes and APP_SECRET.
-[Phase 0 gate](docs/PHASE0-GATE.md) records the acceptance assumptions and limits.
+[Phase 0 gate](docs/history/PHASE0-GATE.md) records the acceptance assumptions and limits.
 
 ## 2026-10-29 · Official Codex CLI launcher · Phase 1 item 117
 

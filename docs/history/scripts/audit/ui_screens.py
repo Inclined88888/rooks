@@ -6,7 +6,7 @@ lead run and a small knowledge graph, then drives Chromium with Playwright:
   - the entity page shows Connections from /knowledge/graph/traverse, 2 hops, with paths; the rel filter narrows it
   - axe-core (WCAG 2.0/2.1/2.2 A and AA rules) on the chat, team runs and entity pages: violations are listed
   - the ARIA snapshot Chromium hands to screen readers is saved for each page (not a VoiceOver run)
-Writes screenshots and JSON into docs/evidence/ui/. Exit 0 only if every assertion holds.
+Writes screenshots and JSON into docs/history/evidence/ui/. Exit 0 only if every assertion holds.
 
 Needs: workbench/frontend/dist (npm run build), python playwright with chromium, AXE_JS=path/to/axe.min.js.
 Run:   AXE_JS=... python scripts/audit/ui_screens.py
@@ -22,10 +22,10 @@ import time
 import urllib.request
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[4]  # moved to docs/history/scripts/audit
 BACKEND = ROOT / "workbench" / "backend"
 DIST = ROOT / "workbench" / "frontend" / "dist"
-OUT = ROOT / "docs" / "evidence" / "ui" / os.environ.get("UI_BROWSER", "chromium")
+OUT = ROOT / "docs" / "history" / "evidence" / "ui" / os.environ.get("UI_BROWSER", "chromium")
 H = {"X-Workbench": "1"}
 
 SEED = r"""

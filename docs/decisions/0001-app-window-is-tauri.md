@@ -20,7 +20,7 @@ it when it is installed (desktop/launcher/ai_workspace.py native_app()). When no
 ## What follows
 
 - Parity is tested against the shared web UI in Chromium and in WebKit (the engine of the macOS app window):
-  scripts/audit/ui_screens.py with UI_BROWSER=chromium and UI_BROWSER=webkit.
+  docs/history/scripts/audit/ui_screens.py with UI_BROWSER=chromium and UI_BROWSER=webkit.
 - #7 (a terminal inside the app) is built in the shared UI (Terminal page, /api/terminal/ws), so the app window,
   and a browser on the same computer, get it from the same code. No Tauri command or extra permission is needed.
 - Not yet done: a rebuilt AI Workspace.app run with these changes (needs a sidecar freeze and a Tauri build).

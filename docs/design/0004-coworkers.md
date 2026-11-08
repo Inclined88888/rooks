@@ -4,8 +4,8 @@ Status: research done, first increment on branch `feat/coworkers` (2026-11-07). 
 
 Evidence for every claim below is in three reports, written from the code and tests rather than the docs:
 
-1. `docs/evidence/2026-11-07-inventory-agents-tools-mcp-memory.md` (ROOKS areas 1 to 7)
-2. `docs/evidence/2026-11-07-inventory-automation-apps-security.md` (ROOKS areas 8 to 14)
+1. `docs/history/evidence/2026-11-07-inventory-agents-tools-mcp-memory.md` (ROOKS areas 1 to 7)
+2. `docs/history/evidence/2026-11-07-inventory-automation-apps-security.md` (ROOKS areas 8 to 14)
 3. `docs/competitive/rerun.md` (Rerun, `rerun-build/rerun` at commit ab3def9, 16 components)
 
 The labels mean this. **Works**: code plus passing tests. **Untested**: code, no test. **Documented**: prose only. Nothing here was verified against a live third party service.

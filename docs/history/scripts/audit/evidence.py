@@ -1,4 +1,4 @@
-"""Re-run every acceptance test behind a claim and write docs/evidence/EVIDENCE.md: for each item the commit that
+"""Re-run every acceptance test behind a claim and write docs/history/evidence/EVIDENCE.md: for each item the commit that
 delivered it, the test file, the exact command, and the raw pytest output from this checkout's HEAD.
 
     python scripts/audit/evidence.py            (from the repo root; provider keys are stripped from the environment)
@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[4]  # moved to docs/history/scripts/audit
 PY = sys.executable
 BACKEND, ROOKS = "workbench/backend", "rooks-code"
 
@@ -91,8 +91,8 @@ def main() -> int:
     # Browser checks (B1 and B2 screens, #7 in the page, axe-core, ARIA snapshots) come from scripts/audit/ui_screens.py,
     # run per engine: Chromium (browser) and WebKit (the engine of the macOS app window)
     for engine in ("chromium", "webkit"):
-        txt = ROOT / "docs" / "evidence" / "ui" / f"{engine}.txt"
-        res = ROOT / "docs" / "evidence" / "ui" / engine / "results.json"
+        txt = ROOT / "docs" / "history" / "evidence" / "ui" / f"{engine}.txt"
+        res = ROOT / "docs" / "history" / "evidence" / "ui" / engine / "results.json"
         if txt.exists() and res.exists():
             import json
 
@@ -101,11 +101,11 @@ def main() -> int:
             ok = "FAIL" not in body and "PASS" in body
             status[f"UI-{engine}"] = "PASS" if ok else "FAIL"
             out += [f"## UI-{engine}: B1 run tree, B2 graph walk, #7 app terminal, axe-core WCAG A/AA and ARIA snapshots", "",
-                    f"- run at: {at}; screenshots, axe JSON and ARIA trees in docs/evidence/ui/{engine}/", "",
+                    f"- run at: {at}; screenshots, axe JSON and ARIA trees in docs/history/evidence/ui/{engine}/", "",
                     "```", f"$ AXE_JS=axe-core-4.10.3/axe.min.js UI_BROWSER={engine} python scripts/audit/ui_screens.py",
                     body, "```", "", f"result: {status[f'UI-{engine}']}", ""]
             print(f"UI-{engine}: {status[f'UI-{engine}']}", flush=True)
-    path = ROOT / "docs" / "evidence" / "EVIDENCE.md"
+    path = ROOT / "docs" / "history" / "evidence" / "EVIDENCE.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(out) + "\n")
     print(path)

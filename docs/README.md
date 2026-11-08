@@ -3,8 +3,7 @@
 A self hosted AI workspace in one light container. Start with the [README](../README.md) for install and a tour of the features.
 
 - [API reference](API.md)
-- [Security audit](AUDIT.md)
-- [Phase 0 gate](PHASE0-GATE.md)
+- Old audits and evidence (snapshots, kept as a record): [security audit](history/AUDIT.md), [Phase 0 gate](history/PHASE0-GATE.md), [history folder](history/)
 - [Releases](RELEASES.md)
 - [Connect Google and Microsoft (OAuth setup)](connect-google-microsoft.md)
 - Design notes: [run log and connections](design/0001-run-log-and-connections.md), [adapters](design/0002-adapters.md)
