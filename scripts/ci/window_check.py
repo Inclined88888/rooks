@@ -187,7 +187,7 @@ def main() -> int:
     leftovers = [p for p in data.rglob("*.html") if "window" not in p.parts]
     assert not leftovers, f"temporary pages left behind: {leftovers}"
     if sys.platform == "darwin":
-        app = Path.home() / "Applications" / "AI Workspace.app"
+        app = Path.home() / "Applications" / "Rooks.app"  # renamed with the app (design 0007)
         plist = (app / "Contents" / "Info.plist").read_text()
         assert "CFBundleIconFile" in plist, plist
         icns = app / "Contents" / "Resources" / "icon.icns"
