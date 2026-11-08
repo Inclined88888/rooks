@@ -610,13 +610,13 @@ def test_status_says_what_this_room_can_do(client, room_home, remote_room):
     from app import config, room
 
     st = client.get("/api/room/status").json()  # the helper (TRY_URL): no terminal and no folder on this computer
-    assert st["can"] == {"terminal": False, "files": False} and st["terminals"] == []
+    assert st["can"] == {"terminal": False, "files": False, "terminal_off_reason": "helper"} and st["terminals"] == []
     assert client.get("/api/room/files").status_code == 501
     config.TRY_URL = ""
     room.reset()
     st = client.get("/api/room/status").json()
     if sys.platform != "win32":
-        assert st["can"] == {"terminal": True, "files": True}, st["can"]
+        assert st["can"] == {"terminal": True, "files": True, "terminal_off_reason": None}, st["can"]
     assert st["terminals"] == [] and st["terminal_max"] == 4
 
 

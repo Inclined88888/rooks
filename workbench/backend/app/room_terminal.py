@@ -64,7 +64,10 @@ DONE_LINES = 20
 TAIL_DEFAULT, TAIL_MAX = 200, 2000
 COLS, ROWS = 80, 24
 
-FULL = "Four terminals can be open in the Room. Close one to open another."
+FULL = "Four terminals are in the Room, ended ones included. Close one to open another."
+ONE_LINE = "Start one line at a time. Join the steps with && on one line."
+THEIRS = "That terminal is the person's own, so Rooks does not read it. They can hand it to Rooks first."
+HIDDEN_LINE = "(a line was sent, {n} characters)"
 OFF = "The Room is off. Start it first."
 NOT_INSTALLED = "The Room is not installed on this computer."
 NO_TERMINAL = "This Room has no terminal of its own. Use its screen."
@@ -85,13 +88,50 @@ WS_ENDED = "This terminal has ended"
 ELSEWHERE = "This terminal was opened in another window."
 EXITED = "The shell exited"
 
-_MARK = re.compile(rb"\x1b\]7777;(-?\d{0,6})\x07")
+QUEUE_MAX = RING_MAX     # output queued for one socket; past this the socket gets a fresh scrollback frame instead
+
+# The exit code marker the Room's profile prints at each prompt: ESC ] 7777 ; code ; nonce BEL, the nonce this
+# terminal's own (ROOKS_MARK in its environment, kept unexported by the profile), so what a command prints cannot end
+# it. A profile seeded before the nonce prints ESC ] 7777 ; code BEL: read while the terminal has never shown a nonce.
+_MARK = re.compile(rb"\x1b\]7777;(-?\d{0,6})(?:;([0-9a-f]{0,64}))?\x07")
 _MARK_HEAD = b"\x1b]7777;"
-_ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b[@-Z\\-_]")
+_MARK_PART = re.compile(rb"\x1b\]7777;-?\d{0,6}(?:;[0-9a-f]{0,64})?")
+# What tail gives is plain text (the model and the rooks terminal read it): escape sequences out, carriage returns
+# settled. CSI; OSC, DCS, APC, PM and SOS strings to their end; two and three byte escapes; a lone ESC; C1 controls.
+_ESCAPES = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b[\]P_^X][^\x07\x1b]*(?:\x07|\x1b\\?|$)|\x1b[ -/]*[0-~]|\x1b$"
+                      r"|[\x80-\x9f]")
+_CONTROLS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+_ANSI = _ESCAPES
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def plain(text: str) -> str:
+    """A terminal's text as plain lines: no escape sequences (a program in the Room cannot retitle, switch modes in or
+    write the clipboard of whoever reads it), carriage returns settled the way a screen shows them."""
+    text = _ESCAPES.sub("", text).replace("\r\n", "\n")
+    lines = []
+    for line in text.split("\n"):
+        if "\r" in line:
+            shown = ""
+            for part in line.split("\r"):  # a later write starts at the left and covers what it is as long as
+                shown = part + shown[len(part):]
+            line = shown
+        lines.append(_CONTROLS.sub("", line))
+    return "\n".join(lines)
+
+
+def _private(path: Path, mode: str = "w"):
+    """A file only the person can read (0600), opened for writing ("w", "wb" or "ab")."""
+    flags = os.O_WRONLY | os.O_CREAT | (os.O_APPEND if "a" in mode else os.O_TRUNC)
+    fd = os.open(path, flags, 0o600)
+    try:
+        os.fchmod(fd, 0o600)  # one an earlier version wrote with the default mode
+    except (OSError, AttributeError):
+        pass
+    return os.fdopen(fd, mode)
 
 
 @dataclass
@@ -127,7 +167,7 @@ class RoomTerminal:
     exit_code: int | None = None
     restart_seen: bool = False
     run: str = ""
-    attached: tuple | None = None   # (token, asyncio.Queue, loop) of the one socket attached
+    attached: _Socket | None = None  # the one socket attached: its queue, its loop, what waits in the queue
     lock: threading.RLock = field(default_factory=threading.RLock)
     stop: threading.Event = field(default_factory=threading.Event)
     reader: threading.Thread | None = None
@@ -136,6 +176,8 @@ class RoomTerminal:
     log_fh: object | None = None
     log_size: int = 0
     last_out: float = 0.0           # monotonic time of the last output
+    nonce: str = field(default_factory=lambda: uuid.uuid4().hex)  # what this terminal's own exit code markers carry
+    nonce_seen: bool = False        # its profile prints the nonce: a marker without it is not the shell's
 
     # --- what it is now -------------------------------------------------------------------------------------------------
     @property
@@ -169,8 +211,22 @@ class RoomTerminal:
         return int((self.ended_ts or time.time()) - self.started_ts)
 
     def text(self) -> str:
+        """The ring as text, without a character cut by a read: its first bytes at the end (the decoder holds them and
+        sends the whole character with the next output) or its last bytes at the start (the rest went out of the ring)."""
         with self.lock:
-            return bytes(self.ring).decode("utf-8", "replace")
+            data = bytes(self.ring)
+            held = self.decoder.getstate()[0]
+        if held and data.endswith(held):
+            data = data[: -len(held)]
+        for _ in range(3):
+            if data and 0x80 <= data[0] < 0xC0:
+                data = data[1:]
+        return data.decode("utf-8", "replace")
+
+    def frame(self) -> str:
+        """The scrollback frame a socket gets first (and again when it fell too far behind)."""
+        return json.dumps({"type": "scrollback", "data": self.text(), "cols": self.cols, "rows": self.rows,
+                           "alive": self.alive})
 
     def row(self, extra: bool = False) -> dict:
         out = {"id": self.id, "name": self.name, "owner": self.owner, "alive": self.alive, "busy": self.busy(),
@@ -190,7 +246,8 @@ class RoomTerminal:
     def save(self) -> None:
         try:
             tmp = self.meta.with_suffix(f".{threading.get_ident()}.tmp")
-            tmp.write_text(json.dumps(self.meta_dict()))
+            with _private(tmp) as f:
+                f.write(json.dumps(self.meta_dict()))
             tmp.replace(self.meta)
         except OSError as e:  # a Room folder that went away (a test's, or a removed home) loses nothing that matters
             log.debug("terminal meta not written: %s", e.__class__.__name__)
@@ -212,7 +269,9 @@ def _folder() -> Path | None:
     if room.remote() or room._import_room() is None:
         return None
     path = room._store().work_dir() / "terminals"
-    path.mkdir(parents=True, exist_ok=True)
+    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if os.name == "posix" and path.stat().st_mode & 0o077:  # a terminal's text is the person's: theirs alone
+        path.chmod(0o700)
     return path
 
 
@@ -270,36 +329,60 @@ def taken_any() -> bool:
 def load_ended() -> int:
     """Read back the terminals an earlier run of the app left: listed as ended (a live one was hung up by the restart),
     their log as their text. Returns how many this call found ended by the restart. The registry does this on its first
-    use, so the app's start (restart.recover) reads them before any chat is told."""
+    use, so the app's start (restart.recover) reads them before any chat is told: counted here either way."""
+    with _LOCK:
+        before = _RESTART_ENDED
     _registry()
     with _LOCK:
-        return _load(_DIR) if _DIR is not None else 0
+        if _DIR is not None:
+            _load(_DIR)
+        return _RESTART_ENDED - before
+
+
+def _record(folder: Path, path: Path) -> tuple[RoomTerminal, bool] | None:
+    """One ended terminal from its record, or None when the record is not one (a Room program can write this folder
+    when the Room has no namespace; a bad file is skipped, never a reason for every terminal route to fail)."""
+    try:
+        meta = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+    if not isinstance(meta, dict):
+        return None
+    tid = str(meta.get("id") or "")
+    if not re.fullmatch(r"[0-9a-f]{8}", tid) or tid in _TERMS or meta.get("run") == _RUN:
+        return None
+    code = meta.get("exit_code")
+    try:
+        t = RoomTerminal(id=tid, name=str(meta.get("name") or "Terminal")[:40], owner=str(meta.get("owner") or "person"),
+                         starter=str(meta.get("starter") or meta.get("owner") or "person"),
+                         started=str(meta.get("started") or ""), started_ts=float(meta.get("started_ts") or 0),
+                         log=folder / f"{tid}.log", meta=path, shell=str(meta.get("shell") or ""),
+                         cols=int(meta.get("cols") or COLS), rows=int(meta.get("rows") or ROWS),
+                         command=str(meta["command"]) if meta.get("command") is not None else None,
+                         command_ts=float(meta["command_ts"]) if meta.get("command_ts") is not None else None,
+                         command_code=int(meta["command_code"]) if meta.get("command_code") is not None else None,
+                         run=str(meta.get("run") or ""))
+        t.exit_code = int(code) if code is not None else None
+        t.ended_ts = float(meta.get("ended_ts") or path.stat().st_mtime)
+    except (TypeError, ValueError, OverflowError, OSError):
+        return None
+    t.ended = True
+    t.ended_reason = str(meta.get("ended_reason") or "restart")
+    t.restart_seen = bool(meta.get("restart_seen"))
+    if t.owner not in ("person", "rooks") or t.starter not in ("person", "rooks"):
+        return None
+    return t, bool(meta.get("ended"))
 
 
 def _load(folder: Path) -> int:
     global _RESTART_ENDED
     found = 0
     for path in sorted(folder.glob("*.json")):
-        try:
-            meta = json.loads(path.read_text())
-        except (OSError, ValueError):
+        got = _record(folder, path)
+        if got is None:
             continue
-        tid = str(meta.get("id") or "")
-        if not isinstance(meta, dict) or not re.fullmatch(r"[0-9a-f]{8}", tid) or tid in _TERMS or meta.get("run") == _RUN:
-            continue
-        t = RoomTerminal(id=tid, name=str(meta.get("name") or "Terminal"), owner=str(meta.get("owner") or "person"),
-                         starter=str(meta.get("starter") or meta.get("owner") or "person"),
-                         started=str(meta.get("started") or ""), started_ts=float(meta.get("started_ts") or 0),
-                         log=folder / f"{tid}.log", meta=path, shell=str(meta.get("shell") or ""),
-                         cols=int(meta.get("cols") or COLS), rows=int(meta.get("rows") or ROWS),
-                         command=meta.get("command"), command_ts=meta.get("command_ts"),
-                         command_code=meta.get("command_code"), run=str(meta.get("run") or ""))
-        t.ended = True
-        t.exit_code = meta.get("exit_code")
-        t.ended_reason = meta.get("ended_reason") or "restart"
-        t.ended_ts = meta.get("ended_ts") or path.stat().st_mtime
-        t.restart_seen = bool(meta.get("restart_seen"))
-        if not meta.get("ended") or (t.ended_reason == "restart" and not t.restart_seen):
+        t, was_ended = got
+        if not was_ended or (t.ended_reason == "restart" and not t.restart_seen):
             t.ended_reason = "restart"
             t.restart_seen = True
             found += 1
@@ -310,7 +393,7 @@ def _load(folder: Path) -> int:
                 t.ring = bytearray(f.read())
         except OSError:
             pass
-        _TERMS[tid] = t
+        _TERMS[t.id] = t
     _RESTART_ENDED += found
     return found
 
@@ -348,17 +431,42 @@ def reset_for_tests(restart: bool = True) -> None:
 
 
 # --- the shell's output ----------------------------------------------------------------------------------------------------
-def _split_marks(data: bytes) -> tuple[bytes, list[int], bytes]:
-    """The output without exit code markers, the codes they carried, and a tail held back because it may be the start
-    of a marker cut by the read."""
-    codes = [int(m) if m not in (b"", b"-") else 0 for m in _MARK.findall(data)]
+def _split_marks(data: bytes) -> tuple[bytes, list[tuple[int, str | None]], bytes]:
+    """The output without exit code markers, the (code, nonce) each carried (nonce None from a profile seeded before
+    the nonce), and a tail held back because it may be the start of a marker cut by the read."""
+    marks = [(int(m.group(1)) if m.group(1) not in (b"", b"-") else 0,
+              m.group(2).decode() if m.group(2) is not None else None) for m in _MARK.finditer(data)]
     clean = _MARK.sub(b"", data)
     i = clean.rfind(b"\x1b")
     if i != -1:
         tail = clean[i:]
-        if len(tail) < 16 and (_MARK_HEAD.startswith(tail) or (tail.startswith(_MARK_HEAD) and tail[7:].lstrip(b"-").isdigit())):
-            return clean[:i], codes, tail
-    return clean, codes, b""
+        if len(tail) < 96 and (_MARK_HEAD.startswith(tail) or _MARK_PART.fullmatch(tail)):
+            return clean[:i], marks, tail
+    return clean, marks, b""
+
+
+@dataclass
+class _Socket:
+    """The one socket attached to a terminal: its queue, its loop, and how much output waits in the queue."""
+    token: object
+    q: asyncio.Queue
+    loop: asyncio.AbstractEventLoop
+    queued: int = 0
+
+    def __getitem__(self, i: int):  # (token, queue, loop), as before
+        return (self.token, self.q, self.loop)[i]
+
+
+def _resync(q: asyncio.Queue, frame: str) -> None:
+    """On the socket's loop: what waits is dropped and one fresh scrollback frame takes its place."""
+    closing = []
+    while not q.empty():
+        item = q.get_nowait()
+        if isinstance(item, tuple) and item[0] == "close":
+            closing.append(item)
+    q.put_nowait(("frame", frame))
+    for item in closing:
+        q.put_nowait(item)
 
 
 def _emit(t: RoomTerminal, clean: bytes) -> None:
@@ -371,19 +479,26 @@ def _emit(t: RoomTerminal, clean: bytes) -> None:
         t.total += len(clean)
         t.last_out = time.monotonic()
         text = t.decoder.decode(clean)
-        if t.attached and text:
-            _, q, loop = t.attached
+        sock = t.attached
+        if sock and text:
             try:
-                loop.call_soon_threadsafe(q.put_nowait, text)
+                if sock.queued + len(text) > QUEUE_MAX:  # a window that stopped reading: it gets the ring, once
+                    frame = t.frame()
+                    sock.queued = len(frame)
+                    sock.loop.call_soon_threadsafe(_resync, sock.q, frame)
+                else:
+                    sock.queued += len(text)
+                    sock.loop.call_soon_threadsafe(sock.q.put_nowait, text)
             except RuntimeError:  # that socket's loop is gone
                 t.attached = None
     _log_write(t, clean)
 
 
 def _log_write(t: RoomTerminal, data: bytes) -> None:
+    """The terminal's log in the Room's work folder: the person's alone (0600 in a 0700 folder)."""
     try:
         if t.log_fh is None:
-            t.log_fh = t.log.open("ab")
+            t.log_fh = _private(t.log, "ab")
             t.log_size = t.log.stat().st_size
         t.log_fh.write(data)
         t.log_fh.flush()
@@ -391,8 +506,9 @@ def _log_write(t: RoomTerminal, data: bytes) -> None:
         if t.log_size > LOG_MAX:  # keep the last megabyte
             t.log_fh.close()
             keep = t.log.read_bytes()[-LOG_KEEP:]
-            t.log.write_bytes(keep)
-            t.log_fh, t.log_size = t.log.open("ab"), len(keep)
+            with _private(t.log, "wb") as f:
+                f.write(keep)
+            t.log_fh, t.log_size = _private(t.log, "ab"), len(keep)
     except OSError as e:
         log.debug("terminal log not written: %s", e.__class__.__name__)
 
@@ -401,14 +517,21 @@ def _command_output(t: RoomTerminal) -> str:
     with t.lock:
         since = t.total - t.command_mark
         raw = bytes(t.ring[-since:]) if 0 < since <= len(t.ring) else bytes(t.ring)
-    text = _ANSI.sub("", raw.decode("utf-8", "replace")).replace("\r\n", "\n").replace("\r", "\n")
+    text = plain(raw.decode("utf-8", "replace"))
     return "\n".join([ln for ln in text.split("\n") if ln.strip()][-DONE_LINES:])
 
 
-def _marker(t: RoomTerminal, code: int) -> None:
-    """The shell came back to its prompt: the last command ended with this code."""
+def _marker(t: RoomTerminal, code: int, nonce: str | None = None) -> None:
+    """The shell came back to its prompt: the last command ended with this code. A marker without this terminal's
+    nonce is something a command printed, once the profile has shown it prints the nonce; it is cut out and ignored."""
     done = False
     with t.lock:
+        if nonce is not None:
+            if nonce != t.nonce:
+                return
+            t.nonce_seen = True
+        elif t.nonce_seen:
+            return
         t.prompts += 1
         t.last_code = code
         if t.pending:
@@ -421,8 +544,24 @@ def _marker(t: RoomTerminal, code: int) -> None:
              (f"exit {code}; " + lines)[:500], t.command_mono or time.monotonic())
 
 
+def _take(t: RoomTerminal, data: bytes) -> None:
+    clean, marks, t.carry = _split_marks(t.carry + data)
+    _emit(t, clean)
+    for code, nonce in marks:
+        _marker(t, code, nonce)
+
+
+def _shell_gone(t: RoomTerminal) -> bool:
+    proc = t.proc
+    try:
+        return proc is not None and proc.poll() is not None
+    except OSError:
+        return False
+
+
 def _read_loop(t: RoomTerminal) -> None:
     fd = t.master
+    left = False  # the shell exited while something it started still holds the terminal (sleep 30 & exit)
     while not t.stop.is_set():
         try:
             ready, _, _ = select.select([fd], [], [], 0.25)
@@ -432,6 +571,9 @@ def _read_loop(t: RoomTerminal) -> None:
             if t.carry:  # a held tail that turned out not to be a marker
                 carry, t.carry = t.carry, b""
                 _emit(t, carry)
+            if _shell_gone(t):
+                left = True
+                break
             continue
         try:
             data = os.read(fd, 65536)
@@ -441,12 +583,18 @@ def _read_loop(t: RoomTerminal) -> None:
             data = b""
         if not data:
             break
-        clean, codes, t.carry = _split_marks(t.carry + data)
-        _emit(t, clean)
-        for code in codes:
-            _marker(t, code)
+        _take(t, data)
+    if left:  # what the shell printed last, then its session is hung up and reaped
+        while True:
+            try:
+                data = os.read(fd, 65536)
+            except OSError:
+                break
+            if not data:
+                break
+            _take(t, data)
     if not t.stop.is_set():  # the shell exited by itself
-        _finish(t, "exited", hang_up=False)
+        _finish(t, "exited", hang_up=left)
 
 
 # --- opening, typing, closing ------------------------------------------------------------------------------------------------
@@ -478,24 +626,44 @@ def _spawn(t: RoomTerminal, argv: list[str], home: Path, env: dict) -> None:
     """In a worker thread: the shell on a fresh pseudo terminal, and its reader."""
     import pty
 
+    if t.ended:  # Stop, Start over or Close came first
+        raise HTTPException(409, ENDED)
     master, slave = pty.openpty()
     # A session of its own with this terminal as its controlling terminal, so every shell gets job control (bash takes
     # it itself; dash and others do not) and the foreground process group says when a program runs. util-linux's
     # setsid -c does that in place (same pid); elsewhere a new session is all Python can give without a fork hook.
-    setsid = shutil.which("setsid") if sys.platform.startswith("linux") else None
+    # setsid by its full path on this computer: never one from the Room's own bins, which a Room program can write.
+    setsid = _host_which("setsid") if sys.platform.startswith("linux") else None
     try:
         terminal_pty._resize(master, t.cols, t.rows)
-        t.proc = subprocess.Popen(["setsid", "-c", *argv] if setsid else argv, stdin=slave, stdout=slave, stderr=slave,
-                                  cwd=str(home), env=env, start_new_session=not setsid, close_fds=True)
+        proc = subprocess.Popen([setsid, "-c", *argv] if setsid else argv, stdin=slave, stdout=slave, stderr=slave,
+                                cwd=str(home), env=env, start_new_session=not setsid, close_fds=True)
     except OSError:
         os.close(master)
         raise
     finally:
         os.close(slave)
     os.set_blocking(master, False)
-    t.master = master
-    t.reader = threading.Thread(target=_read_loop, args=(t,), name=f"room-terminal-{t.id}", daemon=True)
-    t.reader.start()
+    with t.lock:  # _end_now marks a terminal ended under this lock, then hangs up whatever t.proc is
+        if not t.ended:
+            t.proc, t.master = proc, master
+            t.reader = threading.Thread(target=_read_loop, args=(t,), name=f"room-terminal-{t.id}", daemon=True)
+            t.reader.start()
+            return
+    # It was closed while its shell started: that shell never becomes a terminal. Hang it up, reap it, close its pty.
+    terminal_pty._hang_up(proc)
+    terminal_pty._reap(proc)
+    os.close(master)
+    raise HTTPException(409, ENDED)
+
+
+def _host_which(name: str) -> str | None:
+    """A program on this computer, never in the Room's folders (rooks_try's host_which; shutil's when it is older)."""
+    try:
+        from rooks_try.drivers.shell import host_which
+    except ImportError:
+        return shutil.which(name)
+    return host_which(name)
 
 
 def _env(room, driver, home: Path) -> dict:
@@ -530,6 +698,9 @@ async def open_terminal(name: str | None = None, owner: str = "person", command:
     Returns at once; nothing here waits for the command."""
     from . import room
 
+    command = (command or "").strip() or None
+    if command and ("\n" in command or "\r" in command):  # bash marks each line's end: one line, one end, one code
+        raise HTTPException(400, ONE_LINE)
     if room.remote():
         raise HTTPException(501, NO_TERMINAL)
     tryroom = room._import_room()
@@ -542,7 +713,6 @@ async def open_terminal(name: str | None = None, owner: str = "person", command:
         raise HTTPException(501, NO_TERMINAL)
     if not st.get("running"):
         raise HTTPException(409, OFF)
-    command = (command or "").strip() or None
     if command:
         owner = "rooks"
         wanted = (name or "Rooks").strip()[:40] or "Rooks"
@@ -570,11 +740,11 @@ async def open_terminal(name: str | None = None, owner: str = "person", command:
         if not argv:
             raise HTTPException(501, NO_TERMINAL)
         env = await asyncio.to_thread(_env, tryroom, driver, home)
+        env["ROOKS_MARK"] = t.nonce  # the profile keeps it, unexported, and prints it in each exit code marker
         t.shell = env.get("SHELL") or "/bin/sh"
         await asyncio.to_thread(_spawn, t, argv, home, env)
     except HTTPException:
-        with _LOCK:
-            _TERMS.pop(t.id, None)
+        _forget(t)  # it never opened (or was closed while it opened): nothing of it stays
         raise
     except Exception as e:  # noqa: BLE001
         with _LOCK:
@@ -647,9 +817,8 @@ def _end_now(t: RoomTerminal, reason: str, hang_up: bool = True) -> bool:
         t.log_fh = None
     t.save()
     if attached:
-        _, q, loop = attached
         try:
-            loop.call_soon_threadsafe(q.put_nowait, ("close", EXITED))
+            attached.loop.call_soon_threadsafe(attached.q.put_nowait, ("close", EXITED))
         except RuntimeError:
             pass
     return True
@@ -689,20 +858,38 @@ def _forget(t: RoomTerminal) -> None:
             pass
 
 
-async def send(t: RoomTerminal, text: str, enter: bool = True) -> int:
+def hidden_input(t: RoomTerminal) -> bool:
+    """The terminal is waiting for an answer it does not show (sudo, passwd, ssh, read -s): echo off in line mode. A
+    shell's own line editor (readline, zle) also turns echo off, but reads key by key, so it is not counted."""
+    import termios
+
+    master = t.master
+    if master is None:
+        return False
+    try:
+        lflag = termios.tcgetattr(master)[3]
+    except (OSError, termios.error, TypeError, ValueError):
+        return False
+    return not lflag & termios.ECHO and bool(lflag & termios.ICANON)
+
+
+async def send(t: RoomTerminal, text: str, enter: bool = True) -> tuple[int, bool]:
+    """Type a line into a terminal. Returns the bytes typed and whether the terminal was waiting for hidden input."""
     if t.ended:
         raise HTTPException(409, ENDED)
     if t.owner == "rooks" and not t.taken and t.busy():
         raise HTTPException(409, ROOKS_BUSY)
     await _ready(t)
+    hidden = hidden_input(t)
     data = (text + ("\r" if enter else "")).encode()
     await _typed(t, data)
-    return len(data)
+    return len(data), hidden
 
 
 def tail(t: RoomTerminal, lines: int = TAIL_DEFAULT) -> dict:
+    """A terminal's last lines as plain text (no escape sequences), with whether it is busy and how it ended."""
     lines = max(1, min(int(lines or TAIL_DEFAULT), TAIL_MAX))
-    text = "\n".join(t.text().split("\n")[-lines:])
+    text = "\n".join(plain(t.text()).split("\n")[-lines:])
     out = {"id": t.id, "name": t.name, "text": text, "alive": t.alive, "busy": t.busy(), "exit_code": t.code(),
            "owner": t.owner, "taken": t.taken, "elapsed_s": t.elapsed(), "started": t.started,
            "ended_reason": t.ended_reason}
@@ -750,8 +937,10 @@ async def send_route(tid: str, request: Request):
     body = await _body(request)
     text = str(body.get("text") or "")
     started = time.monotonic()
-    sent = await send(t, text, body.get("enter", True) is not False)
-    _row("send", {"name": t.name, "text": text}, "ok", f"sent a line to {t.name}", started)
+    sent, hidden = await send(t, text, body.get("enter", True) is not False)
+    # An answer typed where the terminal does not show it (a password prompt) is never written down, only its length.
+    shown = HIDDEN_LINE.format(n=len(text)) if hidden else text
+    _row("send", {"name": t.name, "text": shown}, "ok", f"sent a line to {t.name}", started)
     return {"ok": True, "bytes": sent}
 
 
@@ -815,29 +1004,35 @@ async def attach(ws: WebSocket, tid: str):
         await ws.close(code=no[0], reason=no[1])
         return
     await ws.accept()
-    loop = asyncio.get_running_loop()
-    q: asyncio.Queue = asyncio.Queue()
-    token = object()
+    sock = _Socket(object(), asyncio.Queue(), asyncio.get_running_loop())
     with t.lock:
-        before, t.attached = t.attached, (token, q, loop)
-        scrollback = bytes(t.ring).decode("utf-8", "replace")
-        alive = t.alive
+        ended = t.ended  # it ended while this socket was being accepted: its text, then the reason, never a hang
+        before = None
+        if not ended:
+            before, t.attached = t.attached, sock
+        first = t.frame()
+    if ended:
+        await ws.send_text(first)
+        await ws.close(code=4409, reason=WS_ENDED)
+        return
     if before:  # one window at a time: the earlier one is told why it closed
         try:
-            before[2].call_soon_threadsafe(before[1].put_nowait, ("close", ELSEWHERE))
+            before.loop.call_soon_threadsafe(before.q.put_nowait, ("close", ELSEWHERE))
         except RuntimeError:
             pass
     attached_at, typed, resized = time.monotonic(), False, False
 
     async def pump() -> None:
-        await ws.send_text(json.dumps({"type": "scrollback", "data": scrollback, "cols": t.cols, "rows": t.rows,
-                                       "alive": alive}))
+        await ws.send_text(first)
         while True:
-            item = await q.get()
-            if isinstance(item, tuple):
+            item = await sock.q.get()
+            if isinstance(item, tuple) and item[0] == "close":
                 await ws.close(code=1000, reason=item[1])
                 return
-            await ws.send_text(item)
+            text = item[1] if isinstance(item, tuple) else item  # ("frame", scrollback) after the socket fell behind
+            await ws.send_text(text)
+            with t.lock:
+                sock.queued = max(0, sock.queued - len(text))
 
     sender = asyncio.create_task(pump())
     try:
@@ -861,7 +1056,7 @@ async def attach(ws: WebSocket, tid: str):
     finally:
         sender.cancel()
         with t.lock:
-            if t.attached and t.attached[0] is token:
+            if t.attached is sock:
                 t.attached = None  # the shell keeps running
         if typed:  # one coarse row; what was typed is never recorded
             minutes = max(1, round((time.monotonic() - attached_at) / 60))

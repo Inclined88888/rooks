@@ -351,6 +351,8 @@ async def _use_room(action: str = "status", command: str = "", goal: str = "", l
             t = room_terminal.get(id) if id else room_terminal.newest_rooks()
             if t is None:
                 return {"ok": False, "error": room_terminal.NO_SUCH if id else room_terminal.NOTHING_STARTED}
+            if t.starter != "rooks" and t.owner != "rooks":  # the person's own, never handed over: not Rooks's to read
+                return {"ok": False, "error": room_terminal.THEIRS}
             return room_terminal.tail(t, lines or 60)
         if action == "files":
             return await room.list_files(path or "")

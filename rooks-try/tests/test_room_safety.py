@@ -104,6 +104,35 @@ def test_a_quick_command_is_posix_sh_whatever_the_persons_login_shell(room_home,
     assert any("SHELL" in a and "-l" in a for a in shell_mod.login_argv(store.guest_home()))
 
 
+def test_a_profile_seeded_before_the_marker_nonce_is_brought_up_to_date(room_home):
+    """The exit code marker carries the terminal's own nonce, so a command cannot print one. A Room seeded by an earlier
+    version gets the new profile when it is still word for word what was seeded; a profile the person changed is kept."""
+    home = store.guest_home()
+    old = ('# Rooks put this here so tools you install in the Room are found. Edit it as you like.\n'
+           'PATH="$HOME/.local/bin:$HOME/bin:$HOME/.cargo/bin:$PATH"; export PATH\n'
+           'if [ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc"; fi\n'
+           'if [ -n "$BASH_VERSION" ]; then PROMPT_COMMAND=\'printf "\\033]7777;%s\\007" "$?"\'"${PROMPT_COMMAND:+;$PROMPT_COMMAND}"; fi\n')
+    (home / ".profile").write_text(old)
+    (home / ".zprofile").write_text("# mine\n")
+    store.seed_home(home)
+    assert (home / ".profile").read_text() == store.PROFILE and "ROOKS_MARK" in store.PROFILE
+    assert (home / ".zprofile").read_text() == "# mine\n"
+
+
+@POSIX
+def test_the_marker_nonce_is_not_seen_by_what_the_shell_starts(room_home):
+    """bash -l with ROOKS_MARK set: the marker carries it, a child process does not see it."""
+    if not os.path.exists("/bin/bash"):
+        pytest.skip("needs bash")
+    home = store.guest_home()
+    store.seed_home(home)
+    env = {**shell_mod.room_env(home), "ROOKS_MARK": "abc123", "SHELL": "/bin/bash"}
+    out = subprocess.run(["/bin/bash", "-lc", 'env | grep -c ROOKS_MARK; eval "$PROMPT_COMMAND"'], env=env,
+                         cwd=str(home), capture_output=True, text=True, timeout=30)
+    # grep -c found nothing (0, exit code 1): the marker says code 1 and carries the nonce
+    assert out.stdout.startswith("0\n") and "\x1b]7777;1;abc123\x07" in out.stdout, repr(out.stdout)
+
+
 def test_room_env_drops_every_app_secret(room_home):
     home = store.guest_home()
     env = shell_mod.room_env(home, False, base={"PATH": "/usr/bin", "LANG": "C", **APP_SECRETS})
