@@ -17,7 +17,7 @@ secrets_staged() {
 
 secrets_history() {
   need gitleaks
-  gitleaks git --redact --no-banner .
+  gitleaks git --redact --verbose --no-banner .  # --verbose lists each finding; --redact hides its value
 }
 
 skills() {
