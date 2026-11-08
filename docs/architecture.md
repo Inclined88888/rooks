@@ -527,7 +527,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | Library pages | Files, Notes, Documents, Sites, Projects | live |
 | Workspace pages | Automations, Research, Meetings, Talk, Coworkers, Packs, Browser and Computer (only when the helpers run) | live |
 | pages/Code.tsx | Coding jobs plus copies of the Terminal, Browser and Computer pages as tabs | duplicate |
-| pages/TerminalPage.tsx, terminalHost.tsx | A real shell in the app window | live (to be hidden) |
+| pages/TerminalPage.tsx, terminalHost.tsx | A real shell in the app window | live (hidden behind Advanced, g.3a) |
 | pages/Customize.tsx | A page of tiles that only link to other pages | duplicate |
 | pages/Company.tsx | AI agents in an org chart (Advanced) | live |
 | Settings pages | Settings, Connect, Models, Voice, Appearance, Plan, About, Privacy, Phone | live |
@@ -716,6 +716,23 @@ browser agent now).
 | goals routes | Goals are set from chat; no screen calls the routes | Low |
 | rooks-browser/app (Electron preview) | A third browser surface nothing starts | Low. Pick one browser surface before investing more. |
 | companion/macos | One commit, built by hand, Mac only | Low. Fix the server's description of it. |
+
+### g.3a Done on branch `cleanup/workplace`
+
+One switch, Settings, Advanced, **Show developer tools** (off by default, kept by the install as the `dev_tools`
+setting and sent in `/api/status`), decides whether the developer pages are listed. `pages/registry.ts` marks them
+`dev: true`; the rail, flyouts, More sheet and command menu skip them while it is off, and with it on they sit under
+Advanced. Routes are built from every page, so each address still opens.
+
+| Item | Outcome |
+|---|---|
+| Terminal page, Code page (coding jobs), "Continue in terminal", Chat's Plan and Build | Hidden with the switch off; `terminal_pty.py`, the coding job routes and the `rooks` terminal unchanged |
+| Run log, Insights, System status, Compare, Fine-tune, Extra tools | Hidden; Settings, Advanced lists them when the switch is on |
+| Open WebUI, Paperclip, Hermes links | Only with the switch on |
+| Trade, Legal and Study packs (the Packs page and the three pack pages) | Hidden; their routes and the server's pack routes unchanged |
+| account.py paid-plan checks | Off unless a build sets `AIW_PLAN_CHECKS=1`; code kept |
+| goals routes | No screen ever called them, so nothing to hide; left for the owner (BACKLOG.md) |
+| Terminal access card in Chat settings, companion hooks, tool servers for other chat programs, Docker add-ons, rooks-browser/app, companion/macos | Not changed in this step (BACKLOG.md) |
 
 ### g.4 Rename
 

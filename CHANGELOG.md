@@ -6,9 +6,32 @@ version and the merge commit on `main`.
 
 ## Unreleased · Workplace cleanup · branch cleanup/workplace
 
-The first step of the cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the
-old browser agent, move old reports into `docs/history/`. Coding features are hidden later, not deleted. No schema
-change, nothing to migrate in the app. Rollback: revert the branch's commits.
+The cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the old browser
+agent, move old reports into `docs/history/`, and hide developer features behind Advanced (hidden, not deleted). No
+schema change, nothing to migrate in the app. Rollback: revert the branch's commits.
+
+- **Developer tools are hidden behind one switch** (section g.3). The Terminal, Code (coding jobs), the run log,
+  Insights, System status, Compare models, Fine-tune, Extra tools, Packs and the Trade, Legal and Study pack pages are
+  no longer in the More sheet or the command menu (none was on the top bar or in its menus), and the More sheet no
+  longer links to Open WebUI, Paperclip or Hermes. Settings, Advanced has **Show developer tools**, off on a new
+  install and on an upgrade: turn it on to list them all again, under Advanced. The install remembers the choice (the
+  server's settings, `dev_tools`), so every window and paired browser agrees; only a signed in person or paired
+  browser can change it, never a helper or coding job with a bridge key. Every address still opens (`/terminal`,
+  `/code`, `/runs`, `/packs/trade` and the rest), so bookmarks and links from chat results keep working. With the
+  switch off, Chat has no Chat/Code tabs, no Plan or Build, no "Code" or "Continue in terminal" in its menu, and a
+  Build mode saved earlier does not come back until the switch is on; Settings, Tools and Connect no longer link to
+  Extra tools. The `rooks` terminal is unchanged. The goals routes had no screen to hide (goals are set from chat).
+  **Action:** someone who uses the Terminal or Code page turns the switch on once.
+- **Paid-plan checks are off by default** (`account.py`, section g.3). No Rooks cloud sells plans, so no feature asks
+  for an upgrade, even if a cloud address is set and says billing is live. The code stays; a build opts in with
+  `AIW_PLAN_CHECKS=1` (`AIW_ENFORCE_PLANS` still forces either way).
+- **Tests** (each failed on the tree before the change): `workbench/frontend/tests/developer-tools.test.mjs` (with the
+  switch off none of these pages is in the rail, a flyout, the More sheet or the command menu; with it on all are;
+  their addresses open; the outside links, the chat modes and the switch itself) and
+  `workbench/backend/tests/test_developer_tools.py` (off on a new install, kept by the install, never on when signed
+  out, a bridge key cannot flip it, plan checks off by default and still on when a build opts in). Screenshots of the
+  top bar and the More sheet, off and on, light and dark, 1440x900 and 390x844, were taken locally and are not in the
+  repository.
 
 - **Removed: 375 files, 3,226 text lines, 40,578,218 bytes** (measured with git against `f837498`): 347 old
   screenshots (40 MB, tracked although `.gitignore` excludes the folder), draft launch posts with claims that are false

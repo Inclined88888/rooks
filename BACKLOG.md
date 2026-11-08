@@ -41,7 +41,22 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   saved trade. Settle it with the Trade, Legal and Study packs (g.3).
 * **The sidecar unit test does not run in CI.** `cargo test --offline sidecars` in `desktop/src-tauri` needs a
   placeholder `binaries/workbench-server-<target>` file; no workflow runs `cargo test` for the desktop app.
-* **Undecided by the owner:** `cli-launcher/` and `pages/Code.tsx` (hiding Code behind Advanced is the next step).
+* **Undecided by the owner:** `cli-launcher/`. `pages/Code.tsx` is now hidden behind Settings, Advanced, Show
+  developer tools, not deleted.
+* **Developer tools switch: what it does not cover yet.**
+  * Chat settings (`/assistant-settings`) still shows the "Terminal access" card, which names the `ws` command and
+    `cli/ws`. Hide it with the switch, or move it, once the owner decides `cli/ws` (g.2 merges it into rooks-code).
+  * The Stage's terminal card links to `/terminal` when the `rooks` terminal is working; the page opens by address,
+    so the link works, but it is the one way into a hidden page from a normal screen.
+  * The `rooks` terminal and the phone still show the Trade, Legal and Study packs. The terminal is a developer tool,
+    so its packs stay; the phone's Packs screen should read the same `dev_tools` setting.
+  * The goals routes (`/api/goals`) had no screen to hide. Nothing calls them but tests; remove them or keep them for
+    a future screen (owner's call).
+  * Your plan still lists Pro features as "free while in beta". With plan checks off, decide whether the page should
+    exist at all for workplace teams (section h, rank 16).
+* **For the room-browser branch** (not touched here): if the desktop app's tray, menus or launcher ever link to
+  `/terminal`, `/code`, `/runs` or the packs, those pages are now hidden behind the switch but still open by address.
+  Nothing in `desktop/` links to them today (checked with grep).
 * **`test_room_terminal.py::test_tail_says_busy_and_the_exit_code_honestly` failed once** in a full backend run on this
   branch (912 passed, 1 failed) and then passed three runs of its file in a row. The branch does not touch the Room's
   terminal code; it looks timing sensitive under load. The failure's own output was not kept, so the cause is unknown.
