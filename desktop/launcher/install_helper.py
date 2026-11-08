@@ -11,7 +11,9 @@ It installs, per user and without admin rights:
                       Playwright's Chromium
   * `rooks-desk`:     Rooks Desk, computer use: sees the screen, clicks and types in your apps, runs terminal commands
                       and works with files in folders you allow, asking first (uv tool; skip with --no-desk)
-  * the native app:   only when a published GitHub release has one for this computer (--native auto|yes|no)
+  * the Rooks app:    the native app, from a published GitHub release at or above this version that has one for this
+                      computer (--native auto|yes|no, default auto). Without one, it asks once whether `ai-workspace`
+                      opens Rooks in a Chrome or Edge window or in the usual browser, and keeps the answer
 
 Run again to upgrade; data, keys and settings are kept (they live in the app's data folder, not here).
 """
@@ -31,7 +33,10 @@ import urllib.request
 from pathlib import Path
 
 WIN, MAC = sys.platform == "win32", sys.platform == "darwin"
-NAME = "AI Workspace"
+NAME = "Rooks"
+OLD_NAMES = ("AI Workspace",)  # copies installed before the app was called Rooks (1.0.6 and older)
+NO_APP = "There is no Rooks app for this computer yet."
+QUESTION = f"{NO_APP} Open Rooks in a Chrome or Edge window, or in your usual browser?"
 
 
 def say(msg: str) -> None:
@@ -261,7 +266,10 @@ def write_shortcut(launcher: Path, app: Path, py: Path) -> str:
     icon = app / "workbench" / "frontend" / "dist" / "favicon.svg"
     try:
         if WIN:
-            menu = Path(os.environ["APPDATA"]) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / f"{NAME}.lnk"
+            programs = Path(os.environ["APPDATA"]) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+            for old in OLD_NAMES:
+                (programs / f"{old}.lnk").unlink(missing_ok=True)
+            menu = programs / f"{NAME}.lnk"
             pyw = py.with_name("pythonw.exe")
             ps = ("$s=(New-Object -ComObject WScript.Shell).CreateShortcut($env:LNK);$s.TargetPath=$env:PYW;"
                   "$s.Arguments='\"'+$env:LAUNCHER+'\"';$s.WorkingDirectory=$env:USERPROFILE;"
@@ -273,8 +281,13 @@ def write_shortcut(launcher: Path, app: Path, py: Path) -> str:
             return str(menu)
         if MAC:
             bundle = Path.home() / "Applications" / f"{NAME}.app"
-            if (Path("/Applications") / f"{NAME}.app").exists():
-                return "(native app in /Applications)"
+            for old in OLD_NAMES:  # the shortcut made before the app was called Rooks (never a real app)
+                old_bundle = Path.home() / "Applications" / f"{old}.app"
+                if old_bundle.exists() and not is_real_mac_app(old_bundle):
+                    shutil.rmtree(old_bundle, ignore_errors=True)
+            for real in (Path("/Applications") / f"{NAME}.app", bundle):
+                if is_real_mac_app(real):
+                    return f"(the {NAME} app in {real.parent})"
             macos = bundle / "Contents" / "MacOS"
             macos.mkdir(parents=True, exist_ok=True)
             (bundle / "Contents" / "Info.plist").write_text(
@@ -285,10 +298,10 @@ def write_shortcut(launcher: Path, app: Path, py: Path) -> str:
                 "<key>CFBundleExecutable</key><string>ai-workspace</string>"
                 "<key>CFBundleIdentifier</key><string>com.inclined88888.aiworkspace</string>"
                 "<key>CFBundlePackageType</key><string>APPL</string>"
-                "<key>NSAppleEventsUsageDescription</key><string>AI Workspace reads and drafts email through Apple Mail for "
+                f"<key>NSAppleEventsUsageDescription</key><string>{NAME} reads and drafts email through Apple Mail for "
                 "accounts you signed in to on this Mac. It never sends without your yes.</string>"
-                "<key>NSMicrophoneUsageDescription</key><string>AI Workspace listens when you use voice or record a meeting. Nothing is recorded unless you start it.</string>"
-                "<key>NSScreenCaptureUsageDescription</key><string>AI Workspace sees the screen only while you are using the computer page, and only after you allow it.</string>"
+                f"<key>NSMicrophoneUsageDescription</key><string>{NAME} listens when you use voice or record a meeting. Nothing is recorded unless you start it.</string>"
+                f"<key>NSScreenCaptureUsageDescription</key><string>{NAME} sees the screen only while you are using the computer page, and only after you allow it.</string>"
                 "<key>CFBundleIconFile</key><string>icon.icns</string></dict></plist>\n")
             res = bundle / "Contents" / "Resources"
             res.mkdir(parents=True, exist_ok=True)
@@ -296,8 +309,9 @@ def write_shortcut(launcher: Path, app: Path, py: Path) -> str:
             if icns.exists():
                 shutil.copyfile(icns, res / "icon.icns")
             exe = macos / "ai-workspace"
-            # Stay this app (do not exec). macOS then names permission prompts AI Workspace, not Python or Chrome.
-            exe.write_text(f'#!/bin/sh\n"{launcher}" --web\n')
+            # Stay this app (do not exec). macOS then names permission prompts Rooks, not Python or Chrome. No --web:
+            # the launcher opens the Rooks app when there is one, else what the person chose (it asks when they have not).
+            exe.write_text(f'#!/bin/sh\n"{launcher}"\n')
             exe.chmod(0o755)
             os.utime(bundle)  # Finder re-reads the icon
             lsregister = Path("/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister")
@@ -307,56 +321,154 @@ def write_shortcut(launcher: Path, app: Path, py: Path) -> str:
         apps = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share") / "applications"
         apps.mkdir(parents=True, exist_ok=True)
         f = apps / "ai-workspace.desktop"
-        f.write_text(f"[Desktop Entry]\nType=Application\nName={NAME}\nComment=Your AI assistant, coding agent and browser agent\n"
+        f.write_text(f"[Desktop Entry]\nType=Application\nName={NAME}\nComment=Your own AI assistant, with its own computer and browser\n"
                      f"Exec={launcher}\nIcon={icon}\nTerminal=false\nCategories=Utility;Development;\n")
         return str(f)
     except (OSError, subprocess.CalledProcessError) as e:
         return f"(no shortcut: {e})"
 
 
-def native_asset(repo: str) -> tuple[str, str] | None:
-    """(name, url) of a published native installer for this computer, if any release has one."""
-    arch = platform.machine().lower()
-    if MAC:
-        want = (lambda n: n.endswith(".dmg") and ("aarch64" in n if arch in ("arm64", "aarch64") else ("x64" in n or "x86_64" in n)))
-    elif WIN:
-        want = (lambda n: n.endswith("-setup.exe"))
-    else:
-        want = (lambda n: n.endswith(".AppImage") and ("amd64" in n or "x86_64" in n))
+def _tag_version(tag: str) -> tuple[int, int, int] | None:
+    """The version of an app release tag: vX.Y.Z or desktop-vX.Y.Z. Anything else (rooks-native-v*, the Ask palette,
+    or a hand-made tag) is not an app release."""
+    import re
+
+    m = re.fullmatch(r"(?:desktop-)?v(\d+)\.(\d+)\.(\d+)", tag or "")
+    return (int(m.group(1)), int(m.group(2)), int(m.group(3))) if m else None
+
+
+def _wants(plat: str, machine: str):
+    arch = machine.lower()
+    arm = arch in ("arm64", "aarch64")
+    if plat == "darwin":
+        return lambda n: n.endswith(".dmg") and (("aarch64" in n) if arm else ("x64" in n or "x86_64" in n))
+    if plat == "win32":
+        return lambda n: n.endswith("-setup.exe") and not arm
+    return lambda n: n.endswith(".AppImage") and not arm and ("amd64" in n or "x86_64" in n)
+
+
+def pick_native_asset(releases: list, current: str, plat: str, machine: str) -> tuple[str, str] | None:
+    """(name, url) of the newest app installer for this computer in releases at or above this install's version.
+
+    Only v* and desktop-v* tags count: rooks-native-v0.3.0's Rooks_0.3.0_aarch64.dmg is the Ask palette, not the app.
+    A release older than this install is the old app and would replace a newer one.
+    """
+    floor = _tag_version("v" + (current or "0.0.0").strip()) or (0, 0, 0)
+    want = _wants(plat, machine)
+    found = []
+    for rel in releases or []:
+        ver = _tag_version(str(rel.get("tag_name") or ""))
+        if not ver or ver < floor or rel.get("draft"):
+            continue
+        for a in rel.get("assets", []):
+            if want(str(a.get("name", ""))):
+                found.append((ver, a["name"], a["browser_download_url"]))
+                break
+    if not found:
+        return None
+    _, name, url = max(found, key=lambda f: f[0])
+    return name, url
+
+
+def native_asset(repo: str, current: str) -> tuple[str, str] | None:
+    """(name, url) of a published native installer for this computer, if a release at or above `current` has one."""
     try:
-        req = urllib.request.Request(f"https://api.github.com/repos/{repo}/releases?per_page=10",
+        req = urllib.request.Request(f"https://api.github.com/repos/{repo}/releases?per_page=30",
                                      headers={"Accept": "application/vnd.github+json", "User-Agent": "ai-workspace-installer"})
         with urllib.request.urlopen(req, timeout=15) as r:
             releases = json.load(r)
     except (OSError, ValueError):
         return None
-    for rel in releases:
-        for a in rel.get("assets", []):
-            if want(a.get("name", "")):
-                return a["name"], a["browser_download_url"]
-    return None
+    return pick_native_asset(releases if isinstance(releases, list) else [], current, sys.platform, platform.machine())
+
+
+def ask_shell(have_window: bool, interactive: bool, ask=None) -> str | None:
+    """Where `ai-workspace` opens Rooks when there is no Rooks app: "window" (a Chrome or Edge window of its own) or
+    "browser" (the usual browser). Asked once, only with someone at the terminal; None means no answer, and the
+    launcher then asks too (never a window nobody chose)."""
+    if not have_window:
+        return "browser"  # no Chrome or Edge: the usual browser is the only way, nothing to ask
+    if not interactive:
+        return None
+    ask = ask or tty_ask
+    reply = (ask(f"{QUESTION}\n  1. A Chrome or Edge window of its own\n  2. My usual browser\nChoose 1 or 2 [1]: ") or "").strip().lower()
+    return "browser" if reply in ("2", "b", "browser", "usual") else "window"
+
+
+def tty_ask(prompt: str) -> str:
+    """Read one answer from the person at the terminal, also when this runs from `curl ... | bash` (stdin is the
+    script then). Empty after 60 seconds."""
+    if WIN:
+        return input(prompt) if sys.stdin.isatty() else ""
+    try:
+        import select
+
+        with open("/dev/tty", "r+", encoding="utf-8") as tty:
+            tty.write(prompt)
+            tty.flush()
+            ready, _, _ = select.select([tty], [], [], 60)
+            return tty.readline() if ready else ""
+    except OSError:
+        return ""
+
+
+def can_ask() -> bool:
+    if os.environ.get("AI_WORKSPACE_NONINTERACTIVE") == "1":
+        return False
+    if WIN:
+        return sys.stdin.isatty()
+    try:
+        with open("/dev/tty"):
+            return sys.stdout.isatty()
+    except OSError:
+        return False
+
+
+def has_window_browser(app: Path) -> bool:
+    """A Chrome, Edge or Chromium the launcher can open an app window in (its own search, so both agree)."""
+    sys.path.insert(0, str(app / "desktop" / "launcher"))
+    try:
+        import ai_workspace  # noqa: PLC0415
+
+        return bool(ai_workspace.window_browser())
+    except Exception:  # noqa: BLE001 - when in doubt, ask
+        return True
+    finally:
+        sys.path.pop(0)
+
+
+def desktop_app_paths() -> list[Path]:
+    """Where a native app installed by this installer (or the shortcut it made) lives, under the new and old names."""
+    names = (NAME, *OLD_NAMES)
+    if MAC:
+        return [d / f"{n}.app" for n in names for d in (Path("/Applications"), Path.home() / "Applications")]
+    if WIN:
+        local = os.environ.get("LOCALAPPDATA", "")
+        roots = [r for r in (local, os.path.join(local, "Programs") if local else "") if r]
+        return [Path(r) / n for n in names for r in roots]
+    return [Path.home() / ".ai-workspace" / "bin" / f"{n.replace(' ', '-')}.AppImage" for n in names]
+
+
+def is_real_mac_app(bundle: Path) -> bool:
+    """The Tauri app (its binary inside), not the shortcut to the launcher this installer makes."""
+    return (bundle / "Contents" / "MacOS" / "ai-workspace-desktop").exists()
 
 
 def _quit_desktop_app() -> None:
     """The old app has to be closed before it can be replaced. Ignore it when it is not running."""
     if MAC:
-        subprocess.run(["osascript", "-e", f'quit app "{NAME}"'], capture_output=True)
+        for n in (NAME, *OLD_NAMES):
+            subprocess.run(["osascript", "-e", f'quit app "{n}"'], capture_output=True)
     elif WIN:
-        for image in ("ai-workspace-desktop.exe", f"{NAME}.exe"):
+        for image in ("ai-workspace-desktop.exe", *(f"{n}.exe" for n in (NAME, *OLD_NAMES))):
             subprocess.run(["taskkill", "/IM", image, "/F"], capture_output=True)
 
 
-def remove_stale_desktop_app() -> None:
-    """An older desktop app, if left in place, is what opens. Remove it so this install is the one that runs."""
+def remove_stale_desktop_app(keep: Path | None = None) -> None:
+    """An older desktop app, if left in place, is what opens. Remove it so this install is the one that runs.
+    `keep` is the app just installed. Data, keys and settings are not here: they stay in the app's data folder."""
     _quit_desktop_app()
-    leftovers: list[Path] = []
-    if MAC:
-        leftovers = [d / f"{NAME}.app" for d in (Path("/Applications"), Path.home() / "Applications")]
-    elif WIN:
-        local = os.environ.get("LOCALAPPDATA", "")
-        leftovers = [Path(r) / NAME for r in filter(None, (local, os.path.join(local, "Programs") if local else ""))]
-    else:
-        leftovers = [Path.home() / ".ai-workspace" / "bin" / "AI-Workspace.AppImage"]
+    leftovers = [p for p in desktop_app_paths() if keep is None or p != keep]
     for path in leftovers:
         if not path.exists():
             continue
@@ -365,16 +477,17 @@ def remove_stale_desktop_app() -> None:
         else:
             path.unlink(missing_ok=True)
         if path.exists():
-            say(f"The older {NAME} app is still at {path}. Drag it to the Trash and open {NAME} again, "
+            say(f"An older app is still at {path}. Drag it to the Trash and open {NAME} again, "
                 "or the old one keeps opening.")
 
 
-def install_native(repo: str, home: Path) -> str:
-    found = native_asset(repo)
+def install_native(repo: str, home: Path, current: str) -> str:
+    found = native_asset(repo, current)
     if not found:
         return ""
     name, url = found
-    say(f"native app: downloading {name}…")
+    say(f"Rooks app: downloading {name}…")
+    _quit_desktop_app()
     tmp = Path(tempfile.mkdtemp())
     f = tmp / name
     urllib.request.urlretrieve(url, f)  # noqa: S310 - GitHub release asset over https
@@ -387,16 +500,25 @@ def install_native(repo: str, home: Path) -> str:
             dest_dir.mkdir(exist_ok=True)
             shutil.rmtree(dest_dir / src.name, ignore_errors=True)
             run(["ditto", str(src), str(dest_dir / src.name)])
+            remove_stale_desktop_app(keep=dest_dir / src.name)
             return str(dest_dir / src.name)
         finally:
             subprocess.run(["hdiutil", "detach", "-quiet", str(mnt)])
     if WIN:
         run([str(f), "/S"])  # NSIS, per-user install (installMode currentUser): no admin prompt
-        return "Start menu → AI Workspace"
-    dest = home / "bin" / "AI-Workspace.AppImage"
+        local = os.environ.get("LOCALAPPDATA", "")
+        for old in OLD_NAMES:  # the app before it was called Rooks: its own folder, uninstalled quietly
+            for root in filter(None, (local, os.path.join(local, "Programs") if local else "")):
+                uninstall = Path(root) / old / "uninstall.exe"
+                if uninstall.exists():
+                    subprocess.run([str(uninstall), "/S"], capture_output=True)
+        return f"Start menu → {NAME}"
+    dest = home / "bin" / f"{NAME}.AppImage"
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(f, dest)
     dest.chmod(0o755)
+    for old in OLD_NAMES:
+        (home / "bin" / f"{old.replace(' ', '-')}.AppImage").unlink(missing_ok=True)
     return str(dest)
 
 
@@ -429,19 +551,36 @@ def ensure_path(bin_dir: Path) -> str:
     return f"Added {bin_dir} to PATH in your shell config. Restart your terminal (or run: source {rcs[0]}) so the commands are found."
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser()
     p.add_argument("--src", required=True)
     p.add_argument("--home", default=os.environ.get("AI_WORKSPACE_HOME") or str(Path.home() / ".ai-workspace"))
     p.add_argument("--bin", default=os.environ.get("AI_WORKSPACE_BIN") or str(Path.home() / ".local" / "bin"))
     p.add_argument("--repo", default=os.environ.get("AI_WORKSPACE_REPO") or "Inclined88888/rooks")
-    p.add_argument("--native", choices=("auto", "yes", "no"), default=os.environ.get("AI_WORKSPACE_NATIVE", "no"))
+    p.add_argument("--native", choices=("auto", "yes", "no"), default=os.environ.get("AI_WORKSPACE_NATIVE") or "auto",
+                   help="install the Rooks app from a published release (auto: when there is one for this computer)")
+    p.add_argument("--shell", choices=("window", "browser"), default=os.environ.get("AI_WORKSPACE_SHELL") or None,
+                   help="without a Rooks app: open Rooks in a Chrome or Edge window, or in the usual browser")
     p.add_argument("--no-browser", action="store_true")
     p.add_argument("--no-desk", action="store_true", help="do not install rooks-desk (computer use)")
     p.add_argument("--no-shortcut", action="store_true")
-    a = p.parse_args()
+    return p
+
+
+def read_install(home: Path) -> dict:
+    try:
+        d = json.loads((home / "install.json").read_text())
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def main() -> int:
+    a = build_parser().parse_args()
     src, home, bin_dir = Path(a.src).resolve(), Path(a.home).expanduser(), Path(a.bin).expanduser()
     home.mkdir(parents=True, exist_ok=True)
+    current = (src / "VERSION").read_text().strip() if (src / "VERSION").exists() else "0.0.0"
+    before = read_install(home)
 
     step("1/5  App")
     ensure_frontend(src, home)
@@ -452,34 +591,40 @@ def main() -> int:
     install_tools(src, desk=not a.no_desk)
     step("3/5  A browser for Rooks Browser")
     browser = ensure_browser(a.no_browser)
-    step("4/5  Launch command and shortcut")
+    step(f"4/5  The {NAME} app")
+    native = ""
     if a.native == "no":
         remove_stale_desktop_app()
+        say(f"{NAME} app: not installed (--native no)")
+    else:
+        native = install_native(a.repo, home, current)
+        if native:
+            say(f"{NAME} app: {native}")
+        else:
+            say(f"{NAME} app: none published for this computer at version {current} or newer yet.")
+            if a.native == "yes":
+                return 1
+    shell = None
+    if not native:
+        shell = a.shell or (before.get("shell") if before.get("shell") in ("window", "browser") else None)
+        if not shell:
+            shell = ask_shell(has_window_browser(app), can_ask())
+        say({"window": "Rooks opens in a Chrome or Edge window of its own (same app, same data).",
+             "browser": "Rooks opens in your usual browser (same app, same data)."}.get(
+            shell or "", f"{NO_APP} Rooks asks where to open the first time you start it."))
+    step("5/5  Launch command and shortcut")
     launcher = write_launcher(bin_dir, home, app, py)
     say(f"command: {launcher}")
-    if not a.no_shortcut:
+    if not a.no_shortcut and not (native and (MAC or WIN)):  # the app brings its own Applications / Start menu entry
         say(f"shortcut: {write_shortcut(launcher, app, py)}")
-    step("5/5  Native desktop app")
-    native = ""
-    if a.native != "no":
-        native = install_native(a.repo, home)
-    if native:
-        say(f"native app: {native}")
-    else:
-        say("native app: no published installer for this computer yet; `ai-workspace` opens the app in its own "
-            "Chrome/Edge app window instead (same app, same data).")
-        if a.native == "yes":
-            return 1
     hint = ensure_path(bin_dir)
-    try:  # keep the update channel the owner chose (ai-workspace --update --channel)
-        channel = json.loads((home / "install.json").read_text()).get("channel")
-    except (OSError, ValueError):
-        channel = None
-    (home / "install.json").write_text(json.dumps({**({"channel": channel} if channel else {}), "src": str(src), "app": str(app), "python": str(py), "browser": browser,
+    keep = {k: before[k] for k in ("channel",) if before.get(k)}  # the update channel the owner chose
+    (home / "install.json").write_text(json.dumps({**keep, **({"shell": shell} if shell else {}), "src": str(src),
+                                                   "app": str(app), "python": str(py), "browser": browser,
                                                    "native": native, "bin": str(bin_dir)}, indent=1))
-    print("\nDone. The app is ready.")
+    print("\nDone. Rooks is ready.")
     print("\nWhat happens next:")
-    print("  1. Run 'ai-workspace' (or click the AI Workspace shortcut) to open the app.")
+    print(f"  1. Run 'ai-workspace' (or click {NAME} in your apps) to open Rooks.")
     print("  2. On first launch, choose where the AI runs:")
     print("     • Free cloud (recommended): paste a free Gemini or Groq key, two minutes, no card")
     print("     • Your subscription: sign in with ChatGPT, Claude or GitHub Copilot")
