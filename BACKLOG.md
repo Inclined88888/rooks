@@ -42,6 +42,9 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **The sidecar unit test does not run in CI.** `cargo test --offline sidecars` in `desktop/src-tauri` needs a
   placeholder `binaries/workbench-server-<target>` file; no workflow runs `cargo test` for the desktop app.
 * **Undecided by the owner:** `cli-launcher/` and `pages/Code.tsx` (hiding Code behind Advanced is the next step).
+* **`test_room_terminal.py::test_tail_says_busy_and_the_exit_code_honestly` failed once** in a full backend run on this
+  branch (912 passed, 1 failed) and then passed three runs of its file in a row. The branch does not touch the Room's
+  terminal code; it looks timing sensitive under load. The failure's own output was not kept, so the cause is unknown.
 * **Old reports keep their old paths inside.** Files in `docs/history/` mention `docs/evidence/` and `scripts/audit/`
   as they were; `docs/history/README.md` maps them.
 
