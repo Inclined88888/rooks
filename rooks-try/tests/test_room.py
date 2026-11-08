@@ -460,7 +460,7 @@ def test_status_and_every_result_say_which_shell(room_home):
 LOGIN = 'exec "$SHELL" -l'
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="the namespace wrapper and POSIX paths are Linux and macOS only")
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="unshare, the namespace wrapper, exists on Linux only")
 def test_login_argv_is_a_login_shell_in_the_rooms_home(room_home, monkeypatch):
     home = store.guest_home()
     monkeypatch.setattr(shell_mod, "_NAMESPACES", True)
