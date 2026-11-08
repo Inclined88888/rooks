@@ -478,11 +478,11 @@ def help_table(ui) -> None:
     if not hasattr(ui, "console"):
         ui.p(words.help_text())
         return
-    for name, cmds in [*words.groups().items(), ("Keys", None)]:
+    for name, rows in [*words.sections(), ("Keys", words.KEYS)]:
         t = Table.grid(padding=(0, 3))
         t.add_column(style="bold", no_wrap=True)
         t.add_column()
-        for k, v in ([(c, COMMANDS[c]) for c in cmds] if cmds else words.KEYS):
+        for k, v in rows:
             t.add_row(Text(k), Text(v))  # Text, not markup: "[question]" is shown as typed
         ui.console.print(Padding(Text(name, style=ui.hexcolour("dim") if ui.color else ""), (1, 2, 0, 2)))
         ui.console.print(Padding(t, (0, 2)))
@@ -557,6 +557,8 @@ def run(agent, ui: RichUI) -> int:
                  ("class:dim", f"{_k(t['tokens_in'] + t['tokens_out'])} tokens")]
         if todos:
             parts += [sep, ("class:dim", f"plan {sum(i['status'] == 'done' for i in todos)}/{len(todos)}")]
+        if workroom.room_working():  # a /room open command still running, as the last /room verb saw it
+            parts += [sep, ("class:mode", "● Room running")]
         parts += [sep, ("class:dim" if mode == "asks first" else "class:mode", mode), ("class:hint", "  Shift+Tab")]
         return FormattedText(parts)
 

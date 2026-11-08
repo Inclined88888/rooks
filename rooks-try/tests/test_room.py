@@ -454,3 +454,103 @@ def test_status_and_every_result_say_which_shell(room_home):
     assert ("Command Prompt" in st["note"]) == (st["shell"] == "cmd")
     if sys.platform != "win32":
         assert st["shell"] == "sh"
+
+
+# --- design 0006, 9.1: the Room's own login shell, profile and PATH ---------------------------------------------------
+LOGIN = 'exec "$SHELL" -l'
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="unshare, the namespace wrapper, exists on Linux only")
+def test_login_argv_is_a_login_shell_in_the_rooms_home(room_home, monkeypatch):
+    home = store.guest_home()
+    monkeypatch.setattr(shell_mod, "_NAMESPACES", True)
+    wrapped = shell_mod.login_argv(home, False)
+    # unshare and sh by their full paths on this computer, never looked up in the Room's own bins
+    assert os.path.isabs(wrapped[0]) and wrapped[0].endswith("unshare") and wrapped[1:3] == ["-Urm", "--"]
+    assert wrapped[-1].endswith(LOGIN) and '"$HOME/.local/bin:' in wrapped[5]
+    assert wrapped[wrapped.index("room") + 1] == str(home)
+    assert shell_mod.login_argv(home, True)[1] == "-Urmn"  # offline: no network either
+    monkeypatch.setattr(shell_mod, "_NAMESPACES", False)
+    plain = shell_mod.login_argv(home, False)
+    assert os.path.isabs(plain[0]) and plain[1] == "-c" and plain[-2:] == ["room", str(home)]
+    assert plain[2].startswith('cd "$1"') and plain[2].endswith(LOGIN) and '"$HOME/.local/bin:' in plain[2]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="a POSIX shell")
+def test_run_finds_a_tool_installed_in_the_rooms_local_bin(room_home, monkeypatch):
+    # The host PATH, without the person's own ~/.local/bin (which the Room's home sits over inside a namespace).
+    monkeypatch.setenv("PATH", "/usr/local/bin:/usr/bin:/bin")
+    driver = shell_mod.ShellDriver()
+    driver.up()
+    bin_dir = store.guest_home() / ".local" / "bin"
+    bin_dir.mkdir(parents=True)
+    tool = bin_dir / "hello"
+    tool.write_text("#!/bin/sh\necho hi\n")
+    tool.chmod(0o755)
+    out = driver.run("hello")
+    assert out["code"] == 0 and out["stdout"] == "hi\n", out
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="a POSIX shell")
+def test_run_reads_the_rooms_profile(room_home):
+    driver = shell_mod.ShellDriver()
+    driver.up()
+    with (store.guest_home() / ".profile").open("a") as f:
+        f.write("\nexport GREETING=room\n")
+    out = driver.run('echo "$GREETING"')
+    assert out["code"] == 0 and out["stdout"].strip().splitlines()[-1] == "room", out
+
+
+def test_up_seeds_a_profile_only_when_missing(room_home):
+    driver = shell_mod.ShellDriver()
+    driver.up()
+    home = store.guest_home()
+    for name in (".profile", ".zprofile"):
+        assert "$HOME/.local/bin" in (home / name).read_text(), name
+    assert "7777" in (home / ".profile").read_text()  # how the app learns a command's exit code
+    (home / ".profile").write_text("# mine\n")
+    driver.up()
+    assert (home / ".profile").read_text() == "# mine\n"  # seeded, never overwritten
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the namespace wrapper and POSIX paths are Linux and macOS only")
+def test_room_env_drops_secrets_and_keeps_the_rooms_bins_off_the_wrappers_path(room_home):
+    """The Room's bins come first inside the Room's shell (login_argv, run_argv, the profile), never on the PATH the
+    wrappers are looked up with (tests/test_room_safety.py)."""
+    home = store.guest_home()
+    env = shell_mod.room_env(home, False, base={"PATH": f"{home}/.local/bin:/usr/bin", "OPENAI_API_KEY": "x",
+                                                "FOO_TOKEN": "y", "LANG": "C"})
+    assert env["PATH"] == "/usr/bin"
+    assert "OPENAI_API_KEY" not in env and "FOO_TOKEN" not in env
+    assert env["HOME"] == str(home) and env["ROOKS_TRY"] == "1" and env["LANG"] == "C"
+    offline = shell_mod.room_env(home, True, base={"PATH": "/usr/bin"})
+    assert offline["HTTPS_PROXY"] == "http://127.0.0.1:9"
+
+
+def test_nested_terminal_argv_is_the_shared_login_shell(room_home):
+    from rooks_try.drivers.display import DisplayDriver
+    from rooks_try.drivers.nested import NestedDriver
+    from rooks_try.drivers.qemu import QemuDriver
+
+    home = store.guest_home()
+    assert NestedDriver().terminal_argv(home) == shell_mod.login_argv(home, False)
+    assert NestedDriver(offline=True).terminal_argv(home) == shell_mod.login_argv(home, True)
+    if sys.platform != "win32":
+        assert shell_mod.ShellDriver().terminal_argv(home) == shell_mod.login_argv(home, False)
+    assert QemuDriver().terminal_argv(home) is None  # a separate computer has no shell on this one
+    assert DisplayDriver().terminal_argv(home) is None
+
+
+def test_the_helper_says_it_hosts_no_terminal_and_no_folder(room_home, monkeypatch):
+    """rooks-try serve: status says what the app can offer through it (design 0006, section 6: helper mode)."""
+    import rooks_try.server as server
+
+    monkeypatch.setattr(server, "API_KEY", "secret-key")
+    server.Handler.room = TryRoom(prefer="shell")
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    try:
+        code, body = _call(f"http://127.0.0.1:{httpd.server_address[1]}", "GET", "/api/status")
+        assert code == 200 and body["can"] == {"terminal": False, "files": False}
+    finally:
+        httpd.shutdown()

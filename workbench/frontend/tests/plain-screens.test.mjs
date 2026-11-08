@@ -2,11 +2,13 @@
 // blamed on the shell.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const side = read("../src/chat/ChatList.tsx"); // the chats list lives in the Chat page's column now
-const terminal = read("../src/pages/TerminalPage.tsx");
+// the pane itself (xterm and its socket) lives in terminal/Shell.tsx, shared with the Room's terminals; the page reads
+// the close codes in its own words
+const terminal = `${read("../src/pages/TerminalPage.tsx")}\n${read("../src/terminal/Shell.tsx")}`;
 const app = read("../src/App.tsx");
 const registry = read("../src/pages/registry.ts");
 const vite = read("../vite.config.ts");
@@ -50,4 +52,33 @@ test("the app has no virtual computer page; the Room never shows a fake screen",
   assert.match(words, /Commands run as you, in a folder of its own\. It is not a locked off computer\./, "the honest command line");
   assert.match(room, /commandViewLine\(/, "the command view says it");
   assert.doesNotMatch(room, /A drawing of a terminal|fake|pretend/i);
+});
+
+test("the Room's desk never draws a fake screen: the Screen window exists only with a real one, and the dark box is the terminal's", () => {
+  const exists = (p) => existsSync(new URL(p, import.meta.url));
+  const files = ["RoomPage.tsx", "RoomStage.tsx", "TerminalWindow.tsx", "FilesWindow.tsx", "PointsWindow.tsx", "desk.ts"];
+  for (const f of files) assert.ok(exists(`../src/room/${f}`), `src/room/${f} exists`);
+  // the one <img> stays inside RoomPicture: no other Room file draws a picture
+  for (const f of files) assert.doesNotMatch(read(`../src/room/${f}`), /<img\b/, `${f} draws no picture`);
+  // the Screen window and its dock item come from windowsFor, which offers it only when status.screen is true
+  const desk = read("../src/room/desk.ts");
+  assert.match(desk, /status\.screen === true/, "screen only when the service says it has one");
+  const page = read("../src/room/RoomPage.tsx");
+  assert.match(page, /windowsFor\(status\)/);
+  assert.match(page, /dockItems\(status\)/);
+  // the dark --screen colours belong to the terminal's box and the phone's last lines, nothing else on the desk
+  for (const f of files.filter((n) => n !== "TerminalWindow.tsx")) assert.doesNotMatch(read(`../src/room/${f}`), /--screen-/, `${f} uses no --screen colour`);
+  const css = read("../src/room/room.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const rule of css.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+    if (/--screen-/.test(rule[2])) assert.match(rule[1], /room-term|room-tail/, `${rule[1].trim()}: a --screen colour outside the terminal`);
+  }
+  // the Terminal window is a terminal, never called a screen
+  const win = read("../src/room/TerminalWindow.tsx");
+  assert.doesNotMatch(win, /title="Screen"|>Screen</);
+  const words = read("../src/room/words.ts");
+  for (const fn of ["terminalLabel", "tailLine", "endedLine"]) {
+    const at = words.indexOf(`export function ${fn}`);
+    assert.ok(at > -1, `${fn} exists`);
+    assert.doesNotMatch(words.slice(at, words.indexOf("\n}", at)), /screen/i, `${fn} never says screen`);
+  }
 });

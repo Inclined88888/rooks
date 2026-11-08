@@ -13,7 +13,7 @@ COMMANDS: dict[str, str] = {
     "/model": "pick the AI, the model and how hard it thinks (arrow keys)",
     "/effort": "how hard a plan's model thinks: /effort low, medium, high or auto",
     "/mode": "chat talks, plan reads, build can change files: /mode chat",
-    "/room": "Rooks' own computer: /room, /room start, /room stop, /room run COMMAND",
+    "/room": "Rooks' own computer: /room, start, stop, open COMMAND, files, points, shell (all under The Room)",
     "/needs": "what waits for your OK in the app: /needs, /needs approve 1, /needs deny 1",
     "/team": "coworkers for your line of work: /team, /team set up construction, /team create construction",
     "/jobs": "jobs running here and in the app; /jobs stop ID stops one started here",
@@ -49,7 +49,26 @@ GROUPS = {
     "Checks": ["/auto", "/dry-run", "/doctor", "/cost", "/receipt"],
 }
 
-KEYS = [("/", "commands, with what each does"), ("@", "add a file or folder to your request"),
+# /room's verbs, listed in /help under "The Room" (design record 0006 section 7.1). The words match the Room page.
+ROOM = "The Room"
+ROOM_VERBS = [
+    ("/room", "On or Off, its terminals, and what it is"),
+    ("/room start", "start the Room"),
+    ("/room stop", "stop it; everything in it is kept"),
+    ("/room run COMMAND", "a quick command, two minutes at most"),
+    ("/room open COMMAND", "run something long in the Room's terminal \"Rooks\", no time limit"),
+    ("/room tail [NAME]", "a terminal's last lines, and whether it is still running"),
+    ("/room send NAME TEXT", "type a line into a Room terminal"),
+    ("/room close NAME", "close a Room terminal (asks first)"),
+    ("/room files [FOLDER]", "what is in the Room's folder, on or off"),
+    ("/room points", "the saved points, newest first"),
+    ("/room save LABEL", "Save a point: copy the Room's files as they are now"),
+    ("/room back N", "Start over from a saved point (asks first)"),
+    ("/room handoff FILE PLACE", "Hand off a file: it waits for your OK in Needs you"),
+    ("/room shell", "a shell inside the Room, right here; exit comes back"),
+]
+
+KEYS = [("/","commands, with what each does"), ("@", "add a file or folder to your request"),
         ("Shift+Tab", "switch mode: asks first, auto-accept, plan only"), ("Esc Enter", "new line (paste keeps lines too)"),
         ("Up Down", "earlier requests"), ("Ctrl+R", "search earlier requests"), ("Ctrl+C", "stop the current task"),
         ("Ctrl+D", "quit"), ("?", "this help")]
@@ -66,12 +85,24 @@ def groups() -> dict[str, list[str]]:
     return out
 
 
-def help_text() -> str:
-    """/help as plain lines: every command and every key."""
-    lines = []
+def sections() -> list[tuple[str, list[tuple[str, str]]]]:
+    """/help's sections as (name, [(what to type, what it does)]): the command groups, with The Room's verbs right
+    after the group that holds /room."""
+    out = []
     for name, cmds in groups().items():
+        out.append((name, [(c, COMMANDS[c]) for c in cmds]))
+        if "/room" in cmds:
+            out.append((ROOM, list(ROOM_VERBS)))
+    return out
+
+
+def help_text() -> str:
+    """/help as plain lines: every command, The Room's verbs and every key."""
+    lines = []
+    for name, rows in sections():
+        width = max(10, *(len(k) for k, _ in rows)) if rows else 10
         lines.append(name)
-        lines += [f"  {c:<10} {COMMANDS[c]}" for c in cmds]
+        lines += [f"  {k:<{width}} {v}" for k, v in rows]
         lines.append("")
     lines.append("Keys")
     lines += [f"  {k:<10} {v}" for k, v in KEYS]

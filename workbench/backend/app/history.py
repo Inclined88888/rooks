@@ -277,6 +277,8 @@ def describe(name: str, a: dict, result, snap: dict) -> dict | None:
             title = "Stopped the Room"
         elif action == "run":
             title = _subject("Ran in the Room", a.get("command"))
+        elif action == "start":
+            title = _subject("Started in the Room's terminal", a.get("command"))
         elif action == "checkpoint":
             title = _subject("Saved a point in the Room", a.get("label") or r.get("name"))
         elif action == "reset":

@@ -4,7 +4,7 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-
 import { api } from "./api";
 import { CommandPalette } from "./Palette";
 import { PRODUCT } from "./product";
-import { TerminalKeeper } from "./terminalHost";
+import { RoomTerminalKeeper, TerminalKeeper } from "./terminalHost";
 import Auth from "./pages/Auth";
 import Welcome, { AccountsStep } from "./pages/Welcome";
 import { AccountLayer } from "./ProGate";
@@ -209,6 +209,7 @@ export default function App() {
       <MoreSheet open={moreOpen} onClose={closeMore} status={status} name={shellName} onSearch={openSearch} />
 
       <TerminalKeeper />
+      <RoomTerminalKeeper />
       <DeskNotice enabled={!!status.desk_enabled} />
       <JobNotifier />{/* feat/v02-automations */}<DesktopBridge />{/* feat/tauri-native */}
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} pages={pages} />

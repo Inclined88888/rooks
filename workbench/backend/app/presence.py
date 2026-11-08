@@ -66,7 +66,21 @@ _ROOM: dict[str, Callable[[dict], str]] = {  # use_room, one sentence per action
     "checkpoint": lambda a: _with("Saving a point in the Room", _field(a, "label")),
     "reset": lambda a: f"Starting the Room over from {clip(_field(a, 'name'))}" if _field(a, "name") else "Starting the Room over",
     "handoff": lambda a: _with("Copying a file out of the Room", _field(a, "src")),
+    # design 0006: a long command in a Room terminal, and watching it
+    "start": lambda a: _with("Running in the Room's terminal", _field(a, "command")),  # not every command installs
+    "tail": lambda a: "You took the terminal; Rooks waits" if _room_taken() else "Watching the Room's terminal",
+    "files": lambda a: "Looking through the Room's files",
 }
+
+
+def _room_taken() -> bool:
+    """The person took a Room terminal from Rooks while a turn works there (design 0006, section 6, take)."""
+    try:
+        from . import room_terminal
+
+        return room_terminal.taken_any()
+    except Exception:  # noqa: BLE001 - presence never fails on the Room
+        return False
 WORKING = "Working"  # a step the vocabulary has no words for (the frontend's own fallback)
 
 SAY: dict[str, Callable[[dict], str]] = {

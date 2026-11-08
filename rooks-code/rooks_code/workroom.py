@@ -9,14 +9,23 @@ the app.
 
 from __future__ import annotations
 
+import importlib
 import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime
+from pathlib import Path
 
 from . import talk
 
-RUN_WAIT_S = 330  # the Room's own limit on a command is 300 s
+RUN_WAIT_S = 330  # the Room's quick path stops a command after 120 s; a Room terminal has no limit
 
 
 class Refused(Exception):
@@ -29,6 +38,9 @@ class Unreachable(Exception):
 
 class Said(Exception):
     """The app answered with a reason (its reasons are plain words by design)."""
+
+
+OLDER_ROUTE = "The Rooks app on this computer does not have that yet. Update the app, then try again."
 
 
 def link_of(agent) -> dict | None:
@@ -55,6 +67,8 @@ def call(link: dict, method: str, path: str, body: dict | None = None, timeout: 
             detail = json.loads(e.read() or b"{}").get("detail")
         except (ValueError, AttributeError):
             detail = None
+        if e.code == 404 and str(detail or "").strip().lower() == "not found":  # the app has no such route at all
+            raise Said(OLDER_ROUTE) from None
         raise Said(detail if isinstance(detail, str) and detail else "The app could not do that.") from None
     except (urllib.error.URLError, OSError, ValueError):
         raise Unreachable() from None
@@ -68,9 +82,102 @@ OLDER_APP = ("  The Rooks app did not let this terminal {what}. Starting the Roo
 
 
 # --- /room ------------------------------------------------------------------------------------------------------------
+# The words match the Room page in the app (workbench/frontend/src/room/words.ts and design record 0006): On, Off, Save
+# a point, Start over, Needs you, Hand off a file, and the honest line.
 ISOLATION = {"none": "It runs as you; it is not locked off.", "namespace": "It runs in a space of its own on this computer.",
              "vm": "It is a separate computer."}
-ROOM_USE = "  /room shows it  ·  /room start  ·  /room stop  ·  /room run COMMAND"
+HONEST_LINE = "Commands run as you, in a folder of its own. It is not a locked off computer."
+VM_LINE = "A separate computer. Commands run inside it, apart from your files."
+OFF_KEPT = "The Room is off. Everything in it is kept."
+NOT_HERE = "  The Room's terminal opens in the app on this computer."
+SWITCHED_OFF = "  Terminals are switched off in Settings."
+LINK_WORDS = {"outside": "link, leads outside the Room", "broken": "link, leads nowhere"}
+# What /room tail prints is plain text: a program in the Room never switches modes in, retitles or writes the clipboard
+# of this terminal. The app strips these too; an older app may not.
+_ESCAPES = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b[\]P_^X][^\x07\x1b]*(?:\x07|\x1b\\?|$)|\x1b[ -/]*[0-~]|\x1b$"
+                      r"|[\x80-\x9f]")
+_CONTROLS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+
+def plain(text: str) -> str:
+    """A terminal's text as plain lines: escape sequences out, carriage returns settled as a screen shows them."""
+    out = []
+    for line in _ESCAPES.sub("", text).replace("\r\n", "\n").split("\n"):
+        shown = ""
+        for part in line.split("\r"):
+            shown = part + shown[len(part):]
+        out.append(_CONTROLS.sub("", shown))
+    return "\n".join(out)
+CUT_OFF = "Stopped after 120 seconds. For something long: /room open COMMAND"
+ROOM_USE = ("  /room start  ·  /room stop  ·  /room open COMMAND  ·  /room tail  ·  /room files  ·  /room points  ·  /room shell"
+            "  ·  /help lists every one")
+TAIL_LINES = 60
+
+# What the status line shows: whether a command Rooks started in a Room terminal is still running, as last seen by a
+# /room verb (asked when the person next runs one; never polled).
+_SEEN = {"working": False, "last_rooks": None}
+
+
+def room_working() -> bool:
+    """True while the last /room verb saw a command Rooks started in a Room terminal still running."""
+    return bool(_SEEN["working"])
+
+
+def _note_terminals(terms: list) -> None:
+    _SEEN["working"] = any(t.get("owner") == "rooks" and t.get("alive") and t.get("busy") for t in terms)
+
+
+def honest_line(st: dict) -> str:
+    """The page's honest line (commandViewLine): the same words, never under Advanced."""
+    if st.get("isolation") == "vm":
+        return (st.get("note") or "").strip() or VM_LINE
+    return HONEST_LINE
+
+
+def _plural(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
+def _elapsed(seconds) -> str:
+    s = int(seconds or 0)
+    if s < 60:
+        return "under a minute"
+    m = s // 60
+    if m < 60:
+        return f"{m} min"
+    h, m = divmod(m, 60)
+    return f"{h} h {m} min" if m else f"{h} h"
+
+
+_POINT = re.compile(r"^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})-(.+)$")
+
+
+def point_line(name: str) -> str:
+    """A saved point as the page says it (pointLine): its label, then the day and time it was saved."""
+    m = _POINT.match(name or "")
+    if not m:
+        return re.sub(r"[-_]+", " ", name or "").strip()
+    label = re.sub(r"[-_]+", " ", re.sub(r"-\d{2}$", "", m.group(7))).strip() or "save"
+    try:
+        when = datetime(*(int(m.group(i)) for i in range(1, 7)))
+    except ValueError:
+        return label
+    return f"{label} · {when.day} {when.strftime('%b')}, {when:%H:%M}"
+
+
+def terminal_line(t: dict) -> str:
+    """One Room terminal in plain words: "Terminal 1 · yours", "Rooks · running, 3 min", "Rooks · ended, code 0"."""
+    words = ["yours"] if t.get("owner") == "person" else []
+    if not t.get("alive"):
+        if t.get("ended_reason") == "restart":
+            words.append("ended when the app restarted")
+        else:
+            words.append("ended" + (f", code {t['exit_code']}" if t.get("exit_code") is not None else ""))
+    elif t.get("busy"):
+        words.append("running" + (f", {_elapsed(t.get('elapsed_s'))}" if t.get("owner") == "rooks" else ""))
+    elif t.get("owner") == "rooks":
+        words.append("open")
+    return f"{t.get('name') or 'A terminal'} · {', '.join(words)}"
 
 
 def _room_status(ui, st: dict) -> None:
@@ -80,17 +187,28 @@ def _room_status(ui, st: dict) -> None:
             ui.p(ui.c("dim", "  " + st["note"]))
         return
     on = bool(st.get("running"))
-    ui.p("  The Room  ·  " + (ui.c("accent", "on") if on else "off"))
+    ui.p("  The Room  ·  " + (ui.c("accent", "On") if on else "Off"))
     if st.get("label"):
         ui.p("  " + st["label"])
+    honest = honest_line(st)
     note = st.get("note") or ISOLATION.get(st.get("isolation") or "", "")
-    if note:
+    if note and note.strip() not in honest:
         ui.p(ui.c("dim", "  " + note))
+    ui.p(ui.c("dim", "  " + honest))
     if not st.get("screen"):
         ui.p(ui.c("dim", "  No screen to watch here: what it does shows as text."))
+    terms = st.get("terminals")
+    if isinstance(terms, list):
+        _note_terminals(terms)
+        if terms:
+            ui.p(f"  Terminals  ·  {len(terms)} of {st.get('terminal_max') or 4}")
+            for t in terms:
+                line = "    " + terminal_line(t)
+                ui.p(line if t.get("alive") else ui.c("dim", line))
     if st.get("last_checkpoint"):
         last = st["last_checkpoint"]
-        ui.p(ui.c("dim", f"  Last saved point: {last.get('label') or last.get('name') if isinstance(last, dict) else last}"))
+        said = (point_line(last["name"]) if last.get("name") else last.get("label")) if isinstance(last, dict) else last
+        ui.p(ui.c("dim", f"  Last saved point: {said}"))
     ui.p(ui.c("dim", ROOM_USE))
 
 
@@ -101,12 +219,327 @@ def _show_run(ui, out: dict) -> None:
         ui.p(ui.c("dim", "    ") + line)
     if len(lines) > 60:
         ui.p(ui.c("dim", f"    … {len(lines) - 60} more lines"))
-    if out.get("error"):
+    if out.get("code") == 124:  # the quick path's two minutes ran out; a Room terminal has no limit
+        ui.p(ui.c("error", "  " + CUT_OFF))
+    elif out.get("error"):
         ui.p(ui.c("error", "  " + str(out["error"])))
     elif out.get("code") not in (0, None):
         ui.p(ui.c("error", f"  It ended with an error (code {out['code']})."))
     elif not lines:
         ui.p(ui.c("dim", "  Done, nothing printed."))
+
+
+def _yes(ui, question: str) -> bool:
+    """Ask first, the way the page's inline confirm does: only y or yes goes ahead."""
+    ui.p("  " + question)
+    try:
+        line = sys.stdin.readline()
+    except (KeyboardInterrupt, EOFError, OSError, ValueError):
+        line = ""
+    return line.strip().lower() in ("y", "yes")
+
+
+# --- the Room's terminals ---------------------------------------------------------------------------------------------
+def _terminals(link: dict) -> list:
+    out = call(link, "GET", "/api/room/terminals")
+    terms = out.get("terminals") if isinstance(out, dict) else None
+    terms = [t for t in terms or [] if isinstance(t, dict)]
+    _note_terminals(terms)
+    return terms
+
+
+def _named(terms: list, name: str) -> dict | None:
+    want = " ".join(name.split()).lower()
+    return next((t for t in terms if " ".join(str(t.get("name") or "").split()).lower() == want), None) if want else None
+
+
+def _name_then_text(terms: list, rest: str) -> tuple[dict | None, str]:
+    """A terminal's name may have spaces ("Terminal 1"): the longest run of first words that names one wins."""
+    words = list(re.finditer(r"\S+", rest))
+    for i in range(len(words), 0, -1):
+        t = _named(terms, " ".join(w.group() for w in words[:i]))
+        if t:
+            return t, rest[words[i - 1].end():].strip()
+    return None, rest
+
+
+def _no_such(ui, name: str) -> None:
+    ui.p(f"  No terminal called {name} in the Room. /room lists them.")
+
+
+def _tid(t: dict) -> str:
+    return urllib.parse.quote(str(t.get("id") or ""), safe="")
+
+
+def _room_open(ui, link: dict, command: str) -> None:
+    if not command:
+        ui.p("  Say what to run: /room open ./install.sh")
+        return
+    out = call(link, "POST", "/api/room/terminals", {"name": "Rooks", "command": command})
+    _SEEN.update(working=True, last_rooks=out.get("id"))
+    ui.p(f"  Started in the Room's terminal \"{out.get('name') or 'Rooks'}\". /room tail shows how it goes.")
+
+
+def _room_tail(ui, link: dict, name: str) -> None:
+    terms = _terminals(link)
+    if name:
+        t = _named(terms, name)
+        if not t:
+            _no_such(ui, name)
+            return
+    else:  # the one Rooks started last, else Rooks's newest, else the newest terminal
+        rooks = [x for x in terms if x.get("owner") == "rooks"]
+        t = next((x for x in terms if x.get("id") == _SEEN["last_rooks"]), None) or (rooks or terms or [None])[-1]
+        if not t:
+            ui.p("  No terminals in the Room yet. /room open COMMAND starts one.")
+            return
+    out = call(link, "GET", f"/api/room/terminals/{_tid(t)}/tail?lines={TAIL_LINES}")
+    label = t.get("name") or "The terminal"
+    ui.p(ui.c("dim", f"  {label}  ·  last lines"))
+    for line in plain(str(out.get("text") or "")).splitlines()[-TAIL_LINES:]:
+        ui.p(ui.c("dim", "    ") + line)
+    if t.get("owner") == "rooks":
+        _SEEN["working"] = bool(out.get("alive") and out.get("busy"))
+    code = out.get("exit_code")
+    if out.get("taken"):
+        ui.p(ui.c("dim", "  You took this terminal; Rooks waits."))
+    if out.get("alive") and out.get("busy"):
+        ui.p("  " + ui.c("accent", f"{label}: still running ({_elapsed(out.get('elapsed_s'))})."))
+    elif out.get("alive"):
+        if code is None:
+            ui.p(ui.c("dim", f"  {label}: waiting for a command."))
+        else:
+            ui.p(ui.c("dim" if code == 0 else "error", f"  {label}: the last command ended with code {code}."))
+    elif out.get("ended_reason") == "restart" or t.get("ended_reason") == "restart":
+        ui.p(ui.c("dim", "  The app restarted, so this terminal ended. Your files and anything you installed are still here."))
+    else:
+        ui.p(ui.c("dim", "  This terminal ended" + (f" with code {code}." if code is not None else ".")
+                  + " Its files are still in the Room."))
+
+
+def _room_send(ui, link: dict, rest: str) -> None:
+    terms = _terminals(link)
+    t, text = _name_then_text(terms, rest)
+    if not t:
+        ui.p("  Say which terminal, then what to type: /room send Terminal 1 ls. /room lists them.")
+        return
+    if not text:
+        ui.p(f"  Say what to type: /room send {t.get('name')} ls")
+        return
+    call(link, "POST", f"/api/room/terminals/{_tid(t)}/send", {"text": text, "enter": True})
+    ui.p(f"  Sent to {t.get('name')}. /room tail {t.get('name')} shows what it printed.")
+
+
+def _room_close(ui, link: dict, name: str) -> None:
+    if not name:
+        ui.p("  Say which terminal: /room close Terminal 1. /room lists them.")
+        return
+    t = _named(_terminals(link), name)
+    if not t:
+        _no_such(ui, name)
+        return
+    label = t.get("name")
+    question = (f"Close {label}? What it is running stops. (y/N)" if t.get("alive")
+                else f"Close {label}? Its last lines go with it. (y/N)")
+    if not _yes(ui, question):
+        ui.p(f"  Kept {label}.")
+        return
+    call(link, "DELETE", f"/api/room/terminals/{_tid(t)}")
+    if _SEEN["last_rooks"] == t.get("id"):
+        _SEEN.update(last_rooks=None, working=False)
+    ui.p(f"  Closed {label}.")
+
+
+# --- the Room's files and saved points --------------------------------------------------------------------------------
+def _size(n) -> str:
+    if not isinstance(n, (int, float)):
+        return ""
+    if n < 1024:
+        return "1 byte" if n == 1 else f"{int(n)} bytes"
+    for unit in ("KB", "MB", "GB"):
+        n /= 1024
+        if n < 1024 or unit == "GB":
+            return f"{n:.0f} {unit}" if n >= 10 or unit == "KB" else f"{n:.1f} {unit}"
+    return ""
+
+
+def _when(iso) -> str:
+    try:
+        d = datetime.fromisoformat(str(iso).replace("Z", "+00:00")).astimezone()
+    except (TypeError, ValueError):
+        return ""
+    now = datetime.now().astimezone()
+    if d.date() == now.date():
+        return f"today {d:%H:%M}"
+    return f"{d.day} {d.strftime('%b')}" + ("" if d.year == now.year else f" {d.year}")
+
+
+def _room_files(ui, link: dict, where: str) -> None:
+    where = where.strip()
+    where = where[2:] if where.startswith("~/") else ("" if where == "~" else where)
+    out = call(link, "GET", "/api/room/files" + (f"?path={urllib.parse.quote(where)}" if where else ""))
+    crumbs = [out.get("root_label") or "Home"] + [p for p in str(out.get("path") or "").split("/") if p]
+    ui.p("  Files  ·  " + " › ".join(crumbs))
+    entries = [e for e in out.get("entries") or [] if isinstance(e, dict)]
+    if not entries:
+        ui.p(ui.c("dim", "  Nothing here yet. What you install or save in the terminal shows up here."))
+        return
+    width = min(max(len(str(e.get("name") or "")) for e in entries), 40)
+    for e in entries:
+        kind = e.get("kind")
+        meta = ("folder" if kind == "folder" else LINK_WORDS.get(str(e.get("why")), "link") if kind == "link"
+                else _size(e.get("size")))
+        ui.p(f"    {str(e.get('name') or ''):<{width}}  {meta:<9}  " + ui.c("dim", _when(e.get("modified"))))
+    if out.get("truncated"):
+        ui.p(ui.c("dim", "  Showing the first 500. Use the terminal to see more."))
+
+
+def _points(st: dict) -> list[str]:
+    names = [c.get("name") if isinstance(c, dict) else c for c in st.get("checkpoints") or []]
+    return sorted((str(n) for n in names if n), reverse=True)  # names start with when they were saved: newest first
+
+
+def _room_points(ui, link: dict) -> None:
+    points = _points(call(link, "GET", "/api/room/status"))
+    if not points:
+        ui.p("  No saved points yet. Save one before trying something you might want to undo: /room save LABEL")
+        return
+    ui.p(f"  Saved points  ·  {len(points)}")
+    for i, name in enumerate(points, 1):
+        ui.p(f"  {i:>3}  {point_line(name)}")
+    ui.p(ui.c("dim", "  /room back N starts over from one (it asks first). /room save LABEL saves a new one."))
+
+
+def _room_save(ui, link: dict, label: str) -> None:
+    ui.p(ui.c("dim", "  Saving a point. The Room's files are copied as they are now; a big folder can take a while."))
+    out = call(link, "POST", "/api/room/checkpoint", {"label": label}, timeout=900)
+    if not out.get("verified"):
+        ui.p("  The point could not be confirmed, so it is not saved. Try again.")
+        return
+    ui.p("  " + ui.c("ok", f"Saved a point{': ' + label if label else ''}."))
+    removed = out.get("removed") or []
+    if removed:
+        ui.p(ui.c("dim", f"  Older points are removed once there are 20; {_plural(len(removed), 'was', 'were')} removed now."))
+
+
+def _pick_point(points: list[str], arg: str) -> str | None:
+    if not arg:
+        return points[0] if len(points) == 1 else None
+    if arg.isdigit():
+        n = int(arg)
+        return points[n - 1] if 1 <= n <= len(points) else None
+    if arg in points:
+        return arg
+    want = " ".join(re.sub(r"[-_]+", " ", arg).split()).lower()
+    return next((p for p in points if point_line(p).split(" · ")[0].lower() == want), None)
+
+
+def _room_back(ui, link: dict, arg: str) -> None:
+    points = _points(call(link, "GET", "/api/room/status"))
+    if not points:
+        ui.p("  No saved points yet. /room save LABEL saves one.")
+        return
+    name = _pick_point(points, arg)
+    if not name:
+        ui.p("  Say which point: /room back 1 (the number from /room points).")
+        return
+    if not _yes(ui, f"Yes to start over from {point_line(name)}? Anything done since is lost and open terminals close. (y/N)"):
+        ui.p("  Nothing changed.")
+        return
+    out = call(link, "POST", "/api/room/reset", {"name": name}, timeout=900)
+    if not out.get("verified"):
+        ui.p("  Starting over could not be confirmed. The Room was left as it was.")
+        return
+    closed = int(out.get("terminals_closed") or 0)
+    ui.p("  " + ui.c("ok", f"The Room is back at {point_line(out.get('name') or name)}.")
+         + (f" {_plural(closed, 'terminal', 'terminals')} closed." if closed else ""))
+    if isinstance(out.get("terminal"), dict) and out["terminal"].get("name"):
+        ui.p(ui.c("dim", f"  {out['terminal']['name']} is open again."))
+
+
+def _room_handoff(ui, link: dict, arg: str) -> None:
+    try:
+        parts = shlex.split(arg)
+    except ValueError:
+        parts = []
+    if len(parts) != 2:
+        ui.p("  Say which file and where it goes: /room handoff Desktop/notes.txt ~/Desktop")
+        return
+    out = call(link, "POST", "/api/room/handoff", {"src": parts[0], "dest": parts[1]})
+    if out.get("held") and out.get("already_asked"):
+        ui.p("  That copy is already waiting for your OK in Needs you (/needs). It was not asked for twice.")
+    elif out.get("held"):
+        ui.p("  Waiting for your OK in Needs you (/needs). Nothing is copied until you say yes.")
+    elif out.get("already"):
+        ui.p("  That file was already copied after your OK.")
+    else:
+        ui.p("  " + str(out.get("note") or "The app did not say what happened to the file."))
+
+
+# --- /room shell: the same login shell, right here ---------------------------------------------------------------------
+def _on_this_computer(url: str) -> bool:
+    host = (urllib.parse.urlsplit(url).hostname or "").lower()
+    return host in ("localhost", "::1") or host.startswith("127.")
+
+
+def _from_this_computer(argv: list, env: dict, home: Path) -> tuple[list, dict]:
+    """The program that starts the Room's shell by its full path on this computer, and a PATH without the Room's
+    folders: a program in the Room can write its own bin folders, and what starts the Room runs before its walls are up.
+    (rooks-try does this itself now; an older one put the Room's bins first and named the program bare.)"""
+    roots = [os.path.realpath(home)] + ([os.path.realpath(home.parent)] if home.name == "home" else [])
+
+    def host(path: str) -> str:
+        keep = []
+        for p in (path or "").split(os.pathsep):
+            real = os.path.realpath(p) if p and os.path.isabs(p) else ""
+            if real and not any(real == r or real.startswith(r.rstrip(os.sep) + os.sep) for r in roots) and p not in keep:
+                keep.append(p)
+        return os.pathsep.join(keep)
+
+    env = {**env, "PATH": host(env.get("PATH", "")) or host(os.environ.get("PATH", "")) or os.defpath}
+    exe = str(argv[0])
+    if not os.path.isabs(exe) or not host(os.path.dirname(exe)):
+        found = shutil.which(os.path.basename(exe), path=host(os.environ.get("PATH", "")) or os.defpath)
+        if not found:
+            raise OSError(f"{os.path.basename(exe)} not found")
+        argv = [found, *argv[1:]]
+    return list(argv), env
+
+
+def _room_shell(ui, link: dict) -> None:
+    """The Room's own login shell in this terminal: the same wrapper, home and profile the app's Room terminal uses
+    (rooks_try's login_argv and room_env). A child process, so Rooks comes back after exit."""
+    st = call(link, "GET", "/api/room/status")
+    home = st.get("home")
+    shell = None
+    if (st.get("can") or {}).get("terminal_off_reason") == "switched_off":  # the app's words, the same switch
+        ui.p(SWITCHED_OFF)
+        return
+    if (st.get("can") or {}).get("terminal") and home and _on_this_computer(link["url"]):
+        try:
+            shell = importlib.import_module("rooks_try.drivers.shell")
+        except Exception:  # noqa: BLE001 - rooks-try not installed beside this terminal: the app has the terminal
+            shell = None
+    if not (shell and callable(getattr(shell, "login_argv", None)) and callable(getattr(shell, "room_env", None))):
+        ui.p(NOT_HERE)
+        return
+    if not st.get("running"):
+        ui.p("  The Room is off. Start it first: /room start")
+        return
+    offline = bool(st.get("offline"))
+    try:
+        argv, env = _from_this_computer(shell.login_argv(Path(home), offline), shell.room_env(Path(home), offline),
+                                        Path(home))
+    except OSError:
+        ui.p("  The Room's shell could not start here." + NOT_HERE)
+        return
+    ui.p(ui.c("dim", "  A shell inside the Room. What you install here stays. Type exit to come back to Rooks."))
+    try:
+        subprocess.call(argv, env=env)
+    except OSError:
+        ui.p("  The Room's shell could not start here." + NOT_HERE)
+        return
+    ui.p(ui.c("dim", "  Back in Rooks."))
 
 
 def room_command(agent, ui, rest: str = "") -> None:
@@ -125,12 +558,37 @@ def room_command(agent, ui, rest: str = "") -> None:
             ui.p("  The Room is " + ui.c("accent", "on") + "." if out.get("running") else "  The Room did not start.")
         elif sub in ("stop", "down", "off"):
             out = call(link, "POST", "/api/room/down", timeout=60)
-            ui.p("  The Room is off." if not out.get("running") else "  The Room is still on.")
+            if out.get("running"):
+                ui.p("  The Room is still on.")
+            else:
+                closed = int(out.get("terminals_closed") or 0)
+                _SEEN["working"] = False
+                ui.p(f"  {OFF_KEPT}" + (f" {_plural(closed, 'terminal', 'terminals')} closed." if closed else ""))
         elif sub == "run":
             if not arg:
                 ui.p("  Say what to run: /room run ls")
                 return
             _show_run(ui, call(link, "POST", "/api/room/run", {"command": arg}, timeout=RUN_WAIT_S))
+        elif sub == "open":
+            _room_open(ui, link, arg)
+        elif sub == "tail":
+            _room_tail(ui, link, arg)
+        elif sub == "send":
+            _room_send(ui, link, arg)
+        elif sub == "close":
+            _room_close(ui, link, arg)
+        elif sub == "files":
+            _room_files(ui, link, arg)
+        elif sub == "points":
+            _room_points(ui, link)
+        elif sub == "save":
+            _room_save(ui, link, arg)
+        elif sub == "back":
+            _room_back(ui, link, arg)
+        elif sub == "handoff":
+            _room_handoff(ui, link, arg)
+        elif sub == "shell":
+            _room_shell(ui, link)
         else:
             ui.p(ROOM_USE)
     except Refused:

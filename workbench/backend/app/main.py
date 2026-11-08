@@ -174,7 +174,12 @@ app.include_router(desk_proxy.router)
 from . import room  # noqa: E402 - the Room (design 0003): Rooks's own computer inside the app
 
 app.include_router(room.router)
-app.include_router(room.terminal)  # /room in the terminal: status, start, stop, run
+app.include_router(room.terminal)  # /room in the terminal: status, start, stop, run, files, save, back, hand off
+from . import room_terminal  # noqa: E402 - design 0006: the Room's own terminals, kept on the server
+
+app.include_router(room_terminal.terminal)  # /room open, tail, send, close (the rooks terminal's key too)
+app.include_router(room_terminal.router)    # take a terminal from Rooks, name it: the person's
+app.include_router(room_terminal.sockets)   # the terminal's screen: loopback, same origin, signed in
 from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): the presence strip and the Needs you inbox
 
 app.include_router(presence.router)

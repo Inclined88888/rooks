@@ -1,12 +1,14 @@
 /**
- * The Room's live view, shared by the Room page and the Stage (docs/design/0003-workroom.md, sections 3 and 4).
- * useRoomFrame() gives each of them the frame's label, its live and captured flags, the controls bar and the body.
+ * The Room's shared parts, used by the Room page (the desk) and the Stage (docs/design/0003-workroom.md, sections 3
+ * and 4; docs/design/0006-room-desktop.md, sections 2 and 3): the actions with the words that follow them, the window
+ * frame every desk window uses, the screen's picture with stepping in, the Commands window, and the small forms.
  *
  * Honesty rules in code: the picture (RoomPicture, the one picture element) is mounted only while roomScreenLive(status) says
  * the Room is running and has a real screen, and the screenshot route is asked only then; the mouse and keyboard
- * controls (Watch, Step in, Hand back) appear only when status.pointer is true; otherwise a real command view runs
- * commands through the Room's run route and says the honest line. Save a point and Start over are reported done only
- * when the service verified them; a hand-off is held in Needs you and nothing is copied from here.
+ * controls (Watch, Step in, Hand back) appear only when status.pointer is true. Where a Room terminal cannot exist, a
+ * real Commands window runs commands through the Room's run route and says the honest line. Save a point and Start
+ * over are reported done only when the service verified them; a hand-off is held in Needs you and nothing is copied
+ * from here.
  */
 import { Bookmark, Columns2, Eye, FileOutput, Hand, Laptop, Power, RotateCcw, Undo2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
@@ -15,22 +17,27 @@ import { api, fetchFrame } from "../api";
 import { openNeedsYou } from "../needs/store";
 import { getPresence, refreshPresence, subscribePresence } from "../shell/presence";
 import { openStage } from "../shell/StageHost";
-import { Badge, Button, EmptyState, IconButton, Input, Select, useToast } from "../ui";
+import { Badge, Button, Card, EmptyState, IconButton, Input, Select, useToast } from "../ui";
 import { errorText } from "../ui/toast";
-import { frameEvery, refreshRoomStatus, roomBusy, useRoomStatus, type RoomState } from "./status";
+import { addCommandLines, frameEvery, refreshRoomStatus, roomBusy, useRoomStatus, type CommandLine, type RoomState } from "./status";
+import { setActiveTerminal } from "./terms";
 import {
-  commandViewLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, pointLine, roomScreenLive, RUN_TIMEOUT_S, toScreenPoint, wheelSteps,
-  type Checkpoint, type Point, type Size,
+  commandViewLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, offStartLine, pointLine, resetLine, roomScreenLive, RUN_TIMEOUT_S, STOPPED_LINE,
+  TIMEOUT_NOTE, toScreenPoint, wheelSteps, type Checkpoint, type Point, type Size,
 } from "./words";
 import "./room.css";
 
 export type Held = { ok?: boolean; held?: boolean; request_id?: string; needs_you_id?: string; summary?: string; note?: string; already_asked?: boolean };
 type Panel = "point" | "reset" | "handoff" | null;
+type Opened = { id?: string; name?: string; owner?: string; alive?: boolean };
 
 /* ---------------------------------------------------------------- actions, with the words that follow them */
 export function useRoomActions() {
   const toast = useToast();
   const [busy, setBusy] = useState("");
+  /** The last thing an action said, for the Room bar's live region. */
+  const [said, setSaid] = useState("");
+  const ok = (text: string) => { toast.ok(text); setSaid(text); };
   const run = async <T,>(what: string, call: () => Promise<T>): Promise<T | null> => {
     setBusy(what);
     try {
@@ -46,48 +53,108 @@ export function useRoomActions() {
   /** The Room is said to be on only when the service answers running: true (honesty rule 6). */
   const start = () => run("up", async () => {
     const r = await api<{ running?: boolean; label?: string; error?: string }>("/room/up", { method: "POST" });
-    if (r?.running) toast.ok("The Room is on.");
+    if (r?.running) ok("The Room is on.");
     else toast.err(new Error(r?.error || "The Room did not start."));
     return r;
   });
+  /** Stop hangs every Room terminal up first; the folder is kept, and Files still lists it. */
   const stop = () => run("down", async () => {
-    const r = await api<{ running?: boolean }>("/room/down", { method: "POST" });
-    if (r && !r.running) toast.ok("The Room is off.");
+    const r = await api<{ running?: boolean; terminals_closed?: number }>("/room/down", { method: "POST" });
+    if (r && !r.running) ok(STOPPED_LINE);
     return r;
   });
   /** Reported saved only once the service checked the point is really in the store (rule 4). */
   const savePoint = (label: string) => run("point", async () => {
     const r = await api<{ name?: string; verified?: boolean; removed?: string[] }>("/room/checkpoint", { body: { label } });
-    if (r?.verified) toast.ok(`Saved a point${label ? `: ${label}` : ""}.`);
+    if (r?.verified) ok(`Saved a point${label ? `: ${label}` : ""}.`);
     else toast.err(new Error("The point could not be confirmed, so it is not saved."));
     return r;
   });
+  /** Terminals close first (the service does it); when the Room is on afterwards one new Terminal 1 opens. */
   const startOver = (name?: string) => run("reset", async () => {
-    const r = await api<{ name?: string; verified?: boolean }>("/room/reset", { body: name ? { name } : {} });
-    if (r?.verified) toast.ok(`The Room is back at ${pointLine(r.name || name || "")}.`);
-    else toast.err(new Error("Starting over could not be confirmed. The Room was left as it was."));
+    const r = await api<{ name?: string; verified?: boolean; terminals_closed?: number; terminal?: Opened | null }>("/room/reset", { body: name ? { name } : {} });
+    if (r?.verified) {
+      ok(`The Room is back at ${pointLine(r.name || name || "")}.`);
+      if (r.terminal?.id) setActiveTerminal(r.terminal.id);
+    } else toast.err(new Error("Starting over could not be confirmed. The Room was left as it was."));
     return r;
   });
   /** Nothing is copied here: the service holds the copy in Needs you (rule 5). */
   const handOff = (src: string, dest: string) => run("handoff", async () => {
     const r = await api<Held>("/room/handoff", { body: { src, dest } });
     void refreshPresence();
-    if (r?.ok) toast.ok("Copied out of the Room.");
+    if (r?.ok) ok("Copied out of the Room.");
     return r;
   });
-  return { busy, start, stop, savePoint, startOver, handOff };
+  // ---- the Room's terminals (0006, section 6): the list comes back from status after each of these
+  const newTerminal = () => run("terminal", async () => {
+    const r = await api<Opened>("/room/terminals", { body: {} });
+    if (r?.id) setActiveTerminal(r.id);
+    return r;
+  });
+  const closeTerminal = (id: string, name: string) => run(`close:${id}`, async () => {
+    const r = await api<{ ok?: boolean }>(`/room/terminals/${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (r?.ok !== false) setSaid(`${name} closed.`);
+    return r;
+  });
+  const renameTerminal = (id: string, name: string) => run(`rename:${id}`, () => api<{ id?: string; name?: string }>(`/room/terminals/${encodeURIComponent(id)}`, { method: "PATCH", body: { name } }));
+  const takeTerminal = (id: string) => run(`take:${id}`, async () => {
+    const r = await api<{ taken?: boolean }>(`/room/terminals/${encodeURIComponent(id)}/take`, { body: { owner: "person" } });
+    void refreshPresence();
+    return r;
+  });
+  /** Close every terminal, the ended ones included (their records go too). */
+  const closeAll = (ids: string[]) => run("close-all", async () => {
+    let closed = 0;
+    for (const id of ids) {
+      await api(`/room/terminals/${encodeURIComponent(id)}`, { method: "DELETE" });
+      closed += 1;
+    }
+    if (closed) ok(closed === 1 ? "1 terminal closed." : `${closed} terminals closed.`);
+    return { closed };
+  });
+  return { busy, said, say: setSaid, start, stop, savePoint, startOver, handOff, newTerminal, closeTerminal, renameTerminal, takeTerminal, closeAll };
 }
 
-/* ---------------------------------------------------------------- the frame's parts */
-export type RoomFrame = { status: RoomState; label: string; live: boolean; captured: boolean; controls: ReactNode; body: ReactNode };
+export type RoomActions = ReturnType<typeof useRoomActions>;
 
-export function useRoomFrame({ mode, goal, onClose }: { mode: "page" | "stage"; goal?: string; onClose?: () => void }): RoomFrame {
-  const status = useRoomStatus();
-  const act = useRoomActions();
-  const navigate = useNavigate();
+/* ---------------------------------------------------------------- a window on the desk */
+/**
+ * One window: the app's Card with a 36 px title bar (the name, the window's own verbs) and a label line. Windows are
+ * never dragged or resized; the desk's grid places them. The title takes focus (F6 from the terminal, the skip link).
+ */
+export function RoomWindow({ id, title, titleTip, verbs, label, stale, children, className }: {
+  id: string; title: string; titleTip?: string; verbs?: ReactNode; label?: ReactNode; stale?: boolean; children: ReactNode; className?: string;
+}) {
+  const titleId = `room-${id}-title`;
+  return (
+    <Card padding="none" as="section" aria-labelledby={titleId} className={["room-window", `room-window-${id}`, className].filter(Boolean).join(" ")}>
+      <header className="room-window-bar">
+        <h2 id={titleId} className="room-window-title" tabIndex={-1} title={titleTip}>{title}</h2>
+        {verbs && <div className="room-window-verbs">{verbs}</div>}
+      </header>
+      {label && <p className="room-window-label">{label}</p>}
+      {stale && <p className="room-window-label">Last known.</p>}
+      <div className="room-window-body">{children}</div>
+    </Card>
+  );
+}
+
+/** Put focus on a window's title (after a verified Start over, from the skip link, from F6). */
+export function focusWindowTitle(id: string): boolean {
+  const el = document.getElementById(`room-${id}-title`);
+  if (!el) return false;
+  el.focus();
+  return true;
+}
+
+/* ---------------------------------------------------------------- the screen: Watch, Step in, Hand back */
+/**
+ * The Screen window's parts: the picture (only while the Room really has a screen) or the off state, and the modes
+ * (only when the Room takes a pointer). Shared by the Screen window on the desk and the Stage.
+ */
+export function useRoomScreen(status: RoomState, onStart: () => void, starting: boolean) {
   const [captured, setCaptured] = useState(false);
-  const [panel, setPanel] = useState<Panel>(null);
-  const [held, setHeld] = useState<Held | null>(null);
   const screenLive = roomScreenLive(status);
   const canStep = screenLive && status.pointer === true;
   useEffect(() => { if (!canStep) setCaptured(false); }, [canStep]);
@@ -98,8 +165,43 @@ export function useRoomFrame({ mode, goal, onClose }: { mode: "page" | "stage"; 
     setCaptured(false);
     window.setTimeout(() => stepIn.current?.focus(), 0);
   }, []);
+  const modes = canStep ? (
+    <span className="room-modes" role="group" aria-label="Your mouse and keyboard">
+      <Button size="sm" variant="ghost" aria-pressed={!captured} icon={<Eye size={13} />} onClick={release}>Watch</Button>
+      <Button ref={stepIn} size="sm" variant="ghost" aria-pressed={captured} icon={<Hand size={13} />} title="Step in to use your mouse and keyboard here" onClick={() => setCaptured(true)}>Step in</Button>
+      {captured && <Button size="sm" variant="primary" icon={<Undo2 size={13} />} onClick={release}>Hand back</Button>}
+    </span>
+  ) : null;
+  const picture = screenLive ? <RoomPicture captured={captured} onRelease={release} /> : (
+    <EmptyState icon={<Laptop size={24} />} title={offLine(status)} line={offStartLine("screen")}
+      action={status.available && status.reachable ? <Button variant="primary" size="sm" icon={<Power size={13} />} busy={starting} onClick={onStart}>Start</Button> : undefined} />
+  );
+  return { captured, setCaptured, release, modes, picture, screenLive };
+}
+
+/* ---------------------------------------------------------------- the Stage's frame */
+export type RoomFrame = {
+  status: RoomState; act: RoomActions; label: string; live: boolean; captured: boolean; controls: ReactNode;
+  /** The screen's picture (or its off state), the goal line, the open form under the view. */
+  picture: ReactNode; goal: ReactNode; panels: ReactNode;
+  /** Open the hand off form with a file from the Files window filled in. */
+  openHandoff: (src: string) => void;
+};
+
+/**
+ * `pointsShown`: the Stage shows the Saved points window, which has its own Save a point and Start over from here, so
+ * the frame's two step aside (one of each on screen, never two forms for the same thing).
+ */
+export function useRoomFrame({ mode, goal, onClose, pointsShown = false }: { mode: "page" | "stage"; goal?: string; onClose?: () => void; pointsShown?: boolean }): RoomFrame {
+  const status = useRoomStatus();
+  const act = useRoomActions();
+  const navigate = useNavigate();
+  const screen = useRoomScreen(status, () => void act.start(), act.busy === "up");
+  const [panel, setPanel] = useState<Panel>(null);
+  const [held, setHeld] = useState<Held | null>(null);
+  const [handoffSrc, setHandoffSrc] = useState("");
   const points: Checkpoint[] = status.checkpoints ?? [];
-  const toggle = (p: Panel) => setPanel((cur) => (cur === p ? null : p));
+  const toggle = (p: Panel) => { setHandoffSrc(""); setPanel((cur) => (cur === p ? null : p)); };
 
   const label = !status.checked ? "Checking the Room…"
     : !status.reachable ? "The Room could not be checked."
@@ -110,18 +212,16 @@ export function useRoomFrame({ mode, goal, onClose }: { mode: "page" | "stage"; 
       {status.available && status.reachable && (status.running
         ? <Button size="sm" icon={<Power size={13} />} busy={act.busy === "down"} onClick={() => void act.stop()}>Stop</Button>
         : <Button size="sm" variant="primary" icon={<Power size={13} />} busy={act.busy === "up"} onClick={() => void act.start()}>Start</Button>)}
-      {canStep && (
-        <span className="room-modes" role="group" aria-label="Your mouse and keyboard">
-          <Button size="sm" variant="ghost" aria-pressed={!captured} icon={<Eye size={13} />} onClick={release}>Watch</Button>
-          <Button ref={stepIn} size="sm" variant="ghost" aria-pressed={captured} icon={<Hand size={13} />} onClick={() => setCaptured(true)}>Step in</Button>
-          {captured && <Button size="sm" variant="primary" icon={<Undo2 size={13} />} onClick={release}>Hand back</Button>}
-        </span>
-      )}
+      {screen.modes}
       {status.available && status.reachable && (
         <>
-          <Button size="sm" variant="ghost" icon={<Bookmark size={13} />} aria-pressed={panel === "point"} onClick={() => toggle("point")}>Save a point</Button>
-          <Button size="sm" variant="ghost" icon={<RotateCcw size={13} />} aria-pressed={panel === "reset"} disabled={!points.length}
-            title={points.length ? undefined : "Save a point first"} onClick={() => toggle("reset")}>Start over</Button>
+          {!pointsShown && (
+            <>
+              <Button size="sm" variant="ghost" icon={<Bookmark size={13} />} aria-pressed={panel === "point"} onClick={() => toggle("point")}>Save a point</Button>
+              <Button size="sm" variant="ghost" icon={<RotateCcw size={13} />} aria-pressed={panel === "reset"} disabled={!points.length}
+                title={points.length ? undefined : "Save a point first"} onClick={() => toggle("reset")}>Start over</Button>
+            </>
+          )}
           <Button size="sm" variant="ghost" icon={<FileOutput size={13} />} aria-pressed={panel === "handoff"} onClick={() => toggle("handoff")}>Hand off a file</Button>
         </>
       )}
@@ -135,33 +235,36 @@ export function useRoomFrame({ mode, goal, onClose }: { mode: "page" | "stage"; 
     </>
   );
 
-  let main: ReactNode;
-  if (!status.checked) main = <p className="room-line" role="status">Checking the Room…</p>;
-  else if (!status.reachable) main = <EmptyState icon={<Laptop size={24} />} title="The Room could not be checked." line="Rooks did not answer. It will be asked again in a moment." />;
-  else if (!status.available) main = <EmptyState icon={<Laptop size={24} />} title={status.label || NOT_HERE_LINE} line={status.note || "Rooks gets its own computer inside this app. You will watch it work, step in, hand it back and undo what it did."} />;
-  else main = screenLive ? <RoomPicture captured={captured} onRelease={release} /> : <CommandView status={status} />;
-
-  const body = (
+  const panels = (
     <>
-      {goal && <p className="room-goal"><span className="room-goal-k">Rooks is here to</span> {goal}</p>}
-      {main}
-      {panel === "point" && (
+      {panel === "point" && !pointsShown && (
         <PointPanel busy={act.busy === "point"} onCancel={() => setPanel(null)}
           onSave={async (l) => { const r = await act.savePoint(l); if (r?.verified) setPanel(null); }} />
       )}
-      {panel === "reset" && (
-        <ResetPanel points={points} initial={status.last_checkpoint?.name || undefined} busy={act.busy === "reset"} onCancel={() => setPanel(null)}
-          onConfirm={async (n) => { const r = await act.startOver(n); if (r?.verified) { setPanel(null); setCaptured(false); } }} />
+      {panel === "reset" && !pointsShown && (
+        <ResetPanel closing={status.terminals.filter((t) => t.alive).length} points={points} initial={status.last_checkpoint?.name || undefined}
+          busy={act.busy === "reset"} onCancel={() => setPanel(null)}
+          onConfirm={async (n) => { const r = await act.startOver(n); if (r?.verified) { setPanel(null); screen.setCaptured(false); } }} />
       )}
       {panel === "handoff" && (
-        <HandoffPanel busy={act.busy === "handoff"} onCancel={() => setPanel(null)}
+        <HandoffPanel initialSrc={handoffSrc} busy={act.busy === "handoff"} onCancel={() => setPanel(null)}
           onSend={async (s, d) => { const r = await act.handOff(s, d); if (r?.held) { setHeld(r); setPanel(null); } else if (r?.ok) setPanel(null); }} />
       )}
       {held && <HeldNote held={held} onClose={() => setHeld(null)} />}
     </>
   );
 
-  return { status, label, live: status.running === true, captured, controls, body };
+  const goalLine = goal ? <p className="room-goal"><span className="room-goal-k">Rooks is here to</span> {goal}</p> : null;
+  const openHandoff = (src: string) => { setHandoffSrc(src); setPanel("handoff"); };
+  return { status, act, label, live: status.running === true, captured: screen.captured, controls, picture: screen.picture, goal: goalLine, panels, openHandoff };
+}
+
+/** What the Room shows before it is known, when it did not answer, or when it is not installed; null when it is there. */
+export function roomNotReady(status: RoomState): ReactNode {
+  if (!status.checked) return <p className="room-line" role="status">Checking the Room…</p>;
+  if (!status.reachable && !status.available) return <EmptyState icon={<Laptop size={24} />} title="The Room could not be checked." line="Rooks did not answer. It will be asked again in a moment." />;
+  if (!status.available) return <EmptyState icon={<Laptop size={24} />} title={status.label || NOT_HERE_LINE} line={status.note || "Rooks gets its own computer inside this app. You will watch it work, step in, hand it back and undo what it did."} />;
+  return null;
 }
 
 /* ---------------------------------------------------------------- the picture: only while the Room really has a screen */
@@ -337,12 +440,15 @@ function RoomPicture({ captured, onRelease }: { captured: boolean; onRelease: ()
   );
 }
 
-/* ---------------------------------------------------------------- the command view: a real shell, said honestly */
-type Line = { kind: "cmd" | "out" | "err" | "note"; text: string };
+/* ---------------------------------------------------------------- the Commands window: a real shell, said honestly */
 type RunResult = { ok?: boolean; code?: number; stdout?: string; stderr?: string; note?: string; error?: string; isolation?: string };
 
-function CommandView({ status }: { status: RoomState }) {
-  const [lines, setLines] = useState<Line[]>([]);
+/**
+ * Only where a Room terminal cannot exist (helper mode, Windows): one command at a time through the run route, up to two
+ * minutes each. Its lines live in the status store, so leaving the page and coming back keeps them for the session.
+ */
+export function CommandView({ status }: { status: RoomState }) {
+  const lines = status.commandLines;
   const [cmd, setCmd] = useState("");
   const [busy, setBusy] = useState(false);
   const out = useRef<HTMLPreElement>(null);
@@ -354,24 +460,24 @@ function CommandView({ status }: { status: RoomState }) {
     if (!command || busy || !status.running) return;
     setBusy(true);
     setCmd("");
-    setLines((l) => [...l, { kind: "cmd", text: command }]);
+    addCommandLines([{ kind: "cmd", text: command }]);
     try {
       const r = await api<RunResult>("/room/run", { body: { command, timeout: RUN_TIMEOUT_S } });
-      const add: Line[] = [];
+      const add: CommandLine[] = [];
       if (r.stdout) add.push({ kind: "out", text: r.stdout.replace(/\n$/, "") });
       if (r.stderr) add.push({ kind: "err", text: r.stderr.replace(/\n$/, "") });
-      if (r.error) add.push({ kind: "err", text: r.error });
-      if (r.code !== undefined && r.code !== 0) add.push({ kind: "note", text: r.code === 124 ? `Stopped after ${RUN_TIMEOUT_S} seconds.` : `Finished with code ${r.code}.` });
+      if (r.error && r.code !== 124) add.push({ kind: "err", text: r.error });
+      if (r.code !== undefined && r.code !== 0) add.push({ kind: "note", text: r.code === 124 ? TIMEOUT_NOTE : `Finished with code ${r.code}.` });
       if (!add.length) add.push({ kind: "note", text: "Done, with nothing to show." });
-      setLines((l) => [...l, ...add]);
+      addCommandLines(add);
     } catch (err) {
-      setLines((l) => [...l, { kind: "err", text: errorText(err) }]);
+      addCommandLines([{ kind: "err", text: errorText(err) }]);
     } finally {
       setBusy(false);
     }
   };
 
-  const hint = status.running ? "Type a command below. Everything run here is in the run log." : offLine(status);
+  const hint = status.running ? "Type a command below. Each command Rooks or you run here is in the run log." : `${offLine(status)} ${offStartLine("commands")}`;
   return (
     <div className="room-cmd">
       <pre ref={out} className="room-cmd-out" aria-live="polite" aria-label="Output">
@@ -386,16 +492,23 @@ function CommandView({ status }: { status: RoomState }) {
           spellCheck={false} autoComplete="off" autoCapitalize="off" />
         <Button size="sm" type="submit" variant="primary" disabled={!status.running || !cmd.trim()} busy={busy}>Run</Button>
       </form>
-      <p className="room-honest">
-        <span>{commandViewLine(status)}</span>
-        <Badge tone="neutral" title="How separate the Room is">{isolationWords(status.isolation, !!status.offline)}</Badge>
-      </p>
     </div>
   );
 }
 
+/** The honest line with how separate the Room is (the Stage, the phone). Never hidden, never under Advanced. */
+export function HonestLine({ status, className = "room-honest" }: { status: RoomState; className?: string }) {
+  return (
+    <p className={className}>
+      <span>{commandViewLine(status)}</span>
+      <Badge tone="neutral" title="How separate the Room is">{isolationWords(status.isolation, !!status.offline)}</Badge>
+      {status.offline && <Badge tone="neutral">No network</Badge>}
+    </p>
+  );
+}
+
 /* ---------------------------------------------------------------- the three small forms */
-function PointPanel({ busy, onSave, onCancel }: { busy: boolean; onSave: (label: string) => void | Promise<void>; onCancel: () => void }) {
+export function PointPanel({ busy, onSave, onCancel }: { busy: boolean; onSave: (label: string) => void | Promise<void>; onCancel: () => void }) {
   const [label, setLabel] = useState("");
   return (
     <form className="room-panel" onSubmit={(e) => { e.preventDefault(); void onSave(label.trim()); }}>
@@ -409,13 +522,14 @@ function PointPanel({ busy, onSave, onCancel }: { busy: boolean; onSave: (label:
   );
 }
 
-function ResetPanel({ points, initial, busy, onConfirm, onCancel }: {
-  points: Checkpoint[]; initial?: string; busy: boolean; onConfirm: (name: string) => void | Promise<void>; onCancel: () => void;
+/** `closing`: how many terminals are open; Start over closes them, and the form says how many, as the Points confirm does. */
+export function ResetPanel({ points, initial, busy, closing = 0, onConfirm, onCancel }: {
+  points: Checkpoint[]; initial?: string; busy: boolean; closing?: number; onConfirm: (name: string) => void | Promise<void>; onCancel: () => void;
 }) {
   const [name, setName] = useState(initial && points.some((p) => p.name === initial) ? initial : points[0]?.name ?? "");
   return (
     <form className="room-panel" onSubmit={(e) => { e.preventDefault(); if (name) void onConfirm(name); }}>
-      <p className="room-panel-line">This puts the Room's files back as they were at that point. Anything done since is lost. The Room restarts if it is on.</p>
+      <p className="room-panel-line">{resetLine(closing)}</p>
       <div className="room-panel-row">
         <Select label="Start over from" value={name} onChange={(e) => setName(e.target.value)}>
           {points.map((p) => <option key={p.name} value={p.name}>{pointLine(p.name)}</option>)}
@@ -427,8 +541,11 @@ function ResetPanel({ points, initial, busy, onConfirm, onCancel }: {
   );
 }
 
-function HandoffPanel({ busy, onSend, onCancel }: { busy: boolean; onSend: (src: string, dest: string) => void | Promise<void>; onCancel: () => void }) {
-  const [src, setSrc] = useState("");
+export function HandoffPanel({ busy, onSend, onCancel, initialSrc = "" }: {
+  busy: boolean; onSend: (src: string, dest: string) => void | Promise<void>; onCancel: () => void; initialSrc?: string;
+}) {
+  const [src, setSrc] = useState(initialSrc);
+  useEffect(() => { if (initialSrc) setSrc(initialSrc); }, [initialSrc]);
   const [dest, setDest] = useState("");
   const ready = !!src.trim() && !!dest.trim();
   return (
@@ -444,7 +561,7 @@ function HandoffPanel({ busy, onSend, onCancel }: { busy: boolean; onSend: (src:
   );
 }
 
-function HeldNote({ held, onClose }: { held: Held; onClose: () => void }) {
+export function HeldNote({ held, onClose }: { held: Held; onClose: () => void }) {
   return (
     <div className="room-held" role="status">
       <Hand size={14} aria-hidden="true" />
