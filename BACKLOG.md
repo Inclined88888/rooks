@@ -45,6 +45,22 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
+### Rooks as its own program (design 0007 part 2): not done here
+* **Not run in a real WebKit window.** Playwright's WebKit is not installed on the build machine, and no Mac was at
+  hand. Not verified, each needs a run in the built app: `<a download>` and blob downloads reaching `on_download` in
+  WKWebView and WebKitGTK; `on_new_window` catching `target="_blank"`; the microphone grant in WKWebView with
+  `Info.plist`'s text; `ClipboardItem` with a promise in WebKitGTK (older than 2.40 lacks it, the copy then falls back
+  to `writeText` and can be refused); live dictation (`SpeechRecognition`) is offered only where present.
+* **A Playwright WebKit smoke run of the built UI** (sign in, chat, Room page, a download, an external link), as 0007
+  section 3 asks: needs `npx playwright install webkit` on CI.
+* **The owner's release steps** (code cannot do them): push a tag `vX.Y.Z` matching `VERSION` so `desktop.yml`
+  attaches installers; mark the 1.0.5 release as old; Apple Developer ID notarisation and a Windows signing
+  certificate for Gatekeeper and SmartScreen.
+* **The new mark** (`desktop/app-icon.svg`, then `npx tauri icon`) is its own step; the icons are unchanged here.
+* **Windows**: the NSIS install folder follows the product name (`%LOCALAPPDATA%\Rooks`); the installer quietly runs
+  the old folder's uninstaller. Not run on a real PC.
+* **macOS in-place update** from 1.0.5 keeps the bundle's old name ("AI Workspace.app") until the installer runs again.
+
 ### The Room's browser (design 0007), engine and API lane: not done here
 
 * **The Room's own engine download.** `install_engine` checks a downloaded archive against a SHA-256 and refuses one

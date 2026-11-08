@@ -143,3 +143,27 @@ Push a tag `vX.Y.Z` that matches `VERSION`. `release.yml` makes the release and 
 * "The person took the browser": any input from the window or the phone within 20 s of an assistant step. For 2 min
   after, the assistant's steps are refused unless the person said yes to that very step (`Ctx.approved_call`).
 * The terminal: `/room browse [--new] ADDRESS`, `/room tabs`, `/room page` in `rooks_code/workroom.py`.
+
+## 6. As built (native-app lane, 2026-11-08)
+
+* The installer: `pick_native_asset(releases, VERSION, platform, machine)` keeps `v*` and `desktop-v*` tags at or above
+  `VERSION`, skips drafts and Arm Linux, and takes the newest. `--native` defaults to `auto` in `install_helper.py`,
+  `install.sh` and `install.ps1`. Under `auto` a failed download says so and the install goes on. The Windows record
+  names the installed program, not "Start menu", so the launcher can open it.
+* The question is asked once, by the installer (through `/dev/tty`, also from `curl | bash`; 60 s) or by `ai-workspace`
+  in a terminal. With no terminal (Dock, Finder, Start menu, `rooks` starting the app) the launcher opens the usual
+  browser with `?shell=ask`; the page asks. A chosen window passes `?shell=window` and the page says it once. With no
+  Chrome or Edge on the computer the usual browser is the only way and nothing is asked. `--web` stays a one-launch
+  choice made by the person.
+* The page's answer: `POST /api/desktop/shell` on the signed-in router (the app.json key and the tools key are refused,
+  as everywhere on it), writing only to `AI_WORKSPACE_INSTALL_FILE`, which the launcher sets when it starts the server
+  and which must be an absolute path named `install.json`. Without it the route is 404.
+* The main window is in `tauri.conf.json` with `create: false` and built in `webkit.rs` with `from_config`, so
+  `on_new_window` (web addresses to the system browser, the rest refused), `on_download` (Downloads, a name that
+  overwrites nothing, a notification) and `on_permission_request` (microphone only) are attached. The page's own links
+  go through `openExternal` and a capture-phase click handler (`routeLinks`) in the app only; files through
+  `download()`; copies after a server answer through `copyLater()`.
+* `mainBinaryName` is pinned to `ai-workspace-desktop`. The identifier is unchanged, which a test checks against the
+  launcher's `IDENT` and `data_dir()`.
+* Not verified in a real WebKit window (no Playwright WebKit here): see BACKLOG.
+

@@ -4,6 +4,38 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · Rooks is its own program: the app by default, no Chrome window nobody chose · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, part 2 (as built: section 6).
+
+- **The installer installs the Rooks app by default** (`--native auto`; `install.ps1`: `AI_WORKSPACE_NATIVE`, default
+  `auto`). It takes only a real app release (`vX.Y.Z` or `desktop-vX.Y.Z`) at or above this copy's version, never the
+  Ask palette's `rooks-native-v*` release and never an older app. No such release exists for 1.0.6 yet, so today it
+  installs nothing and says "none published for this computer at version 1.0.6 or newer yet". A download that fails
+  under `auto` no longer stops the install.
+- **`ai-workspace` never opens a Chrome window nobody chose.** It opens the Rooks app when it is installed (under the
+  new or the old name). Without one it asks once: "There is no Rooks app for this computer yet. Open Rooks in a Chrome
+  or Edge window, or in your usual browser?" The installer asks it when someone is at the terminal; started from the
+  Dock, Finder or the Start menu with no answer yet, Rooks opens in the usual browser and the page asks with the same
+  words. The answer is kept (`install.json`); `ai-workspace --shell window|browser` changes it, `--status` says
+  "opens in: ...". The macOS Applications shortcut no longer forces `--web`. New: `install.sh --shell window|browser`
+  and `AI_WORKSPACE_SHELL`.
+- **The page's bar** (outside the Rooks app only) says that line with "A window of its own", "My usual browser" and
+  "Not now", and saves the answer for the launcher (`POST /api/desktop/shell`: a signed-in person only, never the
+  app.json key or the tools key; it writes only the `install.json` the launcher named, and only those two answers).
+- **The app is called Rooks**: product name, window title, splash, update prompt, macOS permission texts, the launcher
+  and the installer. The identifier stays `com.inclined88888.aiworkspace`, so the data folder, the webview's storage
+  and the keychain items do not move; the binary name and the `aiworkspace://` links stay. The Ask palette is packed
+  as "Rooks Ask" so the two cannot replace each other.
+- **What WebKit does not do, the Rooks app does**: links that would open a new window go to your browser
+  (`open_external`, web addresses only), downloads are saved to Downloads with a notification, the microphone prompt
+  is answered (camera, screen and location still ask), copies that wait for the server use a `ClipboardItem`, and
+  Meetings says "Recording the computer's sound needs Chrome. The microphone works." where it cannot. Compiled and
+  unit tested on Linux; not yet run in a real WebKit window (BACKLOG).
+- Upgrade: run the installer again. Nothing to migrate; data stays where it was. Rollback: `install.sh --native no`
+  keeps the window or browser; an earlier copy reads the same data folder. Copies of the 1.0.5 app named "AI Workspace"
+  are still found and opened until replaced.
+
 ## Unreleased · The Room's Browser window, the assistant in it, and /room browse · branch room-browser-native-app
 
 Design record: `docs/design/0007-room-browser-and-native-app.md`, sections 1.3, 1.5 and 1.6 (as built: section 5).
