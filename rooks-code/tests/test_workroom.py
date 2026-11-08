@@ -30,6 +30,7 @@ class FakeApp:
                      "offline": False, "terminals": [], "terminal_max": 4, "can": {"terminal": True, "files": True}}
         self.tails: dict[str, dict] = {}  # a terminal's last lines, as GET /api/room/terminals/{id}/tail answers
         self.verified = True  # what the service could confirm about a saved point or a start over
+        self.older = False  # an app without the Room's terminals and files yet
         self.needs = [{"id": "a:7", "kind": "approval", "title": "Send an email to Ana", "detail": "Subject: Friday",
                        "since": "2026-11-06T10:00:00", "actions": ["approve", "deny"]},
                       {"id": "j:3", "kind": "job", "title": "Tidy the downloads folder", "detail": "",
@@ -84,6 +85,8 @@ class FakeApp:
                     return self._send(200, {"id": item, "status": status})
                 path, _, query = p.partition("?")
                 q = dict(urllib.parse.parse_qsl(query))
+                if app.older and path.startswith(("/api/room/terminals", "/api/room/files")):
+                    return self._send(404, {"detail": "Not Found"})  # an app from before the Room's terminals
                 terms = app.room["terminals"]
                 if path == "/api/room/terminals" and method == "GET":
                     return self._send(200, {"terminals": terms, "max": app.room["terminal_max"]})
@@ -367,6 +370,15 @@ def test_room_files_points_and_open_tail_close(fake_app, monkeypatch):
     closed = _say(workroom.room_command, agent, "close rooks")
     assert ("DELETE", f"/api/room/terminals/{tid}", None) in fake_app.calls
     assert "Closed Rooks." in closed, closed
+
+
+def test_an_app_without_room_terminals_is_said_plainly(fake_app):
+    fake_app.older = True
+    fake_app.room["running"] = True
+    for rest in ("files", "open echo hi", "tail"):
+        text = _say(workroom.room_command, _agent(fake_app.url), rest)
+        assert "Not Found" not in text and "404" not in text, text
+        assert "update" in text.lower(), text
 
 
 def test_room_send_finds_a_name_with_spaces(fake_app):

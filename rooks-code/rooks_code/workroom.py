@@ -38,6 +38,9 @@ class Said(Exception):
     """The app answered with a reason (its reasons are plain words by design)."""
 
 
+OLDER_ROUTE = "The Rooks app on this computer does not have that yet. Update the app, then try again."
+
+
 def link_of(agent) -> dict | None:
     s = agent.s
     if getattr(s, "provider", "") == "workbench" and getattr(s, "base_url", "") and getattr(s, "api_key", ""):
@@ -62,6 +65,8 @@ def call(link: dict, method: str, path: str, body: dict | None = None, timeout: 
             detail = json.loads(e.read() or b"{}").get("detail")
         except (ValueError, AttributeError):
             detail = None
+        if e.code == 404 and str(detail or "").strip().lower() == "not found":  # the app has no such route at all
+            raise Said(OLDER_ROUTE) from None
         raise Said(detail if isinstance(detail, str) and detail else "The app could not do that.") from None
     except (urllib.error.URLError, OSError, ValueError):
         raise Unreachable() from None
