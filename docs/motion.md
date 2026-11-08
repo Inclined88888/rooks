@@ -31,4 +31,4 @@ and nothing moves without a reason (work is happening, something landed, you nee
 | Voice orb | Chat composer (desktop and phone) | Breathes while listening and swells with your voice level |
 | Skeletons | Lists while loading | A soft light passes over placeholders |
 
-See them all at **Appearance › See every animation** (`/appearance/motion`). Recordings: `screenshots/motion/`.
+See them all at **Appearance › See every animation** (`/appearance/motion`). The old recordings in `screenshots/motion/` were removed in the workplace cleanup; the page above is the live reference.
