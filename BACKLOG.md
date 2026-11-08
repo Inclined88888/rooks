@@ -56,7 +56,9 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **The owner's release steps** (code cannot do them): push a tag `vX.Y.Z` matching `VERSION` so `desktop.yml`
   attaches installers; mark the 1.0.5 release as old; Apple Developer ID notarisation and a Windows signing
   certificate for Gatekeeper and SmartScreen.
-* **The new mark** (`desktop/app-icon.svg`, then `npx tauri icon`) is its own step; the icons are unchanged here.
+* **The new mark** is applied (CHANGELOG, 0007 section 7). Left: the macOS Dock and Windows taskbar pictures are
+  checked as files only (`desktop/scripts/test_icons.py`), not seen in a built app; a phone build (`eas build`) has not
+  been run with the new layers; the terminal banner keeps the word "Rooks" (no glyph reads well in every terminal font).
 * **Windows**: the NSIS install folder follows the product name (`%LOCALAPPDATA%\Rooks`); the installer quietly runs
   the old folder's uninstaller. Not run on a real PC.
 * **macOS in-place update** from 1.0.5 keeps the bundle's old name ("AI Workspace.app") until the installer runs again.

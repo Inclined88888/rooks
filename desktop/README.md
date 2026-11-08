@@ -77,3 +77,14 @@ folders.
 ## Build
 
 See [docs/desktop-release.md](../docs/desktop-release.md#building-locally).
+
+## Icons
+
+The mark is `app-icon.svg`: the rook as a plain tower with a gold door on an ink tile (design record 0007, section 7).
+After changing it, from `desktop/`:
+
+```bash
+npx tauri icon app-icon.svg -o /tmp/icons && cp /tmp/icons/*.png /tmp/icons/icon.icns /tmp/icons/icon.ico src-tauri/icons/
+python scripts/make_icons.py      # app-icon.png, the Ask palette's icons, the phone app's icons
+python -m pytest -q scripts/test_icons.py
+```

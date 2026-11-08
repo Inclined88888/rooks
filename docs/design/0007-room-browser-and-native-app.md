@@ -72,7 +72,7 @@ What is checked: a fresh snapshot of the target element just before each click, 
 
 ### 2.3 The name
 
-`productName`, the window title, `desktop/ui/index.html`'s title, `lib.rs` strings and the launcher's `NAME` become "Rooks". The `identifier` stays `com.inclined88888.aiworkspace`. Tauri 2's `app_data_dir()` is the system data folder joined with the identifier (`~/.local/share/…`, `~/Library/Application Support/…`, `%APPDATA%\…`), the same folder `ai_workspace.data_dir()` computes, and the webview's storage is keyed the same way, so chats, keys and settings stay. Pin `mainBinaryName: "ai-workspace-desktop"` (the launcher finds the real app by it) and keep the `aiworkspace` link scheme. The launcher and `remove_stale_desktop_app()` look for both the old and the new names. The palette's pack scripts rename it to "Rooks Ask.app" so two `Rooks.app` cannot collide. The new mark is its own step (`desktop/app-icon.svg`, then `npx tauri icon`).
+`productName`, the window title, `desktop/ui/index.html`'s title, `lib.rs` strings and the launcher's `NAME` become "Rooks". The `identifier` stays `com.inclined88888.aiworkspace`. Tauri 2's `app_data_dir()` is the system data folder joined with the identifier (`~/.local/share/…`, `~/Library/Application Support/…`, `%APPDATA%\…`), the same folder `ai_workspace.data_dir()` computes, and the webview's storage is keyed the same way, so chats, keys and settings stay. Pin `mainBinaryName: "ai-workspace-desktop"` (the launcher finds the real app by it) and keep the `aiworkspace` link scheme. The launcher and `remove_stale_desktop_app()` look for both the old and the new names. The palette's pack scripts rename it to "Rooks Ask.app" so two `Rooks.app` cannot collide. The new mark is its own step (`desktop/app-icon.svg`, then `npx tauri icon`; done, section 7).
 
 ### 2.4 WebKit (WebKitGTK on Linux, WKWebView on macOS)
 
@@ -167,3 +167,27 @@ Push a tag `vX.Y.Z` that matches `VERSION`. `release.yml` makes the release and 
   launcher's `IDENT` and `data_dir()`.
 * Not verified in a real WebKit window (no Playwright WebKit here): see BACKLOG.
 
+## 7. As built (the mark, 2026-11-08)
+
+The chosen concept, "keep": the chess rook as a plain home-base tower. One rounded slab with three merlons and an
+arched doorway lit in gold, meaning the light is on and the assistant is home. Ink tile (`#2A2A28` to `#161615`),
+paper mark (`#FAFAF9`), one gold accent (`#E3A82B`). At 16 px it is still a tower with a gold door.
+
+* **Source**: `desktop/app-icon.svg` (1024 units: tile 64..960, tower 288..736 by 224..808, door 448..576).
+* **Desktop app**: `npx tauri icon app-icon.svg` from `desktop/` (Tauri CLI 2.12.4, resvg) wrote every file in
+  `desktop/src-tauri/icons`; its `android/` and `ios/` folders are not kept (the desktop app does not ship them).
+* **Everything else** is drawn by `desktop/scripts/make_icons.py` (Pillow, four times oversampled): `desktop/app-icon.png`,
+  the Ask palette's `app-icon.png`, `app-icon-256.png` and `app-icon.ico` (16 to 256), and the phone app's files:
+  `icon.png` full bleed with no transparency (the phone rounds it), Android's ink background, the tower alone at 0.75
+  scale inside the safe circle, a one colour silhouette with the doorway cut out, the 48 px web icon cropped to the tile,
+  and the splash (the tile, which reads on both splash colours).
+* **In the app**: `src/ui/RooksMark.tsx` draws the same shapes from fixed tokens (`--mark-ink-top`, `--mark-ink`,
+  `--mark-paper`, `--mark-gold` in `tokens.css`), the same in every mode like the icon on the computer. It is the top
+  bar's search button (the button keeps its words: "<name>: search or jump to"), sits beside "Rooks" on the welcome
+  and sign-in cards, and on the loading screen. `public/favicon.svg` is the tile cropped to its edge.
+* **Terminal**: unchanged. "♜" is the only one-character tower; several terminal fonts draw it two cells wide or as an
+  emoji, which breaks the banner's width count, so the banner keeps the word.
+* **Tests**: `desktop/scripts/test_icons.py` opens every icon, checks its size against what declares it
+  (`tauri.conf.json` and Tauri's file names, `mobile/app.json`, the palette's pack files) and reads ink, paper and gold
+  back at fixed points of the design, every `.ico` and `.icns` frame included. `tests/brand-mark.test.mjs` guards the
+  component, the tokens, the top bar, the welcome card and the favicon.

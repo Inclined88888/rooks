@@ -4,6 +4,25 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · The new mark: a tower with a gold door · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, section 7.
+
+- **Rooks has its own mark**: the chess rook as a plain tower, one rounded slab with three merlons and an arched
+  doorway lit in gold (the light is on, the assistant is home), on an ink tile. At 16 px it is still a tower with a gold
+  door. It replaces the purple lines (desktop app), the letter R (browser tab), Expo's sample icons (phone) and the
+  first letter of the assistant's name (top bar).
+- Where it shows: the desktop app's icons (`desktop/src-tauri/icons`, every PNG size, `icon.icns`, `icon.ico`, made by
+  `npx tauri icon desktop/app-icon.svg`), the desktop splash, the Ask palette's icons (`desktop/rooks-native/assets`),
+  the browser tab (`favicon.svg`, also the Linux menu icon the installer writes), the phone app's icon, Android
+  layers, splash and web icon (`mobile/assets`), the top bar's search button, the welcome and sign-in cards beside
+  "Rooks", and the loading screen. `desktop/scripts/make_icons.py` draws the files Tauri does not make.
+- Not changed: the terminal banner keeps the word "Rooks" (a chess glyph is drawn wide or as an emoji by some
+  terminal fonts, so it did not read well as plain text); the README has no logo; `rooks-browser/app` has no icon
+  files. Shortcuts the installer made before keep the old picture until the installer runs again.
+- Upgrade: nothing to do; the next installer run or app update carries the new icons. Rollback: the icons are files
+  only, no data changes.
+
 ## Unreleased · Rooks is its own program: the app by default, no Chrome window nobody chose · branch room-browser-native-app
 
 Design record: `docs/design/0007-room-browser-and-native-app.md`, part 2 (as built: section 6).
