@@ -86,7 +86,7 @@ def test_a_piped_task_gives_one_json_result_a_script_can_parse(project, fake):
     assert out["type"] == "result" and out["exit_code"] == 0 and out["ok"] is True
     assert out["result"] == "calc.py defines add(), which subtracts."
     assert out["denied"] == [] and out["turns"] == 2
-    assert out["tokens"] == {"input": 220, "output": 50}
+    assert out["tokens"] == {"input": 220, "output": 50, "cache_read": 0, "cache_write": 0}
     assert out["session_id"] == _receipts(project)[0].stem  # the receipt in .rooks/runs has the same name
     first = m.requests[0]["body"]["messages"]
     assert any("Which file defines add()?" in str(x.get("content")) for x in first if x["role"] == "user")

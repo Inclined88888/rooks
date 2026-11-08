@@ -54,6 +54,8 @@ class Result:
     turns: int = 0
     tokens_in: int = 0
     tokens_out: int = 0
+    cache_read: int = 0  # of tokens_in, read from the provider's prompt cache
+    cache_write: int = 0  # of tokens_in, written to it
     cost_usd: float | None = 0.0
     denied: list[dict] = field(default_factory=list)
     error: str = ""
@@ -66,7 +68,8 @@ class Result:
     def to_dict(self, kind: str = "result") -> dict:
         return {"type": kind, "ok": self.ok, "result": redact(self.result), "outcome": self.outcome,
                 "session_id": self.session_id, "turns": self.turns,
-                "tokens": {"input": self.tokens_in, "output": self.tokens_out}, "cost_usd": self.cost_usd,
+                "tokens": {"input": self.tokens_in, "output": self.tokens_out, "cache_read": self.cache_read,
+                           "cache_write": self.cache_write}, "cost_usd": self.cost_usd,
                 "denied": [redact_obj(d) for d in self.denied], "exit_code": self.exit_code, "error": redact(self.error),
                 "duration_ms": self.duration_ms}
 
@@ -257,7 +260,7 @@ def run(prompt: str, *, cwd: str | Path | None = None, provider: str | None = No
             agent.close()
     t = log.totals()
     res.turns = sum(1 for r in log.rows.values() if r["kind"] == "model_call" and r["outcome"] != "retry")
-    res.tokens_in, res.tokens_out = t["tokens_in"], t["tokens_out"]
+    res.tokens_in, res.tokens_out, res.cache_read, res.cache_write = t["tokens_in"], t["tokens_out"], t["cache_read"], t["cache_write"]
     res.cost_usd = None if t["cost_unknown"] else t["usd"]
     res.denied = list(ui.denied)
     return finish(res)

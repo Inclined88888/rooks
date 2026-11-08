@@ -81,7 +81,8 @@ standard input is not read; `-` or no task reads it from the pipe.
 * `--output-format text` (the default): the answer alone on standard output; each step and each denial, briefly, on
   standard error.
 * `--output-format json`: one object: `result` (the answer), `session_id` (the receipt in `.rooks/runs`, and
-  `rooks --resume ID` continues it), `turns` (model calls), `tokens`, `cost_usd` (`null` when the price is unknown),
+  `rooks --resume ID` continues it), `turns` (model calls), `tokens` (`input`, `output`, and `cache_read` and
+  `cache_write`, the input read from and written to the prompt cache), `cost_usd` (`null` when the price is unknown),
   `denied` (each step not done: `tool`, `summary`, `by` = `headless`, `rule` or `hook`), `exit_code`, `error`,
   `outcome` and `duration_ms`.
 * `--output-format stream-json`: one object per line: `start`, `assistant` (text), `tool_call`, `tool_result` (paired
@@ -194,6 +195,15 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
 * **Hard budget.** `max_tokens` (default 200,000) and `max_usd` (default $1.00) per session. Before each model call Rooks
   estimates its input and stops rather than cross either cap. Local models cost $0. If a model's price is unknown the
   dollar cap cannot be enforced; Rooks says so at start and the token cap still applies (add the price under `[prices]`).
+* **Prompt caching, charged honestly.** With Anthropic, every request marks the system prompt, the tool list and the
+  conversation so far for caching, so the next step rereads them at the cache price. OpenAI and DeepSeek cache by
+  themselves. Input read from the cache, and (Anthropic) input written to it, are counted apart and charged at the
+  cached price in `/cost`, the receipts (`cache_read_tokens`, `cache_write_tokens` on each model call), the headless
+  result (`tokens.cache_read`, `tokens.cache_write`) and the dollar cap. A cache write costs more than plain input
+  (1.25x on Anthropic), so the cap's estimate for the next call uses that price. Cached prices come from the built-in
+  table; for a model priced under `[prices]`, add them as `[input, output, cache read, cache write]`. If a call used
+  the cache and its cached price is unknown, its cost is unknown, never guessed: Rooks says so once, and the dollar
+  cap cannot be enforced while the token cap still applies.
 * **Project boundary.** File tools cannot read or write outside the project folder, nor write into `.git` or `.rooks`.
 * **Small-model help.** Tool calls a local model prints as text (`<tool_call>` tags or a JSON block) are recovered with
   Workbench's rule (only well-formed calls to offered tools; receipt column `from_text`), and a reply that announces a

@@ -30,7 +30,9 @@
         "turns": {"type": "integer", "minimum": 0, "description": "model calls made"},
         "tokens": {
           "type": "object", "additionalProperties": false, "required": ["input", "output"],
-          "properties": {"input": {"type": "integer", "minimum": 0}, "output": {"type": "integer", "minimum": 0}}
+          "properties": {"input": {"type": "integer", "minimum": 0}, "output": {"type": "integer", "minimum": 0},
+                         "cache_read": {"type": "integer", "minimum": 0, "description": "of input, read from the provider's prompt cache"},
+                         "cache_write": {"type": "integer", "minimum": 0, "description": "of input, written to the prompt cache"}}
         },
         "cost_usd": {"type": ["number", "null"], "minimum": 0, "description": "null when the model's price is unknown"},
         "denied": {"type": "array", "items": {"$ref": "#/$defs/denial"}},

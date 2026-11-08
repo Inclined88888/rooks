@@ -866,7 +866,11 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         ui.p("" if agent.compact("asked with /compact") else "  Nothing to compact yet.")
     elif cmd == "/cost":
         t = agent.log.totals()
-        ui.p(f"  {t['tokens_in']:,} in + {t['tokens_out']:,} out tokens, "
+        read, write = t["cache_read"], t["cache_write"]  # parts of the input, charged at the cached price
+        cached = ", ".join(x for x in (f"{read:,} of the input read from the cache" if read else "",
+                                       (f"{write:,} written to it" if read else f"{write:,} of the input written to the cache")
+                                       if write else "") if x)
+        ui.p(f"  {t['tokens_in']:,} in + {t['tokens_out']:,} out tokens{f' ({cached})' if cached else ''}, "
              f"{'cost unknown' if t['cost_unknown'] else '$%.4f' % t['usd']}, {t['model_calls']} model calls")
     elif cmd == "/permissions":
         permissions_command(agent, ui, rest)

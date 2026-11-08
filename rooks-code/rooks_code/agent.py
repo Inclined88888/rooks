@@ -101,6 +101,11 @@ class Budget:
     def __init__(self, max_tokens: int | None, max_usd: float | None, model: str, prices: dict, local: bool):
         self.max_tokens, self.max_usd = max_tokens, max_usd
         self.price = providers.price(model, prices, local)
+        # The next call's input is estimated at the input price, or at the cache write price when that is higher
+        # (Anthropic: every request asks for its prompt to be cached, and a write costs 1.25x), so the cap stops
+        # before a call that could cross it. Reads are cheaper than input, so they never raise the estimate.
+        write = providers.cache_price(model, prices, local)[1] if self.price is not None else None
+        self.per_input = max(self.price[0], write or 0.0) if self.price is not None else None
 
     def check(self, totals: dict, next_input_estimate: int) -> str:
         """'' when the next call fits, else the reason it would cross a hard cap."""
@@ -108,7 +113,7 @@ class Budget:
         if self.max_tokens and used + next_input_estimate > self.max_tokens:
             return f"token cap reached: {used:,} used, next call needs about {next_input_estimate:,}, cap {self.max_tokens:,}"
         if self.max_usd and self.price is not None:
-            nxt = next_input_estimate * self.price[0] / 1_000_000
+            nxt = next_input_estimate * self.per_input / 1_000_000
             if totals["usd"] + nxt > self.max_usd:
                 return f"cost cap reached: ${totals['usd']:.4f} spent, next call about ${nxt:.4f}, cap ${self.max_usd:.2f}"
         return ""
@@ -138,6 +143,7 @@ class Agent:
             for line in self.perms.notices():
                 ui.warn(line)
         self.budget = Budget(settings.max_tokens, settings.max_usd, settings.model, settings.prices, settings.local)
+        self._cache_price_said = False  # said once per session that the cached-token price is unknown
         self.system = SYSTEM.format(root=self.root, os=f"{platform.system()} {platform.release()}", listing=_listing(self.root),
                                     runtimes=_runtimes(self.root))
         self._turn: int | None = None
@@ -290,9 +296,8 @@ class Agent:
         try:
             reply = self.model.complete(SUMMARY_SYSTEM, [{"role": "user", "content": "\n\n".join(lines)[-200_000:]}], [])
             summary = providers.THINK_RE.sub("", reply.text or "").strip()
-            usd = providers.cost(self.s.model, reply.tokens_in, reply.tokens_out, self.s.prices, self.s.local)
             self.log.add("model_call", "ok", parent=self._turn, latency_ms=int((time.monotonic() - t0) * 1000),
-                         tokens_in=reply.tokens_in, tokens_out=reply.tokens_out, usd_cost=usd, detail="compaction summary")
+                         **self._usage(reply), detail="compaction summary")
         except providers.ProviderError as e:
             summary = ""
             self.log.add("model_call", "error", parent=self._turn, failure_reason=str(e), detail="compaction summary")
@@ -381,10 +386,8 @@ class Agent:
                         for n, c in enumerate(extra):
                             c.id = f"text_{n}"
                         reply.tool_calls, reply.text = extra + reply.tool_calls, text
-                usd = providers.cost(self.s.model, reply.tokens_in, reply.tokens_out, self.s.prices, self.s.local)
                 self.log.add("model_call", "ok", parent=turn, latency_ms=int((time.monotonic() - t0) * 1000),
-                             tokens_in=reply.tokens_in, tokens_out=reply.tokens_out, usd_cost=usd,
-                             detail=f"step {step + 1}, {len(reply.tool_calls)} tool calls")
+                             **self._usage(reply), detail=f"step {step + 1}, {len(reply.tool_calls)} tool calls")
                 msg: dict = {"role": "assistant", "content": reply.text or ""}
                 if reply.tool_calls:
                     msg["tool_calls"] = [{"id": c.id, "type": "function", "function": {
@@ -592,6 +595,21 @@ class Agent:
                 break  # text was already shown, or the error will not heal by switching (bad request, bad key)
         assert last_error is not None
         raise last_error  # the original error, with its status, so callers explain it the same way as before
+
+    def _usage(self, reply) -> dict:
+        """One model call's tokens and price for its receipt row: cached reads and cache writes are counted apart and
+        charged at the cached price. When the model has a price but its cached price is unknown, the cost is unknown
+        (never guessed) and Rooks says so once, as it does for a model with no price at all."""
+        read, write = getattr(reply, "cache_read", 0) or 0, getattr(reply, "cache_write", 0) or 0
+        usd = providers.cost(self.s.model, reply.tokens_in, reply.tokens_out, self.s.prices, self.s.local, read, write)
+        if usd is None and (read or write) and self.budget.price is not None and not self._cache_price_said:
+            self._cache_price_said = True
+            cap = (f", and the ${self.s.max_usd} cap cannot be enforced; the token cap ({self.s.max_tokens or 'none'}) "
+                   f"still is" if self.s.max_usd else "")
+            self.ui.warn(f"the price of cached tokens for {self.s.model} is unknown, so this session's cost is unknown{cap}. "
+                         f"Add it under [prices] as [input, output, cache read, cache write].")
+        return {"tokens_in": reply.tokens_in, "tokens_out": reply.tokens_out, "usd_cost": usd,
+                "cache_read_tokens": read, "cache_write_tokens": write}
 
     def _notice(self, text: str, needs_you: bool = False) -> None:
         """One quiet line about the conversation itself, said the same way the app says it."""

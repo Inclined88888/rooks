@@ -8,6 +8,22 @@ version and the merge commit on `main`.
 
 No schema change, nothing to migrate. Rollback: revert the branch's commits.
 
+- **Prompt caching, charged at the cached price in `rooks`.** Anthropic requests already marked the system prompt,
+  the tool list and the conversation for caching; now what the provider reports is used. Input read from the cache
+  (Anthropic `cache_read_input_tokens`, OpenAI `prompt_tokens_details.cached_tokens`, DeepSeek
+  `prompt_cache_hit_tokens`) and input written to it (Anthropic `cache_creation_input_tokens`) are counted apart and
+  charged at the cached price: `/cost` shows them ("20,000 of the input read from the cache, 21,000 written to it"),
+  each receipt's model call has `cache_read_tokens` and `cache_write_tokens`, the headless result's `tokens` has
+  `cache_read` and `cache_write`, and the dollar cap counts the cached price. Before, every cached token was charged at
+  the full input price: cache reads were overcharged (a session could stop at the cap early) and Anthropic cache
+  writes, which cost 1.25x the input price, were undercharged (the cap could be crossed). The cap's estimate for the
+  next call now uses the cache write price when it is higher. Cached prices are in the built-in table (Claude models
+  by Anthropic's rule: a read 0.1x, a write 1.25x the input price); a `[prices]` entry takes them as
+  `[input, output, cache read, cache write]`. A call that used the cache with no known cached price has an unknown
+  cost, never a guess, and Rooks says once that the dollar cap cannot be enforced (the token cap still is). Tests:
+  `rooks-code/tests/test_caching.py` (all but the request-marks test failed before the change; scripted fake model,
+  no real key, so no live call has checked that a provider reports cache reads above zero).
+
 - **Headless `rooks` for scripts and CI.** `rooks -p "task"` (or the task piped in: `echo "task" | rooks -p`) runs one
   task and never waits for input: a step that would need your OK (an edit, a command, an MCP tool, an MCP server's
   question to you) is denied at once, reported, and the run exits with code 3. Only what you set up beforehand lets a

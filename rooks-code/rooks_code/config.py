@@ -195,7 +195,7 @@ class Settings:
     nudge: bool = True                   # ask again when a reply announces a step but calls no tool (small models)
     dry_run: bool = False
     mcp_servers: dict[str, dict] = field(default_factory=dict)
-    prices: dict[str, list[float]] = field(default_factory=dict)  # model -> [usd per 1M in, usd per 1M out]
+    prices: dict[str, list[float]] = field(default_factory=dict)  # model -> [usd per 1M in, out(, cache read, cache write)]
     workbench_url: str = ""
     stream: bool = True                  # show answers as they are written (interactive terminals only)
     context_tokens: int = 128_000        # the model's window; older turns are summarised at 70% of it
@@ -466,4 +466,6 @@ trusted_folders = []                # edits and commands inside these folders ru
 
 # [prices]                          # USD per million tokens [input, output], overrides the built-in table
 # "my-model" = [0.5, 1.5]
+# "my-cached-model" = [0.5, 1.5, 0.05, 0.625]   # also the prompt cache's prices [read, write]; without them a call
+#                                               # that used the cache has an unknown cost (never a guess)
 '''
