@@ -4,8 +4,10 @@
 * Signing in links this install to an account on the cloud service. The cloud hands back a short-lived Ed25519
   signed entitlement token that is verified here, offline, with the cloud's public key. It stays valid for its
   lifetime plus a grace period (7 days by default), so a Pro user who goes offline keeps Pro for a week.
-* Plans are only enforced once billing is live: until the cloud URL is set and that server reports billing is on,
-  every feature stays unlocked ("free while in beta"), so nothing breaks for anyone testing a build today.
+* Paid-plan checks are off by default: no Rooks cloud sells plans today, so a paywall would point at nothing. A build
+  or install opts in with AIW_PLAN_CHECKS=1 (AIW_ENFORCE_PLANS=0 or 1 still forces either way, for tests).
+* Once opted in, plans are only enforced once billing is live: until the cloud URL is set and that server reports
+  billing is on, every feature stays unlocked ("free while in beta"), so nothing breaks for anyone testing a build.
   Once a build has seen billing live it remembers, so blocking the server does not unlock Pro.
 * Pro features are gated by `allowed(feature)` / `require_feature(feature)` and by a small path rule table
   (`GATES`) so features from other modules are gated without editing them. A gated call answers 402 with
@@ -168,9 +170,16 @@ def _payload() -> dict | None:
     return verify(tok) if tok else None
 
 
+def plan_checks_on() -> bool:
+    """Paid-plan checks run only when this build or install opts in (the code stays for a future cloud)."""
+    return os.getenv("AIW_PLAN_CHECKS") == "1"
+
+
 def billing_live() -> bool:
     if os.getenv("AIW_ENFORCE_PLANS") in ("0", "1"):
         return os.getenv("AIW_ENFORCE_PLANS") == "1"
+    if not plan_checks_on():
+        return False
     return bool(cloud_url()) and db.get_setting("account_billing_live") == "1"
 
 

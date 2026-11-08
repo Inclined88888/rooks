@@ -69,6 +69,7 @@ def cloud(client, monkeypatch):
     monkeypatch.setenv("AIW_CLOUD_URL", CLOUD)
     monkeypatch.setenv("AIW_CLOUD_PUBLIC_KEY", PUB)
     monkeypatch.delenv("AIW_ENFORCE_PLANS", raising=False)
+    monkeypatch.setenv("AIW_PLAN_CHECKS", "1")  # plan checks are off unless a build opts in (test_developer_tools.py)
     monkeypatch.setattr(account, "_http", httpx.Client(transport=httpx.MockTransport(fake)))
     yield fake
     for k in ("account_session", "account_token", "account_email", "account_login", "account_billing_live",

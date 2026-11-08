@@ -70,7 +70,14 @@ def status(request: Request):
         "signins_offered": db.get_setting("signins_offered") == "1",
         "welcome_pending": db.get_setting("desktop_welcome_done") == "0",
         "trade": _trade(),
+        # Settings, Advanced, "Show developer tools": off on a new install, kept by the install (not one browser)
+        "dev_tools": bool(signed_in) and dev_tools_on(),
     }
+
+
+def dev_tools_on() -> bool:
+    """The Terminal, Code, coding jobs, the run log and other developer pages are listed only while this is on."""
+    return db.get_setting("dev_tools", "0") == "1"
 
 
 @api.post("/browser/pair/start")
@@ -326,6 +333,7 @@ def get_settings():
         "model_catalog_refresh": catalog.auto_refresh(),
         "model_catalog_env": os.getenv("MODEL_CATALOG_REFRESH", "") in ("0", "1"),
         "app_terminal": db.get_setting("app_terminal", "1") == "1",
+        "dev_tools": dev_tools_on(),
     }
 
 
@@ -336,6 +344,7 @@ class SettingsIn(BaseModel):
     max_steps_channels: dict[str, int] | None = None   # e.g. {"schedule": 30}; a value of 0 removes the override
     model_catalog_refresh: bool | None = None
     app_terminal: bool | None = None
+    dev_tools: bool | None = None
 
 
 @api.put("/settings")
@@ -357,6 +366,8 @@ def put_settings(data: SettingsIn):
             db.run("DELETE FROM settings WHERE key = ?", f"max_steps_{channel}")
     if data.app_terminal is not None:
         db.set_setting("app_terminal", "1" if data.app_terminal else "0")
+    if data.dev_tools is not None:
+        db.set_setting("dev_tools", "1" if data.dev_tools else "0")
     if data.model_catalog_refresh is not None:
         db.set_setting("model_catalog_refresh", "1" if data.model_catalog_refresh else "0")
         if data.model_catalog_refresh:
