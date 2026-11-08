@@ -10,12 +10,15 @@
 
 export type WindowId = "screen" | "terminal" | "commands" | "files" | "points";
 
+/** Why the Room has no terminal (status.can.terminal_off_reason): switched off in Settings, helper mode, or Windows. */
+export type TerminalOffReason = "switched_off" | "helper" | "windows";
+
 /** The part of the Room's status the desk reads. */
 export type DeskStatus = {
   checked?: boolean;
   available?: boolean;
   screen?: boolean;
-  can?: { terminal?: boolean; files?: boolean } | null;
+  can?: { terminal?: boolean; files?: boolean; terminal_off_reason?: TerminalOffReason | null } | null;
 };
 
 export const DESK_KEY = "rooks.room.desk";
@@ -30,12 +33,17 @@ const DOCK_LABEL: Record<WindowId, string> = {
   screen: "Screen", terminal: "Terminal", commands: "Commands", files: "Files", points: "Points",
 };
 
-/** The windows the Room offers, primary first (Screen, else Terminal or Commands), then Files and Saved points. */
+/**
+ * The windows the Room offers, primary first (Screen, else Terminal or Commands), then Files and Saved points. Terminals
+ * switched off in Settings keep the Terminal window, which says so and links to Settings; Commands is only for helper
+ * mode and Windows, where a Room terminal cannot exist (design 3.5).
+ */
 export function windowsFor(status: DeskStatus | null | undefined): WindowId[] {
   if (!status || status.checked === false || !status.available) return [];
   const out: WindowId[] = [];
   if (status.screen === true) out.push("screen");
-  out.push(status.can?.terminal === true ? "terminal" : "commands");
+  const terminal = status.can?.terminal === true || status.can?.terminal_off_reason === "switched_off";
+  out.push(terminal ? "terminal" : "commands");
   if (status.can?.files === true) out.push("files");
   out.push("points");
   return out;
@@ -106,6 +114,63 @@ export function deskLayout(open: WindowId[]): { primary: WindowId | null; side: 
 }
 
 // ---------------------------------------------------------------------------------------------- the terminal
+/**
+ * Terminals are switched off in Settings: status says so, or (an older service that does not say why) a socket was
+ * refused for that reason and status has not said terminals are on since.
+ */
+export function terminalsSwitchedOff(status: Pick<DeskStatus, "can"> | null | undefined, latched: boolean): boolean {
+  if (status?.can?.terminal_off_reason === "switched_off") return true;
+  if (status?.can?.terminal === true) return false;
+  return latched;
+}
+
+/** What the cap of terminal_max counts (ended terminals included): the service's own count, else every record it lists. */
+export function terminalsCounted(status: { terminals?: unknown[] | null; terminals_counted?: number | null }): number {
+  const n = status.terminals_counted;
+  return typeof n === "number" && Number.isFinite(n) && n >= 0 ? n : (status.terminals?.length ?? 0);
+}
+
+/** New terminal is refused by the service once the count reaches the cap. */
+export function terminalsFull(status: { terminals?: unknown[] | null; terminals_counted?: number | null; terminal_max?: number | null }): boolean {
+  return terminalsCounted(status) >= (status.terminal_max ?? 4);
+}
+
+/** Where Skip the terminal sends focus, the first found: the Files window's title, the page's dock, the Stage's dock. */
+export const SKIP_TARGETS = ["room-files-title", "room-dock", "room-stage-dock"];
+
+export function skipTarget<T>(byId: (id: string) => T | null): T | null {
+  for (const id of SKIP_TARGETS) {
+    const el = byId(id);
+    if (el) return el;
+  }
+  return null;
+}
+
+/** A key on a focused terminal tab: the arrows move, F2 and Enter rename (the keyboard's way to the double-click). */
+export function tabKey(key: string): 1 | -1 | "rename" | null {
+  if (key === "ArrowRight") return 1;
+  if (key === "ArrowLeft") return -1;
+  if (key === "F2" || key === "Enter") return "rename";
+  return null;
+}
+
+/** The service closed this socket because the same terminal was opened in another window (room_terminal.ELSEWHERE). */
+export function closedElsewhere(code: number, reason: string): boolean {
+  return code === 1000 && /another window/i.test(reason || "");
+}
+
+export const RECONNECT_TRIES = 3;
+
+/**
+ * After a terminal's socket closes: ask again on its own (a dropped connection, a few times), or offer a button:
+ * "here" (Use it here, after it was opened in another window), "reconnect" (after the last try), or nothing.
+ */
+export function afterClose(code: number, reason: string, retries: number, max = RECONNECT_TRIES): { retry: boolean; action: "" | "here" | "reconnect" } {
+  if (closedElsewhere(code, reason)) return { retry: false, action: "here" };
+  if (code === 1005 || code === 1006) return retries < max ? { retry: true, action: "" } : { retry: false, action: "reconnect" };
+  return { retry: false, action: "" };
+}
+
 /** Inside the terminal every key goes to the shell, Escape included. F6 is the one key the pane keeps: it leaves. */
 export function leavesTerminal(e: { type: string; key: string }): boolean {
   return e.type === "keydown" && e.key === "F6";
@@ -162,7 +227,11 @@ export function cdCommand(path: string): string {
 }
 
 // ---------------------------------------------------------------------------------------------- files
-export type FileEntry = { name: string; kind: "folder" | "file" | "link" | string; size?: number | null; modified?: string | null };
+export type FileEntry = {
+  name: string; kind: "folder" | "file" | "link" | string; size?: number | null; modified?: string | null;
+  /** For a link: where it leads, as the service says (outside the Room, or nowhere). */
+  why?: "outside" | "broken" | string | null;
+};
 
 /** Folders first, then files and links, A to Z; names that start with a dot last (shown, the seeded profile must be). */
 export function sortEntries<T extends FileEntry>(entries: T[]): T[] {
@@ -170,10 +239,10 @@ export function sortEntries<T extends FileEntry>(entries: T[]): T[] {
   return [...entries].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, undefined, { sensitivity: "base", numeric: true }));
 }
 
-/** "folder", "link", or the size in plain words. */
-export function entryMeta(e: Pick<FileEntry, "kind" | "size">): string {
+/** "folder", a link and where it leads (the same words as the terminal's /room files), or the size in plain words. */
+export function entryMeta(e: Pick<FileEntry, "kind" | "size"> & Pick<Partial<FileEntry>, "why">): string {
   if (e.kind === "folder") return "folder";
-  if (e.kind === "link") return "link";
+  if (e.kind === "link") return e.why === "outside" ? "link, leads outside the Room" : e.why === "broken" ? "link, leads nowhere" : "link";
   const n = typeof e.size === "number" && e.size >= 0 ? e.size : 0;
   if (n < 1024) return n === 1 ? "1 byte" : `${n} bytes`;
   if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;

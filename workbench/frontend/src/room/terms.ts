@@ -15,6 +15,8 @@ export type PaneWords = {
   blocked: "" | "remote" | "settings";
   /** The shell's socket is open. */
   open: boolean;
+  /** A button the chrome bar offers: "here" (Use it here, after it was opened in another window), "reconnect", or none. */
+  action?: "" | "here" | "reconnect";
 };
 
 type State = {
@@ -61,13 +63,24 @@ export function setActiveTerminal(id: string | null) {
 }
 
 export function setPaneWords(id: string, words: Partial<PaneWords>) {
-  const cur = state.words[id] ?? { line: "", blocked: "", open: false };
+  const cur = state.words[id] ?? { line: "", blocked: "", open: false, action: "" };
   const next = { ...cur, ...words };
-  if (cur.line === next.line && cur.blocked === next.blocked && cur.open === next.open) return;
+  if (cur.line === next.line && cur.blocked === next.blocked && cur.open === next.open && (cur.action ?? "") === (next.action ?? "")) return;
   const patch: Partial<State> = { words: { ...state.words, [id]: next } };
   if (next.blocked === "remote") patch.remote = true;
   if (next.blocked === "settings") patch.switchedOff = true;
   set(patch);
+}
+
+/**
+ * Status says terminals are on (status.ts calls this on each answer that says so): forget a socket's "switched off"
+ * refusal, on the page and on each pane, so the panes are drawn again and their sockets asked again.
+ */
+export function clearSwitchedOff() {
+  if (!state.switchedOff && !Object.values(state.words).some((w) => w.blocked === "settings")) return;
+  const words: Record<string, PaneWords> = {};
+  for (const [id, w] of Object.entries(state.words)) words[id] = w.blocked === "settings" ? { ...w, blocked: "", line: "" } : w;
+  set({ switchedOff: false, words });
 }
 
 export function setCtrlLatch(on: boolean) {
@@ -90,6 +103,21 @@ export function registerSender(id: string, send: ((data: string) => void) | null
 /** A pane registers how to focus its terminal (null when it goes). */
 export function registerFocus(id: string, focus: (() => void) | null) {
   if (focus) focusers.set(id, focus); else focusers.delete(id);
+}
+
+const reattachers = new Map<string, () => void>();
+
+/** A pane registers how to join its shell again (Use it here, Reconnect); null when it goes. */
+export function registerReattach(id: string, again: (() => void) | null) {
+  if (again) reattachers.set(id, again); else reattachers.delete(id);
+}
+
+/** Join a pane's shell again (the chrome bar's Use it here and Reconnect). False when that pane is not there. */
+export function reattachTerminal(id: string | null): boolean {
+  const again = id ? reattachers.get(id) : undefined;
+  if (!again) return false;
+  again();
+  return true;
 }
 
 /** Send keys to a pane's shell as they are (the phone's key row). False when that pane is not connected. */

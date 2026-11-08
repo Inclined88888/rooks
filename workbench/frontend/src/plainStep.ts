@@ -26,8 +26,9 @@ const ROOM: Record<string, (args: string) => string> = {
     return name ? `Starting the Room over from ${clip(name)}` : "Starting the Room over";
   },
   handoff: (a) => withSubject("Copying a file out of the Room", field(a, "src")),
-  // design 0006: a long command in a Room terminal, and watching it (presence.py _ROOM says the same)
-  start: () => "Installing in the Room's terminal",
+  // design 0006: a long command in a Room terminal (an install, a build, a server: what it is, not a guess), and
+  // watching it (presence.py _ROOM says the same)
+  start: (a) => withSubject("Running in the Room's terminal", field(a, "command")),
   tail: () => "Watching the Room's terminal",
   files: () => "Looking through the Room's files",
 };
