@@ -14,7 +14,7 @@ plus three command line agents: `rooks` (terminal coding agent), `rooks-browser`
   `needs_you.py`, `room.py`, `restart.py` (a restart reported honestly: the cut off turn gets a note, the next turn says
   `resumed`, goals that opted in continue). A prompt that does not fit is compacted and retried in `assistant._run_turn`
   (`compacted` event), never fatal at once.
-- `workbench/backend/tests/` pytest suite (about 770 tests, about 5 minutes).
+- `workbench/backend/tests/` pytest suite (about 940 tests, about 5 minutes).
 - `workbench/frontend/src/` React + Vite + TypeScript. The Workroom shell: `pages/registry.ts` (the one page list:
   routes, rail, flyouts, More sheet, palette), `shell/` (rail, presence strip, stage host, phone bar), `ui/`
   (primitives), `chat/` (thread, events, turns), `room/` (the Room page and stage), `stage/` (surfaces), `needs/` (the

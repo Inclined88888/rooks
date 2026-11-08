@@ -2,7 +2,7 @@
 
 An architecture map of the Rooks repository for the owner. It covers what the parts are, how information moves between them, where data and secrets are kept, what could be cleaned up, and what a workplace team would miss today.
 
-**Source.** A read-only survey of branch `main` at commit `81125e1` on 8 November 2026. Sections a to i describe `main` as it was at that commit. The branch `cleanup/workplace` (stacked on `phase-1a/terminal-safety`) carries out the cleanup in section g and updates this document as it goes; where a part listed below has since been removed or moved, the cleanup notes in section g say so.
+**Source.** A read-only survey of branch `main` at commit `81125e1` on 8 November 2026. This copy describes branch `cleanup/workplace` (stacked on `phase-1a/terminal-safety`), which carries out the cleanup in section g: the component map (section e) marks what it removed, hid or changed, the cleanup tables (section g) have a Done column, and section i says which contradictions it fixed. The data flows (sections b to d), stores (section f) and gaps (section h) are as surveyed on `main`, apart from notes where a part has since moved.
 
 **A caveat on dates.** The whole repository was imported in one commit on 6 November 2026. A "last changed" date therefore only separates files touched since 7 or 8 November from the rest. It says nothing about how old or how alive a file really is. Status in this document comes from what imports what, what the screens call, and what the tests cover.
 
@@ -325,15 +325,18 @@ Notes:
 
 Status words: **live** (used and reachable), **half built** (exists but a part is missing or unused), **duplicate** (another module does the same job), **dead** (nothing uses it). Line counts are approximate.
 
-### e.1 The app's server (`workbench/backend/app`, about 32,600 lines, 777 tests)
+The map describes branch `cleanup/workplace`: a row for something this branch removed says **removed** and names the
+step in section g; a row it changed says so in its status. Everything else is as surveyed on `main` at `81125e1`.
+
+### e.1 The app's server (`workbench/backend/app`, about 32,600 lines on `main`; 938 backend tests on this branch)
 
 **Wiring and health**
 
 | Module | What it does | Status |
 |---|---|---|
 | main.py | Builds the server, runs upgrades, starts 14 background loops, mounts every route and the web page | live |
-| config.py | Settings and defaults: data folder, app secret, add-on addresses, desktop flags | live |
-| db.py | The database file, the 31 core tables, settings helpers (schema version 4) | live |
+| config.py | Settings and defaults: data folder, app secret, add-on addresses, desktop flags (the unread Claude Code and Codex launcher addresses are gone, contradiction 11) | live |
+| db.py | The database file, the core tables, settings helpers (schema version 5: the memory move, g.2a) | live |
 | health.py | Health checks on request, and the list of background loops | live |
 | restart.py | Tells the truth about restarts: cut-off turns get a note, the next turn says resumed | live |
 
@@ -369,7 +372,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | receipts.py | Proves a change exists; checks claims against proof | live |
 | goals.py | Goal mode: keeps taking turns until an objective is met | live |
 | push.py | Phone notifications for approvals and finished runs | live |
-| companion.py | Live view of every agent with approvals from the notch app or phone | half built (no web page uses it) |
+| companion.py | Live view of every agent with approvals from the notch app or phone; its description now says so (contradiction 15) | half built (no web page uses it) |
 | companion/hooks/ | Hook script and installer for Claude Code, Codex, Gemini and Cursor | live (developer only) |
 
 **Memory and learning**
@@ -441,7 +444,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | room.py | The Room: status, start, stop, save points, reset, run, click, type, picture, hand-off | live |
 | room_terminal.py | Real shells inside the Room, kept on the server, with private logs | live |
 | room_files.py | Read-only listing of the Room folder | live |
-| terminal_pty.py | The app's own Terminal page on the person's computer | live (to be hidden) |
+| terminal_pty.py | The app's own Terminal page on the person's computer | live (page hidden behind Advanced, g.3a) |
 | browser_proxy.py | Passes Browser page requests to the separate browser helper | live |
 | desk_proxy.py | Passes Computer page requests to the computer-use helper | live |
 | handoff.py | Notes the browser leaves for the Computer page | live |
@@ -490,7 +493,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | research.py | Deep research: search, read pages, write a cited report | live |
 | search.py | Web search through Brave, Tavily or a search server | live |
 | media.py | Image generation saved to Files | live |
-| packs/ (registry, routes, trade, trade_push, legal, study, store, tools, mobile_routes, ai) | Optional Trade, Legal and Study bundles; Trade pushes to ServiceM8 and Xero | live (to be hidden) |
+| packs/ (registry, routes, trade, trade_push, legal, study, store, tools, mobile_routes, ai) | Optional Trade, Legal and Study bundles; Trade pushes to ServiceM8 and Xero | live (pages hidden behind Advanced, g.3a) |
 
 **Security and secrets**
 
@@ -500,7 +503,7 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | redact.py | Removes keys from every log line and error | live |
 | egress.py | Records every outbound connection; shown on the Privacy page | live |
 | keychain.py | Provider keys in the computer's keychain on the desktop build | live |
-| account.py | Sign-in to a Rooks cloud service and paid plan checks; the cloud does not exist in this build | half built |
+| account.py | Sign-in to a Rooks cloud service and paid plan checks; the cloud does not exist in this build; plan checks are off unless a build sets `AIW_PLAN_CHECKS=1` (g.3a) | half built |
 | plan_tiers.py | Which plan each feature belongs to (was features_v02.py) | live |
 
 ### e.2 The screens (`workbench/frontend/src`)
@@ -513,25 +516,25 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | App.tsx, api.ts | Starts the app, sign-in, mounts routes; the client that talks to the server | live |
 | shell/ | Top bar, presence line, side Stage, phone dock, More sheet, the one status poll | live |
 | pages/Assistant.tsx, chat/ | The chat page: thread, composer, result cards with undo, model and mode chips | live |
-| chat/tabs/SkillsTab.tsx | An older skills editor no route can open | dead |
+| chat/tabs/SkillsTab.tsx | An older skills editor; its list now lives on the Skills page | removed (g.1a) |
 | room/ | The Room page: terminal, screen, files and save-point windows; compact Room on the Stage | live |
 | needs/ | The Needs you sheet | live |
 | stage/surfaces.tsx | How the side Stage draws the Room, a browser job or a computer job | live |
 | memory/ | The Memory page: what I know (add, correct, forget), people, projects, conflicts, tidy up, learning switches, backups and imports | live |
-| memory/Improved.tsx | A "What I improved" card that nothing shows | dead |
+| memory/Improved.tsx | A "What I improved" card that nothing showed | removed (g.1a) |
 | teammates/ | Teammates, Channels, Groups, Pages and Vault pages | live |
 | team/ | The human team lead's board, plan, tracker settings, outbox | live |
 | v02/ | Jobs board, job notifications, live sheets and charts, trigger builder | live |
 | Day pages | Mail, Calendar, Tasks, Home | live |
 | Memory pages | Skills, Teach (About you and the chat's Memory tab are the Memory page now) | live |
 | Library pages | Files, Notes, Documents, Sites, Projects | live |
-| Workspace pages | Automations, Research, Meetings, Talk, Coworkers, Packs, Browser and Computer (only when the helpers run) | live |
-| pages/Code.tsx | Coding jobs plus copies of the Terminal, Browser and Computer pages as tabs | duplicate |
+| Workspace pages | Automations, Research, Meetings, Talk, Coworkers, Browser and Computer (only when the helpers run); Packs moved behind Advanced (g.3a) | live |
+| pages/Code.tsx | Coding jobs plus copies of the Terminal, Browser and Computer pages as tabs | duplicate (hidden behind Advanced, g.3a) |
 | pages/TerminalPage.tsx, terminalHost.tsx | A real shell in the app window | live (hidden behind Advanced, g.3a) |
-| pages/Customize.tsx | A page of tiles that only link to other pages | duplicate |
+| pages/Customize.tsx | A page of tiles that only linked to other pages; `/customize` opens Settings | removed (g.1a) |
 | pages/Company.tsx | AI agents in an org chart (Advanced) | live |
 | Settings pages | Settings, Connect, Models, Voice, Appearance, Plan, About, Privacy, Phone | live |
-| Advanced pages | History, Run log, Insights, Status, Compare, Fine-tune, Extra tools | live |
+| Advanced pages | History and Company always; Run log, Insights, Status, Compare, Fine-tune, Extra tools, Code, Terminal and Packs only with Show developer tools on (g.3a) | live |
 | Welcome, Auth, AskBar | First run, sign-in, the floating ask bar | live |
 | Beside.tsx | An older side-by-side picker that the Stage now builds on | half built |
 | Palette.tsx | The command menu (Ctrl or Cmd + K) | live |
@@ -549,37 +552,37 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | rooks-desk llm.py, mcp_client.py | Copies of other modules that have drifted apart | duplicate |
 | rooks-try | The Room driver: Linux guest, private desktop, or private folder and shell | live |
 | desktop/src-tauri, desktop/sidecar | The installable desktop app (version 1.0.6): starts the server, signs the window in, tray, shortcut | live |
-| desktop/src-tauri sidecars.rs (three rows) | Placeholder rows for helpers "coming later" | dead |
+| desktop/src-tauri sidecars.rs (three rows) | Placeholder rows for helpers "coming later" | removed (g.1a) |
 | desktop/launcher | The `ai-workspace` command and the installer behind the install scripts | live |
-| desktop/rooks-native | A second desktop window drawn without a web view (version 0.4.0) | half built |
+| desktop/rooks-native | A desktop window drawn without a web view (version 0.4.0); since design record 0003 (W1) only the floating Ask palette | half built |
 | mobile/ | The phone app (Expo); not in any app store | live |
 | companion/macos | The Mac notch app; built by hand, no automatic checks | half built |
-| vscode-extension | Ask the assistant from VS Code; not on the Marketplace | half built |
+| vscode-extension | Ask the assistant from VS Code; finds the open app from `app.json` (contradiction 20); not on the Marketplace | half built |
 
 ### e.4 Older and supporting material at the top level
 
 | Part | What it does | Status |
 |---|---|---|
 | assistant/ and the `hermes` link | A kit to run a different, third-party assistant (Hermes) on a server | live (separate product) |
-| browser-agent/ | The old Docker browser agent that rooks-browser replaced | duplicate |
+| browser-agent/ | The old Docker browser agent; the Docker `browser` add-on is Rooks Browser now | removed (g.1a) |
 | cli/ws | A second, older terminal chat client, shipped with each release | live (duplicates `rooks talk`) |
-| cli-launcher/ | A Docker service to run Claude Code or Codex; nothing in the app calls it | half built |
+| cli-launcher/ | A Docker service to run Claude Code or Codex; nothing in the app calls it, and the app is no longer given its address or key (contradiction 11) | half built (owner to decide) |
 | paperclip/, searxng/ | Settings for optional server add-ons | live |
-| marketing/launch-posts.md | Draft launch posts with claims that are no longer true | dead |
-| screenshots/ | 347 old screenshots, 40 MB | dead |
-| scripts/test-all.sh | Runs every local test suite (not all the suites the online checks run) | live |
+| marketing/launch-posts.md | Draft launch posts with claims that were no longer true | removed (g.1a) |
+| screenshots/ | 347 old screenshots, 40 MB | removed (g.1a) |
+| scripts/test-all.sh | Runs every suite that runs on one computer, now including `cli/ws`, the CLI launcher, the VS Code add-on and the phone app; AGENTS.md lists what only the online checks run (contradiction 12) | live |
 | scripts/ci, security-scan.sh, hooks | Online check helpers, secret and dependency scans | live |
 | scripts/hermes-config.sh, paperclip-invite.sh, sync-opencode-config.sh | First-run helpers for the server add-ons | live |
 | scripts/write-oauth-clients.py, setup-sign-in.sh | Register the Google and Microsoft sign-in apps for releases | live |
 | scripts/release/package.sh | Builds a source zip; nothing calls it | unknown |
 | scripts/check-theme-contrast.py | Colour contrast check that nothing runs | half built |
-| scripts/audit/ | Regenerates old evidence pages | half built |
-| scripts/test_vertical_slice.py | A test tied to one developer's folder path | dead |
+| scripts/audit/ | Regenerates old evidence pages; now `docs/history/scripts/audit/` | moved (g.1a) |
+| scripts/test_vertical_slice.py | A test tied to one developer's folder path | removed (g.1a) |
 | install.sh, install.ps1 | One-command install for one person, no Docker | live |
-| install-server.sh, setup.sh, docker-compose files, .env.example | The Docker server install with add-ons | live (secondary) |
+| install-server.sh, setup.sh, docker-compose files, .env.example | The Docker server install with add-ons; default name Rooks (g.4a) | live (secondary) |
 | .github/workflows | Checks, desktop builds, releases, server image, Mac window check, native window build | live |
-| README.md, QUICKSTART.md, SECURITY.md, THIRD_PARTY_NOTICES.md, docs/ | Guides, design records, decisions, security model | live (some stale, see section i) |
-| PROGRESS-desktop.md, ai-workspace-audit-report.md, docs/AUDIT.md and other dated reports | Snapshots from earlier branches | dead (history) |
+| README.md, QUICKSTART.md, SECURITY.md, THIRD_PARTY_NOTICES.md, docs/ | Guides, design records, decisions, security model; the stale parts in section i are corrected (g.4a, documents) | live |
+| PROGRESS-desktop.md, ai-workspace-audit-report.md, docs/AUDIT.md and other dated reports | Snapshots from earlier branches: the two root reports removed, docs/AUDIT.md and the rest moved to `docs/history/` with a README | removed or moved (g.1a) |
 
 ---
 
@@ -627,25 +630,25 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 
 ## g. Cleanup proposal
 
-This is a proposal. Nothing is deleted by this document. "Hide behind Advanced" means keep the code and the tests but take the page out of the normal menus.
+The owner approved this proposal. "Hide behind Advanced" means keep the code and the tests but take the page out of the normal menus. The Done column in each table, and the sections ending in "a", record what branch `cleanup/workplace` has done.
 
 ### g.1 Delete
 
-| Path | Why | Risk |
-|---|---|---|
-| screenshots/ | 347 old branch screenshots (40 MB). No document shows them; `.gitignore` already says this folder should not be tracked. Every install downloads them. | Low. Fix one pointer in `docs/motion.md`. |
-| marketing/launch-posts.md | Claims that are false today ("mail never sends", "no shell tool", "350 MB"). Publishing it would break the "never fake results" rule. | Low. Rewrite launch copy from the current README if needed. |
-| PROGRESS-desktop.md | Log for an old branch; says the licence is MIT, but it is now proprietary. | Low. |
-| ai-workspace-audit-report.md | A 4 November snapshot that cites a script that does not exist. | Low. Move to a history folder if the record matters. |
-| scripts/test_vertical_slice.py | Hard-wired to one developer's folder, so it cannot run anywhere else. | None. |
-| frontend chat/tabs/SkillsTab.tsx | No route can open it; the Skills page replaced it. | Low. Update one text check in the tests. |
-| frontend memory/Improved.tsx | Nothing shows it. | Low. Decide whether Home should show the card instead. |
-| frontend pages/Customize.tsx | Every tile links to another page; Settings and the More sheet already do this. | Low. Point the old `/connect` link at Settings. |
-| desktop sidecars.rs placeholder rows | Three "coming soon" rows; one points at the old browser agent. | Low. |
-| api.py `/api/trade` routes | No screen calls them. | Low. |
-| browser-agent/ | The old Docker browser agent; rooks-browser replaced it and speaks the same job language. Two browser agents with different safety rules. | Medium. The Docker "browser" add-on, setup script, Paperclip and Hermes settings, README, one check job and one terminal test refer to it. Replace the Docker service with rooks-browser first. |
-| cli-launcher/ (and its two Docker add-ons and settings) | Nothing in the app reads its address; running the person's own Claude Code or Codex already works another way. | Medium. It is the only plan-based path for a Docker server with no local programs. Ask the owner first. |
-| frontend pages/Code.tsx | Coding is for developers; the page also repeats the Terminal, Browser and Computer pages. | Medium. The terminal keeps coding jobs; update the chat's plan and build modes and two tests. |
+| Path | Why | Risk | Done |
+|---|---|---|---|
+| screenshots/ | 347 old branch screenshots (40 MB). No document shows them; `.gitignore` already says this folder should not be tracked. Every install downloads them. | Low. Fix one pointer in `docs/motion.md`. | Done (g.1a) |
+| marketing/launch-posts.md | Claims that are false today ("mail never sends", "no shell tool", "350 MB"). Publishing it would break the "never fake results" rule. | Low. Rewrite launch copy from the current README if needed. | Done (g.1a) |
+| PROGRESS-desktop.md | Log for an old branch; says the licence is MIT, but it is now proprietary. | Low. | Done (g.1a) |
+| ai-workspace-audit-report.md | A 4 November snapshot that cites a script that does not exist. | Low. Move to a history folder if the record matters. | Done (g.1a) |
+| scripts/test_vertical_slice.py | Hard-wired to one developer's folder, so it cannot run anywhere else. | None. | Done (g.1a) |
+| frontend chat/tabs/SkillsTab.tsx | No route can open it; the Skills page replaced it. | Low. Update one text check in the tests. | Done (g.1a) |
+| frontend memory/Improved.tsx | Nothing shows it. | Low. Decide whether Home should show the card instead. | Done (g.1a) |
+| frontend pages/Customize.tsx | Every tile links to another page; Settings and the More sheet already do this. | Low. Point the old `/connect` link at Settings. | Done (g.1a) |
+| desktop sidecars.rs placeholder rows | Three "coming soon" rows; one points at the old browser agent. | Low. | Done (g.1a) |
+| api.py `/api/trade` routes | No screen calls them. | Low. | Done (g.1a) |
+| browser-agent/ | The old Docker browser agent; rooks-browser replaced it and speaks the same job language. Two browser agents with different safety rules. | Medium. The Docker "browser" add-on, setup script, Paperclip and Hermes settings, README, one check job and one terminal test refer to it. Replace the Docker service with rooks-browser first. | Done (g.1a) |
+| cli-launcher/ (and its two Docker add-ons and settings) | Nothing in the app reads its address; running the person's own Claude Code or Codex already works another way. | Medium. It is the only plan-based path for a Docker server with no local programs. Ask the owner first. | Not done: the owner decides. The app no longer gets its address or key (contradiction 11) |
+| frontend pages/Code.tsx | Coding is for developers; the page also repeats the Terminal, Browser and Computer pages. | Medium. The terminal keeps coding jobs; update the chat's plan and build modes and two tests. | Hidden instead (g.3a); deleting it is the owner's call |
 
 **Totals for the "Delete" table** (files only; partial deletions inside other files are not counted):
 
@@ -681,26 +684,26 @@ browser agent now).
 
 ### g.2 Merge
 
-| Path | Into | Why | Risk |
-|---|---|---|---|
-| learn.py (memories) + adapt/knowledge.py (adapt_facts) + knowledge/memory.py (kn_memories) | One memory store in knowledge/ | Three stores for one idea; one Memory page, one "forget" | Medium. Existing users need a one-time move; two tests check the old path. |
-| Memory page + About you + chat Memory tab | The Memory page | Three screens over three stores | Medium. Only after the stores are merged. |
-| company.py + starters.py + teammates/ + team/ | Two ideas: Coworkers (AI) and People (humans) | Four overlapping models of "others who work here"; a workplace pitch cannot show four pages for this | High. Needs a product decision first; the team area alone has 15 tables. |
-| Tasks, project items, team tasks, agent tasks, jobs | One task list with an owner (me, a coworker, a person) and a project | Five task tables; a Planner or Jira user expects one list | High. Tools, phone routes, meetings, team and Company each write their own table. |
-| browser_proxy.py, local_agents.py, handoff.py | room.py (the Room browser) | One built-in browser the person and the assistant share | High. Sites and the recorder use the helper's browser profile and must move with it. |
-| mobile.py + teammates/phonelink.py + companion.py | One phone module | Three ways a phone reaches this computer | High. The phone app and notch app need the exact same routes; keep routes, merge code. |
-| telegram.py | teammates/channels.py | Telegram is set up there but run from a separate file | Medium. 12 test files mention Telegram. |
-| Tables created on first use in about 30 modules (including the terminal hand-off table) | knowledge/schema.py upgrades | Schema in one place, with versions | Low to medium. Upgrade order must be tested. |
-| Four status routes no screen calls | One health answer | Simpler Status page | Low. |
-| Notes, Documents and Teammate pages | Library, Documents | Three document lists | Medium. Teammate pages have share links that notes lack. |
-| Talk page and Voice settings | Chat (a voice mode) and Settings | Voice lives in three places | Low. |
-| Research page | A chat mode | A question-to-report flow belongs in chat | Low. |
-| Models page | Settings, Models | Two places manage providers | Low. |
-| Beside.tsx | shell/StageHost | An older hand-made screen list beside the Stage | Medium. |
-| rooks-desk and rooks-browser llm.py, rooks-desk mcp_client.py | One shared copy, synced by a script | Copies 27 to 60 lines apart with no test | Medium. Each tool installs separately. |
-| desktop/rooks-native | One desktop app | A second desktop window that repeats the web screens | High. Decide which window is "the app" first. |
-| cli/ws | rooks-code | A second terminal client with different names and settings | Medium. Shipped in releases; deprecate for one release first. |
-| Old audits and evidence (docs/AUDIT.md, PHASE0-GATE, ROOKS-FINISH-REPORT, docs/evidence, docs/night, scripts/audit) | docs/history/ | Snapshots mixed in with current guides | Low. Fix links from design record 0004. |
+| Path | Into | Why | Risk | Done |
+|---|---|---|---|---|
+| learn.py (memories) + adapt/knowledge.py (adapt_facts) + knowledge/memory.py (kn_memories) | One memory store in knowledge/ | Three stores for one idea; one Memory page, one "forget" | Medium. Existing users need a one-time move; two tests check the old path. | Done (g.2a) |
+| Memory page + About you + chat Memory tab | The Memory page | Three screens over three stores | Medium. Only after the stores are merged. | Done (g.2a) |
+| company.py + starters.py + teammates/ + team/ | Two ideas: Coworkers (AI) and People (humans) | Four overlapping models of "others who work here"; a workplace pitch cannot show four pages for this | High. Needs a product decision first; the team area alone has 15 tables. | Not done (needs a product decision) |
+| Tasks, project items, team tasks, agent tasks, jobs | One task list with an owner (me, a coworker, a person) and a project | Five task tables; a Planner or Jira user expects one list | High. Tools, phone routes, meetings, team and Company each write their own table. | Not done |
+| browser_proxy.py, local_agents.py, handoff.py | room.py (the Room browser) | One built-in browser the person and the assistant share | High. Sites and the recorder use the helper's browser profile and must move with it. | Not done (after the room-browser branch) |
+| mobile.py + teammates/phonelink.py + companion.py | One phone module | Three ways a phone reaches this computer | High. The phone app and notch app need the exact same routes; keep routes, merge code. | Not done |
+| telegram.py | teammates/channels.py | Telegram is set up there but run from a separate file | Medium. 12 test files mention Telegram. | Not done |
+| Tables created on first use in about 30 modules (including the terminal hand-off table) | knowledge/schema.py upgrades | Schema in one place, with versions | Low to medium. Upgrade order must be tested. | Not done |
+| Four status routes no screen calls | One health answer | Simpler Status page | Low. | Not done |
+| Notes, Documents and Teammate pages | Library, Documents | Three document lists | Medium. Teammate pages have share links that notes lack. | Not done |
+| Talk page and Voice settings | Chat (a voice mode) and Settings | Voice lives in three places | Low. | Not done |
+| Research page | A chat mode | A question-to-report flow belongs in chat | Low. | Not done |
+| Models page | Settings, Models | Two places manage providers | Low. | Not done |
+| Beside.tsx | shell/StageHost | An older hand-made screen list beside the Stage | Medium. | Not done |
+| rooks-desk and rooks-browser llm.py, rooks-desk mcp_client.py | One shared copy, synced by a script | Copies 27 to 60 lines apart with no test | Medium. Each tool installs separately. | Not done |
+| desktop/rooks-native | One desktop app | A second desktop window that repeats the web screens | High. Decide which window is "the app" first. | Decided, not merged: Ask palette only (0003, W1); 0007 on the room-browser branch |
+| cli/ws | rooks-code | A second terminal client with different names and settings | Medium. Shipped in releases; deprecate for one release first. | Not done |
+| Old audits and evidence (docs/AUDIT.md, PHASE0-GATE, ROOKS-FINISH-REPORT, docs/evidence, docs/night, scripts/audit) | docs/history/ | Snapshots mixed in with current guides | Low. Fix links from design record 0004. | Done (g.1a) |
 
 ### g.2a Done on branch `cleanup/workplace`
 
@@ -713,18 +716,18 @@ browser agent now).
 
 ### g.3 Hide behind Advanced
 
-| Path | Why | Risk |
-|---|---|---|
-| Terminal page (terminal_pty.py stays; the Room's terminals use its helpers) | Workplace buyers do not need a shell in the app | Low |
-| Coding jobs, companion hooks, "Continue in terminal", terminal access | Developer features | Medium. Keep running, just unlisted; the terminal must still match the app. |
-| Tool servers for other chat programs, and links to Open WebUI, Paperclip, Hermes | For other AI front ends, not a workplace team | Low |
-| Fine-tune, Compare, Run log, Insights, Status, Extra tools | Developer tools (already Advanced) | Low |
-| Trade, Legal and Study packs | Aimed at sole traders and students | Medium. 21 tests; the terminal and phone also show packs. |
-| account.py and paid-plan checks | Points at a cloud that does not exist; shows paywalls for nothing | Medium. Turn plan checks off by default. |
-| assistant/ (Hermes), paperclip/, searxng/, Docker add-ons | The server line is secondary | Low |
-| goals routes | Goals are set from chat; no screen calls the routes | Low |
-| rooks-browser/app (Electron preview) | A third browser surface nothing starts | Low. Pick one browser surface before investing more. |
-| companion/macos | One commit, built by hand, Mac only | Low. Fix the server's description of it. |
+| Path | Why | Risk | Done |
+|---|---|---|---|
+| Terminal page (terminal_pty.py stays; the Room's terminals use its helpers) | Workplace buyers do not need a shell in the app | Low | Done (g.3a) |
+| Coding jobs, companion hooks, "Continue in terminal", terminal access | Developer features | Medium. Keep running, just unlisted; the terminal must still match the app. | Partly (g.3a): the Code page, "Continue in terminal", Plan and Build are hidden; companion hooks and the terminal access card are not |
+| Tool servers for other chat programs, and links to Open WebUI, Paperclip, Hermes | For other AI front ends, not a workplace team | Low | Partly (g.3a): the Open WebUI, Paperclip and Hermes links are hidden; the tool servers are not |
+| Fine-tune, Compare, Run log, Insights, Status, Extra tools | Developer tools (already Advanced) | Low | Done (g.3a) |
+| Trade, Legal and Study packs | Aimed at sole traders and students | Medium. 21 tests; the terminal and phone also show packs. | Done in the app (g.3a); the terminal and phone still show them |
+| account.py and paid-plan checks | Points at a cloud that does not exist; shows paywalls for nothing | Medium. Turn plan checks off by default. | Done (g.3a): off by default |
+| assistant/ (Hermes), paperclip/, searxng/, Docker add-ons | The server line is secondary | Low | Not done |
+| goals routes | Goals are set from chat; no screen calls the routes | Low | Nothing to hide: no screen calls them (BACKLOG.md) |
+| rooks-browser/app (Electron preview) | A third browser surface nothing starts | Low. Pick one browser surface before investing more. | Not done |
+| companion/macos | One commit, built by hand, Mac only | Low. Fix the server's description of it. | The server's description of it is fixed (contradiction 15); not hidden |
 
 ### g.3a Done on branch `cleanup/workplace`
 
@@ -745,14 +748,14 @@ Advanced. Routes are built from every page, so each address still opens.
 
 ### g.4 Rename
 
-| Path | New name | Why | Risk |
-|---|---|---|---|
-| api.py | auth_api, providers_api, day_api, mail_api, research_api | 1,188 lines mixing eight purposes | Low if the routes keep their paths |
-| v02_api.py, v02_hooks.py, v02_mobile.py, features_v02.py | automations_api, projects_hooks, projects_mobile, plan_tiers | Named after a branch, not a purpose | Low |
-| catalog_build.py | scripts/build_model_catalog.py | A build tool inside the running program | Low |
-| Home page | "Today", first in the Day menu | Called Home but hidden in More | Low |
-| "AI Workspace" on screens (sign-in error page, Connect results, mail app-password name, Apple Mail, "AI Workspace Cloud", backup readme, calendar exports, Computer page, desktop app name, search server name, default workspace name), and the wake phrase "hey workspace" | Rooks | The product is Rooks; mixed names confuse people | Medium. Renaming the desktop app makes the computer treat it as a new app (permissions, keychain); the Google and Microsoft sign-in apps are registered under the old name. |
-| Stale status lines in design records 0003 to 0006, the native app plan, decision record 0001, docs/README "100 reasons", README sections, SECURITY.md versions table | Corrected text | See section i | None |
+| Path | New name | Why | Risk | Done |
+|---|---|---|---|---|
+| api.py | auth_api, providers_api, day_api, mail_api, research_api | 1,188 lines mixing eight purposes | Low if the routes keep their paths | Not done |
+| v02_api.py, v02_hooks.py, v02_mobile.py, features_v02.py | automations_api, projects_hooks, projects_mobile, plan_tiers | Named after a branch, not a purpose | Low | Done (g.4a) |
+| catalog_build.py | scripts/build_model_catalog.py | A build tool inside the running program | Low | Done (g.4a) |
+| Home page | "Today", first in the Day menu | Called Home but hidden in More | Low | Not done |
+| "AI Workspace" on screens (sign-in error page, Connect results, mail app-password name, Apple Mail, "AI Workspace Cloud", backup readme, calendar exports, Computer page, desktop app name, search server name, default workspace name), and the wake phrase "hey workspace" | Rooks | The product is Rooks; mixed names confuse people | Medium. Renaming the desktop app makes the computer treat it as a new app (permissions, keychain); the Google and Microsoft sign-in apps are registered under the old name. | Partly (g.4a): the server's screens, the wake phrase and the Docker defaults; the desktop app's name is the room-browser branch's, the sign-in apps the owner's |
+| Stale status lines in design records 0003 to 0006, the native app plan, decision record 0001, docs/README "100 reasons", README sections, SECURITY.md versions table | Corrected text | See section i | None | Done (g.4a, documents) |
 
 ### g.4a Done on branch `cleanup/workplace`
 
@@ -764,7 +767,8 @@ Advanced. Routes are built from every page, so each address still opens.
 | Guard | `workbench/backend/tests/test_rooks_name.py` scans every non-docstring string in the server, the built screens and the Docker defaults; an allow list names the three internal or honest exceptions. |
 | v02_api, v02_hooks, v02_mobile, features_v02 | Renamed automations_api, projects_hooks, projects_mobile, plan_tiers. All 700 routes keep method and path. |
 | catalog_build.py | Moved to `scripts/build_model_catalog.py`. |
-| Not done here | The desktop app's name (the room-browser branch renames it), the Google and Microsoft sign-in registrations (the owner, in their consoles), the `rooks`, Rooks Browser and Rooks Desk help texts, the phone app, the VS Code add-on, `cli/ws`, the README and quick start, and the split of api.py: BACKLOG.md. |
+| Stale documents (section i) | Corrected: README (mail sends after a yes, your own Claude Code works today, the browser sections describe Rooks Browser, "Why Rooks"), QUICKSTART's title, SECURITY.md's supported versions and updater line, the status lines of design records 0003 to 0006, the native app plan, a note in decision record 0001 pointing at 0003 and 0007, the false "100 reasons" in docs/README, the four feature guides written as branches, and `companion.py`'s description. Also fixed with them: the VS Code add-on's address and the unread Claude Code and Codex addresses (section i, 11 and 20). |
+| Not done here | The desktop app's name (the room-browser branch renames it), the Google and Microsoft sign-in registrations (the owner, in their consoles), the `rooks`, Rooks Browser and Rooks Desk help texts, the phone app, the VS Code add-on's name, `cli/ws`, the README's install section (the command and download files keep the old name until the room-browser branch), and the split of api.py: BACKLOG.md. |
 
 ### g.5 Keep as they are
 
@@ -801,7 +805,7 @@ Ranked by how soon a workplace buyer would notice. Each line names the existing 
 | 11 | **One place for people and one task list** | Four coworker models and five task tables | `team/` and `teammates/` (see the merges in g.2) |
 | 12 | **Managed install**: signed installers, packages IT can push, central policy | Per-person installs from GitHub; preview builds not signed | `desktop/launcher`, the desktop build workflow, `desktop/src-tauri` |
 | 13 | **Zoho** beyond mail | Zoho Mail through app passwords only | `mail_autodetect.py` already knows Zoho; CRM, Desk and Projects would sit beside `team/trackers.py` |
-| 14 | **Developer surfaces out of the way** | Terminal and Code in the Workspace menu; Plan and Build coding modes in chat | `pages/registry.ts` (one list decides where every page appears) |
+| 14 | **Developer surfaces out of the way** | Terminal and Code in the Workspace menu; Plan and Build coding modes in chat. *Done on `cleanup/workplace` (g.3a): behind Show developer tools.* | `pages/registry.ts` (one list decides where every page appears) |
 | 15 | **Phone app, notch app and VS Code add-on that IT can hand out** | Phone app runs through a developer tool; the others are built by hand | `mobile/`, `companion/macos`, `vscode-extension` |
 | 16 | **Workplace pricing and copy** | Prices in Australian dollars, Trade, Legal and Study packs, small-business examples | `plan_tiers.py`, `pages/Plan.tsx`, packs |
 
@@ -809,30 +813,30 @@ Ranked by how soon a workplace buyer would notice. Each line names the existing 
 
 ## i. Contradictions between the documents and the code
 
-Plain list, most visible first.
+Plain list, most visible first. Each item says whether branch `cleanup/workplace` fixed it; 17 of the 22 are fixed (for 8, in the records; the installer default is the room-browser branch's), 2 are partly fixed (3 and 13) and 3 are open (14, 17 and 22).
 
-1. **"Mail is draft-only, it never sends."** Said in `docs/README.md` (points 16 and 57) and in the marketing posts. The code sends mail after a yes (`mail.py`, `cloud_mail.py`, Rooks Desk's send-mail).
-2. **The Claude Code add-on "not built yet".** Said in the README. Running the person's own Claude Code, Codex or Copilot works today (`adapters.py`), and `docs/CLAUDE-CODE.md` describes it.
-3. **The product name.** README is titled Rooks and the server's default name is Rooks, but the desktop app is named "AI Workspace", the Docker setup's default name is "AI Workspace", sign-in and mail screens say "AI Workspace", and the wake phrase is "hey workspace". The quick start guide is titled "AI Workspace". *Partly fixed on `cleanup/workplace` (g.4a): the server's screens, the Computer page, the wake phrase and the Docker default say Rooks; the desktop app's name is the room-browser branch's, and the quick start is still to do.*
-4. **Supported versions.** `SECURITY.md` lists `integration/v0.3`; the install line is `main` at 1.0.6. It also promises a signed updater, while the README says signing and updates are off until the keys exist.
-5. **Licence.** `PROGRESS-desktop.md` says MIT; the licence file says proprietary.
-6. **Design records say "not merged".** Records 0003 (Workroom), 0004 (Coworkers) and 0005 (Rooks Browser app) say not merged or not shipped; all are on `main`. Record 0006 still says "design record" though the Room desk is built.
-7. **"Nothing in this document is built."** Said in `docs/native-app-plan.md`; `desktop/rooks-native` exists and has its own build.
-8. **Which window is the app.** Decision record 0001 says the app window is the desktop (Tauri) app; the installers now skip that app by default ("that release is the old app") and a second native window exists. No newer decision record replaces it.
-9. **Marketing size and features.** The posts say a 350 MB container and "no shell tool"; the README measures 248 MB, and there is a Terminal page and the Room.
-10. **The old browser agent.** rooks-browser replaced `browser-agent/`, but the README's "Browser agent" section, the Docker setup, Paperclip and Hermes settings still describe or start the old one, and a desktop placeholder row points at its folder.
-11. **Claude Code and Codex addresses.** The setup script writes them and `config.py` defines them; nothing reads them.
-12. **"Runs every suite."** `AGENTS.md` says `scripts/test-all.sh` runs every suite and must pass before pushing; it skips the old browser agent, `cli/tests`, the CLI launcher, the VS Code add-on and the phone app, which the online checks run. "All passed." locally covers less than the online checks.
-13. **"The terminal, the browser and the app must match."** `AGENTS.md` sets this rule, but there are two terminal clients (`rooks` and `cli/ws`) with different settings files and names, and two browser agents with different safety rules.
-14. **Where the database schema lives.** `AGENTS.md` names `db.py` as the database and its version; tables are also created on first use in about 30 other modules, including the terminal hand-off table.
-15. **The companion.** `companion.py` says the web app uses it and mentions a `companion/desktop` folder; no screen calls it and that folder does not exist.
-16. **Screenshots.** `.gitignore` says `/screenshots/` is for throwaway captures and should not be tracked; 347 files are tracked.
-17. **Company sign-in.** The Plan page offers company sign-in on a Business tier; there is no such sign-in, and the cloud that would sell the tier is not set up.
-18. **Feature guides written as unmerged branches.** `docs/teammates.md`, `docs/packs.md` and `docs/v02-anywhere-voice.md` describe their features as living on feature branches; they are on `main`.
-19. **docs/AUDIT.md** says "nothing in this repository is named Rook".
-20. **VS Code add-on address.** It defaults to the Docker server's port; the desktop app picks a random port each time.
-21. **"Add-ons are Docker-only".** The README lists the browser agent among Docker-only add-ons; the desktop app starts rooks-browser itself.
-22. **Teams in the team area.** The word "teams" in `team/connect.py` means the app's own unbuilt cloud team sync, not Microsoft Teams; easy to misread in a pitch.
+1. **"Mail is draft-only, it never sends."** Said in `docs/README.md` (points 16 and 57) and in the marketing posts. The code sends mail after a yes (`mail.py`, `cloud_mail.py`, Rooks Desk's send-mail). **Fixed on `cleanup/workplace`:** points 16 and 57 say an email is sent after your yes, the README's Mail section says so too, and the marketing posts are deleted.
+2. **The Claude Code add-on "not built yet".** Said in the README. Running the person's own Claude Code, Codex or Copilot works today (`adapters.py`), and `docs/CLAUDE-CODE.md` describes it. **Fixed on `cleanup/workplace`:** the README's Claude section says it works today and points at docs/CLAUDE-CODE.md.
+3. **The product name.** README is titled Rooks and the server's default name is Rooks, but the desktop app is named "AI Workspace", the Docker setup's default name is "AI Workspace", sign-in and mail screens say "AI Workspace", and the wake phrase is "hey workspace". The quick start guide is titled "AI Workspace". **Partly fixed on `cleanup/workplace`** (g.4a): the server's screens, the Computer page, the wake phrase, the Docker default and the quick start's title say Rooks. Open: the desktop app's name (the room-browser branch renames it), the installer command and download files, the VS Code add-on and the Google and Microsoft sign-in registrations (BACKLOG.md).
+4. **Supported versions.** `SECURITY.md` lists `integration/v0.3`; the install line is `main` at 1.0.6. It also promises a signed updater, while the README says signing and updates are off until the keys exist. **Fixed on `cleanup/workplace`:** SECURITY.md supports `main` at 1.0.6 and the latest release, and says the built-in updater is off until the signing key exists, so updates come from running the install again.
+5. **Licence.** `PROGRESS-desktop.md` says MIT; the licence file says proprietary. **Fixed on `cleanup/workplace`:** `PROGRESS-desktop.md` is deleted (g.1a).
+6. **Design records say "not merged".** Records 0003 (Workroom), 0004 (Coworkers) and 0005 (Rooks Browser app) say not merged or not shipped; all are on `main`. Record 0006 still says "design record" though the Room desk is built. **Fixed on `cleanup/workplace`:** each status line names the pull request that merged it; 0005 says the preview is merged but not installed or started.
+7. **"Nothing in this document is built."** Said in `docs/native-app-plan.md`; `desktop/rooks-native` exists and has its own build. **Fixed on `cleanup/workplace`:** the plan's status says its first milestone became `desktop/rooks-native` and that 0003 (W1) narrowed it to the Ask palette; it is kept as a record.
+8. **Which window is the app.** Decision record 0001 says the app window is the desktop (Tauri) app; the installers now skip that app by default ("that release is the old app") and a second native window exists. No newer decision record replaces it. **Fixed on `cleanup/workplace`:** 0001 has a note pointing at design record 0003 (W1) and design record 0007 (room-browser branch, section 2), and says the install skips the desktop app until that branch merges. Changing the installer default is that branch's work.
+9. **Marketing size and features.** The posts say a 350 MB container and "no shell tool"; the README measures 248 MB, and there is a Terminal page and the Room. **Fixed on `cleanup/workplace`:** the posts are deleted (g.1a); docs/README point 58 now says commands run in the Room or a sandbox, or on your computer after a yes.
+10. **The old browser agent.** rooks-browser replaced `browser-agent/`, but the README's "Browser agent" section, the Docker setup, Paperclip and Hermes settings still describe or start the old one, and a desktop placeholder row points at its folder. **Fixed on `cleanup/workplace`:** the old agent, its Docker service and the placeholder rows are gone (g.1a); the README's browser sections describe Rooks Browser on your computer and as the server add-on.
+11. **Claude Code and Codex addresses.** The setup script writes them and `config.py` defines them; nothing reads them. **Fixed on `cleanup/workplace`:** removed from `config.py`, `setup.sh`, the app's Docker service and `.env.example`, with the two launcher keys the app was also given and never read; the launchers keep their own key. Guarded by `test_repo_cleanup.py`.
+12. **"Runs every suite."** `AGENTS.md` says `scripts/test-all.sh` runs every suite and must pass before pushing; it skips the old browser agent, `cli/tests`, the CLI launcher, the VS Code add-on and the phone app, which the online checks run. "All passed." locally covers less than the online checks. **Fixed on `cleanup/workplace`:** `cli/tests`, the CLI launcher, the VS Code add-on and the phone app are added to `scripts/test-all.sh` (the old browser agent is gone), and AGENTS.md lists what it runs and what only the online checks run (security scan, installs on three systems, Docker images, desktop builds, real-screen runs).
+13. **"The terminal, the browser and the app must match."** `AGENTS.md` sets this rule, but there are two terminal clients (`rooks` and `cli/ws`) with different settings files and names, and two browser agents with different safety rules. **Partly fixed on `cleanup/workplace`:** one browser agent now (g.1a). Open: `cli/ws` beside `rooks` (g.2, the owner's call).
+14. **Where the database schema lives.** `AGENTS.md` names `db.py` as the database and its version; tables are also created on first use in about 30 other modules, including the terminal hand-off table. Open (g.2, the schema merge row).
+15. **The companion.** `companion.py` says the web app uses it and mentions a `companion/desktop` folder; no screen calls it and that folder does not exist. **Fixed on `cleanup/workplace`:** the docstring names the Mac notch app and the phone app, says no web screen calls it, and calls the Lock Screen view a plan.
+16. **Screenshots.** `.gitignore` says `/screenshots/` is for throwaway captures and should not be tracked; 347 files are tracked. **Fixed on `cleanup/workplace`:** deleted, and a test fails if the folder is tracked again (g.1a).
+17. **Company sign-in.** The Plan page offers company sign-in on a Business tier; there is no such sign-in, and the cloud that would sell the tier is not set up. Open: plan checks are off by default (g.3a), but the Plan page still lists the Business tier (BACKLOG.md).
+18. **Feature guides written as unmerged branches.** `docs/teammates.md`, `docs/packs.md` and `docs/v02-anywhere-voice.md` describe their features as living on feature branches; they are on `main`. **Fixed on `cleanup/workplace`:** those three and `docs/team-lead.md` say the feature is in the app on `main`; the packs guide says the packs sit behind Show developer tools, the voice guide says "hey rooks".
+19. **docs/AUDIT.md** says "nothing in this repository is named Rook". **Fixed on `cleanup/workplace`:** it is now `docs/history/AUDIT.md`, under a README that says those files describe the repository as it was when written (g.1a).
+20. **VS Code add-on address.** It defaults to the Docker server's port; the desktop app picks a random port each time. **Fixed on `cleanup/workplace`:** the add-on reads the open app's address from `app.json` as `rooks` does (only the address, never the key), ignores a stale file, and falls back to the server's port; the setting is empty by default. Tested in `vscode-extension/test/address.test.mjs`.
+21. **"Add-ons are Docker-only".** The README lists the browser agent among Docker-only add-ons; the desktop app starts rooks-browser itself. **Fixed on `cleanup/workplace`:** the README says the app starts Rooks Browser and Rooks Desk itself, and that Paperclip, Hermes and Open WebUI are server add-ons.
+22. **Teams in the team area.** The word "teams" in `team/connect.py` means the app's own unbuilt cloud team sync, not Microsoft Teams; easy to misread in a pitch. Open (a rename for the team area).
 
 ---
 

@@ -63,6 +63,32 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Old reports keep their old paths inside.** Files in `docs/history/` mention `docs/evidence/` and `scripts/audit/`
   as they were; `docs/history/README.md` maps them.
 
+### Documents and contradictions: what the documents step left (branch cleanup/workplace)
+
+* **Contradictions still open** (docs/architecture.md, section i): 13, the second terminal client `cli/ws` beside
+  `rooks` (g.2, the owner's call); 14, tables created on first use in about 30 modules (the g.2 schema merge); 17, the
+  Plan page still lists a Business tier with company sign-in (plan checks are off, but the page shows it); 22, "teams"
+  in `team/connect.py` means the unbuilt cloud team sync, not Microsoft Teams (rename it before a workplace pitch).
+  3 is open only for the parts listed under "Rooks names" below.
+* **For the room-browser branch:** decision record 0001's new note says the one-command install skips the desktop app
+  until that branch merges (`--native no`). When it changes the default, change that sentence, the README's
+  "Download" and install sections and QUICKSTART's line that the command and download files still carry the old name.
+  Link design record 0007 from `docs/README.md` once it is on the same branch (it is not here, so the index does not
+  link it).
+* **"100 reasons" (docs/README.md) was corrected where an item was clearly false, not re-verified line by line.** Not
+  checked against the code: 35 and 36 (skills run without a chat turn, delegated agents loading a skill), 47 (one
+  worker), 49 and 50 (Company mission control and templates), 68 (data export documented), 96 to 98 (add-on
+  manifest). Check them, or drop the list for workplace copy (section h, rank 16).
+* **The CLI launcher example was not run here.** `cli-launcher/README.md` passes the key from `.env` into
+  `docker exec -e CLAUDE_CODE_API_KEY` for one command; this session had no Docker daemon. Run it once on a server
+  install with the `claude-code` add-on.
+* **The VS Code add-on is still called "AI Workspace"** (commands, settings, output panel) and is not on the
+  Marketplace. Rename it with the desktop app. Its address lookup reads `~/.config/ai-workspace/app.json`, which
+  section g.5 keeps.
+* **What only the online checks run** (AGENTS.md): the security scan, the one-command install on three systems, the
+  Docker images, the desktop and native window builds and the real-screen runs. `cargo test` for `desktop/src-tauri`
+  runs nowhere (entry above).
+
 ### Rooks names: what the rename step left (branch cleanup/workplace)
 
 * **The owner must rename the sign-in apps in the Google and Microsoft consoles.** The Google Cloud OAuth client and
@@ -80,8 +106,9 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Other surfaces still say "AI Workspace" or "Workbench"** (not scanned by `test_rooks_name.py`, which covers the
   server and the built screens): the `rooks`, Rooks Browser and Rooks Desk help texts (`--db` "Workbench database",
   "the AI Workspace app"), the phone app (pairing screen title and steps, the default name), the VS Code add-on,
-  `cli/ws`, `companion/macos`, `setup.sh`'s other lines and `install-server.sh`, `install.ps1`, `QUICKSTART.md` (its
-  title), the README and most docs, and many code comments and docstrings. Extend the scan to each when it is renamed.
+  `cli/ws`, `companion/macos`, `setup.sh`'s other lines and `install-server.sh`, `install.ps1`, QUICKSTART's and the
+  README's install steps (their titles say Rooks now; the command and files keep the old name until the room-browser
+  branch), most other docs, and many code comments and docstrings. Extend the scan to each when it is renamed.
 * **Slack and Discord bots made before the rename keep their name.** The manifest for a new Slack app says Rooks;
   an existing one is renamed in Slack's app settings by its owner.
 * **Split `api.py`** into auth_api, providers_api, day_api, mail_api and research_api (section g.4), keeping every

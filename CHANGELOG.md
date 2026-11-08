@@ -8,9 +8,45 @@ version and the merge commit on `main`.
 
 The cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the old browser
 agent, move old reports into `docs/history/`, hide developer features behind Advanced (hidden, not deleted), and call
-the product Rooks on every normal screen, and keep one memory. One schema change: the memory move
+the product Rooks on every normal screen, keep one memory, and correct the documents that contradicted the code
+(section i). One schema change: the memory move
 (`SCHEMA_VERSION` 5, below); one connection row is renamed (below). Rollback: revert the branch's commits, and for the
 memory move restore the backup it takes.
+
+- **Documents and small parts that contradicted the code** (section i; each item there now says fixed, partly fixed
+  or open: 17 fixed, 2 partly, 3 open).
+  - **VS Code add-on finds the app** (contradiction 20). It defaulted to `http://127.0.0.1:3100`, the server
+    install's port, but the desktop app starts on a new port each launch, so on a normal install the add-on could not
+    reach it. It now reads the open app's address from `app.json` the way `rooks` does (same file, same path rules, a
+    file left by an app that has quit is ignored after a health check), takes only the address and never the key next
+    to it (the add-on signs in with its own Terminal access token), and falls back to the server port. The
+    `aiWorkspace.url` setting is empty by default; an address typed there still wins. **Action:** none; a setting you
+    set by hand is kept. Test: `vscode-extension/test/address.test.mjs` (failed on the old code: no lookup existed and
+    the default was the server port).
+  - **The app is no longer given the CLI launchers' addresses or keys** (contradiction 11). `setup.sh` wrote
+    `CLAUDE_CODE_URL` and `CODEX_URL`, Docker passed them and `CLAUDE_CODE_API_KEY` and `CODEX_API_KEY` to the app's
+    container, and `config.py` defined all four; nothing read them. They are removed from `config.py`, `setup.sh`, the
+    `workbench` service and `.env.example`. The `claude-code` and `codex` launcher services keep their own key from
+    `.env` and `setup.sh` still makes it. An existing `.env` keeps its old `*_URL` lines; nothing reads them, and they
+    can be deleted. `cli-launcher/README.md` shows how to call a launcher with the key from `.env`. Test:
+    `test_repo_cleanup.py::test_the_app_is_not_given_the_cli_launchers_addresses_or_keys` (failed on the old code);
+    `cli-launcher/test/setup.test.mjs` now checks that no address is written. **Rollback:** revert the commit.
+  - **`scripts/test-all.sh` runs the suites it skipped** (contradiction 12): `cli/tests`, the CLI launcher's tests,
+    the VS Code add-on and the phone app (typecheck, lint, tests); the last two are skipped by `--quick`. AGENTS.md
+    says what it runs and what only the online checks run (security scan, installs on three systems, Docker images,
+    desktop and native window builds, real-screen runs).
+  - **Documents.** README: an email is sent after your yes (not draft-only); your own Claude Code, Codex or Copilot
+    works today (the "planned add-on, not built yet" line is gone) and the Code page is behind Show developer tools;
+    the browser sections describe Rooks Browser, which the app starts itself, with the `browser` add-on as the same
+    program for servers; "Why Rooks". QUICKSTART is titled Rooks. SECURITY.md supports `main` at 1.0.6 and the latest
+    release (not `integration/v0.3`) and no longer promises a signed updater, which is off until the signing key
+    exists. Design records 0003 to 0006 say what was merged and by which pull request. `docs/native-app-plan.md`
+    says its first milestone was built and then narrowed to the Ask palette. Decision record 0001 has a note pointing
+    at design records 0003 (W1) and 0007 (room-browser branch). docs/README's "100 reasons": false items corrected
+    (mail, "no shell tool", "inside your container", the tested/untested table) and shipped items lost their roadmap
+    marker (memory export, scopes and page, skills page, Signal, WhatsApp, Slack, Discord). The teammates, packs,
+    voice and team lead guides no longer read as unmerged branches. `companion.py`'s description names its real users
+    (the Mac notch app and the phone app; no web screen) (contradiction 15).
 
 - **One memory** (section g.2, first two rows; the audit found the Memory page showed nothing). What the assistant
   knows about you was kept in three places: the old plaintext `memories` table, the encrypted "What I know about you"
