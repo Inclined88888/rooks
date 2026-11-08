@@ -13,6 +13,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { api, ApiError } from "../api";
 import { createPoller } from "../lib/poller";
 import { busy, getPresence, roomOn, subscribePresence, type Presence } from "../shell/presence";
+import { BROWSER_OFF_REASONS, type BrowserOffReason, type BrowserTab } from "./browser";
 import type { TerminalOffReason } from "./desk";
 import { clearSwitchedOff } from "./terms";
 import { NOT_HERE_LINE, type RoomStatus, type RoomTerminal } from "./words";
@@ -31,7 +32,9 @@ export type RoomState = RoomStatus & {
   terminal_max: number;
   /** What the cap counts (ended terminals included), when the service says; else the length of `terminals`. */
   terminal_count: number | null;
-  can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null };
+  can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null; browser: boolean; browser_off_reason: BrowserOffReason | null };
+  /** design 0007: the Room's browser as status last saw it (open, and its tabs: the saved ones while it is closed). */
+  browser: { open: boolean; tabs: BrowserTab[] };
   /** The Commands window's lines, for this session. */
   commandLines: CommandLine[];
 };
@@ -43,7 +46,9 @@ const COMMAND_LINES_MAX = 500;
 const START: RoomState = {
   checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none",
   label: "", note: "", checkpoints: [], last_checkpoint: null, error: null,
-  terminals: [], terminal_max: TERMINAL_MAX, terminal_count: null, can: { terminal: false, files: false, terminal_off_reason: null }, commandLines: [],
+  terminals: [], terminal_max: TERMINAL_MAX, terminal_count: null,
+  can: { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null },
+  browser: { open: false, tabs: [] }, commandLines: [],
 };
 
 const OFF_REASONS: TerminalOffReason[] = ["switched_off", "helper", "windows"];
@@ -75,6 +80,7 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
   const terminals = Array.isArray(w.terminals) ? w.terminals.map(terminalFromWire).filter((t): t is RoomTerminal => t !== null) : [];
   const max = typeof w.terminal_max === "number" && w.terminal_max > 0 ? w.terminal_max : TERMINAL_MAX;
   const why = w.can?.terminal_off_reason;
+  const bwhy = w.can?.browser_off_reason;
   const counted = w.terminal_count;
   return {
     ...w,
@@ -97,6 +103,12 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
       terminal: w.can?.terminal === true,
       files: w.can?.files === true,
       terminal_off_reason: why && OFF_REASONS.includes(why) ? why : null,
+      browser: w.can?.browser === true,
+      browser_off_reason: bwhy && (BROWSER_OFF_REASONS as string[]).includes(bwhy) ? (bwhy as BrowserOffReason) : null,
+    },
+    browser: {
+      open: w.browser?.open === true,
+      tabs: Array.isArray(w.browser?.tabs) ? w.browser!.tabs.filter((t): t is BrowserTab => !!t && typeof t.id === "string") : [],
     },
   };
 }

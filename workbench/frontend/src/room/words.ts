@@ -31,7 +31,13 @@ export type RoomStatus = WatchStatus & {
   /** What the cap of terminal_max counts, ended terminals included (newer services say it). */
   terminal_count?: number | null;
   /** terminal_off_reason: why there is no terminal ("switched_off" in Settings, "helper" mode, "windows"), or null. */
-  can?: { terminal?: boolean; files?: boolean; terminal_off_reason?: "switched_off" | "helper" | "windows" | null } | null;
+  can?: {
+    terminal?: boolean; files?: boolean; terminal_off_reason?: "switched_off" | "helper" | "windows" | null;
+    /** design 0007: the Room's own browser here, and why not. */
+    browser?: boolean; browser_off_reason?: string | null;
+  } | null;
+  /** design 0007: whether the Room's browser is open, and its tabs (the saved ones while it is closed). */
+  browser?: { open?: boolean; tabs?: { id: string; url?: string | null; title?: string | null; asleep?: boolean }[] } | null;
   isolation?: string;
   driver?: string | null;
   home?: string | null;
