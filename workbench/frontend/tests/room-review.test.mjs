@@ -140,10 +140,10 @@ test("before the Room has ever answered, the bar claims no state", () => {
 test("one terminal count everywhere: what the cap counts, ended ones included", () => {
   const two = { terminals: [{ id: "a", alive: true }, { id: "b", alive: false }], terminal_max: 4 };
   assert.equal(desk.terminalsCounted(two), 2, "without the field, every record the service lists");
-  assert.equal(desk.terminalsCounted({ ...two, terminals_counted: 3 }), 3, "the service's count when it says");
-  assert.equal(desk.terminalsFull({ ...two, terminals_counted: 4 }), true);
+  assert.equal(desk.terminalsCounted({ ...two, terminal_count: 3 }), 3, "the service's count when it says");
+  assert.equal(desk.terminalsFull({ ...two, terminal_count: 4 }), true);
   assert.equal(desk.terminalsFull(two), false);
-  assert.equal(stores.roomFromWire({ available: true, terminals_counted: 3 }).terminals_counted, 3);
+  assert.equal(stores.roomFromWire({ available: true, terminal_count: 3 }).terminal_count, 3);
   assert.equal(words.fullLine(4), "Four terminals are in the Room, ended ones included. Close one to open another.");
   assert.equal(words.terminalCountLine({ counted: 2, open: 1, max: 4 }), "2 of 4, ended ones included (1 open)");
   assert.equal(words.terminalCountLine({ counted: 2, open: 2, max: 4 }), "2 of 4");

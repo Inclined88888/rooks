@@ -29,7 +29,7 @@ export type RoomStatus = WatchStatus & {
   terminals?: RoomTerminal[];
   terminal_max?: number;
   /** What the cap of terminal_max counts, ended terminals included (newer services say it). */
-  terminals_counted?: number | null;
+  terminal_count?: number | null;
   /** terminal_off_reason: why there is no terminal ("switched_off" in Settings, "helper" mode, "windows"), or null. */
   can?: { terminal?: boolean; files?: boolean; terminal_off_reason?: "switched_off" | "helper" | "windows" | null } | null;
   isolation?: string;

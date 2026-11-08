@@ -125,13 +125,13 @@ export function terminalsSwitchedOff(status: Pick<DeskStatus, "can"> | null | un
 }
 
 /** What the cap of terminal_max counts (ended terminals included): the service's own count, else every record it lists. */
-export function terminalsCounted(status: { terminals?: unknown[] | null; terminals_counted?: number | null }): number {
-  const n = status.terminals_counted;
+export function terminalsCounted(status: { terminals?: unknown[] | null; terminal_count?: number | null }): number {
+  const n = status.terminal_count;
   return typeof n === "number" && Number.isFinite(n) && n >= 0 ? n : (status.terminals?.length ?? 0);
 }
 
 /** New terminal is refused by the service once the count reaches the cap. */
-export function terminalsFull(status: { terminals?: unknown[] | null; terminals_counted?: number | null; terminal_max?: number | null }): boolean {
+export function terminalsFull(status: { terminals?: unknown[] | null; terminal_count?: number | null; terminal_max?: number | null }): boolean {
   return terminalsCounted(status) >= (status.terminal_max ?? 4);
 }
 

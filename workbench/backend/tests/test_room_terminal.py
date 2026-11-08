@@ -384,7 +384,7 @@ def test_the_chat_tool_starts_tails_and_lists_files(client, on):
     assert tool.confirm({"action": "tail"}) == "" and tool.confirm({"action": "files"}) == ""
     from app import presence
 
-    assert presence.plain_step("use_room", {"action": "start", "command": "x"}) == "Installing in the Room's terminal"
+    assert presence.plain_step("use_room", {"action": "start", "command": "x"}).startswith("Running in the Room's terminal")
 
 
 def test_the_exit_code_marker_is_cut_out_even_when_a_read_splits_it():

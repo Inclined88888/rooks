@@ -123,7 +123,8 @@ export function Shell({ url, replay = false, active, hold, label, options, conne
     ws.onmessage = (e) => {
       if (!alive) return;
       const text = typeof e.data === "string" ? e.data : "";
-      if (replay && first) {
+      // The server's first frame is the scrollback; it sends a fresh one again if this page fell too far behind.
+      if (replay && (first || text.startsWith('{"type":"scrollback"'))) {
         first = false;
         if (text.startsWith("{")) {
           try {

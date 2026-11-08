@@ -30,7 +30,7 @@ export type RoomState = RoomStatus & {
   terminals: RoomTerminal[];
   terminal_max: number;
   /** What the cap counts (ended terminals included), when the service says; else the length of `terminals`. */
-  terminals_counted: number | null;
+  terminal_count: number | null;
   can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null };
   /** The Commands window's lines, for this session. */
   commandLines: CommandLine[];
@@ -43,7 +43,7 @@ const COMMAND_LINES_MAX = 500;
 const START: RoomState = {
   checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none",
   label: "", note: "", checkpoints: [], last_checkpoint: null, error: null,
-  terminals: [], terminal_max: TERMINAL_MAX, terminals_counted: null, can: { terminal: false, files: false, terminal_off_reason: null }, commandLines: [],
+  terminals: [], terminal_max: TERMINAL_MAX, terminal_count: null, can: { terminal: false, files: false, terminal_off_reason: null }, commandLines: [],
 };
 
 const OFF_REASONS: TerminalOffReason[] = ["switched_off", "helper", "windows"];
@@ -75,7 +75,7 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
   const terminals = Array.isArray(w.terminals) ? w.terminals.map(terminalFromWire).filter((t): t is RoomTerminal => t !== null) : [];
   const max = typeof w.terminal_max === "number" && w.terminal_max > 0 ? w.terminal_max : TERMINAL_MAX;
   const why = w.can?.terminal_off_reason;
-  const counted = w.terminals_counted;
+  const counted = w.terminal_count;
   return {
     ...w,
     checked: true,
@@ -92,7 +92,7 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
     last_checkpoint: w.last_checkpoint || null,
     terminals,
     terminal_max: max,
-    terminals_counted: typeof counted === "number" && Number.isFinite(counted) && counted >= 0 ? counted : null,
+    terminal_count: typeof counted === "number" && Number.isFinite(counted) && counted >= 0 ? counted : null,
     can: {
       terminal: w.can?.terminal === true,
       files: w.can?.files === true,

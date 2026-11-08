@@ -67,7 +67,7 @@ _ROOM: dict[str, Callable[[dict], str]] = {  # use_room, one sentence per action
     "reset": lambda a: f"Starting the Room over from {clip(_field(a, 'name'))}" if _field(a, "name") else "Starting the Room over",
     "handoff": lambda a: _with("Copying a file out of the Room", _field(a, "src")),
     # design 0006: a long command in a Room terminal, and watching it
-    "start": lambda a: "Installing in the Room's terminal",
+    "start": lambda a: _with("Running in the Room's terminal", _field(a, "command")),  # not every command installs
     "tail": lambda a: "You took the terminal; Rooks waits" if _room_taken() else "Watching the Room's terminal",
     "files": lambda a: "Looking through the Room's files",
 }
