@@ -43,3 +43,12 @@ tools_api_key
 
 # Scratch worktrees made by Claude Code review agents
 .claude/worktrees/
+
+# UI design skills (.claude/skills/README.md): Impeccable's engine binary and its local run state
+.claude/skills/impeccable/scripts/bin/
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
+.impeccable/live/
+.impeccable/history/
+.impeccable/config.local.json
+.claude/settings.local.json
