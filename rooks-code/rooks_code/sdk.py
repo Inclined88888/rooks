@@ -244,31 +244,41 @@ def run(prompt: str, *, cwd: str | Path | None = None, provider: str | None = No
     agent = None
     try:
         agent = Agent(s, ui, log=log, messages=history)
-        res.result = agent.run(prompt) or ""
-        turns = [r for r in log.rows.values() if r["kind"] == "turn"]
-        res.outcome = turns[-1]["outcome"] if turns and turns[-1]["outcome"] in OUTCOMES else "error"
-        if agent.denials or ui.denied:
-            res.exit_code = EXIT_DENIED
-        elif res.outcome in FINISHED:
-            res.exit_code = EXIT_OK
-        if res.outcome in STOPPED:  # the answer is the reason it stopped, in plain words: that is the error
-            res.error, res.result = res.result, ""
-        elif res.outcome == "interrupted":
-            res.error = "stopped before it finished"
-        elif res.outcome == "unbacked":
-            res.error = "a change was made but its check failed"
+        settle(res, agent, log, ui, agent.run(prompt) or "")
     except Exception as e:  # noqa: BLE001 - a script gets an answer, never a stack trace
         res.outcome, res.exit_code = "error", EXIT_UNFINISHED
         res.error = f"rooks stopped unexpectedly ({type(e).__name__}); the receipt in .rooks/runs has what was done"
     finally:
         if agent is not None:
             agent.close()
+    totals(res, log, ui)
+    return finish(res)
+
+
+def settle(res: Result, agent, log, ui: HeadlessUI, answer: str) -> None:
+    """The outcome, exit code and error of a run that ended, from its receipt, its denials and its answer."""
+    res.result = answer
+    turns = [r for r in log.rows.values() if r["kind"] == "turn"]
+    res.outcome = turns[-1]["outcome"] if turns and turns[-1]["outcome"] in OUTCOMES else "error"
+    if agent.denials or ui.denied:
+        res.exit_code = EXIT_DENIED
+    elif res.outcome in FINISHED:
+        res.exit_code = EXIT_OK
+    if res.outcome in STOPPED:  # the answer is the reason it stopped, in plain words: that is the error
+        res.error, res.result = res.result, ""
+    elif res.outcome == "interrupted":
+        res.error = "stopped before it finished"
+    elif res.outcome == "unbacked":
+        res.error = "a change was made but its check failed"
+
+
+def totals(res: Result, log, ui: HeadlessUI) -> None:
+    """Turns, tokens, cost and denials measured from the receipt, never from the answer."""
     t = log.totals()
     res.turns = sum(1 for r in log.rows.values() if r["kind"] == "model_call" and r["outcome"] != "retry")
     res.tokens_in, res.tokens_out, res.cache_read, res.cache_write = t["tokens_in"], t["tokens_out"], t["cache_read"], t["cache_write"]
     res.cost_usd = None if t["cost_unknown"] else t["usd"]
     res.denied = list(ui.denied)
-    return finish(res)
 
 
 def schema() -> dict:

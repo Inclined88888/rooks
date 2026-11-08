@@ -797,22 +797,7 @@ class Agent:
 
     def _project_hook(self, tool: str, effect: str, arguments: dict) -> str:
         """Optional .rooks/hooks/before_tool script. Exit 0 allows; any other exit stops the tool. Empty if no hook."""
-        script = self.root / ".rooks" / "hooks" / "before_tool"
-        if not script.is_file():
-            extra = str(getattr(self.s, "hook_before_tool", "") or "")
-            script = Path(extra) if extra else script
-            if extra and not script.is_absolute():
-                script = self.root / script
-        if not script.is_file():
-            return ""
-        payload = json.dumps({"tool": tool, "effect": effect, "arguments": arguments}, ensure_ascii=False)
-        try:
-            proc = subprocess.run([str(script)], input=payload, text=True, capture_output=True, timeout=8, cwd=self.root)
-        except (OSError, subprocess.TimeoutExpired) as e:
-            return f"before_tool hook failed ({e})"
-        if proc.returncode == 0:
-            return ""
-        return (proc.stderr or proc.stdout or "blocked by before_tool").strip()[:500]
+        return project_hook(self.root, self.s, tool, effect, arguments)
 
     def _mcp_question(self, server: str, tool: str, params: dict) -> dict:
         """An MCP server asks the person (elicitation), e.g. rooks-try before a file leaves the Room. The person answers
@@ -847,6 +832,27 @@ class Agent:
         self.extras.close()
         if self.mcp:
             self.mcp.close()
+
+
+def project_hook(root: Path, settings, tool: str, effect: str, arguments: dict) -> str:
+    """The project's before_tool hook (.rooks/hooks/before_tool, or [hooks] before_tool in rooks.toml), run for one step.
+    '' allows; otherwise what the hook said, which stops the step. A race's pick runs it for every file it would write."""
+    script = root / ".rooks" / "hooks" / "before_tool"
+    if not script.is_file():
+        extra = str(getattr(settings, "hook_before_tool", "") or "")
+        script = Path(extra) if extra else script
+        if extra and not script.is_absolute():
+            script = root / script
+    if not script.is_file():
+        return ""
+    payload = json.dumps({"tool": tool, "effect": effect, "arguments": arguments}, ensure_ascii=False)
+    try:
+        proc = subprocess.run([str(script)], input=payload, text=True, capture_output=True, timeout=8, cwd=root)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return f"before_tool hook failed ({e})"
+    if proc.returncode == 0:
+        return ""
+    return (proc.stderr or proc.stdout or "blocked by before_tool").strip()[:500]
 
 
 def _listing(root: Path, limit: int = 60) -> str:

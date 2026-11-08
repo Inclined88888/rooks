@@ -209,6 +209,7 @@ class Settings:
     allow_rules: list[str] = field(default_factory=list)  # [permissions] allow: "bash(pytest *)", "edit(src/**)", "mcp(s/t)"
     deny_rules: list[str] = field(default_factory=list)   # [permissions] deny: never run, in every mode (permissions.py)
     lint_after_edit: bool = False        # run linter/tests after edits and feed errors back
+    test_command: str = ""               # the project's own test command (a race's judge runs it); "" = detect from the project's files
     root: Path = field(default_factory=Path.cwd)
     # Fallback chain: list of (provider, model) pairs to try on transient failures (429, 5xx)
     fallback_models: list[tuple[str, str]] = field(default_factory=list)
@@ -293,9 +294,10 @@ def resolve(flags: dict, root: Path, file: dict | None = None) -> Settings:
     cfg = load_file() if file is None else file
     s = Settings(root=root)
     for key in ("max_usd", "max_tokens", "max_steps", "command_timeout", "trusted_folders", "auto_approve", "workbench_url", "nudge",
-                "stream", "context_tokens", "learn", "lint_after_edit", "mode", "sandbox"):
+                "stream", "context_tokens", "learn", "lint_after_edit", "mode", "sandbox", "test_command"):
         if key in cfg:
             setattr(s, key, cfg[key])
+    s.test_command = str(s.test_command or "")
     if str(s.mode).lower() not in ("chat", "plan", "build"):
         s.mode = "build"
     else:
