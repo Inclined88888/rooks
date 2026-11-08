@@ -67,8 +67,8 @@
       "properties": {
         "aiWorkspace.url": {
           "type": "string",
-          "default": "http://127.0.0.1:3100",
-          "description": "Address of your AI Workspace (the Workbench)."
+          "default": "",
+          "description": "Leave empty to use the AI Workspace app open on this computer (found on its own each time). Set it for a server install, for example http://127.0.0.1:3100."
         },
         "aiWorkspace.model": {
           "type": "string",

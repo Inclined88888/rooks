@@ -1,7 +1,10 @@
-// The AI Workspace API, with no VS Code imports so it can be tested with plain Node (test/client.test.mjs).
+// The AI Workspace API, with no VS Code imports so it can be tested with plain Node (test/*.test.mjs).
 //
 // Auth: the "Terminal access" token from the app (Assistant settings) as a Bearer token; the backend accepts it on
 // the assistant routes (require_user_or_cli). State-changing calls also carry X-Workbench: 1 (the app's CSRF guard).
+
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 export type TurnEvent =
   | { type: "start"; conversation_id: number }
@@ -14,6 +17,47 @@ export type TurnEvent =
   | { type: "error"; error: string }
   | { type: "done"; conversation_id: number; cost_cents: number; tool_calls: number }
   | { type: string; [k: string]: unknown };
+
+/** The server install's address (docker-compose.yml publishes the app on port 3100). */
+export const SERVER_URL = "http://127.0.0.1:3100";
+
+/** app.json, which the open desktop app writes and removes when it quits. Same place the `rooks` terminal reads it
+ * (rooks-code/rooks_code/config.py: app_link_path). */
+export function appLinkPath(env: Record<string, string | undefined>, platform: string, home: string): string {
+  if (env.AI_WORKSPACE_APP_FILE) return env.AI_WORKSPACE_APP_FILE;
+  if (platform === "win32" && env.APPDATA) return path.win32.join(env.APPDATA, "ai-workspace", "app.json");
+  const p = platform === "win32" ? path.win32 : path.posix;
+  return p.join(env.XDG_CONFIG_HOME || p.join(home, ".config"), "ai-workspace", "app.json");
+}
+
+export type FindOptions = {
+  env: Record<string, string | undefined>; platform: string; home: string; fetchImpl?: typeof fetch; timeoutMs?: number;
+};
+
+/** The open app's address, or "" when it is not open. Only the address is read: the key next to it is the app's
+ * bridge key, which the add-on never uses (it signs in with its own Terminal access token). A file left by an app
+ * that is no longer running is ignored, as rooks ignores it (it asks /healthz first). */
+export async function findAppUrl(o: FindOptions): Promise<string> {
+  let url = "";
+  try {
+    const d = JSON.parse(fs.readFileSync(appLinkPath(o.env, o.platform, o.home), "utf8")) as { url?: unknown };
+    url = String(d?.url ?? "").replace(/\/+$/, "");
+  } catch {
+    return "";
+  }
+  if (!/^https?:\/\/[^/]+$/.test(url)) return "";
+  try {
+    const r = await (o.fetchImpl ?? fetch)(`${url}/healthz`, { signal: AbortSignal.timeout(o.timeoutMs ?? 1500) });
+    return r.ok ? url : "";
+  } catch {
+    return "";
+  }
+}
+
+/** The address to use: the aiWorkspace.url setting when set, else the open app, else the server install. */
+export function resolveUrl(setting: string | undefined, found: string): string {
+  return ((setting ?? "").trim() || found || SERVER_URL).replace(/\/+$/, "");
+}
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }

@@ -1,5 +1,6 @@
+import * as os from "node:os";
 import * as vscode from "vscode";
-import { ApiError, buildMessage, chat, describe, EXPLAIN } from "./client";
+import { ApiError, buildMessage, chat, describe, EXPLAIN, findAppUrl, resolveUrl } from "./client";
 
 const TOKEN_KEY = "aiWorkspace.token";
 const CONV_KEY = "aiWorkspace.conversationId";
@@ -14,7 +15,10 @@ export function activate(context: vscode.ExtensionContext): void {
   let running: AbortController | undefined;
 
   const cfg = () => vscode.workspace.getConfiguration("aiWorkspace");
-  const url = () => cfg().get<string>("url", "http://127.0.0.1:3100");
+  // The desktop app starts on a new port each time, so the address is looked up for every question.
+  const setting = () => cfg().get<string>("url", "").trim();
+  const url = async () => resolveUrl(setting(),
+    setting() ? "" : await findAppUrl({ env: process.env, platform: process.platform, home: os.homedir() }));
 
   async function token(): Promise<string | undefined> {
     const t = await context.secrets.get(TOKEN_KEY);
@@ -38,6 +42,7 @@ export function activate(context: vscode.ExtensionContext): void {
     running?.abort();
     running = new AbortController();
     const signal = running.signal;
+    const base = await url();
     out.show(true);
     out.appendLine(`\n> ${question}${sel ? "  [with selection]" : ""}`);
     status.text = "$(sync~spin) AI Workspace";
@@ -45,9 +50,9 @@ export function activate(context: vscode.ExtensionContext): void {
       const r = await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Window, title: "AI Workspace is answering" },
         () => chat({
-          url: url(), token: tok, message, signal, model: cfg().get<string>("model") || undefined,
+          url: base, token: tok, message, signal, model: cfg().get<string>("model") || undefined,
           conversationId: context.workspaceState.get<number>(CONV_KEY),
-          onEvent: (e) => { const line = describe(e, url()); if (line) out.appendLine(line); },
+          onEvent: (e) => { const line = describe(e, base); if (line) out.appendLine(line); },
         }));
       if (r.conversationId) await context.workspaceState.update(CONV_KEY, r.conversationId);
       out.appendLine("");
@@ -62,7 +67,9 @@ export function activate(context: vscode.ExtensionContext): void {
       const msg = e instanceof Error ? e.message : String(e);
       out.appendLine(`Error: ${msg}`);
       const isConn = /fetch failed|ECONNREFUSED|ENOTFOUND/.test(msg);
-      vscode.window.showErrorMessage(isConn ? `Can't reach AI Workspace at ${url()}. Is it running? (Setting: aiWorkspace.url)` : msg);
+      vscode.window.showErrorMessage(!isConn ? msg : setting()
+        ? `Can't reach AI Workspace at ${base}. Is it running? (Setting: aiWorkspace.url)`
+        : "Can't reach AI Workspace. Open the app, or for a server set its address in aiWorkspace.url.");
     } finally {
       status.text = "$(comment-discussion) AI Workspace";
     }
@@ -89,7 +96,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (t.trim()) await context.secrets.store(TOKEN_KEY, t.trim()); else await context.secrets.delete(TOKEN_KEY);
       vscode.window.showInformationMessage(t.trim() ? "AI Workspace token saved in VS Code's secret storage." : "AI Workspace token removed.");
     }),
-    vscode.commands.registerCommand("aiWorkspace.openApp", () => vscode.env.openExternal(vscode.Uri.parse(url()))),
+    vscode.commands.registerCommand("aiWorkspace.openApp", async () => vscode.env.openExternal(vscode.Uri.parse(await url()))),
     { dispose: () => running?.abort() },
   );
 }
