@@ -166,7 +166,7 @@ def test_a_denied_change_exits_3_in_one_shot_mode(project, fake):
         assert (project / "calc.py").read_text().endswith("a - b\n")
     m = fake([openai_reply("Nothing to change.")])
     assert rooks(project, "-P", "openai-compatible", "--base-url", m.url, "-m", "fake-model", "look").returncode == 0
-    readme = (PKG / "README.md").read_text()
+    readme = (PKG / "README.md").read_text(encoding="utf-8")
     assert re.search(r"(?m)^\| *`?3`? *\|.*denied", readme), "the README lists the exit codes"
 
 
@@ -200,10 +200,10 @@ def test_the_shift_tab_setting_and_the_mode_setting_never_share_a_word():
     assert not any(w in label.split() for label in tui.MODES for w in mode_words), tui.MODES
     shift_tab = dict(words.KEYS)["Shift+Tab"]
     assert "plan" not in shift_tab and "mode" not in shift_tab, shift_tab
-    src = (PKG / "rooks_code" / "tui.py").read_text()
+    src = (PKG / "rooks_code" / "tui.py").read_text(encoding="utf-8")
     assert 'f"plan {' not in src and 'f"Plan {' not in src  # the checklist is a checklist
-    assert "plan only" not in (PKG / "rooks_code" / "delegate.py").read_text()
-    assert "plan only" not in (PKG / "README.md").read_text()
+    assert "plan only" not in (PKG / "rooks_code" / "delegate.py").read_text(encoding="utf-8")
+    assert "plan only" not in (PKG / "README.md").read_text(encoding="utf-8")
 
 
 # 8. One version number ----------------------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ def test_one_version_number_everywhere():
     version = (REPO / "VERSION").read_text().strip()
     assert tomllib.loads((PKG / "pyproject.toml").read_text())["project"]["version"] == version
     assert __version__ == version
-    assert f"version {version}," in (REPO / "AGENTS.md").read_text()
+    assert f"version {version}," in (REPO / "AGENTS.md").read_text(encoding="utf-8")
 
 
 # 9. The README says answers stream ------------------------------------------------------------------------------------
@@ -221,6 +221,6 @@ def test_readme_says_answers_stream_live_in_the_terminal():
     from rooks_code.tui import RichUI
 
     assert RichUI(out=io.StringIO(), color=True).can_stream()  # the full terminal streams when it draws
-    readme = " ".join((PKG / "README.md").read_text().split())
+    readme = " ".join((PKG / "README.md").read_text(encoding="utf-8").split())
     assert "answers appear formatted once complete" not in readme
     assert "answers stream in as they are written" in readme

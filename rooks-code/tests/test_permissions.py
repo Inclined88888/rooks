@@ -37,9 +37,13 @@ def bin_pytest(tmp_path, monkeypatch):
     b = tmp_path / "bin"
     b.mkdir()
     mark = tmp_path / "pytest-ran"
-    exe = b / "pytest"
-    exe.write_text(f"#!/bin/sh\necho ran >> '{mark}'\necho '1 passed'\n")
-    exe.chmod(0o755)
+    if sys.platform == "win32":
+        exe = b / "pytest.cmd"
+        exe.write_text(f"@echo ran>> \"{mark}\"\r\n@echo 1 passed\r\n")
+    else:
+        exe = b / "pytest"
+        exe.write_text(f"#!/bin/sh\necho ran >> '{mark}'\necho '1 passed'\n")
+        exe.chmod(0o755)
     monkeypatch.setenv("PATH", f"{b}{os.pathsep}{os.environ.get('PATH', '')}")
     return mark
 
@@ -205,7 +209,7 @@ def test_the_trust_question_is_asked_once_and_stored_by_real_path(project, tmp_p
     text = "\n".join(said)
     assert "npm test" in text and "trust" in text, text
     store = json.loads((config.config_path().parent / "rooks-trust.json").read_text())
-    assert os.path.realpath(project) in json.dumps(store)
+    assert os.path.realpath(project) in store["folders"]
     assert permissions.ask_trust(project, ask=lambda _: pytest.fail("asked twice"), say=said.append) is True
 
     other = tmp_path / "cloned"
