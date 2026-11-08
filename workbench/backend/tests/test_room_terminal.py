@@ -376,3 +376,22 @@ def test_the_chat_tool_starts_tails_and_lists_files(client, on):
     from app import presence
 
     assert presence.plain_step("use_room", {"action": "start", "command": "x"}) == "Installing in the Room's terminal"
+
+
+def test_the_chat_can_watch_an_install_more_than_once_in_a_turn(client, on):
+    """tail twice in one turn is watching, not a repeated change: neither is turned away as "already done"."""
+    from conftest import SCRIPT, events, tool_call
+
+    from app import db
+
+    tid = _open(client, command="sleep 1; echo watched-$((2*3))")["id"]
+    since = db.one("SELECT COALESCE(MAX(id), 0) AS m FROM actions")["m"]
+    SCRIPT[:] = [tool_call("use_room", {"action": "tail", "id": tid}, "t1"),
+                 tool_call("use_room", {"action": "tail", "id": tid}, "t2"),
+                 {"role": "assistant", "content": "It is still installing."}]
+    ev = events(client.post("/api/assistant/chat", json={"message": "how is the install going?"}))
+    SCRIPT.clear()
+    assert not [e for e in ev if e["type"] == "approval_required"]
+    rows = db.all("SELECT outcome FROM actions WHERE id > ? AND kind = 'tool_call' AND tool = 'use_room' AND channel != 'room'",
+                  since)
+    assert [r["outcome"] for r in rows] == ["ok", "ok"], rows

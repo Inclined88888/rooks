@@ -813,6 +813,8 @@ def hold_reason(t: Tool, ctx: Ctx, args: dict) -> str:
             return WEAK_SANDBOX_REASON
     if t.name == TOOL_USE_ROOM and str(args.get("action") or "").strip().lower() == "handoff":
         return ""  # its copy always waits on a held request of its own in Needs you: one yes, not two
+    if _room_reads(t.name, args):
+        return ""  # status, a terminal's last lines, the Room's files: only looking, nothing changes (design 0006)
     if ctx.tainted and t.effect in GATED_EFFECTS:
         return HOLD_REASON
     if ctx.tainted and t.name == "run_python":
