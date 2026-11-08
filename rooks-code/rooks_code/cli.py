@@ -17,7 +17,9 @@ or local Ollama / LM Studio (works fully offline).
   rooks talk ["prompt"]         the same assistant as the app, in the terminal (no desktop install needed)
 
 Every edit (shown as a diff) and every command is asked about first, unless the folder is trusted or --yes is given.
-"a" approves only that exact command, changes to that one file, or that one tool, for the rest of the session.
+"a" approves only that exact command, changes to that one file, or that one tool, for the rest of the session;
+"h" keeps a rule that always allows that exact command in this folder. Rules in rooks.toml [permissions] (and, once
+you trust the folder, in its .rooks/settings.json) allow or never allow commands by pattern: /permissions shows them.
 --dry-run shows what would change and changes nothing.
 
 If you only want the assistant in a terminal (no desktop app window), install rooks-code and run `rooks talk`.
@@ -122,8 +124,9 @@ class UI:
         from . import shared_approval
 
         label = ASK_LABELS[plan.effect]
-        always = words.always_choice(plan)
-        prompt = f"  {self.c('accent', 'Needs your OK')}: {label}.  [y] Approve  [n] Deny  " + (f"[a] {always} " if always else "")
+        always, here = words.always_choice(plan), words.here_choice(plan)
+        prompt = (f"  {self.c('accent', 'Needs your OK')}: {label}.  [y] Approve  [n] Deny  " + (f"[a] {always} " if always else "")
+                  + (f"[h] {here} " if here else ""))
 
         def show():
             # A live terminal keeps the question on the same line. Piped output (the app) needs a newline so the question is visible.
@@ -366,6 +369,10 @@ def main(argv: list[str] | None = None) -> int:
             ui.error(f"{s.provider} needs an API key in the {s.key_env} environment variable (or use --provider ollama)")
             return 2
         s = config.resolve(overrides, root)
+    if interactive:  # a folder whose own rules would let things run: ask once whether the person trusts it
+        from . import permissions
+
+        permissions.ask_trust(root)
     from .agent import Agent
     history: list[dict] = []
     if args.cont or args.resume:
@@ -393,7 +400,7 @@ HELP = words.help_text()  # the same list the full terminal shows
 EXIT_OK = 0          # finished
 EXIT_UNFINISHED = 1  # did not finish: model error, step limit, a cap reached, a change whose check failed
 EXIT_SETUP = 2       # cannot start: no key for the provider, bad arguments
-EXIT_DENIED = 3      # a change or command was denied (you typed n, there was no input to answer, or a hook stopped it)
+EXIT_DENIED = 3      # a change or command was denied (you typed n, no input to answer, a permission rule, or a hook)
 
 
 def load_session(root: Path, session: str | None) -> tuple[list[dict], str]:

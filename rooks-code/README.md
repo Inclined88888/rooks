@@ -58,7 +58,7 @@ A one-shot run (`rooks "task"`, also with piped input) ends with an exit code a 
 | `0` | finished |
 | `1` | did not finish: the model could not answer, the step limit or a cap was reached, or a checked change failed |
 | `2` | cannot start: no key for the provider, or bad arguments |
-| `3` | a change or command was denied: you typed `n`, there was no input to answer with, or a project hook stopped it |
+| `3` | a change or command was denied: you typed `n`, there was no input to answer with, a permission rule never allows it, or a project hook stopped it |
 
 Inside a session type `/` for the command menu (every command with what it does) and `@` to pick a file:
 
@@ -69,6 +69,8 @@ Inside a session type `/` for the command menu (every command with what it does)
   talks, plan reads, build can change files); it shows as "build mode" in the line under each answer. Shift+Tab says
   how changes are approved: asks first, auto-accept or dry run (`/auto` and `/dry-run` switch the same thing); it shows
   in the status bar. A checklist the agent keeps shows there as "checklist 2/5".
+* `/permissions` shows what runs without asking and what never runs, in plain words, and whether this folder's own
+  rules apply; `/permissions trust` or `untrust` changes that (see Trust controls).
 * `/init` writes AGENTS.md and the session follows it from the next request on, no restart needed.
 * `/doctor` checks the provider at the address this session uses (`--base-url` or the app's), with one real call, and
   prints the full detail of any error. On the normal screen a model error is said in plain words, with no address.
@@ -97,7 +99,7 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
 ## Trust controls
 
 * **Approval by default.** Reading and searching run freely. Every edit is shown as a diff and every command in full,
-  then you answer `y`, `n` or `a`. `a` approves only that exact command, changes to that one file, or that one tool
+  then you answer `y`, `n`, `a` (or `h`, below). `a` approves only that exact command, changes to that one file, or that one tool
   of one MCP server, for the rest of the session; the question says which ("Approve this exact command for this
   session"). Any other command, file or tool is still asked about. A denied action is reported to the model, which is
   told not to retry it, and its reply ends the turn: Rooks never nudges it to carry on after a no. With no terminal
@@ -109,6 +111,38 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
   the app only.
 * **Trusted folders.** `trusted_folders = ["~/code/my-app"]` in the config lets edits and commands in those folders (and
   below) run without asking. `--yes` does the same for one run.
+* **Permission rules.** Allow or never allow by tool and pattern, in `rooks.toml`:
+
+  ```toml
+  [permissions]
+  allow = ["bash(pytest *)", "bash(npm test)", "edit(src/**)", "mcp(notes/search)"]
+  deny = ["bash(rm *)", "edit(.env)"]
+  ```
+
+  `bash(pytest *)` is `pytest` and anything after it (not `pytesting`), `bash(npm test)` exactly that command,
+  `edit(src/**)` changes to files under `src`, `mcp(notes/search)` one extra tool (`mcp(notes/*)` all of its tools); a
+  bare `bash`, `edit` or `mcp` means every one. Claude Code's `Bash(...)`, `Edit(...)` and `mcp__server__tool` read
+  the same. **Deny wins** over allow and applies in every mode: asks first, auto-accept (`--yes`, `/auto`), trusted
+  folders and dry run; a refused step counts as a denial (exit code 3). Commands are read the way the shell reads them:
+  `pytest; rm -rf x`, `pytest && curl ...`, `$(...)`, backticks, pipes, `VAR=value pytest` and a redirect to a file
+  never match an allow rule unless every part does (only `2>&1` and `> /dev/null` are fine); when in doubt Rooks asks.
+  A deny rule sees through `sudo`, `env`, `xargs`, `find -exec`, `bash -c '...'`, full paths (`/bin/rm`), quotes and
+  backslashes. A command too hard to read (the program's name in a variable, `eval`) is asked about even in
+  auto-accept while any command deny rule exists. A rule matches the command line: a script or program that a command
+  starts can still do anything, so deny rules are a guard, not a sandbox (`sandbox = "project"` is the one that keeps
+  writes in the folder). `/permissions` shows the rules in plain words; `/permissions help` how to write one.
+* **A folder's own rules need your trust.** A project can keep rules in `.rooks/settings.json`
+  (`{"permissions": {"allow": [...], "deny": [...]}}`). Its deny rules always apply. Its allow rules apply only after
+  you say you trust the folder: a one-time question when `rooks` starts there, kept by the folder's real path in
+  `rooks-trust.json` next to `rooks.toml`. Until then they are ignored and Rooks says so; `/permissions trust` and
+  `/permissions untrust` change it. A copied repository cannot grant itself anything. Rooks' own rule files are never
+  changed by the agent unasked: the file tools cannot write `.rooks`, and a command naming `.rooks/settings`,
+  `rooks.toml` or the trust file is asked about in every mode.
+* **Always allow here.** For a command, the question also offers `h`, "Always allow this command in this folder": it
+  writes one exact allow rule per part of the command (`bash(npm test)`; a `*` in it stays a literal star) to the
+  folder's `.rooks/settings.json`. It is offered when you trust the folder, or nobody was asked yet and the folder has
+  no allow rules of its own (then choosing it also records that you trust it, and says so); never for a command that
+  cannot be pinned down exactly. The app's Needs you card answers yes or no only.
 * **Dry run.** `--dry-run` (or `/dry-run`) shows everything that would change and applies nothing.
 * **Undo.** Every file written during one prompt is snapshotted first; `/undo` or `rooks undo` restores them all and
   deletes files the agent created. Commands cannot be undone (their receipts list what ran).

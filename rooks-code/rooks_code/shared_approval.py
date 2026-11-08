@@ -22,7 +22,17 @@ import time
 import urllib.error
 import urllib.request
 
-ANSWERS = {"y": "y", "yes": "y", "n": "n", "no": "n", "a": "a", "always": "a"}
+ANSWERS = {"y": "y", "yes": "y", "n": "n", "no": "n", "a": "a", "always": "a", "h": "h", "here": "h"}
+
+
+def _answer(line: str, plan) -> str:
+    """'y', 'n', 'a' or 'h' (only when the question offers it), or '' for anything else."""
+    a = ANSWERS.get(line.strip().lower(), "")
+    return "" if a == "h" and not getattr(plan, "here", False) else a
+
+
+def _hint(plan) -> str:
+    return "  Type y, n, a or h, then Enter." if getattr(plan, "here", False) else "  Type y, n or a, then Enter."
 POLL_S = 1.0
 REMOTE_WAIT_S = 900  # no keyboard (piped input ran out): wait this long for an answer from the app, then deny
 
@@ -106,14 +116,14 @@ def _ready(timeout: float) -> bool:
 
 
 def ask(ui, plan, show_prompt, read_line) -> str:
-    """Return 'y', 'n' or 'a'. show_prompt() prints the question; read_line() reads one line ('' at end of input)."""
+    """Return 'y', 'n', 'a' or 'h' (h only when plan.here). show_prompt() prints the question; read_line() reads one line ('' at end of input)."""
     link = Link.of(ui)
     aid = link.create(plan) if link else None
     if aid:
         ui.p(ui.c("dim", "  Also waiting in Needs you in the app. Answer here or there."))
     show_prompt()
     if not aid or link is None:
-        return _local(ui, show_prompt, read_line)
+        return _local(ui, plan, show_prompt, read_line)
     keyboard = True
     deadline = None
     while True:
@@ -126,12 +136,12 @@ def ask(ui, plan, show_prompt, read_line) -> str:
                 continue
             if line is None:
                 continue
-            a = ANSWERS.get(line.strip().lower())
+            a = _answer(line, plan)
             if not a:
-                ui.p(ui.c("dim", "  Type y, n or a, then Enter."))
+                ui.p(ui.c("dim", _hint(plan)))
                 show_prompt()
                 continue
-            stood = link.answer(aid, a in ("y", "a"))
+            stood = link.answer(aid, a in ("y", "a", "h"))
             if link.withdrawn:
                 ui.p(ui.c("dim", "  Your answer here counts. The app closed its card; run rooks login so the app records "
                                  "answers typed here."))
@@ -161,14 +171,14 @@ def ask(ui, plan, show_prompt, read_line) -> str:
             return "n"
 
 
-def _local(ui, show_prompt, read_line) -> str:
+def _local(ui, plan, show_prompt, read_line) -> str:
     while True:
         line = read_line()
         if line == "":
             ui.p("n (no input: denied)")
             return "n"
-        a = ANSWERS.get(line.strip().lower())
+        a = _answer(line, plan)
         if a:
             return a
-        ui.p(ui.c("dim", "  Type y, n or a, then Enter."))
+        ui.p(ui.c("dim", _hint(plan)))
         show_prompt()

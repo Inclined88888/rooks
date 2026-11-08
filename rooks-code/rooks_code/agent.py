@@ -13,7 +13,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import images, providers, words
+from . import images, permissions, providers, words
 from .extras import BUILD_TOOLS, READ_ONLY, Extras, project_instructions
 from .extras import NAMES as EXTRA_NAMES
 from .extras import SPECS as EXTRA_SPECS
@@ -21,6 +21,7 @@ from .learning import Learning
 from .lint_test import LintTestRunner
 from .loop_detection import LoopDetector
 from .mcp import MCPError, MCPManager
+from .permissions import Decision, Permissions
 from .receipts import RunLog
 from .repo_map import RepoMap
 from .tools import SPECS, Plan, Toolbox, ToolError
@@ -129,6 +130,11 @@ class Agent:
         # one server (approval_key), never a whole kind of action
         self.always: set[tuple] = set()
         self.denials = 0  # changes and commands refused during the current prompt (one-shot mode exits 3 when any were)
+        # allow and deny rules (yours, and the folder's own once you trust it): deny refuses in every mode
+        self.perms = Permissions.from_settings(settings, self.root)
+        if not sub:
+            for line in self.perms.notices():
+                ui.warn(line)
         self.budget = Budget(settings.max_tokens, settings.max_usd, settings.model, settings.prices, settings.local)
         self.system = SYSTEM.format(root=self.root, os=f"{platform.system()} {platform.release()}", listing=_listing(self.root),
                                     runtimes=_runtimes(self.root))
@@ -209,10 +215,16 @@ class Agent:
             return ("command", name, arguments["command"].strip()), "command"
         return ("step", name, json.dumps(arguments, sort_keys=True, ensure_ascii=False)), "step"
 
-    def trusted_effect(self, effect: str, mcp_server: str | None = None, key: tuple | None = None) -> str:
+    def trusted_effect(self, effect: str, mcp_server: str | None = None, key: tuple | None = None,
+                       rule: Decision | None = None) -> str:
         """Why this action needs no prompt, or '' when the user must approve it."""
         if effect == "read":
             return "read-only"
+        if rule is not None and rule.verdict == "unclear":
+            # it could be a command a deny rule names: never run it silently, whatever the mode
+            return "approved for this session" if key is not None and key in self.always else ""
+        if rule is not None and rule.verdict == "allow" and rule.rule is not None:
+            return f"allowed by a rule in {'your settings' if rule.rule.source == 'you' else 'this folder'}"
         if self.s.auto_approve:
             return "auto-approved (--yes)"
         if mcp_server and self.mcp and mcp_server in self.mcp.trusted:
@@ -647,6 +659,13 @@ class Agent:
         effect = {"command": "external"}.get(plan.effect, plan.effect)
         action = self.log.add("tool_call", "running", parent=turn, tool=call.name, effect=effect, args=args_text,
                               from_text=int(call.from_text))
+        rule = self.perms.check_call(call.name, call.arguments, plan, mcp_tool)
+        if rule.verdict == "deny":
+            self.denials += 1
+            self.log.finish(action, "denied", detail=f"a permission rule never allows this: {rule.rule.text if rule.rule else ''}"[:500])
+            self.ui.tool_note(f"not allowed by a permission rule ({permissions.plain(rule.rule)}): {plan.summary}")
+            return (f"Error: the user's permission rules never allow this ({plan.summary}). Do not retry it or work around "
+                    f"it; say so in your answer."), "denied"
         blocked = self._project_hook(call.name, plan.effect, call.arguments)
         if blocked:
             self.denials += 1
@@ -662,17 +681,31 @@ class Agent:
                 return (f"[dry run] Not applied: {plan.summary}. The user is previewing; continue as if it succeeded but "
                         f"say in your summary that nothing was changed."), "dry_run"
             key, plan.scope = self.approval_key(call.name, call.arguments, plan, mcp_tool)
-            why = self.trusted_effect(plan.effect, mcp_server, key)
+            why = self.trusted_effect(plan.effect, mcp_server, key, rule)
             if why:
                 self.ui.tool_note(why)
             else:
                 plan.tool = call.name  # the app's Approvals card names the tool
+                if rule.verdict == "unclear" and (self.s.auto_approve or self.s.trusted()):
+                    self.ui.tool_note(f"Rooks asks about this one even though others run without asking: {rule.why}.")
+                command = call.arguments.get("command") if call.name in permissions.BASH_TOOLS else None
+                plan.here = isinstance(command, str) and self.perms.can_remember_here(command)
                 answer = self.ui.ask(plan)
-                decision = "approved" if answer in ("y", "a") else "denied"
+                if answer == "h" and not plan.here:
+                    answer = "n"
+                decision = "approved" if answer in ("y", "a", "h") else "denied"
                 self.log.add("decision", decision, parent=action, tool=call.name,
-                             detail=f"approved {words.ALWAYS_SCOPES[plan.scope]} for the rest of the session" if answer == "a" else "")
+                             detail=f"approved {words.ALWAYS_SCOPES[plan.scope]} for the rest of the session" if answer == "a"
+                             else "always allowed in this folder by a rule" if answer == "h" else "")
                 if answer == "a":
                     self.always.add(key)
+                if answer == "h":
+                    try:
+                        said = self.perms.remember_here(command)
+                    except (OSError, ValueError) as e:
+                        said = f"Approved once; the rule could not be kept in .rooks/settings.json ({str(e)[:100]})."
+                    if said:
+                        self.ui.tool_note(said)
                 if decision == "denied":
                     self.denials += 1
                     self.log.finish(action, "denied")

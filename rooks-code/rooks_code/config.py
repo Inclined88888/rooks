@@ -206,6 +206,8 @@ class Settings:
     mode: str = "build"                  # chat talks, plan reads, build can change files and run commands
     sandbox: str = "project"             # project keeps command writes inside the folder (macOS seatbelt, Linux bwrap; refused where neither works; Windows runs uncontained and says so); full does not
     hook_before_tool: str = ""           # optional script path from rooks.toml [hooks] before_tool
+    allow_rules: list[str] = field(default_factory=list)  # [permissions] allow: "bash(pytest *)", "edit(src/**)", "mcp(s/t)"
+    deny_rules: list[str] = field(default_factory=list)   # [permissions] deny: never run, in every mode (permissions.py)
     lint_after_edit: bool = False        # run linter/tests after edits and feed errors back
     root: Path = field(default_factory=Path.cwd)
     # Fallback chain: list of (provider, model) pairs to try on transient failures (429, 5xx)
@@ -303,6 +305,10 @@ def resolve(flags: dict, root: Path, file: dict | None = None) -> Settings:
     else:
         s.sandbox = str(s.sandbox).lower()
     s.prices = dict(cfg.get("prices", {}))
+    perms = cfg.get("permissions") or {}
+    if isinstance(perms, dict):
+        s.allow_rules = list(perms.get("allow") or []) if isinstance(perms.get("allow"), list) else []
+        s.deny_rules = list(perms.get("deny") or []) if isinstance(perms.get("deny"), list) else []
     hooks = cfg.get("hooks") or {}
     if isinstance(hooks, dict):
         s.hook_before_tool = str(hooks.get("before_tool") or "")
@@ -434,6 +440,11 @@ EXAMPLE = '''# Rooks Code settings. API keys are read from the environment varia
 max_usd = 1.0                       # hard cap per session, in US dollars (0 = no cap)
 max_tokens = 200000                 # hard cap per session (0 = no cap)
 trusted_folders = []                # edits and commands inside these folders run without asking
+
+# [permissions]                     # rules by tool and pattern; deny wins and applies in every mode (auto-accept too)
+# allow = ["bash(pytest *)", "bash(npm test)", "edit(src/**)", "mcp(notes/search)"]
+# deny = ["bash(rm *)", "edit(.env)"]
+# A project can keep its own in .rooks/settings.json; its allow rules apply only after you say you trust the folder.
 # workbench_url = "http://localhost:3100"
 # stream = true                     # show answers as they are written
 # context_tokens = 128000           # the model's context window; older turns are summarised at 70% of it

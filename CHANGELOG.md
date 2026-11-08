@@ -20,6 +20,18 @@ No schema change, nothing to migrate. Rollback: revert the branch's commits.
   and `rooks` now puts such a question to you, also with `--yes`, and mirrors it to Needs you. A program that cannot
   ask gets "waiting for a person" and nothing is copied. The same goes for Rooks Desk's questions in `rooks`: a
   sensitive step it used to refuse there (the terminal could not ask) is now put to you.
+- **Permission rules in `rooks`.** `[permissions] allow` and `deny` in `rooks.toml`, and a project's own in
+  `.rooks/settings.json`: `bash(pytest *)`, `bash(npm test)`, `edit(src/**)`, `mcp(notes/search)`. Deny wins and
+  applies in every mode, auto-accept (`--yes`) included; a refused step exits with code 3 in a one-shot run. A
+  compound command (`pytest; rm -rf x`, `&&`, pipes, `$(...)`, backticks, a redirect to a file, `VAR=value` in front)
+  never matches an allow rule unless every part does; a command too hard to read is asked about even in auto-accept
+  while a command deny rule exists. A project's allow rules apply only after you trust the folder (a one-time
+  question, kept by the folder's real path in `rooks-trust.json` next to `rooks.toml`; `/permissions trust` or
+  `untrust`); until then they are ignored and Rooks says so. A new choice at the question, `h`, always allows that
+  exact command in this folder (a precise rule in `.rooks/settings.json`). `/permissions` shows the rules in plain
+  words. A command naming Rooks' own rule files is asked about in every mode, so the agent cannot grant itself a
+  rule. Not in the app's Settings yet (phase 1b parity pass). Tests: `rooks-code/tests/test_permissions.py` (each
+  failed before the change; scripted fake model, no real model key).
 - **The terminal audit's defects, fixed in `rooks`** (each with a test in `rooks-code/tests/test_audit_defects.py` that
   failed before the fix, run against the scripted fake model, no real model key):
   - A no ends the turn. A reply that declines ("OK, I will not change it.", "I'll leave it as is.") is no longer taken

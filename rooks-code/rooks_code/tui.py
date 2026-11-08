@@ -255,10 +255,11 @@ class RichUI(UI):
         from .cli import ASK_LABELS
 
         self.p("")
-        always = words.always_choice(plan)
+        always, here = words.always_choice(plan), words.here_choice(plan)
         self.p("  " + self.c("accent", "Needs your OK") + f": {ASK_LABELS[plan.effect]}.   "
                + self.c("bold", "y") + " Approve   " + self.c("bold", "n") + " Deny"
-               + (("   " + self.c("bold", "a") + " " + always) if always else ""))
+               + (("   " + self.c("bold", "a") + " " + always) if always else "")
+               + (("   " + self.c("bold", "h") + " " + here) if here else ""))
 
         def show():
             sys.stdout.write("  › ")
@@ -707,6 +708,30 @@ def add_skill(agent, ui, url: str) -> None:
     ui.p(f"  Approve it on the Skills page: {learning.app_page('/skills')}")
 
 
+def permissions_command(agent, ui, rest: str) -> None:
+    """/permissions: the rules in plain words. /permissions trust or untrust: whether this folder's own rules apply."""
+    from . import permissions
+
+    perms = getattr(agent, "perms", None) or permissions.Permissions.from_settings(agent.s, agent.root)
+    want = rest.strip().lower()
+    if want in ("trust", "untrust", "distrust"):
+        permissions.set_folder_trust(agent.root, want == "trust")
+        perms.reload()
+        ui.p("  " + ("You trust this folder: its own rules apply from now on." if want == "trust" else
+                     "You do not trust this folder: its rules that let things run are ignored; its never-allowed rules still apply."))
+        return
+    if want in ("help", "how", "?"):
+        ui.p("  " + permissions.SHAPES)
+        return
+    if want:
+        ui.p("  /permissions shows the rules; /permissions trust or untrust for this folder's own rules; /permissions help "
+             "says how to write one.")
+        return
+    for line in perms.describe():
+        ui.p(("  " + line) if line.startswith(" ") else ("  " + ui.c("bold", line) if line.endswith(":") else "  " + line))
+    ui.p(ui.c("dim", "  /permissions help says how to add a rule; /permissions trust or untrust for this folder's own rules."))
+
+
 def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
     s = agent.s
     if cmd == "/help":
@@ -843,6 +868,8 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         t = agent.log.totals()
         ui.p(f"  {t['tokens_in']:,} in + {t['tokens_out']:,} out tokens, "
              f"{'cost unknown' if t['cost_unknown'] else '$%.4f' % t['usd']}, {t['model_calls']} model calls")
+    elif cmd == "/permissions":
+        permissions_command(agent, ui, rest)
     elif cmd == "/auto":
         s.auto_approve = not s.auto_approve
         ui.p(ui.c("warn", "  Changes now happen without asking. /auto again to turn asking back on.") if s.auto_approve

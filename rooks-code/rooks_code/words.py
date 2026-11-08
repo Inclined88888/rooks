@@ -33,6 +33,7 @@ COMMANDS: dict[str, str] = {
     "/image": "ask about a picture: /image PATH [question] (or mention @shot.png in a request)",
     "/compact": "summarise the conversation so far to make room",
     "/cost": "tokens used and cost so far",
+    "/permissions": "rules for what runs without asking and what never runs; /permissions trust for this folder's own",
     "/auto": "turn asking before changes off or on",
     "/dry-run": "show what would change without changing anything",
     "/doctor": "check that everything works and say what to fix",
@@ -46,7 +47,7 @@ GROUPS = {
     "The Room, Needs you, Jobs": ["/room", "/needs", "/jobs", "/team"],
     "Memory": ["/memory", "/history", "/skills", "/init", "/context", "/sessions", "/resume"],
     "Model": ["/model", "/effort", "/mode", "/provider", "/login", "/mcp"],
-    "Checks": ["/auto", "/dry-run", "/doctor", "/cost", "/receipt"],
+    "Checks": ["/permissions", "/auto", "/dry-run", "/doctor", "/cost", "/receipt"],
 }
 
 # /room's verbs, listed in /help under "The Room" (design record 0006 section 7.1). The words match the Room page.
@@ -78,6 +79,14 @@ def always_choice(plan) -> str:
     (a server's own question is answered once, never for the session)."""
     scope = ALWAYS_SCOPES.get(getattr(plan, "scope", "") or "")
     return f"Approve {scope} for this session" if scope else ""
+
+
+HERE = "Always allow this command in this folder"
+
+
+def here_choice(plan) -> str:
+    """The "h" choice: a rule kept in the folder's .rooks/settings.json, offered only where it can apply (agent.py)."""
+    return HERE if getattr(plan, "here", False) else ""
 
 
 KEYS = [("/","commands, with what each does"), ("@", "add a file or folder to your request"),
