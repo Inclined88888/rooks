@@ -40,9 +40,17 @@ def test_mail_site_and_team_land_on_the_customer(clean):
     assert any("due today" in x["what"] for x in lines)
 
 
-def test_trade_is_a_choice_on_the_day(clean):
+def test_trade_is_read_from_settings_and_has_no_route_of_its_own(clean):
+    """No screen called /api/trade (workplace cleanup, docs/architecture.md g.1), so the routes are gone; a trade
+    already saved is still reported to Home and the status answer, and an unknown value still reads as none."""
+    from app import db
+
     c = clean
     assert c.get("/api/dashboard").json()["trade"] == ""
-    assert c.put("/api/trade", json={"trade": "architect"}).status_code == 200
+    db.set_setting("trade", "architect")
     assert c.get("/api/status").json()["trade"] == "architect"
-    assert c.put("/api/trade", json={"trade": "nope"}).status_code == 400
+    assert c.get("/api/dashboard").json()["trade"] == "architect"
+    db.set_setting("trade", "nope")
+    assert c.get("/api/status").json()["trade"] == ""
+    assert c.put("/api/trade", json={"trade": "architect"}).status_code in (404, 405)
+    assert c.get("/api/trade").status_code in (404, 405)

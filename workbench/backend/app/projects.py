@@ -611,13 +611,6 @@ def current_trade() -> str:
     return t if t in TRADES else ""
 
 
-def set_trade(value: str) -> str:
-    if value not in TRADES:
-        raise HTTPException(400, "Choose an architect, a waste office, a small business, or leave it blank.")
-    db.set_setting("trade", value)
-    return value
-
-
 def dismiss(pid: int, kind: str, ref: str) -> dict:
     get(pid)
     db.run("INSERT OR IGNORE INTO project_dismissed(project_id, kind, ref) VALUES (?, ?, ?)", pid, kind, str(ref))

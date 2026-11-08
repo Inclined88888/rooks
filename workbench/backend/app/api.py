@@ -664,22 +664,6 @@ def _trade() -> str:
     return projects.current_trade()
 
 
-class TradeIn(BaseModel):
-    trade: str = ""
-
-
-@api.get("/trade")
-def get_trade():
-    return {"trade": _trade()}
-
-
-@api.put("/trade")
-def put_trade(data: TradeIn):
-    from . import projects
-
-    return {"trade": projects.set_trade(data.trade)}
-
-
 # Dashboard
 @api.get("/dashboard")
 def dashboard():
