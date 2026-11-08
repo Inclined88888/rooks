@@ -35,9 +35,10 @@ folders.
 
 ## Extension points for the next phases
 
-* **New sidecars** (phase 2 terminal coding agent, phase 3 AI browser agent, phase 4 computer use / MCP): add the
-  frozen binary to `bundle.externalBin`, flip `enabled` in `SIDECARS` (`src/sidecars.rs`), and start it like
-  `start_workbench` does. Settings → Desktop app already lists them as "coming soon".
+* **New sidecars**: add the frozen binary to `bundle.externalBin`, a row in `SIDECARS` (`src/sidecars.rs`), and
+  start it like `start_workbench` does. Settings → Desktop app lists every row, so only list what ships. The
+  terminal, browser and computer helpers (`rooks`, `rooks-browser`, `rooks-desk`) are installed beside the app by the
+  installer instead.
 * **Approvals**: anything that acts on the user's behalf calls `approvals::ask` (Rust) or
   `requestApproval()` from `workbench/frontend/src/desktop.ts`. Workbench's own held tool calls keep using its run log.
 * **Settings for keys and connectors**: provider keys go through the existing `/api/providers` endpoints, which store

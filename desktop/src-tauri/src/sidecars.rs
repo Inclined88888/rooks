@@ -1,4 +1,4 @@
-//! Sidecar processes: the Workbench backend now, and the agents later phases add.
+//! Sidecar processes: the Workbench backend.
 //!
 //! Every long-running helper the app ships is a frozen executable listed in `tauri.conf.json` →
 //! `bundle.externalBin` and described in [`SIDECARS`]. The [`Supervisor`] owns the running children, kills them on
@@ -29,8 +29,10 @@ pub struct SidecarSpec {
     pub enabled: bool,
 }
 
-/// Registry of sidecars. Later phases flip `enabled`, add the binary to `bundle.externalBin`, and start it the same
-/// way as Workbench (see [`start_workbench`]); the UI already lists them so users see what is coming.
+/// Registry of sidecars. Only helpers that really ship are listed: Settings → Desktop app shows every row. A new
+/// helper adds its binary to `bundle.externalBin`, a row here, and starts the same way as Workbench (see
+/// [`start_workbench`]). The terminal (`rooks`), the browser helper (`rooks-browser`) and computer use (`rooks-desk`)
+/// are installed beside the app by the installer, not frozen into it.
 pub const SIDECARS: &[SidecarSpec] = &[
     SidecarSpec {
         name: "workbench",
@@ -38,27 +40,6 @@ pub const SIDECARS: &[SidecarSpec] = &[
         description: "Workbench backend: chat, run log, approvals, budgets, MCP server",
         phase: 1,
         enabled: true,
-    },
-    SidecarSpec {
-        name: "terminal-agent",
-        binary: "terminal-agent",
-        description: "Terminal coding agent that works with any model, including local ones",
-        phase: 2,
-        enabled: false,
-    },
-    SidecarSpec {
-        name: "browser-agent",
-        binary: "browser-agent",
-        description: "AI browser agent (the repo's browser-agent/, frozen with its own Chromium)",
-        phase: 3,
-        enabled: false,
-    },
-    SidecarSpec {
-        name: "computer-use",
-        binary: "computer-use",
-        description: "Computer-use and MCP bridge to apps on this machine (every action goes through approvals)",
-        phase: 4,
-        enabled: false,
     },
 ];
 
@@ -310,4 +291,19 @@ async fn boot(app: &AppHandle) -> Result<(), String> {
 async fn tokio_sleep(d: Duration) {
     // tauri's async runtime is tokio; spawn_blocking keeps us off a tokio feature flag.
     let _ = tauri::async_runtime::spawn_blocking(move || std::thread::sleep(d)).await;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Settings → Desktop app shows every row, so a row is only listed when its helper really ships in the bundle.
+    #[test]
+    fn every_listed_sidecar_ships() {
+        let conf = include_str!("../tauri.conf.json");
+        for s in SIDECARS {
+            assert!(s.enabled, "{} is listed but not enabled (a placeholder row)", s.name);
+            assert!(conf.contains(&format!("\"binaries/{}\"", s.binary)), "{} is not in bundle.externalBin", s.binary);
+        }
+    }
 }

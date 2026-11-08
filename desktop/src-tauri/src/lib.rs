@@ -5,7 +5,7 @@
 //! navigates to `/api/desktop/session?token=…`, which signs the window in and lands on the welcome flow or chat.
 //!
 //! Extension points for later phases:
-//! - [`sidecars::SIDECARS`]: the terminal coding agent, AI browser agent and computer-use / MCP layer register here.
+//! - [`sidecars::SIDECARS`]: helper processes the app freezes into its bundle register here (today only Workbench).
 //! - [`approvals::request_approval`]: native approve / deny prompt any part of the app can raise.
 //! - [`updater`]: in-app updates, compiled in only with `--features updater` once signing keys exist.
 
