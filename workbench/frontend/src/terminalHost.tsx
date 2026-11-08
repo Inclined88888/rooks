@@ -1,18 +1,26 @@
-// One terminal for the whole app. The shells stay mounted when you open chat, mail, or settings,
-// and the window is only moved over the place that is showing them.
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+// The terminals stay mounted for the life of the window: the shells stay alive when you open chat, mail, or settings,
+// and their window is only moved over the place that is showing them. Two keepers, keyed: "app" (the Terminal page's
+// shells) and "room" (the Room's terminals, docs/design/0006-room-desktop.md, section 4.4). Each has its own slot list
+// and its own parked element; a screen reserves a place with <TerminalSlot kind=… /> and the keeper of that kind draws
+// its panes over the latest one.
+import { lazy, Suspense, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import TerminalPage from "./pages/TerminalPage";
+
+export type SlotKind = "app" | "room";
+
+// The Room's panes load with the Room's code, the first time a Room slot shows.
+const RoomPanes = lazy(() => import("./room/TerminalWindow").then((m) => ({ default: m.RoomPanes })));
 
 type PaneSnap = { id: number; name: string };
 type Snap = { panes: PaneSnap[]; active: number };
 
-const slots: HTMLElement[] = [];
-const slotListeners = new Set<() => void>();
+const slots: Record<SlotKind, HTMLElement[]> = { app: [], room: [] };
+const slotListeners: Record<SlotKind, Set<() => void>> = { app: new Set(), room: new Set() };
 let snap: Snap = { panes: [], active: 0 };
 const snapListeners = new Set<() => void>();
 
-function notifySlots() {
-  slotListeners.forEach((fn) => fn());
+function notifySlots(kind: SlotKind) {
+  slotListeners[kind].forEach((fn) => fn());
 }
 
 function notifySnap() {
@@ -33,38 +41,39 @@ export function useTerminalSnap(): Snap {
   );
 }
 
-function currentSlot(): HTMLElement | null {
-  return slots[slots.length - 1] ?? null;
+function currentSlot(kind: SlotKind): HTMLElement | null {
+  const list = slots[kind];
+  return list[list.length - 1] ?? null;
 }
 
-/** Empty box a screen reserves. The live terminal is drawn over the latest one. */
-export function TerminalSlot() {
+/** Empty box a screen reserves. The live terminal of that kind is drawn over the latest one. */
+export function TerminalSlot({ kind = "app" }: { kind?: SlotKind }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    slots.push(el);
-    notifySlots();
+    slots[kind].push(el);
+    notifySlots(kind);
     return () => {
-      const i = slots.indexOf(el);
-      if (i >= 0) slots.splice(i, 1);
-      notifySlots();
+      const i = slots[kind].indexOf(el);
+      if (i >= 0) slots[kind].splice(i, 1);
+      notifySlots(kind);
     };
-  }, []);
-  return <div ref={ref} className="terminal-slot" />;
+  }, [kind]);
+  return <div ref={ref} className={kind === "room" ? "terminal-slot room-term-slot" : "terminal-slot"} />;
 }
 
-function useSlot(): HTMLElement | null {
+function useSlot(kind: SlotKind): HTMLElement | null {
   return useSyncExternalStore(
-    (fn) => { slotListeners.add(fn); return () => { slotListeners.delete(fn); }; },
-    currentSlot,
+    (fn) => { slotListeners[kind].add(fn); return () => { slotListeners[kind].delete(fn); }; },
+    () => currentSlot(kind),
     () => null,
   );
 }
 
 /** Stays mounted for the life of the window so shells and their text are still there when you come back. */
-export function TerminalKeeper() {
-  const slot = useSlot();
+function Keeper({ kind, render }: { kind: SlotKind; render: (parked: boolean) => ReactNode }) {
+  const slot = useSlot(kind);
   const park = useRef<HTMLDivElement>(null);
   const [kept, setKept] = useState(false);
 
@@ -109,8 +118,18 @@ export function TerminalKeeper() {
   if (!kept) return null;
 
   return (
-    <div ref={park} className="terminal-park">
-      <TerminalPage bare parked={!slot} />
+    <div ref={park} className="terminal-park" data-keeper={kind}>
+      {render(!slot)}
     </div>
   );
+}
+
+/** The app's Terminal page ("app"). */
+export function TerminalKeeper() {
+  return <Keeper kind="app" render={(parked) => <TerminalPage bare parked={parked} />} />;
+}
+
+/** The Room's terminals ("room"): their sockets stay open while you are in chat, so coming back does not reconnect. */
+export function RoomTerminalKeeper() {
+  return <Keeper kind="room" render={(parked) => <Suspense fallback={null}><RoomPanes parked={parked} /></Suspense>} />;
 }

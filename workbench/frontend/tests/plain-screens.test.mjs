@@ -6,7 +6,9 @@ import { existsSync, readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const side = read("../src/chat/ChatList.tsx"); // the chats list lives in the Chat page's column now
-const terminal = read("../src/pages/TerminalPage.tsx");
+// the pane itself (xterm and its socket) lives in terminal/Shell.tsx, shared with the Room's terminals; the page reads
+// the close codes in its own words
+const terminal = `${read("../src/pages/TerminalPage.tsx")}\n${read("../src/terminal/Shell.tsx")}`;
 const app = read("../src/App.tsx");
 const registry = read("../src/pages/registry.ts");
 const vite = read("../vite.config.ts");

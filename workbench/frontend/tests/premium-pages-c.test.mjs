@@ -91,7 +91,8 @@ test("no inline hex colour, no inline style with a colour, and no spinner withou
 });
 
 test("the terminal's dark screen comes from the --screen tokens, not hex in the page", () => {
-  const t = read("src/pages/TerminalPage.tsx");
+  // the xterm pane is terminal/Shell.tsx (shared by the Terminal page and the Room's terminals)
+  const t = `${read("src/pages/TerminalPage.tsx")}\n${read("src/terminal/Shell.tsx")}\n${read("src/room/TerminalWindow.tsx")}`;
   assert.doesNotMatch(t, /#[0-9a-fA-F]{6}\b/);
   assert.match(t, /--screen-/);
 });

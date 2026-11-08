@@ -1,10 +1,9 @@
 // A real terminal in the app window. Each tab is its own shell and stays running when you switch tabs.
-// The server allows six at once (terminal_pty.MAX_SESSIONS). xterm.js talks to /api/terminal/ws.
-import { FitAddon } from "@xterm/addon-fit";
-import { Terminal } from "@xterm/xterm";
-import "@xterm/xterm/css/xterm.css";
+// The server allows six at once (terminal_pty.MAX_SESSIONS). Each tab is a Shell (terminal/Shell.tsx, shared with the
+// Room's terminals) on /api/terminal/ws.
 import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Shell, type Phase } from "../terminal/Shell";
 import { publishTerminals } from "../terminalHost";
 import { Button, Page } from "../ui";
 import "../work.css";
@@ -21,109 +20,6 @@ function terminalWhy(code: number, reason: string): string {
   if (reason) return reason;
   if (code === 1006 || code === 1005) return "The terminal could not connect. Press Reopen this terminal.";
   return "The shell exited.";
-}
-
-type Phase = "connecting" | "open" | "closed";
-
-function Shell({ active, hold, label, onPhase, onSend }: {
-  active: boolean;
-  hold: boolean;
-  label: string;
-  onPhase: (phase: Phase, why: string) => void;
-  onSend: (send: (cmd: string) => void) => void;
-}) {
-  const box = useRef<HTMLDivElement>(null);
-  const termRef = useRef<Terminal | null>(null);
-  const fitRef = useRef<FitAddon | null>(null);
-  const [phase, setPhase] = useState<Phase>("connecting");
-  const [why, setWhy] = useState("");
-  const [gen, setGen] = useState(0);
-  const holdRef = useRef(hold);
-  holdRef.current = hold;
-
-  useEffect(() => {
-    if (!box.current) return;
-    const css = getComputedStyle(document.documentElement);
-    const tok = (name: string) => css.getPropertyValue(name).trim() || undefined;
-    // The dark screen is on purpose; its colours are the --screen tokens in tokens.css. Blue, magenta and cyan are xterm's own.
-    const term = new Terminal({
-      cursorBlink: true, fontSize: 13, scrollback: 5000, screenReaderMode: true,
-      fontFamily: tok("--font-mono") || "ui-monospace, Menlo, monospace",
-      theme: {
-        background: tok("--screen-bg"),
-        foreground: tok("--screen-ink"),
-        cursor: tok("--screen-ink"),
-        cursorAccent: tok("--screen-bg"),
-        selectionBackground: tok("--screen-border"),
-        black: tok("--screen-bg"),
-        red: tok("--screen-dot-close"),
-        green: tok("--screen-dot-max"),
-        yellow: tok("--screen-dot-min"),
-        white: tok("--screen-ink"),
-      },
-    });
-    const fit = new FitAddon();
-    term.loadAddon(fit);
-    term.open(box.current);
-    termRef.current = term;
-    fitRef.current = fit;
-    if (!holdRef.current) {
-      try { fit.fit(); } catch { /* hidden or not laid out yet */ }
-    }
-    let alive = true;
-    setPhase("connecting");
-    setWhy("");
-    const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/api/terminal/ws`);
-    const send = (m: object) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(m)); };
-    const run = (cmd: string) => send({ type: "input", data: cmd + "\r" });
-    onSend(run);
-    ws.onopen = () => {
-      if (!alive) return;
-      setPhase("open");
-      send({ type: "resize", cols: term.cols, rows: term.rows });
-      if (active && !holdRef.current) term.focus();
-    };
-    ws.onmessage = (e) => { if (alive) term.write(typeof e.data === "string" ? e.data : ""); };
-    ws.onclose = (e) => {
-      if (!alive) return;
-      setPhase("closed");
-      setWhy(terminalWhy(e.code, e.reason));
-    };
-    const input = term.onData((d) => send({ type: "input", data: d }));
-    const resized = term.onResize(({ cols, rows }) => send({ type: "resize", cols, rows }));
-    const ro = new ResizeObserver(() => { if (holdRef.current) return; try { fit.fit(); } catch { /* hidden */ } });
-    ro.observe(box.current);
-    return () => {
-      alive = false;
-      ro.disconnect();
-      input.dispose();
-      resized.dispose();
-      ws.close();
-      term.dispose();
-      termRef.current = null;
-      fitRef.current = null;
-    };
-  }, [gen]);
-
-  const report = useRef(onPhase);
-  report.current = onPhase;
-  useEffect(() => { if (active) report.current(phase, why); }, [phase, why, active]);
-
-  useEffect(() => {
-    if (!active || hold) return;
-    try { fitRef.current?.fit(); } catch { /* not open yet */ }
-    termRef.current?.focus();
-  }, [active, hold, phase]);
-
-  return (
-    <div className={`terminal-pane${active ? "" : " is-hidden"}`} aria-hidden={!active}>
-      <div role="status" aria-live="polite" className="terminal-phase">{phase === "connecting" ? "Connecting…" : phase === "closed" ? why : ""}</div>
-      <div ref={box} className="terminal-box" aria-label={label} />
-      {phase === "closed" && (
-        <div className="terminal-reopen"><Button size="sm" onClick={() => setGen((n) => n + 1)}>Reopen this terminal</Button></div>
-      )}
-    </div>
-  );
 }
 
 function TabChip({ pane, active, over, onPick, onRename, onClose, onDragStart, onDragOver, onDrop, onDragEnd }: {
@@ -249,7 +145,7 @@ export default function TerminalPage({ bare = false, parked = false }: { bare?: 
         </div>
         <div className="terminal-stage">
           {panes.map((p) => (
-            <Shell key={p.id} active={p.id === active} hold={parked} label={p.name}
+            <Shell key={p.id} url="/api/terminal/ws" active={p.id === active} hold={parked} label={p.name} why={terminalWhy}
               onPhase={(ph, _why) => { if (p.id === active) setPhase(ph); }}
               onSend={(send) => { senders.current.set(p.id, send); }} />
           ))}
