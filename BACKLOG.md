@@ -59,14 +59,35 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   was run on a Mac; the record's Seatbelt check before release is still to do.
 * **File uploads** (a page's file picker) are not wired: headless Chromium cancels the chooser. Choosing from the
   Room's files is the way.
-* **Copy** returns the page's selection (`{"type": "copy"}` on the socket); the window's `ClipboardItem` is the
-  frontend lane's.
+* **Copy** returns the page's selection (`{"type": "copy"}` on the socket); the window writes it with a
+  `ClipboardItem` (done in the window lane).
 * **The phone's taps** are not in the run log (only the window's coarse "You used the browser" row is).
 * **A window that opens before the Room is on** gets the socket closed with "The Room is off. Start it first." and
   must open again after Start.
 * **Uvicorn ends on SIGTERM by raising the signal again**, so `atexit` does not run at a normal stop; the browser is
   closed from the app's shutdown instead. The Room's terminals still rely on `atexit` (their restart record is right
   either way, since a record without an end counts as ended by the restart).
+
+### The Room's browser (design 0007), window, assistant and terminal lane: not done here
+
+* **"Get one?" for the Room's own engine** is not there: with no engine the window says "The Room has no browser yet."
+  and offers Check again (the engine download is the engine lane's open item above).
+* **No Settings switch in the app's screens** for `room_browser` (the setting and its route exist, as for the app's
+  terminal); the window says "switched off in Settings" and links there.
+* **Typing with an input method** (Chinese, Japanese, dead keys): the live page takes key presses and paste; composed
+  text from an IME is not sent yet. The phone's Type field works for any text.
+* **The assistant's every acting step asks first** (the Room's rule), so a purchase asks twice: the Room's own yes, then
+  the purchase's. A per-chat "use the Room's browser" yes would cut that to one; it is a decision for the owner.
+* **The assistant sees no picture:** `shot` gives what is in view and where (boxes), not an image; the picture is on the
+  window for the person.
+* **What is not checked** before a click (said under Advanced): a page's own scripts sending data on an ordinary click
+  or as you type, button words the English patterns miss, and the person's own input. A purchase button labelled only
+  with an icon is not seen as one.
+* **The browser's start thread.** On Linux the browser is started from the app loop's worker thread and bwrap's
+  `--die-with-parent` ends it when that thread ends. The app's default executor keeps its threads for the app's life, so
+  this holds today; a dedicated long-lived starter thread would make it independent of that.
+* **Asked sites the person typed** are kept for this run of the app only; after a restart the assistant's form sends on
+  them wait for a yes again until the person types the address or names the site in the chat.
 
 ### The Room as a small computer (design 0006): follow-ups, each its own record or line
 

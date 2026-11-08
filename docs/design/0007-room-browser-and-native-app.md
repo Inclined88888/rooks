@@ -121,3 +121,25 @@ Push a tag `vX.Y.Z` that matches `VERSION`. `release.yml` makes the release and 
 * After a restart the front tab loads and the others wait asleep as addresses until opened; `reopened` names them.
 * The overview (`GET /api/room/browser`), `POST /start`, `POST /close`, `GET /frame`, `GET /shot`, `POST /act` and
   closing a tab are the person's; the rooks terminal's key reaches exactly `open`, `tabs` and `page`.
+
+## 5. As built (window, assistant and terminal lane, 2026-11-08)
+
+* The window is `room/BrowserWindow.tsx` with the pure parts in `room/browser.ts`. It is offered when `can.browser` is
+  true or `browser_off_reason` is one of the four reasons (the window says why); a Room whose own screen is the way
+  has none. The desk puts it on the left when open (Screen, then Browser, then Terminal). The browser starts only when
+  its window is opened; the default desk does not open it.
+* Pointer events carry no click count, so the window counts double and triple clicks itself (500 ms, 5 px). The live
+  picture is drawn at the view's size; a click maps through the view the service reports.
+* "Phone" is any page not on the computer running Rooks, or any touch screen: the still, taps and Type field.
+* The assistant's actions are `room_browser_tool.py`. Elements are numbered by rooks-browser's own snapshot
+  (`rooks_try/page_rules.py`, parity tests against `rooks_browser`); a click by number or by a point from `shot`. The
+  fresh look before a step (`DESCRIBE`) goes into frames of the same origin and stops at one from another site. A step
+  that waits is a held `use_room` call with a `room-browser:` request id and the look it was asked on; after the yes it
+  runs once, and only if the same look is still there ("The page changed since you said yes, so nothing was done.").
+  Every acting step also asks first (`ROOM_CONFIRM`), so a purchase asks twice (BACKLOG).
+* Asked sites: hosts in the person's own messages in this chat (role user, no tool name, not the "[I approved
+  request ...]" lines, never in a schedule's, coworker's, MCP or automation chat) and hosts typed into the window's or
+  the phone's address bar in this run of the app. Subdomains of an asked site count.
+* "The person took the browser": any input from the window or the phone within 20 s of an assistant step. For 2 min
+  after, the assistant's steps are refused unless the person said yes to that very step (`Ctx.approved_call`).
+* The terminal: `/room browse [--new] ADDRESS`, `/room tabs`, `/room page` in `rooks_code/workroom.py`.

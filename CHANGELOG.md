@@ -4,6 +4,36 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · The Room's Browser window, the assistant in it, and /room browse · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, sections 1.3, 1.5 and 1.6 (as built: section 5).
+
+- **A Browser window on the Room's desk**, after Terminal in the dock. Tabs (eight at most), New tab, back, forward,
+  reload or stop, an address bar, and the live page: click, double click, type, scroll, copy (Ctrl or Cmd+C puts the
+  page's selection on your clipboard) and paste. F6 leaves the page. It is there only when the Room has a browser on
+  this computer; otherwise it says why in plain words ("The Room has no browser yet.", "switched off in Settings",
+  "not on Windows yet", "runs elsewhere"). With the Room off it says so and lists the tabs it kept. After an app
+  restart it says "The app restarted, so the browser closed. Your tabs and sign-ins are kept." The Stage beside the
+  chat shows it too.
+- **On a phone** (or any touch screen) the window shows a still of the page every 2 seconds, with taps, Scroll up and
+  down, a Type field and Enter: "On a phone you can tap, scroll and type. Dragging, hovering and shortcuts need the
+  computer."
+- **The assistant can use the Room's browser.** `use_room` gains browse, page, shot, click, type, scroll, key, back and
+  tabs. Looking (page, shot, tabs) is never asked about; every other step asks first, as in the rest of the Room. On
+  top of that a step waits for your yes in Needs you when it looks like a purchase (on any site, or a form with card
+  fields), sends a form, a message or a sign-in to a site you did not name in this chat or type into the address bar
+  yourself, or clicks inside another site's frame. Page text never counts as you naming a site. It never types a
+  password: it asks you to type it yourself. While it acts the window says "Rooks is using the browser"; your own click
+  or key takes it back, and its next step waits for your yes. Presence says "Looking at a page in the Room's browser".
+- **The run log** keeps the site and path (never the query), the element's name and "(N characters)" for typing, never
+  the text, also in the chat step's own row.
+- **The rooks terminal:** `/room browse ADDRESS` (`--new` for a new tab), `/room tabs` and `/room page` print the same
+  words through the app, with the terminal's own key.
+- **Fixes on the way.** A tab is named by its page's title also after a form posts and redirects (it showed the
+  address). A frame still drawn at the old size just after a resize is dropped, so a click lands where it was made (a
+  socket test that read the first frame failed now and then on it).
+- **No migration.** Nothing changes on upgrade; rollback is removing the branch.
+
 ## Unreleased · A real browser in the Room (engine and API) · branch room-browser-native-app
 
 Design record: `docs/design/0007-room-browser-and-native-app.md`. This entry is the engine and API lane; the Browser
