@@ -8,6 +8,19 @@ version and the merge commit on `main`.
 
 No schema change, nothing to migrate. Rollback: revert the branch's commits.
 
+- **Fixes from the phase 1a review.** A coding job's own prompt is now refused in Needs you too when answered with the
+  Terminal access token (only the signed in app answers it; the terminal's `/needs` lists it as "answer in the app"
+  and sends nothing), and only a job withdraws a job's prompt. Deny rules in `rooks` now also catch a shell reading
+  from the input (`| bash -s`, `| sh -`, `| sudo -s`, `| su`), `bash -c "$X"`, `bash -c -- '...'`, brace expansion
+  (`{rm,-rf,x}`), `$'rm'`, a program name in a variable behind `sudo`, and `su -c`, `script -c`, `busybox`,
+  `unshare`, `fakeroot` and similar wrappers. The guard on Rooks' own rule files reads the command as the shell does,
+  so `.rooks/set''tings.json`, `cd .rooks && ...` and `./.rooks//settings.json` are asked about. "Always allow here"
+  is no longer offered in an unasked folder that has skills or commands of its own (choosing it would have trusted
+  them unseen). A Claude model priced under `[prices]` with two numbers gets Anthropic's cached price rule again, so
+  the dollar cap keeps counting. Tests: `rooks-code/tests/test_permissions.py` section 9, `test_caching.py`,
+  `test_workroom.py`, `workbench/backend/tests/test_auth_boundaries.py` (each failed before the fix; scripted fake
+  model, no real model key).
+
 - **Skills and your own commands in `rooks`, with the app off.** Skills are folders with a `SKILL.md` (a `name` and a
   `description` in front matter, then the steps) in this folder's `.rooks/skills` or `.claude/skills` and your own
   `~/.rooks/skills` or `~/.claude/skills`. Only names and descriptions go into the instructions; a skill's steps reach

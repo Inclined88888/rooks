@@ -338,3 +338,77 @@ def test_the_agent_never_changes_rooks_own_rule_files_unasked(project, fake):
     assert not (project / ".rooks" / "settings.json").exists()
     assert (project / "src" / "ok.py").exists()             # an ordinary edit still runs unasked
     assert "own permission settings" in ui.out.getvalue()
+
+
+# 9. what a review found: deny rules and the own-files guard read commands the way the shell does -----------------------
+@pytest.mark.parametrize("cmd", ["echo 'rm -rf x' | bash -s", "echo 'rm -rf x' | sh -e", "echo 'rm -rf x' | sh -",
+                                 "X='rm -rf x'; bash -c \"$X\"", "script -qc 'rm -rf x' /dev/null",
+                                 "bash -c '{rm,-rf,x}'", "unshare -r rm -rf x", "su -c 'rm -rf x' root",
+                                 "$'rm' -rf x", "X=rm; sudo $X -rf x", "bash -c -- 'rm -rf x'"])
+def test_shell_tricks_never_slip_past_a_deny_rule_in_auto_accept(project, fake, cmd):
+    """Each of these runs `rm -rf x` (or could): with a deny rule for rm, auto-accept refuses it or asks first."""
+    (project / "x").mkdir()
+    agent, ui, _ = _run_commands(fake, project, [cmd], answers=["n"], rules=RULES, auto_approve=True)
+    assert ui.asked or agent.denials == 1, (cmd, ui.asked, agent.denials)
+    assert (project / "x").is_dir(), cmd
+
+
+def test_the_matcher_sees_through_more_wrappers_and_shells(project):
+    from rooks_code import permissions
+
+    p = permissions.Permissions(user_allow=[], user_deny=["bash(rm *)"], root=project)
+    for cmd in ("busybox rm -rf x", "fakeroot rm -rf x", "unshare -r rm -rf x", "su -c 'rm -rf x' root",
+                "su root -c 'rm -rf x'", "script --command='rm -rf x' /dev/null", "busybox sh -c 'rm -rf x'",
+                "timeout 5 bash -lc 'rm -rf x'", "pkexec rm -rf x"):
+        assert p.check_command(cmd).verdict == "deny", cmd
+    for cmd in ("echo 'rm -rf x' | bash -s", "echo 'rm -rf x' | sudo bash", "echo 'rm -rf x' | busybox sh",
+                "echo 'rm -rf x' | su", "echo 'rm -rf x' | sudo -s", "timeout 5 $X -rf x", "bash -c \"$X\"",
+                "bash -c '{rm,-rf,x}'", "{rm,-rf,x}", "$'rm' -rf x", "echo 'rm -rf x' | script -q /dev/null"):
+        assert p.check_command(cmd).verdict in ("deny", "unclear"), cmd
+    # ordinary commands are not made hard to read
+    for cmd in ("bash script.sh", "bash -c 'pytest -q'", "echo {a,b}", "sudo -u bob pytest", "git status"):
+        assert p.check_command(cmd).verdict == "ask", cmd
+
+
+@pytest.mark.parametrize("deny", [["bash(rm *)"], []])
+def test_a_command_reaching_rooks_own_rule_files_is_asked_however_it_is_spelled(project, deny):
+    from rooks_code import permissions
+
+    p = permissions.Permissions(user_allow=["bash(*)"], user_deny=deny, root=project)
+    for cmd in ("printf '{}' > .rooks/set''tings.json", "cd .rooks && cp /tmp/evil settings.json",
+                "tee .rooks/sett\\ings.json", "sed -i s/deny/xx/ ~/.config/ai-workspace/rook''s.toml",
+                "bash -c 'cp x .rooks/sett\"\"ings.json'", "D=.rooks; cp x $D/settings.json",
+                "cp x ./.rooks//settings.json", "cd ~/.config/ai-workspace && cp x rooks-trust.json", "cd ~/.config/ai-workspace && cp x ./trust"):
+        d = p.check_command(cmd)
+        assert d.verdict == "unclear" and d.why == permissions.OWN_SETTINGS, (cmd, d)
+    for cmd in ("cd rooks-code && pytest", "git status", "cat README.md"):
+        assert p.check_command(cmd).verdict == "allow", cmd
+
+
+def test_auto_accept_never_writes_itself_a_rule_by_splitting_the_name(project, fake):
+    (project / ".rooks").mkdir()
+    cmd = "printf '{\"permissions\":{\"allow\":[\"bash\"]}}' > .rooks/set''tings.json"
+    agent, ui, _ = _run_commands(fake, project, [cmd], answers=["n"], rules=RULES, auto_approve=True)
+    assert ui.asked == [f"run: {cmd}"], ui.asked
+    assert not (project / ".rooks" / "settings.json").exists()
+
+
+def test_always_allow_here_is_not_offered_where_trust_would_switch_on_skills_or_commands(project, fake):
+    """Choosing h trusts the folder, which turns on its own skills and commands: so it is offered only where trusting
+    turns on nothing the person has not seen (the trust question lists them)."""
+    from rooks_code import permissions
+
+    (project / ".rooks" / "commands").mkdir(parents=True)
+    (project / ".rooks" / "commands" / "deploy.md").write_text("Deploy it.\n")
+    assert permissions.folder_trust(project) is None
+    assert permissions.Permissions([], [], project).can_remember_here("npm test") is False
+    agent, ui, _ = _run_commands(fake, project, ["echo hi"], answers=["n"], rules={})
+    assert ui.offered_here == [False]
+    assert permissions.folder_trust(project) is None
+    (project / ".rooks" / "commands" / "deploy.md").unlink()
+    skill = project / ".claude" / "skills" / "tests"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("---\nname: tests\ndescription: run the tests\n---\n\nRun them.\n")
+    assert permissions.Permissions([], [], project).can_remember_here("npm test") is False
+    skill.joinpath("SKILL.md").unlink()
+    assert permissions.Permissions([], [], project).can_remember_here("npm test") is True  # nothing else to turn on

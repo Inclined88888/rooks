@@ -12,11 +12,12 @@ write_file), mcp(SERVER/TOOL) for an extra tool. A bare `bash`, `edit` or `mcp` 
 - A command is split the way the shell splits it (; && || | & newlines, $(...), backticks, subshells). An allow rule
   matches only when every part matches an allow rule and nothing else can run or write: no command inside the command,
   no redirect to a file, no VAR=value in front. When in doubt, Rooks asks.
-- A deny rule matches any part, also behind sudo, env, nohup and the like, a full path (/bin/rm), quotes or
-  backslashes (r\\m), and inside bash -c '...'. A command too hard to read (the program name comes from a variable,
+- A deny rule matches any part, also behind sudo, env, nohup, busybox, unshare and the like, a full path (/bin/rm),
+  quotes or backslashes (r\\m), and inside bash -c '...', su -c and script -c. A command too hard to read (the program
+  name comes from a variable, a shell reading its commands from the input, {a,b} or $'...',
   eval, xargs, find -exec, ...) is asked about even in auto-accept while any command deny rule exists.
 - A change to Rooks' own rule files (.rooks/settings.json, .rooks/hooks, the user's config folder), by a file tool or a
-  command naming them, is asked about in every mode and never matched by an allow rule.
+  command naming them however it is spelled, is asked about in every mode and never matched by an allow rule.
 - A project's own allow rules apply only after the person trusts the folder: a one-time question, kept in the user's
   config folder (rooks-trust.json) by the folder's real path. Its deny rules always apply.
 
@@ -40,8 +41,15 @@ EDIT_TOOLS = ("edit_file", "write_file")
 
 # Programs that run the rest of their words as another command: a deny rule looks behind them.
 WRAPPERS = {"sudo", "doas", "env", "nohup", "time", "nice", "ionice", "timeout", "command", "builtin", "exec", "stdbuf",
-            "setsid", "chrt", "taskset", "unbuffer", "caffeinate", "watch", "chroot", "flock", "strace", "ltrace"}
-SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "fish", "ash", "mksh", "busybox"}
+            "setsid", "chrt", "taskset", "unbuffer", "caffeinate", "watch", "chroot", "flock", "strace", "ltrace",
+            "busybox", "toybox", "unshare", "fakeroot", "pkexec", "nsenter", "firejail", "proot", "systemd-run",
+            "xvfb-run", "valgrind", "catchsegv", "eatmydata", "faketime", "setpriv", "prlimit", "numactl", "cgexec",
+            "runcon", "torsocks", "proxychains", "proxychains4", "screen", "dbus-run-session", "aa-exec", "chpst"}
+SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "fish", "ash", "mksh", "tcsh", "csh", "yash", "posh", "rbash", "pwsh",
+          "nu", "elvish", "xonsh"}
+# Programs that hand the text after -c (or --command) to a shell, and start one reading its input without it.
+RUNNERS = SHELLS | {"su", "runuser", "sg", "script"}
+ELEVATORS = {"sudo", "doas"}  # -s or -i: a shell of their own
 # Programs that run a command Rooks cannot read from the command line.
 OPAQUE = {"eval", "source", ".", "xargs", "parallel", "trap", "alias", "function", "coproc"}
 RESERVED = {"if", "then", "else", "elif", "fi", "do", "done", "while", "until", "for", "in", "case", "esac", "select",
@@ -147,6 +155,10 @@ def _tokens(cmd: str) -> tuple[list, str]:
             if i >= n:
                 unclear = unclear or "a quote is never closed"
             i += 1
+        elif c == "$" and i + 1 < n and cmd[i + 1] in "'\"":
+            w.dynamic = True  # $'...' and $"...": the shell rewrites the text (escapes, translation)
+            started = True
+            i += 1
         elif c == "`" or cmd.startswith("$(", i) or cmd.startswith("<(", i) or cmd.startswith(">(", i):
             unclear = unclear or "it runs a command inside the command"
             end()
@@ -164,8 +176,8 @@ def _tokens(cmd: str) -> tuple[list, str]:
                 toks.append(op)
                 i += len(op)
                 continue
-            if c in "*?[" or (c == "~" and not started):
-                w.glob = True
+            if c in "*?[" or (c == "~" and not started) or (c == "{" and i + 1 < n and cmd[i + 1] not in " \t\r\n"):
+                w.glob = True  # {a,b} and {1..3} are rewritten by the shell too
             cur.append(c)
             started = True
             i += 1
@@ -224,7 +236,7 @@ def parse(cmd: str) -> Parsed:
             unclear = unclear or f"{name} runs a command Rooks cannot read"
         elif name == "find" and any(x.text in ("-exec", "-execdir", "-ok", "-okdir") for x in s.words):
             unclear = unclear or "find runs a command for each file"
-        elif name in SHELLS and len(s.words) == 1:
+        elif _shell_input(name, s.words):
             unclear = unclear or "a shell reads its commands from the input"
     return Parsed(segments, unclear)
 
@@ -233,33 +245,136 @@ def _line(words: list[str]) -> str:
     return " ".join(words)
 
 
-def _deny_forms(words: list[str], depth: int = 0) -> list[list[str]]:
-    """Every reading of one simple command a deny rule must see: as written, its program's plain name, behind a
-    wrapper (sudo rm), past the shell's own words (then rm), and inside bash -c '...'."""
-    while words and (words[0] in RESERVED or _ASSIGN.match(words[0])):
+_TAKES_ARG = {"-o", "+o", "-O", "+O", "--rcfile", "--init-file"}
+_SUDO_ARG = re.compile(r"-[A-Za-z]*[ugChprtUDRT]")  # sudo -u bob: the next word is the option's
+
+
+def _c_string(name: str, words: list[Word]) -> tuple[bool, Word | None]:
+    """(whether a -c or --command was given, the text the shell runs) for a program in RUNNERS: the first word that is
+    not an option after the -c (bash -c -- 'rm x'), or --command=TEXT. sg GROUP TEXT runs TEXT without a -c."""
+    seen = False
+    plain = 0
+    for w in words[1:]:
+        t = w.text
+        if t.startswith("--command="):
+            return True, Word(t[len("--command="):], w.dynamic, w.glob)
+        if not seen:
+            if t == "--command" or (not t.startswith("--") and re.fullmatch(r"-[A-Za-z]*c[A-Za-z]*", t, re.I)):
+                seen = True
+            elif name == "sg" and not t.startswith("-"):
+                plain += 1
+                if plain == 2:
+                    return True, w
+            continue
+        if t.startswith("-") and len(t) > 1:
+            continue
+        return True, w
+    return seen, None
+
+
+def _shell_input(name: str, words: list[Word], given_c: bool | None = None) -> bool:
+    """True when this command starts a shell that reads its commands from the input (echo 'rm x' | bash -s), which no
+    rule can read."""
+    if name in ELEVATORS:
+        k = 1
+        while k < len(words):
+            t = words[k].text
+            if t in ("--shell", "--login"):
+                return True
+            if not t.startswith("-") or t == "--":
+                return False
+            if not t.startswith("--") and ("s" in t[1:] or "i" in t[1:]):
+                return True
+            k += 2 if _SUDO_ARG.fullmatch(t) else 1  # sudo -u bob: skip the option's own word
+        return False
+    if name not in RUNNERS:
+        return False
+    if given_c is None:
+        given_c = _c_string(name, words)[0]
+    if given_c:
+        return False
+    if name not in SHELLS:
+        return True  # su, runuser, sg, script without a command: a shell of their own
+    skip = False
+    for w in words[1:]:
+        t = w.text
+        if skip:
+            skip = False
+            continue
+        if t == "-":
+            return True
+        if t == "--":
+            continue
+        if t in _TAKES_ARG:
+            skip = True
+            continue
+        if (t.startswith("-") or t.startswith("+")) and len(t) > 1:
+            if not t.startswith("--") and "s" in t[1:]:
+                return True
+            continue
+        return False  # a script file: the program it runs is on the command line
+    return True
+
+
+def _readings(words: list[Word], depth: int = 0, wrapped: bool = False) -> tuple[list[list[str]], str]:
+    """Every reading of one simple command a deny rule must see, and why one of them cannot be read for sure ('' when
+    all can): as written, its program's plain name, behind a wrapper (sudo rm, busybox rm, unshare rm), past the
+    shell's own words (then rm), and inside bash -c '...', su -c '...' or script -c '...'."""
+    while words and (words[0].text in RESERVED or _ASSIGN.match(words[0].text)):
         words = words[1:]
     if not words:
-        return []
-    forms = [words]
-    if "/" in words[0]:
-        forms.append([os.path.basename(words[0]), *words[1:]])
-    name = os.path.basename(words[0])
-    if name in WRAPPERS or name in ("xargs", "parallel"):
-        for i in range(1, len(words)):
-            forms.extend(_deny_forms(words[i:], depth + 1))
+        return [], ""
+    texts = [w.text for w in words]
+    forms = [texts]
+    first = words[0]
+    name = os.path.basename(first.text)
+    unclear = ""
+    if first.dynamic or first.glob or not first.text:
+        unclear = "the program's name is not written out"
+    elif name in OPAQUE:
+        unclear = f"{name} runs a command Rooks cannot read"
+    if "/" in first.text:
+        forms.append([name, *texts[1:]])
+    if depth > 8:
+        return forms, unclear or "it wraps one command in too many others"
+    subs: list[list[Word]] = []
+    if (name in WRAPPERS or name in ("xargs", "parallel")) and not wrapped:
+        subs = [words[i:] for i in range(1, len(words))]  # every later word may be the program (sudo -u bob rm)
     elif name == "find":
-        for i, a in enumerate(words[:-1]):
-            if a in ("-exec", "-execdir", "-ok", "-okdir"):
-                forms.extend(_deny_forms(words[i + 1:], depth + 1))
-    out = list(forms)
-    if depth < 4:
-        for f in forms:
-            if os.path.basename(f[0]) in SHELLS:
-                for i, a in enumerate(f[1:-1], 1):
-                    if re.fullmatch(r"-[a-zA-Z]*c[a-zA-Z]*", a):
-                        for seg in parse(f[i + 1]).segments:
-                            out.extend(_deny_forms([x.text for x in seg.words], depth + 1))
-                        break
+        subs = [words[i + 1:] for i, a in enumerate(words[:-1]) if a.text in ("-exec", "-execdir", "-ok", "-okdir")]
+        unclear = unclear or ("find runs a command for each file" if subs else "")
+    for sub in subs:
+        f, u = _readings(sub, depth + 1, wrapped=name in WRAPPERS or name in ("xargs", "parallel"))
+        forms += f
+        unclear = unclear or u
+    if name in RUNNERS:
+        given, text = _c_string(name, words)
+        if text is not None:
+            if text.dynamic or text.glob:
+                unclear = unclear or "the shell runs text Rooks cannot see"
+            inner = parse(text.text)
+            unclear = unclear or inner.unclear
+            for seg in inner.segments:
+                f, u = _readings(seg.words, depth + 1)
+                forms += f
+                unclear = unclear or u
+        elif _shell_input(name, words, given):
+            unclear = unclear or "a shell reads its commands from the input"
+    elif _shell_input(name, words):
+        unclear = unclear or "a shell reads its commands from the input"
+    return forms, unclear
+
+
+def _words_everywhere(cmd: str, depth: int = 0) -> list[Word]:
+    """Every word of a command as the shell reads it (quotes and backslashes gone), redirect targets and assignments
+    included, and the words of any text that may be run as a command again (bash -c '...')."""
+    toks, _ = _tokens(cmd)
+    words = [t for t in toks if isinstance(t, Word)]
+    out = list(words)
+    if depth < 3:
+        for w in words:
+            if any(ch in w.text for ch in " \t\n'\"\\;&|$`"):
+                out += _words_everywhere(w.text, depth + 1)
     return out
 
 
@@ -497,18 +612,23 @@ class Permissions:
     def check_command(self, cmd: str) -> Decision:
         parsed = parse(cmd)
         denies = self._active("deny", "bash")
+        hard = parsed.unclear
         if denies:
-            lines = [_line(f) for seg in parsed.segments for f in _deny_forms([w.text for w in seg.words])]
-            if parsed.unclear:
-                lines += [_line(f) for seg in parse(_flat(cmd)).segments for f in _deny_forms([w.text for w in seg.words])]
+            lines: list[str] = []
+            for seg in parsed.segments:
+                forms, why = _readings(seg.words)
+                lines += [_line(f) for f in forms]
+                hard = hard or why
+            if hard:
+                lines += [_line(f) for seg in parse(_flat(cmd)).segments for f in _readings(seg.words)[0]]
             for line in lines:
                 for r in denies:
                     if r.matches_command_line(line):
                         return Decision("deny", r)
-        if any(m in cmd for m in PROTECTED_MARKS):
+        if self.names_own_files(cmd):
             return Decision("unclear", None, OWN_SETTINGS)
-        if denies and parsed.unclear:
-            return Decision("unclear", None, f"it is hard to read ({parsed.unclear}), and your rules never allow some commands")
+        if denies and hard:
+            return Decision("unclear", None, f"it is hard to read ({hard}), and your rules never allow some commands")
         if parsed.unclear or not parsed.segments:
             return Decision("ask", None, parsed.unclear)
         allows = self._active("allow", "bash")
@@ -536,9 +656,12 @@ class Permissions:
         return out
 
     def can_remember_here(self, cmd: str) -> bool:
-        """Offer "always allow this command in this folder": the folder is trusted, or nobody was asked yet and it has no
-        allow rules of its own that trusting it would switch on; and the command can be pinned down exactly."""
-        if self.problem or self.trust is False or (self.trust is None and self.project_allows()):
+        """Offer "always allow this command in this folder": the folder is trusted, or nobody was asked yet and trusting
+        it would switch on nothing of its own (no allow rules, skills or commands: the trust question lists those); and
+        the command can be pinned down exactly."""
+        if self.problem or self.trust is False:
+            return False
+        if self.trust is None and (self.project_allows() or own_skills_and_commands(self.root)):
             return False
         return bool(self.exact_rules(cmd)) and self.check_command(cmd).verdict == "ask"
 
@@ -571,6 +694,33 @@ class Permissions:
                     return Decision("ask")  # never outside the folder by an allow rule
                 return Decision("allow", r)
         return Decision("ask")
+
+    def names_own_files(self, cmd: str) -> bool:
+        """A command that names one of Rooks' own rule files or their folders, however it is spelled: quotes and
+        backslashes (.rooks/set''tings.json), a cd first (cd .rooks), a path with ./ or //, a VAR=.rooks, or inside
+        bash -c '...'. A program the command starts can still write them; this is a guard, not a sandbox."""
+        if any(m in cmd for m in PROTECTED_MARKS):
+            return True
+        from .config import config_path
+
+        own_dirs = {Path(os.path.realpath(self.root / ".rooks")), Path(os.path.realpath(config_path().parent))}
+        for w in _words_everywhere(cmd) + _words_everywhere(_flat(cmd)):
+            t = w.text
+            if any(m in t for m in PROTECTED_MARKS) or ".config/ai-workspace" in t:
+                return True
+            if w.dynamic and ("settings.json" in t or "rooks" in t):
+                return True
+            for part in {t, *re.split(r"[=:]", t)[1:]}:
+                if not part or "\0" in part:
+                    continue
+                q = Path(os.path.expanduser(part))
+                try:
+                    q = Path(os.path.realpath(q if q.is_absolute() else self.root / q))
+                except (OSError, ValueError):
+                    continue
+                if q in own_dirs or self.protected(q):
+                    return True
+        return False
 
     def protected(self, p: Path) -> bool:
         """Rooks' own rule files: the folder's .rooks/settings.json and hooks, and the user's config folder (rooks.toml,
@@ -654,18 +804,23 @@ SHAPES = ('Shapes: bash(pytest *) a command and anything after it, bash(npm test
           'deny = [...]), or in this folder\'s .rooks/settings.json.')
 
 
+def own_skills_and_commands(root: Path) -> list:
+    """The folder's own skills and commands (skills.py), which trusting the folder turns on."""
+    from .skills import Library
+
+    lib = Library(root)
+    return [i for i in lib.all("skills") + lib.all("commands") if i.project]
+
+
 def ask_trust(root: Path, ask=input, say=print) -> bool | None:
     """The one-time question for a folder whose own rules would let things run without asking, or that brings skills
     and commands of its own (skills.py). Returns the stored answer (asking only when there is none), or None when the
     folder has nothing of its own that trust would turn on."""
-    from .skills import Library
-
     p = Permissions([], [], root)
     if p.trust is not None:
         return p.trust
     allows = p.project_allows()
-    lib = Library(root)
-    own = [i for i in lib.all("skills") + lib.all("commands") if i.project]
+    own = own_skills_and_commands(root)
     if not allows and not own:
         return None
     if allows:

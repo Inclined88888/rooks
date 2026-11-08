@@ -219,20 +219,22 @@ def _input_price(model: str, tokens_in: int, overrides: dict, local: bool) -> tu
 
 def cache_price(model: str, overrides: dict, local: bool, tokens_in: int = 0) -> tuple[float | None, float | None]:
     """USD per million cached input tokens [read, written], each None when unknown. Never guessed: a model with a
-    price but no cached price (a [prices] entry with two numbers, a model outside the tables) has None here."""
+    price but no cached price (a [prices] entry with two numbers, a model outside the tables) has None here, except a
+    Claude model, whose cached prices follow Anthropic's published rule from its input price (ANTHROPIC_CACHE), its
+    [prices] entry's included."""
     if local:
         return (0.0, 0.0)
+    bare = model.split("/")[-1]
+    p = _input_price(model, tokens_in, overrides, local)
+    rule = ((round(p[0] * ANTHROPIC_CACHE[0], 6), round(p[0] * ANTHROPIC_CACHE[1], 6))
+            if bare.startswith("claude-") and p is not None else (None, None))
     if model in overrides:
         o = list(overrides[model])
-        return (float(o[2]) if len(o) > 2 else None, float(o[3]) if len(o) > 3 else None)
+        return (float(o[2]) if len(o) > 2 else rule[0], float(o[3]) if len(o) > 3 else rule[1])
     listed = _known(model, CACHE_PRICES)
     if listed is not None:
         return listed
-    bare = model.split("/")[-1]
-    p = _input_price(model, tokens_in, overrides, local)
-    if bare.startswith("claude-") and p is not None:  # Anthropic's published rule, from this request's input price
-        return (round(p[0] * ANTHROPIC_CACHE[0], 6), round(p[0] * ANTHROPIC_CACHE[1], 6))
-    return (None, None)
+    return rule  # Anthropic's published rule for a Claude model, from this request's input price; else unknown
 
 
 def cost(model: str, tokens_in: int, tokens_out: int, overrides: dict, local: bool,

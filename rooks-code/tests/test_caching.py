@@ -187,3 +187,16 @@ def test_cached_price_can_be_set_in_the_config(project, fake, tmp_path):
     assert r.returncode == 0, r.stderr
     # 1,000 x $1 + 9,000 x $0.10 + 100 x $2 = $0.0021
     assert [c["usd_cost"] for c in calls(project)] == [0.0021]
+
+
+def test_a_claude_model_priced_with_two_numbers_gets_anthropics_cache_rule():
+    """[prices] claude-sonnet-4-5 = [3, 15]: cached input follows Anthropic's published rule from that input price
+    (a read 0.1x, a write 1.25x), so the dollar cap keeps counting once the cache is used."""
+    from rooks_code import providers
+
+    over = {"claude-sonnet-4-5": [3, 15]}
+    assert providers.cost("claude-sonnet-4-5", 100000, 1000, over, False, 90000, 5000) == 0.07575
+    assert providers.cost("claude-sonnet-4-5", 100000, 1000, {"claude-sonnet-4-5": [6, 30]}, False, 90000, 5000) == 0.1515
+    assert providers.cost("claude-sonnet-4-5", 100000, 1000, {"claude-sonnet-4-5": [3, 15, 0.5]}, False, 90000, 5000) \
+        == round((5000 * 3 + 90000 * 0.5 + 5000 * 3.75 + 1000 * 15) / 1e6, 6)  # a given read price is used as given
+    assert providers.cost("my-model", 100000, 1000, {"my-model": [3, 15]}, False, 90000, 0) is None  # never guessed

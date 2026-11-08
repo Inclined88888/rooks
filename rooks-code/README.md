@@ -195,9 +195,11 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
   folders and dry run; a refused step counts as a denial (exit code 3). Commands are read the way the shell reads them:
   `pytest; rm -rf x`, `pytest && curl ...`, `$(...)`, backticks, pipes, `VAR=value pytest` and a redirect to a file
   never match an allow rule unless every part does (only `2>&1` and `> /dev/null` are fine); when in doubt Rooks asks.
-  A deny rule sees through `sudo`, `env`, `xargs`, `find -exec`, `bash -c '...'`, full paths (`/bin/rm`), quotes and
-  backslashes. A command too hard to read (the program's name in a variable, `eval`) is asked about even in
-  auto-accept while any command deny rule exists. A rule matches the command line: a script or program that a command
+  A deny rule sees through `sudo`, `env`, `busybox`, `unshare`, `fakeroot` and similar, `xargs`, `find -exec`,
+  `bash -c '...'` (also `bash -c -- '...'`), `su -c`, `script -c`, full paths (`/bin/rm`), quotes and backslashes. A
+  command too hard to read is asked about even in auto-accept while any command deny rule exists: the program's name
+  in a variable (also behind `sudo`), `$'...'`, `{rm,-rf,x}`, `eval`, `bash -c "$X"`, or a shell that reads its
+  commands from the input (`... | bash -s`, `| sh -`, `| sudo -s`, `| su`). A rule matches the command line: a script or program that a command
   starts can still do anything, so deny rules are a guard, not a sandbox (`sandbox = "project"` is the one that keeps
   writes in the folder). `/permissions` shows the rules in plain words; `/permissions help` how to write one.
 * **A folder's own rules need your trust.** A project can keep rules in `.rooks/settings.json`
@@ -205,13 +207,15 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
   you say you trust the folder: a one-time question when `rooks` starts there, kept by the folder's real path in
   `rooks-trust.json` next to `rooks.toml`. Until then they are ignored and Rooks says so; `/permissions trust` and
   `/permissions untrust` change it. A copied repository cannot grant itself anything. Rooks' own rule files are never
-  changed by the agent unasked: the file tools cannot write `.rooks`, and a command naming `.rooks/settings`,
-  `rooks.toml` or the trust file is asked about in every mode.
+  changed by the agent unasked: the file tools cannot write `.rooks`, and a command naming `.rooks`, `rooks.toml`, the
+  trust file or the config folder is asked about in every mode, however it is spelled (`.rooks/set''tings.json`,
+  `cd .rooks && ...`, `./.rooks//settings.json`, `D=.rooks`, inside `bash -c`). A program that a command starts (a
+  script, `python -c`) can still write them: this is a guard, not a sandbox.
 * **Always allow here.** For a command, the question also offers `h`, "Always allow this command in this folder": it
   writes one exact allow rule per part of the command (`bash(npm test)`; a `*` in it stays a literal star) to the
   folder's `.rooks/settings.json`. It is offered when you trust the folder, or nobody was asked yet and the folder has
-  no allow rules of its own (then choosing it also records that you trust it, and says so); never for a command that
-  cannot be pinned down exactly. The app's Needs you card answers yes or no only.
+  no allow rules, skills or commands of its own (then choosing it also records that you trust it, and says so; a folder
+  with any of those gets the trust question, which lists them); never for a command that cannot be pinned down exactly. The app's Needs you card answers yes or no only.
 * **Dry run.** `--dry-run` (or `/dry-run`) shows everything that would change and applies nothing.
 * **Undo.** Every file written during one prompt is snapshotted first; `/undo` or `rooks undo` restores them all and
   deletes files the agent created. Commands cannot be undone (their receipts list what ran).
@@ -224,7 +228,8 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
   cached price in `/cost`, the receipts (`cache_read_tokens`, `cache_write_tokens` on each model call), the headless
   result (`tokens.cache_read`, `tokens.cache_write`) and the dollar cap. A cache write costs more than plain input
   (1.25x on Anthropic), so the cap's estimate for the next call uses that price. Cached prices come from the built-in
-  table; for a model priced under `[prices]`, add them as `[input, output, cache read, cache write]`. If a call used
+  table; for a model priced under `[prices]`, add them as `[input, output, cache read, cache write]` (a Claude model
+  priced with two numbers gets Anthropic's rule from its input price: a read 0.1x, a write 1.25x). If a call used
   the cache and its cached price is unknown, its cost is unknown, never guessed: Rooks says so once, and the dollar
   cap cannot be enforced while the token cap still applies.
 * **Project boundary.** File tools cannot read or write outside the project folder, nor write into `.git` or `.rooks`.
@@ -287,7 +292,7 @@ no. Only yes or no questions are answered; a server asking for anything else is 
   Windows has no containment yet: commands run with your user's permissions and the approval line says so.
   `sandbox = "full"` runs them with your user's permissions everywhere; then approval, dry run and trusted folders
   are the controls.
-* MCP over HTTP/SSE and prompt caching are not implemented yet.
+* MCP over HTTP/SSE is not implemented yet.
 * Skills are learned only through the AI Workspace app; on its own Rooks learns facts, not procedures. Skill files and
   your own commands (above) work without the app, but the app does not show them yet, and a session that runs on
   the app's shared loop (linked to an app chat) does not offer skill files to the model.
