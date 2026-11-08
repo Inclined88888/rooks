@@ -347,8 +347,10 @@ def _wants(plat: str, machine: str):
     return lambda n: n.endswith(".AppImage") and not arm and ("amd64" in n or "x86_64" in n)
 
 
-def pick_native_asset(releases: list, current: str, plat: str, machine: str) -> tuple[str, str] | None:
-    """(name, url) of the newest app installer for this computer in releases at or above this install's version.
+def pick_native_asset(releases: list, current: str, plat: str, machine: str) -> tuple[str, str, str | None] | None:
+    """(name, url, checksums url) of the newest app installer for this computer in releases at or above this install's
+    version. Drafts and prereleases never count. The checksums are the release's SHA256SUMS-desktop (desktop.yml), or
+    None when it has none; install_native installs nothing without them.
 
     Only v* and desktop-v* tags count: rooks-native-v0.3.0's Rooks_0.3.0_aarch64.dmg is the Ask palette, not the app.
     A release older than this install is the old app and would replace a newer one.
@@ -358,20 +360,22 @@ def pick_native_asset(releases: list, current: str, plat: str, machine: str) -> 
     found = []
     for rel in releases or []:
         ver = _tag_version(str(rel.get("tag_name") or ""))
-        if not ver or ver < floor or rel.get("draft"):
+        if not ver or ver < floor or rel.get("draft") or rel.get("prerelease"):
             continue
-        for a in rel.get("assets", []):
+        assets = rel.get("assets", [])
+        sums = next((a["browser_download_url"] for a in assets if a.get("name") == SUMS), None)
+        for a in assets:
             if want(str(a.get("name", ""))):
-                found.append((ver, a["name"], a["browser_download_url"]))
+                found.append((ver, a["name"], a["browser_download_url"], sums))
                 break
     if not found:
         return None
-    _, name, url = max(found, key=lambda f: f[0])
-    return name, url
+    _, name, url, sums = max(found, key=lambda f: f[0])
+    return name, url, sums
 
 
-def native_asset(repo: str, current: str) -> tuple[str, str] | None:
-    """(name, url) of a published native installer for this computer, if a release at or above `current` has one."""
+def native_asset(repo: str, current: str) -> tuple[str, str, str | None] | None:
+    """(name, url, checksums url) of a published native installer for this computer, if a release at or above `current` has one."""
     try:
         req = urllib.request.Request(f"https://api.github.com/repos/{repo}/releases?per_page=30",
                                      headers={"Accept": "application/vnd.github+json", "User-Agent": "ai-workspace-installer"})
@@ -384,32 +388,53 @@ def native_asset(repo: str, current: str) -> tuple[str, str] | None:
 
 def ask_shell(have_window: bool, interactive: bool, ask=None) -> str | None:
     """Where `ai-workspace` opens Rooks when there is no Rooks app: "window" (a Chrome or Edge window of its own) or
-    "browser" (the usual browser). Asked once, only with someone at the terminal; None means no answer, and the
-    launcher then asks too (never a window nobody chose)."""
+    "browser" (the usual browser). Asked once, only with someone at the terminal; None means no answer (nobody replied
+    in time, or the terminal closed), and the launcher then asks too (never a window nobody chose). Only an Enter the
+    person pressed takes the first choice."""
     if not have_window:
         return "browser"  # no Chrome or Edge: the usual browser is the only way, nothing to ask
     if not interactive:
         return None
     ask = ask or tty_ask
-    reply = (ask(f"{QUESTION}\n  1. A Chrome or Edge window of its own\n  2. My usual browser\nChoose 1 or 2 [1]: ") or "").strip().lower()
+    raw = ask(f"{QUESTION}\n  1. A Chrome or Edge window of its own\n  2. My usual browser\nChoose 1 or 2 [1]: ")
+    if not raw:  # None: nobody answered in time; "": the terminal closed before a line came
+        return None
+    reply = raw.strip().lower()
     return "browser" if reply in ("2", "b", "browser", "usual") else "window"
 
 
-def tty_ask(prompt: str) -> str:
-    """Read one answer from the person at the terminal, also when this runs from `curl ... | bash` (stdin is the
-    script then). Empty after 60 seconds."""
+TTY = "/dev/tty"
+ASK_WAIT_S = 60.0
+
+
+def tty_ask(prompt: str) -> str | None:
+    """Read one line from the person at the terminal, also when this runs from `curl ... | bash` (stdin is the script
+    then), with its newline: "\n" is an Enter. None when nobody answers within ASK_WAIT_S or there is no terminal."""
     if WIN:
-        return input(prompt) if sys.stdin.isatty() else ""
+        if not sys.stdin.isatty():
+            return None
+        try:
+            return input(prompt) + "\n"  # input() drops the newline an Enter typed
+        except EOFError:
+            return None
     try:
         import select
 
-        with open("/dev/tty", "r+", encoding="utf-8") as tty:
-            tty.write(prompt)
-            tty.flush()
-            ready, _, _ = select.select([tty], [], [], 60)
-            return tty.readline() if ready else ""
+        # a raw descriptor: open(..., "r+") on a terminal raises (a terminal cannot seek), which used to read as no answer
+        fd = os.open(TTY, os.O_RDWR | getattr(os, "O_NOCTTY", 0))
     except OSError:
-        return ""
+        return None
+    try:
+        os.write(fd, prompt.encode("utf-8"))
+        ready, _, _ = select.select([fd], [], [], ASK_WAIT_S)
+        if not ready:
+            return None
+        line = os.read(fd, 4096).decode("utf-8", "replace")  # a terminal hands over one whole line
+        return line or None
+    except OSError:
+        return None
+    finally:
+        os.close(fd)
 
 
 def can_ask() -> bool:
@@ -481,16 +506,58 @@ def remove_stale_desktop_app(keep: Path | None = None) -> None:
                 "or the old one keeps opening.")
 
 
+SUMS = "SHA256SUMS-desktop"
+
+
+class NotInstalled(Exception):
+    """The Rooks app was found but not installed; the message says why in plain words."""
+
+
+def fetch_text(url: str) -> str:
+    req = urllib.request.Request(url, headers={"User-Agent": "ai-workspace-installer"})
+    with urllib.request.urlopen(req, timeout=30) as r:  # noqa: S310 - GitHub release asset over https
+        return r.read(1_000_000).decode("utf-8", "replace")
+
+
+def expected_sha256(sums: str, name: str) -> str | None:
+    """The SHA-256 a `sha256sum` listing gives for `name`, or None."""
+    for line in sums.splitlines():
+        parts = line.strip().split(None, 1)
+        if len(parts) == 2 and parts[1].lstrip("*").strip() == name and len(parts[0]) == 64:
+            return parts[0].lower()
+    return None
+
+
+def _sha256(path: Path) -> str:
+    import hashlib
+
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
 def install_native(repo: str, home: Path, current: str) -> str:
+    """Install the published Rooks app for this computer: "" when none is published, its place when installed. It is
+    run only when its SHA-256 matches the release's own checksums; NotInstalled says why otherwise."""
     found = native_asset(repo, current)
     if not found:
         return ""
-    name, url = found
+    name, url, sums_url = found
+    if not sums_url:
+        raise NotInstalled("its release has no checksums to check it against")
     say(f"Rooks app: downloading {name}…")
-    _quit_desktop_app()
     tmp = Path(tempfile.mkdtemp())
     f = tmp / name
     urllib.request.urlretrieve(url, f)  # noqa: S310 - GitHub release asset over https
+    want = expected_sha256(fetch_text(sums_url), name)
+    if not want:
+        raise NotInstalled("its release's checksums do not list it")
+    if _sha256(f) != want:
+        f.unlink(missing_ok=True)
+        raise NotInstalled("the download did not match its checksum")
+    _quit_desktop_app()
     if MAC:
         mnt = tmp / "mnt"
         run(["hdiutil", "attach", "-nobrowse", "-quiet", "-mountpoint", str(mnt), str(f)])
@@ -588,6 +655,32 @@ def read_install(home: Path) -> dict:
         return {}
 
 
+def app_step(native_flag: str, repo: str, home: Path, current: str) -> str:
+    """Step 4: the Rooks app. Says one true line: installed, not installed and why, or none published yet. Returns the
+    app's place, or "". With --native yes a download that failed or did not check out is raised."""
+    if native_flag == "no":
+        remove_stale_desktop_app()
+        say(f"{NAME} app: not installed (--native no)")
+        return ""
+    try:
+        native = install_native(repo, home, current)
+    except NotInstalled as e:
+        say(f"{NAME} app: not installed, because {e}.")
+        if native_flag == "yes":
+            raise
+        return ""
+    except (OSError, subprocess.CalledProcessError) as e:
+        if native_flag == "yes":
+            raise
+        say(f"{NAME} app: the download did not finish ({e.__class__.__name__}), so it is not installed this time.")
+        return ""
+    if native:
+        say(f"{NAME} app: {native}")
+    else:
+        say(f"{NAME} app: none published for this computer at version {current} or newer yet.")
+    return native
+
+
 def main() -> int:
     a = build_parser().parse_args()
     src, home, bin_dir = Path(a.src).resolve(), Path(a.home).expanduser(), Path(a.bin).expanduser()
@@ -605,23 +698,12 @@ def main() -> int:
     step("3/5  A browser for Rooks Browser")
     browser = ensure_browser(a.no_browser)
     step(f"4/5  The {NAME} app")
-    native = ""
-    if a.native == "no":
-        remove_stale_desktop_app()
-        say(f"{NAME} app: not installed (--native no)")
-    else:
-        try:
-            native = install_native(a.repo, home, current)
-        except (OSError, subprocess.CalledProcessError) as e:
-            if a.native == "yes":
-                raise
-            say(f"{NAME} app: the download did not finish ({e.__class__.__name__}), so it is not installed this time.")
-        if native:
-            say(f"{NAME} app: {native}")
-        else:
-            say(f"{NAME} app: none published for this computer at version {current} or newer yet.")
-            if a.native == "yes":
-                return 1
+    try:
+        native = app_step(a.native, a.repo, home, current)
+    except NotInstalled:
+        return 1
+    if a.native == "yes" and not native:
+        return 1
     shell = chosen_shell(a.shell, before)  # kept with the app too, for the day it is not there
     if not native:
         if not shell:

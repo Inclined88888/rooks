@@ -83,7 +83,7 @@ def test_installer_asks_once_and_never_picks_a_window_on_its_own():
 
     def answer(text):
         asked.append(text)
-        return ""
+        return "\n"  # the person pressed Enter
 
     assert helper.ask_shell(have_window=True, interactive=False, ask=answer) is None  # no terminal: no silent choice
     assert asked == []
@@ -92,6 +92,90 @@ def test_installer_asks_once_and_never_picks_a_window_on_its_own():
     assert helper.ask_shell(have_window=True, interactive=True, ask=lambda t: "2") == "browser"
     assert helper.ask_shell(have_window=False, interactive=True, ask=answer) == "browser"  # nothing to choose
     assert len(asked) == 1
+
+
+def test_no_answer_is_not_a_choice():
+    """Review finding: tty_ask gave "" after 60 s with nobody there, and ask_shell read "" as Enter, so a person who ran
+    curl | bash and walked away got a Chrome window every launch. No answer stays no answer (the launcher asks later);
+    only an Enter the person pressed takes the first choice."""
+    assert helper.ask_shell(have_window=True, interactive=True, ask=lambda t: None) is None
+    assert helper.ask_shell(have_window=True, interactive=True, ask=lambda t: "") is None  # the terminal closed
+    assert helper.ask_shell(have_window=True, interactive=True, ask=lambda t: "\n") == "window"
+    assert helper.ask_shell(have_window=True, interactive=True, ask=lambda t: "2\n") == "browser"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="a pseudo terminal")
+def test_tty_ask_says_nobody_answered_after_the_wait(monkeypatch):
+    import os
+    import pty
+
+    master, slave = pty.openpty()
+    try:
+        monkeypatch.setattr(helper, "TTY", os.ttyname(slave))
+        monkeypatch.setattr(helper, "ASK_WAIT_S", 0.3)
+        assert helper.tty_ask("Choose 1 or 2 [1]: ") is None
+        os.write(master, b"2\n")
+        assert (helper.tty_ask("Choose 1 or 2 [1]: ") or "").strip() == "2"
+    finally:
+        os.close(master)
+        os.close(slave)
+
+
+def test_native_asset_skips_prereleases_and_names_the_checksums():
+    pre = _rel("v1.0.7", "Rooks_1.0.7_amd64.AppImage")
+    pre["prerelease"] = True
+    assert helper.pick_native_asset([pre], "1.0.6", "linux", "x86_64") is None
+    rel = _rel("v1.0.7", "Rooks_1.0.7_amd64.AppImage", "SHA256SUMS-desktop")
+    name, url, sums = helper.pick_native_asset([rel], "1.0.6", "linux", "x86_64")
+    assert name == "Rooks_1.0.7_amd64.AppImage" and sums.endswith("/SHA256SUMS-desktop")
+    assert helper.pick_native_asset([_rel("v1.0.7", "Rooks_1.0.7_amd64.AppImage")], "1.0.6", "linux", "x86_64")[2] is None
+
+
+def _fake_release(monkeypatch, tmp_path, body: bytes, sums: str | None):
+    import hashlib
+
+    monkeypatch.setattr(helper, "MAC", False)
+    monkeypatch.setattr(helper, "WIN", False)
+    monkeypatch.setattr(helper, "_quit_desktop_app", lambda: None)
+    monkeypatch.setattr(helper, "native_asset", lambda repo, current: (
+        "Rooks_1.0.7_amd64.AppImage", "https://example.invalid/a", None if sums is None else "https://example.invalid/s"))
+    monkeypatch.setattr(helper.urllib.request, "urlretrieve", lambda url, f: Path(f).write_bytes(body))
+    real = hashlib.sha256(body).hexdigest()
+    monkeypatch.setattr(helper, "fetch_text", lambda url: (sums or "").replace("REAL", real))
+
+
+def test_the_native_app_is_installed_only_when_its_checksum_matches(monkeypatch, tmp_path):
+    """Review finding: the native installer, now downloaded and run by default, had no checksum check."""
+    home = tmp_path / "home"
+    _fake_release(monkeypatch, tmp_path, b"the app", "0" * 64 + "  Rooks_1.0.7_amd64.AppImage\n")
+    with pytest.raises(helper.NotInstalled) as e:
+        helper.install_native("o/r", home, "1.0.6")
+    assert "checksum" in str(e.value)
+    assert not (home / "bin" / "Rooks.AppImage").exists()
+    _fake_release(monkeypatch, tmp_path, b"the app", None)
+    with pytest.raises(helper.NotInstalled):
+        helper.install_native("o/r", home, "1.0.6")
+    assert not (home / "bin" / "Rooks.AppImage").exists()
+    _fake_release(monkeypatch, tmp_path, b"the app", "REAL  Rooks_1.0.7_amd64.AppImage\nREAL  other\n")
+    assert helper.install_native("o/r", home, "1.0.6") == str(home / "bin" / "Rooks.AppImage")
+    assert (home / "bin" / "Rooks.AppImage").read_bytes() == b"the app"
+
+
+def test_a_cut_download_says_one_true_thing(monkeypatch, tmp_path, capsys):
+    """Review finding: a failed download said "the download did not finish" and then "none published", which is false."""
+    def cut(repo, home, current):
+        raise OSError("network cut")
+
+    monkeypatch.setattr(helper, "install_native", cut)
+    assert helper.app_step("auto", "o/r", tmp_path, "1.0.6") == ""
+    out = capsys.readouterr().out
+    assert "did not finish" in out and "none published" not in out
+    monkeypatch.setattr(helper, "install_native", lambda repo, home, current: "")
+    assert helper.app_step("auto", "o/r", tmp_path, "1.0.6") == ""
+    assert "none published" in capsys.readouterr().out
+    monkeypatch.setattr(helper, "install_native", cut)
+    with pytest.raises(OSError):
+        helper.app_step("yes", "o/r", tmp_path, "1.0.6")
 
 
 def test_installer_names_and_finds_both_old_and_new_apps(tmp_path, monkeypatch):
