@@ -140,7 +140,8 @@ test("the last answer per page is kept in memory and asked again in the backgrou
 
 test("every page the app links to has a route: the packs, and Extra tools away from the service's own /mcp", () => {
   for (const p of ["/packs", "/packs/legal", "/packs/study", "/packs/trade", "/extra-tools"]) assert.ok(registry.pageAt(p), `${p} is a page`);
-  assert.ok(registry.morePages(null).some((g) => g.pages.some((p) => p.path === "/packs")), "Packs is in the More sheet");
+  // Packs is a developer page (developer-tools.test.mjs): in the More sheet while "Show developer tools" is on
+  assert.ok(registry.morePages({ dev_tools: true }).some((g) => g.pages.some((p) => p.path === "/packs")), "Packs is in the More sheet");
   assert.ok(!registry.pageAt("/mcp") && !registry.pageAt("/tools"), "no page where the service answers a reload itself");
   assert.ok(registry.REDIRECTS.some((r) => r.from === "/mcp" && r.to === "/extra-tools"), "an old /mcp link still lands on Extra tools");
   assert.ok(!registry.REDIRECTS.some((r) => r.from.startsWith("/packs") && r.to === "/assistant"), "the packs no longer bounce to Chat");

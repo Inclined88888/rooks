@@ -23,6 +23,7 @@ import { adoptServerIds, mergeSteps, rebuildTurns, stepTitle, type Row } from ".
 import { Thread, type Fresh } from "../chat/Thread";
 import { followBehavior, isPinned } from "../chat/scroll";
 import { isShortcut } from "../lib/shortcuts";
+import { chatMode, useDevTools } from "../lib/devTools";
 import { Composer } from "../chat/Composer";
 import { ThreadHeader } from "../chat/ThreadHeader";
 import { EmptyChat } from "../chat/EmptyChat";
@@ -137,12 +138,16 @@ function Chat() {
   const { models, defaultRef } = useModels();
   const [broken, setBroken] = useState("");
   const [effort, setEffort] = useEffort();
-  const [workMode, setWorkMode] = useState<WorkMode>(() => {
+  const [savedMode, setWorkMode] = useState<WorkMode>(() => {
     const saved = localStorage.getItem("aiw.workMode");
     return saved === "plan" || saved === "build" ? saved : "chat";
   });
+  // Plan and Build are coding modes: only while "Show developer tools" is on (Settings, Advanced). With it off every
+  // chat is a plain chat, and a Build mode saved earlier does not come back until the switch is on again.
+  const devTools = useDevTools();
+  const workMode = chatMode(savedMode, devTools);
   // The last Code depth, so leaving for Chat and coming back restores Plan or Build.
-  const codeDepth = useRef<"plan" | "build">(workMode === "build" ? "build" : "plan");
+  const codeDepth = useRef<"plan" | "build">(savedMode === "build" ? "build" : "plan");
   const chooseMode = (next: WorkMode) => {
     if (next !== "chat") codeDepth.current = next;
     setWorkMode(next);
@@ -466,7 +471,7 @@ function Chat() {
       <div className="agents-chat-main chat-main">
         <ThreadHeader
           title={title} cid={cid} listOpen={listOpen} onToggleList={toggleList}
-          workMode={workMode} onMode={chooseMode} codeDepth={codeDepth.current}
+          workMode={workMode} onMode={chooseMode} codeDepth={codeDepth.current} devTools={devTools}
           model={model} onModel={setModel} models={models} defaultRef={defaultRef} isPlan={isPlan} effort={effort} onEffort={setEffort}
           busy={busy} showRoutines={showRoutines} onRoutines={() => { setShowRoutines((v) => !v); setRoutines(null); }}
           onTerminal={() => api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } })

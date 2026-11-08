@@ -20,6 +20,8 @@ export type ThreadHeaderProps = {
   workMode: WorkMode;
   onMode: (m: WorkMode) => void;
   codeDepth: "plan" | "build";
+  /** "Show developer tools" (Settings, Advanced): the Chat and Code tabs, Plan and Build, Code and Continue in terminal. */
+  devTools: boolean;
   model: string;
   onModel: (ref: string) => void;
   models: Model[];
@@ -50,18 +52,20 @@ export function ThreadHeader(p: ThreadHeaderProps) {
         <div className="toolbar-title truncate">{p.title}</div>
         <span className="agents-local-pill" title="Work stays on this computer">On this computer</span>
         <div className="spacer" />
-        <div className="tabs mode-tabs agents-mode-head" role="group" aria-label="Mode" title="Chat is for the day. Code is for changing a project, and it asks before it changes files.">
-          <button type="button" className={`tab ${p.workMode === "chat" ? "active" : ""}`} onClick={() => p.onMode("chat")}>Chat</button>
-          <button type="button" className={`tab ${p.workMode !== "chat" ? "active" : ""}`} onClick={() => { if (p.workMode === "chat") p.onMode(p.codeDepth); }}>Code</button>
-        </div>
-        {p.workMode !== "chat" && (
+        {p.devTools && (
+          <div className="tabs mode-tabs agents-mode-head" role="group" aria-label="Mode" title="Chat is for the day. Code is for changing a project, and it asks before it changes files.">
+            <button type="button" className={`tab ${p.workMode === "chat" ? "active" : ""}`} onClick={() => p.onMode("chat")}>Chat</button>
+            <button type="button" className={`tab ${p.workMode !== "chat" ? "active" : ""}`} onClick={() => { if (p.workMode === "chat") p.onMode(p.codeDepth); }}>Code</button>
+          </div>
+        )}
+        {p.devTools && p.workMode !== "chat" && (
           <div className="tabs mode-tabs agents-mode-head" role="group" aria-label="Code">
             <button type="button" className={`tab ${p.workMode === "plan" ? "active" : ""}`} onClick={() => p.onMode("plan")}>Plan</button>
             <button type="button" className={`tab ${p.workMode === "build" ? "active" : ""}`} onClick={() => p.onMode("build")}>Build</button>
           </div>
         )}
-        <span className="sr-only">Chat is for the day. Code is for changing a project, and it asks before it changes files.</span>
-        <ChatMenu showRoutines={p.showRoutines} onRoutines={p.onRoutines} cid={p.cid} busy={p.busy}
+        {p.devTools && <span className="sr-only">Chat is for the day. Code is for changing a project, and it asks before it changes files.</span>}
+        <ChatMenu showRoutines={p.showRoutines} onRoutines={p.onRoutines} cid={p.cid} busy={p.busy} devTools={p.devTools}
           onTerminal={p.onTerminal} onBeside={p.onBeside} onNewChat={p.onNewChat} onStop={p.onStop} onFocusComposer={p.onFocusComposer} />
       </div>
       <div className="chat-chips" aria-label="This chat">
@@ -78,8 +82,8 @@ export function ThreadHeader(p: ThreadHeaderProps) {
   );
 }
 
-function ChatMenu({ showRoutines, onRoutines, cid, busy, onTerminal, onBeside, onNewChat, onStop, onFocusComposer }: {
-  showRoutines: boolean; onRoutines: () => void; cid: number | null; busy: boolean;
+function ChatMenu({ showRoutines, onRoutines, cid, busy, devTools, onTerminal, onBeside, onNewChat, onStop, onFocusComposer }: {
+  showRoutines: boolean; onRoutines: () => void; cid: number | null; busy: boolean; devTools: boolean;
   onTerminal: () => void; onBeside: () => void; onNewChat: () => void; onStop: () => void; onFocusComposer: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -100,9 +104,9 @@ function ChatMenu({ showRoutines, onRoutines, cid, busy, onTerminal, onBeside, o
           <button type="button" role="menuitem" disabled={!busy} onClick={go(onStop)}>Stop <span className="chat-menu-keys"><Kbd>Esc</Kbd></span></button>
           <hr />
           <button type="button" role="menuitem" className={showRoutines ? "on" : ""} onClick={go(onRoutines)}>Routines</button>
-          <button type="button" role="menuitem" onClick={go(() => navigate("/code"))}>Code</button>
+          {devTools && <button type="button" role="menuitem" onClick={go(() => navigate("/code"))}>Code</button>}
           <button type="button" role="menuitem" onClick={go(onBeside)}>Open mail beside</button>
-          {cid ? <button type="button" role="menuitem" onClick={go(onTerminal)}><SquareTerminal size={14} /> Continue in terminal</button> : null}
+          {devTools && cid ? <button type="button" role="menuitem" onClick={go(onTerminal)}><SquareTerminal size={14} /> Continue in terminal</button> : null}
           <hr />
           <button type="button" role="menuitem" onClick={go(() => navigate("/assistant-memory"))}>Memory</button>
           <button type="button" role="menuitem" onClick={go(() => navigate("/assistant-settings"))}>Chat settings</button>

@@ -20,6 +20,7 @@ import { MoreSheet } from "./shell/MoreSheet";
 import { Loading, Page, ToastHost } from "./ui";
 import { pageComponent, warmWhenIdle } from "./pages/warm";
 import { createKeyReader, SHORTCUTS } from "./lib/shortcuts";
+import { setDevTools } from "./lib/devTools";
 import { IS_MAC, MOD_KEY } from "./keys";
 import { registerStageSurfaces } from "./stage/surfaces";
 import { NeedsYouSheet } from "./needs/NeedsYou";
@@ -49,6 +50,8 @@ export type Status = {
   signins_offered?: boolean;
   welcome_pending?: boolean;
   needs_models?: boolean;
+  /** Settings, Advanced, "Show developer tools": off on a new install, kept by the install. */
+  dev_tools?: boolean;
 };
 
 /** While Rooks Desk is driving the computer (from any page, chat or Rooks Code), a small still notice says so and offers Stop. */
@@ -121,6 +124,7 @@ export default function App() {
     api<Status>("/status")
       .then((s) => {
         setStatus(s);
+        setDevTools(!!s.dev_tools);
         setError("");
         // the product name, after the workspace's own name when it has one
         const own = (s.workspace_name || "").trim();

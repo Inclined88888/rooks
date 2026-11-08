@@ -1,24 +1,22 @@
-import { Building2, ExternalLink, Keyboard, MessageSquare, Plug, Search } from "lucide-react";
+import { ExternalLink, Keyboard, Search } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { narrowQuery, useMediaQuery } from "./breakpoints";
 import { MOD_KEY } from "../keys";
-import { morePages, type StatusLike } from "../pages/registry";
+import { externalLinks, morePages, type StatusLike } from "../pages/registry";
 import { warmProps } from "../pages/warm";
 import { openShortcuts } from "./ShortcutsSheet";
 import { Button, Kbd, Sheet, useFocusTrap } from "../ui";
-
-type Links = StatusLike & { chat_url?: string; paperclip_url?: string; hermes_url?: string };
 
 /**
  * Every other page, grouped by section. Above 900px a glass menu drops from the More button at the top right, with
  * the sections side by side; on phones it is a side sheet. Both trap focus and close on Escape. Built from the page
  * registry.
  */
-export function MoreSheet({ open, onClose, status, name, onSearch }: { open: boolean; onClose: () => void; status: Links | null; name: string; onSearch: () => void }) {
+export function MoreSheet({ open, onClose, status, name, onSearch }: { open: boolean; onClose: () => void; status: StatusLike | null; name: string; onSearch: () => void }) {
   const location = useLocation();
   const groups = morePages(status);
-  const extras = status && (status.chat_url || status.paperclip_url || status.hermes_url);
+  const links = externalLinks(status); // Open WebUI, Paperclip, Hermes: only with "Show developer tools" on
   const narrow = useMediaQuery(narrowQuery);
   const footer = (
     <>
@@ -39,13 +37,9 @@ export function MoreSheet({ open, onClose, status, name, onSearch }: { open: boo
               </NavLink>
             );
           })}
-          {g.section === "Advanced" && extras && (
-            <>
-              {status?.chat_url && <a className="more-link" href={status.chat_url} target="_blank" rel="noreferrer"><MessageSquare size={16} aria-hidden="true" /> Open WebUI <ExternalLink size={12} className="more-ext" aria-hidden="true" /></a>}
-              {status?.paperclip_url && <a className="more-link" href={status.paperclip_url} target="_blank" rel="noreferrer"><Building2 size={16} aria-hidden="true" /> Paperclip <ExternalLink size={12} className="more-ext" aria-hidden="true" /></a>}
-              {status?.hermes_url && <a className="more-link" href={status.hermes_url} target="_blank" rel="noreferrer"><Plug size={16} aria-hidden="true" /> Hermes agent <ExternalLink size={12} className="more-ext" aria-hidden="true" /></a>}
-            </>
-          )}
+          {g.section === "Advanced" && links.map((l) => (
+            <a key={l.label} className="more-link" href={l.href} target="_blank" rel="noreferrer"><l.icon size={16} aria-hidden="true" /> {l.label} <ExternalLink size={12} className="more-ext" aria-hidden="true" /></a>
+          ))}
         </div>
       ));
   if (narrow) return <Sheet open={open} onClose={onClose} title={name} side="left" width={300} footer={footer}>{body}</Sheet>;
