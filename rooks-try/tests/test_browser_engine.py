@@ -282,7 +282,8 @@ def _real_engine():
 
 
 REAL = _real_engine()
-needs_chromium = pytest.mark.skipif(REAL is None, reason="no Chromium on this computer")
+needs_chromium = pytest.mark.skipif(REAL is None or sys.platform == "win32",
+                                    reason="no Chromium here, or Windows, where the Room browser is off (design 0007)")
 
 
 def _listening_inodes() -> set[str]:
@@ -480,7 +481,7 @@ def test_an_offline_room_without_bwrap_still_has_no_network(tmp_path):
 
 
 @needs_chromium
-@pytest.mark.skipif(os.getuid() == 0, reason="Chromium will not start as root without bwrap's ordinary id inside")
+@pytest.mark.skipif(getattr(os, "getuid", lambda: -1)() == 0, reason="Chromium will not start as root without bwrap's ordinary id inside")
 def test_real_offline_without_bwrap_loads_nothing(session, served):
     start, _home = session
     s = start(offline=True, bwrap=False)
@@ -488,3 +489,13 @@ def test_real_offline_without_bwrap_loads_nothing(session, served):
     tab = s.new_tab()
     s.navigate(tab, f"http://127.0.0.1:{served}/", wait=True, timeout=10)
     assert "the app itself" not in s.page_text(tab)
+
+
+def test_the_room_loads_where_there_is_no_fcntl():
+    """Windows has no fcntl. The Room (and saving a point, which asks the browser module which caches to skip) must
+    still load there; the browser itself is off on Windows (design 0007)."""
+    import subprocess
+
+    code = "import sys; sys.modules['fcntl'] = None; import rooks_try.browser, rooks_try.store; print('ok')"
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=60)
+    assert out.stdout.strip() == "ok", out.stderr[-800:]

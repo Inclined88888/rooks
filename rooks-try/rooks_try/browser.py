@@ -33,7 +33,6 @@ any one event loop, as the Room's terminals do.
 from __future__ import annotations
 
 import base64
-import fcntl
 import hashlib
 import ipaddress
 import json
@@ -833,7 +832,7 @@ class Session:
         to_r, to_w = os.pipe()
         fr_r, fr_w = os.pipe()
         for fd in (to_w, fr_r):
-            fcntl.fcntl(fd, fcntl.F_SETFD, fcntl.FD_CLOEXEC)
+            os.set_inheritable(fd, False)  # portable; fcntl does not exist on Windows
         try:
             argv, inside = launch_argv(self.engine, self.room_home, person_home=self.person_home, offline=self.offline,
                                        bwrap=bwrap, fds=(to_r, fr_w))
