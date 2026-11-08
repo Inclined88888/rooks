@@ -460,6 +460,7 @@ def test_status_and_every_result_say_which_shell(room_home):
 LOGIN = 'exec "$SHELL" -l'
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="the namespace wrapper and POSIX paths are Linux and macOS only")
 def test_login_argv_is_a_login_shell_in_the_rooms_home(room_home, monkeypatch):
     home = store.guest_home()
     monkeypatch.setattr(shell_mod, "_NAMESPACES", True)
@@ -512,6 +513,7 @@ def test_up_seeds_a_profile_only_when_missing(room_home):
     assert (home / ".profile").read_text() == "# mine\n"  # seeded, never overwritten
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="the namespace wrapper and POSIX paths are Linux and macOS only")
 def test_room_env_drops_secrets_and_keeps_the_rooms_bins_off_the_wrappers_path(room_home):
     """The Room's bins come first inside the Room's shell (login_argv, run_argv, the profile), never on the PATH the
     wrappers are looked up with (tests/test_room_safety.py)."""
