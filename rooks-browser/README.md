@@ -52,7 +52,7 @@ When Chrome or Edge is already installed, nothing else gets downloaded. If neith
 | --- | --- |
 | Rooks Browser with your Chrome or Edge | ≈ 140 MB (Playwright's Python package and driver; a fresh venv measured 140 MB) |
 | … plus Playwright's own Chromium | + ≈ 400 MB on Linux (+ ≈ 270 MB for the headless shell) |
-| The `browser` add-on (browser-use image) | ≈ 2.5 GB |
+| The Docker server's `browser` add-on (this package plus Chromium in a Python image) | not measured yet |
 
 The only dependency is Playwright. Model calls, the HTTP API and the MCP server use the standard library.
 
@@ -133,7 +133,7 @@ rooks-browser serve                                   # http://127.0.0.1:8765, t
 ROOKS_BROWSER_TOKEN=$(openssl rand -hex 24) rooks-browser serve --host 0.0.0.0 --block-private
 ```
 
-It speaks the same job API as the `browser` add-on: `GET /api/providers`, `POST /api/jobs {goal, provider, model,
+It speaks the job API Workbench's Browser page uses: `GET /api/providers`, `POST /api/jobs {goal, provider, model,
 max_steps, allowed_domains, start_url}`, `GET /api/jobs[/{id}]`, `GET /api/jobs/{id}/screenshot`,
 `POST /api/jobs/{id}/cancel` and `DELETE /api/jobs/{id}`. On top of that it adds:
 
@@ -143,7 +143,8 @@ max_steps, allowed_domains, start_url}`, `GET /api/jobs[/{id}]`, `GET /api/jobs/
 * A job may carry `approve: ["submit", …]`, the same as `--approve` on the command line. Only send it from something
   acting on your explicit say-so, such as a button you pressed. Workbench's chat tool never sends it.
 
-To use it from Workbench instead of the `browser` add-on, start it with a token on `0.0.0.0` and set
+The Docker server's `browser` add-on is this server in a container (`rooks-browser/Dockerfile`, port 8100, service
+mode with `--block-private`). To run it on the host instead of the add-on, start it with a token on `0.0.0.0` and set
 `BROWSER_URL=http://host.docker.internal:8765` and `BROWSER_API_KEY=<the same token>` in `.env`. Workbench's Browser page
 and the chat `browse_web` tool then use it as-is. Start the server with `WORKBENCH_URL=http://localhost:3100` in its env: jobs with `provider: "workbench"` call
 `WORKBENCH_URL/v1` with `BROWSER_API_KEY`, so they run on your Workbench model connections and show up in its usage.

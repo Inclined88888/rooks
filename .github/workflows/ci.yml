@@ -117,23 +117,25 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm test
 
-  browser-agent:
-    name: Browser agent tests
+  browser-image:
+    name: Browser add-on image (Rooks Browser in Docker)
     runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: browser-agent
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.12"  # the browser image's Python (browser-agent/Dockerfile)
-          cache: pip
-          cache-dependency-path: browser-agent/pyproject.toml
-      - run: pip install -e ".[server,dev]"
-      - name: Chromium for the pinned Playwright
-        run: python -m playwright install --with-deps chromium
-      - run: python -m pytest -q
+      - name: Build the image the browser add-on uses (docker-compose.yml, profile browser)
+        run: docker build -t rooks-browser-addon rooks-browser
+      - name: Starts in service mode, answers its health check, refuses requests without the token
+        run: |
+          token=$(openssl rand -hex 24)
+          docker run -d --name rb -p 127.0.0.1:8100:8100 -e ROOKS_BROWSER_TOKEN="$token" rooks-browser-addon
+          for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:8100/healthz && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8100/healthz
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8100/api/jobs)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $token" http://127.0.0.1:8100/api/jobs)" = 200
+          docker run --rm --entrypoint rooks-browser rooks-browser-addon doctor
+      - name: Without a token it refuses to listen beyond the container
+        run: |
+          if docker run --rm rooks-browser-addon; then echo "started without a token"; exit 1; fi
 
   image:
     name: Image size, idle RAM and access log

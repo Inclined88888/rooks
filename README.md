@@ -27,7 +27,7 @@ Everything heavier is an **optional add-on, off by default**:
 | `search` | SearXNG | Free private web search (otherwise use a Brave or Tavily key, or none) | small |
 | `codex` | Official Codex CLI 0.163.0 | Explicit CLI task hand-off ([setup](cli-launcher/CODEX.md)) | image size unmeasured |
 | `claude-code` | Official Claude Code 2.1.308 | Explicit CLI task hand-off using the user's own official login ([setup and API](cli-launcher/README.md)) | image size unmeasured |
-| `browser` | browser-use + Chromium | Browser agent page and a `browse_web` tool (or use the lighter [Rooks Browser](rooks-browser/README.md), no image) | ≈ 2.5 GB image |
+| `browser` | [Rooks Browser](rooks-browser/README.md) + Chromium | Browser page and a `browse_web` tool, with approvals (on your own computer the app starts Rooks Browser itself) | image size unmeasured |
 | `local-models` | Ollama in Docker | Local models (on a Mac, native Ollama is faster and is detected by setup) | ≈ 8.5 GB image + models |
 | `openwebui` | Open WebUI | A second chat app with RAG knowledge bases and multi user accounts | ≈ 6.5 GB image |
 | `paperclip` | Paperclip | Upstream company of agents running coding CLIs (Claude Code, Codex, OpenCode) | ≈ 13 GB image |
@@ -228,7 +228,7 @@ Hiring an agent (Agents → New agent) means choosing an adapter, which is the p
 | Gemini CLI | Google models | `GEMINI_API_KEY` |
 | OpenClaw | An [OpenClaw](https://github.com/openclaw/openclaw) gateway you run separately, joined with "Invite an external agent" | the gateway's token |
 
-Paperclip's image ships the Claude Code, Codex, OpenCode and Gemini CLIs. OpenCode reads `paperclip/opencode.json` (mounted read only), which `scripts/sync-opencode-config.sh` writes: one entry per downloaded Ollama model plus the browser agent as an MCP server. **Run that script again after pulling new Ollama models**, then `docker compose restart paperclip`.
+Paperclip's image ships the Claude Code, Codex, OpenCode and Gemini CLIs. OpenCode reads `paperclip/opencode.json` (mounted read only), which `scripts/sync-opencode-config.sh` writes: one entry per downloaded Ollama model plus Workbench's tools as an MCP server. **Run that script again after pulling new Ollama models**, then `docker compose restart paperclip`.
 
 Things to know:
 
@@ -263,7 +263,7 @@ Day to day, use the `./hermes` command from the repository root (same as in [`as
 How it is wired here:
 
 * **Chat:** pick the model `hermes-agent` (new installs; see the note below for existing ones).
-* **Tools:** Workbench (13 tools: notes, tasks, calendar, mail search and drafts) and the browser agent are attached as MCP servers. Hermes cannot send mail, only draft it.
+* **Tools:** Workbench (13 tools: notes, tasks, calendar, mail search and drafts) is attached as an MCP server. Hermes cannot send mail, only draft it, and it has no browser (see the browser add-on below).
 * **Dashboard** at port 3300 (user `admin`, password printed by `setup.sh`, stored as `HERMES_DASHBOARD_PASSWORD` in `.env`): memory, skills, scheduled jobs, sessions, model and messaging setup.
 * **Model:** `scripts/hermes-config.sh` picks Anthropic if `ANTHROPIC_API_KEY` is set, else OpenRouter, else your local `DEFAULT_MODEL`. It runs once; afterwards switch with `./hermes use ...` or the dashboard. `--force` reapplies the defaults.
 
@@ -273,27 +273,40 @@ Requirements and limits, verified in testing:
 * **Small local models can chat but not drive tools.** In testing, a 0.6B model answered a plain question (70 s on CPU) but called tools with malformed arguments until Hermes' loop guard stopped it. Use a cloud model or at least `qwen3:4b` on a GPU for agent work.
 * **Existing installs:** Open WebUI stores connections in its database after first start, so on an install that predates Hermes, add it in Chat → Admin Settings → Connections: URL `http://hermes:8642/v1`, key `HERMES_API_KEY` from `.env`.
 * **Hiring Hermes in Paperclip** (adapter "Hermes Gateway", API URL `http://hermes:8642`, key `HERMES_API_KEY`, Paperclip API URL `http://paperclip:3100`) is **not preconfigured**. Paperclip refuses plain HTTP to any host other than localhost. Your two options: put TLS in front of Hermes, or tick Paperclip's `dangerouslyAllowInsecureRemoteHttp` for that agent, accepting that the traffic is unencrypted on the Docker network between the two containers (it never leaves the machine). That is your call; this setup does not set it for you.
-* Hermes' own browser tools are disabled in this image (no browser installed); it uses the browser agent over MCP instead.
+* Hermes' own browser tools are disabled in this image (no browser installed), and the browser add-on is not shared with it.
 
 ### Browser agent (`browser` add-on)
 
-Give a goal in plain English, for example "Go to weworkremotely.com and find three remote software engineer roles" or "On PCPartPicker find a compatible CPU, motherboard and RAM for an AM5 build". The agent opens a headless Chromium, decides each step with your chosen model, and reports back with the pages it visited.
+The `browser` add-on is [Rooks Browser](rooks-browser/README.md) in a container: the same agent the desktop app starts,
+with the same approvals. (It replaced the older `browser-agent` image, which had different safety rules.) Give a goal
+in plain English, for example "Go to weworkremotely.com and find three remote software engineer roles". The agent opens
+a headless Chromium, decides each step with your chosen model, and reports back with the pages it visited.
 
-* **Workbench → Browser agent:** pick the provider and model, a step limit, and optionally lock it to specific sites. Watch the steps and a live screenshot.
-* **Chat:** the `Browser` tool (`browse_web`, `read_page`) is preconfigured; enable it per chat like the Workbench tool.
-* **Paperclip employees** (OpenCode) and **Hermes** have it as the `browser` MCP server automatically.
-* **Standalone:** `browser-agent/` is a normal Python package with a CLI (`browser-agent run`, `open`, `click`, `type`, `screenshot`, `text`, `links`) and an `examples/` folder. See [browser-agent/README.md](browser-agent/README.md).
+* **Workbench → Browser:** pick the model and a step limit, watch the steps and a live screenshot.
+* **Chat:** Workbench's `browse_web` tool sends the job to the add-on and answers its approvals through Needs you.
+* **What it asks first.** A step that submits a form, buys, sends a message or downloads waits for your yes on the
+  Browser page or in Needs you. No answer in ten minutes is a no.
+* **Not given to Paperclip, Hermes or Open WebUI.** The browser key also answers approvals, and those add-ons run
+  agents on their own, so they do not get it. Browse from Workbench's chat, where a person says yes. (Existing Hermes
+  setups may still list a `browser` tool server; it no longer answers, and can be removed in the Hermes dashboard.)
 
-Model choice: the browser agent uses the models you connected in Workbench. It calls them through Workbench's OpenAI-shaped `/v1` endpoint, so the browser container holds no provider keys, and every browser model call (including browser-use's own self-check call per run) appears in Workbench's usage and run log. From the Browser agent page you pick any connected model; from chat it uses the conversation's model; Paperclip and Hermes runs use Workbench's default model. Claude and Gemini are far more reliable at browsing than small local models; in testing a 0.6B local model invented an answer and claimed success, which is why the UI labels results as the agent's own claim.
+Model choice: jobs from Workbench use the models you connected in Workbench, through its OpenAI-shaped `/v1` endpoint,
+so the browser container holds no provider keys, and every browser model call appears in Workbench's usage and run log.
+Claude and Gemini are far more reliable at browsing than small local models; the UI labels results as the agent's own
+claim.
 
-**Cost control.** Browser model calls are counted in Workbench's usage like any other call (channel `browser`), including runs started by Paperclip employees, which are therefore **outside Paperclip's budgets**. Three limits apply to every caller: `max_steps` per run, `BROWSER_MAX_STEPS_LIMIT` (default 50) as the ceiling for any run, and `BROWSER_MONTHLY_STEP_LIMIT` (default 2000 steps per UTC month, 0 = unlimited). For guaranteed $0, pick a local model.
+**Cost control.** Each job stops after its `max_steps`, and never after more than 50. Model calls are counted in
+Workbench's usage like any other call. For guaranteed $0, pick a local model.
 
-**Safety.** The service refuses IP address URLs and the stack's own hostnames, and its one-off page reads refuse any host that resolves to a private address. That keeps it off your containers and LAN. A public hostname that resolves to a private address could still be reached during an agent run; don't rely on this as your only network boundary on a sensitive LAN. The agent can fill forms and click buttons on public sites, so be specific about what it must not do (buy, post, delete).
+**Safety.** The container runs `rooks-browser serve` in service mode: every request needs `BROWSER_API_KEY`, and it
+refuses localhost, LAN and private addresses and single-word hostnames, which keeps it off the stack's own containers
+(`workbench`, `ollama`, `paperclip`, ...). A public hostname that resolves to a private address could still be reached;
+don't rely on this as your only network boundary on a sensitive LAN.
 
 ### Rooks Browser (no add-on needed)
 
 [Rooks Browser](rooks-browser/README.md) is a lighter, local-first browser agent. It drives your own Chrome or Edge
-through Playwright (≈ 150 MB instead of a 2.5 GB image) and works with OpenAI, Anthropic, OpenRouter, Ollama or your
+through Playwright (≈ 150 MB) and works with OpenAI, Anthropic, OpenRouter, Ollama or your
 Workbench models. Vision models get screenshots, and text-only models work from the page's element list.
 
 * **What it asks first.** It shows every action, and asks before it submits a form, buys, sends a message or logs in.
@@ -301,8 +314,8 @@ Workbench models. Vision models get screenshots, and text-only models work from 
   It never stores or types passwords.
 * **How you reach it:**
   * a CLI: `rooks-browser "task"`
-  * a local HTTP API with the same job API as the `browser` add-on: point `BROWSER_URL` at it and Workbench's Browser
-    page uses it
+  * a local HTTP API, the one the `browser` add-on runs: point `BROWSER_URL` at it and Workbench's Browser page uses
+    it
   * an MCP server for Rooks Code, Claude Code and Codex: `rooks-browser mcp`
 
 ```
@@ -382,7 +395,7 @@ New Anthropic connections use Anthropic's native Messages API. Connections creat
 - Remote access from your phone: a VPN such as Tailscale is the simplest safe option. Add the Tailscale hostname to `PAPERCLIP_ALLOWED_HOSTNAMES`.
 - Workbench is a single owner app. Passwords are hashed with scrypt; mail, CalDAV and provider credentials are encrypted at rest with a key derived from `APP_SECRET`. **Back up `.env`**: if you lose `APP_SECRET`, stored credentials cannot be decrypted and must be re-entered.
 - Ollama, SearXNG, the browser agent and Hermes' API are not published to the host. The Hermes dashboard is (port 3300, basic auth, bound to `BIND_ADDRESS`); it stores API keys, so keep it on localhost or behind a VPN.
-- Hermes can run terminal commands inside its own container. Its tool approvals and loop guards apply, but treat it as having full access to its volume and whatever its tools reach. The browser agent requires `BROWSER_API_KEY` on every request, including MCP.
+- Hermes can run terminal commands inside its own container. Its tool approvals and loop guards apply, but treat it as having full access to its volume and whatever its tools reach. The browser add-on requires `BROWSER_API_KEY` on every request, and only Workbench holds it.
 - The tool server requires `TOOLS_API_KEY` as a bearer token. Its OpenAPI description is readable without the key (it contains no data).
 
 ## Operations
@@ -403,7 +416,7 @@ docker run --rm -v ai-workspace_open-webui:/data -v "$PWD":/backup alpine tar cz
 docker compose stop paperclip && docker run --rm -v ai-workspace_paperclip:/data -v "$PWD":/backup alpine tar czf /backup/paperclip.tgz -C /data . && docker compose start paperclip
 ```
 
-Pin image versions for predictable upgrades with `HERMES_TAG`, `PAPERCLIP_TAG`, `OPEN_WEBUI_TAG`, `OLLAMA_TAG` and `SEARXNG_TAG` in `.env`. The browser agent pins browser-use to one minor series in `browser-agent/pyproject.toml`; raise it and run `pytest` to upgrade.
+Pin image versions for predictable upgrades with `HERMES_TAG`, `PAPERCLIP_TAG`, `OPEN_WEBUI_TAG`, `OLLAMA_TAG` and `SEARXNG_TAG` in `.env`.
 
 ## Development
 

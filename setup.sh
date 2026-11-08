@@ -5,7 +5,7 @@
 #                                       company, notes, tasks, calendar, mail, research)
 #   ./setup.sh --with search,browser    add optional add-ons (comma separated):
 #       search        SearXNG web search without an API key            (~110 MB RAM)
-#       browser       Chromium browser agent                           (~2.4 GB download)
+#       browser       Rooks Browser, the browser agent with approvals   (Chromium, a large download)
 #       local-models  Ollama in Docker (on a Mac prefer the native Ollama app: it uses the GPU)
 #       openwebui     Open WebUI chat app                              (~6.5 GB download)
 #       paperclip     Paperclip company app                            (~13 GB download)
@@ -140,13 +140,10 @@ fi
 if has search; then set_env SEARXNG_URL "http://searxng:8080"; set_env WEBUI_ENABLE_WEB_SEARCH true; else set_env SEARXNG_URL ""; set_env WEBUI_ENABLE_WEB_SEARCH false; fi
 if has codex; then set_env CODEX_URL "http://codex:8110"; else set_env CODEX_URL ""; fi
 if has claude-code; then set_env CLAUDE_CODE_URL "http://claude-code:8110"; else set_env CLAUDE_CODE_URL ""; fi
-if has browser; then
-  set_env BROWSER_URL "http://browser:8100"
-  # Open WebUI's entry for the browser tool server, appended to TOOL_SERVER_CONNECTIONS in docker-compose.yml
-  set_env WEBUI_BROWSER_TOOL ',{"type":"openapi","url":"http://browser:8100/tools","spec_type":"url","spec":"","path":"openapi.json","auth_type":"bearer","key":"'"$(get_env BROWSER_API_KEY)"'","config":{"enable":true},"info":{"id":"browser","name":"Browser","description":"A browser agent that can navigate websites to reach a goal"}}'
-else
-  set_env BROWSER_URL ""; set_env WEBUI_BROWSER_TOOL ""
-fi
+if has browser; then set_env BROWSER_URL "http://browser:8100"; else set_env BROWSER_URL ""; fi
+# Older setups gave Open WebUI a browser tool server holding the browser key. Rooks Browser has none (its key answers
+# approvals), so the saved entry is cleared.
+set_env WEBUI_BROWSER_TOOL ""
 if has openwebui; then set_env CHAT_URL "http://${HOST}:$(get_env WEBUI_PORT)"; set_env WEBUI_PUBLIC_URL "$(get_env CHAT_URL)"; else set_env CHAT_URL ""; fi
 if has paperclip; then
   set_env PAPERCLIP_URL "http://${HOST}:$(get_env PAPERCLIP_PORT)"; set_env PAPERCLIP_PUBLIC_URL "$(get_env PAPERCLIP_URL)"
