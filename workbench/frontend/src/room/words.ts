@@ -7,8 +7,28 @@ import { roomScreenLive, type RoomStatus as WatchStatus } from "../chat/watch";
 
 export type Checkpoint = { name: string; path?: string; label?: string; created?: string };
 
+/** One of the Room's terminals, as GET /api/room/status lists it (docs/design/0006-room-desktop.md, section 6). */
+export type RoomTerminal = {
+  id: string;
+  name: string;
+  owner: "person" | "rooks";
+  alive: boolean;
+  busy: boolean;
+  started?: string | null;
+  exit_code?: number | null;
+  ended_reason?: string | null;
+  command?: string | null;
+  elapsed_s?: number | null;
+  /** The person took Rooks's terminal (from the tail; status may carry it too). */
+  taken?: boolean;
+  shell?: string | null;
+};
+
 /** GET /api/room/status (section 8). `driver` and `home` are for the Advanced view only. */
 export type RoomStatus = WatchStatus & {
+  terminals?: RoomTerminal[];
+  terminal_max?: number;
+  can?: { terminal?: boolean; files?: boolean } | null;
   isolation?: string;
   driver?: string | null;
   home?: string | null;
@@ -62,10 +82,88 @@ export function advancedDetails(s: RoomStatus | null | undefined): { kind: strin
   return { kind: String(s?.driver || ""), folder: String(s?.home || "") };
 }
 
-/** What the view says instead of a picture when the Room is off. */
-export function offLine(s: Pick<RoomStatus, "screen"> | null | undefined): string {
-  return s?.screen ? "The Room is off. Start it to see its screen." : "The Room is off. Start it to run commands.";
+/** Stop's words: the Room is off, and nothing in its folder went anywhere. */
+export const STOPPED_LINE = "The Room is off. Everything in it is kept.";
+
+/** What a window says instead of a picture or a shell when the Room is off. */
+export function offLine(_s?: Pick<RoomStatus, "screen"> | null): string {
+  return STOPPED_LINE;
 }
+
+/** The line under offLine: what Start does here. */
+export function offStartLine(what: "screen" | "terminal" | "commands"): string {
+  if (what === "screen") return "Start it to see its screen.";
+  return what === "commands" ? "Start it to run commands." : "Start it to open a terminal.";
+}
+
+// ---------------------------------------------------------------------------------------------- the terminal (0006)
+/** The Terminal window's label line. */
+export function terminalLabel(): string {
+  return "A shell inside the Room. What you install here stays.";
+}
+
+/** Printed into an ended terminal, next to its last text. */
+export function endedLine(reason: string | null | undefined): string {
+  if (reason === "restart") return "The app restarted, so this terminal ended. Your files and anything you installed are still here.";
+  return "This terminal ended. Its files are still in the Room.";
+}
+
+/** The Start over confirm names how many terminals close. */
+export function closeCount(n: number): string {
+  if (!n || n < 0) return "";
+  return n === 1 ? "1 terminal will close." : `${n} terminals will close.`;
+}
+
+/** The label of the phone's tail view: last lines of a real shell, never called a picture of one. */
+export function tailLine(): string {
+  return "This phone shows the terminal's last lines and sends what you type. Open the Room on this computer for the full terminal.";
+}
+
+const NUMBER_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+
+/** New terminal's title when the Room has as many as it may. */
+export function fullLine(max: number): string {
+  const n = NUMBER_WORDS[max] ?? String(max);
+  return `${n} terminal${max === 1 ? "" : "s"} can be open in the Room. Close one to open another.`;
+}
+
+/** The quick command route stops at 120 s; a terminal has no limit. */
+export const TIMEOUT_NOTE = "Stopped after 120 seconds. For something long, start it in a Room terminal.";
+
+/** How long Rooks's command has run: "under a minute", "3 min", "1 h 5 min". */
+export function elapsedWords(seconds: number | null | undefined): string {
+  const s = Math.max(0, Math.floor(Number(seconds) || 0));
+  if (s < 60) return "under a minute";
+  const min = Math.floor(s / 60);
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h} h ${m} min` : `${h} h`;
+}
+
+export function doneWords(code: number): string {
+  return `Done (code ${code})`;
+}
+
+/** One terminal in one line, the same words the rooks terminal prints for /room. */
+export function terminalLine(t: Pick<RoomTerminal, "name" | "owner" | "alive"> & Partial<RoomTerminal>): string {
+  if (!t.alive) return typeof t.exit_code === "number" ? `${t.name} · ended, code ${t.exit_code}` : `${t.name} · ended`;
+  if (t.busy) return typeof t.elapsed_s === "number" && t.owner === "rooks" ? `${t.name} · running, ${elapsedWords(t.elapsed_s)}` : `${t.name} · running`;
+  return t.owner === "rooks" ? `${t.name} · Rooks's, waiting` : `${t.name} · yours`;
+}
+
+/** The Commands window's label (only where a terminal cannot exist). */
+export function commandsLabel(helper: boolean): string {
+  const base = "One command at a time, up to two minutes each.";
+  return helper ? `${base} A terminal needs the Room on this computer.` : base;
+}
+
+export const OPENING_LINE = "Opening a terminal in the Room…";
+export const PICKED_UP_LINE = "Picked up where you left off.";
+export const ENDED_SHORT = "This terminal ended.";
+export const STARTING_OVER_LINE = "The Room is starting over; this terminal closes.";
+export const ROOKS_WORKING_LINE = "Rooks is working here";
+export const ROOKS_STARTED_LINE = "Rooks started this. You can type here too.";
 
 // ---------------------------------------------------------------------------------------------- saved points
 const POINT = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})-(.+)$/;

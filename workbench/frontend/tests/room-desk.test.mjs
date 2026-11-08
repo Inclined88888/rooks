@@ -89,6 +89,12 @@ test("inside the terminal every key goes to the shell except F6, and the phone k
   // the full terminal opens only on the computer running Rooks; a phone gets the last lines and a command row
   for (const h of ["localhost", "127.0.0.1", "127.0.1.1", "::1", "[::1]"]) assert.equal(desk.isLoopbackHost(h), true, h);
   for (const h of ["192.168.1.20", "rooks.local", "example.com", ""]) assert.equal(desk.isLoopbackHost(h), false, h);
+  assert.equal(desk.plainTail("\x1b[32mok\x1b[0m\nhalf\rdone\r\n\x1b]7777;0\x07$ "), "ok\ndone\n$ ", "the phone's box shows the words, not the codes");
+  assert.equal(desk.toTermText("a\nb\r\nc"), "a\r\nb\r\nc");
+  assert.equal(desk.pickActive([{ id: "a", alive: false }, { id: "b", alive: true }], null), "b", "the first open terminal shows");
+  assert.equal(desk.pickActive([{ id: "a", alive: false }, { id: "b", alive: true }], "a"), "a", "the one picked stays picked");
+  assert.equal(desk.pickActive([{ id: "a", alive: false }], "gone"), "a");
+  assert.equal(desk.pickActive([], "gone"), null);
   assert.equal(desk.cdCommand(""), 'cd "$HOME"');
   assert.equal(desk.cdCommand("Desktop/hermes"), `cd "$HOME"/'Desktop/hermes'`);
   assert.equal(desk.cdCommand("it's here"), `cd "$HOME"/'it'\\''s here'`, "a quote in a name cannot break out");
