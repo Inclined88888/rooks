@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import threading
+from pathlib import Path
 import types
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -445,8 +446,8 @@ def test_room_shell_runs_the_same_login_shell_or_says_where_it_is(fake_app, monk
     assert calls, text
     argv, kw = calls[0]
     assert os.path.isabs(argv[0]) and os.path.splitext(os.path.basename(argv[0]))[0].lower() == "sh"  # found on this computer, by its full path
-    assert argv[1:] == ["-c", "login", "room", "/rooms/home", "False"]
-    assert kw["env"]["HOME"] == "/rooms/home"
+    assert argv[1:] == ["-c", "login", "room", str(Path("/rooms/home")), "False"]
+    assert kw["env"]["HOME"] == str(Path("/rooms/home"))
     assert "exit" in text and "/rooms/home" not in text, text
 
     calls.clear()
