@@ -246,7 +246,7 @@ class RichUI(UI):
             t.add_row(Text(mark, style=self.hexcolour(role) if self.color else ""),
                       Text(i["text"], style=self.hexcolour("dim") if i["status"] == "done" and self.color else ""))
         done = sum(i["status"] == "done" for i in items)
-        self.console.print(Padding(Text(f"Plan {done}/{len(items)}", style=self.hexcolour("dim") if self.color else ""), (0, 0, 0, 2)))
+        self.console.print(Padding(Text(f"Checklist {done}/{len(items)}", style=self.hexcolour("dim") if self.color else ""), (0, 0, 0, 2)))
         self.console.print(Padding(t, (0, 0, 0, 2)))
 
     def ask(self, plan) -> str:
@@ -255,9 +255,10 @@ class RichUI(UI):
         from .cli import ASK_LABELS
 
         self.p("")
+        always = words.always_choice(plan)
         self.p("  " + self.c("accent", "Needs your OK") + f": {ASK_LABELS[plan.effect]}.   "
-               + self.c("bold", "y") + " Approve   " + self.c("bold", "n") + " Deny   "
-               + self.c("bold", "a") + " Approve for this session")
+               + self.c("bold", "y") + " Approve   " + self.c("bold", "n") + " Deny"
+               + (("   " + self.c("bold", "a") + " " + always) if always else ""))
 
         def show():
             sys.stdout.write("  › ")
@@ -277,7 +278,7 @@ class RichUI(UI):
         tokens = totals["tokens_in"] + totals["tokens_out"]
         cost = "" if totals["cost_unknown"] else f" · ${totals['usd']:.4f}"
         mode = str(getattr(s, "mode", "build") or "build")
-        self.p(self.c("dim", f"  {tokens:,} tokens{cost} · {mode}{' · /undo puts the files back' if undo else ''}"))
+        self.p(self.c("dim", f"  {tokens:,} tokens{cost} · {mode} mode{' · /undo puts the files back' if undo else ''}"))
 
 
 class RooksCompleter(Completer):
@@ -457,15 +458,17 @@ def banner(agent, ui: RichUI) -> None:
 
 SHORTCUTS = words.KEYS
 
-MODES = ["asks first", "auto-accept", "plan only"]
+# Shift+Tab: how changes are approved. Its own words, so it never reads like /mode (chat, plan, build), which says
+# what Rooks may do at all; the status bar shows this one, the line under each answer shows the mode.
+MODES = ["asks first", "auto-accept", "dry run"]
 
 
 def mode_of(s) -> str:
-    return "plan only" if s.dry_run else ("auto-accept" if (s.auto_approve or s.trusted()) else "asks first")
+    return "dry run" if s.dry_run else ("auto-accept" if (s.auto_approve or s.trusted()) else "asks first")
 
 
 def set_mode(s, mode: str) -> None:
-    s.dry_run = mode == "plan only"
+    s.dry_run = mode == "dry run"
     s.auto_approve = mode == "auto-accept"
 
 
@@ -533,7 +536,7 @@ def run(agent, ui: RichUI) -> int:
         event.current_buffer.insert_text("\n")
 
     @keys.add("s-tab")
-    def _mode(event):  # Shift+Tab: asks first -> auto-accept -> plan only, like Claude Code
+    def _mode(event):  # Shift+Tab: asks first -> auto-accept -> dry run, like Claude Code's approval cycle
         m = MODES[(MODES.index(mode_of(agent.s)) + 1) % len(MODES)]
         set_mode(agent.s, m)
         event.app.invalidate()
@@ -556,7 +559,7 @@ def run(agent, ui: RichUI) -> int:
                  ("class:dim", f"context {pct}%"), sep,
                  ("class:dim", f"{_k(t['tokens_in'] + t['tokens_out'])} tokens")]
         if todos:
-            parts += [sep, ("class:dim", f"plan {sum(i['status'] == 'done' for i in todos)}/{len(todos)}")]
+            parts += [sep, ("class:dim", f"checklist {sum(i['status'] == 'done' for i in todos)}/{len(todos)}")]
         if workroom.room_working():  # a /room open command still running, as the last /room verb saw it
             parts += [sep, ("class:mode", "● Room running")]
         parts += [sep, ("class:dim" if mode == "asks first" else "class:mode", mode), ("class:hint", "  Shift+Tab")]
@@ -803,6 +806,10 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
             workroom.app_jobs(agent, ui)
     elif cmd == "/init":
         agent.run(INIT_PROMPT)
+        before = list(getattr(agent, "instruction_files", []))
+        files = agent.reload_instructions() if hasattr(agent, "reload_instructions") else before
+        if files and files != before:
+            ui.p(ui.c("dim", "  Following " + ", ".join(Path(f).name for f in files) + " from now on."))
     elif cmd == "/context":
         used = agent._estimate()
         window = agent.s.context_tokens or 0
@@ -847,7 +854,8 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         import argparse
 
         from .cli import doctor
-        doctor(Path(agent.root), argparse.Namespace(provider=s.provider, model=s.model, base_url=None))
+        # the address this session talks to (--base-url, the app's), not only the config file's
+        doctor(Path(agent.root), argparse.Namespace(provider=s.provider, model=s.model, base_url=s.base_url or None))
     elif cmd == "/receipt":
         ui.p(f"  {agent.log.path}")
     else:

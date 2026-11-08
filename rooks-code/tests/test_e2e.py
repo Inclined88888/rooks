@@ -52,7 +52,7 @@ def test_fixes_a_bug_with_approval_diff_command_and_receipt(project, fake):
     assert (project / "calc.py").read_text() == "def add(a, b):\n    return a + b\n"
     out = r.stdout
     assert "-    return a - b" in out and "+    return a + b" in out          # the diff was shown
-    assert "Needs your OK: make this change.  [y] Approve  [n] Deny  [a] Approve for this session\ny" in out
+    assert "Needs your OK: make this change.  [y] Approve  [n] Deny  [a] Approve changes to this file for this session\ny" in out
     assert "Needs your OK: run this command." in out, out  # the whole output: pytest would cut the middle
     assert "tests pass" in out, out
     assert "Fixed add()" in out
@@ -85,7 +85,7 @@ def test_denied_edit_is_not_applied_and_model_is_told(project, fake):
     assert (project / "calc.py").read_text().endswith("a - b\n")
     assert "denied" in m.requests[1]["body"]["messages"][-1]["content"]
     assert [x["outcome"] for x in receipt(project) if x["kind"] in ("decision", "tool_call")] == ["denied", "denied"]
-    assert r.returncode == 0
+    assert r.returncode == 3  # a denied change: the job was not done as asked (README, exit codes)
 
 
 def test_no_input_means_denied(project, fake):

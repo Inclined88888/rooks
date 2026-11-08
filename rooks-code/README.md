@@ -36,7 +36,7 @@ is the no-installer fallback. CI tests and installs it on macOS, Windows and Lin
 ```sh
 cd your-project
 rooks                                  # interactive session
-rooks "make the failing test pass"     # one prompt, prints the answer, exits 1 if it did not finish
+rooks "make the failing test pass"     # one prompt, prints the answer, then exits (codes below)
 rooks -P ollama -m qwen2.5:7b    # local and offline (ollama pull qwen2.5:7b first)
 rooks -P anthropic -m claude-sonnet-5-5   # needs ANTHROPIC_API_KEY
 rooks -P openai -m gpt-4.1-mini        # needs OPENAI_API_KEY
@@ -48,16 +48,32 @@ rooks -P codex "fix the build"         # delegate to your own signed-in Codex (y
 ```
 
 `-P claude-code` and `-P codex` run the official CLI you installed and signed in to yourself, in this folder, and print
-what it does. Edits and commands are still asked about first (`--yes` = accept edits, `--dry-run` = plan only); Rooks
-never handles a key or token for them. See [../docs/CLAUDE-CODE.md](../docs/CLAUDE-CODE.md).
+what it does. Edits and commands are still asked about first (`--yes` = accept edits, `--dry-run` = show what would
+change and change nothing); Rooks never handles a key or token for them. See [../docs/CLAUDE-CODE.md](../docs/CLAUDE-CODE.md).
+
+A one-shot run (`rooks "task"`, also with piped input) ends with an exit code a script can check:
+
+| Code | Means |
+| --- | --- |
+| `0` | finished |
+| `1` | did not finish: the model could not answer, the step limit or a cap was reached, or a checked change failed |
+| `2` | cannot start: no key for the provider, or bad arguments |
+| `3` | a change or command was denied: you typed `n`, there was no input to answer with, or a project hook stopped it |
 
 Inside a session type `/` for the command menu (every command with what it does) and `@` to pick a file:
 
 * `/model` opens a menu: Auto or an AI, then a short list of its newest chat models (older ones behind "More"),
   then, for a Claude, ChatGPT or Copilot plan, how hard it thinks. `/effort low|medium|high|auto` changes only that.
   The choice shows in the status bar and is kept for the next start.
+* Two separate settings, never called by the same name. `/mode chat|plan|build` says what Rooks may do at all (chat
+  talks, plan reads, build can change files); it shows as "build mode" in the line under each answer. Shift+Tab says
+  how changes are approved: asks first, auto-accept or dry run (`/auto` and `/dry-run` switch the same thing); it shows
+  in the status bar. A checklist the agent keeps shows there as "checklist 2/5".
+* `/init` writes AGENTS.md and the session follows it from the next request on, no restart needed.
+* `/doctor` checks the provider at the address this session uses (`--base-url` or the app's), with one real call, and
+  prints the full detail of any error. On the normal screen a model error is said in plain words, with no address.
 * `/new`, `/sessions`, `/resume ID`, `/compact`, `/copy`, `/undo`, `/cost`, `/auto`, `/dry-run`, `/login`, `/provider`,
-  `/doctor`, `/receipt`, `/exit`.
+  `/receipt`, `/exit`.
 * `/memory` and `/skills` show what Rooks has learned (below).
 
 ## It learns
@@ -81,8 +97,11 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
 ## Trust controls
 
 * **Approval by default.** Reading and searching run freely. Every edit is shown as a diff and every command in full,
-  then you answer `y`, `n` or `a` (always, for this session). A denied action is reported to the model, which is told not
-  to retry it. With no terminal input the answer is "no".
+  then you answer `y`, `n` or `a`. `a` approves only that exact command, changes to that one file, or that one tool
+  of one MCP server, for the rest of the session; the question says which ("Approve this exact command for this
+  session"). Any other command, file or tool is still asked about. A denied action is reported to the model, which is
+  told not to retry it, and its reply ends the turn: Rooks never nudges it to carry on after a no. With no terminal
+  input the answer is "no", and a one-shot run exits with code 3.
 * **Only you answer, here or in the app.** Linked to the app, each question also waits in Needs you. An answer typed
   here is recorded in the app only with your Terminal access token (`rooks login`); the open app's own key never
   records one, because any program on this computer can read it, a command the agent ran included. Without the token
@@ -99,7 +118,8 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
 * **Project boundary.** File tools cannot read or write outside the project folder, nor write into `.git` or `.rooks`.
 * **Small-model help.** Tool calls a local model prints as text (`<tool_call>` tags or a JSON block) are recovered with
   Workbench's rule (only well-formed calls to offered tools; receipt column `from_text`), and a reply that announces a
-  step without calling a tool gets up to two nudges (`nudge = false` turns this off).
+  step without calling a tool gets up to two nudges (`nudge = false` turns this off). A reply that declines ("OK, I will
+  not change it.", "I'll leave it as is.") is not a step, and nothing is nudged after you deny a change.
 * **Receipts.** Each session writes `.rooks/runs/<session>.jsonl` (git-ignored automatically): one row per prompt, model
   call, tool call, approval decision and outbound connection, using the columns and outcome words of Workbench's `actions`
   table (`turn`, `model_call`, `tool_call`, `decision`, `egress`; `verified`, `denied`, `budget_paused`, ...). File edits
@@ -145,8 +165,9 @@ no. Only yes or no questions are answered; a server asking for anything else is 
   ran the test and stopped correctly; `qwen2.5:3b` and `qwen2.5-coder:7b` described steps without calling tools, even
   with Rooks' recovery of tool calls printed as text and its "you announced a step, call the tool" nudge. Use a 7B+
   general instruct model, or a hosted model, for real work.
-* In the interactive terminal, answers appear formatted once complete (a "Working" line with a timer shows progress);
-  plain mode (`ROOKS_PLAIN=1`) streams token by token in a terminal; piped output arrives whole.
+* In the interactive terminal, answers stream in as they are written, formatted as they arrive (a "Working" line with
+  a timer shows progress until the first words); plain mode (`ROOKS_PLAIN=1`) streams token by token in a terminal;
+  piped output arrives whole.
 * Commands are kept inside the project folder by default (`sandbox = "project"`): on macOS with the built in
   `sandbox-exec`, on Linux with bubblewrap (`bwrap`, for example `sudo apt install bubblewrap`). They can still read
   the whole computer and use the network; only writes are limited, to the project and the temp folder. On Linux

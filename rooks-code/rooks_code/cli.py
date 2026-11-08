@@ -2,7 +2,7 @@
 or local Ollama / LM Studio (works fully offline).
 
   rooks                         interactive session in the current folder
-  rooks "fix the failing test"  one prompt, then exit (prints the final answer; exit 1 if it did not finish)
+  rooks "fix the failing test"  one prompt, then exit (exit 0 done, 1 not finished, 2 cannot start, 3 a change was denied)
   rooks -c                      continue the last session in this folder (--resume ID for an older one)
   rooks login                   connect a model: paste a key, or point at your Rooks app server
   rooks undo                    put back the files changed by the last prompt
@@ -16,8 +16,9 @@ or local Ollama / LM Studio (works fully offline).
   rooks mcp                     list MCP servers and their tools
   rooks talk ["prompt"]         the same assistant as the app, in the terminal (no desktop install needed)
 
-Every edit (shown as a diff) and every command is asked about first, unless the folder is trusted, --yes is given, or
-you answer "a" (always, for this session). --dry-run shows what would change and changes nothing.
+Every edit (shown as a diff) and every command is asked about first, unless the folder is trusted or --yes is given.
+"a" approves only that exact command, changes to that one file, or that one tool, for the rest of the session.
+--dry-run shows what would change and changes nothing.
 
 If you only want the assistant in a terminal (no desktop app window), install rooks-code and run `rooks talk`.
 It uses the Rooks on this computer, or WORKBENCH_URL for a private tunnel back to that same computer.
@@ -121,7 +122,8 @@ class UI:
         from . import shared_approval
 
         label = ASK_LABELS[plan.effect]
-        prompt = f"  {self.c('accent', 'Needs your OK')}: {label}.  [y] Approve  [n] Deny  [a] Approve for this session "
+        always = words.always_choice(plan)
+        prompt = f"  {self.c('accent', 'Needs your OK')}: {label}.  [y] Approve  [n] Deny  " + (f"[a] {always} " if always else "")
 
         def show():
             # A live terminal keeps the question on the same line. Piped output (the app) needs a newline so the question is visible.
@@ -375,15 +377,23 @@ def main(argv: list[str] | None = None) -> int:
     agent = Agent(s, ui, messages=history)
     try:
         if args.prompt:
-            answer = agent.run(" ".join(args.prompt))
+            agent.run(" ".join(args.prompt))
+            if agent.denials:  # a change or command was refused (typed n, no input, a hook): the job is not done as asked
+                return EXIT_DENIED
             outcome = agent.log.rows[min(r for r in agent.log.rows if agent.log.rows[r]["kind"] == "turn")]["outcome"]
-            return 0 if outcome in ("no_claim", "backed") else 1
+            return EXIT_OK if outcome in ("no_claim", "backed") else EXIT_UNFINISHED
         return repl(agent, ui)
     finally:
         agent.close()
 
 
 HELP = words.help_text()  # the same list the full terminal shows
+
+# One-shot exit codes (rooks "task"), listed in the README: scripts and CI tell them apart.
+EXIT_OK = 0          # finished
+EXIT_UNFINISHED = 1  # did not finish: model error, step limit, a cap reached, a change whose check failed
+EXIT_SETUP = 2       # cannot start: no key for the provider, bad arguments
+EXIT_DENIED = 3      # a change or command was denied (you typed n, there was no input to answer, or a hook stopped it)
 
 
 def load_session(root: Path, session: str | None) -> tuple[list[dict], str]:

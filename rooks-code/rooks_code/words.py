@@ -11,7 +11,7 @@ COMMANDS: dict[str, str] = {
     "/help": "every command and key",
     "/new": "start a fresh conversation",
     "/model": "pick the AI, the model and how hard it thinks (arrow keys)",
-    "/effort": "how hard a plan's model thinks: /effort low, medium, high or auto",
+    "/effort": "how hard the model thinks: /effort low, medium, high or auto",
     "/mode": "chat talks, plan reads, build can change files: /mode chat",
     "/room": "Rooks' own computer: /room, start, stop, open COMMAND, files, points, shell (all under The Room)",
     "/needs": "what waits for your OK in the app: /needs, /needs approve 1, /needs deny 1",
@@ -68,8 +68,20 @@ ROOM_VERBS = [
     ("/room shell", "a shell inside the Room, right here; exit comes back"),
 ]
 
+# What "a" at the question approves for the rest of the session (agent.approval_key): never a whole kind of action.
+ALWAYS_SCOPES = {"command": "this exact command", "file": "changes to this file", "tool": "this tool",
+                 "step": "this exact step"}
+
+
+def always_choice(plan) -> str:
+    """The "a" choice, saying what it covers ("Approve this exact command for this session"); '' when there is none
+    (a server's own question is answered once, never for the session)."""
+    scope = ALWAYS_SCOPES.get(getattr(plan, "scope", "") or "")
+    return f"Approve {scope} for this session" if scope else ""
+
+
 KEYS = [("/","commands, with what each does"), ("@", "add a file or folder to your request"),
-        ("Shift+Tab", "switch mode: asks first, auto-accept, plan only"), ("Esc Enter", "new line (paste keeps lines too)"),
+        ("Shift+Tab", "switch approvals: asks first, auto-accept, dry run"), ("Esc Enter", "new line (paste keeps lines too)"),
         ("Up Down", "earlier requests"), ("Ctrl+R", "search earlier requests"), ("Ctrl+C", "stop the current task"),
         ("Ctrl+D", "quit"), ("?", "this help")]
 NOTE = "Anything that is not a command is a request. A command also works without its slash, like: model"
@@ -110,6 +122,34 @@ def help_text() -> str:
     return "\n".join(lines)
 
 
+# --- a model error, in plain words ---------------------------------------------------------------------------------
+DOCTOR_HINT = "/doctor (or rooks doctor) shows the details."
+
+
+def model_error(e) -> str:
+    """What the screen says when the model could not answer: what happened and what to do, in plain words. Never the
+    address, the raw reply or a stack trace: those stay in the session's record and in /doctor."""
+    status = getattr(e, "status", None)
+    text = str(e)
+    if status in (401, 403):
+        said = "The AI service did not accept the key. Check it with /login, then try again."
+    elif status == 429:
+        said = "The AI service says it has had too many requests. Wait a minute, then try again."
+    elif status in (500, 502, 503, 504, 529):
+        said = "The AI service is busy or down right now. Try again in a minute."
+    elif status == 404:
+        said = "The AI service does not know this model. Pick another with /model."
+    elif status is None and text.startswith("cannot reach"):
+        said = "Could not reach the AI service. Check that it is running and that this computer is online."
+    elif status is None and text.startswith("unexpected reply"):
+        said = "The AI service sent a reply Rooks could not read."
+    elif text.startswith("No AI model is set up yet"):  # config.NO_MODEL_HELP: written for people already
+        return text
+    else:
+        said = "The AI service could not answer this request."
+    return f"{said} {DOCTOR_HINT}"
+
+
 # --- a step, said the way the app says it (workbench/frontend/src/plainStep.ts) --------------------------------------
 def _field(args, key: str) -> str:
     if isinstance(args, str):
@@ -148,7 +188,7 @@ _SAY = {
     "edit_file": lambda a: _with("Editing", _field(a, "path"), " ") if _field(a, "path") else "Editing a file",
     "write_file": lambda a: _with("Writing", _field(a, "path"), " ") if _field(a, "path") else "Writing a file",
     "run_command": lambda a: _with("Running", _field(a, "command"), " ") if _field(a, "command") else "Running something on this computer",
-    "todo": lambda a: "Updating the plan",
+    "todo": lambda a: "Updating the checklist",
     "web_fetch": lambda a: "Reading a page",
     "start_background": lambda a: _with("Starting a job", _field(a, "command")),
     "check_background": lambda a: "Checking the jobs",

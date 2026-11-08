@@ -376,6 +376,7 @@ class Extras:
                      "with a dense summary of what you found: exact file paths, line numbers, facts, and open "
                      "questions. Do not change anything.\n\nGoal: ")
         answer = sub.run(brief + goal)
+        parent.denials += sub.denials  # a refusal inside a helper is a refusal of this request too
         return answer or "(the sub-agent returned nothing)"
 
     def close(self) -> None:

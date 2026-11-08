@@ -20,6 +20,26 @@ No schema change, nothing to migrate. Rollback: revert the branch's commits.
   and `rooks` now puts such a question to you, also with `--yes`, and mirrors it to Needs you. A program that cannot
   ask gets "waiting for a person" and nothing is copied. The same goes for Rooks Desk's questions in `rooks`: a
   sensitive step it used to refuse there (the terminal could not ask) is now put to you.
+- **The terminal audit's defects, fixed in `rooks`** (each with a test in `rooks-code/tests/test_audit_defects.py` that
+  failed before the fix, run against the scripted fake model, no real model key):
+  - A no ends the turn. A reply that declines ("OK, I will not change it.", "I'll leave it as is.") is no longer taken
+    for an announced step, and after you deny a change Rooks never nudges the model to carry on.
+  - `a` approves only that exact command, changes to that one file, or that one tool of one MCP server, for the rest of
+    the session; the question says which ("Approve this exact command for this session"). It used to approve every
+    command (or every edit, or every MCP tool of every server) for the session. Breaking for anyone who relied on
+    one `a` covering all commands: you are asked again for each different one.
+  - `/init` reloads the project instructions, so the AGENTS.md it writes is followed from the next request on.
+  - `/doctor` in a session checks the address that session uses (`--base-url`, the app's), not only the config file's.
+  - A one-shot run exits with code 3 when a change or command was denied (typed `n`, no input, a hook). Exit codes
+    are listed in `rooks-code/README.md`: 0 finished, 1 not finished, 2 cannot start, 3 denied. Breaking for scripts
+    that treated a denial as success (it exited 0).
+  - A model error is said in plain words with no address ("The AI service is busy or down right now. Try again in a
+    minute. /doctor (or rooks doctor) shows the details."); the full detail stays in the session's record and /doctor.
+  - One meaning of "plan": Shift+Tab's settings are now asks first, auto-accept and dry run (was "plan only"), so they
+    never share a word with `/mode chat|plan|build`; the line under each answer says "build mode", and the agent's
+    checklist shows as "checklist 2/5" (was "plan 2/5").
+  - One version number: `rooks --version`, `rooks-code/pyproject.toml` and AGENTS.md now say 1.0.6, the `VERSION` file.
+  - The README says what is true: answers stream in as they are written.
 
 ## 2026-11-08 · The Room as a small computer · branch feat/room-desktop
 

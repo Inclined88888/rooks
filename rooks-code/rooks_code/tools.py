@@ -55,6 +55,7 @@ class Plan:
     preview: str                      # diff or command shown before approval
     apply: Callable[[], tuple[str, bool | None, str]]  # -> (result for the model, verified, evidence)
     path: Path | None = None          # file to snapshot before applying (writes)
+    scope: str = ""                   # what "a" approves for the session: command, file, tool or step (agent.approval_key)
 
 
 SPECS = [

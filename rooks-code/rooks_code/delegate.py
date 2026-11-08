@@ -264,7 +264,7 @@ def main(provider: str, s, ui, prompt: str | None) -> int:
         ui.error(f"{a['name']} is {st['detail']}")
         return 2
     sess = Session(provider, s, ui, st["path"])
-    mode = {"ask": "asks before changes", "acceptEdits": "edits allowed", "plan": "plan only"}[sess.mode]
+    mode = {"ask": "asks before changes", "acceptEdits": "edits allowed", "plan": "dry run"}[sess.mode]
     ui.p(ui.c("2", f"rooks → {a['name']} ({st['detail']}) · {s.root} · {mode}"))
     if prompt:
         return 0 if sess.run(prompt) else 1

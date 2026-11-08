@@ -16,6 +16,8 @@ import subprocess
 import sys
 import threading
 
+from . import __version__
+
 PROTOCOL = "2025-06-18"
 
 
@@ -40,7 +42,7 @@ class StdioServer:
         threading.Thread(target=self._drain, daemon=True).start()
         caps = {"elicitation": {}} if elicit else {}
         info = self.request("initialize", {"protocolVersion": PROTOCOL, "capabilities": caps,
-                                           "clientInfo": {"name": "rooks-code", "version": "0.1.0"}})
+                                           "clientInfo": {"name": "rooks-code", "version": __version__}})
         self.server_info = info.get("serverInfo", {})
         self.notify("notifications/initialized")
         self.tools = self.request("tools/list", {}).get("tools", [])

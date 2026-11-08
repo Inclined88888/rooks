@@ -52,6 +52,11 @@ How to work:
 _ANNOUNCES = re.compile(r"\b(I'll|I will|I am going to|I'm going to|Let's|Let me|Next,? I|Now,? I|First,? I|This will|"
                         r"We'll|We will)\b",
                         re.I)
+# A refusal or a decision to leave things as they are is not a step to take: "OK, I will not change it.", "Done. I'll
+# leave it as is." end the turn.
+_DECLINES = re.compile(r"\b(will not|won't|will never|shall not|not going to|leave (it|this|that|"
+                       r"them|things|everything|the \w+)|as (it|they) (is|are|was|were)|no (more |further )?changes?)\b",
+                       re.I)
 NUDGE = ("You described a next step but did not call a tool. Call the tool now. If the task is already finished, reply "
          "with your final summary instead.")
 NUDGES = 2
@@ -83,7 +88,10 @@ def announces_step(text: str) -> bool:
     if not tail or tail.endswith("?") or re.search(r"(?i)\b(summary|summari[sz]e|in short|all done)\b", tail):
         return False
     lines = [x for x in tail.splitlines() if x.strip()]
-    return tail.endswith(":") or any(_ANNOUNCES.search(x) for x in lines[-2:])
+    last = lines[-2:]
+    if any(_DECLINES.search(x) for x in last):
+        return False
+    return tail.endswith(":") or any(_ANNOUNCES.search(x) for x in last)
 
 
 class Budget:
@@ -117,25 +125,28 @@ class Agent:
         self.mcp = (MCPManager(settings.mcp_servers, str(self.root), warn=ui.warn, elicit=self._mcp_question)
                     if settings.mcp_servers and not sub else None)
         self.messages: list[dict] = list(messages or [])
-        self.always: set[str] = set()  # effects approved for the rest of the session ("a" at the prompt)
+        # what "a" at the prompt approved for the rest of the session: one exact command, one file, or one MCP tool on
+        # one server (approval_key), never a whole kind of action
+        self.always: set[tuple] = set()
+        self.denials = 0  # changes and commands refused during the current prompt (one-shot mode exits 3 when any were)
         self.budget = Budget(settings.max_tokens, settings.max_usd, settings.model, settings.prices, settings.local)
         self.system = SYSTEM.format(root=self.root, os=f"{platform.system()} {platform.release()}", listing=_listing(self.root),
                                     runtimes=_runtimes(self.root))
         self._turn: int | None = None
         self.learning = Learning(settings, session_id=self.log.session) if getattr(settings, "learn", True) and not sub else None
         self.extras = Extras(self)
-        self.instructions, self.instruction_files = project_instructions(self.root)
-        if self.instructions:
-            self.system += "\n\n" + self.instructions
+        self._system_head = self.system
         self._extra = ""  # this request's memory and skills context (learning.py)
         self.loop_detector = LoopDetector() if not sub else None
         self._nudge = ""
+        self._system_tail = ""
         # Build lightweight repo map for project overview
         self.repo_map = RepoMap(self.root, max_tokens=1500) if not sub else None
         if self.repo_map:
             repo_map_text = self.repo_map.get_repo_map()
             if repo_map_text:
-                self.system += f"\n\nProject structure (symbol index):\n{repo_map_text}"
+                self._system_tail = f"\n\nProject structure (symbol index):\n{repo_map_text}"
+        self.reload_instructions()
 
         # Lint/test runner (optional, enabled via settings)
         self.lint_test_runner = None
@@ -148,6 +159,13 @@ class Agent:
         if settings.max_usd and self.budget.price is None and settings.provider not in ("workbench", "nvidia"):
             ui.warn(f"price of {settings.model} is unknown, so the ${settings.max_usd} cap cannot be enforced; the token cap "
                     f"({settings.max_tokens or 'none'}) still is. Add it under [prices] to enforce a dollar cap.")
+
+    def reload_instructions(self) -> list[str]:
+        """Read the project's instruction files (AGENTS.md, CLAUDE.md, ...) again, so a file written or changed during
+        the session (/init writes AGENTS.md) is followed from the next request on. Returns the files in use."""
+        self.instructions, self.instruction_files = project_instructions(self.root)
+        self.system = self._system_head + (f"\n\n{self.instructions}" if self.instructions else "") + self._system_tail
+        return self.instruction_files
 
     # receipts --------------------------------------------------------------------------------------------------
     def _egress(self, method: str, url: str, outcome: str, ms: int, error: str) -> None:
@@ -179,7 +197,19 @@ class Agent:
             specs = SPECS + EXTRA_SPECS + (self.learning.specs() if self.learning else []) + (self.mcp.tool_specs() if self.mcp else [])
         return [t for t in specs if self._mode_allows(t["name"])]
 
-    def trusted_effect(self, effect: str, mcp_server: str | None = None) -> str:
+    @staticmethod
+    def approval_key(name: str, arguments: dict, plan, mcp: tuple[str, str] | None = None) -> tuple[tuple, str]:
+        """(key, scope) of what "a" approves for the rest of the session: one MCP tool on one server, changes to one
+        file, one exact command, or else this exact step. The scope names it in the question ("this exact command")."""
+        if mcp:
+            return ("mcp", *mcp), "tool"
+        if plan.effect == "write" and plan.path is not None:
+            return ("file", str(plan.path)), "file"
+        if plan.effect == "command" and isinstance(arguments.get("command"), str):
+            return ("command", name, arguments["command"].strip()), "command"
+        return ("step", name, json.dumps(arguments, sort_keys=True, ensure_ascii=False)), "step"
+
+    def trusted_effect(self, effect: str, mcp_server: str | None = None, key: tuple | None = None) -> str:
         """Why this action needs no prompt, or '' when the user must approve it."""
         if effect == "read":
             return "read-only"
@@ -189,7 +219,7 @@ class Agent:
             return f"trusted MCP server {mcp_server}"
         if not mcp_server and self.s.trusted():
             return "trusted folder"
-        if effect in self.always:
+        if key is not None and key in self.always:
             return "approved for this session"
         return ""
 
@@ -277,6 +307,7 @@ class Agent:
 
     # one prompt --------------------------------------------------------------------------------------------------
     def run(self, prompt: str) -> str:
+        self.denials = 0
         if self.uses_shared_loop():
             return self.run_via_bridge(prompt)
 
@@ -317,7 +348,7 @@ class Agent:
                 except providers.ProviderError as e:
                     self.log.add("model_call", "error", parent=turn, latency_ms=int((time.monotonic() - t0) * 1000),
                                  failure_reason=str(e))
-                    outcome, answer = "model_error", f"Model error: {e}"
+                    outcome, answer = "model_error", f"Model error: {words.model_error(e)}"  # the detail: receipt, /doctor
                     self.ui.error(answer)
                     break
                 finally:
@@ -345,7 +376,9 @@ class Agent:
                     msg["tool_calls"] = [{"id": c.id, "type": "function", "function": {
                         "name": c.name, "arguments": json.dumps(c.arguments)}} for c in reply.tool_calls]
                 self.messages.append(msg)
-                nudge = (not reply.tool_calls and self.s.nudge and nudges < NUDGES and announces_step(reply.text))
+                # after a refusal the model's reply ends the turn: the person said no, so Rooks never pushes it on
+                nudge = (not reply.tool_calls and self.s.nudge and nudges < NUDGES and not self.denials
+                         and announces_step(reply.text))
                 if reply.text and not streamed:
                     self.ui.assistant(reply.text, final=not reply.tool_calls and not nudge)
                 if nudge:
@@ -574,9 +607,9 @@ class Agent:
             server, tool = target
             summary = f"MCP {server.name}: {tool} {args_text[:300]}"
             plan = Plan("external", summary, summary, lambda: self._mcp(server, tool, call.arguments))
-            mcp_server = server.name
+            mcp_server, mcp_tool = server.name, (server.name, tool)
         else:
-            mcp_server = None
+            mcp_server, mcp_tool = None, None
             try:
                 allow = BUILD_TOOLS if self.sub_mode == "build" else READ_ONLY
                 if self.sub and call.name not in allow:
@@ -616,6 +649,7 @@ class Agent:
                               from_text=int(call.from_text))
         blocked = self._project_hook(call.name, plan.effect, call.arguments)
         if blocked:
+            self.denials += 1
             self.log.finish(action, "denied", detail=blocked[:500])
             self.ui.tool_note(f"stopped by a project hook: {blocked[:200]}")
             return f"Error: a project hook stopped this ({blocked}). Do not retry it unless the user says to.", "denied"
@@ -627,7 +661,8 @@ class Agent:
                 self.ui.tool_note("dry run: not applied")
                 return (f"[dry run] Not applied: {plan.summary}. The user is previewing; continue as if it succeeded but "
                         f"say in your summary that nothing was changed."), "dry_run"
-            why = self.trusted_effect(plan.effect, mcp_server)
+            key, plan.scope = self.approval_key(call.name, call.arguments, plan, mcp_tool)
+            why = self.trusted_effect(plan.effect, mcp_server, key)
             if why:
                 self.ui.tool_note(why)
             else:
@@ -635,10 +670,11 @@ class Agent:
                 answer = self.ui.ask(plan)
                 decision = "approved" if answer in ("y", "a") else "denied"
                 self.log.add("decision", decision, parent=action, tool=call.name,
-                             detail="approved for the rest of the session" if answer == "a" else "")
+                             detail=f"approved {words.ALWAYS_SCOPES[plan.scope]} for the rest of the session" if answer == "a" else "")
                 if answer == "a":
-                    self.always.add(plan.effect)
+                    self.always.add(key)
                 if decision == "denied":
+                    self.denials += 1
                     self.log.finish(action, "denied")
                     return f"The user denied this ({plan.summary}). Do not retry it; ask or try another approach.", "denied"
         else:
