@@ -372,7 +372,14 @@ async def turn(data: TurnIn):
 # Terminal approvals (one row per terminal action). The terminal asks for an OK before it changes a file or runs a command
 # on its own machine; the same request appears in the app's Approvals with its diff, and whichever side answers first
 # decides. The app never runs these actions itself: an approval from the app only tells the terminal to go ahead.
+#
+# Who may record an answer: only the person. A bridge key (the app.json key, the desk key, a coding job's key) never
+# can, since any program on this computer can read app.json, a command the agent ran included, and could answer its
+# own prompt. The Terminal access token (rooks login) can, for prompts the person's own terminal raised. A prompt a
+# coding job raised (its own key) is answered in the signed in app only: the job runs as the person and its commands
+# could read the stored token too. The terminal that asked may withdraw its prompt (it never becomes an approval).
 TERMINAL_REQUEST = "terminal:"
+JOB_REQUEST = TERMINAL_REQUEST + "job:"  # raised by a coding job the app started
 
 
 class TerminalApprovalIn(BaseModel):
@@ -384,26 +391,28 @@ class TerminalApprovalIn(BaseModel):
 
 
 @router.post("/approvals")
-def terminal_approval(data: TerminalApprovalIn):
+def terminal_approval(data: TerminalApprovalIn, request: Request):
     import uuid
 
     from . import actions, push
+    from .security import _bearer_token, is_coding_job_key
 
     if not _terminal_conversation(data.conversation_id):
         raise HTTPException(404, "Conversation not found")
     effect = "external" if data.effect == "command" else data.effect
     args = json.dumps({"summary": data.summary, "diff": data.preview} if data.effect == "write"
                       else {"summary": data.summary, "command": data.preview})
+    prefix = JOB_REQUEST if is_coding_job_key(_bearer_token(request)) else TERMINAL_REQUEST
     aid = actions.add("tool_call", "held", trace={"channel": CHANNEL, "conversation_id": data.conversation_id},
                       tool=data.tool, effect=effect, args=args[:4000], payload=args,
                       detail="Rooks is asking before it changes something on your computer.",
-                      request_id=TERMINAL_REQUEST + uuid.uuid4().hex)
+                      request_id=prefix + uuid.uuid4().hex)
     push.approval_needed(aid, data.tool)
     return {"id": aid}
 
 
 def _terminal_row(aid: int) -> dict:
-    row = db.one("SELECT id, request_id FROM actions WHERE id = ? AND kind = 'tool_call'", aid)
+    row = db.one("SELECT id, request_id, outcome FROM actions WHERE id = ? AND kind = 'tool_call'", aid)
     if not row or not (row["request_id"] or "").startswith(TERMINAL_REQUEST):
         raise HTTPException(404, "No terminal approval with this id")
     return row
@@ -413,7 +422,8 @@ def _terminal_row(aid: int) -> dict:
 def terminal_approval_status(aid: int):
     from . import actions
 
-    _terminal_row(aid)
+    if _terminal_row(aid)["outcome"] == WITHDRAWN:
+        return {"id": aid, "status": WITHDRAWN, "decided_at": None}
     a = actions.approval(aid)
     return {"id": aid, "status": a["status"], "decided_at": a["decided_at"]}
 
@@ -424,16 +434,39 @@ class TerminalDecisionIn(BaseModel):
 
 @router.post("/approvals/{aid}")
 def terminal_approval_answer(aid: int, data: TerminalDecisionIn, request: Request):
-    """The user answered in the terminal: record it so the app's card closes. 409 when the app answered first.
-    A coding job the app started holds its own key and may never record an answer: nobody is at its keyboard."""
+    """The person answered in the terminal: record it so the app's card closes. 409 when the app answered first.
+    Only the Terminal access token records an answer, and never for a prompt a coding job raised (see above)."""
     from . import actions
-    from .security import _bearer_token, is_coding_job_key
+    from .security import _bearer_token, check_cli_token
 
-    if is_coding_job_key(_bearer_token(request)):
+    if not check_cli_token(_bearer_token(request)):
+        raise HTTPException(403, "Only you can answer this. Answer it in Needs you, or sign the terminal in with rooks login.")
+    row = _terminal_row(aid)
+    if (row["request_id"] or "").startswith(JOB_REQUEST):
         raise HTTPException(403, "A background job can't answer for you. Answer it in Needs you.")
-    _terminal_row(aid)
     actions.decide(aid, data.approve, CHANNEL)
     return {"id": aid, "status": actions.approval(aid)["status"]}
+
+
+WITHDRAWN = "withdrawn"
+
+
+@router.post("/approvals/{aid}/withdraw")
+def terminal_approval_withdraw(aid: int):
+    """The terminal that asked no longer waits (the person answered there and the app could not record it, or the
+    terminal stopped). The card closes; nothing is approved, and the app can no longer approve it. 409 once answered."""
+    from . import actions
+
+    row = _terminal_row(aid)
+    if row["outcome"] == WITHDRAWN:
+        return {"id": aid, "status": WITHDRAWN}
+    if actions.approval(aid)["status"] != "pending":
+        raise HTTPException(409, "Already answered")
+    # only a held row with no decision changes, so an answer that lands at the same moment always wins
+    db.run("UPDATE actions SET outcome = ?, detail = ? WHERE id = ? AND outcome = 'held' AND NOT EXISTS "
+           "(SELECT 1 FROM actions d WHERE d.kind = 'decision' AND d.parent_action_id = ?)",
+           WITHDRAWN, "Answered in the terminal.", aid, aid)
+    return {"id": aid, "status": terminal_approval_status(aid)["status"]}
 
 
 # ---- B3 packs from the terminal: the same gallery, add and remove as the app's Packs page ------------------------------

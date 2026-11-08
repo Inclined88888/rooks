@@ -92,8 +92,77 @@ def test_a_coding_job_cannot_answer_its_own_terminal_prompt(client, keys):
     r = a.post(f"/v1/rooks/approvals/{aid}", headers=bearer(CODING), json={"approve": True})
     assert r.status_code == 403
     assert a.get(f"/v1/rooks/approvals/{aid}", headers=bearer(CODING)).json()["status"] == "pending"
-    # The person's interactive terminal (app.json key) still records the answer it was given.
-    assert a.post(f"/v1/rooks/approvals/{aid}", headers=bearer(BROWSER), json={"approve": False}).status_code == 200
+
+
+# ---- terminal prompts: a shared key never answers one (phase 1a) ---------------------------------------------------
+TOKEN = "wb_terminal-token-for-tests-0123456789"
+
+
+def _terminal_token():
+    import hashlib
+
+    from app import db
+
+    db.set_setting("cli_token_hash", hashlib.sha256(TOKEN.encode()).hexdigest())
+    return TOKEN
+
+
+def _terminal_prompt(a, key: str) -> int:
+    cid = a.post("/v1/rooks/conversation", json={"session": f"s-{key[:6]}"}, headers=bearer(key)).json()["conversation_id"]
+    return a.post("/v1/rooks/approvals", headers=bearer(key), json={
+        "conversation_id": cid, "tool": "run_command", "effect": "command", "summary": "rm", "preview": "rm -rf x"}).json()["id"]
+
+
+@pytest.mark.parametrize("key", SHARED)
+@pytest.mark.parametrize("raised_with", [pytest.param(BROWSER, id="raised-with-app-key"), pytest.param(CODING, id="raised-by-job")])
+def test_a_shared_key_never_answers_a_terminal_prompt(client, keys, key, raised_with):
+    """The app.json key is readable by any program on this computer, a coding job's commands included: a command the
+    agent runs could read it and answer its own pending prompt. Only the person's credentials record an answer."""
+    a = anon(client)
+    aid = _terminal_prompt(a, raised_with)
+    for approve in (True, False):
+        r = a.post(f"/v1/rooks/approvals/{aid}", headers=bearer(key), json={"approve": approve})
+        assert r.status_code == 403, (key, approve, r.status_code)
+    assert a.get(f"/v1/rooks/approvals/{aid}", headers=bearer(BROWSER)).json()["status"] == "pending"
+
+
+def test_the_terminal_token_answers_the_persons_own_terminal_prompt(client, keys):
+    a = anon(client)
+    token = _terminal_token()
+    for raised_with in (token, BROWSER):  # rooks login, or the open app's key
+        aid = _terminal_prompt(a, raised_with)
+        r = a.post(f"/v1/rooks/approvals/{aid}", headers=bearer(token), json={"approve": True})
+        assert r.status_code == 200 and r.json()["status"] == "approved"
+
+
+def test_a_prompt_raised_by_a_coding_job_is_answered_only_in_the_app(client, keys):
+    """A coding job runs as the person: its commands can read the token `rooks login` stored. So a job's own prompt is
+    never answered with a bearer token, the person's token included; the signed in app (Needs you) answers it."""
+    a = anon(client)
+    token = _terminal_token()
+    aid = _terminal_prompt(a, CODING)
+    assert a.post(f"/v1/rooks/approvals/{aid}", headers=bearer(token), json={"approve": True}).status_code == 403
+    assert a.get(f"/v1/rooks/approvals/{aid}", headers=bearer(CODING)).json()["status"] == "pending"
+    assert client.post(f"/api/approvals/{aid}", json={"approve": True}).json()["status"] == "approved"  # signed in
+    assert a.get(f"/v1/rooks/approvals/{aid}", headers=bearer(CODING)).json()["status"] == "approved"
+
+
+def test_withdrawing_a_terminal_prompt_closes_the_card_and_never_approves(client, keys):
+    """The terminal that asked closes its card when the person answered there and the app could not record it (no
+    rooks login). Withdrawn is not an answer: the status never becomes approved and the app can no longer approve it."""
+    a = anon(client)
+    aid = _terminal_prompt(a, CODING)
+    r = a.post(f"/v1/rooks/approvals/{aid}/withdraw", headers=bearer(CODING, write=True))
+    assert r.status_code == 200 and r.json()["status"] == "withdrawn"
+    assert a.get(f"/v1/rooks/approvals/{aid}", headers=bearer(CODING)).json()["status"] == "withdrawn"
+    assert all(x["id"] != aid for x in client.get("/api/approvals").json())
+    assert client.post(f"/api/approvals/{aid}", json={"approve": True}).status_code in (404, 409)
+    assert a.get(f"/v1/rooks/approvals/{aid}", headers=bearer(CODING)).json()["status"] == "withdrawn"
+    # an answered prompt cannot be withdrawn into something else
+    done = _terminal_prompt(a, BROWSER)
+    client.post(f"/api/approvals/{done}", json={"approve": True})
+    assert a.post(f"/v1/rooks/approvals/{done}/withdraw", headers=bearer(BROWSER, write=True)).status_code == 409
+    assert a.get(f"/v1/rooks/approvals/{done}", headers=bearer(BROWSER)).json()["status"] == "approved"
 
 
 def test_a_coding_job_reads_nothing_in_the_workroom(client, keys):
