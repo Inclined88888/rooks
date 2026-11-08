@@ -78,7 +78,7 @@ def test_the_app_json_bridge_key_reads_but_never_acts(tmp_path):
     try:
         setup(a, "http://127.0.0.1:9/v1")
         status = _say(workroom.room_command, a.url, BRIDGE)
-        assert "The Room  ·  off" in status and "Update the app" not in status, status
+        assert "The Room  ·  Off" in status and "Update the app" not in status, status
         started = _say(workroom.room_command, a.url, BRIDGE, "start")
         assert "Terminal access" in started and "401" not in started, started
         assert "hello-room" not in _say(workroom.room_command, a.url, BRIDGE, "run echo hello-room")
