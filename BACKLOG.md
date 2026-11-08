@@ -88,6 +88,33 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   path. Left for later: the room-browser branch is changing `api.py` (desktop shell choice), so splitting now would
   turn its merge into a rewrite.
 
+### One memory: what the merge step left (branch cleanup/workplace)
+
+* **A teammate's own notes are still their own store** (`tm_notes`, `teammates/memory.py`, encrypted with the
+  workspace key). The task named three stores; this is a fourth, per teammate. It could become `kn_memories` rows
+  with `scope = assistant:<id>` (the swap point the module's docstring describes), with its own move.
+* **The terminal's offline memory** (`memory.json` in `rooks-code/rooks_code/learning.py`, used only when the app is
+  not connected) is not moved into the app when the terminal is later connected. Offer to copy it on `rooks login`.
+* **The predicates are loose.** "role" matches any "is a ..." sentence, so "My dog is a labrador" would replace "The
+  user is a nurse in Sydney" in the prompt (kept as history, shown by "why"). Before this branch the same match made
+  both facts wait as a conflict, so it was already wrong, only quieter. Tighten `PREDICATES` in
+  `knowledge/memory.py` with tests from real sentences before relying on it for more than where you live and work.
+* **The move does not apply "newer replaces older" to facts it moves.** Two old facts with the same predicate (lives
+  in Brisbane, moved to Sydney) both stay in use after the upgrade, as they were before; the next statement about the
+  same thing replaces both. Doing it at upgrade would hide facts the person saw yesterday.
+* **The old categories are folded into tiers.** About you, Your work, People and Other things become "About you and
+  your work" (`profile`); Formats and tone and How you like things done become "How you like things done"
+  (`procedural`). The Memory page groups by tier. If people miss the finer grouping, add a category column.
+* **Facts sealed with an older app secret stay in `adapt_facts`.** They could not be read before either. Nothing
+  shows them; a Data safety line could say how many there are and that the old secret would bring them back.
+* **The job classifier called "Please remember that I live in Sydney" a legal review** (seen in the real run, on the
+  Memory page's "The work I've seen"). `adapt/jobs.classify` matches too eagerly; not changed here.
+* **`test_knowledge.py::test_api` fails when it runs right after some other files** (seen with test_adapt,
+  test_assistant, test_auth_boundaries, test_coworker_guards, test_rooks_link and test_v02_core in one run):
+  `PRAGMA integrity_check` reports "malformed inverted index for FTS5 table main.messages_fts". The same order fails
+  on the tree before this branch, so it is not from the memory change; the full suite's order passes. Find which test
+  leaves the chat search index broken.
+
 ### Other scheduled items
 
 * **Rooks Browser app: what the preview still lacks** (`rooks-browser/app`, landed from `feat/browser-app` after review, CHANGELOG

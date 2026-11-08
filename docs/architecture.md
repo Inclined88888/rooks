@@ -241,44 +241,44 @@ Notes:
 
 ### d.4 Memory and learning
 
-What the assistant learns after each turn, and where it keeps it. Three stores hold the same kind of fact today.
+What the assistant learns after each turn, and where it keeps it. Since the cleanup branch (g.2a) there is one store for
+facts about the person, `kn_memories`, which chat, the Memory page and the terminal all read and write.
 
 ```mermaid
 flowchart TB
   turn(["1 Chat turn"])
   term["rooks terminal"]
-  learn(["4.1 Mine the turn<br/>learn.py"])
-  adapt(["4.2 Personal facts, lessons,<br/>playbooks: adapt/"])
-  kn(["4.3 Knowledge layer<br/>knowledge/memory, graph, index"])
-  sync(["4.4 Copy older stores in<br/>knowledge/adapters.py"])
-  live(["4.5 Build the memory block<br/>knowledge/live.py"])
-  m1[("A: memories table<br/>older")]
-  m2[("B: adapt_facts<br/>encrypted")]
-  m3[("C: kn_memories, entities,<br/>search index")]
-  pages["Three memory screens<br/>Memory, About you, chat Memory tab"]
+  learn(["4.1 Mine the turn<br/>learn.py, knowledge/facts.py"])
+  adapt(["4.2 Lessons, playbooks,<br/>routines: adapt/"])
+  facts(["4.3 Facts about the person<br/>knowledge/facts.py, memory.py"])
+  live(["4.5 Build the memory block<br/>knowledge/live.py, recall.py"])
+  m3[("kn_memories, entities,<br/>search index (encrypted)")]
+  page["The Memory page<br/>What I know, Learning"]
   turn -->|"1 finished turn"| learn
-  learn -->|"2"| m1
-  learn -->|"3 hand over"| adapt
-  turn -->|"4 remember, forget"| adapt
-  adapt --> m2
-  term -->|"5 remember, turns"| learn
-  m1 -->|"6"| sync
-  m2 -->|"7"| sync
-  sync --> kn
-  kn <--> m3
-  m3 -->|"8 recall"| live
-  live -->|"9 memory for the prompt"| turn
-  pages <-->|"10 Memory page"| m3
-  pages <-.->|"11 About you"| m2
-  pages <-.->|"12 chat Memory tab"| m1
+  learn -->|"2 new facts"| facts
+  learn -->|"3 work patterns"| adapt
+  turn -->|"4 remember, forget"| facts
+  term -->|"5 remember, forget, /memory"| facts
+  page <-->|"6 add, correct, forget"| facts
+  facts <--> m3
+  m3 -->|"7 recall"| live
+  live -->|"8 memory for the prompt"| turn
+  live -->|"9 memory for the prompt"| term
 ```
 
 Notes:
 
-- The three screens read three different stores: the Memory page reads C, About you reads B, and the chat's Memory tab reads A.
-- Sensitive text in B and C is encrypted with a data key that is itself protected by the app's secret (or the computer's keychain on the desktop build). The search index uses scrambled words so it can be searched without storing plain text.
+- One store: a fact told in chat is on the Memory page and in the terminal's /memory at once, and "forget" anywhere
+  removes it everywhere and from the next prompt. A newer fact about the same thing (same predicate, such as lives_in or
+  works_at) replaces the older one, which is kept as history ("Why do you know this?" shows it); a guess that disagrees
+  with what the person said themselves waits on the Memory page ("Needs your call") and their word stays in use.
+- The older `memories` and `adapt_facts` tables were moved into `kn_memories` once by `db.migrate_v5` and dropped.
+- Sensitive text is encrypted with a data key that is itself protected by the app's secret (or the computer's keychain
+  on the desktop build). The search index uses scrambled words so it can be searched without storing plain text. A key
+  or password is never kept in memory, because memories go into prompts.
 - Skills are separate: skills from GitHub pass a security gate (`skills_hub.py`, `skill_scan.py`) and run in a sandbox (`skill_sandbox.py`).
 - A daily backup copies the whole database, still encrypted (`knowledge/backup.py`).
+- A teammate's own notes (`tm_notes`, teammates/memory.py) are still a separate store (BACKLOG.md).
 
 ### d.5 Phone and chat channels
 
@@ -376,20 +376,20 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 
 | Module | What it does | Status |
 |---|---|---|
-| learn.py | Mines memories and skills after each turn into the older memories table | duplicate |
+| learn.py | After each turn: facts into the one memory store (knowledge/facts.py) and reusable skills | live |
 | learn_hook.py | Tells the learning layer about Files and Sites work | live |
-| adapt/knowledge.py | Encrypted personal facts with search (second memory store) | duplicate |
 | adapt/playbooks.py | "Show me how": a recording becomes a playbook with a schedule | live |
 | adapt/recorder.py | Recording interface; only the browser recorder is wired | half built |
 | adapt/jobs.py | Notices habits and proposes routines | live |
 | adapt/feedback.py | Thumbs, comments and edits become lessons | live |
 | adapt/hooks.py, routes.py, store.py | The entry points, routes and eight tables of the learning layer | live |
-| knowledge/memory.py | Memory tiers, sources, duplicates, conflicts, pinning, forgetting (third memory store) | duplicate |
+| knowledge/memory.py | The one memory store: tiers, sources, duplicates, a newer fact replacing an older one, conflicts, pinning, forgetting | live |
+| knowledge/facts.py | Facts about the person for chat, the terminal and the Memory page; the learner; the one-time move of the older stores | live |
 | knowledge/graph.py | People, projects, files, sites and how they relate | live |
 | knowledge/index.py | One search index over everything, on scrambled words | live |
 | knowledge/recall.py | Mixed recall: search, graph, recency, pinning, within a size budget | live |
 | knowledge/live.py | Keeps the graph current and builds the memory block for the prompt | live |
-| knowledge/adapters.py | Copies older stores into the graph and index | live |
+| knowledge/adapters.py | Indexes projects, tasks, files, sites and notes into the graph and index | live |
 | knowledge/crypto.py | The data key for every encrypted column | live |
 | knowledge/importers.py | Imports ChatGPT, Claude and Grok exports, Notion and Obsidian | live |
 | knowledge/improve.py | Nightly improvement proposals, only when switched on | live |
@@ -517,13 +517,13 @@ Status words: **live** (used and reachable), **half built** (exists but a part i
 | room/ | The Room page: terminal, screen, files and save-point windows; compact Room on the Stage | live |
 | needs/ | The Needs you sheet | live |
 | stage/surfaces.tsx | How the side Stage draws the Room, a browser job or a computer job | live |
-| memory/ | The Memory page: facts, people, projects, conflicts, tidy up, backups and imports | live |
+| memory/ | The Memory page: what I know (add, correct, forget), people, projects, conflicts, tidy up, learning switches, backups and imports | live |
 | memory/Improved.tsx | A "What I improved" card that nothing shows | dead |
 | teammates/ | Teammates, Channels, Groups, Pages and Vault pages | live |
 | team/ | The human team lead's board, plan, tracker settings, outbox | live |
 | v02/ | Jobs board, job notifications, live sheets and charts, trigger builder | live |
 | Day pages | Mail, Calendar, Tasks, Home | live |
-| Memory pages | Skills, About you, Teach | live |
+| Memory pages | Skills, Teach (About you and the chat's Memory tab are the Memory page now) | live |
 | Library pages | Files, Notes, Documents, Sites, Projects | live |
 | Workspace pages | Automations, Research, Meetings, Talk, Coworkers, Packs, Browser and Computer (only when the helpers run) | live |
 | pages/Code.tsx | Coding jobs plus copies of the Terminal, Browser and Computer pages as tabs | duplicate |
@@ -701,6 +701,15 @@ browser agent now).
 | desktop/rooks-native | One desktop app | A second desktop window that repeats the web screens | High. Decide which window is "the app" first. |
 | cli/ws | rooks-code | A second terminal client with different names and settings | Medium. Shipped in releases; deprecate for one release first. |
 | Old audits and evidence (docs/AUDIT.md, PHASE0-GATE, ROOKS-FINISH-REPORT, docs/evidence, docs/night, scripts/audit) | docs/history/ | Snapshots mixed in with current guides | Low. Fix links from design record 0004. |
+
+### g.2a Done on branch `cleanup/workplace`
+
+| Item | Outcome |
+|---|---|
+| learn.py memories + adapt_facts + kn_memories | One store, `kn_memories`, used through `knowledge/facts.py` by chat's remember, forget and search tools, the background learner, the terminal (`/v1/rooks/memory`, `/context`, `/remember`, `/forget`), feedback lessons, projects, history undo and imports. `adapt/knowledge.py`, the live sync's copy of adapt_facts and the `skip_adapt_mirrors` rule are gone; the prompt has one memory block, not two with two id spaces. A newer fact about the same thing replaces the older one (memory.py's predicates and `superseded`). |
+| The move | `db.SCHEMA_VERSION` 5 (`db.migrate_v5`): every fact in `memories` and `adapt_facts` moves into `kn_memories`, encrypted with the memory key, de-duplicated by its words (the live sync's copies count as the same fact), with its source, dates, pin and uses; then both tables are dropped. A backup is taken first. A password or key is not moved (the old code dropped those too). If the memory key is locked at upgrade time nothing changes and the move runs the first time memory opens. Knowledge migration 4 indexes the moved facts. Tested on a copy of a database with facts in all three stores. |
+| Memory page + About you + chat Memory tab | The Memory page: "Tell me something", correct in place, why, pin, sensitive, forget, forget everything, and a Learning tab with the four switches, the work it has seen and lessons from your changes. `pages/AboutYou.tsx` and `chat/tabs/MemoryTab.tsx` are deleted; `/about-you` and `/assistant-memory` redirect to `/knowledge`. `/api/memories` and `/api/learn/facts` are gone; `/api/learn/work` replaces the work list. |
+| Left | A teammate's own notes (`tm_notes`) and the terminal's offline `memory.json` (used only without the app) are still separate (BACKLOG.md). |
 
 ### g.3 Hide behind Advanced
 

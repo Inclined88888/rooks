@@ -27,8 +27,16 @@ Problems: three ways of creating tables, no version for 30+ tables, people exist
 1. adopt every feature module's tables (imports their SCHEMA strings) + `db.ensure_columns`
 2. knowledge tables (below) + change-log triggers
 3. backfill the graph and memories from existing stores (adapters)
+4. index the facts core migration 5 moved in from the older memory stores
 
-Each step: one transaction, backup file `workbench.db.pre-kn<N>-<ts>.bak` before the first pending step, never re-run. `schema.integrity()` = `PRAGMA integrity_check` + foreign keys + index orphan checks. To add a step: append `(4, "name", fn)` to `MIGRATIONS`; make it idempotent.
+Each step: one transaction, backup file `workbench.db.pre-kn<N>-<ts>.bak` before the first pending step, never re-run. `schema.integrity()` = `PRAGMA integrity_check` + foreign keys + index orphan checks. To add a step: append `(5, "name", fn)` to `MIGRATIONS`; make it idempotent.
+
+**One memory store (core `SCHEMA_VERSION` 5, `db.migrate_v5`).** The plaintext `memories` table and the encrypted
+`adapt_facts` table are moved into `kn_memories` once (`knowledge/facts.py` `move_old_stores`): same words become one
+row with the earliest date, the person's own word as source if either copy had it, pinned if either was, and the uses
+added; the live sync's copies (`source_ref adapt_fact:<id>`) count as the same fact. Passwords and keys are not moved.
+Then both tables are dropped (a backup `workbench.db.pre-v5-<ts>.bak` is taken first). If the memory key is locked at
+upgrade, nothing changes and `knowledge.schema.ensure()` runs the move the first time memory opens with the key.
 
 ## 3. Tables
 
@@ -46,8 +54,9 @@ Each step: one transaction, backup file `workbench.db.pre-kn<N>-<ts>.bak` before
 ## 5. Rules
 
 - Dedupe: same scope/tier/subject and ≥75% word overlap → refresh the existing memory.
-- Contradictions (same subject + predicate): about another person/thing → newer wins, old kept as history (`superseded`); about the user, or when the old one came from the user → both marked `conflict` and a review card (`/api/knowledge/conflicts`, resolve old|new|both). The user's own word beats an automatic guess.
-- Secrets (passwords, card numbers, tokens) are refused unless typed by the user → belong in the Vault.
+- Contradictions (same subject + predicate, such as lives_in): the newer fact replaces the older one, which is kept as history (`superseded`, shown by "why"). The one exception: a guess (`source_kind` other than `user`) that disagrees with what the person said themselves is marked `conflict` with a review card (`/api/knowledge/conflicts`, resolve old|new|both), and their word stays `active` meanwhile.
+- Secrets (passwords, card numbers, tokens) are refused unless typed by the user → belong in the Vault. Keys by their shapes (sk-, AIza, ghp_, AKIA, JWTs, private keys) are refused from anyone, since memories go into prompts.
+- Facts about the person (`subject_id` NULL, scope shared) are what chat's remember/forget tools, the background learner, the terminal (`/v1/rooks/memory`, `/context`, `/remember`, `/forget`) and the Memory page use, through `knowledge/facts.py`.
 - Consolidation: `consolidate(days)` turns old episodic notes per project into one durable memory; episodes archived with `consolidated_into` so "why" still shows them.
 - Why: `why(id)` → plain sentence + source, date, confidence, use count, what it replaced.
 

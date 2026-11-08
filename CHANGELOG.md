@@ -8,8 +8,53 @@ version and the merge commit on `main`.
 
 The cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the old browser
 agent, move old reports into `docs/history/`, hide developer features behind Advanced (hidden, not deleted), and call
-the product Rooks on every normal screen. No schema change; one connection row is renamed (below). Rollback: revert
-the branch's commits.
+the product Rooks on every normal screen, and keep one memory. One schema change: the memory move
+(`SCHEMA_VERSION` 5, below); one connection row is renamed (below). Rollback: revert the branch's commits, and for the
+memory move restore the backup it takes.
+
+- **One memory** (section g.2, first two rows; the audit found the Memory page showed nothing). What the assistant
+  knows about you was kept in three places: the old plaintext `memories` table, the encrypted "What I know about you"
+  store (`adapt_facts`: chat's remember and forget, the terminal's /memory) and `kn_memories` (the Memory page, copied
+  from adapt_facts once a minute). A fact told in chat did not show on the Memory page, forgetting it on the Memory
+  page left it in the prompt through the other store, and the prompt carried two memory lists whose ids meant
+  different things. Now there is one store, `kn_memories`, used through `knowledge/facts.py` by chat's remember,
+  forget and search tools, the background learner, the terminal (`/v1/rooks/memory`, `/context`, `/remember`,
+  `/forget`), feedback lessons, projects, history undo and imports; the prompt has one memory list.
+  - **A newer fact replaces an older one about the same thing**, using `knowledge/memory.py`'s predicates (lives_in,
+    works_at, role, phone, email, birthday, prefers:*) and its `superseded` status: "Moved to Melbourne" replaces
+    "Lives in Sydney" in the prompt, and "Why do you know this?" shows what it replaced. This changes the old rule for
+    facts about you: two of your own statements no longer become a question; the newer one wins. A guess that
+    disagrees with what you said yourself still waits under "Needs your call", and your word stays in use meanwhile
+    (before, both were set aside until you chose).
+  - **A key or password never goes into memory** from chat, the terminal or the Memory page (keys by their shapes:
+    sk-, AIza, ghp_, AKIA, JWTs, private keys), because memories go into prompts. Before, chat's remember tool saved
+    whatever it was given.
+  - **One screen.** The Memory page has "Tell me something", correct in place, why, pin, sensitive, forget, "Forget
+    everything", and a Learning tab with the four switches, the work it has seen and what it learned from your
+    changes. About you (`/about-you`) and the chat's Memory tab (`/assistant-memory`) are gone; both addresses open
+    the Memory page, and Settings, Privacy, Projects and the chat's menu link there.
+  - **Routes:** `/api/memories` and `/api/learn/facts` (and `/api/learn/legacy-memories`) are removed; use
+    `/api/knowledge/memories` (with `POST /api/knowledge/memories/forget-all`). `/api/learn/work` gives the work list
+    `/api/learn/facts` used to carry. The terminal's routes are unchanged.
+  - **Data on upgrade (`SCHEMA_VERSION` 5, `db.migrate_v5`):** every fact in `memories` and `adapt_facts` moves into
+    `kn_memories`, encrypted with the memory key, de-duplicated by its words (the once-a-minute copies count as the
+    same fact), keeping its source, dates, pin and uses; then both tables are dropped. A backup
+    `workbench.db.pre-v5-<time>.bak` is taken first. Passwords and keys are not moved (the old code dropped those
+    from `memories` too); facts sealed with a different app secret cannot be read and stay in `adapt_facts`. If the
+    memory key is locked at upgrade (a desktop keychain), start-up is not blocked: nothing changes, and the move runs
+    the first time memory opens with the key. Knowledge migration 4 indexes the moved facts for search.
+    **Rollback:** stop the app, replace `workbench.db` with the newest `workbench.db.pre-v5-*.bak`, run the previous
+    build. Facts saved after the upgrade are then lost.
+  - **Tests** (each failed on the tree before): `workbench/backend/tests/test_one_memory.py` (remember in chat shows
+    on Memory, in the terminal's /memory and its prompt context; forget on the Memory page, in the terminal or in
+    chat is gone everywhere and from the next prompt; "Moved to Melbourne" replaces "Lives in Sydney" in the prompt;
+    a correction on the Memory page is what the next prompt uses; a key is refused; the move keeps every fact from
+    all three stores on a database built as the last release left it; a locked key at upgrade loses nothing) and
+    `workbench/frontend/tests/one-memory.test.mjs`. Existing tests that read the old stores now read the one store;
+    `test_knowledge.py`'s rule for two statements of your own changed with the behaviour above. Also checked on a copy
+    of a database the previous build made with facts in all three stores, and in a real run of the built app on a
+    fake model with Playwright (told a fact in chat, saw it on the Memory page, corrected it, the next prompt used the
+    correction, forgot it from the terminal); screenshots were taken locally and are not in the repository.
 
 - **Rooks on every normal screen** (section g.4, contradiction 3). The server's pages and messages say Rooks instead of
   "AI Workspace" or "Workbench": the page a used sign-in link shows, the Google and Microsoft Connect results, the
