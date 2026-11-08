@@ -55,7 +55,7 @@ Actions:
 - search_files {"root": "~/Documents", "pattern": "*.dwg", "text": ""}   move_file {"from": "..", "to": ".."}   delete_file {"path": ".."}
 - clipboard_get {}  clipboard_set {"text": ".."}
 - mcp      {"server": "autocad", "tool": "draw_line", "args": {...}}   call a tool on a connected MCP server (listed below)
-- send_email {"to": "...", "subject": "...", "body": "...", "attachments": ["/path/file.png"]}   sends from the person's mail account in AI Workspace
+- send_email {"to": "...", "subject": "...", "body": "...", "attachments": ["/path/file.png"]}   sends from the person's mail account in the Rooks app
 - wait     {"seconds": 2}
 - handoff  {"reason": "what the person must do"}   ask the person to do a step themselves (passwords, codes, UAC prompts) and wait
 - done     {"answer": "...", "success": true}
@@ -408,7 +408,7 @@ class Desk:
             return ("" if ok else "tool error: ") + text[:4000]
         if name == "send_email":
             if not self.mailer:
-                raise ValueError("email needs the AI Workspace app open with a mail account connected")
+                raise ValueError("email needs the Rooks app open with a mail account connected")
             for a in args.get("attachments") or []:
                 if not Path(os.path.expanduser(a)).is_file():
                     raise ValueError(f"attachment not found: {a}")

@@ -137,7 +137,7 @@ def cmd_run(argv: list[str]) -> int:
 
     try:
         shown = llm.resolve(s.provider)
-        shown = "AI Workspace app (smart router)" if shown == "workbench" else shown
+        shown = "Rooks app (smart router)" if shown == "workbench" else shown
     except ValueError as e:
         print(f"rooks-browser: {e}", file=sys.stderr)
         return 2
