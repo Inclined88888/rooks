@@ -34,16 +34,23 @@ def test_the_switch_is_remembered_by_the_install(client):
         db.set_setting("dev_tools", "0")
 
 
+def _signed_out():
+    """A second client on the same running app, with no session cookie (the shared client keeps its own)."""
+    from fastapi.testclient import TestClient
+
+    from app import main
+
+    return TestClient(main.app, headers={"X-Workbench": "1"})
+
+
 def test_signed_out_status_never_says_on(client):
     from app import db
 
-    saved = dict(client.cookies)
     db.set_setting("dev_tools", "1")
-    client.cookies.clear()
     try:
-        assert client.get("/api/status").json()["dev_tools"] is False
+        assert client.get("/api/status").json()["dev_tools"] is True
+        assert _signed_out().get("/api/status").json()["dev_tools"] is False
     finally:
-        client.cookies.update(saved)
         db.set_setting("dev_tools", "0")
 
 
@@ -52,14 +59,9 @@ def test_a_bridge_key_cannot_flip_the_switch(client, monkeypatch):
     from app import config, db
 
     monkeypatch.setattr(config, "BROWSER_API_KEY", "bridge-key-for-this-test-0123456789")
-    saved = dict(client.cookies)
-    client.cookies.clear()
-    try:
-        r = client.put("/api/settings", json={"dev_tools": True}, headers={"Authorization": "Bearer bridge-key-for-this-test-0123456789"})
-        assert r.status_code == 401
-        assert db.get_setting("dev_tools", "0") != "1"
-    finally:
-        client.cookies.update(saved)
+    r = _signed_out().put("/api/settings", json={"dev_tools": True}, headers={"Authorization": "Bearer bridge-key-for-this-test-0123456789"})
+    assert r.status_code == 401
+    assert db.get_setting("dev_tools", "0") != "1"
 
 
 def _cloud_says_billing_is_live(monkeypatch):
