@@ -7,13 +7,18 @@ its last 256 KiB as one scrollback frame, then streams. Nothing here has a time 
 
 Each terminal has a reader thread (not the event loop's add_reader: the chat tool and the routes may run on different
 loops, and a shell must outlive any one of them). It appends the output to a ring and to a log in the Room's work
-folder, forwards it to the one attached socket, and cuts out the invisible exit code marker the Room's profile prints
-after each command (ESC ] 7777 ; code BEL), which is how the server knows a started command has ended and how.
+folder (0600, in a 0700 folder: the person's alone), forwards it to the one attached socket (one that falls behind gets
+a fresh scrollback frame instead of a growing queue), and cuts out the invisible exit code marker the Room's profile
+prints after each command (ESC ] 7777 ; code ; nonce BEL, with this terminal's own nonce so nothing a command prints
+can pass for it), which is how the server knows a started command has ended and how. A shell that exits while a job
+still holds its terminal ends the terminal and the job is hung up. A command Rooks starts is one line.
 
 Who may attach: terminal_pty's rules (signed in, same origin, loopback peer and page, terminals not switched off in
 Settings). What is recorded in the run log (channel room, tool use_room): opening and closing a terminal, every command
-Rooks starts and how it ended, every line sent through the send route (the phone row, /room send), and one coarse
-"You used the terminal for N min" row when a socket that typed detaches. Keystrokes over the socket are never recorded.
+Rooks starts and how it ended, every line sent through the send route (the phone row, /room send; only its length when
+the terminal was waiting for hidden input, a password prompt), and one coarse "You used the terminal for N min" row
+when a socket that typed detaches. Keystrokes over the socket are never recorded. tail gives plain text: no escape
+sequences reach the model or the rooks terminal.
 
 At most four Room terminals, live or ended, counted apart from the app terminal's six. Stop closes them (the ended ones
 stay listed, greyed, with their text); Start over closes and forgets them. When the app exits, every live shell is hung
@@ -101,7 +106,6 @@ _MARK_PART = re.compile(rb"\x1b\]7777;-?\d{0,6}(?:;[0-9a-f]{0,64})?")
 _ESCAPES = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b[\]P_^X][^\x07\x1b]*(?:\x07|\x1b\\?|$)|\x1b[ -/]*[0-~]|\x1b$"
                       r"|[\x80-\x9f]")
 _CONTROLS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
-_ANSI = _ESCAPES
 
 
 def _now_iso() -> str:
