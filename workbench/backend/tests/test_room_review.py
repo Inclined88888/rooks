@@ -310,7 +310,9 @@ def test_a_stalled_window_never_queues_without_limit(client, on, local, monkeypa
             if frame.startswith('{"type": "scrollback"'):
                 fresh = json.loads(frame)
                 break
-        assert fresh and fresh["data"].endswith("LAST") and len(fresh["data"]) <= room_terminal.RING_MAX, fresh and len(fresh["data"])
+        # the latest text is in it; the real shell may still print its first prompt after LAST (seen on CI)
+        assert fresh and "LAST" in fresh["data"][-400:] and len(fresh["data"]) <= room_terminal.RING_MAX, \
+            fresh and (len(fresh["data"]), fresh["data"][-120:])
 
 
 def test_a_bad_record_in_the_terminals_folder_is_skipped(client, on):
