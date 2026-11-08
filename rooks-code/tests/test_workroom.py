@@ -3,7 +3,10 @@ older app does not let them."""
 
 import io
 import json
+import sys
 import threading
+import types
+import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import SimpleNamespace
 
@@ -23,7 +26,10 @@ class FakeApp:
         self.calls: list[tuple[str, str, dict | None]] = []
         self.room = {"available": True, "running": False, "screen": False, "pointer": False, "isolation": "namespace",
                      "label": "A private folder and shell", "note": "Commands run as you, in a folder of its own.",
-                     "driver": "shell", "last_checkpoint": None, "checkpoints": []}
+                     "driver": "shell", "last_checkpoint": None, "checkpoints": [], "home": "/rooms/home",
+                     "offline": False, "terminals": [], "terminal_max": 4, "can": {"terminal": True, "files": True}}
+        self.tails: dict[str, dict] = {}  # a terminal's last lines, as GET /api/room/terminals/{id}/tail answers
+        self.verified = True  # what the service could confirm about a saved point or a start over
         self.needs = [{"id": "a:7", "kind": "approval", "title": "Send an email to Ana", "detail": "Subject: Friday",
                        "since": "2026-11-06T10:00:00", "actions": ["approve", "deny"]},
                       {"id": "j:3", "kind": "job", "title": "Tidy the downloads folder", "detail": "",
@@ -57,10 +63,17 @@ class FakeApp:
                     return self._send(200, {"running": True, "label": app.room["label"]})
                 if p == "/api/room/down":
                     app.room["running"] = False
-                    return self._send(200, {"running": False})
+                    closed = 0
+                    for t in app.room["terminals"]:
+                        closed += bool(t["alive"])
+                        t.update(alive=False, busy=False, ended_reason="stop")
+                    return self._send(200, {"running": False, "terminals_closed": closed})
                 if p == "/api/room/run":
                     if not app.room["running"]:
                         return self._send(409, {"detail": "The Room is off. Start it first."})
+                    if body["command"].startswith("sleep"):
+                        return self._send(200, {"ok": False, "code": 124, "stdout": "", "stderr": "",
+                                                "error": "Timed out after 120 s"})
                     return self._send(200, {"ok": True, "code": 0, "stdout": f"ran {body['command']}\n", "stderr": ""})
                 if p == "/api/needs-you":
                     return self._send(200, app.needs)
@@ -69,6 +82,70 @@ class FakeApp:
                     app.needs = [i for i in app.needs if i["id"] != item]
                     status = app.answers.pop(0) if app.answers else ("approved" if answer == "approve" else "denied")
                     return self._send(200, {"id": item, "status": status})
+                path, _, query = p.partition("?")
+                q = dict(urllib.parse.parse_qsl(query))
+                terms = app.room["terminals"]
+                if path == "/api/room/terminals" and method == "GET":
+                    return self._send(200, {"terminals": terms, "max": app.room["terminal_max"]})
+                if path == "/api/room/terminals" and method == "POST":
+                    if not app.room["running"]:
+                        return self._send(409, {"detail": "The Room is off. Start it first."})
+                    body = body or {}
+                    rooks = bool(body.get("command"))
+                    t = {"id": f"t{len(terms) + 1:07d}", "name": body.get("name") or f"Terminal {len(terms) + 1}",
+                         "owner": "rooks" if rooks else "person", "alive": True, "busy": rooks,
+                         "started": "2026-11-07T14:02:11Z", "exit_code": None, "ended_reason": None,
+                         "command": body.get("command"), "elapsed_s": 0}
+                    terms.append(t)
+                    return self._send(200, {k: t[k] for k in ("id", "name", "owner", "alive", "started")})
+                if path.startswith("/api/room/terminals/"):
+                    tid, _, verb = path[len("/api/room/terminals/"):].partition("/")
+                    t = next((x for x in terms if x["id"] == tid), None)
+                    if t is None:
+                        return self._send(404, {"detail": "No such terminal"})
+                    if verb == "tail" and method == "GET":
+                        return self._send(200, app.tails.get(tid) or {
+                            "text": "", "alive": t["alive"], "busy": t["busy"], "exit_code": t["exit_code"],
+                            "owner": t["owner"], "taken": False, "elapsed_s": t["elapsed_s"]})
+                    if verb == "send" and method == "POST":
+                        if not t["alive"]:
+                            return self._send(409, {"detail": "This terminal has ended."})
+                        if t["owner"] == "rooks" and t["busy"]:
+                            return self._send(409, {"detail": "Rooks is working in that terminal. Take it first, or open your own."})
+                        return self._send(200, {"ok": True, "bytes": len(body["text"]) + (1 if body.get("enter") else 0)})
+                    if verb == "" and method == "DELETE":
+                        terms.remove(t)
+                        return self._send(200, {"ok": True, "exit_code": 0, "closed": True})
+                if path == "/api/room/files":
+                    where = q.get("path", "")
+                    if ".." in where.split("/"):
+                        return self._send(400, {"detail": "That is outside the Room."})
+                    if where == "":
+                        return self._send(200, {"path": "", "parent": None, "root_label": "Home", "truncated": False, "entries": [
+                            {"name": "Desktop", "kind": "folder", "size": None, "modified": "2026-11-07T14:02:11Z"},
+                            {"name": ".profile", "kind": "file", "size": 230, "modified": "2026-11-07T14:02:11Z"}]})
+                    if where == "Desktop":
+                        return self._send(200, {"path": "Desktop", "parent": "", "root_label": "Home", "truncated": False, "entries": [
+                            {"name": "hermes", "kind": "folder", "size": None, "modified": "2026-11-07T14:02:11Z"},
+                            {"name": "notes.txt", "kind": "file", "size": 2048, "modified": "2026-11-03T09:00:00Z"},
+                            {"name": "out", "kind": "link", "size": None, "modified": "2026-11-03T09:00:00Z"}]})
+                    return self._send(404, {"detail": "That folder is gone."})
+                if path == "/api/room/checkpoint" and method == "POST":
+                    label = (body or {}).get("label") or "save"
+                    name = "20261107T140211-" + label.replace(" ", "-")
+                    if app.verified:
+                        app.room["checkpoints"].insert(0, {"name": name})
+                    return self._send(200, {"name": name, "label": label, "verified": app.verified})
+                if path == "/api/room/reset" and method == "POST":
+                    closed = sum(1 for t in terms if t["alive"])
+                    for t in terms:
+                        t.update(alive=False, busy=False, ended_reason="start over")
+                    return self._send(200, {"name": (body or {}).get("name"), "restored": app.verified,
+                                            "verified": app.verified, "terminals_closed": closed,
+                                            "terminal": {"id": "t0000009", "name": "Terminal 1"}})
+                if path == "/api/room/handoff" and method == "POST":
+                    return self._send(200, {"ok": False, "held": True, "needs_you_id": "a:9", "request_id": "r1",
+                                            "note": "Nothing was copied. It waits for your OK in Needs you."})
                 if p == "/api/jobs":
                     return self._send(200, {"running": [{"id": 4, "title": "Weekly report", "status": "running"}],
                                             "you": [], "done": []})
@@ -79,6 +156,9 @@ class FakeApp:
 
             def do_POST(self):
                 self._handle("POST")
+
+            def do_DELETE(self):
+                self._handle("DELETE")
 
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), H)
         self.url = f"http://127.0.0.1:{self.server.server_address[1]}"
@@ -185,3 +265,197 @@ def test_jobs_lists_the_terminal_jobs_and_the_apps_jobs(fake_app, tmp_path):
 
 def test_room_and_needs_are_reachable_from_the_command_list():
     assert "/room" in tui.COMMANDS and "/needs" in tui.COMMANDS
+
+
+# --- the Room as a small computer (design record 0006, sections 6, 7.1 and 9.9) -------------------------------------------
+HONEST = "Commands run as you, in a folder of its own. It is not a locked off computer."
+
+
+def _term(name, owner="person", alive=True, busy=False, exit_code=None, elapsed_s=0, ended_reason=None, tid=None):
+    return {"id": tid or ("t" + name.lower().replace(" ", "")[:7]).ljust(8, "0"), "name": name, "owner": owner,
+            "alive": alive, "busy": busy, "started": "2026-11-07T14:02:11Z", "exit_code": exit_code,
+            "ended_reason": ended_reason, "command": "./install.sh" if owner == "rooks" else None, "elapsed_s": elapsed_s}
+
+
+def _answer(monkeypatch, line: str) -> None:
+    """What the person types at a (y/N) question."""
+    monkeypatch.setattr("sys.stdin", io.StringIO(line + "\n"))
+
+
+def test_room_lists_terminals_and_the_honest_line(fake_app):
+    fake_app.room["running"] = True
+    fake_app.room["terminals"] = [_term("Terminal 1"), _term("Rooks", owner="rooks", busy=True, elapsed_s=184)]
+    text = _say(workroom.room_command, _agent(fake_app.url))
+    assert "The Room  ·  On" in text, text
+    assert "Terminal 1 · yours" in text and "Rooks · running, 3 min" in text, text
+    assert HONEST in text, text
+    for hidden in [t["id"] for t in fake_app.room["terminals"]] + ["namespace", "driver", "/rooms/home", "http"]:
+        assert hidden not in text, hidden
+    fake_app.room["terminals"] = [_term("Rooks", owner="rooks", alive=False, exit_code=0, ended_reason="exited")]
+    assert "Rooks · ended, code 0" in _say(workroom.room_command, _agent(fake_app.url))
+    fake_app.room["terminals"] = [_term("Terminal 1", alive=False, ended_reason="restart")]
+    assert "the app restarted" in _say(workroom.room_command, _agent(fake_app.url))
+
+
+def test_room_stop_says_everything_is_kept_and_how_many_terminals_closed(fake_app):
+    fake_app.room["running"] = True
+    fake_app.room["terminals"] = [_term("Terminal 1"), _term("Terminal 2", tid="t0000002")]
+    text = _say(workroom.room_command, _agent(fake_app.url), "stop")
+    assert "The Room is off. Everything in it is kept. 2 terminals closed." in text, text
+    assert "Off" in _say(workroom.room_command, _agent(fake_app.url))
+
+
+def test_room_run_cut_off_at_two_minutes_points_to_a_terminal(fake_app):
+    fake_app.room["running"] = True
+    text = _say(workroom.room_command, _agent(fake_app.url), "run sleep 200")
+    assert "Stopped after 120 seconds. For something long: /room open COMMAND" in text, text
+    assert "124" not in text
+
+
+def test_room_files_points_and_open_tail_close(fake_app, monkeypatch):
+    agent = _agent(fake_app.url)
+    files = _say(workroom.room_command, agent, "files Desktop")
+    assert ("GET", "/api/room/files?path=Desktop", None) in fake_app.calls
+    assert "Home › Desktop" in files, files
+    rows = {ln.split()[0]: ln for ln in files.splitlines()[1:] if ln.strip()}
+    assert "folder" in rows["hermes"] and "2 KB" in rows["notes.txt"] and "3 Nov" in rows["notes.txt"], files
+    assert "link" in rows["out"], files
+    home = _say(workroom.room_command, agent, "files")
+    assert "Home" in home and ".profile" in home, home
+    outside = _say(workroom.room_command, agent, "files ../etc")
+    assert "That is outside the Room." in outside and "400" not in outside
+
+    fake_app.room["checkpoints"] = [{"name": "20261101T090000-first"}, {"name": "20261107T140211-before-hermes"}]
+    points = _say(workroom.room_command, agent, "points")
+    assert "before hermes · 7 Nov, 14:02" in points and "first · 1 Nov, 09:00" in points, points
+    assert points.index("before hermes") < points.index("first")  # newest first
+    assert "20261107T140211" not in points
+
+    assert "The Room is off. Start it first." in _say(workroom.room_command, agent, "open echo hi")
+    fake_app.room["running"] = True
+    opened = _say(workroom.room_command, agent, "open echo hi")
+    assert ("POST", "/api/room/terminals", {"name": "Rooks", "command": "echo hi"}) in fake_app.calls
+    assert 'Started in the Room\'s terminal "Rooks". /room tail shows how it goes.' in opened, opened
+    tid = fake_app.room["terminals"][0]["id"]
+    assert workroom.room_working()  # the status line's live dot while Rooks's command runs
+
+    fake_app.tails[tid] = {"text": "Installing hermes…\nstill going", "alive": True, "busy": True, "exit_code": None,
+                           "owner": "rooks", "taken": False, "elapsed_s": 184}
+    running = _say(workroom.room_command, agent, "tail")
+    assert ("GET", f"/api/room/terminals/{tid}/tail?lines=60", None) in fake_app.calls
+    assert "Installing hermes…" in running and "still running (3 min)" in running, running
+    fake_app.tails[tid] = {"text": "hi", "alive": True, "busy": False, "exit_code": 0, "owner": "rooks", "taken": False,
+                           "elapsed_s": 2}
+    done = _say(workroom.room_command, agent, "tail Rooks")
+    assert "hi" in done and "ended with code 0" in done, done
+    assert not workroom.room_working()  # the dot goes once the command is seen done
+    assert "No terminal called Nope" in _say(workroom.room_command, agent, "tail Nope")
+
+    fake_app.room["terminals"][0]["busy"] = True
+    busy = _say(workroom.room_command, agent, "send Rooks y")
+    assert "Rooks is working in that terminal. Take it first, or open your own." in busy, busy
+    fake_app.room["terminals"][0]["busy"] = False
+    _say(workroom.room_command, agent, "send Rooks hermes --version")
+    assert ("POST", f"/api/room/terminals/{tid}/send", {"text": "hermes --version", "enter": True}) in fake_app.calls
+
+    _answer(monkeypatch, "n")
+    kept = _say(workroom.room_command, agent, "close Rooks")
+    assert "Close Rooks? What it is running stops. (y/N)" in kept, kept
+    assert not any(c[0] == "DELETE" for c in fake_app.calls)
+    _answer(monkeypatch, "y")
+    closed = _say(workroom.room_command, agent, "close rooks")
+    assert ("DELETE", f"/api/room/terminals/{tid}", None) in fake_app.calls
+    assert "Closed Rooks." in closed, closed
+
+
+def test_room_send_finds_a_name_with_spaces(fake_app):
+    fake_app.room["running"] = True
+    fake_app.room["terminals"] = [_term("Terminal 1", tid="t0000001")]
+    _say(workroom.room_command, _agent(fake_app.url), "send Terminal 1 ls -la")
+    assert ("POST", "/api/room/terminals/t0000001/send", {"text": "ls -la", "enter": True}) in fake_app.calls
+
+
+def test_room_save_and_back_say_done_only_when_verified(fake_app, monkeypatch):
+    agent = _agent(fake_app.url)
+    fake_app.verified = False
+    unsure = _say(workroom.room_command, agent, "save x")
+    assert ("POST", "/api/room/checkpoint", {"label": "x"}) in fake_app.calls
+    assert "Saved a point" not in unsure and "could not be confirmed" in unsure, unsure
+    fake_app.verified = True
+    assert "Saved a point: x." in _say(workroom.room_command, agent, "save x")
+
+    fake_app.room["running"] = True
+    fake_app.room["terminals"] = [_term("Terminal 1")]
+    fake_app.room["checkpoints"] = [{"name": "20261107T140211-before-hermes"}]
+    _answer(monkeypatch, "")
+    asked = _say(workroom.room_command, agent, "back before hermes")
+    assert ("Yes to start over from before hermes · 7 Nov, 14:02? Anything done since is lost and open terminals close."
+            " (y/N)") in asked, asked
+    assert not any(c[1] == "/api/room/reset" for c in fake_app.calls)
+    fake_app.verified = False
+    _answer(monkeypatch, "y")
+    failed = _say(workroom.room_command, agent, "back 1")
+    assert ("POST", "/api/room/reset", {"name": "20261107T140211-before-hermes"}) in fake_app.calls
+    assert "The Room is back" not in failed and "could not be confirmed" in failed, failed
+    fake_app.verified = True
+    fake_app.room["terminals"] = [_term("Terminal 1")]
+    _answer(monkeypatch, "y")
+    back = _say(workroom.room_command, agent, "back before hermes")
+    assert "The Room is back at before hermes · 7 Nov, 14:02." in back and "1 terminal closed" in back, back
+    assert "Say which point" in _say(workroom.room_command, agent, "back nothing-like-it")
+
+
+def test_room_handoff_waits_in_needs_you(fake_app):
+    text = _say(workroom.room_command, _agent(fake_app.url), "handoff Desktop/notes.txt ~/Desktop")
+    assert ("POST", "/api/room/handoff", {"src": "Desktop/notes.txt", "dest": "~/Desktop"}) in fake_app.calls
+    assert "Waiting for your OK in Needs you (/needs)." in text, text
+    assert "a:9" not in text
+
+
+def _fake_room_shell(monkeypatch, calls):
+    shell = types.ModuleType("rooks_try.drivers.shell")
+    shell.login_argv = lambda home, offline: ["sh", "-c", "login", "room", str(home), str(offline)]
+    shell.room_env = lambda home, offline, base=None: {"HOME": str(home), "PATH": f"{home}/.local/bin:/usr/bin"}
+    monkeypatch.setitem(sys.modules, "rooks_try.drivers.shell", shell)
+    monkeypatch.setattr("subprocess.call", lambda argv, **kw: calls.append((argv, kw)) or 0)
+
+
+def test_room_shell_runs_the_same_login_shell_or_says_where_it_is(fake_app, monkeypatch):
+    calls: list = []
+    _fake_room_shell(monkeypatch, calls)
+    fake_app.room["running"] = True
+    text = _say(workroom.room_command, _agent(fake_app.url), "shell")
+    assert calls, text
+    argv, kw = calls[0]
+    assert argv == ["sh", "-c", "login", "room", "/rooms/home", "False"]
+    assert kw["env"]["HOME"] == "/rooms/home"
+    assert "exit" in text and "/rooms/home" not in text, text
+
+    calls.clear()
+    fake_app.room["can"] = {"terminal": False, "files": False}  # a Room run by a helper elsewhere
+    remote = _say(workroom.room_command, _agent(fake_app.url), "shell")
+    assert "The Room's terminal opens in the app on this computer." in remote and not calls, remote
+
+    fake_app.room["can"] = {"terminal": True, "files": True}
+    monkeypatch.setitem(sys.modules, "rooks_try.drivers.shell", None)  # rooks-try not installed with this terminal
+    assert "The Room's terminal opens in the app on this computer." in _say(workroom.room_command, _agent(fake_app.url), "shell")
+    assert not calls
+
+
+def test_room_shell_waits_for_the_room_to_be_on(fake_app, monkeypatch):
+    calls: list = []
+    _fake_room_shell(monkeypatch, calls)
+    text = _say(workroom.room_command, _agent(fake_app.url), "shell")
+    assert "The Room is off" in text and "/room start" in text and not calls, text
+
+
+def test_help_lists_the_room_verbs():
+    from rooks_code import words
+
+    plain = words.help_text()
+    out = io.StringIO()
+    tui.help_table(tui.RichUI(out=out, color=False))
+    for text in (plain, out.getvalue()):
+        assert "The Room" in text
+        for verb in ("open", "tail", "send", "close", "files", "points", "save", "back", "handoff", "shell"):
+            assert f"/room {verb}" in text, verb
