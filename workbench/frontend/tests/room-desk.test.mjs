@@ -273,3 +273,11 @@ test("the Room's terminals stay mounted through a keyed keeper, and the app's Te
   const stage = maybe("../src/room/RoomStage.tsx");
   assert.match(stage, /<TerminalSlot kind="room"/, "the Stage shows the very same panes");
 });
+
+test("the empty Saved points window has one Save a point button, in its title bar", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("../src/room/PointsWindow.tsx", import.meta.url), "utf8");
+  const empty = src.slice(src.indexOf("<EmptyState"), src.indexOf("/>", src.indexOf("<EmptyState")));
+  assert.doesNotMatch(empty, /Save a point/, "the empty state repeats the title bar's button");
+});
+

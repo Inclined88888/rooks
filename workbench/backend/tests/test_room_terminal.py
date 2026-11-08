@@ -425,3 +425,18 @@ def test_the_chat_can_watch_an_install_more_than_once_in_a_turn(client, on):
     rows = db.all("SELECT outcome FROM actions WHERE id > ? AND kind = 'tool_call' AND tool = 'use_room' AND channel != 'room'",
                   since)
     assert [r["outcome"] for r in rows] == ["ok", "ok"], rows
+
+
+def test_a_line_sent_to_a_new_terminal_shows_once(client, on):
+    """Text typed before the shell's first prompt is echoed by the terminal and again at the prompt: a command sent to
+    a brand new terminal showed twice. send waits for the first prompt, as a started command does."""
+    tid = _open(client)["id"]
+    assert client.post(f"/api/room/terminals/{tid}/send", json={"text": "echo once-$((20+1))", "enter": True}).status_code == 200
+    text = ""
+    for _ in range(100):
+        text = client.get(f"/api/room/terminals/{tid}/tail").json()["text"]
+        if "once-21" in text:
+            break
+        time.sleep(0.1)
+    assert text.count("echo once-$((20+1))") == 1, text
+

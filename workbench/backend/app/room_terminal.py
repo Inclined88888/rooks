@@ -588,10 +588,9 @@ async def open_terminal(name: str | None = None, owner: str = "person", command:
     return t
 
 
-async def _start(t: RoomTerminal, command: str) -> None:
-    """Type a command Rooks starts, once the shell shows its first prompt (so the end is read from the right marker)."""
-    from .redact import redact
-
+async def _ready(t: RoomTerminal) -> None:
+    """Wait for a new shell's first prompt (PROMPT_WAIT_S at most). Text typed before it is echoed once by the terminal
+    and again at the prompt, so a command sent to a brand new terminal showed twice."""
     deadline = time.monotonic() + PROMPT_WAIT_S
     while t.prompts == 0 and not t.ended and time.monotonic() < deadline:
         if t.total and not t.busy() and time.monotonic() - t.last_out > 0.5:
@@ -599,6 +598,13 @@ async def _start(t: RoomTerminal, command: str) -> None:
         await asyncio.sleep(0.05)
     if t.ended:
         raise HTTPException(409, ENDED)
+
+
+async def _start(t: RoomTerminal, command: str) -> None:
+    """Type a command Rooks starts, once the shell shows its first prompt (so the end is read from the right marker)."""
+    from .redact import redact
+
+    await _ready(t)
     with t.lock:
         t.command = redact(command)[:500]
         t.command_ts, t.command_mono, t.command_code, t.done_ts = time.time(), time.monotonic(), None, None
@@ -688,6 +694,7 @@ async def send(t: RoomTerminal, text: str, enter: bool = True) -> int:
         raise HTTPException(409, ENDED)
     if t.owner == "rooks" and not t.taken and t.busy():
         raise HTTPException(409, ROOKS_BUSY)
+    await _ready(t)
     data = (text + ("\r" if enter else "")).encode()
     await _typed(t, data)
     return len(data)

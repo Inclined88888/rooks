@@ -63,8 +63,7 @@ export function PointsWindow({ status, act, ask, stale = false }: { status: Room
       )}
       {!points.length
         ? (
-          <EmptyState icon={<Bookmark size={24} />} title="No saved points yet." line="Save one before trying something you might want to undo."
-            action={!naming ? <Button size="sm" variant="secondary" onClick={openNaming}>Save a point</Button> : undefined} />
+          <EmptyState icon={<Bookmark size={24} />} title="No saved points yet." line="Save one before trying something you might want to undo." />
         )
         : (
           <List label="Saved points, newest first" className="room-points-list">
