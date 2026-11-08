@@ -146,10 +146,18 @@ export function doneWords(code: number): string {
 }
 
 /** One terminal in one line, the same words the rooks terminal prints for /room. */
+/** One Room terminal in plain words, the same as the rooks terminal's /room (workroom.terminal_line). */
 export function terminalLine(t: Pick<RoomTerminal, "name" | "owner" | "alive"> & Partial<RoomTerminal>): string {
-  if (!t.alive) return typeof t.exit_code === "number" ? `${t.name} · ended, code ${t.exit_code}` : `${t.name} · ended`;
-  if (t.busy) return typeof t.elapsed_s === "number" && t.owner === "rooks" ? `${t.name} · running, ${elapsedWords(t.elapsed_s)}` : `${t.name} · running`;
-  return t.owner === "rooks" ? `${t.name} · Rooks's, waiting` : `${t.name} · yours`;
+  const words: string[] = t.owner === "person" ? ["yours"] : [];
+  if (!t.alive) {
+    if (t.ended_reason === "restart") words.push("ended when the app restarted");
+    else words.push(typeof t.exit_code === "number" ? `ended, code ${t.exit_code}` : "ended");
+  } else if (t.busy) {
+    words.push(typeof t.elapsed_s === "number" && t.owner === "rooks" ? `running, ${elapsedWords(t.elapsed_s)}` : "running");
+  } else if (t.owner === "rooks") {
+    words.push("open");
+  }
+  return `${t.name} · ${words.join(", ")}`;
 }
 
 /** The Commands window's label (only where a terminal cannot exist). */

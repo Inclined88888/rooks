@@ -148,6 +148,10 @@ test("the Room's new words: off keeps everything, a shell that stays, an ended t
   assert.equal(words.terminalLine({ name: "Rooks", owner: "rooks", alive: true, busy: true, elapsed_s: 184 }), "Rooks · running, 3 min");
   assert.equal(words.terminalLine({ name: "Terminal 1", owner: "person", alive: true, busy: false }), "Terminal 1 · yours");
   assert.equal(words.terminalLine({ name: "Rooks", owner: "rooks", alive: false, exit_code: 0 }), "Rooks · ended, code 0");
+  // the same words as the rooks terminal's /room (rooks_code/workroom.py terminal_line)
+  assert.equal(words.terminalLine({ name: "Rooks", owner: "rooks", alive: true, busy: false }), "Rooks · open");
+  assert.equal(words.terminalLine({ name: "Terminal 1", owner: "person", alive: false, exit_code: 0 }), "Terminal 1 · yours, ended, code 0");
+  assert.equal(words.terminalLine({ name: "Terminal 2", owner: "person", alive: false, ended_reason: "restart" }), "Terminal 2 · yours, ended when the app restarted");
   assert.match(words.commandsLabel(true), /A terminal needs the Room on this computer\./);
   assert.equal(words.commandsLabel(false), "One command at a time, up to two minutes each.");
   // the honest line is unchanged
