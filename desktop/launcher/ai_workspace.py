@@ -159,7 +159,8 @@ def native_app() -> list[str] | None:
                     if p.exists():
                         return [str(p)]
     else:
-        bins = [Path.home() / ".ai-workspace" / "bin" / f"{n.replace(' ', '-')}.AppImage" for n in names]
+        homes = dict.fromkeys((Path.home() / ".ai-workspace", install_file().parent))  # the default, or AI_WORKSPACE_HOME
+        bins = [h / "bin" / f"{n.replace(' ', '-')}.AppImage" for h in homes for n in names]
         for p in (*bins, Path("/usr/bin/ai-workspace-desktop")):
             if p.exists() and os.access(p, os.X_OK):
                 return [str(p)]

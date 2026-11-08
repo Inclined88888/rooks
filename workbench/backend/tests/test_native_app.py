@@ -214,3 +214,102 @@ def test_status_says_how_rooks_opens(tmp_path, monkeypatch, capsys):
 def test_the_mac_shortcut_does_not_force_a_window():
     src = (ROOT / "desktop" / "launcher" / "install_helper.py").read_text()
     assert '--web\\n' not in src  # the Applications shortcut used to pass --web: a Chrome window nobody chose
+
+
+# ---- a real launch, end to end through main() ----------------------------------------------------------------------
+
+def _launch(monkeypatch, tmp_path, *, native=None, tty=False, answer="", choice=None, argv=()):
+    """Run `ai-workspace` against a copy that is already running (no server starts) and record what it opens."""
+    home = tmp_path / "home"
+    home.mkdir(exist_ok=True)
+    monkeypatch.setenv("AI_WORKSPACE_HOME", str(home))
+    monkeypatch.setenv("AI_WORKSPACE_DATA_DIR", str(tmp_path / "data"))
+    if choice:
+        (home / "install.json").write_text(json.dumps({"shell": choice}))
+    opened = {"popen": [], "web": [], "links": []}
+
+    class Popen:
+        def __init__(self, args, **kw):
+            opened["popen"].append(list(args))
+
+        def wait(self, *a):
+            return 0
+
+    class Tty:
+        def __init__(self, on):
+            self.on = on
+
+        def isatty(self):
+            return self.on
+
+        def write(self, s):
+            return len(s)
+
+        def flush(self):
+            pass
+
+    monkeypatch.setattr(launcher, "read_state", lambda: {"url": "http://127.0.0.1:9", "token": "T", "pid": 1})
+    monkeypatch.setattr(launcher, "healthy", lambda *a, **k: True)
+    monkeypatch.setattr(launcher, "installed_native", lambda: native)
+    monkeypatch.setattr(launcher, "window_browser", lambda: "/usr/bin/google-chrome")
+    monkeypatch.setattr(launcher.updates, "cached_notice", lambda current: "")
+
+    def link(url, token, shell=None):
+        opened["links"].append(shell)
+        return f"{url}/api/desktop/handoff?code=C" + (f"&shell={shell}" if shell else "")
+
+    monkeypatch.setattr(launcher, "handoff_url", link)
+    monkeypatch.setattr(launcher.subprocess, "Popen", Popen)
+    monkeypatch.setattr(launcher.webbrowser, "open", lambda url: opened["web"].append(url))
+    monkeypatch.setattr(launcher.sys, "stdin", Tty(tty))
+    monkeypatch.setattr(launcher.sys, "stdout", Tty(tty))
+    monkeypatch.setattr("builtins.input", lambda prompt="": answer)
+    assert launcher.main(list(argv)) == 0
+    return opened
+
+
+def test_a_launch_with_the_rooks_app_opens_only_the_app(monkeypatch, tmp_path):
+    opened = _launch(monkeypatch, tmp_path, native=["/home/me/.ai-workspace/bin/Rooks.AppImage"])
+    assert opened["popen"] == [["/home/me/.ai-workspace/bin/Rooks.AppImage"]]
+    assert opened["web"] == [] and opened["links"] == []
+
+
+def test_a_launch_from_the_dock_with_no_app_and_no_answer_opens_no_chrome_window(monkeypatch, tmp_path):
+    opened = _launch(monkeypatch, tmp_path)
+    assert not any("--app=" in " ".join(a) for a in opened["popen"])  # never a Chrome window nobody chose
+    assert len(opened["web"]) == 1 and opened["web"][0].endswith("&shell=ask")  # the usual browser, and the page asks
+
+
+def test_a_launch_in_a_terminal_asks_first_and_keeps_the_answer(monkeypatch, tmp_path):
+    opened = _launch(monkeypatch, tmp_path, tty=True, answer="2")
+    assert opened["web"] and not any("--app=" in " ".join(a) for a in opened["popen"])
+    assert launcher.shell_choice() == "browser"
+    opened = _launch(monkeypatch, tmp_path, tty=True, answer="")  # Enter takes a window of its own
+    # the answer above is kept: no second question, the usual browser again
+    assert opened["web"] and launcher.shell_choice() == "browser"
+
+
+def test_a_chosen_window_opens_and_tells_the_page(monkeypatch, tmp_path):
+    opened = _launch(monkeypatch, tmp_path, choice="window")
+    assert opened["web"] == []
+    assert len(opened["popen"]) == 1 and opened["popen"][0][0] == "/usr/bin/google-chrome"
+    assert any(a.startswith("--app=") and a.endswith("&shell=window") for a in opened["popen"][0])
+
+
+def test_the_shell_flag_saves_the_choice(monkeypatch, tmp_path):
+    opened = _launch(monkeypatch, tmp_path, argv=["--shell", "browser"])
+    assert launcher.shell_choice() == "browser" and opened["web"]
+
+
+def test_install_sh_passes_the_shell_choice_on():
+    sh = (ROOT / "install.sh").read_text()
+    assert "--shell)" in sh and "--shell window|browser" in sh
+    ps = (ROOT / "install.ps1").read_text()
+    assert "AI_WORKSPACE_SHELL" in ps
+
+
+def test_the_installer_keeps_an_earlier_answer(tmp_path):
+    assert helper.chosen_shell(None, {"shell": "browser"}) == "browser"
+    assert helper.chosen_shell("window", {"shell": "browser"}) == "window"  # the flag wins and replaces it
+    assert helper.chosen_shell(None, {"shell": "chrome"}) is None
+    assert helper.chosen_shell(None, {}) is None

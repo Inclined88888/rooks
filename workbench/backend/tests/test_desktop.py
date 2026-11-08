@@ -299,3 +299,11 @@ def test_the_page_saves_the_shell_answer_for_the_launcher(client, desktop, monke
     assert json.loads(install.read_text())["shell"] == "browser"
     monkeypatch.setenv("AI_WORKSPACE_INSTALL_FILE", str(tmp_path / "other.json"))
     assert client.post("/api/desktop/shell", json={"shell": "window"}, headers=h).status_code == 404  # only install.json
+
+
+def test_a_used_sign_in_link_names_rooks(client, desktop):
+    """The page a used or expired launcher link shows says the app's name, Rooks, in plain words."""
+    r = client.get("/api/desktop/handoff", params={"code": "N" * 20}, follow_redirects=False)
+    assert r.status_code == 403
+    assert "<title>Rooks</title>" in r.text and "open Rooks again" in r.text
+    assert "AI Workspace" not in r.text

@@ -428,7 +428,7 @@ def has_window_browser(app: Path) -> bool:
     """A Chrome, Edge or Chromium the launcher can open an app window in (its own search, so both agree)."""
     sys.path.insert(0, str(app / "desktop" / "launcher"))
     try:
-        import ai_workspace  # noqa: PLC0415
+        import ai_workspace
 
         return bool(ai_workspace.window_browser())
     except Exception:  # noqa: BLE001 - when in doubt, ask
@@ -507,12 +507,16 @@ def install_native(repo: str, home: Path, current: str) -> str:
     if WIN:
         run([str(f), "/S"])  # NSIS, per-user install (installMode currentUser): no admin prompt
         local = os.environ.get("LOCALAPPDATA", "")
+        exe = next((p for root in filter(None, (local, os.path.join(local, "Programs") if local else ""))
+                    for p in (Path(root) / NAME / "ai-workspace-desktop.exe", Path(root) / NAME / f"{NAME}.exe")
+                    if p.exists()), None)
         for old in OLD_NAMES:  # the app before it was called Rooks: its own folder, uninstalled quietly
             for root in filter(None, (local, os.path.join(local, "Programs") if local else "")):
                 uninstall = Path(root) / old / "uninstall.exe"
                 if uninstall.exists():
-                    subprocess.run([str(uninstall), "/S"], capture_output=True)
-        return f"Start menu → {NAME}"
+                    subprocess.run([str(uninstall), "/S"], capture_output=True, check=False)
+        # the launcher opens the app it finds only when install.json names it, so record the program, not a menu
+        return str(exe) if exe else f"Start menu → {NAME}"
     dest = home / "bin" / f"{NAME}.AppImage"
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(f, dest)
@@ -567,6 +571,15 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def chosen_shell(flag: str | None, before: dict) -> str | None:
+    """The answer to "a Chrome or Edge window, or the usual browser?": --shell (or AI_WORKSPACE_SHELL) wins, else the
+    one kept from an earlier install or launch, else None (not asked yet)."""
+    if flag in ("window", "browser"):
+        return flag
+    kept = before.get("shell")
+    return kept if kept in ("window", "browser") else None
+
+
 def read_install(home: Path) -> dict:
     try:
         d = json.loads((home / "install.json").read_text())
@@ -597,16 +610,20 @@ def main() -> int:
         remove_stale_desktop_app()
         say(f"{NAME} app: not installed (--native no)")
     else:
-        native = install_native(a.repo, home, current)
+        try:
+            native = install_native(a.repo, home, current)
+        except (OSError, subprocess.CalledProcessError) as e:
+            if a.native == "yes":
+                raise
+            say(f"{NAME} app: the download did not finish ({e.__class__.__name__}), so it is not installed this time.")
         if native:
             say(f"{NAME} app: {native}")
         else:
             say(f"{NAME} app: none published for this computer at version {current} or newer yet.")
             if a.native == "yes":
                 return 1
-    shell = None
+    shell = chosen_shell(a.shell, before)  # kept with the app too, for the day it is not there
     if not native:
-        shell = a.shell or (before.get("shell") if before.get("shell") in ("window", "browser") else None)
         if not shell:
             shell = ask_shell(has_window_browser(app), can_ask())
         say({"window": "Rooks opens in a Chrome or Edge window of its own (same app, same data).",

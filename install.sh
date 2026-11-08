@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AI Workspace: one-command install for macOS and Linux (Windows: install.ps1).
+# Rooks: one-command install for macOS and Linux (Windows: install.ps1).
 #
 #   From the downloaded folder (zip or clone):   bash install.sh
 #   Straight from GitHub:                        curl -fsSL https://raw.githubusercontent.com/Inclined88888/rooks/main/install.sh | bash
@@ -7,7 +7,8 @@
 # Then start everything with:   ai-workspace
 #
 # Installs per user, no admin password, no Docker:
-#   ai-workspace    the app (native app when a published release has one, else its own Chrome/Edge app window)
+#   ai-workspace    opens Rooks: the Rooks app when a published release has one for this computer; without one, a
+#                   Chrome or Edge window of its own or your usual browser, as you choose (asked once)
 #   rooks           Rooks Code, the terminal coding agent (`rooks talk` = the same assistant without the desktop window)
 #   rooks-browser   Rooks Browser, the AI browser agent (uses your Chrome or Edge; else downloads Chromium)
 #   rooks-desk      Rooks Desk, computer use: your apps, terminal and files, asking before anything risky
@@ -18,7 +19,8 @@
 #
 # Options:  --no-start (don't open the app at the end)  --no-browser (skip the Chromium download)
 #           --no-desk (don't install rooks-desk, computer use)
-#           --native auto|yes|no (native installer from GitHub releases; default no, that release is the old app)
+#           --native auto|yes|no (the Rooks app from a published release at or above this version; default auto)
+#           --shell window|browser (without a Rooks app: a Chrome or Edge window of its own, or your usual browser)
 #           --no-helpers (don't offer the optional helper apps: Tesseract, FFmpeg, LibreOffice)
 # Settings: AI_WORKSPACE_REF (branch/tag when downloading, default main)  AI_WORKSPACE_REPO (owner/repo)
 #           AI_WORKSPACE_HELPERS=yes|no (answer the helper-apps question in advance)
@@ -83,7 +85,9 @@ main() {
       --no-helpers) helpers=no ;;
       --native) shift; helper_args+=(--native "${1:-auto}") ;;
       --native=*) helper_args+=(--native "${1#--native=}") ;;
-      -h|--help) sed -n '2,25p' "${BASH_SOURCE[0]:-/dev/null}" 2>/dev/null || true; return 0 ;;
+      --shell) shift; helper_args+=(--shell "${1:-}") ;;
+      --shell=*) helper_args+=(--shell "${1#--shell=}") ;;
+      -h|--help) sed -n '2,28p' "${BASH_SOURCE[0]:-/dev/null}" 2>/dev/null || true; return 0 ;;
       *) printf 'Unknown option %s\n' "$1" >&2; return 2 ;;
     esac
     shift
@@ -92,7 +96,7 @@ main() {
   bold() { printf '\033[1m%s\033[0m\n' "$*"; }
   fail() { printf '\033[31mError:\033[0m %s\n' "$*" >&2; exit 1; }
 
-  bold "AI Workspace installer"
+  bold "Rooks installer"
   case "$(uname -s)" in
     Darwin|Linux) ;;
     *) fail "Unsupported system $(uname -s). On Windows run install.ps1 in PowerShell." ;;
@@ -135,7 +139,7 @@ main() {
   optional_helpers "$helpers" || true
 
   if $start; then
-    printf '\nStarting AI Workspace…\n'
+    printf '\nStarting Rooks…\n'
     "$bin/ai-workspace" || true
   fi
 }

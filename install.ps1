@@ -1,14 +1,15 @@
-# AI Workspace: one-command install for Windows 10/11 (macOS and Linux: install.sh).
+# Rooks: one-command install for Windows 10/11 (macOS and Linux: install.sh).
 #
 #   From the downloaded folder (zip or clone), in PowerShell:
 #       powershell -ExecutionPolicy Bypass -File .\install.ps1
 #   Straight from GitHub:
 #       powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/Inclined88888/rooks/main/install.ps1 | iex"
 #
-# Then start everything with:   ai-workspace      (or Start menu > AI Workspace)
+# Then start everything with:   ai-workspace      (or Start menu > Rooks)
 #
 # Installs for your user only, no admin prompt, no Docker, no WSL:
-#   ai-workspace    the app (native app when a published release has one, else its own Edge/Chrome app window)
+#   ai-workspace    opens Rooks: the Rooks app when a published release has one for this computer; without one, an
+#                   Edge or Chrome window of its own or your usual browser, as you choose (asked once)
 #   rooks           Rooks Code, the terminal coding agent
 #   rooks-browser   Rooks Browser, the AI browser agent (uses Edge, which every Windows has, or Chrome)
 #   rooks-desk      Rooks Desk, computer use: your apps, terminal and files, asking before anything risky
@@ -17,7 +18,8 @@
 #
 # Settings (env vars, because `irm | iex` cannot take arguments):
 #   AI_WORKSPACE_NO_START=1   don't open the app at the end
-#   AI_WORKSPACE_NATIVE=auto|yes|no   native installer from GitHub releases (default no; that release is the old app)
+#   AI_WORKSPACE_NATIVE=auto|yes|no   the Rooks app from a published release at or above this version (default auto)
+#   AI_WORKSPACE_SHELL=window|browser  without a Rooks app: an Edge or Chrome window of its own, or your usual browser
 #   AI_WORKSPACE_HELPERS=yes|no   optional helper apps for Files (Tesseract, FFmpeg, LibreOffice via winget; default: ask)
 #   AI_WORKSPACE_REF (branch/tag to download, default main)   AI_WORKSPACE_REPO (owner/repo)
 # Run it again to upgrade. Your chats, keys and settings are kept. Uninstall: QUICKSTART.md.
@@ -31,7 +33,7 @@
   $ref = if ($env:AI_WORKSPACE_REF) { $env:AI_WORKSPACE_REF } else { 'main' }
   $bin = if ($env:AI_WORKSPACE_BIN) { $env:AI_WORKSPACE_BIN } else { Join-Path $env:USERPROFILE '.local\bin' }
 
-  Write-Host 'AI Workspace installer' -ForegroundColor White
+  Write-Host 'Rooks installer' -ForegroundColor White
 
   # 1. The source: this folder when run from a zip or clone, else a download of $ref (no git needed).
   $src = $null
@@ -64,7 +66,7 @@
   $env:PYTHONUTF8 = '1'
 
   # 3. Everything else is the same on every OS: desktop\launcher\install_helper.py.
-  $native = if ($env:AI_WORKSPACE_NATIVE) { $env:AI_WORKSPACE_NATIVE } else { 'no' }
+  $native = if ($env:AI_WORKSPACE_NATIVE) { $env:AI_WORKSPACE_NATIVE } else { 'auto' }
   & $uv run --quiet --no-project --python 3.12 (Join-Path $src 'desktop\launcher\install_helper.py') --src $src --bin $bin --native $native
   if ($LASTEXITCODE -ne 0) { throw "Install failed (exit $LASTEXITCODE). Scroll up for the reason." }
 
@@ -98,7 +100,7 @@
   } catch { Write-Host '  Helper apps skipped. The Files page can install them later.' }
 
   if ($env:AI_WORKSPACE_NO_START -ne '1') {
-    Write-Host "`nStarting AI Workspace..."
+    Write-Host "`nStarting Rooks..."
     & (Join-Path $bin 'ai-workspace.cmd')
   }
 }

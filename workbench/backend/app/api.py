@@ -149,7 +149,7 @@ def setup(data: SetupIn, request: Request, response: Response):
 # Desktop app: the native shell owns the machine and the window, so there is no password. On each launch it starts
 # this backend with a fresh random WORKBENCH_DESKTOP_TOKEN and opens /api/desktop/session?token=... in its own window.
 @public.get("/desktop/session")
-def desktop_session(token: str, request: Request):
+def desktop_session(token: str, request: Request, shell: str = ""):
     from fastapi.responses import RedirectResponse
 
     if not config.DESKTOP or not config.DESKTOP_TOKEN or not secrets.compare_digest(token, config.DESKTOP_TOKEN):
@@ -160,6 +160,8 @@ def desktop_session(token: str, request: Request):
         db.set_setting("setup_complete", "1")
         services.local_calendar_id()
     target = "/" if db.get_setting("desktop_welcome_done") == "1" else "/welcome"
+    if shell in SHELL_WORDS:  # the launcher opened this outside the Rooks app: the page says so and offers the choice
+        target += f"?shell={shell}"
     response = RedirectResponse(target, status_code=303)
     _login(response)
     return response
@@ -200,7 +202,7 @@ def desktop_handoff_code(request: Request):
     token = auth.removeprefix("Bearer ").strip()
     if not config.DESKTOP or not config.DESKTOP_TOKEN or not secrets.compare_digest(token, config.DESKTOP_TOKEN):
         throttle(request.client.host if request.client else "?")
-        raise HTTPException(403, "Only the AI Workspace launcher can ask for a sign-in code")
+        raise HTTPException(403, "Only the Rooks launcher can ask for a sign-in code")
     now = time.monotonic()
     for c, exp in list(_handoffs.items()):
         if exp < now:
@@ -211,7 +213,7 @@ def desktop_handoff_code(request: Request):
 
 
 @public.get("/desktop/handoff")
-def desktop_handoff(code: str, request: Request):
+def desktop_handoff(code: str, request: Request, shell: str = ""):
     import time
 
     from fastapi.responses import HTMLResponse
@@ -220,12 +222,50 @@ def desktop_handoff(code: str, request: Request):
     if exp is None or exp < time.monotonic():
         throttle(request.client.host if request.client else "?")
         return HTMLResponse(
-            '<!doctype html><meta charset="utf-8"><title>AI Workspace</title>'
+            '<!doctype html><meta charset="utf-8"><title>Rooks</title>'
             '<body style="font:16px -apple-system,system-ui,sans-serif;max-width:34em;margin:4em auto;color:#222">'
             "<h2>This sign-in link has already been used or has expired</h2>"
-            "<p>Close this window and open AI Workspace again (run <code>ai-workspace</code> in a terminal, "
-            "or click AI Workspace in Applications / the Start menu).</p></body>", status_code=403)
-    return desktop_session(config.DESKTOP_TOKEN, request)
+            "<p>Close this window and open Rooks again (run <code>ai-workspace</code> in a terminal, "
+            "or click Rooks in Applications or the Start menu).</p></body>", status_code=403)
+    return desktop_session(config.DESKTOP_TOKEN, request, shell)
+
+
+# Without a Rooks app the launcher opens the page in a Chrome or Edge window, or in the usual browser, and says which
+# (?shell=window, or ?shell=ask when nobody has chosen yet). The page shows the same question and saves the answer
+# where the launcher keeps it: the install.json the launcher named when it started this server. Only a signed in
+# person answers (the api router: not the app.json key, not the tools key), and only these two answers are written.
+SHELL_WORDS = ("window", "ask")
+SHELL_CHOICES = ("window", "browser")
+
+
+class ShellIn(BaseModel):
+    shell: str = Field(..., max_length=20)
+
+
+@api.post("/desktop/shell")
+def desktop_shell(data: ShellIn):
+    import json as _json
+    import os
+    from pathlib import Path
+
+    named = os.environ.get("AI_WORKSPACE_INSTALL_FILE", "")
+    path = Path(named) if named else None
+    if not path or path.name != "install.json" or not path.is_absolute():
+        raise HTTPException(404, "Rooks was not started by its launcher, so there is nothing to save here.")
+    if data.shell not in SHELL_CHOICES:
+        raise HTTPException(400, "Choose a window of its own or your usual browser.")
+    try:
+        rec = _json.loads(path.read_text())
+        rec = rec if isinstance(rec, dict) else {}
+    except (OSError, ValueError):
+        rec = {}
+    rec["shell"] = data.shell
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_json.dumps(rec, indent=1))
+    except OSError as e:
+        raise HTTPException(500, "The choice could not be saved. Run ai-workspace --shell window or browser.") from e
+    return {"ok": True, "shell": data.shell}
 
 
 class LoginIn(BaseModel):

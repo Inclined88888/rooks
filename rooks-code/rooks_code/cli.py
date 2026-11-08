@@ -557,8 +557,8 @@ def provider_command(agent, ui: UI, rest: str) -> None:
 
 
 def open_app_and_link(wait_s: float = 90, model_wait_s: float = 600) -> bool:
-    """Start the Rooks app if it is not open (the native app, or its window in Chrome/Edge), wait until it publishes
-    app.json, then wait until a model is connected in it. Ctrl-C gives up."""
+    """Start the Rooks app if it is not open (the Rooks app, or where the person chose to open it), waits until it
+    publishes app.json, then waits until a model is connected in it. Ctrl-C gives up."""
     try:
         link = config.app_link()
         if not link:
