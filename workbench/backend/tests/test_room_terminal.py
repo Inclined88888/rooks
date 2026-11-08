@@ -201,12 +201,20 @@ def test_a_long_command_is_not_cut_off_in_a_terminal(client, on, monkeypatch):
 
 # 11
 def test_tail_says_busy_and_the_exit_code_honestly(client, on):
+    from app import db
+
+    since = db.one("SELECT COALESCE(MAX(id), 0) AS m FROM actions")["m"]
     t = _open(client, command="sleep 2; false")
     now = _tail(client, t["id"])
     assert now["busy"] is True and now["exit_code"] is None and now["owner"] == "rooks" and now["taken"] is False
     later = wait_tail(client, t["id"], lambda x: not x["busy"], timeout=20)
     assert later["exit_code"] == 1 and later["alive"] is True
     assert "\x1b]7777" not in later["text"]  # the marker never reaches the screen
+    rows = db.all("SELECT args, outcome, detail FROM actions WHERE id > ? AND channel = 'room' ORDER BY id", since)
+    assert [json.loads(r["args"])["action"] for r in rows] == ["open terminal", "start", "done"], rows
+    done = rows[-1]
+    assert done["outcome"] == "error" and json.loads(done["args"])["exit_code"] == 1 and done["detail"].startswith("exit 1")
+    assert "sleep 2; false" in json.loads(rows[1]["args"])["command"]
     assert client.get("/api/room/terminals/nope0000/tail").status_code == 404
 
 
@@ -376,6 +384,17 @@ def test_the_chat_tool_starts_tails_and_lists_files(client, on):
     from app import presence
 
     assert presence.plain_step("use_room", {"action": "start", "command": "x"}) == "Installing in the Room's terminal"
+
+
+def test_the_exit_code_marker_is_cut_out_even_when_a_read_splits_it():
+    from app.room_terminal import _split_marks
+
+    stream = b"out\r\n\x1b]7777;127\x07$ \x1b[1mbold\x1b[0m"
+    for cut in range(len(stream) + 1):  # every place a read can end
+        clean, codes, carry = _split_marks(stream[:cut])
+        clean2, codes2, carry2 = _split_marks(carry + stream[cut:])
+        assert clean + clean2 + carry2 == b"out\r\n$ \x1b[1mbold\x1b[0m", cut
+        assert codes + codes2 == [127], cut
 
 
 def test_a_room_terminal_has_none_of_the_apps_secrets_and_the_rooms_path(client, on, monkeypatch):
