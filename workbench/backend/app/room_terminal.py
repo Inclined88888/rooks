@@ -426,9 +426,13 @@ def reset_for_tests(restart: bool = True) -> None:
     restart (what atexit does); False: they are ended quietly, as closed."""
     global _DIR, _RUN, _RESTART_ENDED
     with _LOCK:
-        for t in list(_TERMS.values()):
+        terms = list(_TERMS.values())
+        for t in terms:
             _end_now(t, "restart" if restart else "closed")
         _TERMS.clear()
+    for t in terms:  # a reader finishing later would write its row into whatever runs next
+        if t.reader is not None and t.reader is not threading.current_thread():
+            t.reader.join(timeout=3)
         _DIR = None
         _RUN = uuid.uuid4().hex
         _RESTART_ENDED = 0

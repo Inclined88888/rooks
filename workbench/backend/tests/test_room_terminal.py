@@ -327,6 +327,8 @@ def test_terminal_rows_are_in_the_run_log_and_keystrokes_are_not(client, on, loc
     assert client.delete(f"/api/room/terminals/{t['id']}").json()["closed"] is True
     rows = db.all("SELECT tool, args, detail, evidence, failure_reason FROM actions WHERE id > ? AND channel = 'room' "
                   "AND kind = 'tool_call' ORDER BY id", since)
+    # only this terminal's rows: a shell an earlier test ended may still be writing its last row (seen once in CI)
+    rows = [r for r in rows if json.loads(r["args"]).get("reason") != "exited"]
     assert [json.loads(r["args"])["action"] for r in rows] == ["open terminal", "send", "used terminal", "close terminal"], rows
     assert all(r["tool"] == "use_room" for r in rows)
     send = json.loads(rows[1]["args"])
