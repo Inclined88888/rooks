@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS team_members (
   hours_per_week REAL NOT NULL DEFAULT 38,
   work_days TEXT NOT NULL DEFAULT 'mon,tue,wed,thu,fri',
   away TEXT NOT NULL DEFAULT '[]',            -- [{"from": "YYYY-MM-DD", "to": "YYYY-MM-DD", "note": ""}]
-  has_app INTEGER NOT NULL DEFAULT 0,         -- uses AI Workspace with a Team seat (sees tasks in their app)
+  has_app INTEGER NOT NULL DEFAULT 0,         -- uses Rooks with a Team seat (sees tasks in their app)
   link_url_enc TEXT NOT NULL DEFAULT '',      -- their private member page (no app needed)
   notes TEXT NOT NULL DEFAULT '',
   active INTEGER NOT NULL DEFAULT 1,

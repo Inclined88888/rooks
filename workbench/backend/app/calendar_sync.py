@@ -152,7 +152,7 @@ def create_remote(c: dict, title: str, start: str, end: str, all_day: bool, loca
         if "@" in a:
             ev.add("attendee", f"mailto:{a.strip()}")
     cal = icalendar.Calendar()
-    cal.add("prodid", "-//AI Workspace//Workbench//EN")
+    cal.add("prodid", "-//Rooks//Calendar//EN")
     cal.add("version", "2.0")
     cal.add_component(ev)
     try:

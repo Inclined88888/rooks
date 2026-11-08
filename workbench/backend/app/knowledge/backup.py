@@ -121,7 +121,7 @@ def export_zip() -> bytes:
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("README.txt", "Your AI Workspace export. JSON files open in any text editor; notes are Markdown; files are as you added them.\n")
+        z.writestr("README.txt", "Your Rooks export. JSON files open in any text editor; notes are Markdown; files are as you added them.\n")
         z.writestr("knowledge.json", json.dumps(export_all(), indent=1, default=str))
         if _has("conversations"):
             chats = []

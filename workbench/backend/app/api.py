@@ -207,7 +207,7 @@ def desktop_handoff_code(request: Request):
     token = auth.removeprefix("Bearer ").strip()
     if not config.DESKTOP or not config.DESKTOP_TOKEN or not secrets.compare_digest(token, config.DESKTOP_TOKEN):
         throttle(request.client.host if request.client else "?")
-        raise HTTPException(403, "Only the AI Workspace launcher can ask for a sign-in code")
+        raise HTTPException(403, "Only the Rooks launcher can ask for a sign-in code")
     now = time.monotonic()
     for c, exp in list(_handoffs.items()):
         if exp < now:
@@ -227,11 +227,11 @@ def desktop_handoff(code: str, request: Request):
     if exp is None or exp < time.monotonic():
         throttle(request.client.host if request.client else "?")
         return HTMLResponse(
-            '<!doctype html><meta charset="utf-8"><title>AI Workspace</title>'
+            '<!doctype html><meta charset="utf-8"><title>Rooks</title>'
             '<body style="font:16px -apple-system,system-ui,sans-serif;max-width:34em;margin:4em auto;color:#222">'
             "<h2>This sign-in link has already been used or has expired</h2>"
-            "<p>Close this window and open AI Workspace again (run <code>ai-workspace</code> in a terminal, "
-            "or click AI Workspace in Applications / the Start menu).</p></body>", status_code=403)
+            "<p>Close this window and open Rooks again (run <code>ai-workspace</code> in a terminal, "
+            "or click Rooks in Applications or the Start menu).</p></body>", status_code=403)
     return desktop_session(config.DESKTOP_TOKEN, request)
 
 

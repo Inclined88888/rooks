@@ -445,7 +445,7 @@ class HttpFetcher:
 
     def __init__(self, site: dict):
         self.site = site
-        self.client = httpx.AsyncClient(timeout=30, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Workbench site reader)"})
+        self.client = httpx.AsyncClient(timeout=30, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Rooks site reader)"})
 
     async def page(self, url: str) -> tuple[str, int, str, str]:
         r = await self.client.get(url)
@@ -847,7 +847,7 @@ def ics(sid: int) -> str:
 
     s = get(sid)
     cal = Calendar()
-    cal.add("prodid", "-//AI Workspace//Sites//EN")
+    cal.add("prodid", "-//Rooks//Sites//EN")
     cal.add("version", "2.0")
     for it in timeline(sid):
         e = Event()

@@ -62,7 +62,8 @@ for _f in V02_PRO_FEATURES:
 # Paid plans whose signed token predates the v0.2 ids still get them (the token's plan is signed too).
 PAID_PLANS = {"pro", "team", "business"}
 REFRESH_AFTER_S = 12 * 3600
-CLOUD_CONNECTION_NAME = "AI Workspace Cloud"
+CLOUD_CONNECTION_NAME = "Rooks Cloud"
+LEGACY_CLOUD_CONNECTION_NAME = "AI Workspace Cloud"  # the same row before the rename (moved once, below)
 
 # (method, path regex, feature). Only starting new Pro work is gated; stopping, approving, reading, deleting and
 # exporting stay free so a lapsed plan never traps anyone's data or leaves a job running.
@@ -118,7 +119,7 @@ def _cloud(method: str, path: str, body: dict | None = None, auth: bool = True) 
     try:
         r = _client().request(method, f"{base}{path}", json=body, headers=headers)
     except httpx.HTTPError as e:
-        raise HTTPException(503, "Can't reach your AI Workspace account right now. Check your internet and try again.") from e
+        raise HTTPException(503, "Can't reach your Rooks account right now. Check your internet and try again.") from e
     try:
         data = r.json()
     except ValueError:
@@ -285,6 +286,11 @@ def _sync_cloud_connection(enabled: bool) -> None:
     """The hosted models show up as a normal model connection, keyed by the account session."""
     from . import llm
 
+    # Before the product was Rooks this row was "AI Workspace Cloud": rename it once, so it keeps its id (history,
+    # default model) instead of a second connection appearing beside it.
+    if not db.one("SELECT id FROM connections WHERE name = ?", CLOUD_CONNECTION_NAME):
+        db.run("UPDATE connections SET name = ? WHERE name = ? AND auth_kind = 'api_key' AND protocol = 'chat_completions'",
+               CLOUD_CONNECTION_NAME, LEGACY_CLOUD_CONNECTION_NAME)
     base = cloud_url()
     llm.managed_connection(CLOUD_CONNECTION_NAME, f"{base}/v1", _session(), enabled and bool(base), "auto,fast,smart")
 

@@ -110,7 +110,7 @@ async def lifespan(_: FastAPI):
         t.cancel()
 
 
-app = FastAPI(title="Workbench", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="Rooks", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.middleware("http")

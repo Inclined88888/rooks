@@ -70,7 +70,7 @@ host_tz() {
   echo "${tz:-UTC}"
 }
 
-bold "AI Workspace setup"
+bold "Rooks setup"
 command -v docker >/dev/null 2>&1 || fail "Docker is not installed (Mac: Docker Desktop or OrbStack; Linux: https://docs.docker.com/engine/install/)."
 docker compose version >/dev/null 2>&1 || fail "Docker Compose v2 is required (the 'docker compose' command)."
 docker info >/dev/null 2>&1 || fail "Cannot talk to Docker. Is Docker running (and is your user in the docker group on Linux)?"
@@ -105,7 +105,7 @@ set_env COMPOSE_PROFILES "$ADDONS"
 
 if $FIRST_RUN; then
   echo; bold "Basics"
-  ask NAME "Workspace name" "AI Workspace"; set_env WORKSPACE_NAME "$NAME"
+  ask NAME "Workspace name" "Rooks"; set_env WORKSPACE_NAME "$NAME"
   ask TZ_IN "Your timezone (for schedules)" "$(host_tz)"; set_env WORKSPACE_TIMEZONE "$TZ_IN"
   ask LAN "Allow access from other devices on your network? (y/N)" "n"
   if [[ "$LAN" =~ ^[Yy] ]]; then

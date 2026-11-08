@@ -40,7 +40,7 @@ DEFAULTS = {
     "voice_language": "",               # "" = detect
     "voice_name": "",                   # system voice name chosen in the page
     "voice_rate": "1",
-    "voice_wake_phrase": "hey workspace",
+    "voice_wake_phrase": "hey rooks",  # "hey workspace" still wakes it (voice/logic.ts)
     "voice_local_model": "base",
     "voice_cloud_voice": "alloy",
 }

@@ -52,7 +52,7 @@ services:
     volumes:
       - open-webui:/app/backend/data
     environment:
-      WEBUI_NAME: ${WORKSPACE_NAME:-AI Workspace}
+      WEBUI_NAME: ${WORKSPACE_NAME:-Rooks}
       WEBUI_URL: ${WEBUI_PUBLIC_URL:-http://localhost:3000}
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-}
       # First account created becomes admin. Later sign ups wait for approval.
@@ -78,7 +78,7 @@ services:
       TOOL_SERVER_CONNECTIONS: >-
         [{"type":"openapi","url":"http://workbench:8000/tools","spec_type":"url","spec":"","path":"openapi.json",
         "auth_type":"bearer","key":"${TOOLS_API_KEY}","config":{"enable":true},
-        "info":{"id":"workbench","name":"Workbench","description":"Notes, documents, tasks, calendar and email drafts"}}]
+        "info":{"id":"workbench","name":"Rooks","description":"Notes, documents, tasks, calendar and email drafts"}}]
 
   workbench:
     build: ./workbench
@@ -99,7 +99,7 @@ services:
       SETUP_CODE: ${SETUP_CODE:-}
       # Set to your reverse proxy's address if it should be trusted for X-Forwarded-For.
       FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
-      WORKSPACE_NAME: ${WORKSPACE_NAME:-AI Workspace}
+      WORKSPACE_NAME: ${WORKSPACE_NAME:-Rooks}
       WORKSPACE_TIMEZONE: ${WORKSPACE_TIMEZONE:-UTC}
       DEFAULT_MODEL: ${DEFAULT_MODEL:-qwen3:4b}
       # Context window requested from Ollama (tokens). More needs more RAM: about 2.4 GB of cache per 16K on a 4B model

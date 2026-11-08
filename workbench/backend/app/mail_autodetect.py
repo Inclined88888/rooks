@@ -24,8 +24,8 @@ KNOWN: dict[str, dict] = {
         "app_password": True, "app_password_url": "https://account.apple.com/account/manage",
         "steps": ["Turn on two-factor authentication for your Apple Account if it isn't already.",
                   "Go to account.apple.com, sign in, then Sign-In and Security > App-Specific Passwords.",
-                  "Click Generate an app-specific password, name it AI Workspace, and paste it here."],
-        "username_hint": "Your full iCloud address. If that's refused, AI Workspace retries with the part before the @.",
+                  "Click Generate an app-specific password, name it Rooks, and paste it here."],
+        "username_hint": "Your full iCloud address. If that's refused, Rooks retries with the part before the @.",
     },
     "yahoo": {
         "domains": ("yahoo.com", "ymail.com", "rocketmail.com", "yahoo.co.uk", "yahoo.com.au", "yahoo.ca", "yahoo.fr", "yahoo.de"),
@@ -33,7 +33,7 @@ KNOWN: dict[str, dict] = {
         "smtp_port": 465, "smtp_security": "ssl", "caldav_url": "https://caldav.calendar.yahoo.com",
         "app_password": True, "app_password_url": "https://login.yahoo.com/account/security",
         "steps": ["Open login.yahoo.com/account/security (Account Security).",
-                  "Click Generate app password (or Manage app passwords), name it AI Workspace.",
+                  "Click Generate app password (or Manage app passwords), name it Rooks.",
                   "Copy the 16-character password and paste it here. Your normal Yahoo password won't work."],
     },
     "aol": {
@@ -85,7 +85,7 @@ FALLBACK = {
         "key": "gmail", "label": "Gmail (app password)", "imap_host": "imap.gmail.com", "imap_port": 993,
         "smtp_host": "smtp.gmail.com", "smtp_port": 465, "smtp_security": "ssl", "app_password": True,
         "app_password_url": "https://myaccount.google.com/apppasswords",
-        "steps": ["Type the name AI Workspace and click Create.",
+        "steps": ["Type the name Rooks and click Create.",
                   "Copy the 16-letter password Google shows (spaces don't matter). Your normal Google password won't work.",
                   "Google says this setting isn't available? Turn on 2-Step Verification first (myaccount.google.com/security), "
                   "then open the page again."],
@@ -103,7 +103,7 @@ UNAVAILABLE = {
     "microsoft": {
         "label": "Outlook, Hotmail and Live mail",
         "message": ("Microsoft only lets apps into Outlook mail through its own sign-in, and that isn't switched on in "
-                    "this copy of AI Workspace yet. Microsoft turned off app passwords, so there is no other way in."),
+                    "this copy of Rooks yet. Microsoft turned off app passwords, so there is no other way in."),
         "steps": ["Your Outlook calendar works today: in Outlook on the web open Settings > Calendar > Shared calendars.",
                   "Under Publish a calendar pick your calendar and Can view all details, then Publish.",
                   "Copy the ICS link and add it on the Calendar page (read-only)."],
@@ -112,7 +112,7 @@ UNAVAILABLE = {
 
 
 MAC_ROUTE = {
-    "microsoft": ("Your Mac can sign in to Outlook for you, with Microsoft's normal sign-in page. AI Workspace then reads "
+    "microsoft": ("Your Mac can sign in to Outlook for you, with Microsoft's normal sign-in page. Rooks then reads "
                   "and drafts through Apple Mail and never sees your password. It takes about a minute."),
 }
 

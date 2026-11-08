@@ -116,8 +116,14 @@ def providers_info() -> dict:
     return out
 
 
+# The sign-in apps registered with Google and Microsoft still carry the old name until the owner renames them in their
+# consoles (BACKLOG.md), so an IT admin looking for the app needs that name too.
+ADMIN_NEEDED = ("Your organisation needs an administrator to approve Rooks for mail and calendar (the sign-in page may "
+                "still show its old name, AI Workspace). Ask your IT admin, or connect a personal account.")
+
+
 # Loopback listener -------------------------------------------------------------------------------------------------
-_PAGE = ("<!doctype html><meta charset=utf-8><title>AI Workspace</title><body style=\"font:16px/1.5 system-ui,sans-serif;"
+_PAGE = ("<!doctype html><meta charset=utf-8><title>Rooks</title><body style=\"font:16px/1.5 system-ui,sans-serif;"
          "background:#FFFDF6;color:#1d1b16;display:grid;place-items:center;height:100vh;margin:0\"><div style=\"max-width:460px\">"
          "<h1 style=\"font-weight:500\">{title}</h1><p>{body}</p></div>")
 
@@ -138,7 +144,7 @@ async def _serve(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> 
 
             page = _PAGE.format(title="Connected." if ok else "That didn't finish.",
                                 body=html.escape(f"{res.get('email', '')} is set up for mail and calendar. You can close this tab."
-                                                 if ok else res.get("error", "Go back to AI Workspace and try again.")))
+                                                 if ok else res.get("error", "Go back to Rooks and try again.")))
             data = page.encode()
             writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\n"
                          b"Connection: close\r\nContent-Length: " + str(len(data)).encode() + b"\r\n\r\n" + data)
@@ -234,8 +240,7 @@ def _token_error(provider: str, r: httpx.Response) -> str:
     if code == "invalid_client":
         return f"{name} rejected this app's client ID or secret. The maintainer needs to check the app registration."
     if "AADSTS65001" in desc or "AADSTS90094" in desc or code == "consent_required":
-        return ("Your organisation needs an administrator to approve AI Workspace for mail and calendar. "
-                "Ask your IT admin, or connect a personal account.")
+        return ADMIN_NEEDED
     return f"{name} refused the sign-in ({code or r.status_code}). Try again."
 
 
@@ -251,8 +256,7 @@ async def complete(callback_url: str) -> dict:
     if q.get("error"):
         desc = q.get("error_description", "")
         if "AADSTS90094" in desc or "AADSTS65001" in desc or q["error"] == "consent_required" or "admin" in desc.lower():
-            return _fail(a, "Your organisation needs an administrator to approve AI Workspace for mail and calendar. "
-                            "Ask your IT admin, or connect a personal account.")
+            return _fail(a, ADMIN_NEEDED)
         if q["error"] == "access_denied":
             return _fail(a, "You didn't allow access, so nothing was connected.")
         return _fail(a, f"Sign-in failed: {desc[:200] or q['error']}")

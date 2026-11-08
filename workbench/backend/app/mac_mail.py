@@ -41,7 +41,7 @@ def available() -> bool:
 
 def _osa(script: str, args: list[str], timeout: int = TIMEOUT, lang: str = "JavaScript") -> str:
     if not available():
-        raise HTTPException(400, "Mail and calendars on this Mac are only available in the AI Workspace app on a Mac.")
+        raise HTTPException(400, "Mail and calendars on this Mac are only available in the Rooks app on a Mac.")
     try:
         r = subprocess.run(["osascript", "-l", lang, "-e", script, *args], capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -52,7 +52,7 @@ def _osa(script: str, args: list[str], timeout: int = TIMEOUT, lang: str = "Java
         err = (r.stderr or r.stdout).strip()
         if "-1743" in err or "Not authorized" in err or "not allowed" in err.lower():
             raise HTTPException(403, "macOS blocked access. Open System Settings > Privacy & Security > Automation and "
-                                     "turn on Mail and Calendar for AI Workspace, then try again.")
+                                     "turn on Mail and Calendar for Rooks, then try again.")
         raise HTTPException(502, f"Apple Mail or Calendar said: {err[:300]}")
     return r.stdout.strip()
 

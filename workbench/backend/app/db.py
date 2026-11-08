@@ -408,7 +408,7 @@ CREATE INDEX IF NOT EXISTS actions_parent ON actions(parent_action_id);
 -- a held tool call is answered at most once
 CREATE UNIQUE INDEX IF NOT EXISTS actions_one_decision ON actions(parent_action_id) WHERE kind = 'decision';
 
--- MCP client (mcp_client.py): servers the user connected Workbench to. spec_json keeps the non-secret config
+-- MCP client (mcp_client.py): servers the user connected Rooks to. spec_json keeps the non-secret config
 -- (command/args/url/transport, non-secret env and headers); secret env/header values are encrypted in
 -- secret_enc like provider keys (security.py) and never leave the API.
 CREATE TABLE IF NOT EXISTS mcp_servers (

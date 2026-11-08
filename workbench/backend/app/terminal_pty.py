@@ -71,7 +71,7 @@ def refusal(ws: WebSocket) -> tuple[int, str] | None:
     if not _same_origin(ws):
         return 4403, "Wrong origin"
     if not _is_local(ws):
-        return 4403, "The terminal only opens on the computer running AI Workspace"
+        return 4403, "The terminal only opens on the computer running Rooks"
     if len(_open) >= MAX_SESSIONS:
         return 4429, f"At most {MAX_SESSIONS} terminals at once"
     return None
