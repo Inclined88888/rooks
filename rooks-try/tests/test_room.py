@@ -457,18 +457,22 @@ def test_status_and_every_result_say_which_shell(room_home):
 
 
 # --- design 0006, 9.1: the Room's own login shell, profile and PATH ---------------------------------------------------
-LOGIN = 'exec "${SHELL:-/bin/sh}" -l'
+LOGIN = 'exec "$SHELL" -l'
 
 
 def test_login_argv_is_a_login_shell_in_the_rooms_home(room_home, monkeypatch):
     home = store.guest_home()
     monkeypatch.setattr(shell_mod, "_NAMESPACES", True)
     wrapped = shell_mod.login_argv(home, False)
-    assert wrapped[:3] == ["unshare", "-Urm", "--"] and wrapped[-1] == LOGIN
+    # unshare and sh by their full paths on this computer, never looked up in the Room's own bins
+    assert os.path.isabs(wrapped[0]) and wrapped[0].endswith("unshare") and wrapped[1:3] == ["-Urm", "--"]
+    assert wrapped[-1].endswith(LOGIN) and '"$HOME/.local/bin:' in wrapped[5]
     assert wrapped[wrapped.index("room") + 1] == str(home)
     assert shell_mod.login_argv(home, True)[1] == "-Urmn"  # offline: no network either
     monkeypatch.setattr(shell_mod, "_NAMESPACES", False)
-    assert shell_mod.login_argv(home, False) == ["sh", "-c", 'cd "$1" && exec "${SHELL:-/bin/sh}" -l', "room", str(home)]
+    plain = shell_mod.login_argv(home, False)
+    assert os.path.isabs(plain[0]) and plain[1] == "-c" and plain[-2:] == ["room", str(home)]
+    assert plain[2].startswith('cd "$1"') and plain[2].endswith(LOGIN) and '"$HOME/.local/bin:' in plain[2]
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="a POSIX shell")
@@ -508,10 +512,13 @@ def test_up_seeds_a_profile_only_when_missing(room_home):
     assert (home / ".profile").read_text() == "# mine\n"  # seeded, never overwritten
 
 
-def test_room_env_keeps_the_rooms_bins_first_and_drops_secrets(room_home):
+def test_room_env_drops_secrets_and_keeps_the_rooms_bins_off_the_wrappers_path(room_home):
+    """The Room's bins come first inside the Room's shell (login_argv, run_argv, the profile), never on the PATH the
+    wrappers are looked up with (tests/test_room_safety.py)."""
     home = store.guest_home()
-    env = shell_mod.room_env(home, False, base={"PATH": "/usr/bin", "OPENAI_API_KEY": "x", "FOO_TOKEN": "y", "LANG": "C"})
-    assert env["PATH"].startswith(f"{home}/.local/bin:{home}/bin:{home}/.cargo/bin:") and env["PATH"].endswith(":/usr/bin")
+    env = shell_mod.room_env(home, False, base={"PATH": f"{home}/.local/bin:/usr/bin", "OPENAI_API_KEY": "x",
+                                                "FOO_TOKEN": "y", "LANG": "C"})
+    assert env["PATH"] == "/usr/bin"
     assert "OPENAI_API_KEY" not in env and "FOO_TOKEN" not in env
     assert env["HOME"] == str(home) and env["ROOKS_TRY"] == "1" and env["LANG"] == "C"
     offline = shell_mod.room_env(home, True, base={"PATH": "/usr/bin"})
