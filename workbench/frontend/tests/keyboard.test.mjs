@@ -86,9 +86,10 @@ test("the command menu, the shortcuts sheet and the shell all read the one list"
 
 test("the command menu offers every action and every Settings section", () => {
   const palette = read("../src/Palette.tsx");
-  for (const id of ["new-chat", "new-task", "new-note", "room-start", "room-stop", "needs-you", "search-chats", "search-everything", "shortcuts"]) {
+  for (const id of ["new-chat", "new-task", "new-note", "room-start", "room-stop", "room-terminal", "room-point", "room-over", "room-files", "needs-you", "search-chats", "search-everything", "shortcuts"]) {
     assert.match(palette, new RegExp(`id: "${id}"`), id);
   }
+  assert.match(palette, /id: "room-terminal", label: "Open a terminal in the Room"/);
   assert.match(palette, /\.\.\.THEMES\.map/, "light, dark, high contrast and match my computer");
   assert.match(read("../src/appearance.tsx"), /id: "contrast"/);
   assert.match(palette, /\.\.\.SETTINGS_SECTIONS\.map/, "every Settings section");

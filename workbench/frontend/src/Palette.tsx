@@ -5,7 +5,8 @@
  * Moving onto a page warms its chunk, so it opens at once.
  */
 import {
-  BookMarked, Contrast, CornerDownLeft, Github, Inbox, Keyboard, LucideIcon, MessageSquare, Moon, Pause, Play, Plus, Power, Search, Settings, Sun, Type,
+  Bookmark, BookMarked, Contrast, CornerDownLeft, Folder, Github, Inbox, Keyboard, LucideIcon, MessageSquare, Moon, Pause, Play, Plus, Power, RotateCcw, Search, Settings,
+  SquareTerminal, Sun, Type,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -78,6 +79,11 @@ export function paletteActions(o: {
     o.roomRunning
       ? { id: "room-stop", label: "Stop the Room", group: "Actions", icon: Power, keywords: "room computer off turn off", run: () => void room(false) }
       : { id: "room-start", label: "Start the Room", group: "Actions", icon: Power, keywords: "room computer on turn on", run: () => void room(true) },
+    // The Room's desk (docs/design/0006-room-desktop.md): each opens the Room page on the window it names.
+    { id: "room-terminal", label: "Open a terminal in the Room", group: "Actions", icon: SquareTerminal, keywords: "room shell command line install", to: "/room", run: () => navigate("/room", { state: { room: "terminal" } }) },
+    { id: "room-point", label: "Save a point in the Room", group: "Actions", icon: Bookmark, keywords: "room checkpoint snapshot undo", to: "/room", run: () => navigate("/room", { state: { room: "point" } }) },
+    { id: "room-over", label: "Start the Room over from a saved point", group: "Actions", icon: RotateCcw, keywords: "room undo restore reset checkpoint", to: "/room", run: () => navigate("/room", { state: { room: "over" } }) },
+    { id: "room-files", label: "Show the Room's files", group: "Actions", icon: Folder, keywords: "room folder home files", to: "/room", run: () => navigate("/room", { state: { room: "files" } }) },
     { id: "needs-you", label: "Open Needs you", group: "Actions", icon: Inbox, keywords: "approvals waiting ok inbox", run: () => openNeedsYou() },
     { id: "search-chats", label: "Search chats", group: "Actions", icon: MessageSquare, keywords: "find conversation history", stay: true, run: () => o.setScope("chats") },
     { id: "search-everything", label: "Search memory, files and notes", group: "Actions", icon: BookMarked, keywords: "find knowledge remember people projects", stay: true, run: () => o.setScope("everything") },

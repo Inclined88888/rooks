@@ -177,6 +177,16 @@ test("every text token is AA (4.5:1) on bg, surface and accent-soft, in light, d
   assert.match(tokens, /html\[data-mode="contrast"\][^{]*\{[^}]*--focus-w:\s*3px/, "and a 3 px focus ring");
 });
 
+test("the terminal's dark screen is AA in every theme: one --screen block, ink on its background", () => {
+  const raw = strip(read("src/tokens.css"));
+  const blocks = [...raw.matchAll(/([^{}]+)\{([^}]*--screen-bg:[^}]*)\}/g)];
+  assert.equal(blocks.length, 1, "the --screen colours are defined once, the same in light, dark and high contrast");
+  const t = Object.fromEntries([...blocks[0][2].matchAll(/(--screen-[\w-]+):\s*(#[0-9a-f]{6})\s*;/gi)].map((m) => [m[1], m[2].toLowerCase()]));
+  const r = ratio(t["--screen-ink"], t["--screen-bg"]);
+  assert.ok(r >= 4.5, `--screen-ink on --screen-bg is ${r.toFixed(2)}:1`);
+  assert.ok(ratio(t["--screen-ink"], t["--screen-chrome"]) >= 4.5, "the chrome bar's words too");
+});
+
 test("cards and panels have no shadow; one floating shadow for menus, sheets, the palette and toasts", () => {
   const ui = strip(read("src/ui/ui.css"));
   const card = ui.match(/\.ui-card\s*\{([^}]*)\}/);
