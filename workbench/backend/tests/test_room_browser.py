@@ -6,7 +6,8 @@ forward, reload, input, page text, a still for the phone, downloads into the Roo
 Save a point and Start over closing it first, and an app restart that reopens the tabs and says why the browser closed.
 Status says whether the Room has a browser here and, when not, why.
 
-The tests that need a real Chromium start one (Playwright's, or the system's) and skip when none can start here.
+The tests that need a real Chromium start one (Playwright's, or the system's) and skip when none can start here,
+except with ROOM_BROWSER_TESTS_REQUIRED=1 (CI), where that fails the test instead.
 """
 
 from __future__ import annotations
@@ -47,6 +48,39 @@ class _Quiet(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+def serve_folder(folder: Path):
+    """A loopback web server for `folder`, in a process of its own: a server in the test's own process would be on one
+    of this app's own ports, which the Room's browser refuses. Returns (port, process)."""
+    import socket
+    import subprocess
+
+    probe = socket.socket()
+    probe.bind(("127.0.0.1", 0))
+    port = probe.getsockname()[1]
+    probe.close()
+    proc = subprocess.Popen([sys.executable, "-I", "-m", "http.server", str(port), "--bind", "127.0.0.1",
+                             "--directory", str(folder)], cwd=str(folder), stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
+    deadline = time.monotonic() + 15
+    while True:
+        try:
+            socket.create_connection(("127.0.0.1", port), timeout=1).close()
+            return port, proc
+        except OSError:
+            if time.monotonic() > deadline or proc.poll() is not None:
+                proc.kill()
+                raise AssertionError("the test web server did not start")
+            time.sleep(0.05)
+
+
+def stop_serving(proc) -> None:
+    proc.terminate()
+    try:
+        proc.wait(5)
+    except Exception:  # noqa: BLE001
+        proc.kill()
+
+
 @pytest.fixture()
 def site(tmp_path):
     """A small web site on loopback (not the app's port): a page with a button, a field and a download."""
@@ -55,10 +89,9 @@ def site(tmp_path):
     (folder / "page.html").write_text(PAGE)
     (folder / "second.html").write_text("<title>Second</title><p>the second page</p>")
     (folder / "notes.txt").write_text("words from the web")
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), lambda *a, **k: _Quiet(*a, directory=str(folder), **k))
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    yield srv.server_address[1]
-    srv.shutdown()
+    port, proc = serve_folder(folder)
+    yield port
+    stop_serving(proc)
 
 
 @pytest.fixture()
@@ -120,6 +153,8 @@ def chromium(on):
                 s.close()
         _PROBE["ok"], _PROBE["reason"] = not reason, reason
     if not _PROBE["ok"]:
+        if os.environ.get("ROOM_BROWSER_TESTS_REQUIRED") == "1":  # CI: the walls are tested, never skipped quietly
+            pytest.fail(f"ROOM_BROWSER_TESTS_REQUIRED is set but {_PROBE['reason']}")
         pytest.skip(_PROBE["reason"])
     return on
 
@@ -309,6 +344,91 @@ def test_the_terminal_key_browses_and_reads_but_the_phone_routes_are_the_persons
 
     row = db.one("SELECT args, detail FROM actions WHERE tool = 'use_room' AND args LIKE '%browse%' ORDER BY id DESC LIMIT 1")
     assert row and "example.com/a" in row["args"] and "secret" not in row["args"] and "secret" not in row["detail"]
+
+
+def test_a_bridge_key_never_reads_the_rooms_signed_in_pages(client, on, monkeypatch):
+    """Review finding: the helpers' shared key (app.json's, Rooks Desk's) read the Room browser's open page and tabs with
+    the terminal's channel header. Pages steer those helpers, and the Room's browser holds sign-ins: reading it needs the
+    person or the Terminal access token, as opening a page does."""
+    from fastapi.testclient import TestClient
+
+    from app import config, main, room_browser
+    from rooks_try import browser as rb
+
+    monkeypatch.setattr(room_browser, "_engine", lambda: rb.Engine("/x/chrome", "system"))
+    monkeypatch.setattr(room_browser, "_new_session", lambda *a, **k: _FakeSession())
+    monkeypatch.setattr(config, "BROWSER_API_KEY", "b" * 40)
+    monkeypatch.setattr(config, "DESK_API_KEY", "d" * 40)
+    assert client.post("/api/room/browser/open", json={"address": "example.com/a"}).status_code == 200
+    anon = TestClient(main.app)
+    for key in ("b" * 40, "d" * 40):
+        shared = {"Authorization": f"Bearer {key}", "X-Workbench-Channel": "rooks-code"}
+        assert anon.get("/api/room/browser/page", headers=shared).status_code == 401, key
+        assert anon.get("/api/room/browser/tabs", headers=shared).status_code == 401, key
+        assert anon.get("/api/room/status", headers=shared).status_code == 200  # the Room's status still reads
+    token = client.post("/api/cli-token").json()["token"]
+    mine = {"Authorization": f"Bearer {token}"}
+    assert anon.get("/api/room/browser/page", headers=mine).status_code == 200
+    assert anon.get("/api/room/browser/tabs", headers=mine).status_code == 200
+
+
+def test_the_apps_own_port_is_refused_before_any_browser_route_learns_it(client, on, monkeypatch):
+    """Review finding: the app's port was learned only from the browser's own routes and socket, so a browser the
+    assistant started first (and every browser after an app restart, until the person opened the Browser window)
+    refused nothing. The ports this app's process listens on are known when the browser starts."""
+    import asyncio
+    import socket
+
+    from app import room_browser
+    from rooks_try import browser as rb
+
+    monkeypatch.setattr(room_browser, "_engine", lambda: rb.Engine("/x/chrome", "system"))
+    made: dict = {}
+
+    def new(engine, home, **kw):
+        made.update(kw)
+        return _FakeSession()
+
+    monkeypatch.setattr(room_browser, "_new_session", new)
+    room_browser.reset_for_tests()  # a new run of the app: nothing learned from a request yet
+    listener = socket.socket()  # where this app's process is reached, as uvicorn's own socket is
+    listener.bind(("127.0.0.1", 0))
+    listener.listen()
+    port = listener.getsockname()[1]
+    try:
+        asyncio.run(room_browser.ensure())
+        assert port in made["app_ports"], made.get("app_ports")
+    finally:
+        listener.close()
+
+
+def test_a_browser_that_cannot_tell_where_the_app_is_does_not_start(client, on, monkeypatch):
+    """Fail closed: when no port of this app is known (nothing found listening, no request seen), the browser stays shut
+    and says why in plain words."""
+    import asyncio
+
+    from fastapi import HTTPException
+
+    from app import room_browser
+    from rooks_try import browser as rb
+
+    monkeypatch.setattr(room_browser, "_engine", lambda: rb.Engine("/x/chrome", "system"))
+    monkeypatch.setattr(room_browser, "_new_session", lambda *a, **k: _FakeSession())
+    monkeypatch.setattr(room_browser, "listening_ports", lambda: set())
+    room_browser.reset_for_tests()
+    with pytest.raises(HTTPException) as e:
+        asyncio.run(room_browser.ensure())
+    assert e.value.detail == room_browser.APP_UNKNOWN
+    assert "port" not in e.value.detail.lower() and room_browser.session() is None
+
+
+def test_every_request_to_the_app_tells_the_browser_its_port(client, on, monkeypatch):
+    """A running browser learns a new port of this app from any request, not only from its own routes."""
+    from app import room_browser
+
+    room_browser.reset_for_tests()
+    client.get("/api/room/status", headers={"host": "127.0.0.1:47123"})
+    assert 47123 in room_browser._PORTS
 
 
 class _FakeSession:

@@ -81,6 +81,11 @@ OLDER_APP = ("  The Rooks app did not let this terminal {what}. Starting the Roo
              " than this terminal, update it. Or {where} in the app.")
 
 
+BROWSER_READ_REFUSED = ("  The Rooks app did not let this terminal read the Room's browser. Its pages can hold your sign-ins, so"
+                        " reading them needs the terminal's own sign in: in the app open Settings, Terminal access, then"
+                        " run rooks login. Or open the Browser window in the app.")
+
+
 # --- /room ------------------------------------------------------------------------------------------------------------
 # The words match the Room page in the app (workbench/frontend/src/room/words.ts and design record 0006): On, Off, Save
 # a point, Start over, Needs you, Hand off a file, and the honest line.
@@ -660,10 +665,11 @@ def room_command(agent, ui, rest: str = "") -> None:
             _room_shell(ui, link)
         elif sub in ("browse", "go"):
             _room_browse(ui, link, arg)
-        elif sub == "tabs":
-            _room_tabs(ui, link)
-        elif sub == "page":
-            _room_page(ui, link)
+        elif sub in ("tabs", "page"):
+            try:
+                (_room_tabs if sub == "tabs" else _room_page)(ui, link)
+            except Refused:  # the Room's browser holds sign-ins: the app lets only this terminal's own sign in read it
+                ui.p(BROWSER_READ_REFUSED)
         else:
             ui.p(ROOM_USE)
     except Refused:

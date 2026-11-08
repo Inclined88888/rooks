@@ -127,6 +127,9 @@ async def guard(request: Request, call_next):
     if request.url.path.startswith("/api/") and request.method not in ("GET", "HEAD", "OPTIONS"):
         if request.headers.get("x-workbench") != "1":
             return JSONResponse({"detail": "Missing X-Workbench header"}, status_code=403)
+    from . import room_browser  # every request says where this app is reached: the Room's browser refuses it there
+
+    room_browser.learn(request.scope)
     if not companion._published and request.url.hostname in ("127.0.0.1", "localhost"):
         companion.publish(f"{request.url.scheme}://{request.url.hostname}:{request.url.port or 80}")  # notch app + agent hooks
     response = await call_next(request)
@@ -185,7 +188,7 @@ app.include_router(room_terminal.router)    # take a terminal from Rooks, name i
 app.include_router(room_terminal.sockets)   # the terminal's screen: loopback, same origin, signed in
 from . import room_browser  # noqa: E402 - design 0007: the Room's own browser, a real Chromium over a pipe
 
-app.include_router(room_browser.terminal)  # /room browse, tabs, page (the rooks terminal's key too; a bridge key reads)
+app.include_router(room_browser.terminal)  # /room browse, tabs, page (the rooks terminal's key; never a shared bridge key)
 app.include_router(room_browser.router)    # the phone's still and taps, close: the person's
 app.include_router(room_browser.sockets)   # the live page: loopback, same origin, signed in, one window
 from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): the presence strip and the Needs you inbox

@@ -117,14 +117,16 @@ def test_nothing_else_widens(client, keys, room_home, token):
 
     widened = sorted((m, r.path) for r in main.app.routes if getattr(r, "path", "").startswith("/api/room")
                      for m in (getattr(r, "methods", None) or set()) - {"HEAD"}
-                     if any(getattr(d.call, "__name__", "") == "require_user_or_terminal" for d in r.dependant.dependencies))
+                     if any(getattr(d.call, "__name__", "") in ("require_user_or_terminal", "require_user_or_terminal_token")
+                            for d in r.dependant.dependencies))
     assert widened == sorted([
         ("GET", "/api/room/status"), ("POST", "/api/room/up"), ("POST", "/api/room/down"), ("POST", "/api/room/run"),
         ("POST", "/api/room/checkpoint"), ("POST", "/api/room/reset"), ("POST", "/api/room/handoff"),
         ("GET", "/api/room/files"), ("GET", "/api/room/terminals"), ("POST", "/api/room/terminals"),
         ("GET", "/api/room/terminals/{tid}/tail"), ("POST", "/api/room/terminals/{tid}/send"),
         ("DELETE", "/api/room/terminals/{tid}"),
-        # design 0007, 1.6: /room browse, /room tabs, /room page (a bridge key still only reads)
+        # design 0007, 1.6: /room browse, /room tabs, /room page (the Terminal access token only: a bridge key never
+        # reads the Room's browser, test_room_browser.test_a_bridge_key_never_reads_the_rooms_signed_in_pages)
         ("POST", "/api/room/browser/open"), ("GET", "/api/room/browser/tabs"), ("GET", "/api/room/browser/page")]), widened
 
 

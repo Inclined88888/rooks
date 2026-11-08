@@ -204,6 +204,20 @@ def require_user_or_terminal(request: Request) -> None:
     raise HTTPException(status_code=401, detail="Not signed in")
 
 
+def require_user_or_terminal_token(request: Request) -> None:
+    """The signed in user, or the rooks terminal with its own Terminal access token, which a person creates: for the
+    Room's browser (open a page, list the tabs, read a page). Never a shared bridge key, not even to read: the Room's
+    browser holds the person's sign-ins, and the browser and desk helpers that share that key are steered by pages."""
+    try:
+        require_user(request)
+        return
+    except HTTPException:
+        pass
+    if check_cli_token(_bearer_token(request)):
+        return
+    raise HTTPException(status_code=401, detail="Not signed in")
+
+
 def check_bearer(request: Request) -> bool:
     auth = request.headers.get("authorization", "")
     token = auth[7:] if auth.lower().startswith("bearer ") else ""

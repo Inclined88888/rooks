@@ -38,6 +38,7 @@ class FakeApp:
                       {"id": "j:3", "kind": "job", "title": "Tidy the downloads folder", "detail": "",
                        "since": "2026-11-06T09:00:00", "actions": ["approve", "deny"]}]
         self.tabs: list[dict] = []  # the Room browser's tabs, as /api/room/browser/tabs lists them
+        self.reads_need_login = False  # the app reads the Room's browser only with the terminal's own sign in
         self.answers: list[str] = []  # what the app reports for the next answers (approved, done, failed, held, denied)
         app = self
 
@@ -170,6 +171,8 @@ class FakeApp:
                     else:
                         app.tabs[-1] = tab
                     return self._send(200, {"tab": tab["id"], "url": url, "title": "Shop", "blocked": None})
+                if path in ("/api/room/browser/tabs", "/api/room/browser/page") and app.reads_need_login:
+                    return self._send(401, {"detail": "Not signed in"})
                 if path == "/api/room/browser/tabs" and method == "GET":
                     if not app.tabs:
                         return self._send(409, {"detail": "The Room's browser is closed. Open a page first."})
@@ -599,6 +602,17 @@ def test_room_tabs_and_page_say_plainly_when_the_browser_is_closed(fake_app):
     fake_app.room["running"] = True
     assert "The Room's browser is closed. Open a page first." in _say(workroom.room_command, agent, "tabs")
     assert "The Room's browser is closed. Open a page first." in _say(workroom.room_command, agent, "page")
+
+
+def test_reading_the_rooms_browser_needs_the_terminals_own_sign_in(fake_app):
+    """The app keeps the Room browser's pages from the helpers' shared key: the terminal says how to sign in, plainly."""
+    agent = _agent(fake_app.url)
+    fake_app.room["running"] = True
+    fake_app.reads_need_login = True
+    for verb in ("tabs", "page"):
+        text = _say(workroom.room_command, agent, verb)
+        assert "read the Room's browser" in text and "rooks login" in text, text
+        assert "open the Room" not in text and "401" not in text and "Not signed in" not in text
 
 
 def test_room_browser_verbs_are_in_help_and_the_usage_line():

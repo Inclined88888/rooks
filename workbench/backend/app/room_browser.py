@@ -9,9 +9,14 @@ the app's exit closes it and writes that a restart did, and the next start (and 
 
 Who may watch and drive: the socket follows the Room terminal's rules (signed in, same origin, loopback peer and page),
 the browser not switched off in Settings, one window at a time. Frames are JPEG binary messages, newest wins, and
-none are made while no one watches; state is JSON. The rooks terminal's key may open a page, list the tabs and read a
-page (`/room browse`, `/room tabs`, `/room page`); a bridge key only reads, and reads never start the browser. The
-phone's still and taps are the person's.
+none are made while no one watches; state is JSON. The rooks terminal's own Terminal access token may open a page, list
+the tabs and read a page (`/room browse`, `/room tabs`, `/room page`); the helpers' shared bridge key may not, not even
+read (the Room's browser holds sign-ins, and pages steer those helpers), and reads never start the browser. The phone's
+still and taps are the person's.
+
+Where this app is reached is refused from the browser's first start: the ports this process listens on (read from the
+system when the browser starts) and every port a request to the app came in on (main.guard). When neither is known the
+browser does not start.
 
 What is written down (channel room, tool use_room): opening and closing the browser, every page the rooks terminal
 or a route opens (host and path, never the query), and one coarse "You used the browser for N min" row when a window
@@ -24,6 +29,8 @@ import asyncio
 import atexit
 import json
 import logging
+import os
+import subprocess
 import sys
 import threading
 import time
@@ -36,11 +43,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket
 from fastapi.responses import Response
 
 from . import db, terminal_pty
-from .security import require_user, require_user_or_terminal
+from .security import require_user, require_user_or_terminal_token
 
 log = logging.getLogger("room.browser")
 
-terminal = APIRouter(prefix="/api/room/browser", dependencies=[Depends(require_user_or_terminal)])
+# The rooks terminal's routes: its own Terminal access token, never the helpers' shared bridge key (not even to read)
+terminal = APIRouter(prefix="/api/room/browser", dependencies=[Depends(require_user_or_terminal_token)])
 router = APIRouter(prefix="/api/room/browser", dependencies=[Depends(require_user)])
 sockets = APIRouter()
 
@@ -53,6 +61,7 @@ NOT_INSTALLED = "The Room is not installed on this computer."
 NO_BROWSER_HERE = "This Room has no browser of its own. Use its screen."
 HELPER = "The Room runs elsewhere, so its browser is not here."
 DID_NOT_START = "The Room's browser could not start."
+APP_UNKNOWN = "The Room's browser stays closed: it could not check that pages in it cannot reach Rooks itself."
 NO_SUCH_TAB = "No such tab."
 SAY_WHERE = "Say which page to open."
 BAD_ACT = "The browser cannot do that."
@@ -154,12 +163,16 @@ def _store_home() -> Path | None:
 
 
 def _learn(scope) -> None:
-    """Where this app is reached (the server's port, and the Host header's): the Room's browser refuses those."""
+    """Where this app is reached (the server's port, and the Host header's): the Room's browser refuses those. Every
+    request to the app tells it (main.guard), not only the browser's own routes."""
     ports = set()
     server = scope.get("server") if isinstance(scope, dict) else None
-    if server and len(server) > 1 and server[1]:
-        ports.add(int(server[1]))
-    for name, value in scope.get("headers") or []:
+    try:
+        if server and len(server) > 1 and server[1]:
+            ports.add(int(server[1]))
+    except (TypeError, ValueError):
+        pass
+    for name, value in (scope.get("headers") if isinstance(scope, dict) else None) or []:
         if name == b"host":
             try:
                 port = urlsplit("http://" + value.decode("latin-1")).port
@@ -167,15 +180,83 @@ def _learn(scope) -> None:
                 port = None
             if port:
                 ports.add(port)
+    _add_ports(ports)
+
+
+learn = _learn
+
+
+def _add_ports(ports) -> None:
     with _LOCK:
-        new = ports - _PORTS
-        _PORTS.update(ports)
+        new = set(ports) - _PORTS
+        _PORTS.update(new)
     s = session()
     if new and s is not None:
         try:
             s.set_app_ports(_PORTS)
         except Exception:  # noqa: BLE001
             pass
+
+
+def _linux_listening() -> set[int]:
+    inodes = set()
+    for fd in os.listdir("/proc/self/fd"):
+        try:
+            link = os.readlink(f"/proc/self/fd/{fd}")
+        except OSError:
+            continue
+        if link.startswith("socket:["):
+            inodes.add(link[8:-1])
+    ports = set()
+    for name in ("tcp", "tcp6"):
+        try:
+            lines = Path(f"/proc/self/net/{name}").read_text().splitlines()[1:]
+        except OSError:
+            continue
+        for line in lines:
+            parts = line.split()
+            if len(parts) > 9 and parts[3] == "0A" and parts[9] in inodes:  # LISTEN, and ours
+                ports.add(int(parts[1].rsplit(":", 1)[1], 16))
+    return ports
+
+
+def _lsof_listening() -> set[int]:
+    try:
+        out = subprocess.run(["lsof", "-nP", "-a", "-p", str(os.getpid()), "-iTCP", "-sTCP:LISTEN", "-Fn"],
+                             capture_output=True, text=True, timeout=5).stdout
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    ports = set()
+    for line in out.splitlines():
+        if line.startswith("n") and ":" in line:
+            tail = line.rsplit(":", 1)[1]
+            if tail.isdigit():
+                ports.add(int(tail))
+    return ports
+
+
+def listening_ports() -> set[int]:
+    """The TCP ports this app's own process listens on (uvicorn's socket, the phone's Wi-Fi door), so the Room's browser
+    refuses them from its first start: a browser the assistant opens before any request has said where the app is
+    reached (after a restart, the usual case) must refuse it too."""
+    try:
+        if sys.platform.startswith("linux"):
+            ports = _linux_listening()
+        elif sys.platform == "darwin":
+            ports = _lsof_listening()
+        else:
+            ports = set()
+    except Exception as e:  # noqa: BLE001
+        log.debug("listening ports not read: %s", e.__class__.__name__)
+        ports = set()
+    try:
+        from . import config, mobile
+
+        if config.DESKTOP:  # the phone's Wi-Fi door is this app too, also before it opens
+            ports.add(int(mobile.LAN_PORT))
+    except Exception:  # noqa: BLE001
+        pass
+    return ports
 
 
 def closed_at_restart() -> bool:
@@ -243,6 +324,10 @@ def _start(engine, offline: bool):
         home = _store_home()
         if home is None:
             raise HTTPException(503, NOT_INSTALLED)
+        _add_ports(listening_ports())
+        if not _PORTS:  # fail closed: a browser that cannot tell where this app is would refuse nothing
+            _row("open browser", {}, "rejected", APP_UNKNOWN, started)
+            raise HTTPException(503, APP_UNKNOWN)
         restarted = rb.closed_by_restart(home, _RUN)
         s = _new_session(engine, home, offline=offline, app_ports=set(_PORTS), on_frame=_on_frame,
                          on_change=_on_change, tab_max=TAB_MAX, run=_RUN,

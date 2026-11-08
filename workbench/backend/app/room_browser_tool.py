@@ -14,7 +14,9 @@ shows the same thing:
 * a click that lands on a frame from another site, which the snapshot cannot read.
 
 The assistant never types into a password field: the person types it themselves. What is checked is a fresh look at the
-target element just before each click, type or Enter, and the top page's host. What is not checked (said under
+target element just before each click, type or key press, and the top page's host. Enter or Space on a focused button
+or link is checked as a click on it, Enter in a form field as sending the form, and any key in a card form as typing
+there; only keys that move around (Tab, the arrows, Escape, PageDown and the like) skip the look. What is not checked (said under
 Advanced): a page's own scripts sending data on an ordinary click or as you type, button words the English patterns miss,
 and the person's own input.
 
@@ -305,6 +307,32 @@ def _check(action: str, el: dict | None, frame: dict | None, top: str, asked: se
     return None
 
 
+# Keys that only move around a page (focus, scroll, a field's caret) and never press, tick or send anything.
+MOVING_KEYS = frozenset({"Tab", "Escape", "ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown", "PageUp", "PageDown",
+                         "Home", "End", "Backspace", "Delete"})
+KEY_NAMES = {"Return": "Enter", "Space": " ", "Spacebar": " ", "Esc": "Escape"}
+_PRESSES = ("Enter", " ")  # what presses a focused button or link, as a click does
+
+
+def _check_key(key: str, el: dict | None, frame: dict | None, top: str, asked: set[str]) -> str | None:
+    """Why a key press must wait, or None. Enter or Space on a focused button or link is checked as a click on it;
+    Enter in a form field as sending the form; any other key in a card form as typing there (a purchase)."""
+    if key in MOVING_KEYS:
+        return None
+    if frame:
+        return "frame"
+    if not el:
+        return None
+    editable = bool(el.get("editable")) or el.get("role") in ("textbox", "searchbox", "combobox")
+    if key in _PRESSES and not editable:
+        return _check("click", el, frame, top, asked, False)
+    if el.get("form_has_card") or _rules().card_words(el.get("name") or ""):
+        return "purchase"
+    if key == "Enter":
+        return _check("type", el, frame, top, asked, bool(el.get("in_form") and el.get("tag") != "textarea"))
+    return None
+
+
 def _act(s, action: str, call: dict, asked: set[str], approved_req: dict | None, ctx_conv: int | None,
          channel: str) -> dict:
     """One step, after the look and the checks (in a worker thread)."""
@@ -343,7 +371,9 @@ def _act(s, action: str, call: dict, asked: set[str], approved_req: dict | None,
     else:  # key
         if not key:
             return {"ok": False, "error": "Say which key: Enter, Tab, Escape, an arrow, PageDown."}
-        look = _describe(s, "focus") if key == "Enter" else {"el": None, "frame": None, "top": s.tab(None).url}
+        key = KEY_NAMES.get(key, key)
+        # only keys that move around skip the look; any other key may press, tick or send what has the focus
+        look = ({"el": None, "frame": None, "top": s.tab(None).url} if key in MOVING_KEYS else _describe(s, "focus"))
     el, frame, top = look.get("el"), look.get("frame"), str(look.get("top") or s.tab(None).url)
     if approved_req is not None:
         if approved_req["args"].get("expect") != _fingerprint(el, frame, top):
@@ -351,9 +381,10 @@ def _act(s, action: str, call: dict, asked: set[str], approved_req: dict | None,
     else:
         if action == "type" and el and (el.get("form_has_card") or _rules().card_words(el.get("name") or "")):
             why = "purchase"
+        elif action == "key":
+            why = _check_key(key, el, frame, top, asked)
         else:
-            enter = action == "key" and key == "Enter" and bool(el and el.get("in_form") and el.get("tag") != "textarea")
-            why = _check(action, el, frame, top, asked, submit if action == "type" else enter)
+            why = _check(action, el, frame, top, asked, submit)
         if why:
             return hold(why, call, el, frame, top, ctx_conv, channel)
     on = (el or {}).get("name") or ""
@@ -369,7 +400,7 @@ def _act(s, action: str, call: dict, asked: set[str], approved_req: dict | None,
         if submit:
             s.press("Enter")
     else:
-        s.press(key)
+        s.press(key)  # the name as normalised above (Return is Enter, Space is " ")
     time.sleep(0.3)  # what the step started (a load, a script) begins before the answer
     t = s.tab(None)
     if t.loading:

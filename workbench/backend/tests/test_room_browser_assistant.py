@@ -27,7 +27,8 @@ import time
 
 import pytest
 
-from tests.test_room_browser import _page, _wait_page, chromium, local, on, room_home  # noqa: F401 - shared fixtures
+from tests.test_room_browser import (_page, _wait_page, chromium, local, on, room_home, serve_folder,  # noqa: F401
+                                     stop_serving)
 
 pytestmark = pytest.mark.skipif(__import__("sys").platform == "win32", reason="the Room's browser is not on Windows yet")
 
@@ -53,9 +54,7 @@ class _Quiet(http.server.SimpleHTTPRequestHandler):
 
 
 def _serve(folder):
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), lambda *a, **k: _Quiet(*a, directory=str(folder), **k))
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return srv
+    return serve_folder(folder)  # (port, process): out of the test's own process, whose ports are the app's
 
 
 @pytest.fixture()
@@ -64,19 +63,18 @@ def shop(tmp_path):
     other = tmp_path / "other"
     other.mkdir()
     (other / "frame.html").write_text(FRAME)
-    osrv = _serve(other)
+    oport, osrv = _serve(other)
     folder = tmp_path / "shop"
     folder.mkdir()
-    srv = _serve(folder)
-    port = srv.server_address[1]
+    port, srv = _serve(folder)
     (folder / "shop.html").write_text(SHOP.format(host=f"127.0.0.1:{port}",
-                                                  frame=f"http://localhost:{osrv.server_address[1]}/frame.html"))
+                                                  frame=f"http://localhost:{oport}/frame.html"))
     for name, words in (("second", "the second page"), ("search", "search results"), ("pay", "paid"),
                         ("in", "signed in")):
         (folder / f"{name}.html").write_text(f"<title>{name}</title><p>{words}</p>")
     yield port
-    srv.shutdown()
-    osrv.shutdown()
+    stop_serving(srv)
+    stop_serving(osrv)
 
 
 def _ctx(asked: str | None = None, channel: str = "web"):
@@ -311,3 +309,139 @@ def test_through_the_chat_a_purchase_asks_twice_in_plain_words(client, chromium,
     r = client.post(f"/api/approvals/{held[0]['id']}", json={"approve": True}).json()
     assert r["status"] == "done", r
     _wait_page(client, "bought-42")
+
+
+# --- review findings: keys past a hold, the app's own address when the assistant browses first ----------------------------------
+class _KeySession:
+    """Stands in for the browser where the test is about what a key press is checked as (the focused element is given)."""
+
+    def __init__(self, focused):
+        self.focused = focused
+        self.pressed: list[str] = []
+        self.view = (1280, 800)
+
+        class T:
+            url, title, loading = "https://shop.example/cart", "Shop", False
+
+        self.t = T()
+
+    def tab(self, tid=None):
+        return self.t
+
+    def evaluate(self, tid, expression, timeout=10.0):
+        return {"el": self.focused, "frame": None, "top": self.t.url}
+
+    def press(self, key):
+        self.pressed.append(key)
+
+
+def _none_waiting() -> None:
+    """Say no to every browser step still waiting, so a test starts with nothing already asked (a step that waits is
+    not asked twice: the same key would be told it is already waiting)."""
+    from app import actions
+
+    for a in actions.pending():
+        if a["tool"] == "use_room":
+            actions.decide(a["id"], False)
+
+
+def _el(**kw):
+    base = {"id": 3, "tag": "button", "role": "button", "name": "", "type": "", "in_form": False, "form_has_password": False,
+            "form_action": "", "is_submit": False, "form_has_card": False, "editable": False}
+    return {**base, **kw}
+
+
+@pytest.mark.parametrize("key", ["Enter", " ", "Space", "Spacebar", "Return"])
+def test_a_key_on_a_focused_buy_button_waits_like_a_click(client, monkeypatch, key):
+    """Review finding: Space and every key but Enter were pressed with no look at the focused element, and Enter on a
+    button outside a form counted as typing, so Tab, Tab, Enter on "Add to cart" bought with no yes in Needs you."""
+    from app import room_browser_tool as t
+
+    _none_waiting()
+    s = _KeySession(_el(name="Add to cart"))
+    out = t._act(s, "key", {"action": "key", "key": key}, {"shop.example"}, None, None, "web")
+    assert out.get("held") is True and out["why"] == "purchase", out
+    assert s.pressed == []
+
+
+@pytest.mark.parametrize("key", ["Enter", " "])
+def test_a_key_on_a_focused_submit_button_waits_on_a_site_nobody_asked_for(client, key):
+    from app import room_browser_tool as t
+
+    _none_waiting()
+    s = _KeySession(_el(name="Search", in_form=True, is_submit=True, form_action="search.html"))
+    out = t._act(s, "key", {"action": "key", "key": key}, set(), None, None, "web")
+    assert out.get("held") is True and out["why"] == "submit", out
+    assert s.pressed == []
+    ok = t._act(s, "key", {"action": "key", "key": key}, {"shop.example"}, None, None, "web")  # asked: it goes ahead
+    assert ok.get("ok") is True and s.pressed == [{"Return": "Enter", "Space": " ", "Spacebar": " "}.get(key, key)]
+
+
+def test_moving_keys_never_wait_and_typing_in_a_card_field_does(client):
+    from app import room_browser_tool as t
+
+    _none_waiting()
+    s = _KeySession(_el(name="Add to cart"))
+    for key in ("Tab", "Escape", "ArrowDown", "PageDown"):
+        assert t._act(s, "key", {"action": "key", "key": key}, set(), None, None, "web").get("ok") is True, key
+    card = _KeySession(_el(tag="input", role="textbox", name="Card number", in_form=True, form_has_card=True,
+                           editable=True))
+    out = t._act(card, "key", {"action": "key", "key": "4"}, {"shop.example"}, None, None, "web")
+    assert out.get("held") is True and out["why"] == "purchase", out
+
+
+def test_real_tab_tab_enter_on_add_to_cart_waits(client, chromium, shop):
+    _none_waiting()
+    ctx = _ctx(asked=f"Look around 127.0.0.1:{shop}")
+    _opened(ctx, shop)
+    for key in ("Tab", "Tab"):
+        assert _use(ctx, action="key", key=key).get("ok") is True
+    out = _use(ctx, action="key", key="Enter")
+    assert out.get("held") is True and out["why"] == "purchase", out
+    space = _use(ctx, action="key", key=" ")
+    assert space.get("held") is True and space["why"] == "purchase", space
+    time.sleep(0.3)
+    assert "bought-42" not in _page(client)["text"]
+
+
+def test_real_space_on_a_search_button_waits_on_a_site_nobody_asked_for(client, chromium, shop):
+    _none_waiting()
+    ctx = _ctx(asked="Find me a lamp somewhere")
+    _opened(ctx, shop)
+    for key in ("Tab", "Tab", "Tab", "Tab"):  # Next page, Add to cart, Search words, Search
+        assert _use(ctx, action="key", key=key).get("ok") is True
+    out = _use(ctx, action="key", key=" ")
+    assert out.get("held") is True and out["why"] == "submit", out
+    time.sleep(0.5)
+    assert "search results" not in _page(client)["text"]
+
+
+def test_real_app_address_is_refused_when_the_assistant_browses_first(client, chromium):
+    """Review finding, the reviewer's own run: a real app on a real port, the Room on, and the assistant's browse is the
+    first thing that starts the browser (after an app restart this is the usual path). The app's address, and the same
+    address with a dot after the name, are refused; the page never shows the app's answer."""
+    import uvicorn
+
+    from app import main, room_browser
+    from rooks_try import browser as rb
+
+    room_browser.reset_for_tests()  # a new run of the app: no browser route has been asked anything
+    server = uvicorn.Server(uvicorn.Config(main.app, host="127.0.0.1", port=0, lifespan="off", log_level="warning"))
+    th = threading.Thread(target=server.run, daemon=True)
+    th.start()
+    deadline = time.monotonic() + 15
+    while not server.started and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert server.started
+    port = server.servers[0].sockets[0].getsockname()[1]
+    try:
+        ctx = _ctx()
+        for address in (f"http://127.0.0.1:{port}/healthz", f"http://localhost.:{port}/healthz",
+                        f"http://foo.localhost.:{port}/healthz", f"http://localhost:{port}/healthz"):
+            out = _use(ctx, action="browse", address=address)
+            assert out.get("ok") is False and out.get("error") == rb.APP_ADDRESS, (address, out)
+            text = room_browser.session().page_text(None)
+            assert '"database"' not in text, (address, text)
+    finally:
+        server.should_exit = True
+        th.join(10)
