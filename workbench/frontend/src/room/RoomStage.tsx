@@ -15,26 +15,28 @@ import { FilesWindow } from "./FilesWindow";
 import { PointsWindow } from "./PointsWindow";
 import { CommandView, HonestLine, roomNotReady, useRoomFrame } from "./RoomView";
 import { TerminalWindow } from "./TerminalWindow";
+import { useRoomStatus } from "./status";
 import { useTerms } from "./terms";
 
 const ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, files: Folder, points: Bookmark, screen: Monitor };
 
 export function RoomStage({ stage, close }: { stage: Stage; close: () => void }) {
-  const f = useRoomFrame({ mode: "stage", goal: stage.goal, onClose: close });
-  const status = f.status;
+  // the same store the frame reads: which window shows decides whether the frame keeps its point verbs
+  const status = useRoomStatus();
   const ui = useTerms();
   const offered = windowsFor(status);
   const [pick, setPick] = useState<WindowId | null>(null);
   const shown: WindowId | null = pick && offered.includes(pick) ? pick : offered[0] ?? null;
-  const terminalId = (() => { const id = pickActive(status.terminals, ui.active); return status.terminals.find((t) => t.id === id && t.alive)?.id ?? null; })();
+  const f = useRoomFrame({ mode: "stage", goal: stage.goal, onClose: close, pointsShown: shown === "points" });
+  const terminal = (() => { const id = pickActive(status.terminals, ui.active); return status.terminals.find((t) => t.id === id && t.alive) ?? null; })();
 
   let main: ReactNode = roomNotReady(status);
   if (!main) {
     if (shown === "screen") main = f.picture;
     else if (shown === "terminal") main = <TerminalWindow bare status={status} act={f.act} slot={<TerminalSlot kind="room" />} />;
     else if (shown === "commands") main = <CommandView status={status} />;
-    else if (shown === "files") main = <FilesWindow status={status} terminalId={terminalId} onHandOff={f.openHandoff} />;
-    else if (shown === "points") main = <PointsWindow status={status} act={f.act} />;
+    else if (shown === "files") main = <FilesWindow status={status} terminal={terminal} onHandOff={f.openHandoff} />;
+    else if (shown === "points") main = <PointsWindow status={status} act={f.act} stale={!status.reachable} />;
   }
   const items = dockItems(status);
   return (
@@ -42,7 +44,7 @@ export function RoomStage({ stage, close }: { stage: Stage; close: () => void })
       {f.goal}
       <div className="room-stage-window">{main}</div>
       {status.available && (
-        <div className="room-stage-dock">
+        <div className="room-stage-dock" id="room-stage-dock" tabIndex={-1}>
           {items.length > 1 && (
             <span className="room-stage-dock-items" role="toolbar" aria-label="Windows">
               {items.map((d) => {

@@ -22,7 +22,7 @@ import { errorText } from "../ui/toast";
 import { addCommandLines, frameEvery, refreshRoomStatus, roomBusy, useRoomStatus, type CommandLine, type RoomState } from "./status";
 import { setActiveTerminal } from "./terms";
 import {
-  commandsLabel, commandViewLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, offStartLine, pointLine, roomScreenLive, RUN_TIMEOUT_S, STOPPED_LINE,
+  commandViewLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, offStartLine, pointLine, resetLine, roomScreenLive, RUN_TIMEOUT_S, STOPPED_LINE,
   TIMEOUT_NOTE, toScreenPoint, wheelSteps, type Checkpoint, type Point, type Size,
 } from "./words";
 import "./room.css";
@@ -188,7 +188,11 @@ export type RoomFrame = {
   openHandoff: (src: string) => void;
 };
 
-export function useRoomFrame({ mode, goal, onClose }: { mode: "page" | "stage"; goal?: string; onClose?: () => void }): RoomFrame {
+/**
+ * `pointsShown`: the Stage shows the Saved points window, which has its own Save a point and Start over from here, so
+ * the frame's two step aside (one of each on screen, never two forms for the same thing).
+ */
+export function useRoomFrame({ mode, goal, onClose, pointsShown = false }: { mode: "page" | "stage"; goal?: string; onClose?: () => void; pointsShown?: boolean }): RoomFrame {
   const status = useRoomStatus();
   const act = useRoomActions();
   const navigate = useNavigate();
@@ -211,9 +215,13 @@ export function useRoomFrame({ mode, goal, onClose }: { mode: "page" | "stage"; 
       {screen.modes}
       {status.available && status.reachable && (
         <>
-          <Button size="sm" variant="ghost" icon={<Bookmark size={13} />} aria-pressed={panel === "point"} onClick={() => toggle("point")}>Save a point</Button>
-          <Button size="sm" variant="ghost" icon={<RotateCcw size={13} />} aria-pressed={panel === "reset"} disabled={!points.length}
-            title={points.length ? undefined : "Save a point first"} onClick={() => toggle("reset")}>Start over</Button>
+          {!pointsShown && (
+            <>
+              <Button size="sm" variant="ghost" icon={<Bookmark size={13} />} aria-pressed={panel === "point"} onClick={() => toggle("point")}>Save a point</Button>
+              <Button size="sm" variant="ghost" icon={<RotateCcw size={13} />} aria-pressed={panel === "reset"} disabled={!points.length}
+                title={points.length ? undefined : "Save a point first"} onClick={() => toggle("reset")}>Start over</Button>
+            </>
+          )}
           <Button size="sm" variant="ghost" icon={<FileOutput size={13} />} aria-pressed={panel === "handoff"} onClick={() => toggle("handoff")}>Hand off a file</Button>
         </>
       )}
@@ -229,12 +237,13 @@ export function useRoomFrame({ mode, goal, onClose }: { mode: "page" | "stage"; 
 
   const panels = (
     <>
-      {panel === "point" && (
+      {panel === "point" && !pointsShown && (
         <PointPanel busy={act.busy === "point"} onCancel={() => setPanel(null)}
           onSave={async (l) => { const r = await act.savePoint(l); if (r?.verified) setPanel(null); }} />
       )}
-      {panel === "reset" && (
-        <ResetPanel points={points} initial={status.last_checkpoint?.name || undefined} busy={act.busy === "reset"} onCancel={() => setPanel(null)}
+      {panel === "reset" && !pointsShown && (
+        <ResetPanel closing={status.terminals.filter((t) => t.alive).length} points={points} initial={status.last_checkpoint?.name || undefined}
+          busy={act.busy === "reset"} onCancel={() => setPanel(null)}
           onConfirm={async (n) => { const r = await act.startOver(n); if (r?.verified) { setPanel(null); screen.setCaptured(false); } }} />
       )}
       {panel === "handoff" && (
@@ -487,11 +496,6 @@ export function CommandView({ status }: { status: RoomState }) {
   );
 }
 
-/** The Commands window's label: where a terminal cannot exist, said plainly. */
-export function commandsWindowLabel(status: RoomState): string {
-  return commandsLabel(!!status.available && !status.can.terminal && !status.can.files && status.isolation !== "vm");
-}
-
 /** The honest line with how separate the Room is (the Stage, the phone). Never hidden, never under Advanced. */
 export function HonestLine({ status, className = "room-honest" }: { status: RoomState; className?: string }) {
   return (
@@ -518,13 +522,14 @@ export function PointPanel({ busy, onSave, onCancel }: { busy: boolean; onSave: 
   );
 }
 
-export function ResetPanel({ points, initial, busy, onConfirm, onCancel }: {
-  points: Checkpoint[]; initial?: string; busy: boolean; onConfirm: (name: string) => void | Promise<void>; onCancel: () => void;
+/** `closing`: how many terminals are open; Start over closes them, and the form says how many, as the Points confirm does. */
+export function ResetPanel({ points, initial, busy, closing = 0, onConfirm, onCancel }: {
+  points: Checkpoint[]; initial?: string; busy: boolean; closing?: number; onConfirm: (name: string) => void | Promise<void>; onCancel: () => void;
 }) {
   const [name, setName] = useState(initial && points.some((p) => p.name === initial) ? initial : points[0]?.name ?? "");
   return (
     <form className="room-panel" onSubmit={(e) => { e.preventDefault(); if (name) void onConfirm(name); }}>
-      <p className="room-panel-line">This puts the Room's files back as they were at that point. Anything done since is lost. The Room restarts if it is on.</p>
+      <p className="room-panel-line">{resetLine(closing)}</p>
       <div className="room-panel-row">
         <Select label="Start over from" value={name} onChange={(e) => setName(e.target.value)}>
           {points.map((p) => <option key={p.name} value={p.name}>{pointLine(p.name)}</option>)}
