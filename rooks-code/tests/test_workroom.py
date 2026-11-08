@@ -3,6 +3,7 @@ older app does not let them."""
 
 import io
 import json
+import os
 import sys
 import threading
 import types
@@ -131,7 +132,10 @@ class FakeApp:
                         return self._send(200, {"path": "Desktop", "parent": "", "root_label": "Home", "truncated": False, "entries": [
                             {"name": "hermes", "kind": "folder", "size": None, "modified": "2026-11-07T14:02:11Z"},
                             {"name": "notes.txt", "kind": "file", "size": 2048, "modified": "2026-11-03T09:00:00Z"},
-                            {"name": "out", "kind": "link", "size": None, "modified": "2026-11-03T09:00:00Z"}]})
+                            {"name": "out", "kind": "link", "why": "outside", "size": None,
+                             "modified": "2026-11-03T09:00:00Z"},
+                            {"name": "gone", "kind": "link", "why": "broken", "size": None,
+                             "modified": "2026-11-03T09:00:00Z"}]})
                     return self._send(404, {"detail": "That folder is gone."})
                 if path == "/api/room/checkpoint" and method == "POST":
                     label = (body or {}).get("label") or "save"
@@ -440,7 +444,8 @@ def test_room_shell_runs_the_same_login_shell_or_says_where_it_is(fake_app, monk
     text = _say(workroom.room_command, _agent(fake_app.url), "shell")
     assert calls, text
     argv, kw = calls[0]
-    assert argv == ["sh", "-c", "login", "room", "/rooms/home", "False"]
+    assert os.path.isabs(argv[0]) and os.path.basename(argv[0]) == "sh"  # found on this computer, by its full path
+    assert argv[1:] == ["-c", "login", "room", "/rooms/home", "False"]
     assert kw["env"]["HOME"] == "/rooms/home"
     assert "exit" in text and "/rooms/home" not in text, text
 
@@ -460,6 +465,69 @@ def test_room_shell_waits_for_the_room_to_be_on(fake_app, monkeypatch):
     _fake_room_shell(monkeypatch, calls)
     text = _say(workroom.room_command, _agent(fake_app.url), "shell")
     assert "The Room is off" in text and "/room start" in text and not calls, text
+
+
+def test_room_tail_prints_plain_text_never_escape_sequences(fake_app):
+    """A program in the Room cannot switch modes in, retitle or write the clipboard of the person's own terminal."""
+    fake_app.room["running"] = True
+    fake_app.room["terminals"] = [_term("Rooks", owner="rooks", tid="t0000009")]
+    fake_app.tails["t0000009"] = {"text": "\x1b]52;c;aGk=\x07hi\x1b[?2004h\n\x1b[31mred\x1b[0m\x1b]0;title\x07\rRED",
+                                  "alive": True, "busy": False, "exit_code": 0, "owner": "rooks", "taken": False,
+                                  "elapsed_s": 1}
+    text = _say(workroom.room_command, _agent(fake_app.url), "tail Rooks")
+    assert "\x1b" not in text and "\x07" not in text, repr(text)
+    assert "hi" in text and "RED" in text and "52;" not in text, text
+
+
+def test_room_files_says_where_a_link_leads(fake_app):
+    files = _say(workroom.room_command, _agent(fake_app.url), "files Desktop")
+    rows = {ln.split()[0]: ln for ln in files.splitlines()[1:] if ln.strip()}
+    assert "link, leads outside the Room" in rows["out"] and "link, leads nowhere" in rows["gone"], files
+
+
+def test_room_shell_says_when_terminals_are_switched_off(fake_app, monkeypatch):
+    calls: list = []
+    _fake_room_shell(monkeypatch, calls)
+    fake_app.room["running"] = True
+    fake_app.room["can"] = {"terminal": False, "files": True, "terminal_off_reason": "switched_off"}
+    text = _say(workroom.room_command, _agent(fake_app.url), "shell")
+    assert "Terminals are switched off in Settings." in text and "opens in the app" not in text and not calls, text
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="a POSIX shell")
+def test_room_shell_never_runs_a_wrapper_from_the_rooms_own_bins(fake_app, monkeypatch, tmp_path):
+    """Even with an older rooks-try (a bare "sh" first, the Room's bins first on the PATH), the program that starts the
+    Room's shell is found on this computer, never in a folder a Room program can write."""
+    import shutil
+    import subprocess as sp
+
+    home = tmp_path / "try" / "home"
+    marker = tmp_path / "planted.log"
+    for folder in (home / ".local" / "bin", home / "bin", home / ".cargo" / "bin"):
+        folder.mkdir(parents=True)
+        for name in ("sh", "unshare", "setsid"):
+            real = shutil.which(name, path="/usr/bin:/bin") or f"/bin/{name}"
+            (folder / name).write_text(f'#!/bin/sh\necho "PLANTED $0" >> "{marker}"\nexec {real} "$@"\n')
+            (folder / name).chmod(0o755)
+    shell = types.ModuleType("rooks_try.drivers.shell")
+    shell.login_argv = lambda h, offline: ["sh", "-c", 'cd "$1" && exec /bin/sh', "room", str(h)]
+    bins = f"{home}/.local/bin:{home}/bin:{home}/.cargo/bin"
+    shell.room_env = lambda h, offline, base=None: {"HOME": str(h), "PATH": f"{bins}:/usr/bin:/bin"}
+    monkeypatch.setitem(sys.modules, "rooks_try.drivers.shell", shell)
+    ran: list = []
+
+    def call(argv, **kw):
+        ran.append((argv, kw))
+        return sp.run(argv, input="exit\n", capture_output=True, text=True, timeout=30, **kw).returncode
+
+    monkeypatch.setattr("subprocess.call", call)
+    fake_app.room.update(running=True, home=str(home))
+    _say(workroom.room_command, _agent(fake_app.url), "shell")
+    assert ran, "the shell never ran"
+    assert not marker.exists(), marker.read_text()
+    argv, kw = ran[0]
+    assert os.path.isabs(argv[0]) and str(home) not in argv[0], argv
+    assert str(home) not in kw["env"]["PATH"], kw["env"]["PATH"]
 
 
 def test_help_lists_the_room_verbs():
