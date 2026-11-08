@@ -499,7 +499,7 @@ def _emit(t: RoomTerminal, clean: bytes) -> None:
                     sock.loop.call_soon_threadsafe(sock.q.put_nowait, text)
             except RuntimeError:  # that socket's loop is gone
                 t.attached = None
-    _log_write(t, clean)
+        _log_write(t, clean)  # under the lock: a rotation closes the file, and another thread must not write to it
 
 
 def _log_write(t: RoomTerminal, data: bytes) -> None:
@@ -817,12 +817,13 @@ def _end_now(t: RoomTerminal, reason: str, hang_up: bool = True) -> bool:
         except OSError:
             pass
         t.master = None
-    if t.log_fh is not None:
-        try:
-            t.log_fh.close()
-        except OSError:
-            pass
-        t.log_fh = None
+    with t.lock:  # the reader may still be writing if it did not stop within the join's time limit
+        if t.log_fh is not None:
+            try:
+                t.log_fh.close()
+            except OSError:
+                pass
+            t.log_fh = None
     t.save()
     if attached:
         try:

@@ -81,6 +81,13 @@ ROOM_TITLES: dict[str, tuple[str, str]] = {  # use_room action: (title, the argu
     "status": ("Check the Room", ""),
     "handoff": ("Copy a file out of the Room", "src"),
     "start": ("Start in the Room's terminal", "command"),
+    # design 0007: the Room's own browser (typed text is never in a title; an address by its site only)
+    "browse": ("Open a page in the Room's browser", "address"),
+    "click": ("Click in the Room's browser", "on"),
+    "type": ("Type in the Room's browser", "on"),
+    "scroll": ("Scroll in the Room's browser", ""),
+    "key": ("Press a key in the Room's browser", "key"),
+    "back": ("Go back in the Room's browser", ""),
 }
 
 
@@ -88,8 +95,16 @@ def _title(tool: str, args: dict) -> str:
     from .presence import clip
 
     if tool == "use_room":  # the Room's own verbs, with what they are about
-        title, key = ROOM_TITLES.get(str(args.get("action") or "status").lower(), ("Use the Room", "goal"))
+        from .room_browser_tool import WHY_TITLE
+
+        why = str(args.get("why") or "")
+        title, key = ((WHY_TITLE[why], "on") if why in WHY_TITLE  # a browser step that waits: what it would really do
+                      else ROOM_TITLES.get(str(args.get("action") or "status").lower(), ("Use the Room", "goal")))
         subject = args.get(key) if key else None
+        if key == "address" and isinstance(subject, str):
+            from .presence import _site
+
+            subject = _site(subject)
         return f"{title}: {clip(' '.join(str(subject).split()))}" if isinstance(subject, (str, int)) and str(subject).strip() else title
     if tool.startswith("mcp__"):  # mcp__<server>__<tool>: a tool on one of the user's own connected servers
         parts = tool.split("__", 2)

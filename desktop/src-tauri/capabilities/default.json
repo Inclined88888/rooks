@@ -22,6 +22,7 @@
     "allow-request-approval",
     "allow-open-data-dir",
     "allow-open-logs",
+    "allow-open-external",
     "allow-get-ask-shortcut",
     "allow-set-ask-shortcut",
     "allow-hide-ask-bar",

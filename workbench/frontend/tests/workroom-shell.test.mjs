@@ -70,7 +70,7 @@ test("one page registry drives routes, rail, flyouts, the More sheet and the pal
 test("the product is Rooks everywhere people see a name", () => {
   assert.match(read("../src/product.ts"), /PRODUCT = "Rooks"/);
   assert.match(read("../index.html"), /<title>Rooks<\/title>/);
-  assert.match(read("../public/favicon.svg"), />R</);
+  assert.match(read("../public/favicon.svg"), /#E3A82B/i, "the tab shows the Rooks tower with its gold door (tests/brand-mark.test.mjs)");
   assert.doesNotMatch(read("../src/Palette.tsx"), />Rooks</, "the palette footer reads the product name, not a literal");
 });
 

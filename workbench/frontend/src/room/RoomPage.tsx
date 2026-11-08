@@ -7,13 +7,15 @@
  * Everything here is solid (the app's own chrome around the Room); the only dark surface is the terminal's own box.
  * Which windows exist comes from status (windowsFor); the browser remembers only which are open (desk.ts).
  */
-import { Bookmark, ChevronDown, Columns2, FileOutput, Folder, Monitor, MoreHorizontal, Power, RotateCcw, SquareTerminal, type LucideIcon } from "lucide-react";
+import { Bookmark, ChevronDown, Columns2, FileOutput, Folder, Globe, Monitor, MoreHorizontal, Power, RotateCcw, SquareTerminal, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { narrowQuery, useMediaQuery } from "../shell/breakpoints";
 import { openStage } from "../shell/StageHost";
 import { TerminalSlot } from "../terminalHost";
 import { Badge, Button, Menu, Sheet, Tabs, type ButtonProps, type MenuItem } from "../ui";
+import { BROWSER_CHECKS, BROWSER_LIMITS } from "./browser";
+import { BrowserWindow } from "./BrowserWindow";
 import { deskLayout, dockItems, pickActive, readDesk, terminalsCounted, terminalsFull, toggleWindow, windowsFor, writeDesk, type WindowId } from "./desk";
 import { FilesWindow } from "./FilesWindow";
 import { PointsWindow, type PointsAsk } from "./PointsWindow";
@@ -25,7 +27,7 @@ import { TerminalWindow } from "./TerminalWindow";
 import { setActiveTerminal, useTerms } from "./terms";
 import { advancedDetails, commandsLabelFor, commandViewLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, terminalCountLine } from "./words";
 
-const DOCK_ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, files: Folder, points: Bookmark, screen: Monitor };
+const DOCK_ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, browser: Globe, files: Folder, points: Bookmark, screen: Monitor };
 
 /** A verb in the Room bar: its icon and its word; under 1280 px the word is kept for the title and screen readers only. */
 function Verb({ icon, word, ...rest }: { icon: ReactNode; word: string } & Omit<ButtonProps, "icon" | "children">) {
@@ -88,6 +90,7 @@ export default function RoomPage() {
     } else if (want === "point") askPoints({ kind: "save" });
     else if (want === "over") openWindow("points");
     else if (want === "files") openWindow("files");
+    else if (want === "browser") openWindow("browser");
     navigate(location.pathname, { replace: true, state: null });
   }, [location.key, status.checked]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -182,6 +185,8 @@ export default function RoomPage() {
         );
       case "terminal":
         return <TerminalWindow key="terminal" status={status} act={act} stale={stale} slot={<TerminalSlot kind="room" />} />;
+      case "browser":
+        return <BrowserWindow key="browser" status={status} act={act} stale={stale} />;
       case "commands":
         return <RoomWindow key="commands" id="commands" title="Commands" label={commandsLabelFor(status)} stale={stale}><CommandView status={status} /></RoomWindow>;
       case "files":
@@ -259,6 +264,7 @@ export default function RoomPage() {
           <dt>Profile files read</dt><dd>~/.profile and, for bash, ~/.bashrc; for zsh ~/.zprofile and ~/.zshrc</dd>
           <dt>Terminals</dt><dd>{terminalCountLine({ counted: terminalsCounted(status), open: alive.length, max: status.terminal_max })}</dd>
           <dt>What is recorded</dt><dd>{RECORDED_LINE}</dd>
+          {offered.includes("browser") && <><dt>The browser</dt><dd>{BROWSER_LIMITS}</dd><dt>What Rooks asks about</dt><dd>{BROWSER_CHECKS}</dd></>}
           {!status.can.files && status.isolation === "vm" && <><dt>Files</dt><dd>Files live inside the separate computer. Use its screen.</dd></>}
         </dl>
       </Sheet>

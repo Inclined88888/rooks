@@ -186,6 +186,79 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
+### Rooks as its own program (design 0007 part 2): not done here
+* **Not run in a real WebKit window.** Playwright's WebKit is not installed on the build machine, and no Mac was at
+  hand. Not verified, each needs a run in the built app: `<a download>` and blob downloads reaching `on_download` in
+  WKWebView and WebKitGTK; `on_new_window` catching `target="_blank"`; the microphone grant in WKWebView with
+  `Info.plist`'s text; `ClipboardItem` with a promise in WebKitGTK (older than 2.40 lacks it, the copy then falls back
+  to `writeText` and can be refused); live dictation (`SpeechRecognition`) is offered only where present.
+* **A Playwright WebKit smoke run of the built UI** (sign in, chat, Room page, a download, an external link), as 0007
+  section 3 asks: needs `npx playwright install webkit` on CI.
+* **The owner's release steps** (code cannot do them): push a tag `vX.Y.Z` matching `VERSION` so `desktop.yml`
+  attaches installers; mark the 1.0.5 release as old; Apple Developer ID notarisation and a Windows signing
+  certificate for Gatekeeper and SmartScreen.
+* **The new mark** is applied (CHANGELOG, 0007 section 7). Left: the macOS Dock and Windows taskbar pictures are
+  checked as files only (`desktop/scripts/test_icons.py`), not seen in a built app; a phone build (`eas build`) has not
+  been run with the new layers; the terminal banner keeps the word "Rooks" (no glyph reads well in every terminal font).
+* **Windows**: the NSIS install folder follows the product name (`%LOCALAPPDATA%\Rooks`); the installer quietly runs
+  the old folder's uninstaller. Not run on a real PC.
+* **macOS in-place update** from 1.0.5 keeps the bundle's old name ("AI Workspace.app") until the installer runs again.
+
+### The Room's browser (design 0007), engine and API lane: not done here
+
+* **The Room's own engine download.** `install_engine` checks a downloaded archive against a SHA-256 and refuses one
+  that reaches outside its folder, but no Chrome for Testing build is pinned yet (URL, version and its real SHA-256 per
+  platform), and there is no "Get one?" route or button. Until then the engine is Playwright's Chromium, the system's,
+  Chrome or Edge, or `no_engine`.
+* **The Chromium policy file** (`/etc/chromium/policies/managed/`) the record names is not bound: bwrap cannot create
+  that mount point under a read-only `/` when the folder does not exist. The request rule (the DevTools `Fetch` domain
+  at the browser level, every target) refuses files outside the Room's home and the app's address instead, with or
+  without bwrap.
+* **macOS.** The engine search, flags (`--use-mock-keychain`) and memory reading (`ps`) have macOS paths, but nothing
+  was run on a Mac; the record's Seatbelt check before release is still to do.
+* **File uploads** (a page's file picker) are not wired: headless Chromium cancels the chooser. Choosing from the
+  Room's files is the way.
+* **Copy** returns the page's selection (`{"type": "copy"}` on the socket); the window writes it with a
+  `ClipboardItem` (done in the window lane).
+* **The phone's taps** are not in the run log (only the window's coarse "You used the browser" row is).
+* **A window that opens before the Room is on** gets the socket closed with "The Room is off. Start it first." and
+  must open again after Start.
+* **Uvicorn ends on SIGTERM by raising the signal again**, so `atexit` does not run at a normal stop; the browser is
+  closed from the app's shutdown instead. The Room's terminals still rely on `atexit` (their restart record is right
+  either way, since a record without an end counts as ended by the restart).
+
+### The Room's browser (design 0007), window, assistant and terminal lane: not done here
+
+* **"Get one?" for the Room's own engine** is not there: with no engine the window says "The Room has no browser yet."
+  and offers Check again (the engine download is the engine lane's open item above).
+* **Switching the Room's browser or terminals on and off from the rooks terminal**: the switches are in Settings,
+  Tools (done after review); the terminal has no `/room browser on|off` yet.
+* **Enter in a field outside a form** (a chat box made of a textarea or an editable area that sends on Enter) is not
+  checked as sending a message; Enter or Space on a focused button or link, and Enter in a form field, are.
+* **A held key step is matched by the key, not the element**: a second Enter on another element while one waits is told
+  the first is already waiting (after a yes the step runs only if the same element still has the focus).
+* **WebSockets to the app's own address** are not refused by the request rule (Chromium's `Fetch` does not see them);
+  the app's sockets refuse them anyway (sign-in cookie, same origin, loopback page), and the Room's browser has no
+  sign-in cookie of the app.
+* **The app's address on the local network** (the computer's Wi-Fi address and the app's port) is refused only when the
+  computer's own name resolves to it.
+* **The Room browser's real Chromium tests on CI** now fail instead of skip (`ROOM_BROWSER_TESTS_REQUIRED=1`, bubblewrap
+  installed); not yet seen green on a CI runner from this branch.
+* **Typing with an input method** (Chinese, Japanese, dead keys): the live page takes key presses and paste; composed
+  text from an IME is not sent yet. The phone's Type field works for any text.
+* **The assistant's every acting step asks first** (the Room's rule), so a purchase asks twice: the Room's own yes, then
+  the purchase's. A per-chat "use the Room's browser" yes would cut that to one; it is a decision for the owner.
+* **The assistant sees no picture:** `shot` gives what is in view and where (boxes), not an image; the picture is on the
+  window for the person.
+* **What is not checked** before a click (said under Advanced): a page's own scripts sending data on an ordinary click
+  or as you type, button words the English patterns miss, and the person's own input. A purchase button labelled only
+  with an icon is not seen as one.
+* **The browser's start thread.** On Linux the browser is started from the app loop's worker thread and bwrap's
+  `--die-with-parent` ends it when that thread ends. The app's default executor keeps its threads for the app's life, so
+  this holds today; a dedicated long-lived starter thread would make it independent of that.
+* **Asked sites the person typed** are kept for this run of the app only; after a restart the assistant's form sends on
+  them wait for a yes again until the person types the address or names the site in the chat.
+
 ### The Room as a small computer (design 0006): follow-ups, each its own record or line
 
 * **"Since you were here" and an Activity window.** New programs in the Room's bin folders, files changed and points

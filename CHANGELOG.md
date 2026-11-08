@@ -205,6 +205,157 @@ memory move restore the backup it takes.
   tree before its change. The new CI job `browser-image` builds the add-on image and checks its health check and token;
   the image was not built locally (no Docker daemon here).
 
+## Unreleased · The Room's browser and the installer after review: walls that hold · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, section 8. Every fix below has a test that failed on
+the code before it.
+
+- **The app's own address is refused from the browser's first start.** The rule only knew the ports the browser's own
+  routes had seen, so a browser the assistant opened first (after every app restart, the usual case) could open the
+  app. Now the ports this app's process listens on are read when the browser starts (`/proc` on Linux, `lsof` on
+  macOS, plus the phone's Wi-Fi door), every request to the app tells it (not only the browser's routes), and when no
+  port is known the browser does not start ("The Room's browser stays closed: it could not check that pages in it
+  cannot reach Rooks itself.").
+- **Names with a dot at the end** (`localhost.`, `foo.localhost.`), which Chromium sends to loopback, are refused like
+  `localhost`. An app on port 80 or 443 is matched without the port in the address too.
+- **Keys no longer get past a hold.** Enter or Space on a focused button or link is checked as a click on it (a
+  purchase on any site, a form or message on a site nobody asked for), any key in a card form as typing there; only
+  keys that move around (Tab, the arrows, Escape, PageDown and the like) skip the look. Tab, Tab, Enter on "Add to
+  cart" now waits for a yes in Needs you.
+- **The helpers' shared key no longer reads the Room's browser.** `GET /api/room/browser/tabs` and `/page` (and
+  `/open`) take the signed-in person or the Terminal access token only; the app.json and Rooks Desk keys, which the
+  browser and desk helpers hold and pages can steer, are refused even for reads. The rooks terminal says how to sign
+  in (`rooks login`) when the app refuses it. The Room's status still reads with that key.
+- **An offline Room's browser without bwrap** (macOS, Linux without it) goes through a proxy that answers nothing,
+  loopback included, instead of relying on proxy variables Chrome on macOS does not read.
+- **Settings has the switches the Room's windows point to**: Settings, Tools, The Room: Terminals and The Room's
+  browser. The windows say "Switch it on in Settings, under Tools" and their button opens that section.
+- **Installer**: the question "a Chrome or Edge window, or your usual browser?" was never asked from `curl | bash` (a
+  terminal opened "r+" cannot seek, so it read as no answer, and no answer was taken as the window). It is asked now,
+  and nobody answering in 60 s is no answer: the launcher asks later, never a window nobody chose. The Rooks app is
+  installed only when its SHA-256 matches the release's `SHA256SUMS-desktop`; prereleases are skipped; a cut download
+  says that once and no longer also says "none published".
+- **CI**: the backend job installs bubblewrap and sets `ROOM_BROWSER_TESTS_REQUIRED=1`, so the Room browser's real
+  Chromium tests fail instead of skipping when no browser can start.
+- Upgrade: nothing to do. Someone who used the rooks terminal's `/room tabs` or `/room page` with only the app.json key
+  runs `rooks login` once (Settings, Terminal access). Rollback: revert the branch; no data changes.
+
+## Unreleased · The new mark: a tower with a gold door · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, section 7.
+
+- **Rooks has its own mark**: the chess rook as a plain tower, one rounded slab with three merlons and an arched
+  doorway lit in gold (the light is on, the assistant is home), on an ink tile. At 16 px it is still a tower with a gold
+  door. It replaces the purple lines (desktop app), the letter R (browser tab), Expo's sample icons (phone) and the
+  first letter of the assistant's name (top bar).
+- Where it shows: the desktop app's icons (`desktop/src-tauri/icons`, every PNG size, `icon.icns`, `icon.ico`, made by
+  `npx tauri icon desktop/app-icon.svg`), the desktop splash, the Ask palette's icons (`desktop/rooks-native/assets`),
+  the browser tab (`favicon.svg`, also the Linux menu icon the installer writes), the phone app's icon, Android
+  layers, splash and web icon (`mobile/assets`), the top bar's search button, the welcome and sign-in cards beside
+  "Rooks", and the loading screen. `desktop/scripts/make_icons.py` draws the files Tauri does not make.
+- Not changed: the terminal banner keeps the word "Rooks" (a chess glyph is drawn wide or as an emoji by some
+  terminal fonts, so it did not read well as plain text); the README has no logo; `rooks-browser/app` has no icon
+  files. Shortcuts the installer made before keep the old picture until the installer runs again.
+- Upgrade: nothing to do; the next installer run or app update carries the new icons. Rollback: the icons are files
+  only, no data changes.
+
+## Unreleased · Rooks is its own program: the app by default, no Chrome window nobody chose · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, part 2 (as built: section 6).
+
+- **The installer installs the Rooks app by default** (`--native auto`; `install.ps1`: `AI_WORKSPACE_NATIVE`, default
+  `auto`). It takes only a real app release (`vX.Y.Z` or `desktop-vX.Y.Z`) at or above this copy's version, never the
+  Ask palette's `rooks-native-v*` release and never an older app. No such release exists for 1.0.6 yet, so today it
+  installs nothing and says "none published for this computer at version 1.0.6 or newer yet". A download that fails
+  under `auto` no longer stops the install.
+- **`ai-workspace` never opens a Chrome window nobody chose.** It opens the Rooks app when it is installed (under the
+  new or the old name). Without one it asks once: "There is no Rooks app for this computer yet. Open Rooks in a Chrome
+  or Edge window, or in your usual browser?" The installer asks it when someone is at the terminal; started from the
+  Dock, Finder or the Start menu with no answer yet, Rooks opens in the usual browser and the page asks with the same
+  words. The answer is kept (`install.json`); `ai-workspace --shell window|browser` changes it, `--status` says
+  "opens in: ...". The macOS Applications shortcut no longer forces `--web`. New: `install.sh --shell window|browser`
+  and `AI_WORKSPACE_SHELL`.
+- **The page's bar** (outside the Rooks app only) says that line with "A window of its own", "My usual browser" and
+  "Not now", and saves the answer for the launcher (`POST /api/desktop/shell`: a signed-in person only, never the
+  app.json key or the tools key; it writes only the `install.json` the launcher named, and only those two answers).
+- **The app is called Rooks**: product name, window title, splash, update prompt, macOS permission texts, the launcher
+  and the installer. The identifier stays `com.inclined88888.aiworkspace`, so the data folder, the webview's storage
+  and the keychain items do not move; the binary name and the `aiworkspace://` links stay. The Ask palette is packed
+  as "Rooks Ask" so the two cannot replace each other.
+- **What WebKit does not do, the Rooks app does**: links that would open a new window go to your browser
+  (`open_external`, web addresses only), downloads are saved to Downloads with a notification, the microphone prompt
+  is answered (camera, screen and location still ask), copies that wait for the server use a `ClipboardItem`, and
+  Meetings says "Recording the computer's sound needs Chrome. The microphone works." where it cannot. Compiled and
+  unit tested on Linux; not yet run in a real WebKit window (BACKLOG).
+- Upgrade: run the installer again. Nothing to migrate; data stays where it was. Rollback: `install.sh --native no`
+  keeps the window or browser; an earlier copy reads the same data folder. Copies of the 1.0.5 app named "AI Workspace"
+  are still found and opened until replaced.
+
+## Unreleased · The Room's Browser window, the assistant in it, and /room browse · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, sections 1.3, 1.5 and 1.6 (as built: section 5).
+
+- **A Browser window on the Room's desk**, after Terminal in the dock. Tabs (eight at most), New tab, back, forward,
+  reload or stop, an address bar, and the live page: click, double click, type, scroll, copy (Ctrl or Cmd+C puts the
+  page's selection on your clipboard) and paste. F6 leaves the page. It is there only when the Room has a browser on
+  this computer; otherwise it says why in plain words ("The Room has no browser yet.", "switched off in Settings",
+  "not on Windows yet", "runs elsewhere"). With the Room off it says so and lists the tabs it kept. After an app
+  restart it says "The app restarted, so the browser closed. Your tabs and sign-ins are kept." The Stage beside the
+  chat shows it too.
+- **On a phone** (or any touch screen) the window shows a still of the page every 2 seconds, with taps, Scroll up and
+  down, a Type field and Enter: "On a phone you can tap, scroll and type. Dragging, hovering and shortcuts need the
+  computer."
+- **The assistant can use the Room's browser.** `use_room` gains browse, page, shot, click, type, scroll, key, back and
+  tabs. Looking (page, shot, tabs) is never asked about; every other step asks first, as in the rest of the Room. On
+  top of that a step waits for your yes in Needs you when it looks like a purchase (on any site, or a form with card
+  fields), sends a form, a message or a sign-in to a site you did not name in this chat or type into the address bar
+  yourself, or clicks inside another site's frame. Page text never counts as you naming a site. It never types a
+  password: it asks you to type it yourself. While it acts the window says "Rooks is using the browser"; your own click
+  or key takes it back, and its next step waits for your yes. Presence says "Looking at a page in the Room's browser".
+- **The run log** keeps the site and path (never the query), the element's name and "(N characters)" for typing, never
+  the text, also in the chat step's own row.
+- **The rooks terminal:** `/room browse ADDRESS` (`--new` for a new tab), `/room tabs` and `/room page` print the same
+  words through the app, with the terminal's own key.
+- **Fixes on the way.** A tab is named by its page's title also after a form posts and redirects (it showed the
+  address). A frame still drawn at the old size just after a resize is dropped, so a click lands where it was made (a
+  socket test that read the first frame failed now and then on it).
+- **No migration.** Nothing changes on upgrade; rollback is removing the branch.
+
+## Unreleased · A real browser in the Room (engine and API) · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`. This entry is the engine and API lane; the Browser
+window on the Room's desk, the assistant's `use_room` browse actions and the terminal's `/room browse` land from their
+own lanes.
+
+- **The Room has its own browser.** A real Chromium the app starts when the Room is on and a page is opened. It runs
+  headless, so no window appears on your screen; you see it only as the Room's live picture. It is driven over a pipe,
+  never a network port. Its sign-ins and cookies live in the Room's own folder (`.room-browser`), never in your own
+  browser's profile; passwords are never saved. On Linux with bubblewrap it runs with the Room's folder over your home
+  folder and no network when the Room is offline; elsewhere it runs as you, and the app says so.
+- **What it refuses.** A file outside the Room's folder, and this app's own address, are refused for every request,
+  typed or from a page.
+- **Downloads** land in the Room's `Downloads` with a safe name (`notes (2).txt` when the name is taken); one stops at
+  2 GB. They leave the Room only through Hand off and your yes in Needs you.
+- **Tabs and limits.** Eight tabs at most ("Eight tabs are open. Close one to open another."). Over 1.5 GB of memory
+  the least recently viewed background tab is put to sleep (kept as its address); over 2.5 GB the browser closes and
+  its tabs are kept. The disk cache is 100 MB.
+- **Stop, Save a point, Start over, restart.** Stop closes the browser and keeps its tabs. Save a point closes it for
+  the copy (caches left out) and opens it again. Start over closes it before the Room's folder is replaced, so sign-ins
+  made since that point are gone. When the app restarts, the browser closes cleanly, the next start reopens the tabs
+  (the front one loads, the others wait asleep) and says "The app restarted, so the browser closed. Your tabs and
+  sign-ins are kept."; a chat cut off by the restart says the same.
+- **Status** has `can.browser` and `can.browser_off_reason` (`no_engine`, `windows`, `helper`, `switched_off`) and a
+  `browser` part (open, tabs, notes). Settings has `room_browser` (on by default) to switch it off.
+- **API.** `WS /api/room/browser/ws` (signed in, same origin, this computer only, one window at a time): JPEG frames
+  as they change, state as JSON, and mouse, wheel, key, text, resize, address, back, forward, reload and tab messages.
+  `POST /api/room/browser/open`, `GET /api/room/browser/tabs` and `GET /api/room/browser/page` also take the rooks
+  terminal's Terminal access token (a bridge key only reads, and reads never start the browser). The phone's still
+  (`GET /frame`), taps (`POST /act`), `GET /shot`, `POST /start`, `POST /close` and closing a tab are yours only.
+- **Run log.** Opening and closing the browser, every page a route opens (host and path, never the query), and one
+  "You used the browser for N min" row; what you type is never recorded.
+- **No migration.** Nothing changes on upgrade; rollback is removing the branch (the `.room-browser` folder in the
+  Room's home can be deleted).
+
 ## Unreleased · Phase 1a: terminal safety · branch phase-1a/terminal-safety
 
 No schema change, nothing to migrate. Rollback: revert the branch's commits.

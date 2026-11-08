@@ -18,6 +18,7 @@ import { StageHost } from "./shell/StageHost";
 import { MobileBar } from "./shell/MobileBar";
 import { MoreSheet } from "./shell/MoreSheet";
 import { Loading, Page, ToastHost } from "./ui";
+import { RooksMark } from "./ui/RooksMark";
 import { pageComponent, warmWhenIdle } from "./pages/warm";
 import { createKeyReader, SHORTCUTS } from "./lib/shortcuts";
 import { setDevTools } from "./lib/devTools";
@@ -25,6 +26,7 @@ import { IS_MAC, MOD_KEY } from "./keys";
 import { registerStageSurfaces } from "./stage/surfaces";
 import { NeedsYouSheet } from "./needs/NeedsYou";
 import { ShortcutsSheet, toggleShortcuts } from "./shell/ShortcutsSheet";
+import { ShellChoiceBar } from "./shell/ShellChoiceBar";
 
 export { MOD_KEY };
 
@@ -82,7 +84,7 @@ function DeskNotice({ enabled }: { enabled: boolean }) {
 }
 
 function Boot() {
-  return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">{PRODUCT}</div></div>;
+  return <div className="boot" role="status" aria-label="Loading"><div className="boot-brand"><RooksMark size={40} /><div className="wordmark lg">{PRODUCT}</div></div></div>;
 }
 
 // Sign in, the first welcome and the ask bar stay in the first load. Every registered page is its own chunk, warmed on
@@ -200,6 +202,7 @@ export default function App() {
       <a className="skip-link" href={onChat ? "#thread" : "#main"}>{onChat ? "Skip to the conversation" : "Skip to the page"}</a>
       <Rail status={status} name={shellName} onMore={openMore} onSearch={openSearch} />
       <div className="shell-main">
+        <ShellChoiceBar />
         <PresenceStrip />
         <main id="main" className="main agents-main" tabIndex={-1}>
           <StageHost renderRoutes={() => (

@@ -1,6 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "AI Workspace",
+  "productName": "Rooks",
+  "mainBinaryName": "ai-workspace-desktop",
   "version": "1.0.6",
   "identifier": "com.inclined88888.aiworkspace",
   "build": {
@@ -10,7 +11,8 @@
     "windows": [
       {
         "label": "main",
-        "title": "AI Workspace",
+        "create": false,
+        "title": "Rooks",
         "url": "index.html",
         "width": 1280,
         "height": 820,
@@ -36,8 +38,8 @@
     "publisher": "Inclined88888",
     "copyright": "Copyright (c) 2026 Inclined88888. MIT licence.",
     "category": "Productivity",
-    "shortDescription": "Your private AI workspace",
-    "longDescription": "A private AI workspace that runs on your computer: chat with any model, keep a receipt of everything the AI did, and approve what matters.",
+    "shortDescription": "Your own AI assistant",
+    "longDescription": "Rooks, a private AI assistant that runs on your computer: chat with any model, keep a receipt of everything the AI did, and approve what matters.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

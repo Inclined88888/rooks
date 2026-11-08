@@ -225,6 +225,59 @@
   .room-panel .ui-btn, .room-panel .ui-iconbtn, .room-held .ui-btn, .room-held .ui-iconbtn { min-width: 44px; min-height: 44px; }
 }
 
+/* ---- the Browser window (docs/design/0007): tabs, the address bar, the live page; a still with taps on a phone ---- */
+.room-desk-side > .room-window-browser { flex: 1 1 0; min-height: 320px; }
+.room-browser { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.room-browser-tabs { flex: none; display: flex; align-items: flex-end; gap: var(--space-1); padding: var(--space-1) var(--space-2) 0; border-bottom: var(--border-w) solid var(--color-border); }
+.room-browser-tablist { flex: 0 1 auto; min-width: 0; display: flex; align-items: flex-end; gap: var(--space-1); overflow-x: auto; scrollbar-width: none; }
+.room-browser-tab {
+  flex: 0 1 200px; min-width: 96px; display: inline-flex; align-items: center; height: 32px; padding: 0 var(--space-1) 0 0;
+  border: var(--border-w) solid transparent; border-bottom: 0; border-radius: var(--radius-sm) var(--radius-sm) 0 0; color: var(--color-ink-muted);
+}
+.room-browser-tab:hover { background: var(--color-bg-hover); }
+.room-browser-tab.is-active { background: var(--color-surface-sunken); border-color: var(--color-border); color: var(--color-ink); }
+.room-browser-tab.is-asleep .room-browser-tab-name { font-style: italic; }
+.room-browser-tab-face {
+  flex: 1; min-width: 0; height: 100%; display: inline-flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-2);
+  background: none; border: 0; color: inherit; font: inherit; font-size: var(--text-sm); text-align: left; cursor: pointer;
+}
+.room-browser-tab-face:focus-visible, .room-browser-tab-close:focus-visible { outline: var(--focus-w) solid var(--color-border-focus); outline-offset: -2px; border-radius: var(--radius-xs); }
+.room-browser-tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-browser-tab-close {
+  flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0; background: none; border: 0;
+  border-radius: var(--radius-xs); color: var(--color-ink-muted); cursor: pointer;
+}
+.room-browser-tab-close:hover { background: var(--color-bg-active); color: var(--color-ink); }
+/* a tab that is loading: a still ring (the app has one animation, the fade) */
+.room-browser-spin { flex: none; width: 10px; height: 10px; border-radius: var(--radius-full); border: 2px solid var(--color-border-strong); border-top-color: var(--color-accent); }
+.room-browser-bar { flex: none; display: flex; align-items: center; gap: var(--space-1); padding: var(--space-2); background: var(--color-surface-sunken); }
+.room-browser-address { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: var(--text-sm); }
+.room-browser-view {
+  position: relative; flex: 1; min-height: 240px; overflow: hidden; display: flex; align-items: flex-start; justify-content: flex-start;
+  background: var(--color-surface-sunken); border-top: var(--border-w) solid var(--color-border);
+}
+.room-browser-view:focus { outline: none; }
+.room-browser-view:focus-visible { box-shadow: inset 0 0 0 var(--focus-w) var(--color-border-focus); }
+.room-browser-frame { display: block; max-width: 100%; max-height: 100%; object-fit: contain; object-position: left top; user-select: none; touch-action: none; cursor: default; }
+.room-browser-frame.is-still { width: 100%; height: auto; max-height: none; touch-action: manipulation; }
+.room-browser-view.is-still { overflow: auto; min-height: 0; flex: none; }
+.room-browser-wait { margin: auto; color: var(--color-ink-muted); font-size: var(--text-sm); }
+.room-browser-blocked {
+  position: absolute; inset: var(--space-4) var(--space-4) auto; margin: 0; padding: var(--space-3) var(--space-4); background: var(--color-surface);
+  border: var(--border-w) solid var(--color-border-strong); border-radius: var(--radius-md); color: var(--color-ink); font-size: var(--text-sm);
+}
+.room-browser-note { flex: none; margin: 0; min-height: 28px; padding: var(--space-1) var(--space-3); font-size: var(--text-sm); color: var(--color-ink-muted); border-top: var(--border-w) solid var(--color-border); }
+.room-browser-note:empty { display: none; }
+.room-browser-rooks {
+  flex: none; display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-active); color: var(--color-ink); font-size: var(--text-sm); border-top: var(--border-w) solid var(--color-border);
+}
+.room-browser-saved { margin: 0; padding: 0 var(--space-4) var(--space-4); text-align: center; font-size: var(--text-sm); color: var(--color-ink-muted); }
+.room-browser-closed { flex: 1; display: grid; place-items: center; }
+.room-browser-phone-row { flex: none; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3) 0; }
+.room-browser-phone-row .ui-input { flex: 1; min-width: 0; }
+.room-browser-phone-line { flex: none; margin: 0; padding: var(--space-2) var(--space-3) var(--space-3); font-size: var(--text-sm); color: var(--color-ink-muted); }
+
 /* ---- under 1280 px the bar's verbs keep their icons and lose their words (the title keeps the word) ---- */
 @media (max-width: 1280px) {
   .room-verb-word { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -248,4 +301,7 @@
   .room-dock.is-phone .ui-tab { flex: 1; min-height: 44px; }
   .room-dock.is-phone .room-dock-honest { justify-content: flex-start; text-align: left; font-size: var(--text-2xs); }
   .room-desk-side > .room-window-points { max-height: none; }
+  .room-browser-tab { flex-basis: 140px; min-width: 88px; height: 40px; }
+  .room-browser-tab-close { width: 40px; height: 40px; }
+  .room-browser-bar .ui-iconbtn, .room-browser-tabs .ui-iconbtn, .room-browser-phone-row .ui-btn { min-width: 44px; min-height: 44px; }
 }

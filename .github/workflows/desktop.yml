@@ -129,7 +129,7 @@ jobs:
               echo "Windows: signing with Azure Trusted Signing"
               cargo install trusted-signing-cli --locked
               jq -n --arg e "$AZURE_SIGNING_ENDPOINT" --arg a "$AZURE_SIGNING_ACCOUNT" --arg p "$AZURE_SIGNING_PROFILE" \
-                '{bundle:{windows:{signCommand:("trusted-signing-cli -e " + $e + " -a " + $a + " -c " + $p + " -d \"AI Workspace\" %1")}}}' \
+                '{bundle:{windows:{signCommand:("trusted-signing-cli -e " + $e + " -a " + $a + " -c " + $p + " -d \"Rooks\" %1")}}}' \
                 > desktop/src-tauri/tauri.ci.conf.json
             elif [ "$HAS_WINDOWS_SIGN_COMMAND" = true ]; then
               echo "Windows: signing with WINDOWS_SIGN_COMMAND (OV certificate in a cloud HSM)"
@@ -195,7 +195,7 @@ jobs:
             -o -name '*.sig' -o -name '*.app.tar.gz' \) -exec cp {} out/ \;
           # Make Intel and Apple silicon DMGs distinguishable
           for f in out/*.dmg; do [ -e "$f" ] || continue; case "$f" in *aarch64*|*x64*) ;; *) mv "$f" "${f%.dmg}_${{ matrix.target }}.dmg";; esac; done
-          # Both macOS jobs emit "AI Workspace.app.tar.gz(.sig)"; tag them with the target so they don't overwrite each
+          # Both macOS jobs emit "Rooks.app.tar.gz(.sig)"; tag them with the target so they don't overwrite each
           # other when the publish job merges artifacts, and so make_latest_json.py can map them to darwin-<arch>.
           for f in out/*.app.tar.gz out/*.app.tar.gz.sig; do [ -e "$f" ] || continue
             n="$(basename "$f")"; mv "$f" "out/${n/.app.tar.gz/_${{ matrix.target }}.app.tar.gz}"; done
@@ -213,7 +213,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF#refs/tags/}"
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "AI Workspace ${TAG#desktop-}" --notes "Drag the old app to the Trash before opening this one."
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "Rooks ${TAG#desktop-}" --notes "Drag the old app to the Trash before opening this one."
           gh release upload "$TAG" out/* --clobber
 
   publish:
@@ -253,5 +253,5 @@ jobs:
             # release.yml creates v* releases after its own checks; wait for it rather than racing it.
             for i in $(seq 1 60); do gh release view "$TAG" >/dev/null 2>&1 && break; sleep 30; done
           fi
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "AI Workspace ${TAG#desktop-}" --notes-file docs/desktop-release.md
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "Rooks ${TAG#desktop-}" --notes-file docs/desktop-release.md
           gh release upload "$TAG" out/* --clobber

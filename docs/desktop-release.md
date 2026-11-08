@@ -16,6 +16,21 @@ keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service). The
 `keychain:connection:3`. On a Linux machine with no unlocked Secret Service the app falls back to a `0600` file in the
 data folder and Settings → Desktop app says so.
 
+## The installer picks the app up by itself
+
+`install.sh` and `install.ps1` install the Rooks app by default (`--native auto`, `AI_WORKSPACE_NATIVE`). The
+installer (`desktop/launcher/install_helper.py`, `pick_native_asset`) looks only at releases tagged `vX.Y.Z` or
+`desktop-vX.Y.Z`, never at `rooks-native-v*` (the Rooks Ask palette, whose `Rooks_0.3.0_aarch64.dmg` is not the app),
+and only at versions at or above the install's `VERSION`. So until a release at or above this tree's version carries
+installers, `auto` installs nothing and says so, and `ai-workspace` asks once whether to open Rooks in a Chrome or Edge
+window or in the usual browser.
+
+What the owner does to ship the app (code cannot do it): push a tag `vX.Y.Z` that matches `VERSION`; `release.yml`
+makes the release and `desktop.yml` attaches the installers. Then mark the 1.0.5 release as old. Gatekeeper's and
+SmartScreen's warnings only go away with an Apple Developer ID (notarised) and a Windows signing certificate, as the
+secrets below. Copies installed from 1.0.5 ("AI Workspace") move to the new name when the installer runs again; the
+launcher and the installer find the app under both names, and the data folder is the same.
+
 ## How CI builds it
 
 `.github/workflows/desktop.yml` runs on **manual dispatch** (Actions → Desktop app → Run workflow: installers appear as
@@ -24,9 +39,9 @@ for `v*` tags it waits for `release.yml` to create the release first).
 
 | Runner | Output |
 | --- | --- |
-| `macos-15` | `AI Workspace_<ver>_aarch64.dmg` (Apple silicon) |
-| `macos-15-intel` | `AI Workspace_<ver>_x64.dmg` (Intel) |
-| `windows-2022` | `AI Workspace_<ver>_x64_en-US.msi` and `AI Workspace_<ver>_x64-setup.exe` |
+| `macos-15` | `Rooks_<ver>_aarch64.dmg` (Apple silicon) |
+| `macos-15-intel` | `Rooks_<ver>_x64.dmg` (Intel) |
+| `windows-2022` | `Rooks_<ver>_x64_en-US.msi` and `Rooks_<ver>_x64-setup.exe` |
 | `ubuntu-22.04` | `.deb` and `.AppImage` |
 
 Two DMGs, not one universal DMG: PyInstaller can only build a universal2 sidecar if Python and every compiled wheel
@@ -47,7 +62,7 @@ repository secrets are present (Settings → Secrets and variables → Actions).
   → **Open Anyway**). Once.
 * **Windows:** SmartScreen shows "Windows protected your PC". Users click **More info** → **Run anyway**.
 * **Keychain (macOS):** an unsigned app's keychain access is tied to its exact binary, so after each update macOS asks
-  "AI Workspace wants to use your confidential information" once. Signing with a stable Developer ID removes this.
+  "Rooks wants to use your confidential information" once. Signing with a stable Developer ID removes this.
 
 ### macOS: Developer ID signing and notarisation
 

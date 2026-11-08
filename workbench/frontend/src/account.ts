@@ -2,6 +2,7 @@
 // The backend verifies the signed entitlement offline; this file only reads it and starts sign-in or checkout.
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
+import { openExternal as openOutside } from "./desktop";
 
 export type ProFeature = { id: string; label: string; unlocked: boolean };
 export type Account = {
@@ -62,7 +63,7 @@ export function themeLocked(a: Account | null, theme: string, defaultTheme = "")
 
 /** Open a checkout or billing page outside the app window. */
 export function openExternal(url: string) {
-  window.open(url, "_blank", "noopener,noreferrer");
+  void openOutside(url); // the person's browser in the Rooks app (WebKit opens no window.open), a new tab elsewhere
 }
 
 export function useAccount(): [Account | null, () => Promise<Account | undefined>] {

@@ -32,9 +32,17 @@ jobs:
             workbench/backend/requirements-files.txt
             rooks-try/pyproject.toml
       - run: pip install -r requirements.txt -r requirements-dev.txt -r requirements-files.txt -e ../../rooks-try  # the Room, as the desktop install has it
+      - name: Bubblewrap, the wall the Room's browser runs behind (its tests use the runner's Chrome as the engine)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q bubblewrap
+          # Ubuntu 24.04 switches off unprivileged user namespaces, which bwrap needs; print why, then allow them
+          bwrap --ro-bind / / /bin/true || sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          bwrap --ro-bind / / /bin/true
       - name: Legacy database migration (schema v0 fixture from main 1a725f9)
         run: python -m pytest -q tests/test_actions.py -k migration
       - name: Full test suite
+        env:
+          ROOM_BROWSER_TESTS_REQUIRED: "1"  # the Room browser's walls (app address, files, holds) run here, never skipped
         run: python -m pytest -q
       - name: Terminal CLI contract
         run: python -m pytest -q ../../cli/tests
@@ -277,6 +285,13 @@ jobs:
           cache: pip
           cache-dependency-path: rooks-try/pyproject.toml
       - run: python -m pip install -e ".[dev]"
+      - name: Bubblewrap, the wall the Room's browser runs behind (its tests use the runner's Chrome as the engine)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q bubblewrap
+          # Ubuntu 24.04 switches off unprivileged user namespaces, which bwrap and Chromium's own sandbox need
+          bwrap --ro-bind / / /bin/true || sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          bwrap --ro-bind / / /bin/true
       - run: python -m pytest -q -rs
       - name: Installs as a command
         run: |

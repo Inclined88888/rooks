@@ -13,6 +13,7 @@ import {
 } from "./types";
 import LeadRuns from "./LeadRuns";
 import "./team.css";
+import { copyLater } from "../desktop";
 
 const TABS = [
   { id: "board", label: "Board", icon: LayoutGrid },
@@ -465,7 +466,15 @@ function PersonPage({ id, team }: { id: number; team: TeamCtx }) {
     </Page>
   );
   const open = p.tasks.filter((t) => t.status !== "done"), done = p.tasks.filter((t) => t.status === "done");
-  const link = async () => { const r = await team.act(() => api<{ url: string; reason?: string }>(`/team/members/${id}/link`, { method: "POST" })); if (r?.url) { await navigator.clipboard?.writeText(r.url).catch(() => undefined); team.toast.ok("Private link copied"); } else if (r?.reason) team.toast.err(r.reason); };
+  const link = async () => {
+    // the copy starts in the click itself (copyLater): WebKit refuses a clipboard write once the server has answered
+    const got = team.act(() => api<{ url: string; reason?: string }>(`/team/members/${id}/link`, { method: "POST" }));
+    const url = got.then((r) => { if (!r?.url) throw new Error(r?.reason || ""); return r.url; });
+    if (await copyLater(url)) { team.toast.ok("Private link copied"); return; }
+    const r = await got.catch(() => undefined);
+    if (r?.url) team.toast.err("The link could not be copied. Try again.");
+    else if (r?.reason) team.toast.err(r.reason);
+  };
   return (
     <Page wide className="ag-page team" kicker={p.role || "Team member"} title={p.name}
       description={`${p.working_today ? "Working today" : "Not working today"} · ${p.work_days.map((x) => x[0].toUpperCase() + x.slice(1)).join(" ")} · ${p.hours_per_week}h a week · ${CHANNEL_LABEL[p.channel]}${p.last_heard_at ? ` · last heard from ${relTime(p.last_heard_at)}` : ""}`}

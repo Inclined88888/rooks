@@ -109,7 +109,8 @@
 .auth-card.st-auth-card { width: 100%; padding: var(--space-8); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: none; display: flex; flex-direction: column; gap: var(--space-6); }
 .st-auth-head { display: flex; flex-direction: column; gap: var(--space-2); }
 .st-auth-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: 0 0 var(--space-4); font-size: var(--text-sm); color: var(--color-ink-muted); }
-.st-auth-brand { font-weight: var(--weight-heading); color: var(--color-ink); }
+.st-auth-brand { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: var(--weight-heading); color: var(--color-ink); }
+.st-auth-brand .rooks-mark { flex: none; }
 .st-auth-step { margin-left: auto; }
 .st-auth-title { margin: 0; font-family: var(--font-sans); font-size: var(--text-2xl); font-weight: var(--weight-heading); letter-spacing: var(--tracking-tight); line-height: var(--leading-tight); color: var(--color-ink); text-wrap: balance; }
 .st-auth-line { margin: 0; font-size: var(--text-md); line-height: var(--leading-normal); color: var(--color-ink-muted); text-wrap: pretty; }

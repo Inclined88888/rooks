@@ -6,6 +6,7 @@ import { SurfaceNote } from "../SurfaceNote";
 import { Badge, Button, Card, EmptyState, ErrorState, IconButton, Input, List, Loading, Page, Row, Section, Select, Tabs, Textarea } from "../ui";
 import { Markdown, relTime, useToast } from "../util";
 import { Busy, Notice, plainError, Split } from "./day/parts";
+import { download } from "../desktop";
 
 type WorkFile = { id: number; name: string; kind: string; size: number; summary: string; source: string; notes: string[]; created_at: string };
 type Chunk = { loc: string; text: string };
@@ -181,7 +182,7 @@ export default function Files() {
   const doReport = async (format: "docx" | "pdf") => {
     if (!sel) return;
     const body = `**${sel.name}**\n\n${sel.summary}\n\n${sel.extract.chunks.slice(0, 40).map((c) => `*${c.loc}*: ${c.text}`).join("\n\n")}`;
-    try { const r = await api<{ download: string }>("/files/report", { body: { title: `Summary of ${sel.name}`, body, format } }); window.open(r.download, "_blank"); }
+    try { const r = await api<{ download: string }>("/files/report", { body: { title: `Summary of ${sel.name}`, body, format } }); download(r.download); }
     catch (e) { toast.err(e); }
   };
   const remove = async (id: number) => {

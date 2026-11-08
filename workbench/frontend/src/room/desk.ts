@@ -8,7 +8,7 @@
  * is dropped.
  */
 
-export type WindowId = "screen" | "terminal" | "commands" | "files" | "points";
+export type WindowId = "screen" | "terminal" | "browser" | "commands" | "files" | "points";
 
 /** Why the Room has no terminal (status.can.terminal_off_reason): switched off in Settings, helper mode, or Windows. */
 export type TerminalOffReason = "switched_off" | "helper" | "windows";
@@ -18,20 +18,27 @@ export type DeskStatus = {
   checked?: boolean;
   available?: boolean;
   screen?: boolean;
-  can?: { terminal?: boolean; files?: boolean; terminal_off_reason?: TerminalOffReason | null } | null;
+  can?: {
+    terminal?: boolean; files?: boolean; terminal_off_reason?: TerminalOffReason | null;
+    /** design 0007: the Room's own browser here, and why not ("no_engine", "switched_off", "windows", "helper"). */
+    browser?: boolean; browser_off_reason?: string | null;
+  } | null;
 };
 
 export const DESK_KEY = "rooks.room.desk";
 
 /** Each window's title. */
 export const WINDOW_TITLE: Record<WindowId, string> = {
-  screen: "Screen", terminal: "Terminal", commands: "Commands", files: "Files", points: "Saved points",
+  screen: "Screen", terminal: "Terminal", browser: "Browser", commands: "Commands", files: "Files", points: "Saved points",
 };
 
 /** Each dock item's name. */
 const DOCK_LABEL: Record<WindowId, string> = {
-  screen: "Screen", terminal: "Terminal", commands: "Commands", files: "Files", points: "Points",
+  screen: "Screen", terminal: "Terminal", browser: "Browser", commands: "Commands", files: "Files", points: "Points",
 };
+
+/** Reasons the Browser window is there to say (it has no browser here, and why); with none, the Room's screen is the way. */
+const BROWSER_SAYS_WHY = ["no_engine", "switched_off", "windows", "helper"];
 
 /**
  * The windows the Room offers, primary first (Screen, else Terminal or Commands), then Files and Saved points. Terminals
@@ -44,22 +51,25 @@ export function windowsFor(status: DeskStatus | null | undefined): WindowId[] {
   if (status.screen === true) out.push("screen");
   const terminal = status.can?.terminal === true || status.can?.terminal_off_reason === "switched_off";
   out.push(terminal ? "terminal" : "commands");
+  // design 0007: the Browser window after Terminal, when the Room has a browser here or a reason to say why not
+  const why = status.can?.browser_off_reason;
+  if (status.can?.browser === true || (typeof why === "string" && BROWSER_SAYS_WHY.includes(why))) out.push("browser");
   if (status.can?.files === true) out.push("files");
   out.push("points");
   return out;
 }
 
-/** What opens when nothing is remembered: the primary window, Files and Saved points. */
+/** What opens when nothing is remembered: the primary window, Files and Saved points (the browser starts only when asked). */
 export function defaultOpen(status: DeskStatus | null | undefined): WindowId[] {
   const offered = windowsFor(status);
   if (!offered.length) return [];
   return offered.filter((w, i) => i === 0 || w === "files" || w === "points");
 }
 
-/** The dock's items, in its fixed order: Terminal (or Commands), Files, Points, Screen. */
+/** The dock's items, in its fixed order: Terminal (or Commands), Browser, Files, Points, Screen. */
 export function dockItems(status: DeskStatus | null | undefined): { id: WindowId; label: string }[] {
   const offered = windowsFor(status);
-  const order: WindowId[] = ["terminal", "commands", "files", "points", "screen"];
+  const order: WindowId[] = ["terminal", "commands", "browser", "files", "points", "screen"];
   return order.filter((w) => offered.includes(w)).map((id) => ({ id, label: DOCK_LABEL[id] }));
 }
 
@@ -103,13 +113,13 @@ export function toggleWindow(open: WindowId[], id: WindowId): WindowId[] {
 }
 
 /**
- * Where the open windows sit: the primary one (Screen, else Terminal, else Commands) on the left, the rest stacked on
- * the right. With a screen the Terminal moves to the right column above Files. With no primary window open the right
- * column's windows fill the width.
+ * Where the open windows sit: the primary one (Screen, else Browser, else Terminal, else Commands) on the left, the rest
+ * stacked on the right. With a screen or a browser the Terminal moves to the right column above Files. With no primary
+ * window open the right column's windows fill the width.
  */
 export function deskLayout(open: WindowId[]): { primary: WindowId | null; side: WindowId[] } {
-  const primary = (["screen", "terminal", "commands"] as WindowId[]).find((w) => open.includes(w)) ?? null;
-  const side = (["terminal", "commands", "files", "points"] as WindowId[]).filter((w) => w !== primary && open.includes(w));
+  const primary = (["screen", "browser", "terminal", "commands"] as WindowId[]).find((w) => open.includes(w)) ?? null;
+  const side = (["browser", "terminal", "commands", "files", "points"] as WindowId[]).filter((w) => w !== primary && open.includes(w));
   return { primary, side };
 }
 

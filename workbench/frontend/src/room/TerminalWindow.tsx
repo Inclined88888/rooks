@@ -303,8 +303,8 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
 
   let body: ReactNode;
   if (off) {
-    body = <EmptyState icon={<SquareTerminal size={24} />} title="Terminals are switched off in Settings." line="Switch them on there to open a terminal in the Room."
-      action={<Link className="ui-btn ui-btn-secondary ui-btn-sm" to="/settings">Open Settings</Link>} />;
+    body = <EmptyState icon={<SquareTerminal size={24} />} title="Terminals are switched off in Settings." line="Switch them on in Settings, under Tools, to open a terminal in the Room."
+      action={<Link className="ui-btn ui-btn-secondary ui-btn-sm" to="/settings?section=tools">Open Settings</Link>} />;
   } else if (!status.running) {
     body = (
       <>

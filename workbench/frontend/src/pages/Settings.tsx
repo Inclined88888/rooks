@@ -28,7 +28,7 @@ const DEV_HELP: Record<string, string> = {
 };
 
 type DesktopInfo = { desktop: boolean; data_dir: string; secret_backend: string };
-type SettingsData = { workspace_name: string; default_model: string; chat_url: string; tools_url: string; model_catalog_refresh: boolean; model_catalog_env: boolean; dev_tools: boolean };
+type SettingsData = { workspace_name: string; default_model: string; chat_url: string; tools_url: string; model_catalog_refresh: boolean; model_catalog_env: boolean; app_terminal: boolean; room_browser: boolean; dev_tools: boolean };
 
 function BrowserPair() {
   const [code, setCode] = useState("");
@@ -372,6 +372,15 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
     try { setS(await api("/settings", { method: "PUT", body: { model_catalog_refresh: on } })); toast.ok(on ? "Model prices will update once a day" : "Model price updates are off"); }
     catch (e) { toast.err(e); }
   };
+  // the switches the Room's Terminal and Browser windows point to when they are off
+  const setTerminals = async (on: boolean) => {
+    try { setS(await api("/settings", { method: "PUT", body: { app_terminal: on } })); toast.ok(on ? "Terminals are on" : "Terminals are off"); }
+    catch (e) { toast.err(e); }
+  };
+  const setRoomBrowser = async (on: boolean) => {
+    try { setS(await api("/settings", { method: "PUT", body: { room_browser: on } })); toast.ok(on ? "The Room's browser is on" : "The Room's browser is off. Its tabs are kept."); }
+    catch (e) { toast.err(e); }
+  };
   const changePw = async (e: FormEvent) => {
     e.preventDefault();
     try { await api("/password", { body: pw }); setPw({ current: "", new: "" }); toast.ok("Password changed. Other sessions were signed out."); }
@@ -458,6 +467,18 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
                 <Go primary label="Computer" help="Let the assistant click and type on this machine, when you allow it." to="/computer" />
                 <Go label="Browser" help="Let the assistant work in a browser, when you allow it." to="/browser" />
               </SettingsGroup>
+            </Section>
+            <Section title="The Room" description="Rooks's own computer on this one. Switched off, its window says so and nothing in it runs.">
+              {!s ? settingsState : (
+                <SettingsGroup>
+                  <SettingRow label="Terminals" help="Terminals in the Room and on the Terminal page.">
+                    <Switch checked={s.app_terminal !== false} onChange={setTerminals} label="Terminals" />
+                  </SettingRow>
+                  <SettingRow label="The Room's browser" help="A real browser inside the Room. Switching it off closes it; its tabs and sign-ins are kept.">
+                    <Switch checked={s.room_browser !== false} onChange={setRoomBrowser} label="The Room's browser" />
+                  </SettingRow>
+                </SettingsGroup>
+              )}
             </Section>
             <Section title="Another device">
               <BrowserPair />

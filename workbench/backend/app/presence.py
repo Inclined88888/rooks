@@ -70,7 +70,42 @@ _ROOM: dict[str, Callable[[dict], str]] = {  # use_room, one sentence per action
     "start": lambda a: _with("Running in the Room's terminal", _field(a, "command")),  # not every command installs
     "tail": lambda a: "You took the terminal; Rooks waits" if _room_taken() else "Watching the Room's terminal",
     "files": lambda a: "Looking through the Room's files",
+    # design 0007: the Room's own browser. Typed text is never said; an address is said by its site only
+    "browse": lambda a: _with("Opening a page in the Room's browser", _site(_field(a, "address"))),
+    "page": lambda a: _browser_look(),
+    "shot": lambda a: _browser_look(),
+    "click": lambda a: "Clicking in the Room's browser",
+    "type": lambda a: "Typing in the Room's browser",
+    "scroll": lambda a: "Scrolling in the Room's browser",
+    "key": lambda a: "Pressing a key in the Room's browser",
+    "back": lambda a: "Going back in the Room's browser",
+    "tabs": lambda a: "Checking the Room browser's tabs",
 }
+
+
+def _site(address: str) -> str:
+    """Only the site of an address (never its path or query)."""
+    from urllib.parse import urlsplit
+
+    a = (address or "").strip()
+    if not a:
+        return ""
+    try:
+        return (urlsplit(a if "://" in a else "http://" + a).hostname or "").lower()
+    except ValueError:
+        return ""
+
+
+def _browser_look() -> str:
+    """The person took the Room's browser back while a turn works there: Rooks waits."""
+    try:
+        from . import room_browser
+
+        if room_browser.taken():
+            return "You took the browser; Rooks waits"
+    except Exception:  # noqa: BLE001 - presence never fails on the Room
+        pass
+    return "Looking at a page in the Room's browser"
 
 
 def _room_taken() -> bool:

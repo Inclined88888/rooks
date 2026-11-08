@@ -5,12 +5,13 @@ import { MOD_KEY } from "../keys";
 import { isActive, railItems, SETTINGS_PAGE, type GroupId, type RailItem, type StatusLike } from "../pages/registry";
 import { warmPath, warmProps } from "../pages/warm";
 import { useFocusTrap } from "../ui";
+import { RooksMark } from "../ui/RooksMark";
 import { PresenceStrip } from "./PresenceStrip";
 import { roomOn, usePresence } from "./presence";
 
 /**
- * The glass navigation bar (docs/design/0003-workroom.md, section 6): a floating top bar above 900px. Left: the mark
- * (search or jump) and the presence line. Centre: one frosted pill holding Chat, Room, Jobs and the Day, Memory and
+ * The glass navigation bar (docs/design/0003-workroom.md, section 6): a floating top bar above 900px. Left: the mark,
+ * the Rooks tower (search or jump) and the presence line. Centre: one frosted pill holding Chat, Room, Jobs and the Day, Memory and
  * Library groups, with a solid pill that slides to the page you are on. Right: round glass buttons for search, More
  * and Settings. Groups open a glass menu below their tab (focus trapped, Escape closes). Everything comes from the
  * page registry.
@@ -41,7 +42,7 @@ export function Rail({ status, onMore, onSearch, name }: { status: StatusLike | 
     <header className="topbar">
       <div className="topbar-start">
         <button type="button" className="rail-mark" onClick={onSearch} title={`Search or jump to (${MOD_KEY}K)`} aria-label={`${name}: search or jump to`}>
-          <span aria-hidden="true">{name.trim().charAt(0).toUpperCase() || "R"}</span>
+          <RooksMark size={40} />
         </button>
         <PresenceStrip />
       </div>

@@ -64,3 +64,69 @@ export async function requestApproval(title: string, detail: string, risk: "low"
   if (!inDesktopShell()) return window.confirm(`${title}\n\n${detail}`);
   return invoke<boolean>("request_approval", { request: { title, detail, risk, source: "workbench" } });
 }
+
+/* ---- What the Rooks app's webview (WebKit) does not do on its own (docs/design/0007 2.4) ----------------------- */
+
+/** Open a web address outside this window: sign-ins, plans, help pages. In the Rooks app it goes to the person's own
+ *  browser (WebKit opens no window for window.open); in a browser, a new tab. */
+export async function openExternal(url: string): Promise<void> {
+  if (inDesktopShell()) {
+    const abs = new URL(url, window.location.href).href;
+    try { await invoke<void>("open_external", { url: abs }); return; } catch { /* not a web address: nothing opens */ return; }
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/** Save a file the app made (a report, an export). A download link works in every browser and, in the Rooks app,
+ *  the shell saves it to the Downloads folder and says so. Never a new window: WebKit would open none. */
+export function download(url: string, name = ""): void {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/** In the Rooks app, links that would open a new window go to the person's browser, and the app's own files are
+ *  saved instead (a new window would not open, or would not be signed in). Elsewhere, links behave as usual.
+ *  Call once at start; returns the function that removes the handler. */
+export function routeLinks(doc: Document = document): () => void {
+  const onClick = (e: MouseEvent) => {
+    if (!inDesktopShell() || e.defaultPrevented || e.button !== 0) return;
+    const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+    if (!a) return;
+    const href = a.href;
+    const sameOrigin = (() => { try { return new URL(href).origin === window.location.origin; } catch { return false; } })();
+    if (a.hasAttribute("download")) {
+      if (sameOrigin || href.startsWith("blob:") || href.startsWith("data:")) return; // the shell saves it (on_download)
+      e.preventDefault();
+      void openExternal(href);
+      return;
+    }
+    if (a.getAttribute("target") === "_blank" || a.matches("a[target=_blank]")) {
+      e.preventDefault();
+      if (sameOrigin && new URL(href).pathname.startsWith("/api/")) download(href); // a file from the app: save it
+      else void openExternal(href);
+    }
+  };
+  doc.addEventListener("click", onClick, true);
+  return () => doc.removeEventListener("click", onClick, true);
+}
+
+/** Copy text that arrives after a round trip to the server. WebKit refuses clipboard.writeText once an await has
+ *  passed since the click; a ClipboardItem whose content is a promise keeps the click's permission. Returns whether
+ *  the text reached the clipboard. */
+export async function copyLater(text: Promise<string>): Promise<boolean> {
+  const ClipboardItem = (window as unknown as { ClipboardItem?: new (items: Record<string, Promise<Blob>>) => unknown }).ClipboardItem;
+  const clip = navigator.clipboard as (Clipboard & { write?: (items: unknown[]) => Promise<void> }) | undefined;
+  if (ClipboardItem && clip?.write) {
+    try {
+      await clip.write([new ClipboardItem({ "text/plain": text.then((t) => new Blob([t], { type: "text/plain" })) })]);
+      return true;
+    } catch { /* fall through: some browsers want the text itself */ }
+  }
+  try { await clip?.writeText(await text); return !!clip; } catch { return false; }
+}

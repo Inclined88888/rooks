@@ -120,7 +120,10 @@ def checkpoint(label: str = "") -> dict:
         n += 1
         name = f"{base}-{n:02d}"
     dest = checkpoints_dir() / name
-    shutil.copytree(guest_home(), dest, symlinks=True, dirs_exist_ok=False)
+    from .browser import ignore_caches  # the Room browser's caches are not worth a point (design 0007, section 1.4)
+
+    home = guest_home()
+    shutil.copytree(home, dest, symlinks=True, dirs_exist_ok=False, ignore=ignore_caches(home))
     meta = {"name": name, "label": label or "save", "created": stamp, "path": str(dest)}
     state = load_state()
     state["last_checkpoint"] = meta

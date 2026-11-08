@@ -19,7 +19,7 @@ if [[ -f "$icon_src" ]]; then
 fi
 cat > "$root/usr/share/applications/rooks-native.desktop" <<'EOF'
 [Desktop Entry]
-Name=Rooks
+Name=Rooks Ask
 Comment=A personal assistant on this computer
 Exec=rooks-native
 Icon=rooks-native

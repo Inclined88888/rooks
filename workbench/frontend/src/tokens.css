@@ -173,7 +173,8 @@ html[data-mode="contrast"] {
 }
 
 /* ---- Fixed colours, the same in every mode: the terminal window is a dark screen on purpose (TerminalPage.tsx
-   paints xterm with the same values), and the companies' sign-in marks sit on a white tile as their guidelines ask. ---- */
+   paints xterm with the same values), the companies' sign-in marks sit on a white tile as their guidelines ask, and
+   the Rooks mark is the app icon's colours. ---- */
 :root {
   --screen-bg: #1C1C1E;
   --screen-chrome: #2C2C2E;
@@ -183,6 +184,11 @@ html[data-mode="contrast"] {
   --screen-dot-min: #FEBC2E;
   --screen-dot-max: #28C840;
   --brand-tile: #FFFFFF;
+  /* the Rooks mark (src/ui/RooksMark.tsx, desktop/app-icon.svg): an ink tile, a paper tower, a gold door */
+  --mark-ink-top: #2A2A28;
+  --mark-ink: #161615;
+  --mark-paper: #FAFAF9;
+  --mark-gold: #E3A82B;
 }
 
 /* ---- Everything that is not a colour ---- */

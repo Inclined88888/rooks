@@ -23,6 +23,7 @@ CUT = " These steps were cut off and not run: {steps}. Anything after them was n
 MAYBE_RAN = " These steps may have run before the restart; check History to see: {steps}."
 NOTHING_CUT = " The reply was cut short; nothing after that point was done."
 ROOM_ENDED = " Terminals in the Room ended; their files are still there."  # design 0006, section 5
+BROWSER_CLOSED = " The app restarted, so the browser closed. Your tabs and sign-ins are kept."  # design 0007, 1.4
 _TASKS: set[asyncio.Task] = set()
 
 
@@ -87,6 +88,17 @@ def _room_terminals_ended() -> bool:
         return False
 
 
+def _room_browser_closed() -> bool:
+    """Whether the Room's browser was open when the app stopped (it closed with it; tabs and sign-ins are kept)."""
+    try:
+        from . import room_browser
+
+        return room_browser.closed_at_restart()
+    except Exception as e:  # noqa: BLE001 - the note never fails on the Room
+        log.debug("room browser unknown at restart: %s", e.__class__.__name__)
+        return False
+
+
 def interrupt_running_turns() -> list[dict]:
     """At startup: close every turn still marked running (actions.recover) and write the note into its conversation.
     Returns what was done, one entry per turn: turn_id, conversation_id, cut (tool names), message_id."""
@@ -95,6 +107,7 @@ def interrupt_running_turns() -> list[dict]:
     rows = db.all("SELECT id, conversation_id FROM actions WHERE kind = 'turn' AND outcome = 'running' ORDER BY id")
     actions.recover()
     room_ended = ROOM_ENDED if rows and _room_terminals_ended() else ""
+    room_ended += BROWSER_CLOSED if rows and _room_browser_closed() else ""
     out = []
     for r in rows:
         cid = r["conversation_id"]

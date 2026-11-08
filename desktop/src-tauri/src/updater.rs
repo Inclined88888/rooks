@@ -38,7 +38,7 @@ pub fn check_on_start<R: Runtime>(app: AppHandle<R>) {
         let dialog = app
             .dialog()
             .message(format!(
-                "AI Workspace {version} is available. Install it now? The app restarts afterwards."
+                "Rooks {version} is available. Install it now? The app restarts afterwards."
             ))
             .title("Update available")
             .buttons(MessageDialogButtons::OkCancelCustom(

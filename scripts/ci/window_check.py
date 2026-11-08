@@ -167,11 +167,13 @@ def main() -> int:
     assert "launcher.log" in logs or "workbench.log" in logs
     stop(proc)
 
-    step("4. The real window path: plain `ai-workspace` opens the Chrome app window on a one-time link")
+    step("4. The real window path: after the person chooses a window (--shell window), Rooks opens the Chrome app "
+         "window on a one-time link; with no choice and no terminal it never opens a window nobody chose")
     shot = (OUT / "window.png").resolve()
     env = {**os.environ, "AI_WORKSPACE_WINDOW_ARGS": "--headless=new --remote-debugging-port=9333"}
     STATE.unlink(missing_ok=True)
-    proc = subprocess.Popen([LAUNCHER], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
+    proc = subprocess.Popen([LAUNCHER, "--shell", "window"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                            env=env)
     wait_state(proc)
     try:
         render("cdp", "http://127.0.0.1:9333", shot)
@@ -185,7 +187,7 @@ def main() -> int:
     leftovers = [p for p in data.rglob("*.html") if "window" not in p.parts]
     assert not leftovers, f"temporary pages left behind: {leftovers}"
     if sys.platform == "darwin":
-        app = Path.home() / "Applications" / "AI Workspace.app"
+        app = Path.home() / "Applications" / "Rooks.app"  # renamed with the app (design 0007)
         plist = (app / "Contents" / "Info.plist").read_text()
         assert "CFBundleIconFile" in plist, plist
         icns = app / "Contents" / "Resources" / "icon.icns"
