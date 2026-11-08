@@ -13,6 +13,8 @@ import { useEffect, useSyncExternalStore } from "react";
 import { api, ApiError } from "../api";
 import { createPoller } from "../lib/poller";
 import { busy, getPresence, roomOn, subscribePresence, type Presence } from "../shell/presence";
+import type { TerminalOffReason } from "./desk";
+import { clearSwitchedOff } from "./terms";
 import { NOT_HERE_LINE, type RoomStatus, type RoomTerminal } from "./words";
 
 /** A line of the Commands window: the command, its output, its errors, a note. */
@@ -23,9 +25,13 @@ export type RoomState = RoomStatus & {
   checked: boolean;
   /** The last ask was answered (false: the service is away; the words on screen are the last known). */
   reachable: boolean;
+  /** The service has answered at least once (a first ask with no answer knows nothing, not even "Not installed"). */
+  answered: boolean;
   terminals: RoomTerminal[];
   terminal_max: number;
-  can: { terminal: boolean; files: boolean };
+  /** What the cap counts (ended terminals included), when the service says; else the length of `terminals`. */
+  terminals_counted: number | null;
+  can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null };
   /** The Commands window's lines, for this session. */
   commandLines: CommandLine[];
 };
@@ -35,10 +41,12 @@ export const TERMINAL_MAX = 4;
 const COMMAND_LINES_MAX = 500;
 
 const START: RoomState = {
-  checked: false, reachable: true, available: false, running: false, screen: false, pointer: false, isolation: "none",
+  checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none",
   label: "", note: "", checkpoints: [], last_checkpoint: null, error: null,
-  terminals: [], terminal_max: TERMINAL_MAX, can: { terminal: false, files: false }, commandLines: [],
+  terminals: [], terminal_max: TERMINAL_MAX, terminals_counted: null, can: { terminal: false, files: false, terminal_off_reason: null }, commandLines: [],
 };
+
+const OFF_REASONS: TerminalOffReason[] = ["switched_off", "helper", "windows"];
 
 function terminalFromWire(t: unknown): RoomTerminal | null {
   if (!t || typeof t !== "object") return null;
@@ -66,10 +74,13 @@ function terminalFromWire(t: unknown): RoomTerminal | null {
 export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
   const terminals = Array.isArray(w.terminals) ? w.terminals.map(terminalFromWire).filter((t): t is RoomTerminal => t !== null) : [];
   const max = typeof w.terminal_max === "number" && w.terminal_max > 0 ? w.terminal_max : TERMINAL_MAX;
+  const why = w.can?.terminal_off_reason;
+  const counted = w.terminals_counted;
   return {
     ...w,
     checked: true,
     reachable: true,
+    answered: true,
     available: w.available !== false,
     running: w.running === true,
     screen: w.screen === true,
@@ -81,8 +92,18 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
     last_checkpoint: w.last_checkpoint || null,
     terminals,
     terminal_max: max,
-    can: { terminal: w.can?.terminal === true, files: w.can?.files === true },
+    terminals_counted: typeof counted === "number" && Number.isFinite(counted) && counted >= 0 ? counted : null,
+    can: {
+      terminal: w.can?.terminal === true,
+      files: w.can?.files === true,
+      terminal_off_reason: why && OFF_REASONS.includes(why) ? why : null,
+    },
   };
+}
+
+/** The service did not answer: the last known state stays, marked away. Nothing becomes known by not answering. */
+export function unreachable<T extends { checked: boolean; reachable: boolean }>(s: T): T {
+  return { ...s, checked: true, reachable: false };
 }
 
 export const ROOM_STATUS_QUIET_MS = 30000;
@@ -121,7 +142,10 @@ function set(next: RoomState) {
 
 /** Take one answer from the service; the Commands window's lines are the session's and stay. */
 export function receiveRoomStatus(w: RoomStatus): void {
-  set({ ...roomFromWire(w), commandLines: state.commandLines });
+  const next = roomFromWire(w);
+  set({ ...next, commandLines: state.commandLines });
+  // status says terminals are on: a socket's earlier "switched off" refusal no longer stands
+  if (next.can.terminal) clearSwitchedOff();
 }
 
 /** Add lines to the Commands window (kept for the session, the last 500). */
@@ -134,8 +158,8 @@ async function load(): Promise<void> {
     const w = await api<RoomStatus>("/room/status");
     receiveRoomStatus(w);
   } catch (e) {
-    if (e instanceof ApiError && e.status === 404) set({ ...START, checked: true, reachable: true, available: false, label: NOT_HERE_LINE, commandLines: state.commandLines });
-    else set({ ...state, checked: true, reachable: false });
+    if (e instanceof ApiError && e.status === 404) set({ ...START, checked: true, reachable: true, answered: true, available: false, label: NOT_HERE_LINE, commandLines: state.commandLines });
+    else set(unreachable(state));
   }
 }
 

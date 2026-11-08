@@ -11,14 +11,15 @@ import { Button, EmptyState, ErrorState, IconButton, List, Loading, Row, useToas
 import { cdCommand, crumbs, entryMeta, joinPath, parentOf, sortEntries, whenWords, type FileEntry } from "./desk";
 import { RoomWindow } from "./RoomView";
 import type { RoomState } from "./status";
+import { showInTerminalBlock, typedCdWords, type RoomTerminal } from "./words";
 
 type Listing = { path?: string; parent?: string; root_label?: string; entries?: FileEntry[]; truncated?: boolean };
 type Load = { state: "loading" } | { state: "ok"; listing: Listing } | { state: "gone" } | { state: "error"; line: string };
 
-export function FilesWindow({ status, terminalId, onHandOff, stale = false }: {
+export function FilesWindow({ status, terminal, onHandOff, stale = false }: {
   status: RoomState;
-  /** The terminal Show in terminal types into (the one showing), or null when none is open. */
-  terminalId: string | null;
+  /** The terminal Show in terminal types into (the one showing, open), or null when none is open. */
+  terminal: RoomTerminal | null;
   onHandOff: (src: string) => void;
   stale?: boolean;
 }) {
@@ -48,11 +49,14 @@ export function FilesWindow({ status, terminalId, onHandOff, stale = false }: {
   }, [load]);
 
   const go = (p: string) => { moved.current = true; setLoad({ state: "loading" }); setPath(p); };
+  // A cd is typed into the terminal, nothing more: the words say what was typed, never that the terminal is there now.
+  // While the terminal runs something the line would go into that program, so the button waits.
+  const blocked = showInTerminalBlock(terminal);
   const showInTerminal = async (folder: string) => {
-    if (!terminalId) return;
+    if (!terminal || blocked) return;
     try {
-      await api(`/room/terminals/${encodeURIComponent(terminalId)}/send`, { body: { text: cdCommand(folder), enter: true } });
-      toast.ok(`The terminal is in ${folder || "Home"} now.`);
+      await api(`/room/terminals/${encodeURIComponent(terminal.id)}/send`, { body: { text: cdCommand(folder), enter: true } });
+      toast.ok(typedCdWords(folder, terminal.name));
     } catch (e) {
       toast.err(e);
     }
@@ -65,7 +69,6 @@ export function FilesWindow({ status, terminalId, onHandOff, stale = false }: {
     </>
   );
   const label = status.running ? "What is in the Room's folder." : "What is in the Room's folder. The Room is off. Its files are still here.";
-  const noTerminal = terminalId ? undefined : "Open a terminal first";
 
   let body;
   if (load.state === "loading") body = <Loading rows={4} label="Reading the Room's folder" />;
@@ -83,7 +86,7 @@ export function FilesWindow({ status, terminalId, onHandOff, stale = false }: {
           {entries.map((e) => {
             const at = joinPath(path, e.name);
             const when = whenWords(e.modified);
-            const meta = e.kind === "link" ? "link, points outside the Room" : when ? `${entryMeta(e)} · ${when}` : entryMeta(e);
+            const meta = e.kind !== "link" && when ? `${entryMeta(e)} · ${when}` : entryMeta(e);
             const icon = e.kind === "folder" ? <Folder size={16} /> : e.kind === "link" ? <Link2 size={16} /> : <File size={16} />;
             return (
               <Row key={e.name} title={e.name} meta={meta} leading={icon} className="room-file"
@@ -92,8 +95,8 @@ export function FilesWindow({ status, terminalId, onHandOff, stale = false }: {
                   // icon buttons with their names (the column is narrow); each says what it does on hover and to a reader
                   <>
                     {e.kind === "file" && <IconButton label={`Hand off ${e.name}`} onClick={() => onHandOff(at)}><FileOutput size={15} /></IconButton>}
-                    <IconButton label={noTerminal ? `Show in terminal: ${noTerminal.toLowerCase()}` : `Show in terminal: go to ${e.kind === "folder" ? e.name : path || "Home"}`}
-                      disabled={!terminalId} onClick={() => void showInTerminal(e.kind === "folder" ? at : path)}><SquareTerminal size={15} /></IconButton>
+                    <IconButton label={blocked ? `Show in terminal: ${blocked}` : `Show in terminal: type a cd to ${e.kind === "folder" ? e.name : crumbs(path).pop()?.label || "Home"} into ${terminal?.name}`}
+                      disabled={!!blocked} onClick={() => void showInTerminal(e.kind === "folder" ? at : path)}><SquareTerminal size={15} /></IconButton>
                   </>
                 )} />
             );

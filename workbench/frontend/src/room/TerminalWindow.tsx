@@ -21,30 +21,23 @@ import { api } from "../api";
 import { motionLevel } from "../motion";
 import { Shell, type Phase } from "../terminal/Shell";
 import { Button, EmptyState, Input, useToast } from "../ui";
-import { leavesTerminal, phoneKey, pickActive, plainTail, toTermText, withCtrl, type PhoneKey } from "./desk";
+import {
+  afterClose, leavesTerminal, phoneKey, pickActive, plainTail, RECONNECT_TRIES, skipTarget, tabKey, terminalsFull, terminalsSwitchedOff, toTermText, withCtrl,
+  type PhoneKey,
+} from "./desk";
 import { focusWindowTitle, RoomWindow, type RoomActions } from "./RoomView";
 import { refreshRoomStatus, useRoomStatusQuiet, type RoomState } from "./status";
 import {
-  focusTerminal, getTerms, markDone, markTaken, registerFocus, registerSender, sendRaw, setActiveTerminal, setCtrlLatch, setPaneWords, useTerms,
+  focusTerminal, getTerms, markDone, markTaken, reattachTerminal, registerFocus, registerReattach, registerSender, sendRaw, setActiveTerminal, setCtrlLatch,
+  setPaneWords, useTerms,
 } from "./terms";
 import {
-  doneWords, elapsedWords, ENDED_SHORT, endedLine, fullLine, offLine, offStartLine, OPENING_LINE, PICKED_UP_LINE, ROOKS_STARTED_LINE, ROOKS_WORKING_LINE,
+  closeWords, doneWords, elapsedWords, ENDED_SHORT, endedLine, fullLine, offLine, offStartLine, OPENING_LINE, PICKED_UP_LINE, ROOKS_STARTED_LINE, ROOKS_WORKING_LINE,
   STARTING_OVER_LINE, tailLine, terminalLabel, type RoomTerminal,
 } from "./words";
 
 const enc = encodeURIComponent;
 const DONE_FOR_MS = 30000;
-
-/** The close codes of a Room terminal's socket, in plain words. */
-function roomWhy(code: number, reason: string): string {
-  if (code === 4401) return "You are signed out. Sign in again, then come back to the Room.";
-  if (code === 4403) return reason || "The terminal only opens on the computer running Rooks.";
-  if (code === 4404) return "This terminal is gone. Open a new one.";
-  if (code === 4409) return ENDED_SHORT;
-  if (code === 1005 || code === 1006) return "The terminal lost its connection. Trying again…";
-  if (!reason || /shell exited/i.test(reason)) return ENDED_SHORT;
-  return reason;
-}
 
 /** Rooks's terminal takes no keys while Rooks works there, until the person takes it. */
 function lockedFor(t: RoomTerminal, taken: Record<string, boolean>): boolean {
@@ -69,7 +62,7 @@ export function RoomPanes({ parked }: { parked: boolean }) {
   const status = useRoomStatusQuiet();
   const ui = useTerms();
   const terminals = status.terminals;
-  if (ui.remote || ui.switchedOff || !terminals.length) return null;
+  if (ui.remote || terminalsSwitchedOff(status, ui.switchedOff) || !terminals.length) return null;
   const active = pickActive(terminals, ui.active);
   return (
     <div className="terminal-stage room-term-stage">
@@ -123,10 +116,18 @@ function RoomPane({ t, active, hold, locked }: { t: RoomTerminal; active: boolea
     registerFocus(t.id, () => x.focus());
   }, [t.id]);
   useEffect(() => () => { registerSender(t.id, null); registerFocus(t.id, null); }, [t.id]);
+  // Use it here (it was opened in another window) and Reconnect (after the last try): join the same shell again.
+  useEffect(() => {
+    registerReattach(t.id, () => { retries.current = 0; setGen((g) => g + 1); });
+    return () => registerReattach(t.id, null);
+  }, [t.id]);
+
+  // The close codes in plain words; a dropped connection says "Trying again…" only while it will.
+  const why = useCallback((code: number, reason: string) => closeWords(code, reason, (code === 1005 || code === 1006) && retries.current < RECONNECT_TRIES), []);
 
   const onPhase = useCallback((phase: Phase, why: string, code: number) => {
-    if (phase === "connecting") { setPaneWords(t.id, { line: OPENING_LINE, open: false }); return; }
-    if (phase === "open") { retries.current = 0; setPaneWords(t.id, { line: "", open: true }); return; }
+    if (phase === "connecting") { setPaneWords(t.id, { line: OPENING_LINE, open: false, action: "" }); return; }
+    if (phase === "open") { retries.current = 0; setPaneWords(t.id, { line: "", open: true, action: "" }); return; }
     if (code === 4403) { setPaneWords(t.id, { line: why, open: false, blocked: /switched off/i.test(why) ? "settings" : "remote" }); return; }
     if (code === 4409) {
       // it ended between the list and the socket: show its last lines, then say so
@@ -134,9 +135,11 @@ function RoomPane({ t, active, hold, locked }: { t: RoomTerminal; active: boolea
       setPaneWords(t.id, { line: ENDED_SHORT, open: false });
       return;
     }
-    setPaneWords(t.id, { line: why, open: false });
-    // a dropped connection (not an ended shell): ask again a few times; the service replays the text
-    if ((code === 1005 || code === 1006) && retries.current < 3) {
+    // a dropped connection (not an ended shell): ask again a few times, the service replays the text; after the last
+    // try, or when the terminal was opened in another window, the chrome bar offers a button instead
+    const next = afterClose(code, why, retries.current);
+    setPaneWords(t.id, { line: why, open: false, action: next.action });
+    if (next.retry) {
       retries.current += 1;
       window.setTimeout(() => setGen((g) => g + 1), 2000);
     } else void refreshRoomStatus();
@@ -163,7 +166,7 @@ function RoomPane({ t, active, hold, locked }: { t: RoomTerminal; active: boolea
   return (
     <div className={`room-term-pane${ended ? " is-ended" : ""}${active ? "" : " is-hidden"}`}>
       <Shell key={gen} url={url} replay active={active} hold={hold} label={t.name} options={options} connecting="" reopen={false}
-        initialText={initial || undefined} why={roomWhy} onPhase={onPhase} onTerm={onTerm} onReplay={onReplay} mapInput={mapInput}
+        initialText={initial || undefined} why={why} onPhase={onPhase} onTerm={onTerm} onReplay={onReplay} mapInput={mapInput}
         onSend={(_run, raw) => registerSender(t.id, raw)} />
     </div>
   );
@@ -179,7 +182,8 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
   const terminals = status.terminals;
   const activeId = pickActive(terminals, ui.active);
   const active = terminals.find((t) => t.id === activeId) ?? null;
-  const full = terminals.length >= status.terminal_max;
+  const full = terminalsFull(status);
+  const off = terminalsSwitchedOff(status, ui.switchedOff);
   const newRef = useRef<HTMLButtonElement>(null);
   const tabRefs = useRef(new Map<string, HTMLButtonElement>());
   const [closing, setClosing] = useState<string | null>(null);
@@ -223,6 +227,7 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
   };
   const rename = (t: RoomTerminal, name: string) => {
     setRenaming(null);
+    window.setTimeout(() => tabRefs.current.get(t.id)?.focus(), 0);
     const clean = name.trim().slice(0, 40);
     if (clean && clean !== t.name) void act.renameTerminal(t.id, clean);
   };
@@ -231,9 +236,10 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
     if (r) { markTaken(t.id); focusTerminal(t.id); }
   };
   const onTabKey = (e: ReactKeyboardEvent, i: number) => {
-    const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-    if (!step || !terminals.length) return;
+    const step = tabKey(e.key);
+    if (step === null || !terminals.length) return;
     e.preventDefault();
+    if (step === "rename") { setRenaming(terminals[i].id); return; }
     const next = terminals[(i + step + terminals.length) % terminals.length];
     setActiveTerminal(next.id);
     tabRefs.current.get(next.id)?.focus();
@@ -256,11 +262,11 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
               {renaming === t.id ? (
                 <input className="terminal-tab-rename" autoFocus aria-label="Terminal name" defaultValue={t.name} maxLength={40}
                   onBlur={(e) => rename(t, e.currentTarget.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); rename(t, e.currentTarget.value); } if (e.key === "Escape") { e.preventDefault(); setRenaming(null); } }} />
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); rename(t, e.currentTarget.value); } if (e.key === "Escape") { e.preventDefault(); setRenaming(null); window.setTimeout(() => tabRefs.current.get(t.id)?.focus(), 0); } }} />
               ) : (
                 <button type="button" role="tab" aria-selected={on} tabIndex={on ? 0 : -1} className="terminal-tab-name room-tab-name"
                   ref={(el) => { if (el) tabRefs.current.set(t.id, el); else tabRefs.current.delete(t.id); }}
-                  title={t.busy ? "running" : t.alive ? "Double-click to rename." : "This terminal ended."}
+                  title={t.busy ? "running. Double-click or press F2 to rename." : t.alive ? "Double-click or press F2 to rename." : "This terminal ended."}
                   onClick={() => setActiveTerminal(t.id)} onDoubleClick={() => setRenaming(t.id)} onKeyDown={(e) => onTabKey(e, i)}>
                   {t.busy && <span className="room-tab-dot" aria-hidden="true" />}
                   {t.name}
@@ -296,7 +302,7 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
     : "";
 
   let body: ReactNode;
-  if (ui.switchedOff) {
+  if (off) {
     body = <EmptyState icon={<SquareTerminal size={24} />} title="Terminals are switched off in Settings." line="Switch them on there to open a terminal in the Room."
       action={<Link className="ui-btn ui-btn-secondary ui-btn-sm" to="/settings">Open Settings</Link>} />;
   } else if (!status.running) {
@@ -323,16 +329,17 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
             <span className="room-term-status">
               <span role="status" aria-live="polite" className="room-term-words">{phaseLine}</span>
               {active && locked && <Button size="sm" variant="ghost" className="room-term-take" busy={act.busy === `take:${active.id}`} onClick={() => void take(active)}>Take this one</Button>}
+              {active?.alive && words?.action === "here" && <Button size="sm" variant="ghost" className="room-term-take" onClick={() => reattachTerminal(active.id)}>Use it here</Button>}
+              {active?.alive && words?.action === "reconnect" && <Button size="sm" variant="ghost" className="room-term-take" onClick={() => reattachTerminal(active.id)}>Reconnect</Button>}
             </span>
           </div>
-          <button type="button" className="room-skip" onClick={() => { if (!focusWindowTitle("files")) document.getElementById("room-dock")?.focus(); }}>Skip the terminal</button>
+          <button type="button" className="room-skip" onClick={() => skipTarget((id) => document.getElementById(id))?.focus()}>Skip the terminal</button>
           <div className="room-term-box" tabIndex={0} aria-label="The terminal. Press F6 to leave it." onFocus={(e) => { if (e.target === e.currentTarget) focusTerminal(activeId); }}>
             {slot}
           </div>
         </div>
         {active && !active.alive && (
           <div className="room-term-ended">
-            <span className="room-term-ended-line">{endedLine(active.ended_reason)}</span>
             <Button size="sm" variant="secondary" icon={<Plus size={13} />} disabled={full} busy={act.busy === "terminal"} onClick={() => void open()}>Open a new terminal</Button>
             <Button size="sm" variant="ghost" busy={act.busy === `close:${active.id}`} onClick={() => void close(active)}>Close</Button>
           </div>
@@ -344,7 +351,7 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
 
   const verbs = (
     <Button ref={newRef} size="sm" variant="secondary" icon={<Plus size={13} />} busy={act.busy === "terminal"}
-      disabled={full || !status.running || ui.switchedOff}
+      disabled={full || !status.running || off}
       title={full ? fullLine(status.terminal_max) : !status.running ? "Start the Room first" : "Open another shell in the Room. The ones already open keep running."}
       onClick={() => void open().catch((e) => toast.err(e))}>New terminal</Button>
   );

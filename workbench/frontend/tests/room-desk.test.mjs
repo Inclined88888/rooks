@@ -137,9 +137,9 @@ test("the Room's new words: off keeps everything, a shell that stays, an ended t
   assert.equal(words.closeCount(2), "2 terminals will close.");
   assert.equal(words.closeCount(1), "1 terminal will close.");
   assert.equal(words.closeCount(0), "");
-  assert.match(words.tailLine(), /this computer/);
-  assert.equal(words.tailLine(), "This phone shows the terminal's last lines and sends what you type. Open the Room on this computer for the full terminal.");
-  assert.equal(words.fullLine(4), "Four terminals can be open in the Room. Close one to open another.");
+  assert.match(words.tailLine(), /the computer running Rooks/);
+  assert.equal(words.tailLine(), "This page shows the terminal's last lines and sends what you type. Open the Room on the computer running Rooks for the full terminal.");
+  assert.equal(words.fullLine(4), "Four terminals are in the Room, ended ones included. Close one to open another.");
   assert.equal(words.TIMEOUT_NOTE, "Stopped after 120 seconds. For something long, start it in a Room terminal.");
   assert.equal(words.elapsedWords(184), "3 min");
   assert.equal(words.elapsedWords(20), "under a minute");
@@ -176,11 +176,11 @@ test("the terminal list comes from the service on every refresh, never from the 
   assert.equal(s.terminals[1].owner, "rooks");
   assert.equal(s.terminals[1].alive, false);
   assert.equal(s.terminal_max, 4);
-  assert.deepEqual(s.can, { terminal: true, files: true });
+  assert.deepEqual(s.can, { terminal: true, files: true, terminal_off_reason: null });
   const old = store.roomFromWire({ available: true, running: true });
   assert.deepEqual(old.terminals, []);
   assert.equal(old.terminal_max, 4);
-  assert.deepEqual(old.can, { terminal: false, files: false }, "a service that says nothing can do nothing new");
+  assert.deepEqual(old.can, { terminal: false, files: false, terminal_off_reason: null }, "a service that says nothing can do nothing new");
   // the Commands window's lines live in the store, so leaving the page and coming back keeps them for the session
   store.addCommandLines([{ kind: "cmd", text: "ls" }]);
   store.receiveRoomStatus({ available: true, running: true });

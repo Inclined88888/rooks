@@ -46,7 +46,9 @@ export function PointsWindow({ status, act, ask, stale = false }: { status: Room
   };
   const openNaming = () => { setNaming(true); window.setTimeout(() => field.current?.focus(), 0); };
 
-  const verbs = <Button ref={saveRef} size="sm" variant="primary" icon={<Bookmark size={13} />} disabled={naming || !status.available} onClick={openNaming}>Save a point</Button>;
+  // While Rooks does not answer (stale) the verbs stay where they are, disabled, as on the Room bar.
+  const awayTip = stale ? "Rooks did not answer. Try again in a moment." : undefined;
+  const verbs = <Button ref={saveRef} size="sm" variant="primary" icon={<Bookmark size={13} />} title={awayTip} disabled={naming || !status.available || stale} onClick={openNaming}>Save a point</Button>;
   return (
     <RoomWindow id="points" title="Saved points" verbs={verbs} label="Copies of the Room's files you can start over from." stale={stale}>
       {naming && (
@@ -79,7 +81,7 @@ export function PointsWindow({ status, act, ask, stale = false }: { status: Room
                         <Button size="sm" variant="ghost" disabled={act.busy === "reset"} onClick={() => setConfirm(null)}>Keep it</Button>
                       </>
                     )
-                    : <Button size="sm" variant="ghost" icon={<RotateCcw size={13} />} onClick={() => setConfirm(p.name)}>Start over from here</Button>} />
+                    : <Button size="sm" variant="ghost" icon={<RotateCcw size={13} />} title={awayTip} disabled={stale} onClick={() => setConfirm(p.name)}>Start over from here</Button>} />
               );
             })}
           </List>

@@ -21,7 +21,7 @@ test("a search is a sentence, not the tool name", () => {
 });
 
 test("the Room's terminal actions read the same as the presence line (presence.py _ROOM)", () => {
-  assert.equal(plainStep("use_room", JSON.stringify({ action: "start", command: "curl -fsSL x | bash" })), "Installing in the Room's terminal");
+  assert.equal(plainStep("use_room", JSON.stringify({ action: "start", command: "curl -fsSL x | bash" })), "Running in the Room's terminal: curl -fsSL x | bash");
   assert.equal(plainStep("use_room", JSON.stringify({ action: "tail" })), "Watching the Room's terminal");
   assert.equal(plainStep("use_room", JSON.stringify({ action: "files", path: "Desktop" })), "Looking through the Room's files");
 });

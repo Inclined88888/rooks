@@ -14,16 +14,16 @@ import { narrowQuery, useMediaQuery } from "../shell/breakpoints";
 import { openStage } from "../shell/StageHost";
 import { TerminalSlot } from "../terminalHost";
 import { Badge, Button, Menu, Sheet, Tabs, type ButtonProps, type MenuItem } from "../ui";
-import { deskLayout, dockItems, pickActive, readDesk, toggleWindow, windowsFor, writeDesk, type WindowId } from "./desk";
+import { deskLayout, dockItems, pickActive, readDesk, terminalsCounted, terminalsFull, toggleWindow, windowsFor, writeDesk, type WindowId } from "./desk";
 import { FilesWindow } from "./FilesWindow";
 import { PointsWindow, type PointsAsk } from "./PointsWindow";
 import {
-  CommandView, commandsWindowLabel, HandoffPanel, HeldNote, roomNotReady, RoomWindow, useRoomActions, useRoomScreen, type Held,
+  CommandView, HandoffPanel, HeldNote, roomNotReady, RoomWindow, useRoomActions, useRoomScreen, type Held,
 } from "./RoomView";
 import { useRoomStatus } from "./status";
 import { TerminalWindow } from "./TerminalWindow";
 import { setActiveTerminal, useTerms } from "./terms";
-import { advancedDetails, commandViewLine, isolationWords, pointLine, roomStateWords } from "./words";
+import { advancedDetails, commandsLabelFor, commandViewLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, terminalCountLine } from "./words";
 
 const DOCK_ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, files: Folder, points: Bookmark, screen: Monitor };
 
@@ -83,7 +83,7 @@ export default function RoomPage() {
     if (want === "terminal") {
       openWindow("terminal");
       const alive = status.terminals.filter((t) => t.alive);
-      if (status.running && status.can.terminal && !alive.length && status.terminals.length < status.terminal_max) void act.newTerminal();
+      if (status.running && status.can.terminal && !alive.length && !terminalsFull(status)) void act.newTerminal();
       else if (alive.length) setActiveTerminal(pickActive(alive, ui.active));
     } else if (want === "point") askPoints({ kind: "save" });
     else if (want === "over") openWindow("points");
@@ -92,7 +92,7 @@ export default function RoomPage() {
   }, [location.key, status.checked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- the Room bar
-  const word = !status.checked ? "" : roomStateWords(status);
+  const word = roomBarWord(status);
   const barLine = !status.checked ? "Checking the Room…"
     : !status.reachable ? "The Room could not be checked. Rooks did not answer; it will be asked again in a moment."
     : status.label || (status.available ? "Rooks's own computer" : "");
@@ -170,7 +170,7 @@ export default function RoomPage() {
 
   // ---- the windows
   const stale = !status.reachable;
-  const terminalId = (() => { const id = pickActive(status.terminals, ui.active); return status.terminals.find((t) => t.id === id && t.alive)?.id ?? null; })();
+  const terminal = (() => { const id = pickActive(status.terminals, ui.active); return status.terminals.find((t) => t.id === id && t.alive) ?? null; })();
   const windowFor = (id: WindowId): ReactNode => {
     switch (id) {
       case "screen":
@@ -183,9 +183,9 @@ export default function RoomPage() {
       case "terminal":
         return <TerminalWindow key="terminal" status={status} act={act} stale={stale} slot={<TerminalSlot kind="room" />} />;
       case "commands":
-        return <RoomWindow key="commands" id="commands" title="Commands" label={commandsWindowLabel(status)} stale={stale}><CommandView status={status} /></RoomWindow>;
+        return <RoomWindow key="commands" id="commands" title="Commands" label={commandsLabelFor(status)} stale={stale}><CommandView status={status} /></RoomWindow>;
       case "files":
-        return <FilesWindow key="files" status={status} terminalId={terminalId} stale={stale} onHandOff={(src) => openHandoff(src)} />;
+        return <FilesWindow key="files" status={status} terminal={terminal} stale={stale} onHandOff={(src) => openHandoff(src)} />;
       case "points":
         return <PointsWindow key="points" status={status} act={act} ask={pointsAsk} stale={stale} />;
     }
@@ -257,8 +257,8 @@ export default function RoomPage() {
           {folder && <><dt>Folder</dt><dd>{folder}</dd></>}
           <dt>Shell</dt><dd>{shellPath || "The login shell of this computer's account"}</dd>
           <dt>Profile files read</dt><dd>~/.profile and, for bash, ~/.bashrc; for zsh ~/.zprofile and ~/.zshrc</dd>
-          <dt>Terminals open</dt><dd>{alive.length} of {status.terminal_max}</dd>
-          <dt>What is recorded</dt><dd>Each terminal opening and closing, every command Rooks starts, and commands sent from a phone are in the run log. What you type in a terminal is not recorded.</dd>
+          <dt>Terminals</dt><dd>{terminalCountLine({ counted: terminalsCounted(status), open: alive.length, max: status.terminal_max })}</dd>
+          <dt>What is recorded</dt><dd>{RECORDED_LINE}</dd>
           {!status.can.files && status.isolation === "vm" && <><dt>Files</dt><dd>Files live inside the separate computer. Use its screen.</dd></>}
         </dl>
       </Sheet>

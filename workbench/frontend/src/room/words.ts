@@ -28,7 +28,10 @@ export type RoomTerminal = {
 export type RoomStatus = WatchStatus & {
   terminals?: RoomTerminal[];
   terminal_max?: number;
-  can?: { terminal?: boolean; files?: boolean } | null;
+  /** What the cap of terminal_max counts, ended terminals included (newer services say it). */
+  terminals_counted?: number | null;
+  /** terminal_off_reason: why there is no terminal ("switched_off" in Settings, "helper" mode, "windows"), or null. */
+  can?: { terminal?: boolean; files?: boolean; terminal_off_reason?: "switched_off" | "helper" | "windows" | null } | null;
   isolation?: string;
   driver?: string | null;
   home?: string | null;
@@ -69,6 +72,15 @@ export function isolationWords(isolation: string | null | undefined, offline = f
 export function roomStateWords(s: Pick<RoomStatus, "available" | "running"> | null | undefined): string {
   if (!s || s.available === false) return "Not installed";
   return s.running ? "On" : "Off";
+}
+
+/**
+ * The Room bar's word: nothing until the service has answered once (a first ask that got no answer knows nothing, so
+ * it is never "Not installed"); after that the last known word, kept while Rooks does not answer.
+ */
+export function roomBarWord(s: Pick<RoomStatus, "available" | "running"> & { checked?: boolean; answered?: boolean }): string {
+  if (!s.checked || !s.answered) return "";
+  return roomStateWords(s);
 }
 
 /** The line under the command view: the honest line for a folder and shell, the driver's own note for a separate computer. */
@@ -114,17 +126,61 @@ export function closeCount(n: number): string {
   return n === 1 ? "1 terminal will close." : `${n} terminals will close.`;
 }
 
-/** The label of the phone's tail view: last lines of a real shell, never called a picture of one. */
+/** The Stage's Start over form: the same warning as the Saved points confirm, with how many terminals close. */
+export function resetLine(open: number): string {
+  const base = "This puts the Room's files back as they were at that point. Anything done since is lost. The Room restarts if it is on.";
+  const n = closeCount(open);
+  return n ? `${base} ${n}` : base;
+}
+
+/**
+ * The label of the tail view (any page not on the computer running Rooks: a phone, another computer's browser): last
+ * lines of a real shell, never called a picture of one.
+ */
 export function tailLine(): string {
-  return "This phone shows the terminal's last lines and sends what you type. Open the Room on this computer for the full terminal.";
+  return "This page shows the terminal's last lines and sends what you type. Open the Room on the computer running Rooks for the full terminal.";
 }
 
 const NUMBER_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
 
-/** New terminal's title when the Room has as many as it may. */
+/** New terminal's title when the Room has as many as it may. The cap counts ended terminals too, so the words say so. */
 export function fullLine(max: number): string {
   const n = NUMBER_WORDS[max] ?? String(max);
-  return `${n} terminal${max === 1 ? "" : "s"} can be open in the Room. Close one to open another.`;
+  return `${n} terminal${max === 1 ? " is" : "s are"} in the Room, ended ones included. Close one to open another.`;
+}
+
+/** Advanced's terminal count: the same number the cap counts (and the terminal's /room prints), and how many are open. */
+export function terminalCountLine({ counted, open, max }: { counted: number; open: number; max: number }): string {
+  const base = `${counted} of ${max}`;
+  return open < counted ? `${base}, ended ones included (${open} open)` : base;
+}
+
+/** Advanced's "What is recorded". */
+export const RECORDED_LINE = "Each terminal's text is kept in a private log on this computer until the terminal is closed. "
+  + "Opening and closing a terminal, every command Rooks starts, and lines sent from another device are in the run log; hidden input, such as a password, is not.";
+
+/** Show in terminal types a cd into a terminal; it says just that, with only the last folder's name. */
+export function typedCdWords(folder: string, terminalName: string): string {
+  const last = (folder || "").split("/").filter(Boolean).pop() || "Home";
+  return `Typed a cd to ${last} into ${terminalName}.`;
+}
+
+/** Why Show in terminal cannot type now: no terminal, or the terminal is running something (the cd would go into it). */
+export function showInTerminalBlock(t: Pick<RoomTerminal, "name" | "alive" | "busy"> | null | undefined): string {
+  if (!t || !t.alive) return "Open a terminal first";
+  if (t.busy) return `${t.name} is running something. Wait until it finishes.`;
+  return "";
+}
+
+/** The chrome bar's words when a terminal's socket closes. `retrying`: it will be asked again on its own. */
+export function closeWords(code: number, reason: string, retrying: boolean): string {
+  if (code === 4401) return "You are signed out. Sign in again, then come back to the Room.";
+  if (code === 4403) return /switched off/i.test(reason || "") ? reason : "The terminal only opens on the computer running Rooks.";
+  if (code === 4404) return "This terminal is gone. Open a new one.";
+  if (code === 4409) return ENDED_SHORT;
+  if (code === 1005 || code === 1006) return retrying ? "The terminal lost its connection. Trying again…" : "The terminal lost its connection.";
+  if (!reason || /shell exited/i.test(reason)) return ENDED_SHORT;
+  return reason;
 }
 
 /** The quick command route stops at 120 s; a terminal has no limit. */
@@ -164,6 +220,17 @@ export function terminalLine(t: Pick<RoomTerminal, "name" | "owner" | "alive"> &
 export function commandsLabel(helper: boolean): string {
   const base = "One command at a time, up to two minutes each.";
   return helper ? `${base} A terminal needs the Room on this computer.` : base;
+}
+
+/**
+ * The Commands window's label from status: helper mode says a terminal needs the Room on this computer. A service that
+ * says why there is no terminal is believed; an older one is guessed from what it can do (no terminal, no files, not a
+ * separate computer).
+ */
+export function commandsLabelFor(s: Pick<RoomStatus, "available" | "isolation" | "can">): string {
+  const why = s.can?.terminal_off_reason;
+  if (why) return commandsLabel(why === "helper");
+  return commandsLabel(!!s.available && !s.can?.terminal && !s.can?.files && s.isolation !== "vm");
 }
 
 export const OPENING_LINE = "Opening a terminal in the Room…";
