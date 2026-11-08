@@ -96,6 +96,10 @@ def test_the_hosted_models_connection_keeps_its_row_under_the_new_name(client):
     """Someone who had "AI Workspace Cloud" keeps the same connection (history, default model), now called Rooks Cloud."""
     from app import account, db
 
+    # the test session shares one database: set aside any cloud row another test made, and put it back after
+    kept = [r["id"] for r in db.all("SELECT id FROM connections WHERE name IN ('AI Workspace Cloud', 'Rooks Cloud')")]
+    for cid in kept:
+        db.run("UPDATE connections SET name = ? WHERE id = ?", f"set aside {cid}", cid)
     old = db.run("INSERT INTO connections(name, auth_kind, protocol, base_url, secret_enc, models, enabled, residency, "
                  "created_at) VALUES ('AI Workspace Cloud', 'api_key', 'chat_completions', 'https://x.invalid/v1', '', "
                  "'auto', 1, 'cloud', ?)", db.now())
@@ -105,6 +109,8 @@ def test_the_hosted_models_connection_keeps_its_row_under_the_new_name(client):
         assert [(r["id"], r["name"], r["enabled"]) for r in rows] == [(old, "Rooks Cloud", 0)]
     finally:
         db.run("DELETE FROM connections WHERE id = ?", old)
+        for cid in kept:
+            db.run("UPDATE connections SET name = 'Rooks Cloud' WHERE id = ?", cid)
 
 
 def test_connect_result_page_says_rooks(client):
