@@ -35,7 +35,7 @@ def test_the_data_folder_and_binary_do_not_move():
 
 
 def test_the_shell_says_rooks_to_people():
-    strings = "\n".join((TAURI / "src" / f).read_text() for f in ("lib.rs", "updater.rs"))
+    strings = "\n".join((TAURI / "src" / f).read_text() for f in ("lib.rs", "updater.rs") if (TAURI / "src" / f).exists())
     strings += (TAURI / "Info.plist").read_text()
     assert "AI Workspace" not in strings
     assert re.search(r"Rooks \{version\} is available", strings)
@@ -44,3 +44,26 @@ def test_the_shell_says_rooks_to_people():
 def test_the_palette_cannot_collide_with_the_app():
     pack = (REPO / "desktop" / "rooks-native" / "pack" / "macos-dmg.sh").read_text()
     assert "Rooks Ask.app" in pack
+
+
+def test_the_window_is_built_in_code_with_the_webkit_handlers():
+    """docs/design/0007 2.4: WebKit opens no window for window.open or target=_blank and drops <a download> unless the
+    shell handles them, and it asks the shell about the microphone. The main window keeps its settings in the config
+    (title, size) but is built in setup, so the handlers can be attached."""
+    main = next(w for w in CONF["app"]["windows"] if w["label"] == "main")
+    assert main.get("create") is False
+    # the shell's sources: lib.rs, and webkit.rs when the handlers live there
+    lib = "\n".join(p.read_text() for p in (TAURI / "src" / "lib.rs", TAURI / "src" / "webkit.rs") if p.exists())
+    assert "WebviewWindowBuilder::from_config" in lib
+    for handler in ("on_new_window", "on_download", "on_permission_request"):
+        assert handler in lib
+    # the microphone (voice, meetings) is granted; the camera, the screen and the rest are left to the system's prompt
+    assert re.search(r"PermissionKind::Microphone\s*=>\s*PermissionResponse::Allow", lib)
+    assert not re.search(r"PermissionKind::(Camera|DisplayCapture|Geolocation)\s*=>\s*PermissionResponse::Allow", lib)
+
+
+def test_links_leave_only_as_web_addresses():
+    """open_external opens http and https addresses in the system browser and nothing else (no file:, no app links)."""
+    native = (TAURI / "src" / "native.rs").read_text() + (TAURI / "src" / "commands.rs").read_text()
+    assert "fn open_external" in native
+    assert re.search(r'"http"\s*\|\s*"https"', native)

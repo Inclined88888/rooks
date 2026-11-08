@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="Rooks" Language="1033" Version="0.4.0" Manufacturer="Inclined88888" UpgradeCode="6F1C2A3E-7B44-4D1A-9C3E-2A6B8D4E1F70">
+  <Product Id="*" Name="Rooks Ask" Language="1033" Version="0.4.0" Manufacturer="Inclined88888" UpgradeCode="6F1C2A3E-7B44-4D1A-9C3E-2A6B8D4E1F70">
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" Description="Rooks, on this computer" />
     <MajorUpgrade DowngradeErrorMessage="A newer Rooks is already installed." />
     <MediaTemplate EmbedCab="yes" />
@@ -8,10 +8,10 @@
     <Property Id="ARPPRODUCTICON" Value="RooksIcon" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="LocalAppDataFolder">
-        <Directory Id="INSTALLDIR" Name="Rooks" />
+        <Directory Id="INSTALLDIR" Name="Rooks Ask" />
       </Directory>
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="ApplicationProgramsFolder" Name="Rooks" />
+        <Directory Id="ApplicationProgramsFolder" Name="Rooks Ask" />
       </Directory>
     </Directory>
     <DirectoryRef Id="INSTALLDIR">
@@ -22,7 +22,7 @@
     </DirectoryRef>
     <DirectoryRef Id="ApplicationProgramsFolder">
       <Component Id="StartMenu" Guid="C2D3E4F5-A6B7-4890-9BCD-EF0123456789">
-        <Shortcut Id="RooksStart" Name="Rooks" Description="Rooks" Target="[INSTALLDIR]rooks-native.exe" WorkingDirectory="INSTALLDIR" Icon="RooksIcon" />
+        <Shortcut Id="RooksStart" Name="Rooks Ask" Description="Rooks Ask" Target="[INSTALLDIR]rooks-native.exe" WorkingDirectory="INSTALLDIR" Icon="RooksIcon" />
         <RemoveFolder Id="CleanMenu" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\Inclined88888\Rooks" Name="installed" Type="integer" Value="1" KeyPath="yes" />
       </Component>

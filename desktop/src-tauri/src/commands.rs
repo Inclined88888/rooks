@@ -45,3 +45,18 @@ pub fn open_logs(app: AppHandle) -> Result<(), String> {
         .open_path(dir.display().to_string(), None::<&str>)
         .map_err(|e| e.to_string())
 }
+
+/// Open a web address in the person's own browser: sign-ins, plans, help pages. WebKit opens no window for
+/// `window.open`, so the page sends its links here (desktop.ts `openExternal`). Only http and https leave; a page
+/// cannot use this to open a file or start another program.
+#[tauri::command]
+pub fn open_external(app: AppHandle, url: String) -> Result<(), String> {
+    let parsed =
+        tauri::Url::parse(url.trim()).map_err(|_| "That is not a web address.".to_string())?;
+    if !matches!(parsed.scheme(), "http" | "https") || !crate::webkit::is_web_address(&parsed) {
+        return Err("Only web addresses open in the browser.".into());
+    }
+    app.opener()
+        .open_url(parsed.as_str(), None::<&str>)
+        .map_err(|e| e.to_string())
+}
