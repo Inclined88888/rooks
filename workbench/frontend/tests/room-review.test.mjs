@@ -55,7 +55,7 @@ test("terminals switched off in Settings come from status: the Terminal window s
   const win = src("../src/room/TerminalWindow.tsx");
   assert.match(win, /terminalsSwitchedOff\(status, ui\.switchedOff\)/, "the window and the panes read the switched-off state from status");
   assert.doesNotMatch(win, /if \(ui\.remote \|\| ui\.switchedOff/, "the panes do not stay hidden on the old refusal alone");
-  assert.match(win, /to="\/settings">Open Settings</, "the switched-off state links to Settings");
+  assert.match(win, /to="\/settings\?section=tools">Open Settings</, "the switched-off state links to Settings, where its switch is");
 });
 
 test("the switched-off refusal is forgotten as soon as status says terminals are on", () => {

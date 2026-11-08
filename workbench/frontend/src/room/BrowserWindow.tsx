@@ -50,7 +50,7 @@ export function BrowserWindow({ status, act, stale }: { status: RoomState; act: 
     const saved = status.browser.tabs;
     const action = off.reason === "off" && status.available && status.reachable
       ? <Button variant="primary" size="sm" icon={<Power size={13} />} busy={act.busy === "up"} onClick={() => void act.start()}>Start</Button>
-      : off.reason === "switched_off" ? <Link className="ui-btn ui-btn-secondary ui-btn-sm" to="/settings">Open Settings</Link>
+      : off.reason === "switched_off" ? <Link className="ui-btn ui-btn-secondary ui-btn-sm" to="/settings?section=tools">Open Settings</Link>
       : off.reason === "no_engine" ? <Button variant="secondary" size="sm" onClick={() => void refreshRoomStatus()}>Check again</Button>
       : undefined;
     body = (

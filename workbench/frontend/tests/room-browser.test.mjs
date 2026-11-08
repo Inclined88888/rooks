@@ -159,3 +159,23 @@ test("the browser steps read the same as the presence line (presence.py _ROOM)",
   assert.equal(say({ action: "type", text: "my secret words" }), "Typing in the Room's browser");
   assert.equal(say({ action: "tabs" }), "Checking the Room browser's tabs");
 });
+
+test("switched off, the window points to a switch that is really in Settings (review finding)", () => {
+  assert.ok(br, "src/room/browser.ts exists");
+  const settings = read("../src/pages/Settings.tsx");
+  // the app's own screens switch the Room's browser and its terminals on and off (PUT /settings room_browser, app_terminal)
+  assert.match(settings, /room_browser:\s*boolean/, "Settings reads the Room browser's switch");
+  assert.match(settings, /app_terminal:\s*boolean/, "Settings reads the terminals' switch");
+  assert.match(settings, /body:\s*\{\s*room_browser:/, "Settings saves the Room browser's switch");
+  assert.match(settings, /body:\s*\{\s*app_terminal:/, "Settings saves the terminals' switch");
+  assert.match(settings, /label="The Room's browser"/);
+  assert.match(settings, /label="Terminals"/);
+  // where: Settings, Tools; the window's link opens that section
+  const off = br.browserOff({ ...ON, can: { browser: false, browser_off_reason: "switched_off" } });
+  assert.match(off.line, /Settings, under Tools/);
+  const win = read("../src/room/BrowserWindow.tsx");
+  assert.match(win, /to="\/settings\?section=tools"/);
+  const term = read("../src/room/TerminalWindow.tsx");
+  assert.match(term, /to="\/settings\?section=tools"/);
+  assert.match(term, /Settings, under Tools/);
+});

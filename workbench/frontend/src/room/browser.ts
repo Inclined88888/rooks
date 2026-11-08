@@ -48,7 +48,7 @@ export const BROWSER_CHECKS = "Before a purchase, a form sent to a site you did 
 
 const OFF: Record<BrowserOffReason, { title: string; line: string }> = {
   no_engine: { title: "The Room has no browser yet.", line: "Install Chrome, Edge or Chromium on this computer, then check again. The Room uses it only as an engine, with a profile of its own." },
-  switched_off: { title: "The Room's browser is switched off in Settings.", line: "Switch it on there to browse inside the Room." },
+  switched_off: { title: "The Room's browser is switched off in Settings.", line: "Switch it on in Settings, under Tools, to browse inside the Room." },
   windows: { title: "The Room's browser is not on Windows yet.", line: "The terminal and Files work. Use your own browser for now." },
   helper: { title: "The Room runs elsewhere, so its browser is not here.", line: "Open the Room on the computer it runs on to use its browser." },
 };
