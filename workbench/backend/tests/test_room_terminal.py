@@ -378,6 +378,17 @@ def test_the_chat_tool_starts_tails_and_lists_files(client, on):
     assert presence.plain_step("use_room", {"action": "start", "command": "x"}) == "Installing in the Room's terminal"
 
 
+def test_a_room_terminal_has_none_of_the_apps_secrets_and_the_rooms_path(client, on, monkeypatch):
+    monkeypatch.setenv("SOME_PROVIDER_API_KEY", "sk-should-not-leak")
+    monkeypatch.setenv("SOME_SERVICE_PASSWORD", "hunter2-should-not-leak")
+    tid = _open(client)["id"]
+    _send(client, tid, 'echo "[${APP_SECRET}][${TOOLS_API_KEY}][${SOME_PROVIDER_API_KEY}][${SOME_SERVICE_PASSWORD}]'
+                       '[$ROOKS_TRY]" "first=${PATH%%:*}"')
+    out = wait_tail(client, tid, lambda x: "[][][][][1]" in x["text"])["text"]
+    assert "should-not-leak" not in out.replace("SOME_PROVIDER_API_KEY", "").replace("SOME_SERVICE_PASSWORD", "")
+    assert re.search(r"first=\S*/\.local/bin", out), out[-300:]
+
+
 def test_the_chat_can_watch_an_install_more_than_once_in_a_turn(client, on):
     """tail twice in one turn is watching, not a repeated change: neither is turned away as "already done"."""
     from conftest import SCRIPT, events, tool_call

@@ -45,6 +45,41 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
+### The Room as a small computer (design 0006): follow-ups, each its own record or line
+
+* **"Since you were here" and an Activity window.** New programs in the Room's bin folders, files changed and points
+  saved since the person last looked, with a `seen` marker. The Files window already shows that nothing was wiped.
+* **A read-only file preview in Files** (`GET /api/room/files/read`). Files lists one folder at a time and changes nothing.
+* **Terminals through the helper.** `rooks-try serve` (`TRY_URL`) hosts no terminals and no Files; its status says
+  `can: {terminal: false, files: false}` and the page keeps the Commands window ("A terminal needs the Room on this
+  computer."). Hosting the registry in the helper and proxying the WebSocket through the app would close it.
+* **Windows terminals.** `terminal_pty` and the Room's terminals are POSIX only; a pseudo terminal through ConPTY is
+  the way. Windows keeps the Commands window with a login Git bash (or Command Prompt, which says so).
+* **A shell inside a QEMU guest** (serial or ssh console). Until then a separate computer has no Terminal window and no
+  Files (`terminal_argv` is None), and Advanced says "Files live inside the separate computer. Use its screen."
+* **Shells that survive an app restart** (`tmux` around the login shell). Today a restart ends every Room terminal; it
+  is listed greyed with its text, the restart note says so, and its files stay.
+* **A live theme switch re-theming an open xterm** (the app's Terminal page has the same gap).
+* **The loopback rule on a Room that is a virtual machine.** The terminal's screen opens only on the computer running
+  Rooks, even when the Room is a guest with `isolation: vm`; relaxing it there is a decision for the owner.
+* **Recording click, drag, scroll, type and key steps in the run log** (from 0003 B2, listed again below).
+* **Found while building lane B of 0006:**
+  * Ended terminals count toward the four. After Stop with four open, the person must Close an ended one before a new
+    terminal opens, and the chat tool cannot close one (use_room has no close); `start` then answers "Four terminals
+    can be open in the Room. Close one to open another." Decide whether `start` may drop Rooks's own oldest ended one.
+  * Start over forgets the terminals it closed (their records and logs go with the folder they stood in), so they are
+    not listed greyed afterwards, unlike Stop. The record asked for one new "Terminal 1" and the cap of four; keeping
+    them would have left no room for it.
+  * The exit code of a command comes from a marker the Room's `~/.profile` (bash) and `~/.zprofile` (zsh) print; with
+    sh, dash, fish or a profile the person replaced, busy still works (the foreground process group) but a started
+    command's end and exit code are not known, and no "done" row is written.
+  * A Room terminal gets its controlling terminal from util-linux `setsid -c` on Linux; on macOS it is a plain new
+    session, so a shell that does not take the terminal itself (not bash or zsh) runs without job control there.
+  * The WebSocket was tested through the test client with the loopback check allowed, as the app terminal's tests do;
+    a real browser on this computer (uvicorn, a loopback Origin) was not driven in lane B.
+  * Switching terminals off in Settings stops new Room terminals and the screen, but leaves open ones running and
+    reachable through tail and send.
+
 ### Premium pass (2026-11-07): left undone, recorded at verification
 
 * **Page caching is partial.** Jobs, Tasks and reopened chats show cached data at once; Settings, Teach, Company and
