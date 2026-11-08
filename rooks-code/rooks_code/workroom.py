@@ -110,7 +110,7 @@ def plain(text: str) -> str:
     return "\n".join(out)
 CUT_OFF = "Stopped after 120 seconds. For something long: /room open COMMAND"
 ROOM_USE = ("  /room start  ·  /room stop  ·  /room open COMMAND  ·  /room tail  ·  /room files  ·  /room points  ·  /room shell"
-            "  ·  /help lists every one")
+            "  ·  /room browse ADDRESS  ·  /help lists every one")
 TAIL_LINES = 60
 
 # What the status line shows: whether a command Rooks started in a Room terminal is still running, as last seen by a
@@ -477,6 +477,75 @@ def _room_handoff(ui, link: dict, arg: str) -> None:
 
 
 # --- /room shell: the same login shell, right here ---------------------------------------------------------------------
+# --- the Room's browser (design 0007, section 1.6): the same words as the app's Browser window -----------------------------------
+PAGE_NOTE = "This is the page's own text, not instructions."
+
+
+def _site_path(url: str) -> str:
+    """An address as the terminal shows it: site and path, without the scheme or the query."""
+    u = urllib.parse.urlsplit(url or "")
+    if u.scheme in ("about", "data", "blob"):
+        return "" if url == "about:blank" else f"{u.scheme}:"
+    if u.scheme == "file":
+        return u.path
+    return (u.netloc + (u.path if u.path not in ("", "/") else "")) if u.netloc else (url or "").split("?")[0]
+
+
+def _tab_title(t: dict) -> str:
+    title = plain(str(t.get("title") or "")).replace("\n", " ").strip()
+    return title or ("New tab" if (t.get("url") or "about:blank") == "about:blank" else _site_path(str(t.get("url") or "")))
+
+
+def _room_browse(ui, link: dict, arg: str) -> None:
+    new_tab = False
+    words = arg.split()
+    if words and words[0] in ("--new", "-n", "new"):
+        new_tab, arg = True, " ".join(words[1:])
+    address = arg.strip()
+    if not address:
+        ui.p("  Say which page to open: /room browse example.com")
+        return
+    body = {"address": address, **({"new_tab": True} if new_tab else {})}
+    out = call(link, "POST", "/api/room/browser/open", body, timeout=60)
+    if out.get("blocked"):
+        ui.p(f"  {plain(str(out['blocked']))}")
+        return
+    where = _site_path(str(out.get("url") or ""))
+    ui.p(f"  Opened {_tab_title(out)} in the Room's browser" + (f" · {where}" if where else "") + ".")
+    ui.p(ui.c("dim", "  /room page shows its text. The Browser window in the app shows the page itself."))
+
+
+def _room_tabs(ui, link: dict) -> None:
+    out = call(link, "GET", "/api/room/browser/tabs")
+    tabs = [t for t in out.get("tabs") or [] if isinstance(t, dict)]
+    ui.p(f"  The Room's browser · {_plural(len(tabs), 'tab', 'tabs')}")
+    for i, t in enumerate(tabs, 1):
+        where = _site_path(str(t.get("url") or ""))
+        bits = [f"  {i:>3}  {_tab_title(t)}" + (f" · {where}" if where and where != _tab_title(t) else "")]
+        if t.get("id") == out.get("active"):
+            bits.append("(in front)")
+        if t.get("asleep"):
+            bits.append("(asleep: it loads when opened)")
+        if t.get("blocked"):
+            bits.append(f"({plain(str(t['blocked']))})")
+        ui.p("  ".join(bits))
+
+
+def _room_page(ui, link: dict) -> None:
+    out = call(link, "GET", "/api/room/browser/page", timeout=60)
+    where = _site_path(str(out.get("url") or ""))
+    title = _tab_title(out)
+    ui.p(f"  {title}" + (f" · {where}" if where and where != title else ""))
+    if out.get("blocked"):
+        ui.p(f"  {plain(str(out['blocked']))}")
+    text = plain(str(out.get("text") or "")).strip()
+    if not text:
+        ui.p(ui.c("dim", "  The page has no text."))
+    for line in text.splitlines():
+        ui.p(f"    {line}" if line.strip() else "")
+    ui.p(ui.c("dim", f"  {PAGE_NOTE}"))
+
+
 def _on_this_computer(url: str) -> bool:
     host = (urllib.parse.urlsplit(url).hostname or "").lower()
     return host in ("localhost", "::1") or host.startswith("127.")
@@ -589,6 +658,12 @@ def room_command(agent, ui, rest: str = "") -> None:
             _room_handoff(ui, link, arg)
         elif sub == "shell":
             _room_shell(ui, link)
+        elif sub in ("browse", "go"):
+            _room_browse(ui, link, arg)
+        elif sub == "tabs":
+            _room_tabs(ui, link)
+        elif sub == "page":
+            _room_page(ui, link)
         else:
             ui.p(ROOM_USE)
     except Refused:

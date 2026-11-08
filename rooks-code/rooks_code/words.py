@@ -66,6 +66,9 @@ ROOM_VERBS = [
     ("/room back N", "Start over from a saved point (asks first)"),
     ("/room handoff FILE PLACE", "Hand off a file: it waits for your OK in Needs you"),
     ("/room shell", "a shell inside the Room, right here; exit comes back"),
+    ("/room browse ADDRESS", "open a page in the Room's own browser (--new for a new tab)"),
+    ("/room tabs", "the Room browser's tabs"),
+    ("/room page", "the text of the page in front, as plain lines"),
 ]
 
 KEYS = [("/","commands, with what each does"), ("@", "add a file or folder to your request"),
