@@ -168,11 +168,27 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Redaction copy drift (pre existing).** `rooks-browser` keeps a copy of the backend's `redact.py`; the backend gained
   PEM and AWS patterns, so `rooks-browser/tests/test_units.py::test_redaction_is_a_verbatim_copy_of_workbench` fails at
   the branch's base commit and at its tip.
-* **Terminal approvals with the bridge key (pre existing, not widened).** `/v1/rooks/approvals/{id}` lets a bridge key
-  record an answer to a terminal held row (`terminal:` request ids only). It runs nothing on the server, but a coding
-  job could record an answer to its own terminal prompt. Owner decision.
-* **Stored Terminal access token.** A coding job with shell access runs as the person and could read the token
-  `rooks login` stores; the read only bridge key closes the app's own routes, not a hostile local process.
+* **Fixed in phase 1a: terminal approvals with the bridge key.** `POST /v1/rooks/approvals/{id}` now refuses every
+  bridge key (app.json, desk, coding job) with 403; only the Terminal access token records an answer, and only for a
+  prompt the person's own terminal raised. A prompt raised with the coding job key (request id `terminal:job:`) is
+  answered in the signed in app only, the token included, here and in `POST /api/needs-you/a:{id}/...` (which refuses
+  it unless signed in; the list marks it `in_app_only` and the terminal's /needs sends no answer for it). The terminal
+  that asked may withdraw its prompt (`/withdraw`, outcome `withdrawn`): the card closes and it can never become an
+  approval; a coding job withdraws only its own prompts and no other key withdraws a job's. Tests:
+  `test_auth_boundaries.py::test_a_shared_key_never_answers_a_terminal_prompt`,
+  `::test_a_prompt_raised_by_a_coding_job_is_answered_only_in_the_app`,
+  `::test_needs_you_never_answers_a_coding_jobs_prompt_with_the_terminal_token`,
+  `::test_only_the_side_that_asked_withdraws_a_terminal_prompt`, and over real processes
+  `rooks-code/tests/test_shared_loop_e2e.py::test_a_program_holding_the_apps_key_cannot_answer_the_terminals_prompt`.
+* **What remains of it: the stored Terminal access token.** Anything running as the person can read the token
+  `rooks login` keeps in `rooks-keys.json` and answer a prompt the person's own interactive terminal raised (the token
+  is accepted for those by design: `test_the_terminal_token_answers_the_persons_own_terminal_prompt` shows a row raised
+  with the app key answered by the token). So a program the agent started earlier in the same session (a background
+  command the person approved) could still answer a later prompt while the person is away from the keyboard. Not
+  proven closed: binding an answer to the terminal process that asked (a per prompt secret held only in its memory)
+  or keeping the token in the OS keychain would narrow it. Coding jobs the app starts are covered (their prompts refuse
+  the token). Without `rooks login` the person's answer typed in the terminal is no longer recorded in the app; the
+  card is withdrawn instead and the terminal says to run `rooks login`.
 * **Not tested with a real model.** Every chat, Room and approval flow on this branch was tested with the scripted
   harness model only; no provider key was available.
 * **Versions.** The terminal reports 0.1.0 (`rooks-code` package) while AGENTS.md calls the install 1.0.0.
@@ -209,10 +225,16 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   them out and say so on the page.
 * **Done in B3: a repeated hand-off request no longer makes a second held item.** `room.request_handoff` joins a
   pending request for the same file and place (`already_asked`), and the chat turn stops asking.
-* **The terminal's Room MCP server lets the calling agent set `approve: true` on handoff.** In the app, the copy out
-  of the Room waits for a person in Needs you. In the terminal, `rooks-try mcp` takes the agent's own flag; rooks-code
-  treats the server as untrusted, so its usual approval prompt is the only gate. Replace the flag with an MCP
-  elicitation question, as Rooks Desk does, so a person answers in the terminal too.
+* **Fixed in phase 1a: the Room MCP server took the calling agent's `approve: true` on handoff.** `rooks-try mcp`
+  drops the flag (an `approve` the agent sends is ignored) and asks the person with MCP elicitation, as Rooks Desk
+  does; a client that cannot ask gets `waiting_for: "a person"` and nothing is copied. rooks-code's MCP client now
+  declares elicitation and puts the question to the person (also with `--yes`, mirrored to Needs you when linked); a
+  question that is not a single yes or no is declined. Tests: `rooks-try/tests/test_mcp_handoff.py` (the real
+  `rooks-try mcp` over stdio) and `rooks-code/tests/test_e2e.py::test_an_mcp_servers_question_*`. What remains: an
+  MCP client that answers elicitation by itself (some clients auto-accept) is outside our control; the Room's HTTP
+  helper (`rooks-try serve`, `POST /api/handoff` with `approve`) still trusts its caller: it needs the helper's key
+  (`ROOKS_TRY_API_KEY` or `TOOLS_API_KEY`, which `security.scrub_env` keeps from child processes) and the app calls it
+  only after a yes in Needs you. Not re-checked in phase 1a.
 * **The Room has no real screen on macOS and Windows yet.** Only the private folder and shell (and the drawn terminal
   by name) work there; a virtual machine driver (Apple Virtualization or QEMU with a guest agent and an in-process
   screen viewer) is the next driver behind the same interface. Design 0003 records this as out of scope for the branch.

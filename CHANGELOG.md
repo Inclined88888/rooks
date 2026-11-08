@@ -155,6 +155,115 @@ own lanes.
 - **No migration.** Nothing changes on upgrade; rollback is removing the branch (the `.room-browser` folder in the
   Room's home can be deleted).
 
+## Unreleased · Phase 1a: terminal safety · branch phase-1a/terminal-safety
+
+No schema change, nothing to migrate. Rollback: revert the branch's commits.
+
+- **Fixes from the phase 1a review.** A coding job's own prompt is now refused in Needs you too when answered with the
+  Terminal access token (only the signed in app answers it; the terminal's `/needs` lists it as "answer in the app"
+  and sends nothing), and only a job withdraws a job's prompt. Deny rules in `rooks` now also catch a shell reading
+  from the input (`| bash -s`, `| sh -`, `| sudo -s`, `| su`), `bash -c "$X"`, `bash -c -- '...'`, brace expansion
+  (`{rm,-rf,x}`), `$'rm'`, a program name in a variable behind `sudo`, and `su -c`, `script -c`, `busybox`,
+  `unshare`, `fakeroot` and similar wrappers. The guard on Rooks' own rule files reads the command as the shell does,
+  so `.rooks/set''tings.json`, `cd .rooks && ...` and `./.rooks//settings.json` are asked about. "Always allow here"
+  is no longer offered in an unasked folder that has skills or commands of its own (choosing it would have trusted
+  them unseen). A Claude model priced under `[prices]` with two numbers gets Anthropic's cached price rule again, so
+  the dollar cap keeps counting. Tests: `rooks-code/tests/test_permissions.py` section 9, `test_caching.py`,
+  `test_workroom.py`, `workbench/backend/tests/test_auth_boundaries.py` (each failed before the fix; scripted fake
+  model, no real model key).
+
+- **Skills and your own commands in `rooks`, with the app off.** Skills are folders with a `SKILL.md` (a `name` and a
+  `description` in front matter, then the steps) in this folder's `.rooks/skills` or `.claude/skills` and your own
+  `~/.rooks/skills` or `~/.claude/skills`. Only names and descriptions go into the instructions; a skill's steps reach
+  the model only when it calls `load_skill`, the tool the app's saved skills already use (a skill file is used before
+  an app skill of the same name, and the app's skills still work when it is connected). `learn = false` does not turn
+  skill files off. Your own commands are `.rooks/commands/NAME.md` and `.claude/commands/NAME.md` (this folder and
+  yours): `/NAME words` sends the file's text with `$ARGUMENTS`, `$1`, `$2` filled in; `rooks "/NAME words"` and
+  `rooks -p "/NAME words"` too. Built-in command names always win. `/skills` lists the app's skills, skill files and
+  your commands, each saying where it comes from and whether it is used. **A folder's own skills and commands are used
+  only after you trust the folder** (the trust of the permission rules: the one-time question at start now also lists
+  them, or `/permissions trust`); until then they are listed as not used, the session start says so, `load_skill`
+  refuses them and `/NAME` says why instead of running (headless exits 3). A command file grants nothing: front matter
+  such as `allowed-tools` is not honoured and `!` shell lines are not run. A folder's skill or command file linking
+  outside the folder is never read; descriptions are shown without control codes. Not yet: the app does not show skill
+  files, and a session on the app's shared loop does not offer them. Tests: `rooks-code/tests/test_local_skills.py`
+  (each failed before the change; scripted fake model, no real model key).
+
+- **Prompt caching, charged at the cached price in `rooks`.** Anthropic requests already marked the system prompt,
+  the tool list and the conversation for caching; now what the provider reports is used. Input read from the cache
+  (Anthropic `cache_read_input_tokens`, OpenAI `prompt_tokens_details.cached_tokens`, DeepSeek
+  `prompt_cache_hit_tokens`) and input written to it (Anthropic `cache_creation_input_tokens`) are counted apart and
+  charged at the cached price: `/cost` shows them ("20,000 of the input read from the cache, 21,000 written to it"),
+  each receipt's model call has `cache_read_tokens` and `cache_write_tokens`, the headless result's `tokens` has
+  `cache_read` and `cache_write`, and the dollar cap counts the cached price. Before, every cached token was charged at
+  the full input price: cache reads were overcharged (a session could stop at the cap early) and Anthropic cache
+  writes, which cost 1.25x the input price, were undercharged (the cap could be crossed). The cap's estimate for the
+  next call now uses the cache write price when it is higher. Cached prices are in the built-in table (Claude models
+  by Anthropic's rule: a read 0.1x, a write 1.25x the input price); a `[prices]` entry takes them as
+  `[input, output, cache read, cache write]`. A call that used the cache with no known cached price has an unknown
+  cost, never a guess, and Rooks says once that the dollar cap cannot be enforced (the token cap still is). Tests:
+  `rooks-code/tests/test_caching.py` (all but the request-marks test failed before the change; scripted fake model,
+  no real key, so no live call has checked that a provider reports cache reads above zero).
+
+- **Headless `rooks` for scripts and CI.** `rooks -p "task"` (or the task piped in: `echo "task" | rooks -p`) runs one
+  task and never waits for input: a step that would need your OK (an edit, a command, an MCP tool, an MCP server's
+  question to you) is denied at once, reported, and the run exits with code 3. Only what you set up beforehand lets a
+  step run: a permission rule, a trusted folder, or `--yes` (which still never answers an MCP server's question to
+  you). A headless run is not linked to an app chat, so nothing waits in Needs you. `--output-format text` (the answer
+  on stdout, steps and denials on stderr), `json` (one result: answer, session id, model calls, tokens, cost, what was
+  denied and why, exit code) or `stream-json` (one event per line: start, assistant text, tool call, tool result,
+  approval asked, approval denied, notice, end). Both are described by `rooks-code/rooks_code/schema/headless.schema.json`.
+  Keys, tokens, emails and phone numbers are hidden in this output, as in the receipts. Exit codes: 0 done, 1 not
+  finished or an error, 2 bad usage or cannot start, 3 something was denied. `rooks_code.sdk.run(prompt, cwd=...,
+  on_event=...)` is the same run in-process for Python scripts, returning the same result object; `rooks -p` uses it.
+  `-P claude-code` and `-P codex` are refused in headless mode (use `claude -p` or `codex exec`). Tests:
+  `rooks-code/tests/test_headless.py` (each failed before the change; scripted fake model, no real model key).
+  `rooks-code[dev]` now needs `jsonschema` for that test.
+- **Only a person answers a terminal's question.** The open app's own key (app.json), Rooks Desk's key and a coding
+  job's key can no longer record an answer to a question the `rooks` terminal asked: any program on this computer can
+  read app.json, a command the agent ran included, so it could have said yes to its own question. An answer typed in
+  the terminal is recorded in the app with the Terminal access token (`rooks login`); without it the answer still
+  stands in the terminal and the app's card closes. A question from a coding job the app started is answered in the
+  app only, not even with the token. Breaking for scripts that answered `/v1/rooks/approvals/{id}` with the app.json
+  key: they get "Only you can answer this" (403) now.
+- **The Room asks you before a file leaves it, in the terminal too.** `rooks-try mcp`'s `handoff` no longer takes
+  `approve: true` from the agent calling it. The server asks the person itself (MCP elicitation, as Rooks Desk does),
+  and `rooks` now puts such a question to you, also with `--yes`, and mirrors it to Needs you. A program that cannot
+  ask gets "waiting for a person" and nothing is copied. The same goes for Rooks Desk's questions in `rooks`: a
+  sensitive step it used to refuse there (the terminal could not ask) is now put to you.
+- **Permission rules in `rooks`.** `[permissions] allow` and `deny` in `rooks.toml`, and a project's own in
+  `.rooks/settings.json`: `bash(pytest *)`, `bash(npm test)`, `edit(src/**)`, `mcp(notes/search)`. Deny wins and
+  applies in every mode, auto-accept (`--yes`) included; a refused step exits with code 3 in a one-shot run. A
+  compound command (`pytest; rm -rf x`, `&&`, pipes, `$(...)`, backticks, a redirect to a file, `VAR=value` in front)
+  never matches an allow rule unless every part does; a command too hard to read is asked about even in auto-accept
+  while a command deny rule exists. A project's allow rules apply only after you trust the folder (a one-time
+  question, kept by the folder's real path in `rooks-trust.json` next to `rooks.toml`; `/permissions trust` or
+  `untrust`); until then they are ignored and Rooks says so. A new choice at the question, `h`, always allows that
+  exact command in this folder (a precise rule in `.rooks/settings.json`). `/permissions` shows the rules in plain
+  words. A command naming Rooks' own rule files is asked about in every mode, so the agent cannot grant itself a
+  rule. Not in the app's Settings yet (phase 1b parity pass). Tests: `rooks-code/tests/test_permissions.py` (each
+  failed before the change; scripted fake model, no real model key).
+- **The terminal audit's defects, fixed in `rooks`** (each with a test in `rooks-code/tests/test_audit_defects.py` that
+  failed before the fix, run against the scripted fake model, no real model key):
+  - A no ends the turn. A reply that declines ("OK, I will not change it.", "I'll leave it as is.") is no longer taken
+    for an announced step, and after you deny a change Rooks never nudges the model to carry on.
+  - `a` approves only that exact command, changes to that one file, or that one tool of one MCP server, for the rest of
+    the session; the question says which ("Approve this exact command for this session"). It used to approve every
+    command (or every edit, or every MCP tool of every server) for the session. Breaking for anyone who relied on
+    one `a` covering all commands: you are asked again for each different one.
+  - `/init` reloads the project instructions, so the AGENTS.md it writes is followed from the next request on.
+  - `/doctor` in a session checks the address that session uses (`--base-url`, the app's), not only the config file's.
+  - A one-shot run exits with code 3 when a change or command was denied (typed `n`, no input, a hook). Exit codes
+    are listed in `rooks-code/README.md`: 0 finished, 1 not finished, 2 cannot start, 3 denied. Breaking for scripts
+    that treated a denial as success (it exited 0).
+  - A model error is said in plain words with no address ("The AI service is busy or down right now. Try again in a
+    minute. /doctor (or rooks doctor) shows the details."); the full detail stays in the session's record and /doctor.
+  - One meaning of "plan": Shift+Tab's settings are now asks first, auto-accept and dry run (was "plan only"), so they
+    never share a word with `/mode chat|plan|build`; the line under each answer says "build mode", and the agent's
+    checklist shows as "checklist 2/5" (was "plan 2/5").
+  - One version number: `rooks --version`, `rooks-code/pyproject.toml` and AGENTS.md now say 1.0.6, the `VERSION` file.
+  - The README says what is true: answers stream in as they are written.
+
 ## 2026-11-08 · The Room as a small computer · branch feat/room-desktop
 
 The Room keeps what you do in it. Design record: `docs/design/0006-room-desktop.md`. This entry was written by the

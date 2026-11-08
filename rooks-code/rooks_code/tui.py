@@ -246,7 +246,7 @@ class RichUI(UI):
             t.add_row(Text(mark, style=self.hexcolour(role) if self.color else ""),
                       Text(i["text"], style=self.hexcolour("dim") if i["status"] == "done" and self.color else ""))
         done = sum(i["status"] == "done" for i in items)
-        self.console.print(Padding(Text(f"Plan {done}/{len(items)}", style=self.hexcolour("dim") if self.color else ""), (0, 0, 0, 2)))
+        self.console.print(Padding(Text(f"Checklist {done}/{len(items)}", style=self.hexcolour("dim") if self.color else ""), (0, 0, 0, 2)))
         self.console.print(Padding(t, (0, 0, 0, 2)))
 
     def ask(self, plan) -> str:
@@ -255,9 +255,11 @@ class RichUI(UI):
         from .cli import ASK_LABELS
 
         self.p("")
+        always, here = words.always_choice(plan), words.here_choice(plan)
         self.p("  " + self.c("accent", "Needs your OK") + f": {ASK_LABELS[plan.effect]}.   "
-               + self.c("bold", "y") + " Approve   " + self.c("bold", "n") + " Deny   "
-               + self.c("bold", "a") + " Approve for this session")
+               + self.c("bold", "y") + " Approve   " + self.c("bold", "n") + " Deny"
+               + (("   " + self.c("bold", "a") + " " + always) if always else "")
+               + (("   " + self.c("bold", "h") + " " + here) if here else ""))
 
         def show():
             sys.stdout.write("  › ")
@@ -277,7 +279,7 @@ class RichUI(UI):
         tokens = totals["tokens_in"] + totals["tokens_out"]
         cost = "" if totals["cost_unknown"] else f" · ${totals['usd']:.4f}"
         mode = str(getattr(s, "mode", "build") or "build")
-        self.p(self.c("dim", f"  {tokens:,} tokens{cost} · {mode}{' · /undo puts the files back' if undo else ''}"))
+        self.p(self.c("dim", f"  {tokens:,} tokens{cost} · {mode} mode{' · /undo puts the files back' if undo else ''}"))
 
 
 class RooksCompleter(Completer):
@@ -292,6 +294,14 @@ class RooksCompleter(Completer):
             for cmd, what in COMMANDS.items():
                 if cmd.startswith(text.lower()):
                     yield Completion(cmd, start_position=-len(text), display_meta=what)
+            try:
+                own = _library(self.agent).active("commands")
+            except OSError:
+                own = {}
+            for name, item in own.items():
+                cmd = "/" + name
+                if cmd.startswith(text.lower()) and cmd not in COMMANDS and cmd not in ALIASES:
+                    yield Completion(cmd, start_position=-len(text), display_meta=item.description or item.where)
             return
         if text.startswith("/model "):
             part = text[len("/model "):]
@@ -457,15 +467,17 @@ def banner(agent, ui: RichUI) -> None:
 
 SHORTCUTS = words.KEYS
 
-MODES = ["asks first", "auto-accept", "plan only"]
+# Shift+Tab: how changes are approved. Its own words, so it never reads like /mode (chat, plan, build), which says
+# what Rooks may do at all; the status bar shows this one, the line under each answer shows the mode.
+MODES = ["asks first", "auto-accept", "dry run"]
 
 
 def mode_of(s) -> str:
-    return "plan only" if s.dry_run else ("auto-accept" if (s.auto_approve or s.trusted()) else "asks first")
+    return "dry run" if s.dry_run else ("auto-accept" if (s.auto_approve or s.trusted()) else "asks first")
 
 
 def set_mode(s, mode: str) -> None:
-    s.dry_run = mode == "plan only"
+    s.dry_run = mode == "dry run"
     s.auto_approve = mode == "auto-accept"
 
 
@@ -533,7 +545,7 @@ def run(agent, ui: RichUI) -> int:
         event.current_buffer.insert_text("\n")
 
     @keys.add("s-tab")
-    def _mode(event):  # Shift+Tab: asks first -> auto-accept -> plan only, like Claude Code
+    def _mode(event):  # Shift+Tab: asks first -> auto-accept -> dry run, like Claude Code's approval cycle
         m = MODES[(MODES.index(mode_of(agent.s)) + 1) % len(MODES)]
         set_mode(agent.s, m)
         event.app.invalidate()
@@ -556,7 +568,7 @@ def run(agent, ui: RichUI) -> int:
                  ("class:dim", f"context {pct}%"), sep,
                  ("class:dim", f"{_k(t['tokens_in'] + t['tokens_out'])} tokens")]
         if todos:
-            parts += [sep, ("class:dim", f"plan {sum(i['status'] == 'done' for i in todos)}/{len(todos)}")]
+            parts += [sep, ("class:dim", f"checklist {sum(i['status'] == 'done' for i in todos)}/{len(todos)}")]
         if workroom.room_working():  # a /room open command still running, as the last /room verb saw it
             parts += [sep, ("class:mode", "● Room running")]
         parts += [sep, ("class:dim" if mode == "asks first" else "class:mode", mode), ("class:hint", "  Shift+Tab")]
@@ -704,10 +716,128 @@ def add_skill(agent, ui, url: str) -> None:
     ui.p(f"  Approve it on the Skills page: {learning.app_page('/skills')}")
 
 
+def _library(agent):
+    lib = getattr(agent, "library", None)
+    if lib is None:
+        from .skills import Library
+
+        lib = Library(getattr(agent, "root", None) or agent.s.root)
+    return lib
+
+
+def custom_names(agent) -> list[str]:
+    """The person's own commands and this folder's that are in use, as /names, built-in names left out."""
+    try:
+        return ["/" + n for n in _library(agent).active("commands") if "/" + n not in COMMANDS and "/" + n not in ALIASES]
+    except OSError:
+        return []
+
+
+def custom_command(agent, ui, cmd: str, rest: str) -> bool:
+    """/NAME words: run a custom command's text as the request. False when there is no such command. Called only after
+    every built-in name, so a built-in always wins. A command of a folder not trusted is not run, and says so."""
+    from . import skills
+
+    name = cmd.lstrip("/")
+    if not skills.NAME_RE.match(name):
+        return False
+    item, held = _library(agent).command(name)
+    if item is None and held is None:
+        return False
+    if item is None:
+        ui.p(ui.c("warn", "  " + skills.held_command_note(name)))
+        return True
+    prompt = skills.expand(item, rest)
+    if not prompt:
+        ui.p(f"  /{name} is empty ({item.where}), so there is nothing to send.")
+        return True
+    agent.run(prompt)
+    return True
+
+
+def skills_command(agent, ui) -> None:
+    """/skills: the app's saved skills and the skills and commands kept in files, each saying where it comes from."""
+    lib = _library(agent)
+    learning = getattr(agent, "learning", None)
+    app_skills = learning.skill_list() if learning and learning.app else []
+    trusted = lib.trusted()
+    local = lib.all("skills")
+    in_use = lib.active("skills")
+    shown = 0
+    if local or app_skills:
+        ui.p("  " + ui.c("bold", "Skills") + ui.c("dim", "  (Rooks reads one only when a task needs it)"))
+    for i in local:
+        if in_use.get(i.name) == i:
+            state = ""
+        elif i.project and not trusted:
+            state = "  · not used yet: you have not said you trust this folder"
+        else:
+            state = "  · not used: another skill has the same name"
+        ui.p(f"  {ui.c('bold', i.name)}  {i.description}  " + ui.c("dim", f"· {i.where}{state}"))
+        shown += 1
+    for sk in app_skills:
+        hidden = "  · not used: one of your skill files has the same name" if sk["name"].lower() in in_use else ""
+        ui.p(f"  {ui.c('bold', sk['name'])}  {sk.get('description', '')}  " + ui.c("dim", f"· from the Rooks app{hidden}"))
+        shown += 1
+    commands = lib.all("commands")
+    active = lib.active("commands")
+    if commands:
+        ui.p("  " + ui.c("bold", "Your commands") + ui.c("dim", "  (type /name, with words after it if it takes any)"))
+    for i in commands:
+        if "/" + i.name in COMMANDS or "/" + i.name in ALIASES:
+            state = f"  · not used: /{i.name} is a built-in command, which always wins"
+        elif active.get(i.name) == i:
+            state = ""
+        elif i.project and not trusted:
+            state = "  · not used yet: you have not said you trust this folder"
+        else:
+            state = "  · not used: another command has the same name"
+        ui.p(f"  {ui.c('bold', '/' + i.name)}  {i.description}  " + ui.c("dim", f"· {i.where}{state}"))
+        shown += 1
+    if not shown:
+        ui.p("  No skills yet. Put a folder with a SKILL.md in .rooks/skills (this folder) or ~/.rooks/skills (yours); "
+             "Claude Code's .claude/skills work too." + (" After a task of several steps, the app saves one as well."
+                                                          if learning and learning.app else
+                                                          " The Rooks app isn't connected, so the skills it learns are not shown."))
+        return
+    if not trusted and any(i.project for i in local + commands):
+        ui.p(ui.c("dim", "  This folder's own skills and commands are used once you trust it: /permissions trust."))
+    if learning and not learning.app:
+        ui.p(ui.c("dim", "  The Rooks app isn't connected, so the skills it learns are not shown."))
+
+
+def permissions_command(agent, ui, rest: str) -> None:
+    """/permissions: the rules in plain words. /permissions trust or untrust: whether this folder's own rules apply."""
+    from . import permissions
+
+    perms = getattr(agent, "perms", None) or permissions.Permissions.from_settings(agent.s, agent.root)
+    want = rest.strip().lower()
+    if want in ("trust", "untrust", "distrust"):
+        permissions.set_folder_trust(agent.root, want == "trust")
+        perms.reload()
+        ui.p("  " + ("You trust this folder: its own rules, skills and commands apply from now on." if want == "trust" else
+                     "You do not trust this folder: its rules that let things run, its skills and its commands are not "
+                     "used; its never-allowed rules still apply."))
+        return
+    if want in ("help", "how", "?"):
+        ui.p("  " + permissions.SHAPES)
+        return
+    if want:
+        ui.p("  /permissions shows the rules; /permissions trust or untrust for this folder's own rules; /permissions help "
+             "says how to write one.")
+        return
+    for line in perms.describe():
+        ui.p(("  " + line) if line.startswith(" ") else ("  " + ui.c("bold", line) if line.endswith(":") else "  " + line))
+    ui.p(ui.c("dim", "  /permissions help says how to add a rule; /permissions trust or untrust for this folder's own rules."))
+
+
 def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
     s = agent.s
     if cmd == "/help":
         help_table(ui)
+        own = custom_names(agent)
+        if own:
+            ui.p("  Your own commands: " + ", ".join(own[:30]) + ". /skills says what each does and where it comes from.")
     elif cmd == "/image":
         from .images import image_command
 
@@ -774,13 +904,7 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
     elif cmd == "/skills" and rest.split(" ", 1)[0].lower() in ("add", "install"):
         add_skill(agent, ui, rest.split(" ", 1)[1].strip() if " " in rest else "")
     elif cmd == "/skills":
-        learning = getattr(agent, "learning", None)
-        found = learning.skill_list() if learning else []
-        if not found:
-            ui.p("  No saved skills yet. After a task of several steps, the app saves the procedure so next time is faster."
-                 if learning and learning.app else "  Skills are learned through the Rooks app; it isn't connected.")
-        for sk in found:
-            ui.p(f"  {ui.c('bold', sk['name'])}  {sk.get('description', '')}")
+        skills_command(agent, ui)
     elif cmd == "/undo":
         ui.p(undo_text(agent.changes))
     elif cmd == "/diff":
@@ -803,6 +927,10 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
             workroom.app_jobs(agent, ui)
     elif cmd == "/init":
         agent.run(INIT_PROMPT)
+        before = list(getattr(agent, "instruction_files", []))
+        files = agent.reload_instructions() if hasattr(agent, "reload_instructions") else before
+        if files and files != before:
+            ui.p(ui.c("dim", "  Following " + ", ".join(Path(f).name for f in files) + " from now on."))
     elif cmd == "/context":
         used = agent._estimate()
         window = agent.s.context_tokens or 0
@@ -834,8 +962,14 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         ui.p("" if agent.compact("asked with /compact") else "  Nothing to compact yet.")
     elif cmd == "/cost":
         t = agent.log.totals()
-        ui.p(f"  {t['tokens_in']:,} in + {t['tokens_out']:,} out tokens, "
+        read, write = t["cache_read"], t["cache_write"]  # parts of the input, charged at the cached price
+        cached = ", ".join(x for x in (f"{read:,} of the input read from the cache" if read else "",
+                                       (f"{write:,} written to it" if read else f"{write:,} of the input written to the cache")
+                                       if write else "") if x)
+        ui.p(f"  {t['tokens_in']:,} in + {t['tokens_out']:,} out tokens{f' ({cached})' if cached else ''}, "
              f"{'cost unknown' if t['cost_unknown'] else '$%.4f' % t['usd']}, {t['model_calls']} model calls")
+    elif cmd == "/permissions":
+        permissions_command(agent, ui, rest)
     elif cmd == "/auto":
         s.auto_approve = not s.auto_approve
         ui.p(ui.c("warn", "  Changes now happen without asking. /auto again to turn asking back on.") if s.auto_approve
@@ -847,13 +981,16 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         import argparse
 
         from .cli import doctor
-        doctor(Path(agent.root), argparse.Namespace(provider=s.provider, model=s.model, base_url=None))
+        # the address this session talks to (--base-url, the app's), not only the config file's
+        doctor(Path(agent.root), argparse.Namespace(provider=s.provider, model=s.model, base_url=s.base_url or None))
     elif cmd == "/receipt":
         ui.p(f"  {agent.log.path}")
+    elif custom_command(agent, ui, cmd, rest):
+        pass  # one of the person's own commands (or this folder's), after every built-in name
     else:
         import difflib
 
-        close = difflib.get_close_matches(cmd, list(COMMANDS) + list(ALIASES), n=1, cutoff=0.6)
+        close = difflib.get_close_matches(cmd, list(COMMANDS) + list(ALIASES) + custom_names(agent), n=1, cutoff=0.6)
         close = [ALIASES.get(c, c) for c in close]
         ui.p(f"  Unknown command {cmd}." + (f" Did you mean {close[0]}?" if close else "") + " /help lists them all.")
 

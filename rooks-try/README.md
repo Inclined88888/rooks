@@ -79,9 +79,10 @@ claude mcp add rooks-try -- rooks-try mcp
 - A saved point copies that folder. Names never collide; the 20 newest are kept and status names the ones removed.
   When a QEMU disk is present, the same point is also saved on the disk.
 - `handoff` is the only supported way to copy a file out. In the Rooks app it waits for your yes in Needs you.
-  Through `rooks-try mcp` the package cannot ask you itself: the copy runs only when the calling agent passes
-  `approve: true`. Rooks Code treats the server as untrusted and shows its own approval prompt first; another MCP
-  client must gate it the same way.
+  Through `rooks-try mcp` the server asks you itself (MCP elicitation, as Rooks Desk does): Rooks Code puts the
+  question to you in the terminal, and the copy runs only on your yes. The calling agent cannot answer for you; an
+  `approve` it sends is ignored. A client that cannot ask gets "waiting for a person" and nothing is copied: hand the
+  file off from the Rooks app (Needs you) or with `/room handoff` in rooks instead.
 - `rooks-try serve` listens on this computer only, refuses to start until `ROOKS_TRY_API_KEY` (or `TOOLS_API_KEY`)
   is set, and compares the key in constant time. Its screenshot route serves the last picture without waiting behind a command.
 - Networking follows the driver (qemu and the namespaced shell can start offline with `--offline`).

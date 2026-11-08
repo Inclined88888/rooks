@@ -226,8 +226,8 @@ def test_claude_style_tool_lines_and_modes(tmp_path, capsys):
     assert tui.mode_of(s) == "asks first"
     tui.set_mode(s, "auto-accept")
     assert tui.mode_of(s) == "auto-accept"
-    tui.set_mode(s, "plan only")
-    assert s.dry_run and tui.mode_of(s) == "plan only"
+    tui.set_mode(s, "dry run")
+    assert s.dry_run and tui.mode_of(s) == "dry run"
     # arguments named the way other agents name them still land
     assert ToolCall("1", "read_file", {"file_path": "a.py"}).arguments == {"path": "a.py"}
 

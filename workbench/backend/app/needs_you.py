@@ -29,10 +29,10 @@ from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from . import actions, browser_proxy, config, db, desk_proxy, jobs, starters
-from .security import require_user_or_terminal
+from .security import is_signed_in, require_user_or_terminal
 
 log = logging.getLogger("needs_you")
 # The terminal's /needs lists and answers the same items with its own key (security.require_user_or_terminal).
@@ -133,10 +133,14 @@ def _action_item(a: dict) -> dict:
     except ValueError:
         args = {}
     args = args if isinstance(args, dict) else {}
+    from .rooks_link import raised_by_job
+
     return {"id": f"a:{a['id']}", "kind": "room" if a["tool"] == "use_room" else "approval", "title": _title(a["tool"], args),
             "detail": args_summary(args, 200), "since": a["created_at"], "conversation_id": a["conversation_id"],
             "job_id": None, "actions": ACTIONS, "tool": a["tool"], "effect": a["effect"], "reason": a["reason"] or "",
-            "args": a["args"]}
+            "args": a["args"],
+            # a coding job's own prompt: answered only in the signed in app, never with a key its commands could read
+            "in_app_only": raised_by_job(a["id"])}
 
 
 def _job_item(j: dict) -> dict:
@@ -271,8 +275,9 @@ async def inbox():
 
 
 @router.post("/{item_id}/{answer}")
-async def decide(item_id: str, answer: str):
-    """Approve or deny one item in the system it came from. Answered once: a repeat is refused."""
+async def decide(item_id: str, answer: str, request: Request):
+    """Approve or deny one item in the system it came from. Answered once: a repeat is refused. A prompt a coding job
+    raised is answered only by the signed in person, never with the Terminal access token (rooks_link.raised_by_job)."""
     if answer not in ACTIONS:
         raise HTTPException(404, "Nothing is waiting under that name.")
     approve = answer == "approve"
@@ -281,7 +286,10 @@ async def decide(item_id: str, answer: str):
     plain_number = rest.isascii() and rest.isdecimal()  # "²" passes isdigit() but not int()
     if kind == "a" and plain_number:
         from . import assistant
+        from .rooks_link import JOB_ANSWER_REFUSED, raised_by_job
 
+        if raised_by_job(int(rest)) and not is_signed_in(request):
+            raise HTTPException(403, JOB_ANSWER_REFUSED)
         a = await assistant.decide(int(rest), approve)  # 404 unknown, 409 already answered
         return {"id": item_id, "status": a["status"], "result": a.get("result", "")}
     if kind == "j" and plain_number:

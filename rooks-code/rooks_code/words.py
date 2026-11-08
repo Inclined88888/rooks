@@ -11,7 +11,7 @@ COMMANDS: dict[str, str] = {
     "/help": "every command and key",
     "/new": "start a fresh conversation",
     "/model": "pick the AI, the model and how hard it thinks (arrow keys)",
-    "/effort": "how hard a plan's model thinks: /effort low, medium, high or auto",
+    "/effort": "how hard the model thinks: /effort low, medium, high or auto",
     "/mode": "chat talks, plan reads, build can change files: /mode chat",
     "/room": "Rooks' own computer: /room, start, stop, open COMMAND, files, points, shell (all under The Room)",
     "/needs": "what waits for your OK in the app: /needs, /needs approve 1, /needs deny 1",
@@ -19,7 +19,7 @@ COMMANDS: dict[str, str] = {
     "/jobs": "jobs running here and in the app; /jobs stop ID stops one started here",
     "/memory": "what Rooks remembers about you; /memory forget <words> drops one",
     "/history": "search past chats from the app and the terminal: /history words",
-    "/skills": "procedures Rooks learned; /skills add GITHUB-LINK checks a new one",
+    "/skills": "skills and your own commands, and where each comes from; /skills add GITHUB-LINK checks a new one",
     "/mcp": "connect an extra tool in plain words: /mcp add notes npx notes-server",
     "/provider": "switch the AI service: /provider NAME",
     "/login": "connect an AI service (paste a key, or use the Rooks app)",
@@ -33,6 +33,7 @@ COMMANDS: dict[str, str] = {
     "/image": "ask about a picture: /image PATH [question] (or mention @shot.png in a request)",
     "/compact": "summarise the conversation so far to make room",
     "/cost": "tokens used and cost so far",
+    "/permissions": "rules for what runs without asking and what never runs; /permissions trust for this folder's own",
     "/auto": "turn asking before changes off or on",
     "/dry-run": "show what would change without changing anything",
     "/doctor": "check that everything works and say what to fix",
@@ -46,7 +47,7 @@ GROUPS = {
     "The Room, Needs you, Jobs": ["/room", "/needs", "/jobs", "/team"],
     "Memory": ["/memory", "/history", "/skills", "/init", "/context", "/sessions", "/resume"],
     "Model": ["/model", "/effort", "/mode", "/provider", "/login", "/mcp"],
-    "Checks": ["/auto", "/dry-run", "/doctor", "/cost", "/receipt"],
+    "Checks": ["/permissions", "/auto", "/dry-run", "/doctor", "/cost", "/receipt"],
 }
 
 # /room's verbs, listed in /help under "The Room" (design record 0006 section 7.1). The words match the Room page.
@@ -71,8 +72,28 @@ ROOM_VERBS = [
     ("/room page", "the text of the page in front, as plain lines"),
 ]
 
+# What "a" at the question approves for the rest of the session (agent.approval_key): never a whole kind of action.
+ALWAYS_SCOPES = {"command": "this exact command", "file": "changes to this file", "tool": "this tool",
+                 "step": "this exact step"}
+
+
+def always_choice(plan) -> str:
+    """The "a" choice, saying what it covers ("Approve this exact command for this session"); '' when there is none
+    (a server's own question is answered once, never for the session)."""
+    scope = ALWAYS_SCOPES.get(getattr(plan, "scope", "") or "")
+    return f"Approve {scope} for this session" if scope else ""
+
+
+HERE = "Always allow this command in this folder"
+
+
+def here_choice(plan) -> str:
+    """The "h" choice: a rule kept in the folder's .rooks/settings.json, offered only where it can apply (agent.py)."""
+    return HERE if getattr(plan, "here", False) else ""
+
+
 KEYS = [("/","commands, with what each does"), ("@", "add a file or folder to your request"),
-        ("Shift+Tab", "switch mode: asks first, auto-accept, plan only"), ("Esc Enter", "new line (paste keeps lines too)"),
+        ("Shift+Tab", "switch approvals: asks first, auto-accept, dry run"), ("Esc Enter", "new line (paste keeps lines too)"),
         ("Up Down", "earlier requests"), ("Ctrl+R", "search earlier requests"), ("Ctrl+C", "stop the current task"),
         ("Ctrl+D", "quit"), ("?", "this help")]
 NOTE = "Anything that is not a command is a request. A command also works without its slash, like: model"
@@ -113,6 +134,34 @@ def help_text() -> str:
     return "\n".join(lines)
 
 
+# --- a model error, in plain words ---------------------------------------------------------------------------------
+DOCTOR_HINT = "/doctor (or rooks doctor) shows the details."
+
+
+def model_error(e) -> str:
+    """What the screen says when the model could not answer: what happened and what to do, in plain words. Never the
+    address, the raw reply or a stack trace: those stay in the session's record and in /doctor."""
+    status = getattr(e, "status", None)
+    text = str(e)
+    if status in (401, 403):
+        said = "The AI service did not accept the key. Check it with /login, then try again."
+    elif status == 429:
+        said = "The AI service says it has had too many requests. Wait a minute, then try again."
+    elif status in (500, 502, 503, 504, 529):
+        said = "The AI service is busy or down right now. Try again in a minute."
+    elif status == 404:
+        said = "The AI service does not know this model. Pick another with /model."
+    elif status is None and text.startswith("cannot reach"):
+        said = "Could not reach the AI service. Check that it is running and that this computer is online."
+    elif status is None and text.startswith("unexpected reply"):
+        said = "The AI service sent a reply Rooks could not read."
+    elif text.startswith("No AI model is set up yet"):  # config.NO_MODEL_HELP: written for people already
+        return text
+    else:
+        said = "The AI service could not answer this request."
+    return f"{said} {DOCTOR_HINT}"
+
+
 # --- a step, said the way the app says it (workbench/frontend/src/plainStep.ts) --------------------------------------
 def _field(args, key: str) -> str:
     if isinstance(args, str):
@@ -151,7 +200,7 @@ _SAY = {
     "edit_file": lambda a: _with("Editing", _field(a, "path"), " ") if _field(a, "path") else "Editing a file",
     "write_file": lambda a: _with("Writing", _field(a, "path"), " ") if _field(a, "path") else "Writing a file",
     "run_command": lambda a: _with("Running", _field(a, "command"), " ") if _field(a, "command") else "Running something on this computer",
-    "todo": lambda a: "Updating the plan",
+    "todo": lambda a: "Updating the checklist",
     "web_fetch": lambda a: "Reading a page",
     "start_background": lambda a: _with("Starting a job", _field(a, "command")),
     "check_background": lambda a: "Checking the jobs",
@@ -194,3 +243,13 @@ def plain_step(name: str, args=None) -> str:
     """A tool call, said the way a person would. Never the raw name or the raw arguments."""
     say = _SAY.get(name or "")
     return say(args or {}) if say else "Working"
+
+
+_WANTED = {"edited": "edit", "wrote": "write", "created": "create"}
+
+
+def wanted_step(summary: str) -> str:
+    """A change's summary as a step not yet taken ("edited calc.py" -> "edit calc.py"), for a step that was asked about
+    or denied: the receipt's past tense would read as if it had been done."""
+    first, sep, rest = (summary or "").partition(" ")
+    return f"{_WANTED[first]}{sep}{rest}" if first in _WANTED else summary

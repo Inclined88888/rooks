@@ -712,6 +712,10 @@ def needs_command(agent, ui, rest: str = "") -> None:
                 ui.p("  Nothing needs you." if not items else "  Say which one: /needs approve 1 (the number from /needs).")
                 return
             item = items[int(n) - 1]
+            if item.get("in_app_only"):  # a background job's own request: the app answers it only for you, signed in
+                ui.p(f"  {item.get('title') or 'That'} was asked by a background job, so only you can answer it, "
+                     "in the app under Needs you. This terminal does not answer it for you.")
+                return
             answer = "approve" if verb in APPROVE else "deny"
             out = call(link, "POST", f"/api/needs-you/{urllib.parse.quote(str(item['id']), safe=':')}/{answer}")
             ui.p(f"  {_answered(answer, out.get('status'))}: {item.get('title') or 'that'}")
@@ -725,7 +729,9 @@ def needs_command(agent, ui, rest: str = "") -> None:
         ui.p("  " + ui.c("accent", f"Needs you  ·  {len(items)}"))
         for i, it in enumerate(items[:30], 1):
             detail = " ".join(str(it.get("detail") or "").split())[:90]
-            ui.p(f"  {i:>2}  {it.get('title') or 'Needs your OK'}" + (ui.c("dim", f"  {detail}") if detail else ""))
+            where = "  (a background job asked: answer in the app)" if it.get("in_app_only") else ""
+            ui.p(f"  {i:>2}  {it.get('title') or 'Needs your OK'}" + (ui.c("dim", f"  {detail}") if detail else "")
+                 + (ui.c("dim", where) if where else ""))
         if len(items) > 30:
             ui.p(ui.c("dim", f"  … {len(items) - 30} more in the app"))
         ui.p(ui.c("dim", "  /needs approve N or /needs deny N answers one. The app shows the same list."))

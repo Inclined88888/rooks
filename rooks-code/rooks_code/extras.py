@@ -376,6 +376,7 @@ class Extras:
                      "with a dense summary of what you found: exact file paths, line numbers, facts, and open "
                      "questions. Do not change anything.\n\nGoal: ")
         answer = sub.run(brief + goal)
+        parent.denials += sub.denials  # a refusal inside a helper is a refusal of this request too
         return answer or "(the sub-agent returned nothing)"
 
     def close(self) -> None:
@@ -391,6 +392,11 @@ class _SubUI:
 
     def tool_note(self, text, read=False):
         self.ui.tool_note("  ↳ " + text, read=read) if hasattr(self.ui, "tool_note") else None
+
+    def event(self, ev):
+        """A helper's steps reach a headless run's events too, marked as the helper's."""
+        if callable(getattr(self.ui, "event", None)):
+            self.ui.event({**ev, "helper": True})
 
     def ask(self, plan):
         if self.allow_writes and hasattr(self.ui, "ask"):

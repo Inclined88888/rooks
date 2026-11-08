@@ -1,10 +1,17 @@
-"""MCP server on stdio for the Room."""
+"""MCP server on stdio for the Room.
+
+A copy out of the Room (`handoff`) needs a person's yes, and the calling agent can never give it: the server asks the
+person itself with MCP elicitation (as Rooks Desk does). A client that cannot ask gets "waiting for a person" and
+nothing is copied; the person can hand the file off from the Rooks app (Needs you) or with /room handoff in rooks.
+"""
 
 from __future__ import annotations
 
 import base64
+import itertools
 import json
 import sys
+import threading
 
 from . import __version__
 from .room import TryRoom
@@ -45,22 +52,92 @@ TOOLS = [
     {"name": "run", "description": "Run a shell command inside the Room's home as the person (not on the host desktop). The result says how separate it was (isolation) and what ran it (shell: \"sh\" for a POSIX shell, \"cmd\" for Windows Command Prompt).",
      "inputSchema": {"type": "object", "properties": {
          "command": {"type": "string"}, "timeout": {"type": "number", "default": 120}}, "required": ["command"]}},
-    {"name": "handoff", "description": "Copy a file out of the Room onto this computer. Without approve=true it only asks; approve=true is the person's yes, never your own.",
+    {"name": "handoff", "description": "Copy a file out of the Room onto this computer. The person is asked; nothing is copied without their yes, and you cannot answer for them.",
      "inputSchema": {"type": "object", "properties": {
-         "src": {"type": "string"}, "dest": {"type": "string"}, "approve": {"type": "boolean", "default": False}},
+         "src": {"type": "string"}, "dest": {"type": "string"}},
          "required": ["src", "dest"]}},
 ]
 
+ASK_TIMEOUT_S = 900  # how long a question to the person may stay open before it counts as a no
+
+NO_ASK = ("Nothing was copied. The copy is waiting for a person, and this program cannot ask them here. Tell them: they "
+          "can hand the file off from the Rooks app (Needs you) or with /room handoff in rooks.")
+
 
 class Server:
-    def __init__(self) -> None:
+    def __init__(self, inp=None, out=None) -> None:
         self.room = TryRoom()
+        self.inp, self.out = inp or sys.stdin, out or sys.stdout
+        self.client_caps: dict = {}
+        self.wlock = threading.Lock()
+        self.pending: dict[str, tuple[threading.Event, dict]] = {}
+        self.ids = itertools.count(1)
+
+    # --- JSON-RPC plumbing: tool calls run on their own thread so a question to the person can be answered meanwhile
+    def send(self, msg: dict) -> None:
+        with self.wlock:
+            self.out.write(json.dumps(msg) + "\n")
+            self.out.flush()
+
+    def request(self, method: str, params: dict, timeout: float = ASK_TIMEOUT_S) -> dict | None:
+        rid = f"rt-{next(self.ids)}"
+        ev, box = threading.Event(), {}
+        self.pending[rid] = (ev, box)
+        self.send({"jsonrpc": "2.0", "id": rid, "method": method, "params": params})
+        ok = ev.wait(timeout)
+        self.pending.pop(rid, None)
+        return box.get("result") if ok else None
+
+    def serve(self) -> int:
+        for line in self.inp:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                msg = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if "method" not in msg and str(msg.get("id")) in self.pending:  # the client's answer to our question
+                ev, box = self.pending[str(msg["id"])]
+                box["result"] = msg.get("result") or {"action": "decline"}
+                ev.set()
+                continue
+            if msg.get("method") == "tools/call":
+                threading.Thread(target=self._reply, args=(msg,), daemon=True).start()
+            else:
+                self._reply(msg)
+        return 0
+
+    def _reply(self, msg: dict) -> None:
+        reply = self.handle(msg)
+        if reply is not None:
+            self.send(reply)
+
+    def ask_person(self, question: str) -> bool:
+        """The person's own yes, asked through the client (MCP elicitation). Never the calling agent's word."""
+        if "elicitation" not in self.client_caps:
+            return False
+        r = self.request("elicitation/create", {
+            "message": question,
+            "requestedSchema": {"type": "object", "properties": {"approve": {"type": "boolean", "title": "Allow this"}},
+                                "required": ["approve"]}})
+        return bool(r and r.get("action") == "accept" and (r.get("content") or {}).get("approve") is True)
+
+    def handoff(self, src: str, dest: str) -> dict:
+        question = f"Copy {src} from the Room to {dest} on this computer?"
+        if "elicitation" not in self.client_caps:
+            return {"ok": False, "held": True, "waiting_for": "a person", "summary": question, "note": NO_ASK}
+        if not self.ask_person(question):
+            return {"ok": False, "denied": True, "summary": question,
+                    "note": "The person did not say yes. Nothing was copied. Do not try this another way."}
+        return self.room.handoff(src, dest, approve=True)
 
     def handle(self, msg: dict) -> dict | None:
         mid = msg.get("id")
         method = msg.get("method", "")
         params = msg.get("params") or {}
         if method == "initialize":
+            self.client_caps = params.get("capabilities") or {}
             return self._ok(mid, {
                 "protocolVersion": params.get("protocolVersion") if params.get("protocolVersion") in PROTOCOLS else PROTOCOLS[0],
                 "capabilities": {"tools": {}},
@@ -109,7 +186,8 @@ class Server:
             if name == "run":
                 return self._text(json.dumps(self.room.run(args["command"], float(args.get("timeout") or 120)), indent=2))
             if name == "handoff":
-                return self._text(json.dumps(self.room.handoff(args["src"], args["dest"], bool(args.get("approve"))), indent=2))
+                # an "approve" the agent sends is ignored: only the person's answer to ask_person counts
+                return self._text(json.dumps(self.handoff(str(args["src"]), str(args["dest"])), indent=2))
             return self._text(f"Unknown tool {name}", error=True)
         except Exception as exc:  # noqa: BLE001
             return self._text(str(exc), error=True)
@@ -125,17 +203,4 @@ class Server:
 
 
 def main() -> int:
-    server = Server()
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            msg = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        reply = server.handle(msg)
-        if reply is not None:
-            sys.stdout.write(json.dumps(reply) + "\n")
-            sys.stdout.flush()
-    return 0
+    return Server().serve()

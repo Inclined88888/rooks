@@ -76,6 +76,9 @@ class RunLog:
         calls = [r for r in self.rows.values() if r["kind"] == "model_call"]
         costs = [r["usd_cost"] for r in calls]
         return {"tokens_in": sum(r["tokens_in"] for r in calls), "tokens_out": sum(r["tokens_out"] for r in calls),
+                # of tokens_in: read from and written to the provider's prompt cache (rows from before 1a have neither)
+                "cache_read": sum(r.get("cache_read_tokens") or 0 for r in calls),
+                "cache_write": sum(r.get("cache_write_tokens") or 0 for r in calls),
                 "usd": round(sum(c for c in costs if c is not None), 6), "cost_unknown": any(c is None for c in costs),
                 "model_calls": len(calls)}
 

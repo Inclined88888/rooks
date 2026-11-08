@@ -3,6 +3,7 @@ back, and repeat until it answers without asking for a tool, hits the step limit
 
 from __future__ import annotations
 
+import itertools
 import json
 import os
 import platform
@@ -13,16 +14,18 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import images, providers, words
+from . import images, permissions, providers, words
 from .extras import BUILD_TOOLS, READ_ONLY, Extras, project_instructions
 from .extras import NAMES as EXTRA_NAMES
 from .extras import SPECS as EXTRA_SPECS
-from .learning import Learning
+from .learning import SKILL_SPEC, Learning, skill_plan
 from .lint_test import LintTestRunner
 from .loop_detection import LoopDetector
 from .mcp import MCPError, MCPManager
+from .permissions import Decision, Permissions
 from .receipts import RunLog
 from .repo_map import RepoMap
+from .skills import Library, skills_block
 from .tools import SPECS, Plan, Toolbox, ToolError
 from .undo import ChangeSets
 
@@ -52,6 +55,11 @@ How to work:
 _ANNOUNCES = re.compile(r"\b(I'll|I will|I am going to|I'm going to|Let's|Let me|Next,? I|Now,? I|First,? I|This will|"
                         r"We'll|We will)\b",
                         re.I)
+# A refusal or a decision to leave things as they are is not a step to take: "OK, I will not change it.", "Done. I'll
+# leave it as is." end the turn.
+_DECLINES = re.compile(r"\b(will not|won't|will never|shall not|not going to|leave (it|this|that|"
+                       r"them|things|everything|the \w+)|as (it|they) (is|are|was|were)|no (more |further )?changes?)\b",
+                       re.I)
 NUDGE = ("You described a next step but did not call a tool. Call the tool now. If the task is already finished, reply "
          "with your final summary instead.")
 NUDGES = 2
@@ -71,6 +79,7 @@ DELEGATION_WAIT_S = 900  # one shared-loop turn, including time the user takes t
 BRIDGE_LOCAL = {"read_file", "list_files", "search", "edit_file", "write_file", "run_command"}  # run here, not in the app
 # Tail budget: keep last N tool results unpruned
 TAIL_TOOL_RESULTS = 4
+_STEPS = itertools.count(1)  # tool steps in this process, for the ids of headless events
 
 SUMMARY_SYSTEM = ("You compress a coding session so it can continue. Write a dense summary of the conversation below for "
                   "the agent that continues it: the user's goals and preferences, files read or changed (exact paths), "
@@ -83,13 +92,21 @@ def announces_step(text: str) -> bool:
     if not tail or tail.endswith("?") or re.search(r"(?i)\b(summary|summari[sz]e|in short|all done)\b", tail):
         return False
     lines = [x for x in tail.splitlines() if x.strip()]
-    return tail.endswith(":") or any(_ANNOUNCES.search(x) for x in lines[-2:])
+    last = lines[-2:]
+    if any(_DECLINES.search(x) for x in last):
+        return False
+    return tail.endswith(":") or any(_ANNOUNCES.search(x) for x in last)
 
 
 class Budget:
     def __init__(self, max_tokens: int | None, max_usd: float | None, model: str, prices: dict, local: bool):
         self.max_tokens, self.max_usd = max_tokens, max_usd
         self.price = providers.price(model, prices, local)
+        # The next call's input is estimated at the input price, or at the cache write price when that is higher
+        # (Anthropic: every request asks for its prompt to be cached, and a write costs 1.25x), so the cap stops
+        # before a call that could cross it. Reads are cheaper than input, so they never raise the estimate.
+        write = providers.cache_price(model, prices, local)[1] if self.price is not None else None
+        self.per_input = max(self.price[0], write or 0.0) if self.price is not None else None
 
     def check(self, totals: dict, next_input_estimate: int) -> str:
         """'' when the next call fits, else the reason it would cross a hard cap."""
@@ -97,7 +114,7 @@ class Budget:
         if self.max_tokens and used + next_input_estimate > self.max_tokens:
             return f"token cap reached: {used:,} used, next call needs about {next_input_estimate:,}, cap {self.max_tokens:,}"
         if self.max_usd and self.price is not None:
-            nxt = next_input_estimate * self.price[0] / 1_000_000
+            nxt = next_input_estimate * self.per_input / 1_000_000
             if totals["usd"] + nxt > self.max_usd:
                 return f"cost cap reached: ${totals['usd']:.4f} spent, next call about ${nxt:.4f}, cap ${self.max_usd:.2f}"
         return ""
@@ -114,27 +131,42 @@ class Agent:
         self.changes = ChangeSets(self.root)
         self.sub = sub  # a sub-agent (the task tool): no MCP servers, no learning; tools depend on sub_mode
         self.sub_mode = sub_mode if sub else "explore"  # explore|plan = read-only; build = edits under parent approvals
-        self.mcp = MCPManager(settings.mcp_servers, str(self.root), warn=ui.warn) if settings.mcp_servers and not sub else None
+        self.mcp = (MCPManager(settings.mcp_servers, str(self.root), warn=ui.warn, elicit=self._mcp_question)
+                    if settings.mcp_servers and not sub else None)
         self.messages: list[dict] = list(messages or [])
-        self.always: set[str] = set()  # effects approved for the rest of the session ("a" at the prompt)
+        # what "a" at the prompt approved for the rest of the session: one exact command, one file, or one MCP tool on
+        # one server (approval_key), never a whole kind of action
+        self.always: set[tuple] = set()
+        self.denials = 0  # changes and commands refused during the current prompt (one-shot mode exits 3 when any were)
+        # allow and deny rules (yours, and the folder's own once you trust it): deny refuses in every mode
+        self.perms = Permissions.from_settings(settings, self.root)
+        # skills and custom commands kept in files (skills.py): a folder's own only once the person trusts it
+        self.library = Library(self.root) if not sub else None
+        self._local_skills: list = []  # with learning off: the skills in use, as of this request
+        if not sub:
+            for line in self.perms.notices() + [self.library.notice()]:
+                if line:
+                    ui.warn(line)
         self.budget = Budget(settings.max_tokens, settings.max_usd, settings.model, settings.prices, settings.local)
+        self._cache_price_said = False  # said once per session that the cached-token price is unknown
         self.system = SYSTEM.format(root=self.root, os=f"{platform.system()} {platform.release()}", listing=_listing(self.root),
                                     runtimes=_runtimes(self.root))
         self._turn: int | None = None
-        self.learning = Learning(settings, session_id=self.log.session) if getattr(settings, "learn", True) and not sub else None
+        self.learning = (Learning(settings, session_id=self.log.session, library=self.library)
+                         if getattr(settings, "learn", True) and not sub else None)
         self.extras = Extras(self)
-        self.instructions, self.instruction_files = project_instructions(self.root)
-        if self.instructions:
-            self.system += "\n\n" + self.instructions
+        self._system_head = self.system
         self._extra = ""  # this request's memory and skills context (learning.py)
         self.loop_detector = LoopDetector() if not sub else None
         self._nudge = ""
+        self._system_tail = ""
         # Build lightweight repo map for project overview
         self.repo_map = RepoMap(self.root, max_tokens=1500) if not sub else None
         if self.repo_map:
             repo_map_text = self.repo_map.get_repo_map()
             if repo_map_text:
-                self.system += f"\n\nProject structure (symbol index):\n{repo_map_text}"
+                self._system_tail = f"\n\nProject structure (symbol index):\n{repo_map_text}"
+        self.reload_instructions()
 
         # Lint/test runner (optional, enabled via settings)
         self.lint_test_runner = None
@@ -147,6 +179,13 @@ class Agent:
         if settings.max_usd and self.budget.price is None and settings.provider not in ("workbench", "nvidia"):
             ui.warn(f"price of {settings.model} is unknown, so the ${settings.max_usd} cap cannot be enforced; the token cap "
                     f"({settings.max_tokens or 'none'}) still is. Add it under [prices] to enforce a dollar cap.")
+
+    def reload_instructions(self) -> list[str]:
+        """Read the project's instruction files (AGENTS.md, CLAUDE.md, ...) again, so a file written or changed during
+        the session (/init writes AGENTS.md) is followed from the next request on. Returns the files in use."""
+        self.instructions, self.instruction_files = project_instructions(self.root)
+        self.system = self._system_head + (f"\n\n{self.instructions}" if self.instructions else "") + self._system_tail
+        return self.instruction_files
 
     # receipts --------------------------------------------------------------------------------------------------
     def _egress(self, method: str, url: str, outcome: str, ms: int, error: str) -> None:
@@ -165,7 +204,7 @@ class Agent:
     def _mode_allows(self, name: str) -> bool:
         if self.sub or self.mode() == "build":
             return True
-        learning = self.learning.names() if self.learning else set()
+        learning = self.learning.names() if self.learning else ({"load_skill"} if self.library else set())
         if self.mode() == "chat":
             return name in learning
         return name in READ_ONLY or name in learning
@@ -175,20 +214,44 @@ class Agent:
             allow = BUILD_TOOLS if self.sub_mode == "build" else READ_ONLY
             specs = [t for t in SPECS + EXTRA_SPECS if t["name"] in allow]
         else:
-            specs = SPECS + EXTRA_SPECS + (self.learning.specs() if self.learning else []) + (self.mcp.tool_specs() if self.mcp else [])
+            specs = SPECS + EXTRA_SPECS + self._learning_specs() + (self.mcp.tool_specs() if self.mcp else [])
         return [t for t in specs if self._mode_allows(t["name"])]
 
-    def trusted_effect(self, effect: str, mcp_server: str | None = None) -> str:
+    def _learning_specs(self) -> list[dict]:
+        """remember and load_skill; with learning off, load_skill alone when the person has skills in files."""
+        if self.learning:
+            return self.learning.specs()
+        return [SKILL_SPEC] if self._local_skills else []
+
+    @staticmethod
+    def approval_key(name: str, arguments: dict, plan, mcp: tuple[str, str] | None = None) -> tuple[tuple, str]:
+        """(key, scope) of what "a" approves for the rest of the session: one MCP tool on one server, changes to one
+        file, one exact command, or else this exact step. The scope names it in the question ("this exact command")."""
+        if mcp:
+            return ("mcp", *mcp), "tool"
+        if plan.effect == "write" and plan.path is not None:
+            return ("file", str(plan.path)), "file"
+        if plan.effect == "command" and isinstance(arguments.get("command"), str):
+            return ("command", name, arguments["command"].strip()), "command"
+        return ("step", name, json.dumps(arguments, sort_keys=True, ensure_ascii=False)), "step"
+
+    def trusted_effect(self, effect: str, mcp_server: str | None = None, key: tuple | None = None,
+                       rule: Decision | None = None) -> str:
         """Why this action needs no prompt, or '' when the user must approve it."""
         if effect == "read":
             return "read-only"
+        if rule is not None and rule.verdict == "unclear":
+            # it could be a command a deny rule names: never run it silently, whatever the mode
+            return "approved for this session" if key is not None and key in self.always else ""
+        if rule is not None and rule.verdict == "allow" and rule.rule is not None:
+            return f"allowed by a rule in {'your settings' if rule.rule.source == 'you' else 'this folder'}"
         if self.s.auto_approve:
             return "auto-approved (--yes)"
         if mcp_server and self.mcp and mcp_server in self.mcp.trusted:
             return f"trusted MCP server {mcp_server}"
         if not mcp_server and self.s.trusted():
             return "trusted folder"
-        if effect in self.always:
+        if key is not None and key in self.always:
             return "approved for this session"
         return ""
 
@@ -245,9 +308,8 @@ class Agent:
         try:
             reply = self.model.complete(SUMMARY_SYSTEM, [{"role": "user", "content": "\n\n".join(lines)[-200_000:]}], [])
             summary = providers.THINK_RE.sub("", reply.text or "").strip()
-            usd = providers.cost(self.s.model, reply.tokens_in, reply.tokens_out, self.s.prices, self.s.local)
             self.log.add("model_call", "ok", parent=self._turn, latency_ms=int((time.monotonic() - t0) * 1000),
-                         tokens_in=reply.tokens_in, tokens_out=reply.tokens_out, usd_cost=usd, detail="compaction summary")
+                         **self._usage(reply), detail="compaction summary")
         except providers.ProviderError as e:
             summary = ""
             self.log.add("model_call", "error", parent=self._turn, failure_reason=str(e), detail="compaction summary")
@@ -276,11 +338,16 @@ class Agent:
 
     # one prompt --------------------------------------------------------------------------------------------------
     def run(self, prompt: str) -> str:
+        self.denials = 0
         if self.uses_shared_loop():
             return self.run_via_bridge(prompt)
 
         first = len(self.messages)
-        self._extra = self.learning.context(prompt) if self.learning else ""
+        if self.learning:
+            self._extra = self.learning.context(prompt)
+        else:  # learning off: no memory, but the person's own skill files still count
+            self._local_skills = self.library.skills() if self.library else []
+            self._extra = skills_block(self._local_skills, [])
         # Reset loop detector for new prompt
         if self.loop_detector:
             self.loop_detector.reset()
@@ -316,7 +383,7 @@ class Agent:
                 except providers.ProviderError as e:
                     self.log.add("model_call", "error", parent=turn, latency_ms=int((time.monotonic() - t0) * 1000),
                                  failure_reason=str(e))
-                    outcome, answer = "model_error", f"Model error: {e}"
+                    outcome, answer = "model_error", f"Model error: {words.model_error(e)}"  # the detail: receipt, /doctor
                     self.ui.error(answer)
                     break
                 finally:
@@ -335,16 +402,16 @@ class Agent:
                         for n, c in enumerate(extra):
                             c.id = f"text_{n}"
                         reply.tool_calls, reply.text = extra + reply.tool_calls, text
-                usd = providers.cost(self.s.model, reply.tokens_in, reply.tokens_out, self.s.prices, self.s.local)
                 self.log.add("model_call", "ok", parent=turn, latency_ms=int((time.monotonic() - t0) * 1000),
-                             tokens_in=reply.tokens_in, tokens_out=reply.tokens_out, usd_cost=usd,
-                             detail=f"step {step + 1}, {len(reply.tool_calls)} tool calls")
+                             **self._usage(reply), detail=f"step {step + 1}, {len(reply.tool_calls)} tool calls")
                 msg: dict = {"role": "assistant", "content": reply.text or ""}
                 if reply.tool_calls:
                     msg["tool_calls"] = [{"id": c.id, "type": "function", "function": {
                         "name": c.name, "arguments": json.dumps(c.arguments)}} for c in reply.tool_calls]
                 self.messages.append(msg)
-                nudge = (not reply.tool_calls and self.s.nudge and nudges < NUDGES and announces_step(reply.text))
+                # after a refusal the model's reply ends the turn: the person said no, so Rooks never pushes it on
+                nudge = (not reply.tool_calls and self.s.nudge and nudges < NUDGES and not self.denials
+                         and announces_step(reply.text))
                 if reply.text and not streamed:
                     self.ui.assistant(reply.text, final=not reply.tool_calls and not nudge)
                 if nudge:
@@ -545,6 +612,21 @@ class Agent:
         assert last_error is not None
         raise last_error  # the original error, with its status, so callers explain it the same way as before
 
+    def _usage(self, reply) -> dict:
+        """One model call's tokens and price for its receipt row: cached reads and cache writes are counted apart and
+        charged at the cached price. When the model has a price but its cached price is unknown, the cost is unknown
+        (never guessed) and Rooks says so once, as it does for a model with no price at all."""
+        read, write = getattr(reply, "cache_read", 0) or 0, getattr(reply, "cache_write", 0) or 0
+        usd = providers.cost(self.s.model, reply.tokens_in, reply.tokens_out, self.s.prices, self.s.local, read, write)
+        if usd is None and (read or write) and self.budget.price is not None and not self._cache_price_said:
+            self._cache_price_said = True
+            cap = (f", and the ${self.s.max_usd} cap cannot be enforced; the token cap ({self.s.max_tokens or 'none'}) "
+                   f"still is" if self.s.max_usd else "")
+            self.ui.warn(f"the price of cached tokens for {self.s.model} is unknown, so this session's cost is unknown{cap}. "
+                         f"Add it under [prices] as [input, output, cache read, cache write].")
+        return {"tokens_in": reply.tokens_in, "tokens_out": reply.tokens_out, "usd_cost": usd,
+                "cache_read_tokens": read, "cache_write_tokens": write}
+
     def _notice(self, text: str, needs_you: bool = False) -> None:
         """One quiet line about the conversation itself, said the same way the app says it."""
         notice = getattr(self.ui, "notice", None)
@@ -561,7 +643,27 @@ class Agent:
     def _streaming(self) -> bool:
         return bool(getattr(self.s, "stream", False)) and getattr(self.ui, "can_stream", lambda: False)()
 
+    def _emit(self, kind: str, **data) -> None:
+        """One event for a UI that takes them (a headless run, sdk.py): a tool call, its result, a denied step."""
+        event = getattr(self.ui, "event", None)
+        if callable(event):
+            event({"type": kind, **data})
+
+    def _deny(self, tool: str, summary: str, by: str) -> None:
+        """A step was refused (by a permission rule, a project hook, or an answer): it counts for the exit code and
+        is reported."""
+        self.denials += 1
+        self._emit("approval_denied", tool=tool, summary=words.wanted_step(summary), by=by)
+
     def _call(self, call: providers.ToolCall, turn: int) -> tuple[str, str]:
+        """Run one tool call and report it (tool_call, then tool_result) to a UI that takes events."""
+        step = f"step-{next(_STEPS)}"  # pairs the two events; a model's own call ids repeat across replies
+        self._emit("tool_call", id=step, tool=call.name, args=call.arguments if isinstance(call.arguments, dict) else {})
+        result, outcome = self._run_call(call, turn)
+        self._emit("tool_result", id=step, tool=call.name, outcome=outcome, result=result)
+        return result, outcome
+
+    def _run_call(self, call: providers.ToolCall, turn: int) -> tuple[str, str]:
         """Run one tool call through prepare -> approve -> apply -> verify. Returns (result for the model, outcome)."""
         args_text = json.dumps(call.arguments, ensure_ascii=False)
         if call.bad_json:
@@ -573,9 +675,9 @@ class Agent:
             server, tool = target
             summary = f"MCP {server.name}: {tool} {args_text[:300]}"
             plan = Plan("external", summary, summary, lambda: self._mcp(server, tool, call.arguments))
-            mcp_server = server.name
+            mcp_server, mcp_tool = server.name, (server.name, tool)
         else:
-            mcp_server = None
+            mcp_server, mcp_tool = None, None
             try:
                 allow = BUILD_TOOLS if self.sub_mode == "build" else READ_ONLY
                 if self.sub and call.name not in allow:
@@ -586,6 +688,8 @@ class Agent:
                     plan = self.extras.prepare(call.name, call.arguments)
                 elif self.learning and call.name in self.learning.names():
                     plan = self.learning.prepare(call.name, call.arguments)
+                elif call.name == "load_skill" and self.library and not self.learning:
+                    plan = skill_plan(self.library, None, call.arguments.get("name"))
                 else:
                     plan = self.tools.prepare(call.name, call.arguments)
             except ToolError as e:
@@ -613,8 +717,16 @@ class Agent:
         effect = {"command": "external"}.get(plan.effect, plan.effect)
         action = self.log.add("tool_call", "running", parent=turn, tool=call.name, effect=effect, args=args_text,
                               from_text=int(call.from_text))
+        rule = self.perms.check_call(call.name, call.arguments, plan, mcp_tool)
+        if rule.verdict == "deny":
+            self._deny(call.name, plan.summary, "rule")
+            self.log.finish(action, "denied", detail=f"a permission rule never allows this: {rule.rule.text if rule.rule else ''}"[:500])
+            self.ui.tool_note(f"not allowed by a permission rule ({permissions.plain(rule.rule)}): {plan.summary}")
+            return (f"Error: the user's permission rules never allow this ({plan.summary}). Do not retry it or work around "
+                    f"it; say so in your answer."), "denied"
         blocked = self._project_hook(call.name, plan.effect, call.arguments)
         if blocked:
+            self._deny(call.name, plan.summary, "hook")
             self.log.finish(action, "denied", detail=blocked[:500])
             self.ui.tool_note(f"stopped by a project hook: {blocked[:200]}")
             return f"Error: a project hook stopped this ({blocked}). Do not retry it unless the user says to.", "denied"
@@ -626,18 +738,34 @@ class Agent:
                 self.ui.tool_note("dry run: not applied")
                 return (f"[dry run] Not applied: {plan.summary}. The user is previewing; continue as if it succeeded but "
                         f"say in your summary that nothing was changed."), "dry_run"
-            why = self.trusted_effect(plan.effect, mcp_server)
+            key, plan.scope = self.approval_key(call.name, call.arguments, plan, mcp_tool)
+            why = self.trusted_effect(plan.effect, mcp_server, key, rule)
             if why:
                 self.ui.tool_note(why)
             else:
                 plan.tool = call.name  # the app's Approvals card names the tool
+                if rule.verdict == "unclear" and (self.s.auto_approve or self.s.trusted()):
+                    self.ui.tool_note(f"Rooks asks about this one even though others run without asking: {rule.why}.")
+                command = call.arguments.get("command") if call.name in permissions.BASH_TOOLS else None
+                plan.here = isinstance(command, str) and self.perms.can_remember_here(command)
                 answer = self.ui.ask(plan)
-                decision = "approved" if answer in ("y", "a") else "denied"
+                if answer == "h" and not plan.here:
+                    answer = "n"
+                decision = "approved" if answer in ("y", "a", "h") else "denied"
                 self.log.add("decision", decision, parent=action, tool=call.name,
-                             detail="approved for the rest of the session" if answer == "a" else "")
+                             detail=f"approved {words.ALWAYS_SCOPES[plan.scope]} for the rest of the session" if answer == "a"
+                             else "always allowed in this folder by a rule" if answer == "h" else "")
                 if answer == "a":
-                    self.always.add(plan.effect)
+                    self.always.add(key)
+                if answer == "h":
+                    try:
+                        said = self.perms.remember_here(command)
+                    except (OSError, ValueError) as e:
+                        said = f"Approved once; the rule could not be kept in .rooks/settings.json ({str(e)[:100]})."
+                    if said:
+                        self.ui.tool_note(said)
                 if decision == "denied":
+                    self._deny(call.name, plan.summary, "answer")
                     self.log.finish(action, "denied")
                     return f"The user denied this ({plan.summary}). Do not retry it; ask or try another approach.", "denied"
         else:
@@ -685,6 +813,31 @@ class Agent:
         if proc.returncode == 0:
             return ""
         return (proc.stderr or proc.stdout or "blocked by before_tool").strip()[:500]
+
+    def _mcp_question(self, server: str, tool: str, params: dict) -> dict:
+        """An MCP server asks the person (elicitation), e.g. rooks-try before a file leaves the Room. The person answers
+        here or in the app's Needs you, never the model, and --yes or "a" do not answer it: they approve the agent's own
+        steps. Only a yes or no question is answered; a form this terminal cannot fill is declined."""
+        schema = params.get("requestedSchema") or {}
+        props = schema.get("properties") or {}
+        flags = [k for k, v in props.items() if isinstance(v, dict) and v.get("type") == "boolean"]
+        if len(flags) != 1 or set(schema.get("required") or []) - set(flags):
+            self.ui.tool_note(f"{server} asked a question this terminal cannot answer, so it was declined")
+            return {"action": "decline"}
+        message = re.sub(r"[\x00-\x1f\x7f]+", " ", str(params.get("message") or "")).strip()[:300]
+        plan = Plan("external", f"{server} asks you: {message or 'go ahead?'}", "", lambda: ("", None, ""))
+        plan.tool = f"mcp__{server}__{tool}" if tool else f"mcp__{server}"
+        self.ui.show_plan(plan)
+        try:
+            answer = self.ui.ask(plan)
+        except (EOFError, KeyboardInterrupt):
+            answer = "n"
+        yes = answer in ("y", "a")  # "a" is one yes here: a question is never approved for the session
+        self.log.add("decision", "approved" if yes else "denied", parent=self._turn, tool=plan.tool,
+                     detail=f"question from {server}: {message[:200]}")
+        if not yes:  # reported, but not counted: an interactive one-shot run ends as before (the server was told no)
+            self._emit("approval_denied", tool=plan.tool, summary=plan.summary, by="answer")
+        return {"action": "accept", "content": {flags[0]: True}} if yes else {"action": "decline"}
 
     def _mcp(self, server, tool: str, arguments: dict):
         ok, text = server.call(tool, arguments)
