@@ -120,3 +120,26 @@ def test_renamed_modules_still_serve_their_routes(client):
     for path in ("/api/automations", "/api/jobs/notices", "/api/mobile/jobs", "/api/projects", "/api/history",
                  "/api/checked/mode", "/api/mobile/projects", "/api/mobile/history", "/api/mobile/checked/mode"):
         assert path in paths, path
+
+
+# ---- the CLI launcher add-on's addresses (docs/architecture.md, section i, contradiction 11) -------------------------
+LAUNCHER_VARS = ("CLAUDE_CODE_URL", "CLAUDE_CODE_API_KEY", "CODEX_URL", "CODEX_API_KEY")
+
+
+def test_the_app_is_not_given_the_cli_launchers_addresses_or_keys():
+    """setup.sh wrote CLAUDE_CODE_URL and CODEX_URL and config.py defined them with the two launcher keys, but nothing in
+    the app reads any of them. A key nothing uses is only one more copy of a secret, so the app's container does not
+    get them; the launcher services keep their own key (LAUNCHER_API_KEY)."""
+    config = (ROOT / "workbench" / "backend" / "app" / "config.py").read_text()
+    for var in LAUNCHER_VARS:
+        assert var not in config, f"config.py still defines {var}"
+    workbench = _services((ROOT / "docker-compose.yml").read_text())["workbench"]
+    for var in LAUNCHER_VARS:
+        assert f"{var}:" not in workbench, f"the workbench service is still given {var}"
+    setup = (ROOT / "setup.sh").read_text()
+    assert "set_env CLAUDE_CODE_URL" not in setup and "set_env CODEX_URL" not in setup
+    example = (ROOT / ".env.example").read_text().splitlines()
+    assert "CLAUDE_CODE_URL=" not in example and "CODEX_URL=" not in example
+    services = _services((ROOT / "docker-compose.yml").read_text())
+    assert "LAUNCHER_API_KEY: ${CLAUDE_CODE_API_KEY:-}" in services["claude-code"]
+    assert "LAUNCHER_API_KEY: ${CODEX_API_KEY:-}" in services["codex"]

@@ -58,8 +58,6 @@ SEARXNG_URL = os.getenv("SEARXNG_URL", "").rstrip("/")  # optional add-on
 OLLAMA_URL = os.getenv("OLLAMA_URL", "").rstrip("/")  # optional: add-on container or native app on the host
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "qwen3:4b")
 COOKIE_SECURE = _bool("COOKIE_SECURE")
-CLAUDE_CODE_URL = os.getenv("CLAUDE_CODE_URL", "").rstrip("/")  # optional official CLI launcher
-CLAUDE_CODE_API_KEY = os.getenv("CLAUDE_CODE_API_KEY", "")
 BROWSER_URL = os.getenv("BROWSER_URL", "").rstrip("/")  # optional add-on
 BROWSER_API_KEY = os.getenv("BROWSER_API_KEY", "")
 DESK_URL = os.getenv("DESK_URL", "").rstrip("/")  # optional add-on: Rooks Desk, computer use on this machine
@@ -90,6 +88,3 @@ SEED_KEYS = {
     "fireworks": os.getenv("FIREWORKS_API_KEY", ""),
 }
 
-
-CODEX_URL = os.getenv("CODEX_URL", "").rstrip("/")
-CODEX_API_KEY = os.getenv("CODEX_API_KEY", "")

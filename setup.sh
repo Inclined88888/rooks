@@ -138,8 +138,8 @@ if [[ "$(get_env BIND_ADDRESS)" == "0.0.0.0" ]]; then
   HOST=$( (hostname -I 2>/dev/null || ipconfig getifaddr en0 2>/dev/null || echo localhost) | awk '{print $1}')
 fi
 if has search; then set_env SEARXNG_URL "http://searxng:8080"; set_env WEBUI_ENABLE_WEB_SEARCH true; else set_env SEARXNG_URL ""; set_env WEBUI_ENABLE_WEB_SEARCH false; fi
-if has codex; then set_env CODEX_URL "http://codex:8110"; else set_env CODEX_URL ""; fi
-if has claude-code; then set_env CLAUDE_CODE_URL "http://claude-code:8110"; else set_env CLAUDE_CODE_URL ""; fi
+# The claude-code and codex launchers are reached at http://claude-code:8110 and http://codex:8110 by whoever calls
+# them (cli-launcher/README.md); the app does not, so it is given neither their address nor their key.
 if has browser; then set_env BROWSER_URL "http://browser:8100"; else set_env BROWSER_URL ""; fi
 # Older setups gave Open WebUI a browser tool server holding the browser key. Rooks Browser has none (its key answers
 # approvals), so the saved entry is cleared.

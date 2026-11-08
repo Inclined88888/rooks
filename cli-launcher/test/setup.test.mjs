@@ -25,7 +25,8 @@ for (const addon of ['claude-code', 'codex']) test(`setup enables and disables $
   const output = run(addon);
   let env = readFileSync(join(dir, '.env'), 'utf8');
   assert.ok(env.includes(`COMPOSE_PROFILES=${addon}\n`));
-  assert.ok(env.includes(`${prefix}_URL=http://${addon}:8110\n`));
+  // The app reads neither the launcher's address nor its key, so setup writes no address (the key is the launcher's).
+  assert.ok(!env.includes(`${prefix}_URL=`));
   const key = env.match(new RegExp(`^${prefix}_API_KEY=(.+)$`, 'm'))?.[1];
   assert.ok(key?.length >= 24);
   assert.ok(!output.includes(key));
@@ -34,6 +35,6 @@ for (const addon of ['claude-code', 'codex']) test(`setup enables and disables $
   run('none');
   env = readFileSync(join(dir, '.env'), 'utf8');
   assert.match(env, /^COMPOSE_PROFILES=$/m);
-  assert.ok(env.includes(`${prefix}_URL=\n`));
+  assert.ok(!env.includes(`${prefix}_URL=`));
   assert.ok(env.includes(`${prefix}_API_KEY=${key}`));
 });
