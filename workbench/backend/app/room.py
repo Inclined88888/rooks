@@ -230,7 +230,11 @@ def _shape(st: dict, available: bool = True) -> dict:
         # design 0006: what this Room can do here (and why it has no terminal: "switched_off" in Settings, "helper",
         # "windows", or None when there is no reason to give), and its terminals (the in-process Room fills these in).
         # terminal_count is the one count: live and ended, what the cap of terminal_max counts.
-        "can": {"terminal": False, "files": False, "terminal_off_reason": None},
+        # design 0007: the Room's own browser here (can.browser) and why not ("no_engine", "windows", "helper",
+        # "switched_off"); `browser` says whether it is open, its tabs and what it last said.
+        "can": {"terminal": False, "files": False, "terminal_off_reason": None, "browser": False,
+                "browser_off_reason": None},
+        "browser": {"open": False, "tabs": []},
         "terminals": [],
         "terminal_count": 0,
         "terminal_max": TERMINAL_MAX,
@@ -297,6 +301,7 @@ async def perform(action: str, body: dict | None = None) -> dict:
             _REMOTE = (time.monotonic(), st)
             out = _shape(st)
             out["can"]["terminal_off_reason"] = "helper"  # a helper's Room has no terminal hosted here yet
+            out["can"]["browser_off_reason"] = "helper"  # nor a browser
             return out
         out = (await _remote("POST", f"/api/{action}", body)).json()
         if action in ("up", "down") and isinstance(out, dict) and "running" in out:
@@ -310,9 +315,12 @@ async def perform(action: str, body: dict | None = None) -> dict:
     try:
         out = await asyncio.to_thread(_local, room, action, body)
         if action == "status":
-            from . import room_files, room_terminal
+            from . import room_browser, room_files, room_terminal
 
-            out["can"] = await asyncio.to_thread(room_files.can, room.driver(), False)
+            driver = room.driver()
+            out["can"] = await asyncio.to_thread(room_files.can, driver, False)
+            out["can"].update(await asyncio.to_thread(room_browser.can, driver, False))
+            out["browser"] = room_browser.overview()
             out["terminals"] = room_terminal.listing()
             out["terminal_count"] = len(out["terminals"])
         return _cut_note(action, out, body)
@@ -336,9 +344,11 @@ def _cut_note(action: str, out, body: dict):
 
 
 async def stop() -> dict:
-    """Stop the Room: every Room terminal is hung up first (its text and files stay), then the Room itself."""
-    from . import room_terminal
+    """Stop the Room: its browser closes and every Room terminal is hung up first (tabs, text and files stay), then
+    the Room itself."""
+    from . import room_browser, room_terminal
 
+    await room_browser.close("stop")
     closed = await room_terminal.close_all("stop")
     out = await perform("down")
     if isinstance(out, dict):
@@ -348,9 +358,11 @@ async def stop() -> dict:
 
 async def start_over(name: str | None = None) -> dict:
     """Start over from a saved point: the terminals close first (no shell may stand in a folder being replaced), the
-    restore is checked as before, and when the Room is on afterwards one new terminal opens in it."""
-    from . import room_terminal
+    restore is checked as before, and when the Room is on afterwards one new terminal opens in it. The browser closes
+    first too: its profile is in the folder being replaced (sign-ins made since that point are gone)."""
+    from . import room_browser, room_terminal
 
+    await room_browser.close("start over")
     closed = await room_terminal.close_all("start over", forget=True)
     meta = await reset_to(name)
     meta["terminals_closed"] = closed
@@ -382,7 +394,21 @@ async def list_files(path: str = "") -> dict:
 
 
 async def checkpoint(label: str = "") -> dict:
-    """Save a point, and check it is really in the store before saying so (design section 4, rule 4)."""
+    """Save a point, and check it is really in the store before saying so (design section 4, rule 4). An open browser
+    closes for the copy (its profile is copied whole, its caches left out) and opens again with its tabs after."""
+    from . import room_browser
+
+    paused = False if remote() else await room_browser.pause("save point")
+    try:
+        meta = await _checkpoint(label)
+    finally:
+        if paused:
+            await room_browser.resume()
+    meta["browser_reopened"] = bool(paused and room_browser.session() is not None)
+    return meta
+
+
+async def _checkpoint(label: str) -> dict:
     meta = await perform("checkpoint", {"label": label})
     name = meta.get("name") if isinstance(meta, dict) else None
     st = await perform("status")

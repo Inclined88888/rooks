@@ -105,6 +105,9 @@ async def lifespan(_: FastAPI):
     restart.start()  # B3: goals that asked to carry on after a restart continue now, in the background
     async with mcp.session_manager.run():
         yield
+    from . import room_browser  # design 0007: the Room's browser closes cleanly and its record says a restart did it
+
+    await asyncio.to_thread(room_browser._at_exit)
     mobile.lan_stop()
     for t in loops:
         t.cancel()
@@ -180,6 +183,11 @@ from . import room_terminal  # noqa: E402 - design 0006: the Room's own terminal
 app.include_router(room_terminal.terminal)  # /room open, tail, send, close (the rooks terminal's key too)
 app.include_router(room_terminal.router)    # take a terminal from Rooks, name it: the person's
 app.include_router(room_terminal.sockets)   # the terminal's screen: loopback, same origin, signed in
+from . import room_browser  # noqa: E402 - design 0007: the Room's own browser, a real Chromium over a pipe
+
+app.include_router(room_browser.terminal)  # /room browse, tabs, page (the rooks terminal's key too; a bridge key reads)
+app.include_router(room_browser.router)    # the phone's still and taps, close: the person's
+app.include_router(room_browser.sockets)   # the live page: loopback, same origin, signed in, one window
 from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): the presence strip and the Needs you inbox
 
 app.include_router(presence.router)

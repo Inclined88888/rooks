@@ -326,6 +326,7 @@ def get_settings():
         "model_catalog_refresh": catalog.auto_refresh(),
         "model_catalog_env": os.getenv("MODEL_CATALOG_REFRESH", "") in ("0", "1"),
         "app_terminal": db.get_setting("app_terminal", "1") == "1",
+        "room_browser": db.get_setting("room_browser", "1") == "1",  # the Room's own browser (design 0007)
     }
 
 
@@ -336,6 +337,7 @@ class SettingsIn(BaseModel):
     max_steps_channels: dict[str, int] | None = None   # e.g. {"schedule": 30}; a value of 0 removes the override
     model_catalog_refresh: bool | None = None
     app_terminal: bool | None = None
+    room_browser: bool | None = None
 
 
 @api.put("/settings")
@@ -357,6 +359,12 @@ def put_settings(data: SettingsIn):
             db.run("DELETE FROM settings WHERE key = ?", f"max_steps_{channel}")
     if data.app_terminal is not None:
         db.set_setting("app_terminal", "1" if data.app_terminal else "0")
+    if data.room_browser is not None:
+        db.set_setting("room_browser", "1" if data.room_browser else "0")
+        if not data.room_browser:
+            from . import room_browser
+
+            room_browser._close_sync("closed")  # switched off: the running one closes, its tabs kept
     if data.model_catalog_refresh is not None:
         db.set_setting("model_catalog_refresh", "1" if data.model_catalog_refresh else "0")
         if data.model_catalog_refresh:

@@ -43,6 +43,16 @@ Every driver reports `screen` (a real picture exists), `pointer` (clicks reach s
 `isolation` (`none`, `namespace` or `vm`), a plain `label` and a `note`. Anything that shows the
 room should show a picture only when `screen` is true and input controls only when `pointer` is true.
 
+## The Room's browser
+
+`rooks_try.browser` is a real Chromium for the Room (design record `docs/design/0007-room-browser-and-native-app.md`).
+It finds an engine (the Room's own checked build, Playwright's Chromium, the system's Chromium but never the Snap one,
+then Chrome or Edge used only as an engine with the Room's own profile), starts it headless over a pipe (never a
+debugging port, never with its sandbox off), keeps its profile in `<Room home>/.room-browser/profile`, and on Linux with
+`bwrap` runs it with the Room's home over yours and no network when the Room is offline. Every request is checked: a
+file outside the Room's home and the app's own address are refused. Downloads land in the Room's `Downloads`. A saved
+point leaves the browser's caches out. The app drives it (`/api/room/browser`); without bwrap it runs as you.
+
 ## MCP tools
 
 `status`, `up`, `down`, `checkpoint`, `reset`, `screenshot`, `click`, `drag`, `scroll`,

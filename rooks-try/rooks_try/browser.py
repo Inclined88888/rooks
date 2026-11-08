@@ -764,7 +764,7 @@ class Session:
 
     def __init__(self, engine: Engine, room_home: Path, *, offline: bool = False, app_ports=(),
                  person_home: Path | None = None, bwrap: str | None | bool = "auto", on_frame=None, on_change=None,
-                 tab_max: int = TAB_MAX, memory_reader=None) -> None:
+                 tab_max: int = TAB_MAX, memory_reader=None, run: str = "") -> None:
         self.engine = engine
         self.room_home = Path(room_home)
         self.offline = offline
@@ -775,6 +775,8 @@ class Session:
         self.on_change = on_change        # (what: str) state changed: tabs, url, title, note, closed
         self.tab_max = tab_max
         self.memory_reader = memory_reader or tree_memory
+        self.run = run                     # which run of the app started it (state.json: a restart is told apart)
+        self._closing = False
         self.walled = False
         self.inside_home = self.room_home
         self.proc: subprocess.Popen | None = None
@@ -785,6 +787,7 @@ class Session:
         self.view = VIEW_DEFAULT
         self.watching = False
         self.casting: str | None = None   # the tab whose screencast runs
+        self._frame_edges: tuple[int, int] | None = None  # the window's size beyond its page area
         self.notes: list[str] = []
         self.closed_reason: str | None = None
         self.downloads: dict[str, dict] = {}
@@ -864,8 +867,12 @@ class Session:
     def close(self, reason: str = "closed") -> None:
         """Ask the browser to close, then end its process tree after three seconds. Tabs stay in tabs.json."""
         with self.lock:
+            if self._closing:
+                return
+            self._closing = True
             if self.closed_reason is None:
                 self.closed_reason = reason
+            reason = self.closed_reason
         self._stop.set()
         pipe, proc = self.pipe, self.proc
         known = _tree(proc.pid) if proc is not None else []
@@ -888,8 +895,11 @@ class Session:
     def _gone(self) -> None:
         """The pipe closed: the browser exited (or was closed)."""
         with self.lock:
+            crashed = not self._closing
             if self.closed_reason is None:
                 self.closed_reason = "exited"
+        if crashed:
+            self._write_state(open_=False, reason="exited")
         for t in self.tabs:
             t.target = t.session = None
             t.loaded.set()
@@ -921,14 +931,30 @@ class Session:
         with self.lock:
             tab.target, tab.session, tab.asleep = target, session, False
         for method, params in (("Page.enable", {}), ("Page.setLifecycleEventsEnabled", {"enabled": False}),
-                               ("Runtime.enable", {}),
-                               ("Emulation.setDeviceMetricsOverride",
-                                {"width": self.view[0], "height": self.view[1], "deviceScaleFactor": 1,
-                                 "mobile": False})):
+                               ("Runtime.enable", {})):
             try:
                 self._call(method, params, session)
             except ProtocolError:
                 pass
+        self._fit(tab)
+
+    def _fit(self, tab: Tab) -> None:
+        """Size the tab's window so its page area is the view: the stream shows the whole page area at its real size,
+        and a click at (x, y) in a frame lands at (x, y) on the page."""
+        if not tab.target or not self.alive():
+            return
+        try:
+            win = self._call("Browser.getWindowForTarget", {"targetId": tab.target})["windowId"]
+            if self._frame_edges is None and tab.session:
+                got = self._call("Runtime.evaluate", {"expression": "[outerWidth - innerWidth, outerHeight - innerHeight]",
+                                                      "returnByValue": True}, tab.session)
+                v = (got.get("result") or {}).get("value") or [0, 0]
+                self._frame_edges = (max(0, int(v[0])), max(0, int(v[1])))
+            dw, dh = self._frame_edges or (0, 0)
+            self._call("Browser.setWindowBounds", {"windowId": win, "bounds": {"width": self.view[0] + dw,
+                                                                                 "height": self.view[1] + dh}})
+        except (ProtocolError, KeyError, TypeError, ValueError):
+            pass
 
     def new_tab(self, url: str | None = None, activate: bool = True) -> str:
         with self.lock:
@@ -1028,6 +1054,8 @@ class Session:
         out = self._call("Page.navigate", {"url": url}, tab.session)
         with self.lock:
             tab.loading = True
+            if not out.get("errorText"):
+                tab.url = url  # the address bar shows where it is going while it loads
         err = out.get("errorText")
         if err:
             with self.lock:
@@ -1124,11 +1152,9 @@ class Session:
         h = max(150, min(int(height), FRAME_MAX[1]))
         with self.lock:
             self.view = (w, h)
-            sessions = [t.session for t in self.tabs if t.session]
-        for s in sessions:
-            if self.alive():
-                self.pipe.send("Emulation.setDeviceMetricsOverride",
-                               {"width": w, "height": h, "deviceScaleFactor": 1, "mobile": False}, s)
+            awake = [t for t in self.tabs if t.target]
+        for t in awake:
+            self._fit(t)
         with self.lock:
             casting = next((t for t in self.tabs if t.id == self.casting), None)
             self.casting = None
@@ -1249,6 +1275,8 @@ class Session:
                 threading.Thread(target=self._popup, args=(info,), name="room-browser-popup", daemon=True).start()
         elif method == "Target.targetDestroyed":
             tab = self._tab_by(target=p.get("targetId"))
+            if self._closing or self.closed_reason:  # the whole browser is closing: its tabs are kept
+                return
             if tab is not None and not tab.asleep:  # the page closed itself (window.close)
                 with self.lock:
                     if tab in self.tabs:
@@ -1402,8 +1430,19 @@ class Session:
         return names
 
     def _write_state(self, open_: bool, reason: str | None = None) -> None:
-        write_state(self.room_home, {"open": open_, "closed": reason, "pid": self.proc.pid if self.proc else None,
-                                     "at": time.time()})
+        write_state(self.room_home, {"open": open_, "closed": reason, "run": self.run, "at": time.time()})
+
+    def set_app_ports(self, ports) -> None:
+        """The app is reached on another port too: its requests are refused from now on."""
+        ports = {int(p) for p in ports or () if p}
+        if not ports - self.app_ports or not self.rules:
+            return
+        self.app_ports |= ports
+        self.rules.app_ports = self.app_ports
+        try:
+            self._call("Fetch.enable", {"patterns": self.rules.patterns()})
+        except ProtocolError:
+            pass
 
 
 def _prefs(profile: Path) -> None:
@@ -1481,10 +1520,13 @@ def read_state(room_home: Path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def closed_by_restart(room_home: Path) -> bool:
-    """The browser was open when the app last stopped: closed by the app's exit, or never closed (the app was killed)."""
+def closed_by_restart(room_home: Path, run: str = "") -> bool:
+    """The browser was open when the app last stopped: closed by the app's exit, or never closed because the app was
+    killed (state.json still says open, written by another run of the app than `run`)."""
     st = read_state(room_home)
-    return bool(st.get("open")) or st.get("closed") == "restart"
+    if st.get("closed") == "restart":
+        return True
+    return bool(st.get("open")) and (not run or st.get("run") != run)
 
 
 def ignore_caches(home: Path):
