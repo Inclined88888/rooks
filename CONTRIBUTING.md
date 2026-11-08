@@ -104,3 +104,6 @@ licence and its attack surface: justify it in the pull request.
   `## [Unreleased]`, written from the user's point of view. A change that
   alters what they do also updates `public-docs/`.
 - Do not bump versions: releases are cut by the maintainers.
+- Every change reaches `main` through a pull request, the maintainers' own
+  included: nobody pushes to `main`. Start your branch from an up-to-date
+  `main`; a pull request is merged once the required checks are green.
