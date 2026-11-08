@@ -30,6 +30,7 @@
 }
 .room-over .ui-iconbtn:hover { background: var(--color-bg-hover); }
 .room-over-face { display: inline-flex; align-items: center; gap: var(--space-2); }
+.room-over .ui-menu-pop { min-width: 260px; }
 
 /* ---- the panels under the bar ---- */
 .room-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-ink); }
@@ -81,7 +82,7 @@
 .room-window-terminal .room-window-body, .room-term-bare .room-window-body { overflow: hidden; gap: var(--space-2); padding: 0 var(--space-3) var(--space-3); }
 .room-tabs { flex: none; margin: 0; }
 .room-tab-name { display: inline-flex; align-items: center; gap: 6px; }
-.room-tab.is-ended { color: var(--color-ink-muted); }
+.room-tab.is-ended, .room-tab.is-ended.is-active { color: var(--color-ink-muted); font-style: italic; }
 .room-tab-dot { flex: none; width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--color-live); }
 .room-tab-note { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--color-ink-muted); }
 .room-term { position: relative; flex: 1; min-height: 240px; box-shadow: none; }
@@ -141,6 +142,7 @@
 .room-point-form-verbs { display: inline-flex; gap: var(--space-1); padding-bottom: 22px; }
 .room-points-list { padding: 0 var(--space-2); }
 .room-point-name { font-family: var(--font-mono); font-size: var(--text-mono); }
+.room-point-row .ui-row-title { white-space: normal; overflow-wrap: anywhere; }
 .room-point-row.is-confirming { flex-wrap: wrap; align-items: flex-start; }
 .room-point-row.is-confirming .ui-row-meta { white-space: normal; color: var(--color-ink); }
 .room-point-row.is-confirming .ui-row-actions { padding: 0 var(--space-2) var(--space-2); }
@@ -226,7 +228,12 @@
 
 /* ---- phones: one window at a time, Tabs for the dock, the honest line under them ---- */
 @media (max-width: 900px) {
-  .room-page { height: auto; padding: var(--space-3) var(--space-4) var(--space-4); overflow: visible; }
+  .room-page { height: auto; padding: var(--space-3) var(--space-4) calc(var(--dock-h) + var(--space-6)); overflow: visible; }
+  .room-window-terminal .room-window-body { padding: 0 var(--space-2) var(--space-2); }
+  .room-term-bar { grid-template-columns: 52px minmax(0, 1fr); }
+  .room-term-bar .terminal-screen-title { display: none; }
+  .room-keys { flex-wrap: nowrap; }
+  .room-key { flex: 1 1 44px; padding: 0; }
   .room-bar { min-height: 44px; padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3); }
   .room-bar-label { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .room-desk.is-phone { display: flex; flex-direction: column; padding: 0; min-height: 0; background: transparent; }

@@ -89,10 +89,11 @@ export function FilesWindow({ status, terminalId, onHandOff, stale = false }: {
               <Row key={e.name} title={e.name} meta={meta} leading={icon} className="room-file"
                 onClick={e.kind === "folder" ? () => go(at) : undefined}
                 actions={e.kind === "link" ? undefined : (
+                  // icon buttons with their names (the column is narrow); each says what it does on hover and to a reader
                   <>
-                    {e.kind === "file" && <Button size="sm" variant="ghost" icon={<FileOutput size={13} />} onClick={() => onHandOff(at)}>Hand off</Button>}
-                    <Button size="sm" variant="ghost" icon={<SquareTerminal size={13} />} disabled={!terminalId} title={noTerminal}
-                      onClick={() => void showInTerminal(e.kind === "folder" ? at : path)}>Show in terminal</Button>
+                    {e.kind === "file" && <IconButton label={`Hand off ${e.name}`} onClick={() => onHandOff(at)}><FileOutput size={15} /></IconButton>}
+                    <IconButton label={noTerminal ? `Show in terminal: ${noTerminal.toLowerCase()}` : `Show in terminal: go to ${e.kind === "folder" ? e.name : path || "Home"}`}
+                      disabled={!terminalId} onClick={() => void showInTerminal(e.kind === "folder" ? at : path)}><SquareTerminal size={15} /></IconButton>
                   </>
                 )} />
             );
