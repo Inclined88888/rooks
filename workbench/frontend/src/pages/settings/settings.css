@@ -283,25 +283,6 @@
 .st-pick-meta { flex: none; font-size: var(--text-sm); color: var(--color-ink-muted); }
 @media (max-width: 900px) { .st-pick-meta { display: none; } }
 
-/* ---- About you: what it knows ---- */
-.st-two { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: var(--space-8); align-items: start; }
-.st-aside { display: flex; flex-direction: column; gap: var(--space-6); position: sticky; top: var(--space-4); }
-.st-aside-title { margin: 0 0 var(--space-2); font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-ink-muted); }
-.st-fact { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-top: var(--border-w) solid var(--color-border); min-width: 0; }
-.st-fact:first-child { border-top: 0; }
-.st-fact-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
-.st-fact-text > p { margin: 0; font-size: var(--text-md); line-height: var(--leading-normal); color: var(--color-ink); overflow-wrap: anywhere; }
-.st-fact-text > p svg { color: var(--color-ink-muted); margin-right: var(--space-1); vertical-align: -1px; }
-.st-fact-actions { display: flex; gap: 2px; flex: none; }
-.st-work { display: flex; justify-content: space-between; gap: var(--space-2); padding: var(--space-1) 0; font-size: var(--text-sm); color: var(--color-ink); }
-.st-work > span:last-child { color: var(--color-ink-muted); font-variant-numeric: tabular-nums; }
-.st-search { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-6); }
-.st-search .ui-input { flex: 1; }
-@media (max-width: 900px) {
-  .st-two { grid-template-columns: 1fr; gap: var(--space-6); }
-  .st-aside { position: static; }
-}
-
 /* ---- Plan ---- */
 .st-plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 .st-plan-card { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); min-width: 0; }

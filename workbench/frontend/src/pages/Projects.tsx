@@ -190,7 +190,7 @@ export default function Projects() {
       {!SECTIONS.some((s) => sel.items[s.kind]?.length) && <EmptyState className="day-empty-sm" title="Nothing here yet" line="Add a person, a deadline or a note." action={<Button size="sm" icon={<NotebookPen size={14} />} onClick={() => setAdding("note")}>Add a note</Button>} />}
 
       {sel.facts.length > 0 && (
-        <Section title="What I know that relates" actions={<Link className="day-link" to="/about-you"><BookMarked size={14} aria-hidden="true" /> Edit in What I know</Link>}>
+        <Section title="What I know that relates" actions={<Link className="day-link" to="/knowledge"><BookMarked size={14} aria-hidden="true" /> Edit in Memory</Link>}>
           <List label="What I know that relates">{sel.facts.map((f) => <Row key={f.id} title={<span className="day-wrap">{f.content}</span>} />)}</List>
         </Section>
       )}

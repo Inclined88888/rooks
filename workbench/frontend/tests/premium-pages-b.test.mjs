@@ -9,7 +9,7 @@ const read = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), "utf8"
 const strip = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
 
 // Pages people open from the rail, the More sheet or the palette: each is a <Page>.
-const PAGES = ["Settings", "Models", "VoiceSettings", "McpServers", "Plan", "Privacy", "About", "AboutYou", "Status",
+const PAGES = ["Settings", "Models", "VoiceSettings", "McpServers", "Plan", "Privacy", "About", "Status",
   "Insights", "Runs", "Compare", "FineTune"];
 // First impressions: one quiet card with one clear choice.
 const COVERS = ["Auth", "Welcome"];
@@ -24,7 +24,6 @@ const STATES = {
   VoiceSettings: ["Loading", "ErrorState"],
   McpServers: ["Loading", "ErrorState", "EmptyState"],
   Plan: ["Loading", "ErrorState"],
-  AboutYou: ["Loading", "ErrorState", "EmptyState"],
   Status: ["Loading", "ErrorState"],
   Insights: ["Loading", "ErrorState", "EmptyState"],
   Runs: ["Loading", "ErrorState", "EmptyState"],

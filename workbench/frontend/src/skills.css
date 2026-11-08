@@ -17,7 +17,7 @@
 .sk-token { align-items: flex-end; }
 .sk-token .ui-field { flex: 1; min-width: 200px; }
 .sk-needs { color: var(--color-accent); }
-/* "Install anyway": AboutYou also uses this solid danger button */
+/* "Install anyway": a solid danger button */
 .btn.danger-solid { background: var(--color-danger); border-color: var(--color-danger); color: var(--color-on-danger); }
 .btn.danger-solid:hover:not(:disabled) { background: var(--color-danger-hover); }
 

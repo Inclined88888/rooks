@@ -199,8 +199,9 @@ test("a new chat greets by the time of day and offers three things to do", () =>
 });
 
 // ---------------------------------------------------------------------------------------------- the source
-test("the chat page is split: thread, composer, result cards, header, empty state and the two tabs", () => {
-  for (const f of ["Thread.tsx", "Composer.tsx", "ResultCards.tsx", "ThreadHeader.tsx", "EmptyChat.tsx", "tabs/MemoryTab.tsx", "tabs/SettingsTab.tsx"]) {
+test("the chat page is split: thread, composer, result cards, header, empty state and the settings tab", () => {
+  // the chat's Memory tab is the Memory page now (one memory, tests/one-memory.test.mjs)
+  for (const f of ["Thread.tsx", "Composer.tsx", "ResultCards.tsx", "ThreadHeader.tsx", "EmptyChat.tsx", "tabs/SettingsTab.tsx"]) {
     assert.ok(exists(`../src/chat/${f}`), `src/chat/${f} exists`);
   }
   const page = read("../src/pages/Assistant.tsx");

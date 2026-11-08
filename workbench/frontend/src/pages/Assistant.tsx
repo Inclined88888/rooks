@@ -1,6 +1,6 @@
 /**
- * The Chat page (/assistant, /assistant/:id) and the chat's Memory and Settings tabs (/assistant-memory,
- * /assistant-settings). This file owns the turn: one POST to /api/assistant/chat read as a stream, folded into the
+ * The Chat page (/assistant, /assistant/:id) and the chat's Settings tab (/assistant-settings; what it remembers is
+ * on the Memory page). This file owns the turn: one POST to /api/assistant/chat read as a stream, folded into the
  * turn's record by chat/events.ts, drawn by chat/Thread.tsx. Every turn's steps stay with its reply (rebuilt from
  * the server after a reload), the reply is revealed once, and ids become the server's as soon as the turn is done.
  */
@@ -29,7 +29,6 @@ import { ThreadHeader } from "../chat/ThreadHeader";
 import { EmptyChat } from "../chat/EmptyChat";
 import { refreshHistory } from "../chat/ResultCards";
 import { forgetRuns } from "../chat/receipts";
-import { MemoryTab } from "../chat/tabs/MemoryTab";
 import { SettingsTab } from "../chat/tabs/SettingsTab";
 import type { Conv, Msg, WorkMode } from "../chat/types";
 import { motionOff } from "../appearance";
@@ -539,17 +538,16 @@ function Chat() {
   );
 }
 
-export default function Assistant({ tab }: { tab: "chat" | "memory" | "settings" }) {
+export default function Assistant({ tab }: { tab: "chat" | "settings" }) {
   const navigate = useNavigate();
   if (tab === "chat") return <Chat />;
   return (
     <div className="page" style={{ maxWidth: 720 }}>
       <div className="page-head">
         <button type="button" className="btn ghost sm" onClick={() => navigate("/assistant")}><ArrowLeft size={14} /> Chat</button>
-        <h1 className="grow">{tab === "memory" ? "Memory" : "Chat settings"}</h1>
+        <h1 className="grow">Chat settings</h1>
       </div>
-      {tab === "memory" && <MemoryTab />}
-      {tab === "settings" && <SettingsTab />}
+      <SettingsTab />
     </div>
   );
 }

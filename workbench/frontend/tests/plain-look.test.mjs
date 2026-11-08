@@ -38,7 +38,7 @@ test("Team, Channels, the trade pack and the chat use the shared controls, not t
   const legacy = /className=(?:"|\{`)(?:[^"`]*\s)?(btn|input)(?=[\s"`$])/;
   const found = [];
   for (const f of ["src/team/Team.tsx", "src/teammates/Channels.tsx", "src/pages/PackTrade.tsx", "src/chat/Thread.tsx", "src/chat/Composer.tsx",
-    "src/chat/ThreadHeader.tsx", "src/chat/tabs/SettingsTab.tsx", "src/chat/tabs/MemoryTab.tsx", "src/pages/Skills.tsx"]) {
+    "src/chat/ThreadHeader.tsx", "src/chat/tabs/SettingsTab.tsx", "src/pages/Skills.tsx"]) {
     readFileSync(root + f, "utf8").split("\n").forEach((line, i) => { if (legacy.test(line)) found.push(`${f}:${i + 1}`); });
   }
   assert.deepEqual(found, [], `use ui-btn / ui-input / ui-select:\n${found.join("\n")}`);

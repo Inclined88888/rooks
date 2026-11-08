@@ -1,4 +1,4 @@
-/* "What I know about you" (AboutYou) and "Show me how" (Teach). Tokens only, design system v3. */
+/* "Show me how" (Teach). Tokens only, design system v3. What I know about you is on the Memory page (memory/). */
 .learn-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--space-8); align-items: start; }
 @media (max-width: 900px) { .learn-grid { grid-template-columns: 1fr; } }
 .learn-section { margin-bottom: var(--space-8); }

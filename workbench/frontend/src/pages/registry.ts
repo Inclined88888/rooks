@@ -8,7 +8,7 @@ import {
   Activity, AudioLines, BookMarked, Building2, CalendarClock, CalendarDays, CheckSquare, Code2, CreditCard, Columns3, FileText, FlaskConical,
   FolderKanban, FolderOpen, Gauge, Globe, Globe2, GraduationCap, Hammer, History, Home, Info, Laptop, Layers, LineChart, ListChecks, ListTree, Lock,
   Mail, MessageCircle, MessageSquare, Mic, Monitor, NotebookPen, Package, Palette, Plug, Scale, Search, Settings, Shield,
-  SquareTerminal, UserRound, Users, UsersRound, Video,
+  SquareTerminal, Users, UsersRound, Video,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -83,7 +83,6 @@ export const PAGES: PageEntry[] = [
   // ---- Memory: facts, skills, what it noticed ----
   { path: "/knowledge", label: "Memory", icon: BookMarked, group: "memory", load: () => import("../memory/Knowledge") },
   { path: "/skills", label: "Skills", icon: ListChecks, group: "memory", load: () => import("./Skills") },
-  { path: "/about-you", label: "About you", icon: UserRound, group: "memory", load: () => import("./AboutYou") },
   { path: "/teach", label: "Show me how", icon: GraduationCap, group: "memory", load: () => import("./Teach"), also: ["/teach/:id"] },
 
   // ---- Library ----
@@ -136,7 +135,6 @@ export const PAGES: PageEntry[] = [
   { path: "/packs/legal", label: "Legal pack", icon: Scale, dev: true, load: () => import("./PackLegal") },
   { path: "/packs/study", label: "Study pack", icon: GraduationCap, dev: true, load: () => import("./PackStudy") },
   { path: "/packs/trade", label: "Trade pack", icon: Hammer, dev: true, load: () => import("./PackTrade") },
-  { path: "/assistant-memory", label: "Chat memory", icon: BookMarked, load: () => import("./Assistant"), props: { tab: "memory" }, palette: false },
   { path: "/assistant-settings", label: "Chat settings", icon: Settings, load: () => import("./Assistant"), props: { tab: "settings" }, palette: false },
   { path: "/groups/:id", label: "Group", icon: Users, load: () => import("../teammates/Groups"), palette: false },
 ];
@@ -146,6 +144,8 @@ export const REDIRECTS: Redirect[] = [
   { from: "/connect", to: "/settings" },
   { from: "/customize", to: "/settings" },  // the Customize page only linked to other pages; Settings has them all
   { from: "/assistant-skills", to: "/skills" },
+  { from: "/about-you", to: "/knowledge" },  // one memory (architecture g.2): About you and the chat's Memory tab are the Memory page
+  { from: "/assistant-memory", to: "/knowledge" },
   { from: "/packs/*", to: "/packs" },
   { from: "/mcp", to: "/extra-tools" },
   { from: "/welcome", to: "/assistant" },

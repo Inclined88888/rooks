@@ -108,7 +108,7 @@ function ChatMenu({ showRoutines, onRoutines, cid, busy, devTools, onTerminal, o
           <button type="button" role="menuitem" onClick={go(onBeside)}>Open mail beside</button>
           {devTools && cid ? <button type="button" role="menuitem" onClick={go(onTerminal)}><SquareTerminal size={14} /> Continue in terminal</button> : null}
           <hr />
-          <button type="button" role="menuitem" onClick={go(() => navigate("/assistant-memory"))}>Memory</button>
+          <button type="button" role="menuitem" onClick={go(() => navigate("/knowledge"))}>Memory</button>
           <button type="button" role="menuitem" onClick={go(() => navigate("/assistant-settings"))}>Chat settings</button>
           <button type="button" role="menuitem" onClick={go(() => navigate("/settings"))}>Settings</button>
         </div>

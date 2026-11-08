@@ -469,8 +469,7 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
           <Section title="Skills and rules">
             <SettingsGroup>
               <Go primary label="Skills" help="Saved ways of working. Add more whenever you like." to="/skills" />
-              <Go label="About you" help="Standing instructions and what it already knows about you." to="/about-you" />
-              <Go label="Memory" help="Everything it remembers, in one place." to="/knowledge" />
+              <Go label="Memory" help="Everything it knows about you and your work, in one place. Correct or forget anything." to="/knowledge" />
             </SettingsGroup>
           </Section>
         )}
