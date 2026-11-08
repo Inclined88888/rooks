@@ -1,1 +1,0 @@
-import{r,N as o,j as a}from"./index-DNVrZPVC.js";function c(){const[t,s]=r.useState("");return r.useEffect(()=>{o("/surfaces").then(e=>s(e.computer?"":e.note)).catch(()=>{})},[]),t?a.jsx("div",{className:"alert",style:{marginBottom:16},children:t}):null}export{c as S};

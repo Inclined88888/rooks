@@ -21,6 +21,7 @@ PUBLIC = {
     ("POST", "/api/mobile/pair/claim"),      # short-lived pairing code
     ("GET", "/api/mobile/ping"),
     ("POST", "/api/setup"),
+    ("GET", "/api/signin"),               # one-time sign-in link (signin.py), checked and throttled in the handler
     ("GET", "/api/status"),
 }
 

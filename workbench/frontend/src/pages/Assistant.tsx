@@ -269,6 +269,7 @@ function Chat() {
   }, [cid, messages.length > 0]);
   useEffect(() => {
     if (!pinnedRef.current) return;
+    if (!messages.length && !live) return;  // an empty chat: keep its greeting in view (on a phone it is taller than the space)
     endRef.current?.scrollIntoView({ behavior: followBehavior(busyRef.current, motionOff()), block: "end" });
   }, [messages, live?.steps.length, live?.draft.length]);
 

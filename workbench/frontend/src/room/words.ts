@@ -102,8 +102,9 @@ export function offLine(_s?: Pick<RoomStatus, "screen"> | null): string {
   return STOPPED_LINE;
 }
 
-/** The line under offLine: what Start does here. */
-export function offStartLine(what: "screen" | "terminal" | "commands"): string {
+/** The line under offLine: what Start does here. With fromBar, the window has no Start of its own: the bar's is used. */
+export function offStartLine(what: "screen" | "terminal" | "commands", fromBar = false): string {
+  if (fromBar) return what === "screen" ? "Press Start at the top to see its screen." : what === "terminal" ? "Press Start at the top to open a terminal." : "Press Start at the top to run commands.";
   if (what === "screen") return "Start it to see its screen.";
   return what === "commands" ? "Start it to run commands." : "Start it to open a terminal.";
 }
@@ -314,4 +315,10 @@ export function wheelSteps(deltaY: number): number {
   if (deltaY > 0) return -3;
   if (deltaY < 0) return 3;
   return 0;
+}
+
+/** A window's label line from the Room's label and note: two sentences, never run together. */
+export function labelLine(label?: string | null, note?: string | null): string {
+  const parts = [label, note].map((p) => (p ?? "").trim()).filter(Boolean);
+  return parts.map((p, i) => (i < parts.length - 1 && !/[.!?]$/.test(p) ? `${p}.` : p)).join(" ");
 }

@@ -34,6 +34,8 @@ export type Status = {
   setup_complete: boolean;
   signed_in: boolean;
   setup_code_required: boolean;
+  /** An older install where someone typed a PIN: it can still sign in with it. New installs open with a link. */
+  pin_login?: boolean;
   workspace_name: string;
   chat_url: string;
   paperclip_url: string;

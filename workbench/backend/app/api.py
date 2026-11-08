@@ -58,6 +58,8 @@ def status(request: Request):
         # Docker installs get the same first-run "Choose how to think" screen while no model is connected
         "needs_models": bool(signed_in) and not db.one("SELECT id FROM connections WHERE enabled = 1 LIMIT 1"),
         "setup_code_required": bool(SETUP_CODE),
+        # A typed PIN is offered only where someone set one (older installs). New installs sign in with a link.
+        "pin_login": db.get_setting("setup_complete") == "1" and bool(db.get_setting("password_hash")) and db.get_setting("lock_kind", "") not in ("link", "window"),
         "workspace_name": db.get_setting("workspace_name", config.WORKSPACE_NAME),
         "chat_url": config.CHAT_URL,
         "paperclip_url": config.PAPERCLIP_URL,
@@ -158,6 +160,7 @@ def desktop_session(token: str, request: Request):
     if db.get_setting("setup_complete") != "1":
         db.set_setting("password_hash", hash_password(secrets.token_urlsafe(32)))  # never typed: the window is the login
         db.set_setting("setup_complete", "1")
+        db.set_setting("lock_kind", "window")
         services.local_calendar_id()
     target = "/" if db.get_setting("desktop_welcome_done") == "1" else "/welcome"
     response = RedirectResponse(target, status_code=303)
@@ -180,6 +183,7 @@ def desktop_local_session(request: Request, response: Response):
     if db.get_setting("setup_complete") != "1":
         db.set_setting("password_hash", hash_password(secrets.token_urlsafe(32)))
         db.set_setting("setup_complete", "1")
+        db.set_setting("lock_kind", "window")
         services.local_calendar_id()
     _login(response)
     return {"ok": True}
@@ -240,6 +244,39 @@ def browser_pair_claim(data: dict):
     throttle("pair")
     code = str((data or {}).get("code") or "")
     return surfaces.claim(code)
+
+
+# Server installs: a one-time link instead of a typed PIN (signin.py). The first link is the SETUP_CODE that setup.sh
+# prints, good only until setup is done; after that `python -m app.signin` on the server, or Settings on a device that
+# is already signed in, makes a new one. A bad or spent link opens nothing and is throttled like a wrong PIN.
+@public.get("/signin")
+def signin_with_link(code: str, request: Request):
+    from fastapi.responses import RedirectResponse
+
+    from . import signin
+
+    first_run = db.get_setting("setup_complete") != "1"
+    ok = (first_run and bool(SETUP_CODE) and secrets.compare_digest(code.strip(), SETUP_CODE)) or signin.take(code.strip())
+    if not ok:
+        throttle(request.client.host if request.client else "?")
+        return RedirectResponse("/?signin=expired", status_code=303)
+    if first_run:
+        db.set_setting("password_hash", hash_password(secrets.token_urlsafe(32)))  # never typed: the link is the key
+        db.set_setting("lock_kind", "link")
+        if db.get_setting("desktop_welcome_done") != "1":
+            db.set_setting("desktop_welcome_done", "0")
+        db.set_setting("setup_complete", "1")
+        services.local_calendar_id()
+    response = RedirectResponse("/", status_code=303)
+    _login(response)
+    return response
+
+
+@api.post("/signin/link")
+def signin_link_for_another_device(request: Request):
+    from . import signin
+
+    return {"url": signin.link(str(request.base_url), signin.make_code()), "minutes": signin.TTL // 60}
 
 
 @public.post("/login")

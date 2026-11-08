@@ -23,7 +23,7 @@ import {
 import { useRoomStatus } from "./status";
 import { TerminalWindow } from "./TerminalWindow";
 import { setActiveTerminal, useTerms } from "./terms";
-import { advancedDetails, commandsLabelFor, commandViewLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, terminalCountLine } from "./words";
+import { advancedDetails, commandsLabelFor, commandViewLine, isolationWords, labelLine, pointLine, RECORDED_LINE, roomBarWord, terminalCountLine } from "./words";
 
 const DOCK_ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, files: Folder, points: Bookmark, screen: Monitor };
 
@@ -48,7 +48,7 @@ export default function RoomPage() {
   const [advanced, setAdvanced] = useState(false);
   const [closingAll, setClosingAll] = useState(false);
   const [pointsAsk, setPointsAsk] = useState<PointsAsk>(null);
-  const screen = useRoomScreen(status, () => void act.start(), act.busy === "up");
+  const screen = useRoomScreen(status, narrow ? () => void act.start() : null, act.busy === "up");  // on a desktop the bar has Start
   const points = status.checkpoints ?? [];
   const available = status.available && status.reachable;
   const away = !status.reachable;
@@ -56,6 +56,8 @@ export default function RoomPage() {
   // The windows status offers decide; a remembered window it does not offer is dropped, at render time.
   useEffect(() => { setOpen((cur) => { const kept = offered.filter((w) => cur.includes(w)); return kept.length ? kept : readDesk(status); }); }, [offeredKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const shown = offered.filter((w) => open.includes(w));
+  // With the Saved points window open on a desktop, its title bar has Save a point: the Room bar's steps aside (as on the Stage).
+  const pointsShown = !narrow && shown.includes("points");
   // The Room bar's live region says when a terminal ends ("Terminal 1 ended."), as status reports it.
   const wasAlive = useRef<Record<string, boolean>>({});
   useEffect(() => {
@@ -131,7 +133,7 @@ export default function RoomPage() {
             {status.available && (status.running
               ? <Verb icon={<Power size={13} />} word="Stop" variant="secondary" disabled={away} busy={act.busy === "down"} onClick={() => void act.stop()} />
               : <Verb icon={<Power size={13} />} word="Start" variant="primary" disabled={away} busy={act.busy === "up"} onClick={() => void act.start()} />)}
-            {status.available && <Verb icon={<Bookmark size={13} />} word="Save a point" variant="secondary" disabled={away} onClick={() => askPoints({ kind: "save" })} />}
+            {!pointsShown && status.available && <Verb icon={<Bookmark size={13} />} word="Save a point" variant="secondary" disabled={away} onClick={() => askPoints({ kind: "save" })} />}
             {status.available && (points.length && !away
               ? <Menu label="Start over" className="room-over" items={overItems}
                   icon={<span className="room-over-face"><RotateCcw size={13} aria-hidden="true" /><span className="room-verb-word">Start over</span><ChevronDown size={13} aria-hidden="true" /></span>} />
@@ -176,12 +178,12 @@ export default function RoomPage() {
       case "screen":
         return (
           <RoomWindow key="screen" id="screen" title="Screen" verbs={screen.modes} stale={stale} className={screen.captured ? "is-captured" : undefined}
-            label={[status.label, status.note].filter(Boolean).join(" ")}>
+            label={labelLine(status.label, status.note)}>
             {screen.picture}
           </RoomWindow>
         );
       case "terminal":
-        return <TerminalWindow key="terminal" status={status} act={act} stale={stale} slot={<TerminalSlot kind="room" />} />;
+        return <TerminalWindow key="terminal" status={status} act={act} stale={stale} startFromBar={!narrow} slot={<TerminalSlot kind="room" />} />;
       case "commands":
         return <RoomWindow key="commands" id="commands" title="Commands" label={commandsLabelFor(status)} stale={stale}><CommandView status={status} /></RoomWindow>;
       case "files":

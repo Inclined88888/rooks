@@ -167,8 +167,11 @@
 @media (max-width: 900px) {
   .chatlist.is-open { position: absolute; left: 0; top: 0; bottom: 0; z-index: 30; width: min(300px, 88vw); box-shadow: var(--shadow-float); }
   .chatlist-scrim { position: absolute; inset: 0; z-index: 29; background: var(--color-scrim); }
-  .chat-top.agents-thread-top { flex-wrap: wrap; }
-  .chat-chips { flex-wrap: nowrap; overflow-x: auto; padding: 4px 12px 8px; scrollbar-width: none; }
+  /* one row: the "On this computer" pill steps aside so the ⋯ never drops onto a line of its own */
+  .chat-top .agents-local-pill { display: none; }
+  /* the scrollbar is hidden, so the row fades at its end to show there is more */
+  .chat-chips { flex-wrap: nowrap; overflow-x: auto; padding: 4px 12px 8px; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); }
   .chat-chips::-webkit-scrollbar { display: none; }
   .chat-chip-select { max-width: 48vw; }
   .chat-layout .composer-bar { flex-wrap: nowrap; }

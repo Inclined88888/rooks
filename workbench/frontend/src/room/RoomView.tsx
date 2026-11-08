@@ -153,7 +153,7 @@ export function focusWindowTitle(id: string): boolean {
  * The Screen window's parts: the picture (only while the Room really has a screen) or the off state, and the modes
  * (only when the Room takes a pointer). Shared by the Screen window on the desk and the Stage.
  */
-export function useRoomScreen(status: RoomState, onStart: () => void, starting: boolean) {
+export function useRoomScreen(status: RoomState, onStart: (() => void) | null, starting: boolean) {
   const [captured, setCaptured] = useState(false);
   const screenLive = roomScreenLive(status);
   const canStep = screenLive && status.pointer === true;
@@ -173,8 +173,8 @@ export function useRoomScreen(status: RoomState, onStart: () => void, starting: 
     </span>
   ) : null;
   const picture = screenLive ? <RoomPicture captured={captured} onRelease={release} /> : (
-    <EmptyState icon={<Laptop size={24} />} title={offLine(status)} line={offStartLine("screen")}
-      action={status.available && status.reachable ? <Button variant="primary" size="sm" icon={<Power size={13} />} busy={starting} onClick={onStart}>Start</Button> : undefined} />
+    <EmptyState icon={<Laptop size={24} />} title={offLine(status)} line={offStartLine("screen", !onStart)}
+      action={onStart && status.available && status.reachable ? <Button variant="primary" size="sm" icon={<Power size={13} />} busy={starting} onClick={onStart}>Start</Button> : undefined} />
   );
   return { captured, setCaptured, release, modes, picture, screenLive };
 }

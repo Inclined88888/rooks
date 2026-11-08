@@ -326,7 +326,8 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
   const go = (id: string) => setParams(id === "general" ? {} : { section: id }, { replace: true });
   const [s, setS] = useState<SettingsData | null>(null);
   const [loadError, setLoadError] = useState("");
-  const [pw, setPw] = useState({ current: "", new: "" });
+  const [link, setLink] = useState<{ url: string; minutes: number } | null>(null);
+  const [linking, setLinking] = useState(false);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const [desktop, setDesktop] = useState<DesktopInfo | null>(null);
@@ -348,10 +349,16 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
     try { setS(await api("/settings", { method: "PUT", body: { model_catalog_refresh: on } })); toast.ok(on ? "Model prices will update once a day" : "Model price updates are off"); }
     catch (e) { toast.err(e); }
   };
-  const changePw = async (e: FormEvent) => {
-    e.preventDefault();
-    try { await api("/password", { body: pw }); setPw({ current: "", new: "" }); toast.ok("Password changed. Other sessions were signed out."); }
+  const makeLink = async () => {
+    setLinking(true);
+    try { setLink(await api<{ url: string; minutes: number }>("/signin/link", { method: "POST" })); }
     catch (err) { toast.err(err); }
+    finally { setLinking(false); }
+  };
+  const copyLink = async () => {
+    if (!link) return;
+    try { await navigator.clipboard.writeText(link.url); toast.ok("Copied"); }
+    catch { toast.err(new Error("Copy did not work. Select the link and copy it.")); }
   };
 
   const meta = SECTIONS.find((x) => x.id === section) ?? SECTIONS[0];
@@ -381,18 +388,14 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
             </Section>
             {desktop?.desktop && <DesktopApp info={desktop} />}
             {!desktop?.desktop && (
-              <Section title="Password" description="The password that locks this copy of Rooks. Changing it signs out other sessions.">
-                <form onSubmit={changePw}>
-                  <SettingsGroup>
-                    <SettingRow label="Current password" htmlFor="st-pw-current">
-                      <Input id="st-pw-current" type="password" autoComplete="current-password" value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} />
-                    </SettingRow>
-                    <SettingRow label="New password" help="At least 10 characters." htmlFor="st-pw-new">
-                      <Input id="st-pw-new" type="password" autoComplete="new-password" value={pw.new} onChange={(e) => setPw({ ...pw, new: e.target.value })} />
-                    </SettingRow>
-                    <div className="st-row st-row-foot"><Button type="submit" disabled={!pw.current || pw.new.length < 10}>Change password</Button></div>
-                  </SettingsGroup>
-                </form>
+              <Section title="Sign in on another device" description="No password. Make a link, open it on the other device, and it is signed in.">
+                <SettingsGroup>
+                  <SettingRow label="Sign-in link" help={link ? `Works once, for ${link.minutes} minutes. Anyone with it can open Rooks, so only send it to yourself.` : "Works once and expires after a few minutes."}>
+                    {link
+                      ? <span className="st-inline"><Input aria-label="Sign-in link" readOnly value={link.url} onFocus={(e) => e.currentTarget.select()} className="st-mono" /><Button size="sm" onClick={copyLink}>Copy</Button></span>
+                      : <Button busy={linking} onClick={makeLink}>{linking ? "Making it…" : "Make a sign-in link"}</Button>}
+                  </SettingRow>
+                </SettingsGroup>
               </Section>
             )}
           </>

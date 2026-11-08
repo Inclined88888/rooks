@@ -98,6 +98,8 @@ services:
       # One time code the first run setup screen asks for (setup.sh writes it to .env). Without it, whoever opens
       # /setup first owns the workspace.
       SETUP_CODE: ${SETUP_CODE:-}
+      # Where sign-in links point (python -m app.signin). Set it to the address people open, e.g. https://rooks.example.com
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:${WORKBENCH_PORT:-3100}}
       # Set to your reverse proxy's address if it should be trusted for X-Forwarded-For.
       FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
       WORKSPACE_NAME: ${WORKSPACE_NAME:-AI Workspace}

@@ -227,8 +227,8 @@ kbd, .kbd {
   border-radius: var(--radius-md); box-shadow: none;
 }
 .shell-agents .agents-composer:focus-within {
-  border-color: var(--faint);
-  box-shadow: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 1px var(--color-border-focus);  /* the same ring as .input */
 }
 .shell-agents .agents-composer textarea {
   background: transparent; color: var(--text); min-height: 40px; font-size: var(--text-md);
@@ -579,7 +579,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 .typing-label { width: auto !important; height: auto !important; background: none !important; font-family: var(--font); font-style: normal; font-size: var(--text-sm); color: var(--muted); margin-left: var(--space-2); }
 .composer-wrap { padding: var(--space-2) var(--space-6) var(--space-5); }
 .composer { max-width: var(--max-content-width); margin: 0 auto; background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: none; transition: border-color var(--dur-fast) var(--ease-out); }
-.composer:focus-within { border-color: var(--faint); }
+.composer:focus-within { border-color: var(--color-border-focus); box-shadow: 0 0 0 1px var(--color-border-focus); }  /* the same ring as .input */
 .composer-bar .mode-tabs { flex: none; }
 .composer-bar .mode-tabs .tab { height: 28px; padding: 0 10px; font-size: 12px; }
 .composer textarea {

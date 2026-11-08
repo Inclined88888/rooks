@@ -173,8 +173,10 @@ function RoomPane({ t, active, hold, locked }: { t: RoomTerminal; active: boolea
 }
 
 /* ================================================================ the window (on the page and the Stage) */
-export function TerminalWindow({ status, act, slot, bare = false, stale = false }: {
+export function TerminalWindow({ status, act, slot, bare = false, stale = false, startFromBar = false }: {
   status: RoomState; act: RoomActions; slot: ReactNode; bare?: boolean; stale?: boolean;
+  /** On the desktop Room page the bar has Start, so the window does not repeat it. */
+  startFromBar?: boolean;
 }) {
   const toast = useToast();
   const ui = useTerms();
@@ -309,8 +311,8 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
     body = (
       <>
         {tabs}
-        <EmptyState icon={<SquareTerminal size={24} />} title={offLine(status)} line={offStartLine("terminal")}
-          action={status.available && status.reachable ? <Button variant="primary" size="sm" icon={<Power size={13} />} busy={act.busy === "up"} onClick={() => void act.start()}>Start</Button> : undefined} />
+        <EmptyState icon={<SquareTerminal size={24} />} title={offLine(status)} line={offStartLine("terminal", startFromBar)}
+          action={!startFromBar && status.available && status.reachable ? <Button variant="primary" size="sm" icon={<Power size={13} />} busy={act.busy === "up"} onClick={() => void act.start()}>Start</Button> : undefined} />
       </>
     );
   } else if (!terminals.length) {

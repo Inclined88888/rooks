@@ -34,9 +34,30 @@ export async function applyWindowChrome(a: Appearance) {
   await invoke("plugin:window|set_background_color", { label: "main", value: bg }).catch(() => undefined);
 }
 
+/** Phone browsers colour their bar from <meta name="theme-color">. index.html follows the system; a theme picked in the
+ *  app (or High contrast) replaces both tags with its own page colour, and Match my computer puts them back. */
+export function applyBrowserBar(a: Appearance) {
+  const metas = Array.from(document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]'));
+  if (!metas.length) return;
+  if (a.theme === "auto") {
+    metas.forEach((m) => {
+      if (m.dataset.media === undefined) return;
+      m.media = m.dataset.media; m.content = m.dataset.content ?? m.content;
+      delete m.dataset.media; delete m.dataset.content;
+    });
+    return;
+  }
+  const bg = THEMES.find((t) => t.id === resolveTheme(a.theme))?.swatch.paper ?? "#fafaf9";
+  metas.forEach((m) => {
+    if (m.dataset.media === undefined) { m.dataset.media = m.media; m.dataset.content = m.content; m.removeAttribute("media"); }
+    m.content = bg;
+  });
+}
+
 /** Wire it up once at start-up. */
 export function startThemeSync(initial: Appearance) {
   applyWindowChrome(initial);
+  applyBrowserBar(initial);
   followSystem();
-  onAppearance((a) => { applyWindowChrome(a); saveAppearanceRemote(a); });
+  onAppearance((a) => { applyWindowChrome(a); applyBrowserBar(a); saveAppearanceRemote(a); });
 }

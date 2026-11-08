@@ -78,7 +78,7 @@ test("no inline colour, no inline hex, no spinner without words, no old card and
   }
 });
 
-test("Settings is a calm settings app: a category list, a select on the phone, rows with help, a normal Password row", () => {
+test("Settings is a calm settings app: a category list, a select on the phone, rows with help, a sign-in link row instead of a password", () => {
   const s = read("pages/Settings.tsx");
   const sections = read("pages/settings/sections.ts"); // shared with the command menu, which opens each section
   assert.match(s, /SETTINGS_SECTIONS as SECTIONS/);
@@ -88,10 +88,10 @@ test("Settings is a calm settings app: a category list, a select on the phone, r
   assert.match(nav, /<Select\b/, "a select on the phone");
   assert.match(s, /<SettingRow\b/, "settings are rows: label, one line of help, the control on the right");
   assert.doesNotMatch(s, /<Shield\b/, "the Password section has no oversized icon");
-  assert.match(s, /title="Password"/);
+  assert.match(s, /title="Sign in on another device"/, "no password: a link for another device (ui-polish.test.mjs)");
   assert.doesNotMatch(s, /cursor-settings/);
   // the endpoints stay
-  for (const ep of ['"/settings"', '"/password"', '"/desktop/info"', '"/providers"', '"/ollama/status"', '"/usage"', '"/browser/pair/start"']) assert.ok(s.includes(ep), ep);
+  for (const ep of ['"/settings"', '"/signin/link"', '"/desktop/info"', '"/providers"', '"/ollama/status"', '"/usage"', '"/browser/pair/start"']) assert.ok(s.includes(ep), ep);
 });
 
 test("technical detail sits under Advanced", () => {

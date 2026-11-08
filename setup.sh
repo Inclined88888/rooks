@@ -87,7 +87,8 @@ for key in APP_SECRET TOOLS_API_KEY WEBUI_SECRET_KEY SEARXNG_SECRET BROWSER_API_
            PAPERCLIP_TOOL_ACTION_SECRET PAPERCLIP_AGENT_JWT_SECRET HERMES_API_KEY HERMES_DASHBOARD_SECRET; do
   if [[ -z "$(get_env "$key")" ]]; then set_env "$key" "$(rand 32)"; fi
 done
-if [[ -z "$(get_env SETUP_CODE)" ]]; then set_env SETUP_CODE "$(rand 4)"; fi
+# The first sign-in link carries this code, so it is long: nobody types it. It stops working once setup is done.
+if [[ -z "$(get_env SETUP_CODE)" ]]; then set_env SETUP_CODE "$(rand 16)"; fi
 if [[ -z "$(get_env HERMES_DASHBOARD_PASSWORD)" ]]; then set_env HERMES_DASHBOARD_PASSWORD "$(rand 12)"; fi
 
 # Add-ons: --with replaces the saved list; without it the saved list is kept
@@ -206,7 +207,8 @@ fi
 has hermes && { ./scripts/hermes-config.sh || info "Hermes config not written; run ./scripts/hermes-config.sh later."; }
 
 echo; bold "Ready"
-info "Workspace:  http://${HOST}:$(get_env WORKBENCH_PORT)    setup code: $(get_env SETUP_CODE)"
+info "Workspace:  open http://${HOST}:$(get_env WORKBENCH_PORT)/api/signin?code=$(get_env SETUP_CODE)"
+info "            (this first link works once; for a new one: docker compose exec workbench python -m app.signin)"
 info "Terminal:   rooks login   (choose 'connect to a running Workbench', URL above, token: Assistant > Settings > Terminal access)"
 info "Telegram, web search keys, timezone: Assistant > Settings"
 has openwebui && info "Open WebUI: $(get_env CHAT_URL)    (first account becomes admin; create it now)"
