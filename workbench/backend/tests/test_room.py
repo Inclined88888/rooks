@@ -576,3 +576,57 @@ def test_history_says_what_the_room_did_in_plain_words(client, room_home):
     assert ran["title"] == "Ran in the Room: ls -la"
     out = history.describe("use_room", {"action": "handoff", "src": "a.txt", "dest": "/tmp/a.txt"}, {"ok": True}, {})
     assert out["title"].startswith("Copied a file out of the Room: a.txt")
+
+
+# --- design 0006, 9.3: Files, what the Room can do, and the two-minute note ------------------------------------------
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX links")
+def test_files_lists_the_rooms_folder_on_or_off_and_never_outside(client, room_home):
+    home = room_home / "home"
+    client.post("/api/room/up")  # the owner's case: something was installed while it was on
+    (home / "Desktop").mkdir(parents=True, exist_ok=True)
+    (home / "Desktop" / "notes.txt").write_text("")
+    (home / "out").symlink_to("/etc")
+    assert client.post("/api/room/down").json()["running"] is False
+    top = client.get("/api/room/files")
+    assert top.status_code == 200, top.text
+    body = top.json()
+    assert body["path"] == "" and body["root_label"] == "Home" and body["truncated"] is False
+    kinds = {e["name"]: e["kind"] for e in body["entries"]}
+    assert kinds["Desktop"] == "folder" and kinds[".profile"] == "file" and kinds["out"] == "link"
+    names = [e["name"] for e in body["entries"]]
+    assert names.index("Desktop") < names.index("out") < names.index(".profile")  # folders first, dotfiles last
+    desk = client.get("/api/room/files", params={"path": "Desktop"}).json()
+    assert desk["path"] == "Desktop" and desk["parent"] == ""
+    note = next(e for e in desk["entries"] if e["name"] == "notes.txt")
+    assert note["kind"] == "file" and note["size"] == 0 and note["modified"][:4].isdigit()
+    for bad in ("../", "out", "/etc", "Desktop/../../"):
+        r = client.get("/api/room/files", params={"path": bad})
+        assert r.status_code == 400 and r.json()["detail"] == "That is outside the Room.", (bad, r.text)
+    gone = client.get("/api/room/files", params={"path": "Nowhere"})
+    assert gone.status_code == 404 and gone.json()["detail"] == "That folder is gone."
+
+
+def test_status_says_what_this_room_can_do(client, room_home, remote_room):
+    from app import config, room
+
+    st = client.get("/api/room/status").json()  # the helper (TRY_URL): no terminal and no folder on this computer
+    assert st["can"] == {"terminal": False, "files": False} and st["terminals"] == []
+    assert client.get("/api/room/files").status_code == 501
+    config.TRY_URL = ""
+    room.reset()
+    st = client.get("/api/room/status").json()
+    if sys.platform != "win32":
+        assert st["can"] == {"terminal": True, "files": True}, st["can"]
+    assert st["terminals"] == [] and st["terminal_max"] == 4
+
+
+def test_the_120_second_note_points_to_a_terminal(client, room_home, monkeypatch):
+    from app import room
+
+    assert room.RUN_MAX_S == 120
+    client.post("/api/room/up")
+    monkeypatch.setattr(room, "RUN_MAX_S", 1)
+    out = client.post("/api/room/run", json={"command": "sleep 3"}).json()
+    assert out["code"] == 124
+    assert out["note"] == out["error"] == "Stopped after 1 second. For something long, start it in a Room terminal."
+    assert room.run_cut_note(120) == "Stopped after 120 seconds. For something long, start it in a Room terminal."

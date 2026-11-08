@@ -100,12 +100,71 @@ def test_writes_still_need_the_workbench_header(client, keys, room_home, token):
 
 @pytest.mark.parametrize("token", CREDS)
 def test_nothing_else_widens(client, keys, room_home, token):
+    """Design 0006 widens the terminal's reach on purpose, to exactly: the Room's terminals (list, open, tail, send,
+    close), its files, and save a point, start over and hand off. Everything else stays the person's."""
     anon = _anon(client)
     for path in ("/api/settings", "/api/room/screenshot", "/api/jobs/notices", "/api/presence", "/api/automations"):
         assert anon.get(path, headers=_as(token)).status_code == 401, path
-    for path in ("/api/room/reset", "/api/room/handoff", "/api/room/checkpoint", "/api/room/click", "/api/jobs"):
-        r = anon.post(path, json={"prompt": "x", "command": "id"}, headers=_as(token, True))
+    for path in ("/api/room/click", "/api/room/type", "/api/room/key", "/api/jobs",
+                 "/api/room/terminals/abcd1234/take"):
+        r = anon.post(path, json={"prompt": "x", "command": "id", "owner": "person"}, headers=_as(token, True))
         assert r.status_code == 401, (path, r.status_code)
+    r = anon.patch("/api/room/terminals/abcd1234", json={"name": "x"}, headers=_as(token, True))
+    assert r.status_code == 401  # a name is the person's to give
+    from app import main
+
+    widened = sorted((m, r.path) for r in main.app.routes if getattr(r, "path", "").startswith("/api/room")
+                     for m in (getattr(r, "methods", None) or set()) - {"HEAD"}
+                     if any(getattr(d.call, "__name__", "") == "require_user_or_terminal" for d in r.dependant.dependencies))
+    assert widened == sorted([
+        ("GET", "/api/room/status"), ("POST", "/api/room/up"), ("POST", "/api/room/down"), ("POST", "/api/room/run"),
+        ("POST", "/api/room/checkpoint"), ("POST", "/api/room/reset"), ("POST", "/api/room/handoff"),
+        ("GET", "/api/room/files"), ("GET", "/api/room/terminals"), ("POST", "/api/room/terminals"),
+        ("GET", "/api/room/terminals/{tid}/tail"), ("POST", "/api/room/terminals/{tid}/send"),
+        ("DELETE", "/api/room/terminals/{tid}")]), widened
+
+
+def test_terminal_key_reaches_the_rooms_terminals_files_and_points(client, keys, room_home, monkeypatch):
+    """Design 0006, 9.4: /room open, tail, send, close, files, save, back and handoff work from the rooks terminal with
+    the Terminal access token; the bridge key (held by coding jobs the app starts) only reads."""
+    from app import room_terminal
+
+    monkeypatch.setenv("SHELL", "/bin/sh")
+    anon = _anon(client)
+    w, r = _as(CLI_TOKEN, True), _as(CLI_TOKEN)
+    try:
+        assert anon.post("/api/room/up", headers=w).status_code == 200
+        opened = anon.post("/api/room/terminals", json={"name": "Rooks", "command": "echo reach"}, headers=w)
+        assert opened.status_code == 200, opened.text
+        tid = opened.json()["id"]
+        assert anon.get("/api/room/terminals", headers=r).status_code == 200
+        assert anon.get(f"/api/room/terminals/{tid}/tail", headers=r).status_code == 200
+        assert anon.post(f"/api/room/terminals/{tid}/send", json={"text": "echo more"}, headers=w).status_code == 200
+        assert anon.get("/api/room/files", headers=r).status_code == 200
+        point = anon.post("/api/room/checkpoint", json={"label": "reach"}, headers=w)
+        assert point.status_code == 200 and point.json()["verified"] is True, point.text
+        held = anon.post("/api/room/handoff", json={"src": ".profile", "dest": "/tmp/nowhere-reach"}, headers=w)
+        assert held.status_code == 200 and held.json()["held"] is True  # still waits in Needs you
+        # the bridge key only reads
+        b, bw = _as(BRIDGE_KEY), _as(BRIDGE_KEY, True)
+        for path in ("/api/room/terminals", f"/api/room/terminals/{tid}/tail", "/api/room/files"):
+            assert anon.get(path, headers=b).status_code == 200, path
+        assert anon.post("/api/room/terminals", json={}, headers=bw).status_code == 401
+        assert anon.post(f"/api/room/terminals/{tid}/send", json={"text": "id"}, headers=bw).status_code == 401
+        assert anon.delete(f"/api/room/terminals/{tid}", headers=bw).status_code == 401
+        for path in ("/api/room/checkpoint", "/api/room/reset", "/api/room/handoff"):
+            assert anon.post(path, json={"label": "x", "src": "a", "dest": "b"}, headers=bw).status_code == 401, path
+        assert anon.delete(f"/api/room/terminals/{tid}", headers=w).status_code == 200
+        back = anon.post("/api/room/reset", json={"name": point.json()["name"]}, headers=w)
+        assert back.status_code == 200 and back.json()["verified"] is True, back.text
+    finally:
+        from app import actions
+
+        for a in actions.pending():
+            if a["tool"] == "use_room":
+                actions.decide(a["id"], False, "test")
+        room_terminal.reset_for_tests(write=False)
+        anon.post("/api/room/down", headers=w)
 
 
 def test_the_bridge_key_only_reads(client, keys, room_home):
