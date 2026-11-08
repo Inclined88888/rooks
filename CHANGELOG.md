@@ -8,6 +8,23 @@ version and the merge commit on `main`.
 
 No schema change, nothing to migrate. Rollback: revert the branch's commits.
 
+- **Skills and your own commands in `rooks`, with the app off.** Skills are folders with a `SKILL.md` (a `name` and a
+  `description` in front matter, then the steps) in this folder's `.rooks/skills` or `.claude/skills` and your own
+  `~/.rooks/skills` or `~/.claude/skills`. Only names and descriptions go into the instructions; a skill's steps reach
+  the model only when it calls `load_skill`, the tool the app's saved skills already use (a skill file is used before
+  an app skill of the same name, and the app's skills still work when it is connected). `learn = false` does not turn
+  skill files off. Your own commands are `.rooks/commands/NAME.md` and `.claude/commands/NAME.md` (this folder and
+  yours): `/NAME words` sends the file's text with `$ARGUMENTS`, `$1`, `$2` filled in; `rooks "/NAME words"` and
+  `rooks -p "/NAME words"` too. Built-in command names always win. `/skills` lists the app's skills, skill files and
+  your commands, each saying where it comes from and whether it is used. **A folder's own skills and commands are used
+  only after you trust the folder** (the trust of the permission rules: the one-time question at start now also lists
+  them, or `/permissions trust`); until then they are listed as not used, the session start says so, `load_skill`
+  refuses them and `/NAME` says why instead of running (headless exits 3). A command file grants nothing: front matter
+  such as `allowed-tools` is not honoured and `!` shell lines are not run. A folder's skill or command file linking
+  outside the folder is never read; descriptions are shown without control codes. Not yet: the app does not show skill
+  files, and a session on the app's shared loop does not offer them. Tests: `rooks-code/tests/test_local_skills.py`
+  (each failed before the change; scripted fake model, no real model key).
+
 - **Prompt caching, charged at the cached price in `rooks`.** Anthropic requests already marked the system prompt,
   the tool list and the conversation for caching; now what the provider reports is used. Input read from the cache
   (Anthropic `cache_read_input_tokens`, OpenAI `prompt_tokens_details.cached_tokens`, DeepSeek

@@ -18,13 +18,14 @@ from . import images, permissions, providers, words
 from .extras import BUILD_TOOLS, READ_ONLY, Extras, project_instructions
 from .extras import NAMES as EXTRA_NAMES
 from .extras import SPECS as EXTRA_SPECS
-from .learning import Learning
+from .learning import SKILL_SPEC, Learning, skill_plan
 from .lint_test import LintTestRunner
 from .loop_detection import LoopDetector
 from .mcp import MCPError, MCPManager
 from .permissions import Decision, Permissions
 from .receipts import RunLog
 from .repo_map import RepoMap
+from .skills import Library, skills_block
 from .tools import SPECS, Plan, Toolbox, ToolError
 from .undo import ChangeSets
 
@@ -139,15 +140,20 @@ class Agent:
         self.denials = 0  # changes and commands refused during the current prompt (one-shot mode exits 3 when any were)
         # allow and deny rules (yours, and the folder's own once you trust it): deny refuses in every mode
         self.perms = Permissions.from_settings(settings, self.root)
+        # skills and custom commands kept in files (skills.py): a folder's own only once the person trusts it
+        self.library = Library(self.root) if not sub else None
+        self._local_skills: list = []  # with learning off: the skills in use, as of this request
         if not sub:
-            for line in self.perms.notices():
-                ui.warn(line)
+            for line in self.perms.notices() + [self.library.notice()]:
+                if line:
+                    ui.warn(line)
         self.budget = Budget(settings.max_tokens, settings.max_usd, settings.model, settings.prices, settings.local)
         self._cache_price_said = False  # said once per session that the cached-token price is unknown
         self.system = SYSTEM.format(root=self.root, os=f"{platform.system()} {platform.release()}", listing=_listing(self.root),
                                     runtimes=_runtimes(self.root))
         self._turn: int | None = None
-        self.learning = Learning(settings, session_id=self.log.session) if getattr(settings, "learn", True) and not sub else None
+        self.learning = (Learning(settings, session_id=self.log.session, library=self.library)
+                         if getattr(settings, "learn", True) and not sub else None)
         self.extras = Extras(self)
         self._system_head = self.system
         self._extra = ""  # this request's memory and skills context (learning.py)
@@ -198,7 +204,7 @@ class Agent:
     def _mode_allows(self, name: str) -> bool:
         if self.sub or self.mode() == "build":
             return True
-        learning = self.learning.names() if self.learning else set()
+        learning = self.learning.names() if self.learning else ({"load_skill"} if self.library else set())
         if self.mode() == "chat":
             return name in learning
         return name in READ_ONLY or name in learning
@@ -208,8 +214,14 @@ class Agent:
             allow = BUILD_TOOLS if self.sub_mode == "build" else READ_ONLY
             specs = [t for t in SPECS + EXTRA_SPECS if t["name"] in allow]
         else:
-            specs = SPECS + EXTRA_SPECS + (self.learning.specs() if self.learning else []) + (self.mcp.tool_specs() if self.mcp else [])
+            specs = SPECS + EXTRA_SPECS + self._learning_specs() + (self.mcp.tool_specs() if self.mcp else [])
         return [t for t in specs if self._mode_allows(t["name"])]
+
+    def _learning_specs(self) -> list[dict]:
+        """remember and load_skill; with learning off, load_skill alone when the person has skills in files."""
+        if self.learning:
+            return self.learning.specs()
+        return [SKILL_SPEC] if self._local_skills else []
 
     @staticmethod
     def approval_key(name: str, arguments: dict, plan, mcp: tuple[str, str] | None = None) -> tuple[tuple, str]:
@@ -331,7 +343,11 @@ class Agent:
             return self.run_via_bridge(prompt)
 
         first = len(self.messages)
-        self._extra = self.learning.context(prompt) if self.learning else ""
+        if self.learning:
+            self._extra = self.learning.context(prompt)
+        else:  # learning off: no memory, but the person's own skill files still count
+            self._local_skills = self.library.skills() if self.library else []
+            self._extra = skills_block(self._local_skills, [])
         # Reset loop detector for new prompt
         if self.loop_detector:
             self.loop_detector.reset()
@@ -672,6 +688,8 @@ class Agent:
                     plan = self.extras.prepare(call.name, call.arguments)
                 elif self.learning and call.name in self.learning.names():
                     plan = self.learning.prepare(call.name, call.arguments)
+                elif call.name == "load_skill" and self.library and not self.learning:
+                    plan = skill_plan(self.library, None, call.arguments.get("name"))
                 else:
                     plan = self.tools.prepare(call.name, call.arguments)
             except ToolError as e:

@@ -19,7 +19,7 @@ COMMANDS: dict[str, str] = {
     "/jobs": "jobs running here and in the app; /jobs stop ID stops one started here",
     "/memory": "what Rooks remembers about you; /memory forget <words> drops one",
     "/history": "search past chats from the app and the terminal: /history words",
-    "/skills": "procedures Rooks learned; /skills add GITHUB-LINK checks a new one",
+    "/skills": "skills and your own commands, and where each comes from; /skills add GITHUB-LINK checks a new one",
     "/mcp": "connect an extra tool in plain words: /mcp add notes npx notes-server",
     "/provider": "switch the AI service: /provider NAME",
     "/login": "connect an AI service (paste a key, or use the Rooks app)",

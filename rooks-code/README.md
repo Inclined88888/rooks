@@ -122,7 +122,8 @@ Inside a session type `/` for the command menu (every command with what it does)
   prints the full detail of any error. On the normal screen a model error is said in plain words, with no address.
 * `/new`, `/sessions`, `/resume ID`, `/compact`, `/copy`, `/undo`, `/cost`, `/auto`, `/dry-run`, `/login`, `/provider`,
   `/receipt`, `/exit`.
-* `/memory` and `/skills` show what Rooks has learned (below).
+* `/memory` shows what Rooks remembers; `/skills` lists skills and your own commands, each with where it comes from
+  (below).
 
 ## It learns
 
@@ -135,6 +136,28 @@ Rooks gets better the more you use it, the same way the AI Workspace app does, a
 * Requests that read web pages never become skills (injected text must not become a standing instruction).
 * Without the app, remembered facts live in `memory.json` next to `rooks.toml` and come back in every session.
 * `learn = false` in `rooks.toml` turns it off. The app's "Learn about me" switch also applies.
+
+## Skills and your own commands (app on or off)
+
+* **Skills** are folders with a `SKILL.md`: front matter with a `name` and a `description`, then the steps. Rooks reads
+  them from this folder's `.rooks/skills/NAME/` and `.claude/skills/NAME/`, and from your own `~/.rooks/skills/NAME/`
+  and `~/.claude/skills/NAME/`, so skills written for Claude Code work as they are. Only each skill's name and
+  description go into the instructions; its steps reach the model only when it calls `load_skill` (the same tool the
+  app's saved skills use), so a long skill costs nothing until a task needs it. With the app connected its skills are
+  listed too; a skill file of the same name is used before the app's. `learn = false` does not turn skill files off.
+* **Your own commands** are Markdown files: `.rooks/commands/NAME.md` or `.claude/commands/NAME.md` in this folder,
+  `~/.rooks/commands/NAME.md` or `~/.claude/commands/NAME.md` for you. `/NAME words` sends the file's text (front
+  matter left out) as the request, with `$ARGUMENTS` replaced by the words and `$1`, `$2` ... by each word; when the
+  text names none, the words are added at the end. `rooks "/NAME words"` and `rooks -p "/NAME words"` work the same.
+  They show in the `/` menu and in `/help`. A built-in command always wins over one of yours with the same name
+  (`/skills` says so). A command file grants nothing: `allowed-tools` and other front matter are not honoured, Claude
+  Code's `!` shell lines are not run, and every step it leads to is asked about as usual.
+* Where names clash: this folder's before yours, `.rooks` before `.claude`. Subfolders of `commands` are not read.
+* **A folder's own skills and commands are used only once you trust the folder**, the same trust that turns on its
+  own permission rules: the one-time question at start (it lists them), or `/permissions trust`. Until then they are
+  listed in `/skills` as not used yet, the session start says so, `load_skill` refuses them, and `/NAME` says why
+  instead of running (a headless run exits 3). Your own (`~/.rooks`, `~/.claude`) are always used. A folder's skill or
+  command file that links to a file outside the folder is never read.
 
 Other commands: `rooks undo`, `rooks receipts [list|show|import --db workbench.db]`, `rooks doctor` (checks the provider,
 key and MCP servers with one real call), `rooks mcp` (lists MCP tools), `rooks init` (writes an example config).
@@ -265,7 +288,9 @@ no. Only yes or no questions are answered; a server asking for anything else is 
   `sandbox = "full"` runs them with your user's permissions everywhere; then approval, dry run and trusted folders
   are the controls.
 * MCP over HTTP/SSE and prompt caching are not implemented yet.
-* Skills are learned only through the AI Workspace app; on its own Rooks learns facts, not procedures.
+* Skills are learned only through the AI Workspace app; on its own Rooks learns facts, not procedures. Skill files and
+  your own commands (above) work without the app, but the app does not show them yet, and a session that runs on
+  the app's shared loop (linked to an app chat) does not offer skill files to the model.
 
 ## Development
 

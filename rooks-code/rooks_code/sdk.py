@@ -204,6 +204,11 @@ def run(prompt: str, *, cwd: str | Path | None = None, provider: str | None = No
     if not (prompt or "").strip():
         return finish(Result(EXIT_SETUP, error="no task given: pass one, for example rooks -p \"fix the failing test\", "
                                                "or pipe it in"))
+    from .skills import one_shot
+
+    prompt, held = one_shot(root, prompt, words.COMMANDS)  # "/x words": a custom command's text, once trusted
+    if held:
+        return finish(Result(EXIT_DENIED, error=held))
     overrides = {"provider": provider, "model": model, "base_url": base_url, "yes": yes, "dry_run": dry_run,
                  "max_usd": max_usd, "max_tokens": max_tokens, "max_steps": max_steps}
     try:

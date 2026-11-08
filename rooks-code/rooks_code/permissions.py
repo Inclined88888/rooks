@@ -655,19 +655,32 @@ SHAPES = ('Shapes: bash(pytest *) a command and anything after it, bash(npm test
 
 
 def ask_trust(root: Path, ask=input, say=print) -> bool | None:
-    """The one-time question for a folder whose own rules would let things run without asking. Returns the stored
-    answer (asking only when there is none), or None when the folder has no such rules."""
+    """The one-time question for a folder whose own rules would let things run without asking, or that brings skills
+    and commands of its own (skills.py). Returns the stored answer (asking only when there is none), or None when the
+    folder has nothing of its own that trust would turn on."""
+    from .skills import Library
+
     p = Permissions([], [], root)
     if p.trust is not None:
         return p.trust
     allows = p.project_allows()
-    if not allows:
+    lib = Library(root)
+    own = [i for i in lib.all("skills") + lib.all("commands") if i.project]
+    if not allows and not own:
         return None
-    say(f"  This folder ({p.root.name}) has rules of its own that let Rooks do these without asking you:")
-    for r in allows[:12]:
-        say(f"    · {plain(r)}")
-    if len(allows) > 12:
-        say(f"    · and {len(allows) - 12} more")
+    if allows:
+        say(f"  This folder ({p.root.name}) has rules of its own that let Rooks do these without asking you:")
+        for r in allows[:12]:
+            say(f"    · {plain(r)}")
+        if len(allows) > 12:
+            say(f"    · and {len(allows) - 12} more")
+    if own:
+        say(f"  {'It also has' if allows else f'This folder ({p.root.name}) has'} skills and commands of its own, "
+            "which Rooks would follow:")
+        for i in own[:12]:
+            say(f"    · {'skill ' + i.name if i.kind == 'skill' else '/' + i.name}: {i.description}")
+        if len(own) > 12:
+            say(f"    · and {len(own) - 12} more")
     say("  Only say yes for a folder you know: a folder copied from someone else could grant itself anything.")
     for _ in range(3):
         try:
@@ -677,11 +690,12 @@ def ask_trust(root: Path, ask=input, say=print) -> bool | None:
             return None
         if a in ("y", "yes"):
             set_folder_trust(root, True)
-            say("  Trusted. Its rules apply from now on; /permissions untrust undoes it.")
+            say("  Trusted. Its rules, skills and commands apply from now on; /permissions untrust undoes it.")
             return True
         if a in ("n", "no"):
             set_folder_trust(root, False)
-            say("  Not trusted. Its rules that let things run are ignored; its never-allowed rules still apply.")
+            say("  Not trusted. Its rules that let things run, its skills and its commands are not used; its "
+                "never-allowed rules still apply.")
             return False
         say("  Type y or n, then Enter.")
     return None

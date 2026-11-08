@@ -468,7 +468,13 @@ def main(argv: list[str] | None = None) -> int:
     agent = Agent(s, ui, messages=history)
     try:
         if args.prompt:
-            agent.run(" ".join(args.prompt))
+            from .skills import one_shot
+
+            task, held = one_shot(root, " ".join(args.prompt), words.COMMANDS)  # "/x words": a custom command
+            if held:
+                ui.error(held)
+                return EXIT_DENIED
+            agent.run(task)
             if agent.denials:  # a change or command was refused (typed n, no input, a hook): the job is not done as asked
                 return EXIT_DENIED
             outcome = agent.log.rows[min(r for r in agent.log.rows if agent.log.rows[r]["kind"] == "turn")]["outcome"]
