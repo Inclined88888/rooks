@@ -13,7 +13,7 @@ import { ApprovalCard, Button, Card, EmptyState, ErrorState, Loading, Page, Sect
 import { plainError } from "./agents/kit";
 import { argsLine, stepTitle } from "../chat/turns";
 import { listenOnce, Mic as MicT, openMic, osDictationHint, speak, stopSpeaking, voiceStatus, VoiceStatus, watchBargeIn } from "../voice/engine";
-import { afterWake } from "../voice/logic";
+import { WAKE_PHRASE, afterWake } from "../voice/logic";
 import "../voice/voice.css";
 
 type Turn = { id: number; role: "user" | "assistant" | "note"; text: string };
@@ -146,7 +146,7 @@ export default function Talk() {
         continue;
       }
       if (!awake) {
-        const rest = afterWake(text, st?.settings.wake_phrase || "hey workspace");
+        const rest = afterWake(text, st?.settings.wake_phrase || WAKE_PHRASE);
         if (rest === null) continue;
         awake = true;
         lastTalk = Date.now();

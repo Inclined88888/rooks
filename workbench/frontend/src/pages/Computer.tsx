@@ -329,7 +329,7 @@ function PermissionSteps({ missing, platform, onRecheck }: { missing: string[]; 
         </li>
         {screen && <li>
           <span className="free-n">2</span>
-          <span className="grow">In <strong>Screen &amp; System Audio Recording</strong>, switch on <strong>AI Workspace</strong> (or python, if that's what's listed).</span>
+          <span className="grow">In <strong>Screen &amp; System Audio Recording</strong>, switch on <strong>Rooks</strong> (or python, if that's what's listed).</span>
           <Button size="sm" onClick={() => open("screen")}>Open it</Button>
         </li>}
         {control && <li>
@@ -339,7 +339,7 @@ function PermissionSteps({ missing, platform, onRecheck }: { missing: string[]; 
         </li>}
         <li>
           <span className="free-n">{1 + (screen ? 1 : 0) + (control ? 1 : 0) + 1}</span>
-          <span className="grow">macOS applies it after a restart: quit AI Workspace and open it again, then check.</span>
+          <span className="grow">macOS applies it after a restart: quit Rooks and open it again, then check.</span>
           <Button size="sm" variant="ghost" onClick={onRecheck}>Check again</Button>
         </li>
       </ol>
