@@ -98,10 +98,14 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Fixed in phase 1a: terminal approvals with the bridge key.** `POST /v1/rooks/approvals/{id}` now refuses every
   bridge key (app.json, desk, coding job) with 403; only the Terminal access token records an answer, and only for a
   prompt the person's own terminal raised. A prompt raised with the coding job key (request id `terminal:job:`) is
-  answered in the signed in app only, the token included. The terminal that asked may withdraw its prompt
-  (`/withdraw`, outcome `withdrawn`): the card closes and it can never become an approval. Tests:
+  answered in the signed in app only, the token included, here and in `POST /api/needs-you/a:{id}/...` (which refuses
+  it unless signed in; the list marks it `in_app_only` and the terminal's /needs sends no answer for it). The terminal
+  that asked may withdraw its prompt (`/withdraw`, outcome `withdrawn`): the card closes and it can never become an
+  approval; a coding job withdraws only its own prompts and no other key withdraws a job's. Tests:
   `test_auth_boundaries.py::test_a_shared_key_never_answers_a_terminal_prompt`,
-  `::test_a_prompt_raised_by_a_coding_job_is_answered_only_in_the_app`, and over real processes
+  `::test_a_prompt_raised_by_a_coding_job_is_answered_only_in_the_app`,
+  `::test_needs_you_never_answers_a_coding_jobs_prompt_with_the_terminal_token`,
+  `::test_only_the_side_that_asked_withdraws_a_terminal_prompt`, and over real processes
   `rooks-code/tests/test_shared_loop_e2e.py::test_a_program_holding_the_apps_key_cannot_answer_the_terminals_prompt`.
 * **What remains of it: the stored Terminal access token.** Anything running as the person can read the token
   `rooks login` keeps in `rooks-keys.json` and answer a prompt the person's own interactive terminal raised (the token

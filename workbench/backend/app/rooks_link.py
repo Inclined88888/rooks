@@ -382,6 +382,15 @@ TERMINAL_REQUEST = "terminal:"
 JOB_REQUEST = TERMINAL_REQUEST + "job:"  # raised by a coding job the app started
 
 
+def raised_by_job(aid: int) -> bool:
+    """True for a terminal prompt a coding job raised: only the signed in app answers it (here and in Needs you)."""
+    row = db.one("SELECT request_id FROM actions WHERE id = ?", aid)
+    return bool(row) and (row["request_id"] or "").startswith(JOB_REQUEST)
+
+
+JOB_ANSWER_REFUSED = "A background job can't answer for you. Answer it in the app, under Needs you."
+
+
 class TerminalApprovalIn(BaseModel):
     conversation_id: int
     tool: str = Field(..., min_length=1, max_length=100)
@@ -441,9 +450,9 @@ def terminal_approval_answer(aid: int, data: TerminalDecisionIn, request: Reques
 
     if not check_cli_token(_bearer_token(request)):
         raise HTTPException(403, "Only you can answer this. Answer it in Needs you, or sign the terminal in with rooks login.")
-    row = _terminal_row(aid)
-    if (row["request_id"] or "").startswith(JOB_REQUEST):
-        raise HTTPException(403, "A background job can't answer for you. Answer it in Needs you.")
+    _terminal_row(aid)
+    if raised_by_job(aid):
+        raise HTTPException(403, JOB_ANSWER_REFUSED)
     actions.decide(aid, data.approve, CHANNEL)
     return {"id": aid, "status": actions.approval(aid)["status"]}
 
@@ -452,12 +461,17 @@ WITHDRAWN = "withdrawn"
 
 
 @router.post("/approvals/{aid}/withdraw")
-def terminal_approval_withdraw(aid: int):
+def terminal_approval_withdraw(aid: int, request: Request):
     """The terminal that asked no longer waits (the person answered there and the app could not record it, or the
-    terminal stopped). The card closes; nothing is approved, and the app can no longer approve it. 409 once answered."""
+    terminal stopped). The card closes; nothing is approved, and the app can no longer approve it. 409 once answered.
+    Only the side that asked withdraws: a coding job its own prompts, the person's terminal (the app.json key or the
+    Terminal access token) the others. The desk helper's key is often the app.json key, so it is not told apart."""
     from . import actions
+    from .security import _bearer_token, is_coding_job_key
 
     row = _terminal_row(aid)
+    if is_coding_job_key(_bearer_token(request)) != raised_by_job(aid):
+        raise HTTPException(403, "Only the terminal that asked can take this back.")
     if row["outcome"] == WITHDRAWN:
         return {"id": aid, "status": WITHDRAWN}
     if actions.approval(aid)["status"] != "pending":

@@ -182,6 +182,15 @@ def is_coding_job_key(token: str) -> bool:
     return bool(token) and bool(key) and hmac.compare_digest(token, key)
 
 
+def is_signed_in(request: Request) -> bool:
+    """The person themselves: a session cookie, or a browser they paired. Never a bearer key a program could read."""
+    try:
+        require_user(request)
+        return True
+    except HTTPException:
+        return False
+
+
 def require_user_or_terminal(request: Request) -> None:
     """The signed in user, or the rooks terminal on this computer with its own key: only for the Workroom routes the
     terminal's /room, /needs and /jobs use (room status/up/down/run, Needs you, the Jobs board). The Terminal access

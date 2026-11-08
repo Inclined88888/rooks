@@ -541,3 +541,17 @@ def test_help_lists_the_room_verbs():
         assert "The Room" in text
         for verb in ("open", "tail", "send", "close", "files", "points", "save", "back", "handoff", "shell"):
             assert f"/room {verb}" in text, verb
+
+
+def test_a_background_jobs_request_is_answered_in_the_app_not_from_the_terminal(fake_app):
+    """The app answers a coding job's own prompt only for the signed in person (the job's commands could read the
+    terminal's sign in). /needs lists it, says where to answer it, and never sends an answer for it."""
+    fake_app.needs.insert(0, {"id": "a:9", "kind": "approval", "title": "Run a command: rm -rf build", "detail": "",
+                              "since": "2026-11-06T11:00:00", "actions": ["approve", "deny"], "in_app_only": True})
+    agent = _agent(fake_app.url)
+    listed = _say(workroom.needs_command, agent)
+    assert "Run a command: rm -rf build" in listed and "answer in the app" in listed
+    for verb in ("approve", "deny"):
+        said = _say(workroom.needs_command, agent, f"{verb} 1")
+        assert "in the app" in said and "Approved" not in said and "Denied" not in said, said
+    assert not any(c[0] == "POST" and c[1].startswith("/api/needs-you/a:9") for c in fake_app.calls)
