@@ -1,9 +1,10 @@
-# AI Workspace: Quick start
+# Rooks: Quick start
 
 One command installs everything for your user account, with no admin rights, Docker or Node.js needed:
 
-* **AI Workspace**, the app: chat, memory, notes, tasks, calendar, mail drafts, automations, skills, research and the
-  Browser agent page.
+* **Rooks**, the app: chat, memory, notes, tasks, calendar, mail (an email is sent only after your yes), automations,
+  skills, research and the Browser page. Its command, shortcut and download files still carry the older name AI
+  Workspace.
 * **`rooks`**, the terminal coding agent (Rooks Code).
 * **`rooks-browser`**, the AI browser agent (Rooks Browser), plus a browser for it. It uses your Chrome or Edge if you
   have one, and otherwise downloads Chromium.
