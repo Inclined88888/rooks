@@ -398,3 +398,50 @@ def test_real_no_port_file_rule_app_address_and_download(session, served, tmp_pa
         time.sleep(0.2)
     assert (home / "Downloads" / "notes.txt").read_text() == "downloaded words"
     assert not [p for p in (home / "Downloads").iterdir() if p.name != "notes.txt"], "a half named file was left"
+
+
+@needs_chromium
+def test_real_a_tab_is_named_by_its_page_title_after_a_form_post(session, tmp_path):
+    """A tab's name is the page's own title, also after a form posts and redirects (the browser's own title event does
+    not always come; the title is read when the page has loaded). Never the address standing in for a title."""
+    import urllib.parse
+
+    class Site(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def _send(self, code, body="", where=""):
+            data = body.encode()
+            self.send_response(code)
+            if where:
+                self.send_header("Location", where)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def do_GET(self):
+            if self.path.startswith("/done"):
+                return self._send(200, "<title>All done here</title><p>done</p>")
+            return self._send(200, "<title>Form</title><form method=post action=/go><input name=a value=1>"
+                                   "<button id=b>Go</button></form><script>document.getElementById('b').click()</script>")
+
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("Content-Length") or 0))
+            return self._send(303, "", "/done")
+
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Site)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    start, _home = session
+    s = start()
+    try:
+        tid = s.new_tab()
+        s.navigate(tid, f"127.0.0.1:{srv.server_address[1]}/form")
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline and s.tab(tid).title != "All done here":
+            time.sleep(0.1)
+        assert s.tab(tid).url.endswith("/done")
+        assert s.tab(tid).title == "All done here"
+        assert urllib.parse.urlsplit(s.tab(tid).url).netloc not in s.tab(tid).title
+    finally:
+        srv.shutdown()

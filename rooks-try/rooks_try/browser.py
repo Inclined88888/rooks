@@ -1301,6 +1301,9 @@ class Session:
                     tab.loading = False
                 tab.loaded.set()
                 self._changed("tabs")
+                if tab is not None and method == "Page.loadEventFired":
+                    # the browser's own title event does not always come (a form that posts and redirects): read it
+                    threading.Thread(target=self._read_title, args=(tab,), name="room-browser-title", daemon=True).start()
         elif method == "Page.javascriptDialogOpening":
             if session and self.pipe:  # nobody can answer a dialog in a stream: alerts are accepted, the rest declined
                 accept = p.get("type") in ("alert", "beforeunload")
@@ -1327,6 +1330,20 @@ class Session:
                     tab.blocked = refused
                 self._note(refused)
                 self._changed("tabs")
+
+    def _read_title(self, tab: Tab) -> None:
+        session = tab.session
+        if not session or not self.alive():
+            return
+        try:
+            got = self.pipe.call("Runtime.evaluate", {"expression": "document.title", "returnByValue": True}, session, timeout=5)
+        except ProtocolError:
+            return
+        title = str((got.get("result") or {}).get("value") or "")
+        if title and tab.session == session and title != tab.title:
+            with self.lock:
+                tab.title = title
+            self._changed("tabs")
 
     def _popup(self, info: dict) -> None:
         target = info["targetId"]
