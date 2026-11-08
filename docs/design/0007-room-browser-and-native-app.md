@@ -101,3 +101,23 @@ Push a tag `vX.Y.Z` that matches `VERSION`. `release.yml` makes the release and 
 * `workbench/frontend/tests/room-browser.test.mjs`: Browser offered only with `can.browser`; off-reason words; the phone sentence; copy uses `ClipboardItem`.
 * `workbench/backend/tests/test_launcher.py`: default `auto`; `native_asset` skips `rooks-native-*` and versions below `VERSION`; no app and no answer gives a question, not a Chrome window; old and new names found; `IDENT` unchanged.
 * `desktop/scripts`: `tauri.conf.json` name, identifier, `mainBinaryName`; a Playwright WebKit smoke run of the built UI (sign in, chat, Room page, a download, an external link).
+
+## 4. As built (engine and API lane, 2026-11-08)
+
+* The pipe ends reach fds 3 and 4 through a short Python step (`sys.executable -I -c`), not the wrapper's `3<&N 4>&M`:
+  `sh` cannot name an fd above 9 and a busy server's fds are higher; the step moves both above 10 first so neither is
+  closed by the other's `dup2`. bwrap passes them through.
+* The request rule is the DevTools `Fetch` domain enabled on the browser itself, so it covers every tab, popup, frame
+  and worker; patterns are `file://*` and `*:<app port>/*`, and the host check (loopback, unspecified, this computer's
+  own names and addresses) is done in Python. A typed or assistant address is refused before anything loads. The
+  policy file is not bound (BACKLOG).
+* As root (uid 0) the bwrap step maps the person to uid and gid 1000 inside, since Chromium will not start as root
+  with its sandbox on. An engine under the person's home is bound read-only at `/tmp/.room-browser-engine` (on the
+  wall's own `/tmp`).
+* The live picture's size is the page area: the tab's window is sized with `Browser.setWindowBounds` (not a device
+  metrics override, which left the stream at the window's size and clicks off by its scale).
+* The app closes the browser from its shutdown as well as `atexit` (uvicorn ends on SIGTERM by raising the signal
+  again). A browser whose record still says open, written by another run, also counts as closed by a restart.
+* After a restart the front tab loads and the others wait asleep as addresses until opened; `reopened` names them.
+* The overview (`GET /api/room/browser`), `POST /start`, `POST /close`, `GET /frame`, `GET /shot`, `POST /act` and
+  closing a tab are the person's; the rooks terminal's key reaches exactly `open`, `tabs` and `page`.

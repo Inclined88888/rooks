@@ -45,6 +45,29 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
+### The Room's browser (design 0007), engine and API lane: not done here
+
+* **The Room's own engine download.** `install_engine` checks a downloaded archive against a SHA-256 and refuses one
+  that reaches outside its folder, but no Chrome for Testing build is pinned yet (URL, version and its real SHA-256 per
+  platform), and there is no "Get one?" route or button. Until then the engine is Playwright's Chromium, the system's,
+  Chrome or Edge, or `no_engine`.
+* **The Chromium policy file** (`/etc/chromium/policies/managed/`) the record names is not bound: bwrap cannot create
+  that mount point under a read-only `/` when the folder does not exist. The request rule (the DevTools `Fetch` domain
+  at the browser level, every target) refuses files outside the Room's home and the app's address instead, with or
+  without bwrap.
+* **macOS.** The engine search, flags (`--use-mock-keychain`) and memory reading (`ps`) have macOS paths, but nothing
+  was run on a Mac; the record's Seatbelt check before release is still to do.
+* **File uploads** (a page's file picker) are not wired: headless Chromium cancels the chooser. Choosing from the
+  Room's files is the way.
+* **Copy** returns the page's selection (`{"type": "copy"}` on the socket); the window's `ClipboardItem` is the
+  frontend lane's.
+* **The phone's taps** are not in the run log (only the window's coarse "You used the browser" row is).
+* **A window that opens before the Room is on** gets the socket closed with "The Room is off. Start it first." and
+  must open again after Start.
+* **Uvicorn ends on SIGTERM by raising the signal again**, so `atexit` does not run at a normal stop; the browser is
+  closed from the app's shutdown instead. The Room's terminals still rely on `atexit` (their restart record is right
+  either way, since a record without an end counts as ended by the restart).
+
 ### The Room as a small computer (design 0006): follow-ups, each its own record or line
 
 * **"Since you were here" and an Activity window.** New programs in the Room's bin folders, files changed and points

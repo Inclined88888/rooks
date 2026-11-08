@@ -4,6 +4,41 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · A real browser in the Room (engine and API) · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`. This entry is the engine and API lane; the Browser
+window on the Room's desk, the assistant's `use_room` browse actions and the terminal's `/room browse` land from their
+own lanes.
+
+- **The Room has its own browser.** A real Chromium the app starts when the Room is on and a page is opened. It runs
+  headless, so no window appears on your screen; you see it only as the Room's live picture. It is driven over a pipe,
+  never a network port. Its sign-ins and cookies live in the Room's own folder (`.room-browser`), never in your own
+  browser's profile; passwords are never saved. On Linux with bubblewrap it runs with the Room's folder over your home
+  folder and no network when the Room is offline; elsewhere it runs as you, and the app says so.
+- **What it refuses.** A file outside the Room's folder, and this app's own address, are refused for every request,
+  typed or from a page.
+- **Downloads** land in the Room's `Downloads` with a safe name (`notes (2).txt` when the name is taken); one stops at
+  2 GB. They leave the Room only through Hand off and your yes in Needs you.
+- **Tabs and limits.** Eight tabs at most ("Eight tabs are open. Close one to open another."). Over 1.5 GB of memory
+  the least recently viewed background tab is put to sleep (kept as its address); over 2.5 GB the browser closes and
+  its tabs are kept. The disk cache is 100 MB.
+- **Stop, Save a point, Start over, restart.** Stop closes the browser and keeps its tabs. Save a point closes it for
+  the copy (caches left out) and opens it again. Start over closes it before the Room's folder is replaced, so sign-ins
+  made since that point are gone. When the app restarts, the browser closes cleanly, the next start reopens the tabs
+  (the front one loads, the others wait asleep) and says "The app restarted, so the browser closed. Your tabs and
+  sign-ins are kept."; a chat cut off by the restart says the same.
+- **Status** has `can.browser` and `can.browser_off_reason` (`no_engine`, `windows`, `helper`, `switched_off`) and a
+  `browser` part (open, tabs, notes). Settings has `room_browser` (on by default) to switch it off.
+- **API.** `WS /api/room/browser/ws` (signed in, same origin, this computer only, one window at a time): JPEG frames
+  as they change, state as JSON, and mouse, wheel, key, text, resize, address, back, forward, reload and tab messages.
+  `POST /api/room/browser/open`, `GET /api/room/browser/tabs` and `GET /api/room/browser/page` also take the rooks
+  terminal's Terminal access token (a bridge key only reads, and reads never start the browser). The phone's still
+  (`GET /frame`), taps (`POST /act`), `GET /shot`, `POST /start`, `POST /close` and closing a tab are yours only.
+- **Run log.** Opening and closing the browser, every page a route opens (host and path, never the query), and one
+  "You used the browser for N min" row; what you type is never recorded.
+- **No migration.** Nothing changes on upgrade; rollback is removing the branch (the `.room-browser` folder in the
+  Room's home can be deleted).
+
 ## 2026-11-08 · The Room as a small computer · branch feat/room-desktop
 
 The Room keeps what you do in it. Design record: `docs/design/0006-room-desktop.md`. This entry was written by the
