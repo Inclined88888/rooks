@@ -432,3 +432,23 @@ def test_status_says_why_there_is_no_terminal(client, on, monkeypatch):
     assert room_files.can(None, True)["terminal_off_reason"] == "helper"
     monkeypatch.setattr(sys, "platform", "win32")
     assert room_files.can(TryRoom(prefer="shell").driver(), False)["terminal_off_reason"] == "windows"
+
+
+def test_the_terminal_log_is_written_under_the_terminals_lock(client, on, local, monkeypatch):
+    """The reader thread and anyone else emitting output share one log file, which is closed and reopened when it
+    rotates. Written outside the lock, one thread could write to the file another had just closed (seen on CI:
+    "write to closed file")."""
+    from app import room_terminal
+
+    tid = _open(client)["id"]
+    t = room_terminal.get(tid)
+    held = []
+    real = room_terminal._log_write
+
+    def checked(term, data):
+        held.append(term.lock._is_owned())
+        real(term, data)
+
+    monkeypatch.setattr(room_terminal, "_log_write", checked)
+    room_terminal._emit(t, b"hello")
+    assert held and all(held), held
