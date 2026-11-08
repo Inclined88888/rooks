@@ -137,6 +137,7 @@ class Candidate:
     deadline: float = float("inf")
     agent: Agent | None = None
     settings: config.Settings | None = None
+    receipt: str = ""                       # the receipt's path once the agent is gone (a race loaded from race.json)
     thread: threading.Thread | None = None
     cancel: threading.Event = field(default_factory=threading.Event)
 
@@ -150,7 +151,7 @@ class Candidate:
                            "copy": str(self.copy), "answer": self.answer, "changed": [c.__dict__ for c in self.changed],
                            "test_files": self.test_files, "score": self.score.to_dict(), "judge": self.judge,
                            "result": self.result.to_dict() if self.result else None,
-                           "receipt": str(self.agent.log.path) if self.agent else ""})
+                           "receipt": str(self.agent.log.path) if self.agent else self.receipt})
 
 
 # --- helpers -----------------------------------------------------------------------------------------------------------
@@ -528,6 +529,9 @@ class Race:
         self.picked: int | None = None
         self.started = 0.0
         self.finished = 0.0
+        self.saved_seconds = 0.0          # a race loaded from race.json: how long it took
+        self.app_job: int | None = None   # the job on the app's Jobs board that shows this race (section 7)
+        self.app_pick: int | None = None  # a pick made in the app, read by the terminal, not yet applied here
         self.stopping = False
         self.judged = False
         self._pending: list[dict] = []
@@ -861,19 +865,25 @@ class Race:
         if any(c.result and c.result.denied for c in self.candidates) or any(c.agent and c.agent.denials for c in self.candidates):
             self.exit_code = sdk.EXIT_DENIED
         self.save()
-        self._event({"type": "race_end", "race": self.id, "exit_code": self.exit_code, "seconds": round(self.seconds, 1),
-                     "statuses": [c.status for c in self.candidates], "picked": self.picked})
+        self._event(result_of(self).to_dict("race_end"))
 
     @property
     def seconds(self) -> float:
+        if not self.started:
+            return self.saved_seconds
         end = self.finished or time.monotonic()
-        return max(0.0, end - self.started) if self.started else 0.0
+        return max(0.0, end - self.started)
+
+    @property
+    def alive(self) -> bool:
+        """Whether any candidate is still working."""
+        return any(c.thread is not None and c.thread.is_alive() for c in self.candidates)
 
     def to_dict(self) -> dict:
         return redact_obj({"race": self.id, "task": self.task, "folder": str(self.root), "copies": str(self.dir),
                            "cap_usd": self.max_usd, "cap_tokens": self.max_tokens, "time_limit_s": self.time_limit_s,
                            "test_command": self.test_command, "seconds": round(self.seconds, 1), "exit_code": self.exit_code,
-                           "picked": self.picked, "error": self.error, "notices": self.notices,
+                           "picked": self.picked, "error": self.error, "notices": self.notices, "app_job": self.app_job,
                            "candidates": [c.to_dict() for c in self.candidates], "order": [c.n for c in self.ranked()]})
 
     def save(self) -> Path | None:
@@ -896,8 +906,7 @@ def run(task: str, **kw) -> Race:
     failed candidate: the Race carries error (exit code 2) or each candidate's status."""
     r = Race.prepare(task, **kw)
     if r.error:
-        r._event({"type": "race_end", "race": r.id, "exit_code": r.exit_code, "error": redact(r.error), "seconds": 0,
-                  "statuses": [], "picked": None})
+        r._event(result_of(r).to_dict("race_end"))
         return r
     r.start()
     r.wait()
@@ -909,30 +918,293 @@ def drop(r: Race) -> None:
     r._remove_copies()
 
 
+def drop_all(root: Path) -> int:
+    """Remove every saved race under this folder's .rooks/race. Returns how many."""
+    root = Path(root).resolve()
+    folder = root / ".rooks" / "race"
+    n = 0
+    for d in sorted(folder.iterdir()) if folder.is_dir() else []:
+        if d.is_dir():
+            r = load(root, d.name)
+            if r is not None:
+                drop(r)
+            else:
+                shutil.rmtree(d, ignore_errors=True)
+            n += 1
+    if shutil.which("git") and _git_root(root):
+        _git(root, "worktree", "prune")
+    return n
+
+
+# --- a saved race: race.json back into a Race, enough to show, pick and drop ------------------------------------------------
+def saved(root: Path) -> list[Path]:
+    """The race.json files under this folder, oldest first."""
+    folder = Path(root).resolve() / ".rooks" / "race"
+    return sorted(p for p in folder.glob("*/race.json") if p.is_file()) if folder.is_dir() else []
+
+
+def load(root: Path, race_id: str | None = None, settings: config.Settings | None = None) -> "Race | None":
+    """The race saved in this folder (the newest, or the one named) as a Race that can be shown, picked and dropped: its
+    copies are on disk, its scores and diffs in race.json. None when there is none."""
+    root = Path(root).resolve()
+    files = saved(root)
+    if race_id:
+        files = [f for f in files if f.parent.name == race_id]
+    if not files:
+        return None
+    try:
+        data = json.loads(files[-1].read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    specs = [CandidateSpec(provider=c.get("provider") or None, model=c.get("model") or None, brief=c.get("brief") or "")
+             for c in data.get("candidates") or []]
+    s = settings or config.Settings(root=root)
+    r = Race(str(data.get("task") or ""), root, s, specs, max_usd=data.get("cap_usd"), max_tokens=data.get("cap_tokens"),
+             time_limit_s=float(data.get("time_limit_s") or DEFAULT_TIME_S), test_command=str(data.get("test_command") or ""),
+             ask=None, on_event=None)
+    r.id = str(data.get("race") or files[-1].parent.name)
+    r.dir = files[-1].parent
+    r.base = r.dir / "base"
+    r.git = (r.base / ".git").is_file()
+    r.saved_seconds = float(data.get("seconds") or 0)
+    r.exit_code = int(data.get("exit_code") or sdk.EXIT_UNFINISHED)
+    r.picked = data.get("picked")
+    r.error = str(data.get("error") or "")
+    r.notices = list(data.get("notices") or [])
+    r.app_job = data.get("app_job")
+    r.judged = True
+    for c, d in zip(r.candidates, data.get("candidates") or []):
+        c.copy = r.dir / f"c{c.n}"
+        c.label = str(d.get("label") or "")
+        c.status = str(d.get("status") or "finished")
+        c.answer = str(d.get("answer") or "")
+        c.changed = [Change(**{k: v for k, v in ch.items() if k in Change.__dataclass_fields__}) for ch in d.get("changed") or []]
+        c.test_files = list(d.get("test_files") or [])
+        c.score = Score(**{k: v for k, v in (d.get("score") or {}).items() if k in Score.__dataclass_fields__})
+        c.judge = dict(d.get("judge") or {})
+        c.receipt = str(d.get("receipt") or "")
+        c.settings = _copy.copy(s)
+        c.settings.provider, c.settings.model = str(d.get("provider") or s.provider), str(d.get("model") or "")
+        res = d.get("result")
+        if isinstance(res, dict):
+            c.result = sdk.Result(int(res.get("exit_code", sdk.EXIT_UNFINISHED)), result=str(res.get("result") or ""),
+                                  outcome=str(res.get("outcome") or "not_started"), session_id=res.get("session_id"),
+                                  turns=int(res.get("turns") or 0), tokens_in=int((res.get("tokens") or {}).get("input") or 0),
+                                  tokens_out=int((res.get("tokens") or {}).get("output") or 0), cost_usd=res.get("cost_usd"),
+                                  denied=list(res.get("denied") or []), error=str(res.get("error") or ""),
+                                  duration_ms=int(res.get("duration_ms") or 0))
+    return r
+
+
+def result_of(r: Race) -> "sdk.RaceResult":
+    """The race as the headless result object (sdk.RaceResult): the json output and the race_end event."""
+    tokens_in = sum(c.result.tokens_in for c in r.candidates if c.result)
+    tokens_out = sum(c.result.tokens_out for c in r.candidates if c.result)
+    costs = [c.result.cost_usd if c.result else 0.0 for c in r.candidates]
+    rows = []
+    for c in r.candidates:
+        rows.append({"candidate": c.n, "label": c.label, "provider": c.settings.provider if c.settings else "",
+                     "model": c.settings.model if c.settings else "", "brief": c.spec.brief, "status": c.status,
+                     "score": c.score.to_dict(), "result": c.result.to_dict() if c.result else None,
+                     "files": [ch.path for ch in c.changed]})
+    return sdk.RaceResult(exit_code=r.exit_code, race=r.id, task=r.task, picked=r.picked, error=r.error,
+                          seconds=round(r.seconds, 1), tokens_in=tokens_in, tokens_out=tokens_out,
+                          cost_usd=None if any(x is None for x in costs) else float(sum(costs)),
+                          candidates=rows, order=[c.n for c in r.ranked()] if not r.error else [])
+
+
+# --- the words typed after /race and rooks race ----------------------------------------------------------------------------------
+USAGE = ('/race "task" [--n 3] [--models a,b,c] [--briefs smallest,robust,fastest] [--time 15m] [--auto]  ·  '
+         '/race show [N]  ·  /race pick N  ·  /race drop')
+VERBS = ("show", "pick", "drop", "stop")
+
+
+def parse_time(text: str) -> float:
+    """"15m", "90s", "1h", "2m30s" or a plain number of seconds."""
+    t = str(text or "").strip().lower()
+    if not t:
+        return float(DEFAULT_TIME_S)
+    if t.replace(".", "", 1).isdigit():
+        return float(t)
+    total, num = 0.0, ""
+    for ch in t:
+        if ch.isdigit() or ch == ".":
+            num += ch
+        elif ch in "hms" and num:
+            total += float(num) * {"h": 3600, "m": 60, "s": 1}[ch]
+            num = ""
+        else:
+            raise RaceError(f"--time takes minutes or seconds, like 15m or 90s, not {text!r}")
+    if num:
+        raise RaceError(f"--time takes minutes or seconds, like 15m or 90s, not {text!r}")
+    return total
+
+
+def _known_providers() -> set[str]:
+    names = set(config.PROVIDERS)
+    try:
+        names |= set((config.load_file().get("providers") or {}).keys())
+    except Exception:  # noqa: BLE001 - a broken config file is reported when the race starts
+        pass
+    return names
+
+
+def parse_models(text: str) -> list[tuple[str | None, str | None]]:
+    """--models as /model names them: "anthropic/claude-sonnet-5-5", "ollama/qwen2.5:7b", "claude-code" (a provider on its
+    own), or a bare model name on the session's provider. Each is (provider or None, model or None)."""
+    out: list[tuple[str | None, str | None]] = []
+    known = _known_providers()
+    for item in [x.strip() for x in str(text or "").split(",") if x.strip()]:
+        if item in known:
+            out.append((item, None))
+        elif "/" in item and item.split("/", 1)[0] in known:
+            prov, model = item.split("/", 1)
+            out.append((prov, model or None))
+        else:
+            out.append((None, item))
+    return out
+
+
+def specs_from(models: str = "", briefs: str = "", n: int | None = None) -> list[CandidateSpec]:
+    """The candidates asked for: one per --models entry (one model means all use it; none means the session's), each with
+    its brief (--briefs, cycling through smallest, robust, fastest when none are given), --n of them."""
+    pairs = parse_models(models)
+    names = [b.strip() for b in str(briefs or "").split(",") if b.strip()] if briefs else list(BRIEFS)
+    count = max(1, int(n or (len(pairs) if len(pairs) > 1 else (len(names) if briefs else DEFAULT_N))))
+    if len(pairs) > 1 and n and n != len(pairs):
+        count = max(count, len(pairs))
+    if not pairs:
+        pairs = [(None, None)]
+    return [CandidateSpec(provider=pairs[i % len(pairs)][0] if len(pairs) > 1 else pairs[0][0],
+                          model=pairs[i % len(pairs)][1] if len(pairs) > 1 else pairs[0][1],
+                          brief=names[i % len(names)]) for i in range(count)]
+
+
+def parse_command(rest: str) -> dict:
+    """The words after /race: {"verb": "run" | "show" | "pick" | "drop" | "stop" | "usage", ...} with the task and flags,
+    or {"verb": "error", "error": words}."""
+    import shlex
+
+    try:
+        parts = shlex.split(rest or "")
+    except ValueError as e:
+        return {"verb": "error", "error": f"could not read that: {e}"}
+    if not parts:
+        return {"verb": "usage"}
+    if parts[0].lower() in VERBS:
+        verb = parts[0].lower()
+        n = parts[1] if len(parts) > 1 else ""
+        if verb == "pick" and not n:
+            return {"verb": "pick", "n": None}
+        if n and not n.isdigit():
+            return {"verb": "error", "error": f"/race {verb} takes a candidate number, like /race {verb} 1"}
+        return {"verb": verb, "n": int(n) if n else None}
+    out: dict = {"verb": "run", "n": None, "models": "", "briefs": "", "time": DEFAULT_TIME_S, "auto": False, "task": ""}
+    words_: list[str] = []
+    i = 0
+    while i < len(parts):
+        p = parts[i]
+        if p in ("--n", "--models", "--briefs", "--time", "--test-command") or p.startswith(("--n=", "--models=", "--briefs=", "--time=")):
+            if "=" in p:
+                key, val = p[2:].split("=", 1)
+            else:
+                key = p[2:]
+                i += 1
+                if i >= len(parts):
+                    return {"verb": "error", "error": f"--{key} needs a value"}
+                val = parts[i]
+            if key == "n":
+                if not val.isdigit() or int(val) < 1:
+                    return {"verb": "error", "error": "--n takes how many candidates, like --n 3"}
+                out["n"] = int(val)
+            elif key == "time":
+                try:
+                    out["time"] = parse_time(val)
+                except RaceError as e:
+                    return {"verb": "error", "error": str(e)}
+            elif key == "test-command":
+                out["test_command"] = val
+            else:
+                out[key] = val
+        elif p == "--auto":
+            out["auto"] = True
+        elif p.startswith("--"):
+            return {"verb": "error", "error": f"unknown option {p}. {USAGE}"}
+        else:
+            words_.append(p)
+        i += 1
+    out["task"] = " ".join(words_).strip()
+    if not out["task"]:
+        return {"verb": "error", "error": f"say what the candidates should do. {USAGE}"}
+    return out
+
+
+def start_words(r: Race) -> str:
+    """What the person reads before the race starts (section 2)."""
+    n = len(r.candidates)
+    cap = []
+    if r.max_usd:
+        cap.append(f"${r.max_usd:.2f}")
+    if r.max_tokens:
+        cap.append(f"{r.max_tokens:,} tokens")
+    first = (f"{n} candidate{'s' if n != 1 else ''} will try this task, each on its own copy of this folder. "
+             "Nothing here changes until you pick one.")
+    second = f" Cap for the whole race: {' and '.join(cap)}." if cap else " No spending cap is set for this race."
+    return first + second + f" Up to {words_time(r.time_limit_s)} each."
+
+
 # --- the scoreboard, pick and show ---------------------------------------------------------------------------------------------
-def scoreboard_text(r: Race) -> str:
-    """The scoreboard: every number measured. "unknown" where a price is unknown."""
+SCORE_COLS = ["#", "Candidate", "Proof", "Others' tests", "Project tests", "Diff", "Files", "Tokens", "Cost", "Time", "Status"]
+HOW_TO = "/race show N for a diff and its test output · /race pick N applies one · /race drop removes them all"
+HOW_TO_SHELL = "rooks race show N for a diff and its test output · rooks race pick N applies one · rooks race drop removes them all"
+
+
+def scoreboard_rows(r: Race) -> tuple[str, list[list[str]], list[str]]:
+    """The scoreboard's parts: the heading, one row of words per candidate in rank order (SCORE_COLS), and the notes.
+    Every number is measured. "unknown" where a price is unknown."""
     total_tok = sum(c.score.tokens for c in r.candidates)
     costs = [c.score.cost_usd for c in r.candidates]
     total_cost = "unknown" if any(x is None for x in costs) else _money(sum(costs))
     head = (f"Race: {redact(r.task)[:60]}    {len(r.candidates)} candidate{'s' if len(r.candidates) != 1 else ''} · "
             f"{words_time(r.seconds)} · {total_cost} · {total_tok:,} tokens")
-    cols = ["#", "Candidate", "Proof", "Others' tests", "Project tests", "Diff", "Files", "Tokens", "Cost", "Time", "Status"]
     rows = []
     for c in r.ranked():
         s = c.score
         rows.append([str(c.n), c.label, s.proof, f"{s.others_passed}/{s.others_total}" if s.others_total else "none to run",
                      s.project, f"+{s.diff_added} -{s.diff_removed}", str(s.files), f"{s.tokens:,}", _money(s.cost_usd),
                      words_time(s.seconds), c.status])
-    widths = [max(len(x) for x in col) for col in zip(cols, *rows)]
-    lines = [head, "  ".join(x.ljust(w) for x, w in zip(cols, widths)).rstrip()]
-    lines += ["  ".join(x.ljust(w) for x, w in zip(row, widths)).rstrip() for row in rows]
+    notes = []
     if r.error:
-        lines.append(f"Not run: {redact(r.error)}")
-    for n in r.notices:
-        lines.append(f"Note: {redact(n)}")
-    lines.append("/race show N for a diff and its test output · /race pick N applies one · /race drop removes them all")
+        notes.append(f"Not run: {redact(r.error)}")
+    notes += [f"Note: {redact(n)}" for n in r.notices]
+    if r.picked is not None:
+        notes.append(f"Applied: Candidate {r.picked}. /undo puts the files back.")
+    return head, rows, notes
+
+
+def scoreboard_text(r: Race, how_to: str = HOW_TO) -> str:
+    """The scoreboard as text: every number measured. "unknown" where a price is unknown."""
+    head, rows, notes = scoreboard_rows(r)
+    widths = [max(len(x) for x in col) for col in zip(SCORE_COLS, *rows)]
+    lines = [head, "  ".join(x.ljust(w) for x, w in zip(SCORE_COLS, widths)).rstrip()]
+    lines += ["  ".join(x.ljust(w) for x, w in zip(row, widths)).rstrip() for row in rows]
+    lines += notes
+    lines.append(how_to)
     return "\n".join(lines)
+
+
+def rows_for_app(r: Race) -> list[dict]:
+    """The scoreboard for the app's race card: the same words and numbers, with each candidate's diff and test output,
+    redacted like a receipt and clipped."""
+    out = []
+    for c in r.ranked():
+        s = c.score
+        out.append({"n": c.n, "label": c.label, "proof": s.proof, "others": f"{s.others_passed}/{s.others_total}" if s.others_total else "none to run",
+                    "project": s.project, "diff": f"+{s.diff_added} -{s.diff_removed}", "files": s.files, "tokens": s.tokens,
+                    "cost": _money(s.cost_usd), "time": words_time(s.seconds), "status": c.status, "full_pass": s.full_pass,
+                    "answer": c.answer[:1000], "diff_text": _clip(_diff_text(r, c), 20_000) if c.copy.is_dir() else "",
+                    "tests": {k: _clip(v, 3000) for k, v in c.judge.items() if k in ("proof_base", "proof_self", "project") and v}})
+    return redact_obj(out)
 
 
 def show_text(r: Race, n: int) -> str:
@@ -945,8 +1217,9 @@ def show_text(r: Race, n: int) -> str:
                         ("project", "The project's tests on its change")):
         if c.judge.get(name):
             out += ["", f"{title}:", c.judge[name][:3000]]
-    if c.agent:
-        out += ["", f"Receipt: {c.agent.log.path}"]
+    receipt = str(c.agent.log.path) if c.agent else c.receipt
+    if receipt:
+        out += ["", f"Receipt: {receipt}"]
     return "\n".join(out)
 
 
@@ -978,6 +1251,8 @@ def apply(r: Race, n: int, *, settings: config.Settings, ui, log: RunLog | None 
     changed in the real project since the race began is refused and named; then one approval for the whole set, shown
     as the full diff; the files are snapshotted into one change set ("race: <task>"), so /undo puts them all back."""
     c = _candidate(r, n)
+    if r.picked is not None:
+        raise RaceError(f"Candidate {r.picked} was already applied from this race. /undo puts the files back; then run the race again")
     if not c.done:
         raise RaceError(f"Candidate {c.n} is still running; wait for it, or stop the race")
     if not c.changed:
@@ -1066,6 +1341,7 @@ def auto_pick(r: Race) -> tuple[int | None, str]:
     return None, f"{len(full)} candidates have a full pass ({', '.join(str(c.n) for c in full)}); pick one with /race pick N"
 
 
-__all__ = ["BRIEFS", "Candidate", "CandidateSpec", "Change", "Race", "RaceError", "Score", "TestRun", "apply", "auto_pick",
-           "changes_between", "drop", "is_test_file", "make_copy", "run", "run_tests", "scoreboard_text", "show_text",
-           "test_command_for"]
+__all__ = ["BRIEFS", "Candidate", "CandidateSpec", "Change", "Race", "RaceError", "Score", "TestRun", "USAGE", "apply", "auto_pick",
+           "changes_between", "drop", "drop_all", "is_test_file", "load", "make_copy", "parse_command", "parse_models", "result_of",
+           "rows_for_app", "run", "run_tests", "saved", "scoreboard_rows", "scoreboard_text", "show_text", "specs_from",
+           "start_words", "test_command_for"]

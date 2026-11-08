@@ -74,6 +74,35 @@ class Result:
                 "duration_ms": self.duration_ms}
 
 
+@dataclass
+class RaceResult:
+    """What a headless race ended with (design record 0009 section 6): each candidate's headless Result and its scores,
+    the pick, and the exit code. to_dict() is the json output and the stream's race_end event."""
+
+    exit_code: int
+    race: str = ""
+    task: str = ""
+    picked: int | None = None
+    error: str = ""
+    note: str = ""
+    seconds: float = 0.0
+    tokens_in: int = 0
+    tokens_out: int = 0
+    cost_usd: float | None = 0.0
+    candidates: list[dict] = field(default_factory=list)
+    order: list[int] = field(default_factory=list)
+
+    @property
+    def ok(self) -> bool:
+        return self.exit_code == EXIT_OK
+
+    def to_dict(self, kind: str = "race_result") -> dict:
+        return {"type": kind, "ok": self.ok, "race": self.race, "task": redact(self.task), "picked": self.picked,
+                "exit_code": self.exit_code, "error": redact(self.error), "note": redact(self.note), "seconds": self.seconds,
+                "tokens": {"input": self.tokens_in, "output": self.tokens_out}, "cost_usd": self.cost_usd,
+                "candidates": [redact_obj(c) for c in self.candidates], "order": list(self.order)}
+
+
 def _short(text, limit: int = TEXT_LIMIT) -> str:
     text = redact(str(text or ""))
     return text if len(text) <= limit else text[:limit] + f"\n[... {len(text) - limit} more characters]"
@@ -281,9 +310,78 @@ def totals(res: Result, log, ui: HeadlessUI) -> None:
     res.denied = list(ui.denied)
 
 
+PICK_NOTE = "The race waits for your pick: rooks race show N reads a candidate, rooks race pick N applies one (in this folder)."
+
+
+def race(task: str, *, cwd: str | Path | None = None, n: int | None = None, models: str = "", briefs: str = "",
+         time_limit: float | None = None, auto: bool = False, provider: str | None = None, model: str | None = None,
+         base_url: str | None = None, yes: bool = False, max_usd: float | None = None, max_tokens: int | None = None,
+         test_command: str | None = None, on_event: Callable[[dict], None] | None = None) -> RaceResult:
+    """Run one race headless (design record 0009 section 6) and return its RaceResult. Never reads standard input and
+    never raises for a bad setup: every candidate's question is denied at once (unless yes, a rule or a trusted folder
+    allows it), the judge runs, and with auto the one full pass is applied, as a step of its own under the same rule.
+    Exit codes: 0 the race finished (with auto: and the winner was applied); 1 no candidate finished, or auto found no
+    single full pass; 2 bad usage or cannot start; 3 a step was denied."""
+    from . import race as racing
+
+    sink = on_event or (lambda ev: None)
+    try:
+        specs = racing.specs_from(models, briefs, n)
+    except Exception as e:  # noqa: BLE001 - said, not raised
+        res = RaceResult(EXIT_SETUP, task=task, error=str(e))
+        sink(res.to_dict("race_end"))
+        return res
+    r = racing.Race.prepare(task, cwd=cwd, candidates=specs, provider=provider, model=model, base_url=base_url, yes=yes,
+                            max_usd=max_usd, max_tokens=max_tokens, time_limit=time_limit or racing.DEFAULT_TIME_S,
+                            test_command=test_command, ask=None, on_event=sink)
+    link = _app_link(r)
+    if r.error:
+        r._event(racing.result_of(r).to_dict("race_end"))
+        return racing.result_of(r)
+    if link:
+        link.start(r)
+    r.start()
+    while r.alive:
+        for c in r.candidates:
+            if c.thread is not None:
+                c.thread.join(0.5)
+        if link and link.stopped:
+            r.stop()
+    r.wait(judge=True)
+    res = racing.result_of(r)
+    if auto and not r.error:
+        pick, why = racing.auto_pick(r)
+        if pick is None:
+            res.exit_code, res.error = EXIT_UNFINISHED, why
+        else:
+            ui = HeadlessUI(lambda ev: sink({**ev, "candidate": pick}))
+            try:
+                res.note = racing.apply(r, pick, settings=r.settings, ui=ui)
+                res.picked = r.picked
+            except racing.RaceError as e:
+                res.error = str(e)
+                res.exit_code = EXIT_DENIED if ui.denied or "you said no" in str(e) else EXIT_UNFINISHED
+        r.save()
+    elif not r.error and any(c.changed for c in r.candidates):
+        res.note = PICK_NOTE
+    if link:
+        link.finish(r, res)
+    return res
+
+
+def _app_link(r):
+    """The app's race card, when the terminal is linked to the app (section 7); None otherwise."""
+    try:
+        from .race_ui import AppRace
+
+        return AppRace.for_settings(r.settings)
+    except Exception:  # noqa: BLE001 - the app is a mirror, never a condition
+        return None
+
+
 def schema() -> dict:
     """The JSON Schema of the result and of each event (schema/headless.schema.json)."""
     return json.loads(SCHEMA.read_text(encoding="utf-8"))
 
 
-__all__ = ["EXIT_DENIED", "EXIT_OK", "EXIT_SETUP", "EXIT_UNFINISHED", "HeadlessUI", "Result", "run", "schema"]
+__all__ = ["EXIT_DENIED", "EXIT_OK", "EXIT_SETUP", "EXIT_UNFINISHED", "HeadlessUI", "RaceResult", "Result", "race", "run", "schema"]

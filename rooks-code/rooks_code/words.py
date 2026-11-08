@@ -34,6 +34,7 @@ COMMANDS: dict[str, str] = {
     "/compact": "summarise the conversation so far to make room",
     "/cost": "tokens used and cost so far",
     "/permissions": "rules for what runs without asking and what never runs; /permissions trust for this folder's own",
+    "/race": "several candidates try one task on their own copies; tests score them; you pick: /race \"task\", show N, pick N, drop",
     "/auto": "turn asking before changes off or on",
     "/dry-run": "show what would change without changing anything",
     "/doctor": "check that everything works and say what to fix",
@@ -47,7 +48,7 @@ GROUPS = {
     "The Room, Needs you, Jobs": ["/room", "/needs", "/jobs", "/team"],
     "Memory": ["/memory", "/history", "/skills", "/init", "/context", "/sessions", "/resume"],
     "Model": ["/model", "/effort", "/mode", "/provider", "/login", "/mcp"],
-    "Checks": ["/permissions", "/auto", "/dry-run", "/doctor", "/cost", "/receipt"],
+    "Checks": ["/permissions", "/race", "/auto", "/dry-run", "/doctor", "/cost", "/receipt"],
 }
 
 # /room's verbs, listed in /help under "The Room" (design record 0006 section 7.1). The words match the Room page.
