@@ -8,7 +8,7 @@
  * Which windows exist comes from status (windowsFor); the browser remembers only which are open (desk.ts).
  */
 import { Bookmark, ChevronDown, Columns2, FileOutput, Folder, Monitor, MoreHorizontal, Power, RotateCcw, SquareTerminal, type LucideIcon } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { narrowQuery, useMediaQuery } from "../shell/breakpoints";
 import { openStage } from "../shell/StageHost";
@@ -51,10 +51,19 @@ export default function RoomPage() {
   const screen = useRoomScreen(status, () => void act.start(), act.busy === "up");
   const points = status.checkpoints ?? [];
   const available = status.available && status.reachable;
+  const away = !status.reachable;
 
   // The windows status offers decide; a remembered window it does not offer is dropped, at render time.
   useEffect(() => { setOpen((cur) => { const kept = offered.filter((w) => cur.includes(w)); return kept.length ? kept : readDesk(status); }); }, [offeredKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const shown = offered.filter((w) => open.includes(w));
+  // The Room bar's live region says when a terminal ends ("Terminal 1 ended."), as status reports it.
+  const wasAlive = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    for (const t of status.terminals) {
+      if (wasAlive.current[t.id] && !t.alive) act.say(`${t.name} ended.`);
+      wasAlive.current[t.id] = t.alive;
+    }
+  }, [status.terminals]); // eslint-disable-line react-hooks/exhaustive-deps
   const phoneTab: WindowId | null = tab && offered.includes(tab) ? tab : offered[0] ?? null;
 
   const setDesk = (next: WindowId[]) => { setOpen(next); writeDesk(next); };
@@ -118,15 +127,16 @@ export default function RoomPage() {
         ? <Menu label="The Room's actions" items={phoneItems} className="room-bar-menu" />
         : (
           <div className="room-bar-verbs">
-            {available && (status.running
-              ? <Verb icon={<Power size={13} />} word="Stop" variant="secondary" busy={act.busy === "down"} onClick={() => void act.stop()} />
-              : <Verb icon={<Power size={13} />} word="Start" variant="primary" busy={act.busy === "up"} onClick={() => void act.start()} />)}
-            {available && <Verb icon={<Bookmark size={13} />} word="Save a point" variant="secondary" onClick={() => askPoints({ kind: "save" })} />}
-            {available && (points.length
+            {/* while Rooks does not answer, the verbs stay where they are, disabled */}
+            {status.available && (status.running
+              ? <Verb icon={<Power size={13} />} word="Stop" variant="secondary" disabled={away} busy={act.busy === "down"} onClick={() => void act.stop()} />
+              : <Verb icon={<Power size={13} />} word="Start" variant="primary" disabled={away} busy={act.busy === "up"} onClick={() => void act.start()} />)}
+            {status.available && <Verb icon={<Bookmark size={13} />} word="Save a point" variant="secondary" disabled={away} onClick={() => askPoints({ kind: "save" })} />}
+            {status.available && (points.length && !away
               ? <Menu label="Start over" className="room-over" items={overItems}
                   icon={<span className="room-over-face"><RotateCcw size={13} aria-hidden="true" /><span className="room-verb-word">Start over</span><ChevronDown size={13} aria-hidden="true" /></span>} />
-              : <Verb icon={<RotateCcw size={13} />} word="Start over" variant="secondary" disabled title="Save a point first" />)}
-            {available && <Verb icon={<FileOutput size={13} />} word="Hand off a file" variant="secondary" aria-pressed={!!handoff} onClick={() => (handoff ? setHandoff(null) : openHandoff())} />}
+              : <Verb icon={<RotateCcw size={13} />} word="Start over" variant="secondary" disabled title={away ? "Start over" : "Save a point first"} />)}
+            {status.available && <Verb icon={<FileOutput size={13} />} word="Hand off a file" variant="secondary" disabled={away} aria-pressed={!!handoff} onClick={() => (handoff ? setHandoff(null) : openHandoff())} />}
             {available && (
               <Verb icon={<Columns2 size={13} />} word="Watch beside the chat" variant="ghost" title="Keep the Room on the Stage while you chat"
                 onClick={() => { openStage({ surface: "room", jobId: "room" }); navigate("/assistant"); }} />
