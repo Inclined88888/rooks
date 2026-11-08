@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { PRODUCT } from "../../product";
+import { RooksMark } from "../../ui/RooksMark";
 import "./settings.css";
 
 /**
- * The first impression: one quiet card in the middle of the page. The product name small at the top, an optional step
+ * The first impression: one quiet card in the middle of the page. The mark and the product name small at the top, an optional step
  * in words ("Step 2 of 4"), one heading, one line, then the one choice. Used by Auth (the lock) and Welcome.
  */
 export function AuthCard({ title, line, step, wide, footer, children, brand = true }: {
@@ -16,7 +17,7 @@ export function AuthCard({ title, line, step, wide, footer, children, brand = tr
           <header className="st-auth-head">
             {(brand || step) && (
               <p className="st-auth-top">
-                {brand && <span className="st-auth-brand">{PRODUCT}</span>}
+                {brand && <span className="st-auth-brand"><RooksMark size={24} />{PRODUCT}</span>}
                 {step && <span className="st-auth-step">{step}</span>}
               </p>
             )}

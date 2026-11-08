@@ -18,6 +18,7 @@ import { StageHost } from "./shell/StageHost";
 import { MobileBar } from "./shell/MobileBar";
 import { MoreSheet } from "./shell/MoreSheet";
 import { Loading, Page, ToastHost } from "./ui";
+import { RooksMark } from "./ui/RooksMark";
 import { pageComponent, warmWhenIdle } from "./pages/warm";
 import { createKeyReader, SHORTCUTS } from "./lib/shortcuts";
 import { IS_MAC, MOD_KEY } from "./keys";
@@ -80,7 +81,7 @@ function DeskNotice({ enabled }: { enabled: boolean }) {
 }
 
 function Boot() {
-  return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">{PRODUCT}</div></div>;
+  return <div className="boot" role="status" aria-label="Loading"><div className="boot-brand"><RooksMark size={40} /><div className="wordmark lg">{PRODUCT}</div></div></div>;
 }
 
 // Sign in, the first welcome and the ask bar stay in the first load. Every registered page is its own chunk, warmed on

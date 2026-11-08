@@ -618,6 +618,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 /* ---- Boot (before /status answers) ---- */
 .boot { height: 100%; display: grid; place-items: center; background: var(--bg); }
 .boot .wordmark { color: var(--muted); }
+.boot-brand { display: flex; align-items: center; gap: var(--space-3); }
 
 /* ---- Thinking (motion/index.tsx): a still line ---- */
 .thinking-line { display: inline-flex; align-items: baseline; gap: var(--space-2); min-height: 24px; font-size: var(--text-md); color: var(--muted); }
