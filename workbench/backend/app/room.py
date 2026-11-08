@@ -11,6 +11,10 @@ chosen on its own and is not a real Room (use_room is not offered for it); a sav
 against the store before they are reported done; a hand-off out of the Room waits as a held action in Needs you and
 copies only after a yes, which the chat tool cannot give itself; and every up, down, checkpoint, reset, run and
 hand-off is a row in the run log, on channel "room".
+
+Design 0006 makes the Room a small computer: terminals that live on the server (room_terminal.py), Files
+(room_files.py), and status saying what this Room can do (`can`) and which terminals it has. Stop and Start over close
+the terminals first; a quick command keeps its two-minute limit and its cut-off note points to a terminal.
 """
 
 from __future__ import annotations
@@ -48,7 +52,8 @@ HELPER_KEY = "The Room helper did not accept the app's key. Check its key under 
 HELPER_FAILED = "The Room helper ran into a problem."
 ROOM_OFF = "The Room is off. Start it first."
 NEEDS_ON = {"run", "click", "drag", "scroll", "type", "key"}  # actions that work in a Room that is on, never start it
-RUN_MAX_S = 120          # a command in the Room stops after this
+RUN_MAX_S = 120          # a quick command in the Room stops after this; a Room terminal has no limit
+TERMINAL_MAX = 4         # Room terminals, live or ended, counted apart from the app terminal's six (room_terminal.MAX)
 REMOTE_TIMEOUT_S = 150   # a helper call may carry a whole command
 STATUS_KEEP_S = 5.0      # the cheap readers (presence, surfaces) reuse a helper's status answer this long
 
@@ -222,7 +227,17 @@ def _shape(st: dict, available: bool = True) -> dict:
         "checkpoint_limit": st.get("checkpoint_limit"),
         "pruned": st.get("pruned"),
         "error": st.get("error"),
+        # design 0006: what this Room can do here, and its terminals (the in-process Room fills these in)
+        "can": {"terminal": False, "files": False},
+        "terminals": [],
+        "terminal_max": TERMINAL_MAX,
     }
+
+
+def run_cut_note(seconds: float) -> str:
+    """What a quick command that hit the limit says (design 0006, section 4.3)."""
+    n = int(round(float(seconds)))
+    return f"Stopped after {n} second{'' if n == 1 else 's'}. For something long, start it in a Room terminal."
 
 
 def _unavailable() -> dict:
@@ -281,14 +296,20 @@ async def perform(action: str, body: dict | None = None) -> dict:
         out = (await _remote("POST", f"/api/{action}", body)).json()
         if action in ("up", "down") and isinstance(out, dict) and "running" in out:
             _REMOTE = (time.monotonic(), out)
-        return out
+        return _cut_note(action, out, body)
     room = _import_room()
     if room is None:
         if action == "status":
             return _unavailable()
         raise HTTPException(503, NOT_INSTALLED)
     try:
-        return await asyncio.to_thread(_local, room, action, body)
+        out = await asyncio.to_thread(_local, room, action, body)
+        if action == "status":
+            from . import room_files, room_terminal
+
+            out["can"] = await asyncio.to_thread(room_files.can, room.driver(), False)
+            out["terminals"] = room_terminal.listing()
+        return _cut_note(action, out, body)
     except HTTPException:
         raise
     except KeyError as e:
@@ -299,6 +320,59 @@ async def perform(action: str, body: dict | None = None) -> dict:
         raise HTTPException(400, str(e)[:300]) from e
     except Exception as e:  # noqa: BLE001 - the driver's own one-line message
         raise HTTPException(500, str(e)[:300] or e.__class__.__name__) from e
+
+
+def _cut_note(action: str, out, body: dict):
+    """A quick command that hit the limit says so, and where something long belongs."""
+    if action == "run" and isinstance(out, dict) and out.get("code") == 124:
+        out["error"] = out["note"] = run_cut_note(body.get("timeout") or RUN_MAX_S)
+    return out
+
+
+async def stop() -> dict:
+    """Stop the Room: every Room terminal is hung up first (its text and files stay), then the Room itself."""
+    from . import room_terminal
+
+    closed = await room_terminal.close_all("stop")
+    out = await perform("down")
+    if isinstance(out, dict):
+        out["terminals_closed"] = closed
+    return out
+
+
+async def start_over(name: str | None = None) -> dict:
+    """Start over from a saved point: the terminals close first (no shell may stand in a folder being replaced), the
+    restore is checked as before, and when the Room is on afterwards one new terminal opens in it."""
+    from . import room_terminal
+
+    closed = await room_terminal.close_all("start over", forget=True)
+    meta = await reset_to(name)
+    meta["terminals_closed"] = closed
+    meta["terminal"] = None
+    if not remote():
+        st = await perform("status")
+        if st.get("running") and (st.get("can") or {}).get("terminal"):
+            try:
+                t = await room_terminal.open_terminal(owner="person")
+                meta["terminal"] = {"id": t.id, "name": t.name}
+            except HTTPException as e:  # the Room is back; a terminal that could not open is said, not hidden
+                meta["terminal_error"] = str(e.detail)
+    return meta
+
+
+async def list_files(path: str = "") -> dict:
+    """The Room's folder, on or off (design 0006, section 3.2). Not in the run log: it only reads."""
+    from . import room_files
+
+    if remote():
+        raise HTTPException(501, room_files.NOT_HERE)
+    room = _import_room()
+    if room is None:
+        raise HTTPException(503, NOT_INSTALLED)
+    driver = await asyncio.to_thread(room.driver)
+    if not room_files.can(driver, False)["files"]:
+        raise HTTPException(501, room_files.NOT_HERE)
+    return await asyncio.to_thread(room_files.listing, path)
 
 
 async def checkpoint(label: str = "") -> dict:
@@ -428,13 +502,15 @@ def _summary(action: str, out) -> str:
     if not isinstance(out, dict):
         return ""
     if action in ("up", "down"):
-        return f"running: {out.get('running')}; {out.get('label') or ''}"
+        closed = f"; {out['terminals_closed']} terminals closed" if out.get("terminals_closed") else ""
+        return f"running: {out.get('running')}; {out.get('label') or ''}{closed}"
     if action == "run":
         return f"exit {out.get('code')}; {(out.get('stdout') or out.get('error') or '')[:200]}"
     if action == "checkpoint":
         return f"point {out.get('name')}"
     if action == "reset":
-        return f"back at point {out.get('name')}"
+        closed = f"; {out['terminals_closed']} terminals closed" if out.get("terminals_closed") else ""
+        return f"back at point {out.get('name')}{closed}"
     if action == "handoff":
         return f"copied {out.get('from')} to {out.get('to')}"
     return ""
@@ -488,19 +564,27 @@ async def up():
 
 @terminal.post("/down")
 async def down():
-    return await _audited("down", {}, lambda: perform("down"))
+    return await _audited("down", {}, stop)
 
 
-@router.post("/checkpoint")
+# Save a point, start over and hand off also take the rooks terminal's Terminal access token (design 0006, section 6:
+# /room save, /room back, /room handoff). A bridge key still only reads; a hand-off still waits for a person's yes.
+@terminal.post("/checkpoint")
 async def save_point(request: Request):
     label = str((await _body(request)).get("label") or "")
     return await _audited("checkpoint", {"label": label}, lambda: checkpoint(label))
 
 
-@router.post("/reset")
-async def start_over(request: Request):
+@terminal.post("/reset")
+async def reset_route(request: Request):
     name = str((await _body(request)).get("name") or "")
-    return await _audited("reset", {"name": name}, lambda: reset_to(name or None))
+    return await _audited("reset", {"name": name}, lambda: start_over(name or None))
+
+
+@terminal.get("/files")
+async def files(path: str = ""):
+    """What is in the Room's folder (one level), whether the Room is on or off. Never outside it."""
+    return await list_files(path)
 
 
 @terminal.post("/run")
@@ -534,7 +618,7 @@ async def key(request: Request):
     return await perform("key", await _body(request))
 
 
-@router.post("/handoff")
+@terminal.post("/handoff")
 async def handoff(request: Request):
     """Copy a file out of the Room. Without an approved request this holds the copy in Needs you and copies nothing;
     with one it copies once."""

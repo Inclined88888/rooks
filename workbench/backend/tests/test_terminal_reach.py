@@ -163,7 +163,7 @@ def test_terminal_key_reaches_the_rooms_terminals_files_and_points(client, keys,
         for a in actions.pending():
             if a["tool"] == "use_room":
                 actions.decide(a["id"], False, "test")
-        room_terminal.reset_for_tests(write=False)
+        room_terminal.reset_for_tests(restart=False)
         anon.post("/api/room/down", headers=w)
 
 

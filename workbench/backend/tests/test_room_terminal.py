@@ -45,9 +45,9 @@ def room_home(client, tmp_path, monkeypatch):
     monkeypatch.setattr(config, "TRY_URL", "")
     monkeypatch.setattr(config, "TRY_API_KEY", "")
     room.reset()
-    room_terminal.reset_for_tests(write=False)
+    room_terminal.reset_for_tests(restart=False)
     yield tmp_path / "try"
-    room_terminal.reset_for_tests(write=False)
+    room_terminal.reset_for_tests(restart=False)
     client.post("/api/room/down")
     room.reset()
 
@@ -347,7 +347,7 @@ def test_an_ended_terminal_is_listed_after_a_restart_with_its_log(client, on):
     note = next(d for d in done if d["conversation_id"] == cid)
     rows = client.get(f"/api/conversations/{cid}").json()["messages"]
     assert rows[-1]["id"] == note["message_id"] and "Terminals in the Room ended; their files are still there." in rows[-1]["content"]
-    room_terminal.reset_for_tests(write=False)
+    room_terminal.reset_for_tests(restart=False)
     room_terminal.load_ended()
     assert room_terminal.ended_at_restart() == 0  # the next restart does not say it again
 
