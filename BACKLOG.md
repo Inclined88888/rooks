@@ -104,8 +104,9 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   `api.py`'s used-sign-in-link page and launcher message were changed here to that branch's exact words; merging it
   will still conflict in `desktop_handoff` (it also adds `shell`): take that branch's version.
 * **Other surfaces still say "AI Workspace" or "Workbench"** (not scanned by `test_rooks_name.py`, which covers the
-  server and the built screens): the `rooks`, Rooks Browser and Rooks Desk help texts (`--db` "Workbench database",
-  "the AI Workspace app"), the phone app (pairing screen title and steps, the default name), the VS Code add-on,
+  server and the built screens): the `rooks`, Rooks Browser and Rooks Desk help texts (`--db` "Workbench database";
+  their model choice and messages now say "the Rooks app"; Rooks Desk's macOS permission steps still say AI Workspace,
+  which is what macOS lists until the desktop app is renamed on the room-browser branch), the phone app (pairing screen title and steps, the default name), the VS Code add-on,
   `cli/ws`, `companion/macos`, `setup.sh`'s other lines and `install-server.sh`, `install.ps1`, QUICKSTART's and the
   README's install steps (their titles say Rooks now; the command and files keep the old name until the room-browser
   branch), most other docs, and many code comments and docstrings. Extend the scan to each when it is renamed.
@@ -124,8 +125,21 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   not connected) is not moved into the app when the terminal is later connected. Offer to copy it on `rooks login`.
 * **The predicates are loose.** "role" matches any "is a ..." sentence, so "My dog is a labrador" would replace "The
   user is a nurse in Sydney" in the prompt (kept as history, shown by "why"). Before this branch the same match made
-  both facts wait as a conflict, so it was already wrong, only quieter. Tighten `PREDICATES` in
-  `knowledge/memory.py` with tests from real sentences before relying on it for more than where you live and work.
+  both facts wait as a conflict, so it was already wrong, only quieter. Since the review, a pinned fact (chat's
+  remember pins what you say about yourself) or your own word is never replaced by an unpinned guess: that waits
+  under "Needs your call". Still open: a fact chat saved for you as "fact" or "preference" is not pinned, so a
+  later guess with the same loose predicate replaces it (shown by "why", and forgetting the guess brings it back).
+  Chat's remember tool and the background learner both save with source "chat"; telling them apart would let the
+  rule protect everything you asked to keep. Tighten `PREDICATES` in `knowledge/memory.py` with tests from real
+  sentences before relying on it for more than where you live and work.
+* **Sensitive memories are shown only on the Memory page.** The terminal's `/memory` (`/v1/rooks/memory`, the bridge
+  key) and `ws memory` (`/api/memories`) leave them out, like every list that can reach a model in the cloud. If the
+  terminal should show them to the person, it needs a list that is printed and never put into a prompt, behind the
+  person's own sign-in rather than a shared key.
+* **`cli/ws` keeps a read-only `/api/memories`.** The terminal chat client signs in with the Terminal access token,
+  which `/api/knowledge` refuses, so the list it prints stays on the assistant routes. When `cli/ws` is merged into
+  `rooks` (section g.2), remove the route and point the CI image check's 401 sample (`scripts/ci/check-image.sh`)
+  at another signed-in route.
 * **The move does not apply "newer replaces older" to facts it moves.** Two old facts with the same predicate (lives
   in Brisbane, moved to Sydney) both stay in use after the upgrade, as they were before; the next statement about the
   same thing replaces both. Doing it at upgrade would hide facts the person saw yesterday.

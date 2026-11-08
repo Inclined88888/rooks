@@ -191,7 +191,7 @@ app.include_router(skills_hub.router)  # Skills from GitHub behind the security 
 app.include_router(mcp_client_api.router)  # feat/mcp-client: connect Workbench to the user's own MCP servers
 app.include_router(cli_agents_api.router)  # hand jobs to the user's own Claude Code / Codex CLI
 app.include_router(plan_signin.router)  # install and sign in to Claude Code / Codex from the app
-app.include_router(adapt_routes.router)  # /api/learn: What I know about you, Show me how, suggestions
+app.include_router(adapt_routes.router)  # /api/learn: learning switches, the work it has seen, Show me how, suggestions
 adapt_hooks.register_tools()
 app.include_router(automations_api.router)  # feat/v02-automations: automations, jobs board, live documents
 app.include_router(automations_api.phone)

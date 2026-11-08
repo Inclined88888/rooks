@@ -13,6 +13,43 @@ the product Rooks on every normal screen, keep one memory, and correct the docum
 (`SCHEMA_VERSION` 5, below); one connection row is renamed (below). Rollback: revert the branch's commits, and for the
 memory move restore the backup it takes.
 
+- **Fixes from the review of the memory step** (each test failed on the tree before; `workbench/backend/tests/test_one_memory_review.py`
+  unless named).
+  - **`ws login` and `ws memory` work again.** The memory step removed `/api/memories`, which the terminal chat client
+    (`cli/ws`) uses to check its Terminal access token and to list memories; both answered "Error 404". `GET
+    /api/memories` is back, read-only, on the one store (search with `?q=`), and refuses a request without a session
+    or the token (401, the sample the CI image check expects). Writing stays on `/api/knowledge/memories`.
+    `test_assistant.py::test_cli_token_auth` checks it again.
+  - **A sensitive memory never reaches a cloud model by another way.** The prompt's memory block left memories marked
+    sensitive out for cloud models, but chat's `search_memory` tool, project context, the learner's "already known"
+    list and the bridge's `/v1/rooks/memory` gave them back. Now only a model on this computer finds them with the
+    search tool; the other lists leave them out. The Memory page shows them as before.
+  - **The upgrade keeps what you decided on the Memory page.** A copy of an old fact that you had replaced there (for
+    example "Lives in Sydney" replaced by "Lives in Melbourne") came back as a second, active fact. It now stays
+    replaced. Only installs that ran the memory step before this fix could have the extra fact; forget it on the
+    Memory page.
+  - **A pinned fact is not silently replaced by a guess.** Chat's remember pins what you say about yourself; a later
+    unpinned guess about the same thing (by the loose "is a" rule, "Their manager is a stickler" against "Is a nurse")
+    now waits under "Needs your call" and the pinned fact stays in use. A newer pinned fact still replaces it.
+  - **Forgetting a newer fact brings back the one it replaced.** Before, the older fact stayed stored but no screen
+    showed it, so it could not be seen or forgotten; undoing a remember lost the earlier fact. Forgetting an older
+    version keeps the chain, so "why" still shows what the fact in use replaced.
+  - **Only a secret with its value is refused.** "Works as a legal secretary" and "Prefers token rings" were refused
+    from chat and the terminal, and dropped from the old plaintext table at upgrade, because the check matched the
+    words alone. Now a secret word must come with its value ("my password is ...", "PIN 4471", "api key: ..."). Keys
+    by their shapes are refused as before.
+  - **A correction on the Memory page cannot store a key.** Editing a memory checked only its length; it now refuses
+    key shapes like adding one does.
+  - **Rooks Browser and Rooks Desk say "Rooks app"** for the app's smart router and in their messages
+    (`rooks-browser/tests/test_rooks_name.py`, `rooks-desk/tests/test_rooks_name.py`), as `rooks` already did. Rooks
+    Desk's macOS permission steps keep "AI Workspace", the name macOS shows until the desktop app is renamed.
+  - **Documents.** `docs/data-model.md` marks the two removed stores as history and describes the sensitive, forget
+    and secret rules; `adapt/__init__.py`, `adapt/feedback.py` and `main.py` no longer describe "What I know about
+    you".
+  - **Not changed, on purpose:** paid-plan checks stay off by default even on an install that once recorded billing
+    as live (the owner's decision in section g.3; no Rooks cloud sells plans). A build that sets `AIW_PLAN_CHECKS=1`
+    gets the remembered state back.
+
 - **Documents and small parts that contradicted the code** (section i; each item there now says fixed, partly fixed
   or open: 17 fixed, 2 partly, 3 open).
   - **VS Code add-on finds the app** (contradiction 20). It defaulted to `http://127.0.0.1:3100`, the server
@@ -69,8 +106,9 @@ memory move restore the backup it takes.
     everything", and a Learning tab with the four switches, the work it has seen and what it learned from your
     changes. About you (`/about-you`) and the chat's Memory tab (`/assistant-memory`) are gone; both addresses open
     the Memory page, and Settings, Privacy, Projects and the chat's menu link there.
-  - **Routes:** `/api/memories` and `/api/learn/facts` (and `/api/learn/legacy-memories`) are removed; use
-    `/api/knowledge/memories` (with `POST /api/knowledge/memories/forget-all`). `/api/learn/work` gives the work list
+  - **Routes:** `/api/learn/facts` (and `/api/learn/legacy-memories`) and the write routes of `/api/memories` are
+    removed; use `/api/knowledge/memories` (with `POST /api/knowledge/memories/forget-all`). `GET /api/memories` stays,
+    read-only, for `cli/ws` (see the review fixes above). `/api/learn/work` gives the work list
     `/api/learn/facts` used to carry. The terminal's routes are unchanged.
   - **Data on upgrade (`SCHEMA_VERSION` 5, `db.migrate_v5`):** every fact in `memories` and `adapt_facts` moves into
     `kn_memories`, encrypted with the memory key, de-duplicated by its words (the once-a-minute copies count as the
@@ -128,7 +166,7 @@ memory move restore the backup it takes.
   Extra tools. The `rooks` terminal is unchanged. The goals routes had no screen to hide (goals are set from chat).
   **Action:** someone who uses the Terminal or Code page turns the switch on once.
 - **Paid-plan checks are off by default** (`account.py`, section g.3). No Rooks cloud sells plans, so no feature asks
-  for an upgrade, even if a cloud address is set and says billing is live. The code stays; a build opts in with
+  for an upgrade, even if a cloud address is set and says billing is live, or the install remembered it was live. The code stays; a build opts in with
   `AIW_PLAN_CHECKS=1` (`AIW_ENFORCE_PLANS` still forces either way).
 - **Tests** (each failed on the tree before the change): `workbench/frontend/tests/developer-tools.test.mjs` (with the
   switch off none of these pages is in the rail, a flyout, the More sheet or the command menu; with it on all are;

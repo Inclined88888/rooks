@@ -1,7 +1,7 @@
 """Adapt and learn: the assistant gets to know each person and gets better at their work.
 
-  knowledge.py   "What I know about you": durable facts learned from chats, files and tasks; encrypted at rest;
-                 BM25 retrieval into the assistant's context; editable, deletable, with an off switch
+  (memory)       what the assistant knows about the person is no longer here: it is the one memory store,
+                 knowledge/facts.py over kn_memories (the Memory page); learning from chats and work calls it
   recorder.py    "Show me how": one recorder interface over Rooks Browser (now), Rooks Desk (adapter stub until it
                  exposes a recording stream) and plain narration; events are normalised and secrets never stored
   playbooks.py   a recording plus narration becomes a parameterised playbook in plain English steps; replay finds

@@ -3,7 +3,7 @@
 An edit is compared with what the assistant wrote. Clear patterns (shorter, a different greeting or sign-off, bullet
 points, a word always swapped) become a lesson without a model; otherwise the model is asked for the one lesson the
 edit teaches. Lessons about a playbook go into its notes (used on the next run); everything else becomes a preference
-in "What I know about you". The caller shows the lesson as "Learned from your change".
+in the one memory store (the Memory page). The caller shows the lesson as "Learned from your change".
 """
 
 from __future__ import annotations

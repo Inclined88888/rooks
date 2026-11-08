@@ -4,11 +4,14 @@ Python package: `workbench/backend/app/knowledge/` (`API_VERSION = 1`). HTTP: `/
 
 ## 1. Audit: what existed before (v0.2)
 
+This is the history the knowledge layer started from, not today's stores. The two memory rows below are gone:
+core `SCHEMA_VERSION` 5 moved both into `kn_memories` and dropped them (section 2, "One memory store").
+
 | Store | Where | Versioning | Notes |
 |---|---|---|---|
 | Core tables (settings, connections, docs+FTS, tasks, calendars, events, mail_*, linked_accounts, conversations, messages+FTS, memories+FTS, skills, hub_skills, schedules, inbox, agents, agent_tasks, devices, actions...) | `db.py` SCHEMA | `PRAGMA user_version` = 2 | `ADDED_COLUMNS` (#26 mail/calendar `kind`, `linked_account_id`) added in place **without** a version bump |
-| Legacy `memories` (plaintext) | `db.py` | – | migrated into `adapt_facts` by #29; table kept empty |
-| "What I know about you" `adapt_facts`, recordings, playbooks, runs, activity, suggestions, lessons, routines | `adapt/store.py` (#29) | none (`ensure()` on first use) | encrypted with workspace Fernet key (APP_SECRET); BM25 in Python memory |
+| Legacy `memories` (plaintext) | `db.py` | – | migrated into `adapt_facts` by #29; table kept empty. **Removed** in core v5 (moved into `kn_memories`) |
+| "What I know about you" `adapt_facts`, recordings, playbooks, runs, activity, suggestions, lessons, routines | `adapt/store.py` (#29) | none (`ensure()` on first use) | encrypted with workspace Fernet key (APP_SECRET); BM25 in Python memory. `adapt_facts` **removed** in core v5 (moved into `kn_memories`); the rest stay |
 | Projects `projects`, `project_items`, `project_dismissed` | `projects.py` (#36) | none | people/notes are encrypted rows of `project_items`; `tasks.project` is a free-text name, not a key |
 | History `history_entries` | `history.py` (#36) | none | |
 | Automations / jobs `automations`, `jobs`, `job_notices` | #34 | none | |
@@ -34,7 +37,9 @@ Each step: one transaction, backup file `workbench.db.pre-kn<N>-<ts>.bak` before
 **One memory store (core `SCHEMA_VERSION` 5, `db.migrate_v5`).** The plaintext `memories` table and the encrypted
 `adapt_facts` table are moved into `kn_memories` once (`knowledge/facts.py` `move_old_stores`): same words become one
 row with the earliest date, the person's own word as source if either copy had it, pinned if either was, and the uses
-added; the live sync's copies (`source_ref adapt_fact:<id>`) count as the same fact. Passwords and keys are not moved.
+added; the live sync's copies (`source_ref adapt_fact:<id>`) count as the same fact, and a copy the person had
+replaced on the Memory page stays replaced. Passwords and keys (a secret word with its value, or a key's shape) are
+not moved; a fact that only mentions such a word ("legal secretary") is.
 Then both tables are dropped (a backup `workbench.db.pre-v5-<ts>.bak` is taken first). If the memory key is locked at
 upgrade, nothing changes and `knowledge.schema.ensure()` runs the move the first time memory opens with the key.
 
@@ -49,13 +54,14 @@ upgrade, nothing changes and `knowledge.schema.ensure()` runs the move the first
 
 ## 4. Scopes and privacy
 
-`scope`: `shared` (every assistant), `private`, `assistant:<id>` (a teammate), `team:<id>`. `knowledge.scoped("assistant:3")` sees its own scope + shared. `privacy`: normal | private | sensitive (sensitive is never sent to cloud models — enforcement point for callers; not wired yet).
+`scope`: `shared` (every assistant), `private`, `assistant:<id>` (a teammate), `team:<id>`. `knowledge.scoped("assistant:3")` sees its own scope + shared. `privacy`: normal | private | sensitive. Sensitive memories reach a model only when it runs on this computer (connection residency `local`): the prompt's memory block (`live.context`) and chat's `search_memory` tool check the turn's model; project context, the learner's "already known" list, the bridge's `/v1/rooks/memory` and the `ws` client's `/api/memories` leave them out (`facts.all_facts` and `facts.search` default). The Memory page shows them.
 
 ## 5. Rules
 
 - Dedupe: same scope/tier/subject and ≥75% word overlap → refresh the existing memory.
-- Contradictions (same subject + predicate, such as lives_in): the newer fact replaces the older one, which is kept as history (`superseded`, shown by "why"). The one exception: a guess (`source_kind` other than `user`) that disagrees with what the person said themselves is marked `conflict` with a review card (`/api/knowledge/conflicts`, resolve old|new|both), and their word stays `active` meanwhile.
-- Secrets (passwords, card numbers, tokens) are refused unless typed by the user → belong in the Vault. Keys by their shapes (sk-, AIza, ghp_, AKIA, JWTs, private keys) are refused from anyone, since memories go into prompts.
+- Contradictions (same subject + predicate, such as lives_in): the newer fact replaces the older one, which is kept as history (`superseded`, shown by "why"). The one exception: a guess (`source_kind` other than `user`) that disagrees with what the person said themselves, or with a pinned fact (chat's remember pins what they say about themselves) when the guess is not pinned, is marked `conflict` with a review card (`/api/knowledge/conflicts`, resolve old|new|both), and the older fact stays `active` meanwhile.
+- Forget: a hard delete. Forgetting the fact in use brings back the one it replaced (undo works, and nothing is kept that no screen shows); forgetting an older version links what it replaced to the fact in use.
+- Secrets (a secret word with its value: "my password is ...", "PIN 4471", "api key: ...") are refused unless typed by the user → belong in the Vault; the word alone ("legal secretary", "uses a password manager") is not a secret. Keys by their shapes (sk-, AIza, ghp_, AKIA, JWTs, private keys) are refused from anyone, also in a correction on the Memory page, since memories go into prompts.
 - Facts about the person (`subject_id` NULL, scope shared) are what chat's remember/forget tools, the background learner, the terminal (`/v1/rooks/memory`, `/context`, `/remember`, `/forget`) and the Memory page use, through `knowledge/facts.py`.
 - Consolidation: `consolidate(days)` turns old episodic notes per project into one durable memory; episodes archived with `consolidated_into` so "why" still shows them.
 - Why: `why(id)` → plain sentence + source, date, confidence, use count, what it replaced.
