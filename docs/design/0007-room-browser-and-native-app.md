@@ -191,3 +191,43 @@ paper mark (`#FAFAF9`), one gold accent (`#E3A82B`). At 16 px it is still a towe
   (`tauri.conf.json` and Tauri's file names, `mobile/app.json`, the palette's pack files) and reads ink, paper and gold
   back at fixed points of the design, every `.ico` and `.icns` frame included. `tests/brand-mark.test.mjs` guards the
   component, the tokens, the top bar, the welcome card and the favicon.
+
+## 8. As built (after review, 2026-11-08)
+
+* **The app's own address.** `room_browser.listening_ports()` reads the TCP ports this process listens on when the
+  browser starts (Linux: the process's socket inodes against `/proc/self/net/tcp` and `tcp6`; macOS: `lsof -a -p`; the
+  phone's Wi-Fi door `mobile.LAN_PORT` on the desktop app). `main.guard` passes every request's scope to
+  `room_browser.learn`, so a port the app is reached on later is added to a running browser. With no port known the
+  browser does not start (`APP_UNKNOWN`). Test servers in the backend suite run in processes of their own for this
+  reason (`serve_folder`).
+* **Hosts.** `Rules._app` drops dots at the end of a host before it compares (`localhost.`, `foo.localhost.`). Ports 80
+  and 443 add `http://*`, `ws://*`, `https://*` and `wss://*` patterns, since Chromium leaves a default port out of an
+  address.
+* **Keys.** `room_browser_tool._check_key`: `MOVING_KEYS` (Tab, arrows, Escape, PageUp, PageDown, Home, End, Backspace,
+  Delete) skip the look; any other key looks at the focused element. Enter or Space on something that is not a field is
+  `_check("click", ...)`; any key in a card form, or on a card field, is a purchase; Enter in a form field (not a
+  textarea) is sending the form. `Return`, `Space`, `Spacebar` and `Esc` are read as Enter, " " and Escape.
+* **Who reads the browser.** `security.require_user_or_terminal_token` (the signed-in person or the Terminal access
+  token) guards `/api/room/browser/open`, `/tabs` and `/page`. The shared bridge keys (app.json's, Rooks Desk's, the
+  coding jobs') are refused there even for reads: the Room's browser holds the person's sign-ins, and pages steer the
+  helpers that hold those keys. The rooks terminal says "Its pages can hold your sign-ins, so reading them needs the
+  terminal's own sign in" and names `rooks login`.
+* **Offline without bwrap.** `launch_argv` adds `OFFLINE_FLAGS`: `--proxy-server=http://127.0.0.1:9`,
+  `--proxy-bypass-list=<-loopback>` (loopback goes to the dead proxy too) and
+  `--force-webrtc-ip-handling-policy=disable_non_proxied_udp`. A closed door, not a wall: a page's own code still runs
+  as the person.
+* **Settings.** Settings, Tools, "The Room": the switches `app_terminal` (Terminals) and `room_browser` (The Room's
+  browser). The Browser and Terminal windows link to `/settings?section=tools`.
+* **Installer.** `tty_ask` reads `/dev/tty` through a raw descriptor (a text file opened "r+" on a terminal raises, so
+  the question was never asked) and returns None when nobody answers in `ASK_WAIT_S`; `ask_shell` takes None or an empty
+  read as no answer and only a typed Enter as the first choice. `pick_native_asset` skips prereleases and returns the
+  release's `SHA256SUMS-desktop` address; `install_native` installs only when the download's SHA-256 is the one listed
+  there (`NotInstalled` says why otherwise). `app_step` says one line: installed, not installed and why, or none
+  published.
+* **Tests.** `test_room_browser.py`: the app's port known before any route (a listener in the process), fail closed with
+  no port, every request teaches the port, a bridge key refused on `/page` and `/tabs`. `test_room_browser_assistant.py`:
+  keys on a focused buy or submit button (fake focus, and real Chromium: Tab, Tab, Enter and Space on "Add to cart",
+  Space on Search), and a real uvicorn app refused when the assistant browses first, also as `localhost.` and
+  `foo.localhost.`. `test_browser_engine.py`: trailing dots, default ports, offline flags without bwrap.
+  `test_native_app.py`: no answer, a real pseudo terminal, prereleases, checksums, one line on a cut download.
+  `room-browser.test.mjs`: the Settings switches and where the windows point.

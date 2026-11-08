@@ -90,8 +90,19 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 * **"Get one?" for the Room's own engine** is not there: with no engine the window says "The Room has no browser yet."
   and offers Check again (the engine download is the engine lane's open item above).
-* **No Settings switch in the app's screens** for `room_browser` (the setting and its route exist, as for the app's
-  terminal); the window says "switched off in Settings" and links there.
+* **Switching the Room's browser or terminals on and off from the rooks terminal**: the switches are in Settings,
+  Tools (done after review); the terminal has no `/room browser on|off` yet.
+* **Enter in a field outside a form** (a chat box made of a textarea or an editable area that sends on Enter) is not
+  checked as sending a message; Enter or Space on a focused button or link, and Enter in a form field, are.
+* **A held key step is matched by the key, not the element**: a second Enter on another element while one waits is told
+  the first is already waiting (after a yes the step runs only if the same element still has the focus).
+* **WebSockets to the app's own address** are not refused by the request rule (Chromium's `Fetch` does not see them);
+  the app's sockets refuse them anyway (sign-in cookie, same origin, loopback page), and the Room's browser has no
+  sign-in cookie of the app.
+* **The app's address on the local network** (the computer's Wi-Fi address and the app's port) is refused only when the
+  computer's own name resolves to it.
+* **The Room browser's real Chromium tests on CI** now fail instead of skip (`ROOM_BROWSER_TESTS_REQUIRED=1`, bubblewrap
+  installed); not yet seen green on a CI runner from this branch.
 * **Typing with an input method** (Chinese, Japanese, dead keys): the live page takes key presses and paste; composed
   text from an IME is not sent yet. The phone's Type field works for any text.
 * **The assistant's every acting step asks first** (the Room's rule), so a purchase asks twice: the Room's own yes, then

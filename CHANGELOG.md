@@ -4,6 +4,41 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · The Room's browser and the installer after review: walls that hold · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, section 8. Every fix below has a test that failed on
+the code before it.
+
+- **The app's own address is refused from the browser's first start.** The rule only knew the ports the browser's own
+  routes had seen, so a browser the assistant opened first (after every app restart, the usual case) could open the
+  app. Now the ports this app's process listens on are read when the browser starts (`/proc` on Linux, `lsof` on
+  macOS, plus the phone's Wi-Fi door), every request to the app tells it (not only the browser's routes), and when no
+  port is known the browser does not start ("The Room's browser stays closed: it could not check that pages in it
+  cannot reach Rooks itself.").
+- **Names with a dot at the end** (`localhost.`, `foo.localhost.`), which Chromium sends to loopback, are refused like
+  `localhost`. An app on port 80 or 443 is matched without the port in the address too.
+- **Keys no longer get past a hold.** Enter or Space on a focused button or link is checked as a click on it (a
+  purchase on any site, a form or message on a site nobody asked for), any key in a card form as typing there; only
+  keys that move around (Tab, the arrows, Escape, PageDown and the like) skip the look. Tab, Tab, Enter on "Add to
+  cart" now waits for a yes in Needs you.
+- **The helpers' shared key no longer reads the Room's browser.** `GET /api/room/browser/tabs` and `/page` (and
+  `/open`) take the signed-in person or the Terminal access token only; the app.json and Rooks Desk keys, which the
+  browser and desk helpers hold and pages can steer, are refused even for reads. The rooks terminal says how to sign
+  in (`rooks login`) when the app refuses it. The Room's status still reads with that key.
+- **An offline Room's browser without bwrap** (macOS, Linux without it) goes through a proxy that answers nothing,
+  loopback included, instead of relying on proxy variables Chrome on macOS does not read.
+- **Settings has the switches the Room's windows point to**: Settings, Tools, The Room: Terminals and The Room's
+  browser. The windows say "Switch it on in Settings, under Tools" and their button opens that section.
+- **Installer**: the question "a Chrome or Edge window, or your usual browser?" was never asked from `curl | bash` (a
+  terminal opened "r+" cannot seek, so it read as no answer, and no answer was taken as the window). It is asked now,
+  and nobody answering in 60 s is no answer: the launcher asks later, never a window nobody chose. The Rooks app is
+  installed only when its SHA-256 matches the release's `SHA256SUMS-desktop`; prereleases are skipped; a cut download
+  says that once and no longer also says "none published".
+- **CI**: the backend job installs bubblewrap and sets `ROOM_BROWSER_TESTS_REQUIRED=1`, so the Room browser's real
+  Chromium tests fail instead of skipping when no browser can start.
+- Upgrade: nothing to do. Someone who used the rooks terminal's `/room tabs` or `/room page` with only the app.json key
+  runs `rooks login` once (Settings, Terminal access). Rollback: revert the branch; no data changes.
+
 ## Unreleased · The new mark: a tower with a gold door · branch room-browser-native-app
 
 Design record: `docs/design/0007-room-browser-and-native-app.md`, section 7.
