@@ -13,7 +13,11 @@ from .text import words
 
 TIERS = ("profile", "episodic", "project", "procedural")
 PRIVACY = ("normal", "private", "sensitive")
-SECRETISH = re.compile(r"password|passcode|\bpin\b|card number|cvv|api key|secret|\btoken\b", re.I)
+# A secret word followed by its value ("my password is ...", "PIN 4471", "api key: ..."), not just the word: "legal
+# secretary", "token rings" or "uses a password manager" are ordinary facts. Refused from anyone but the person
+# (memory guessed from chats, files, mail), and never moved from the old stores (facts.move_old_stores).
+SECRETISH = re.compile(r"\b(?:password|passcode|passphrase|pin(?: code| number)?|card number|credit card|cvv|cvc|security code|"
+                       r"api key|access key|secret key|token|secret)s?\b(?:\s*(?:is|was|are|=|:)\s*\S|\s*\d)", re.I)
 # Keys by their published shapes (as in redact.py): never kept, whoever typed them, because memories go into prompts
 KEYLIKE = re.compile(r"\b(?:sk-(?:ant-|or-v1-|proj-)?[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{35}|gh[pousr]_[A-Za-z0-9]{36,}|"
                      r"xox[abprs]-[A-Za-z0-9-]{10,}|tvly-[A-Za-z0-9_-]{16,}|wb_[A-Za-z0-9_-]{30,}|(?:AKIA|ASIA)[0-9A-Z]{16}|"
@@ -100,11 +104,13 @@ def remember(content: str, tier: str = "profile", *, subject_id: int | None = No
     outcome = "created"
     # 2. the same thing again (same subject + predicate, such as lives_in), in other words: the newer fact replaces the
     # older one, which is kept as history ("why" shows what it replaced). One exception: a guess never silently
-    # replaces what the person said themselves. That becomes a question for them, and their word stays in use meanwhile.
+    # replaces what the person said themselves or pinned (chat's remember pins what they say about themselves). That
+    # becomes a question for them, and their word stays in use meanwhile. A newer pinned fact may replace a pinned one.
     if pred:
         olds = db.all("SELECT * FROM kn_memories WHERE id != ? AND status = 'active' AND predicate = ? AND scope = ? "
                       "AND COALESCE(subject_id, 0) = COALESCE(?, 0)", mid, pred, scope, subject_id)
-        theirs = next((o for o in olds if o["source_kind"] == "user"), None) if source_kind != "user" else None
+        theirs = next((o for o in olds if o["source_kind"] == "user" or (o["pinned"] and not pinned)), None) \
+            if source_kind != "user" else None
         if theirs:
             db.run("UPDATE kn_memories SET status = 'conflict' WHERE id = ?", mid)
             db.run("INSERT INTO kn_conflicts(old_id, new_id, created_at) VALUES (?, ?, ?)", theirs["id"], mid, now)
@@ -125,6 +131,8 @@ def update(mid: int, content: str | None = None, pinned: bool | None = None, pri
     content = " ".join((content if content is not None else cur["content"]).split())[:1000]
     if len(content) < 3:
         raise HTTPException(400, "Write a short sentence to remember.")
+    if KEYLIKE.search(content):  # a correction goes into prompts like anything remembered
+        raise HTTPException(400, "That looks like a password or secret. Keep those in the Vault, not in memory.")
     changed = content != cur["content"]
     new_tier = tier or cur["tier"]
     pred = (predicate_of(content) if new_tier == "profile" else "") if changed and cur["subject_id"] is None else cur["predicate"]
@@ -140,9 +148,18 @@ def update(mid: int, content: str | None = None, pinned: bool | None = None, pri
 
 
 def forget(mid: int) -> dict:
-    """Hard delete (the change log keeps only the id, so a synced phone deletes it too)."""
+    """Hard delete (the change log keeps only the id, so a synced phone deletes it too). Forgetting the fact in use
+    brings back the one it replaced (undo, or "that's wrong"), so nothing is kept that no screen shows; forgetting an
+    older version keeps the chain, so what it replaced still points at what is in use now."""
     schema.ensure()
-    get(mid)
+    cur = get(mid)
+    olders = db.all("SELECT * FROM kn_memories WHERE superseded_by = ? AND status = 'superseded'", mid)
+    if cur["status"] == "active":
+        for r in olders:
+            db.run("UPDATE kn_memories SET status = 'active', superseded_by = NULL, updated_at = ? WHERE id = ?", db.now(), r["id"])
+            _index(get(r["id"]))
+    else:
+        db.run("UPDATE kn_memories SET superseded_by = ? WHERE superseded_by = ?", cur["superseded_by"], mid)
     db.run("UPDATE kn_memories SET superseded_by = NULL WHERE superseded_by = ?", mid)
     db.run("UPDATE kn_memories SET consolidated_into = NULL WHERE consolidated_into = ?", mid)
     db.run("DELETE FROM kn_memories WHERE id = ?", mid)

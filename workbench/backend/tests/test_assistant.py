@@ -226,6 +226,9 @@ def test_cli_token_auth(client):
     assert anon.get("/api/skills").status_code == 401
     assert anon.get("/api/skills", headers={"Authorization": f"Bearer {token}"}).status_code == 200
     assert anon.get("/api/skills", headers={"Authorization": "Bearer wrong"}).status_code == 401
+    # `ws login` checks its token with /api/memories and `ws memory` lists it (cli/ws)
+    assert anon.get("/api/memories").status_code == 401
+    assert anon.get("/api/memories", headers={"Authorization": f"Bearer {token}"}).status_code == 200
 
 
 def test_web_search_tool_only_offered_when_search_is_set_up(monkeypatch):

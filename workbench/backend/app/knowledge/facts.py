@@ -43,7 +43,7 @@ SOURCE_KIND = {"user": "user", "assistant": "chat", "agent": "chat", "auto": "ch
                "file": "file", "task": "task", "teach": "teach", "feedback": "feedback", "import": "import",
                "site": "site", "note": "note", "email": "email", "other": "other"}
 YOURS = ["shared", "private"]  # memories about you and your work; a teammate's own notes stay with that teammate
-SECRETISH = re.compile(r"password|passcode|\bpin\b|card number|cvv|api key|token|secret", re.I)
+SECRETISH = memory.SECRETISH  # a secret word with its value ("my password is ..."), not "legal secretary"
 
 
 def learning_on() -> bool:
@@ -97,13 +97,22 @@ def delete(mid: int) -> dict:
     return {"deleted": mid}
 
 
-def all_facts(limit: int = 500) -> list[dict]:
-    """What is known now: pinned first, then newest."""
-    return [_fact(m) for m in memory.list_(scopes=YOURS, limit=limit)]
+def _shareable(m: dict, allow_sensitive: bool) -> bool:
+    return allow_sensitive or m["privacy"] != "sensitive"
 
 
-def search(query: str, limit: int = 8) -> list[dict]:
-    return [_fact(m) | {"score": m["score"]} for m in _recall(query, scopes=YOURS, k=limit)]
+def all_facts(limit: int = 500, allow_sensitive: bool = False) -> list[dict]:
+    """What is known now: pinned first, then newest. Memories marked sensitive are left out unless asked for: like the
+    prompt block (recall.context_for), these lists reach models and helpers that may run in the cloud."""
+    rows = memory.list_(scopes=YOURS, limit=limit if allow_sensitive else limit * 2 + 50)
+    return [_fact(m) for m in rows if _shareable(m, allow_sensitive)][:limit]
+
+
+def search(query: str, limit: int = 8, allow_sensitive: bool = False) -> list[dict]:
+    """Facts that match a query (chat's search_memory tool, project context). Sensitive ones only for a model that
+    runs on this computer (allow_sensitive), as in the prompt block."""
+    hits = _recall(query, scopes=YOURS, k=limit if allow_sensitive else limit * 2 + 8)
+    return [_fact(m) | {"score": m["score"]} for m in hits if _shareable(m, allow_sensitive)][:limit]
 
 
 def context_block(user_text: str, budget_tokens: int = 500) -> str:
@@ -257,13 +266,16 @@ def move_old_stores(c: sqlite3.Connection) -> dict:
     facts, unreadable = _old_facts(c, have)
     cols = ("id", "content_enc", "tier", "pinned", "confidence", "source_kind", "source_ref", "evidence_enc", "uses",
             "observed_at", "created_at", "updated_at")
-    rows = [dict(zip(cols, r)) for r in c.execute(
-        f"SELECT {', '.join(cols)} FROM kn_memories WHERE subject_id IS NULL AND scope = 'shared' AND status IN ('active', 'conflict')")]
+    rows = [dict(zip((*cols, "status"), r)) for r in c.execute(
+        f"SELECT {', '.join(cols)}, status FROM kn_memories WHERE subject_id IS NULL AND scope = 'shared'")]
     by_norm, by_ref = {}, {}
     for r in rows:
         r["content"] = crypto.open_text(r["content_enc"])
-        by_norm.setdefault(_norm(r["content"]), r)
+        if r["status"] in ("active", "conflict"):
+            by_norm.setdefault(_norm(r["content"]), r)
         if r["source_ref"].startswith("adapt_fact:"):
+            # the live sync's copy, whatever the person did with it on the Memory page: a copy they replaced (status
+            # superseded) stays replaced, with the old fact's details merged into it, never a second, active copy
             by_ref[r["source_ref"]] = r
     moved = merged = dropped = 0
     for f in facts:

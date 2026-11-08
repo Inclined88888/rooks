@@ -388,7 +388,8 @@ def _remember(content: str, kind: str = "fact", ctx: Ctx | None = None) -> dict:
     if f["outcome"] == "superseded":
         out["note"] = "This replaces what was known before about the same thing."
     elif f["outcome"] == "conflict":
-        out["note"] = "This disagrees with something the user said themselves, so it waits on the Memory page for them to choose."
+        out["note"] = ("This disagrees with something the user said themselves or pinned, so it waits on the Memory page "
+                       "for them to choose.")
     return out
 
 
@@ -423,11 +424,15 @@ def explore_graph(name: str, direction: str = "both", rel: str = "", depth: int 
                         for n in t["nodes"] if n.get("privacy") != "sensitive"]}
 
 
-def search_memories(query: str, limit: int = 8) -> list[dict]:
+def search_memories(query: str, limit: int = 8, ctx: Ctx | None = None) -> list[dict]:
+    """Chat's search_memory tool. A memory marked sensitive is found only when this turn's model runs on this computer,
+    as in the prompt's memory block (knowledge/live.py)."""
     from .knowledge import facts
+    from .knowledge.live import model_is_local
 
+    local = bool(ctx and ctx.model) and model_is_local(ctx.model)
     return [{"id": f["id"], "content": f["content"], "kind": f["category"], "updated_at": f["updated_at"]}
-            for f in facts.search(query, limit)]
+            for f in facts.search(query, limit, allow_sensitive=local)]
 
 
 def search_history(query: str, limit: int = 8) -> list[dict]:
@@ -686,7 +691,8 @@ TOOLS: list[Tool] = [
          effect="persistent"),
     Tool("forget", "Delete a memory by id when the user asks or it is wrong.", {"memory_id": I()}, _forget, ("memory_id",),
          effect="persistent"),
-    Tool("search_memory", "Search what you remember about the user.", {"query": S()}, lambda query: search_memories(query), ("query",)),
+    Tool("search_memory", "Search what you remember about the user.", {"query": S()}, lambda query, ctx=None: search_memories(query, ctx=ctx),
+         ("query",)),
     Tool("explore_graph", "Walk the knowledge graph from a person, company, project or other entity by name: who works "
          "where, who is on what, what is about what. direction out|in|both, rel optional (works_at, member_of, assigned_to, "
          "about, mentions, part_of, attended, located_at, owns), depth 1 to 4.",

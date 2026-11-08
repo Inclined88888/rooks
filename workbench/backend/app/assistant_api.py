@@ -352,6 +352,17 @@ def run_trace(aid: int):
 
 
 # Memory lives at /api/knowledge/memories (knowledge/routes.py): one store for chat, the Memory page and the terminal.
+# This read-only list is for the `ws` terminal chat client (`ws login` checks its token with it, `ws memory` prints
+# it), which signs in with the Terminal access token that /api/knowledge refuses. Sensitive memories stay on the
+# Memory page.
+@router.get("/memories")
+def memories(q: str = ""):
+    from .knowledge import facts
+
+    found = facts.search(q, 50) if q.strip() else facts.all_facts(500)
+    kind = {"about": "profile", "preference": "preference"}
+    return [{"id": f["id"], "content": f["content"], "kind": kind.get(f["category"], "fact"), "source": f["source"],
+             "created_at": f["created_at"], "updated_at": f["updated_at"]} for f in found]
 
 
 # Skills
