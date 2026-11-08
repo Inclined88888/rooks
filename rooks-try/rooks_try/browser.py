@@ -1265,8 +1265,11 @@ class Session:
             info = p.get("targetInfo") or {}
             tab = self._tab_by(target=info.get("targetId"))
             if tab is not None and info.get("type") == "page":
+                url, title = info.get("url") or tab.url, info.get("title") or ""
+                if title and title == url.split("://", 1)[-1]:
+                    title = ""  # the browser names a page with no title yet by its address: that is not a title
                 with self.lock:
-                    tab.url, tab.title = info.get("url") or tab.url, info.get("title") or ""
+                    tab.url, tab.title = url, title
                 self._changed("tabs")
         elif method == "Target.targetCreated":
             info = p.get("targetInfo") or {}

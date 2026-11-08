@@ -59,6 +59,10 @@ BAD_ACT = "The browser cannot do that."
 RESTARTED = "The app restarted, so the browser closed. Your tabs and sign-ins are kept."
 SAVING = "Saving a point. The browser closes for a moment."
 ELSEWHERE = "This browser was opened in another window."
+ROOKS_USING = "Rooks is using the browser"
+TAKEN = "The person took the browser."
+ROOKS_FOR_S = 20.0   # the window says Rooks is using the browser this long after its last step
+TAKEN_FOR_S = 120.0  # after the person takes it back, Rooks's next steps wait for a fresh yes this long
 WS_NOT_LOCAL = "The browser only opens on the computer running Rooks"
 CLOSE_WORDS = {
     "stop": "The Room is off. Everything in it is kept.",
@@ -81,6 +85,9 @@ _ENGINE: tuple[float, object] | None = None
 _RUN = uuid.uuid4().hex            # this run of the app
 _ATEXIT = False
 _memory_reader = None              # tests put a fake reader here; None reads the process tree
+_TYPED: set[str] = set()           # hosts the person typed into the address bar (the window or the phone): asked sites
+_ROOKS_AT: float | None = None     # when the assistant last acted in the browser
+_TAKEN_AT: float | None = None     # when the person's own input took the browser back from the assistant
 
 
 def _rb():
@@ -311,7 +318,7 @@ def _at_exit() -> None:
 
 def reset_for_tests() -> None:
     """Forget the browser as a new run of the app would (it is closed quietly when it still runs)."""
-    global _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE, _RUN, _LAST_NOTES
+    global _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE, _RUN, _LAST_NOTES, _ROOKS_AT, _TAKEN_AT
     s = _S
     if s is not None and s.alive():
         s.close("closed")
@@ -319,6 +326,8 @@ def reset_for_tests() -> None:
         _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE = None, None, None, None, [], None
         _LAST_NOTES = []
         _PORTS.clear()
+        _TYPED.clear()
+        _ROOKS_AT = _TAKEN_AT = None
         _RUN = uuid.uuid4().hex
 
 
@@ -329,7 +338,8 @@ def overview(history: bool = False) -> dict:
     s = _S
     open_ = s is not None and s.alive()
     out = {"open": open_, "tabs": [], "active": None, "notes": [], "note": _NOTE, "reopened": list(_REOPENED),
-           "walled": bool(s and s.walled), "back": False, "forward": False, "max": TAB_MAX}
+           "walled": bool(s and s.walled), "back": False, "forward": False, "max": TAB_MAX,
+           "rooks": rooks_using(), "rooks_words": ROOKS_USING if rooks_using() else "", "taken": taken()}
     if open_:
         out.update(tabs=s.rows(), active=s.active, notes=list(s.notes)[-20:], view=list(s.view))
         if history and s.active:
@@ -358,6 +368,60 @@ def _need_open():
     return s
 
 
+# --- who is driving: the person or the assistant (design 0007, section 1.5) -----------------------------------------------------
+def rooks_using() -> bool:
+    """The assistant acted in the browser in the last ROOKS_FOR_S seconds, and the person has not taken it back since."""
+    return _ROOKS_AT is not None and time.monotonic() - _ROOKS_AT < ROOKS_FOR_S
+
+
+def taken() -> bool:
+    """The person's own input took the browser back from the assistant in the last TAKEN_FOR_S seconds."""
+    return _TAKEN_AT is not None and time.monotonic() - _TAKEN_AT < TAKEN_FOR_S
+
+
+def rooks_acting() -> None:
+    """The assistant is acting: the window says so ("Rooks is using the browser")."""
+    global _ROOKS_AT, _TAKEN_AT
+    _ROOKS_AT, _TAKEN_AT = time.monotonic(), None
+    _on_change("rooks")
+
+
+def give_back() -> None:
+    """A person's yes to a new step hands the browser back to the assistant."""
+    global _TAKEN_AT
+    _TAKEN_AT = None
+    _on_change("rooks")
+
+
+def _person_input(msg: dict) -> None:
+    """Input from the person's window or phone: an address they type is a site they asked for, and any input while the
+    assistant is using the browser takes it back."""
+    global _ROOKS_AT, _TAKEN_AT
+    kind = msg.get("type") or msg.get("kind")
+    if kind in ("resize", "copy"):
+        return
+    if kind == "nav" and (msg.get("action") or "go") == "go" or kind == "tab" and msg.get("address"):
+        host = typed_host(str(msg.get("address") or ""))
+        if host:
+            _TYPED.add(host)
+    if rooks_using():
+        _ROOKS_AT, _TAKEN_AT = None, time.monotonic()
+        _on_change("rooks")
+
+
+def typed_host(address: str) -> str:
+    try:
+        url = _rb().normalise(address)
+    except Exception:  # noqa: BLE001
+        return ""
+    return (urlsplit(url).hostname or "").lower()
+
+
+def typed_hosts() -> set[str]:
+    """Hosts the person typed into the Room browser's address bar in this run of the app."""
+    return set(_TYPED)
+
+
 # --- the one window watching ------------------------------------------------------------------------------------------------------
 @dataclass
 class _Viewer:
@@ -384,10 +448,41 @@ class _Viewer:
             pass
 
 
+def jpeg_size(data: bytes) -> tuple[int, int] | None:
+    """(width, height) of a JPEG from its frame header, or None."""
+    i, n = 2, len(data)
+    if data[:2] != b"\xff\xd8":
+        return None
+    while i + 9 < n:
+        if data[i] != 0xFF:
+            return None
+        marker = data[i + 1]
+        if marker in (0xD8, 0x01) or 0xD0 <= marker <= 0xD7:
+            i += 2
+            continue
+        length = int.from_bytes(data[i + 2:i + 4], "big")
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            return int.from_bytes(data[i + 7:i + 9], "big"), int.from_bytes(data[i + 5:i + 7], "big")
+        i += 2 + length
+    return None
+
+
+RESIZE_SETTLE_S = 2.0
+_RESIZED_AT: float | None = None
+
+
 def _on_frame(jpeg: bytes, meta: dict) -> None:
     v = _VIEWER
-    if v is not None and jpeg:
-        v.post(frame=jpeg)
+    if v is None or not jpeg:
+        return
+    s = _S
+    if s is not None and _RESIZED_AT is not None and time.monotonic() - _RESIZED_AT < RESIZE_SETTLE_S:
+        # just after a resize, a frame still drawn at the old size is dropped: clicks map through the new size, so it
+        # would land them wrong (the next frame comes at the new size)
+        size = jpeg_size(jpeg)
+        if size and (abs(size[0] - s.view[0]) > 2 or abs(size[1] - s.view[1]) > 2):
+            return
+    v.post(frame=jpeg)
 
 
 def _on_change(what: str) -> None:
@@ -412,6 +507,7 @@ def _refusal(ws: WebSocket) -> tuple[int, str] | None:
 
 def _input(s, msg: dict, person: bool = True) -> dict | None:
     """One message from the window (or the phone), as calls to the browser. Returns an answer for the window, if any."""
+    global _RESIZED_AT
     kind = msg.get("type") or msg.get("kind")
     num = lambda k, d=0.0: float(msg.get(k) or d)  # noqa: E731
     if kind == "mouse":
@@ -430,6 +526,7 @@ def _input(s, msg: dict, person: bool = True) -> dict | None:
     elif kind in ("text", "type"):
         s.insert_text(str(msg.get("text") or ""))
     elif kind == "resize":
+        _RESIZED_AT = time.monotonic()
         w, h = s.resize(int(msg.get("width") or 0), int(msg.get("height") or 0))
         return {"type": "view", "width": w, "height": h}
     elif kind == "nav":
@@ -534,6 +631,7 @@ async def attach(ws: WebSocket):
                 continue
             if v.closing:
                 break
+            _person_input(msg)
             try:
                 answer = await asyncio.to_thread(_input, s, msg)
             except Exception as e:  # noqa: BLE001 - one bad message says why, the window stays
@@ -664,6 +762,7 @@ async def act_route(request: Request):
     if body.get("kind") not in ("click", "scroll", "type", "key", "nav", "tab"):
         raise HTTPException(400, BAD_ACT)
     s = _need_open()
+    _person_input(body)
     try:
         answer = await asyncio.to_thread(_input, s, body)
     except HTTPException:
