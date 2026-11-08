@@ -15,12 +15,12 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from . import db, features_v02, llm, voice
+from . import db, plan_tiers, llm, voice
 from .security import require_user
 
 
 def _pro() -> None:
-    if not features_v02.allowed("meeting_companion"):
+    if not plan_tiers.allowed("meeting_companion"):
         raise HTTPException(402, "The meeting companion is part of Pro.")
 
 

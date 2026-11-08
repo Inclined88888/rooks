@@ -25,7 +25,7 @@ import logging
 
 from fastapi import HTTPException
 
-from . import db, features_v02
+from . import db, plan_tiers
 
 log = logging.getLogger("jobs")
 
@@ -92,7 +92,7 @@ def ensure() -> None:
 
 def max_parallel() -> int:
     """Pro runs several jobs side by side; Free runs one at a time (they still queue and show on the board)."""
-    return MAX_PARALLEL_PRO if features_v02.allowed("jobs_board") else 1
+    return MAX_PARALLEL_PRO if plan_tiers.allowed("jobs_board") else 1
 
 
 def _out(r: dict | None) -> dict:
@@ -124,8 +124,8 @@ def board(limit_done: int = 30) -> dict:
         "you": [j for j in active if j["column"] == "you"],
         "done": done,
         "max_parallel": max_parallel(),
-        "pro": features_v02.allowed("jobs_board"),
-        "tier": features_v02.tier("jobs_board"),
+        "pro": plan_tiers.allowed("jobs_board"),
+        "tier": plan_tiers.tier("jobs_board"),
     }
 
 

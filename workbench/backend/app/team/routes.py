@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from .. import features_v02
+from .. import plan_tiers
 from ..mobile import require_device
 from ..security import require_user
 from . import connect, engine, loop as team_loop, outbox, parse, replies, sms, store, trackers
@@ -24,7 +24,7 @@ PRIVACY = ("Your team's details stay on this computer. Members only ever see the
 
 def _lead() -> None:
     """Managing other people's tasks is a Team/Business feature; your own 'My tasks' list is free."""
-    features_v02.require("team_tasks")
+    plan_tiers.require("team_tasks")
 
 
 class MemberIn(BaseModel):
@@ -98,7 +98,7 @@ def _settings() -> dict:
             "stuck_days": int(store.setting("stuck_days", "3")),
             "read_inbox": store.setting("read_inbox") == "1", "replies_review": replies.review_on(),
             "mail_account": int(store.setting("mail_account") or 0) or None, "sms": sms.status(), "trackers": trackers.status(), "privacy": PRIVACY,
-            "team_unlocked": features_v02.allowed("team_tasks")}
+            "team_unlocked": plan_tiers.allowed("team_tasks")}
 
 
 @router.get("")

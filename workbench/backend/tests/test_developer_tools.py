@@ -84,7 +84,7 @@ def _forget_account():
 
 
 def test_plan_checks_are_off_by_default_even_when_a_cloud_says_billing_is_live(client, monkeypatch):
-    from app import account, features_v02
+    from app import account, plan_tiers
 
     _cloud_says_billing_is_live(monkeypatch)
     monkeypatch.delenv("AIW_PLAN_CHECKS", raising=False)
@@ -92,7 +92,7 @@ def test_plan_checks_are_off_by_default_even_when_a_cloud_says_billing_is_live(c
         s = client.get("/api/account").json()
         assert s["billing_live"] is False and all(f["unlocked"] for f in s["pro_features"])
         assert not account.billing_live()
-        assert all(features_v02.allowed(f) for f in features_v02.FEATURE_TIERS)
+        assert all(plan_tiers.allowed(f) for f in plan_tiers.FEATURE_TIERS)
         assert client.post("/api/mobile/pair/start").status_code == 200  # no paywall
     finally:
         _forget_account()

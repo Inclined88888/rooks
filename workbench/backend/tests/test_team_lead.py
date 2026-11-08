@@ -122,15 +122,15 @@ def test_member_away_and_person_page(team):
 
 
 def test_team_features_need_team_plan_but_my_tasks_are_free(team, monkeypatch):
-    from app import features_v02
+    from app import plan_tiers
 
     c, sam, jo = team
-    monkeypatch.setattr(features_v02, "_account_allowed", lambda f: False)
+    monkeypatch.setattr(plan_tiers, "_account_allowed", lambda f: False)
     r = c.post("/api/team/tasks", json={"title": "x", "assignee_id": sam["id"]})
     assert r.status_code == 402 and "Team and Business" in r.json()["detail"]["message"]
     assert c.post("/api/team/members", json={"name": "New"}).status_code == 402
     assert c.post("/api/team/tasks", json={"title": "Call the council", "mine": True}).status_code == 200
-    assert features_v02.tier("team_tasks") == "team" and features_v02.tier("my_tasks") == "free"
+    assert plan_tiers.tier("team_tasks") == "team" and plan_tiers.tier("my_tasks") == "free"
 
 
 def test_entities_and_phone_routes(team):

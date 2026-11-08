@@ -26,7 +26,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from . import config, db, features_v02
+from . import config, db, plan_tiers
 from .security import decrypt, require_user
 
 router = APIRouter(prefix="/api/voice", dependencies=[Depends(require_user)])
@@ -275,7 +275,7 @@ def status():
         "engine": engine,
         # Wake word listens all the time, so it only runs on this computer (offline Whisper or the OS's own dictation)
         "wake_ok": engine != "cloud" or e["local"],
-        "features": {f: features_v02.describe(f) for f in ("voice_dictation", "voice_conversation")},
+        "features": {f: plan_tiers.describe(f) for f in ("voice_dictation", "voice_conversation")},
     }
 
 
@@ -332,7 +332,7 @@ async def answer_by_voice(aid: int, utterance: str, channel: str) -> dict:
     """Re-checks the words here (the page's reading is never trusted), then answers like the card's buttons do."""
     from . import actions, assistant
 
-    if not features_v02.allowed("voice_conversation"):
+    if not plan_tiers.allowed("voice_conversation"):
         raise HTTPException(402, "Spoken approvals are part of Pro. Tap Approve on the card instead.")
     a = actions.approval(aid)
     d = spoken_decision(utterance)
@@ -372,7 +372,7 @@ def _device_router() -> APIRouter:
 
     @r.get("/status")
     def device_status(_: dict = Depends(require_device)):
-        return {"engine": _pick(), "features": {f: features_v02.describe(f) for f in ("voice_dictation", "voice_conversation")}}
+        return {"engine": _pick(), "features": {f: plan_tiers.describe(f) for f in ("voice_dictation", "voice_conversation")}}
 
     @r.post("/decision")
     def device_decision(data: DecisionIn, _: dict = Depends(require_device)):

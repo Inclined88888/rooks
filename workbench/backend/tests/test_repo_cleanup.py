@@ -96,3 +96,27 @@ def test_ci_has_no_job_for_the_old_browser_agent():
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
     assert "working-directory: browser-agent" not in ci
     assert "\n  browser-agent:" not in ci
+
+
+# ---- modules named after old branches carry their purpose (architecture g.4); every route keeps its path ----------
+RENAMED = {"v02_api": "automations_api", "v02_hooks": "projects_hooks", "v02_mobile": "projects_mobile",
+           "features_v02": "plan_tiers"}
+
+
+def test_branch_named_modules_are_renamed():
+    app = ROOT / "workbench" / "backend" / "app"
+    for old, new in RENAMED.items():
+        assert not (app / f"{old}.py").exists(), old
+        assert (app / f"{new}.py").is_file(), new
+    # the catalog builder is a build tool, not part of the running app
+    assert not (app / "catalog_build.py").exists()
+    assert (ROOT / "scripts" / "build_model_catalog.py").is_file()
+
+
+def test_renamed_modules_still_serve_their_routes(client):
+    """One route from each renamed module (automations_api's three routers, projects_hooks, projects_mobile), at the
+    same path as before the rename."""
+    paths = {r.path for r in client.app.routes}
+    for path in ("/api/automations", "/api/jobs/notices", "/api/mobile/jobs", "/api/projects", "/api/history",
+                 "/api/checked/mode", "/api/mobile/projects", "/api/mobile/history", "/api/mobile/checked/mode"):
+        assert path in paths, path

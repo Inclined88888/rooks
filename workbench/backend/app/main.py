@@ -29,9 +29,9 @@ from . import restart  # noqa: E402 - B3: a restart reported honestly; goals tha
 from .mcp_server import mcp, mcp_app
 from . import mcp_client_api  # noqa: E402 - feat/mcp-client: Workbench as an MCP client (the user's own servers)
 from .adapt import hooks as adapt_hooks, routes as adapt_routes  # adapt and learn (feat/learn-and-adapt)
-from . import auto_tools, automations, jobs, v02_api  # noqa: E402 - feat/v02-automations
+from . import auto_tools, automations, jobs, automations_api  # noqa: E402 - feat/v02-automations
 from .team import loop as team_loop, routes as team_routes, tools as team_tools  # feat/team-lead
-from . import v02_hooks  # feat/v02-core: projects, action history with undo, checked answers
+from . import projects_hooks  # feat/v02-core: projects, action history with undo, checked answers
 from .packs import mobile_routes as packs_mobile, routes as packs_routes, tools as packs_tools  # feat/v02-packs: Trade, Legal, Study packs
 from .security import check_bearer
 from .tools import tools
@@ -193,9 +193,9 @@ app.include_router(cli_agents_api.router)  # hand jobs to the user's own Claude 
 app.include_router(plan_signin.router)  # install and sign in to Claude Code / Codex from the app
 app.include_router(adapt_routes.router)  # /api/learn: What I know about you, Show me how, suggestions
 adapt_hooks.register_tools()
-app.include_router(v02_api.router)  # feat/v02-automations: automations, jobs board, live documents
-app.include_router(v02_api.phone)
-app.include_router(v02_api.terminal)  # /jobs in the terminal reads the board
+app.include_router(automations_api.router)  # feat/v02-automations: automations, jobs board, live documents
+app.include_router(automations_api.phone)
+app.include_router(automations_api.terminal)  # /jobs in the terminal reads the board
 auto_tools.register_tools()
 # feat/v02-anywhere-voice: Ask from anywhere, voice, meeting companion
 from . import anywhere, meetings, voice  # noqa: E402
@@ -208,7 +208,7 @@ app.include_router(meetings.router)
 app.include_router(media.router)  # phase 4: images through connected providers, saved to Files
 app.include_router(companion.router)  # notch / top-edge app, phone, agent hooks
 app.include_router(finetune.router)  # phase 4: datasets from your chats, hosted fine-tuning jobs
-v02_hooks.install(app)  # feat/v02-core: /api/projects, /api/history (undo), /api/checked
+projects_hooks.install(app)  # feat/v02-core: /api/projects, /api/history (undo), /api/checked
 from .knowledge import routes as knowledge_routes  # feat/memory-core: shared memory and data layer
 app.include_router(knowledge_routes.router)  # feat/memory-core
 from .knowledge import mobile as knowledge_mobile  # feat/memory-core: read-only search, People and Projects on the phone

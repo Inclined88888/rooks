@@ -11,7 +11,7 @@ starts; either way it runs on the "automation" channel, where anything that send
 something outside the app waits for the user's approval every time.
 
 The first check of a trigger only notes what is already there (old mail, old files), so nothing fires for the past.
-Free plans keep up to features_v02.FREE_LIMITS["automations"] automations; Pro is unlimited.
+Free plans keep up to plan_tiers.FREE_LIMITS["automations"] automations; Pro is unlimited.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ from pathlib import Path
 
 from fastapi import HTTPException
 
-from . import db, features_v02, jobs
+from . import db, plan_tiers, jobs
 
 log = logging.getLogger("automations")
 
@@ -132,7 +132,7 @@ def listing() -> dict:
     ensure()
     rows = [_out(r) for r in db.all("SELECT * FROM automations ORDER BY id DESC")]
     lim = limit()
-    return {"automations": rows, "limit": lim, "pro": lim is None, "tier": features_v02.tier("automations_unlimited"),
+    return {"automations": rows, "limit": lim, "pro": lim is None, "tier": plan_tiers.tier("automations_unlimited"),
             "triggers": TRIGGERS, "actions": ACTIONS}
 
 
@@ -145,7 +145,7 @@ def get(aid: int) -> dict:
 
 
 def limit() -> int | None:
-    return None if features_v02.allowed("automations_unlimited") else features_v02.FREE_LIMITS["automations"]
+    return None if plan_tiers.allowed("automations_unlimited") else plan_tiers.FREE_LIMITS["automations"]
 
 
 # --- plain English ---------------------------------------------------------------------------------------------------------

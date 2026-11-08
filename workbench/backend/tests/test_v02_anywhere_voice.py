@@ -154,10 +154,10 @@ def test_phone_spoken_approval(client, monkeypatch):
 
 
 def test_pro_gate_blocks_spoken_approvals_when_plan_lacks_it(client, monkeypatch):
-    from app import features_v02
+    from app import plan_tiers
 
     held = _held(client, monkeypatch)
-    monkeypatch.setattr(features_v02, "allowed", lambda f: f != "voice_conversation")
+    monkeypatch.setattr(plan_tiers, "allowed", lambda f: f != "voice_conversation")
     r = client.post(f"/api/voice/approvals/{held[0]}", json={"utterance": "yes"})
     assert r.status_code == 402 and "Approve on the card" in r.json()["detail"]
     assert client.get("/api/approvals").json()  # nothing was decided
@@ -361,8 +361,8 @@ def test_parse_srt_and_plain_text():
 
 
 def test_meetings_are_pro(client, monkeypatch):
-    from app import features_v02
+    from app import plan_tiers
 
-    monkeypatch.setattr(features_v02, "allowed", lambda f: f != "meeting_companion")
+    monkeypatch.setattr(plan_tiers, "allowed", lambda f: f != "meeting_companion")
     r = client.get("/api/meetings")
     assert r.status_code == 402 and "Pro" in r.json()["detail"]

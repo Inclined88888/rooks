@@ -1,9 +1,9 @@
 """feat/v02-core: the few places Projects, Action history and Checked answers plug into the assistant.
 
 Shared files call only these functions (one commented line each), so other v0.2 branches merge cleanly:
-- main.py: `v02_hooks.install(app)` adds the routers, the tools and settings tracking;
-- assistant.system_prompt: `parts.extend(v02_hooks.context(ctx, user_text))`;
-- assistant.run_tool: `snap = v02_hooks.before_tool(...)` before a tool runs and `v02_hooks.after_tool(...)` after it worked.
+- main.py: `projects_hooks.install(app)` adds the routers, the tools and settings tracking;
+- assistant.system_prompt: `parts.extend(projects_hooks.context(ctx, user_text))`;
+- assistant.run_tool: `snap = projects_hooks.before_tool(...)` before a tool runs and `projects_hooks.after_tool(...)` after it worked.
 Every hook swallows its own errors: a chat turn never fails because of them.
 """
 
@@ -66,10 +66,10 @@ def register_tools() -> None:
 
 
 def install(app) -> None:
-    from . import checked, history, projects, v02_mobile
+    from . import checked, history, projects, projects_mobile
 
     app.include_router(projects.router)
-    app.include_router(v02_mobile.device)  # the phone's device-token routes for the same three features
+    app.include_router(projects_mobile.device)  # the phone's device-token routes for the same three features
     app.include_router(history.router)
     app.include_router(checked.router)
     history.install()

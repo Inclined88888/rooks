@@ -23,7 +23,7 @@ import time
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from . import config, db, desk_proxy, features_v02, llm
+from . import config, db, desk_proxy, plan_tiers, llm
 from .api import sse
 from .security import require_user
 
@@ -229,7 +229,7 @@ class SettingsIn(BaseModel):
 def get_settings():
     s = settings()
     return {"grab_selection": s["grab_selection"] == "1", "screenshot": s["screenshot"] == "1", "shortcut": s["shortcut"],
-            "desk": desk_proxy.enabled(), "desktop": config.DESKTOP, **features_v02.describe("ask_anywhere")}
+            "desk": desk_proxy.enabled(), "desktop": config.DESKTOP, **plan_tiers.describe("ask_anywhere")}
 
 
 @router.put("/settings")

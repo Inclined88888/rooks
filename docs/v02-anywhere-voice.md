@@ -28,7 +28,7 @@ Branch `feat/v02-anywhere-voice`. Plain-English guide first, technical notes aft
 - **Follow-up email:** edit it, then **Save as draft**. It is **never sent** from here.
 - Audio is transcribed in 30-second pieces and not kept; only the text is saved. Delete removes the meeting and its transcript.
 
-## Tiers (`backend/app/features_v02.py`)
+## Tiers (`backend/app/plan_tiers.py`)
 | Feature | Tier |
 |---|---|
 | `ask_anywhere` | free |
@@ -36,7 +36,7 @@ Branch `feat/v02-anywhere-voice`. Plain-English guide first, technical notes aft
 | `voice_conversation` (Talk, wake word, spoken approvals) | pro |
 | `meeting_companion` | pro |
 
-`features_v02.allowed()` already calls `account.allowed(feature)` when PR #32's `app/account.py` exists; until then (or if the plan check errors) everything is allowed. Pro features answer HTTP 402 with a plain-English message when not allowed.
+`plan_tiers.allowed()` already calls `account.allowed(feature)` when PR #32's `app/account.py` exists; until then (or if the plan check errors) everything is allowed. Pro features answer HTTP 402 with a plain-English message when not allowed.
 
 ## Technical notes
 - Backend: `app/anywhere.py` (`/api/anywhere/*`), `app/voice.py` (`/api/voice/*`, `/api/mobile/voice/*`), `app/meetings.py` (`/api/meetings/*`). Spoken approvals: `voice.spoken_decision()` re-parses the words server-side, then calls the normal `actions` approval path. Follow-up drafts go through `tools.save_draft` and return `sent: false`.

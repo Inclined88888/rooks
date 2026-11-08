@@ -11,7 +11,7 @@ your quotes, cards and notes where they were.
 | Legal | Pro | Clause library, version compare with a redline, defined-terms, cross-reference and citation checks, and a matter timeline. |
 | Study & research | Free (lab notebook is Pro) | Flashcards with spaced repetition, worked maths checked with sympy, references (BibTeX, RIS, DOI, Zotero) and a lab notebook. |
 
-Tiers are declared in `workbench/backend/app/features_v02.py` (`FEATURE_TIERS`). The check goes through
+Tiers are declared in `workbench/backend/app/plan_tiers.py` (`FEATURE_TIERS`). The check goes through
 `packs.registry.allowed()`. That uses `account.allowed()` when the accounts branch is present, and otherwise allows
 everything.
 

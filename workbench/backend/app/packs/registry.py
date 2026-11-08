@@ -15,7 +15,7 @@ from pathlib import Path
 from fastapi import HTTPException
 
 from .. import db, skills_hub
-from ..features_v02 import tier as feature_tier
+from ..plan_tiers import tier as feature_tier
 from . import store
 
 BUNDLES = Path(__file__).parent / "bundles"
@@ -23,17 +23,17 @@ PACK_IDS = ("trade", "legal", "study")
 
 
 def allowed(feature: str) -> bool:
-    """Pro gating hook (integration/v0.2): features_v02.allowed -> account.allowed, unlocked while billing isn't live."""
-    from .. import features_v02
+    """Pro gating hook (integration/v0.2): plan_tiers.allowed -> account.allowed, unlocked while billing isn't live."""
+    from .. import plan_tiers
 
-    return features_v02.allowed(feature)
+    return plan_tiers.allowed(feature)
 
 
 def require_feature(feature: str) -> None:
     if not allowed(feature):
-        from .. import features_v02
+        from .. import plan_tiers
 
-        raise HTTPException(402, features_v02.upgrade_detail(feature))  # the app-wide upgrade card reads this shape
+        raise HTTPException(402, plan_tiers.upgrade_detail(feature))  # the app-wide upgrade card reads this shape
 
 
 def manifest(pack_id: str) -> dict:
