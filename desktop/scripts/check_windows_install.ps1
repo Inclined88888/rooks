@@ -222,3 +222,4 @@ if ($script:failed.Count -gt 0) {
 }
 Write-Host ""
 Write-Host "Every install, start, stop and uninstall check passed."
+exit 0  # the tidy-up's cmdkey /delete finds nothing to delete and would leave its own exit code as ours
