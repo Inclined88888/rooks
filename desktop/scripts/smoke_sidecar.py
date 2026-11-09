@@ -73,23 +73,33 @@ class Signed:
             return e.code, e.headers.get("content-type", ""), e.read()
 
 
+# The test page's server. Not `python -m http.server`: its HTTPServer looks up this computer's full name before it
+# listens, which on the macOS runners took longer than the wait (the connection timed out, the page never came).
+_SERVE = ("import functools,http.server,socketserver,sys\n"
+          "h=functools.partial(http.server.SimpleHTTPRequestHandler,directory=sys.argv[2])\n"
+          "class S(socketserver.ThreadingTCPServer):\n allow_reuse_address=True\n daemon_threads=True\n"
+          "S(('127.0.0.1',int(sys.argv[1])),h).serve_forever()")
+
+
 def serve_page(folder: Path):
     """The test page on loopback, from a process of its own (the browser refuses the app's own ports)."""
     (folder / "page.html").write_text(PAGE)
     port = free_port()
-    proc = subprocess.Popen([sys.executable, "-I", "-m", "http.server", str(port), "--bind", "127.0.0.1",
-                             "--directory", str(folder)], cwd=str(folder), stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL)
-    deadline = time.time() + 20
+    log = open(folder.parent / "page-server.log", "wb")
+    proc = subprocess.Popen([sys.executable, "-I", "-c", _SERVE, str(port), str(folder)], cwd=str(folder),
+                            stdout=log, stderr=subprocess.STDOUT)
+    deadline = time.time() + 60
     while True:
         try:
-            socket.create_connection(("127.0.0.1", port), timeout=1).close()
+            socket.create_connection(("127.0.0.1", port), timeout=2).close()
             return port, proc
-        except OSError:
+        except OSError as e:
             if time.time() > deadline or proc.poll() is not None:
                 proc.kill()
-                raise AssertionError("the test page server did not start")
-            time.sleep(0.1)
+                log.close()
+                said = (folder.parent / "page-server.log").read_text(errors="replace")[-800:]
+                raise AssertionError(f"the test page server did not start ({e!r}): {said}")
+            time.sleep(0.2)
 
 
 def why_not(app: Signed) -> str:
@@ -205,6 +215,7 @@ def main(binary: str, with_browser: bool = False) -> int:
 
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(line_buffering=True)  # each line when it happens, so the CI log's times are right
     args = sys.argv[1:]
     browser = "--room-browser" in args
     args = [a for a in args if a != "--room-browser"]
