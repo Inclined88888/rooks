@@ -88,6 +88,7 @@ _HOME: Path | None = None          # the Room home it belongs to
 _VIEWER: _Viewer | None = None
 _PORTS: set[int] = set()           # where this app is reached: the browser's requests there are refused
 _NOTE: str | None = None           # why the browser had closed, said by the next start
+_FAILED: dict | None = None        # why the last start failed: reason, plain words, and the detail for Advanced
 _REOPENED: list[str] = []
 _LAST_NOTES: list[str] = []        # what a closed browser said last
 _ENGINE: tuple[float, object] | None = None
@@ -313,8 +314,18 @@ async def ensure():
     return await asyncio.to_thread(_start, engine, bool(getattr(driver, "offline", False)))
 
 
+def _start_failure(e: Exception) -> dict:
+    """Why the browser did not start, as overview()["failed"]: the reason, its plain words for every screen, and what was
+    run and what it printed for Advanced only."""
+    reason = getattr(e, "reason", None)
+    words = _rb().START_WORDS.get(reason) if reason else None
+    if not words:
+        return {"reason": "unknown", "words": DID_NOT_START, "advanced": e.__class__.__name__}
+    return {"reason": reason, "words": words, "advanced": str(getattr(e, "detail", "") or "")}
+
+
 def _start(engine, offline: bool):
-    global _S, _HOME, _NOTE, _REOPENED
+    global _S, _HOME, _NOTE, _REOPENED, _FAILED
     rb = _rb()
     with _LOCK:
         s = session()
@@ -335,10 +346,12 @@ def _start(engine, offline: bool):
         try:
             s.start()
         except Exception as e:  # noqa: BLE001
-            log.warning("room browser did not start: %s", e.__class__.__name__)
-            _row("open browser", {}, "tool_error", DID_NOT_START, started)
-            raise HTTPException(500, DID_NOT_START) from e
-        _S, _HOME = s, home
+            failed = _start_failure(e)
+            log.warning("room browser did not start: %s", failed["reason"])
+            _FAILED = failed
+            _row("open browser", {}, "tool_error", failed["words"], started)
+            raise HTTPException(500, failed["words"]) from e
+        _S, _HOME, _FAILED = s, home, None
         saved, active = rb.load_tabs(home)
         try:
             reopened = s.restore(saved, active) if saved else []
@@ -403,12 +416,12 @@ def _at_exit() -> None:
 
 def reset_for_tests() -> None:
     """Forget the browser as a new run of the app would (it is closed quietly when it still runs)."""
-    global _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE, _RUN, _LAST_NOTES, _ROOKS_AT, _TAKEN_AT
+    global _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE, _RUN, _LAST_NOTES, _ROOKS_AT, _TAKEN_AT, _FAILED
     s = _S
     if s is not None and s.alive():
         s.close("closed")
     with _LOCK:
-        _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE = None, None, None, None, [], None
+        _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE, _FAILED = None, None, None, None, [], None, None
         _LAST_NOTES = []
         _PORTS.clear()
         _TYPED.clear()
@@ -424,7 +437,8 @@ def overview(history: bool = False) -> dict:
     open_ = s is not None and s.alive()
     out = {"open": open_, "tabs": [], "active": None, "notes": [], "note": _NOTE, "reopened": list(_REOPENED),
            "walled": bool(s and s.walled), "back": False, "forward": False, "max": TAB_MAX,
-           "rooks": rooks_using(), "rooks_words": ROOKS_USING if rooks_using() else "", "taken": taken()}
+           "rooks": rooks_using(), "rooks_words": ROOKS_USING if rooks_using() else "", "taken": taken(),
+           "failed": None if open_ else _FAILED}
     if open_:
         out.update(tabs=s.rows(), active=s.active, notes=list(s.notes)[-20:], view=list(s.view))
         if history and s.active:

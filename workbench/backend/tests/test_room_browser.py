@@ -422,6 +422,42 @@ def test_a_browser_that_cannot_tell_where_the_app_is_does_not_start(client, on, 
     assert "port" not in e.value.detail.lower() and room_browser.session() is None
 
 
+@pytest.mark.parametrize("reason", ["no_engine", "refused", "wall"])
+def test_a_browser_that_did_not_start_says_why_with_the_detail_under_advanced(client, on, monkeypatch, reason):
+    """Not only "could not start": the window, the terminal and the run log say why in plain words (no browser found, the
+    browser refused to start, the wall could not be set up); what was run and what it printed is kept for Advanced only.
+    A start that works clears it."""
+    from app import db, room_browser
+    from rooks_try import browser as rb
+
+    detail = {"no_engine": "No program at /x/chrome (system).",
+              "refused": "Exit code: 7\nLast output:\nchrome: Missing X server",
+              "wall": "Exit code: 1\nLast output:\nbwrap: setting up uid map: Permission denied"}[reason]
+
+    class _Refuses(_FakeSession):
+        def start(self):
+            raise rb.StartError(reason, detail)
+
+    monkeypatch.setattr(room_browser, "_engine", lambda: rb.Engine("/x/chrome", "system"))
+    monkeypatch.setattr(room_browser, "_new_session", lambda *a, **k: _Refuses())
+    room_browser.reset_for_tests()
+    r = client.post("/api/room/browser/start")
+    assert r.status_code == 500
+    words = r.json()["detail"]
+    assert words == rb.START_WORDS[reason] and words != room_browser.DID_NOT_START
+    assert "bwrap" not in words and "Exit code" not in words and "/x/chrome" not in words
+    failed = {"reason": reason, "words": words, "advanced": detail}
+    assert client.get("/api/room/browser").json()["failed"] == failed
+    assert client.get("/api/room/status").json()["browser"]["failed"] == failed
+    r = client.post("/api/room/browser/open", json={"address": "example.com"})  # the rooks terminal's route
+    assert r.status_code == 500 and r.json()["detail"] == words
+    row = db.one("SELECT detail FROM actions WHERE tool = 'use_room' AND args LIKE '%open browser%' ORDER BY id DESC LIMIT 1")
+    assert row and row["detail"] == words
+    monkeypatch.setattr(room_browser, "_new_session", lambda *a, **k: _FakeSession())
+    assert client.post("/api/room/browser/start").status_code == 200
+    assert client.get("/api/room/browser").json()["failed"] is None
+
+
 def test_every_request_to_the_app_tells_the_browser_its_port(client, on, monkeypatch):
     """A running browser learns a new port of this app from any request, not only from its own routes."""
     from app import room_browser

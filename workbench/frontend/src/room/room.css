@@ -274,6 +274,12 @@
 }
 .room-browser-saved { margin: 0; padding: 0 var(--space-4) var(--space-4); text-align: center; font-size: var(--text-sm); color: var(--color-ink-muted); }
 .room-browser-closed { flex: 1; display: grid; place-items: center; }
+.room-browser-advanced { flex: none; max-width: 100%; margin: 0; padding: 0 var(--space-4) var(--space-3); font-size: var(--text-sm); color: var(--color-ink-muted); }
+.room-browser-advanced summary { cursor: pointer; }
+.room-browser-advanced pre {
+  max-height: 12rem; overflow: auto; margin: var(--space-2) 0 0; padding: var(--space-2); white-space: pre-wrap; overflow-wrap: anywhere;
+  font-family: var(--font-mono); font-size: var(--text-xs); background: var(--color-surface-sunken); border-radius: var(--radius-sm);
+}
 .room-browser-phone-row { flex: none; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3) 0; }
 .room-browser-phone-row .ui-input { flex: 1; min-width: 0; }
 .room-browser-phone-line { flex: none; margin: 0; padding: var(--space-2) var(--space-3) var(--space-3); font-size: var(--text-sm); color: var(--color-ink-muted); }

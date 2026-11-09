@@ -71,8 +71,29 @@ DOWNLOAD_CUT = "A download stopped at 2 GB."
 RESTARTED = "The app restarted, so the browser closed. Your tabs and sign-ins are kept."
 NOT_LOCKED = "Not locked off: this browser runs as you."
 DID_NOT_START = "The Room's browser could not start."
+# Why it did not start, in plain words (StartError.reason); what was run and what it said last goes under Advanced.
+START_WORDS = {
+    "no_engine": "The Room's browser could not start: no browser was found on this computer to run it.",
+    "refused": "The Room's browser could not start: the browser on this computer refused to start.",
+    "wall": "The Room's browser could not start: the wall that keeps it inside the Room could not be set up.",
+}
 CLOSED = "The Room's browser is closed."
 NO_SUCH_TAB = "No such tab."
+
+
+
+class StartError(RuntimeError):
+    """The browser did not start. `reason` is a START_WORDS key and the message its plain words; `detail` is for
+    Advanced only (where the engine is, its exit code and the last of what it printed)."""
+
+    def __init__(self, reason: str, detail: str = "") -> None:
+        super().__init__(START_WORDS[reason])
+        self.reason = reason
+        self.detail = str(detail or "")[-START_DETAIL_MAX:]
+
+
+START_DETAIL_MAX = 1500
+
 
 # --- limits and places ------------------------------------------------------------------------------------------------------
 TAB_MAX = 8
@@ -793,6 +814,41 @@ def _quiet_url(url: str) -> str:
     return f"{u.scheme}://{u.netloc}{u.path}" if u.netloc or u.scheme == "file" else url.split("?")[0][:200]
 
 
+class _Tail:
+    """The engine's own output, read until it ends so the engine never blocks on it, keeping only the last few KB: what
+    it said last is the Advanced detail when it does not start. Nothing of it is logged or kept on disk."""
+
+    def __init__(self, stream, keep: int = 4096) -> None:
+        self._buf = bytearray()
+        self._keep = keep
+        self._lock = threading.Lock()
+        self.done = threading.Event()
+        threading.Thread(target=self._drain, args=(stream,), name="room-browser-output", daemon=True).start()
+
+    def _drain(self, stream) -> None:
+        try:
+            while True:
+                chunk = os.read(stream.fileno(), 4096)
+                if not chunk:
+                    break
+                with self._lock:
+                    self._buf += chunk
+                    del self._buf[:-self._keep]
+        except (OSError, ValueError):
+            pass
+        finally:
+            self.done.set()
+            try:
+                stream.close()
+            except OSError:
+                pass
+
+    def text(self, wait: float = 0.0) -> str:
+        self.done.wait(wait)
+        with self._lock:
+            return bytes(self._buf).decode("utf-8", "replace").strip()
+
+
 class Session:
     """One running Room browser. Thread safe; every method blocks (the app calls it off its event loop)."""
 
@@ -832,6 +888,7 @@ class Session:
         self._ready = threading.Event()   # set once start has closed the window headless opens with
         self._watchdog: threading.Thread | None = None
         self.started_at = 0.0
+        self._output: _Tail | None = None
 
     # --- where things are ------------------------------------------------------------------------------------------------
     @property
@@ -844,6 +901,8 @@ class Session:
 
     # --- start and close -------------------------------------------------------------------------------------------------------
     def start(self) -> None:
+        """Start the engine and take its pipe. Raises StartError saying why not: no engine, the engine refused to start,
+        or the wall could not be set up (never a fallback to running without the wall)."""
         self.dir.mkdir(parents=True, exist_ok=True)
         try:
             self.dir.chmod(0o700)
@@ -852,11 +911,14 @@ class Session:
         self.downloads_dir.mkdir(parents=True, exist_ok=True)
         _prefs(profile_dir(self.room_home))
         _drop_stale_locks(profile_dir(self.room_home))
+        if not _executable(self.engine.path):  # found a moment ago, gone now (uninstalled, moved by an update)
+            raise StartError("no_engine", f"No program at {self.engine.path} ({self.engine.kind}).")
         bwrap = bwrap_path() if self._bwrap == "auto" else (self._bwrap or None)
         to_r, to_w = os.pipe()
         fr_r, fr_w = os.pipe()
         for fd in (to_w, fr_r):
             os.set_inheritable(fd, False)  # portable; fcntl does not exist on Windows
+        argv: list[str] = []
         try:
             argv, inside = launch_argv(self.engine, self.room_home, person_home=self.person_home, offline=self.offline,
                                        bwrap=bwrap, fds=(to_r, fr_w))
@@ -864,17 +926,21 @@ class Session:
             self.rules = Rules(home=inside, app_ports=self.app_ports, host_home=self.room_home)
             env = browser_env(inside, offline=self.offline)
             self.proc = subprocess.Popen(argv, pass_fds=(to_r, fr_w), stdin=subprocess.DEVNULL,
-                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                                          cwd=str(self.room_home), env=env, start_new_session=True)
-        except BaseException:
+        except BaseException as e:
             for fd in (to_r, to_w, fr_r, fr_w):
                 try:
                     os.close(fd)
                 except OSError:
                     pass
+            if isinstance(e, OSError):  # the program that puts the pipe in place could not be run at all
+                raise StartError("refused", f"{argv[0] if argv else self.engine.path}: "
+                                            f"{e.strerror or e.__class__.__name__}") from e
             raise
         os.close(to_r)
         os.close(fr_w)
+        self._output = _Tail(self.proc.stderr)
         self.pipe = Pipe(fr_r, to_w, self._event, self._gone)
         self.started_at = time.monotonic()
         try:
@@ -887,12 +953,37 @@ class Session:
                 if info.get("type") == "page":  # the window headless opens with: not a tab of ours
                     self.pipe.send("Target.closeTarget", {"targetId": info["targetId"]})
         except ProtocolError as e:
+            why = self._why_not(bwrap, str(e))
             self.close("did not start")
-            raise RuntimeError(DID_NOT_START) from e
+            raise why from e
         self._ready.set()
         self._write_state(open_=True)
         self._watchdog = threading.Thread(target=self._watch, name="room-browser-memory", daemon=True)
         self._watchdog.start()
+
+    def _why_not(self, bwrap: str | None, said: str) -> StartError:
+        """The engine never answered on its pipe: tell the wall failing from the engine refusing, from what was printed
+        before the process ended."""
+        proc = self.proc
+        code = None
+        if proc is not None:
+            try:
+                code = proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                code = None
+        out = self._output.text(wait=1.0) if self._output else ""
+        lines = [f"Engine: {self.engine.path} ({self.engine.kind})"]
+        if bwrap:
+            lines.append(f"Wall: {bwrap}")
+        lines.append(f"Exit code: {code}" if code is not None else f"Still running, but: {said}")
+        if out:
+            lines += ["Last output:", out]
+        detail = "\n".join(lines)
+        if bwrap and ("bwrap:" in out or (code is not None and os.path.basename(bwrap) in out)):
+            return StartError("wall", detail)
+        if not _executable(self.engine.path):
+            return StartError("no_engine", detail)
+        return StartError("refused", detail)
 
     def alive(self) -> bool:
         return self.proc is not None and self.proc.poll() is None and self.pipe is not None \

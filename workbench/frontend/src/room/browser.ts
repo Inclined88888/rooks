@@ -11,6 +11,20 @@ export const BROWSER_OFF_REASONS: BrowserOffReason[] = ["no_engine", "windows", 
 /** One tab, as the browser's state (and status.browser.tabs) lists it. */
 export type BrowserTab = { id: string; url?: string | null; title?: string | null; asleep?: boolean; loading?: boolean; blocked?: string | null };
 
+/**
+ * Why the last start failed (status.browser.failed): the reason ("no_engine", "refused", "wall"), its plain words for the
+ * window, and what was run and what it printed, shown only under Advanced.
+ */
+export type BrowserFailed = { reason: string; words: string; advanced: string };
+
+/** The service's `failed` as the window keeps it, or null when there is nothing plain to say. */
+export function startFailed(x: unknown): BrowserFailed | null {
+  if (!x || typeof x !== "object") return null;
+  const f = x as Record<string, unknown>;
+  if (typeof f.words !== "string" || !f.words) return null;
+  return { reason: typeof f.reason === "string" ? f.reason : "unknown", words: f.words, advanced: typeof f.advanced === "string" ? f.advanced : "" };
+}
+
 /** The socket's state message and GET /api/room/browser. */
 export type BrowserState = {
   open?: boolean;
@@ -27,6 +41,7 @@ export type BrowserState = {
   rooks?: boolean;
   rooks_words?: string;
   taken?: boolean;
+  failed?: BrowserFailed | null;
 };
 
 export type Size = { width: number; height: number };

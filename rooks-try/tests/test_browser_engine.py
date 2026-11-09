@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import http.server
 import os
+import re
 import socket
 import sys
 import threading
@@ -511,3 +512,54 @@ def test_the_packaged_app_runs_the_pipe_step_with_its_own_program(monkeypatch, t
     argv, _ = rb.launch_argv(engine, tmp_path / "home", person_home=tmp_path, bwrap=None, fds=(7, 8))
     assert argv[:4] == ["/Applications/Rooks.app/Contents/MacOS/workbench-server", rb.PIPE_STEP_FLAG, "7", "8"], argv
     assert "-c" not in argv[:4]
+
+
+# --- why it did not start: in plain words, with the detail for Advanced -----------------------------------------------------
+POSIX = pytest.mark.skipif(sys.platform == "win32", reason="the Room's browser is not on Windows yet")
+
+
+def _failing_start(tmp_path, engine_path: str, bwrap=False):
+    s = rb.Session(rb.Engine(engine_path, "system"), tmp_path / "home", person_home=tmp_path, bwrap=bwrap)
+    with pytest.raises(rb.StartError) as e:
+        s.start()
+    assert s.alive() is False
+    return e.value
+
+
+@POSIX
+def test_no_engine_says_no_browser_was_found(tmp_path):
+    """The engine found a moment ago is gone (uninstalled, an update moved it): the words say no browser was found, not
+    only "could not start", and Advanced names where it was looked for."""
+    err = _failing_start(tmp_path, str(tmp_path / "gone" / "chrome"))
+    assert err.reason == "no_engine"
+    assert str(err) == rb.START_WORDS["no_engine"] and "no browser" in str(err).lower()
+    assert str(tmp_path / "gone" / "chrome") in err.detail
+
+
+@POSIX
+def test_an_engine_that_refuses_to_start_says_so_with_its_last_words_under_advanced(tmp_path):
+    engine = _exe(tmp_path / "engine" / "chrome",
+                  "#!/bin/sh\necho 'chrome: Missing X server or $DISPLAY' >&2\nexit 7\n")
+    err = _failing_start(tmp_path, str(engine))
+    assert err.reason == "refused"
+    assert str(err) == rb.START_WORDS["refused"] and "refused to start" in str(err)
+    assert "Missing X server" in err.detail and "7" in err.detail
+
+
+@POSIX
+def test_a_wall_that_cannot_be_set_up_says_so(tmp_path):
+    """bwrap passed its probe but the real start failed (a namespace or a bind refused): the browser stays closed (no
+    fallback to running without the wall) and the words say the wall could not be set up."""
+    engine = _exe(tmp_path / "engine" / "chrome")
+    bwrap = _exe(tmp_path / "bin" / "bwrap",
+                 "#!/bin/sh\necho 'bwrap: setting up uid map: Permission denied' >&2\nexit 1\n")
+    err = _failing_start(tmp_path, str(engine), bwrap=str(bwrap))
+    assert err.reason == "wall"
+    assert str(err) == rb.START_WORDS["wall"] and "wall" in str(err)
+    assert "setting up uid map" in err.detail
+
+
+def test_the_start_words_are_plain():
+    for reason, words in rb.START_WORDS.items():
+        assert words.startswith("The Room's browser could not start"), reason
+        assert not re.search(r"https?:|bwrap|stderr|exit code|Traceback|errno|pipe|DevTools", words, re.I), reason

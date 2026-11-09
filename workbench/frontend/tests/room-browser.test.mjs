@@ -179,3 +179,26 @@ test("switched off, the window points to a switch that is really in Settings (re
   assert.match(term, /to="\/settings\?section=tools"/);
   assert.match(term, /Settings, under Tools/);
 });
+
+test("a browser that did not start says why in plain words, with the detail only under Advanced", () => {
+  assert.ok(br && store, "src/room/browser.ts and status.ts exist");
+  const words = {
+    no_engine: "The Room's browser could not start: no browser was found on this computer to run it.",
+    refused: "The Room's browser could not start: the browser on this computer refused to start.",
+    wall: "The Room's browser could not start: the wall that keeps it inside the Room could not be set up.",
+  };
+  for (const [reason, line] of Object.entries(words)) {
+    const failed = { reason, words: line, advanced: "Exit code: 1\nLast output:\nbwrap: setting up uid map: Permission denied" };
+    assert.deepEqual(br.startFailed(failed), failed, reason);
+    const st = store.roomFromWire({ ...WITH, browser: { open: false, tabs: [], failed } });
+    assert.deepEqual(st.browser.failed, failed, `${reason}: status keeps why the last start failed`);
+    assert.doesNotMatch(br.startFailed(failed).words, /bwrap|Exit code|https?:|Traceback/, "the normal line stays plain");
+  }
+  assert.equal(br.startFailed(null), null);
+  assert.equal(br.startFailed({ reason: "refused" }), null, "no words: nothing to say");
+  assert.equal(store.roomFromWire({ ...WITH }).browser.failed, null);
+  const win = maybe("../src/room/BrowserWindow.tsx");
+  assert.match(win, /<details[^>]*>\s*<summary>Advanced<\/summary>/, "the detail is under Advanced");
+  assert.match(win, /failed\.advanced/, "Advanced shows what was run and what it printed");
+  assert.match(win, /failed\.words/, "the window shows the plain reason");
+});
