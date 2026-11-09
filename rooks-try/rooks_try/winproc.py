@@ -285,6 +285,18 @@ class Job:
             raise _err("IsProcessInJob")
         return bool(inside.value)
 
+    def holds(self, pid: int) -> bool | None:
+        """Whether the process with this id is in this job now (None when it has ended or cannot be opened)."""
+        h = OpenProcess(0x1000, False, int(pid))  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not _ok_handle(h):
+            return None
+        try:
+            return self.contains(h)
+        except OSError:
+            return None
+        finally:
+            CloseHandle(h)
+
     def terminate(self, code: int = HUNG_UP) -> None:
         h = self.handle
         if _ok_handle(h):

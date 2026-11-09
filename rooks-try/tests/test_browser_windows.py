@@ -213,6 +213,13 @@ def _engine_pids(profile: Path) -> set[int]:
     return {int(x) for x in out.split() if x.strip().isdigit()}
 
 
+def _command_lines(pids: set[int]) -> dict:
+    out = {}
+    for pid in pids:
+        out[pid] = _ps(f"(Get-CimInstance Win32_Process -Filter 'ProcessId={int(pid)}').CommandLine").strip()[:300]
+    return out
+
+
 def _listening_pids() -> set[int]:
     out = _ps("Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | ForEach-Object { $_.OwningProcess }")
     return {int(x) for x in out.split() if x.strip().isdigit()}
@@ -261,7 +268,9 @@ def test_real_engine_over_its_pipe_page_frame_click_job_no_port_and_close(engine
         in_job = set(s.job.pids())
         mine = _engine_pids(rb.profile_dir(home))
         assert s.proc.pid in in_job and len(in_job) >= 2, in_job
-        assert mine and mine <= in_job, f"engine processes outside the job: {mine - in_job}"
+        # a process started after the job's list was read is asked about itself
+        outside = {p for p in mine - in_job if s.job.holds(p) is False}
+        assert mine and not outside, f"engine processes outside the job: {_command_lines(outside)}"
         assert not (in_job & _listening_pids()), "an engine process listens on a TCP port"
         assert not (winproc.listening_ports(in_job)), "an engine process listens on a TCP port (our own reading)"
 
