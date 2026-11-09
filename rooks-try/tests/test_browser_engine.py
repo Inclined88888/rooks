@@ -510,7 +510,7 @@ def test_the_packaged_app_runs_the_pipe_step_with_its_own_program(monkeypatch, t
     monkeypatch.setattr(rb.sys, "frozen", True, raising=False)
     monkeypatch.setattr(rb.sys, "executable", "/Applications/Rooks.app/Contents/MacOS/workbench-server")
     engine = rb.Engine(path="/opt/chrome/chrome", kind="chrome")
-    argv, _ = rb.launch_argv(engine, tmp_path / "home", person_home=tmp_path, bwrap=None, fds=(7, 8))
+    argv, _ = rb.launch_argv(engine, tmp_path / "home", person_home=tmp_path, bwrap=None, fds=(7, 8), platform="darwin")
     assert argv[:4] == ["/Applications/Rooks.app/Contents/MacOS/workbench-server", rb.PIPE_STEP_FLAG, "7", "8"], argv
     assert "-c" not in argv[:4]
 

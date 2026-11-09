@@ -223,7 +223,10 @@ def test_real_engine_over_its_pipe_page_frame_click_job_no_port_and_close(engine
     (home / "Desktop").mkdir(parents=True)
     frames: list = []
     s = rb.Session(engine, home, app_ports={1}, bwrap=None, on_frame=lambda data, meta: frames.append(data))
-    s.start()
+    try:
+        s.start()
+    except rb.StartError as e:
+        pytest.fail(f"{e}\n{e.detail}")
     try:
         assert s.alive() and s.job is not None
         version = s.pipe.call("Browser.getVersion")
