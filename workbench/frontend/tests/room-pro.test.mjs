@@ -62,16 +62,42 @@ test("switched off, or not possible here, means not shown: no placeholder window
   assert.deepEqual(desk.readDesk(NEW_INSTALL, { getItem: (k) => m.get(k) ?? null }), ["files", "points"]);
 });
 
-test("the line that says commands run as you shows only when terminals are on", () => {
+test("the honest line: shown while Rooks can run commands in the Room, never when nothing runs there", () => {
   assert.equal(typeof words.dockLine, "function", "words.dockLine exists");
-  assert.equal(words.dockLine({ ...NEW_INSTALL, isolation: "none", note: "" }), "");
-  assert.equal(words.dockLine({ ...NEW_INSTALL, isolation: "namespace", note: "" }), "");
-  assert.equal(words.dockLine({ ...DEVELOPER, isolation: "none", note: "" }), words.HONEST_LINE);
+  assert.equal(words.RUN_LINE, "Rooks works here as you, in a folder of its own.");
+  // terminals off, but use_room run is offered (can.run): one short plain line
+  assert.equal(words.dockLine({ ...NEW_INSTALL, can: { ...NEW_INSTALL.can, run: true }, isolation: "none", note: "" }), words.RUN_LINE);
+  assert.equal(words.dockLine({ ...NEW_INSTALL, can: { ...NEW_INSTALL.can, run: true }, isolation: "namespace", note: "" }), words.RUN_LINE);
+  // nothing can run there: no line
+  assert.equal(words.dockLine({ ...NEW_INSTALL, can: { ...NEW_INSTALL.can, run: false }, isolation: "none", note: "" }), "");
+  assert.equal(words.dockLine({ ...NEW_INSTALL, isolation: "none", note: "" }), "", "an older service that does not say: no line");
+  // terminals on: the person runs commands too, so the full line
+  assert.equal(words.dockLine({ ...DEVELOPER, can: { ...DEVELOPER.can, run: true }, isolation: "none", note: "" }), words.HONEST_LINE);
+  // a separate computer says what it is while commands run there
+  assert.match(words.dockLine({ ...NEW_INSTALL, can: { ...NEW_INSTALL.can, run: true }, isolation: "vm", note: "" }), /separate computer/i);
+  assert.equal(words.dockLine({ ...NEW_INSTALL, can: { ...NEW_INSTALL.can, run: false }, isolation: "vm", note: "" }), "");
+  for (const w of [words.RUN_LINE]) assert.doesNotMatch(w, /shell|terminal|bash/i);
+  // the status store keeps can.run, and the exact label for Advanced
+  const wire = store.roomFromWire({ available: true, label: "A private folder on this computer", label_detail: "A private folder and shell", can: { run: true } });
+  assert.equal(wire.can.run, true);
+  assert.equal(wire.label_detail, "A private folder and shell");
+  assert.equal(store.roomFromWire({ available: true }).can.run, false);
   const page = read("../src/room/RoomPage.tsx");
   const view = read("../src/room/RoomView.tsx");
   assert.match(page, /dockLine\(status\)/, "the Room page's dock uses it");
   assert.match(view, /dockLine\(status\)/, "the Stage's and the phone's honest line use it");
   assert.doesNotMatch(page, /commandViewLine\(status\)/);
+  assert.match(page, /status\.label_detail/, "Advanced shows the Room's exact label");
+});
+
+test("Files hides hidden entries (names that start with a dot) unless developer tools are on", () => {
+  assert.equal(typeof desk.visibleEntries, "function", "desk.visibleEntries exists");
+  const entries = [{ name: ".profile", kind: "file" }, { name: "Desktop", kind: "folder" }, { name: ".local", kind: "folder" }, { name: "report.txt", kind: "file" }, { name: ".room-browser", kind: "folder" }];
+  assert.deepEqual(desk.visibleEntries(entries, false).map((e) => e.name), ["Desktop", "report.txt"]);
+  assert.deepEqual(desk.visibleEntries(entries, true).map((e) => e.name), entries.map((e) => e.name));
+  const files = read("../src/room/FilesWindow.tsx");
+  assert.match(files, /useDevTools\(\)/);
+  assert.match(files, /visibleEntries\(/);
 });
 
 test("the Room page never opens a terminal or a Commands window that status does not offer", () => {

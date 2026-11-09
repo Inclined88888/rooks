@@ -153,3 +153,54 @@ def test_a_browser_or_terminal_call_that_comes_anyway_is_refused_without_trying(
         out = asyncio.run(assistant._use_room(action, address="example.com", command="sleep 1"))
         assert out.get("ok") is False and "switched off" in out.get("error", ""), (action, out)
     assert tried == []
+
+
+# ---------------------------------------------------------------------------------------------- plain words for the Room
+TECH = ("shell", "terminal", "bash")
+
+
+def _plain(text: str) -> bool:
+    return not any(w in (text or "").lower() for w in TECH)
+
+
+def test_every_kind_of_room_has_a_plain_label_and_keeps_the_exact_one_for_advanced():
+    from app import room
+    from rooks_try.drivers import display, nested, qemu, shell
+
+    for mod, driver in ((shell, "shell"), (nested, "nested"), (qemu, "qemu"), (display, "display")):
+        plain = room.plain_label({"driver": driver, "label": mod.LABEL})
+        assert plain and _plain(plain), (driver, plain)
+    assert room.plain_label({"driver": "shell", "label": shell.LABEL}) == "A private folder on this computer"
+    assert room.plain_label({"driver": "nested", "label": nested.LABEL}) == nested.LABEL  # already plain: kept
+    # a kind this app does not know yet: its own words when plain, else a plain line
+    assert room.plain_label({"driver": "new", "label": "A box in the cloud"}) == "A box in the cloud"
+    assert _plain(room.plain_label({"driver": "new", "label": "A bash prompt somewhere"}))
+    assert _plain(room.NO_SCREEN) and _plain(room.NOT_INSTALLED)
+
+
+def test_the_rooms_status_and_surfaces_say_plain_words(client, room_home):  # noqa: F811
+    st = client.get("/api/room/status").json()
+    assert st["label"] == "A private folder on this computer"
+    assert st["label_detail"] == "A private folder and shell"  # the exact one, for Advanced
+    up = client.post("/api/room/up").json()
+    assert _plain(up["label"]), up["label"]
+    assert _plain(client.post("/api/room/down").json()["label"])
+    assert _plain(client.get("/api/surfaces").json().get("room", {}).get("label", ""))
+
+
+def test_what_the_assistant_repeats_about_the_room_is_plain(client, room_home):  # noqa: F811
+    from app import assistant
+
+    out = asyncio.run(assistant._use_room("up", goal="look"))
+    assert out["running"] is True and out["label"] == "A private folder on this computer"
+    out = asyncio.run(assistant._use_room("down"))
+    assert _plain(out["label"])
+
+
+def test_status_says_whether_rooks_can_run_commands_in_the_room(client, room_home, monkeypatch):  # noqa: F811
+    from app import room
+
+    assert client.get("/api/room/status").json()["can"]["run"] is True  # use_room run is offered here
+    monkeypatch.setenv("ROOKS_TRY_DRIVER", "display")
+    room.reset()
+    assert client.get("/api/room/status").json()["can"]["run"] is False  # a drawing runs nothing

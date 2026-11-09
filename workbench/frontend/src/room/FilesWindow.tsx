@@ -8,7 +8,8 @@ import { ArrowUp, File, FileOutput, Folder, Link2, RefreshCw, SquareTerminal } f
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError } from "../api";
 import { Button, EmptyState, ErrorState, IconButton, List, Loading, Row, useToast } from "../ui";
-import { cdCommand, crumbs, entryMeta, joinPath, parentOf, sortEntries, whenWords, type FileEntry } from "./desk";
+import { useDevTools } from "../lib/devTools";
+import { cdCommand, crumbs, entryMeta, joinPath, parentOf, sortEntries, visibleEntries, whenWords, type FileEntry } from "./desk";
 import { RoomWindow } from "./RoomView";
 import type { RoomState } from "./status";
 import { showInTerminalBlock, typedCdWords, type RoomTerminal } from "./words";
@@ -53,6 +54,7 @@ export function FilesWindow({ status, terminal, onHandOff, stale = false }: {
   // While the terminal runs something the line would go into that program, so the button waits.
   const blocked = showInTerminalBlock(terminal);
   const termsOn = status.can.terminal === true; // terminals are a developer tool: off, the window never mentions them
+  const devTools = useDevTools(); // hidden entries (.profile, .config) only for developers
   const showInTerminal = async (folder: string) => {
     if (!terminal || blocked) return;
     try {
@@ -79,7 +81,7 @@ export function FilesWindow({ status, terminal, onHandOff, stale = false }: {
   }
   else if (load.state === "error") body = <ErrorState title="The folder could not be read." line={load.line} onRetry={() => setGen((g) => g + 1)} />;
   else {
-    const entries = sortEntries(load.listing.entries ?? []);
+    const entries = sortEntries(visibleEntries(load.listing.entries ?? [], devTools));
     body = !entries.length
       ? <EmptyState icon={<Folder size={24} />} title="Nothing here yet." line={termsOn ? "What you install or save in the terminal shows up here." : "What you or Rooks save in the Room shows up here."} />
       : (

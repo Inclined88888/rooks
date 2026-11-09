@@ -23,6 +23,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 import time
 import uuid
@@ -46,7 +47,34 @@ HANDOFF_REASON = "Copying a file out of the Room always needs your approval."
 NOT_INSTALLED = "The Room is not installed on this computer."
 NOT_INSTALLED_NOTE = "Install Rooks with its installer to add it. Chat, the browser and this computer still work."
 OFF = "The Room is off. Start it to see its screen."
-NO_SCREEN = "This Room has no screen. It is a private folder and shell."
+NO_SCREEN = "This Room has no screen. It is a private folder on this computer."
+# What each kind of Room is called on a normal screen: plain words that stay true for that kind. The driver's own label
+# (which may say shell or terminal) is kept as label_detail, for Advanced.
+PLAIN_LABELS = {
+    "shell": "A private folder on this computer",
+    "nested": "A private desktop on this computer",
+    "qemu": "A separate computer inside this one",
+    "display": "A picture of a screen, not a computer",
+}
+PLAIN_FALLBACK = "Rooks's own space on this computer"
+_TECH_WORDS = re.compile(r"\b(shell|terminal|bash)\b", re.I)
+
+
+def plain_label(st: dict | None) -> str:
+    """The Room's label in plain words: by its kind, else its own words when they are plain, else a plain line."""
+    st = st or {}
+    known = PLAIN_LABELS.get(str(st.get("driver") or ""))
+    if known:
+        return known
+    label = str(st.get("label") or "").strip()
+    return label if label and not _TECH_WORDS.search(label) else (PLAIN_FALLBACK if label else "")
+
+
+def _plain_out(out):
+    """A driver's own answer (up, down) with the plain label, the exact one kept for Advanced."""
+    if isinstance(out, dict) and "label" in out and out.get("driver"):
+        out = {**out, "label": plain_label(out), "label_detail": out.get("label") or ""}
+    return out
 UNREACHABLE = "The Room helper could not be reached."
 HELPER_KEY = "The Room helper did not accept the app's key. Check its key under Advanced."
 HELPER_FAILED = "The Room helper ran into a problem."
@@ -145,7 +173,7 @@ def describe() -> dict:
         st = _remote_status_sync()
         if st is None:
             return {"available": False, "label": "", "isolation": "none"}
-        return {"available": st.get("driver") != "display", "label": st.get("label") or "", "isolation": st.get("isolation") or "none"}
+        return {"available": st.get("driver") != "display", "label": plain_label(st), "isolation": st.get("isolation") or "none"}
     try:
         d = _driver()
     except Exception:  # noqa: BLE001
@@ -156,7 +184,7 @@ def describe() -> dict:
         st = d.status()
     except Exception:  # noqa: BLE001
         st = {}
-    return {"available": d.name != "display", "label": st.get("label") or "", "isolation": st.get("isolation") or "none"}
+    return {"available": d.name != "display", "label": plain_label({"driver": d.name, **st}), "isolation": st.get("isolation") or "none"}
 
 
 # --- the helper (TRY_URL) --------------------------------------------------------------------------------------------------
@@ -216,7 +244,8 @@ def _shape(st: dict, available: bool = True) -> dict:
         "screen": bool(st.get("screen")),
         "pointer": bool(st.get("pointer")),
         "isolation": st.get("isolation") or "none",
-        "label": st.get("label") or "",
+        "label": plain_label(st) if st.get("driver") else (st.get("label") or ""),  # plain words, every screen
+        "label_detail": st.get("label") or "",  # advanced only: the kind's own exact label
         "note": st.get("note") or "",
         "driver": st.get("driver"),          # advanced only
         "home": st.get("home"),              # advanced only
@@ -232,8 +261,9 @@ def _shape(st: dict, available: bool = True) -> dict:
         # terminal_count is the one count: live and ended, what the cap of terminal_max counts.
         # design 0007: the Room's own browser here (can.browser) and why not ("no_engine", "windows", "helper",
         # "switched_off"); `browser` says whether it is open, its tabs and what it last said.
+        # run: Rooks can run commands here (use_room run is offered: a real Room, never a drawing)
         "can": {"terminal": False, "files": False, "terminal_off_reason": None, "browser": False,
-                "browser_off_reason": None},
+                "browser_off_reason": None, "run": available and st.get("driver") not in (None, "display")},
         "browser": {"open": False, "tabs": []},
         "terminals": [],
         "terminal_count": 0,
@@ -256,9 +286,9 @@ def _local(room, action: str, body: dict) -> dict:
     if action == "status":
         return _shape(room.status())
     if action == "up":
-        return room.up()
+        return _plain_out(room.up())
     if action == "down":
-        return room.down()
+        return _plain_out(room.down())
     if action == "checkpoint":
         return room.checkpoint(str(body.get("label") or ""))
     if action == "reset":
@@ -306,6 +336,7 @@ async def perform(action: str, body: dict | None = None) -> dict:
         out = (await _remote("POST", f"/api/{action}", body)).json()
         if action in ("up", "down") and isinstance(out, dict) and "running" in out:
             _REMOTE = (time.monotonic(), out)
+            out = _plain_out(out)
         return _cut_note(action, out, body)
     room = _import_room()
     if room is None:
@@ -320,6 +351,7 @@ async def perform(action: str, body: dict | None = None) -> dict:
             driver = room.driver()
             out["can"] = await asyncio.to_thread(room_files.can, driver, False)
             out["can"].update(await asyncio.to_thread(room_browser.can, driver, False))
+            out["can"]["run"] = getattr(driver, "name", "") not in ("", "display")  # use_room run is offered (enabled())
             out["browser"] = room_browser.overview()
             out["terminals"] = room_terminal.listing()
             out["terminal_count"] = len(out["terminals"])

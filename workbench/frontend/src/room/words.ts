@@ -35,7 +35,11 @@ export type RoomStatus = WatchStatus & {
     terminal?: boolean; files?: boolean; terminal_off_reason?: "switched_off" | "helper" | "windows" | null;
     /** design 0007: the Room's own browser here, and why not. */
     browser?: boolean; browser_off_reason?: string | null;
+    /** Rooks can run commands in the Room (the assistant is offered use_room run): a real Room, never a drawing. */
+    run?: boolean;
   } | null;
+  /** The kind's own exact label, for Advanced only (label is the plain one). */
+  label_detail?: string;
   /** design 0007: whether the Room's browser is open, and its tabs (the saved ones while it is closed). */
   browser?: { open?: boolean; tabs?: { id: string; url?: string | null; title?: string | null; asleep?: boolean }[] } | null;
   isolation?: string;
@@ -95,13 +99,19 @@ export function commandViewLine(s: Pick<RoomStatus, "isolation" | "note"> | null
   return HONEST_LINE;
 }
 
+/** The honest line while Rooks can run commands in the Room and terminals are off: short and plain. */
+export const RUN_LINE = "Rooks works here as you, in a folder of its own.";
+
 /**
- * The line under the Room's windows (the dock, the Stage, the phone): it says commands run as you, so it shows only when
- * terminals are on (a developer tool). A separate computer says what it is either way. Empty: no line.
+ * The honest line under the Room's windows (the dock, the Stage, the phone). Whenever commands can run in the Room it
+ * says how they run: with terminals on (a developer tool) the full line, else RUN_LINE while Rooks can run commands
+ * there (can.run: use_room run is offered); a separate computer says what it is. Nothing can run there: no line.
  */
-export function dockLine(s: (Pick<RoomStatus, "isolation" | "note"> & { can?: { terminal?: boolean } | null }) | null | undefined): string {
+export function dockLine(s: (Pick<RoomStatus, "isolation" | "note"> & { can?: { terminal?: boolean; run?: boolean } | null }) | null | undefined): string {
+  const terminals = s?.can?.terminal === true;
+  if (!terminals && s?.can?.run !== true) return "";
   if (s?.isolation === "vm") return commandViewLine(s);
-  return s?.can?.terminal === true ? commandViewLine(s) : "";
+  return terminals ? commandViewLine(s) : RUN_LINE;
 }
 
 /** The Advanced details on the Room page: the kind of Room and its folder, never on a normal screen. */

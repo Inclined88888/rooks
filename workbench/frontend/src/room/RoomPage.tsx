@@ -262,6 +262,7 @@ export default function RoomPage() {
       <Sheet open={advanced} onClose={() => setAdvanced(false)} title="Advanced">
         <dl className="room-advanced-list">
           {kind && <><dt>Kind</dt><dd>{kind}</dd></>}
+          {status.label_detail && <><dt>Label</dt><dd>{status.label_detail}</dd></>}
           {folder && <><dt>Folder</dt><dd>{folder}</dd></>}
           <dt>Shell</dt><dd>{shellPath || "The login shell of this computer's account"}</dd>
           <dt>Profile files read</dt><dd>~/.profile and, for bash, ~/.bashrc; for zsh ~/.zprofile and ~/.zshrc</dd>

@@ -240,6 +240,12 @@ export type FileEntry = {
   why?: "outside" | "broken" | string | null;
 };
 
+/** Hidden entries (a name that starts with a dot: .profile, .config, .local) are for developers: shown only with
+ * Show developer tools on. */
+export function visibleEntries<T extends Pick<FileEntry, "name">>(entries: T[], devTools: boolean): T[] {
+  return devTools ? entries : entries.filter((e) => !e.name.startsWith("."));
+}
+
 /** Folders first, then files and links, A to Z; names that start with a dot last (shown, the seeded profile must be). */
 export function sortEntries<T extends FileEntry>(entries: T[]): T[] {
   const rank = (e: FileEntry) => (e.name.startsWith(".") ? 2 : 0) + (e.kind === "folder" ? 0 : 1);

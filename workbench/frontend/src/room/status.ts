@@ -32,7 +32,9 @@ export type RoomState = RoomStatus & {
   terminal_max: number;
   /** What the cap counts (ended terminals included), when the service says; else the length of `terminals`. */
   terminal_count: number | null;
-  can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null; browser: boolean; browser_off_reason: BrowserOffReason | null };
+  can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null; browser: boolean; browser_off_reason: BrowserOffReason | null; run: boolean };
+  /** The kind's own exact label, for Advanced only. */
+  label_detail: string;
   /** design 0007: the Room's browser as status last saw it (open, and its tabs: the saved ones while it is closed). */
   browser: { open: boolean; tabs: BrowserTab[] };
   /** The Commands window's lines, for this session. */
@@ -47,7 +49,7 @@ const START: RoomState = {
   checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none",
   label: "", note: "", checkpoints: [], last_checkpoint: null, error: null,
   terminals: [], terminal_max: TERMINAL_MAX, terminal_count: null,
-  can: { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null },
+  can: { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null, run: false }, label_detail: "",
   browser: { open: false, tabs: [] }, commandLines: [],
 };
 
@@ -93,6 +95,7 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
     pointer: w.pointer === true,
     isolation: w.isolation || "none",
     label: w.label || "",
+    label_detail: typeof w.label_detail === "string" ? w.label_detail : "",
     note: w.note || "",
     checkpoints: Array.isArray(w.checkpoints) ? w.checkpoints.filter((c) => c && typeof c.name === "string") : [],
     last_checkpoint: w.last_checkpoint || null,
@@ -105,6 +108,7 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
       terminal_off_reason: why && OFF_REASONS.includes(why) ? why : null,
       browser: w.can?.browser === true,
       browser_off_reason: bwhy && (BROWSER_OFF_REASONS as string[]).includes(bwhy) ? (bwhy as BrowserOffReason) : null,
+      run: w.can?.run === true,
     },
     browser: {
       open: w.browser?.open === true,

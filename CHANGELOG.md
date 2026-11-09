@@ -16,6 +16,13 @@ is still shows. The Files window drops Show in terminal while terminals are off,
 the command menu unless developer tools are on. The code behind both stays; the browser returns later as a browser
 extension.
 
+- Plain words in the Room. Files hides hidden entries (names that start with a dot, such as .profile or .config)
+  unless Show developer tools is on. The Room's label is plain for each kind of Room ("A private folder on this
+  computer", "A private desktop on this computer", "A separate computer inside this one"): no "shell", "terminal" or
+  "bash" on a normal screen, in the chat's Room card or in what the assistant repeats. The kind's exact label is kept as
+  `label_detail` and shown under Advanced. Status gains `can.run` (Rooks can run commands there). While it can, the dock
+  says "Rooks works here as you, in a folder of its own." (the full "Commands run as you" line while terminals are on);
+  where nothing can run, no line.
 - Upgrade: an install that never touched the switches had both on; after this it has both off. An install that switched
   one on (stored `app_terminal` or `room_browser` = 1) keeps it on. To switch them back on: Settings, Advanced, Show
   developer tools, then Settings, Tools, The Room. The `rooks` terminal's `/room` commands work against an app where they

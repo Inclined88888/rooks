@@ -26,7 +26,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
-PLAIN_LABEL = "A private folder and shell"
+PLAIN_LABEL = "A private folder on this computer"  # room-pro: no "shell" on a normal screen (label_detail keeps it)
 
 
 @pytest.fixture()
@@ -177,7 +177,8 @@ def test_screenshot_only_when_there_is_a_screen(client, room_home, monkeypatch):
     monkeypatch.setenv("ROOKS_TRY_DRIVER", "display")
     room.reset()
     st = client.get("/api/room/status").json()
-    assert st["screen"] is True and st["pointer"] is False and st["label"] == "A drawing of a terminal"
+    assert st["screen"] is True and st["pointer"] is False and st["label"] == "A picture of a screen, not a computer" \
+        and st["label_detail"] == "A drawing of a terminal"  # room-pro: plain words; the exact label for Advanced
     assert client.get("/api/room/screenshot").status_code == 404  # off: nothing to show yet
     client.post("/api/room/up")
     r = client.get("/api/room/screenshot")
@@ -611,7 +612,7 @@ def test_status_says_what_this_room_can_do(client, room_home, remote_room):
 
     st = client.get("/api/room/status").json()  # the helper (TRY_URL): no terminal and no folder on this computer
     assert st["can"] == {"terminal": False, "files": False, "terminal_off_reason": "helper", "browser": False,
-                         "browser_off_reason": "helper"} and st["terminals"] == []
+                         "browser_off_reason": "helper", "run": True} and st["terminals"] == []  # room-pro: run
     assert client.get("/api/room/files").status_code == 501
     config.TRY_URL = ""
     room.reset()
