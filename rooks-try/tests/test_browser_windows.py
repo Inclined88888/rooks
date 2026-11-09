@@ -138,6 +138,16 @@ def test_on_windows_the_engine_starts_directly_with_its_pipe_and_never_a_port(tm
             rb.check_flags(argv + [bad + "=1"])
 
 
+def test_on_windows_the_engine_keeps_the_persons_userprofile_but_never_their_secrets(tmp_path):
+    """Chromium on Windows finds its folders through USERPROFILE; with the Room's home there it cannot tell the Room's
+    profile from its default one and refuses the pipe (seen on windows-2022). The profile is the Room's all the same."""
+    base = {"USERPROFILE": r"C:\Users\me", "PATH": r"C:\Windows\System32", "OPENAI_API_KEY": "sk-not-for-the-room",
+            "SystemRoot": r"C:\Windows"}
+    env = rb.browser_env(tmp_path / "home", base=base, platform="win32")
+    assert env["USERPROFILE"] == r"C:\Users\me"
+    assert "OPENAI_API_KEY" not in env and env["HOME"] == str(tmp_path / "home")
+
+
 def test_the_packaged_app_says_the_pipe_step_is_not_used_on_windows(monkeypatch):
     monkeypatch.setattr(rb.sys, "platform", "win32")
     with pytest.raises(SystemExit) as e:

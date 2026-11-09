@@ -537,7 +537,7 @@ def launch_argv(engine: Engine, room_home: Path, *, person_home: Path | None = N
     return argv, person_home
 
 
-def browser_env(home: Path, base: dict | None = None, offline: bool = False) -> dict:
+def browser_env(home: Path, base: dict | None = None, offline: bool = False, platform: str | None = None) -> dict:
     """The Room's environment (room_env: no secrets, no app names), HOME the Room's home as the browser sees it, and
     nothing of the person's desktop session, keyring or agents."""
     from .drivers.shell import room_env
@@ -546,6 +546,13 @@ def browser_env(home: Path, base: dict | None = None, offline: bool = False) -> 
     for name in _SESSION_ENV:
         env.pop(name, None)
     env["HOME"] = str(home)
+    if (platform or sys.platform) == "win32":
+        # Windows: the person's own USERPROFILE stays. Chromium finds its folders through it, and without them it cannot
+        # tell the Room's profile from its default one and refuses the pipe ("DevTools remote debugging requires a
+        # non-default data directory", seen on windows-2022). The profile is the Room's all the same (--user-data-dir).
+        person = (os.environ if base is None else base).get("USERPROFILE")
+        if person:
+            env["USERPROFILE"] = person
     return env
 
 
@@ -1144,7 +1151,7 @@ class Session:
         argv, inside = launch_argv(self.engine, self.room_home, offline=self.offline, platform="win32")
         self.walled, self.inside_home = False, inside
         self.rules = Rules(home=inside, app_ports=self.app_ports, host_home=self.room_home, windows=True)
-        env = browser_env(inside, offline=self.offline)
+        env = browser_env(inside, offline=self.offline, platform="win32")
         try:
             self.job = winproc.Job(memory_limit=JOB_MEMORY_LIMIT, ui_limits=BROWSER_UI_LIMITS)
             piped = winproc.PipedProcess(argv, env, str(self.room_home), self.job)

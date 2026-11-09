@@ -82,10 +82,6 @@ jobs:
         run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 tests/test_room_terminal_windows.py tests/test_room_terminal.py tests/test_app_terminal.py
       - name: The ConPTY, job and side channel tests, on their own (also in the Try Room job)
         run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 ../../rooks-try/tests/test_winproc.py
-      - name: Diagnosis (temporary) of the Room's browser start on Windows
-        continue-on-error: true
-        timeout-minutes: 8
-        run: python ../../scripts/ci/win_browser_diag.py
       - name: The Room's browser on Edge and Chrome over its pipe (design 0011, section 5.3; also in the Try Room job)
         env:
           ROOM_BROWSER_TESTS_REQUIRED: "1"  # never skipped quietly: a browser that cannot start here fails the job
