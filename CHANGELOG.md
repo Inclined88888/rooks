@@ -4,6 +4,29 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · Windows and the work suites · branch feat/windows
+
+Design records `docs/design/0011-windows.md` (Windows on a par with macOS and Linux) and
+`docs/design/0012-work-suites.md` (Microsoft 365 and Google Workspace). No schema change in the entries below.
+Rollback: revert the commits.
+
+- **The Room's browser starts in the packaged app** (2e939c0). The step that hands the browser its pipe ran Python with
+  `-c`; the desktop app is one packaged program with no Python, so on a Mac the Room's browser always said "could not
+  start". The packaged app now runs that step with its own program (`--rooks-pipe-step`).
+- **When the Room's browser does not start, it says why.** Instead of only "The Room's browser could not start.", the
+  Browser window, the phone view, the `rooks` terminal (`/room browse`) and the assistant say one of: no browser was
+  found on this computer to run it; the browser on this computer refused to start; the wall that keeps it inside the
+  Room could not be set up. What was run, its exit code and the last of what it printed are under **Advanced** in the
+  Browser window (`failed` in `GET /api/room/browser` and in the Room's status), never on the normal line and never in
+  the log. A wall that fails still keeps the browser closed: there is no fallback to running without it.
+  Tests that failed on the old code: `rooks-try/tests/test_browser_engine.py` (one per reason),
+  `workbench/backend/tests/test_room_browser.py::test_a_browser_that_did_not_start_says_why_with_the_detail_under_advanced`,
+  and `workbench/frontend/tests/room-browser.test.mjs` ("a browser that did not start says why").
+- **CI proves the packaged app's Room browser.** The desktop build (`.github/workflows/desktop.yml`, the macOS and Linux
+  jobs) now starts the frozen sidecar, opens the Room's browser through its API on a loopback test page, and checks the
+  page's text and a frame arrive (`desktop/scripts/smoke_sidecar.py --room-browser`). Windows is not covered: the
+  Room's browser is not on Windows yet (design 0011, section 2).
+
 ## Unreleased · Workplace cleanup · branch cleanup/workplace
 
 The cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the old browser

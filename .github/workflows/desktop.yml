@@ -87,6 +87,13 @@ jobs:
       - name: Sidecar smoke test (starts, answers /healthz)
         shell: bash
         run: python desktop/scripts/smoke_sidecar.py desktop/src-tauri/binaries/workbench-server-${{ matrix.target }}$([ "$RUNNER_OS" = Windows ] && echo .exe)
+      # The packaged program has no Python of its own: on a Mac the Room's browser once said only "could not start" for
+      # that. This starts the frozen sidecar, opens the Room's browser through its API on a loopback test page and
+      # checks the page's text and a frame come back. The runners' Google Chrome is the engine. (Windows: not yet.)
+      - name: Room browser smoke test (frozen sidecar opens a page, a frame arrives)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: python desktop/scripts/smoke_sidecar.py --room-browser desktop/src-tauri/binaries/workbench-server-${{ matrix.target }}
       - name: Install Tauri CLI
         shell: bash
         run: cd desktop && npm ci --no-audit --no-fund

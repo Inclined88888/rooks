@@ -206,6 +206,12 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ### The Room's browser (design 0007), engine and API lane: not done here
 
+* **The packaged app's browser is proved only in CI with the runner's Chrome** (`smoke_sidecar.py --room-browser`,
+  macOS and Linux). Not covered there: a Mac with only Edge or Chromium, a Linux runner where bwrap's wall is on (the
+  Ubuntu runner may run it without the wall, which the window says), and Windows (no Room browser yet, design 0011).
+* **Telling a wall failure apart** reads what bwrap printed (`bwrap: …`). A wall that fails without printing that is
+  reported as "the browser refused to start"; the Advanced detail still shows what was printed.
+
 * **The Room's own engine download.** `install_engine` checks a downloaded archive against a SHA-256 and refuses one
   that reaches outside its folder, but no Chrome for Testing build is pinned yet (URL, version and its real SHA-256 per
   platform), and there is no "Get one?" route or button. Until then the engine is Playwright's Chromium, the system's,

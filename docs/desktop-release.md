@@ -48,7 +48,10 @@ Two DMGs, not one universal DMG: PyInstaller can only build a universal2 sidecar
 (cryptography, pydantic-core, lxml, …) are universal2, which they are not on PyPI. Each architecture is frozen natively.
 
 Each job: builds the frontend → freezes the backend (`desktop/scripts/build-sidecar.mjs`) → **smoke-tests the frozen
-sidecar** (`desktop/scripts/smoke_sidecar.py`: health, launch token, frontend, exit-with-parent) → `tauri build`.
+sidecar** (`desktop/scripts/smoke_sidecar.py`: health, launch token, frontend, exit-with-parent) → on macOS and Linux, **the Room's browser
+from the frozen sidecar** (`smoke_sidecar.py --room-browser`: a throwaway Room, the browser opens a loopback test page
+through `/api/room/browser/open`, the page's text and a JPEG frame come back; on failure it prints the plain reason and
+the Advanced detail) → `tauri build`. The engine there is the runner's own Google Chrome.
 
 ## Signing: off until the secrets exist
 
