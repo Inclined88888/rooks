@@ -195,6 +195,21 @@ jobs:
           done
           [ "$ok" = 1 ]
 
+      # Design 0011, sections 4 and 5.4: the per-user setup a workplace PC gets. Installed silently, the app started
+      # and killed, then uninstalled twice (keeping the person's things, then with /CLEANDATA): nothing may be left.
+      - name: "Windows: install, start, stop and uninstall the setup, and check nothing is left"
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem "desktop/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*-setup.exe" | Select-Object -First 1
+          ./desktop/scripts/check_windows_install.ps1 -Setup $setup.FullName -Icon desktop/src-tauri/icons/icon.ico -Shots "$env:RUNNER_TEMP/install-shots"
+      - name: "Windows: the installed app's window and Start menu icon (screenshots)"
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: windows-install-shots
+          path: ${{ runner.temp }}/install-shots/*
+          if-no-files-found: ignore
       - name: Collect installers
         shell: bash
         run: |

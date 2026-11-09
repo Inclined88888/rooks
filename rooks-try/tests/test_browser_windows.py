@@ -271,6 +271,8 @@ def test_real_engine_over_its_pipe_page_frame_click_job_no_port_and_close(engine
         # a process started after the job's list was read is asked about itself
         outside = {p for p in mine - in_job if s.job.holds(p) is False}
         assert mine and not outside, f"engine processes outside the job: {_command_lines(outside)}"
+        # and the browser's job is nested in the Room job, so stopping the Room or the app ends it too (design 0011, 3)
+        assert winproc.room_job().holds(s.proc.pid) is True, "the browser is not in the Room job"
         assert not (in_job & _listening_pids()), "an engine process listens on a TCP port"
         assert not (winproc.listening_ports(in_job)), "an engine process listens on a TCP port (our own reading)"
 
