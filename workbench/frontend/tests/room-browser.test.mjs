@@ -36,9 +36,9 @@ test("the Browser window is offered from the Room's status, after Terminal", () 
   assert.deepEqual(desk.windowsFor(WITH), ["terminal", "browser", "files", "points"]);
   assert.deepEqual(desk.windowsFor(WITHOUT), ["terminal", "files", "points"], "a Room whose own screen is the way: no Browser window");
   assert.deepEqual(desk.dockItems(WITH).map((d) => d.label), ["Terminal", "Browser", "Files", "Points"]);
-  for (const why of ["no_engine", "switched_off", "windows", "helper"]) {
+  for (const why of ["no_engine", "switched_off", "windows", "helper"]) { // room-pro: off or not here means not shown
     const off = { ...ON, can: { terminal: true, files: true, browser: false, browser_off_reason: why } };
-    assert.ok(desk.windowsFor(off).includes("browser"), `${why}: the window is there to say why`);
+    assert.ok(!desk.windowsFor(off).includes("browser"), `${why}: no Browser window`);
   }
   assert.deepEqual(desk.defaultOpen(WITH), ["terminal", "files", "points"], "the browser starts only when its window is opened");
   assert.deepEqual(desk.deskLayout(["terminal", "browser", "files"]), { primary: "browser", side: ["terminal", "files"] });

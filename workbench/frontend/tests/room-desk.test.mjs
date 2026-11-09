@@ -38,9 +38,10 @@ test("the windows come from status: a window status does not offer does not exis
   assert.ok(desk, "src/room/desk.ts exists");
   assert.deepEqual(desk.windowsFor(SHELL_ON), ["terminal", "files", "points"]);
   assert.deepEqual(desk.windowsFor(NESTED_ON), ["screen", "terminal", "files", "points"]);
-  assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: { terminal: false, files: true } }), ["commands", "files", "points"]);
+  // room-pro: no terminal here means no Terminal window and no Commands window in its place
+  assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: { terminal: false, files: true } }), ["files", "points"]);
   assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: { terminal: true, files: false } }), ["terminal", "points"]);
-  assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: undefined }), ["commands", "points"], "an older service without terminals keeps Commands");
+  assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: undefined }), ["points"], "an older service that says nothing: Saved points only (room-pro)");
   assert.deepEqual(desk.windowsFor({ ...SHELL_ON, available: false }), []);
   assert.deepEqual(desk.windowsFor({ ...SHELL_ON, checked: false }), []);
   assert.deepEqual(desk.windowsFor({ ...SHELL_ON, running: false }), ["terminal", "files", "points"], "Files and Saved points work while the Room is off");
@@ -201,7 +202,7 @@ test("the page is a desk under a Room bar with a dock of windows, solid, and the
   assert.match(page, /windowsFor\(/);
   assert.match(page, /dockItems\(/);
   assert.match(page, /One window stays open/);
-  assert.match(page, /commandViewLine\(status\)/, "the honest line sits on the dock");
+  assert.match(page, /dockLine\(status\)/, "the honest line sits on the dock (while terminals are on: room-pro.test.mjs)");
   assert.match(page, /isolationWords\(status\.isolation, !!status\.offline\)/);
   assert.doesNotMatch(page, /\bglass\b/, "nothing on the Room page is glass");
   for (const w of ["Advanced", "Close every terminal", "Save a point", "Start over", "Hand off a file", "Watch beside the chat"]) assert.match(page, new RegExp(w), w);

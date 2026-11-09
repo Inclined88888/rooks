@@ -171,6 +171,16 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   on the tree before this branch, so it is not from the memory change; the full suite's order passes. Find which test
   leaves the chat search index broken.
 
+### The Room for workplace teams: what is left (branch feat/room-pro)
+
+- The Room's browser returns as a browser extension, a separate project. Until then the Room's own browser (design
+  0007, `room_browser.py`, `room_browser_tool.py`, `BrowserWindow.tsx`) stays in the code, off on a new install and
+  reachable only with Show developer tools on and its switch on.
+- The Room's terminals are a developer tool: off on a new install, switched on in Settings, Tools, The Room (shown with
+  Show developer tools on). The Commands window (`CommandView`) is no longer offered on the desk; it stays in the code.
+- Settings, Tools still says "This computer and the browser, the Room, and opening Rooks elsewhere" in its one-line
+  summary (`pages/settings/sections`); reword when the browser extension lands.
+
 ### Other scheduled items
 
 * **Rooks Browser app: what the preview still lacks** (`rooks-browser/app`, landed from `feat/browser-app` after review, CHANGELOG

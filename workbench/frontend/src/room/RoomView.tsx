@@ -22,7 +22,7 @@ import { errorText } from "../ui/toast";
 import { addCommandLines, frameEvery, refreshRoomStatus, roomBusy, useRoomStatus, type CommandLine, type RoomState } from "./status";
 import { setActiveTerminal } from "./terms";
 import {
-  commandViewLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, offStartLine, pointLine, resetLine, roomScreenLive, RUN_TIMEOUT_S, STOPPED_LINE,
+  dockLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, offStartLine, pointLine, resetLine, roomScreenLive, RUN_TIMEOUT_S, STOPPED_LINE,
   TIMEOUT_NOTE, toScreenPoint, wheelSteps, type Checkpoint, type Point, type Size,
 } from "./words";
 import "./room.css";
@@ -496,11 +496,15 @@ export function CommandView({ status }: { status: RoomState }) {
   );
 }
 
-/** The honest line with how separate the Room is (the Stage, the phone). Never hidden, never under Advanced. */
+/**
+ * The honest line with how separate the Room is (the Stage, the phone), never under Advanced. How separate it is always
+ * shows; the words that commands run as you show while terminals are on (dockLine).
+ */
 export function HonestLine({ status, className = "room-honest" }: { status: RoomState; className?: string }) {
+  const line = dockLine(status);
   return (
     <p className={className}>
-      <span>{commandViewLine(status)}</span>
+      {line && <span>{line}</span>}
       <Badge tone="neutral" title="How separate the Room is">{isolationWords(status.isolation, !!status.offline)}</Badge>
       {status.offline && <Badge tone="neutral">No network</Badge>}
     </p>

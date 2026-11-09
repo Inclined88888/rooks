@@ -25,7 +25,7 @@ import {
 import { useRoomStatus } from "./status";
 import { TerminalWindow } from "./TerminalWindow";
 import { setActiveTerminal, useTerms } from "./terms";
-import { advancedDetails, commandsLabelFor, commandViewLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, terminalCountLine } from "./words";
+import { advancedDetails, commandsLabelFor, dockLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, terminalCountLine } from "./words";
 
 const DOCK_ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, browser: Globe, files: Folder, points: Bookmark, screen: Monitor };
 
@@ -70,10 +70,9 @@ export default function RoomPage() {
 
   const setDesk = (next: WindowId[]) => { setOpen(next); writeDesk(next); };
   const openWindow = (id: WindowId) => {
-    const w = id === "terminal" && !offered.includes("terminal") ? "commands" : id;
-    if (!offered.includes(w)) return;
-    if (!open.includes(w)) setDesk([...open, w]);
-    setTab(w);
+    if (!offered.includes(id)) return; // a window status does not offer (a switched off Terminal or Browser) never opens
+    if (!open.includes(id)) setDesk([...open, id]);
+    setTab(id);
   };
   const askPoints = (ask: Omit<NonNullable<PointsAsk>, "n">) => { openWindow("points"); setPointsAsk((p) => ({ ...ask, n: (p?.n ?? 0) + 1 })); };
   const openHandoff = (src = "") => setHandoff((h) => ({ src, n: (h?.n ?? 0) + 1 }));
@@ -82,7 +81,7 @@ export default function RoomPage() {
   useEffect(() => {
     const want = (location.state as { room?: string } | null)?.room;
     if (!want || !status.checked) return;
-    if (want === "terminal") {
+    if (want === "terminal" && status.can.terminal) { // terminals switched off: nothing opens, nothing starts
       openWindow("terminal");
       const alive = status.terminals.filter((t) => t.alive);
       if (status.running && status.can.terminal && !alive.length && !terminalsFull(status)) void act.newTerminal();
@@ -103,7 +102,10 @@ export default function RoomPage() {
   const alive = status.terminals.filter((t) => t.alive);
   const advancedItems: MenuItem[] = [
     { id: "advanced", label: "Advanced", onSelect: () => setAdvanced(true) },
-    { id: "close-all", label: "Close every terminal", danger: true, disabled: !status.terminals.length, onSelect: () => setClosingAll(true) },
+    // only where terminals are on, or some are still listed from when they were
+    ...(offered.includes("terminal") || status.terminals.length
+      ? [{ id: "close-all", label: "Close every terminal", danger: true, disabled: !status.terminals.length, onSelect: () => setClosingAll(true) }]
+      : []),
   ];
   const phoneItems: MenuItem[] = available ? [
     status.running
@@ -196,9 +198,10 @@ export default function RoomPage() {
     }
   };
 
+  const line = dockLine(status); // says commands run as you: only while terminals are on
   const honest = (
     <p className="room-dock-honest">
-      <span className="room-dock-line">{commandViewLine(status)}</span>
+      {line && <span className="room-dock-line">{line}</span>}
       <Badge tone="neutral" title="How separate the Room is">{isolationWords(status.isolation, !!status.offline)}</Badge>
       {status.offline && <Badge tone="neutral">No network</Badge>}
     </p>
@@ -262,7 +265,7 @@ export default function RoomPage() {
           {folder && <><dt>Folder</dt><dd>{folder}</dd></>}
           <dt>Shell</dt><dd>{shellPath || "The login shell of this computer's account"}</dd>
           <dt>Profile files read</dt><dd>~/.profile and, for bash, ~/.bashrc; for zsh ~/.zprofile and ~/.zshrc</dd>
-          <dt>Terminals</dt><dd>{terminalCountLine({ counted: terminalsCounted(status), open: alive.length, max: status.terminal_max })}</dd>
+          {offered.includes("terminal") && <><dt>Terminals</dt><dd>{terminalCountLine({ counted: terminalsCounted(status), open: alive.length, max: status.terminal_max })}</dd></>}
           <dt>What is recorded</dt><dd>{RECORDED_LINE}</dd>
           {offered.includes("browser") && <><dt>The browser</dt><dd>{BROWSER_LIMITS}</dd><dt>What Rooks asks about</dt><dd>{BROWSER_CHECKS}</dd></>}
           {!status.can.files && status.isolation === "vm" && <><dt>Files</dt><dd>Files live inside the separate computer. Use its screen.</dd></>}

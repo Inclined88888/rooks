@@ -4,6 +4,24 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · The Room for workplace teams · branch feat/room-pro
+
+The Room shows a normal person its Files and Saved points only. The Room's Terminal and its Browser are developer
+tools: off on a new install, not shown while off (no "switched off" window, no Commands window in their place), and their
+switches in Settings (Tools, "The Room"), with the Browser link row, appear only with "Show developer tools" on
+(Settings, Advanced). The assistant is not offered use_room's terminal actions (start, tail) or browser actions (browse,
+page, shot, click, type, scroll, key, back, tabs) while they are off, and a call that comes anyway is refused without
+trying. The line "Commands run as you, in a folder of its own" shows only while terminals are on; how separate the Room
+is still shows. The Files window drops Show in terminal while terminals are off, and Open a terminal in the Room leaves
+the command menu unless developer tools are on. The code behind both stays; the browser returns later as a browser
+extension.
+
+- Upgrade: an install that never touched the switches had both on; after this it has both off. An install that switched
+  one on (stored `app_terminal` or `room_browser` = 1) keeps it on. To switch them back on: Settings, Advanced, Show
+  developer tools, then Settings, Tools, The Room. The `rooks` terminal's `/room` commands work against an app where they
+  are on.
+- No schema change, nothing to migrate. Rollback: revert the branch's commits (the built `dist` is committed).
+
 ## Unreleased · Industrial redesign · branch feat/industrial-ui
 
 The app's look moves to an industrial, technical design: off-white paper (#F2F2F0), white cards, ink (#111111),

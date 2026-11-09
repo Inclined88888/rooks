@@ -469,21 +469,25 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
             <Section title="Tools">
               <SettingsGroup>
                 <Go primary label="Computer" help="Let the assistant click and type on this machine, when you allow it." to="/computer" />
-                <Go label="Browser" help="Let the assistant work in a browser, when you allow it." to="/browser" />
+                {devTools && <Go label="Browser" help="Let the assistant work in a browser, when you allow it." to="/browser" />}
               </SettingsGroup>
             </Section>
-            <Section title="The Room" description="Rooks's own computer on this one. Switched off, its window says so and nothing in it runs.">
+            {/* the Room's Terminals and browser are developer tools: off on a new install, their switches here only with
+                Show developer tools on (Settings, Advanced). Switched off, they are not shown in the Room. */}
+            {devTools && (
+            <Section title="The Room" description="Tools for people who build with Rooks. Switched off, they are not shown in the Room and nothing in them runs.">
               {!s ? settingsState : (
                 <SettingsGroup>
                   <SettingRow label="Terminals" help="Terminals in the Room and on the Terminal page.">
-                    <Switch checked={s.app_terminal !== false} onChange={setTerminals} label="Terminals" />
+                    <Switch checked={s.app_terminal === true} onChange={setTerminals} label="Terminals" />
                   </SettingRow>
                   <SettingRow label="The Room's browser" help="A real browser inside the Room. Switching it off closes it; its tabs and sign-ins are kept.">
-                    <Switch checked={s.room_browser !== false} onChange={setRoomBrowser} label="The Room's browser" />
+                    <Switch checked={s.room_browser === true} onChange={setRoomBrowser} label="The Room's browser" />
                   </SettingRow>
                 </SettingsGroup>
               )}
             </Section>
+            )}
             <Section title="Another device">
               <BrowserPair />
             </Section>

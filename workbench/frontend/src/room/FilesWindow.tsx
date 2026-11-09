@@ -52,6 +52,7 @@ export function FilesWindow({ status, terminal, onHandOff, stale = false }: {
   // A cd is typed into the terminal, nothing more: the words say what was typed, never that the terminal is there now.
   // While the terminal runs something the line would go into that program, so the button waits.
   const blocked = showInTerminalBlock(terminal);
+  const termsOn = status.can.terminal === true; // terminals are a developer tool: off, the window never mentions them
   const showInTerminal = async (folder: string) => {
     if (!terminal || blocked) return;
     try {
@@ -73,14 +74,14 @@ export function FilesWindow({ status, terminal, onHandOff, stale = false }: {
   let body;
   if (load.state === "loading") body = <Loading rows={4} label="Reading the Room's folder" />;
   else if (load.state === "gone") {
-    body = <EmptyState icon={<Folder size={24} />} title="That folder is gone." line="It may have been moved or removed in the terminal."
+    body = <EmptyState icon={<Folder size={24} />} title="That folder is gone." line={termsOn ? "It may have been moved or removed in the terminal." : "It may have been moved or removed."}
       action={<Button size="sm" variant="secondary" onClick={() => go("")}>Back to Home</Button>} />;
   }
   else if (load.state === "error") body = <ErrorState title="The folder could not be read." line={load.line} onRetry={() => setGen((g) => g + 1)} />;
   else {
     const entries = sortEntries(load.listing.entries ?? []);
     body = !entries.length
-      ? <EmptyState icon={<Folder size={24} />} title="Nothing here yet." line="What you install or save in the terminal shows up here." />
+      ? <EmptyState icon={<Folder size={24} />} title="Nothing here yet." line={termsOn ? "What you install or save in the terminal shows up here." : "What you or Rooks save in the Room shows up here."} />
       : (
         <List label={`In ${path || "Home"}`} className="room-files">
           {entries.map((e) => {
@@ -95,8 +96,8 @@ export function FilesWindow({ status, terminal, onHandOff, stale = false }: {
                   // icon buttons with their names (the column is narrow); each says what it does on hover and to a reader
                   <>
                     {e.kind === "file" && <IconButton label={`Hand off ${e.name}`} onClick={() => onHandOff(at)}><FileOutput size={15} /></IconButton>}
-                    <IconButton label={blocked ? `Show in terminal: ${blocked}` : `Show in terminal: type a cd to ${e.kind === "folder" ? e.name : crumbs(path).pop()?.label || "Home"} into ${terminal?.name}`}
-                      disabled={!!blocked} onClick={() => void showInTerminal(e.kind === "folder" ? at : path)}><SquareTerminal size={15} /></IconButton>
+                    {termsOn && <IconButton label={blocked ? `Show in terminal: ${blocked}` : `Show in terminal: type a cd to ${e.kind === "folder" ? e.name : crumbs(path).pop()?.label || "Home"} into ${terminal?.name}`}
+                      disabled={!!blocked} onClick={() => void showInTerminal(e.kind === "folder" ? at : path)}><SquareTerminal size={15} /></IconButton>}
                   </>
                 )} />
             );
@@ -119,7 +120,7 @@ export function FilesWindow({ status, terminal, onHandOff, stale = false }: {
         })}
       </nav>
       <div className="room-files-body">{body}</div>
-      {load.state === "ok" && load.listing.truncated && <p className="room-window-foot">Showing the first 500. Use the terminal to see more.</p>}
+      {load.state === "ok" && load.listing.truncated && <p className="room-window-foot">{termsOn ? "Showing the first 500. Use the terminal to see more." : "Showing the first 500."}</p>}
     </RoomWindow>
   );
 }

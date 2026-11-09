@@ -331,6 +331,10 @@ def client(fake_url, tmp_path_factory):
         c.pid = pid
         db.set_setting("learning_enabled", "1")
         db.set_setting("compress_history", "0")  # tests that want rolling summaries turn them on (test_compression.py)
+        # Terminals and the Room's browser are developer tools, off on a new install; the suites that test them run with
+        # them switched on, as a developer's install would be. test_room_pro.py tests the new-install default itself.
+        db.set_setting("app_terminal", "1")
+        db.set_setting("room_browser", "1")
         yield c
 
 

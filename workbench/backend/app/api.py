@@ -372,9 +372,9 @@ def get_settings():
         # daily download of model prices and limits from models.dev; off by default (L4: no unasked outbound call)
         "model_catalog_refresh": catalog.auto_refresh(),
         "model_catalog_env": os.getenv("MODEL_CATALOG_REFRESH", "") in ("0", "1"),
-        "app_terminal": db.get_setting("app_terminal", "1") == "1",
+        "app_terminal": db.get_setting("app_terminal", "0") == "1",  # a developer tool: off unless switched on
         "dev_tools": dev_tools_on(),
-        "room_browser": db.get_setting("room_browser", "1") == "1",  # the Room's own browser (design 0007)
+        "room_browser": db.get_setting("room_browser", "0") == "1",  # the Room's own browser (design 0007): off unless switched on
     }
 
 

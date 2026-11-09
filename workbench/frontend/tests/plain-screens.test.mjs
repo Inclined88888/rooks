@@ -50,7 +50,7 @@ test("the app has no virtual computer page; the Room never shows a fake screen",
   assert.match(room, /screenLive \? <RoomPicture/, "mounted only while the screen is really live");
   assert.match(room, /const screenLive = roomScreenLive\(/);
   assert.match(words, /Commands run as you, in a folder of its own\. It is not a locked off computer\./, "the honest command line");
-  assert.match(room, /commandViewLine\(/, "the command view says it");
+  assert.match(room, /dockLine\(/, "the honest line says it while terminals are on (room-pro.test.mjs)");
   assert.doesNotMatch(room, /A drawing of a terminal|fake|pretend/i);
 });
 

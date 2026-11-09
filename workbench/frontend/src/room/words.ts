@@ -95,6 +95,15 @@ export function commandViewLine(s: Pick<RoomStatus, "isolation" | "note"> | null
   return HONEST_LINE;
 }
 
+/**
+ * The line under the Room's windows (the dock, the Stage, the phone): it says commands run as you, so it shows only when
+ * terminals are on (a developer tool). A separate computer says what it is either way. Empty: no line.
+ */
+export function dockLine(s: (Pick<RoomStatus, "isolation" | "note"> & { can?: { terminal?: boolean } | null }) | null | undefined): string {
+  if (s?.isolation === "vm") return commandViewLine(s);
+  return s?.can?.terminal === true ? commandViewLine(s) : "";
+}
+
 /** The Advanced details on the Room page: the kind of Room and its folder, never on a normal screen. */
 export function advancedDetails(s: RoomStatus | null | undefined): { kind: string; folder: string } {
   return { kind: String(s?.driver || ""), folder: String(s?.home || "") };

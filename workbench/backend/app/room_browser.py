@@ -125,7 +125,8 @@ def _engine():
 
 
 def enabled() -> bool:
-    return db.get_setting("room_browser", "1") == "1"
+    """The Room's own browser: off on a new install (it returns as a browser extension), on where switched on."""
+    return db.get_setting("room_browser", "0") == "1"
 
 
 def can(driver, remote: bool) -> dict:

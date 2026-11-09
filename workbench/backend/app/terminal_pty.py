@@ -8,7 +8,7 @@ Who may open one, all of these:
   - a signed-in session (the same cookie as every /api page)
   - the page's own origin (a WebSocket carries cookies cross-site, so another site must not open a shell)
   - a client on this machine (loopback): a self-hosted server reached over the network never hands out a shell
-  - not switched off in Settings (app_terminal = 0)
+  - switched on in Settings (app_terminal = 1; off on a new install, a developer tool)
 The shell gets the user's environment minus the app's own secrets (APP_SECRET, provider keys, tokens).
 POSIX only (macOS, Linux); Windows gets a clear refusal.
 """
@@ -41,7 +41,8 @@ LOOPBACK = {"127.0.0.1", "::1", "localhost"}
 
 
 def enabled() -> bool:
-    return db.get_setting("app_terminal", "1") == "1" and sys.platform != "win32"
+    """Terminals are a developer tool: off on a new install, on only where someone switched them on (Settings)."""
+    return db.get_setting("app_terminal", "0") == "1" and sys.platform != "win32"
 
 
 def shell_env() -> dict[str, str]:

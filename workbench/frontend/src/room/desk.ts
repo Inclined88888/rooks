@@ -3,7 +3,8 @@
  * where they sit, and the small mappings the Terminal and Files windows need. No React, no network, so the tests run it.
  *
  * What exists comes from the Room's status only (windowsFor): the Screen window only when the service says the Room has
- * a real screen, the Terminal only when it can open one, Files only when its folder is on this computer. The browser
+ * a real screen, the Terminal and the Browser only when they are switched on and can open here (developer tools, off on
+ * a new install), Files only when its folder is on this computer. The browser
  * remembers just which windows are open (rooks.room.desk), a convenience; a remembered window status does not offer
  * is dropped.
  */
@@ -37,23 +38,19 @@ const DOCK_LABEL: Record<WindowId, string> = {
   screen: "Screen", terminal: "Terminal", browser: "Browser", commands: "Commands", files: "Files", points: "Points",
 };
 
-/** Reasons the Browser window is there to say (it has no browser here, and why); with none, the Room's screen is the way. */
-const BROWSER_SAYS_WHY = ["no_engine", "switched_off", "windows", "helper"];
-
 /**
- * The windows the Room offers, primary first (Screen, else Terminal or Commands), then Files and Saved points. Terminals
- * switched off in Settings keep the Terminal window, which says so and links to Settings; Commands is only for helper
- * mode and Windows, where a Room terminal cannot exist (design 3.5).
+ * The windows the Room offers, primary first (Screen, then Terminal), then Browser, Files and Saved points. The Room's
+ * Terminal and Browser are developer tools, off on a new install: each is offered only when status says the Room can
+ * open one here (can.terminal, can.browser true). Switched off, or not possible here, means not shown: no window that
+ * says so, and no Commands window in the Terminal's place (CommandView stays in the code; the assistant's quick
+ * commands still show in the run log).
  */
 export function windowsFor(status: DeskStatus | null | undefined): WindowId[] {
   if (!status || status.checked === false || !status.available) return [];
   const out: WindowId[] = [];
   if (status.screen === true) out.push("screen");
-  const terminal = status.can?.terminal === true || status.can?.terminal_off_reason === "switched_off";
-  out.push(terminal ? "terminal" : "commands");
-  // design 0007: the Browser window after Terminal, when the Room has a browser here or a reason to say why not
-  const why = status.can?.browser_off_reason;
-  if (status.can?.browser === true || (typeof why === "string" && BROWSER_SAYS_WHY.includes(why))) out.push("browser");
+  if (status.can?.terminal === true) out.push("terminal");
+  if (status.can?.browser === true) out.push("browser"); // design 0007: after Terminal
   if (status.can?.files === true) out.push("files");
   out.push("points");
   return out;
@@ -63,7 +60,7 @@ export function windowsFor(status: DeskStatus | null | undefined): WindowId[] {
 export function defaultOpen(status: DeskStatus | null | undefined): WindowId[] {
   const offered = windowsFor(status);
   if (!offered.length) return [];
-  return offered.filter((w, i) => i === 0 || w === "files" || w === "points");
+  return offered.filter((w, i) => (i === 0 && w !== "browser") || w === "files" || w === "points");
 }
 
 /** The dock's items, in its fixed order: Terminal (or Commands), Browser, Files, Points, Screen. */

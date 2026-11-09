@@ -111,7 +111,7 @@ test("the Room never draws a picture unless it is running with a real screen, an
   assert.match(view, /\/room\/screenshot\?k=/, "the picture comes from the Room's own screenshot route");
   // the command view is the other branch, with the honest line and the isolation in plain words
   assert.match(view, /function CommandView/);
-  assert.match(view, /commandViewLine\(/);
+  assert.match(view, /dockLine\(/); // the honest line's words, shown while terminals are on (room-pro.test.mjs)
   assert.match(view, /isolationWords\(/);
   assert.match(view, /\/room\/run/);
   // input controls only when the Room has a pointer; Esc or Hand back releases
