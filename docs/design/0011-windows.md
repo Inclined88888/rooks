@@ -49,6 +49,31 @@ with the UI limits (section 3), and the sidecar smoke test opening a terminal (s
 
 `off_reason` loses `windows`. `OFF_WORDS["windows"]` stays for an older helper.
 
+**Built on `feat/windows` (section 2), and where it differs from the text above.** `winproc.crt_block` packs the block
+and `winproc.PipedProcess` starts the engine: fds 0 and 1 are `NUL`, fd 2 is a pipe for what the engine prints (it is
+the Advanced detail when it does not start; Chromium on Windows prints its errors there), 3 and 4 the DevTools pipe;
+those handles only, through `HANDLE_LIST`, in a job of its own (`CREATE_NO_WINDOW`). `Session.close` asks the browser
+to close, then ends the job and waits until it is empty; `Pipe.close` closes the write end first and the read end only
+once the reader saw the end. The memory watchdog reads the job's working set (`Job.memory`). The job's own memory limit
+is twice `MEMORY_CLOSE`, not `MEMORY_CLOSE`: the job counts memory set aside (commit), which for Chromium runs well
+above the working set the watchdog reads, so at `MEMORY_CLOSE` it would fail allocations before the watchdog closed the
+browser cleanly. The browser's job has none of the UI limits of section 3: on windows-2022 each one alone (handles,
+clipboard read, clipboard write, system parameters, display settings, global atoms, desktop, exit Windows) stopped
+Chromium's sandbox from creating its GPU process ("GPU process launch failed: error_code=18", then "GPU process isn't
+usable. Goodbye."), with Chrome and with Edge, and with none the browser started (CI runs 42552436202 and 42553112016).
+Pages still get no permission to read the clipboard (`--deny-permission-prompts`); the job does not hold it back.
+The engine keeps the person's own `USERPROFILE` (the rest of `room_env` stays): with the Room's home there, Chromium
+could not find its own folders and refused the pipe ("DevTools remote debugging requires a non-default data
+directory"). The profile is the Room's all the same. The policy words
+name the engine ("... in Edge." or "... in Chrome."); status carries them as `can.browser_off_words`, and opening the
+browser answers 403 with them. `Software\Policies\Chromium` is read for Playwright's Chromium and `Google\Chrome for
+Testing` as well for the Room's own build. A `file://` address with any host other than `localhost` is refused on every
+system, not only Windows. The work PC line is `can.browser_advanced`, shown in the Room's Advanced sheet. A hand-off
+copies the `Zone.Identifier` stream. The app's own listening ports on Windows come from `GetExtendedTcpTable`. The
+backend's Room browser tests (`tests/test_room_browser.py`) now run on Windows too, in the "Windows: terminals and
+browser" job. Not yet: the sidecar smoke test starting the browser (section 4), and a Room job the browser's job nests in
+(section 3).
+
 ## 3. Containment, and what is said about it
 
 Every Room process runs in a Job object. A Room job is created when the Room starts, with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` and no breakaway flags (`BREAKAWAY_OK` and `SILENT_BREAKAWAY_OK` are never set). Inside it there is a nested job (Windows 8 and later) per terminal, one for the browser and one per quick command (`ShellDriver.run`, which also gets `CREATE_NO_WINDOW`). The sidecar holds the handles, so if it crashes Windows ends everything in the Room. The desktop shell's supervisor also puts the sidecar in a kill-on-close job, so closing or killing Rooks ends the sidecar too. Limits:

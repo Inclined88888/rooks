@@ -208,7 +208,13 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 * **The packaged app's browser is proved only in CI with the runner's Chrome** (`smoke_sidecar.py --room-browser`,
   macOS and Linux). Not covered there: a Mac with only Edge or Chromium, a Linux runner where bwrap's wall is on (the
-  Ubuntu runner may run it without the wall, which the window says), and Windows (no Room browser yet, design 0011).
+  Ubuntu runner may run it without the wall, which the window says), and Windows (the browser works there through the
+  app's tests on windows-2022, but `smoke_sidecar.py` does not yet start it through the frozen sidecar on Windows).
+* **The Room's browser on Windows: what is left** (built on `feat/windows`, design 0011 section 2). Not walled: it runs
+  as the person (the window says "Not locked off"), with the person's own `USERPROFILE` (Chromium needs it), in a job
+  with no UI limits: under any one of them Chromium's sandbox could not start its GPU process, so the job does not hold
+  the person's clipboard back (pages still get no clipboard permission). Left: nest its job in one Room job (section 3); the sidecar smoke test; Edge and Chrome under a real
+  organisation's policies and with a work account's sign-in; Windows on Arm; a real Windows 10 and 11 PC.
 * **Telling a wall failure apart** reads what bwrap printed (`bwrap: …`). A wall that fails without printing that is
   reported as "the browser refused to start"; the Advanced detail still shows what was printed.
 

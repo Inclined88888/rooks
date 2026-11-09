@@ -31,6 +31,30 @@ Rollback: revert the commits.
   `ci.yml`, and CI now also runs on pushes to `feat/windows`. Not tested: a real Windows 10 or 11 PC (the runner is
   Server 2022), Windows on Arm, ConPTY before build 20348, PowerShell's constrained language mode, AppLocker or WDAC,
   and a bundled `conpty.dll`/`OpenConsole.exe` (not shipped yet; Windows' own ConPTY is used).
+- **The Room's browser on Windows** (design 0011, section 2). The Browser window in the Room now works on Windows: it
+  uses Google Chrome when installed, else Microsoft Edge (which every Windows 10 and 11 has), only as an engine, with
+  the Room's own profile in the Room's folder, never your own browser profile, sign-ins or extensions. You see and use
+  it the same way as on macOS and Linux (the live picture, clicks, typing, tabs, downloads into the Room's Downloads,
+  the phone's still and taps), and the `rooks` terminal's `/room browse` and the assistant use it too. Rooks starts the
+  browser itself and talks to it over a private pipe, never a network port, and keeps every one of its processes
+  together so they all stop when it closes. If your organisation has switched this off in Edge or Chrome, the window
+  says "Your organisation has switched this off in Edge. Ask your IT team." and Rooks does not try another way around
+  it. Pages cannot open files outside the Room or files on other computers (a shared folder would be sent your Windows
+  sign-in). On a PC joined to a work account, Advanced says that Edge may sign in to work sites as you through Windows.
+  A download you let leave the Room keeps Windows' mark that it came from the internet, so SmartScreen and Office
+  still check it. The Room's status no longer says "The Room's browser is not on Windows yet." Tests that failed on the
+  old code on windows-2022 (run 42551257253, commit 907069e): `rooks-try/tests/test_browser_windows.py` (find_engine
+  found nothing on a runner with Chrome and Edge; no pipe block, policy check or Windows file rules), and the Mark of
+  the Web hand-off (run 42552146711); locally `workbench/backend/tests/test_room_browser.py` (policy and the Windows
+  status) and `workbench/frontend/tests/room-browser.test.mjs` (the policy words). CI: the job is now "Windows:
+  terminals and browser" and also runs the app's Room browser tests on Windows with Chrome; on windows-2022 Edge and
+  Chrome start over the pipe, show a local page, send a frame, take a click, keep every process in the job with no
+  listening port, and leave the job empty on close (run 42553967635). What the job cannot do on Windows: hold the
+  clipboard and other desktop settings back (Chromium's own sandbox does not start under those limits; pages still get
+  no permission to read the clipboard). Not tested: Edge or Chrome
+  under a real organisation's policies (the test sets the policy value itself), sign-in through a work account (no
+  work tenant), a real Windows 10 or 11 PC, Windows on Arm, and the packaged desktop app starting the browser on
+  Windows.
 - **The Room's browser starts in the packaged app** (2e939c0). The step that hands the browser its pipe ran Python with
   `-c`; the desktop app is one packaged program with no Python, so on a Mac the Room's browser always said "could not
   start". The packaged app now runs that step with its own program (`--rooks-pipe-step`).

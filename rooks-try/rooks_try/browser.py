@@ -18,6 +18,11 @@ read-only at a fixed place when it lies under the person's home, no network when
 (macOS, or Linux without it) it runs as the person, in the Room's home, with no outer wall, and the app says so; an
 offline Room's browser then goes through a proxy that answers nothing (a closed door, not a wall).
 
+On Windows (design 0011, section 2) there is no step and no wall: the Room starts Edge or Chrome itself
+(winproc.PipedProcess) with the pipe at its C runtime fds 3 and 4, in a job of its own from its first instruction, and
+it runs as the person. IT policy that switches remote debugging off for the engine found is respected (policy_off):
+the browser stays off and the person is sent to their IT team. A `file://` address with a host is refused everywhere.
+
 Session drives one running browser: tabs (eight at most, the person's and the assistant's together), the address bar's
 rules (normalise, the same as rooks-browser's app/address.js), back, forward, reload, page text, screenshots, the live
 stream (Page.startScreencast, only while someone watches), input, downloads into the Room's Downloads (a safe, unique

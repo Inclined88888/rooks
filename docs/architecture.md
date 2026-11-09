@@ -236,7 +236,7 @@ flowchart LR
 Notes:
 
 - The Room only shows a screen when a real display exists. Its status always names the screen, the pointer, how isolated it is, and a plain label.
-- There is no browser inside the Room yet. Today the browser is a separate helper program (`rooks-browser`) reached through `browser_proxy.py`, and the Browser page shows its steps and screenshots rather than a page the person can click in. A Room browser is planned (task 49) and is being built on another branch.
+- The Room has its own browser (`room_browser.py`, engine in `rooks-try/rooks_try/browser.py`): a real Chrome, Edge or Chromium run headless with the Room's own profile and driven only over a pipe, never a port. On Windows the Room starts it itself with the pipe in place and keeps every one of its processes in a job (`rooks_try/winproc.py`); when the organisation has switched remote debugging off for that browser, the Room says so and sends the person to their IT team. The separate helper program (`rooks-browser`, reached through `browser_proxy.py`) still drives the person's own signed-in browser for the Browser page and Sites.
 - The app also has its own Terminal page (`terminal_pty.py`), a shell on the person's own computer, separate from the Room's terminals.
 
 ### d.4 Memory and learning
@@ -444,6 +444,7 @@ step in section g; a row it changed says so in its status. Everything else is as
 | room.py | The Room: status, start, stop, save points, reset, run, click, type, picture, hand-off | live |
 | room_terminal.py | Real shells inside the Room, kept on the server, with private logs (on Windows PowerShell or Git Bash on ConPTY, through rooks_try/winproc.py) | live |
 | room_files.py | Read-only listing of the Room folder | live |
+| room_browser.py | The Room's own browser: one engine over a pipe, its tabs, the live picture and input (on Windows in a job, with IT policy respected) | live |
 | terminal_pty.py | The app's own Terminal page on the person's computer (PowerShell on ConPTY on Windows) | live (page hidden behind Advanced, g.3a) |
 | browser_proxy.py | Passes Browser page requests to the separate browser helper | live |
 | desk_proxy.py | Passes Computer page requests to the computer-use helper | live |
