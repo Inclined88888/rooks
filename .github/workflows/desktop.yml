@@ -12,6 +12,9 @@ on:
     paths: ['desktop/**', 'workbench/**', '.github/workflows/desktop.yml']
   push:
     tags: ['v*.*.*', 'desktop-v*.*.*']
+    # The Windows branch has no pull request yet and this token cannot dispatch: a push there builds the installers
+    # (artifacts only, never a release) so the Windows and Mac runners check it. Remove when it merges.
+    branches: ['feat/windows']
 
 permissions:
   contents: read
