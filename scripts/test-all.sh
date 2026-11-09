@@ -96,6 +96,9 @@ else
   bad "cli-launcher (node is not installed)"
 fi
 
+step "Colour contrast (the app's three themes in tokens.css and the terminal palettes, WCAG AA)"
+"$PY" scripts/check-theme-contrast.py && ok "contrast" || bad "contrast"
+
 if ! $QUICK; then
   step "Frontend (workbench/frontend: typecheck, build, tests)"
   (cd workbench/frontend && { [[ -d node_modules ]] || npm ci --silent; } && npm run build --silent >/dev/null && npm test 2>&1 | tail -3) \

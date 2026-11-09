@@ -4,8 +4,12 @@
    shadow on menus, sheets, the palette and toasts. The one motion in the app, ui-fade, lives here.
    ========================================================================== */
 
-/* ---- The one fade: 150 ms or less, opacity only, when something appears. Reduced motion turns it off. ---- */
+/* ---- Motion: the one fade (150 ms or less, opacity only, when something appears), the orange wipe across a
+   headline and the thin line that draws in (tokens.css --motion-wipe, --motion-draw; styles.css .reveal, .rule-draw).
+   No bounce. Reduced motion and Motion off turn all three off, in the two rules below. ---- */
 @keyframes ui-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-wipe { 0% { transform: scaleX(0); transform-origin: left center; } 48% { transform: scaleX(1); transform-origin: left center; } 52% { transform: scaleX(1); transform-origin: right center; } 100% { transform: scaleX(0); transform-origin: right center; } }
+@keyframes ui-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .ui-fade-in { animation: ui-fade var(--dur-fade) var(--ease-out) both; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -42,7 +46,7 @@
 .ui-btn-sm { height: 28px; padding: 0 var(--space-3); font-size: var(--text-sm); }
 .ui-btn-icon { display: inline-grid; place-items: center; }
 .ui-btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary); }
-.ui-btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+.ui-btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); border-color: var(--color-primary-hover); color: var(--color-on-primary-hover); }
 .ui-btn-ghost { background: transparent; border-color: transparent; color: var(--color-ink-muted); }
 .ui-btn-ghost:hover:not(:disabled) { background: var(--color-bg-hover); color: var(--color-ink); }
 .ui-btn-danger { background: transparent; border-color: var(--color-danger); color: var(--color-danger-text); }

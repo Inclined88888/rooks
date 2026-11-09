@@ -575,7 +575,7 @@ step in section g; a row it changed says so in its status. Everything else is as
 | scripts/hermes-config.sh, paperclip-invite.sh, sync-opencode-config.sh | First-run helpers for the server add-ons | live |
 | scripts/write-oauth-clients.py, setup-sign-in.sh | Register the Google and Microsoft sign-in apps for releases | live |
 | scripts/release/package.sh | Builds a source zip; nothing calls it | unknown |
-| scripts/check-theme-contrast.py | Colour contrast check that nothing runs | half built |
+| scripts/check-theme-contrast.py | Colour contrast check of the three themes in tokens.css and the terminal palettes; scripts/test-all.sh runs it (industrial redesign) | live |
 | scripts/audit/ | Regenerates old evidence pages; now `docs/history/scripts/audit/` | moved (g.1a) |
 | scripts/test_vertical_slice.py | A test tied to one developer's folder path | removed (g.1a) |
 | install.sh, install.ps1 | One-command install for one person, no Docker | live |

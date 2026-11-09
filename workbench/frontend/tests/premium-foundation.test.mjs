@@ -1,6 +1,9 @@
 // Design system v3, "restraint" (docs/design/0003-workroom.md, section 6): the foundation of the premium pass.
-// One fade is the only motion, Bodoni is gone, three themes (plus Match my computer) with saved choices mapped,
-// no Motion page, and every text pair in tokens.css is AA, computed from the file itself.
+// Bodoni is gone, three themes (plus Match my computer) with saved choices mapped, no Motion page, and every text pair
+// in tokens.css is AA, computed from the file itself. The industrial redesign (v4, tests/industrial-tokens.test.mjs)
+// changed what four of these guard, on purpose: the palette, the type scale (adds 10/11 px micro-labels and 15 px
+// body), square corners and no floating shadow, and two more motions beside the fade (the orange headline wipe and
+// the line draw-in, both under the same reduced-motion and Motion off rules).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { build } from "esbuild";
@@ -24,22 +27,23 @@ const codeFiles = srcFiles.filter((f) => /\.(tsx?|mjs|css)$/.test(f));
 
 /* ------------------------------------------------------------------ motion */
 
-test("the only keyframes in the app are one opacity fade, ui-fade, of 150 ms or less", () => {
+test("the only keyframes are the fade (ui-fade, 150 ms or less), the headline wipe and the line draw, all in ui/ui.css", () => {
   const names = [];
   for (const f of codeFiles) {
     for (const m of strip(read(f)).matchAll(/@keyframes\s+([\w-]+)\s*\{/g)) names.push(`${f}: ${m[1]}`);
   }
-  assert.deepEqual(names.map((n) => n.split(": ")[1]), ["ui-fade"], `keyframes found: ${names.join(", ")}`);
+  assert.deepEqual(names, ["src/ui/ui.css: ui-fade", "src/ui/ui.css: ui-wipe", "src/ui/ui.css: ui-draw"], `keyframes found: ${names.join(", ")}`);
   const ui = strip(read("src/ui/ui.css"));
   const frames = ui.match(/@keyframes ui-fade\s*\{([\s\S]*?\})\s*\}/);
   assert.ok(frames, "ui-fade lives in ui/ui.css");
   const props = new Set([...frames[1].matchAll(/([a-z-]+)\s*:/g)].map((x) => x[1]));
   assert.deepEqual([...props], ["opacity"], "ui-fade animates opacity only");
-  // every animation in every stylesheet is ui-fade (or none), and never longer than 150 ms
+  // every animation in every stylesheet is ui-fade (or none), and never longer than 150 ms; the wipe and the draw are
+  // only ever named through their tokens (tokens.css --motion-wipe, --motion-draw)
   for (const f of cssFiles) {
     for (const m of strip(read(f)).matchAll(/animation(?:-name)?\s*:\s*([^;}]+)/g)) {
       const v = m[1].trim();
-      if (/^none\b/.test(v)) continue;
+      if (/^none\b/.test(v) || /^var\(--motion-(wipe|draw)\)$/.test(v)) continue;
       assert.match(v, /\bui-fade\b/, `${f}: animation "${v}" is not the one fade`);
       const ms = [...v.matchAll(/(\d+(?:\.\d+)?)(ms|s)\b/g)].map((x) => Number(x[1]) * (x[2] === "s" ? 1000 : 1));
       if (!ms.length) assert.match(v, /var\(--dur-(fast|fade)\)/, `${f}: "${v}" names a duration`);
@@ -79,14 +83,14 @@ test("Bodoni Moda is gone: no font file, no dependency, no serif token", () => {
   for (const f of cssFiles) assert.doesNotMatch(strip(read(f)), /--font-serif|var\(--serif\)|--serif\s*:/, f);
 });
 
-test("the type scale is 12/13/14/16/20/28 with weights 400, 500 and 600", () => {
+test("the type scale is 10/11/12/13/14/15/16/20/28 with weights 400, 500, 600 and 800 for display; corners 0, no shadow", () => {
   const t = strip(read("src/tokens.css"));
-  const sizes = [...t.matchAll(/--text-[a-z0-9]+:\s*([\d.]+)px;/g)].map((m) => Number(m[1]));
-  for (const s of sizes) assert.ok([12, 13, 14, 16, 20, 28].includes(s), `type size ${s}px is off the scale`);
-  for (const [k, v] of [["--weight-regular", "400"], ["--weight-medium", "500"], ["--weight-heading", "600"]]) assert.match(t, new RegExp(`${k}:\\s*${v};`));
-  assert.match(t, /--radius-sm:\s*6px;/);
-  assert.match(t, /--radius-md:\s*10px;/);
-  assert.match(t, /--shadow-float:\s*0 8px 24px -12px rgb\(0 0 0 \/ \.18\);/);
+  const sizes = [...t.matchAll(/--text-[a-z0-9-]+:\s*([\d.]+)px;/g)].map((m) => Number(m[1]));
+  for (const s of sizes) assert.ok([10, 11, 12, 13, 14, 15, 16, 20, 28].includes(s), `type size ${s}px is off the scale`);
+  for (const [k, v] of [["--weight-regular", "400"], ["--weight-medium", "500"], ["--weight-heading", "600"], ["--weight-display", "800"]]) assert.match(t, new RegExp(`${k}:\\s*${v};`));
+  assert.match(t, /--radius-sm:\s*0;/);
+  assert.match(t, /--radius-md:\s*0;/);
+  assert.match(t, /--shadow-float:\s*none;/);
 });
 
 /* ------------------------------------------------------------------ themes */
@@ -138,15 +142,16 @@ const light = block('html[data-mode="light"]');
 const dark = block('html[data-mode="dark"]');
 const contrast = { ...light, ...block('html[data-mode="contrast"]') };
 
-test("the palette is section 6's, value for value", () => {
+test("the palette is the industrial one, value for value", () => {
   const want = {
-    "--color-bg": ["#FAFAF9", "#161616"], "--color-surface": ["#FFFFFF", "#1E1E1E"], "--color-surface-raised": ["#FFFFFF", "#242424"],
-    "--color-surface-sunken": ["#F4F4F2", "#121212"], "--color-border": ["#E7E6E3", "#2E2E2E"], "--color-border-strong": ["#D4D3CF", "#3C3C3C"],
-    "--color-ink": ["#1A1A19", "#EDEDEC"], "--color-ink-muted": ["#5E5D59", "#A3A29E"], "--color-ink-faint": ["#8F8E89", "#6E6D69"],
-    "--color-primary": ["#1A1A19", "#EDEDEC"], "--color-on-primary": ["#FFFFFF", "#161616"], "--color-accent": ["#C98A00", "#E3A82B"],
-    "--color-accent-text": ["#7A5300", "#E9B949"], "--color-accent-soft": ["#FBF1DA", "#2B2414"], "--color-success": ["#2F7D4F", "#5FBF85"],
+    "--color-bg": ["#F2F2F0", "#111111"], "--color-surface": ["#FFFFFF", "#1A1A1A"], "--color-surface-raised": ["#FFFFFF", "#1A1A1A"],
+    "--color-surface-sunken": ["#EDEDEA", "#0B0B0B"], "--color-surface-muted": ["#EDEDEA", "#222222"], "--color-border": ["#D8D8D5", "#2B2B2B"],
+    "--color-border-strong": ["#7A7A76", "#6B6B67"], "--color-ink": ["#111111", "#F2F2F0"], "--color-ink-soft": ["#2B2B2B", "#D4D4D0"],
+    "--color-ink-muted": ["#5A5A57", "#A3A3A0"], "--color-ink-faint": ["#858581", "#75756F"],
+    "--color-primary": ["#111111", "#F2F2F0"], "--color-on-primary": ["#FFFFFF", "#111111"], "--color-accent": ["#FF4D00", "#FF4D00"],
+    "--color-accent-text": ["#B23800", "#FF4D00"], "--color-accent-soft": ["#EDEDEA", "#222222"], "--color-success": ["#2F7D4F", "#5FBF85"],
     "--color-success-text": ["#1E5A37", "#8FD8AB"], "--color-warning": ["#A85F06", "#E3A82B"], "--color-warning-text": ["#7A4300", "#F0C870"],
-    "--color-danger": ["#B3372B", "#E5735F"], "--color-danger-text": ["#82231A", "#F2A193"], "--color-code-bg": ["#F4F4F2", "#121212"],
+    "--color-danger": ["#B3372B", "#E5735F"], "--color-danger-text": ["#82231A", "#F2A193"], "--color-code-bg": ["#EDEDEA", "#0B0B0B"],
   };
   for (const [k, [l, d]] of Object.entries(want)) {
     assert.equal(light[k], l.toLowerCase(), `${k} light`);
@@ -171,6 +176,11 @@ test("every text token is AA (4.5:1) on bg, surface and accent-soft, in light, d
       }
     }
     assert.ok(ratio(t["--color-on-primary"], t["--color-primary"]) >= 4.5, `${name}: the primary button`);
+    assert.ok(ratio(t["--color-on-primary-hover"], t["--color-primary-hover"]) >= 4.5, `${name}: the primary button on hover (ink on orange)`);
+    assert.ok(ratio(t["--color-on-accent"], t["--color-accent"]) >= 4.5, `${name}: words on an orange fill`);
+    // the ring is 3:1 against the page by itself, or its ink halo is (and the orange is 3:1 on the halo)
+    const ring = ratio(t["--color-focus"], t["--color-bg"]) >= 3 || (ratio(t["--color-focus-halo"], t["--color-bg"]) >= 3 && ratio(t["--color-focus"], t["--color-focus-halo"]) >= 3);
+    assert.ok(ring, `${name}: the focus ring, orange on its halo`);
   }
   assert.equal(contrast["--color-ink"], "#000000", "High contrast is black text");
   assert.match(tokens, /html\[data-mode="contrast"\][^{]*\{[^}]*--border-w:\s*2px/, "High contrast draws 2 px borders");

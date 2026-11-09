@@ -1,128 +1,143 @@
 /* ==========================================================================
-   Rooks design tokens v3: "restraint" (docs/design/0003-workroom.md, section 6).
-   Three themes keyed on html[data-mode]: light (also the fallback before data-mode is set), dark, and contrast
-   (High contrast, light based). appearance.tsx sets data-mode; "Match my computer" resolves to light or dark.
-   Neutral first: the primary button is ink on paper. The accent (amber) marks only what is live or needs the person.
-   Glass (--glass-*) is for the navigation layer only: the top bar, its menus, the phone dock, the chat box. Every
-   page, card and form stays solid so text is never read through a blur. High contrast and reduced transparency
-   swap the glass for a solid surface.
-   Every text pair is AA, computed from this file by tests/premium-foundation.test.mjs.
-   Import this FIRST in main.tsx.
+   Rooks design tokens v4: "industrial" (CHANGELOG, Unreleased · Industrial redesign).
+   Off-white paper, white cards, ink, 1 px hairlines and one safety orange (#FF4D00) used sparingly: dots, rules,
+   focus rings, one call to action, large display type. Square corners everywhere, no shadows (a 1 px line separates
+   cards and sections), no gradients except the faint blueprint grid (--bg-grid) behind hero and empty areas, no glass.
+   Three themes keyed on html[data-mode]: light (also the fallback before data-mode is set), dark (ink-on-dark, the
+   same orange) and contrast (High contrast, light based). appearance.tsx sets data-mode; "Match my computer" resolves
+   to light or dark.
+   Orange is 2.97:1 on the paper and 3.33:1 on white, under AA for small text: text that must read as the accent uses
+   --color-accent-text (a burnt orange that is AA); words on an orange fill are ink (5.68:1), never white (3.33:1).
+   The focus ring is an orange outline on a 1 px ink halo (--focus-ring), so it is 3:1 against whatever is next to it.
+   Every text pair is AA, computed from this file by tests/premium-foundation.test.mjs and
+   scripts/check-theme-contrast.py. Import this FIRST in main.tsx.
    ========================================================================== */
 
 /* ---- Light ---- */
 :root,
 html[data-mode="light"] {
-  --color-bg: #FAFAF9;
-  --color-bg-hover: #F1F1EF;
-  --color-bg-active: #E9E8E5;
-  --color-surface: #FFFFFF;
+  --color-bg: #F2F2F0;                /* paper */
+  --color-bg-hover: #EDEDEA;
+  --color-bg-active: #E2E2DF;
+  --color-surface: #FFFFFF;           /* cards */
   --color-surface-raised: #FFFFFF;
-  --color-surface-sunken: #F4F4F2;
-  --color-border: #E7E6E3;
-  --color-border-strong: #D4D3CF;
-  --color-border-focus: #1A1A19;
-  --color-ink: #1A1A19;
-  --color-ink-muted: #5E5D59;
-  --color-ink-faint: #8F8E89;         /* non text only */
-  --color-primary: #1A1A19;           /* the primary button: ink on paper */
-  --color-primary-hover: #33332F;
+  --color-surface-sunken: #EDEDEA;
+  --color-surface-muted: #EDEDEA;
+  --color-border: #D8D8D5;            /* every hairline: borders and dividers */
+  --color-border-strong: #7A7A76;     /* edges of controls a person types in or picks: 3.8:1 on the paper */
+  --color-border-focus: #111111;      /* a single colour outline (feature CSS); the global ring is --focus-ring */
+  --color-focus: #FF4D00;
+  --color-focus-halo: #111111;
+  --color-ink: #111111;
+  --color-ink-soft: #2B2B2B;
+  --color-ink-muted: #5A5A57;         /* grey words: labels, hints, micro-labels */
+  --color-ink-faint: #858581;         /* non text only */
+  --color-primary: #111111;           /* the primary button: a black rectangle */
+  --color-primary-hover: #FF4D00;     /* it hovers to orange, with ink words */
   --color-on-primary: #FFFFFF;
-  --color-accent: #C98A00;            /* live, needs you: nothing else */
-  --color-accent-hover: #B37B00;
-  --color-accent-soft: #FBF1DA;
-  --color-accent-text: #7A5300;
-  --color-on-accent: #1A1A19;
-  --color-live: #C98A00;
+  --color-on-primary-hover: #111111;
+  --color-accent: #FF4D00;            /* safety orange: dots, rules, focus, one call to action */
+  --color-accent-hover: #E04400;
+  --color-accent-soft: #EDEDEA;       /* no pastel tint: a muted surface, the orange dot carries the meaning */
+  --color-accent-text: #B23800;       /* orange words, AA */
+  --color-on-accent: #111111;
+  --color-live: #FF4D00;
   --color-success: #2F7D4F;
   --color-success-hover: #276A43;
-  --color-success-soft: #E7F2EB;
+  --color-success-soft: #EDEDEA;
   --color-success-text: #1E5A37;
   --color-warning: #A85F06;
   --color-warning-hover: #8F5105;
-  --color-warning-soft: #FBEFDF;
+  --color-warning-soft: #EDEDEA;
   --color-warning-text: #7A4300;
   --color-danger: #B3372B;
   --color-danger-hover: #9A2F25;
-  --color-danger-soft: #F9E7E4;
+  --color-danger-soft: #EDEDEA;
   --color-danger-text: #82231A;
   --color-on-danger: #FFFFFF;
-  --color-code-bg: #F4F4F2;
-  --color-code-keyword: #7A5300;
+  --color-code-bg: #EDEDEA;
+  --color-code-keyword: #B23800;
   --color-code-string: #1E5A37;
   --color-code-number: #7A4300;
-  --color-code-title: #1F4FB8;
-  --color-code-type: #5B3AA8;
-  --color-scrim: rgba(26, 26, 25, 0.32);
-  /* Glass (navigation, its menus, the chat box, floating buttons only; pages and cards stay solid) */
-  --glass-bg: rgba(255, 255, 255, 0.62);
-  --glass-bg-strong: rgba(255, 255, 255, 0.86);
-  --glass-border: rgba(255, 255, 255, 0.78);
-  --glass-edge: rgba(26, 26, 25, 0.08);
-  --glass-shadow: 0 10px 30px -8px rgba(26, 26, 25, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  --glass-pill: #FFFFFF;
-  --glass-pill-ink: #1A1A19;
-  --glass-pill-shadow: 0 2px 10px rgba(26, 26, 25, 0.14);
-  --glass-filter: blur(22px) saturate(170%);
+  --color-code-title: #111111;
+  --color-code-type: #5A5A57;
+  --color-scrim: rgba(17, 17, 17, 0.4);
+  --color-grid: color-mix(in srgb, var(--color-border) 45%, transparent);
+  /* The navigation layer is solid now (no glass): paper with a 1 px edge, the current tab an ink block. */
+  --glass-bg: #F2F2F0;
+  --glass-bg-strong: #FFFFFF;
+  --glass-border: #D8D8D5;
+  --glass-edge: #D8D8D5;
+  --glass-shadow: none;
+  --glass-pill: #111111;
+  --glass-pill-ink: #F2F2F0;
+  --glass-pill-shadow: none;
+  --glass-filter: none;
   color-scheme: light;
 }
 
-/* ---- Dark ---- */
+/* ---- Dark: ink-on-dark, the same orange ---- */
 html[data-mode="dark"] {
-  --color-bg: #161616;
-  --color-bg-hover: #202020;
-  --color-bg-active: #2A2A2A;
-  --color-surface: #1E1E1E;
-  --color-surface-raised: #242424;
-  --color-surface-sunken: #121212;
-  --color-border: #2E2E2E;
-  --color-border-strong: #3C3C3C;
-  --color-border-focus: #EDEDEC;
-  --color-ink: #EDEDEC;
-  --color-ink-muted: #A3A29E;
-  --color-ink-faint: #6E6D69;         /* non text only */
-  --color-primary: #EDEDEC;
-  --color-primary-hover: #D6D6D4;
-  --color-on-primary: #161616;
-  --color-accent: #E3A82B;
-  --color-accent-hover: #E9B949;
-  --color-accent-soft: #2B2414;
-  --color-accent-text: #E9B949;
-  --color-on-accent: #161616;
-  --color-live: #E3A82B;
+  --color-bg: #111111;
+  --color-bg-hover: #1F1F1F;
+  --color-bg-active: #2B2B2B;
+  --color-surface: #1A1A1A;
+  --color-surface-raised: #1A1A1A;
+  --color-surface-sunken: #0B0B0B;
+  --color-surface-muted: #222222;
+  --color-border: #2B2B2B;
+  --color-border-strong: #6B6B67;
+  --color-border-focus: #FF4D00;
+  --color-focus: #FF4D00;
+  --color-focus-halo: #111111;
+  --color-ink: #F2F2F0;
+  --color-ink-soft: #D4D4D0;
+  --color-ink-muted: #A3A3A0;
+  --color-ink-faint: #75756F;         /* non text only */
+  --color-primary: #F2F2F0;
+  --color-primary-hover: #FF4D00;
+  --color-on-primary: #111111;
+  --color-on-primary-hover: #111111;
+  --color-accent: #FF4D00;
+  --color-accent-hover: #FF6A2B;
+  --color-accent-soft: #222222;
+  --color-accent-text: #FF4D00;       /* on the dark paper the orange itself is AA: 5.68:1 */
+  --color-on-accent: #111111;
+  --color-live: #FF4D00;
   --color-success: #5FBF85;
   --color-success-hover: #78CC98;
-  --color-success-soft: #15261C;
+  --color-success-soft: #222222;
   --color-success-text: #8FD8AB;
   --color-warning: #E3A82B;
   --color-warning-hover: #E9B949;
-  --color-warning-soft: #2B2414;
+  --color-warning-soft: #222222;
   --color-warning-text: #F0C870;
   --color-danger: #E5735F;
   --color-danger-hover: #EC8C7B;
-  --color-danger-soft: #2E1B17;
+  --color-danger-soft: #222222;
   --color-danger-text: #F2A193;
-  --color-on-danger: #161616;
-  --color-code-bg: #121212;
-  --color-code-keyword: #E9B949;
+  --color-on-danger: #111111;
+  --color-code-bg: #0B0B0B;
+  --color-code-keyword: #FF6A2B;
   --color-code-string: #8FD8AB;
   --color-code-number: #F0C870;
-  --color-code-title: #8DB4F5;
-  --color-code-type: #C3B1F2;
-  --color-scrim: rgba(0, 0, 0, 0.55);
-  --glass-bg: rgba(38, 38, 38, 0.6);
-  --glass-bg-strong: rgba(30, 30, 30, 0.88);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-edge: rgba(0, 0, 0, 0.4);
-  --glass-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  --glass-pill: #EDEDEC;
-  --glass-pill-ink: #161616;
-  --glass-pill-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-  --glass-filter: blur(22px) saturate(160%);
+  --color-code-title: #F2F2F0;
+  --color-code-type: #A3A3A0;
+  --color-scrim: rgba(0, 0, 0, 0.6);
+  --color-grid: color-mix(in srgb, var(--color-border) 70%, transparent);
+  --glass-bg: #111111;
+  --glass-bg-strong: #1A1A1A;
+  --glass-border: #2B2B2B;
+  --glass-edge: #2B2B2B;
+  --glass-shadow: none;
+  --glass-pill: #F2F2F0;
+  --glass-pill-ink: #111111;
+  --glass-pill-shadow: none;
+  --glass-filter: none;
   color-scheme: dark;
 }
 
-/* ---- High contrast: light based, black text, 2 px borders, a 3 px focus ring ---- */
+/* ---- High contrast: light based, black text, 2 px borders, a 3 px focus ring, the same orange for marks ---- */
 html[data-mode="contrast"] {
   --color-bg: #FFFFFF;
   --color-bg-hover: #EDEDED;
@@ -130,42 +145,47 @@ html[data-mode="contrast"] {
   --color-surface: #FFFFFF;
   --color-surface-raised: #FFFFFF;
   --color-surface-sunken: #F2F2F2;
+  --color-surface-muted: #F2F2F2;
   --color-border: #000000;
   --color-border-strong: #000000;
   --color-border-focus: #000000;
+  --color-focus: #FF4D00;
+  --color-focus-halo: #000000;
   --color-ink: #000000;
+  --color-ink-soft: #1A1A1A;
   --color-ink-muted: #262626;
   --color-ink-faint: #595959;
   --color-primary: #000000;
-  --color-primary-hover: #262626;
+  --color-primary-hover: #FF4D00;
   --color-on-primary: #FFFFFF;
-  --color-accent: #8A5A00;
-  --color-accent-hover: #6E4800;
-  --color-accent-soft: #FFF1CC;
-  --color-accent-text: #573800;
-  --color-on-accent: #FFFFFF;
-  --color-live: #8A5A00;
+  --color-on-primary-hover: #000000;
+  --color-accent: #FF4D00;
+  --color-accent-hover: #E04400;
+  --color-accent-soft: #F2F2F2;
+  --color-accent-text: #9E2F00;
+  --color-on-accent: #000000;
+  --color-live: #FF4D00;
   --color-success: #1B5E36;
-  --color-success-soft: #E3F1E8;
+  --color-success-soft: #F2F2F2;
   --color-success-text: #0E3F22;
   --color-warning: #7A4300;
-  --color-warning-soft: #FCEBD5;
+  --color-warning-soft: #F2F2F2;
   --color-warning-text: #5A3100;
   --color-danger: #8C1D13;
-  --color-danger-soft: #FBE3DF;
+  --color-danger-soft: #F2F2F2;
   --color-danger-text: #6B140C;
   --color-on-danger: #FFFFFF;
   --color-code-bg: #F2F2F2;
   --color-scrim: rgba(0, 0, 0, 0.6);
-  /* High contrast: no see-through glass; solid white, 2 px ink border, ink active tab */
+  --color-grid: color-mix(in srgb, var(--color-border) 12%, transparent);
   --glass-bg: #FFFFFF;
   --glass-bg-strong: #FFFFFF;
   --glass-border: #000000;
   --glass-edge: #000000;
-  --glass-shadow: 0 0 0 0 transparent;
+  --glass-shadow: none;
   --glass-pill: #000000;
   --glass-pill-ink: #FFFFFF;
-  --glass-pill-shadow: 0 0 0 0 transparent;
+  --glass-pill-shadow: none;
   --glass-filter: none;
   --border-w: 2px;
   --focus-w: 3px;
@@ -173,8 +193,8 @@ html[data-mode="contrast"] {
 }
 
 /* ---- Fixed colours, the same in every mode: the terminal window is a dark screen on purpose (TerminalPage.tsx
-   paints xterm with the same values), the companies' sign-in marks sit on a white tile as their guidelines ask, and
-   the Rooks mark is the app icon's colours. ---- */
+   paints xterm with the same values), the companies' sign-in marks sit on a white tile as their guidelines ask, the
+   Rooks mark is the app icon's colours with its door in the one accent, and dark sections are dark in every mode. ---- */
 :root {
   --screen-bg: #1C1C1E;
   --screen-chrome: #2C2C2E;
@@ -184,23 +204,32 @@ html[data-mode="contrast"] {
   --screen-dot-min: #FEBC2E;
   --screen-dot-max: #28C840;
   --brand-tile: #FFFFFF;
-  /* the Rooks mark (src/ui/RooksMark.tsx, desktop/app-icon.svg): an ink tile, a paper tower, a gold door */
+  /* the Rooks mark (src/ui/RooksMark.tsx, public/favicon.svg): an ink tile, a paper tower, a door in safety orange.
+     The desktop icon files keep the gold door until they are regenerated (BACKLOG.md). */
   --mark-ink-top: #2A2A28;
   --mark-ink: #161615;
   --mark-paper: #FAFAF9;
-  --mark-gold: #E3A82B;
+  --mark-door: #FF4D00;
+  /* dark sections (#1A1A1A) with off-white words and small mono links */
+  --color-dark: #1A1A1A;
+  --color-on-dark: #F2F2F0;
+  --color-on-dark-muted: #A3A3A0;
+  --color-dark-line: #2B2B2B;
 }
 
 /* ---- Everything that is not a colour ---- */
 :root {
-  /* Shape: 6 (controls), 10 (cards, sheets, composer, stage frame), full (chips, pills). */
-  --radius-xs: 6px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 10px;
-  --radius-full: 999px;
+  /* Shape: square. Every corner is 0 (cards, buttons, inputs, sheets, chips); the names stay so components keep
+     reading them. Edges are 1 px lines in the line colour. */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-full: 0;
   --border-w: 1px;
   --focus-w: 2px;
+  --line: var(--border-w) solid var(--color-border);       /* a hairline: card edges, dividers between sections */
+  --line-ink: var(--border-w) solid var(--color-ink);      /* the secondary button's black edge */
 
   /* Spacing: one 4 px grid, 4 8 12 16 24 32 48 64 (space-5 and space-10 are older names on the same grid) */
   --space-1: 4px;
@@ -213,14 +242,26 @@ html[data-mode="contrast"] {
   --space-10: 48px;
   --space-12: 48px;
   --space-16: 64px;
+  --space-24: 96px;
 
-  /* Type: one sans (Hanken Grotesk), JetBrains Mono for code only. The scale is 12 13 14 16 20 28 and nothing else;
-     the older names (2xs, 3xl, 4xl, thread, mono, rail) point at the nearest step. The Appearance slider scales every
-     --text-* token from these numbers (appearance.tsx TEXT_TOKENS), so size 14 renders exactly these values. */
+  /* The 12 column grid: pages with sections put the number and label in the left columns, the content in the right. */
+  --grid-columns: 12;
+  --grid-gutter: 24px;
+  --grid-meta-span: 3;             /* columns for the section number and label */
+
+  /* Type. Three faces, all bundled (fonts.css):
+     display: Archivo, extra bold, condensed (the width axis), uppercase, tight, for real headlines;
+     sans: Inter for body and controls, 15 px running text;
+     mono: JetBrains Mono for code and the micro-labels ([01 // NAME], 10 to 11 px, uppercase, 0.12em).
+     The Appearance slider scales every --text-* token from these numbers (appearance.tsx TEXT_TOKENS), so size 14
+     renders exactly these values. Display sizes are clamp()ed so phones keep a large, smaller headline. */
+  --text-micro-sm: 10px;
+  --text-micro: 11px;
   --text-2xs: 12px;
   --text-xs: 12px;
   --text-sm: 13px;
   --text-md: 14px;
+  --text-body: 15px;       /* running text */
   --text-lg: 16px;
   --text-xl: 20px;
   --text-2xl: 28px;
@@ -229,45 +270,73 @@ html[data-mode="contrast"] {
   --text-thread: 16px;     /* the conversation body, line height 1.65 */
   --text-mono: 13px;       /* steps, receipts, the terminal */
 
-  --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --display-xl: clamp(44px, 8vw, 120px);   /* hero headlines: welcome, Today */
+  --display-lg: clamp(36px, 5.6vw, 80px);
+  --display-md: clamp(28px, 3.4vw, 44px);  /* page titles (h1) */
+  --display-sm: clamp(20px, 2vw, 26px);    /* section titles (h2) */
+
+  --font-display: "Archivo Variable", "Archivo", "Arial Narrow", "Helvetica Neue Condensed", Impact, ui-sans-serif, sans-serif;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-heading: 600;
+  --weight-bold: 700;
+  --weight-display: 800;
+  --stretch-display: 72%;  /* Archivo's width axis: condensed */
 
+  --leading-display: 0.92;
   --leading-tight: 1.2;
   --leading-snug: 1.35;
   --leading-normal: 1.5;
   --leading-relaxed: 1.65;
 
+  --tracking-display: -0.01em;
   --tracking-tight: -0.01em;
   --tracking-normal: 0;
   --tracking-wide: 0;
+  --tracking-micro: 0.12em;
+  --tracking-button: 0.08em;
 
-  /* Depth: hairlines carry structure; one shadow, only on what floats (menus, sheets, the palette, toasts). */
-  --shadow-float: 0 8px 24px -12px rgb(0 0 0 / .18);
+  /* Depth: none. Lines carry structure; what floats (menus, sheets, the palette, toasts) gets a 1 px ink edge. */
+  --shadow-float: none;
+  --shadow-none: none;
+  /* the focus ring: an orange outline (:focus-visible below) drawn on a 1 px ink halo */
+  --focus-ring: 0 0 0 1px var(--color-focus-halo);
 
-  /* Motion: the one fade (ui/ui.css, ui-fade), 150 ms or less. Reduced motion turns it off. */
+  /* Blueprint grid: a faint repeating 1 px grid in the line colour at low opacity, for hero and empty areas only.
+     Hard 1 px stops, so it reads as lines, not as a gradient. */
+  --bg-grid: linear-gradient(to right, var(--color-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--color-grid) 1px, transparent 1px);
+  --bg-grid-size: 32px 32px;
+
+  /* Motion: subtle and industrial. The one fade (ui/ui.css, ui-fade) when something appears, 150 ms or less; an
+     orange wipe across a headline (ui-wipe) and a thin line that draws in (ui-draw). No bounce: the easing never
+     overshoots. The one reduced-motion rule (ui/ui.css) and Appearance's Motion off stop all of it. */
   --dur-fast: 100ms;
   --dur-fade: 120ms;
   --dur-normal: 120ms;
   --dur-slow: 150ms;
+  --dur-reveal: 560ms;
   --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-industrial: cubic-bezier(0.7, 0, 0.2, 1);
+  --motion-wipe: ui-wipe var(--dur-reveal) var(--ease-industrial) both;
+  --motion-draw: ui-draw var(--dur-reveal) var(--ease-industrial) both;
 
-  /* The glass navigation's one slide: the active pill moves to the picked tab. Motion off and reduced motion stop it. */
-  --dur-slide: 260ms;
-  --ease-slide: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* The navigation's one slide: the current tab's block moves to the picked tab. Motion off and reduced motion stop it. */
+  --dur-slide: 200ms;
+  --ease-slide: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Layout */
-  --topbar-h: 68px;               /* the floating glass navigation bar (desktop) */
-  --dock-h: 64px;                 /* the floating glass bar on phones */
+  --topbar-h: 68px;               /* the navigation bar (desktop) */
+  --dock-h: 64px;                 /* the bar on phones */
   --presence-h: 44px;
   --header-h: 48px;
   --max-content-width: 760px;      /* chat message width */
   --max-read-width: 880px;         /* reading pages */
   --max-page-width: 1120px;
+  --touch: 44px;                   /* the smallest touch target on phones */
 
   /* Breakpoints. CSS custom properties cannot be read inside @media, so these are documentation and the values
      for JavaScript (shell/breakpoints.ts); the stylesheets write the same two numbers, 900px and 1280px. */
@@ -275,30 +344,31 @@ html[data-mode="contrast"] {
   --bp-wide: 1280px;
 }
 
-/* ---- Focus: one visible ring that no component cancels ---- */
+/* ---- Focus: one visible ring that no component cancels: an orange outline on a 1 px ink halo ---- */
 :focus-visible {
-  outline: var(--focus-w) solid var(--color-border-focus);
-  outline-offset: 2px;
-  box-shadow: none;
-  border-radius: var(--radius-xs);
+  outline: var(--focus-w) solid var(--color-focus);
+  outline-offset: 1px;
+  box-shadow: var(--focus-ring);
+  border-radius: 0;
 }
 
-/* ---- Selection ---- */
+/* ---- Selection: ink on safety orange (5.68:1) ---- */
 ::selection {
-  background: var(--color-bg-active);
-  color: var(--color-ink);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
-/* ---- Scrollbar ---- */
+/* ---- Scrollbar: a square thumb ---- */
 * { scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--color-border-strong); border: 2px solid transparent; background-clip: content-box; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--color-border-strong); border: 2px solid transparent; background-clip: content-box; border-radius: 0; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-ink-faint); }
 
 /* ---- Aliases for names older components still use ---- */
 :root {
   --sans: var(--font-sans);
+  --display: var(--font-display);
   --border-focus: var(--color-border-focus);
   --danger-hover: var(--color-danger-hover);
   --success-soft: var(--color-success-soft);
@@ -310,7 +380,7 @@ html[data-mode="contrast"] {
   --dur-med: var(--dur-normal);
 }
 
-/* Glass falls back to a solid surface when the person asks for less transparency, or the browser cannot blur. */
+/* The navigation is solid in every theme now; these stay so a blur can never come back through an old rule. */
 @media (prefers-reduced-transparency: reduce) {
   :root, html[data-mode] { --glass-bg: var(--color-surface); --glass-bg-strong: var(--color-surface); --glass-filter: none; --glass-border: var(--color-border-strong); }
 }

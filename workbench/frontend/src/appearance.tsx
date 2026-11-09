@@ -21,9 +21,9 @@ export type ThemeInfo = { id: ThemeId; label: string; note: string; mode: "light
   /** paper, panel, text, muted, border: used for the picker's small preview and the desktop window's background */
   swatch: { paper: string; panel: string; text: string; muted: string; border: string; live: string } };
 
-const LIGHT = { paper: "#fafaf9", panel: "#ffffff", text: "#1a1a19", muted: "#5e5d59", border: "#e7e6e3", live: "#c98a00" };
-const DARK = { paper: "#161616", panel: "#1e1e1e", text: "#ededec", muted: "#a3a29e", border: "#2e2e2e", live: "#e3a82b" };
-const CONTRAST = { paper: "#ffffff", panel: "#ffffff", text: "#000000", muted: "#262626", border: "#000000", live: "#8a5a00" };
+const LIGHT = { paper: "#f2f2f0", panel: "#ffffff", text: "#111111", muted: "#5a5a57", border: "#d8d8d5", live: "#ff4d00" };
+const DARK = { paper: "#111111", panel: "#1a1a1a", text: "#f2f2f0", muted: "#a3a3a0", border: "#2b2b2b", live: "#ff4d00" };
+const CONTRAST = { paper: "#ffffff", panel: "#ffffff", text: "#000000", muted: "#262626", border: "#000000", live: "#ff4d00" };
 
 export const THEMES: ThemeInfo[] = [
   { id: "light", label: "Light", note: "Quiet greys on white. The everyday look.", mode: "light", swatch: LIGHT },
@@ -50,14 +50,15 @@ export function resolveTheme(t: ThemeId): Exclude<ThemeId, "auto"> {
 export const isDark = (t: ThemeId) => resolveTheme(t) === "dark";
 
 export const FONTS: { id: FontId; label: string; note: string; body: string }[] = [
-  { id: "modern", label: "Clean", note: "Hanken Grotesk, the default", body: '"Hanken Grotesk Variable", Helvetica, sans-serif' },
+  { id: "modern", label: "Clean", note: "Inter, the default", body: '"Inter Variable", Helvetica, sans-serif' },
   { id: "system", label: "System", note: "Your computer's own fonts", body: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' },
 ];
 export const SIZES = { min: 12, max: 18 };
 
 // Base sizes at 14px, the same numbers tokens.css declares; every text token scales with the slider.
-const TEXT_TOKENS: [string, number][] = [["--text-2xs", 12], ["--text-xs", 12], ["--text-sm", 13], ["--text-md", 14], ["--text-lg", 16],
-  ["--text-xl", 20], ["--text-2xl", 28], ["--text-3xl", 28], ["--text-4xl", 28], ["--text-thread", 16], ["--text-mono", 13]];
+const TEXT_TOKENS: [string, number][] = [["--text-micro-sm", 10], ["--text-micro", 11], ["--text-2xs", 12], ["--text-xs", 12], ["--text-sm", 13],
+  ["--text-md", 14], ["--text-body", 15], ["--text-lg", 16], ["--text-xl", 20], ["--text-2xl", 28], ["--text-3xl", 28], ["--text-4xl", 28],
+  ["--text-thread", 16], ["--text-mono", 13]];
 
 export function readAppearance(): Appearance {
   try {

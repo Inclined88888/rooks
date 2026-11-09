@@ -17,6 +17,14 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Scheduled later
 
+### Industrial redesign: the desktop icon files keep the gold door (branch feat/industrial-ui)
+
+* The app (`workbench/frontend/src/ui/RooksMark.tsx`) and the browser tab (`workbench/frontend/public/favicon.svg`) draw
+  the Rooks tower with its door in the one accent, safety orange #FF4D00. The desktop icon files were not regenerated
+  in this branch: `desktop/app-icon.svg`, the PNG and ICNS/ICO files made from it, and the loading page
+  `desktop/ui/index.html` still have the gold door #E3A82B, and `desktop/scripts/test_icons.py` still checks for gold.
+  Regenerate them from the new colour, update that test, and the brand has one accent everywhere.
+
 ### Workplace cleanup: what the delete step left (branch cleanup/workplace)
 
 * **For the room-browser branch** (out of scope here because that branch is changing these files): nothing in

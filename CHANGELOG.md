@@ -4,6 +4,40 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · Industrial redesign · branch feat/industrial-ui
+
+The app's look moves to an industrial, technical design: off-white paper (#F2F2F0), white cards, ink (#111111),
+1 px hairlines (#D8D8D5) and one safety orange (#FF4D00) used sparingly; square corners, no shadows, no gradients
+(only a faint blueprint grid behind hero and empty areas), condensed uppercase headlines. Every feature, page, route,
+call and word stays as it was; only the visual design system changes, step by step. No data change, nothing to
+migrate. Rollback: revert the branch's commits (the built `dist` is committed with each step).
+
+- **Step 1: tokens and global CSS.**
+  - `tokens.css` is design system v4: the palette for Light, Dark (ink on dark: #111111 paper, #1A1A1A surfaces,
+    #2B2B2B lines, #F2F2F0 words, the same orange) and High contrast; every `--radius-*` is 0; `--shadow-float` and
+    the navigation's glass tokens are none (the bar is solid now); `--bg-grid` is the blueprint grid; a type scale with
+    condensed display sizes (`clamp()`ed for phones), 15 px body and 10 to 11 px mono micro-labels at 0.12em; motion
+    tokens for an orange wipe across a headline and a line that draws in (both stop under the one reduced-motion rule
+    and Motion off).
+  - Fonts are bundled at exact versions, never fetched at run time: Archivo (with its width axis, for the condensed
+    headlines) and Inter are added, JetBrains Mono stays, Hanken Grotesk is removed. Appearance's "Clean" typeface
+    now reads "Inter, the default".
+  - Global CSS (`styles.css`): body text 15 px Inter, `h1`/`h2` in the condensed display face, extra bold, uppercase;
+    links in ink with an orange underline; the focus ring is an orange outline on a 1 px ink halo (3:1 against what is
+    next to it); selection is ink on orange; shared pieces for the next steps (`.micro`, `.reveal`, `.rule-draw`,
+    `.blueprint`, `.display-xl`, `.grid-12`). Headings inside written content (answers, notes) keep their case.
+  - Accessibility: orange is never small text (it is 2.97:1 on the paper); orange words use a burnt orange that is AA
+    (#B23800), and the primary button hovers to orange with ink words (white on orange is 3.3:1).
+    `scripts/check-theme-contrast.py` now reads `tokens.css` (it pointed at deleted files and could not run), covers
+    the new tokens, and `scripts/test-all.sh` runs it.
+  - The Rooks mark's door is the accent orange (the app and the browser tab); the desktop icon files keep the gold door
+    until they are regenerated (BACKLOG).
+  - Guards: `tests/industrial-tokens.test.mjs` (failed on the old tree: all ten tests) checks square corners, no
+    shadows but the focus ring, no gradients but the grid, the palette, the type, bundled fonts, the globals and the
+    motion; feature stylesheets not restyled yet are named in its lists, which must shrink to empty by the sweep step.
+    `premium-foundation`, `brand-mark` and `workroom-shell` tests were updated where the spec changes what they guard
+    (palette, type scale, radius and shadow values, the two new motions, the door colour).
+
 ## Unreleased · Workplace cleanup · branch cleanup/workplace
 
 The cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the old browser
