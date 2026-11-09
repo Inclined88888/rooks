@@ -22,7 +22,8 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * The app (`workbench/frontend/src/ui/RooksMark.tsx`) and the browser tab (`workbench/frontend/public/favicon.svg`) draw
   the Rooks tower with its door in the one accent, safety orange #FF4D00. The desktop icon files were not regenerated
   in this branch: `desktop/app-icon.svg`, the PNG and ICNS/ICO files made from it, and the loading page
-  `desktop/ui/index.html` still have the gold door #E3A82B, and `desktop/scripts/test_icons.py` still checks for gold.
+  `desktop/ui/index.html` still have the gold door #E3A82B, and `desktop/scripts/test_icons.py` still checks the desktop
+  source for gold (it checks the favicon for the orange door).
   Regenerate them from the new colour, update that test, and the brand has one accent everywhere.
 
 ### Industrial redesign: words and behaviour for the owner to approve (branch feat/industrial-ui)
