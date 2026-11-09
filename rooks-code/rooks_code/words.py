@@ -15,6 +15,7 @@ COMMANDS: dict[str, str] = {
     "/mode": "chat talks, plan reads, build can change files: /mode chat",
     "/room": "Rooks' own computer: /room, start, stop, open COMMAND, files, points, shell (all under The Room)",
     "/needs": "what waits for your OK in the app: /needs, /needs approve 1, /needs deny 1",
+    "/work": "your work account (Microsoft 365): /work, /work on files, /work files WORDS, /work chats, /work tasks",
     "/team": "coworkers for your line of work: /team, /team set up construction, /team create construction",
     "/jobs": "jobs running here and in the app; /jobs stop ID stops one started here",
     "/memory": "what Rooks remembers about you; /memory forget <words> drops one",
@@ -44,7 +45,7 @@ ALIASES = {"/clear": "/new", "/yes": "/auto", "/quit": "/exit", "/?": "/help", "
 
 GROUPS = {
     "Conversation": ["/help", "/new", "/undo", "/diff", "/compact", "/copy", "/image", "/exit"],
-    "The Room, Needs you, Jobs": ["/room", "/needs", "/jobs", "/team"],
+    "The Room, Needs you, Jobs": ["/room", "/needs", "/jobs", "/team", "/work"],
     "Memory": ["/memory", "/history", "/skills", "/init", "/context", "/sessions", "/resume"],
     "Model": ["/model", "/effort", "/mode", "/provider", "/login", "/mcp"],
     "Checks": ["/permissions", "/auto", "/dry-run", "/doctor", "/cost", "/receipt"],

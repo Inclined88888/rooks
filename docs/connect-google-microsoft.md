@@ -109,6 +109,34 @@ accounts, the tenant's consent policy decides: Microsoft's default "Microsoft-ma
 "Your organisation needs an administrator to approve AI Workspace for mail and calendar". The admin can approve it at
 `https://login.microsoftonline.com/<their tenant>/adminconsent?client_id=<your client id>`.
 
+### Microsoft: the work account and its switches (Work apps, design 0012)
+
+The **Work apps** page (Settings) connects one work account. Its first sign-in asks only for `openid email profile
+offline_access User.Read`; each switch asks for its own permissions when turned on (incremental consent, the same
+registration). Add these **delegated** Microsoft Graph permissions to the registration in step 5 so the consent page
+can offer them; nobody is asked for one until they turn its switch on. The one table is
+`workbench/backend/app/work_scopes.py`.
+
+| Switch | Delegated permissions | Needs an admin by default |
+| --- | --- | --- |
+| Mail | `Mail.ReadWrite`, `Mail.Send` | no (tenant policy decides) |
+| Calendar | `Calendars.ReadWrite` | no |
+| Files: read | `Files.Read.All`, `Sites.Read.All` | no |
+| Files: change | `Files.ReadWrite.All` | no |
+| Chats: read | `Chat.Read`, `Team.ReadBasic.All`, `Channel.ReadBasic.All`, `ChannelMessage.Read.All` | `ChannelMessage.Read.All` |
+| Chats: post | `ChatMessage.Send`, `ChannelMessage.Send` | no |
+| Meeting transcripts | `OnlineMeetings.Read`, `OnlineMeetingTranscript.Read.All` | `OnlineMeetingTranscript.Read.All` |
+| Tasks | `Tasks.ReadWrite` | no |
+
+"Needs an admin" follows Microsoft Graph's permissions reference as known when this was built; it was not checked
+against a live tenant, and a company can require an admin for every permission. When Microsoft answers `AADSTS65001`
+or `AADSTS90094`, the switch shows "Waiting for your IT team" and **Copy the request for IT** copies a note naming each
+permission and why, with the tenant's admin consent address
+(`https://login.microsoftonline.com/<tenant>/v2.0/adminconsent?client_id=...&scope=...`). A personal account
+(tenant `9188040d-6c67-4c5b-b112-36a304b66dad`) is refused as a work account. Every write (upload, new version, share,
+cell edit, post, task change) waits for the person's yes in Needs you; reads never do. Tested only against the fake
+in `workbench/backend/tests/fake_graph.py`: nothing here has been run against a real tenant yet (BACKLOG.md).
+
 ## 3. Put the IDs into a build
 
 Any of these works; the first that is set wins at run time:

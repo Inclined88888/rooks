@@ -1,6 +1,7 @@
 # 0012: Rooks inside the work suites (Microsoft 365 and Google Workspace)
 
-Status: design record, 2026-11-09. Branch `feat/windows`. Grows from `connect.py`, `cloud_mail.py`, `needs_you.py`, `meetings.py`, `analysis.py` and the gaps in `docs/architecture.md` section h (ranks 1, 3, 4, 7, 9). Builds on 0007 (the Room's browser). Lanes: backend, frontend, terminal. Tests first: each one fails on today's code.
+Status: design record, 2026-11-09. Microsoft half built on `feat/windows` (M0 to M4 below, without the `cloud_mail.py`
+tests of M0): see "As built" at the end. Google (G1 to G3) and the Teams bot are not built. Branch `feat/windows`. Grows from `connect.py`, `cloud_mail.py`, `needs_you.py`, `meetings.py`, `analysis.py` and the gaps in `docs/architecture.md` section h (ranks 1, 3, 4, 7, 9). Builds on 0007 (the Room's browser). Lanes: backend, frontend, terminal. Tests first: each one fails on today's code.
 
 The owner: "make it all suitable for professional workspace - Microsoft pack or google ways - teams to onedrive to sharepoint". Most of the audience works in Microsoft 365 on Windows, so Microsoft is built first.
 
@@ -150,3 +151,27 @@ Not testable here, said plainly in the changelog and pull request: a real tenant
 7. **Last, only with the owner's yes and a test company:** the Teams bot with Teams approval cards, and the Google Chat app.
 
 Each step ships with its tests, CHANGELOG, BACKLOG and `docs/connect-google-microsoft.md`.
+
+## As built (Microsoft half, 2026-11-09)
+
+- **Modules.** `work_scopes.py` (the table in 1.2), `work_suite.py` (account, switches, `require`, titles, IT note,
+  `hold`), `work_graph.py` (the calls in 2.1 and 2.2; Graph only), `work_suite_tools.py` (the tools in 2.4),
+  `work_suite_api.py` (`/api/work`, the person or the Terminal access token, never a bridge key). `connect.start`
+  takes `work` and `feature`; `connect.complete` reads `tid` and `oid` from the ID token.
+- **Switch states** are `on`, `off`, `signin` (on, but the token lacks a permission) and `waiting` (the company must
+  approve). `features` is JSON `{"on": [...], "waiting": [...]}`. Mail and Calendar of the work account are its
+  ordinary mailbox and calendar rows, created when on and removed when off.
+- **Holding.** Every write tool is `effect="external"` with a `confirm` reason, so it always waits. A conversation that
+  read untrusted content holds a work write with the untrusted reason (`assistant.hold_reason`, before `confirm`).
+  An approved call whose switch was turned off meanwhile reaches its own gate and answers "Changing files is off"
+  (`work_suite_tools.GATED`). The terminal's `/work post` and the Tasks page's tick on a Planner or To Do task put the
+  write in Needs you through `POST /api/work/hold`; they never send.
+- **Differences from the record.** `work_search` covers files and Teams messages (no SharePoint `listItem`).
+  `/api/work/meetings` asks Graph's calendar view which meetings were held in Teams, so transcripts work for meetings
+  the local calendar has not synced. Tasks sync when the Tasks page opens or `/work tasks` runs; a task deleted at
+  Microsoft is not removed here. Teams approval cards (2.2, last bullet) were judged not feasible without the bot and
+  relay, as the record says; the Channels page has a card explaining it.
+- **Tests.** `tests/fake_graph.py` and `tests/test_work_microsoft.py` (tests 1 to 11 and 13 in section 4), the terminal
+  in `rooks-code/tests/test_work_terminal.py`, the page and parity guard in `frontend/tests/work-apps.test.mjs`. Test 12
+  (`cloud_mail.py`'s own suite) is not done.
+

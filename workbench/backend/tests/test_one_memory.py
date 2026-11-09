@@ -181,10 +181,10 @@ def test_the_move_keeps_every_fact_from_all_three_stores(client, tmp_path, monke
         knowledge.ensure()
 
         c = db.conn()
-        assert c.execute("PRAGMA user_version").fetchone()[0] == db.SCHEMA_VERSION == 5
+        assert c.execute("PRAGMA user_version").fetchone()[0] == db.SCHEMA_VERSION >= 5
         tables = {r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
         assert not {"memories", "memories_fts", "adapt_facts"} & tables, "the two old stores are gone"
-        assert list(tmp_path.glob("workbench.db.pre-v5-*.bak")), "a backup is taken before the move"
+        assert list(tmp_path.glob(f"workbench.db.pre-v{db.SCHEMA_VERSION}-*.bak")), "a backup is taken before the move"
         mems = knowledge.list_memories(status="")
         by = {}
         for m in mems:
@@ -250,7 +250,7 @@ def test_a_locked_memory_key_at_upgrade_leaves_the_facts_in_place_until_it_opens
 
         monkeypatch.setattr(crypto, "_state", locked)
         db.init()
-        assert c.execute("PRAGMA user_version").fetchone()[0] == 5, "start-up is not blocked"
+        assert c.execute("PRAGMA user_version").fetchone()[0] == db.SCHEMA_VERSION, "start-up is not blocked"
         assert c.execute("SELECT COUNT(*) FROM memories").fetchone()[0] == 1, "nothing is lost while the key is locked"
         monkeypatch.setattr(crypto, "_state", real_state)
         knowledge.ensure()

@@ -295,7 +295,7 @@ class RunTurnIn(BaseModel):
 
 
 @router.post("/run_turn")
-async def run_turn(data: RunTurnIn):
+async def run_turn(data: RunTurnIn, request: Request):
     """Run one turn via the backend's shared agent loop.
     Returns SSE stream of events: tool_call, tool_result, message, error, done, writing."""
     from .api import sse
@@ -305,12 +305,18 @@ async def run_turn(data: RunTurnIn):
         raise HTTPException(404, "Conversation not found")
     if data.model:
         db.run("UPDATE conversations SET model = ? WHERE id = ?", data.model, data.conversation_id)
+    from .security import _bearer_token, check_cli_token
+
+    # The shared bridge key is also held by the helpers and the coding jobs the app starts: a turn it starts gets no
+    # work account tools (design 0012). The person's own Terminal access token gets them.
+    shared = not check_cli_token(_bearer_token(request))
 
     async def events():
         import asyncio
 
         cid = data.conversation_id
-        ctx = assistant.Ctx(channel=CHANNEL, conversation_id=cid, request_key="", skip_save=False, attachments=[])
+        ctx = assistant.Ctx(channel=CHANNEL, conversation_id=cid, request_key="", skip_save=False, attachments=[],
+                            shared_key=shared)
         task = asyncio.current_task()
         if task is not None:
             assistant.TURNS[cid] = task  # the app's Stop button (/api/assistant/stop) reaches a terminal turn too

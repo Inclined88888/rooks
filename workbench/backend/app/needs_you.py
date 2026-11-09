@@ -106,6 +106,12 @@ def _title(tool: str, args: dict) -> str:
 
             subject = _site(subject)
         return f"{title}: {clip(' '.join(str(subject).split()))}" if isinstance(subject, (str, int)) and str(subject).strip() else title
+    if tool.startswith("work_"):  # design 0012: the file, the people, the chat or the task, from names already seen
+        from .work_suite import title as work_title
+
+        said = work_title(tool, args)
+        if said:
+            return said
     if tool.startswith("mcp__"):  # mcp__<server>__<tool>: a tool on one of the user's own connected servers
         parts = tool.split("__", 2)
         server, name = (parts[1], parts[2]) if len(parts) == 3 else ("", parts[-1])

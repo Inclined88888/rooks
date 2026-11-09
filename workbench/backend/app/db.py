@@ -423,7 +423,7 @@ def conn() -> sqlite3.Connection:
     return c
 
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 LEGACY_LEDGERS = ("usage", "tool_runs", "turn_checks", "pending_actions")
 LEGACY_TABLES = (*LEGACY_LEDGERS, "providers")
 
@@ -453,6 +453,7 @@ def migrate(c: sqlite3.Connection, path) -> None:
         (3, lambda: migrate_v3(c)),
         (4, lambda: migrate_v4(c)),
         (5, lambda: migrate_v5(c)),
+        (6, lambda: migrate_v6(c)),
     ]
     # Foreign keys off for the whole upgrade. SQLite ignores this pragma inside a transaction, so it has to be set
     # here, before BEGIN: with keys on, a table rebuild's DROP TABLE is an implicit DELETE that cascades (migrate_v3
@@ -488,6 +489,16 @@ ADDED_COLUMNS = (
     ("calendars", "linked_account_id", "INTEGER REFERENCES linked_accounts(id) ON DELETE CASCADE"),
     ("messages", "attachments", "TEXT NOT NULL DEFAULT ''"),  # feat/attachments
     ("conversations", "archived", "INTEGER NOT NULL DEFAULT 0"),
+    # design 0012: one work account per person (Microsoft 365 or Google Workspace), its company and who signed in, and
+    # which of its switches are on ({"on": [...], "waiting": [...]}); version 6 turns Mail and Calendar on for old rows
+    ("linked_accounts", "work", "INTEGER NOT NULL DEFAULT 0"),
+    ("linked_accounts", "tenant", "TEXT NOT NULL DEFAULT ''"),
+    ("linked_accounts", "subject", "TEXT NOT NULL DEFAULT ''"),
+    ("linked_accounts", "features", "TEXT NOT NULL DEFAULT ''"),
+    # design 0012: a task that lives in Planner, To Do (or Google Tasks): where, its id there, and what a change needs
+    ("tasks", "origin", "TEXT NOT NULL DEFAULT ''"),          # '' (kept only in Rooks) | planner | todo
+    ("tasks", "remote_id", "TEXT NOT NULL DEFAULT ''"),
+    ("tasks", "remote_meta", "TEXT NOT NULL DEFAULT ''"),     # JSON: the list or plan, Planner's version tag
 )
 
 
@@ -608,6 +619,12 @@ def migrate_v5(c: sqlite3.Connection) -> None:
         facts.move_old_stores(c)
     except crypto.KeyMissing as e:
         logging.getLogger("db").warning("older memories left in place until the memory key can be read: %s", e)
+
+
+def migrate_v6(c: sqlite3.Connection) -> None:
+    """Design 0012: accounts connected before the work account keep what they did: Mail and Calendar on, work off.
+    Rollback: the older app ignores the four new columns."""
+    c.execute("UPDATE linked_accounts SET features = ? WHERE features = ''", (json.dumps({"on": ["mail", "calendar"], "waiting": []}),))
 
 
 def migrate_v3(c: sqlite3.Connection) -> None:

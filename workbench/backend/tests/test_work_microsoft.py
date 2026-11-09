@@ -502,3 +502,44 @@ def test_old_accounts_keep_mail_and_calendar_after_the_upgrade(tmp_path):
     assert row["work"] == 0 and set(json.loads(row["features"])["on"]) == {"mail", "calendar"}
     assert c.execute("PRAGMA user_version").fetchone()[0] == db.SCHEMA_VERSION == 6
     c.close()
+
+
+def test_a_turn_run_with_the_shared_key_is_offered_no_work_tools(client, work, monkeypatch):
+    """The terminal's chat turns (/v1/rooks/run_turn) accept the shared bridge key too, which coding jobs and the
+    helpers hold. Through it the work account is out of reach: its tools are offered only to a turn the person's own
+    Terminal access token started (or the app itself)."""
+    from conftest import CALLS
+
+    from app import config, db, security
+
+    monkeypatch.setattr(config, "BROWSER_API_KEY", BRIDGE)
+    monkeypatch.setattr(security, "_attempts", {})
+    db.set_setting("cli_token_hash", hashlib.sha256(TERMINAL.encode()).hexdigest())
+    try:
+        _sign_in(client)
+        _on(client, "files_read")
+        anon = _anon(client)
+        for key, offered in ((BRIDGE, False), (TERMINAL, True)):
+            h = {"Authorization": f"Bearer {key}", **W}
+            cid = anon.post("/v1/rooks/conversation", json={"session": f"s-{key[:1]}", "model": ""}, headers=h).json()["conversation_id"]
+            SCRIPT[:] = [tool_call("work_search", {"query": "budget"}), {"role": "assistant", "content": "done"}]
+            CALLS.clear()
+            sent = len(FG.S["requests"])
+            events(anon.post("/v1/rooks/run_turn", json={"conversation_id": cid, "prompt": "find the budget"}, headers=h))
+            names = {t["function"]["name"] for t in CALLS[0]["tools"]}
+            assert ("work_search" in names) is offered, key[:1]
+            assert (len(FG.S["requests"]) > sent) is offered, key[:1]
+    finally:
+        db.set_setting("cli_token_hash", "")
+
+
+def test_a_team_leads_sub_agents_are_offered_no_work_tools(client, work):
+    """Sub-agents are background jobs a turn can start (team_dispatch); the work account stays with the person's turn."""
+    from app import assistant
+
+    _sign_in(client)
+    _on(client, "files_read")
+    cid = assistant.new_conversation("web")
+    assert "work_search" in {t.name for t in assistant.available_tools(assistant.Ctx(channel="web", conversation_id=cid))}
+    assert not {t.name for t in assistant.available_tools(assistant.Ctx(channel="subagent", conversation_id=cid))
+                if t.name.startswith("work_")}

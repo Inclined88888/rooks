@@ -18,7 +18,7 @@ from . import egress  # noqa: E402
 
 egress.install()  # before anything connects: every outbound request is in the audit log (R8, item 75)
 
-from . import actions, api, appearance, assistant_api, bridge, browser_proxy, cli_agents_api, company, plan_signin, config, connect, db, desk_proxy, health, llm, mobile, scheduler, sites, skills_hub, telegram, work_api  # noqa: E402
+from . import actions, api, appearance, assistant_api, bridge, browser_proxy, cli_agents_api, company, plan_signin, config, connect, db, desk_proxy, health, llm, mobile, scheduler, sites, skills_hub, telegram, work_api, work_suite_api  # noqa: E402
 from . import terminal_pty  # noqa: E402 - #7 app terminal
 from . import compression  # AIW-Phase1: rolling compression of long chats
 from . import starters  # noqa: E402 - feat/coworkers
@@ -198,6 +198,7 @@ app.include_router(presence.pulse_router)  # GET /api/pulse: presence, Needs you
 app.include_router(needs_you.router)
 app.include_router(starters.router)  # feat/coworkers: profession setups, coworkers and job cards (design record 0004)
 app.include_router(work_api.router)  # Files (any file, analysis, sandboxed Python) and Sites (any website the user works in)
+app.include_router(work_suite_api.router)  # design 0012: the work account (Microsoft 365), its switches, files, Teams, tasks
 app.include_router(skills_hub.router)  # Skills from GitHub behind the security gate
 app.include_router(mcp_client_api.router)  # feat/mcp-client: connect Workbench to the user's own MCP servers
 app.include_router(cli_agents_api.router)  # hand jobs to the user's own Claude Code / Codex CLI

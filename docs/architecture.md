@@ -431,7 +431,11 @@ step in section g; a row it changed says so in its status. Everything else is as
 |---|---|---|
 | mail.py | Read and send mail on any standard server; routes Google, Microsoft and Mac accounts | live |
 | cloud_mail.py | Gmail and Microsoft mail and calendar for accounts connected with one sign-in | live (no tests) |
-| connect.py | "Connect Google" and "Connect Microsoft" sign-in; tokens stored encrypted | live |
+| connect.py | "Connect Google" and "Connect Microsoft" sign-in; tokens stored encrypted; the work sign-in asks only who you are, then one switch's permissions at a time | live |
+| work_scopes.py | The work account's switches and the permissions each asks for (design 0012) | live |
+| work_suite.py | The work account, its switches, the gate every work tool passes, Needs you titles, the IT note | live (Microsoft) |
+| work_graph.py | OneDrive, SharePoint, Teams, meeting transcripts, Planner and To Do through Microsoft Graph | live, tested against a fake only |
+| work_suite_tools.py, work_suite_api.py | The assistant's `work_*` tools and `/api/work` (the Work apps page and the terminal's `/work`) | live |
 | oauth_clients.py | The public app identifiers used for that sign-in | live |
 | mail_autodetect.py | Finds mail and calendar settings from an address | live |
 | mac_mail.py | Mail through accounts already in Apple Mail | live (Mac only) |

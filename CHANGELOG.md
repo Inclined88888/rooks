@@ -7,8 +7,8 @@ version and the merge commit on `main`.
 ## Unreleased · Windows and the work suites · branch feat/windows
 
 Design records `docs/design/0011-windows.md` (Windows on a par with macOS and Linux) and
-`docs/design/0012-work-suites.md` (Microsoft 365 and Google Workspace). No schema change in the entries below.
-Rollback: revert the commits.
+`docs/design/0012-work-suites.md` (Microsoft 365 and Google Workspace). No schema change in the entries below, except
+the work account (schema version 6, its own entry). Rollback: revert the commits.
 
 - **Terminals in the Room on Windows** (design 0011, section 1). On Windows 10 1809 and later the Room's Terminal window
   works as it does on macOS and Linux: New terminal opens PowerShell (PowerShell 7 when installed, else Windows
@@ -117,6 +117,57 @@ Rollback: revert the commits.
   jobs) now starts the frozen sidecar, opens the Room's browser through its API on a loopback test page, and checks the
   page's text and a frame arrive (`desktop/scripts/smoke_sidecar.py --room-browser`). Windows is covered too since
   the entry above.
+- **Your work account: Microsoft 365, one part at a time** (design 0012, Microsoft half). A new **Work apps** page
+  (Settings) connects the account your company gave you with Microsoft's own sign-in in your browser. The first sign-in
+  asks only who you are. Then one switch per part: Mail, Calendar, Files: read, Files: change, Chats: read, Chats: post,
+  Meeting transcripts and Tasks, each with a line saying what it allows. Turning one on opens a fresh sign-in that asks
+  only for that part's permissions (Microsoft's incremental consent), so files can be read without write permission
+  ever being asked for; turning one off stops it at once, even though Microsoft still allows it (the page says how to
+  remove it there too). When your company makes an IT admin approve apps, the switch says "Waiting for your IT team"
+  and **Copy the request for IT** copies a note naming each permission, why, and the address an admin uses to approve
+  it; that address and the permission names appear nowhere else but Advanced. A personal Microsoft account is told to
+  use Mail and calendar instead. Accounts connected before keep Mail and Calendar on.
+  What Rooks can do with it: search and list your OneDrive, the SharePoint sites you follow and files shared with you;
+  read a file in place with page and cell citations; save a copy to Files that remembers where it came from; open it
+  in the Room's browser (you sign in there once; Rooks never hands its access to a browser), or your own browser where
+  the Room has none. Read your Teams chats and the channels you are in. Bring a Teams meeting's transcript into
+  Meetings with its speakers ("This meeting has no transcript." when there is none). Show your Planner and To Do tasks
+  in Tasks with a Planner or To Do label. Reading never waits. **Every write waits for your yes in Needs you** and runs
+  exactly what the card showed, once: uploading to OneDrive (large files in parts), a new version of a Word file
+  (OneDrive keeps the old one), changing Excel cells, sharing with people or as a company link, posting in a chat or
+  channel (the card shows the chat and the exact text), and changing or adding a task (ticking a Planner or To Do task
+  on the Tasks page asks too). There is no delete. A conversation that read a file, chat or transcript holds every
+  later change as untrusted, so a Teams message saying "share this with x@evil" makes the share wait with that reason.
+  A background job can never answer for you: the bridge key the helpers and coding jobs share is refused by the work
+  routes and by Needs you, a chat turn started with that key (the terminal's `/v1/rooks/run_turn`) and a team lead's
+  sub-agents are not offered the work tools at all, and a scheduled run's request waits once, however often it runs. Files gains a **From work**
+  tab, Meetings a **From Teams** button, Channels a Teams card saying what a chat with Rooks inside Teams would need.
+  The `rooks` terminal gets `/work` (account and switches in the same words, `connect microsoft`, `on`/`off`, `files`,
+  `read`, `save`, `open`, `chats`, `chat`, `post` (held in Needs you), `tasks`, `it`) with its own Terminal access
+  token, never the bridge key. The assistant's tools: `work_search`, `work_files`, `work_file_read`, `work_file_save`,
+  `work_file_open`, `work_file_upload`, `work_file_share`, `work_file_edit`, `work_chats`, `work_chat_read`,
+  `work_chat_post`, `work_transcript`, `work_task_update`. Underneath: `work_scopes.py` (the one table of switches and
+  permissions), `work_suite.py` (account, switches, gate, Needs you titles), `work_graph.py` (Microsoft Graph: refresh
+  and one retry on 401, paging, waiting out a 429 with Retry-After up to 30 s, downloads and upload parts sent to
+  Microsoft's own address without the token), `work_suite_tools.py`, `work_suite_api.py` (`/api/work`). **Schema
+  version 6**: `linked_accounts` gains `work`, `tenant`, `subject` and `features` (old accounts: Mail and Calendar on),
+  `tasks` gains `origin`, `remote_id` and `remote_meta`, Files' table gains `remote`. Only columns are added, so no
+  backup is taken. Rollback: revert the commits, then set the database back to version 5 with
+  `sqlite3 workbench.db "PRAGMA user_version = 5"` (the older app ignores the new columns; without this its health
+  check reports "schema version 6, expected 5"). Tests that failed on the old code (commit 7a39b5a): all 23 in
+  `workbench/backend/tests/test_work_microsoft.py` (and the 2 added after it for the shared key and sub-agents, seen
+  failing on the code without their fix) against `tests/fake_graph.py` (a fake Microsoft sign-in and Graph
+  whose tokens carry the consented permissions and refuse a call without one), the 8 in
+  `rooks-code/tests/test_work_terminal.py` and the 6 in `workbench/frontend/tests/work-apps.test.mjs`. **Not tested,
+  because no real accounts exist here**: a real Microsoft 365 tenant or a real sign-in; real admin consent and its
+  workflow; which permissions a real company lets a person approve (the table of which need an admin follows
+  Microsoft's permissions reference and was not checked against a tenant); conditional access and multi-factor
+  sign-in; sensitivity labels that block downloads; real throttling; real meeting transcripts; SharePoint lists (only
+  document libraries); publisher verification of the shipped registration; and Windows Credential Manager holding the
+  tokens beyond the windows-2022 runner. **Not built**: Google Workspace (the page says it comes next; the same
+  switches and tool names are ready for it), Rooks as its own chat inside Teams and answering Needs you from a Teams
+  card (it needs a bot and a relay the company runs, design 0012 section 2.2; the Channels card says so), and
+  `rooks-browser` opening a work file's address.
 
 ## Unreleased · Workplace cleanup · branch cleanup/workplace
 

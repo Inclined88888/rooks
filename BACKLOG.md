@@ -193,6 +193,30 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
+### Work suites (design 0012), Microsoft half: what is left (branch feat/windows)
+
+* **Google Workspace** (0012 sections 2.3 and 5, G1 to G3): Drive, Docs, Sheets, Google Chat, Meet transcripts and
+  Google Tasks. The switches, words and tool names are shared (`work_scopes.py` already lists Google's scopes); it
+  needs a `work_google.py` beside `work_graph.py`, the sign-in through `connect.start(work=True)` (it says "Google
+  Workspace comes next" today), a `tests/fake_google.py`, and the Work apps page's Google button.
+* **Rooks as a chat inside Teams, and Needs you answered from a Teams card** (0012 section 2.2, last phase): needs an
+  Entra app and Azure Bot in the company's subscription, a Teams app package the admin allows, and a relay the company
+  owns (Azure Relay) or the Rooks cloud. Only with the owner's yes and a test company. The Channels page says so.
+* **A real tenant**: everything was tested against `tests/fake_graph.py` only. Check against a Microsoft 365 developer
+  tenant: incremental consent per switch, which permissions need an admin (the `ADMIN` set in `work_scopes.py`
+  follows Microsoft's permissions reference), the admin consent address in the IT note, a consumer account refused,
+  SharePoint search across sites, transcripts (`OnlineMeetingTranscript.Read.All` and the organiser rule), Planner's
+  version tags, and throttling. Then publisher verification of the shipped registration.
+* **`rooks-browser` opening a work file's address** (0012 section 3.4): the app's Room browser and the terminal's
+  `/work open` do; the separate browser agent does not yet.
+* **SharePoint lists** (`listItem` in search) and site pages: only document libraries are read.
+* **`cloud_mail.py` tests** (architecture section h, rank 3): the work account reuses it for Mail and Calendar, but it
+  still has no suite of its own against a fake Gmail and Graph beyond `test_connect_mail_calendar.py`.
+* **A Planner or To Do task deleted at Microsoft** stays in Rooks' list after the next sync (sync adds and updates,
+  never removes). Removing one needs a yes like every other change and is not built.
+* **Turning a switch off does not remove the permission at Microsoft**: the page says where to remove it (My Apps).
+  Graph has no call for an app to give back one delegated permission.
+
 ### Rooks as its own program (design 0007 part 2): not done here
 * **Not run in a real WebKit window.** Playwright's WebKit is not installed on the build machine, and no Mac was at
   hand. Not verified, each needs a run in the built app: `<a download>` and blob downloads reaching `on_download` in
