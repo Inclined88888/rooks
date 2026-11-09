@@ -565,9 +565,11 @@ class MarkPipe:
         buf = ctypes.create_string_buffer(4096)
         while not self._stop.is_set():
             h = self._h
-            if not ConnectNamedPipe(h, None) and ctypes.get_last_error() != ERROR_PIPE_CONNECTED:
+            # A client that connected, wrote and closed before we asked gives ERROR_NO_DATA: its line is still there
+            if not ConnectNamedPipe(h, None) and ctypes.get_last_error() not in (ERROR_PIPE_CONNECTED, ERROR_NO_DATA):
                 if self._stop.is_set():
                     break
+                DisconnectNamedPipe(h)
                 time.sleep(0.05)
                 continue
             if self._stop.is_set():
