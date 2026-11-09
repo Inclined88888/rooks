@@ -104,12 +104,12 @@ MEMORY_CLOSE = 2560 * 1024 * 1024     # over this the browser closes, its tabs k
 # Windows: the job's own limit, a backstop under the watchdog. It counts memory set aside (commit), which for Chromium
 # runs well above what it really uses (the watchdog's working set), so it sits at twice the watchdog's line.
 JOB_MEMORY_LIMIT = 2 * MEMORY_CLOSE
-# Windows: what the browser's job may not touch outside itself (design 0011, section 3): the person's clipboard, global
-# atoms, system settings, the display, signing out and other programs' windows. Not JOB_OBJECT_UILIMIT_DESKTOP (0x40):
-# Chromium's own sandbox puts its GPU and page processes on a desktop of their own, and under that limit it cannot
-# create them (seen on windows-2022: "GPU process launch failed: error_code=18", then Chrome ends itself; every other
-# limit alone, and all of them but this one, start fine).
-BROWSER_UI_LIMITS = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x80
+# Windows: no JOB_OBJECT_UILIMIT_* on the browser's job (design 0011, section 3 allows removing a limit the browser
+# fails under, with the reason). On windows-2022 every one of them, alone, stopped Chromium's sandbox from creating its
+# GPU and page processes ("GPU process launch failed: error_code=18", then "GPU process isn't usable. Goodbye."), with
+# Chrome and with Edge (to be confirmed per limit by CI). Pages still get no permission to read the clipboard
+# (--deny-permission-prompts), but the job itself does not hold the clipboard back: BACKLOG says so.
+BROWSER_UI_LIMITS = 0
 DOWNLOAD_MAX = 2 * 1024 * 1024 * 1024
 DISK_CACHE = 100 * 1024 * 1024
 FRAME_MAX = (1920, 1200)

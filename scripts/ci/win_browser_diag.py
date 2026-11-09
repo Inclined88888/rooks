@@ -41,11 +41,12 @@ def attempt(path: str, label: str, job_kw: dict, extra: list[str]) -> None:
 
     threading.Thread(target=read, daemon=True).start()
     done.wait(30)
-    print(f"[{label}] after {time.monotonic() - t0:.1f}s answer={got[:200]!r} exit={p.proc.poll()} "
+    time.sleep(6)  # the GPU and page processes start after the first answer
+    print(f"[{label}] gpu_failed={b'GPU process launch failed' in bytes(out)} after {time.monotonic() - t0:.1f}s answer={got[:200]!r} exit={p.proc.poll()} "
           f"pids={job.pids()}")
     job.terminate(1)
     time.sleep(1)
-    if b"result" not in got:
+    if b"result" not in got or b"GPU process launch failed" in bytes(out):
         print(f"[{label}] printed: {bytes(out[-800:]).decode('utf-8', 'replace')}")
     job.close()
 
@@ -69,7 +70,6 @@ log = ["--enable-logging=stderr", "--v=0"]
 names = {0x01: "HANDLES", 0x02: "READCLIPBOARD", 0x04: "WRITECLIPBOARD", 0x08: "SYSTEMPARAMETERS",
          0x10: "DISPLAYSETTINGS", 0x20: "GLOBALATOMS", 0x40: "DESKTOP", 0x80: "EXITWINDOWS"}
 chrome = engines[1]
+attempt(chrome, "chrome no limits", dict(memory_limit=rb.JOB_MEMORY_LIMIT), [])
 for bit, name in names.items():
     attempt(chrome, f"chrome only {name}", dict(ui_limits=bit), [])
-for bit, name in names.items():
-    attempt(chrome, f"chrome all but {name}", dict(ui_limits=0xFF & ~bit), [])

@@ -245,9 +245,8 @@ def test_real_engine_over_its_pipe_page_frame_click_job_no_port_and_close(engine
             time.sleep(0.1)
         assert "clicked here" in s.page_text(tab), "the click did not land on the page"
 
-        # the job keeps the person's clipboard and other programs' windows out of reach (not the desktop limit, which
-        # Chromium's own sandbox needs to make a desktop of its own)
-        assert rb.BROWSER_UI_LIMITS & 0x07 == 0x07 and not rb.BROWSER_UI_LIMITS & 0x40
+        # the browser made its sandboxed GPU and page processes (no job limit stops them)
+        assert len(s.job.pids()) >= 3, s.job.pids()
         # every engine process is in the browser's job, and none listens on a port
         in_job = set(s.job.pids())
         mine = _engine_pids(rb.profile_dir(home))
