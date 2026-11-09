@@ -57,10 +57,16 @@
     },
     "windows": {
       "webviewInstallMode": {
-        "type": "downloadBootstrapper"
+        "type": "embedBootstrapper",
+        "silent": true
       },
       "nsis": {
-        "installMode": "currentUser"
+        "installMode": "currentUser",
+        "installerHooks": "windows/hooks.nsh",
+        "customLanguageFiles": {
+          "English": "windows/English.nsh"
+        },
+        "languages": ["English"]
       }
     },
     "linux": {

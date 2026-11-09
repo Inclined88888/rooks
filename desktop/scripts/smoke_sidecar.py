@@ -4,8 +4,8 @@ Usage: python desktop/scripts/smoke_sidecar.py [--room-browser] <path to workben
 Exit code 0 means: /healthz is ok, the launch token opens a session that lands on /welcome,
 a wrong token is refused, and the built frontend is served.
 
-With --room-browser it also proves the Room's browser starts from the packaged program (macOS and Linux): the Room is
-started in a throwaway folder, the browser opens a test page served on loopback by a separate process, the page's text
+With --room-browser it also proves the Room's browser starts from the packaged program (macOS, Linux and Windows): the
+Room is started in a throwaway folder, a quick command runs in it, the browser opens a test page served on loopback by a separate process, the page's text
 is read back and a frame (a JPEG of the page) arrives. When it does not start, the plain reason and the Advanced detail
 the app keeps are printed. A path ending in .py runs that script with this Python (for trying it out of a checkout).
 """
@@ -120,6 +120,13 @@ def room_browser(app: Signed, scratch: Path) -> int:
         status, _, body = app.call("POST", "/api/room/up")
         assert status == 200 and json.loads(body).get("running") is True, f"the Room did not start: {status} {body[:400]!r}"
         print("ok   the Room started")
+        # a quick command through the packaged program (on Windows: in a job of its own inside the Room's, no window)
+        status, _, body = app.call("POST", "/api/room/run", {"command": "echo room-run-smoke-7"})
+        out = json.loads(body) if status == 200 else {}
+        if not (out.get("ok") and "room-run-smoke-7" in (out.get("stdout") or "")):
+            print(f"FAIL a quick command in the Room did not run ({status}): {body[:400]!r}")
+            return 1
+        print(f"ok   a quick command ran in the Room ({out.get('shell')})")
         _, _, body = app.call("GET", "/api/room/status")
         can = json.loads(body).get("can") or {}
         if can.get("browser") is not True:

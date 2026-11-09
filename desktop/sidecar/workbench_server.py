@@ -352,8 +352,72 @@ def _exit_with_parent() -> None:
     threading.Thread(target=watch, daemon=True, name="parent-watch").start()
 
 
+def _ours(target: str) -> bool:
+    """A Credential Manager entry keyring wrote for the app: the service itself, or "<name>@<service>"."""
+    return target == SERVICE or (target.endswith("@" + SERVICE) and len(target) > len(SERVICE) + 1)
+
+
+def _windows_credentials() -> list[tuple[str, int]]:
+    """(target, type) of every Credential Manager entry of this Windows account (CredEnumerateW)."""
+    import ctypes
+    from ctypes import wintypes as wt
+
+    class FILETIME(ctypes.Structure):
+        _fields_ = [("lo", wt.DWORD), ("hi", wt.DWORD)]
+
+    class CREDENTIALW(ctypes.Structure):
+        _fields_ = [("Flags", wt.DWORD), ("Type", wt.DWORD), ("TargetName", wt.LPWSTR), ("Comment", wt.LPWSTR),
+                    ("LastWritten", FILETIME), ("CredentialBlobSize", wt.DWORD), ("CredentialBlob", ctypes.c_void_p),
+                    ("Persist", wt.DWORD), ("AttributeCount", wt.DWORD), ("Attributes", ctypes.c_void_p),
+                    ("TargetAlias", wt.LPWSTR), ("UserName", wt.LPWSTR)]
+
+    advapi = ctypes.WinDLL("advapi32", use_last_error=True)
+    enum = advapi.CredEnumerateW
+    enum.argtypes = [wt.LPCWSTR, wt.DWORD, ctypes.POINTER(wt.DWORD),
+                     ctypes.POINTER(ctypes.POINTER(ctypes.POINTER(CREDENTIALW)))]
+    enum.restype = wt.BOOL
+    advapi.CredFree.argtypes = [ctypes.c_void_p]
+    count = wt.DWORD(0)
+    creds = ctypes.POINTER(ctypes.POINTER(CREDENTIALW))()
+    if not enum(None, 0, ctypes.byref(count), ctypes.byref(creds)):
+        return []  # ERROR_NOT_FOUND: there are none
+    try:
+        return [(creds[i].contents.TargetName or "", int(creds[i].contents.Type)) for i in range(count.value)]
+    finally:
+        advapi.CredFree(creds)
+
+
+def _windows_delete(target: str, kind: int) -> bool:
+    import ctypes
+    from ctypes import wintypes as wt
+
+    advapi = ctypes.WinDLL("advapi32", use_last_error=True)
+    advapi.CredDeleteW.argtypes = [wt.LPCWSTR, wt.DWORD, wt.DWORD]
+    advapi.CredDeleteW.restype = wt.BOOL
+    return bool(advapi.CredDeleteW(target, kind, 0))
+
+
+def forget_secrets(listing=None, delete=None) -> int:
+    """The uninstaller's "Also remove my chats, keys and the Room" (design 0011, section 4): delete the app's entries
+    in Windows Credential Manager, those keyring wrote ("ai-workspace" and "<name>@ai-workspace") and no other. Runs
+    before the data folders are removed. Returns how many were removed. Elsewhere there is no uninstaller that asks."""
+    if listing is None:
+        if sys.platform != "win32":
+            return 0
+        listing, delete = _windows_credentials, _windows_delete
+    removed = 0
+    for target, kind in listing():
+        if _ours(target) and delete(target, kind):
+            removed += 1
+    return removed
+
+
 def main(argv: list[str] | None = None) -> None:
     raw = sys.argv[1:] if argv is None else argv
+    if raw[:1] == ["--forget-secrets"]:  # the uninstaller, before it removes the person's data (no data folder needed)
+        n = forget_secrets()
+        print(f"removed {n} saved {'key' if n == 1 else 'keys'} from Windows Credential Manager", flush=True)
+        return
     if raw[:1] == ["--run-python"]:  # the frozen app's own interpreter for the Files sandbox (app/compute.py)
         from app import compute
 
