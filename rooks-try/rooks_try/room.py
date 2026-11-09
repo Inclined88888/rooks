@@ -128,7 +128,25 @@ class TryRoom:
             shutil.copytree(source, target, symlinks=True, dirs_exist_ok=True)  # links stay links, never content
         else:
             shutil.copy2(source, target)
+            _keep_mark_of_the_web(source, target)
         return {"ok": True, "from": str(source), "to": str(target)}
+
+
+def _keep_mark_of_the_web(source: Path, target: Path) -> None:
+    """Windows: a file downloaded in the Room carries its Mark of the Web (the Zone.Identifier stream). The copy that
+    leaves the Room keeps it, so SmartScreen and Office still check the file. Elsewhere there is no such stream."""
+    if os.name != "nt":
+        return
+    try:
+        with open(str(source) + ":Zone.Identifier", "rb") as f:
+            mark = f.read(64 * 1024)
+    except OSError:
+        return  # no mark: nothing to keep
+    try:
+        with open(str(target) + ":Zone.Identifier", "wb") as f:
+            f.write(mark)
+    except OSError:
+        pass  # a disk without streams (FAT, a network share that drops them): the file itself is still copied
 
 
 def _stays_inside(folder: Path, home: Path) -> bool:
