@@ -12,12 +12,13 @@ import DesktopBridge from "./DesktopBridge"; // feat/tauri-native: aiworkspace:/
 import JobNotifier from "./v02/JobNotifier"; // feat/v02-automations: desktop notifications for jobs
 import AskBar from "./pages/AskBar";
 import { PAGES, palettePages, REDIRECTS, type PageEntry } from "./pages/registry";
+import { placeOf } from "./pages/places";
 import { Rail } from "./shell/Rail";
 import { PresenceStrip } from "./shell/PresenceStrip";
 import { StageHost } from "./shell/StageHost";
 import { MobileBar } from "./shell/MobileBar";
 import { MoreSheet } from "./shell/MoreSheet";
-import { Loading, Page, ToastHost } from "./ui";
+import { Loading, Page, PageMark, ToastHost } from "./ui";
 import { RooksMark } from "./ui/RooksMark";
 import { pageComponent, warmWhenIdle } from "./pages/warm";
 import { createKeyReader, SHORTCUTS } from "./lib/shortcuts";
@@ -98,8 +99,12 @@ function PageFrameLoading({ entry }: { entry: PageEntry }) {
 function PageElement({ entry, refresh }: { entry: PageEntry; refresh: () => void }) {
   const { C, ready } = useMemo(() => pageComponent(entry), [entry]);
   const props = typeof entry.props === "function" ? entry.props({ refresh }) : entry.props ?? {};
-  if (ready) return <C {...props} />;
-  return <Suspense fallback={<PageFrameLoading entry={entry} />}><C {...props} /></Suspense>;
+  // the page's place in the navigation ([04 // DAY]) for its header's meta column
+  return (
+    <PageMark.Provider value={placeOf(entry)}>
+      {ready ? <C {...props} /> : <Suspense fallback={<PageFrameLoading entry={entry} />}><C {...props} /></Suspense>}
+    </PageMark.Provider>
+  );
 }
 
 /** Every route and redirect, from the page registry. */

@@ -147,7 +147,7 @@ export default function Dashboard(_: { chatUrl?: string }) {
   };
 
   return (
-    <Page title={heading} kicker={date} className="day-page day-home">
+    <Page hero title={heading} kicker={date} className="day-page day-home">
       <form className="day-home-ask" onSubmit={submit}>
         <input
           ref={field}

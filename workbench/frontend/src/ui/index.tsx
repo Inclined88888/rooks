@@ -5,12 +5,13 @@
  */
 import { AlertTriangle, Check, CircleDashed, Hand, Minus, MoreHorizontal, X } from "lucide-react";
 import {
-  forwardRef, useEffect, useId, useRef, useSyncExternalStore,
+  createContext, forwardRef, useContext, useEffect, useId, useRef, useSyncExternalStore,
   useState,
   type ButtonHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject, type SelectHTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
 import { AssistantFace, type Mood } from "../AssistantFace";
+import { splitHeadline } from "./headline";
 import { dismissToast, errorText, getToasts, isPrimaryToastHost, pushToast, registerToastHost, subscribeToasts, type ToastItem } from "./toast";
 
 export type { Mood };
@@ -47,25 +48,51 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
 
 /* ---------------------------------------------------------------- Page, Section */
 /** Every page: the heading (28), one line of description, the actions, and the content width (880 to read, full for boards). */
-export function Page({ title, description, actions, kicker, wide, children, className }: {
-  title: string; description?: ReactNode; actions?: ReactNode; kicker?: string; wide?: boolean; children: ReactNode; className?: string;
-}) {
+/** Where the page sits in the navigation ([04 // DAY], pages/places.ts). The route provides it (App.tsx); a page
+ *  outside the routes has none and its meta column holds only its kicker. */
+export const PageMark = createContext<{ n: number; name: string } | null>(null);
+
+/** A real headline in two lines, the second offset, each wiped in orange as it arrives. The words are the same as
+ *  `text` (screen readers hear one heading); one word stays one line. */
+export function Headline({ text, as: Tag = "h1", className, id }: { text: string; as?: "h1" | "h2"; className?: string; id?: string }) {
+  const [a, b] = splitHeadline(text);
   return (
-    <div className={cx("ui-page", wide && "ui-page-wide", className)}>
-      <header className="ui-page-head">
-        <div className="ui-page-titles">
+    <Tag className={className} id={id}>
+      <span className="hl-line reveal">{a}</span>
+      {b && <>{" "}<span className="hl-line display-offset reveal">{b}</span></>}
+    </Tag>
+  );
+}
+
+/** A page: the header pattern (a left meta column with the place's number and a mono label, the title, description
+ *  and actions on the right; stacked on phones), then the content. `hero` makes the title the huge two-line headline
+ *  on the blueprint grid (Home). */
+export function Page({ title, description, actions, kicker, wide, hero, children, className }: {
+  title: string; description?: ReactNode; actions?: ReactNode; kicker?: string; wide?: boolean; hero?: boolean; children: ReactNode; className?: string;
+}) {
+  const mark = useContext(PageMark);
+  return (
+    <div className={cx("ui-page", wide && "ui-page-wide", hero && "ui-page-hero", className)}>
+      <header className={cx("ui-page-head", hero && "is-hero")}>
+        <div className="ui-page-meta">
+          {mark && <MicroLabel n={mark.n} name={mark.name} />}
           {kicker && <p className="ui-page-kicker">{kicker}</p>}
-          <h1 className="ui-page-title">{title}</h1>
-          {description && <p className="ui-page-desc">{description}</p>}
         </div>
-        {actions && <div className="ui-page-actions">{actions}</div>}
+        <div className="ui-page-main">
+          <div className="ui-page-titles">
+            {hero ? <Headline as="h1" className="ui-page-title ui-page-hero-title" text={title} /> : <h1 className="ui-page-title">{title}</h1>}
+            {description && <p className="ui-page-desc">{description}</p>}
+          </div>
+          {actions && <div className="ui-page-actions">{actions}</div>}
+        </div>
       </header>
       {children}
     </div>
   );
 }
 
-/** A titled part of a page, separated by a hairline and numbered 01, 02, ... in a mono label. */
+/** A titled part of a page, separated by a hairline and numbered 01, 02, ... in a mono label. At the top level of a
+ *  wide page the number and title sit in the left meta column and the content in the right one. */
 export function Section({ title, description, actions, children, className }: {
   title?: string; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string;
 }) {
@@ -80,8 +107,10 @@ export function Section({ title, description, actions, children, className }: {
           {actions && <div className="ui-section-actions">{actions}</div>}
         </div>
       )}
-      {description && <p className="ui-section-desc">{description}</p>}
-      {children}
+      <div className="ui-section-body">
+        {description && <p className="ui-section-desc">{description}</p>}
+        {children}
+      </div>
     </section>
   );
 }

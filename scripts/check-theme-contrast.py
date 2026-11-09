@@ -32,13 +32,18 @@ TEXT_PAIRS = [  # (foreground, background) that must reach 4.5:1
     ("on-dark", "dark"), ("on-dark-muted", "dark"),
     # the primitives (industrial step 2): mono badge words on the sunken fill
     ("ink", "surface-sunken"), ("ink-muted", "surface-sunken"),
+    # the shell (industrial step 3): grey nav links and menu words on the current row's fill (the phone bar's current
+    # cell, ink on paper, is checked in tests/glass.test.mjs)
+    ("ink-muted", "bg-active"),
 ]
 UI_PAIRS = [  # non-text that a person needs to see: 3:1
     ("border-strong", "bg"), ("border-strong", "surface"), ("ink-faint", "bg"), ("border-focus", "bg"), ("accent", "surface"),
     # the primitives (industrial step 2): the square marks on toasts and receipts, the ink edge of what you press
     ("on-primary", "success"), ("on-primary", "danger"), ("on-primary", "warning"), ("ink", "bg"),
 ]
-DECORATIVE = [("accent", "bg")]  # orange marks on the paper: always beside words, reported for the record
+# orange marks on the paper: always beside words, reported for the record. The current link's orange rule in the top
+# bar is one of them: the link itself also turns ink and bold and carries aria-current (shell/shell.css).
+DECORATIVE = [("accent", "bg")]
 def lum(hex_colour: str) -> float:
     h = hex_colour.lstrip("#")
     if len(h) == 3:

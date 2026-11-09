@@ -512,7 +512,7 @@ step in section g; a row it changed says so in its status. Everything else is as
 
 | Part | What it does | Status |
 |---|---|---|
-| pages/registry.ts | The one list of pages and where each appears | live |
+| pages/registry.ts, pages/places.ts | The one list of pages and where each appears; each page's place number and name for its header label ([04 // DAY]) | live |
 | App.tsx, api.ts | Starts the app, sign-in, mounts routes; the client that talks to the server | live |
 | shell/ | Top bar, presence line, side Stage, phone dock, More sheet, the one status poll | live |
 | pages/Assistant.tsx, chat/ | The chat page: thread, composer, result cards with undo, model and mode chips | live |

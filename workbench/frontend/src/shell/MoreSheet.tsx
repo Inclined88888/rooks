@@ -6,12 +6,14 @@ import { MOD_KEY } from "../keys";
 import { externalLinks, morePages, type StatusLike } from "../pages/registry";
 import { warmProps } from "../pages/warm";
 import { openShortcuts } from "./ShortcutsSheet";
-import { Button, Kbd, Sheet, useFocusTrap } from "../ui";
+import { placeOf } from "../pages/places";
+import { Button, Kbd, MicroLabel, Sheet, useFocusTrap } from "../ui";
 
 /**
- * Every other page, grouped by section. Above 900px a glass menu drops from the More button at the top right, with
- * the sections side by side; on phones it is a side sheet. Both trap focus and close on Escape. Built from the page
- * registry.
+ * Every other page, grouped by section. Above 900px a square menu with an ink edge drops from the More button at the
+ * top right, with the sections side by side between hairlines; on phones it is a side sheet. Each section is titled by
+ * a micro-label with the place's number ([07 // WORKSPACE], decoration; the name is read once). Both trap focus and
+ * close on Escape. Built from the page registry.
  */
 export function MoreSheet({ open, onClose, status, name, onSearch }: { open: boolean; onClose: () => void; status: StatusLike | null; name: string; onSearch: () => void }) {
   const location = useLocation();
@@ -26,7 +28,7 @@ export function MoreSheet({ open, onClose, status, name, onSearch }: { open: boo
   );
   const body = groups.map((g) => (
         <div key={g.section} className="more-group">
-          <div className="more-section">{g.section}</div>
+          <div className="more-section"><MicroLabel n={placeOf({ section: g.section })?.n} name={g.section} /><span className="sr-only">{g.section}</span></div>
           {g.pages.map((p) => {
             const on = location.pathname === p.path || location.pathname.startsWith(`${p.path}/`);
             return (

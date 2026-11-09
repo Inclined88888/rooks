@@ -18,10 +18,16 @@
 }
 :root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after { animation: none !important; transition: none !important; }
 
-/* ---- Page, Section: a condensed uppercase title; each section numbered 01, 02 by a mono label (decoration) ---- */
+/* ---- Page, Section: a condensed uppercase title; each section numbered 01, 02 by a mono label (decoration).
+   The header pattern: a left meta column (the place's number and mono label, [04 // DAY], and the kicker) and the
+   title, description and actions on the right, on the 12 column grid; stacked on phones, the meta on top. ---- */
 .ui-page { max-width: var(--max-read-width); margin: 0 auto; padding: var(--space-8) var(--space-8) var(--space-16); counter-reset: ui-section; }
 .ui-page-wide { max-width: var(--max-page-width); }
-.ui-page-head { display: flex; align-items: flex-end; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-8); }
+.ui-page-head { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-8); }
+.ui-page-meta { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+.ui-page-meta:empty { display: none; }
+.ui-page-meta .ui-page-kicker { margin: 0; }
+.ui-page-main { display: flex; align-items: flex-end; gap: var(--space-4); flex-wrap: wrap; min-width: 0; }
 .ui-page-titles { flex: 1; min-width: 0; }
 .ui-page-kicker {
   display: inline-flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3);
@@ -35,6 +41,13 @@
 }
 .ui-page-desc { margin: var(--space-3) 0 0; max-width: 60ch; font-size: var(--text-body); line-height: var(--leading-normal); color: var(--color-ink-muted); }
 .ui-page-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+/* A hero head (Home): the huge two-line headline on the blueprint grid between two hairlines */
+.ui-page-head.is-hero {
+  padding: var(--space-10) 0 var(--space-8); border-top: var(--line); border-bottom: var(--line);
+  background-color: var(--color-bg); background-image: var(--bg-grid); background-size: var(--bg-grid-size); background-position: -1px -1px;
+}
+.ui-page-hero-title { font-size: var(--display-lg); text-wrap: initial; }
+.hl-line { display: block; width: fit-content; }
 .ui-section { padding: var(--space-6) 0; border-top: var(--border-w) solid var(--color-border); counter-increment: ui-section; }
 .ui-section:first-child { border-top: 0; padding-top: 0; }
 .ui-section-head { display: flex; align-items: flex-end; flex-wrap: wrap; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-4); }
@@ -45,7 +58,21 @@
   text-transform: uppercase; letter-spacing: var(--tracking-display); line-height: 1; color: var(--color-ink);
 }
 .ui-section-actions { display: flex; align-items: center; gap: var(--space-2); }
+.ui-section-body { min-width: 0; }
 .ui-section-desc { margin: calc(var(--space-2) * -1) 0 var(--space-4); font-size: var(--text-sm); color: var(--color-ink-muted); }
+/* Wide windows (--bp-narrow and up): the head's meta column and the top level sections' number and title on the left
+   three columns, everything else on the right nine. */
+@media (min-width: 901px) {
+  .ui-page-head { display: grid; grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr)); column-gap: var(--grid-gutter); row-gap: var(--space-3); align-items: end; }
+  .ui-page-meta { grid-column: 1 / span var(--grid-meta-span); align-self: start; padding-top: var(--space-2); }
+  .ui-page-meta:empty { display: flex; }
+  .ui-page-main { grid-column: span calc(var(--grid-columns) - var(--grid-meta-span)); }
+  .ui-page-hero > :not(.ui-page-head) { margin-left: calc((100% + var(--grid-gutter)) * var(--grid-meta-span) / var(--grid-columns)); }
+  .ui-page > .ui-section:has(> .ui-section-head) { display: grid; grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr)); column-gap: var(--grid-gutter); align-items: start; }
+  .ui-page > .ui-section > .ui-section-head { grid-column: 1 / span var(--grid-meta-span); flex-direction: column; align-items: flex-start; margin-bottom: 0; }
+  .ui-page > .ui-section > .ui-section-head .ui-section-title { flex: none; max-width: 100%; overflow-wrap: anywhere; }
+  .ui-page > .ui-section > .ui-section-body { grid-column: span calc(var(--grid-columns) - var(--grid-meta-span)); }
+}
 
 /* ---- Micro-label: [01 // NAME] beside the orange square (styles.css .micro draws both) ---- */
 .ui-micro { white-space: nowrap; }

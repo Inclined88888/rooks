@@ -12,6 +12,44 @@ The app's look moves to an industrial, technical design: off-white paper (#F2F2F
 call and word stays as it was; only the visual design system changes, step by step. No data change, nothing to
 migrate. Rollback: revert the branch's commits (the built `dist` is committed with each step).
 
+- **Step 3: the shell, the page frame and the heroes** (`src/shell/`, `src/Palette.tsx` styles, `src/ui/`,
+  `src/pages/places.ts`, `src/pages/settings/AuthCard.tsx`, Home).
+  - Top bar: paper with a 1 px bottom edge (no floating glass, no blur, no shadow), a small mark (28 px), the presence
+    line behind a hairline, the links as small uppercase mono cells split by hairlines; the current link is ink and
+    bold with a thin orange rule under it that slides to the picked link (it now measures a group's tab correctly; it
+    used to slide to the left edge when Day, Memory or Library was current). Search is the one black rectangular call
+    to action (with its keys, Ctrl K or ⌘ K, beside the mark; it hovers to orange with ink words); More and Settings
+    are square buttons with a 1 px line.
+  - Group menus and More: square with an ink edge; their titles are micro-labels numbered by the page's place in the
+    navigation (`[04 // DAY]`, `[07 // WORKSPACE]`; decoration, the section's name is still read once); links are
+    small uppercase mono rows split by hairlines, the current one with a thin orange edge; More's sections sit side by
+    side between hairlines. 44 px rows on phones.
+  - Phone bar: docked flush at the bottom with a 1 px top edge, square cells split by hairlines, every cell shows its
+    icon over a small mono name (only the current one did), the current cell an ink block; Needs you's count is ink on
+    an orange square. Sheets and the command menu now sit above the bar.
+  - Command menu: micro-label groups with the orange square, hairline rows, the picked row marked by a thin orange edge,
+    mono uppercase hints and foot; the search field's focus is the row's orange rule (it drew a box inside the row).
+  - The page header pattern: each page's header has a left meta column with its place (`[08 // SETTINGS]`, from the
+    new `pages/places.ts`: the top bar's order, then More's sections; the route provides it through `PageMark`) and
+    its kicker, and the title, description and actions on the right, on the 12 column grid; stacked on phones, the
+    meta on top. A section's content now sits in its own `ui-section-body`; top level sections of a page (Automations,
+    Models, Teach today) put their number and title on the left and the content on the right on wide windows. Pages
+    that wrap their sections in their own layout keep it until the pages step.
+  - Heroes: the welcome steps and the sign-in (`AuthCard`) sit on the blueprint grid: the mark and name, the step as a
+    micro-label, the heading as a huge two-line uppercase headline with the second line offset (`Headline`,
+    `ui/headline.ts`: split at the space nearest the middle, the words unchanged), the line as a small mono intro and
+    the footer as a mono note on the left; the card on the right framed by a 1 px ink line with one orange square on
+    its corner. Stacked on phones (headline, card, footer). Home is the second hero (`Page hero`): its question as the
+    huge split headline on the blueprint between two hairlines, the date and place in the meta column, the ask box
+    framed in ink with the orange corner, the rest in the right nine columns. Each headline line gets the orange wipe
+    (off under reduced motion and Motion off). The numbered welcome steps are square.
+  - Accessibility: the current link never rests on orange alone (2.97:1 on paper): it is also ink, bold and
+    `aria-current`. `scripts/check-theme-contrast.py` checks grey words on the current row's fill.
+  - Guards: `tests/industrial-shell.test.mjs` (11 tests, all failed on the tree before this step). `industrial-tokens`
+    takes `shell/shell.css` off its round-corner and shadow lists and `settings.css` off the round-corner list.
+    `premium-pages-b`'s settings stylesheet scale now allows the micro size, the display sizes and the bold and display
+    weights (the hero's headline and labels; the spec changes what that guard guards), and the 901 px form of the narrow
+    breakpoint (as `workroom-sweep` already does).
 - **Step 2: the primitives** (`src/ui/ui.css`, `src/ui/index.tsx`, and their older twins in `styles.css`).
   - Buttons: mono uppercase words, square; primary a black rectangle that hovers to orange with ink words, secondary
     white with a 1 px ink edge, ghost bare, danger in the danger colour on white. A pressed primary keeps its colours

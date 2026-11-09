@@ -102,31 +102,54 @@
 .st-advanced-body { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-3); min-width: 0; }
 .st-row .st-advanced { flex: 1 1 100%; }
 
-/* ---- AuthCard: the first impression ---- */
-.auth.st-auth { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: var(--space-12) var(--space-4); background: var(--color-bg); }
-.st-auth-inner { width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-4); }
-.st-auth-inner:has(.st-auth-card.is-wide) { width: min(640px, 100%); }
-.auth-card.st-auth-card { width: 100%; padding: var(--space-8); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: none; display: flex; flex-direction: column; gap: var(--space-6); }
-.st-auth-head { display: flex; flex-direction: column; gap: var(--space-2); }
-.st-auth-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: 0 0 var(--space-4); font-size: var(--text-sm); color: var(--color-ink-muted); }
-.st-auth-brand { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: var(--weight-heading); color: var(--color-ink); }
+/* ---- AuthCard: the first impression, a hero. The blueprint grid behind; on the left the small mark and name, the step
+   as a micro-label, a huge two-line uppercase headline and a small mono intro; on the right the card framed by a 1 px
+   ink line with one orange square on its corner. Stacked on phones. ---- */
+.auth.st-auth {
+  min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: var(--space-12) var(--space-8);
+  background-color: var(--color-bg); background-image: var(--bg-grid); background-size: var(--bg-grid-size); background-position: -1px -1px;
+}
+.st-auth-inner { width: min(560px, 100%); display: flex; flex-direction: column; gap: var(--space-6); }
+.st-auth-head { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+.st-auth-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: 0; padding-bottom: var(--space-3); border-bottom: var(--line); color: var(--color-ink-muted); }
+.st-auth-brand {
+  display: inline-flex; align-items: center; gap: var(--space-2); color: var(--color-ink);
+  font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: var(--tracking-micro);
+}
 .st-auth-brand .rooks-mark { flex: none; }
-.st-auth-step { margin-left: auto; }
-.st-auth-title { margin: 0; font-family: var(--font-sans); font-size: var(--text-2xl); font-weight: var(--weight-heading); letter-spacing: var(--tracking-tight); line-height: var(--leading-tight); color: var(--color-ink); text-wrap: balance; }
-.st-auth-line { margin: 0; font-size: var(--text-md); line-height: var(--leading-normal); color: var(--color-ink-muted); text-wrap: pretty; }
-.st-auth-foot { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin: 0; font-size: var(--text-sm); color: var(--color-ink-muted); text-align: center; }
+.st-auth-title {
+  margin: 0; font-family: var(--font-display); font-size: var(--display-lg); font-weight: var(--weight-display); font-stretch: var(--stretch-display);
+  text-transform: uppercase; letter-spacing: var(--tracking-display); line-height: var(--leading-display); color: var(--color-ink); overflow-wrap: anywhere;
+}
+.st-auth-line { margin: 0; max-width: 46ch; font-family: var(--font-mono); font-size: var(--text-sm); line-height: var(--leading-relaxed); color: var(--color-ink-muted); text-wrap: pretty; }
+.st-auth-foot {
+  display: flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--color-ink-muted);
+  font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium); line-height: var(--leading-normal); text-transform: uppercase; letter-spacing: var(--tracking-button);
+}
+.auth-card.st-auth-card {
+  position: relative; width: 100%; padding: var(--space-8); border: var(--line-ink); border-radius: 0; background: var(--color-surface); box-shadow: none;
+  display: flex; flex-direction: column; gap: var(--space-6);
+}
+.auth-card.st-auth-card::before { content: ""; position: absolute; top: -5px; left: -5px; width: 9px; height: 9px; background: var(--color-accent); }
 .st-auth-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .st-auth-actions > .st-grow { flex: 1; }
 .st-auth-form { display: flex; flex-direction: column; gap: var(--space-4); }
 .st-auth-form > .ui-btn-primary, .st-auth-full { width: 100%; }
 .st-auth-alt { display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-4); border-top: var(--border-w) solid var(--color-border); }
 .st-auth-alt .ui-btn { justify-content: flex-start; }
-@media (max-width: 900px) {
-  .auth.st-auth { place-items: start center; padding: var(--space-6) var(--space-4); }
-  .auth-card.st-auth-card { padding: var(--space-6) var(--space-4); }
+@media (min-width: 901px) {
+  .st-auth-inner { width: min(1280px, 100%); display: grid; grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr)); column-gap: var(--grid-gutter); row-gap: var(--space-8); align-items: start; }
+  .st-auth-head { grid-column: 1 / span 6; grid-row: 1; }
+  .st-auth-foot { grid-column: 1 / span 6; grid-row: 2; align-self: end; }
+  .auth-card.st-auth-card { grid-column: 8 / span 5; grid-row: 1 / span 2; }
+  .st-auth-inner.is-wide .st-auth-head, .st-auth-inner.is-wide .st-auth-foot { grid-column: 1 / span 5; }
+  .st-auth-inner.is-wide .auth-card.st-auth-card { grid-column: 6 / span 7; }
+  /* a long heading beside the card is set a little smaller so each line still fits its column (phones keep the size) */
+  .st-auth-inner.is-long .st-auth-title { font-size: calc(var(--display-lg) * 0.72); }
 }
-@media (max-width: 900px) and (max-height: 900px) {
-  .auth-card.st-auth-card { border: 0; padding: 0; background: transparent; }
+@media (max-width: 900px) {
+  .auth.st-auth { place-items: start center; padding: var(--space-6) var(--space-4) var(--space-8); }
+  .auth-card.st-auth-card { padding: var(--space-5) var(--space-4); }
 }
 
 /* The ways to start: a list of choices, the first one recommended */
@@ -148,7 +171,7 @@
 /* Numbered steps (a free key: open the page, paste the key) */
 .st-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: var(--border-w) solid var(--color-border); }
 .st-steps > li { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: var(--border-w) solid var(--color-border); min-width: 0; }
-.st-step-n { flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: var(--border-w) solid var(--color-border-strong); font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--color-ink-muted); }
+.st-step-n { flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 0; border: var(--border-w) solid var(--color-border-strong); font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--color-ink-muted); }
 .st-steps > li.is-done .st-step-n { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary); }
 .st-step-body { display: flex; flex-direction: column; gap: var(--space-2); flex: 1; min-width: 0; padding-top: 2px; font-size: var(--text-md); }
 .st-step-body > .st-inline { justify-content: space-between; }

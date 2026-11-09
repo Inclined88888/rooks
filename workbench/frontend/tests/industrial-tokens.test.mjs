@@ -65,7 +65,7 @@ function offenders(check) {
 // move to square corners in the next steps.
 const KNOWN_ROUND = [
   "src/appearance.css", "src/chat/chat.css", "src/connect.css", "src/packs/packs.css", "src/pages/agents/agents.css", "src/pages/day/day.css",
-  "src/pages/settings/settings.css", "src/shell/shell.css", "src/skills.css", "src/team/team.css", "src/teammates/teammates.css",
+  "src/skills.css", "src/team/team.css", "src/teammates/teammates.css",
   "src/v02/v02.css", "src/voice/voice.css",
 ].sort();
 
@@ -89,7 +89,7 @@ test("round corners are left only in the feature stylesheets still waiting for t
 
 // A box-shadow is allowed only as none, or as the focus ring: in a :focus rule, or the --focus-ring token.
 const KNOWN_SHADOW = [
-  "src/appearance.css", "src/attachments.css", "src/packs/packs.css", "src/pages/day/day.css", "src/room/room.css", "src/shell/shell.css",
+  "src/appearance.css", "src/attachments.css", "src/packs/packs.css", "src/pages/day/day.css", "src/room/room.css",
   "src/team/team.css", "src/voice/voice.css", "src/work.css",
 ].sort();
 function badShadows(css) {
