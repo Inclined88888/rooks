@@ -270,6 +270,8 @@ function Chat() {
   }, [cid, messages.length > 0]);
   useEffect(() => {
     if (!pinnedRef.current) return;
+    // a new chat starts at its top: the greeting is a tall hero, so following the (empty) end would cut its first line
+    if (messages.length === 0) return;
     endRef.current?.scrollIntoView({ behavior: followBehavior(busyRef.current, motionOff()), block: "end" });
   }, [messages, live?.steps.length, live?.draft.length]);
 

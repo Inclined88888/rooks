@@ -29,6 +29,7 @@
 .ap-seg button:hover { color: var(--text); background: var(--color-bg-hover); }
 .ap-seg button[aria-checked="true"] { background: var(--color-primary); color: var(--color-on-primary); }
 .ap-range { width: 100%; accent-color: var(--color-primary); }
+@media (pointer: coarse) { .ap-seg button { height: var(--touch); } .ap-range { height: var(--touch); } }
 .ap-preview { position: sticky; top: 24px; }
 .ap-preview .frame { border: var(--line-ink); background: var(--bg); color: var(--text); padding: 24px; display: flex; flex-direction: column; gap: 16px; border-radius: 0; }
 .ap-preview .frame .ap-presence { margin: -12px -12px 0; padding: 0 var(--space-2); border-bottom: 1px solid var(--border); }

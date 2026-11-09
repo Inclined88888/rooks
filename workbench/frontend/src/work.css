@@ -47,3 +47,10 @@
   .terminal-page .ui-page-desc { display: none; }
   .terminal-page .ui-page-head { margin-bottom: var(--space-3); }
 }
+
+/* Touch screens: a terminal's tab, its name and its close button are 44 px targets */
+@media (pointer: coarse) {
+  .terminal-tab { height: auto; min-height: var(--touch); }
+  .terminal-tab-name { align-self: stretch; min-height: var(--touch); }
+  .terminal-tab-x { width: var(--touch); height: var(--touch); }
+}

@@ -172,9 +172,10 @@ kbd, .kbd {
   height: 36px; padding: 0 12px; background: var(--screen-chrome); color: var(--screen-ink); flex: none;
 }
 .terminal-dots { display: flex; gap: 6px; }
-.terminal-dots i { width: 10px; height: 10px; border-radius: 0; display: block; background: var(--screen-dot-close); }
-.terminal-dots i:nth-child(2) { background: var(--screen-dot-min); }
-.terminal-dots i:nth-child(3) { background: var(--screen-dot-max); }
+/* the window's three marks: one orange square and two grey ones (the --screen-dot-* colours stay xterm's red, yellow
+   and green for program output, terminal/Shell.tsx) */
+.terminal-dots i { width: 10px; height: 10px; border-radius: 0; display: block; background: var(--screen-mark); }
+.terminal-dots i:first-child { background: var(--color-accent); }
 .terminal-screen-title { text-align: center; font-size: var(--text-xs); font-weight: var(--weight-medium); }
 .terminal-screen .terminal-stage { min-height: 0; background: var(--screen-bg); }
 .terminal-screen .terminal-box { background: var(--screen-bg); border: 0; padding: 4px 8px 8px; }
@@ -729,4 +730,10 @@ label.field .input, label.field textarea, label.field select { letter-spacing: n
 @media (max-width: 900px) {
   .composer-hint { display: none; }
   .routines-panel li { align-items: flex-start; flex-wrap: wrap; }
+}
+
+/* Touch screens: the older tabs and buttons are 44 px targets too (ui.css does the primitives) */
+@media (pointer: coarse) {
+  .tab, .shell-agents .agents-mode-head .tab, .composer-bar .mode-tabs .tab { height: auto; min-height: var(--touch); }
+  .btn { min-width: var(--touch); }
 }

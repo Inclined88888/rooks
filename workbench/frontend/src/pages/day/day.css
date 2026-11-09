@@ -395,3 +395,5 @@
 .day-needs-count { margin-left: var(--space-1); }
 @media (max-width: 1280px) { .job-board { gap: var(--space-4); } }
 @media (max-width: 900px) { .job-board { grid-template-columns: 1fr; gap: var(--space-8); } }
+
+@media (pointer: coarse) { .day-home-field { height: var(--touch); } .day-check { min-height: var(--touch); } }

@@ -399,3 +399,5 @@
   .st-page .ui-page-titles { flex-basis: 100%; }
 }
 .st-charts > .ui-section { border-top: 0; padding: 0; }
+
+@media (pointer: coarse) { .st-choice-item { min-height: var(--touch); } }

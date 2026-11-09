@@ -12,6 +12,31 @@ The app's look moves to an industrial, technical design: off-white paper (#F2F2F
 call and word stays as it was; only the visual design system changes, step by step. No data change, nothing to
 migrate. Rollback: revert the branch's commits (the built `dist` is committed with each step).
 
+- **Step 5: the sweep.** Every route in `pages/registry.ts` (49, with the developer pages on), plus sign-in and the
+  first welcome, at 1440x900 and 390x844 (a touch phone) in light and dark: 204 screenshots, each looked at, and an
+  automatic check of every element (page overflow, corners, shadows, gradients, blue or purple, gold, text contrast,
+  44 px touch targets, focus rings on the first Tab stops, console errors). What it found and what changed:
+  - Page titles broke inside a word on a phone (AUTOMA / TIONS, MEE / TIN / GS, COMPAN / Y, TERMI / NAL) because the
+    title allowed a break anywhere and the page's buttons took the row first: titles now break only between words
+    (`overflow-wrap: break-word`), take their row first, and the buttons wrap under them (`.ui-page-titles`).
+  - An error card in a narrow column (Computer) squeezed its words to one a line beside Try again: the button now
+    wraps under the words (`.ui-error`). Skills' sentence beside Add a skill does the same on a phone (`.ag-bar`).
+  - The terminal window's bar had red, yellow and green dots: now one orange square and two grey ones
+    (`--screen-mark`); program output keeps xterm's own colours.
+  - A new chat on a phone scrolled to its end and cut off the greeting's first line: it starts at its top now.
+  - Channels' setup steps put the step number beside the second line of a long step: each step is a block now.
+  - The team's three numbers broke into two rows on a phone: they stay one strip with 1 px dividers.
+  - Touch targets under 44 px on phones: chips (42), the skip link, summaries (Advanced, App manifest, More
+    providers), the chat's Chat and Code tabs, model and effort chips, the microphone, Appearance's choices and text
+    size slider, AI models' provider choices, Home's ask field, checkboxes (History, Computer), the terminal's tabs,
+    Channels' steps and buttons narrower than 44 px. All are 44 px on touch screens now; a button with a minimum width
+    never shrinks under its words.
+  - Left as they are, on purpose: a calendar's own colour (blue by default, BACKLOG), the dark theme's warning words
+    (#F0C870, AA, a status colour, not the accent), and the 503 and 409 answers the Browser, Computer and pack pages
+    get from the server when those parts are off (the browser lists them as failed loads; the pages show the plain
+    words). No script error and no console error from the app on any route.
+  - Guard: `tests/industrial-sweep.test.mjs` (9 tests, every one failed on the tree before this step; scratchpad
+    `industrial/step5/fail-first.txt`). No older guard changed.
 - **Step 4: the pages** (every feature stylesheet, `src/chat/EmptyChat.tsx`, `src/ui/headline.ts`, the stat strip in
   `Settings.tsx` (Usage), `Status.tsx` and `team/Team.tsx`, the chart colours in `v02/LiveBlocks.tsx`, `util.tsx`'s
   mermaid theme, `tokens.css` chart tokens).

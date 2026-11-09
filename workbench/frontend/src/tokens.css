@@ -209,6 +209,7 @@ html[data-mode="contrast"] {
   --screen-dot-close: #FF5F57;
   --screen-dot-min: #FEBC2E;
   --screen-dot-max: #28C840;
+  --screen-mark: #6B6B67;            /* the grey squares on the terminal window's bar (the first one is the orange) */
   --brand-tile: #FFFFFF;
   /* the Rooks mark (src/ui/RooksMark.tsx, public/favicon.svg): an ink tile, a paper tower, a door in safety orange.
      The desktop icon files keep the gold door until they are regenerated (BACKLOG.md). */

@@ -122,7 +122,11 @@
 .team-update { padding: 4px 0; border-bottom: var(--line); }
 
 @media (max-width: 900px) {
-  .team-stats.st-stats { min-width: 0; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* the three numbers stay one strip on a phone (the settings strip's two-by-two layout is for four) */
+  .team-stats.st-stats, .team-stats.st-stats.is-three { min-width: 0; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .team-stats.st-stats > * { padding-inline: var(--space-3); }
+  .team-stats.st-stats > :first-child { padding-left: 0; }
+  .team-stats.st-stats.is-three > :nth-child(3) { grid-column: auto; border-top: 0; border-left: var(--line); }
   .team-stats.st-stats .ui-stat-value { font-size: var(--text-2xl); }
   .team-board { grid-auto-flow: row; grid-auto-columns: auto; }
   .team-wl-row { grid-template-columns: 1fr; gap: 4px; }

@@ -76,7 +76,7 @@
 .tm-wizard { display: flex; flex-direction: column; gap: var(--space-3); }
 .tm-wizard ol { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); }
 .tm-wizard li { color: var(--color-ink-muted); }
-.tm-wizard li button { display: inline; border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.tm-wizard li button { display: block; width: 100%; border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .tm-wizard li.on { color: var(--color-ink); font-weight: var(--weight-bold); }
 .tm-wizard li.done { text-decoration: line-through; text-decoration-color: var(--color-border-strong); }
 .tm-conv { width: auto; max-width: 220px; }
@@ -103,3 +103,5 @@
   .tm-new { padding: var(--space-4); }
   .tm-msgs { padding: var(--space-4) var(--space-3); }
 }
+
+@media (pointer: coarse) { .tm-wizard li button { min-height: var(--touch); } }

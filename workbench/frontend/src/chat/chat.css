@@ -206,3 +206,9 @@
   .chat-offer { margin: 0 12px 8px; }
   .chat-empty { margin-top: var(--space-4); padding: var(--space-8) var(--space-4) var(--space-6); }
 }
+
+/* Touch screens: the model and effort chips are 44 px like the project chip beside them */
+@media (pointer: coarse) {
+  .chat-chip-select { height: auto; min-height: var(--touch); }
+  .chat-chip-select select.input { height: auto; min-height: var(--touch); margin-block: calc(var(--border-w) * -1); }  /* covers the chip's edge */
+}

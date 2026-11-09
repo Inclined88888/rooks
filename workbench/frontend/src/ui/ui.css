@@ -28,7 +28,7 @@
 .ui-page-meta:empty { display: none; }
 .ui-page-meta .ui-page-kicker { margin: 0; }
 .ui-page-main { display: flex; align-items: flex-end; gap: var(--space-4); flex-wrap: wrap; min-width: 0; }
-.ui-page-titles { flex: 1; min-width: 0; }
+.ui-page-titles { flex: 1 1 20rem; min-width: 0; }  /* under ~20rem beside the actions, the actions wrap below */
 .ui-page-kicker {
   display: inline-flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3);
   font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium); line-height: 1;
@@ -37,7 +37,7 @@
 .ui-page-kicker::before { content: ""; width: 6px; height: 6px; flex: none; background: var(--color-accent); }
 .ui-page-title {
   margin: 0; font-family: var(--font-display); font-size: var(--display-md); font-weight: var(--weight-display); font-stretch: var(--stretch-display);
-  text-transform: uppercase; letter-spacing: var(--tracking-display); line-height: var(--leading-display); color: var(--color-ink); text-wrap: balance; overflow-wrap: anywhere;
+  text-transform: uppercase; letter-spacing: var(--tracking-display); line-height: var(--leading-display); color: var(--color-ink); text-wrap: balance; overflow-wrap: break-word; hyphens: manual;
 }
 .ui-page-desc { margin: var(--space-3) 0 0; max-width: 60ch; font-size: var(--text-body); line-height: var(--leading-normal); color: var(--color-ink-muted); }
 .ui-page-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
@@ -70,7 +70,7 @@
   .ui-page-hero > :not(.ui-page-head) { margin-left: calc((100% + var(--grid-gutter)) * var(--grid-meta-span) / var(--grid-columns)); }
   .ui-page > .ui-section:has(> .ui-section-head) { display: grid; grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr)); column-gap: var(--grid-gutter); align-items: start; }
   .ui-page > .ui-section > .ui-section-head { grid-column: 1 / span var(--grid-meta-span); flex-direction: column; align-items: flex-start; margin-bottom: 0; }
-  .ui-page > .ui-section > .ui-section-head .ui-section-title { flex: none; max-width: 100%; overflow-wrap: anywhere; }
+  .ui-page > .ui-section > .ui-section-head .ui-section-title { flex: none; max-width: 100%; overflow-wrap: break-word; }
   .ui-page > .ui-section > .ui-section-body { grid-column: span calc(var(--grid-columns) - var(--grid-meta-span)); }
 }
 
@@ -266,9 +266,9 @@ input[type="checkbox"]:disabled, input[type="radio"]:disabled { opacity: 0.45; c
 .ui-loading-row { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-2); border-bottom: var(--border-w) solid var(--color-border); }
 .ui-loading-bar { display: block; height: 12px; border-radius: 0; background: var(--color-bg-active); }
 .ui-loading-bar.is-meta { width: 28%; height: 10px; background: var(--color-bg-hover); }
-.ui-error { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4); border: var(--border-w) solid var(--color-border); border-left: 2px solid var(--color-danger); border-radius: 0; background: var(--color-surface); }
+.ui-error { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3); padding: var(--space-4); border: var(--border-w) solid var(--color-border); border-left: 2px solid var(--color-danger); border-radius: 0; background: var(--color-surface); }
 .ui-error-icon { flex: none; margin-top: 2px; color: var(--color-danger-text); }
-.ui-error-text { flex: 1; min-width: 0; }
+.ui-error-text { flex: 1 1 12rem; min-width: 0; }
 .ui-error-title { margin: 0; font-size: var(--text-md); font-weight: var(--weight-bold); color: var(--color-ink); }
 .ui-error-line { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
 
@@ -409,6 +409,9 @@ button.ui-timeline-row:hover, .ui-timeline-step.is-current .ui-timeline-row { co
 @media (pointer: coarse) {
   .ui-btn, .ui-input, .ui-select, .ui-tab, .ui-menu-item, .ui-chip, .ui-needs, .btn, .input { min-height: var(--touch); }
   .ui-iconbtn, .ui-btn-square, .ui-toast-x, .ui-chip-x { min-height: var(--touch); min-width: var(--touch); }
+  .ui-btn, .ui-tab { min-width: var(--touch); flex-shrink: 0; }  /* a set min-width lets a flex item shrink under its words: it keeps them */
+  .ui-chip-main { margin-block: calc(var(--border-w) * -1); }  /* the button covers the chip's 1 px edge: a full 44 px target */
+  summary { min-height: var(--touch); padding-block: var(--space-3); box-sizing: border-box; }
 }
 
 /* ---- High contrast: thicker edges on the controls people aim at ---- */
