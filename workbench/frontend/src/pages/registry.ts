@@ -5,7 +5,7 @@
  */
 import type { LucideIcon } from "lucide-react";
 import {
-  Activity, AudioLines, BookMarked, Building2, CalendarClock, CalendarDays, CheckSquare, Code2, CreditCard, Columns3, FileText, FlaskConical,
+  Activity, AudioLines, BookMarked, Briefcase, Building2, CalendarClock, CalendarDays, CheckSquare, Code2, CreditCard, Columns3, FileText, FlaskConical,
   FolderKanban, FolderOpen, Gauge, Globe, Globe2, GraduationCap, Hammer, History, Home, Info, Laptop, Layers, LineChart, ListChecks, ListTree, Lock,
   Mail, MessageCircle, MessageSquare, Mic, Monitor, NotebookPen, Package, Palette, Plug, Scale, Search, Settings, Shield,
   SquareTerminal, Users, UsersRound, Video,
@@ -109,6 +109,7 @@ export const PAGES: PageEntry[] = [
 
   // ---- More: Settings ----
   { path: "/models", label: "AI models", icon: Gauge, section: "Settings", load: () => import("./Models") },
+  { path: "/work", label: "Work apps", icon: Briefcase, section: "Settings", load: () => import("./WorkApps") },  // design 0012
   { path: "/voice", label: "Ask anywhere & voice", icon: Mic, section: "Settings", load: () => import("./VoiceSettings") },
   { path: "/appearance", label: "Appearance", icon: Palette, section: "Settings", load: () => import("./Appearance") },
   { path: "/plan", label: "Your plan", icon: CreditCard, section: "Settings", load: () => import("./Plan") },

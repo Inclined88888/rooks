@@ -36,8 +36,8 @@ test("a switch waiting for IT offers the note to copy; the technical detail is u
   assert.match(page, /Copy the request for IT/);
   assert.match(page, /\/work\/features\/\$\{f\.id\}\/it-note/);
   assert.match(page, /navigator\.clipboard\.writeText/);
-  assert.match(page, /<Disclosure[^>]*title="Advanced"/);
-  const advanced = page.indexOf('title="Advanced"');
+  assert.match(page, /<Disclosure[^>]*summary="Advanced"/);
+  const advanced = page.indexOf('summary="Advanced"');
   for (const tech of ["admin_consent", "tenant", "granted", "client_id_hint"]) {
     const at = page.indexOf(tech);
     assert.ok(at === -1 || at > advanced, `${tech} appears only under Advanced`);
