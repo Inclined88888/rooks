@@ -48,7 +48,7 @@ export const TERMINAL_MAX = 4;
 const COMMAND_LINES_MAX = 500;
 
 const START: RoomState = {
-  checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none",
+  checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none", containment: "none",
   label: "", note: "", checkpoints: [], last_checkpoint: null, error: null,
   terminals: [], terminal_max: TERMINAL_MAX, terminal_count: null,
   can: { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null, browser_off_words: "", browser_advanced: "", terminal_shells: [] },
@@ -97,6 +97,7 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
     screen: w.screen === true,
     pointer: w.pointer === true,
     isolation: w.isolation || "none",
+    containment: w.containment === "job" ? "job" : "none",
     label: w.label || "",
     note: w.note || "",
     checkpoints: Array.isArray(w.checkpoints) ? w.checkpoints.filter((c) => c && typeof c.name === "string") : [],

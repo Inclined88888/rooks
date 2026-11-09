@@ -22,11 +22,14 @@ import sys
 import time
 from pathlib import Path
 
-from .. import store
+from .. import store, winproc
 from .base import Driver, DriverInfo
 
 LABEL = "A private folder and shell"
 NOTE = "Commands run as you, in a folder of its own. It is not a locked off computer."
+# Windows (design 0011, section 3): every Room program is in a job, so they stop together. A job is not a wall.
+NOTE_WINDOWS = ("Commands run as you, in a folder of its own. Windows keeps them together, so they all stop when the "
+                "Room stops. It is not a locked off computer: they can read and change your files.")
 RAN_NOTE = "This ran as you, in the private folder."
 NO_SCREEN = "This room has no screen. It is a private folder and shell."
 _SECRET_NAMES = {"APP_SECRET", "TOOLS_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "NVIDIA_API_KEY"}
@@ -167,6 +170,10 @@ def secret_env(name: str) -> bool:
             or upper.endswith(("_API_KEY", "_TOKEN", "_SECRET", "_PASSWORD")))
 
 
+WINDOWS_FOLDERS = {"APPDATA": Path("AppData") / "Roaming", "LOCALAPPDATA": Path("AppData") / "Local",
+                   "TEMP": Path("AppData") / "Local" / "Temp", "TMP": Path("AppData") / "Local" / "Temp"}
+
+
 def room_env(home: Path, offline: bool = False, base: dict | None = None) -> dict:
     """The environment of everything that runs in the Room: HOME is the Room's home, the host's secrets and the app's
     own names are left out, and when offline every proxy points nowhere. The PATH is the computer's own without the
@@ -175,8 +182,18 @@ def room_env(home: Path, offline: bool = False, base: dict | None = None) -> dic
     env = {k: v for k, v in (os.environ if base is None else base).items() if not secret_env(k)}
     env["HOME"] = str(home)
     env["ROOKS_TRY"] = "1"
-    if sys.platform == "win32":  # PowerShell's $HOME and ~, and most programs, read USERPROFILE
+    if sys.platform == "win32":
+        # PowerShell's $HOME and ~, and most programs, read USERPROFILE; settings and temporary files go where APPDATA,
+        # LOCALAPPDATA, TEMP and TMP say. All of them point into the Room. A program that asks Windows itself for
+        # these folders (the known folders) still finds the person's own: Advanced says so.
         env["USERPROFILE"] = str(home)
+        for name, rel in WINDOWS_FOLDERS.items():
+            folder = home / rel
+            try:
+                folder.mkdir(parents=True, exist_ok=True)
+            except OSError:
+                pass
+            env[name] = str(folder)
     if offline:  # belt and braces next to the empty network namespace: proxy-aware programs stop at once
         for key in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"):
             env[key] = "http://127.0.0.1:9"
@@ -280,6 +297,11 @@ def _kill_tree(proc: subprocess.Popen) -> None:
         pass
 
 
+def _note() -> str:
+    note = NOTE_WINDOWS if sys.platform == "win32" else NOTE
+    return note if shell_kind() == "sh" else f"{note} {CMD_NOTE}"
+
+
 class ShellDriver(Driver):
     name = "shell"
 
@@ -305,6 +327,8 @@ class ShellDriver(Driver):
         return self.status()
 
     def down(self) -> dict:
+        if winproc.WINDOWS:  # everything the Room started, still running, ends with it (design 0011, section 3)
+            winproc.end_room()
         state = store.load_state()
         state["running"] = False
         store.save_state(state)
@@ -318,11 +342,13 @@ class ShellDriver(Driver):
             "screen": False,
             "pointer": False,
             "isolation": isolation_level(),
+            # Windows: every Room program is in a job (they stop together); it is not a wall, so isolation stays "none"
+            "containment": "job" if sys.platform == "win32" else "none",
             "home": str(store.guest_home()),
             "offline": self.offline,
             "shell": shell_kind(),
             "label": LABEL,
-            "note": NOTE if shell_kind() == "sh" else f"{NOTE} {CMD_NOTE}",
+            "note": _note(),
             "last_checkpoint": state.get("last_checkpoint"),
         }
 
@@ -353,6 +379,8 @@ class ShellDriver(Driver):
         kind = "cmd" if argv is None else "sh"
         if argv is None:  # Command Prompt reads no profile: the Room's bins go on its PATH here
             env["PATH"] = room_bins(home) + (os.pathsep + env["PATH"] if env.get("PATH") else "")
+        if winproc.WINDOWS:
+            return self._run_windows(command, argv, env, home, timeout, kind)
         try:
             proc = subprocess.Popen(
                 argv if argv else command,
@@ -383,6 +411,25 @@ class ShellDriver(Driver):
             "isolation": isolation_level(),
             "shell": kind,
         }
+
+    def _run_windows(self, command: str, argv: list[str] | None, env: dict, home: Path, timeout: float,
+                     kind: str) -> dict:
+        """Windows: the command in a job of its own inside the Room job, with no window and the UI limits. When it
+        ends or runs out of time, whatever it started ends too (winproc.run_captured)."""
+        line = None
+        if argv is None:  # Command Prompt, as subprocess's shell=True builds it
+            line = '{} /c "{}"'.format(os.environ.get("ComSpec") or "cmd.exe", command)
+        try:
+            code, out, err, timed_out = winproc.run_captured(argv, env, str(home), timeout, command_line=line)
+        except OSError as exc:
+            return {"ok": False, "code": 127, "stdout": "", "stderr": "", "error": str(exc),
+                    "isolation": isolation_level(), "shell": kind}
+        if timed_out:
+            return {"ok": False, "error": f"Timed out after {timeout}s", "stdout": out[-8000:], "stderr": err[-4000:],
+                    "code": 124, "isolation": isolation_level(), "shell": kind}
+        return {"ok": code == 0, "code": code, "stdout": out[-8000:], "stderr": err[-4000:],
+                "note": RAN_NOTE if kind == "sh" else f"{RAN_NOTE} {CMD_NOTE}", "isolation": isolation_level(),
+                "shell": kind}
 
     def _env(self, home: Path, extra: dict | None) -> dict:
         env = room_env(home, self.offline)

@@ -223,7 +223,9 @@ async def _windows_terminal(ws: WebSocket) -> None:
 
     await ws.accept()
     try:
-        term = await asyncio.to_thread(winproc.Terminal, windows_argv(), shell_env(), os.path.expanduser("~"))
+        # the person's own terminal, not the Room's: no Room job, no UI limits
+        term = await asyncio.to_thread(lambda: winproc.Terminal(windows_argv(), shell_env(), os.path.expanduser("~"),
+                                                                room=False))
     except OSError:
         await ws.close(code=1011, reason="The terminal could not start")
         return

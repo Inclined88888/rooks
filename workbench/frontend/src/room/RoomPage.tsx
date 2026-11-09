@@ -26,7 +26,7 @@ import { useRoomStatus } from "./status";
 import { TerminalWindow } from "./TerminalWindow";
 import { setActiveTerminal, useTerms } from "./terms";
 import {
-  advancedDetails, commandsLabelFor, commandViewLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, shellName, terminalCountLine,
+  advancedDetails, commandsLabelFor, commandViewLine, containmentLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, shellName, terminalCountLine,
   WINDOWS_MARKER_LINE, WINDOWS_PROFILE_LINE,
 } from "./words";
 
@@ -276,6 +276,7 @@ export default function RoomPage() {
               <dt>Profile files read</dt><dd>~/.profile and, for bash, ~/.bashrc; for zsh ~/.zprofile and ~/.zshrc</dd>
             </>
           )}
+          {status.containment === "job" && <><dt>What keeps it together</dt><dd>{containmentLine(!!status.offline)}</dd></>}
           <dt>Terminals</dt><dd>{terminalCountLine({ counted: terminalsCounted(status), open: alive.length, max: status.terminal_max })}</dd>
           <dt>What is recorded</dt><dd>{RECORDED_LINE}</dd>
           {offered.includes("browser") && <><dt>The browser</dt><dd>{BROWSER_LIMITS}{status.can.browser_advanced ? ` ${status.can.browser_advanced}` : ""}</dd><dt>What Rooks asks about</dt><dd>{BROWSER_CHECKS}</dd></>}

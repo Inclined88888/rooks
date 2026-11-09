@@ -216,6 +216,8 @@ def _shape(st: dict, available: bool = True) -> dict:
         "screen": bool(st.get("screen")),
         "pointer": bool(st.get("pointer")),
         "isolation": st.get("isolation") or "none",
+        # design 0011, section 3: "job" on Windows (every Room program in a job: they stop together; not a wall)
+        "containment": st.get("containment") or "none",
         "label": st.get("label") or "",
         "note": st.get("note") or "",
         "driver": st.get("driver"),          # advanced only

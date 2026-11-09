@@ -9,6 +9,9 @@ Pure ctypes, so there is no wheel to freeze: the app imports rooks_try, and the 
   pseudo console. The process is in its job from its first instruction, so nothing it starts can slip out first. We do
   not use pywinpty: it creates the process itself, so the shell could start children before it joins a job.
 - `ConPty`: two pipes and a pseudo console. `Terminal` puts a shell on one, in a job of its own.
+- `room_job()`: the one Room job of this process (kill on close, no breakaway). Every terminal, quick command and the
+  browser get a job of their own nested in it, so `end_room()` (the Room stops) ends them all, and when this process
+  ends, however it ends, Windows closes the handle and ends them too. `run_captured` runs a quick command that way.
 - `MarkPipe`: a named pipe only the person can open, the side channel a Room shell writes its exit code to after each
   command when ConPTY drops the in-band marker (it re-renders the screen and drops escape sequences it does not know).
 
@@ -66,6 +69,11 @@ UILIMIT_DESKTOP = 0x40
 UILIMIT_EXITWINDOWS = 0x80
 WAIT_TIMEOUT = 0x102
 INFINITE = 0xFFFFFFFF
+# What a Room terminal's or quick command's programs may not do outside their job: read or change the person's clipboard,
+# use another program's windows, make or switch desktops, change system settings or the display, or sign out or shut
+# down. The browser's job has none of these: under any one of them Chromium's sandbox cannot start its GPU process.
+ROOM_UI_LIMITS = (UILIMIT_HANDLES | UILIMIT_READCLIPBOARD | UILIMIT_WRITECLIPBOARD | UILIMIT_SYSTEMPARAMETERS
+                  | UILIMIT_DISPLAYSETTINGS | UILIMIT_GLOBALATOMS | UILIMIT_DESKTOP | UILIMIT_EXITWINDOWS)
 
 if WINDOWS:  # pragma: no cover - exercised by the Windows jobs in CI
     import ctypes
@@ -308,6 +316,36 @@ class Job:
         _close(h)
 
 
+_ROOM_JOB: Job | None = None
+_ROOM_LOCK = threading.Lock()
+
+
+def room_job() -> Job:
+    """The Room job of this process, made on first use: kill on close and no breakaway, with no UI limits of its own
+    (the browser's job nests in it, and Chromium's sandbox cannot start under any of them; terminals and quick commands
+    carry ROOM_UI_LIMITS on their own jobs). This process holds the only handle."""
+    global _ROOM_JOB
+    _need_windows()
+    with _ROOM_LOCK:
+        if _ROOM_JOB is None or not _ok_handle(_ROOM_JOB.handle):
+            _ROOM_JOB = Job()
+        return _ROOM_JOB
+
+
+def end_room(code: int = HUNG_UP) -> list[int]:
+    """The Room stops: end everything in the Room job and let it go (the next Room start makes a new one). Returns the
+    ids of the processes that were still in it."""
+    global _ROOM_JOB
+    with _ROOM_LOCK:
+        job, _ROOM_JOB = _ROOM_JOB, None
+    if job is None:
+        return []
+    pids = job.pids()
+    job.terminate(code)
+    job.close()
+    return pids
+
+
 # --- processes -------------------------------------------------------------------------------------------------------------
 class Process:
     """A process spawn() started: Popen's pid, poll, wait, returncode and kill. The exit code is Windows' own DWORD."""
@@ -351,10 +389,11 @@ def _env_block(env: dict[str, str]):
 
 def spawn(argv: list[str], env: dict[str, str] | None = None, cwd: str | None = None, *, jobs: tuple | list = (),
           conpty: "ConPty | None" = None, inherit: tuple | list = (), flags: int = 0,
-          std: tuple | None = None, crt_block: bytes | None = None) -> Process:
+          std: tuple | None = None, crt_block: bytes | None = None, command_line: str | None = None) -> Process:
     """CreateProcessW with one attribute list: the job list (in that order, so a later job nests in an earlier one),
     exactly the handles `inherit` names, and the pseudo console. With a pseudo console the standard handles are set to
-    nothing, so a parent whose own output is redirected does not pass its pipes in place of the console."""
+    nothing, so a parent whose own output is redirected does not pass its pipes in place of the console.
+    `command_line` is given as is in place of argv (Command Prompt's `cmd /c "..."`, which argv quoting would change)."""
     _need_windows()
     count = (1 if jobs else 0) + (1 if inherit else 0) + (1 if conpty is not None else 0)
     size = SIZE_T(0)
@@ -393,7 +432,8 @@ def spawn(argv: list[str], env: dict[str, str] | None = None, cwd: str | None = 
             keep.append(block)
             si.StartupInfo.cbReserved2 = len(crt_block)
             si.StartupInfo.lpReserved2 = ctypes.cast(block, LPVOID)
-        cmd = ctypes.create_unicode_buffer(subprocess.list2cmdline([str(a) for a in argv]))
+        cmd = ctypes.create_unicode_buffer(command_line if command_line is not None
+                                           else subprocess.list2cmdline([str(a) for a in argv]))
         block_env = _env_block(env if env is not None else dict(os.environ))
         pi = PROCESS_INFORMATION()
         ok = CreateProcessW(None, ctypes.cast(cmd, LPVOID), None, None, bool(inherit),
@@ -423,7 +463,8 @@ class PipedProcess:
     for what it prints at 2, in `job` from its first instruction and inheriting nothing else. `rfd` and `wfd` are our
     ends as C runtime descriptors (os.read and os.write work on them); `err` is the read end of its output."""
 
-    def __init__(self, argv: list[str], env: dict[str, str], cwd: str, job: Job, flags: int = CREATE_NO_WINDOW) -> None:
+    def __init__(self, argv: list[str], env: dict[str, str], cwd: str, job: Job, flags: int = CREATE_NO_WINDOW,
+                 parent: Job | None = None) -> None:
         _need_windows()
         import msvcrt
 
@@ -438,7 +479,8 @@ class PipedProcess:
                 os.set_handle_inheritable(handle, True)
             block = crt_block([(FOPEN | FDEV, h[nul]), (FOPEN | FDEV, h[nul]), (FOPEN | FPIPE, h[err_w]),
                                (FOPEN | FPIPE, h[to_r]), (FOPEN | FPIPE, h[fr_w])])
-            self.proc = spawn(argv, env, cwd, jobs=[job], inherit=list(h.values()), flags=flags,
+            self.proc = spawn(argv, env, cwd, jobs=[parent, job] if parent is not None else [job],
+                              inherit=list(h.values()), flags=flags,
                               std=(h[nul], h[nul], h[err_w]), crt_block=block)
         except BaseException:
             for fd in (to_w, fr_r, err_r):
@@ -452,6 +494,78 @@ class PipedProcess:
                     pass
         self.rfd, self.wfd, self.err = fr_r, to_w, err_r
         self.pid = self.proc.pid
+
+
+def run_captured(argv: list[str] | None, env: dict[str, str], cwd: str, timeout: float, *,
+                 command_line: str | None = None, ui_limits: int = ROOM_UI_LIMITS,
+                 parent: Job | None = None) -> tuple[int, str, str, bool]:
+    """A quick command in the Room: no window, NUL for input, its output and errors read back, in a job of its own
+    (with `ui_limits`) nested in `parent` (the Room job by default), from its first instruction. When it ends, or its
+    time runs out, the job is ended, so nothing it started outlives it (a background program, or one holding its
+    output open, would otherwise keep it from coming back). Returns (code, output, errors, timed out); a command that
+    ran out of time ends with 124, as on POSIX."""
+    _need_windows()
+    import msvcrt
+
+    parent = room_job() if parent is None else parent
+    job = Job(ui_limits=ui_limits)
+    out_r, out_w = os.pipe()
+    err_r, err_w = os.pipe()
+    nul = os.open(os.devnull, os.O_RDWR)
+    theirs = (nul, out_w, err_w)
+    try:
+        h = {fd: msvcrt.get_osfhandle(fd) for fd in theirs}
+        for handle in h.values():
+            os.set_handle_inheritable(handle, True)
+        proc = spawn(argv or [], env, cwd, jobs=[parent, job], inherit=list(h.values()), flags=CREATE_NO_WINDOW,
+                     std=(h[nul], h[out_w], h[err_w]), command_line=command_line)
+    except BaseException:
+        for fd in (out_r, err_r):
+            os.close(fd)
+        job.close()
+        raise
+    finally:
+        for fd in theirs:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+    chunks: dict[int, list[bytes]] = {out_r: [], err_r: []}
+
+    def drain(fd: int) -> None:
+        try:
+            while True:
+                data = os.read(fd, 65536)
+                if not data:
+                    return
+                chunks[fd].append(data)
+        except OSError:
+            return
+
+    readers = [threading.Thread(target=drain, args=(fd,), daemon=True) for fd in (out_r, err_r)]
+    for t in readers:
+        t.start()
+    timed_out = False
+    try:
+        try:
+            code = proc.wait(timeout)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            job.terminate(124)
+            code = proc.wait(10)
+        job.terminate(code if code >= 0 else 1)  # what it left running, which may hold its output open
+        for t in readers:
+            t.join(10)
+    finally:
+        job.close()
+        proc.close()
+        for fd in (out_r, err_r):
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+    text = lambda fd: b"".join(chunks[fd]).decode("utf-8", "replace").replace("\r\n", "\n")  # noqa: E731
+    return (124 if timed_out else code), text(out_r), text(err_r), timed_out
 
 
 TCP_LISTEN = 2
@@ -584,8 +698,12 @@ class Terminal:
     first draws text of its own."""
 
     def __init__(self, argv: list[str], env: dict[str, str], cwd: str, cols: int = 80, rows: int = 24,
-                 parent: Job | None = None) -> None:
-        self.job = Job()
+                 parent: Job | None = None, room: bool = True) -> None:
+        # A Room terminal: nested in the Room job, with the UI limits. The app's own terminal (room=False) is the
+        # person's own and keeps neither.
+        if room and parent is None:
+            parent = room_job()
+        self.job = Job(ui_limits=ROOM_UI_LIMITS if room else 0)
         try:
             self.pty = ConPty(cols, rows)
         except OSError:

@@ -41,6 +41,7 @@ def room_home(tmp_path, monkeypatch):
 # --- on any computer: the words and the environment ---------------------------------------------------------------------
 def test_status_on_windows_says_the_room_is_kept_together_and_not_locked_off(room_home, monkeypatch):
     monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(shell_mod, "namespaces_available", lambda: False)  # there are none on Windows
     monkeypatch.setattr(shell_mod, "windows_sh", lambda: r"C:\Program Files\Git\bin\bash.exe")
     st = shell_mod.ShellDriver().status()
     assert st["isolation"] == "none"  # a job is not a wall

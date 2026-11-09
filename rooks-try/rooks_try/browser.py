@@ -555,9 +555,12 @@ def browser_env(home: Path, base: dict | None = None, offline: bool = False, pla
         # Windows: the person's own USERPROFILE stays. Chromium finds its folders through it, and without them it cannot
         # tell the Room's profile from its default one and refuses the pipe ("DevTools remote debugging requires a
         # non-default data directory", seen on windows-2022). The profile is the Room's all the same (--user-data-dir).
-        person = (os.environ if base is None else base).get("USERPROFILE")
-        if person:
-            env["USERPROFILE"] = person
+        # APPDATA and LOCALAPPDATA stay the person's for the same reason (room_env points them into the Room for the
+        # Room's other programs); TEMP and TMP stay in the Room.
+        for name in ("USERPROFILE", "APPDATA", "LOCALAPPDATA"):
+            person = (os.environ if base is None else base).get(name)
+            if person:
+                env[name] = person
     return env
 
 
@@ -1159,7 +1162,8 @@ class Session:
         env = browser_env(inside, offline=self.offline, platform="win32")
         try:
             self.job = winproc.Job(memory_limit=JOB_MEMORY_LIMIT, ui_limits=BROWSER_UI_LIMITS)
-            piped = winproc.PipedProcess(argv, env, str(self.room_home), self.job)
+            # nested in the Room job: stopping the Room, or the app ending however it ends, ends the browser too
+            piped = winproc.PipedProcess(argv, env, str(self.room_home), self.job, parent=winproc.room_job())
         except OSError as e:
             if self.job is not None:
                 self.job.close()
