@@ -30,9 +30,13 @@ TEXT_PAIRS = [  # (foreground, background) that must reach 4.5:1
     ("success-text", "success-soft"), ("warning-text", "warning-soft"), ("danger-text", "danger-soft"),
     ("code-keyword", "code-bg"), ("code-string", "code-bg"), ("code-number", "code-bg"), ("code-title", "code-bg"), ("code-type", "code-bg"),
     ("on-dark", "dark"), ("on-dark-muted", "dark"),
+    # the primitives (industrial step 2): mono badge words on the sunken fill
+    ("ink", "surface-sunken"), ("ink-muted", "surface-sunken"),
 ]
 UI_PAIRS = [  # non-text that a person needs to see: 3:1
     ("border-strong", "bg"), ("border-strong", "surface"), ("ink-faint", "bg"), ("border-focus", "bg"), ("accent", "surface"),
+    # the primitives (industrial step 2): the square marks on toasts and receipts, the ink edge of what you press
+    ("on-primary", "success"), ("on-primary", "danger"), ("on-primary", "warning"), ("ink", "bg"),
 ]
 DECORATIVE = [("accent", "bg")]  # orange marks on the paper: always beside words, reported for the record
 def lum(hex_colour: str) -> float:

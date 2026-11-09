@@ -1,6 +1,7 @@
 /**
- * Rooks UI primitives (docs/design/0003-workroom.md, section 6). Small, typed, tokens only (ui.css), sensible aria.
- * Pages outside the shell keep their old className strings; new shell work uses these.
+ * Rooks UI primitives (docs/design/0003-workroom.md, section 6; restyled "industrial" in design system v4, CHANGELOG).
+ * Small, typed, tokens only (ui.css), sensible aria. Pages outside the shell keep their old className strings; new shell
+ * work uses these.
  */
 import { AlertTriangle, Check, CircleDashed, Hand, Minus, MoreHorizontal, X } from "lucide-react";
 import {
@@ -19,7 +20,8 @@ const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boo
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: "sm" | "md"; icon?: ReactNode; busy?: boolean };
 
-/** Primary is ink on paper (never the accent); secondary an outline; ghost bare; danger for the one destructive act. 36px, sm 28px. */
+/** Primary is a black rectangle that hovers to orange; secondary a 1 px ink outline; ghost bare; danger for the one
+ *  destructive act. Mono uppercase words, square. 36px, sm 28px, 44px on touch screens. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant = "secondary", size = "md", icon, busy, className, children, type = "button", disabled, ...rest }, ref,
 ) {
@@ -63,7 +65,7 @@ export function Page({ title, description, actions, kicker, wide, children, clas
   );
 }
 
-/** A titled part of a page, separated by a hairline. */
+/** A titled part of a page, separated by a hairline and numbered 01, 02, ... in a mono label. */
 export function Section({ title, description, actions, children, className }: {
   title?: string; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string;
 }) {
@@ -72,6 +74,8 @@ export function Section({ title, description, actions, children, className }: {
     <section className={cx("ui-section", className)} aria-labelledby={title ? id : undefined}>
       {(title || actions) && (
         <div className="ui-section-head">
+          {/* the section number (01, 02, ...) is drawn by a CSS counter: decoration, so screen readers skip it */}
+          {title && <span className="micro ui-section-num" aria-hidden="true" />}
           {title && <h2 id={id} className="ui-section-title">{title}</h2>}
           {actions && <div className="ui-section-actions">{actions}</div>}
         </div>
@@ -82,9 +86,35 @@ export function Section({ title, description, actions, children, className }: {
   );
 }
 
+/* ---------------------------------------------------------------- MicroLabel */
+/** "[01 // NAME]": the number in two digits; without a number, "[NAME]". */
+export function microText(n: number | undefined, name: string): string {
+  return n == null ? `[${name}]` : `[${String(n).padStart(2, "0")} // ${name}]`;
+}
+
+/** The tiny mono label beside an orange square, [01 // NAME]. It is decoration: hidden from screen readers unless
+ *  `decorative` is false (only when it is the one place a name is written). Never put ids or addresses in it. */
+export function MicroLabel({ n, name, decorative = true, className }: { n?: number; name: string; decorative?: boolean; className?: string }) {
+  return <span className={cx("micro", "ui-micro", className)} aria-hidden={decorative || undefined}>{microText(n, name)}</span>;
+}
+
 /* ---------------------------------------------------------------- Card */
-export function Card({ children, className, padding = "md", as: Tag = "div", ...rest }: { children: ReactNode; className?: string; padding?: "none" | "sm" | "md"; as?: "div" | "section" | "article" } & Record<string, unknown>) {
-  return <Tag className={cx("ui-card", padding !== "md" && `ui-card-pad-${padding}`, className)} {...rest}>{children}</Tag>;
+/** White, a 1 px line, square. With `label` (and `index`) a micro-label sits on top; with `heading` a bold uppercase
+ *  title; either one draws the thin divider under the head. */
+export function Card({ children, className, padding = "md", as: Tag = "div", label, index, heading, ...rest }: {
+  children: ReactNode; className?: string; padding?: "none" | "sm" | "md"; as?: "div" | "section" | "article"; label?: string; index?: number; heading?: ReactNode;
+} & Record<string, unknown>) {
+  return (
+    <Tag className={cx("ui-card", padding !== "md" && `ui-card-pad-${padding}`, className)} {...rest}>
+      {(label || heading) && (
+        <header className="ui-card-head">
+          {label && <MicroLabel n={index} name={label} decorative={!!heading} />}
+          {heading && <h3 className="ui-card-title">{heading}</h3>}
+        </header>
+      )}
+      {children}
+    </Tag>
+  );
 }
 
 /* ---------------------------------------------------------------- Input, Select */
@@ -384,7 +414,7 @@ export function useToast() {
 }
 
 /* ---------------------------------------------------------------- EmptyState, Stat */
-/** One line, one sentence, one action. */
+/** One line, one sentence, one action, on the blueprint grid: the line big and uppercase, the sentence in mono. */
 export function EmptyState({ title, line, action, icon, className }: { title: string; line?: string; action?: ReactNode; icon?: ReactNode; className?: string }) {
   return (
     <div className={cx("ui-empty", className)}>
@@ -496,7 +526,7 @@ export function capturedLine(captured: boolean, wasCaptured: boolean, place: str
   if (captured) return `Your mouse and keyboard go to ${place}. Press Escape or Hand back to stop.`;
   return wasCaptured ? "Handed back." : "";
 }
-/** 10px frame, controls bar. `captured` means your mouse and keyboard go to the surface: a still 2px accent border shows it. */
+/** Square frame, controls bar. `captured` means your mouse and keyboard go to the surface: a still 2px accent border shows it. */
 export function StageFrame({ title, label, live, captured, controls, children, className }: {
   title: string; label: string; live: boolean; captured: boolean; controls: ReactNode; children: ReactNode; className?: string;
 }) {

@@ -113,7 +113,8 @@ test("the stylesheet is on the scale: sizes 12-28 tokens, weights 400/500/600, n
     assert.match(m[1].trim(), /^(400|500|600|var\(--weight-(regular|medium|heading)\)|inherit)$/, `font-weight ${m[1]}`);
   }
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "colours are tokens");
-  for (const m of css.matchAll(/box-shadow:\s*([^;}]+)/g)) assert.match(m[1].trim(), /^(none|var\(--shadow-float\))$/, "no shadows on cards and panels; only the floating one");
+  // the industrial redesign (step 2): the one other box-shadow is the focus ring's 1 px ink halo (tokens.css --focus-ring)
+  for (const m of css.matchAll(/box-shadow:\s*([^;}]+)/g)) assert.match(m[1].trim(), /^(none|var\(--shadow-float\)|var\(--focus-ring\))$/, "no shadows on cards and panels; only the floating one and the focus ring");
   for (const m of css.matchAll(/animation(?:-name)?\s*:\s*([^;}]+)/g)) assert.match(m[1], /ui-fade|none/);
   for (const m of css.matchAll(/border-radius:\s*([^;}]+)/g)) {
     assert.match(m[1].trim(), /^(var\(--radius-(sm|md|full)\)|6px|10px|50%|0)$/, `radius ${m[1]}`);

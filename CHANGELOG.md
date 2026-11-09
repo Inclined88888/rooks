@@ -12,6 +12,36 @@ The app's look moves to an industrial, technical design: off-white paper (#F2F2F
 call and word stays as it was; only the visual design system changes, step by step. No data change, nothing to
 migrate. Rollback: revert the branch's commits (the built `dist` is committed with each step).
 
+- **Step 2: the primitives** (`src/ui/ui.css`, `src/ui/index.tsx`, and their older twins in `styles.css`).
+  - Buttons: mono uppercase words, square; primary a black rectangle that hovers to orange with ink words, secondary
+    white with a 1 px ink edge, ghost bare, danger in the danger colour on white. A pressed primary keeps its colours
+    (it used to flash grey with white words on touch). The older `.btn` classes look the same.
+  - Inputs and selects: square, an edge that turns ink on hover and focus, and the one orange focus ring (the inputs no
+    longer replace it with a thinner ink one). The select's chevron is a token picture in each theme's ink
+    (`--icon-chevron`), not a gradient. Checkboxes and radios are drawn square everywhere (ink with a paper tick; a
+    picked radio holds a small orange square); the Settings switch is square.
+  - Cards: white, a 1 px line; `Card` takes an optional `label` (and `index`) for a micro-label on top and a `heading`
+    for a bold uppercase title, with a thin divider under them. The older `.card-head` titles are bold uppercase.
+  - `MicroLabel` and `microText`: the `[01 // NAME]` label beside the orange square, hidden from screen readers unless
+    it is the only place a name is written. Page kickers are micro-labels; page titles and section titles are the
+    condensed display face; each section shows its number (`01 //`, a CSS counter, decoration).
+  - Tables (`.ui-table`) and lists: hairline rows, mono uppercase column heads (tables in answers get mono heads and
+    keep their case); the current row has a thin orange edge.
+  - Sheets, menus, toasts, the palette and modals: square, a 1 px ink edge, no shadow; the scrim is darker (no blur).
+    Toast and receipt marks are squares.
+  - Tabs: square cells split by hairlines, mono uppercase, the current one an ink block with an orange count. Badges
+    are mono uppercase with a small square in their tone; chips square (their words keep their case).
+  - Empty states sit on the blueprint grid with a big uppercase line and a mono hint; stats show a huge number with a
+    tiny mono label below it (the label is still read first).
+  - On touch screens the controls are 44 px targets (buttons, icon buttons, fields, tabs, menu items, chips, toast
+    close).
+  - Not in this step: the left meta column for sections (number and label beside the content) needs the page layouts,
+    which come with the pages step; feature stylesheets keep their own rules until their step.
+  - Guards: `tests/industrial-primitives.test.mjs` (12 tests, all failed on the tree before this step).
+    `industrial-tokens` takes `ui/ui.css` off its round-corner, shadow and gradient lists (the lists only shrink);
+    `premium-pages-b` now allows the focus ring's halo as the settings stylesheet's one other box-shadow (the spec's
+    focus ring). `scripts/check-theme-contrast.py` checks the new pairs (badge words on the sunken fill, the square
+    marks on toasts and receipts, the ink edge of buttons).
 - **Step 1: tokens and global CSS.**
   - `tokens.css` is design system v4: the palette for Light, Dark (ink on dark: #111111 paper, #1A1A1A surfaces,
     #2B2B2B lines, #F2F2F0 words, the same orange) and High contrast; every `--radius-*` is 0; `--shadow-float` and

@@ -66,7 +66,7 @@ function offenders(check) {
 const KNOWN_ROUND = [
   "src/appearance.css", "src/chat/chat.css", "src/connect.css", "src/packs/packs.css", "src/pages/agents/agents.css", "src/pages/day/day.css",
   "src/pages/settings/settings.css", "src/shell/shell.css", "src/skills.css", "src/team/team.css", "src/teammates/teammates.css",
-  "src/ui/ui.css", "src/v02/v02.css", "src/voice/voice.css",
+  "src/v02/v02.css", "src/voice/voice.css",
 ].sort();
 
 test("the radius tokens are all 0, and every border-radius in the global CSS resolves to 0", () => {
@@ -90,7 +90,7 @@ test("round corners are left only in the feature stylesheets still waiting for t
 // A box-shadow is allowed only as none, or as the focus ring: in a :focus rule, or the --focus-ring token.
 const KNOWN_SHADOW = [
   "src/appearance.css", "src/attachments.css", "src/packs/packs.css", "src/pages/day/day.css", "src/room/room.css", "src/shell/shell.css",
-  "src/team/team.css", "src/ui/ui.css", "src/voice/voice.css", "src/work.css",
+  "src/team/team.css", "src/voice/voice.css", "src/work.css",
 ].sort();
 function badShadows(css) {
   const bad = [];
@@ -121,8 +121,9 @@ test("shadows are left only in the feature stylesheets still waiting for their s
 
 /* ---------------------------------------------------------------- gradients */
 
-// a hard-stop divider line in the day page and the select chevron in ui.css: drawn another way in their steps
-const KNOWN_GRADIENT = ["src/pages/day/day.css", "src/ui/ui.css"].sort();
+// a hard-stop divider line in the day page: drawn another way in its step (the select chevron in ui.css is a token
+// picture since step 2, tokens.css --icon-chevron)
+const KNOWN_GRADIENT = ["src/pages/day/day.css"].sort();
 const GRADIENT = /(linear|radial|conic)-gradient\(/;
 
 test("the only gradient is the blueprint grid token: a faint 1 px grid in the line colour", () => {
