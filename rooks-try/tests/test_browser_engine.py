@@ -500,3 +500,14 @@ def test_the_room_loads_where_there_is_no_fcntl():
     code = "import sys; sys.modules['fcntl'] = None; import rooks_try.browser, rooks_try.store; print('ok')"
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=60)
     assert out.stdout.strip() == "ok", out.stderr[-800:]
+
+
+def test_the_packaged_app_runs_the_pipe_step_with_its_own_program(monkeypatch, tmp_path):
+    """The desktop app is one packaged program with no Python to run `-c` with. There the step must be the app's own
+    program with the step flag, or the Room's browser never starts (seen on a Mac: "could not start")."""
+    monkeypatch.setattr(rb.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(rb.sys, "executable", "/Applications/Rooks.app/Contents/MacOS/workbench-server")
+    engine = rb.Engine(path="/opt/chrome/chrome", kind="chrome")
+    argv, _ = rb.launch_argv(engine, tmp_path / "home", person_home=tmp_path, bwrap=None, fds=(7, 8))
+    assert argv[:4] == ["/Applications/Rooks.app/Contents/MacOS/workbench-server", rb.PIPE_STEP_FLAG, "7", "8"], argv
+    assert "-c" not in argv[:4]

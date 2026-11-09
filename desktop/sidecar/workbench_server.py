@@ -429,4 +429,8 @@ def main(argv: list[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--rooks-pipe-step":  # the Room's browser: put its pipe at fds 3 and 4
+        from rooks_try.browser import pipe_step
+
+        pipe_step(sys.argv[2:])
     main()

@@ -317,6 +317,30 @@ _PIPE_STEP = ("import os,sys,fcntl\nr,w=int(sys.argv[1]),int(sys.argv[2])\n"
               "[os.close(f) for f in {r,w,hr,hw}-{3,4}]\nos.execv(sys.argv[3],sys.argv[3:])")
 
 
+PIPE_STEP_FLAG = "--rooks-pipe-step"
+
+
+def pipe_step(args: list[str]) -> None:
+    """The same step for a packaged app, which has no Python to run `-c` with: its own program is started with
+    PIPE_STEP_FLAG, r, w, then the command (desktop/sidecar/workbench_server.py hands it here first thing)."""
+    import fcntl
+
+    r, w = int(args[0]), int(args[1])
+    hr, hw = fcntl.fcntl(r, fcntl.F_DUPFD, 10), fcntl.fcntl(w, fcntl.F_DUPFD, 10)
+    os.dup2(hr, 3)
+    os.dup2(hw, 4)
+    for f in {r, w, hr, hw} - {3, 4}:
+        os.close(f)
+    os.execv(args[2], args[2:])
+
+
+def _step(fds: tuple[int, int]) -> list[str]:
+    """What runs the pipe step: Python with -c, or, inside the packaged app (sys.frozen), the app's own program."""
+    if getattr(sys, "frozen", False):
+        return [sys.executable, PIPE_STEP_FLAG, str(fds[0]), str(fds[1])]
+    return [sys.executable, "-I", "-c", _PIPE_STEP, str(fds[0]), str(fds[1])]
+
+
 def bwrap_path() -> str | None:
     """bwrap on this computer when it can give the browser a user namespace of its own (Linux only)."""
     if not sys.platform.startswith("linux"):
@@ -341,7 +365,7 @@ def launch_argv(engine: Engine, room_home: Path, *, person_home: Path | None = N
     room_home = Path(room_home)
     person_home = Path(person_home or Path.home())
     binary = os.path.realpath(engine.path) if os.path.exists(engine.path) else engine.path
-    step = [sys.executable, "-I", "-c", _PIPE_STEP, str(fds[0]), str(fds[1])]
+    step = _step(fds)
     if not bwrap:
         # no wall to take the network away: an offline Room's browser is pointed at a proxy that answers nothing,
         # loopback included (the Room's proxy variables alone are not read by Chrome on macOS)
