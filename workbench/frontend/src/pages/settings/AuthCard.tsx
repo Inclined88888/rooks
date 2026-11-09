@@ -31,7 +31,7 @@ export function AuthCard({ title, line, step, wide, footer, children, brand = tr
         <div className={`auth-card st-auth-card${wide ? " is-wide" : ""}`}>
           {children}
         </div>
-        {footer && <p className="st-auth-foot">{footer}</p>}
+        {footer && <p className="st-auth-foot" data-mark={PRODUCT}>{footer}</p>}
       </div>
     </div>
   );

@@ -28,7 +28,11 @@
 .st-layout > .ui-page { margin: 0; padding-left: 0; padding-right: 0; max-width: 720px; width: 100%; }
 .st-nav { position: sticky; top: 0; align-self: start; padding-top: var(--space-8); }
 .st-nav-title { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3) var(--space-3); font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium); text-transform: uppercase; letter-spacing: var(--tracking-micro); color: var(--color-ink-muted); }
-.st-nav-title::before { content: ""; width: 6px; height: 6px; flex: none; background: var(--color-accent); }
+/* the side list's title is the page's place ([08 // SETTINGS]); on a wide screen the page head beside it does not
+   repeat it (on a phone the list is a select and the page head carries it) */
+@media (min-width: 901px) {
+  .st-layout > .ui-page > .ui-page-head .ui-page-meta > .ui-micro { display: none; }
+}
 .st-nav-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; border-top: var(--line); }
 .st-nav-item {
   position: relative; display: flex; align-items: center; width: 100%; height: 36px; padding: 0 var(--space-3); border: 0; border-bottom: var(--line); border-radius: 0;
@@ -115,7 +119,7 @@
   background-color: var(--color-bg); background-image: var(--bg-grid); background-size: var(--bg-grid-size); background-position: -1px -1px;
 }
 .st-auth-inner { width: min(560px, 100%); display: flex; flex-direction: column; gap: var(--space-6); }
-.st-auth-head { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+.st-auth-head { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; container-type: inline-size; }
 .st-auth-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: 0; padding-bottom: var(--space-3); border-bottom: var(--line); color: var(--color-ink-muted); }
 .st-auth-brand {
   display: inline-flex; align-items: center; gap: var(--space-2); color: var(--color-ink);
@@ -123,13 +127,25 @@
 }
 .st-auth-brand .rooks-mark { flex: none; }
 .st-auth-title {
+  --hl-max: var(--display-lg);
   margin: 0; font-family: var(--font-display); font-size: var(--display-lg); font-weight: var(--weight-display); font-stretch: var(--stretch-display);
   text-transform: uppercase; letter-spacing: var(--tracking-display); line-height: var(--leading-display); color: var(--color-ink); overflow-wrap: anywhere;
 }
 .st-auth-line { margin: 0; max-width: 46ch; font-family: var(--font-mono); font-size: var(--text-sm); line-height: var(--leading-relaxed); color: var(--color-ink-muted); text-wrap: pretty; }
+/* the footer: the one dark section (#1A1A1A in every mode) with small mono words, and the product's name as a giant
+   low-opacity wordmark behind them (decoration: its alt text is empty, so screen readers skip it) */
 .st-auth-foot {
-  display: flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--color-ink-muted);
+  position: relative; overflow: hidden; display: flex; align-items: center; gap: var(--space-2); margin: 0;
+  min-height: 88px; padding: var(--space-5) var(--space-5); border-radius: 0;
+  background: var(--color-dark); color: var(--color-on-dark-muted);
   font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium); line-height: var(--leading-normal); text-transform: uppercase; letter-spacing: var(--tracking-button);
+}
+.st-auth-foot > * { position: relative; z-index: 1; }
+.st-auth-foot::after {
+  content: attr(data-mark) / ""; position: absolute; right: calc(var(--space-2) * -1); bottom: -0.2em; z-index: 0; pointer-events: none;
+  font-family: var(--font-display); font-size: var(--display-xl); font-weight: var(--weight-display); font-stretch: var(--stretch-display);
+  line-height: 1; letter-spacing: var(--tracking-display); text-transform: uppercase; white-space: nowrap;
+  color: var(--color-on-dark); opacity: 0.06;
 }
 .auth-card.st-auth-card {
   position: relative; width: 100%; padding: var(--space-8); border: var(--line-ink); border-radius: 0; background: var(--color-surface); box-shadow: none;
@@ -149,8 +165,8 @@
   .auth-card.st-auth-card { grid-column: 8 / span 5; grid-row: 1 / span 2; }
   .st-auth-inner.is-wide .st-auth-head, .st-auth-inner.is-wide .st-auth-foot { grid-column: 1 / span 5; }
   .st-auth-inner.is-wide .auth-card.st-auth-card { grid-column: 6 / span 7; }
-  /* a long heading beside the card is set a little smaller so each line still fits its column (phones keep the size) */
-  .st-auth-inner.is-long .st-auth-title { font-size: calc(var(--display-lg) * 0.72); }
+  /* a long heading beside the card starts a little smaller; .hl-fit (ui.css) then fits each line to the column */
+  .st-auth-inner.is-long .st-auth-title { --hl-max: calc(var(--display-lg) * 0.72); }
 }
 @media (max-width: 900px) {
   .auth.st-auth { place-items: start center; padding: var(--space-6) var(--space-4) var(--space-8); }

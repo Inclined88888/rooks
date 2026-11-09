@@ -1,10 +1,10 @@
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import { Badge, Button, ErrorState, Loading, Page, Section, Stat } from "../ui";
+import { Badge, Button, ErrorState, Loading, Page, Section } from "../ui";
 import { errorText } from "../ui/toast";
 import { relTime } from "../util";
-import { Advanced, Notice, SettingsGroup } from "./settings/index";
+import { Advanced, Notice, SettingRow, SettingsGroup } from "./settings/index";
 
 // Health of every moving part (backend health.py). Checked only when this page asks: no background probes (R8).
 type Check = { name: string; kind: string; status: "ok" | "degraded" | "down" | "off"; detail: string; latency_ms: number };
@@ -78,18 +78,13 @@ export default function Status() {
       )}
       {doctor && (
         <Section title="Connections">
-          {/* the connections as the stat strip: each number or state huge, its name and unit small below */}
-          <div className="st-stats">
-            <Stat label="Models" value={doctor.models_connected} hint={`connection${doctor.models_connected === 1 ? "" : "s"}`} />
-            <Stat label="Browser" value={doctor.browser_ready ? "Ready" : "Off"} />
-            <Stat label="Computer" value={doctor.computer_ready ? "Ready" : "Off"} />
-            <Stat label="Mail" value={doctor.mail_accounts} hint={`account${doctor.mail_accounts === 1 ? "" : "s"}${doctor.docker_required ? "" : " · Docker is not required"}`} />
-          </div>
-          {doctor.notes.length > 0 && (
-            <SettingsGroup>
-              {doctor.notes.map((n) => <div key={n} className="st-row"><p className="st-small">{n}</p></div>)}
-            </SettingsGroup>
-          )}
+          <SettingsGroup>
+            <SettingRow label="Models" help={`${doctor.models_connected} connection${doctor.models_connected === 1 ? "" : "s"}`} />
+            <SettingRow label="Browser" help={doctor.browser_ready ? "Ready" : "Off"} />
+            <SettingRow label="Computer" help={doctor.computer_ready ? "Ready" : "Off"} />
+            <SettingRow label="Mail" help={`${doctor.mail_accounts} account${doctor.mail_accounts === 1 ? "" : "s"}${doctor.docker_required ? "" : " · Docker is not required"}`} />
+            {doctor.notes.map((n) => <div key={n} className="st-row"><p className="st-small">{n}</p></div>)}
+          </SettingsGroup>
         </Section>
       )}
       {egress && (

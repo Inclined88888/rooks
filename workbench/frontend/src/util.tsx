@@ -33,6 +33,12 @@ function mermaidTheme() {
   const line = v("--color-border", "#D8D8D5");
   const grey = v("--color-ink-muted", "#5A5A57");
   const accent = v("--color-accent", "#FF4D00");
+  // pies: the share is written on each slice in one colour, so the slices are light (the orange, greys, white), each
+  // outlined in ink, with ink words: AA on every slice in every theme (tokens.css --color-pie-*)
+  const pieInk = v("--color-pie-ink", "#111111");
+  const pie = [1, 2, 3, 4, 5].map((i) => v(`--color-pie-${i}`, ["#FF4D00", "#A6A6A2", "#C1C1BD", "#DEDEDA", "#FFFFFF"][i - 1]));
+  // mermaid takes twelve slice colours; after five they repeat
+  const pies = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, pie[i % pie.length]]));
   const variables = {
     fontFamily: v("--font-sans", "sans-serif"),
     background: surface,
@@ -43,25 +49,35 @@ function mermaidTheme() {
     mainBkg: surface, nodeBorder: ink, clusterBkg: muted, clusterBorder: line,
     edgeLabelBackground: surface, noteBkgColor: surface, noteBorderColor: accent, noteTextColor: ink,
     actorBkg: surface, actorBorder: ink, actorTextColor: ink, signalColor: ink, signalTextColor: ink,
-    pie1: ink, pie2: accent, pie3: grey, pie4: line, pieStrokeColor: surface, pieSectionTextColor: surface,
+    // solid slices: mermaid's default 0.7 opacity would blend each fill with the page and drop its words under AA
+    ...pies, pieOpacity: "1", pieStrokeColor: pieInk, pieStrokeWidth: "1px", pieOuterStrokeColor: ink, pieOuterStrokeWidth: "1px",
+    pieSectionTextColor: pieInk, pieTitleTextColor: ink, pieLegendTextColor: ink,
   };
   // thin lines, square boxes
-  const themeCSS = "rect, polygon, path.basic, .node rect, .cluster rect { stroke-width: 1px; } .node rect, .cluster rect { rx: 0; ry: 0; } .flowchart-link, .edgePath .path { stroke-width: 1px; }";
+  const themeCSS = "rect, polygon, path.basic, .node rect, .cluster rect { stroke-width: 1px; } .node rect, .cluster rect { rx: 0; ry: 0; } .flowchart-link, .edgePath .path { stroke-width: 1px; }"
+    // the legend's swatches outlined, so the white one shows on a white card (mermaid writes the swatch's stroke inline)
+    + ` .legend rect { stroke: ${ink} !important; stroke-width: 1px; }`;
   return { variables, themeCSS };
 }
 
-// Mermaid keeps one configuration, so each diagram sets the theme's current colours just before it is drawn.
+// Mermaid keeps one configuration: it is set once, and again only when the theme's colours have changed since (a
+// diagram drawn after a switch to dark follows it).
 let mermaidReady: Promise<MermaidApi> | null = null;
+let mermaidKey = "";
 function initMermaid(): Promise<MermaidApi> {
   return (mermaidReady ??= loadMermaid()).then((m) => {
     const theme = mermaidTheme();
-    m.initialize({
-      startOnLoad: false,
-      securityLevel: "strict",
-      theme: "base",
-      themeVariables: theme.variables,
-      themeCSS: theme.themeCSS,
-    });
+    const key = JSON.stringify(theme);
+    if (key !== mermaidKey) {
+      mermaidKey = key;
+      m.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: theme.variables,
+        themeCSS: theme.themeCSS,
+      });
+    }
     return m;
   });
 }

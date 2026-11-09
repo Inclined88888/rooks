@@ -7,7 +7,7 @@ import { AlertTriangle, Check, CircleDashed, Hand, Minus, MoreHorizontal, X } fr
 import {
   createContext, forwardRef, useContext, useEffect, useId, useRef, useSyncExternalStore,
   useState,
-  type ButtonHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject, type SelectHTMLAttributes,
+  type ButtonHTMLAttributes, type CSSProperties, type InputHTMLAttributes, type TextareaHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject, type SelectHTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
 import { AssistantFace, type Mood } from "../AssistantFace";
@@ -54,11 +54,12 @@ export const PageMark = createContext<{ n: number; name: string } | null>(null);
 
 /** A real headline in two lines, the second offset, each wiped in orange as it arrives. The words are the same as
  *  `text` (screen readers hear one heading); one word stays one line. `as="p"` keeps a greeting that is not a heading
- *  (the new chat's) a paragraph. */
+ *  (the new chat's) a paragraph. On a wide window each line stays on one row: CSS sizes the headline to fit its column
+ *  from its longest line (--hl-ch, ui.css .hl-fit). */
 export function Headline({ text, as: Tag = "h1", className, id }: { text: string; as?: "h1" | "h2" | "p"; className?: string; id?: string }) {
   const [a, b] = splitHeadline(text);
   return (
-    <Tag className={className} id={id}>
+    <Tag className={cx("hl-fit", className)} id={id} style={{ "--hl-ch": Math.max(a.length, b.length) } as CSSProperties}>
       <span className="hl-line reveal">{a}</span>
       {b && <>{" "}<span className="hl-line display-offset reveal">{b}</span></>}
     </Tag>
@@ -102,8 +103,9 @@ export function Section({ title, description, actions, children, className }: {
     <section className={cx("ui-section", className)} aria-labelledby={title ? id : undefined}>
       {(title || actions) && (
         <div className="ui-section-head">
-          {/* the section number (01, 02, ...) is drawn by a CSS counter: decoration, so screen readers skip it */}
-          {title && <span className="micro ui-section-num" aria-hidden="true" />}
+          {/* [01 // NAME]: the number is a CSS counter and the name the title's own words; decoration, so screen readers
+              skip it (they hear the heading) */}
+          {title && <span className="micro ui-section-num" aria-hidden="true" data-name={title} />}
           {title && <h2 id={id} className="ui-section-title">{title}</h2>}
           {actions && <div className="ui-section-actions">{actions}</div>}
         </div>
@@ -123,9 +125,17 @@ export function microText(n: number | undefined, name: string): string {
 }
 
 /** The tiny mono label beside an orange square, [01 // NAME]. It is decoration: hidden from screen readers unless
- *  `decorative` is false (only when it is the one place a name is written). Never put ids or addresses in it. */
+ *  `decorative` is false (only when it is the one place a name is written); then a screen reader hears the name alone
+ *  ("Step 1 of 5"), the brackets and the number are drawn, not read. Never put ids or addresses in it. */
 export function MicroLabel({ n, name, decorative = true, className }: { n?: number; name: string; decorative?: boolean; className?: string }) {
-  return <span className={cx("micro", "ui-micro", className)} aria-hidden={decorative || undefined}>{microText(n, name)}</span>;
+  return (
+    <span className={cx("micro", "ui-micro", className)} aria-hidden={decorative || undefined}>
+      {decorative ? microText(n, name) : (
+        // one inner span, so the label's flex gap (after its orange square) does not space the brackets apart
+        <span><span aria-hidden="true">[</span>{n != null && <span aria-hidden="true">{`${String(n).padStart(2, "0")} // `}</span>}{name}<span aria-hidden="true">]</span></span>
+      )}
+    </span>
+  );
 }
 
 /* ---------------------------------------------------------------- Card */

@@ -100,7 +100,7 @@
 .chat-chip-wrap .v02-switch, .chat-chip-wrap .v02-switch > .btn { max-width: 240px; }
 .chat-chip-wrap .btn {
   height: 28px; padding: 0 var(--space-3); border-radius: 0; border: var(--line);
-  background: var(--color-surface); color: var(--color-ink); font-size: var(--text-micro); box-shadow: none;
+  background: var(--color-surface); color: var(--color-ink); font-size: var(--text-micro);
 }
 .chat-chip-wrap .btn:hover { border-color: var(--color-ink); background: var(--color-bg-hover); }
 .chat-chip-wrap .btn.v02-check-toggle.on, .chat-chip-wrap .btn.v02-switch-on { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary); }
@@ -110,11 +110,12 @@
 }
 .chat-chip-select:hover { border-color: var(--color-ink); background: var(--color-bg-hover); }
 .chat-chip-select select.input {
-  height: 26px; width: auto; max-width: 100%; border: 0; background-color: transparent; box-shadow: none;
-  font-size: var(--text-sm); font-weight: 400; color: var(--color-ink); padding: 0 24px 0 4px; cursor: pointer;
+  height: 26px; width: auto; max-width: 100%; border: 0; background-color: transparent;
+  font-family: var(--font-mono); font-size: var(--text-micro); font-weight: 500; text-transform: uppercase; letter-spacing: var(--tracking-button);
+  color: var(--color-ink); padding: 0 24px 0 4px; cursor: pointer;
 }
-/* the select's own ring is cancelled above (border and shadow off), so the chip keeps a visible one */
-.chat-chip-select select.input:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+/* the select has no border of its own (the chip draws it), so its ring is the app's one ring around the chip's words */
+.chat-chip-select select.input:focus-visible { outline: var(--focus-w) solid var(--color-focus); outline-offset: 2px; box-shadow: var(--focus-ring); }
 .chat-menu-keys { margin-left: auto; display: inline-flex; gap: 2px; padding-left: var(--space-3); }
 .chat-menu-panel button[role="menuitem"]:disabled { opacity: 0.45; cursor: default; }
 .chat-offer { margin: 0 24px 8px; }
@@ -176,7 +177,9 @@
   border-top: var(--line); border-bottom: var(--line);
   background-color: var(--color-bg); background-image: var(--bg-grid); background-size: var(--bg-grid-size); background-position: -1px -1px;
 }
+.chat-empty { container-type: inline-size; }  /* the greeting fits this column on a wide window (ui.css .hl-fit) */
 .chat-empty-title {
+  --hl-max: var(--display-lg);
   margin: 0; font-family: var(--font-display); font-size: var(--display-lg); font-weight: var(--weight-display); font-stretch: var(--stretch-display);
   text-transform: uppercase; letter-spacing: var(--tracking-display); line-height: var(--leading-display); color: var(--color-ink);
 }

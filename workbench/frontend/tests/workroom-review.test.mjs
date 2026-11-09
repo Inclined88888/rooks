@@ -207,7 +207,8 @@ test("the token pairs the design names meet their contrast, and the stated figur
 });
 
 test("the model and effort chips keep a visible focus ring", () => {
-  assert.match(strip(read("../src/chat/chat.css")), /\.chat-chip-select select\.input:focus-visible \{[^}]*outline: 2px solid var\(--color-border-focus\)/);
+  // the industrial review: the app's one ring (orange on its ink halo), not a lone ink outline
+  assert.match(strip(read("../src/chat/chat.css")), /\.chat-chip-select select\.input:focus-visible \{[^}]*outline: var\(--focus-w\) solid var\(--color-focus\)[^}]*box-shadow: var\(--focus-ring\)/);
 });
 
 test("the live colour is never the only signal: the Room's focus ring is ink, and live states also say so in words", () => {
