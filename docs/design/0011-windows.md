@@ -83,6 +83,25 @@ Every Room process runs in a Job object. A Room job is created when the Room sta
 
 What a job is not: a wall. Room processes run with the person's own token. They can read and change the person's files and `HKCU`, reach the network, and decrypt anything protected by the person's DPAPI, including the Room browser's cookies. Status stays `isolation: "none"` and gains `containment: "job"`. The note reads: "Commands run as you, in a folder of its own. Windows keeps them together, so they all stop when the Room stops. It is not a locked off computer: they can read and change your files." An offline Room on Windows points programs at a proxy that answers nothing, and Advanced says "a closed door, not a wall." `USERPROFILE`, `HOME`, `APPDATA`, `LOCALAPPDATA`, `TEMP` and `TMP` point into the Room's home. Programs that ask Windows for known folders still find the person's own, and Advanced says so. rooks-code's `NOT_CONTAINED_ON_WINDOWS` stays true. Its `_run_windows` gains a job so that a timeout ends the whole tree. A real wall (AppContainer or a restricted, low-integrity token, or a Hyper-V or QEMU guest) is later work in BACKLOG, not this branch.
 
+**Built on `feat/windows` (section 3), and where it differs from the text above.** `winproc.room_job()` is the one Room
+job of the process (the sidecar), made on first use, kill on close, no breakaway flag. Each terminal
+(`winproc.Terminal`), each quick command (`winproc.run_captured`) and the browser (`winproc.PipedProcess`) get a job of
+their own nested in it through the same `PROC_THREAD_ATTRIBUTE_JOB_LIST`, so each is in both from its first
+instruction. `ShellDriver.down` (Stop) calls `winproc.end_room()`, which ends everything still in the Room job; the
+next start makes a new one. The UI limits are not on the Room job but on the terminal and quick command jobs
+(`ROOM_UI_LIMITS`, every limit listed above): a nested job takes its parent's UI limits, and the browser's job, nested
+in the Room job, cannot have any (section 2, CI runs 42552436202 and 42553112016). A quick command on Windows no longer
+goes through `subprocess.Popen`: it runs with `CREATE_NO_WINDOW`, `NUL` for input and pipes for its output, and when
+it ends or its time runs out its job is ended, so nothing it started outlives it (with Popen a timeout killed only Git
+Bash and then waited on the output its children still held: on windows-2022 the command never came back, run
+42556804352). The app's own Terminal page (`terminal_pty`) is the person's own and stays outside the Room job, without
+UI limits. Status carries `containment: "job"` on Windows (`"none"` elsewhere) and the note above; the Room page shows
+it under the command view and Advanced says what the job does and does not do, with "a closed door, not a wall" when
+offline. `room_env` points `APPDATA`, `LOCALAPPDATA`, `TEMP` and `TMP` into the Room's home (`AppData\Roaming`,
+`AppData\Local`, `AppData\Local\Temp`); the browser keeps the person's `APPDATA` and `LOCALAPPDATA`, as it keeps
+`USERPROFILE`. The memory watchdog still reads the browser job's working set (section 2), not a `MEMORY_CLOSE` job limit.
+Not done: rooks-code's `_run_windows` still ends a timed-out tree with `taskkill /T` rather than a job.
+
 ## 4. Installer and app
 
 - **NSIS, per user** (`installMode: currentUser`, `%LOCALAPPDATA%\Rooks`), no administrator prompt. A Start menu entry "Rooks". A desktop shortcut only when the person ticks it. "Run Rooks" is ticked on the last page. The MSI stays for IT teams (Intune); the release notes say which file is for whom.
@@ -91,6 +110,32 @@ What a job is not: a wall. Room processes run with the person's own token. They 
 - **Autostart is off by default.** If a switch for it is added (`tauri-plugin-autostart`, an `HKCU\...\Run` value), it starts off, and the uninstaller removes the value.
 - **Sidecar:** the PyInstaller spec collects `rooks_try` (with `winproc`) and the bundled `conpty.dll` and `OpenConsole.exe` as binaries. `smoke_sidecar.py` on Windows also opens a ConPTY terminal through the frozen sidecar and starts the browser over its pipe, so freezing cannot drop a module unnoticed.
 - **Uninstall** through installer hooks (`bundle.windows.nsis.installerHooks`, `desktop/src-tauri/windows/hooks.nsh`) removes everything the installer and app added: the program folder, Start menu and desktop entries, the uninstall key, the `aiworkspace` link handler under `HKCU\Software\Classes`, the Run value and the WebView2 data folder. The person's chats, keys and Room are kept unless they tick "Also remove my chats, keys and the Room". Then the hook first runs `workbench-server.exe --forget-secrets`, which deletes the app's Credential Manager entries, and then removes `%APPDATA%\com.inclined88888.aiworkspace`, `%APPDATA%\ai-workspace` and `%USERPROFILE%\.ai-workspace`. A `/CLEANDATA` switch of our own, read with `GetOptions`, lets CI test both paths. Tools that install.ps1 put in place are separate and are not removed.
+
+**Built on `feat/windows` (section 4), and where it differs from the text above.** `tauri.conf.json`:
+`webviewInstallMode` `embedBootstrapper` (silent), NSIS `currentUser`, `installerHooks` `windows/hooks.nsh`,
+`customLanguageFiles` `windows/English.nsh` (only English is built). The Start menu entry is
+`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Rooks.lnk`, pointing at the program, whose icon is `icons/icon.ico`
+(the Rooks mark). Tauri's template makes a desktop shortcut on every silent or passive install (they skip the finish
+page) and ticks the finish page's box; the hooks untick the box (`MUI_FINISHPAGE_SHOWREADME_NOTCHECKED`) and remove
+the shortcut after a silent or passive install unless `/DESKTOP` was given or the person already had one. "Run Rooks"
+stays ticked (Tauri's). Uninstall: Tauri removes the program files, the Start menu and desktop entries, the uninstall
+key, the `aiworkspace` link handler and the `Rooks` Run value; the hooks add the window's data and the logs
+(`%LOCALAPPDATA%\com.inclined88888.aiworkspace`), the key where the setup remembered its folder
+(`HKCU\Software\Inclined88888\Rooks`), and copies of the one-file sidecar left in `%TEMP%\_MEI*` (only those holding
+the app's own `app\packs\bundles`). The box is Tauri's "Delete the application data", worded "Also remove my chats,
+keys and the Room"; ticked, or with `/CLEANDATA`, the hook first runs `workbench-server.exe --forget-secrets` (it
+deletes the Credential Manager entries keyring wrote, `ai-workspace` and `<name>@ai-workspace`, and no other; the
+packaged app keeps its own secrets in a file in its data folder, so on a fresh install there are none), then removes
+`%APPDATA%\com.inclined88888.aiworkspace`, `%APPDATA%\ai-workspace`, `%USERPROFILE%\.ai-workspace\try-room` and
+`appearance.json`, and `.ai-workspace` itself only when empty: `.ai-workspace\bin` belongs to other installers. Before
+uninstalling, a sidecar still running from the program folder is closed the way Tauri closes the app. There is no
+autostart switch in the app, so there is no Run value to add; the uninstaller removes one anyway.
+
+The shell (`sidecars.rs`) puts each sidecar in a kill-on-close job right after starting it. The one-file sidecar
+unpacks itself for a second or more before it starts the program that does the work, so that program starts inside
+the job; the unpacking step itself is assigned a moment after it starts (the shell plugin offers no suspended start).
+On exit the shell first closes the sidecar's input (it ends by itself and removes its unpacked copy) and kills it only
+after 5 s. The splash, the window titled "Rooks" and `/healthz` were already there.
 
 ## 5. What CI runs on windows-2022
 

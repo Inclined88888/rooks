@@ -80,8 +80,8 @@ jobs:
       - name: The Room's terminals and the app's own terminal on a real pseudo console
         # a test past 120 s prints every thread's stack, so a hang says where it is
         run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 tests/test_room_terminal_windows.py tests/test_room_terminal.py tests/test_app_terminal.py
-      - name: The ConPTY, job and side channel tests, on their own (also in the Try Room job)
-        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 ../../rooks-try/tests/test_winproc.py
+      - name: The ConPTY, job and side channel tests, and the Room's job, on their own (also in the Try Room job)
+        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 ../../rooks-try/tests/test_winproc.py ../../rooks-try/tests/test_room_job_windows.py
       - name: The Room's browser on Edge and Chrome over its pipe (design 0011, section 5.3; also in the Try Room job)
         env:
           ROOM_BROWSER_TESTS_REQUIRED: "1"  # never skipped quietly: a browser that cannot start here fails the job

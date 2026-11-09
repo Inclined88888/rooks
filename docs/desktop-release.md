@@ -11,10 +11,12 @@ no terminal, no password: the shell signs its own window in with a one-time toke
 | Windows | `%APPDATA%\com.inclined88888.aiworkspace\` (logs: `%LOCALAPPDATA%\com.inclined88888.aiworkspace\logs\`) |
 | Linux | `~/.local/share/com.inclined88888.aiworkspace/` (logs: `~/.local/share/com.inclined88888.aiworkspace/logs/`) |
 
-Secrets: the database encryption key (`APP_SECRET`), the tools key, and every provider API key are kept in the OS
-keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service). The database stores only a reference such as
-`keychain:connection:3`. On a Linux machine with no unlocked Secret Service the app falls back to a `0600` file in the
-data folder and Settings → Desktop app says so.
+Secrets: the packaged app keeps the database encryption key (`APP_SECRET`) and the tools key in a `0600` file in its
+data folder (`.desktop-secrets.json`) and encrypts provider API keys in the database with it, because an ad hoc signed
+build cannot use the keychain reliably. Run unfrozen (development), it uses the OS keychain (macOS Keychain, Windows
+Credential Manager, Linux Secret Service) and the database stores only a reference such as `keychain:connection:3`; an
+older build may have left entries there, which the first launch moves into the file. Settings → Desktop app says
+which is in use.
 
 ## The installer picks the app up by itself
 
@@ -43,6 +45,28 @@ for `v*` tags it waits for `release.yml` to create the release first).
 | `macos-15-intel` | `Rooks_<ver>_x64.dmg` (Intel) |
 | `windows-2022` | `Rooks_<ver>_x64_en-US.msi` and `Rooks_<ver>_x64-setup.exe` |
 | `ubuntu-22.04` | `.deb` and `.AppImage` |
+
+### Windows: which file is for whom, and what the setup does
+
+* **`Rooks_<ver>_x64-setup.exe` is for people.** It installs for the signed-in person only, into
+  `%LOCALAPPDATA%\Rooks`, with no administrator prompt, adds a Start menu entry named Rooks, and asks before it puts a
+  shortcut on the desktop (the box starts unticked). It brings the Microsoft Edge WebView2 installer with it and uses
+  it only when the PC lacks WebView2 (Windows 11 and an updated Windows 10 have it); when that cannot run it says
+  "Rooks needs Microsoft Edge WebView2. Ask your IT team to install it." Rooks does not start with Windows.
+  Switches for IT and scripts: `/S` silent (no desktop shortcut), `/S /DESKTOP` silent with one, `/P` passive.
+* **`Rooks_<ver>_x64_en-US.msi` is for IT teams** that deploy with Intune or Group Policy.
+* **Removing it** (Settings → Apps, or `uninstall.exe` in the program folder) removes the program, the Start menu and
+  desktop entries, the uninstall entry, the `aiworkspace` link handler, the window's data and the logs, and any copy of
+  the backend left unpacked in `%TEMP%`. The person's chats, keys and Room are kept unless they tick "Also remove my
+  chats, keys and the Room" (`/S /CLEANDATA` for scripts): then the app's Windows Credential Manager entries, its data
+  folder, `%APPDATA%\ai-workspace` and the Room (`%USERPROFILE%\.ai-workspace\try-room`) go too. Tools installed by
+  `install.ps1` are separate and stay.
+* **CI** (`desktop.yml`, the Windows leg) installs the built setup silently on windows-2022, checks the folder, the
+  Start menu entry and its icon, no desktop shortcut and no Run value, starts the app, waits for its window titled
+  Rooks and the backend's `/healthz`, ends the app as Task Manager would and checks the backend ends within 10 seconds,
+  then uninstalls twice (keeping the person's things, then with `/CLEANDATA`) and checks nothing is left
+  (`desktop/scripts/check_windows_install.ps1`). Not covered: a real Windows 10 or 11 PC (the runner is Server 2022), a
+  PC without WebView2 or without internet, SmartScreen on an unsigned setup, and the MSI.
 
 Two DMGs, not one universal DMG: PyInstaller can only build a universal2 sidecar if Python and every compiled wheel
 (cryptography, pydantic-core, lxml, …) are universal2, which they are not on PyPI. Each architecture is frozen natively.

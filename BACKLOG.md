@@ -169,6 +169,13 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   `dovecot-imapd` in the backend job, or add a variant on the suite's mail fake.
 * **Windows: no containment for terminal commands.** The default mode runs them with the user's permissions and the approval line
   says so. A Windows sandbox (AppContainer or a restricted token) is the real fix.
+* **The Room on Windows is kept together, not walled** (design 0011, section 3, built on `feat/windows`). Every Room
+  program is in a job inside one Room job (they stop together; terminals and quick commands have the UI limits), and
+  the words say it is not a wall. Left: a real wall (AppContainer, or a restricted, low-integrity token, or a Hyper-V or
+  QEMU guest); programs that ask Windows for known folders still find the person's own; rooks-code's `_run_windows`
+  still ends a timed-out tree with `taskkill /T` rather than a job; the desktop shell assigns the one-file sidecar's
+  unpacking step to its job a moment after it starts (the shell plugin has no suspended start), so only what that step
+  starts is in the job from its first instruction.
 * **The Companion token in `~/.rooks/companion.json`** is read by the notch app and by agent hooks and answers Companion requests,
   so it sits inside the same operating-system-user boundary as the other 0600 files (docs/security/agent-credentials.md).
 * **Glass navigation is a design decision for the owner to confirm** (CHANGELOG 2026-11-07, integration entry).
@@ -201,20 +208,25 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   checked as files only (`desktop/scripts/test_icons.py`), not seen in a built app; a phone build (`eas build`) has not
   been run with the new layers; the terminal banner keeps the word "Rooks" (no glyph reads well in every terminal font).
 * **Windows**: the NSIS install folder follows the product name (`%LOCALAPPDATA%\Rooks`); the installer quietly runs
-  the old folder's uninstaller. Not run on a real PC.
+  the old folder's uninstaller. The setup is installed, started and uninstalled in CI on windows-2022 (design 0011,
+  section 4, `desktop/scripts/check_windows_install.ps1`), silently only. Not run on a real Windows 10 or 11 PC; its
+  pages (the unticked desktop box, "Also remove my chats, keys and the Room") are not clicked through by any test; the
+  MSI is built but never installed in CI; a PC without WebView2 or without internet, and SmartScreen on the unsigned
+  setup, are untested.
 * **macOS in-place update** from 1.0.5 keeps the bundle's old name ("AI Workspace.app") until the installer runs again.
 
 ### The Room's browser (design 0007), engine and API lane: not done here
 
 * **The packaged app's browser is proved only in CI with the runner's Chrome** (`smoke_sidecar.py --room-browser`,
   macOS and Linux). Not covered there: a Mac with only Edge or Chromium, a Linux runner where bwrap's wall is on (the
-  Ubuntu runner may run it without the wall, which the window says), and Windows (the browser works there through the
-  app's tests on windows-2022, but `smoke_sidecar.py` does not yet start it through the frozen sidecar on Windows).
+  Ubuntu runner may run it without the wall, which the window says). On Windows `smoke_sidecar.py --room-browser` now
+  starts it through the frozen sidecar too, with the runner's Chrome.
 * **The Room's browser on Windows: what is left** (built on `feat/windows`, design 0011 section 2). Not walled: it runs
   as the person (the window says "Not locked off"), with the person's own `USERPROFILE` (Chromium needs it), in a job
   with no UI limits: under any one of them Chromium's sandbox could not start its GPU process, so the job does not hold
-  the person's clipboard back (pages still get no clipboard permission). Left: nest its job in one Room job (section 3); the sidecar smoke test; Edge and Chrome under a real
-  organisation's policies and with a work account's sign-in; Windows on Arm; a real Windows 10 and 11 PC.
+  the person's clipboard back (pages still get no clipboard permission). Its job is nested in the Room job (section 3)
+  and the frozen sidecar's smoke test starts it. Left: Edge and Chrome under a real organisation's policies and with a
+  work account's sign-in; Windows on Arm; a real Windows 10 and 11 PC.
 * **Telling a wall failure apart** reads what bwrap printed (`bwrap: …`). A wall that fails without printing that is
   reported as "the browser refused to start"; the Advanced detail still shows what was printed.
 
@@ -281,8 +293,8 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   computer."). Hosting the registry in the helper and proxying the WebSocket through the app would close it.
 * **Windows terminals: what is left** (built on `feat/windows`, design 0011 section 1). The Room's terminals and the app's
   own terminal run on ConPTY with PowerShell or Git Bash. Left: ship Microsoft's `conpty.dll` and `OpenConsole.exe` in
-  the sidecar (newer ConPTY than an old Windows 10 has) and open a ConPTY terminal from `smoke_sidecar.py` on Windows;
-  nest each terminal's job in one Room job with the UI limits (design 0011, section 3); a real Windows 10 and 11 PC,
+  the sidecar (newer ConPTY than an old Windows 10 has) and open a ConPTY terminal from `smoke_sidecar.py` on Windows
+  (it runs a quick command there, not a terminal); a real Windows 10 and 11 PC,
   Windows on Arm, constrained language mode and AppLocker/WDAC are untested. On Windows a line sent through the send
   route is logged by its length only, always, because the console's echo mode cannot be read from outside.
 * **A shell inside a QEMU guest** (serial or ssh console). Until then a separate computer has no Terminal window and no

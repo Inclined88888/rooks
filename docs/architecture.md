@@ -237,6 +237,7 @@ Notes:
 
 - The Room only shows a screen when a real display exists. Its status always names the screen, the pointer, how isolated it is, and a plain label.
 - The Room has its own browser (`room_browser.py`, engine in `rooks-try/rooks_try/browser.py`): a real Chrome, Edge or Chromium run headless with the Room's own profile and driven only over a pipe, never a port. On Windows the Room starts it itself with the pipe in place and keeps every one of its processes in a job (`rooks_try/winproc.py`); when the organisation has switched remote debugging off for that browser, the Room says so and sends the person to their IT team. The separate helper program (`rooks-browser`, reached through `browser_proxy.py`) still drives the person's own signed-in browser for the Browser page and Sites.
+- On Windows every program the Room starts (each terminal, each quick command and the browser) runs in a job of its own nested in one Room job that the app's backend holds (`winproc.room_job()`, kill on close): stopping the Room ends them all, and so does the backend ending however it ends. The desktop shell in turn holds its backend in a kill-on-close job (`desktop/src-tauri/src/sidecars.rs`), so ending Rooks ends everything. A job keeps them together; it is not a wall, and status says `isolation: "none"`, `containment: "job"`.
 - The app also has its own Terminal page (`terminal_pty.py`), a shell on the person's own computer, separate from the Room's terminals.
 
 ### d.4 Memory and learning

@@ -55,6 +55,49 @@ Rollback: revert the commits.
   under a real organisation's policies (the test sets the policy value itself), sign-in through a work account (no
   work tenant), a real Windows 10 or 11 PC, Windows on Arm, and the packaged desktop app starting the browser on
   Windows.
+- **On Windows the Room's programs are kept together, and the Room says what that is** (design 0011, section 3). Every
+  program the Room starts on Windows (each terminal, each quick command and the Room's browser) now runs in a group
+  Windows keeps together (a job), inside one group for the whole Room. Stopping the Room ends them all, and so does
+  Rooks ending, however it ends. Terminals and quick commands may not read or change your clipboard, use other
+  programs' windows, or change system or display settings. A quick command now runs with no window and, when it ends
+  or runs out of time, nothing it started keeps running; before, a command that ran out of time could leave its
+  programs running and never come back. The Room's programs keep their settings and temporary files in the Room
+  (`APPDATA`, `LOCALAPPDATA`, `TEMP`, `TMP`). None of this is a wall, and the Room says so: the line under the
+  commands reads "Commands run as you, in a folder of its own. Windows keeps them together, so they all stop when the
+  Room stops. It is not a locked off computer: they can read and change your files.", the badge still says "Not locked
+  off", and Advanced says they run with your Windows sign-in, can reach the network and what Windows keeps for you,
+  and that a program asking Windows for your folders still finds your own (offline: "a closed door, not a wall").
+  Status gains `containment` (`"job"` on Windows, `"none"` elsewhere); `isolation` stays `"none"`. The rooks terminal
+  shows the same note. Tests that failed on the old code on windows-2022 (run 42556804352, commit bac1a85):
+  `rooks-try/tests/test_room_job_windows.py` (a command that ran out of time never came back; a command kept running
+  after the Room stopped; a program the Room started outlived the app; a Room command read the clipboard; no Room job;
+  no `containment`; `APPDATA` still the person's) and the Room-job check in `test_browser_windows.py`; locally
+  `workbench/backend/tests/test_room.py::test_status_says_how_the_rooms_programs_are_kept_together` and two in
+  `workbench/frontend/tests/room-windows.test.mjs`. They pass on windows-2022 (run 42557685550).
+- **A Windows setup that installs for you alone and leaves nothing behind** (design 0011, section 4). The
+  `-setup.exe` installs into `%LOCALAPPDATA%\Rooks` with no administrator prompt and a Start menu entry named Rooks
+  with the Rooks icon. It puts a shortcut on the desktop only when you tick the box (it starts unticked; a silent
+  install makes none unless given `/DESKTOP`). Rooks does not start with Windows. It carries the Microsoft Edge WebView2
+  installer and uses it only when the PC lacks WebView2; if that fails it says "Rooks needs Microsoft Edge WebView2. Ask
+  your IT team to install it." The setup's other words are plain too. Removing Rooks now also removes the window's
+  saved data and the logs, the place the setup remembered its folder, and copies of the backend left in the temporary
+  folder. Your chats, keys and Room are kept unless you tick "Also remove my chats, keys and the Room" (`/CLEANDATA`
+  in a script): then the app's entries in Windows Credential Manager go first (only the app's own), then its data and
+  the Room. Tools `install.ps1` put in place stay. Ending Rooks in any way (closing it, a crash, Task Manager) ends its
+  backend and everything the backend started: the desktop shell puts the backend in a kill-on-close job; on a normal
+  exit it first lets the backend end by itself for up to 5 seconds. The MSI stays, for IT teams. CI: the Windows leg
+  of `desktop.yml` installs the built setup silently, checks the Start menu entry and its icon (the same picture as
+  `icon.ico`), starts the app, waits for its window titled Rooks and the backend's `/healthz`, ends it as Task Manager
+  does, and uninstalls twice, checking what is kept and that nothing else is left
+  (`desktop/scripts/check_windows_install.ps1`); screenshots of the window and the Start menu icon are the
+  `windows-install-shots` artifact. On the old setup 9 of those checks failed (run 42556804225: a desktop shortcut
+  after a silent install, the install location key, the window's data and logs left, and with `/CLEANDATA` the data,
+  link file, Room and Credential Manager entries left). The check that ending the app ends its backend passed on the
+  old code too (the backend already ended when its input closed); the job is the guarantee when that is not enough.
+  The frozen backend's Room smoke test (a quick command, then the browser over its pipe) now runs on Windows too.
+  `desktop/scripts/test_forget_secrets.py` failed first locally. Not tested: a real Windows 10 or 11 PC (the runner is
+  Server 2022), a PC without WebView2 or without internet, SmartScreen on the unsigned setup, the MSI, the setup's
+  pages by hand (only the silent path runs in CI), and Windows on Arm.
 - **The Room's browser starts in the packaged app** (2e939c0). The step that hands the browser its pipe ran Python with
   `-c`; the desktop app is one packaged program with no Python, so on a Mac the Room's browser always said "could not
   start". The packaged app now runs that step with its own program (`--rooks-pipe-step`).
@@ -69,8 +112,8 @@ Rollback: revert the commits.
   and `workbench/frontend/tests/room-browser.test.mjs` ("a browser that did not start says why").
 - **CI proves the packaged app's Room browser.** The desktop build (`.github/workflows/desktop.yml`, the macOS and Linux
   jobs) now starts the frozen sidecar, opens the Room's browser through its API on a loopback test page, and checks the
-  page's text and a frame arrive (`desktop/scripts/smoke_sidecar.py --room-browser`). Windows is not covered: the
-  Room's browser is not on Windows yet (design 0011, section 2).
+  page's text and a frame arrive (`desktop/scripts/smoke_sidecar.py --room-browser`). Windows is covered too since
+  the entry above.
 
 ## Unreleased · Workplace cleanup · branch cleanup/workplace
 
