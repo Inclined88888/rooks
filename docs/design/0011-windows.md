@@ -21,6 +21,18 @@ The person: a workplace user who installs Rooks on a Windows 10 or 11 PC, often 
 
 `terminal_pty` (the app's own terminal) uses the same `ConPty` and drops its win32 refusal. The rooks terminal's `/room` commands already go through the app's routes, so they work unchanged.
 
+**Built on `feat/windows` (section 1), and where it differs from the text above.** `rooks_try/winproc.py` has `Job`,
+`spawn`, `ConPty`, `Terminal` and `MarkPipe`; `room_terminal.py` keeps one registry with a POSIX path and a Windows
+path rather than a separate `Pty` class (`t.win` holds the Windows terminal), so the POSIX code is unchanged. The side
+channel's name reaches the profile as `ROOKS_MARK_PIPE` (the nonce stays in `ROOKS_MARK`); both are removed from the
+environment. Instead of choosing one channel at the first prompt, the shell always prints the in-band marker and
+writes the same line to the pipe, each carrying a count, and a prompt counts once whichever arrives first: on the
+windows-2022 runner (build 20348) ConPTY passed the in-band marker through and the pipe also delivered, and which came
+first varied between runs. The field is `shell_kind` (`powershell`, `bash`, and on POSIX the shell's name), because
+`shell` already carries the shell's path under Advanced. Status lists the kinds as `can.terminal_shells`. Not yet: the
+bundled `conpty.dll` and `OpenConsole.exe` (Windows' own ConPTY is used), nesting each terminal's job in one Room job
+with the UI limits (section 3), and the sidecar smoke test opening a terminal (section 4).
+
 ## 2. The Room's browser on Windows
 
 **The pipe.** On Windows Chromium reads `--remote-debugging-pipe` from C runtime file descriptors 3 and 4, which the CRT rebuilds at startup from `STARTUPINFO.lpReserved2`/`cbReserved2`. This is how Node passes extra stdio to Puppeteer. `winproc.crt_block(handles)` packs that block with no padding: an `int` count (5), then one flag byte per descriptor, then one pointer-sized `HANDLE` per descriptor. Descriptors 0 to 2 point at an inheritable `NUL` handle (`FOPEN|FDEV`). Descriptor 3 is the read end of our request pipe and descriptor 4 the write end of our response pipe (`FOPEN|FPIPE`). The same `NUL` handle goes in `hStdInput/Output/Error`. Only these handles are inheritable, and only through `HANDLE_LIST`. Our ends are turned into descriptors with `msvcrt.open_osfhandle`, so the existing `Pipe` class runs unchanged. There is no pipe step on Windows: `spawn` gives the real browser pid, the job and `CREATE_NO_WINDOW` in one call. `workbench_server.py --rooks-pipe-step` on win32 exits with "Not used on Windows". `check_flags` still refuses `--remote-debugging-port`, `--no-sandbox`, `--disable-web-security` and file access flags. There is never a port.

@@ -10,6 +10,27 @@ Design records `docs/design/0011-windows.md` (Windows on a par with macOS and Li
 `docs/design/0012-work-suites.md` (Microsoft 365 and Google Workspace). No schema change in the entries below.
 Rollback: revert the commits.
 
+- **Terminals in the Room on Windows** (design 0011, section 1). On Windows 10 1809 and later the Room's Terminal window
+  works as it does on macOS and Linux: New terminal opens PowerShell (PowerShell 7 when installed, else Windows
+  PowerShell), and when Git for Windows is there a menu beside it offers Git Bash. A terminal keeps running when you
+  leave the page, shows its text again when you come back, says when a program is running and how the last command
+  ended, closes with code 129, and ends everything it started. Four at most, as elsewhere; Stop and Start over close
+  them; after a restart they are listed as ended with their text. Terminals Rooks opens use Git Bash when it is there
+  (as a quick command does), else PowerShell; each terminal and each result says which (`shell_kind`), so the assistant
+  writes the right kind of command. The app's own Terminal page is PowerShell too. Underneath: a pseudo console
+  (ConPTY) and a job object per terminal (`rooks-try/rooks_try/winproc.py`, plain `ctypes`), the shell in its job from
+  its first instruction. PowerShell gets the Room's profile as a command, so there is never an execution policy bypass
+  or an encoded command; it reads the Room's own `Documents\PowerShell\profile.ps1` when you make one. On Windows every
+  line sent from the phone row or `/room send` is recorded in the run log by its length only (Windows cannot say from
+  outside whether a terminal is waiting for a password). How a command ended reaches Rooks in the terminal's output and
+  through a private channel only your account can open (Advanced says so); on the windows-2022 runner both arrived.
+  Older Windows says "This version of Windows is too old for terminals in the Room." Tests that failed on the old code
+  (on windows-2022, commit 1703d0e): `rooks-try/tests/test_winproc.py` (could not import `winproc`) and all ten in
+  `workbench/backend/tests/test_room_terminal_windows.py` ("Terminals are switched off in Settings."), plus
+  `workbench/frontend/tests/room-windows.test.mjs` (four, locally). CI: a new job "Windows: Room terminals" in
+  `ci.yml`, and CI now also runs on pushes to `feat/windows`. Not tested: a real Windows 10 or 11 PC (the runner is
+  Server 2022), Windows on Arm, ConPTY before build 20348, PowerShell's constrained language mode, AppLocker or WDAC,
+  and a bundled `conpty.dll`/`OpenConsole.exe` (not shipped yet; Windows' own ConPTY is used).
 - **The Room's browser starts in the packaged app** (2e939c0). The step that hands the browser its pipe ran Python with
   `-c`; the desktop app is one packaged program with no Python, so on a Mac the Room's browser always said "could not
   start". The packaged app now runs that step with its own program (`--rooks-pipe-step`).

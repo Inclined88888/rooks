@@ -442,9 +442,9 @@ step in section g; a row it changed says so in its status. Everything else is as
 | Module | What it does | Status |
 |---|---|---|
 | room.py | The Room: status, start, stop, save points, reset, run, click, type, picture, hand-off | live |
-| room_terminal.py | Real shells inside the Room, kept on the server, with private logs | live |
+| room_terminal.py | Real shells inside the Room, kept on the server, with private logs (on Windows PowerShell or Git Bash on ConPTY, through rooks_try/winproc.py) | live |
 | room_files.py | Read-only listing of the Room folder | live |
-| terminal_pty.py | The app's own Terminal page on the person's computer | live (page hidden behind Advanced, g.3a) |
+| terminal_pty.py | The app's own Terminal page on the person's computer (PowerShell on ConPTY on Windows) | live (page hidden behind Advanced, g.3a) |
 | browser_proxy.py | Passes Browser page requests to the separate browser helper | live |
 | desk_proxy.py | Passes Computer page requests to the computer-use helper | live |
 | handoff.py | Notes the browser leaves for the Computer page | live |

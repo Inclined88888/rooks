@@ -18,6 +18,7 @@ Importable everywhere; everything that touches Windows raises `OSError` elsewher
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -425,10 +426,18 @@ class ConPty:
         _close(o)
 
 
+# What a console draws that is not text: escape sequences (CSI, OSC to its end, two byte escapes)
+_NOT_TEXT = re.compile(rb"\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)?|\x1b[ -~]|[\x00-\x20]")
+
+
 class Terminal:
     """A shell on a pseudo console, in a job of its own (nested in `parent` when given). `end()` hangs it up: the
     console is closed on a worker thread while the reader drains, and after `grace` seconds whatever is left in the job
-    is ended with code 129."""
+    is ended with code 129.
+
+    A size asked for while the shell is still starting can be lost (seen on windows-2022: a page's first resize, sent
+    as the shell started, left PowerShell at 80 columns). So the last size asked for is given again once the shell
+    first draws text of its own."""
 
     def __init__(self, argv: list[str], env: dict[str, str], cwd: str, cols: int = 80, rows: int = 24,
                  parent: Job | None = None) -> None:
@@ -448,14 +457,23 @@ class Terminal:
             raise
         self.pid = self.proc.pid
         self._closer: threading.Thread | None = None
+        self._asked: tuple[int, int] | None = None  # the last size asked for
+        self._drawn = False                          # the shell has drawn text of its own
 
     def read(self, n: int = 65536) -> bytes:
-        return self.pty.read(n)
+        data = self.pty.read(n)
+        if data and not self._drawn and _NOT_TEXT.sub(b"", data):
+            self._drawn = True
+            asked = self._asked
+            if asked is not None:
+                self.pty.resize(*asked)
+        return data
 
     def write(self, data: bytes) -> None:
         self.pty.write(data)
 
     def resize(self, cols: int, rows: int) -> None:
+        self._asked = (int(cols), int(rows))
         self.pty.resize(cols, rows)
 
     def pids(self) -> list[int]:

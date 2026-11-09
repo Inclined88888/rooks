@@ -273,8 +273,12 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Terminals through the helper.** `rooks-try serve` (`TRY_URL`) hosts no terminals and no Files; its status says
   `can: {terminal: false, files: false}` and the page keeps the Commands window ("A terminal needs the Room on this
   computer."). Hosting the registry in the helper and proxying the WebSocket through the app would close it.
-* **Windows terminals.** `terminal_pty` and the Room's terminals are POSIX only; a pseudo terminal through ConPTY is
-  the way. Windows keeps the Commands window with a login Git bash (or Command Prompt, which says so).
+* **Windows terminals: what is left** (built on `feat/windows`, design 0011 section 1). The Room's terminals and the app's
+  own terminal run on ConPTY with PowerShell or Git Bash. Left: ship Microsoft's `conpty.dll` and `OpenConsole.exe` in
+  the sidecar (newer ConPTY than an old Windows 10 has) and open a ConPTY terminal from `smoke_sidecar.py` on Windows;
+  nest each terminal's job in one Room job with the UI limits (design 0011, section 3); a real Windows 10 and 11 PC,
+  Windows on Arm, constrained language mode and AppLocker/WDAC are untested. On Windows a line sent through the send
+  route is logged by its length only, always, because the console's echo mode cannot be read from outside.
 * **A shell inside a QEMU guest** (serial or ssh console). Until then a separate computer has no Terminal window and no
   Files (`terminal_argv` is None), and Advanced says "Files live inside the separate computer. Use its screen."
 * **Shells that survive an app restart** (`tmux` around the login shell). Today a restart ends every Room terminal; it

@@ -246,6 +246,23 @@ def test_powershell_on_a_pseudo_console_runs_resizes_reports_codes_and_exits(roo
 
 @windows_only
 @pytest.mark.skipif(WINDOWS and not winproc.conpty_available(), reason="Windows older than 10 1809")
+def test_a_size_given_while_the_shell_starts_holds(room_home):
+    """A page sends its size as soon as its socket opens, while the shell is still starting. On windows-2022 that
+    size was sometimes lost and PowerShell stayed at 80 columns; it is given again once the shell draws its prompt."""
+    for _ in range(3):  # it was a race: try it a few times
+        term, screen = _start(shell_mod.windows_terminal_argv(room_home), room_home)
+        try:
+            term.resize(100, 30)  # at once, before PowerShell has drawn anything
+            screen.until("PS ")
+            screen.type("Write-Output ('cols-' + $Host.UI.RawUI.WindowSize.Width + 'x' + $Host.UI.RawUI.WindowSize.Height)")
+            screen.until("cols-100x30")
+        finally:
+            term.end(grace=1)
+            term.close(reader=screen.thread)
+
+
+@windows_only
+@pytest.mark.skipif(WINDOWS and not winproc.conpty_available(), reason="Windows older than 10 1809")
 def test_hanging_up_ends_the_shell_and_what_it_started(room_home):
     term, screen = _start(shell_mod.windows_terminal_argv(room_home), room_home)
     try:
