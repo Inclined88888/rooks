@@ -64,7 +64,7 @@ class FakeApp:
                 q = dict(urllib.parse.parse_qsl(query))
                 if path == "/api/work/status":
                     return self._send(200, app.status)
-                if path == "/api/work/connect/microsoft" and method == "POST":
+                if path in ("/api/work/connect/microsoft", "/api/work/connect/google") and method == "POST":
                     return self._send(200, {"url": "https://login.example/authorize?scope=openid", "state": "s1", "opened": False})
                 if path.startswith("/api/work/features/") and path.endswith("/it-note"):
                     return self._send(200, {"note": "Hello IT team,\n- Chat.Read: read the person's Teams chats\nThank you."})
@@ -222,3 +222,62 @@ def test_the_shared_bridge_key_is_refused_and_said_plainly(app):
 def test_work_is_listed_in_help():
     assert "/work" in words.COMMANDS
     assert "/work" in words.help_text()
+
+
+# --- Google Workspace: the same /work, the suite's own words (design 0012, section 2.3) --------------------------------
+GOOGLE_NAMES = {"suite": "Google Workspace", "files": "Google Drive", "home": "My Drive", "sites": "Shared drives",
+                "chats": "Google Chat", "meetings": "Google Meet", "tasks": "Google Tasks"}
+
+
+def _google(app):
+    app.status = {**STATUS, "account": {**STATUS["account"], "provider": "google", "email": "ana@contoso.example"}, "names": GOOGLE_NAMES}
+
+
+def test_work_without_an_account_offers_both_suites(app):
+    app.status = {**STATUS, "account": None, "features": [{**f, "state": "off", "state_words": "Off"} for f in STATUS["features"]]}
+    out = _say(_agent(app.url))
+    assert "/work connect microsoft" in out and "/work connect google" in out and "comes next" not in out
+
+
+def test_connect_google_opens_googles_own_sign_in(app, no_real_app):
+    out = _say(_agent(app.url), "connect google")
+    assert ("POST", "/api/work/connect/google", {}) in app.calls
+    assert no_real_app and "Finish signing in, in your browser" in out and "Microsoft" not in out
+
+
+def test_a_google_account_speaks_googles_words(app, monkeypatch):
+    _google(app)
+    out = _say(_agent(app.url))
+    assert "Google Workspace" in out and "ana@contoso.example" in out
+    # Google Tasks in the tasks header, never Planner or To Do
+    real = workroom.call
+
+    def fake_call(link, method, path, body=None, timeout=30):
+        if path == "/api/work/tasks/sync":
+            return {"gtasks": 2}
+        if path == "/api/tasks":
+            return [{"id": 7, "title": "Send the invoice", "status": "todo", "due": "2026-11-20", "origin": "gtasks"}]
+        return real(link, method, path, body, timeout=timeout) if body is not None else real(link, method, path, timeout=timeout)
+
+    monkeypatch.setattr(workroom, "call", fake_call)
+    out = _say(_agent(app.url), "tasks")
+    assert "2 in Google Tasks" in out and "Send the invoice" in out and "Planner" not in out
+
+
+def test_google_chat_spaces_and_a_post_say_google_chat(app, monkeypatch):
+    _google(app)
+    real = workroom.call
+
+    def fake_call(link, method, path, body=None, timeout=30):
+        if path.startswith("/api/work/chats?"):
+            return {"chats": [{"chat": "space:DM1", "name": "Direct message", "kind": "chat"},
+                              {"chat": "space:AAA", "name": "Sales team", "kind": "space"}]}
+        if path == "/api/work/hold":
+            return {"held": True, "already_asked": False, "id": "a:9", "title": "Post in Google Chat: Sales team"}
+        return real(link, method, path, body, timeout=timeout) if body is not None else real(link, method, path, timeout=timeout)
+
+    monkeypatch.setattr(workroom, "call", fake_call)
+    out = _say(_agent(app.url), "chats")
+    assert "2  Sales team" in out and "space" in out
+    out = _say(_agent(app.url), "post 2 Numbers please")
+    assert "Post in Google Chat: Sales team" in out and "Nothing was posted yet" in out
