@@ -22,7 +22,29 @@ export type RoomTerminal = {
   /** The person took Rooks's terminal (from the tail; status may carry it too). */
   taken?: boolean;
   shell?: string | null;
+  /** Which shell it is ("powershell", "bash", "zsh", "sh"), so the right kind of command is typed (design 0011). */
+  shell_kind?: string | null;
 };
+
+/** The kinds of terminal a Room on Windows offers (design 0011, section 1). Elsewhere it is the person's own shell. */
+export type TerminalShell = "powershell" | "bash";
+export const TERMINAL_SHELLS: TerminalShell[] = ["powershell", "bash"];
+
+/** A shell's plain name: PowerShell, Git Bash, or the shell's own name elsewhere. */
+export function shellName(kind: string | null | undefined): string {
+  if (kind === "powershell") return "PowerShell";
+  if (kind === "bash") return "Git Bash";
+  return kind || "";
+}
+
+/** The New terminal menu on Windows, beside the button (which opens PowerShell). */
+export const KINDS_LABEL = "Choose a kind of terminal";
+/** Advanced, on Windows: what a terminal reads when it starts. */
+export const WINDOWS_PROFILE_LINE =
+  "PowerShell reads the Room's own profile, Documents\\PowerShell\\profile.ps1 in the Room's folder, when you make one. Git Bash reads the Room's ~/.profile.";
+/** Advanced, on Windows: how the end of a command reaches Rooks (design 0011, section 1). */
+export const WINDOWS_MARKER_LINE =
+  "After each command the shell tells Rooks how it ended through a private channel that only your account can open. A program running as you could write to it too.";
 
 /** GET /api/room/status (section 8). `driver` and `home` are for the Advanced view only. */
 export type RoomStatus = WatchStatus & {
@@ -33,6 +55,8 @@ export type RoomStatus = WatchStatus & {
   /** terminal_off_reason: why there is no terminal ("switched_off" in Settings, "helper" mode, "windows"), or null. */
   can?: {
     terminal?: boolean; files?: boolean; terminal_off_reason?: "switched_off" | "helper" | "windows" | null;
+    /** design 0011: on Windows, the kinds of terminal offered (PowerShell, and Git Bash when Git for Windows is there). */
+    terminal_shells?: string[] | null;
     /** design 0007: the Room's own browser here, and why not. */
     browser?: boolean; browser_off_reason?: string | null;
   } | null;

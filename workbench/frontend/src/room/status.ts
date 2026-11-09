@@ -16,7 +16,7 @@ import { busy, getPresence, roomOn, subscribePresence, type Presence } from "../
 import { BROWSER_OFF_REASONS, startFailed, type BrowserFailed, type BrowserOffReason, type BrowserTab } from "./browser";
 import type { TerminalOffReason } from "./desk";
 import { clearSwitchedOff } from "./terms";
-import { NOT_HERE_LINE, type RoomStatus, type RoomTerminal } from "./words";
+import { NOT_HERE_LINE, TERMINAL_SHELLS, type RoomStatus, type RoomTerminal, type TerminalShell } from "./words";
 
 /** A line of the Commands window: the command, its output, its errors, a note. */
 export type CommandLine = { kind: "cmd" | "out" | "err" | "note"; text: string };
@@ -32,7 +32,9 @@ export type RoomState = RoomStatus & {
   terminal_max: number;
   /** What the cap counts (ended terminals included), when the service says; else the length of `terminals`. */
   terminal_count: number | null;
-  can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null; browser: boolean; browser_off_reason: BrowserOffReason | null };
+  can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null; browser: boolean; browser_off_reason: BrowserOffReason | null;
+    /** design 0011: the kinds of terminal offered on Windows ([] elsewhere: the person's own shell). */
+    terminal_shells: TerminalShell[] };
   /** design 0007: the Room's browser as status last saw it (open, and its tabs: the saved ones while it is closed). */
   browser: { open: boolean; tabs: BrowserTab[]; failed: BrowserFailed | null };
   /** The Commands window's lines, for this session. */
@@ -47,7 +49,7 @@ const START: RoomState = {
   checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none",
   label: "", note: "", checkpoints: [], last_checkpoint: null, error: null,
   terminals: [], terminal_max: TERMINAL_MAX, terminal_count: null,
-  can: { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null },
+  can: { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null, terminal_shells: [] },
   browser: { open: false, tabs: [], failed: null }, commandLines: [],
 };
 
@@ -72,6 +74,7 @@ function terminalFromWire(t: unknown): RoomTerminal | null {
     elapsed_s: num(w.elapsed_s),
     taken: w.taken === true,
     shell: str(w.shell),
+    shell_kind: str(w.shell_kind),
   };
 }
 
@@ -105,6 +108,8 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
       terminal_off_reason: why && OFF_REASONS.includes(why) ? why : null,
       browser: w.can?.browser === true,
       browser_off_reason: bwhy && (BROWSER_OFF_REASONS as string[]).includes(bwhy) ? (bwhy as BrowserOffReason) : null,
+      terminal_shells: Array.isArray(w.can?.terminal_shells)
+        ? TERMINAL_SHELLS.filter((k) => (w.can?.terminal_shells as unknown[]).includes(k)) : [],
     },
     browser: {
       open: w.browser?.open === true,

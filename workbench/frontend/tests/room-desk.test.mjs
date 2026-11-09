@@ -176,11 +176,11 @@ test("the terminal list comes from the service on every refresh, never from the 
   assert.equal(s.terminals[1].owner, "rooks");
   assert.equal(s.terminals[1].alive, false);
   assert.equal(s.terminal_max, 4);
-  assert.deepEqual(s.can, { terminal: true, files: true, terminal_off_reason: null, browser: false, browser_off_reason: null });
+  assert.deepEqual(s.can, { terminal: true, files: true, terminal_off_reason: null, browser: false, browser_off_reason: null, terminal_shells: [] });
   const old = store.roomFromWire({ available: true, running: true });
   assert.deepEqual(old.terminals, []);
   assert.equal(old.terminal_max, 4);
-  assert.deepEqual(old.can, { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null }, "a service that says nothing can do nothing new");
+  assert.deepEqual(old.can, { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null, terminal_shells: [] }, "a service that says nothing can do nothing new");
   // the Commands window's lines live in the store, so leaving the page and coming back keeps them for the session
   store.addCommandLines([{ kind: "cmd", text: "ls" }]);
   store.receiveRoomStatus({ available: true, running: true });

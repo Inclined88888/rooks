@@ -175,11 +175,72 @@ def room_env(home: Path, offline: bool = False, base: dict | None = None) -> dic
     env = {k: v for k, v in (os.environ if base is None else base).items() if not secret_env(k)}
     env["HOME"] = str(home)
     env["ROOKS_TRY"] = "1"
+    if sys.platform == "win32":  # PowerShell's $HOME and ~, and most programs, read USERPROFILE
+        env["USERPROFILE"] = str(home)
     if offline:  # belt and braces next to the empty network namespace: proxy-aware programs stop at once
         for key in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"):
             env[key] = "http://127.0.0.1:9"
     env["PATH"] = host_path(env.get("PATH", ""), home) or (_SYSTEM_PATH if os.name == "posix" else "")
     return env
+
+
+# --- Windows terminals (design 0011, section 1) ---------------------------------------------------------------------------
+# The Room's PowerShell profile, given as a command (a command is not subject to execution policy, so there is never an
+# -ExecutionPolicy Bypass, and never -EncodedCommand, which security software flags). It takes the marker nonce and the
+# side channel's name out of the environment into variables a program the shell starts does not see, makes ~ the Room's
+# home (Windows PowerShell's $HOME is the person's own), puts the Room's bins first on PATH, reads the person's own Room profile when they made one, and defines a prompt that reports how
+# the last command ended: in-band (ESC ] 7777 ; code ; nonce ; n BEL, which ConPTY may drop) and through the side
+# channel. Single quotes only: the text is one argument on a Windows command line.
+PS_PROFILE = (
+    "$global:__rooksMark = $env:ROOKS_MARK; Remove-Item Env:ROOKS_MARK -ErrorAction SilentlyContinue; "
+    "$global:__rooksPipe = $env:ROOKS_MARK_PIPE; Remove-Item Env:ROOKS_MARK_PIPE -ErrorAction SilentlyContinue; "
+    "$global:__rooksN = 0; "
+    "if ($env:HOME) { (Get-PSProvider FileSystem).Home = $env:HOME }; "
+    "$env:PATH = (Join-Path $env:HOME '.local\\bin') + ';' + (Join-Path $env:HOME 'bin') + ';' + "
+    "(Join-Path $env:HOME '.cargo\\bin') + ';' + $env:PATH; "
+    "$__rooksOwn = Join-Path $env:HOME 'Documents\\PowerShell\\profile.ps1'; "
+    "if (Test-Path $__rooksOwn) { try { . $__rooksOwn } catch { Write-Host ('Your Room profile did not run: ' + "
+    "$_.Exception.Message) } }; "
+    "function global:prompt { "
+    "$ok = $?; $c = if ($ok) { 0 } elseif ($global:LASTEXITCODE) { $global:LASTEXITCODE } else { 1 }; "
+    "$global:__rooksN++; $line = ('{0};{1};{2}' -f $c, $global:__rooksMark, $global:__rooksN); "
+    "[Console]::Write([string][char]27 + ']7777;' + $line + [string][char]7); "
+    "if ($global:__rooksPipe) { try { "
+    "$p = New-Object System.IO.Pipes.NamedPipeClientStream('.', $global:__rooksPipe, "
+    "[System.IO.Pipes.PipeDirection]::Out); $p.Connect(2000); "
+    "$b = [Text.Encoding]::ASCII.GetBytes($line + [string][char]10); $p.Write($b, 0, $b.Length); $p.Flush(); "
+    "$p.Dispose() } catch { } }; "
+    "'PS ' + $executionContext.SessionState.Path.CurrentLocation + '> ' }"
+)
+TERMINAL_SHELLS = ("powershell", "bash")
+
+
+def windows_powershell() -> str | None:
+    """PowerShell 7 (pwsh.exe) when installed, else Windows PowerShell, by its full path on this computer."""
+    found = host_which("pwsh.exe") or host_which("pwsh")
+    if found:
+        return found
+    root = os.environ.get("SystemRoot") or os.environ.get("windir") or r"C:\Windows"
+    path = Path(root) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    return str(path) if path.is_file() else (host_which("powershell.exe") or host_which("powershell"))
+
+
+def windows_terminal_shells() -> list[str]:
+    """The terminals a Room on Windows offers: PowerShell, and Git Bash when Git for Windows is there."""
+    out = ["powershell"] if windows_powershell() else []
+    if windows_sh():
+        out.append("bash")
+    return out
+
+
+def windows_terminal_argv(home: Path, shell: str | None = None) -> list[str] | None:
+    """A Room terminal on Windows: PowerShell (the default) with the Room's profile, or Git Bash as a login shell
+    (it reads the Room's .profile and its marker). None when that shell is not on this computer."""
+    if shell == "bash":
+        bash = windows_sh()
+        return [bash, "--login", "-i"] if bash else None
+    ps = windows_powershell()
+    return [ps, "-NoLogo", "-NoProfile", "-NoExit", "-Command", PS_PROFILE] if ps else None
 
 
 def room_bins(home: Path) -> str:
@@ -329,9 +390,16 @@ class ShellDriver(Driver):
             env[str(key)] = str(value)
         return env
 
-    def terminal_argv(self, home: Path) -> list[str] | None:
-        """The Room's terminal: a login shell inside it. None on Windows, where the app has no pseudo terminal."""
-        return None if sys.platform == "win32" else login_argv(home, self.offline)
+    def terminal_argv(self, home: Path, shell: str | None = None) -> list[str] | None:
+        """The Room's terminal: a login shell inside it. On Windows, PowerShell by default, or Git Bash (`shell`
+        "bash") when Git for Windows is there; the app puts it on a pseudo console (ConPTY)."""
+        if sys.platform == "win32":
+            return windows_terminal_argv(home, shell)
+        return login_argv(home, self.offline)
+
+    def terminal_shells(self) -> list[str]:
+        """Which terminals this Room offers: on Windows PowerShell and, with Git for Windows, Git Bash."""
+        return windows_terminal_shells() if sys.platform == "win32" else []
 
     def supports_screen(self) -> bool:
         return False

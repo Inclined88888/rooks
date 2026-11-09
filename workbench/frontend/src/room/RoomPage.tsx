@@ -25,7 +25,10 @@ import {
 import { useRoomStatus } from "./status";
 import { TerminalWindow } from "./TerminalWindow";
 import { setActiveTerminal, useTerms } from "./terms";
-import { advancedDetails, commandsLabelFor, commandViewLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, terminalCountLine } from "./words";
+import {
+  advancedDetails, commandsLabelFor, commandViewLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, shellName, terminalCountLine,
+  WINDOWS_MARKER_LINE, WINDOWS_PROFILE_LINE,
+} from "./words";
 
 const DOCK_ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, browser: Globe, files: Folder, points: Bookmark, screen: Monitor };
 
@@ -249,6 +252,7 @@ export default function RoomPage() {
 
   const { kind, folder } = advancedDetails(status);
   const shellPath = status.terminals.find((t) => t.shell)?.shell || "";
+  const windows = status.can.terminal_shells.length > 0;  // a Room on Windows: PowerShell, and Git Bash when there
   return (
     <div className="room-page">
       <h1 className="sr-only">The Room</h1>
@@ -260,8 +264,18 @@ export default function RoomPage() {
         <dl className="room-advanced-list">
           {kind && <><dt>Kind</dt><dd>{kind}</dd></>}
           {folder && <><dt>Folder</dt><dd>{folder}</dd></>}
-          <dt>Shell</dt><dd>{shellPath || "The login shell of this computer's account"}</dd>
-          <dt>Profile files read</dt><dd>~/.profile and, for bash, ~/.bashrc; for zsh ~/.zprofile and ~/.zshrc</dd>
+          {windows ? (
+            <>
+              <dt>Shells</dt><dd>{status.can.terminal_shells.map(shellName).join(" and ")}</dd>
+              <dt>Profile files read</dt><dd>{WINDOWS_PROFILE_LINE}</dd>
+              <dt>How Rooks knows a command ended</dt><dd>{WINDOWS_MARKER_LINE}</dd>
+            </>
+          ) : (
+            <>
+              <dt>Shell</dt><dd>{shellPath || "The login shell of this computer's account"}</dd>
+              <dt>Profile files read</dt><dd>~/.profile and, for bash, ~/.bashrc; for zsh ~/.zprofile and ~/.zshrc</dd>
+            </>
+          )}
           <dt>Terminals</dt><dd>{terminalCountLine({ counted: terminalsCounted(status), open: alive.length, max: status.terminal_max })}</dd>
           <dt>What is recorded</dt><dd>{RECORDED_LINE}</dd>
           {offered.includes("browser") && <><dt>The browser</dt><dd>{BROWSER_LIMITS}</dd><dt>What Rooks asks about</dt><dd>{BROWSER_CHECKS}</dd></>}

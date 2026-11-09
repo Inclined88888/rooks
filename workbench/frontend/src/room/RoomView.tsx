@@ -23,7 +23,7 @@ import { addCommandLines, frameEvery, refreshRoomStatus, roomBusy, useRoomStatus
 import { setActiveTerminal } from "./terms";
 import {
   commandViewLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, offStartLine, pointLine, resetLine, roomScreenLive, RUN_TIMEOUT_S, STOPPED_LINE,
-  TIMEOUT_NOTE, toScreenPoint, wheelSteps, type Checkpoint, type Point, type Size,
+  TIMEOUT_NOTE, toScreenPoint, wheelSteps, type Checkpoint, type Point, type Size, type TerminalShell,
 } from "./words";
 import "./room.css";
 
@@ -87,8 +87,9 @@ export function useRoomActions() {
     return r;
   });
   // ---- the Room's terminals (0006, section 6): the list comes back from status after each of these
-  const newTerminal = () => run("terminal", async () => {
-    const r = await api<Opened>("/room/terminals", { body: {} });
+  /** A new terminal; on Windows `shell` picks PowerShell or Git Bash (none: the service's default, PowerShell). */
+  const newTerminal = (shell?: TerminalShell) => run("terminal", async () => {
+    const r = await api<Opened>("/room/terminals", { body: shell ? { shell } : {} });
     if (r?.id) setActiveTerminal(r.id);
     return r;
   });
