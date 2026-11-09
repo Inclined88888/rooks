@@ -10,9 +10,12 @@ behaviour is tests/test_room_terminal.py's. TestClient's peer is not loopback, s
 the POSIX tests do.
 """
 
+import contextlib
 import json
 import os
+import queue
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -63,18 +66,53 @@ def _open(client, **body) -> dict:
     return r.json()
 
 
-def _ws(client, tid: str):
-    return client.websocket_connect(f"/api/room/terminals/{tid}/ws", headers=ORIGIN)
+class Timed:
+    """A socket whose reads end after a while: a thread receives into a queue, so a test that waits for text that never
+    comes fails with what it saw instead of hanging the job."""
+
+    def __init__(self, ws) -> None:
+        self.ws, self.q = ws, queue.Queue()
+        threading.Thread(target=self._run, daemon=True).start()
+
+    def _run(self) -> None:
+        while True:
+            try:
+                self.q.put(self.ws.receive_text())
+            except BaseException as e:  # noqa: BLE001 - the socket closed: hand it to the reader
+                self.q.put(e)
+                return
+
+    def receive_text(self, timeout: float = 30.0) -> str:
+        try:
+            got = self.q.get(timeout=timeout)
+        except queue.Empty:
+            raise AssertionError("nothing arrived on the socket") from None
+        if isinstance(got, BaseException):
+            raise got
+        return got
+
+    def send_text(self, text: str) -> None:
+        self.ws.send_text(text)
+
+
+@contextlib.contextmanager
+def _ws(client, tid: str, path: str | None = None):
+    with client.websocket_connect(path or f"/api/room/terminals/{tid}/ws", headers=ORIGIN) as ws:
+        yield Timed(ws)
 
 
 def _type(ws, text: str) -> None:
     ws.send_text(json.dumps({"type": "input", "data": text}))
 
 
-def read_until(ws, needle: str, limit: int = 2000) -> str:
+def read_until(ws, needle: str, timeout: float = 45.0) -> str:
     seen = ""
-    for _ in range(limit):
-        seen += ws.receive_text()
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            seen += ws.receive_text(timeout=max(0.1, deadline - time.monotonic()))
+        except AssertionError:
+            break
         if needle in seen:
             return seen
     raise AssertionError(f"never saw {needle!r} in {seen[-800:]!r}")
@@ -254,7 +292,7 @@ def test_a_git_bash_terminal_when_git_for_windows_is_there(client, on):
 def test_the_apps_own_terminal_is_powershell_and_ends_with_the_tab(client, local):
     from rooks_try import winproc
 
-    with client.websocket_connect("/api/terminal/ws", headers=ORIGIN) as ws:
+    with _ws(client, "", "/api/terminal/ws") as ws:
         ws.send_text(json.dumps({"type": "resize", "cols": 100, "rows": 30}))
         ws.send_text(json.dumps({"type": "input", "data": "Write-Output ('sum-' + (40+2) + '-' + "
                                                           "$Host.UI.RawUI.WindowSize.Width)\r"}))

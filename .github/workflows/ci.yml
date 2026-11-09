@@ -55,6 +55,7 @@ jobs:
     # job's Windows leg runs rooks-try/tests/test_winproc.py (ConPTY, jobs, the side channel) as part of its suite.
     name: "Windows: Room terminals"
     runs-on: windows-2022
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: workbench/backend
@@ -77,9 +78,10 @@ jobs:
           [System.Environment]::OSVersion.Version
           Get-Command pwsh, powershell, git -ErrorAction SilentlyContinue | Format-Table Name, Source -AutoSize
       - name: The Room's terminals and the app's own terminal on a real pseudo console
-        run: python -m pytest -q -rs -p no:cacheprovider tests/test_room_terminal_windows.py tests/test_room_terminal.py tests/test_app_terminal.py
+        # a test past 120 s prints every thread's stack, so a hang says where it is
+        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 tests/test_room_terminal_windows.py tests/test_room_terminal.py tests/test_app_terminal.py
       - name: The ConPTY, job and side channel tests, on their own (also in the Try Room job)
-        run: python -m pytest -q -rs -p no:cacheprovider ../../rooks-try/tests/test_winproc.py
+        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 ../../rooks-try/tests/test_winproc.py
 
   rooks-code:
     name: Terminal coding agent (${{ matrix.os }})

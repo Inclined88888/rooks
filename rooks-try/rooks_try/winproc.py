@@ -529,7 +529,10 @@ def person_only_sddl() -> str:
 class MarkPipe:
     """A named pipe the Room's shell writes "code;nonce;seq" to after each command. Inbound only, local clients only,
     the first instance ours (so nothing can have made it first), and a DACL for the person alone. A program running
-    as the person could find it and write to it: the same strength as the nonce on POSIX, and said under Advanced."""
+    as the person could find it and write to it: the same strength as the nonce on POSIX, and said under Advanced.
+    The next instance is listening before a connected one is read, so two prompts in a row are both taken."""
+
+    INSTANCES = 4
 
     def __init__(self, on_line) -> None:
         _need_windows()
@@ -542,25 +545,37 @@ class MarkPipe:
             raise _err("ConvertStringSecurityDescriptorToSecurityDescriptorW")
         self._sd = sd
         self._sa = SECURITY_ATTRIBUTES(ctypes.sizeof(SECURITY_ATTRIBUTES), sd, False)
-        # PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE; byte mode, blocking, PIPE_REJECT_REMOTE_CLIENTS
-        self._h = CreateNamedPipeW(self.path, 0x00000001 | 0x00080000, 0x00000008, 1, 4096, 4096, 0,
-                                   ctypes.byref(self._sa))
-        if not _ok_handle(self._h):
-            err = _err("CreateNamedPipeW")
+        try:
+            self._h = self._instance(first=True)
+        except OSError:
             LocalFree(sd)
-            raise err
+            raise
         self._thread = threading.Thread(target=self._serve, name="room-mark-pipe", daemon=True)
         self._thread.start()
 
+    def _instance(self, first: bool = False):
+        # PIPE_ACCESS_INBOUND (| FILE_FLAG_FIRST_PIPE_INSTANCE); byte mode, blocking, PIPE_REJECT_REMOTE_CLIENTS
+        h = CreateNamedPipeW(self.path, 0x00000001 | (0x00080000 if first else 0), 0x00000008, self.INSTANCES, 4096,
+                             4096, 0, ctypes.byref(self._sa))
+        if not _ok_handle(h):
+            raise _err("CreateNamedPipeW")
+        return h
+
     def _serve(self) -> None:
-        h = self._h
         buf = ctypes.create_string_buffer(4096)
         while not self._stop.is_set():
+            h = self._h
             if not ConnectNamedPipe(h, None) and ctypes.get_last_error() != ERROR_PIPE_CONNECTED:
                 if self._stop.is_set():
                     break
                 time.sleep(0.05)
                 continue
+            if self._stop.is_set():
+                break
+            try:  # the next one listens before this one is read
+                self._h = self._instance()
+            except OSError:
+                self._h = None
             data = b""
             while len(data) < 4096:
                 got = DWORD(0)
@@ -568,35 +583,45 @@ class MarkPipe:
                     break
                 data += buf.raw[: got.value]
             DisconnectNamedPipe(h)
-            if self._stop.is_set():
-                break
+            _close(h)
             for line in data.decode("ascii", "replace").splitlines():
-                if line.strip():
+                if line.strip() and not self._stop.is_set():
                     try:
                         self._on_line(line.strip())
                     except Exception:  # noqa: BLE001 - one bad line never stops the channel
                         pass
+            if self._h is None:  # no instance could be made: the channel ends here (the in-band marker remains)
+                return
 
     def close(self) -> None:
         if self._stop.is_set():
             return
         self._stop.set()
-        # wake the blocked ConnectNamedPipe by connecting to it ourselves
+        # wake a blocked ConnectNamedPipe by connecting to it ourselves
         h = CreateFileW(self.path, 0x40000000, 0, None, 3, 0, None)  # GENERIC_WRITE, OPEN_EXISTING
         _close(h)
         self._thread.join(2)
         if not self._thread.is_alive():
-            _close(self._h)
-            self._h = None
+            last, self._h = self._h, None
+            _close(last)
             LocalFree(self._sd)
 
 
-def write_mark(name: str, line: str) -> None:
-    """Write one line to a MarkPipe by its short name (what a Room shell does; for tests)."""
+def write_mark(name: str, line: str, timeout: float = 2.0) -> None:
+    """Write one line to a MarkPipe by its short name (what a Room shell does; for tests). Waits while every instance
+    is busy, as PowerShell's Connect does."""
     _need_windows()
     path = rf"\\.\pipe\{name}"
-    with open(path, "wb", buffering=0) as f:
-        f.write((line.rstrip("\n") + "\n").encode("ascii"))
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            with open(path, "wb", buffering=0) as f:
+                f.write((line.rstrip("\n") + "\n").encode("ascii"))
+            return
+        except OSError:
+            if time.monotonic() > deadline:
+                raise
+            time.sleep(0.02)
 
 
 def alive(pid: int) -> bool:
