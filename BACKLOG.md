@@ -193,12 +193,28 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
-### Work suites (design 0012), Microsoft half: what is left (branch feat/windows)
+### Work suites (design 0012): what is left (branch feat/windows)
 
-* **Google Workspace** (0012 sections 2.3 and 5, G1 to G3): Drive, Docs, Sheets, Google Chat, Meet transcripts and
-  Google Tasks. The switches, words and tool names are shared (`work_scopes.py` already lists Google's scopes); it
-  needs a `work_google.py` beside `work_graph.py`, the sign-in through `connect.start(work=True)` (it says "Google
-  Workspace comes next" today), a `tests/fake_google.py`, and the Work apps page's Google button.
+* **A real Google Workspace domain**: Google was tested against `tests/fake_google.py` only. Check against a Workspace
+  test domain: incremental consent per switch with `include_granted_scopes`, what the admin console's App access
+  control block really looks like (Google may show its own page and never send the person back; the switch then stays
+  "Finish signing in" until it is tried again, and a timeout could turn that into "Waiting for your IT team"), the
+  `hd` claim for every Workspace account, shared drive listings with `corpora=drive`, Docs `writeControl` on a real
+  document, resumable uploads (whether Google wants the token on the upload address; Rooks sends none), exports over
+  10 MB (Google refuses them; Rooks should fall back to the file's export links), Meet transcripts and how soon they
+  appear, and real throttling. Then Google's verification of the restricted Drive scopes for the shipped client.
+* **The Chat API needs a Chat app configured in the Cloud project** even for calls made as the person: a maintainer
+  step for the shipped client, not yet in `docs/connect-google-microsoft.md` as a tested step.
+* **Names in Google Chat**: messages read with the person's own access name the sender only by an id, so Rooks says
+  "You" or "Someone". The People API (`directory.readonly`) could name colleagues; it would be one more permission
+  under Chats: read, so it waits for a decision.
+* **Google Chat search** reads the latest 50 messages of up to 20 spaces; older messages are not searched.
+* **A Google Task deleted at Google** stays in Rooks' list after the next sync, as with Planner and To Do.
+* **Google Slides edits, Drive comments and suggestions**: not built; Docs edits are written directly (with the version
+  check), not as suggestions.
+* **Rooks as its own chat inside Google Chat** (0012 section 2.3): a Chat app the company runs in its own Google
+  Cloud project, with Pub/Sub the computer pulls from. Same gate as the Teams bot: only with the owner's yes and a test
+  company. The Channels page says so.
 * **Rooks as a chat inside Teams, and Needs you answered from a Teams card** (0012 section 2.2, last phase): needs an
   Entra app and Azure Bot in the company's subscription, a Teams app package the admin allows, and a relay the company
   owns (Azure Relay) or the Rooks cloud. Only with the owner's yes and a test company. The Channels page says so.

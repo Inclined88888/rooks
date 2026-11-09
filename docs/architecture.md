@@ -433,8 +433,9 @@ step in section g; a row it changed says so in its status. Everything else is as
 | cloud_mail.py | Gmail and Microsoft mail and calendar for accounts connected with one sign-in | live (no tests) |
 | connect.py | "Connect Google" and "Connect Microsoft" sign-in; tokens stored encrypted; the work sign-in asks only who you are, then one switch's permissions at a time | live |
 | work_scopes.py | The work account's switches and the permissions each asks for (design 0012) | live |
-| work_suite.py | The work account, its switches, the gate every work tool passes, Needs you titles, the IT note | live (Microsoft) |
+| work_suite.py | The work account, its switches, the gate every work tool passes, each suite's words, Needs you titles and change lines, the IT note | live |
 | work_graph.py | OneDrive, SharePoint, Teams, meeting transcripts, Planner and To Do through Microsoft Graph | live, tested against a fake only |
+| work_google.py | Drive and shared drives, Docs, Sheets, Google Chat, Meet transcripts and Google Tasks (same functions as work_graph.py) | live, tested against a fake only |
 | work_suite_tools.py, work_suite_api.py | The assistant's `work_*` tools and `/api/work` (the Work apps page and the terminal's `/work`) | live |
 | oauth_clients.py | The public app identifiers used for that sign-in | live |
 | mail_autodetect.py | Finds mail and calendar settings from an address | live |
@@ -805,7 +806,7 @@ Ranked by how soon a workplace buyer would notice. Each line names the existing 
 | 4 | **Microsoft 365 files and tasks**: OneDrive, SharePoint, Planner, To Do | Only Outlook mail and calendar | `cloud_mail.py` (Graph calls) and `connect.py` (permissions); files into `analysis.py` (Files library); tasks into `services.py` |
 | 5 | **Jira and Asana that work both ways; Monday** | Read-only import of Jira, Asana and Trello into the Team board with a personal token; no Monday | `team/trackers.py` (add write-back, comments, Monday); show the items in the personal Tasks list |
 | 6 | **ServiceNow** | Nothing in any part of the code | A new connector beside `team/trackers.py`; tickets into the jobs board (`jobs.py`) and approvals through `needs_you.py`. Today only the Sites feature could read it by screen. |
-| 7 | **Google Workspace beyond Gmail and Calendar**: Drive, Docs, Sheets, Chat, Meet | Gmail and Google Calendar only | `connect.py` (Google permissions) and `cloud_mail.py`; Google Chat as a channel in `teammates/channels.py` |
+| 7 | **Google Workspace beyond Gmail and Calendar**: Drive, Docs, Sheets, Chat, Meet (built on feat/windows: `work_google.py`, design 0012) | Gmail and Google Calendar only | `connect.py` (Google permissions) and `cloud_mail.py`; Google Chat as a channel in `teammates/channels.py` |
 | 8 | **A built-in browser the person and the assistant share** for web apps without a connector | A separate browser helper with steps and screenshots; Sites scrape records after one sign-in | `room.py` (the planned Room browser), taking over `browser_proxy.py`, `local_agents.py` and the browser parts of `sites.py` |
 | 9 | **Company tenant sign-in approval** | The app uses its own shipped sign-in identifiers, registered under the old name; tenants that block user consent need an admin, and there is no admin flow | `oauth_clients.py`, `connect.py` |
 | 10 | **Audit records an IT team would accept**: export, retention, a manager's view | The run log and outbound record are strong but stay on each computer | `actions.py`, `egress.py`, `history.py` (already exports CSV and PDF) |

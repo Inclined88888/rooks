@@ -166,10 +166,55 @@ the work account (schema version 6, its own entry). Rollback: revert the commits
   Microsoft's permissions reference and was not checked against a tenant); conditional access and multi-factor
   sign-in; sensitivity labels that block downloads; real throttling; real meeting transcripts; SharePoint lists (only
   document libraries); publisher verification of the shipped registration; and Windows Credential Manager holding the
-  tokens beyond the windows-2022 runner. **Not built**: Google Workspace (the page says it comes next; the same
-  switches and tool names are ready for it), Rooks as its own chat inside Teams and answering Needs you from a Teams
+  tokens beyond the windows-2022 runner. **Not built**: Google Workspace (built since: the next entry), Rooks as its own chat inside Teams and answering Needs you from a Teams
   card (it needs a bot and a relay the company runs, design 0012 section 2.2; the Channels card says so), and
   `rooks-browser` opening a work file's address.
+- **Your work account: Google Workspace, the same way** (design 0012, section 2.3, G1 to G3). Work apps' **Google
+  Workspace** button now signs in with Google's own sign-in in your browser, and everything works as with Microsoft 365:
+  the first sign-in asks only who you are (`openid email profile`), each switch asks Google only for its own
+  permissions when you turn it on (`include_granted_scopes`, so the earlier ones stay), turning one off stops it at once,
+  and every write waits for your yes in Needs you and runs exactly what the card showed, once. A personal Gmail is told
+  to use Mail and calendar instead (Google names a company's domain only for a Workspace account). When your company's
+  Google admin has not allowed Rooks (`admin_policy_enforced`, on Google's page or from the sign-in), the switch says
+  "Waiting for your IT team" and **Copy the request for IT** copies a note with the app's client ID, each permission and
+  why, and where in the Google Admin console to trust the app. What Rooks can do with it: search and list My Drive,
+  your shared drives (Work apps calls them shared drives where Microsoft says SharePoint sites) and files shared with
+  you; read a file in place with citations (Google Docs, Sheets and Slides are exported as Word, Excel and PowerPoint
+  files, or as plain text and CSV when the files add-on is not installed, so reading works on a plain install too);
+  save a copy to Files that remembers it came from Google Drive; open it in the Room's browser or your own. Read your
+  Google Chat direct messages, group chats and spaces; search them (Google has no chat search for a person's own
+  access, so Rooks reads the latest 50 messages of up to 20 spaces). Bring a Google Meet call's transcript into Meetings
+  with its speakers. Show your Google Tasks in Tasks with a Google Tasks label. **Held writes**: uploading to Google Drive
+  (files over 5 MB in 4 MB parts sent to Google's own upload address without the token; "replace" makes a new version
+  of the file with that name), sharing with people (can view or can edit; Google emails them) or as a link people in
+  your company can open, **Google Docs changes** (replace words, add a paragraph at the end, or the whole new text),
+  **Google Sheets changes** (cells and their new values, written as plain values, never formulas), a new version of a
+  Word file in Drive, posting in a space (or answering in a message's thread), and changing or adding a Google Task. The
+  Needs you card now shows the change itself under the title: what a Docs change takes out and puts in, which cells get
+  which values, the exact text of a post (for Teams too: before, the card's reason line covered a post's text). A Docs
+  change is written only on top of the version Rooks just read, so if someone typed in between, nothing is overwritten
+  and the card's run says "Someone changed it in the meantime." Chat messages read with your own access carry no names
+  at Google, so a message says "You" or "Someone" (BACKLOG). Throttling: a 429 and Google's rate-limit 403 are waited
+  out like Microsoft's. The page, Files, Tasks, Meetings ("From Google Meet") and the terminal's `/work` use each
+  suite's own words, from one table (`work_suite.NAMES`); Channels gains a Google Chat card saying what a chat with
+  Rooks inside Google Chat would need. `rooks` terminal: `/work connect google`, and the rest of `/work` as before.
+  Underneath: `work_google.py` beside `work_graph.py` with the same functions (`work_suite.calls` picks one), so the
+  tools, `/api/work` (now also `/api/work/chats/search`) and the terminal do not change; `NAMES`, `change_lines` and the
+  Google IT note in `work_suite.py`; `connect.py` lets a Google work sign-in through, keeps Google's consent screen
+  (needed for a long-lived token) and reads `hd` and `sub` from the ID token. No schema change. Tests that failed on
+  the old code (commit 4d68b05): all 29 in `workbench/backend/tests/test_work_google.py` ("Google Workspace comes
+  next"), 4 in `rooks-code/tests/test_work_terminal.py` and 3 in `workbench/frontend/tests/work-apps.test.mjs`, against
+  `tests/fake_google.py` (a fake Google sign-in, Drive with shared drives, Docs, Sheets, Chat, Meet, Calendar events
+  and Tasks whose tokens carry the consented scopes and refuse a call without one, page their lists, answer one 429 or
+  rate-limit 403, take resumable uploads and record every write). CI: the Windows job runs them too. **Not tested,
+  because no real accounts exist here**: a real Google Workspace domain or a real Google sign-in; the admin console's
+  app access control and what a real block looks like (Google may show its own page and never send the person back,
+  which leaves the switch "Finish signing in" until it is tried again); Google's verification of the restricted Drive
+  scopes (until then a company uses its own client, or marks the app trusted); the Chat app a Cloud project must
+  configure before the Chat API answers at all; real Meet transcripts and how soon they appear after a call; real
+  throttling; export size limits (Google refuses to export a file over 10 MB); and Google Chat's threaded replies in a
+  real space. **Not built**: Rooks as its own chat inside Google Chat (a Chat app the company runs; the Channels card
+  says so), Google Slides edits, Drive comments, and names of the people in Chat messages.
 
 ## Unreleased · Workplace cleanup · branch cleanup/workplace
 

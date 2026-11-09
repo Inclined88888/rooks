@@ -1,7 +1,7 @@
 # 0012: Rooks inside the work suites (Microsoft 365 and Google Workspace)
 
 Status: design record, 2026-11-09. Microsoft half built on `feat/windows` (M0 to M4 below, without the `cloud_mail.py`
-tests of M0): see "As built" at the end. Google (G1 to G3) and the Teams bot are not built. Branch `feat/windows`. Grows from `connect.py`, `cloud_mail.py`, `needs_you.py`, `meetings.py`, `analysis.py` and the gaps in `docs/architecture.md` section h (ranks 1, 3, 4, 7, 9). Builds on 0007 (the Room's browser). Lanes: backend, frontend, terminal. Tests first: each one fails on today's code.
+tests of M0), then Google (G1 to G3): see "As built" at the end. The Teams bot and the Google Chat app are not built. Branch `feat/windows`. Grows from `connect.py`, `cloud_mail.py`, `needs_you.py`, `meetings.py`, `analysis.py` and the gaps in `docs/architecture.md` section h (ranks 1, 3, 4, 7, 9). Builds on 0007 (the Room's browser). Lanes: backend, frontend, terminal. Tests first: each one fails on today's code.
 
 The owner: "make it all suitable for professional workspace - Microsoft pack or google ways - teams to onedrive to sharepoint". Most of the audience works in Microsoft 365 on Windows, so Microsoft is built first.
 
@@ -174,4 +174,35 @@ Each step ships with its tests, CHANGELOG, BACKLOG and `docs/connect-google-micr
 - **Tests.** `tests/fake_graph.py` and `tests/test_work_microsoft.py` (tests 1 to 11 and 13 in section 4), the terminal
   in `rooks-code/tests/test_work_terminal.py`, the page and parity guard in `frontend/tests/work-apps.test.mjs`. Test 12
   (`cloud_mail.py`'s own suite) is not done.
+
+## As built (Google half, 2026-11-09)
+
+- **Modules.** `work_google.py` beside `work_graph.py`, with the same functions and arguments; `work_suite.calls(acct)`
+  picks one, so `work_suite_tools.py`, `work_suite_api.py` and the terminal's `/work` are shared. `work_suite.NAMES`
+  holds each suite's words (OneDrive or My Drive, SharePoint sites or Shared drives, Teams or Google Chat, Teams or
+  Google Meet, Planner and To Do or Google Tasks), sent as `names` in `/api/work/status`. `connect.start(work=True)`
+  takes Google, keeps `prompt=consent` (Google returns a refresh token only with a consent screen) and
+  `include_granted_scopes=true`; `finish_sign_in` reads `hd` and `sub` and refuses an account without `hd`.
+- **References.** A Drive file is its id (checked against `[A-Za-z0-9_-]`, so a reference never changes the path); a
+  shared drive is a `site` (`gdrive:<id>` in the names kept); a Chat space is `space:<id>`. Words in a Drive query are
+  escaped, so they never change it.
+- **Reading.** Docs, Sheets and Slides export as `.docx`, `.xlsx` and `.pptx` when the files add-on reads them, else as
+  text and CSV. Search covers shared drives (`corpora=allDrives` with `includeItemsFromAllDrives` and
+  `supportsAllDrives`). Chat search reads the latest 50 messages of up to 20 spaces (no search exists for a person's
+  own access). A message's sender is "You" or "Someone": the Chat API names people only by id with user access.
+- **Writes, all held.** Upload (multipart up to 5 MB, else resumable in 4 MB parts, never sending the token to the
+  upload address; `replace` makes a new version of the file with that name in that folder), share
+  (`permissions.create`: people by email, or a `domain` link for the account's `hd`), Docs (`replaceAllText`, an
+  append, or the whole text; written with `writeControl.requiredRevisionId` from a fresh read, so a document changed in
+  between is not overwritten), Sheets (`values.batchUpdate` with `RAW`), a Word file's new version, Chat posts and
+  thread replies, Google Tasks changes. The card in Needs you shows the change itself (`change` on the item, from
+  `work_suite.change_lines`): removed and added text, cells and values, a post's text; for Microsoft too.
+- **Differences from the record.** The Docs redline shows the pairs and the whole new text as given, not a diff
+  against the document (that would need a read before the yes). Meet transcripts become a meeting from the transcript
+  entries and participants (`source = "meet"`), not from the Docs copy in Drive. `/api/work/meetings` returns `online`
+  (and `place`) for both suites. Google Chat as Rooks' own chat (2.3, second bullet) was judged not feasible here for
+  the same reason as the Teams bot: a Chat app the company runs; the Channels page has a card explaining it.
+- **Tests.** `tests/fake_google.py` and `tests/test_work_google.py` (tests 1 to 11 and 13 in section 4, for Google), the
+  terminal in `rooks-code/tests/test_work_terminal.py`, the page in `frontend/tests/work-apps.test.mjs`. Not run against
+  a real Workspace domain.
 
