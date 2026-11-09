@@ -94,7 +94,10 @@ Rollback: revert the commits.
   after a silent install, the install location key, the window's data and logs left, and with `/CLEANDATA` the data,
   link file, Room and Credential Manager entries left). The check that ending the app ends its backend passed on the
   old code too (the backend already ended when its input closed); the job is the guarantee when that is not enough.
-  The frozen backend's Room smoke test (a quick command, then the browser over its pipe) now runs on Windows too.
+  On the new setup every check passes (Desktop run 42559767638, all four builds green). Ending the app as Task
+  Manager does leaves the backend's unpacked copy in `%TEMP%` (it had no time to tidy up); the uninstaller removes it.
+  The frozen backend's Room smoke test (a quick command, then the browser over its pipe) now runs on Windows too, and
+  passes there.
   `desktop/scripts/test_forget_secrets.py` failed first locally. Not tested: a real Windows 10 or 11 PC (the runner is
   Server 2022), a PC without WebView2 or without internet, SmartScreen on the unsigned setup, the MSI, the setup's
   pages by hand (only the silent path runs in CI), and Windows on Arm.
