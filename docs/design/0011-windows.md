@@ -127,8 +127,9 @@ keys and the Room"; ticked, or with `/CLEANDATA`, the hook first runs `workbench
 deletes the Credential Manager entries keyring wrote, `ai-workspace` and `<name>@ai-workspace`, and no other; the
 packaged app keeps its own secrets in a file in its data folder, so on a fresh install there are none), then removes
 `%APPDATA%\com.inclined88888.aiworkspace`, `%APPDATA%\ai-workspace`, `%USERPROFILE%\.ai-workspace\try-room` and
-`appearance.json`, and `.ai-workspace` itself only when empty: `.ai-workspace\bin` belongs to other installers. Before
-uninstalling, a sidecar still running from the program folder is closed the way Tauri closes the app. There is no
+`appearance.json`, and `.ai-workspace` itself only when empty: `.ai-workspace\bin` belongs to other installers. When the
+sidecar's file is still in use a moment after Tauri closed the app (the sidecar ends with the app's job), the hook
+waits 3 s and deletes it again. There is no
 autostart switch in the app, so there is no Run value to add; the uninstaller removes one anyway.
 
 The shell (`sidecars.rs`) puts each sidecar in a kill-on-close job right after starting it. The one-file sidecar

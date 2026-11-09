@@ -69,8 +69,6 @@ FunctionEnd
   ${If} $UpdateMode = 1
     StrCpy $RooksCleanData 0
   ${EndIf}
-  ; The sidecar ends with the app (it is in the app's job), but a copy left running would keep its file in use.
-  !insertmacro CheckIfAppIsRunning "$INSTDIR\workbench-server.exe" "${PRODUCTNAME}"
   ${If} $RooksCleanData = 1
     ; the app's Credential Manager entries, while the program that knows them is still here
     nsExec::Exec '"$INSTDIR\workbench-server.exe" --forget-secrets'
@@ -80,6 +78,13 @@ FunctionEnd
 !macroend
 
 !macro NSIS_HOOK_POSTUNINSTALL
+  ; The sidecar ends with the app (it is in the app's kill-on-close job), a moment after Tauri closed the app: if its
+  ; file was still in use, try once more.
+  ${If} ${FileExists} "$INSTDIR\workbench-server.exe"
+    Sleep 3000
+    Delete "$INSTDIR\workbench-server.exe"
+    RMDir "$INSTDIR"
+  ${EndIf}
   ${If} $UpdateMode <> 1
     SetShellVarContext current
     ; the window's WebView2 data and the app's logs
