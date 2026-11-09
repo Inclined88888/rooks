@@ -7,14 +7,17 @@ import { Button, EmptyState, ErrorState, Input, List, Loading, Row, Tabs, useToa
 import { plainError } from "./day/parts";
 
 /**
- * Files, "From work" (design 0012): the person's OneDrive, the SharePoint sites they follow and files shared with them,
- * read in place through their own work account. Save to Files keeps a copy here with where it came from; Open shows it
+ * Files, "From work" (design 0012): the person's OneDrive and the SharePoint sites they follow, or their My Drive and
+ * shared drives, and files shared with them, read in place through their own work account. The words for each place
+ * come from the app (names), so a Google Workspace account sees Google's names. Save to Files keeps a copy here with where it came from; Open shows it
  * in the Room's browser (they sign in there once; Rooks never hands its access to a browser), or in their own browser
  * where the Room has none. Nothing here changes a work file: uploads, shares and edits wait for a yes in Needs you.
  */
 type Item = { file: string; name: string; folder: boolean; where: string; web_url: string; modified?: string; match?: string };
 type Site = { id: string; name: string };
-type Status = { account: { email: string } | null; features: { id: string; state: string }[] };
+type Names = { home: string; sites: string; site: string; files: string };
+type Status = { account: { email: string } | null; features: { id: string; state: string }[]; names?: Names };
+const MICROSOFT: Names = { home: "OneDrive", sites: "SharePoint sites", site: "SharePoint site", files: "OneDrive and SharePoint" };
 type RoomStatus = { running?: boolean; can?: { browser?: boolean } };
 
 export default function WorkFiles({ onSaved }: { onSaved?: (id: number) => void }) {
@@ -40,6 +43,7 @@ export default function WorkFiles({ onSaved }: { onSaved?: (id: number) => void 
     api<RoomStatus>("/room/status").then(setRoom).catch(() => setRoom(null));
   }, []);
   const readOn = !!status?.features.find((f) => f.id === "files_read" && f.state === "on");
+  const names = status?.names ?? MICROSOFT;
 
   useEffect(() => {
     if (!readOn) return;
@@ -52,7 +56,7 @@ export default function WorkFiles({ onSaved }: { onSaved?: (id: number) => void 
   if (status === null) return <Loading rows={3} label="Checking your work account" />;
   if (!readOn) {
     return <EmptyState icon={<FileText size={22} />} title="Your work files are not connected"
-      line={status.account ? "Turn on Files: read in Work apps to see OneDrive and SharePoint here." : "Connect your work account in Work apps to see OneDrive and SharePoint here."}
+      line={status.account ? `Turn on Files: read in Work apps to see ${names.files} here.` : "Connect your work account in Work apps to see your work files here."}
       action={<Link className="ui-btn ui-btn-primary ui-btn-sm" to="/work">Work apps</Link>} />;
   }
 
@@ -74,18 +78,18 @@ export default function WorkFiles({ onSaved }: { onSaved?: (id: number) => void 
     <div className="day-stack">
       <div className="day-tabs-row">
         <Tabs label="Where" value={where} onChange={(v) => setWhere(v as typeof where)}
-          items={[{ id: "onedrive", label: "OneDrive" }, { id: "sites", label: "SharePoint sites" }, { id: "shared", label: "Shared with me" }]} />
+          items={[{ id: "onedrive", label: names.home }, { id: "sites", label: names.sites }, { id: "shared", label: "Shared with me" }]} />
       </div>
       <form className="day-add-row" onSubmit={search}>
         <Search size={16} aria-hidden="true" className="day-muted-icon" />
-        <Input className="day-grow" aria-label="Search your work files" placeholder="Search OneDrive and SharePoint" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <Input className="day-grow" aria-label="Search your work files" placeholder={`Search ${names.files}`} value={query} onChange={(e) => setQuery(e.target.value)} />
         <Button type="submit" size="sm" disabled={!query.trim()}>Search</Button>
       </form>
-      {trail.length > 0 && <p className="day-hint">{trail.map((t) => t.label).join(" › ")} · <button type="button" className="st-link" onClick={() => { setTrail([]); setWhere("onedrive"); void list(""); }}>Back to OneDrive</button></p>}
+      {trail.length > 0 && <p className="day-hint">{trail.map((t) => t.label).join(" › ")} · <button type="button" className="st-link" onClick={() => { setTrail([]); setWhere("onedrive"); void list(""); }}>Back to {names.home}</button></p>}
       {problem && <ErrorState title="That did not load" line={problem} />}
       {where === "sites" && trail.length === 0 && (
-        sites === null ? <Loading rows={2} label="Loading your sites" /> : sites.length === 0 ? <p className="day-hint">You do not follow any SharePoint sites yet.</p> : (
-          <List label="SharePoint sites">{sites.map((s) => <Row key={s.id} title={s.name} meta="SharePoint site" onClick={() => enter(s.name, `?site=${encodeURIComponent(s.id)}`)} />)}</List>
+        sites === null ? <Loading rows={2} label="Loading your sites" /> : sites.length === 0 ? <p className="day-hint">No {names.sites.toLowerCase()} here yet.</p> : (
+          <List label={names.sites}>{sites.map((s) => <Row key={s.id} title={s.name} meta={names.site.charAt(0).toUpperCase() + names.site.slice(1)} onClick={() => enter(s.name, `?site=${encodeURIComponent(s.id)}`)} />)}</List>
         ))}
       {(where !== "sites" || trail.length > 0) && (items === null ? <Loading rows={4} label="Loading your work files" /> : items.length === 0 && !problem ? <p className="day-hint">Nothing here.</p> : (
         <List label="Work files">

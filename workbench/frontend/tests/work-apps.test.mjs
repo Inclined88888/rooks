@@ -48,7 +48,8 @@ test("a switch waiting for IT offers the note to copy; the technical detail is u
 
 test("signing in and switching use the app's own sign-in in the person's browser", () => {
   const page = read("../src/pages/WorkApps.tsx");
-  assert.match(page, /api<Started>\("\/work\/connect\/microsoft"/);
+  assert.match(page, /api<Started>\(`\/work\/connect\/\$\{provider\}`/);
+  assert.match(page, /connect\("microsoft"\)/);
   assert.match(page, /api<Switched>\(`\/work\/features\/\$\{f\.id\}`, \{ body: \{ on \} \}\)/);
   assert.match(page, /openExternal\(/);
   assert.match(page, /\/connect\/status\//);
@@ -74,7 +75,8 @@ test("Tasks says where a task lives; Meetings gets a Teams transcript; Channels 
   assert.match(tasks, /todo: "To Do"/);
   assert.match(tasks, /\/work\/tasks\/sync/);
   const meetings = read("../src/pages/Meetings.tsx");
-  assert.match(meetings, /Get the transcript from Teams/);
+  assert.match(meetings, /Get the transcript from \$\{place\}/);
+  assert.match(meetings, /useState\("Teams"\)/);
   assert.match(meetings, /\/work\/transcript/);
   assert.match(meetings, /\/work\/meetings/);
   const channels = read("../src/teammates/Channels.tsx");
@@ -89,7 +91,7 @@ test("either suite signs in from Work apps, and the words come from the app's na
   assert.match(page, /api<Started>\(`\/work\/connect\/\$\{provider\}`/);
   assert.match(page, /connect\("google"\)/);
   assert.match(page, /disabled=\{!st\.suites\.google\.ready/);
-  assert.match(page, /names\.suite/);
+  assert.match(page, /names\??\.suite/);
   assert.doesNotMatch(page, /Google Workspace comes next/);
   const backend = read("../../backend/app/work_suite.py");
   assert.doesNotMatch(backend, /GOOGLE_LATER/);

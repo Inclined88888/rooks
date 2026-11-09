@@ -8,14 +8,18 @@ import { ProviderLogo } from "./day/logos";
 import "./settings/settings.css";
 
 /**
- * Work apps (design 0012): one work account, Microsoft 365 (Google Workspace comes next), and one switch per thing Rooks
- * may do there. Each switch asks the company's sign-in only for its own permissions when it is turned on. The switches,
+ * Work apps (design 0012): one work account, Microsoft 365 or Google Workspace, and one switch per thing Rooks may do
+ * there. Each switch asks the company's sign-in only for its own permissions when it is turned on. The switches,
  * what each allows and their states come from the app (/api/work/status), the same words the terminal's /work prints.
  */
 type Feature = { id: string; label: string; says: string; asks_first: boolean; state: "on" | "off" | "signin" | "waiting"; state_words: string; waiting_words?: string };
+type Suite = "microsoft" | "google";
+/** Each suite's own words, from the app (work_suite.NAMES): the same the terminal's /work says. */
+export type SuiteNames = { suite: string; company: string; files: string; home: string; sites: string; site: string; chats: string; meetings: string; tasks: string; upload_to: string };
 type WorkStatus = {
-  account: { provider: "microsoft" | "google"; email: string; name: string; status: string; needs_sign_in: boolean } | null;
-  suites: Record<"microsoft" | "google", { ready: boolean; words: string }>;
+  account: { provider: Suite; email: string; name: string; status: string; needs_sign_in: boolean } | null;
+  suites: Record<Suite, { ready: boolean; words: string }>;
+  names: SuiteNames;
   features: Feature[];
   words?: { asks_first?: string };
   advanced: Advanced;
@@ -52,12 +56,12 @@ export default function WorkApps() {
     }, 1500);
   };
 
-  const connect = async () => {
+  const connect = async (provider: Suite) => {
     setError("");
     try {
-      const r = await api<Started>("/work/connect/microsoft", { body: {} });
+      const r = await api<Started>(`/work/connect/${provider}`, { body: {} });
       if (!r.opened) void openExternal(r.url);
-      follow(r.state, "account");
+      follow(r.state, provider === "google" ? "account-google" : "account");
     } catch (e) { setError(plainError(e)); }
   };
 
@@ -79,16 +83,20 @@ export default function WorkApps() {
   };
 
   const disconnect = async () => {
-    if (!st?.account || !confirm(`Disconnect ${st.account.email}? Rooks stops reaching your work files, chats and tasks. Nothing is deleted at Microsoft.`)) return;
+    if (!st?.account || !confirm(`Disconnect ${st.account.email}? Rooks stops reaching your work files, chats and tasks. Nothing is deleted at ${st.names.company}.`)) return;
     try { const r = await api<{ note: string }>("/work/account", { method: "DELETE" }); toast.ok(r.note); void load(); } catch (e) { toast.err(e); }
   };
 
   const asksFirst = st?.words?.asks_first ?? "Rooks always asks you first";
   const acct = st?.account;
+  const names = st?.names;
+  const removeAt = acct?.provider === "google"
+    ? "To also remove the permission at Google, open your Google Account, Security, Your connections to third-party apps, and remove Rooks."
+    : "To also remove the permission at Microsoft, open your account's apps page (My Apps) and remove Rooks.";
 
   return (
     <Page title="Work apps" className="st-page"
-      description="Your company's Microsoft 365: Outlook, Teams, OneDrive, SharePoint, Planner and To Do. Rooks asks for each part only when you turn it on.">
+      description="Your company's Microsoft 365 (Outlook, Teams, OneDrive, SharePoint, Planner and To Do) or Google Workspace (Gmail, Google Chat, Drive, Docs, Sheets, Meet and Tasks). Rooks asks for each part only when you turn it on.">
       {st === null && !problem && <Loading rows={4} label="Loading work apps" />}
       {problem && <ErrorState title="Work apps did not load" line={problem} onRetry={() => void load()} />}
       {error && <Notice tone="danger" title="That did not work">{error}</Notice>}
@@ -100,10 +108,10 @@ export default function WorkApps() {
                 <div className="st-row">
                   <div className="st-row-text">
                     <span className="st-row-label"><span className="st-inline"><ProviderLogo provider={acct.provider} /> Signed in as {acct.email}</span></span>
-                    <span className="st-row-help">{acct.provider === "microsoft" ? "Microsoft 365" : "Google Workspace"}. Everything runs on this computer.</span>
+                    <span className="st-row-help">{names?.suite}. Everything runs on this computer.</span>
                   </div>
                   <div className="st-row-control">
-                    {acct.needs_sign_in && <Button size="sm" icon={<AlertTriangle size={13} />} onClick={() => void connect()}>Sign in again</Button>}
+                    {acct.needs_sign_in && <Button size="sm" icon={<AlertTriangle size={13} />} onClick={() => void connect(acct.provider)}>Sign in again</Button>}
                     <Button size="sm" variant="ghost" icon={<LogOut size={14} />} onClick={() => void disconnect()}>Disconnect</Button>
                   </div>
                 </div>
@@ -112,12 +120,13 @@ export default function WorkApps() {
               <div className="st-stack">
                 <p className="st-p">Sign in with the account your company gave you. The first sign-in only tells Rooks who you are.</p>
                 <div className="st-inline">
-                  <Button variant="primary" icon={<ProviderLogo provider="microsoft" />} disabled={!st.suites.microsoft.ready || waiting === "account"}
-                    onClick={() => void connect()}>{waiting === "account" ? "Finish signing in, in your browser…" : "Microsoft 365"}</Button>
-                  <Button icon={<ProviderLogo provider="google" />} disabled title={st.suites.google.words}>Google Workspace</Button>
+                  <Button variant="primary" icon={<ProviderLogo provider="microsoft" />} disabled={!st.suites.microsoft.ready || !!waiting}
+                    onClick={() => void connect("microsoft")}>{waiting === "account" ? "Finish signing in, in your browser…" : "Microsoft 365"}</Button>
+                  <Button icon={<ProviderLogo provider="google" />} disabled={!st.suites.google.ready || !!waiting}
+                    onClick={() => void connect("google")}>{waiting === "account-google" ? "Finish signing in, in your browser…" : "Google Workspace"}</Button>
                 </div>
                 {!st.suites.microsoft.ready && <p className="st-small">{st.suites.microsoft.words}</p>}
-                <p className="st-small">{st.suites.google.words}</p>
+                {!st.suites.google.ready && <p className="st-small">{st.suites.google.words}</p>}
               </div>
             )}
           </Section>
@@ -141,7 +150,7 @@ export default function WorkApps() {
                 </div>
               ))}
             </div>
-            <p className="st-small">Turning something off stops it here at once. To also remove the permission at Microsoft, open your account's apps page (My Apps) and remove Rooks.</p>
+            <p className="st-small">Turning something off stops it here at once. {removeAt}</p>
           </Section>
 
           <Disclosure summary="Advanced">

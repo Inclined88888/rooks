@@ -7,8 +7,8 @@ import { todayISO, useModels, useToast } from "../util";
 import { ModelPicker, plainError } from "./day/parts";
 
 const PRIO = ["None", "Low", "Medium", "High"];
-/** design 0012: tasks that live in Planner or To Do too. A change to one waits for your yes in Needs you. */
-const ORIGIN: Record<string, string> = { planner: "Planner", todo: "To Do" };
+/** design 0012: tasks that live in Planner, To Do or Google Tasks too. A change to one waits for your yes in Needs you. */
+const ORIGIN: Record<string, string> = { planner: "Planner", todo: "To Do", gtasks: "Google Tasks" };
 
 function TaskRow({ task, onChange, onDelete }: { task: Task; onChange: (t: Task) => void; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
@@ -19,7 +19,7 @@ function TaskRow({ task, onChange, onDelete }: { task: Task; onChange: (t: Task)
   const done = task.status === "done";
 
   const where = task.origin ? ORIGIN[task.origin] : "";
-  /** A task in Planner or To Do changes there only after your yes in Needs you, like everything Rooks sends out. */
+  /** A task in Planner, To Do or Google Tasks changes there only after your yes in Needs you, like everything Rooks sends out. */
   const ask = async (args: { done?: boolean; due?: string; title?: string }) => {
     try {
       const r = await api<{ title: string; already_asked: boolean }>("/work/hold", { body: { tool: "work_task_update", args: { task: String(task.id), ...args } } });
@@ -101,8 +101,9 @@ export default function Tasks() {
 
   const load = () => {
     setProblem("");
-    // Planner and To Do join the list when the work account's Tasks switch is on (design 0012); a failure leaves the rest
-    api<{ planner: number; todo: number }>("/work/tasks/sync", { method: "POST" })
+    // Planner and To Do (or Google Tasks) join the list when the work account's Tasks switch is on (design 0012); a
+    // failure leaves the rest
+    api<Record<string, number>>("/work/tasks/sync", { method: "POST" })
       .then(() => api<Task[]>("/tasks").then(setTasks)).catch(() => undefined);
     return loadCached("tasks", () => api<Task[]>("/tasks")).then(setTasks).catch((e) => setProblem(plainError(e, "Your tasks did not load."))).finally(() => setLoaded(true));
   };

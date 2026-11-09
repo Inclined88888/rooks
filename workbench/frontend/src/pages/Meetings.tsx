@@ -15,7 +15,8 @@ import { extFor, mimeType } from "../voice/engine";
 import { Action, actionMeta, clock, notesText } from "../voice/logic";
 import "../voice/voice.css";
 
-type TeamsMeeting = { event: string; title: string; start: string; teams: boolean };
+/** A meeting from the work calendar (design 0012); online: it was held in Teams or Google Meet, so it can have a transcript. */
+type TeamsMeeting = { event: string; title: string; start: string; online: boolean };
 
 type Notes = { summary: string; notes: string[]; decisions: string[]; actions: Action[]; attendees: string[]; follow_up: { subject: string; body: string }; template?: string };
 type Seg = { start: number; end: number; speaker: string; text: string };
@@ -304,7 +305,8 @@ export default function Meetings() {
   const [consent, setConsent] = useState(false);
   const [recording, setRecording] = useState<{ m: Meeting; system: boolean } | null>(null);
   const [importing, setImporting] = useState(false);
-  const [teams, setTeams] = useState<TeamsMeeting[] | null>(null);  // design 0012: null while Teams transcripts are off
+  const [teams, setTeams] = useState<TeamsMeeting[] | null>(null);  // design 0012: null while work transcripts are off
+  const [place, setPlace] = useState("Teams");  // the work account's own word: Teams or Google Meet
   const [teamsOpen, setTeamsOpen] = useState(false);
   const [fetching, setFetching] = useState("");
   const file = useRef<HTMLInputElement>(null);
@@ -314,13 +316,13 @@ export default function Meetings() {
   const load = () => api<Meeting[]>("/meetings").then((l) => { setList(l); setListErr(null); })
     .catch((e) => { if (e instanceof ApiError && e.status === 402) { setLocked(e.message); setList([]); } else setListErr(e); });
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { api<{ meetings: TeamsMeeting[] }>("/work/meetings").then((r) => setTeams(r.meetings)).catch(() => setTeams(null)); }, []);
+  useEffect(() => { api<{ meetings: TeamsMeeting[]; place?: string }>("/work/meetings").then((r) => { setTeams(r.meetings); if (r.place) setPlace(r.place); }).catch(() => setTeams(null)); }, []);
   const fromTeams = async (t: TeamsMeeting) => {
     setFetching(t.event);
     try {
       const r = await api<{ meeting_id: number }>("/work/transcript", { body: { event: t.event } });
       setTeamsOpen(false); await load(); navigate(`/meetings/${r.meeting_id}`);
-      toast.ok("Brought in from Teams. Now write the notes.");
+      toast.ok(`Brought in from ${place}. Now write the notes.`);
     } catch (e) { toast.err(e); }
     setFetching("");
   };
@@ -374,7 +376,7 @@ export default function Meetings() {
       actions={<>
         <Button variant="primary" icon={<Circle size={12} fill="currentColor" />} onClick={() => setConsent(true)} disabled={!!recording}>Record</Button>
         <Button icon={<FileUp size={14} />} onClick={() => file.current?.click()} busy={importing}>{importing ? "Bringing it in…" : "Bring in a file"}</Button>
-        {teams !== null && <Button icon={<Users size={14} />} onClick={() => setTeamsOpen(true)}>From Teams</Button>}
+        {teams !== null && <Button icon={<Users size={14} />} onClick={() => setTeamsOpen(true)}>From {place}</Button>}
         <input ref={file} type="file" hidden accept=".vtt,.srt,.txt,.md,.json,.docx,audio/*,video/*,.m4a,.mp3,.wav,.webm,.mp4" onChange={onImport} />
       </>}>
       <Split solo={!mid && list?.length === 0} list={
@@ -395,17 +397,17 @@ export default function Meetings() {
               action={<Button variant="primary" icon={<Mic size={14} />} onClick={() => setConsent(true)}>Record a meeting</Button>} /></Card>}
       </Split>
       {consent && <ConsentModal onStart={start} onClose={() => setConsent(false)} />}
-      <Sheet open={teamsOpen} onClose={() => setTeamsOpen(false)} title="Meetings in Teams">
-        {teams && teams.filter((t) => t.teams).length === 0 && <p className="mt-line">No Teams meetings in the last two weeks.</p>}
-        {teams && teams.filter((t) => t.teams).length > 0 && (
-          <List label="Teams meetings">
-            {teams.filter((t) => t.teams).map((t) => (
+      <Sheet open={teamsOpen} onClose={() => setTeamsOpen(false)} title={`Meetings in ${place}`}>
+        {teams && teams.filter((t) => t.online).length === 0 && <p className="mt-line">No {place} meetings in the last two weeks.</p>}
+        {teams && teams.filter((t) => t.online).length > 0 && (
+          <List label={`${place} meetings`}>
+            {teams.filter((t) => t.online).map((t) => (
               <Row key={t.event} title={t.title} meta={t.start ? t.start.slice(0, 16).replace("T", " ") : ""}
-                actions={<Button size="sm" busy={fetching === t.event} onClick={() => void fromTeams(t)}>Get the transcript from Teams</Button>} />
+                actions={<Button size="sm" busy={fetching === t.event} onClick={() => void fromTeams(t)}>{`Get the transcript from ${place}`}</Button>} />
             ))}
           </List>
         )}
-        <p className="mt-line">Only meetings that were transcribed in Teams have one. Reading it needs no yes; nothing is sent.</p>
+        <p className="mt-line">Only meetings that were transcribed in {place} have one. Reading it needs no yes; nothing is sent.</p>
       </Sheet>
     </Page>
   );

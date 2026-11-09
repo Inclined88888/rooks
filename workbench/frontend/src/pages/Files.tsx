@@ -47,7 +47,7 @@ function HelperApps({ initial }: { initial?: Helpers }) {
   );
 }
 
-const FROM: Record<string, string> = { onedrive: "from OneDrive", sharepoint: "from SharePoint" };
+const FROM: Record<string, string> = { onedrive: "from OneDrive", sharepoint: "from SharePoint", gdrive: "from Google Drive" };
 const KB = (n: number) => (n > 1 << 20 ? `${(n / (1 << 20)).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const fmt = (v: unknown) => (typeof v === "number" ? v.toLocaleString(undefined, { maximumFractionDigits: 2 }) : String(v ?? ""));
 

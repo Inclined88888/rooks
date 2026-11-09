@@ -113,6 +113,13 @@ export default function Channels() {
       <div className="tm-row"><RouterLink className="ui-btn ui-btn-secondary ui-btn-sm" to="/work">Work apps</RouterLink></div>
     </Card>
     <Card as="section" className="tm-card wide">
+      <div className="tm-card-head"><b>Google Chat</b><Badge>Not available yet</Badge></div>
+      <p className="tm-muted">With a Google Workspace work account, Rooks can already read your Google Chat spaces and post in them after your yes:
+        turn that on in Work apps. Talking to Rooks as its own chat inside Google Chat needs your company's Google admin to allow a Chat app
+        that your company runs in its own Google Cloud account. That is not built yet.</p>
+      <div className="tm-row"><RouterLink className="ui-btn ui-btn-secondary ui-btn-sm" to="/work">Work apps</RouterLink></div>
+    </Card>
+    <Card as="section" className="tm-card wide">
       <div className="tm-card-head"><b>Discord</b><Badge>{st.discord.running ? `Connected${st.discord.bot ? ` as ${st.discord.bot}` : ""}` : st.discord.configured ? "Set up" : "Not set up"}</Badge></div>
       <Wizard steps={st.discord.steps}>
         <Input label="Bot token" type="password" autoComplete="off" value={dc.bot_token} onChange={(e) => setDc({ ...dc, bot_token: e.target.value })} />
