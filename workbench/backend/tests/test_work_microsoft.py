@@ -11,6 +11,7 @@ throttling, real transcripts, and which permissions a real company lets a person
 """
 
 import hashlib
+import importlib.util
 import json
 import logging
 import os
@@ -304,6 +305,10 @@ def test_every_write_waits_for_a_yes_and_runs_once_exactly_as_asked(client, work
     item = next(i for i in client.get("/api/needs-you").json() if i["id"] == f"a:{held['id']}")
     assert item["title"] == title
     r = client.post(f"/api/needs-you/a:{held['id']}/approve")
+    if title.endswith(".docx") and importlib.util.find_spec("docx") is None:  # the files add-on is not installed here
+        assert r.json()["status"] == "failed" and "Making Word files needs the files add-on." in r.json()["result"]
+        assert FG.S["writes"] == []
+        return
     assert r.status_code == 200 and r.json()["status"] == "done", r.text
     assert check(FG.S["writes"]), FG.S["writes"]
     # answered once: a second yes is refused and runs nothing
