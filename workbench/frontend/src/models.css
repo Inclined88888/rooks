@@ -3,13 +3,13 @@
 .free-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .free-steps li { display: flex; align-items: flex-start; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .free-steps li .grow { padding-top: 3px; }
-.free-n { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--rule); font-family: var(--font); font-size: 15px; }
+.free-n { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--color-ink); font-family: var(--font-mono); font-size: var(--text-xs); }
 .free-steps li.done .free-n { background: var(--ink-btn); color: var(--on-ink); border-color: var(--ink-btn); }
 
 /* The "via" line under an answer */
 .via { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);
-  font-size: 11px; letter-spacing: 0.02em; color: var(--muted); font-variant-numeric: tabular-nums; }
-.via-who b { font-weight: 650; color: var(--text); }
-.via-tier { text-transform: uppercase; letter-spacing: 0.12em; font-size: 9.5px; font-weight: 700; border: 1px solid var(--border-strong); padding: 1px 6px; }
+  font-family: var(--font-mono); font-size: var(--text-micro); letter-spacing: 0; color: var(--muted); font-variant-numeric: tabular-nums; }
+.via-who b { font-weight: 700; color: var(--text); }
+.via-tier { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: var(--tracking-micro); font-size: var(--text-micro-sm); font-weight: 700; border: 1px solid var(--border-strong); padding: 1px 6px; }
 .via-quota::before, .via-skip::before { content: "·"; margin-right: 10px; color: var(--faint); }
-.via-skip { color: var(--accent-text); font-family: var(--font); font-size: 13px; }
+.via-skip { color: var(--accent-text); font-family: var(--font-mono); font-size: var(--text-micro); }

@@ -1,6 +1,8 @@
 /* ==========================================================================
    Appearance (appearance.tsx sets the data attributes on <html>): typeface, spacing, the Appearance page and the
-   theme picker. Colours come from tokens.css; there are no theme palettes here.
+   theme picker. Colours come from tokens.css; there are no theme palettes here. Industrial (CHANGELOG step 4): the
+   segmented choice is square cells split by hairlines, the picked one ink; theme cards are square with an ink edge
+   when picked; the small drawings of the app are square too.
    ========================================================================== */
 
 /* ---- Typeface ---- */
@@ -21,13 +23,14 @@
 
 /* ---- Appearance page ---- */
 .ap-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: 48px; align-items: start; }
-.ap-seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 2px; gap: 2px; background: var(--color-surface-sunken); }
-.ap-seg button { height: 30px; padding: 0 16px; background: transparent; border: none; color: var(--muted); font: inherit; font-size: var(--text-sm); font-weight: 500; cursor: pointer; border-radius: 4px; }
-.ap-seg button:hover { color: var(--text); }
-.ap-seg button[aria-checked="true"] { background: var(--panel); color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.ap-seg { display: inline-flex; border: var(--line); border-radius: 0; padding: 0; gap: 0; background: var(--color-surface); }
+.ap-seg button { height: 32px; padding: 0 16px; background: transparent; border: none; color: var(--muted); font: inherit; font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium); text-transform: uppercase; letter-spacing: var(--tracking-button); cursor: pointer; border-radius: 0; }
+.ap-seg button + button { border-left: var(--line); }
+.ap-seg button:hover { color: var(--text); background: var(--color-bg-hover); }
+.ap-seg button[aria-checked="true"] { background: var(--color-primary); color: var(--color-on-primary); }
 .ap-range { width: 100%; accent-color: var(--color-primary); }
 .ap-preview { position: sticky; top: 24px; }
-.ap-preview .frame { border: 1px solid var(--border); background: var(--bg); color: var(--text); padding: 24px; display: flex; flex-direction: column; gap: 16px; border-radius: var(--radius-md); }
+.ap-preview .frame { border: var(--line-ink); background: var(--bg); color: var(--text); padding: 24px; display: flex; flex-direction: column; gap: 16px; border-radius: 0; }
 .ap-preview .frame .ap-presence { margin: -12px -12px 0; padding: 0 var(--space-2); border-bottom: 1px solid var(--border); }
 .ap-preview .frame .composer { margin: 0; max-width: none; }
 .ap-preview .frame .fake-input { padding: 12px 16px; color: var(--muted); font-size: var(--text-md); }
@@ -37,26 +40,27 @@
 .look-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .look-card {
   display: flex; flex-direction: column; gap: 4px; padding: 8px 8px 12px; text-align: left; cursor: pointer;
-  background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-md); font: inherit;
+  position: relative; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0; font: inherit;
   transition: border-color var(--dur-fast) var(--ease-out);
 }
-.look-card:hover { border-color: var(--border-strong); }
-.look-card[aria-checked="true"] { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
-.look-card .name { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding: 0 4px; font-size: var(--text-md); font-weight: 500; }
+.look-card:hover { border-color: var(--color-ink); }
+.look-card[aria-checked="true"] { border: 2px solid var(--color-ink); padding: 7px 7px 11px; }
+.look-card[aria-checked="true"]::before { content: ""; position: absolute; top: -5px; left: -5px; width: 9px; height: 9px; background: var(--color-accent); }
+.look-card .name { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding: 0 4px; font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium); text-transform: uppercase; letter-spacing: var(--tracking-button); color: var(--text); }
 .look-card .note { padding: 0 4px; font-size: var(--text-xs); color: var(--muted); line-height: 1.4; }
-.look-mini { display: flex; height: 84px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
+.look-mini { display: flex; height: 84px; border-radius: 0; overflow: hidden; border: 1px solid var(--border); }
 .look-mini.split > .mini-shell + .mini-shell { border-left: 1px solid var(--border); }
 .mini-shell { flex: 1; display: flex; min-width: 0; }
 .mini-rail { width: 18px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 5px; padding-top: 8px; }
-.mini-rail i { width: 8px; height: 8px; border-radius: 2px; opacity: 0.85; }
+.mini-rail i { width: 8px; height: 8px; border-radius: 0; opacity: 0.85; }
 .mini-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .mini-presence { height: 16px; display: flex; align-items: center; gap: 4px; padding: 0 6px; }
-.mini-presence b { width: 5px; height: 5px; border-radius: 50%; }
-.mini-presence .l { height: 3px; border-radius: 2px; opacity: 0.6; }
+.mini-presence b { width: 5px; height: 5px; border-radius: 0; }
+.mini-presence .l { height: 3px; border-radius: 0; opacity: 0.6; }
 .mini-thread { flex: 1; display: flex; flex-direction: column; gap: 5px; padding: 8px 8px 6px; }
-.mini-thread .l { display: block; height: 4px; border-radius: 2px; opacity: 0.55; }
+.mini-thread .l { display: block; height: 4px; border-radius: 0; opacity: 0.55; }
 .mini-thread .l:first-child { opacity: 0.9; }
-.mini-thread .b { display: block; width: 32%; height: 10px; margin-top: auto; border-radius: 3px; }
+.mini-thread .b { display: block; width: 32%; height: 10px; margin-top: auto; border-radius: 0; }
 .look-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .look-row-label { min-width: 72px; }
 .look-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }

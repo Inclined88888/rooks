@@ -2,4 +2,4 @@
 .stage-space { flex: 1; }
 .stage-line { margin: 0; padding: var(--space-4); font-family: var(--font-mono); font-size: var(--text-mono); color: var(--color-ink-muted); }
 .stage-shot { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: var(--space-2); background: var(--color-surface-sunken); }
-.stage-shot img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border-radius: var(--radius-xs); }
+.stage-shot img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border: var(--line); border-radius: 0; }

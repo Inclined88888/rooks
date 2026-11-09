@@ -76,7 +76,7 @@ export default function Insights() {
             <Stat label="Cost" value={money(t.usd)} hint={t.unpriced > 0 ? `+ ${t.unpriced} unpriced calls` : undefined} />
           </div>
           <div className="st-charts">
-            <Chart title="Calls per day" days={data.days} value={(d) => d.calls} fmt={(n) => `${n} calls`} danger={(d) => d.failures} note="Red: calls that failed (the router may have answered from another provider)." />
+            <Chart title="Calls per day" days={data.days} value={(d) => d.calls} fmt={(n) => `${n} calls`} danger={(d) => d.failures} note="Orange: calls that failed (the router may have answered from another provider)." />
             <Chart title="Tokens per day" days={data.days} value={(d) => d.tokens_in + d.tokens_out} fmt={(n) => n.toLocaleString()} />
             <Chart title="Cost per day" days={data.days} value={(d) => d.usd ?? 0} fmt={(n) => money(n)} note="Local and unknown-price models count as unpriced, not free." />
             <Chart title="Slowest typical answer" days={data.days} value={(d) => d.p95_ms} fmt={secs} note="95% of successful calls that day were faster than this." />

@@ -40,6 +40,9 @@ UI_PAIRS = [  # non-text that a person needs to see: 3:1
     ("border-strong", "bg"), ("border-strong", "surface"), ("ink-faint", "bg"), ("border-focus", "bg"), ("accent", "surface"),
     # the primitives (industrial step 2): the square marks on toasts and receipts, the ink edge of what you press
     ("on-primary", "success"), ("on-primary", "danger"), ("on-primary", "warning"), ("ink", "bg"),
+    # the pages (industrial step 4): chart series (black, grey and orange) on the card they are drawn on; the greys
+    # also on the paper (orange on the paper is the decoration note below: charts sit on white cards)
+    *[(f"chart-{i}", "surface") for i in range(1, 6)], *[(f"chart-{i}", "bg") for i in (1, 3, 4, 5)],
 ]
 # orange marks on the paper: always beside words, reported for the record. The current link's orange rule in the top
 # bar is one of them: the link itself also turns ink and bold and carries aria-current (shell/shell.css).
@@ -78,6 +81,9 @@ def tokens(theme: str) -> dict:
     vals.update(b.get(THEMES["light"], {}))
     if theme != "light":
         vals.update(b.get(THEMES[theme], {}))
+    # a token that names another (--color-chart-1: var(--color-ink)) takes that token's value in this theme
+    for _ in range(4):
+        vals = {k: (vals.get(m.group(1), v) if (m := re.fullmatch(r"var\((--[\w-]+)\)", v)) else v) for k, v in vals.items()}
     return vals
 
 

@@ -49,7 +49,7 @@ export default function Team() {
   return (
     <Page wide className="ag-page team" kicker="Your team" title="Team"
       description="Give people work in plain words. See who's on what, what's late and what's stuck. Nothing goes out to your team without your OK unless you've said so in Settings."
-      actions={d && <div className="team-stats" aria-label="Team at a glance">
+      actions={d && <div className="team-stats st-stats is-three" aria-label="Team at a glance">
         <Stat label="Doing" value={d.counts.doing ?? 0} /><Stat label="Need a look" value={d.at_risk} tone={d.at_risk > 0 ? "warn" : "neutral"} /><Stat label="Not given out" value={d.unassigned} />
       </div>}>
       {t.upgrade && <UpgradeCard feature="team_tasks" onClose={() => t.setUpgrade(false)} />}

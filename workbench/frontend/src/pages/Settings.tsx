@@ -3,7 +3,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, stream } from "../api";
 import { AppInfo, Sidecar, appInfo, inDesktopShell, listSidecars, openDataDir, openLogs, requestApproval } from "../desktop";
-import { Badge, Button, ErrorState, IconButton, Input, Loading, Page, Section, Select } from "../ui";
+import { Badge, Button, ErrorState, IconButton, Input, Loading, Page, Section, Select, Stat } from "../ui";
 import { errorText } from "../ui/toast";
 import { ModelSelect, useModels, useToast } from "../util";
 import ConnectSection from "./ConnectSection";
@@ -286,10 +286,14 @@ function Usage() {
     try { setU(await api<UsageSummary>("/usage/prices", { method: "PUT", body: { prices } })); toast.ok("Prices saved"); } catch (e) { toast.err(e); }
   };
   return (
-    <Section title="Usage this month" description="Everything the AI did this month, by model. Free tiers and plans cost nothing extra here. A paid key shows $0 until you set its price."
-      actions={u ? <Badge>${(u.month_cents / 100).toFixed(2)} · {u.month_tokens.toLocaleString()} tokens</Badge> : undefined}>
+    <Section title="Usage this month" description="Everything the AI did this month, by model. Free tiers and plans cost nothing extra here. A paid key shows $0 until you set its price.">
       {failed ? <ErrorState title="Usage did not load" line={failed} onRetry={load} /> : !u ? <Loading rows={2} label="Loading usage" /> : (
         <div className="st-stack">
+          {/* the month's two numbers (they sat in a badge beside the title) as the stat strip */}
+          <div className="st-stats is-two">
+            <Stat label="Cost" value={`$${(u.month_cents / 100).toFixed(2)}`} />
+            <Stat label="Tokens" value={u.month_tokens.toLocaleString()} />
+          </div>
           <SettingsGroup label="Usage by model">
             {u.by_model.length === 0 && <SettingRow label="No usage yet" help="Chat with the assistant and what it uses shows here." />}
             {u.by_model.map((m) => (

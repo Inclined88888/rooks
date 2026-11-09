@@ -53,8 +53,9 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
 export const PageMark = createContext<{ n: number; name: string } | null>(null);
 
 /** A real headline in two lines, the second offset, each wiped in orange as it arrives. The words are the same as
- *  `text` (screen readers hear one heading); one word stays one line. */
-export function Headline({ text, as: Tag = "h1", className, id }: { text: string; as?: "h1" | "h2"; className?: string; id?: string }) {
+ *  `text` (screen readers hear one heading); one word stays one line. `as="p"` keeps a greeting that is not a heading
+ *  (the new chat's) a paragraph. */
+export function Headline({ text, as: Tag = "h1", className, id }: { text: string; as?: "h1" | "h2" | "p"; className?: string; id?: string }) {
   const [a, b] = splitHeadline(text);
   return (
     <Tag className={className} id={id}>

@@ -121,7 +121,9 @@ test("type in this package's stylesheets is on the scale: 12/13/14/16/20/28, wei
     for (const r of rules(f)) {
       for (const m of r.body.matchAll(/font-size\s*:\s*([^;]+)/g)) {
         const v = m[1].trim().replace(/\s*!important$/, "");
-        if (/^(inherit|1em|100%)$/.test(v) || /^var\(--text-[a-z0-9]+\)$/.test(v)) continue;
+        // the industrial redesign (step 4) changes what this guards: micro-labels (--text-micro, --text-micro-sm) and the
+        // display sizes for titles and the stat strip's numbers are on the scale too
+        if (/^(inherit|1em|100%)$/.test(v) || /^var\(--text-[a-z0-9-]+\)$/.test(v) || /^var\(--display-(sm|md|lg|xl)\)$/.test(v)) continue;
         const px = v.match(/^(\d+(?:\.\d+)?)px$/);
         assert.ok(px && SIZES.has(Number(px[1])), `${f} ${r.sel}: font-size ${v} is off the scale`);
       }
@@ -130,7 +132,9 @@ test("type in this package's stylesheets is on the scale: 12/13/14/16/20/28, wei
         assert.ok(/^(400|500|600|normal|inherit|var\(--weight-[a-z]+\))$/.test(v), `${f} ${r.sel}: font-weight ${v}`);
       }
       assert.doesNotMatch(r.body, /#[0-9a-fA-F]{3,8}\b/, `${f} ${r.sel}: hex colour`);
-      assert.doesNotMatch(r.body, /letter-spacing\s*:\s*var\(--track\)|text-transform\s*:\s*uppercase/, `${f} ${r.sel}: shouted label`);
+      assert.doesNotMatch(r.body, /letter-spacing\s*:\s*var\(--track\)/, `${f} ${r.sel}: shouted label`);
+      // industrial (step 4): uppercase is the spec's mono micro-label or condensed display title, never body words
+      if (/text-transform\s*:\s*uppercase/.test(r.body)) assert.match(r.body, /font-family:\s*var\(--font-(mono|display)\)/, `${f} ${r.sel}: uppercase body words`);
     }
   }
 });

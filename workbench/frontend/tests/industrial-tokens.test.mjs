@@ -1,9 +1,8 @@
 // The industrial redesign (CHANGELOG "Unreleased · Industrial redesign"): square corners, hairline borders instead of
 // shadows, no gradients but the faint blueprint grid, one safety orange accent, and condensed uppercase headlines.
-// Step 1 moved the tokens and the global CSS. Feature stylesheets follow in the next steps: each file that still has a
-// round corner, a shadow or a gradient is named in a KNOWN list below, and the lists must shrink to empty by the
-// sweep step. A file that is cleaned up must be taken off its list (the test fails until it is), and no new file may
-// join one.
+// Step 1 moved the tokens and the global CSS; the steps after it moved the feature stylesheets, each taking its files
+// off the KNOWN lists below. Step 4 (the pages) emptied them: no stylesheet has a round corner, a shadow or a gradient
+// left (but the blueprint grid token), and none may gain one.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -63,11 +62,7 @@ function offenders(check) {
 
 // Feature stylesheets with a literal corner that is not 0 (the ones that read --radius-* are square already); they
 // move to square corners in the next steps.
-const KNOWN_ROUND = [
-  "src/appearance.css", "src/chat/chat.css", "src/connect.css", "src/packs/packs.css", "src/pages/agents/agents.css", "src/pages/day/day.css",
-  "src/skills.css", "src/team/team.css", "src/teammates/teammates.css",
-  "src/v02/v02.css", "src/voice/voice.css",
-].sort();
+const KNOWN_ROUND = [];
 
 test("the radius tokens are all 0, and every border-radius in the global CSS resolves to 0", () => {
   for (const t of ["--radius-xs", "--radius-sm", "--radius-md", "--radius-lg", "--radius-full"]) {
@@ -82,16 +77,13 @@ test("round corners are left only in the feature stylesheets still waiting for t
   const found = offenders((css) => [...css.matchAll(/border-radius\s*:\s*([^;}]+)/g)].some((m) => !radiusOk(m[1])));
   assert.deepEqual(found, KNOWN_ROUND, "a file left the list (take it off KNOWN_ROUND) or a new round corner appeared");
   const inline = tsxFiles.filter((f) => /borderRadius\s*:\s*(?!0\b)/.test(read(f)));
-  assert.deepEqual(inline, ["src/util.tsx"], "inline round corners: only the skeleton avatar, until the sweep step");
+  assert.deepEqual(inline, [], "no inline round corners");
 });
 
 /* ---------------------------------------------------------------- shadows */
 
 // A box-shadow is allowed only as none, or as the focus ring: in a :focus rule, or the --focus-ring token.
-const KNOWN_SHADOW = [
-  "src/appearance.css", "src/attachments.css", "src/packs/packs.css", "src/pages/day/day.css", "src/room/room.css",
-  "src/team/team.css", "src/voice/voice.css", "src/work.css",
-].sort();
+const KNOWN_SHADOW = [];
 function badShadows(css) {
   const bad = [];
   for (const [sel, body] of rules(css)) {
@@ -123,7 +115,7 @@ test("shadows are left only in the feature stylesheets still waiting for their s
 
 // a hard-stop divider line in the day page: drawn another way in its step (the select chevron in ui.css is a token
 // picture since step 2, tokens.css --icon-chevron)
-const KNOWN_GRADIENT = ["src/pages/day/day.css"].sort();
+const KNOWN_GRADIENT = [];
 const GRADIENT = /(linear|radial|conic)-gradient\(/;
 
 test("the only gradient is the blueprint grid token: a faint 1 px grid in the line colour", () => {

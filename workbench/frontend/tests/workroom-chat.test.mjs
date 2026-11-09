@@ -283,7 +283,9 @@ test("a new chat gets a greeting line, three suggestion chips and the Needs you 
   assert.match(empty, /suggestionChips/);
   assert.match(empty, /needs_you|needsYou/);
   const css = strip(read("../src/chat/chat.css"));
-  assert.match(css, /\.chat-empty-title \{[^}]*font-family: var\(--font-sans\)/, "the greeting is the sans heading (Bodoni is gone)");
+  // the industrial redesign (step 4) changes what this guarded: a new chat is an empty-state hero, so the greeting is
+  // the condensed display headline (tests/industrial-pages.test.mjs); still not the old Bodoni
+  assert.match(css, /\.chat-empty-title \{[^}]*font-family: var\(--font-display\)/, "the greeting is the display headline (Bodoni is gone)");
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "chat.css has no hex colours");
   assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, "chat.css has no literal colours");
 });

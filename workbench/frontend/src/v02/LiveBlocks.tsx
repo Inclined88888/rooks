@@ -223,19 +223,21 @@ function SheetView({ sheet, values, editing, onChange }: { sheet: Sheet; values:
   );
 }
 
+/** The chart's series colours: black, grey and orange only (tokens.css --color-chart-*), read as real colours so the
+ *  PNG a person saves looks the same. */
 function usePalette(): string[] {
   const [p, setP] = useState<string[]>([]);
   useEffect(() => {
     const read = () => {
       const s = getComputedStyle(document.documentElement);
-      setP(["--accent", "--text", "--ok", "--warn", "--danger", "--muted"].map((v) => s.getPropertyValue(v).trim()).filter(Boolean));
+      setP(["--color-chart-1", "--color-chart-2", "--color-chart-3", "--color-chart-4", "--color-chart-5"].map((v) => s.getPropertyValue(v).trim()).filter(Boolean));
     };
     read();
     const mo = new MutationObserver(read);
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class", "style"] });
     return () => mo.disconnect();
   }, []);
-  return p.length ? p : ["#141311", "#c8102e", "#1f7a3f", "#b36b00", "#3355cc", "#777777"];
+  return p.length ? p : ["#111111", "#FF4D00", "#5A5A57", "#858581", "#7A7A76"];
 }
 
 function ChartView({ chart, editing, onChange, svgRef }: { chart: Chart; editing: boolean; onChange: (d: Data) => void; svgRef: React.RefObject<SVGSVGElement> }) {
@@ -243,6 +245,7 @@ function ChartView({ chart, editing, onChange, svgRef }: { chart: Chart; editing
   const style = getComputedStyle(document.documentElement);
   const ink = style.getPropertyValue("--text").trim() || "#141311";
   const rule = style.getPropertyValue("--border").trim() || "#dddddd";
+  const card = style.getPropertyValue("--color-surface").trim() || "#ffffff";
   const font = style.getPropertyValue("--font").trim() || "sans-serif";
   const W = 560, H = 290, L = 44, T = 16, R = 12;
   const B = chart.series.length > 1 ? 52 : 34; // room for the legend under the labels
@@ -262,7 +265,7 @@ function ChartView({ chart, editing, onChange, svgRef }: { chart: Chart; editing
       <svg ref={svgRef} viewBox={`0 0 ${W} ${chart.type === "pie" ? 220 : H}`} role="img" aria-label={`${chart.type} chart: ${chart.title}`} xmlns="http://www.w3.org/2000/svg" fontFamily={font} fontSize="11">
         {chart.type === "pie" ? (
           <g>
-            <g transform="translate(20 20)">{pieSlices(chart.series[0]?.values ?? []).map((s, i) => <path key={i} d={s.d} fill={pal[i % pal.length]} stroke="#fff" strokeWidth="1.5"><title>{`${chart.labels[i]}: ${chart.series[0].values[i]}`}</title></path>)}</g>
+            <g transform="translate(20 20)">{pieSlices(chart.series[0]?.values ?? []).map((s, i) => <path key={i} d={s.d} fill={pal[i % pal.length]} stroke={card} strokeWidth="1.5"><title>{`${chart.labels[i]}: ${chart.series[0].values[i]}`}</title></path>)}</g>
             {chart.labels.map((l, i) => (
               <g key={i} transform={`translate(220 ${30 + i * 20})`}><rect width="10" height="10" fill={pal[i % pal.length]} /><text x="16" y="9" fill={ink}>{`${l} · ${chart.series[0]?.values[i] ?? 0}`}</text></g>
             ))}
@@ -278,8 +281,8 @@ function ChartView({ chart, editing, onChange, svgRef }: { chart: Chart; editing
                 }))
               : chart.series.map((s, si) => (
                   <g key={si}>
-                    <polyline fill="none" stroke={pal[si % pal.length]} strokeWidth="2.5" points={s.values.slice(0, n).map((v, i) => `${L + band * (i + 0.5)},${y(v)}`).join(" ")} />
-                    {s.values.slice(0, n).map((v, i) => <circle key={i} cx={L + band * (i + 0.5)} cy={y(v)} r="3.5" fill={pal[si % pal.length]}><title>{`${s.name}, ${chart.labels[i]}: ${v}`}</title></circle>)}
+                    <polyline fill="none" stroke={pal[si % pal.length]} strokeWidth="1.5" points={s.values.slice(0, n).map((v, i) => `${L + band * (i + 0.5)},${y(v)}`).join(" ")} />
+                    {s.values.slice(0, n).map((v, i) => <rect key={i} x={L + band * (i + 0.5) - 3} y={y(v) - 3} width="6" height="6" fill={pal[si % pal.length]}><title>{`${s.name}, ${chart.labels[i]}: ${v}`}</title></rect>)}
                   </g>
                 ))}
             {ns > 1 && chart.series.map((s, si) => <g key={si} transform={`translate(${L + si * 110} ${H - 10})`}><rect width="10" height="10" y="-9" fill={pal[si % pal.length]} /><text x="14" fill={ink}>{s.name}</text></g>)}

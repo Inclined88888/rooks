@@ -1,8 +1,9 @@
-/* Code page (premium pass, package C): coding jobs handed to Rooks, Claude Code or Codex, and the desk of panes.
-   Tokens only. The diff colours are shared with components/DiffView.tsx and the study pack. */
-.cli-setup { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); background: var(--color-surface-sunken); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-sm); }
+/* Code page: coding jobs handed to Rooks, Claude Code or Codex, and the desk of panes. Tokens only. The diff colours
+   are shared with components/DiffView.tsx and the study pack. Industrial (CHANGELOG step 4): square, hairlines, tool
+   steps in mono, the desk's name a mono label. */
+.cli-setup { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); background: var(--color-surface-sunken); border: var(--line); border-left: 2px solid var(--color-ink); border-radius: 0; }
 .cli-steps { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); color: var(--color-ink-muted); }
-.cli-steps code { font-family: var(--font-mono); font-size: var(--text-xs); background: var(--color-surface); padding: 2px var(--space-1); border-radius: var(--radius-sm); color: var(--color-ink); user-select: all; }
+.cli-steps code { font-family: var(--font-mono); font-size: var(--text-xs); background: var(--color-surface); padding: 2px var(--space-1); border: var(--line); border-radius: 0; color: var(--color-ink); user-select: all; }
 .dot.ok { background: var(--color-success); }
 .dot.warn { background: var(--color-warning); }
 
@@ -13,7 +14,7 @@
 .cd-run { min-width: 0; }
 .cd-events { display: flex; flex-direction: column; gap: var(--space-3); }
 .cev { font-size: var(--text-md); min-width: 0; }
-.cev-user { align-self: flex-end; max-width: 80%; padding: var(--space-2) var(--space-4); background: var(--color-surface-sunken); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-md); white-space: pre-wrap; }
+.cev-user { align-self: flex-end; max-width: 80%; padding: var(--space-2) var(--space-4); background: var(--color-surface-muted); border: var(--line); border-radius: 0; white-space: pre-wrap; }
 .cev.sub { margin-left: var(--space-5); }
 .cev-pre { white-space: pre-wrap; margin-top: var(--space-1); }
 .cev-think summary, .cev-tool summary { cursor: pointer; color: var(--color-ink-muted); display: flex; align-items: center; gap: var(--space-2); list-style: none; font-size: var(--text-sm); }
@@ -21,13 +22,13 @@
 .cev-tool summary { font-family: var(--font-mono); font-size: var(--text-mono); color: var(--color-ink); }
 .cev-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .cev-tool pre, .cev-out {
-  margin: var(--space-1) 0 0; padding: var(--space-2) var(--space-3); background: var(--color-code-bg); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: var(--text-xs);
+  margin: var(--space-1) 0 0; padding: var(--space-2) var(--space-3); background: var(--color-code-bg); border: var(--line); border-radius: 0; font-family: var(--font-mono); font-size: var(--text-xs);
   white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; color: var(--color-ink-muted);
 }
 .cev-out.err { color: var(--color-danger-text); }
 .cev-note { color: var(--color-ink-muted); display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
 .cev-note.ok { color: var(--color-success-text); }
-.diff { margin: 0; padding: var(--space-3) 0; background: var(--color-code-bg); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: var(--text-xs); line-height: 1.6; overflow: auto; max-height: 520px; }
+.diff { margin: 0; padding: var(--space-3) 0; background: var(--color-code-bg); border: var(--line); border-radius: 0; font-family: var(--font-mono); font-size: var(--text-xs); line-height: 1.6; overflow: auto; max-height: 520px; }
 .diff span { display: block; padding: 0 var(--space-4); white-space: pre; }
 .diff .add { background: var(--color-success-soft); color: var(--color-success-text); }
 .diff .del { background: var(--color-danger-soft); color: var(--color-danger-text); }
@@ -37,8 +38,8 @@
 /* The desk: one bar of tabs, the pane below fills the page */
 .cd-desk { height: 100%; min-height: 0; display: flex; flex-direction: column; }
 .cd-desk-bar { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-3) var(--space-8); border-bottom: var(--border-w) solid var(--color-border); background: var(--color-bg); }
-.cd-desk-name { font-size: var(--text-md); font-weight: var(--weight-medium); color: var(--color-ink); }
-.cd-desk-note { margin-left: auto; font-size: var(--text-sm); color: var(--color-ink-muted); }
+.cd-desk-name { font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium); text-transform: uppercase; letter-spacing: var(--tracking-button); color: var(--color-ink); }
+.cd-desk-note { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-ink-muted); }
 .cd-desk-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
 .cd-desk-body > .terminal-slot { height: auto; flex: 1; }
 

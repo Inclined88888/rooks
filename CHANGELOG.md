@@ -12,6 +12,51 @@ The app's look moves to an industrial, technical design: off-white paper (#F2F2F
 call and word stays as it was; only the visual design system changes, step by step. No data change, nothing to
 migrate. Rollback: revert the branch's commits (the built `dist` is committed with each step).
 
+- **Step 4: the pages** (every feature stylesheet, `src/chat/EmptyChat.tsx`, `src/ui/headline.ts`, the stat strip in
+  `Settings.tsx` (Usage), `Status.tsx` and `team/Team.tsx`, the chart colours in `v02/LiveBlocks.tsx`, `util.tsx`'s
+  mermaid theme, `tokens.css` chart tokens).
+  - Everywhere: square corners, 1 px hairlines between panes, rows and cards, no shadows and no gradients left in any
+    stylesheet (the guard's lists of round, shadowed and gradient files are empty); fixed words (kinds, column heads,
+    weekdays, table heads, dates in History, "Advanced" toggles) are mono micro-labels, many beside the small orange
+    square; fixed titles (Jobs' columns, the calendar's month, a card's heading, the team's columns, Teach and the
+    mail sign-in) are the condensed uppercase face; the current item (a chat, a settings category, a teammate, a
+    browser or terminal tab, today in the calendar) has a thin orange edge; dots, ticks, swatches, avatars and tags are
+    squares; pressed and picked states are an ink edge or an ink block instead of an inset shadow. A person's own
+    words in a field keep their case.
+  - Chat: the chats column with micro-label groups and square rows, New chat the secondary button (1 px ink edge), the
+    row menu, the chat menu and the model and project chips square with an ink edge; result cards white with a hairline,
+    a micro-label on top beside the orange square and a thin divider above their actions; the undo question on a thin
+    warning edge; the byline, the code block's head and the composer's hints mono; the composer's edge turns ink on
+    focus. A new chat is an empty-state hero on the blueprint grid: the greeting is the huge two-line headline with the
+    second line offset (two sentences split after the first: `splitHeadline`), the line under it a mono intro.
+  - Needs you: hairline rows, the since line and the links as mono labels (no orange words). The Room: the desk on the
+    blueprint grid, each window's title bar a mono label beside an orange square over a hairline, square tabs, keys and
+    hints; the terminal keeps its own dark screen colours.
+  - Jobs and History, Mail, Files and Library, Calendar, Tasks, Projects, Sites: the split view's pane line is a border
+    (it was a gradient), the drop area is blueprint with a solid line, the selected day an ink outline (it was a
+    shadow), notices on a 2 px edge in their tone, Gantt bars thin in black, grey and orange with an orange now line.
+  - Memory, Skills, Automations, Coworkers, Team, Teammates, Teach, Packs, Talk and Meetings, Appearance, the developer
+    pages (Insights, a run, Status, Compare, Code, Company): the same language; the Talk button and its level ring are
+    squares; theme cards picked with an ink edge and the orange corner.
+  - Stat strip: the numbers the app already shows sit in a horizontal strip between hairlines with 1 px dividers, each a
+    huge number with a tiny mono label below: Insights and a run's detail (already a strip, now huge), the team's at a
+    glance numbers, Usage this month (its cost and tokens were a badge beside the title; now labelled Cost and Tokens,
+    the words Insights uses) and Status' connections (models, browser, computer, mail; the notes stay below).
+  - Charts: black, grey and orange only, thin lines (`--color-chart-1..5` in `tokens.css`: ink, orange, two greys and
+    the strong line, each 3:1 on the card). Insights' bars are ink with failed calls in orange; its note now says
+    "Orange: calls that failed" (it said Red, the old colour: the one word changed so the note stays true). Live charts
+    in replies use the chart tokens (no blue, red or green), 1.5 px lines and square markers. The team's workload and
+    timeline: ink bars, grey when light, orange when over or late, today a thin orange line. Mermaid diagrams get the
+    theme's real colours (white boxes, ink edges and lines, orange notes; it used to get var() names its colour maths
+    cannot read) and 1 px lines, set each time a diagram is drawn so they follow a theme change.
+  - Not changed: a calendar's colour is the person's own choice (the first offered is still blue, BACKLOG); routes,
+    calls and words are as they were.
+  - Guards: `tests/industrial-pages.test.mjs` (20 tests, each failed on the tree before this step: the headline split
+    against the old `headline.ts`; scratchpad `industrial/pages/fail-first.txt`). `industrial-tokens`' round, shadow and gradient lists and its inline
+    list are empty. The spec changes what four older guards guarded, so they now allow it: `premium-pages-a` and
+    `premium-pages-c` accept the micro and display sizes, the bold weights and uppercase in mono labels and display
+    titles (still never in body words); `workroom-chat` expects the new chat's greeting in the display face (still not
+    the old Bodoni). `check-theme-contrast.py` resolves tokens that name other tokens and checks the chart colours.
 - **Step 3: the shell, the page frame and the heroes** (`src/shell/`, `src/Palette.tsx` styles, `src/ui/`,
   `src/pages/places.ts`, `src/pages/settings/AuthCard.tsx`, Home).
   - Top bar: paper with a 1 px bottom edge (no floating glass, no blur, no shadow), a small mark (28 px), the presence

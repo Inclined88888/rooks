@@ -25,6 +25,13 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   `desktop/ui/index.html` still have the gold door #E3A82B, and `desktop/scripts/test_icons.py` still checks for gold.
   Regenerate them from the new colour, update that test, and the brand has one accent everywhere.
 
+### Industrial redesign: the calendar colours (branch feat/industrial-ui)
+
+* A calendar's colour is the person's own data (`workbench/frontend/src/pages/day/colors.ts`), so step 4 left the
+  choices as they were; the first one offered, and the default for a new calendar, is still blue (#0ea5e9), and Purple
+  is among them. The owner may want the default to be ink or the orange and the list to lead with neutrals; changing it
+  changes what new calendars are saved with, so it waits for that decision.
+
 ### Workplace cleanup: what the delete step left (branch cleanup/workplace)
 
 * **For the room-browser branch** (out of scope here because that branch is changing these files): nothing in
