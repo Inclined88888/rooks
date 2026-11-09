@@ -306,3 +306,26 @@ def test_real_policy_under_the_persons_registry_switches_the_browser_off(tmp_pat
             except OSError:
                 pass
     assert rb.policy_off(edge) is False
+
+
+@windows_only
+def test_real_a_download_handed_out_of_the_room_keeps_its_mark_of_the_web(tmp_path, monkeypatch):
+    """A file the Room's browser downloaded carries Windows' Mark of the Web (its Zone.Identifier stream). When the person
+    says yes to letting it leave the Room, the copy keeps that mark, so SmartScreen and Office still check it."""
+    from rooks_try import store
+    from rooks_try.room import TryRoom
+
+    monkeypatch.setenv("ROOKS_TRY_HOME", str(tmp_path / "try"))
+    room = TryRoom(prefer="shell")
+    room.up()
+    src = store.guest_home() / "Downloads" / "report.docx"
+    src.parent.mkdir(parents=True, exist_ok=True)
+    src.write_bytes(b"PK\x03\x04 a document")
+    mark = "[ZoneTransfer]\r\nZoneId=3\r\nHostUrl=https://example.com/report.docx\r\n"
+    with open(str(src) + ":Zone.Identifier", "w", encoding="ascii") as f:
+        f.write(mark)
+    dest = tmp_path / "out" / "report.docx"
+    done = room.handoff("Downloads/report.docx", str(dest), approve=True)
+    assert done["ok"] is True and dest.read_bytes() == b"PK\x03\x04 a document"
+    with open(str(dest) + ":Zone.Identifier", encoding="ascii") as f:
+        assert "ZoneId=3" in f.read()
