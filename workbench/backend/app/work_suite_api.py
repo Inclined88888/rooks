@@ -11,7 +11,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from . import connect, work_graph, work_suite, work_scopes
+from . import connect, work_graph, work_scopes, work_suite
 from .security import require_user_or_terminal_token
 
 router = APIRouter(prefix="/api/work", dependencies=[Depends(require_user_or_terminal_token)])
@@ -51,7 +51,9 @@ def disconnect():
     row = work_suite.account()
     if not row:
         raise HTTPException(404, "No work account is connected.")
-    return connect.disconnect(row["id"])
+    out = connect.disconnect(row["id"])
+    work_suite.forget()  # its Planner and To Do tasks and the names it saw; nothing is deleted at Microsoft
+    return out
 
 
 @router.post("/features/{fid}")

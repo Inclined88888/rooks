@@ -543,3 +543,21 @@ def test_a_team_leads_sub_agents_are_offered_no_work_tools(client, work):
     assert "work_search" in {t.name for t in assistant.available_tools(assistant.Ctx(channel="web", conversation_id=cid))}
     assert not {t.name for t in assistant.available_tools(assistant.Ctx(channel="subagent", conversation_id=cid))
                 if t.name.startswith("work_")}
+
+
+def test_disconnecting_the_work_account_takes_its_tasks_and_names_out_of_rooks(client, work):
+    """Nothing is deleted at Microsoft; Rooks just stops showing what it can no longer reach."""
+    from app import db, work_suite
+
+    _sign_in(client)
+    _on(client, "tasks", "chats_read")
+    client.post("/api/work/tasks/sync")
+    client.get("/api/work/chats")
+    assert [t for t in client.get("/api/tasks").json() if t["origin"]] and work_suite.name_of("chat:19:chat-lee@unq.gbl.spaces")
+    mine = client.post("/api/tasks", json={"title": "Kept only in Rooks"}).json()
+    assert client.delete("/api/work/account").status_code == 200
+    left = client.get("/api/tasks").json()
+    assert not [t for t in left if t["origin"]] and any(t["id"] == mine["id"] for t in left)
+    assert work_suite.name_of("chat:19:chat-lee@unq.gbl.spaces") == ""
+    assert FG.S["writes"] == []
+    db.run("DELETE FROM tasks WHERE id = ?", mine["id"])

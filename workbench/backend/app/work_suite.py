@@ -274,6 +274,13 @@ def _refs() -> None:
         _refs_ready.add(key)
 
 
+def forget() -> None:
+    """After the work account is disconnected: its tasks and the names it saw leave Rooks' lists (Microsoft keeps them)."""
+    _refs()
+    db.run("DELETE FROM tasks WHERE origin IN ('planner', 'todo')")
+    db.run("DELETE FROM work_refs")
+
+
 def remember(ref: str, name: str, kind: str, web_url: str = "") -> None:
     if not ref:
         return
