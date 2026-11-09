@@ -5,8 +5,9 @@
  */
 
 /** Why the Room has no browser here (status.can.browser_off_reason). */
-export type BrowserOffReason = "no_engine" | "windows" | "helper" | "switched_off";
-export const BROWSER_OFF_REASONS: BrowserOffReason[] = ["no_engine", "windows", "helper", "switched_off"];
+export type BrowserOffReason = "no_engine" | "windows" | "helper" | "switched_off" | "policy";
+/** "windows" comes only from an older helper now: Windows has the Room's browser (design 0011). "policy": IT switched it off. */
+export const BROWSER_OFF_REASONS: BrowserOffReason[] = ["no_engine", "windows", "helper", "switched_off", "policy"];
 
 /** One tab, as the browser's state (and status.browser.tabs) lists it. */
 export type BrowserTab = { id: string; url?: string | null; title?: string | null; asleep?: boolean; loading?: boolean; blocked?: string | null };
@@ -66,12 +67,13 @@ const OFF: Record<BrowserOffReason, { title: string; line: string }> = {
   switched_off: { title: "The Room's browser is switched off in Settings.", line: "Switch it on in Settings, under Tools, to browse inside the Room." },
   windows: { title: "The Room's browser is not on Windows yet.", line: "The terminal and Files work. Use your own browser for now." },
   helper: { title: "The Room runs elsewhere, so its browser is not here.", line: "Open the Room on the computer it runs on to use its browser." },
+  policy: { title: "Your organisation has switched off the Room's browser.", line: "Ask your IT team." },
 };
 
 type OffStatus = {
   running?: boolean;
   available?: boolean;
-  can?: { browser?: boolean; browser_off_reason?: string | null } | null;
+  can?: { browser?: boolean; browser_off_reason?: string | null; browser_off_words?: string | null } | null;
 };
 
 /**
@@ -82,6 +84,7 @@ export function browserOff(s: OffStatus | null | undefined): { title: string; li
   if (!s) return { title: "Checking the Room…", line: "", reason: "none" };
   const why = s.can?.browser_off_reason;
   if (s.can?.browser !== true) {
+    if (why === "policy" && s.can?.browser_off_words) return { ...OFF.policy, line: s.can.browser_off_words, reason: "policy" };
     if (why && (BROWSER_OFF_REASONS as string[]).includes(why)) return { ...OFF[why as BrowserOffReason], reason: why as BrowserOffReason };
     return { title: "This Room has no browser of its own.", line: "Use its screen.", reason: "none" };
   }

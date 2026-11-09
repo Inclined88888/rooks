@@ -278,7 +278,7 @@ export default function RoomPage() {
           )}
           <dt>Terminals</dt><dd>{terminalCountLine({ counted: terminalsCounted(status), open: alive.length, max: status.terminal_max })}</dd>
           <dt>What is recorded</dt><dd>{RECORDED_LINE}</dd>
-          {offered.includes("browser") && <><dt>The browser</dt><dd>{BROWSER_LIMITS}</dd><dt>What Rooks asks about</dt><dd>{BROWSER_CHECKS}</dd></>}
+          {offered.includes("browser") && <><dt>The browser</dt><dd>{BROWSER_LIMITS}{status.can.browser_advanced ? ` ${status.can.browser_advanced}` : ""}</dd><dt>What Rooks asks about</dt><dd>{BROWSER_CHECKS}</dd></>}
           {!status.can.files && status.isolation === "vm" && <><dt>Files</dt><dd>Files live inside the separate computer. Use its screen.</dd></>}
         </dl>
       </Sheet>

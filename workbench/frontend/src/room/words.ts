@@ -59,6 +59,8 @@ export type RoomStatus = WatchStatus & {
     terminal_shells?: string[] | null;
     /** design 0007: the Room's own browser here, and why not. */
     browser?: boolean; browser_off_reason?: string | null;
+    /** design 0011: when IT switched the browser off, the words naming that browser; and what Edge may do on a work PC. */
+    browser_off_words?: string | null; browser_advanced?: string | null;
   } | null;
   /** design 0007: whether the Room's browser is open, and its tabs (the saved ones while it is closed). */
   browser?: { open?: boolean; tabs?: { id: string; url?: string | null; title?: string | null; asleep?: boolean }[] } | null;

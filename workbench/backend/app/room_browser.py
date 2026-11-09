@@ -129,20 +129,56 @@ def enabled() -> bool:
     return db.get_setting("room_browser", "1") == "1"
 
 
+_POLICY: tuple[float, object, bool] | None = None
+
+
+def _policy_off(engine) -> bool:
+    """Windows: whether the organisation switched remote debugging off for this engine (read at most every 30 s)."""
+    global _POLICY
+    if _platform() != "win32" or engine is None:
+        return False
+    now = time.monotonic()
+    if _POLICY and _POLICY[1] == engine and now - _POLICY[0] < ENGINE_KEEP_S:
+        return _POLICY[2]
+    try:
+        off = bool(_rb().policy_off(engine))
+    except Exception as e:  # noqa: BLE001
+        log.debug("policy not read: %s", e.__class__.__name__)
+        off = False
+    _POLICY = (now, engine, off)
+    return off
+
+
+def _work_signin(engine) -> bool:
+    """Windows, Edge, a PC joined to a work account: Edge may sign in to work sites through Windows (said under
+    Advanced)."""
+    if _platform() != "win32" or getattr(engine, "kind", "") != "edge":
+        return False
+    try:
+        return bool(_rb().work_pc())
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def can(driver, remote: bool) -> dict:
-    """Whether the Room has a browser here, and why not: "helper", "windows", "switched_off", "no_engine", or None
-    (a Room with a screen of its own: use its screen)."""
+    """Whether the Room has a browser here, and why not: "helper", "switched_off", "no_engine", "policy" (Windows: the
+    organisation switched it off), or None (a Room with a screen of its own: use its screen). Windows has the browser
+    over its pipe (design 0011); "windows" is said only by an older helper."""
     if remote:
         return {"browser": False, "browser_off_reason": "helper"}
     if driver is None or getattr(driver, "name", "") not in ("shell", "nested"):
         return {"browser": False, "browser_off_reason": None}
-    if _platform() == "win32":
-        return {"browser": False, "browser_off_reason": "windows"}
     if not enabled():
         return {"browser": False, "browser_off_reason": "switched_off"}
-    if _engine() is None:
+    engine = _engine()
+    if engine is None:
         return {"browser": False, "browser_off_reason": "no_engine"}
-    return {"browser": True, "browser_off_reason": None}
+    if _policy_off(engine):
+        return {"browser": False, "browser_off_reason": "policy", "browser_off_words": _rb().policy_words(engine)}
+    out = {"browser": True, "browser_off_reason": None}
+    if _work_signin(engine):
+        out["browser_advanced"] = _rb().WORK_SIGNIN
+    return out
 
 
 def _new_session(engine, home: Path, **kw):
@@ -245,6 +281,10 @@ def listening_ports() -> set[int]:
             ports = _linux_listening()
         elif sys.platform == "darwin":
             ports = _lsof_listening()
+        elif sys.platform == "win32":
+            from rooks_try import winproc
+
+            ports = winproc.listening_ports([os.getpid()])
         else:
             ports = set()
     except Exception as e:  # noqa: BLE001
@@ -298,13 +338,13 @@ async def ensure():
     tryroom = room._import_room()
     if tryroom is None:
         raise HTTPException(503, NOT_INSTALLED)
-    if _platform() == "win32":
-        raise HTTPException(501, _rb().OFF_WORDS["windows"])
     if not enabled():
         raise HTTPException(409, _rb().OFF_WORDS["switched_off"])
     engine = _engine()
     if engine is None:
         raise HTTPException(501, _rb().OFF_WORDS["no_engine"])
+    if _policy_off(engine):  # respected, never worked around: no other engine is tried
+        raise HTTPException(403, _rb().policy_words(engine))
     st = await room.perform("status")
     if not st.get("running"):
         raise HTTPException(409, OFF)
@@ -342,7 +382,7 @@ def _start(engine, offline: bool):
         restarted = rb.closed_by_restart(home, _RUN)
         s = _new_session(engine, home, offline=offline, app_ports=set(_PORTS), on_frame=_on_frame,
                          on_change=_on_change, tab_max=TAB_MAX, run=_RUN,
-                         memory_reader=lambda pid: (_memory_reader or rb.tree_memory)(pid))
+                         memory_reader=lambda pid: _memory_reader(pid) if _memory_reader else None)
         try:
             s.start()
         except Exception as e:  # noqa: BLE001
@@ -416,12 +456,12 @@ def _at_exit() -> None:
 
 def reset_for_tests() -> None:
     """Forget the browser as a new run of the app would (it is closed quietly when it still runs)."""
-    global _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE, _RUN, _LAST_NOTES, _ROOKS_AT, _TAKEN_AT, _FAILED
+    global _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE, _RUN, _LAST_NOTES, _ROOKS_AT, _TAKEN_AT, _FAILED, _POLICY
     s = _S
     if s is not None and s.alive():
         s.close("closed")
     with _LOCK:
-        _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE, _FAILED = None, None, None, None, [], None, None
+        _S, _HOME, _VIEWER, _NOTE, _REOPENED, _ENGINE, _FAILED, _POLICY = None, None, None, None, [], None, None, None
         _LAST_NOTES = []
         _PORTS.clear()
         _TYPED.clear()

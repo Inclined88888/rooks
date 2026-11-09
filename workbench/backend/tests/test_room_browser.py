@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[3] / "rooks-try"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="the Room's browser is not on Windows yet")
+# On Windows these run too (design 0011, section 5.3): the windows-2022 job starts Chrome over its pipe through the app.
 ORIGIN = {"origin": "http://testserver"}
 
 PAGE = """<!doctype html><title>Test page</title>
@@ -248,9 +248,41 @@ def test_status_says_whether_the_room_has_a_browser_and_why_not(client, room_hom
     finally:
         db.set_setting("room_browser", "1")
 
+
+
+def test_on_windows_the_browser_is_there_unless_the_organisation_switched_it_off(client, room_home, monkeypatch):
+    """Design 0011, section 2: Windows has the Room's browser over its pipe, so status no longer says "windows". When IT
+    policy switches remote debugging off for the engine found, the reason is "policy", the words name that browser and
+    send the person to their IT team, and opening it is refused (nothing tries another engine to get around it)."""
+    from app import room_browser
+    from rooks_try import browser as rb
+
+    edge = rb.Engine(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", "edge")
     monkeypatch.setattr(room_browser, "_platform", lambda: "win32")
+    monkeypatch.setattr(room_browser, "_engine", lambda: edge)
+    monkeypatch.setattr(rb, "policy_off", lambda engine, read=None: False)
+    monkeypatch.setattr(rb, "work_pc", lambda read_keys=None: False)
+    room_browser._POLICY = None
     can = _status(client)["can"]
-    assert can["browser"] is False and can["browser_off_reason"] == "windows"
+    assert can["browser"] is True and can["browser_off_reason"] is None, can
+    assert "browser_advanced" not in can
+
+    monkeypatch.setattr(rb, "work_pc", lambda read_keys=None: True)  # a PC joined to a work account, with Edge
+    room_browser._POLICY = None
+    can = _status(client)["can"]
+    assert can["browser_advanced"] == "On a work PC, Edge may sign in to work sites as you through Windows."
+
+    started = []
+    monkeypatch.setattr(room_browser, "_start", lambda *a, **k: started.append(a))
+    monkeypatch.setattr(rb, "policy_off", lambda engine, read=None: engine.kind == "edge")
+    room_browser._POLICY = None
+    can = _status(client)["can"]
+    assert can["browser"] is False and can["browser_off_reason"] == "policy", can
+    assert can["browser_off_words"] == "Your organisation has switched this off in Edge. Ask your IT team."
+    r = client.post("/api/room/browser/open", json={"address": "https://example.com"})
+    assert r.status_code == 403, r.text
+    assert r.json()["detail"] == "Your organisation has switched this off in Edge. Ask your IT team."
+    assert not started
 
 
 def test_a_helpers_room_has_no_browser_here(client, room_home, monkeypatch):

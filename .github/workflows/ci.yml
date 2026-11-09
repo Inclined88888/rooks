@@ -50,10 +50,10 @@ jobs:
         run: python -m pytest -q ../../desktop/scripts
 
   windows-terminals:
-    # Design 0011, section 5.2: the backend on Windows, these files only. The Room's terminals (PowerShell and Git Bash
+    # Design 0011, sections 5.2 and 5.3: the backend on Windows, these files only. The Room's terminals (PowerShell and Git Bash
     # on a real pseudo console) through the app's own routes and WebSocket, and the app's own terminal. The Try Room
     # job's Windows leg runs rooks-try/tests/test_winproc.py (ConPTY, jobs, the side channel) as part of its suite.
-    name: "Windows: Room terminals"
+    name: "Windows: terminals and browser"
     runs-on: windows-2022
     timeout-minutes: 30
     defaults:
@@ -82,6 +82,10 @@ jobs:
         run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 tests/test_room_terminal_windows.py tests/test_room_terminal.py tests/test_app_terminal.py
       - name: The ConPTY, job and side channel tests, on their own (also in the Try Room job)
         run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 ../../rooks-try/tests/test_winproc.py
+      - name: The Room's browser on Edge and Chrome over its pipe (design 0011, section 5.3; also in the Try Room job)
+        env:
+          ROOM_BROWSER_TESTS_REQUIRED: "1"  # never skipped quietly: a browser that cannot start here fails the job
+        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 ../../rooks-try/tests/test_browser_windows.py tests/test_room_browser.py
 
   rooks-code:
     name: Terminal coding agent (${{ matrix.os }})

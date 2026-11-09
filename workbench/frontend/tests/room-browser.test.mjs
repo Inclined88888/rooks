@@ -62,6 +62,26 @@ test("off, the window says why in plain words", () => {
   }
 });
 
+test("on Windows: the organisation's policy is said in plain words, with the browser named, and kept through the store", () => {
+  // design 0011, section 2: Windows has the Room's browser; IT can switch it off, and the window sends the person to IT
+  assert.ok(br.BROWSER_OFF_REASONS.includes("policy"));
+  const policy = { ...ON, can: { browser: false, browser_off_reason: "policy", browser_off_words: "Your organisation has switched this off in Edge. Ask your IT team." } };
+  const w = br.browserOff(policy);
+  assert.equal(w.reason, "policy");
+  assert.equal(w.title, "Your organisation has switched off the Room's browser.");
+  assert.equal(w.line, "Your organisation has switched this off in Edge. Ask your IT team.");
+  assert.match(br.browserOff({ ...ON, can: { browser: false, browser_off_reason: "policy" } }).line, /IT team/);
+  assert.doesNotMatch(`${w.title} ${w.line}`, /https?:|registry|policy|RemoteDebugging|DevTools/i);
+  const st = store.roomFromWire(policy);
+  assert.equal(st.can.browser_off_reason, "policy");
+  assert.equal(st.can.browser_off_words, "Your organisation has switched this off in Edge. Ask your IT team.");
+  const work = store.roomFromWire({ ...ON, can: { browser: true, browser_off_reason: null, browser_advanced: "On a work PC, Edge may sign in to work sites as you through Windows." } });
+  assert.equal(work.can.browser_advanced, "On a work PC, Edge may sign in to work sites as you through Windows.");
+  assert.equal(store.roomFromWire(WITH).can.browser_advanced, "");
+  const page = maybe("../src/room/RoomPage.tsx");
+  assert.match(page, /browser_advanced/, "the Room's Advanced sheet says what Edge may do on a work PC");
+});
+
 test("the phone gets a still, taps and a Type field, and says what needs the computer", () => {
   assert.ok(br, "src/room/browser.ts exists");
   assert.equal(br.PHONE_LINE, "On a phone you can tap, scroll and type. Dragging, hovering and shortcuts need the computer.");

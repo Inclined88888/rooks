@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import re
+import struct
 import subprocess
 import sys
 import threading
@@ -50,6 +51,19 @@ ERROR_MORE_DATA = 234
 ERROR_PIPE_CONNECTED = 535
 ERROR_NO_DATA = 232
 WAIT_OBJECT_0 = 0
+# The C runtime's descriptor flags in STARTUPINFO.lpReserved2 (how Chromium finds --remote-debugging-pipe at fds 3, 4)
+FOPEN = 0x01
+FPIPE = 0x08
+FDEV = 0x40
+# JOB_OBJECT_UILIMIT_*: what a Room job's programs may not touch outside the job (design 0011, section 3)
+UILIMIT_HANDLES = 0x01
+UILIMIT_READCLIPBOARD = 0x02
+UILIMIT_WRITECLIPBOARD = 0x04
+UILIMIT_SYSTEMPARAMETERS = 0x08
+UILIMIT_DISPLAYSETTINGS = 0x10
+UILIMIT_GLOBALATOMS = 0x20
+UILIMIT_DESKTOP = 0x40
+UILIMIT_EXITWINDOWS = 0x80
 WAIT_TIMEOUT = 0x102
 INFINITE = 0xFFFFFFFF
 
@@ -100,6 +114,12 @@ if WINDOWS:  # pragma: no cover - exercised by the Windows jobs in CI
         _fields_ = [("BasicLimitInformation", JOBOBJECT_BASIC_LIMIT_INFORMATION), ("IoInfo", IO_COUNTERS),
                     ("ProcessMemoryLimit", SIZE_T), ("JobMemoryLimit", SIZE_T), ("PeakProcessMemoryUsed", SIZE_T),
                     ("PeakJobMemoryUsed", SIZE_T)]
+
+    class _MemCounters(ctypes.Structure):  # PROCESS_MEMORY_COUNTERS
+        _fields_ = [("cb", DWORD), ("PageFaultCount", DWORD), ("PeakWorkingSetSize", SIZE_T),
+                    ("WorkingSetSize", SIZE_T), ("QuotaPeakPagedPoolUsage", SIZE_T), ("QuotaPagedPoolUsage", SIZE_T),
+                    ("QuotaPeakNonPagedPoolUsage", SIZE_T), ("QuotaNonPagedPoolUsage", SIZE_T),
+                    ("PagefileUsage", SIZE_T), ("PeakPagefileUsage", SIZE_T)]
 
     class JOBOBJECT_BASIC_UI_RESTRICTIONS(ctypes.Structure):
         _fields_ = [("UIRestrictionsClass", DWORD)]
@@ -152,6 +172,10 @@ if WINDOWS:  # pragma: no cover - exercised by the Windows jobs in CI
     GetTokenInformation = _fn(_adv, "GetTokenInformation", BOOL, HANDLE, ctypes.c_int, LPVOID, DWORD,
                               ctypes.POINTER(DWORD))
     ConvertSidToStringSidW = _fn(_adv, "ConvertSidToStringSidW", BOOL, LPVOID, ctypes.POINTER(wt.LPWSTR))
+    K32GetProcessMemoryInfo = _fn(_k32, "K32GetProcessMemoryInfo", BOOL, HANDLE, LPVOID, DWORD, optional=True)
+    _iphlp = ctypes.WinDLL("iphlpapi", use_last_error=True)
+    GetExtendedTcpTable = _fn(_iphlp, "GetExtendedTcpTable", DWORD, LPVOID, ctypes.POINTER(DWORD), BOOL, wt.ULONG,
+                              ctypes.c_int, wt.ULONG)
     ConvertSDDL = _fn(_adv, "ConvertStringSecurityDescriptorToSecurityDescriptorW", BOOL, wt.LPCWSTR, DWORD,
                       ctypes.POINTER(LPVOID), LPVOID)
 
@@ -234,6 +258,27 @@ class Job:
             n *= 4
         return []
 
+    def memory(self) -> int:
+        """The working set of every process in this job now, in bytes (what the memory watchdog reads on Windows). A
+        process that cannot be opened is left out."""
+        if K32GetProcessMemoryInfo is None:
+            return 0
+        total = 0
+        for pid in self.pids():
+            h = OpenProcess(0x1000 | 0x0010, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ
+            if not _ok_handle(h):
+                h = OpenProcess(0x1000, False, pid)
+            if not _ok_handle(h):
+                continue
+            try:
+                counters = _MemCounters()
+                counters.cb = ctypes.sizeof(counters)
+                if K32GetProcessMemoryInfo(h, ctypes.byref(counters), ctypes.sizeof(counters)):
+                    total += int(counters.WorkingSetSize)
+            finally:
+                CloseHandle(h)
+        return total
+
     def contains(self, process_handle) -> bool:
         inside = BOOL(False)
         if not IsProcessInJob(process_handle, self.handle, ctypes.byref(inside)):
@@ -314,6 +359,7 @@ def spawn(argv: list[str], env: dict[str, str] | None = None, cwd: str | None = 
                                              ctypes.sizeof(arr), None, None):
                 raise _err("UpdateProcThreadAttribute (jobs)")
         if inherit:
+            inherit = list(dict.fromkeys(int(h) for h in inherit))  # a handle listed twice fails CreateProcessW
             arr = (HANDLE * len(inherit))(*inherit)
             keep.append(arr)
             if not UpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, ctypes.cast(arr, LPVOID),
@@ -347,6 +393,92 @@ def spawn(argv: list[str], env: dict[str, str] | None = None, cwd: str | None = 
         return Process(pi.hProcess, pi.dwProcessId)
     finally:
         DeleteProcThreadAttributeList(attrs)
+
+
+# --- the C runtime's descriptors, and a browser on its pipe ------------------------------------------------------------
+def crt_block(entries, pointer: int | None = None) -> bytes:
+    """STARTUPINFO.lpReserved2 as the C runtime reads it at startup to rebuild its descriptors (what Node does to give
+    Puppeteer a browser's pipe): an int count, then one flag byte per descriptor, then one HANDLE per descriptor, with
+    no padding between them. `entries` is (flags, handle) for fds 0, 1, 2, ... in order."""
+    pointer = pointer or struct.calcsize("P")
+    entries = [(int(f), int(h)) for f, h in entries]
+    return (struct.pack("<i", len(entries)) + bytes(f & 0xFF for f, _ in entries)
+            + b"".join((h & ((1 << (8 * pointer)) - 1)).to_bytes(pointer, "little") for _, h in entries))
+
+
+class PipedProcess:
+    """A program started with the DevTools pipe at C runtime fds 3 (it reads) and 4 (it writes), NUL at 0 and 1, a pipe
+    for what it prints at 2, in `job` from its first instruction and inheriting nothing else. `rfd` and `wfd` are our
+    ends as C runtime descriptors (os.read and os.write work on them); `err` is the read end of its output."""
+
+    def __init__(self, argv: list[str], env: dict[str, str], cwd: str, job: Job, flags: int = CREATE_NO_WINDOW) -> None:
+        _need_windows()
+        import msvcrt
+
+        to_r, to_w = os.pipe()
+        fr_r, fr_w = os.pipe()
+        err_r, err_w = os.pipe()
+        nul = os.open(os.devnull, os.O_RDWR)
+        theirs = (nul, to_r, fr_w, err_w)
+        try:
+            h = {fd: msvcrt.get_osfhandle(fd) for fd in theirs}
+            for handle in h.values():
+                os.set_handle_inheritable(handle, True)
+            block = crt_block([(FOPEN | FDEV, h[nul]), (FOPEN | FDEV, h[nul]), (FOPEN | FPIPE, h[err_w]),
+                               (FOPEN | FPIPE, h[to_r]), (FOPEN | FPIPE, h[fr_w])])
+            self.proc = spawn(argv, env, cwd, jobs=[job], inherit=list(h.values()), flags=flags,
+                              std=(h[nul], h[nul], h[err_w]), crt_block=block)
+        except BaseException:
+            for fd in (to_w, fr_r, err_r):
+                os.close(fd)
+            raise
+        finally:
+            for fd in theirs:  # the child has its own copies now; ours would keep the pipes open forever
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+        self.rfd, self.wfd, self.err = fr_r, to_w, err_r
+        self.pid = self.proc.pid
+
+
+TCP_LISTEN = 2
+
+
+def _listeners(family: int) -> list[tuple[int, int]]:
+    """(port, owning pid) of every listening TCP socket of one address family (GetExtendedTcpTable)."""
+    size = DWORD(0)
+    GetExtendedTcpTable(None, ctypes.byref(size), False, family, 3, 0)  # TCP_TABLE_OWNER_PID_LISTENER
+    for _ in range(4):
+        buf = ctypes.create_string_buffer(max(size.value, 4) + 4096)
+        size = DWORD(len(buf))
+        rc = GetExtendedTcpTable(buf, ctypes.byref(size), False, family, 3, 0)
+        if rc == 0:
+            break
+        if rc != 122:  # ERROR_INSUFFICIENT_BUFFER: the table grew, try again
+            return []
+    else:
+        return []
+    raw = buf.raw
+    (n,) = struct.unpack_from("<I", raw, 0)
+    out = []
+    if family == 2:  # MIB_TCPROW_OWNER_PID: state, local addr, local port, remote addr, remote port, pid
+        for i in range(n):
+            state, _la, lport, _ra, _rp, pid = struct.unpack_from("<6I", raw, 4 + 24 * i)
+            out.append((((lport & 0xFF) << 8) | ((lport >> 8) & 0xFF), pid))
+    else:  # MIB_TCP6ROW_OWNER_PID: local addr[16], scope, port, remote addr[16], scope, port, state, pid
+        for i in range(n):
+            lport, = struct.unpack_from("<I", raw, 4 + 56 * i + 20)
+            pid, = struct.unpack_from("<I", raw, 4 + 56 * i + 52)
+            out.append((((lport & 0xFF) << 8) | ((lport >> 8) & 0xFF), pid))
+    return out
+
+
+def listening_ports(pids) -> set[int]:
+    """The TCP ports that any of these processes listens on (IPv4 and IPv6)."""
+    _need_windows()
+    want = {int(p) for p in pids}
+    return {port for family in (2, 23) for port, pid in _listeners(family) if pid in want}
 
 
 # --- pseudo consoles -------------------------------------------------------------------------------------------------------

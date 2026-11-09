@@ -33,6 +33,8 @@ export type RoomState = RoomStatus & {
   /** What the cap counts (ended terminals included), when the service says; else the length of `terminals`. */
   terminal_count: number | null;
   can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null; browser: boolean; browser_off_reason: BrowserOffReason | null;
+    /** design 0011: IT's switch, in words naming the browser (""), and what Edge may do on a work PC, for Advanced (""). */
+    browser_off_words: string; browser_advanced: string;
     /** design 0011: the kinds of terminal offered on Windows ([] elsewhere: the person's own shell). */
     terminal_shells: TerminalShell[] };
   /** design 0007: the Room's browser as status last saw it (open, and its tabs: the saved ones while it is closed). */
@@ -49,7 +51,7 @@ const START: RoomState = {
   checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none",
   label: "", note: "", checkpoints: [], last_checkpoint: null, error: null,
   terminals: [], terminal_max: TERMINAL_MAX, terminal_count: null,
-  can: { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null, terminal_shells: [] },
+  can: { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null, browser_off_words: "", browser_advanced: "", terminal_shells: [] },
   browser: { open: false, tabs: [], failed: null }, commandLines: [],
 };
 
@@ -108,6 +110,8 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
       terminal_off_reason: why && OFF_REASONS.includes(why) ? why : null,
       browser: w.can?.browser === true,
       browser_off_reason: bwhy && (BROWSER_OFF_REASONS as string[]).includes(bwhy) ? (bwhy as BrowserOffReason) : null,
+      browser_off_words: typeof w.can?.browser_off_words === "string" ? w.can.browser_off_words : "",
+      browser_advanced: typeof w.can?.browser_advanced === "string" ? w.can.browser_advanced : "",
       terminal_shells: Array.isArray(w.can?.terminal_shells)
         ? TERMINAL_SHELLS.filter((k) => (w.can?.terminal_shells as unknown[]).includes(k)) : [],
     },
