@@ -11,10 +11,16 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from . import connect, work_graph, work_scopes, work_suite
+from . import connect, work_scopes, work_suite
 from .security import require_user_or_terminal_token
 
 router = APIRouter(prefix="/api/work", dependencies=[Depends(require_user_or_terminal_token)])
+
+
+def _on(fid: str):
+    """(the work account, its suite's calls) when this switch is on; else the plain reason."""
+    acct = work_suite.require(fid)
+    return acct, work_suite.calls(acct)
 
 
 class SwitchIn(BaseModel):
@@ -52,7 +58,7 @@ def disconnect():
     if not row:
         raise HTTPException(404, "No work account is connected.")
     out = connect.disconnect(row["id"])
-    work_suite.forget()  # its Planner and To Do tasks and the names it saw; nothing is deleted at Microsoft
+    work_suite.forget()  # its Planner, To Do or Google Tasks and the names it saw; nothing is deleted at Microsoft or Google
     return out
 
 
@@ -73,40 +79,52 @@ def it_note(fid: str):
 
 @router.get("/files")
 def files(query: str = "", folder: str = "", site: str = "", shared: bool = False, limit: int = 100):
-    acct = work_suite.require("files_read")
+    acct, s = _on("files_read")
     if query.strip():
-        return work_graph.search(acct, query, "files", min(limit, 50))
-    return work_graph.listing(acct, folder, site, shared, limit)
+        return s.search(acct, query, "files", min(limit, 50))
+    return s.listing(acct, folder, site, shared, limit)
 
 
 @router.get("/sites")
 def sites():
-    return {"sites": work_graph.sites(work_suite.require("files_read"))}
+    acct, s = _on("files_read")
+    return {"sites": s.sites(acct)}
 
 
 @router.get("/files/read")
 def read(file: str, part: int = 1, query: str = ""):
-    return work_graph.read(work_suite.require("files_read"), file, part, query)
+    acct, s = _on("files_read")
+    return s.read(acct, file, part, query)
 
 
 @router.post("/files/save")
 def save(data: FileIn):
-    return work_graph.save(work_suite.require("files_read"), data.file)
+    acct, s = _on("files_read")
+    return s.save(acct, data.file)
 
 
 @router.get("/files/open")
 def open_file(file: str):
-    return work_graph.open_address(work_suite.require("files_read"), file)
+    acct, s = _on("files_read")
+    return s.open_address(acct, file)
 
 
 @router.get("/chats")
 def chats(kind: str = "all"):
-    return work_graph.chats(work_suite.require("chats_read"), kind if kind in ("chats", "channels", "all") else "all")
+    acct, s = _on("chats_read")
+    return s.chats(acct, kind if kind in ("chats", "channels", "all") else "all")
 
 
 @router.get("/chats/read")
 def chat_read(chat: str, limit: int = 20):
-    return work_graph.chat_read(work_suite.require("chats_read"), chat, "", limit)
+    acct, s = _on("chats_read")
+    return s.chat_read(acct, chat, "", limit)
+
+
+@router.get("/chats/search")
+def chat_search(query: str, limit: int = 20):
+    acct, s = _on("chats_read")
+    return s.search(acct, query, "chats", min(limit, 50))
 
 
 @router.post("/hold")
@@ -117,17 +135,20 @@ def hold(data: HoldIn):
 
 @router.post("/tasks/sync")
 def tasks_sync():
-    return work_graph.sync_tasks(work_suite.require("tasks"))
+    acct, s = _on("tasks")
+    return s.sync_tasks(acct)
 
 
 @router.get("/meetings")
 def meetings_list():
-    acct = work_suite.require("transcripts")
+    acct, s = _on("transcripts")
+    place = work_suite.names(acct)["meetings"]
     if work_suite.state(acct, "calendar") != "on":
-        return {"meetings": [], "words": "Turn Calendar on in Work apps to see your Teams meetings here."}
-    return {"meetings": work_graph.meetings_list(acct)}
+        return {"meetings": [], "place": place, "words": f"Turn Calendar on in Work apps to see your {place} meetings here."}
+    return {"meetings": s.meetings_list(acct), "place": place}
 
 
 @router.post("/transcript")
 def transcript(data: TranscriptIn):
-    return work_graph.transcript(work_suite.require("transcripts"), data.event, data.meeting)
+    acct, s = _on("transcripts")
+    return s.transcript(acct, data.event, data.meeting)

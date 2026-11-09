@@ -1,8 +1,9 @@
 """The work account (design 0012): one Microsoft 365 or Google Workspace account per person, its switches, and the gate
 every work tool passes before it calls anything.
 
-* The account is an ordinary linked account (connect.py) with work = 1, its company (`tenant`, Microsoft's `tid`) and
-  who signed in (`subject`, Microsoft's `oid`), both read from the ID token the token endpoint returned.
+* The account is an ordinary linked account (connect.py) with work = 1, its company (`tenant`: Microsoft's `tid`, or the
+  Google Workspace domain `hd`) and who signed in (`subject`: Microsoft's `oid`, or Google's `sub`), both read from the
+  ID token the token endpoint returned. A personal Microsoft account or a personal Gmail is refused here.
 * `features` holds which switches are on and which wait for the company's IT team. A switch's tools check it on every
   call (require), not only the permissions the token holds, so turning a switch off stops them at once.
 * Every write to the outside service (upload, new version, share, cell edit, post, task change) is a tool with effect
@@ -11,8 +12,9 @@ every work tool passes before it calls anything.
 * Names of files, chats and sites seen in listings are kept in `work_refs`, so a card in Needs you says "Share
   Budget.csv with lee@contoso.com" without asking Microsoft again.
 
-Microsoft's calls are in work_graph.py. Google Workspace has the same switches and tool names (work_scopes.py) and is
-built next: until then its sign-in says so.
+Microsoft's calls are in work_graph.py, Google's in work_google.py; both answer the same functions with the same
+arguments (`calls`), so the tools, the /api/work routes and the terminal's /work do not know which suite answers.
+`NAMES` holds each suite's own words (OneDrive or My Drive, Teams or Google Chat) for the pages and the terminal.
 """
 
 from __future__ import annotations
@@ -34,7 +36,17 @@ WAITING_GOOGLE = "Your company's Google admin needs to allow Rooks. Rooks has pr
 NO_ACCOUNT = "Connect your work account first, in Work apps."
 PERSONAL = ("That is a personal Microsoft account. Work apps need the account your company gave you. Personal accounts "
             "connect under Mail and calendar.")
-GOOGLE_LATER = "Google Workspace comes next. For now, connect Gmail and Google Calendar under Mail and calendar."
+PERSONAL_GOOGLE = ("That is a personal Google account. Work apps need the account your company gave you. Personal accounts "
+                   "connect under Mail and calendar.")
+# Each suite's own words, for the Work apps page, Files, Tasks, Meetings, Needs you and the terminal's /work
+NAMES = {
+    "microsoft": {"suite": "Microsoft 365", "company": "Microsoft", "files": "OneDrive and SharePoint", "home": "OneDrive",
+                  "sites": "SharePoint sites", "site": "SharePoint site", "chats": "Teams", "meetings": "Teams",
+                  "tasks": "Planner and To Do", "upload_to": "OneDrive"},
+    "google": {"suite": "Google Workspace", "company": "Google", "files": "Google Drive", "home": "My Drive",
+               "sites": "Shared drives", "site": "shared drive", "chats": "Google Chat", "meetings": "Google Meet",
+               "tasks": "Google Tasks", "upload_to": "Google Drive"},
+}
 CONSUMER_TENANT = "9188040d-6c67-4c5b-b112-36a304b66dad"  # Microsoft's tenant for personal accounts (outlook.com, hotmail)
 OFF = {  # what a tool says when its switch is off
     "mail": "Mail is off. Turn it on in Work apps.", "calendar": "Calendar is off. Turn it on in Work apps.",
@@ -43,7 +55,7 @@ OFF = {  # what a tool says when its switch is off
     "chats_read": "Reading chats is off. Turn it on in Work apps.", "chats_post": "Posting in chats is off. Turn it on in Work apps.",
     "transcripts": "Meeting transcripts are off. Turn them on in Work apps.", "tasks": "Tasks are off. Turn them on in Work apps.",
 }
-SIGN_IN_AGAIN = "Rooks needs your OK for this at Microsoft. Turn it on again in Work apps to sign in."
+SIGN_IN_AGAIN = "Rooks needs your OK for this at {company}. Turn it on again in Work apps to sign in."
 
 REFS_SQL = """CREATE TABLE IF NOT EXISTS work_refs (
   ref TEXT PRIMARY KEY,            -- drive/item, chat:<id>, channel:<team>/<channel>, site:<id>, drive:<id>
@@ -106,7 +118,7 @@ def require(fid: str) -> dict:
     if st == "on":
         return row
     if st == "signin":
-        raise HTTPException(409, SIGN_IN_AGAIN)
+        raise HTTPException(409, SIGN_IN_AGAIN.format(company=names(row)["company"]))
     raise HTTPException(409, OFF[fid])
 
 
@@ -164,6 +176,8 @@ def finish_sign_in(provider: str, me: dict, claims: dict, record: dict, feature:
 
     if provider == "microsoft" and claims.get("tid") == CONSUMER_TENANT:
         raise HTTPException(400, PERSONAL)
+    if provider == "google" and not claims.get("hd"):  # Google names the Workspace domain only for a company account
+        raise HTTPException(400, PERSONAL_GOOGLE)
     row = account()
     subject = str(claims.get("oid") or claims.get("sub") or "")
     if feature and row and row["subject"] and subject and row["subject"] != subject:
@@ -219,11 +233,15 @@ def it_note(fid: str) -> str:
     if provider == "google":
         from . import connect
 
+        who = f" for {row['email']}" if row else ""
         return ("Hello IT team,\n\nI use Rooks, a personal assistant that runs on my own computer. To let it "
-                f"{feat['says']['google'][len('Rooks can '):].rstrip('.')}, our Google Workspace needs to allow the app with this "
-                f"client ID: {connect.client_config('google')['client_id']}\nIt asks for:\n"
-                + "\n".join(f"- {s}" for s in feat["google"]) + "\n\nEverything runs on my own computer; nothing is kept on a "
-                "Rooks server. Thank you.")
+                f"{feat['says']['google'][len('Rooks can '):].rstrip('.')}, our Google Workspace needs to allow the app{who}. "
+                "In the Google Admin console: Security, Access and data control, API controls, App access control, Manage "
+                f"third-party app access, then add and trust the app with this client ID:\n{connect.client_config('google')['client_id']}"
+                "\n\nIt asks for these permissions, for my account only:\n"
+                + "\n".join(f"- {s}: {work_scopes.WHY.get(s, 'needed for this feature')}" for s in feat["google"])
+                + "\n\nEverything runs on my own computer; nothing is kept on a Rooks server. Anything that sends, posts, shares "
+                "or changes something waits for my yes first.\n\nThank you.")
     lines = [f"- {s}: {work_scopes.WHY.get(s, 'needed for this feature')}" + (" (needs an administrator)" if s in work_scopes.ADMIN["microsoft"] else "")
              for s in feat["microsoft"]]
     who = f" for {row['email']}" if row else ""
@@ -250,18 +268,38 @@ def status() -> dict:
         if st == "waiting":
             item["waiting_words"] = WAITING_GOOGLE if provider == "google" else WAITING
         feats.append(item)
-    ms = connect.providers_info()["microsoft"]
+    info = connect.providers_info()
+    ms = info["microsoft"]
+    suites = {p: {"ready": info[p]["configured"], "words": "" if info[p]["configured"] else
+                  f"Sign-in with {NAMES[p]['company']} is not set up on this computer yet. Your IT team or the person who "
+                  "installed Rooks can add it under Advanced."} for p in ("microsoft", "google")}
     out = {"account": ({"provider": row["provider"], "email": row["email"], "name": row["name"],
                         "status": row["status"], "needs_sign_in": row["status"] == "reauth"} if row else None),
-           "suites": {"microsoft": {"ready": ms["configured"], "words": "" if ms["configured"] else
-                                    "Sign-in with Microsoft is not set up on this computer yet. Your IT team or the person "
-                                    "who installed Rooks can add it under Advanced."},
-                      "google": {"ready": False, "words": GOOGLE_LATER}},
-           "features": feats, "words": {"asks_first": ASKS_FIRST, "waiting": WAITING, "states": STATE_WORDS},
-           "advanced": {"tenant": (row or {}).get("tenant", ""), "client_id_hint": ms["client_id_hint"],
+           "suites": suites, "names": NAMES[provider],
+           "features": feats, "words": {"asks_first": ASKS_FIRST, "waiting": WAITING_GOOGLE if provider == "google" else WAITING,
+                                        "states": STATE_WORDS},
+           "advanced": {"tenant": (row or {}).get("tenant", ""), "client_id_hint": info[provider]["client_id_hint"],
                         "granted": sorted(have), "permissions": {f["id"]: f[provider] for f in work_scopes.FEATURES},
                         "admin_consent": admin_consent_url() if provider == "microsoft" and ms["configured"] else ""}}
     return out
+
+
+def names(row: dict | None = None) -> dict:
+    """The work account's suite words (Microsoft's when there is none yet)."""
+    row = row if row is not None else account()
+    return NAMES.get((row or {}).get("provider") or "microsoft", NAMES["microsoft"])
+
+
+def calls(acct: dict):
+    """The module that talks to the work account's suite: work_graph (Microsoft) or work_google (Google). Both have the
+    same functions with the same arguments."""
+    if acct.get("provider") == "google":
+        from . import work_google
+
+        return work_google
+    from . import work_graph
+
+    return work_graph
 
 
 # --- names seen in listings, for the cards in Needs you ----------------------------------------------------------------
@@ -277,7 +315,7 @@ def _refs() -> None:
 def forget() -> None:
     """After the work account is disconnected: its tasks and the names it saw leave Rooks' lists (Microsoft keeps them)."""
     _refs()
-    db.run("DELETE FROM tasks WHERE origin IN ('planner', 'todo')")
+    db.run("DELETE FROM tasks WHERE origin IN ('planner', 'todo', 'gtasks')")
     db.run("DELETE FROM work_refs")
 
 
@@ -301,6 +339,7 @@ def title(tool: str, args: dict) -> str:
     from .presence import clip
 
     a = args if isinstance(args, dict) else {}
+    n = names()
     if tool == "work_file_upload":
         from . import analysis
 
@@ -308,7 +347,7 @@ def title(tool: str, args: dict) -> str:
             name = analysis.get(int(str(a.get("file_id", "")).lstrip("#")))["name"]
         except (HTTPException, ValueError):
             name = "a file"
-        return f"Upload to OneDrive: {clip(name)}"
+        return f"Upload to {n['upload_to']}: {clip(name)}"
     if tool == "work_file_share":
         name = name_of(a.get("file", ""), "a file")
         people = ", ".join(p.strip() for p in str(a.get("people") or "").split(",") if p.strip())
@@ -318,20 +357,54 @@ def title(tool: str, args: dict) -> str:
     if tool == "work_file_edit":
         return f"Change {clip(name_of(a.get('file', ''), 'a file'))}"
     if tool == "work_chat_post":
-        return f"Post in Teams: {clip(name_of(a.get('chat', ''), 'a chat'))}"
+        return f"Post in {n['chats']}: {clip(name_of(a.get('chat', ''), 'a chat'))}"
     if tool == "work_task_update":
         t = None
         if str(a.get("task") or "").strip().lstrip("#").isdigit():
             t = db.one("SELECT title, origin FROM tasks WHERE id = ?", int(str(a["task"]).lstrip("#")))
         if t:
-            where = {"planner": "Planner", "todo": "To Do"}.get(t["origin"], "your task list")
+            where = {"planner": "Planner", "todo": "To Do", "gtasks": "Google Tasks"}.get(t["origin"], "your task list")
             return f"Change a task in {where}: {clip(t['title'])}"
-        return f"Add a task to To Do: {clip(str(a.get('title') or 'a task'))}"
+        return f"Add a task to {'Google Tasks' if n['company'] == 'Google' else 'To Do'}: {clip(str(a.get('title') or 'a task'))}"
     if tool == "work_file_save":
         return f"Save to Files: {clip(name_of(a.get('file', ''), 'a work file'))}"
     if tool == "work_file_open":
         return f"Open in the Room's browser: {clip(name_of(a.get('file', ''), 'a work file'))}"
     return ""
+
+
+def change_lines(tool: str, args: dict) -> list[dict] | None:
+    """What a held change takes out and puts in, for the card in Needs you (a redline in plain words): a Docs or Word
+    change as removed and added text, a Sheets or Excel change as cells and their new values, a post as its exact text."""
+    a = args if isinstance(args, dict) else {}
+    if tool == "work_chat_post":
+        return [{"op": "add", "text": str(a.get("text") or "")}]
+    if tool != "work_file_edit":
+        return None
+    ch = a.get("changes")
+    if isinstance(ch, str):
+        try:
+            ch = json.loads(ch)
+        except ValueError:
+            ch = {"text": ch}
+    out: list[dict] = []
+    if isinstance(ch, list):
+        for c in ch:
+            if isinstance(c, dict):
+                rows = c.get("values") if isinstance(c.get("values"), list) else []
+                vals = " / ".join(", ".join(str(v) for v in (r if isinstance(r, list) else [r])) for r in rows)
+                out.append({"op": "set", "text": f"{c.get('sheet') or 'Sheet1'}!{c.get('range', '')}: {vals}"})
+        return out
+    if not isinstance(ch, dict):
+        return None
+    for pair in ch.get("replace") or []:
+        if isinstance(pair, dict):
+            out += [{"op": "remove", "text": str(pair.get("find") or "")}, {"op": "add", "text": str(pair.get("with") or "")}]
+    if ch.get("text"):
+        out += [{"op": "remove", "text": "Everything in the document now"}, {"op": "add", "text": str(ch["text"])}]
+    if ch.get("append"):
+        out.append({"op": "add", "text": str(ch["append"])})
+    return out
 
 
 # --- a held write from the terminal (/work post) -----------------------------------------------------------------------

@@ -82,8 +82,8 @@ jobs:
         run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 tests/test_room_terminal_windows.py tests/test_room_terminal.py tests/test_app_terminal.py
       - name: The ConPTY, job and side channel tests, and the Room's job, on their own (also in the Try Room job)
         run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 ../../rooks-try/tests/test_winproc.py ../../rooks-try/tests/test_room_job_windows.py
-      - name: The work account (Microsoft 365) against the fake Microsoft sign-in and Graph (design 0012)
-        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 tests/test_work_microsoft.py tests/test_connect_mail_calendar.py
+      - name: The work account (Microsoft 365 and Google Workspace) against the fake sign-ins, Graph and Google APIs (design 0012)
+        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 tests/test_work_microsoft.py tests/test_work_google.py tests/test_connect_mail_calendar.py
       - name: The Room's browser on Edge and Chrome over its pipe (design 0011, section 5.3; also in the Try Room job)
         env:
           ROOM_BROWSER_TESTS_REQUIRED: "1"  # never skipped quietly: a browser that cannot start here fails the job

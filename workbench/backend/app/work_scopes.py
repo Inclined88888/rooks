@@ -14,6 +14,7 @@ which the sign-in reports and the switch then shows as "Waiting for your IT team
 
 from __future__ import annotations
 
+G = "https://www.googleapis.com/auth/"
 IDENTITY = {
     "microsoft": ["openid", "email", "profile", "offline_access", "User.Read"],
     "google": ["openid", "email", "profile"],
@@ -78,6 +79,18 @@ WHY = {
     "OnlineMeetings.Read": "find the Teams meetings the person was in",
     "OnlineMeetingTranscript.Read.All": "read the transcripts of those meetings",
     "Tasks.ReadWrite": "read the person's Planner and To Do tasks and change them after the person says yes",
+    # Google Workspace (the full scope addresses are what Google's admin console lists)
+    G + "gmail.readonly": "read mail", G + "gmail.compose": "save drafts and send mail the person approved",
+    G + "calendar.events": "read the calendar and add events the person approved",
+    G + "drive.readonly": "read files the person can open in Google Drive and shared drives",
+    G + "drive": "upload and share files, each time only after the person says yes",
+    G + "documents": "edit Google Docs, each time only after the person says yes",
+    G + "spreadsheets": "edit Google Sheets, each time only after the person says yes",
+    G + "chat.spaces.readonly": "list the person's Google Chat spaces",
+    G + "chat.messages.readonly": "read messages in those spaces",
+    G + "chat.messages.create": "post in a space, each time only after the person says yes",
+    G + "meetings.space.readonly": "find the Meet calls the person was in and read their transcripts",
+    G + "tasks": "read the person's Google Tasks and change them after the person says yes",
 }
 
 

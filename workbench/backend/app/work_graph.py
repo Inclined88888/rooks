@@ -463,8 +463,12 @@ def meetings_list(acct: dict, days: int = 14) -> list[dict]:
     rows = pages(acct, "/me/calendarView", {"startDateTime": (now - timedelta(days=days)).isoformat(),
                                             "endDateTime": (now + timedelta(days=2)).isoformat(),
                                             "$select": "id,subject,start,onlineMeeting", "$top": 100}, limit=200)
-    return [{"event": r["id"], "title": r.get("subject") or "(no title)", "start": (r.get("start") or {}).get("dateTime", ""),
-             "teams": bool((r.get("onlineMeeting") or {}).get("joinUrl"))} for r in rows]
+    out = []
+    for r in rows:
+        online = bool((r.get("onlineMeeting") or {}).get("joinUrl"))
+        out.append({"event": r["id"], "title": r.get("subject") or "(no title)", "start": (r.get("start") or {}).get("dateTime", ""),
+                    "online": online, "teams": online})
+    return out
 
 
 # --- Planner and To Do -------------------------------------------------------------------------------------------------

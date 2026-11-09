@@ -854,7 +854,7 @@ def _team_proposal(ui, link: dict, line: str) -> None:
 # The switches and their words come from the app (GET /api/work/status), so the terminal and the Work apps page always
 # say the same thing. The app takes only the terminal's own sign in here, never the shared bridge key. A post, share or
 # change is only ever put in Needs you (POST /api/work/hold); nothing is sent from the terminal.
-WORK_USE = ("  /work  ·  /work connect microsoft  ·  /work on NAME  ·  /work off NAME  ·  /work files WORDS  ·  /work read N"
+WORK_USE = ("  /work  ·  /work connect microsoft|google  ·  /work on NAME  ·  /work off NAME  ·  /work files WORDS  ·  /work read N"
             "  ·  /work save N  ·  /work open N  ·  /work chats  ·  /work chat N  ·  /work post N TEXT  ·  /work tasks"
             "  ·  /work it NAME")
 WORK_REFUSED = ("  The Rooks app did not let this terminal reach your work account. Your company's files and chats need the"
@@ -888,18 +888,19 @@ def _open_sign_in(ui, out: dict) -> None:
             webbrowser.open(url)
         except Exception:  # noqa: BLE001 - say where it is instead
             pass
-    ui.p("  Finish signing in, in your browser. Microsoft asks only for what this needs. Then /work shows it.")
+    ui.p("  Finish signing in, in your browser. Your company's sign-in asks only for what this needs. Then /work shows it.")
 
 
 def _work_status(ui, st: dict) -> None:
     acct = st.get("account")
     if not acct:
-        ui.p("  No work account yet. /work connect microsoft opens the sign-in in your browser (Google Workspace comes next).")
+        ui.p("  No work account yet. /work connect microsoft (Microsoft 365) or /work connect google (Google Workspace) opens the "
+             "sign-in in your browser.")
         return
     suite = SUITES.get(acct.get("provider"), "Work")
     ui.p("  " + ui.c("accent", f"Work apps  ·  {suite}  ·  {acct.get('email')}"))
     if acct.get("needs_sign_in"):
-        ui.p(ui.c("warn", "  Sign in again: /work connect microsoft"))
+        ui.p(ui.c("warn", f"  Sign in again: /work connect {acct.get('provider') or 'microsoft'}"))
     asks = (st.get("words") or {}).get("asks_first") or "Rooks always asks you first"
     for f in st.get("features") or []:
         state = f.get("state_words") or f.get("state") or ""
@@ -954,7 +955,7 @@ def _work_file_verb(ui, link: dict, verb: str, arg: str) -> None:
         if not address:
             address = str(call(link, "GET", "/api/work/files/open?" + urllib.parse.urlencode({"file": ref})).get("address") or "")
         if not address:
-            ui.p("  Microsoft did not give an address for that file.")
+            ui.p("  There is no address for that file.")
             return
         _room_browse(ui, link, address)
 
@@ -967,7 +968,8 @@ def _work_chats(ui, link: dict) -> None:
         ui.p("  No chats or channels.")
         return
     for i, c in enumerate(rows[:60], 1):
-        ui.p(f"  {i:>2}  {c.get('name', '')}" + ui.c("dim", f"  {'channel' if c.get('kind') == 'channel' else 'chat'}"))
+        kind = c.get("kind") if c.get("kind") in ("channel", "space") else "chat"
+        ui.p(f"  {i:>2}  {c.get('name', '')}" + ui.c("dim", f"  {kind}"))
     ui.p(ui.c("dim", "  /work chat N reads one  ·  /work post N TEXT waits for your OK in Needs you"))
 
 
@@ -995,14 +997,15 @@ def _work_post(ui, link: dict, rest: str) -> None:
         return
     out = call(link, "POST", "/api/work/hold", {"tool": "work_chat_post", "args": {"chat": c["chat"], "text": text.strip()}})
     again = " (already waiting)" if out.get("already_asked") else ""
-    ui.p(f"  Waiting for your OK in Needs you: {out.get('title') or 'Post in Teams'}{again}. Nothing was posted yet.")
+    ui.p(f"  Waiting for your OK in Needs you: {out.get('title') or 'Post in a work chat'}{again}. Nothing was posted yet.")
     ui.p(ui.c("dim", "  Answer it in the app, or here with /needs then /needs approve N."))
 
 
 def _work_tasks(ui, link: dict) -> None:
     out = call(link, "POST", "/api/work/tasks/sync", timeout=120)
     rows = [t for t in call(link, "GET", "/api/tasks") if isinstance(t, dict) and t.get("origin")]
-    ui.p("  " + ui.c("accent", f"Work tasks  ·  {out.get('planner', 0)} in Planner, {out.get('todo', 0)} in To Do"))
+    counts = ", ".join(f"{out[k]} in {w}" for k, w in ORIGIN_WORDS.items() if k in out) or "nothing new"
+    ui.p("  " + ui.c("accent", f"Work tasks  ·  {counts}"))
     for t in rows[:60]:
         due = f"  due {t['due']}" if t.get("due") else ""
         done = "done  " if t.get("status") == "done" else ""
@@ -1022,9 +1025,9 @@ def work_command(agent, ui, rest: str = "") -> None:
         if verb in ("", "status"):
             _work_status(ui, call(link, "GET", "/api/work/status"))
         elif verb == "connect":
-            which = (arg or "microsoft").lower()
+            which = (arg or "").lower()
             if which not in SUITES:
-                ui.p("  /work connect microsoft (Google Workspace comes next)")
+                ui.p("  /work connect microsoft (Microsoft 365) or /work connect google (Google Workspace)")
                 return
             _open_sign_in(ui, call(link, "POST", f"/api/work/connect/{which}", {}))
         elif verb in ("on", "off"):

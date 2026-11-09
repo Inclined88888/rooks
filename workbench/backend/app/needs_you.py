@@ -141,7 +141,14 @@ def _action_item(a: dict) -> dict:
     args = args if isinstance(args, dict) else {}
     from .rooks_link import raised_by_job
 
-    return {"id": f"a:{a['id']}", "kind": "room" if a["tool"] == "use_room" else "approval", "title": _title(a["tool"], args),
+    extra = {}
+    if a["tool"].startswith("work_"):  # design 0012: what a work change takes out and puts in, on the card itself
+        from .work_suite import change_lines
+
+        lines = change_lines(a["tool"], args)
+        if lines is not None:
+            extra["change"] = lines
+    return {**extra, "id": f"a:{a['id']}", "kind": "room" if a["tool"] == "use_room" else "approval", "title": _title(a["tool"], args),
             "detail": args_summary(args, 200), "since": a["created_at"], "conversation_id": a["conversation_id"],
             "job_id": None, "actions": ACTIONS, "tool": a["tool"], "effect": a["effect"], "reason": a["reason"] or "",
             "args": a["args"],

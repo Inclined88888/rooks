@@ -188,10 +188,6 @@ async def start(provider: str, login_hint: str = "", work: bool = False, feature
     plus that switch's permissions (work_scopes.py); the personal one asks for mail and calendar as before."""
     if provider not in PROVIDERS:
         raise HTTPException(404, "Unknown provider")
-    if work and provider == "google":
-        from .work_suite import GOOGLE_LATER
-
-        raise HTTPException(409, GOOGLE_LATER)
     info = providers_info()[provider]
     if not info["configured"]:
         raise HTTPException(409, info["message"])
@@ -208,8 +204,10 @@ async def start(provider: str, login_hint: str = "", work: bool = False, feature
         from .work_suite import sign_in_scopes
 
         scopes = sign_in_scopes(provider, feature)
-        if feature and login_hint:
+        if feature and login_hint and provider == "microsoft":
             extra.pop("prompt", None)  # the same person adds a permission: no account picker
+        # Google keeps prompt=consent: a long-lived token comes back only with a consent screen, and adding a permission
+        # shows one anyway; include_granted_scopes=true keeps every switch granted before (design 0012, 1.2)
     params = {"client_id": cfg["client_id"], "response_type": "code", "redirect_uri": redirect, "scope": " ".join(scopes),
               "state": state, "code_challenge": _b64url(hashlib.sha256(verifier.encode()).digest()),
               "code_challenge_method": "S256", **extra}
@@ -255,8 +253,8 @@ def _token_error(provider: str, r: httpx.Response) -> str:
     name = "Google" if provider == "google" else "Microsoft"
     if code == "invalid_client":
         return f"{name} rejected this app's client ID or secret. The maintainer needs to check the app registration."
-    if "AADSTS65001" in desc or "AADSTS90094" in desc or code == "consent_required":
-        return ADMIN_NEEDED
+    if "AADSTS65001" in desc or "AADSTS90094" in desc or code in ("consent_required", "admin_policy_enforced"):
+        return ADMIN_NEEDED  # Google: the Workspace admin has not allowed this app (admin_policy_enforced)
     return f"{name} refused the sign-in ({code or r.status_code}). Try again."
 
 
@@ -271,7 +269,8 @@ async def complete(callback_url: str) -> dict:
     provider = a["provider"]
     if q.get("error"):
         desc = q.get("error_description", "")
-        if "AADSTS90094" in desc or "AADSTS65001" in desc or q["error"] == "consent_required" or "admin" in desc.lower():
+        if ("AADSTS90094" in desc or "AADSTS65001" in desc or q["error"] in ("consent_required", "admin_policy_enforced")
+                or "admin" in desc.lower()):
             return _needs_admin(a) if a.get("work") else _fail(a, ADMIN_NEEDED)
         if q["error"] == "access_denied":
             return _fail(a, "You didn't allow access, so nothing was connected.")
@@ -340,9 +339,10 @@ def _needs_admin(a: dict) -> dict:
     from . import work_suite
 
     work_suite.mark_waiting(a.get("feature") or "")
-    a.update(status="needs_admin", error=work_suite.WAITING)
+    words = work_suite.WAITING_GOOGLE if a.get("provider") == "google" else work_suite.WAITING
+    a.update(status="needs_admin", error=words)
     _close(a["port"])
-    return {"status": "needs_admin", "error": work_suite.WAITING}
+    return {"status": "needs_admin", "error": words}
 
 
 async def _complete_work(a: dict, provider: str, me: dict, tok: dict, record: dict) -> dict:
