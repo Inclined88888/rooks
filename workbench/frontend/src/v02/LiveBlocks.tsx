@@ -223,21 +223,21 @@ function SheetView({ sheet, values, editing, onChange }: { sheet: Sheet; values:
   );
 }
 
-/** The chart's series colours: black, grey and orange only (tokens.css --color-chart-*), read as real colours so the
- *  PNG a person saves looks the same. */
+/** The chart's series colours: black, grey and orange only (tokens.css --color-chart-1 to 6, apart in lightness so
+ *  series can be told apart), read as real colours so the PNG a person saves looks the same. */
 function usePalette(): string[] {
   const [p, setP] = useState<string[]>([]);
   useEffect(() => {
     const read = () => {
       const s = getComputedStyle(document.documentElement);
-      setP(["--color-chart-1", "--color-chart-2", "--color-chart-3", "--color-chart-4", "--color-chart-5"].map((v) => s.getPropertyValue(v).trim()).filter(Boolean));
+      setP(["--color-chart-1", "--color-chart-2", "--color-chart-3", "--color-chart-4", "--color-chart-5", "--color-chart-6"].map((v) => s.getPropertyValue(v).trim()).filter(Boolean));
     };
     read();
     const mo = new MutationObserver(read);
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class", "style"] });
     return () => mo.disconnect();
   }, []);
-  return p.length ? p : ["#111111", "#FF4D00", "#5A5A57", "#858581", "#7A7A76"];
+  return p.length ? p : ["#111111", "#FF4D00", "#42423E", "#70706C", "#A03000", "#2B2B2B"];
 }
 
 function ChartView({ chart, editing, onChange, svgRef }: { chart: Chart; editing: boolean; onChange: (d: Data) => void; svgRef: React.RefObject<SVGSVGElement> }) {

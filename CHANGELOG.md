@@ -37,6 +37,46 @@ The app's look moves to an industrial, technical design: off-white paper (#F2F2F
 call and word stays as it was; only the visual design system changes, step by step. No data change, nothing to
 migrate. Rollback: revert the branch's commits (the built `dist` is committed with each step).
 
+- **Review fixes.** A reviewer drove every page in light, dark and high contrast; what was real is fixed, each with a
+  guard in `tests/industrial-review.test.mjs` (all eleven tests failed on the tree before the fixes):
+  - Focus: the current Chat/Code tab drew its frame as an outline, which replaced the orange focus ring (in dark it
+    was invisible): the frame is a border now. Older buttons, the chat's chips, the model select, the suggestion
+    buttons, Packs and the Team's assign field no longer cancel the ring's ink halo, and a focused field keeps it
+    (orange alone is 2.97:1 on the paper). The Home ask box shows the orange ring when its field has focus (its ink
+    frame did not change on focus). The selected day in the Calendar shows the orange ring when focused (its ring
+    was ink, the same as its selected outline).
+  - Charts: six series that can be told apart (`--color-chart-1` to `6`): the ink, the orange, then greys and a burnt
+    orange set per theme, every pair at least 1.25:1 apart in lightness, so they differ without colour vision too
+    (series 4 and 5 were two greys 1.16:1 apart; in high contrast series 5 was the same black as series 1). Live
+    charts read all six again (they read five, so the sixth repeated the first). The Team's timeline bars keep a grey
+    edge (`--color-border-strong`).
+  - Mermaid pies: the share written on each slice was white on a light grey slice (1.43:1). Slices are now solid (not
+    mermaid's 70% blend), the orange, three greys and white, outlined in ink with ink words (5.7:1 or more on every
+    slice, every theme); legend swatches are outlined. Mermaid's settings are set once and again only when the
+    theme's colours change (the redesign had set them before every diagram). Seen drawn in a browser in all three
+    themes.
+  - Status: Connections is back to its rows with their sentences whole ("Models: 0 connections", "Mail: 0 accounts ·
+    Docker is not required"); Ready and Off were shown as huge numbers.
+  - The welcome step is read aloud as "Step 1 of 5": the brackets of its micro-label are drawn, not read.
+  - Micro-labels: section labels read `[01 // NAME]` like every other one (they read `01 //`). Settings writes its
+    place once, in the side list (`[08 // SETTINGS]`); the page head beside it no longer repeats it.
+  - Headlines: a hero headline stays two lines on a wide window, each line on one row, sized to fit its column
+    (welcome, sign-in, Home, a new chat; three lines before). Phones keep wrapping at the phone size.
+  - The welcome and sign-in footer is the dark section (#1A1A1A in every mode) with small mono words and the product's
+    name as a giant low-opacity wordmark (decoration, not read aloud).
+  - The chat's model select is a mono uppercase chip like the ones beside it; the Calendar's show-calendar tick is
+    44 px wide on a phone (it was 32).
+  - Kept, with the reason: Insights' note says "Orange: calls that failed" because the failed bars are orange now
+    (the word "Red" would be false); Usage this month shows its cost and tokens as the stat strip the spec names for
+    usage, labelled with Insights' own words (Cost, Tokens); a new chat does not follow its empty end, because the
+    taller greeting would lose its first line on a phone. The owner decides each (BACKLOG). The Rooks mark keeps its
+    rounded tile and the assistant's face stays round: the mark is the logo the owner asked to keep (only its door
+    recoloured) and the face is a drawing, not a card, button, field or window.
+  - `scripts/check-theme-contrast.py` also checks that chart series and pie slices are apart and pie words are AA.
+    Guards updated where the fix changes what they guard: `industrial-pages` (six chart tokens; Status not a strip),
+    `industrial-primitives` (the section label's format), `premium-pages-b` (the wordmark's display size),
+    `workroom-review` (the model chip's ring is the app's one ring).
+
 - **Step 5: the sweep.** Every route in `pages/registry.ts` (49, with the developer pages on), plus sign-in and the
   first welcome, at 1440x900 and 390x844 (a touch phone) in light and dark: 204 screenshots, each looked at, and an
   automatic check of every element (page overflow, corners, shadows, gradients, blue or purple, gold, text contrast,

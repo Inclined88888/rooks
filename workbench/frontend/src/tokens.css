@@ -75,6 +75,11 @@ html[data-mode="light"] {
   --glass-pill-ink: #F2F2F0;
   --glass-pill-shadow: none;
   --glass-filter: none;
+  /* chart series 3 to 6 (the data visuals block below): greys and a burnt orange, apart in lightness */
+  --color-chart-3: #42423E;
+  --color-chart-4: #70706C;
+  --color-chart-5: #A03000;
+  --color-chart-6: #2B2B2B;
   color-scheme: light;
 }
 
@@ -138,6 +143,10 @@ html[data-mode="dark"] {
   --glass-pill-ink: #111111;
   --glass-pill-shadow: none;
   --glass-filter: none;
+  --color-chart-3: #A3A39F;
+  --color-chart-4: #6C6C68;
+  --color-chart-5: #BBBBB7;
+  --color-chart-6: #D5D5D1;
   color-scheme: dark;
 }
 
@@ -195,6 +204,10 @@ html[data-mode="contrast"] {
   --glass-filter: none;
   --border-w: 2px;
   --focus-w: 3px;
+  --color-chart-3: #444444;
+  --color-chart-4: #767676;
+  --color-chart-5: #A73200;
+  --color-chart-6: #2B2B2B;
   color-scheme: light;
 }
 
@@ -224,17 +237,24 @@ html[data-mode="contrast"] {
   --color-dark-line: #2B2B2B;
 }
 
-/* ---- Data visuals: black, grey and orange only (the spec's charts), read by every theme from its own ink, greys and
-   the one orange: the Insights bars, live charts in replies (v02/LiveBlocks.tsx reads them for its SVG), the team's
-   workload and timeline, the Gantt bars, and mermaid diagrams (util.tsx). Series in this order; lines are thin (1 to
-   1.5 px). Each is 3:1 on the card (scripts/check-theme-contrast.py). ---- */
+/* ---- Data visuals: black, grey and orange only (the spec's charts): the Insights bars, live charts in replies
+   (v02/LiveBlocks.tsx reads them for its SVG), the team's workload and timeline, the Gantt bars. Six series in this
+   order: the theme's ink, the one orange, then greys and a burnt orange set per theme above. Lines are thin (1 to
+   1.5 px). Each is 3:1 on the card, and every pair is at least 1.25:1 apart in lightness, so series can be told apart
+   without colour vision too (scripts/check-theme-contrast.py, tests/industrial-review.test.mjs). ---- */
 :root {
   --color-chart-1: var(--color-ink);
   --color-chart-2: var(--color-accent);
-  --color-chart-3: var(--color-ink-muted);
-  --color-chart-4: var(--color-ink-faint);
-  --color-chart-5: var(--color-border-strong);
   --color-chart-rule: var(--color-border);
+  /* Mermaid pies (util.tsx) write the share on each slice in one colour, so the slices are the light end of the same
+     language, the same in every theme: the orange, three greys and white, each outlined in ink, with ink words
+     (5.7:1 or more on every slice). */
+  --color-pie-ink: #111111;
+  --color-pie-1: #FF4D00;
+  --color-pie-2: #A6A6A2;
+  --color-pie-3: #C1C1BD;
+  --color-pie-4: #DEDEDA;
+  --color-pie-5: #FFFFFF;
 }
 
 /* ---- Everything that is not a colour ---- */

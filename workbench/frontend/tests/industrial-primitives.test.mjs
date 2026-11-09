@@ -126,8 +126,9 @@ test("page titles are the condensed display face; sections are numbered 01, 02 b
   assert.match(body(ui, ".ui-page-kicker"), /font-family:\s*var\(--font-mono\)/, "the kicker is a micro-label");
   assert.match(body(ui, ".ui-page"), /counter-reset:\s*ui-section/);
   assert.match(body(ui, ".ui-section"), /counter-increment:\s*ui-section/);
-  assert.match(ui, /\.ui-section-num::after \{[^}]*content:\s*counter\(ui-section, decimal-leading-zero\)/);
-  assert.match(tsx, /<span className="micro ui-section-num" aria-hidden="true" \/>/, "the number is decoration");
+  // [01 // NAME] like every other micro-label (the review: it read "01 //" with no name and no brackets)
+  assert.match(ui, /\.ui-section-num::after \{[^}]*content:\s*"\[" counter\(ui-section, decimal-leading-zero\)/);
+  assert.match(tsx, /<span className="micro ui-section-num" aria-hidden="true" data-name=\{title\} \/>/, "the number is decoration");
   assert.match(body(ui, ".ui-section-title"), /font-family:\s*var\(--font-display\)/);
 });
 

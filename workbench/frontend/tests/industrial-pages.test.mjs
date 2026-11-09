@@ -233,13 +233,13 @@ test("the numbers the app already shows are a stat strip: 1 px dividers, huge nu
   assert.match(strip, /border-bottom:\s*var\(--line\)/);
   assert.match(body(settings, ".st-stats > *"), /border-left:\s*var\(--line\)/);
   assert.match(body(settings, ".st-stats .ui-stat-value"), /font-size:\s*var\(--display-lg\)/, "huge numbers");
-  // where: Insights and the run's detail had one; Usage, Status and the team board now use the same strip
+  // where: Insights and the run's detail had one; Usage and the team board now use the same strip (Status keeps its
+  // Connections rows: its states are words, and the review kept its sentences whole)
   assert.match(read("src/pages/Insights.tsx"), /<div className="st-stats">/);
   assert.match(read("src/pages/Runs.tsx"), /<div className="st-stats is-three">/);
   const settingsPage = read("src/pages/Settings.tsx");
   assert.match(settingsPage, /<div className="st-stats is-two">\s*<Stat label="Cost"/, "Usage this month: the month's cost and tokens");
   assert.doesNotMatch(settingsPage, /<Badge>\$\{\(u\.month_cents/, "the numbers left the badge for the strip");
-  assert.match(read("src/pages/Status.tsx"), /<div className="st-stats">\s*<Stat label="Models"/, "Status: the connections as numbers");
   assert.match(read("src/team/Team.tsx"), /<div className="team-stats st-stats is-three"/);
   assert.match(settings, /\.st-stats\.is-two \{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
 });
@@ -247,14 +247,17 @@ test("the numbers the app already shows are a stat strip: 1 px dividers, huge nu
 /* ---------------------------------------------------------------- charts */
 
 test("data visuals: black, grey and orange only, thin lines; the chart colours are tokens", () => {
-  for (const [k, v] of [["1", "ink"], ["2", "accent"], ["3", "ink-muted"], ["4", "ink-faint"], ["5", "border-strong"]]) {
+  // series 1 and 2 are the ink and the orange; 3 to 6 are greys and a burnt orange set per theme, apart in lightness
+  // (the review: 4 and 5 were two greys 1.16:1 apart; tests/industrial-review.test.mjs measures every pair)
+  for (const [k, v] of [["1", "ink"], ["2", "accent"]]) {
     assert.match(tokens, new RegExp(`--color-chart-${k}:\\s*var\\(--color-${v}\\);`), `--color-chart-${k} is ${v}`);
   }
+  for (const k of [3, 4, 5, 6]) assert.equal(tokens.match(new RegExp(`--color-chart-${k}:\\s*#[0-9A-F]{6};`, "g"))?.length, 3, `--color-chart-${k} in each theme`);
   assert.match(body(settings, ".st-bar"), /fill:\s*var\(--color-chart-1\)/, "Insights bars in ink");
   assert.match(body(settings, ".st-bar.is-failed"), /fill:\s*var\(--color-chart-2\)/, "failed calls in orange");
   assert.match(read("src/pages/Insights.tsx"), /note="Orange: calls that failed/, "the note names the colour the bars really are");
   const live = read("src/v02/LiveBlocks.tsx");
-  assert.match(live, /\["--color-chart-1", "--color-chart-2", "--color-chart-3", "--color-chart-4", "--color-chart-5"\]/, "the live chart reads the chart tokens");
+  assert.match(live, /\["--color-chart-1", "--color-chart-2", "--color-chart-3", "--color-chart-4", "--color-chart-5", "--color-chart-6"\]/, "the live chart reads the chart tokens");
   assert.doesNotMatch(live, /#3355cc|#c8102e|#1f7a3f/i, "no blue, red or green fallback");
   assert.match(live, /strokeWidth="1\.5"/, "thin lines");
   assert.doesNotMatch(live, /<circle/, "square markers");

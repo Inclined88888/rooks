@@ -46,13 +46,23 @@
   padding: var(--space-10) 0 var(--space-8); border-top: var(--line); border-bottom: var(--line);
   background-color: var(--color-bg); background-image: var(--bg-grid); background-size: var(--bg-grid-size); background-position: -1px -1px;
 }
-.ui-page-hero-title { font-size: var(--display-lg); text-wrap: initial; }
+.ui-page-hero-title { font-size: var(--display-lg); --hl-max: var(--display-lg); text-wrap: initial; }
+.ui-page-head.is-hero .ui-page-titles { container-type: inline-size; }  /* the hero headline fits this column */
 .hl-line { display: block; width: fit-content; }
+/* A real headline (Headline) stays two lines on a wide window: each line on one row, at the largest size that fits
+   its column (the parent is a size container) for its longest line: --hl-ch letters at up to 0.55em each in the
+   condensed face, plus the second line's 1.2em offset. Never above the headline's own size (--hl-max). On a phone
+   the lines wrap at the phone size instead. */
+@media (min-width: 901px) {
+  /* element and class, so it wins over each headline's own size rule (.st-auth-title, .chat-empty-title, ...) */
+  h1.hl-fit, h2.hl-fit, p.hl-fit { font-size: min(var(--hl-max, var(--display-lg)), calc(100cqi / (var(--hl-ch, 12) * 0.55 + 1.2))); }
+  .hl-fit .hl-line { white-space: nowrap; max-width: none; }
+}
 .ui-section { padding: var(--space-6) 0; border-top: var(--border-w) solid var(--color-border); counter-increment: ui-section; }
 .ui-section:first-child { border-top: 0; padding-top: 0; }
 .ui-section-head { display: flex; align-items: flex-end; flex-wrap: wrap; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-4); }
 .ui-section-num { flex-basis: 100%; }
-.ui-section-num::after { content: counter(ui-section, decimal-leading-zero) " //"; }
+.ui-section-num::after { content: "[" counter(ui-section, decimal-leading-zero) " // " attr(data-name) "]"; }
 .ui-section-title {
   flex: 1; min-width: 0; margin: 0; font-family: var(--font-display); font-size: var(--display-sm); font-weight: var(--weight-display); font-stretch: var(--stretch-display);
   text-transform: uppercase; letter-spacing: var(--tracking-display); line-height: 1; color: var(--color-ink);

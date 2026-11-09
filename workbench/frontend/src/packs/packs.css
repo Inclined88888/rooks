@@ -44,7 +44,7 @@
 .pk-list { display: grid; gap: 0; border-top: var(--border-w) solid var(--color-border); }
 .pk-item { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-3) var(--space-1); border: 0; border-bottom: var(--border-w) solid var(--color-border); background: none; text-align: left; color: var(--color-ink); cursor: pointer; font: inherit; font-size: var(--text-md); width: 100%; }
 .pk-item:hover, .pk-item.active { background: var(--color-bg-hover); }
-.pk-item.active { background: var(--color-bg-active); box-shadow: none; border-left: 2px solid var(--color-accent); }
+.pk-item.active { background: var(--color-bg-active); border-left: 2px solid var(--color-accent); }
 .pk-item.is-static { cursor: default; }
 .pk-item.is-static:hover { background: none; }
 .pk-item .grow, .pk-item .ag-grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -42,8 +42,13 @@ UI_PAIRS = [  # non-text that a person needs to see: 3:1
     ("on-primary", "success"), ("on-primary", "danger"), ("on-primary", "warning"), ("ink", "bg"),
     # the pages (industrial step 4): chart series (black, grey and orange) on the card they are drawn on; the greys
     # also on the paper (orange on the paper is the decoration note below: charts sit on white cards)
-    *[(f"chart-{i}", "surface") for i in range(1, 6)], *[(f"chart-{i}", "bg") for i in (1, 3, 4, 5)],
+    *[(f"chart-{i}", "surface") for i in range(1, 7)], *[(f"chart-{i}", "bg") for i in (1, 3, 4, 5, 6)],
 ]
+# the review fixes: series that can be told apart. Every pair of chart series at least 1.25:1 apart in lightness (so
+# it holds without colour vision too), mermaid pie slices the same, and the words mermaid writes on a slice AA on each
+CHART_SERIES = [f"chart-{i}" for i in range(1, 7)]
+PIE_FILLS = [f"pie-{i}" for i in range(1, 6)]
+APART = 1.25
 # orange marks on the paper: always beside words, reported for the record. The current link's orange rule in the top
 # bar is one of them: the link itself also turns ink and bold and carries aria-current (shell/shell.css).
 DECORATIVE = [("accent", "bg")]
@@ -102,6 +107,18 @@ def check_workbench(verbose: bool) -> list[str]:
                     print(f"  app {tid:<9} {fg:>16} on {bg:<15} {r:5.2f}")
                 if r < need:
                     fails.append(f"app {tid}: --color-{fg} {a} on --color-{bg} {b} is {r:.2f}:1 (needs {need})")
+        for group in (CHART_SERIES, PIE_FILLS):
+            for i, a in enumerate(group):
+                for b in group[i + 1:]:
+                    x, y = t.get(f"--color-{a}", ""), t.get(f"--color-{b}", "")
+                    if not (x.startswith("#") and y.startswith("#")):
+                        fails.append(f"app {tid}: missing --color-{a} or --color-{b}")
+                    elif ratio(x, y) < APART:
+                        fails.append(f"app {tid}: --color-{a} {x} and --color-{b} {y} are {ratio(x, y):.2f}:1 apart (needs {APART})")
+        for fill in PIE_FILLS:
+            ink, f = t.get("--color-pie-ink", ""), t.get(f"--color-{fill}", "")
+            if ink.startswith("#") and f.startswith("#") and ratio(ink, f) < 4.5:
+                fails.append(f"app {tid}: pie words {ink} on --color-{fill} {f} are {ratio(ink, f):.2f}:1 (needs 4.5)")
         # the focus ring: orange, on a 1 px ink halo; 3:1 against the page by itself or through the halo
         ring, halo, page = t.get("--color-focus"), t.get("--color-focus-halo"), t.get("--color-bg")
         if not (ring and halo and page):
@@ -143,4 +160,4 @@ if __name__ == "__main__":
         for f in fails:
             print("  ✗ " + f)
         sys.exit(1)
-    print(f"All themes pass AA: {len(THEMES)} app themes x {len(TEXT_PAIRS) + len(UI_PAIRS) + 1} pairs, terminal palettes on dark and light terminals.")
+    print(f"All themes pass AA: {len(THEMES)} app themes x {len(TEXT_PAIRS) + len(UI_PAIRS) + 1} pairs, chart series and pie slices apart, terminal palettes on dark and light terminals.")

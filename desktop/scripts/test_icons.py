@@ -144,11 +144,16 @@ def test_the_native_palette_icons():
     assert 'include_bytes!("../assets/app-icon.png")' in main
 
 
+# The browser tab's tower has its door in the app's one accent, safety orange (the industrial redesign). The desktop
+# source keeps the gold door until its icon files are regenerated (BACKLOG: the desktop icon files keep the gold door).
 def test_the_svg_sources_are_the_tower():
-    for svg in (REPO / "desktop" / "app-icon.svg", REPO / "workbench" / "frontend" / "public" / "favicon.svg"):
+    for svg, door in ((REPO / "desktop" / "app-icon.svg", "#E3A82B"),
+                      (REPO / "workbench" / "frontend" / "public" / "favicon.svg", "#FF4D00")):
         text = svg.read_text()
-        assert "#E3A82B" in text.upper(), f"{svg.name}: the gold door"
+        assert door in text.upper(), f"{svg.name}: the door {door}"
         assert "H379V336H467V224H557V336H645V224" in text.replace(" ", ""), f"{svg.name}: the three merlons"
+    assert "#E3A82B" not in (REPO / "workbench" / "frontend" / "public" / "favicon.svg").read_text().upper(), \
+        "favicon.svg: one accent, no gold"
 
 
 # The phone app (mobile/app.json). Expo asks for a 1024 square app icon with no transparency, Android's adaptive

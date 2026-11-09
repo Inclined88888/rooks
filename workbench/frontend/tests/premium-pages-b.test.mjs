@@ -108,7 +108,7 @@ test("the stylesheet is on the scale: sizes 12-28 tokens, weights 400/500/600, n
     const v = m[1].trim();
     // the industrial redesign (step 3): the hero's headline takes the display scale and its labels the micro size
     const ok = /^var\(--text-(micro|xs|sm|md|lg|xl|2xl)\)$/.test(v) || /^(12|13|14|16|20|28)px$/.test(v) || v === "inherit"
-      || /^var\(--display-(lg|md)\)$/.test(v) || /^calc\(var\(--display-lg\) \* 0\.\d+\)$/.test(v);
+      || /^var\(--display-(xl|lg|md)\)$/.test(v) || /^calc\(var\(--display-lg\) \* 0\.\d+\)$/.test(v); // xl: the footer's giant wordmark
     assert.ok(ok, `font-size ${v} is off the scale`);
   }
   for (const m of css.matchAll(/font-weight:\s*([^;}]+)/g)) {
