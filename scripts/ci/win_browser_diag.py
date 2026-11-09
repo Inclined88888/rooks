@@ -45,7 +45,8 @@ def attempt(path: str, label: str, job_kw: dict, extra: list[str]) -> None:
           f"pids={job.pids()}")
     job.terminate(1)
     time.sleep(1)
-    print(f"[{label}] printed: {bytes(out[-1500:]).decode('utf-8', 'replace')}")
+    if b"result" not in got:
+        print(f"[{label}] printed: {bytes(out[-800:]).decode('utf-8', 'replace')}")
     job.close()
 
 
@@ -65,8 +66,10 @@ def _drain(fd):
 engines = [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
            r"C:\Program Files\Google\Chrome\Application\chrome.exe"]
 log = ["--enable-logging=stderr", "--v=0"]
-for path in engines:
-    name = Path(path).stem
-    attempt(path, f"{name} full", dict(memory_limit=rb.JOB_MEMORY_LIMIT, ui_limits=rb.BROWSER_UI_LIMITS), log)
-    attempt(path, f"{name} no ui", dict(memory_limit=rb.JOB_MEMORY_LIMIT), log)
-    attempt(path, f"{name} plain job", dict(), log)
+names = {0x01: "HANDLES", 0x02: "READCLIPBOARD", 0x04: "WRITECLIPBOARD", 0x08: "SYSTEMPARAMETERS",
+         0x10: "DISPLAYSETTINGS", 0x20: "GLOBALATOMS", 0x40: "DESKTOP", 0x80: "EXITWINDOWS"}
+chrome = engines[1]
+for bit, name in names.items():
+    attempt(chrome, f"chrome only {name}", dict(ui_limits=bit), [])
+for bit, name in names.items():
+    attempt(chrome, f"chrome all but {name}", dict(ui_limits=0xFF & ~bit), [])
