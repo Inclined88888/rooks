@@ -4414,6 +4414,18 @@ async function cmdPlugin(argv) {
         process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         return;
       }
+      // Held back by the licence whatever its signature: said instead of
+      // "loads within the second". The guard covers a `dist/` built before
+      // the lock, which the repository's CLI can run until the next rebuild.
+      if (typeof mod.heldForWhiteLabel === 'function' && mod.heldForWhiteLabel(result.manifest)) {
+        process.stdout.write(
+          `${result.id}@${result.version} installed (${result.pkg})\n`
+          + `permissions: ${perms.length ? perms.join(', ') : 'none'}\n`
+          + 'installed but NOT loaded: it replaces the whole interface, which needs a licence\n'
+          + 'that includes White Label. It loads on its own once such a licence is active.\n',
+        );
+        return;
+      }
       // Whether the daemon will actually MOUNT it. An unsigned package is
       // installed either way (only a tampered one is refused above), but
       // saying "loads within the second" when admission will reject it sends

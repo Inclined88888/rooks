@@ -186,3 +186,33 @@ test('the browser learns the right as one boolean, never the plan nor the featur
   setLicenseState(paid([]));
   assert.equal(capabilitiesPayload().whitelabel, false);
 });
+
+test('`timon plugin list` says the same: a layout without the right is `skipped:unlicensed`', async (t) => {
+  const { inventory } = await import('./install.js');
+  const config = join(mkdtempSync(join(tmpdir(), 'timon-white-label-config-')), 'timon.config.json');
+  t.after(() => rmSync(dirname(config), { recursive: true, force: true }));
+  const layout = plugin(t, LAYOUT);
+  let read = 0;
+  const denied = () => { read += 1; return false; };
+  const [refused] = inventory(layout, config, [], undefined, denied);
+  assert.equal(refused?.refused, 'skipped:unlicensed');
+  assert.match(refused?.message ?? '', /needs a licence that includes White Label/);
+  assert.equal(refused?.enabled, true, 'still installed and wanted: only the licence holds it back');
+  assert.equal(inventory(layout, config, [], undefined, () => true)[0]?.refused, null);
+  // A plain list never reads the licence.
+  read = 0;
+  assert.equal(inventory(plugin(t, { kind: ['theme'], client: { slots: ['theme'] } }), config, [], undefined, denied)[0]?.refused, null);
+  assert.equal(read, 0);
+  // Door A2 is a manifest refusal, listed as such.
+  assert.equal(inventory(plugin(t, { kind: ['behavior'], client: { slots: ['root'] } }), config, [], undefined, () => true)[0]?.refused, 'skipped:manifest');
+});
+
+test('`timon plugin add` keeps the consent and says the layout is held back', async () => {
+  const { heldForWhiteLabel } = await import('./install.js');
+  assert.equal(heldForWhiteLabel({ kind: ['layout'], client: { slots: ['root'], external: [], mode: 'esm' } } as never, () => false), true);
+  assert.equal(heldForWhiteLabel({ kind: ['layout'], client: { slots: ['root'], external: [], mode: 'esm' } } as never, () => true), false);
+  assert.equal(heldForWhiteLabel({ kind: ['theme'], client: { slots: ['theme'], external: [], mode: 'esm' } } as never, () => false), false);
+  const cli = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../bin/timon'), 'utf8');
+  assert.match(cli, /mod\.heldForWhiteLabel\(result\.manifest\)/);
+  assert.match(cli, /needs a licence\\n'\s*\+ 'that includes White Label/);
+});

@@ -18,6 +18,10 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from
 import { join, resolve } from 'node:path';
 import { CONFIG_FILE, config, setConfig } from '../config/load.js';
 import { BRAND } from '../brand.js';
+import { whiteLabelAllowed } from '../license/capabilities.js';
+import { applyBuildPolicy } from '../license/build-policy.js';
+import { bootLicenseState } from '../license/refresh.js';
+import { requestsRoot, whiteLabelRefusal } from './loader.js';
 import { getHost } from '../host/index.js';
 import { PLUGINS_DIR } from '../paths.js';
 import { discoverPlugins, engineRefusal, hasHostHalf, installedPackages } from './loader.js';
@@ -931,6 +935,7 @@ export function inventory(
   file: string = CONFIG_FILE,
   builtins: readonly ResolvedBuiltin[] = resolveBuiltins(),
   runtime: NodeRuntimeFacts = currentNodeRuntime(),
+  whiteLabel: () => boolean = storedWhiteLabel,
 ): InventoryEntry[] {
   let plugins: Json = {};
   try {
@@ -954,16 +959,40 @@ export function inventory(
     }
     // What the daemon's loader refuses at load, said the same way (TODO #763).
     const engine = engineRefusal(d, runtime);
-    return engine
-      ? { id: d.manifest.id, pkg: d.pkg, version: d.version, enabled: false, refused: 'skipped:node-engine', message: engine, permissions: d.manifest.permissions, ...builtin }
-      : {
-        id: d.manifest.id, pkg: d.pkg, version: d.version, enabled: wanted(d.manifest.id, d.offByDefault === true), refused: null,
-        // No trust verdict here: the CLI does not boot through the release
-        // verification, so only the daemon's loader can judge a built-in.
-        message: null,
-        permissions: d.manifest.permissions, ...builtin,
-      };
+    if (engine) return { id: d.manifest.id, pkg: d.pkg, version: d.version, enabled: false, refused: 'skipped:node-engine', message: engine, permissions: d.manifest.permissions, ...builtin };
+    // The loader refuses it before any other licence check: said here too, or
+    // the list would call active a layout the interface never shows. Read
+    // only when a package asks for `root`, so a plain list reads no licence.
+    if (!d.builtin && heldForWhiteLabel(d.manifest, whiteLabel)) {
+      return { id: d.manifest.id, pkg: d.pkg, version: d.version, enabled: wanted(d.manifest.id, d.offByDefault === true), refused: 'skipped:unlicensed', message: whiteLabelRefusal(d.manifest.id), permissions: d.manifest.permissions };
+    }
+    return {
+      id: d.manifest.id, pkg: d.pkg, version: d.version, enabled: wanted(d.manifest.id, d.offByDefault === true), refused: null,
+      // No trust verdict here: the CLI does not boot through the release
+      // verification, so only the daemon's loader can judge a built-in.
+      message: null,
+      permissions: d.manifest.permissions, ...builtin,
+    };
   });
+}
+
+/**
+ * The White Label right as the daemon's boot reads it: the stored licence,
+ * offline tolerance included. A CLI has no live state, and a token on disk
+ * older than its lifetime is still the licence in force while the daemon
+ * tolerates the server being out of reach.
+ */
+function storedWhiteLabel(): boolean {
+  return whiteLabelAllowed(applyBuildPolicy(bootLicenseState()));
+}
+
+/**
+ * Installed, but held back until the licence includes White Label. Not a
+ * `refused` install: the person still confirms its permissions, since it
+ * loads on its own the day the right arrives.
+ */
+export function heldForWhiteLabel(manifest: Pick<PluginManifest, 'kind' | 'client'>, whiteLabel: () => boolean = storedWhiteLabel): boolean {
+  return requestsRoot(manifest) && !whiteLabel();
 }
 
 export function addPlugin(spec: string, root: string = PLUGINS_DIR, opts: InstallOptions = {}): Promise<AddResult> {

@@ -318,6 +318,11 @@ export function requestsRoot(manifest: Pick<PluginManifest, 'kind' | 'client'>):
   return manifest.kind.includes('layout') || (manifest.client?.slots.includes('root') ?? false);
 }
 
+/** What the loader, the gallery and `timon plugin list` say of a layout refused for want of the right. */
+export function whiteLabelRefusal(id: string): string {
+  return `plugin \`${id}\` replaces the whole interface, which needs a licence that includes White Label`;
+}
+
 function settingOf(v: ModuleSetting | undefined, offByDefault = false): { enabled: boolean; config: Record<string, unknown> } {
   if (v === undefined || v === 'auto') return { enabled: !offByDefault, config: {} };
   if (typeof v === 'boolean') return { enabled: v, config: {} };
@@ -539,7 +544,7 @@ export class PluginLoader {
       // unsigned package through, and must not open the whole interface with it.
       if (!trusted && requestsRoot(d.manifest) && !(this.opts.whiteLabelAllowed?.() ?? false)) {
         await this.unmount(id);
-        records.push({ ...base, state: 'skipped', reason: 'skipped:unlicensed', error: `plugin \`${id}\` replaces the whole interface, which needs a licence that includes White Label` });
+        records.push({ ...base, state: 'skipped', reason: 'skipped:unlicensed', error: whiteLabelRefusal(id) });
         continue;
       }
       if (!trusted && d.manifest.license.required) {
