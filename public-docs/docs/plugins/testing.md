@@ -15,6 +15,10 @@ An unsigned plugin, which includes any plugin you write yourself, loads only in 
 
 This works the same on Free and on a paid licence. When the setting is absent or `false`, unsigned packages are installed but not loaded.
 
+:::warning Timon 0.1.7 and earlier
+In Timon 0.1.7 and earlier, a Free installation installs an unsigned plugin but does not load it, whatever the value of `developer.unsignedPlugins`. Loading it on Free needs a later version; until you have one, an unsigned plugin loads only on an installation where a licence key is activated.
+:::
+
 :::warning What developer mode does not open
 A licence with a fixed plugin composition refuses unsigned plugins even with this setting. An altered package, whose `SIGNATURE` no longer matches its files, is always refused. A plugin with `license.required: true` must also be permitted by the licence.
 :::
