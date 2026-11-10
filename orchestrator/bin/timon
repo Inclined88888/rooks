@@ -4420,8 +4420,18 @@ async function cmdPlugin(argv) {
       // the user looking for the bug everywhere except where it is.
       const { config } = await loadDist('config/load');
       const { unsignedPluginsAllowed } = await loadDist('plugins/pubkey');
-      const admitted = result.signature.ok
-        || unsignedPluginsAllowed(config().developer.unsignedPlugins);
+      const devMode = config().developer.unsignedPlugins;
+      const admitted = result.signature.ok || unsignedPluginsAllowed(devMode);
+      // The two reasons an unsigned package stays unloaded need two different
+      // gestures. Ask the gate itself whether `true` would admit it: if not,
+      // the licence or the lock refuses it, and switching developer mode on
+      // would change nothing.
+      const refusal = !unsignedPluginsAllowed(true)
+        ? 'installed but NOT loaded: unsigned, and this installation refuses unsigned plugins even in\n'
+          + 'developer mode (a licence with a fixed plugin composition, or Timon locked until a licence\n'
+          + 'is activated). Install a signed version, or check `timon license status`.\n'
+        : 'installed but NOT loaded: unsigned, and developer mode is off.\n'
+          + 'Set `"developer": { "unsignedPlugins": true }` in timon.config.json to load it.\n';
       process.stdout.write(
         `${result.id}@${result.version} installed (${result.pkg})\n`
         + `permissions: ${perms.length ? perms.join(', ') : 'none'}\n`
@@ -4431,8 +4441,7 @@ async function cmdPlugin(argv) {
         + update
         + (admitted
           ? 'the daemon loads it within the second, no restart\n'
-          : 'installed but NOT loaded: unsigned, and `developer.unsignedPlugins` is false\n'
-            + 'in timon.config.json. Set it to true (or remove the key) to load it.\n'),
+          : refusal),
       );
       for (const c of result.children) {
         const label = c.state === 'installed' ? `installed (${c.pkg})`

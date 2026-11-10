@@ -17,13 +17,11 @@ The client imports React from the platform and returns the disposer from `ctx.sl
 
 ## Install and inspect
 
-:::warning Timon 0.1.7 on Free
-In Timon 0.1.7, a Free installation installs an unsigned plugin, which includes any plugin you write yourself, but does not load it, whatever the value of `developer.unsignedPlugins`.
-
-This is a defect, fixed in the next version: Free will load unsigned plugins once developer mode is turned on. Until then, an unsigned plugin loads only on an installation where a licence key is activated.
+:::warning Timon 0.1.7 and earlier
+In Timon 0.1.7 and earlier, a Free installation installs an unsigned plugin but does not load it, whatever the value of `developer.unsignedPlugins`. Loading it on Free needs a later version; until you have one, an unsigned plugin loads only on an installation where a licence key is activated.
 :::
 
-Activate your developer installation's licence first. Configure developer mode as explained in [Testing](testing.md), then run:
+Turn on developer mode first, as explained in [Testing](testing.md): your plugin is unsigned, and an unsigned plugin loads only in developer mode, on Free as on a paid licence. Then run:
 
 ```bash
 timon plugin add ./my-plugin
