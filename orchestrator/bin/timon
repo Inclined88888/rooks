@@ -4423,8 +4423,10 @@ async function cmdPlugin(argv) {
       const devMode = config().developer.unsignedPlugins;
       const admitted = result.signature.ok || unsignedPluginsAllowed(devMode);
       // The two reasons an unsigned package stays unloaded need two different
-      // gestures: switching developer mode on, or a licence that allows it.
-      const refusal = devMode === true
+      // gestures. Ask the gate itself whether `true` would admit it: if not,
+      // the licence or the lock refuses it, and switching developer mode on
+      // would change nothing.
+      const refusal = !unsignedPluginsAllowed(true)
         ? 'installed but NOT loaded: unsigned, and this installation refuses unsigned plugins even in\n'
           + 'developer mode (a licence with a fixed plugin composition, or Timon locked until a licence\n'
           + 'is activated). Install a signed version, or check `timon license status`.\n'
