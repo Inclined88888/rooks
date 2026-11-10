@@ -72,9 +72,10 @@ precedence over this file.
 8. **One commit per step**, `type(scope): subject` in English, the body saying
    why. Moving code and changing it are separate commits. A daemon step and an
    interface step are separate commits.
-9. **A visible change** gets one line in `CHANGELOG.md` under `## [Unreleased]`,
-   from the user's point of view, and its documentation in `public-docs/`.
-   Internal work (refactor, tests) does not go in the changelog.
+9. **A visible change** gets a changelog fragment in `changes/` (one small file,
+   format in `changes/README.md`; never an edit of `CHANGELOG.md`, which the
+   release writes), from the user's point of view, and its documentation in
+   `public-docs/`. Internal work (refactor, tests) gets no fragment.
 10. **No version bump, no new npm dependency** without a maintainer's request.
 11. TypeScript strict, no `any`. Comments explain why.
 12. **Everything reaches `main` through a pull request.** Nobody pushes to
