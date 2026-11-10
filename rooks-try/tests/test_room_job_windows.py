@@ -87,7 +87,10 @@ def _wait_for(path: Path, timeout: float = 30.0) -> str:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if path.is_file():
-            text = path.read_text(encoding="ascii", errors="replace").strip()
+            try:
+                text = path.read_text(encoding="ascii", errors="replace").strip()
+            except PermissionError:  # Windows: the shell still has it open for writing (a sharing violation); next look
+                text = ""
             if text:
                 return text
         time.sleep(0.1)
