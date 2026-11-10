@@ -78,7 +78,7 @@ def test_status_says_how_the_rooms_programs_are_kept_together(client, room_home,
         **plain(self), "isolation": "none", "containment": "job", "note": shell_mod.NOTE_WINDOWS})
     st = client.get("/api/room/status").json()
     assert st.get("containment") == "job" and st["isolation"] == "none", st
-    assert "they all stop when the Room stops" in st["note"] and "they can read and change your files" in st["note"]
+    assert "stops when the Room stops, except a program handed to Windows to start" in st["note"] and "they can read and change your files" in st["note"]
 
 
 def test_up_and_run_write_only_inside_the_room_and_are_in_the_run_log(client, room_home, tmp_path):

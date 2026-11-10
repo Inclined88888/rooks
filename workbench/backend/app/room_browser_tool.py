@@ -69,6 +69,9 @@ WHY_REASON = {
     "login": "This signs in on a site you did not ask for.",
     "frame": "This click lands on another site's frame, which Rooks cannot read first.",
 }
+# Edge on a work PC may be signed in to company sites as the person through Windows (room_browser.signed_in_as_person)
+WHY_REASON_WORK_PC = ("On this work PC the Room's browser may be signed in as you through Windows, so anything it sends "
+                      "waits for your yes, even on a site you asked for.")
 NOT_CHECKED = ("Not checked: a page's own scripts sending data on an ordinary click or as you type, button words the "
                "English patterns miss, and your own input.")
 
@@ -256,6 +259,12 @@ def _waiting(call: dict) -> dict | None:
     return None
 
 
+def _why_reason(why: str) -> str:
+    if why in ("submit", "message", "login") and room_browser.signed_in_as_person():
+        return WHY_REASON_WORK_PC
+    return WHY_REASON[why]
+
+
 def hold(why: str, call: dict, el: dict | None, frame: dict | None, top: str, conversation_id: int | None,
          channel: str) -> dict:
     """Hold the step as an approval in Needs you (a held use_room call). Nothing is done here."""
@@ -274,7 +283,7 @@ def hold(why: str, call: dict, el: dict | None, frame: dict | None, top: str, co
     cid = conversation_id or front_door.main_conversation()
     aid = actions.add("tool_call", "held", trace={"channel": channel, "conversation_id": cid}, tool="use_room",
                       effect="external", payload=json.dumps(full), args=json.dumps(scrub(full)),
-                      detail=f"{WHY_REASON[why]} {NOT_CHECKED}", request_id=rid)
+                      detail=f"{_why_reason(why)} {NOT_CHECKED}", request_id=rid)
     try:
         push.approval_needed(aid, "use_room")
     except Exception:  # noqa: BLE001 - a missing phone is no reason to lose the request
@@ -303,6 +312,8 @@ def _check(action: str, el: dict | None, frame: dict | None, top: str, asked: se
         return "purchase"
     if cat in ("submit", "message", "login"):
         host = (urlsplit(top or "").hostname or "").lower()
+        if room_browser.signed_in_as_person():  # it acts as the person at their company: never on its own
+            return cat
         return None if is_asked(host, asked) else cat
     return None
 

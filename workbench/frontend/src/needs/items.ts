@@ -20,7 +20,7 @@ export type NeedsItem = {
   effect?: string;
   reason?: string;
   args?: string | null;
-  /** design 0012: what a held work change takes out and puts in (a Docs or Sheets edit, a post's exact text) */
+  /** design 0012: what a held work change takes out and puts in (a Docs or Sheets edit, a post's exact text, every person a share invites) */
   change?: { op: "remove" | "add" | "set" | string; text: string }[];
 };
 

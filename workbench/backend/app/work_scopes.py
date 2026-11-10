@@ -38,7 +38,8 @@ FEATURES: list[dict] = [
      "microsoft": ["Files.Read.All", "Sites.Read.All"], "google": ["https://www.googleapis.com/auth/drive.readonly"]},
     {"id": "files_change", "label": "Files: change", "asks_first": True,
      "says": {"microsoft": "Rooks can upload, share and edit files in OneDrive and SharePoint.",
-              "google": "Rooks can upload, share and edit files in Google Drive, Docs and Sheets."},
+              "google": "Rooks can upload, share and edit files in Google Drive, Docs and Sheets. Google's permission for this "
+                        "also lets Rooks read all of your Google Drive; Rooks finds and reads files for you only while Files: read is on."},
      "microsoft": ["Files.ReadWrite.All"],
      "google": ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/documents",
                 "https://www.googleapis.com/auth/spreadsheets"]},
@@ -53,7 +54,9 @@ FEATURES: list[dict] = [
      "microsoft": ["ChatMessage.Send", "ChannelMessage.Send"], "google": ["https://www.googleapis.com/auth/chat.messages.create"]},
     {"id": "transcripts", "label": "Meeting transcripts", "asks_first": False,
      "says": {"microsoft": "Rooks can bring the transcript of a Teams meeting you were in into Meetings.",
-              "google": "Rooks can bring the transcript of a Meet call you were in into Meetings."},
+              "google": "Rooks can bring the transcript of a Meet call you were in into Meetings. Google keeps transcripts in "
+                        "Drive, so Google's permission for this lets Rooks read all of your Google Drive; Rooks opens only "
+                        "transcripts unless Files: read is on."},
      "microsoft": ["OnlineMeetings.Read", "OnlineMeetingTranscript.Read.All"],
      "google": ["https://www.googleapis.com/auth/meetings.space.readonly", "https://www.googleapis.com/auth/drive.readonly"]},
     {"id": "tasks", "label": "Tasks", "asks_first": True,

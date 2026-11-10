@@ -57,6 +57,7 @@ def disconnect():
     row = work_suite.account()
     if not row:
         raise HTTPException(404, "No work account is connected.")
+    work_suite.withdraw_held()  # a change waiting for a yes must never run later as another work account
     out = connect.disconnect(row["id"])
     work_suite.forget()  # its Planner, To Do or Google Tasks and the names it saw; nothing is deleted at Microsoft or Google
     return out

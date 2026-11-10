@@ -384,6 +384,7 @@ button.ui-timeline-row:hover, .ui-timeline-step.is-current .ui-timeline-row { co
 .ui-approval-detail, .ui-approval-effect { margin: 0; font-size: var(--text-md); color: var(--color-ink-muted); }
 .ui-approval-command { margin: 0; padding: var(--space-2) var(--space-3); border-radius: 0; background: var(--color-code-bg); border: var(--border-w) solid var(--color-border); font-family: var(--font-mono); font-size: var(--text-mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--color-ink); }
 .ui-approval-diff { max-height: 320px; overflow: auto; }
+.ui-approval-diff.is-whole { max-height: none; overflow: visible; }
 .ui-approval-actions { display: flex; gap: var(--space-2); margin-top: var(--space-1); }
 
 /* ---- StageFrame ---- */

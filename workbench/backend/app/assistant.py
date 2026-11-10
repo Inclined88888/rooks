@@ -82,7 +82,14 @@ class Ctx:
     held_repeats: int = 0              # calls that asked again for an OK already waiting; one ends the turn (B3)
     held_title: str = ""               # what that waiting request is, in Needs you's own words, for the turn's last line
     approved_call: bool = False        # the call running now is one a person said yes to (decide): it may take back the Room's browser
-    shared_key: bool = False           # started with the shared bridge key (helpers, coding jobs): no work account tools (design 0012)
+    # started with the shared bridge key (helpers, coding jobs): no work account tools (design 0012). Only the terminal's
+    # own request knows which key started it (rooks_link.run_turn says so); a terminal conversation rebuilt from the
+    # database alone (a goal resumed after a restart, a job) counts as the shared key, so it gets no work tools.
+    shared_key: bool | None = None
+
+    def __post_init__(self) -> None:
+        if self.shared_key is None:
+            self.shared_key = self.channel == "cli"
 
     def trace(self) -> dict:
         return {"channel": self.channel, "conversation_id": self.conversation_id,
@@ -1042,6 +1049,21 @@ def _already_waiting(ctx: Ctx, name: str, args: dict) -> int | None:
     return None
 
 
+def _change_of(tool: str, raw_args: str) -> dict:
+    """A held work call's change in words (every person a share invites, the cells an edit sets), for the chat's own
+    approval card, as Needs you shows it (work_suite.change_lines): its arguments are clipped there."""
+    if not tool.startswith("work_"):
+        return {}
+    from .work_suite import change_lines
+
+    try:
+        args = json.loads(raw_args or "{}")
+    except ValueError:
+        return {}
+    lines = change_lines(tool, args if isinstance(args, dict) else {})
+    return {"change": lines} if lines else {}
+
+
 async def _run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) -> tuple[bool, str]:
     """Run one tool call, check what it changed, and record the outcome against the model."""
     started = time.monotonic()
@@ -1528,7 +1550,7 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
                 yield card
             if r.get("outcome") == "held":
                 yield {"type": "approval_required", "id": r["action_id"], "tool": name, "args": args[:500],
-                       "effect": r.get("effect") or "external", "reason": r.get("reason") or ""}
+                       "effect": r.get("effect") or "external", "reason": r.get("reason") or "", **_change_of(name, args)}
             _save(ctx.conversation_id, "assistant", final)
             receipts.record_turn(ctx, "held" if r.get("outcome") == "held" else "ok")
             break
@@ -1637,7 +1659,11 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
             except DelegationRequired as e:
                 # Terminal tool delegation: yield event and wait for terminal to execute
                 fut = _PENDING_DELEGATIONS.get(e.action_id)  # held before yielding: the terminal may answer at once
-                yield {"type": "tool_delegation", "id": e.action_id, "tool": e.tool, "args": e.tool_args, "effect": e.effect}
+                # outside_content: the conversation holds text other people wrote (a chat, a file, a page), so the
+                # terminal asks about a change even where its own rules would run it without asking (--yes, a trusted
+                # folder, an allow rule, an earlier "always"); the app does not hold these calls itself
+                yield {"type": "tool_delegation", "id": e.action_id, "tool": e.tool, "args": e.tool_args, "effect": e.effect,
+                       "outside_content": bool(ctx.tainted)}
                 if fut is None:
                     out, ok = "Error: delegation future not found", False
                 else:
@@ -1680,7 +1706,8 @@ async def _run_turn(ctx: Ctx, user_text: str, model: str | None = None) -> Async
 
                     front_door.ping(f"I need a yes before I {fn['name'].replace('_', ' ')}. Open the chat to allow it or say no.")
                 yield {"type": "approval_required" if r["outcome"] == "held" else "approval_denied", "id": r["action_id"],
-                       "tool": fn["name"], "args": fn["arguments"][:500], "effect": r["effect"], "reason": r.get("reason") or HOLD_REASON}
+                       "tool": fn["name"], "args": fn["arguments"][:500], "effect": r["effect"], "reason": r.get("reason") or HOLD_REASON,
+                       **_change_of(fn["name"], fn["arguments"])}
         if ctx.held_repeats:  # it asked again for an OK that is already waiting: stop here instead of asking the model on
             final = HELD_AGAIN_FINAL.format(title=ctx.held_title or "the step I asked about")
             done_lines = [f"- {r['evidence']}" for r in ctx.receipts if r["verified"] is True and r["effect"] != "read"]

@@ -305,8 +305,8 @@ def resume_goal(goal_id: int):
 # Approvals: actions held by assistant.needs_approval
 @router.get("/approvals")
 def approvals(conversation_id: int | None = None):
-    """Actions waiting for the user's decision."""
-    return actions.pending(conversation_id)
+    """Actions waiting for the user's decision; a work change with its lines (every person a share invites)."""
+    return [{**a, **assistant._change_of(a["tool"], a["args"])} for a in actions.pending(conversation_id)]
 
 
 class DecisionIn(BaseModel):

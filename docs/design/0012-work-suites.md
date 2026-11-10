@@ -206,3 +206,30 @@ Each step ships with its tests, CHANGELOG, BACKLOG and `docs/connect-google-micr
   terminal in `rooks-code/tests/test_work_terminal.py`, the page in `frontend/tests/work-apps.test.mjs`. Not run against
   a real Workspace domain.
 
+
+### Review on release/1.1
+
+- **A share's people.** `change_lines` lists every address a share invites (`op: "share"`), each marked when its domain
+  is not the work account's; the title counts them instead of clipping. Needs you, the chat's approval card
+  (`approval_required` and `/api/approvals` carry `change`) and the terminal's /needs all show the lines.
+- **Sheet change forms.** `change_lines` reads the list, `{"cells": [...]}` and one `{sheet, range, values}`, the three
+  forms `work_graph.edit` and `work_google._sheet_edit` accept.
+- **Listings are untrusted.** `work_files` and `work_chats` taint the conversation: names are written by whoever shares
+  a file or starts a chat.
+- **Delegated terminal tools.** The app still does not hold `run_command`, `write_file` and `edit_file` (the terminal
+  asks), but `tool_delegation` carries `outside_content` when the conversation is tainted, and the terminal then asks
+  even where --yes, a trusted folder, an allow rule or "always" would run it (`Agent.run_delegated`).
+- **The shared key's reads.** `rooks_link.shared_key(request)`: with it, /v1/rooks/history leaves out conversations
+  with a `work_*` message, /v1/rooks/calendar leaves out the work calendar, and GET /api/needs-you shows a work item only
+  as "A change in your work apps". Not covered: the work mailbox and calendar stay ordinary mailboxes (section 1.1), so
+  `search_email`, `read_email`, `list_events` and the app's MCP server reach them as they reach a personal mailbox, and
+  facts the app learned from a work conversation are in /v1/rooks/context and /memory like any fact. Narrowing those is
+  a product decision, not made here.
+- **Rebuilt turns.** `Ctx.shared_key` defaults to true for the cli channel, so a goal resumed after a restart or a job
+  in a terminal conversation is offered no work tools; `rooks_link.run_turn` still says which key started a live turn.
+- **Disconnect.** `work_suite.withdraw_held` answers no to every waiting `work_*` call before the account goes.
+- **Edge on a work PC.** Where `room_browser.signed_in_as_person()` (Windows, Edge, an Entra-joined PC), every send the
+  Room's browser classifies (form, message, sign-in) waits even on an asked site, with its own reason, and
+  `work_file_open` says the browser may be signed in as the person.
+- **Google scopes.** `drive.readonly` for transcripts and `drive` for changes reach all of Drive; the switches' words
+  and the IT note say so. `require()` still limits what Rooks opens.

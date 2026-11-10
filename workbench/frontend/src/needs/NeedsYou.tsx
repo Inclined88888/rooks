@@ -12,6 +12,7 @@ import { api, ApiError } from "../api";
 import { refreshPresence } from "../shell/presence";
 import { ApprovalCard, Badge, EmptyState, Sheet, useToast } from "../ui";
 import { relTime } from "../util";
+import { ChangeLines } from "./ChangeLines";
 import { chatLinkFor, commandFor, decidedWords, effectFor, kindWord, linkFor, type NeedsItem } from "./items";
 import { closeNeedsYou, useNeedsYouOpen } from "./store";
 import "./needs.css";
@@ -117,21 +118,8 @@ function NeedsItemCard({ item, busy, onDecide }: { item: NeedsItem; busy: boolea
         {chat && <Link className="needs-link" to={chat.to} onClick={closeNeedsYou}>{chat.label}</Link>}
       </div>
       <ApprovalCard className="needs-card" title={item.title} detail={item.reason || item.detail || undefined} effect={effectFor(item)}
-        command={commandFor(item) || undefined} busy={busy} onApprove={() => onDecide(true)} onDeny={() => onDecide(false)}
-        diff={item.change?.length ? <ChangeLines lines={item.change} /> : undefined} />
+        command={item.change?.length ? undefined : commandFor(item) || undefined} busy={busy} onApprove={() => onDecide(true)} onDeny={() => onDecide(false)}
+        diff={item.change?.length ? <ChangeLines lines={item.change} /> : undefined} whole={!!item.change?.length} />
     </div>
-  );
-}
-
-const CHANGE_WORD: Record<string, string> = { remove: "Takes out", add: "Puts in", set: "Sets" };
-
-/** A held work change as a redline in words (design 0012): what goes out, what comes in, which cells get which values. */
-function ChangeLines({ lines }: { lines: NonNullable<NeedsItem["change"]> }) {
-  return (
-    <ul className="needs-change" aria-label="The change">
-      {lines.map((l, i) => (
-        <li key={i} className={`needs-change-${l.op}`}><span className="needs-change-word">{CHANGE_WORD[l.op] ?? "Changes"}</span> <span className="needs-change-text">{l.text}</span></li>
-      ))}
-    </ul>
   );
 }

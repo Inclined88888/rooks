@@ -75,6 +75,8 @@ KEEP_TURNS = 2  # the newest user prompts (with their tool calls and results) al
 PRUNE_TOOL_RESULT_AT = 8000
 RESUMED = "Picked up after a restart"  # the app's words for its `resumed` event
 SUMMARISED = "Earlier parts of this chat were summarised to fit"  # ... and for `compacted`, here or in the app
+# a change the app hands over after the chat read other people's words (a work chat or file, a page, an email)
+OUTSIDE_CONTENT_ASKS = "This chat has text other people wrote in it, so Rooks asks about this one."
 DELEGATION_WAIT_S = 900  # one shared-loop turn, including time the user takes to approve a change
 BRIDGE_LOCAL = {"read_file", "list_files", "search", "edit_file", "write_file", "run_command"}  # run here, not in the app
 # Tail budget: keep last N tool results unpruned
@@ -505,7 +507,7 @@ class Agent:
                     kind = ev.get("type")
                     if kind == "tool_delegation":
                         call = providers.ToolCall(str(ev.get("id")), ev.get("tool", ""), ev.get("args") or {})
-                        result, out = self._call(call, turn)
+                        result, out = self.run_delegated(call, turn, bool(ev.get("outside_content")))
                         ok = out not in ("denied", "tool_error", "bad_args", "unknown_tool", "check_failed", "loop_detected")
                         post = urllib.request.Request(f"{base}/v1/rooks/tool_result", method="POST", headers=hdr,
                                                       data=json.dumps({"delegation_id": ev.get("id"), "ok": ok,
@@ -655,6 +657,16 @@ class Agent:
         self.denials += 1
         self._emit("approval_denied", tool=tool, summary=words.wanted_step(summary), by=by)
 
+    def run_delegated(self, call: providers.ToolCall, turn: int, outside_content: bool = False) -> tuple[str, str]:
+        """A file or shell step the app's shared loop hands to this machine. outside_content: the app's conversation
+        holds text other people wrote (a work chat or file, a web page, an email), so a change is asked about even where
+        it would run without asking (--yes, a trusted folder, an allow rule, an earlier "always"). A deny rule still wins."""
+        self._outside_content = outside_content
+        try:
+            return self._call(call, turn)
+        finally:
+            self._outside_content = False
+
     def _call(self, call: providers.ToolCall, turn: int) -> tuple[str, str]:
         """Run one tool call and report it (tool_call, then tool_result) to a UI that takes events."""
         step = f"step-{next(_STEPS)}"  # pairs the two events; a model's own call ids repeat across replies
@@ -740,6 +752,9 @@ class Agent:
                         f"say in your summary that nothing was changed."), "dry_run"
             key, plan.scope = self.approval_key(call.name, call.arguments, plan, mcp_tool)
             why = self.trusted_effect(plan.effect, mcp_server, key, rule)
+            if why and getattr(self, "_outside_content", False):
+                self.ui.tool_note(OUTSIDE_CONTENT_ASKS)
+                why = ""
             if why:
                 self.ui.tool_note(why)
             else:

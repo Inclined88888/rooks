@@ -635,3 +635,18 @@ def test_a_background_jobs_request_is_answered_in_the_app_not_from_the_terminal(
         said = _say(workroom.needs_command, agent, f"{verb} 1")
         assert "in the app" in said and "Approved" not in said and "Denied" not in said, said
     assert not any(c[0] == "POST" and c[1].startswith("/api/needs-you/a:9") for c in fake_app.calls)
+
+
+def test_needs_shows_every_person_a_share_invites_and_the_cells_a_change_sets(fake_app):
+    """The app's card lists a share's people and a change's cells one per line (the title only counts them); the
+    terminal's /needs shows the same lines, so a yes here sees who gets the file."""
+    fake_app.needs = [{"id": "a:9", "kind": "approval", "title": "Share Budget.csv with 9 people, 1 outside your company (can edit)",
+                       "detail": "file: drv-me/f2", "since": "2026-11-06T10:00:00", "actions": ["approve", "deny"],
+                       "change": [*({"op": "share", "text": f"colleague{i}@contoso.com (can edit)"} for i in range(8)),
+                                  {"op": "share", "text": "attacker@evil.example (can edit, outside your company)"}]},
+                      {"id": "a:10", "kind": "approval", "title": "Change Forecast.xlsx", "detail": "", "since": "2026-11-06T09:00:00",
+                       "actions": ["approve", "deny"], "change": [{"op": "set", "text": "Sheet1!B2: 999999"}]}]
+    text = _say(workroom.needs_command, _agent(fake_app.url))
+    assert "attacker@evil.example (can edit, outside your company)" in text
+    assert all(f"colleague{i}@contoso.com" in text for i in range(8))
+    assert "Sets Sheet1!B2: 999999" in text and "Shares with" in text

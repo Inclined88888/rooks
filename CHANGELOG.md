@@ -4,6 +4,36 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · release/1.1 security review of the work apps and Windows
+
+No data changes; nothing to migrate.
+
+- A held share lists every person it invites, one line each and never clipped, in Needs you, on the chat's approval
+  card and in the terminal's /needs, and its title counts them: "Share Budget.csv with 9 people, 1 outside your
+  company (can edit)". Before, a long list was clipped and an address at its end could not be seen before a yes.
+- A Sheets or Excel change given as {"cells": [...]} or as one {sheet, range, values} shows its cells on the card, as
+  the list form always did. Before, the card showed no change at all for those two forms.
+- A conversation that listed work files, folders, sites, chats or spaces counts as holding other people's words (they
+  name those), so a later step that reaches outside waits, as after reading a file or a chat.
+- When the app hands a command or a file change to the rooks terminal after the conversation read other people's
+  words (a work chat or file, a page, an email), the terminal asks about it even with --yes, in a trusted folder, under
+  an allow rule or after "always". A deny rule still wins.
+- The shared bridge key (app.json, held by the helpers and coding jobs) no longer sees work items in Needs you (it
+  sees "A change in your work apps" only), conversations that used the work account in /history, or the work calendar
+  in /v1/rooks/calendar. The person's Terminal access token still sees everything. Not changed: the work mailbox and
+  calendar are ordinary mailboxes (design 0012), so mail and calendar tools reach them as they reach a personal one.
+- A terminal conversation rebuilt without its request (a goal resumed after a restart, a job) gets no work tools,
+  since only the request knows whether the shared key or the Terminal access token started it.
+- Disconnecting the work account withdraws its changes still waiting in Needs you, so a later yes cannot run them as
+  another work account.
+- On a Windows work PC where Edge may sign in to company sites through Windows, every form, message or sign-in the
+  Room's browser would send waits for a yes, even on a site the person asked for, and the work file tool says so
+  instead of "Rooks never hands its access there".
+- Google: the Meeting transcripts and Files: change switches say that Google's permission lets Rooks read all of
+  Drive; the note for the IT team says why transcripts ask for Drive.
+- Windows: the Room's note no longer says everything stops with the Room. A program handed to Windows to start, such
+  as a scheduled task, is outside the Room's group and keeps running, and the note and Advanced say so.
+
 ## Unreleased · The Room for workplace teams · branch feat/room-pro
 
 The Room shows a normal person its Files and Saved points only. The Room's Terminal and its Browser are developer
@@ -379,7 +409,7 @@ Playwright's bundled node needs and the slim Python image stopped carrying (the 
   use Mail and calendar instead. Accounts connected before keep Mail and Calendar on.
   What Rooks can do with it: search and list your OneDrive, the SharePoint sites you follow and files shared with you;
   read a file in place with page and cell citations; save a copy to Files that remembers where it came from; open it
-  in the Room's browser (you sign in there once; Rooks never hands its access to a browser), or your own browser where
+  in the Room's browser (you sign in there once; on a work PC Edge may sign you in through Windows), or your own browser where
   the Room has none. Read your Teams chats and the channels you are in. Bring a Teams meeting's transcript into
   Meetings with its speakers ("This meeting has no transcript." when there is none). Show your Planner and To Do tasks
   in Tasks with a Planner or To Do label. Reading never waits. **Every write waits for your yes in Needs you** and runs

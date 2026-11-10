@@ -161,6 +161,16 @@ def _work_signin(engine) -> bool:
         return False
 
 
+def signed_in_as_person() -> bool:
+    """Whether the Room's browser here may already be signed in to company sites as the person (Edge on a work PC,
+    through Windows): then it acts as them on SharePoint, Teams and OneDrive, outside the work switches, and every form,
+    message or sign-in it would send waits for a yes (room_browser_tool._check)."""
+    try:
+        return _work_signin(_engine())
+    except Exception:  # noqa: BLE001 - unknown: the ordinary rules
+        return False
+
+
 def can(driver, remote: bool) -> dict:
     """Whether the Room has a browser here, and why not: "helper", "switched_off", "no_engine", "policy" (Windows: the
     organisation switched it off), or None (a Room with a screen of its own: use its screen). Windows has the browser

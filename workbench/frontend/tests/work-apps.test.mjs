@@ -120,3 +120,27 @@ test("a held Docs or Sheets change shows what goes out and what comes in on the 
   const items = read("../src/needs/items.ts");
   assert.match(items, /change\?:/);
 });
+
+test("a held share lists every person on the card, in Needs you and in the chat, never only a clipped line", () => {
+  const lines = read("../src/needs/ChangeLines.tsx");
+  assert.match(lines, /share: "Shares with"/, "a share line says who gets the file");
+  assert.match(read("../src/needs/NeedsYou.tsx"), /from "\.\/ChangeLines"/);
+  // the lines replace the clipped arguments line, which could end mid-address
+  assert.match(read("../src/needs/NeedsYou.tsx"), /command=\{item\.change\?\.length \? undefined : commandFor\(item\)/);
+  // never in a scroll box: on a phone the last person (often the outsider) would be below the fold
+  assert.match(read("../src/needs/NeedsYou.tsx"), /whole=\{!!item\.change\?\.length\}/);
+  assert.match(read("../src/ui/ui.css"), /\.ui-approval-diff\.is-whole \{ max-height: none;/);
+  assert.match(read("../src/chat/Thread.tsx"), /whole=\{!diff && !!change\}/);
+  // the chat's own approval card: the change from the turn's event or the approvals list, shown in place of the args
+  const events = read("../src/chat/events.ts");
+  assert.match(events, /change\?: ChangeLine\[\]/);
+  assert.match(events, /Array\.isArray\(raw\.change\)/);
+  const thread = read("../src/chat/Thread.tsx");
+  assert.match(thread, /a\.change\?\.length \? <ChangeLines lines=\{a\.change\} \/>/);
+  // the terminal's /needs shows the same lines with the same words
+  const term = read("../../../rooks-code/rooks_code/workroom.py");
+  for (const w of ["Takes out", "Puts in", "Sets", "Shares with"]) {
+    assert.match(lines, new RegExp(`"${w}"`));
+    assert.match(term, new RegExp(`"${w}"`));
+  }
+});

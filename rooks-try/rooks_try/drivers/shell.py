@@ -27,9 +27,12 @@ from .base import Driver, DriverInfo
 
 LABEL = "A private folder and shell"
 NOTE = "Commands run as you, in a folder of its own. It is not a locked off computer."
-# Windows (design 0011, section 3): every Room program is in a job, so they stop together. A job is not a wall.
-NOTE_WINDOWS = ("Commands run as you, in a folder of its own. Windows keeps them together, so they all stop when the "
-                "Room stops. It is not a locked off computer: they can read and change your files.")
+# Windows (design 0011, section 3): every Room program is in a job, so they stop together. A job is not a wall, and a
+# program Windows itself starts on their behalf (Task Scheduler, WMI's Win32_Process.Create, a COM server such as
+# explorer's ShellExecute) is outside the job and outlives it: said in plain words.
+NOTE_WINDOWS = ("Commands run as you, in a folder of its own. What they start stops when the Room stops, except a program "
+                "handed to Windows to start, such as a scheduled task. It is not a locked off computer: they can read and "
+                "change your files.")
 RAN_NOTE = "This ran as you, in the private folder."
 NO_SCREEN = "This room has no screen. It is a private folder and shell."
 _SECRET_NAMES = {"APP_SECRET", "TOOLS_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "NVIDIA_API_KEY"}
@@ -204,7 +207,10 @@ def room_env(home: Path, offline: bool = False, base: dict | None = None) -> dic
 # --- Windows terminals (design 0011, section 1) ---------------------------------------------------------------------------
 # The Room's PowerShell profile, given as a command (a command is not subject to execution policy, so there is never an
 # -ExecutionPolicy Bypass, and never -EncodedCommand, which security software flags). It takes the marker nonce and the
-# side channel's name out of the environment into variables a program the shell starts does not see, makes ~ the Room's
+# side channel's name out of the environment into variables a program the shell starts does not see (a child process).
+# A script the shell runs in its own process (any .ps1) can read them, as anything in that process can read its state
+# (PowerShell has no private scope a script cannot reach), and so can forge "this command ended with code 0". That only
+# misreports a command's end to the model and the person: no yes, hold or hand-off depends on it. Makes ~ the Room's
 # home (Windows PowerShell's $HOME is the person's own), puts the Room's bins first on PATH, reads the person's own Room profile when they made one, and defines a prompt that reports how
 # the last command ended: in-band (ESC ] 7777 ; code ; nonce ; n BEL, which ConPTY may drop) and through the side
 # channel. Single quotes only: the text is one argument on a Windows command line.

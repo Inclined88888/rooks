@@ -234,13 +234,15 @@ def it_note(fid: str) -> str:
         from . import connect
 
         who = f" for {row['email']}" if row else ""
+        drive = ("Google keeps Meet transcripts in Drive, so this asks to read Drive; Rooks opens only the transcripts.\n\n"
+                 if fid == "transcripts" else "")
         return ("Hello IT team,\n\nI use Rooks, a personal assistant that runs on my own computer. To let it "
-                f"{feat['says']['google'][len('Rooks can '):].rstrip('.')}, our Google Workspace needs to allow the app{who}. "
+                f"{feat['says']['google'].split('. ')[0][len('Rooks can '):].rstrip('.')}, our Google Workspace needs to allow the app{who}. "
                 "In the Google Admin console: Security, Access and data control, API controls, App access control, Manage "
                 f"third-party app access, then add and trust the app with this client ID:\n{connect.client_config('google')['client_id']}"
                 "\n\nIt asks for these permissions, for my account only:\n"
                 + "\n".join(f"- {s}: {work_scopes.WHY.get(s, 'needed for this feature')}" for s in feat["google"])
-                + "\n\nEverything runs on my own computer; nothing is kept on a Rooks server. Anything that sends, posts, shares "
+                + "\n\n" + drive + "Everything runs on my own computer; nothing is kept on a Rooks server. Anything that sends, posts, shares "
                 "or changes something waits for my yes first.\n\nThank you.")
     lines = [f"- {s}: {work_scopes.WHY.get(s, 'needed for this feature')}" + (" (needs an administrator)" if s in work_scopes.ADMIN["microsoft"] else "")
              for s in feat["microsoft"]]
@@ -319,6 +321,22 @@ def forget() -> None:
     db.run("DELETE FROM work_refs")
 
 
+def withdraw_held() -> int:
+    """Before the work account is disconnected: every work call still waiting in Needs you is answered no, so a yes given
+    later cannot run it as whatever work account is connected then (Google file ids are the same for every account).
+    Returns how many were withdrawn."""
+    from . import actions
+
+    n = 0
+    for a in db.all(actions._PENDING + " AND a.tool LIKE 'work\\_%' ESCAPE '\\' ORDER BY a.id"):
+        try:
+            actions.decide(a["id"], False, "work_disconnect")
+            n += 1
+        except HTTPException:  # answered meanwhile
+            pass
+    return n
+
+
 def remember(ref: str, name: str, kind: str, web_url: str = "") -> None:
     if not ref:
         return
@@ -350,9 +368,14 @@ def title(tool: str, args: dict) -> str:
         return f"Upload to {n['upload_to']}: {clip(name)}"
     if tool == "work_file_share":
         name = name_of(a.get("file", ""), "a file")
-        people = ", ".join(p.strip() for p in str(a.get("people") or "").split(",") if p.strip())
-        if people:
-            return f"Share {clip(name)} with {clip(people)} ({'can edit' if a.get('access') == 'edit' else 'can view'})"
+        people = share_people(a)
+        can = "can edit" if a.get("access") == "edit" else "can view"
+        if len(people) == 1 and len(people[0]) <= 60:
+            return f"Share {clip(name)} with {people[0]}{', outside your company' if _outside(people[0]) else ''} ({can})"
+        if people:  # counted, never clipped: each person is a line of its own on the card (change_lines)
+            outside = sum(1 for p in people if _outside(p))
+            said = f"{len(people)} {'person' if len(people) == 1 else 'people'}" + (f", {outside} outside your company" if outside else "")
+            return f"Share {clip(name)} with {said} ({can})"
         return f"Share {clip(name)}: a link people in your company can {'edit' if a.get('access') == 'edit' else 'view'}"
     if tool == "work_file_edit":
         return f"Change {clip(name_of(a.get('file', ''), 'a file'))}"
@@ -373,12 +396,32 @@ def title(tool: str, args: dict) -> str:
     return ""
 
 
+def share_people(args: dict) -> list[str]:
+    """The addresses a share invites, exactly as work_graph.share and work_google.share split them."""
+    return [p.strip() for p in str((args or {}).get("people") or "").split(",") if p.strip()]
+
+
+def _outside(address: str) -> bool:
+    """An address outside the work account's own company (its email domain), said on the card."""
+    row = account()
+    mine = str((row or {}).get("email") or "").rpartition("@")[2].lower()
+    theirs = address.rpartition("@")[2].lower().strip(" >")
+    return bool(mine) and theirs != mine
+
+
 def change_lines(tool: str, args: dict) -> list[dict] | None:
     """What a held change takes out and puts in, for the card in Needs you (a redline in plain words): a Docs or Word
-    change as removed and added text, a Sheets or Excel change as cells and their new values, a post as its exact text."""
+    change as removed and added text, a Sheets or Excel change as cells and their new values, a post as its exact text,
+    a share as every person it invites, one line each and never clipped."""
     a = args if isinstance(args, dict) else {}
     if tool == "work_chat_post":
         return [{"op": "add", "text": str(a.get("text") or "")}]
+    if tool == "work_file_share":
+        can = "can edit" if a.get("access") == "edit" else "can view"
+        people = share_people(a)
+        if not people:
+            return [{"op": "share", "text": f"A link people in your company can {can[4:]}"}]
+        return [{"op": "share", "text": f"{p} ({can}, outside your company)" if _outside(p) else f"{p} ({can})"} for p in people]
     if tool != "work_file_edit":
         return None
     ch = a.get("changes")
@@ -388,16 +431,16 @@ def change_lines(tool: str, args: dict) -> list[dict] | None:
         except ValueError:
             ch = {"text": ch}
     out: list[dict] = []
-    if isinstance(ch, list):
-        for c in ch:
-            if isinstance(c, dict):
-                rows = c.get("values") if isinstance(c.get("values"), list) else []
-                vals = " / ".join(", ".join(str(v) for v in (r if isinstance(r, list) else [r])) for r in rows)
-                out.append({"op": "set", "text": f"{c.get('sheet') or 'Sheet1'}!{c.get('range', '')}: {vals}"})
-        return out
+    # A sheet change is a list, {"cells": [...]} or one {sheet, range, values} (work_graph.edit, work_google._sheet_edit)
+    cells = ch if isinstance(ch, list) else ((ch.get("cells") or [ch]) if isinstance(ch, dict) and ("cells" in ch or "range" in ch) else [])
+    for c in cells if isinstance(cells, list) else [cells]:
+        if isinstance(c, dict):
+            rows = c.get("values") if isinstance(c.get("values"), list) else []
+            vals = " / ".join(", ".join(str(v) for v in (r if isinstance(r, list) else [r])) for r in rows)
+            out.append({"op": "set", "text": f"{c.get('sheet') or 'Sheet1'}!{c.get('range', '')}: {vals}"})
     if not isinstance(ch, dict):
-        return None
-    for pair in ch.get("replace") or []:
+        return out if isinstance(ch, list) else None
+    for pair in ch.get("replace") or []:  # a document change; shown beside cells too, whichever the file turns out to be
         if isinstance(pair, dict):
             out += [{"op": "remove", "text": str(pair.get("find") or "")}, {"op": "add", "text": str(pair.get("with") or "")}]
     if ch.get("text"):

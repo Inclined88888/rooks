@@ -9,6 +9,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { api } from "../api";
 import { MessageAttachments } from "../Attachments";
 import { DiffView, extractDiffFromArgs } from "../components/DiffView";
+import { ChangeLines } from "../needs/ChangeLines";
 import { Thinking } from "../motion";
 import { ApprovalCard, Receipt, Timeline, type TimelineStep } from "../ui";
 import { Markdown, RouterVia, useToast } from "../util";
@@ -321,11 +322,13 @@ export function Thread(p: ThreadProps) {
         {p.approvals.map((a) => {
           const diff = (a.tool === "edit_file" || a.tool === "write_file") ? extractDiffFromArgs(a.args) : null;
           const command = a.effect === "command" && !diff ? commandOf(a.args) : "";
+          // a work change in words (every person a share invites, every cell an edit sets) instead of a clipped line
+          const change = a.change?.length ? <ChangeLines lines={a.change} /> : undefined;
           return (
             <ApprovalCard key={a.id} className={p.leaving(a.id) ? "is-leaving" : undefined}
               title={stepTitle(a.tool, a.args)} detail={a.reason || undefined} effect={a.effect}
-              command={command || (!diff ? argsLine(a.args) || undefined : undefined)}
-              diff={diff ? <DiffView diff={diff} compact /> : undefined}
+              command={command || (!diff && !change ? argsLine(a.args) || undefined : undefined)}
+              diff={diff ? <DiffView diff={diff} compact /> : change} whole={!diff && !!change}
               onApprove={() => p.onDecide(a, true)} onDeny={() => p.onDecide(a, false)} />
           );
         })}

@@ -10,7 +10,7 @@ import { plainError } from "./day/parts";
  * Files, "From work" (design 0012): the person's OneDrive and the SharePoint sites they follow, or their My Drive and
  * shared drives, and files shared with them, read in place through their own work account. The words for each place
  * come from the app (names), so a Google Workspace account sees Google's names. Save to Files keeps a copy here with where it came from; Open shows it
- * in the Room's browser (they sign in there once; Rooks never hands its access to a browser), or in their own browser
+ * in the Room's browser (they sign in there once; on a work PC Edge may sign them in through Windows), or in their own browser
  * where the Room has none. Nothing here changes a work file: uploads, shares and edits wait for a yes in Needs you.
  */
 type Item = { file: string; name: string; folder: boolean; where: string; web_url: string; modified?: string; match?: string };

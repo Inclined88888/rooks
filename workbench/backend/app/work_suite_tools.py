@@ -3,7 +3,8 @@ work account decides which one answers (work_suite.calls). assistant.py adds the
 
 Reads (search, list, read, chats) never wait. Every call that sends, shares or changes something outside is
 effect "external" with a confirm reason, so it always waits in Needs you and runs the stored arguments on a yes.
-Content from files, chats and transcripts is untrusted (third parties wrote it), so a conversation that read it holds
+Content from files, chats and transcripts is untrusted (third parties wrote it), and so are the names in a listing of
+files, folders, sites, chats and spaces (whoever shares a file or starts a chat names it), so a conversation that read it holds
 every later change, and a work write after it waits with the untrusted reason (assistant.hold_reason).
 Each tool checks its switch when it runs (work_suite.require), not only when it is offered.
 """
@@ -63,9 +64,14 @@ async def _open(file: str, ctx=None):
                 "message": "The Room's browser is not available here. The person can open it in their own browser."}
     from .assistant import _use_room
 
+    from .room_browser import signed_in_as_person
+
     res = await _use_room(action="browse", address=out["address"], ctx=ctx)
-    return {"name": out["name"], "room": res,
-            "note": f"{_n('company')} may ask the person to sign in once in the Room's browser; Rooks never hands its access there."}
+    note = f"{_n('company')} may ask the person to sign in once in the Room's browser."
+    if signed_in_as_person():  # Edge on a work PC: Windows signs it in as the person, outside the work switches
+        note = ("On this work PC the Room's browser may already be signed in as the person through Windows, so it acts as "
+                "them there; anything it sends waits for their yes.")
+    return {"name": out["name"], "room": res, "note": note}
 
 
 def build(Tool, S, I, B) -> list:  # noqa: N803 - the registry's own constructors
@@ -91,7 +97,8 @@ def build(Tool, S, I, B) -> list:  # noqa: N803 - the registry's own constructor
              "shared with them.",
              {"folder": S("a folder's reference from an earlier listing"), "site": S("a SharePoint site or shared drive id from the sites list"),
               "shared_with_me": B(), "limit": I("default 50")},
-             lambda folder="", site="", shared_with_me=False, limit=50: _files(folder, site, shared_with_me, limit), when=files_on),
+             lambda folder="", site="", shared_with_me=False, limit=50: _files(folder, site, shared_with_me, limit),
+             untrusted=True, when=files_on),  # file, folder and site names are written by whoever shares them
         Tool("work_file_read", "Read a work file in place (Word, Excel, PDF, PowerPoint, Google Docs, Sheets and Slides, text...) "
              "with passages and their location for citing. part pages long files; query jumps to relevant passages.",
              {"file": S("the file's reference from work_files or work_search"), "part": I(), "query": S()},
@@ -127,7 +134,7 @@ def build(Tool, S, I, B) -> list:  # noqa: N803 - the registry's own constructor
         Tool("work_chats", "List the person's work chats: Teams chats and the channels of their teams, or Google Chat direct "
              "messages, group chats and spaces (kind chats, channels or all; spaces count as channels).",
              {"kind": S("chats, channels or all")}, lambda kind="all": _run("chats_read", "chats", kind or "all"),
-             when=lambda ctx: on("chats_read", ctx)),
+             untrusted=True, when=lambda ctx: on("chats_read", ctx)),  # chat, channel and space names: other people's words
         Tool("work_chat_read", "Read the latest messages of a work chat, channel or space (its reference from work_chats).",
              {"chat": S("the chat's reference from work_chats"), "since": S("optional ISO time"), "limit": I("default 20")},
              lambda chat, since="", limit=20: _run("chats_read", "chat_read", chat, since, limit), ("chat",),

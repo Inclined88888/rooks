@@ -514,3 +514,16 @@ def test_the_terminal_reaches_google_with_its_own_sign_in(client, gwork, monkeyp
         assert r.status_code == 200 and r.json()["title"] == "Post in Google Chat: Sales team" and FGo.S["writes"] == []
     finally:
         db.set_setting("cli_token_hash", "")
+
+
+def test_the_transcripts_and_files_switches_say_how_much_of_drive_google_lets_rooks_read(client, gwork):
+    """Google keeps Meet transcripts in Drive, so the transcripts switch asks to read all of Drive, and changing files
+    asks for all of Drive. The switch's words and the note for the IT team say so; Rooks itself still opens only what a
+    switch allows."""
+    _sign_in(client)
+    st = {f["id"]: f for f in client.get("/api/work/status").json()["features"]}
+    assert "lets Rooks read all of your Google Drive" in st["transcripts"]["says"]
+    assert "Google keeps transcripts in Drive" in st["transcripts"]["says"]
+    assert "lets Rooks read all of your Google Drive" in st["files_change"]["says"]
+    note = client.get("/api/work/features/transcripts/it-note").json()["note"]
+    assert "Google keeps Meet transcripts in Drive" in note

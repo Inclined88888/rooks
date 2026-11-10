@@ -71,7 +71,7 @@ test("on Windows the Room says its programs are kept together, and that it is st
   assert.equal(store.roomFromWire(WIN).containment, "none");
   const line = words.commandViewLine(s);
   assert.equal(line, words.WINDOWS_HONEST_LINE);
-  assert.match(line, /Windows keeps them together, so they all stop when the Room stops/);
+  assert.match(line, /What they start stops when the Room stops, except a program handed to Windows to start, such as a scheduled task/);
   assert.match(line, /It is not a locked off computer: they can read and change your files/);
   assert.equal(words.commandViewLine({ isolation: "none", note: "" }), words.HONEST_LINE, "elsewhere the old line");
   assert.equal(words.isolationWords("none"), "Not locked off", "the badge never oversells a job");
@@ -83,6 +83,7 @@ test("Advanced on Windows says what the job does and what it does not", () => {
   assert.match(page, /containmentLine\(/);
   const said = words.containmentLine(false);
   assert.match(said, /stop when the Room stops or Rooks closes/);
+  assert.match(said, /A program handed to Windows to start, such as a scheduled task, is not in that group and keeps running/);
   assert.match(said, /clipboard/);
   assert.match(said, /not a wall/i);
   assert.match(said, /your Windows sign-in/);

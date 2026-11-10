@@ -26,8 +26,9 @@ from rooks_try.drivers import shell as shell_mod
 
 WINDOWS = os.name == "nt"
 windows_only = pytest.mark.skipif(not WINDOWS, reason="real Windows jobs (the windows-2022 jobs)")
-WINDOWS_NOTE = ("Commands run as you, in a folder of its own. Windows keeps them together, so they all stop when the "
-                "Room stops. It is not a locked off computer: they can read and change your files.")
+WINDOWS_NOTE = ("Commands run as you, in a folder of its own. What they start stops when the Room stops, except a program "
+                "handed to Windows to start, such as a scheduled task. It is not a locked off computer: they can read and "
+                "change your files.")
 
 
 @pytest.fixture()

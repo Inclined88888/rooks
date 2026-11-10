@@ -281,10 +281,29 @@ async def count() -> int:
     return actions.pending_count() + starts + len(starters.waiting()) + len(await helper_items())
 
 
+WORK_HIDDEN = "A change in your work apps"
+
+
+def _hide_work(item: dict) -> dict:
+    """A held work call as the shared bridge key may see it: that something waits, not what (no file, person, chat or
+    text). The work account stays out of that key's reach, reads included (design 0012)."""
+    if not str(item.get("tool") or "").startswith("work_"):
+        return item
+    hidden = {k: v for k, v in item.items() if k not in ("change", "detail", "reason")}
+    return {**hidden, "title": WORK_HIDDEN, "detail": "Open the app to see it.", "args": "{}"}
+
+
 @router.get("")
-async def inbox():
-    """Everything waiting on you, newest first: held actions, jobs that ask first, and steps the desk and browser paused on."""
-    return await items()
+async def inbox(request: Request):
+    """Everything waiting on you, newest first: held actions, jobs that ask first, and steps the desk and browser paused on.
+    Read with the shared bridge key (the terminal without its own token), a work item says only that it waits."""
+    out = await items()
+    if not is_signed_in(request):
+        from .rooks_link import shared_key
+
+        if shared_key(request):
+            out = [_hide_work(i) for i in out]
+    return out
 
 
 @router.post("/{item_id}/{answer}")

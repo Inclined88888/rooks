@@ -537,8 +537,10 @@ const EFFECT_LINE: Record<string, string> = {
   handoff: "This copies a file out of the Room.",
 };
 
-export function ApprovalCard({ title, detail, effect, command, diff, onApprove, onDeny, busy, className }: {
-  title: string; detail?: string; effect: string; command?: string; diff?: ReactNode; onApprove: () => void; onDeny: () => void; busy?: boolean; className?: string;
+/** whole: the diff is shown in full, never in a scroll box (a work change's lines: every person a share invites must be
+ * seen before a yes, not only the first few). */
+export function ApprovalCard({ title, detail, effect, command, diff, whole, onApprove, onDeny, busy, className }: {
+  title: string; detail?: string; effect: string; command?: string; diff?: ReactNode; whole?: boolean; onApprove: () => void; onDeny: () => void; busy?: boolean; className?: string;
 }) {
   const id = useId();
   return (
@@ -551,7 +553,7 @@ export function ApprovalCard({ title, detail, effect, command, diff, onApprove, 
       {detail && <p className="ui-approval-detail">{detail}</p>}
       <p className="ui-approval-effect">{EFFECT_LINE[effect] ?? "This acts outside the workspace."}</p>
       {command && <pre className="ui-approval-command">{command}</pre>}
-      {diff && <div className="ui-approval-diff">{diff}</div>}
+      {diff && <div className={cx("ui-approval-diff", whole && "is-whole")}>{diff}</div>}
       <div className="ui-approval-actions">
         <Button variant="primary" size="sm" onClick={onApprove} busy={busy}>Approve</Button>
         <Button variant="secondary" size="sm" onClick={onDeny} disabled={busy}>Deny</Button>

@@ -774,3 +774,40 @@ def test_open_close_and_browse_are_in_the_run_log_without_queries(client, chromi
     assert "open browser" in text and "close browser" in text and "browse" in text
     assert "abc123" not in text and "token=" not in text
     assert f"127.0.0.1:{site}/page.html" in text
+
+
+def test_on_a_work_pc_where_edge_signs_in_as_the_person_every_send_waits(monkeypatch):
+    """Windows, Edge, a PC joined to a work account: Edge may sign in to company sites as the person through Windows, so
+    the Room's browser acts as them there, outside the work switches. A form, a message or a sign-in it would send waits
+    for a yes even on a site the person named; on any other computer the person's own site goes ahead as before. The
+    work file tool says so too, instead of "Rooks never hands its access there"."""
+    import asyncio
+
+    from app import room, room_browser, room_browser_tool as rbt, work_suite_tools
+
+    room._import_room()
+    el = {"tag": "button", "role": "button", "name": "Send", "is_submit": True, "in_form": True}
+    top, asked = "https://contoso.sharepoint.com/sites/sales", {"contoso.sharepoint.com"}
+    monkeypatch.setattr(room_browser, "signed_in_as_person", lambda: False)
+    assert rbt._check("click", el, None, top, asked, False) is None
+    monkeypatch.setattr(room_browser, "signed_in_as_person", lambda: True)
+    assert rbt._check("click", el, None, top, asked, False) == "message"
+    assert "signed in as you through Windows" in rbt.WHY_REASON_WORK_PC
+
+    async def fake_run(*a, **kw):
+        return {"name": "Budget.csv", "address": "https://contoso.sharepoint.com/b"}
+
+    monkeypatch.setattr(work_suite_tools, "_run", fake_run)
+    monkeypatch.setattr(room, "enabled", lambda: True)
+
+    async def browse(**kw):
+        return {"ok": True}
+
+    import app.assistant as assistant
+
+    monkeypatch.setattr(assistant, "_use_room", browse)
+    out = asyncio.run(work_suite_tools._open("drv-me/f2"))
+    assert "never hands" not in out["note"] and "through Windows" in out["note"]
+    monkeypatch.setattr(room_browser, "signed_in_as_person", lambda: False)
+    out = asyncio.run(work_suite_tools._open("drv-me/f2"))
+    assert "never hands" not in out["note"] and "through Windows" not in out["note"]

@@ -696,6 +696,9 @@ def _answered(answer: str, status) -> str:
     return "Approved"
 
 
+CHANGE_WORD = {"remove": "Takes out", "add": "Puts in", "set": "Sets", "share": "Shares with"}  # the app's card's words
+
+
 def needs_command(agent, ui, rest: str = "") -> None:
     parts = rest.strip().split()
     verb = parts[0].lower() if parts else ""
@@ -732,6 +735,9 @@ def needs_command(agent, ui, rest: str = "") -> None:
             where = "  (a background job asked: answer in the app)" if it.get("in_app_only") else ""
             ui.p(f"  {i:>2}  {it.get('title') or 'Needs your OK'}" + (ui.c("dim", f"  {detail}") if detail else "")
                  + (ui.c("dim", where) if where else ""))
+            for line in it.get("change") or []:  # a work change, line by line as the app's card shows it: every person, every cell
+                if isinstance(line, dict):
+                    ui.p(f"        {CHANGE_WORD.get(str(line.get('op')), 'Changes')} {' '.join(str(line.get('text') or '').split())}")
         if len(items) > 30:
             ui.p(ui.c("dim", f"  … {len(items) - 30} more in the app"))
         ui.p(ui.c("dim", "  /needs approve N or /needs deny N answers one. The app shows the same list."))

@@ -51,9 +51,22 @@ def memory():
     return {"facts": known, "learning": learn.enabled()}
 
 
+def shared_key(request: Request) -> bool:
+    """The caller holds the shared bridge key (app.json: the helpers and coding jobs have it), not the person's own
+    Terminal access token. The work account stays out of its reach, reads included (design 0012)."""
+    from .security import _bearer_token, check_cli_token
+
+    return not check_cli_token(_bearer_token(request))
+
+
+# conversations that read or changed something in the work account: what they say came from the company's files and chats
+_WORK_CONVERSATIONS = ("SELECT DISTINCT conversation_id FROM messages WHERE name LIKE 'work\\_%' ESCAPE '\\'")
+
+
 @router.get("/history")
-def history(q: str = "", limit: int = 12):
-    """Full-text search over past Chat and terminal messages. Used by rooks /history."""
+def history(request: Request, q: str = "", limit: int = 12):
+    """Full-text search over past Chat and terminal messages. Used by rooks /history. With the shared key, never a
+    conversation that used the work account."""
     q = (q or "").strip()
     limit = max(1, min(int(limit or 12), 30))
     if not q:
@@ -84,10 +97,11 @@ def history(q: str = "", limit: int = 12):
                 "FROM messages m JOIN conversations c ON c.id = m.conversation_id "
                 "WHERE m.role IN ('user', 'assistant') AND m.content LIKE ? "
                 "ORDER BY m.id DESC LIMIT ?", f"%{q[:80]}%", limit)
+    hidden = {r["conversation_id"] for r in db.all(_WORK_CONVERSATIONS)} if shared_key(request) else set()
     return {"results": [
         {"conversation_id": r["conversation_id"], "title": r["title"] or "Chat", "channel": r["channel"],
          "role": r["role"], "when": r["created_at"], "snippet": (r["content"] or "")[:280]}
-        for r in rows
+        for r in rows if r["conversation_id"] not in hidden
     ]}
 
 
@@ -198,11 +212,14 @@ def draft_mail(data: DraftMailIn):
 
 
 @router.get("/calendar")
-def calendar_soon():
-    """The next events already on this computer."""
+def calendar_soon(request: Request):
+    """The next events already on this computer. With the shared key, never the work account's calendar."""
     from . import db
 
-    rows = db.all("SELECT title, start FROM events WHERE start >= ? ORDER BY start LIMIT 8", db.now()[:10])
+    work = (" AND COALESCE(c.linked_account_id, 0) != COALESCE((SELECT id FROM linked_accounts WHERE work = 1 ORDER BY id LIMIT 1), -1)"
+            if shared_key(request) else "")
+    rows = db.all("SELECT e.title, e.start FROM events e JOIN calendars c ON c.id = e.calendar_id WHERE e.start >= ?"
+                  + work + " ORDER BY e.start LIMIT 8", db.now()[:10])
     return {"events": [{"title": r["title"], "start": r["start"]} for r in rows]}
 
 
@@ -305,11 +322,9 @@ async def run_turn(data: RunTurnIn, request: Request):
         raise HTTPException(404, "Conversation not found")
     if data.model:
         db.run("UPDATE conversations SET model = ? WHERE id = ?", data.model, data.conversation_id)
-    from .security import _bearer_token, check_cli_token
-
     # The shared bridge key is also held by the helpers and the coding jobs the app starts: a turn it starts gets no
     # work account tools (design 0012). The person's own Terminal access token gets them.
-    shared = not check_cli_token(_bearer_token(request))
+    shared = shared_key(request)
 
     async def events():
         import asyncio
