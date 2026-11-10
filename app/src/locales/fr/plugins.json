@@ -6,8 +6,7 @@
     "turnedOn": "Mode développeur activé : les plugins non signés se chargent.",
     "turnedOff": "Mode développeur désactivé : les plugins non signés ne se chargent plus.",
     "blocked": {
-      "fixed": "Votre licence fixe la composition des plugins : le mode développeur ne peut pas être activé.",
-      "license": "Le mode développeur demande une licence valide sur cette installation."
+      "fixed": "Votre licence fixe la composition des plugins : le mode développeur ne peut pas être activé."
     },
     "forbidden": "Seul le superadmin peut changer le mode développeur.",
     "loadError": "Impossible de lire le mode développeur. Réessayez.",

@@ -6,7 +6,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
  * The install sheet of an unsigned package, against developer mode as the
  * daemon applies it NOW (not the preview's frozen verdict):
  *  - mode off: the sheet says why it will not load, turns the mode on in place
- *    when the licence allows it, and says why not otherwise;
+ *    unless a fixed plugin composition keeps it shut, and then says so;
  *  - Install always asks first, mode on or off (a package installed with the
  *    mode off starts the moment it goes on), and nothing installs without an
  *    explicit yes; the question says whether it will load;
@@ -27,7 +27,7 @@ test('unsigned sheet: developer mode off, on in place, and a confirmation before
   install('AsyncLocalStorage', AsyncLocalStorage);
   install('IS_REACT_ACT_ENVIRONMENT', true);
 
-  type State = { requested: boolean; effective: boolean; available: boolean; blockedBy: 'plugin_composition_fixed' | 'license' | null };
+  type State = { requested: boolean; effective: boolean; available: boolean; blockedBy: 'plugin_composition_fixed' | null };
   let developer: State = { requested: false, effective: false, available: true, blockedBy: null };
   const puts: unknown[] = [];
   install('fetch', async (input: string, init?: RequestInit) => {
@@ -125,12 +125,12 @@ test('unsigned sheet: developer mode off, on in place, and a confirmation before
     await settle();
     assert.deepEqual(asked, ['Install My plugin without a signature?']);
 
-    // The licence keeps the mode shut: no button that cannot work, and the reason.
-    developer = { requested: false, effective: false, available: false, blockedBy: 'license' };
+    // A fixed composition keeps the mode shut: no button that cannot work, and the reason.
+    developer = { requested: false, effective: false, available: false, blockedBy: 'plugin_composition_fixed' };
     await render(preview({ token: 'e'.repeat(48) }));
     await settle();
     assert.equal(button('Turn on developer mode'), undefined);
-    assert.match(notice()?.textContent ?? '', /needs a valid licence/);
+    assert.match(notice()?.textContent ?? '', /fixed plugin composition/);
     assert.ok(button('Open developer mode settings'));
   } finally {
     answerConfirmsForTests(null);

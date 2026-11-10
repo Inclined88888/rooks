@@ -7,7 +7,8 @@
  *
  * The switch shows what the daemon APPLIES (`effective`), never the bare wish:
  * a wish the licence refuses would otherwise read as unsigned code that runs.
- * When the licence keeps it shut, the switch is disabled and says why.
+ * When a fixed plugin composition keeps it shut, the switch is disabled and
+ * says why.
  */
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 import { AlertTriangle } from 'lucide-react';
@@ -53,7 +54,8 @@ export function DeveloperModeSettings(): ReactElement {
 
   const blocked = developerModeBlockedText(state);
   // Off is always reachable: a mode left on under a licence that no longer
-  // admits it must still be switchable off.
+  // admits it, such as one that brought a fixed composition, must still be
+  // switchable off.
   const disabled = saving || (!state.effective && !state.available);
 
   return (

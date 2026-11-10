@@ -4,7 +4,9 @@
  *
  * `requested` is the wish the config holds; `effective` is what the daemon
  * applies, after the licence. Only `effective` may say "on": a wish the licence
- * refuses must never read as unsigned code that runs.
+ * refuses must never read as unsigned code that runs. The only refusal is a
+ * fixed plugin composition (the daemon's `DeveloperModeState` says why): Free
+ * and paid licences both admit developer mode.
  */
 import { fetchCapabilities } from '@/lib/capabilities';
 import { t } from '@/lib/i18n';
@@ -16,7 +18,7 @@ export type DeveloperModeState = {
   effective: boolean;
   /** Turning it on would take effect, licence included. */
   available: boolean;
-  blockedBy: 'plugin_composition_fixed' | 'license' | null;
+  blockedBy: 'plugin_composition_fixed' | null;
 };
 
 /** Where the switch lives: Settings › Plugins › Developer mode. */
@@ -65,9 +67,7 @@ export async function setDeveloperMode(enabled: boolean): Promise<DeveloperModeS
 
 /** Why the switch cannot be turned on, or `null` when it can. */
 export function developerModeBlockedText(state: DeveloperModeState): string | null {
-  if (state.blockedBy === 'plugin_composition_fixed') return t('developerMode.blocked.fixed');
-  if (state.blockedBy === 'license' || !state.available) return t('developerMode.blocked.license');
-  return null;
+  return state.blockedBy === 'plugin_composition_fixed' ? t('developerMode.blocked.fixed') : null;
 }
 
 function unsignedChild(child: BundleChildPreview): boolean {

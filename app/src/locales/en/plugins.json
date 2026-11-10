@@ -6,8 +6,7 @@
     "turnedOn": "Developer mode is on: unsigned plugins now load.",
     "turnedOff": "Developer mode is off: unsigned plugins no longer load.",
     "blocked": {
-      "fixed": "Your licence includes a fixed plugin composition, so developer mode cannot be turned on.",
-      "license": "Developer mode needs a valid licence on this installation."
+      "fixed": "Your licence includes a fixed plugin composition, so developer mode cannot be turned on."
     },
     "forbidden": "Only the superadmin can change developer mode.",
     "loadError": "Developer mode could not be read. Try again.",

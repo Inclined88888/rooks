@@ -4,8 +4,8 @@
  * What the install sheet says when the package (or a child of the bundle)
  * is unsigned and developer mode is off: why it will not load, and the two
  * ways out — turn the mode on right here, or open the switch in Settings.
- * When the licence keeps the mode shut, it says that instead of offering a
- * button that cannot work.
+ * When a fixed plugin composition keeps the mode shut, it says that instead of
+ * offering a button that cannot work.
  */
 import type { ReactElement } from 'react';
 import { ShieldAlert } from 'lucide-react';
