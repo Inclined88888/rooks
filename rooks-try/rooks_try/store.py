@@ -35,11 +35,25 @@ def work_dir() -> Path:
 
 # The marker carries the terminal's own nonce (ROOKS_MARK, set by the app for each terminal), kept in an unexported
 # variable so a program the shell starts does not see it: what a command prints cannot pass for the end of a command.
+# On Windows (Git Bash on a pseudo console, which may drop the in-band marker) the app also gives ROOKS_MARK_PIPE, a
+# named pipe only the person can open: the marker then carries a count, and the same line goes to the pipe.
 PROFILE = """# Rooks put this here so tools you install in the Room are found. Edit it as you like.
 PATH="$HOME/.local/bin:$HOME/bin:$HOME/.cargo/bin:$PATH"; export PATH
 __rooks_mark="${ROOKS_MARK:-}"; unset ROOKS_MARK
+__rooks_pipe="${ROOKS_MARK_PIPE:-}"; unset ROOKS_MARK_PIPE
 if [ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc"; fi
-if [ -n "$BASH_VERSION" ]; then PROMPT_COMMAND='printf "\\033]7777;%s;%s\\007" "$?" "$__rooks_mark"'"${PROMPT_COMMAND:+;$PROMPT_COMMAND}"; fi
+__rooks_prompt() {
+  __rooks_rc=$?
+  if [ -n "$__rooks_pipe" ]; then
+    __rooks_n=$((${__rooks_n:-0}+1))
+    printf '\\033]7777;%s;%s;%s\\007' "$__rooks_rc" "$__rooks_mark" "$__rooks_n"
+    printf '%s;%s;%s\\n' "$__rooks_rc" "$__rooks_mark" "$__rooks_n" 2>/dev/null >"//./pipe/$__rooks_pipe"
+  else
+    printf '\\033]7777;%s;%s\\007' "$__rooks_rc" "$__rooks_mark"
+  fi
+  return $__rooks_rc
+}
+if [ -n "$BASH_VERSION" ]; then PROMPT_COMMAND='__rooks_prompt'"${PROMPT_COMMAND:+;$PROMPT_COMMAND}"; fi
 """
 ZPROFILE = """# Rooks put this here so tools you install in the Room are found. Edit it as you like.
 PATH="$HOME/.local/bin:$HOME/bin:$HOME/.cargo/bin:$PATH"; export PATH
@@ -52,7 +66,13 @@ _SEEDED_BEFORE = {
 PATH="$HOME/.local/bin:$HOME/bin:$HOME/.cargo/bin:$PATH"; export PATH
 if [ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc"; fi
 if [ -n "$BASH_VERSION" ]; then PROMPT_COMMAND='printf "\\033]7777;%s\\007" "$?"'"${PROMPT_COMMAND:+;$PROMPT_COMMAND}"; fi
-""",),
+""",
+                 """# Rooks put this here so tools you install in the Room are found. Edit it as you like.
+PATH="$HOME/.local/bin:$HOME/bin:$HOME/.cargo/bin:$PATH"; export PATH
+__rooks_mark="${ROOKS_MARK:-}"; unset ROOKS_MARK
+if [ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc"; fi
+if [ -n "$BASH_VERSION" ]; then PROMPT_COMMAND='printf "\\033]7777;%s;%s\\007" "$?" "$__rooks_mark"'"${PROMPT_COMMAND:+;$PROMPT_COMMAND}"; fi
+"""),
     ".zprofile": ("""# Rooks put this here so tools you install in the Room are found. Edit it as you like.
 PATH="$HOME/.local/bin:$HOME/bin:$HOME/.cargo/bin:$PATH"; export PATH
 precmd() { printf "\\033]7777;%s\\007" "$?"; }

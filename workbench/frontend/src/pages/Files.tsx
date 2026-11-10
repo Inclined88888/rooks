@@ -7,6 +7,7 @@ import { Badge, Button, Card, EmptyState, ErrorState, IconButton, Input, List, L
 import { Markdown, relTime, useToast } from "../util";
 import { Busy, Notice, plainError, Split } from "./day/parts";
 import { download } from "../desktop";
+import WorkFiles from "./WorkFiles";
 
 type WorkFile = { id: number; name: string; kind: string; size: number; summary: string; source: string; notes: string[]; created_at: string };
 type Chunk = { loc: string; text: string };
@@ -46,6 +47,7 @@ function HelperApps({ initial }: { initial?: Helpers }) {
   );
 }
 
+const FROM: Record<string, string> = { onedrive: "from OneDrive", sharepoint: "from SharePoint", gdrive: "from Google Drive" };
 const KB = (n: number) => (n > 1 << 20 ? `${(n / (1 << 20)).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const fmt = (v: unknown) => (typeof v === "number" ? v.toLocaleString(undefined, { maximumFractionDigits: 2 }) : String(v ?? ""));
 
@@ -134,6 +136,7 @@ export default function Files() {
   const [code, setCode] = useState("df = pd.read_csv('inputs/' + INPUTS[0]) if INPUTS else None\nprint(df.describe() if df is not None else 'Add a file first')");
   const [run, setRun] = useState<RunResult | null>(null);
   const [caps, setCaps] = useState<Caps | null>(null);
+  const [shelf, setShelf] = useState<"mine" | "work">("mine");  // design 0012: files here, or from OneDrive and SharePoint
   const toast = useToast();
   const pick = useRef<HTMLInputElement>(null);
   const pickDir = useRef<HTMLInputElement>(null);
@@ -209,7 +212,7 @@ export default function Files() {
         <List label="Files">
           {list.map((f) => (
             <Row key={f.id} active={sel?.id === f.id} onClick={() => void open(f.id)} title={f.name}
-              meta={`${f.kind} · ${KB(f.size)} · ${f.source.startsWith("site:") ? "from a site" : relTime(f.created_at)}`}
+              meta={`${f.kind} · ${KB(f.size)} · ${f.source.startsWith("site:") ? "from a site" : FROM[f.source] ?? relTime(f.created_at)}`}
               actions={<IconButton label={`Remove ${f.name}`} size="sm" onClick={() => void remove(f.id)}><Trash2 size={14} /></IconButton>} />
           ))}
         </List>
@@ -307,6 +310,10 @@ export default function Files() {
       description="Drop in anything: spreadsheets, Word, PDFs, slides, emails, zips, photos, data or code. It is read on this computer; only the text you ask about goes to your model."
       actions={<Button variant="primary" icon={<Upload size={15} />} onClick={choose}>Add files</Button>}>
       <SurfaceNote />
+      <div className="day-tabs-row">
+        <Tabs label="Which files" value={shelf} onChange={(v) => setShelf(v as typeof shelf)} items={[{ id: "mine", label: "Your files" }, { id: "work", label: "From work" }]} />
+      </div>
+      {shelf === "work" ? <WorkFiles onSaved={(id) => { setShelf("mine"); void load().then(() => open(id)); }} /> : <>
       <HelperApps initial={caps?.helpers} />
       <MakeImage onMade={(id) => { void load(); void open(id); }} onError={toast.err} />
       <div className={`day-drop${over ? " is-over" : ""}`} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={onDrop}
@@ -322,6 +329,7 @@ export default function Files() {
         ? <EmptyState icon={<FileText size={24} />} title="No files yet" line="Anything you drop in shows here." action={<Button icon={<Upload size={14} />} onClick={choose}>Choose files</Button>} />
         : <Split label="Files" picked={!!sel} list={listPane} main={mainPane} />}
       {missing.length > 0 && <p className="day-hint day-caps">Not installed on this computer, so some files are read with less detail: {missing.join(", ")}.</p>}
+      </>}
     </Page>
   );
 }

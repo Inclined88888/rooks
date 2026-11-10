@@ -22,7 +22,29 @@ export type RoomTerminal = {
   /** The person took Rooks's terminal (from the tail; status may carry it too). */
   taken?: boolean;
   shell?: string | null;
+  /** Which shell it is ("powershell", "bash", "zsh", "sh"), so the right kind of command is typed (design 0011). */
+  shell_kind?: string | null;
 };
+
+/** The kinds of terminal a Room on Windows offers (design 0011, section 1). Elsewhere it is the person's own shell. */
+export type TerminalShell = "powershell" | "bash";
+export const TERMINAL_SHELLS: TerminalShell[] = ["powershell", "bash"];
+
+/** A shell's plain name: PowerShell, Git Bash, or the shell's own name elsewhere. */
+export function shellName(kind: string | null | undefined): string {
+  if (kind === "powershell") return "PowerShell";
+  if (kind === "bash") return "Git Bash";
+  return kind || "";
+}
+
+/** The New terminal menu on Windows, beside the button (which opens PowerShell). */
+export const KINDS_LABEL = "Choose a kind of terminal";
+/** Advanced, on Windows: what a terminal reads when it starts. */
+export const WINDOWS_PROFILE_LINE =
+  "PowerShell reads the Room's own profile, Documents\\PowerShell\\profile.ps1 in the Room's folder, when you make one. Git Bash reads the Room's ~/.profile.";
+/** Advanced, on Windows: how the end of a command reaches Rooks (design 0011, section 1). */
+export const WINDOWS_MARKER_LINE =
+  "After each command the shell tells Rooks how it ended through a private channel that only your account can open. A program running as you could write to it too.";
 
 /** GET /api/room/status (section 8). `driver` and `home` are for the Advanced view only. */
 export type RoomStatus = WatchStatus & {
@@ -33,16 +55,22 @@ export type RoomStatus = WatchStatus & {
   /** terminal_off_reason: why there is no terminal ("switched_off" in Settings, "helper" mode, "windows"), or null. */
   can?: {
     terminal?: boolean; files?: boolean; terminal_off_reason?: "switched_off" | "helper" | "windows" | null;
+    /** design 0011: on Windows, the kinds of terminal offered (PowerShell, and Git Bash when Git for Windows is there). */
+    terminal_shells?: string[] | null;
     /** design 0007: the Room's own browser here, and why not. */
     browser?: boolean; browser_off_reason?: string | null;
     /** Rooks can run commands in the Room (the assistant is offered use_room run): a real Room, never a drawing. */
     run?: boolean;
+    /** design 0011: when IT switched the browser off, the words naming that browser; and what Edge may do on a work PC. */
+    browser_off_words?: string | null; browser_advanced?: string | null;
   } | null;
   /** The kind's own exact label, for Advanced only (label is the plain one). */
   label_detail?: string;
   /** design 0007: whether the Room's browser is open, and its tabs (the saved ones while it is closed). */
   browser?: { open?: boolean; tabs?: { id: string; url?: string | null; title?: string | null; asleep?: boolean }[] } | null;
   isolation?: string;
+  /** design 0011, section 3: "job" on Windows (every Room program is in a job: they stop together; not a wall). */
+  containment?: string;
   driver?: string | null;
   home?: string | null;
   offline?: boolean;
@@ -56,6 +84,9 @@ export { roomScreenLive };
 
 /** Honesty rule 2: the pane says what a private folder and shell is. */
 export const HONEST_LINE = "Commands run as you, in a folder of its own. It is not a locked off computer.";
+/** On Windows (design 0011, section 3): every Room program is in a job, so they stop together. A job is not a wall. */
+export const WINDOWS_HONEST_LINE =
+  "Commands run as you, in a folder of its own. Windows keeps them together, so they all stop when the Room stops. It is not a locked off computer: they can read and change your files.";
 /** A service that does not have the Room's route at all (an older install). */
 export const NOT_HERE_LINE = "Not on this computer yet.";
 /** The longest a command may run in the Room, in seconds (the service caps it at the same number). */
@@ -94,9 +125,21 @@ export function roomBarWord(s: Pick<RoomStatus, "available" | "running"> & { che
 }
 
 /** The line under the command view: the honest line for a folder and shell, the driver's own note for a separate computer. */
-export function commandViewLine(s: Pick<RoomStatus, "isolation" | "note"> | null | undefined): string {
+export function commandViewLine(s: Pick<RoomStatus, "isolation" | "note" | "containment"> | null | undefined): string {
   if (s?.isolation === "vm") return (s.note || "").trim() || "A separate computer. Commands run inside it, apart from your files.";
-  return HONEST_LINE;
+  return s?.containment === "job" ? WINDOWS_HONEST_LINE : HONEST_LINE;
+}
+
+/**
+ * Advanced, on Windows (design 0011, section 3): what keeps the Room's programs together, and what it does not do.
+ * Offline there is only a proxy that answers nothing, so it is said to be a closed door, not a wall.
+ */
+export function containmentLine(offline: boolean): string {
+  const line =
+    "Windows holds every program the Room starts in one group, so they all stop when the Room stops or Rooks closes, and its terminals and commands may not use your clipboard. " +
+    "That group is not a wall: they run with your Windows sign-in, so they can read and change your files and settings, reach the network, and open what Windows keeps for you, such as the sign-ins saved in the Room's browser. " +
+    "The Room points programs at its own folders for settings and temporary files, but a program that asks Windows where your folders are will still find your own.";
+  return offline ? `${line} Offline, the Room points its programs at a closed door, not a wall: one that ignores it can still reach the network.` : line;
 }
 
 /** The honest line while Rooks can run commands in the Room and terminals are off: short and plain. */
@@ -107,7 +150,7 @@ export const RUN_LINE = "Rooks works here as you, in a folder of its own.";
  * says how they run: with terminals on (a developer tool) the full line, else RUN_LINE while Rooks can run commands
  * there (can.run: use_room run is offered); a separate computer says what it is. Nothing can run there: no line.
  */
-export function dockLine(s: (Pick<RoomStatus, "isolation" | "note"> & { can?: { terminal?: boolean; run?: boolean } | null }) | null | undefined): string {
+export function dockLine(s: (Pick<RoomStatus, "isolation" | "note" | "containment"> & { can?: { terminal?: boolean; run?: boolean } | null }) | null | undefined): string {
   const terminals = s?.can?.terminal === true;
   if (!terminals && s?.can?.run !== true) return "";
   if (s?.isolation === "vm") return commandViewLine(s);

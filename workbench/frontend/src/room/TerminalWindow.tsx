@@ -14,13 +14,13 @@
  * Every key in the terminal goes to the shell, Escape included; F6 is the one key the pane keeps, to leave it.
  */
 import type { Terminal } from "@xterm/xterm";
-import { Plus, Power, SquareTerminal, X } from "lucide-react";
+import { ChevronDown, Plus, Power, SquareTerminal, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { motionLevel } from "../motion";
 import { Shell, type Phase } from "../terminal/Shell";
-import { Button, EmptyState, Input, useToast } from "../ui";
+import { Button, EmptyState, Input, Menu, useToast } from "../ui";
 import {
   afterClose, leavesTerminal, phoneKey, pickActive, plainTail, RECONNECT_TRIES, skipTarget, tabKey, terminalsFull, terminalsSwitchedOff, toTermText, withCtrl,
   type PhoneKey,
@@ -32,8 +32,8 @@ import {
   setPaneWords, useTerms,
 } from "./terms";
 import {
-  closeWords, doneWords, elapsedWords, ENDED_SHORT, endedLine, fullLine, offLine, offStartLine, OPENING_LINE, PICKED_UP_LINE, ROOKS_STARTED_LINE, ROOKS_WORKING_LINE,
-  STARTING_OVER_LINE, tailLine, terminalLabel, type RoomTerminal,
+  closeWords, doneWords, elapsedWords, ENDED_SHORT, endedLine, fullLine, KINDS_LABEL, offLine, offStartLine, OPENING_LINE, PICKED_UP_LINE, ROOKS_STARTED_LINE,
+  ROOKS_WORKING_LINE, shellName, STARTING_OVER_LINE, tailLine, terminalLabel, type RoomTerminal, type TerminalShell,
 } from "./words";
 
 const enc = encodeURIComponent;
@@ -213,8 +213,8 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
     return () => window.clearTimeout(h);
   }, [active, hinted]);
 
-  const open = async () => {
-    const r = await act.newTerminal();
+  const open = async (shell?: TerminalShell) => {
+    const r = await act.newTerminal(shell);
     if (r?.id) window.setTimeout(() => focusTerminal(r.id || null), 300);
   };
   const close = async (t: RoomTerminal) => {
@@ -349,11 +349,20 @@ export function TerminalWindow({ status, act, slot, bare = false, stale = false 
     );
   }
 
+  // On Windows New terminal opens PowerShell; with Git for Windows a menu beside it offers both kinds (design 0011).
+  const kindsOff = full || !status.running || off;
   const verbs = (
-    <Button ref={newRef} size="sm" variant="secondary" icon={<Plus size={13} />} busy={act.busy === "terminal"}
-      disabled={full || !status.running || off}
-      title={full ? fullLine(status.terminal_max) : !status.running ? "Start the Room first" : "Open another shell in the Room. The ones already open keep running."}
-      onClick={() => void open().catch((e) => toast.err(e))}>New terminal</Button>
+    <>
+      <Button ref={newRef} size="sm" variant="secondary" icon={<Plus size={13} />} busy={act.busy === "terminal"}
+        disabled={kindsOff}
+        title={full ? fullLine(status.terminal_max) : !status.running ? "Start the Room first" : "Open another shell in the Room. The ones already open keep running."}
+        onClick={() => void open().catch((e) => toast.err(e))}>New terminal</Button>
+      {status.can.terminal_shells.length > 1 && !kindsOff && (
+        <Menu label={KINDS_LABEL} icon={<ChevronDown size={14} />} items={(status.can.terminal_shells as TerminalShell[]).map((k) => ({
+          id: k, label: shellName(k), onSelect: () => void open(k).catch((e) => toast.err(e)),
+        }))} />
+      )}
+    </>
   );
   const label = ui.remote ? tailLine() : terminalLabel();
 

@@ -7,6 +7,8 @@ import { todayISO, useModels, useToast } from "../util";
 import { ModelPicker, plainError } from "./day/parts";
 
 const PRIO = ["None", "Low", "Medium", "High"];
+/** design 0012: tasks that live in Planner, To Do or Google Tasks too. A change to one waits for your yes in Needs you. */
+const ORIGIN: Record<string, string> = { planner: "Planner", todo: "To Do", gtasks: "Google Tasks" };
 
 function TaskRow({ task, onChange, onDelete }: { task: Task; onChange: (t: Task) => void; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
@@ -16,10 +18,21 @@ function TaskRow({ task, onChange, onDelete }: { task: Task; onChange: (t: Task)
   const today = todayISO();
   const done = task.status === "done";
 
+  const where = task.origin ? ORIGIN[task.origin] : "";
+  /** A task in Planner, To Do or Google Tasks changes there only after your yes in Needs you, like everything Rooks sends out. */
+  const ask = async (args: { done?: boolean; due?: string; title?: string }) => {
+    try {
+      const r = await api<{ title: string; already_asked: boolean }>("/work/hold", { body: { tool: "work_task_update", args: { task: String(task.id), ...args } } });
+      toast.ok(r.already_asked ? "That is already waiting for your OK in Needs you" : `Waiting for your OK in Needs you: ${r.title}`);
+    } catch (e) { toast.err(e); }
+  };
   const patch = async (body: Partial<Task> & { clear_due?: boolean }) => {
+    if (where && body.status) { void ask({ done: body.status === "done" }); return; }
     try { onChange(await api<Task>(`/tasks/${task.id}`, { method: "PATCH", body })); } catch (e) { toast.err(e); }
   };
-  const save = () => patch({ title: draft.title, notes: draft.notes, priority: draft.priority, project: draft.project, ...(draft.due ? { due: draft.due } : { clear_due: true }) });
+  const save = () => where
+    ? ask({ ...(draft.title !== task.title ? { title: draft.title } : {}), ...(draft.due && draft.due !== task.due ? { due: draft.due } : {}) })
+    : patch({ title: draft.title, notes: draft.notes, priority: draft.priority, project: draft.project, ...(draft.due ? { due: draft.due } : { clear_due: true }) });
   const late = !done && !!task.due && task.due < today;
 
   return (
@@ -36,6 +49,7 @@ function TaskRow({ task, onChange, onDelete }: { task: Task; onChange: (t: Task)
         <span className="day-task-tags">
           {task.priority > 0 && <span className={`day-prio is-${task.priority}`} title={`${PRIO[task.priority]} priority`}><Flag size={13} aria-hidden="true" /><span className="sr-only">{PRIO[task.priority]} priority</span></span>}
           {task.project && <Badge>{task.project}</Badge>}
+          {where && <Badge title={`Also in ${where}`}>{where}</Badge>}
           {task.due && <Badge tone={late ? "danger" : task.due === today && !done ? "warn" : "neutral"}>{task.due === today ? "Today" : task.due}</Badge>}
           <ChevronDown size={14} aria-hidden="true" className={`day-task-chev${open ? " is-open" : ""}`} />
         </span>
@@ -54,8 +68,9 @@ function TaskRow({ task, onChange, onDelete }: { task: Task; onChange: (t: Task)
               <option value="todo">To do</option><option value="doing">In progress</option><option value="done">Done</option>
             </Select>
           </div>
+          {where && <p className="day-hint">This task is in {where}. A change there waits for your yes in Needs you.</p>}
           <div className="day-form-foot">
-            <Button variant="danger" size="sm" icon={<Trash2 size={14} />} onClick={onDelete}>Delete</Button>
+            {!where && <Button variant="danger" size="sm" icon={<Trash2 size={14} />} onClick={onDelete}>Delete</Button>}
             <Button variant="primary" size="sm" onClick={async () => { await save(); setOpen(false); }}>Save</Button>
           </div>
         </div>
@@ -86,6 +101,10 @@ export default function Tasks() {
 
   const load = () => {
     setProblem("");
+    // Planner and To Do (or Google Tasks) join the list when the work account's Tasks switch is on (design 0012); a
+    // failure leaves the rest
+    api<Record<string, number>>("/work/tasks/sync", { method: "POST" })
+      .then(() => api<Task[]>("/tasks").then(setTasks)).catch(() => undefined);
     return loadCached("tasks", () => api<Task[]>("/tasks")).then(setTasks).catch((e) => setProblem(plainError(e, "Your tasks did not load."))).finally(() => setLoaded(true));
   };
   useEffect(() => {

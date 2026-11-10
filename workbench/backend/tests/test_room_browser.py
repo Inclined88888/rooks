@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[3] / "rooks-try"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="the Room's browser is not on Windows yet")
+# On Windows these run too (design 0011, section 5.3): the windows-2022 job starts Chrome over its pipe through the app.
 ORIGIN = {"origin": "http://testserver"}
 
 PAGE = """<!doctype html><title>Test page</title>
@@ -248,9 +248,41 @@ def test_status_says_whether_the_room_has_a_browser_and_why_not(client, room_hom
     finally:
         db.set_setting("room_browser", "1")
 
+
+
+def test_on_windows_the_browser_is_there_unless_the_organisation_switched_it_off(client, room_home, monkeypatch):
+    """Design 0011, section 2: Windows has the Room's browser over its pipe, so status no longer says "windows". When IT
+    policy switches remote debugging off for the engine found, the reason is "policy", the words name that browser and
+    send the person to their IT team, and opening it is refused (nothing tries another engine to get around it)."""
+    from app import room_browser
+    from rooks_try import browser as rb
+
+    edge = rb.Engine(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", "edge")
     monkeypatch.setattr(room_browser, "_platform", lambda: "win32")
+    monkeypatch.setattr(room_browser, "_engine", lambda: edge)
+    monkeypatch.setattr(rb, "policy_off", lambda engine, read=None: False)
+    monkeypatch.setattr(rb, "work_pc", lambda read_keys=None: False)
+    room_browser._POLICY = None
     can = _status(client)["can"]
-    assert can["browser"] is False and can["browser_off_reason"] == "windows"
+    assert can["browser"] is True and can["browser_off_reason"] is None, can
+    assert "browser_advanced" not in can
+
+    monkeypatch.setattr(rb, "work_pc", lambda read_keys=None: True)  # a PC joined to a work account, with Edge
+    room_browser._POLICY = None
+    can = _status(client)["can"]
+    assert can["browser_advanced"] == "On a work PC, Edge may sign in to work sites as you through Windows."
+
+    started = []
+    monkeypatch.setattr(room_browser, "_start", lambda *a, **k: started.append(a))
+    monkeypatch.setattr(rb, "policy_off", lambda engine, read=None: engine.kind == "edge")
+    room_browser._POLICY = None
+    can = _status(client)["can"]
+    assert can["browser"] is False and can["browser_off_reason"] == "policy", can
+    assert can["browser_off_words"] == "Your organisation has switched this off in Edge. Ask your IT team."
+    r = client.post("/api/room/browser/open", json={"address": "https://example.com"})
+    assert r.status_code == 403, r.text
+    assert r.json()["detail"] == "Your organisation has switched this off in Edge. Ask your IT team."
+    assert not started
 
 
 def test_a_helpers_room_has_no_browser_here(client, room_home, monkeypatch):
@@ -420,6 +452,42 @@ def test_a_browser_that_cannot_tell_where_the_app_is_does_not_start(client, on, 
         asyncio.run(room_browser.ensure())
     assert e.value.detail == room_browser.APP_UNKNOWN
     assert "port" not in e.value.detail.lower() and room_browser.session() is None
+
+
+@pytest.mark.parametrize("reason", ["no_engine", "refused", "wall"])
+def test_a_browser_that_did_not_start_says_why_with_the_detail_under_advanced(client, on, monkeypatch, reason):
+    """Not only "could not start": the window, the terminal and the run log say why in plain words (no browser found, the
+    browser refused to start, the wall could not be set up); what was run and what it printed is kept for Advanced only.
+    A start that works clears it."""
+    from app import db, room_browser
+    from rooks_try import browser as rb
+
+    detail = {"no_engine": "No program at /x/chrome (system).",
+              "refused": "Exit code: 7\nLast output:\nchrome: Missing X server",
+              "wall": "Exit code: 1\nLast output:\nbwrap: setting up uid map: Permission denied"}[reason]
+
+    class _Refuses(_FakeSession):
+        def start(self):
+            raise rb.StartError(reason, detail)
+
+    monkeypatch.setattr(room_browser, "_engine", lambda: rb.Engine("/x/chrome", "system"))
+    monkeypatch.setattr(room_browser, "_new_session", lambda *a, **k: _Refuses())
+    room_browser.reset_for_tests()
+    r = client.post("/api/room/browser/start")
+    assert r.status_code == 500
+    words = r.json()["detail"]
+    assert words == rb.START_WORDS[reason] and words != room_browser.DID_NOT_START
+    assert "bwrap" not in words and "Exit code" not in words and "/x/chrome" not in words
+    failed = {"reason": reason, "words": words, "advanced": detail}
+    assert client.get("/api/room/browser").json()["failed"] == failed
+    assert client.get("/api/room/status").json()["browser"]["failed"] == failed
+    r = client.post("/api/room/browser/open", json={"address": "example.com"})  # the rooks terminal's route
+    assert r.status_code == 500 and r.json()["detail"] == words
+    row = db.one("SELECT detail FROM actions WHERE tool = 'use_room' AND args LIKE '%open browser%' ORDER BY id DESC LIMIT 1")
+    assert row and row["detail"] == words
+    monkeypatch.setattr(room_browser, "_new_session", lambda *a, **k: _FakeSession())
+    assert client.post("/api/room/browser/start").status_code == 200
+    assert client.get("/api/room/browser").json()["failed"] is None
 
 
 def test_every_request_to_the_app_tells_the_browser_its_port(client, on, monkeypatch):

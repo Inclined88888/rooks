@@ -67,7 +67,7 @@ def test_an_install_that_switched_them_on_keeps_them_on(client, fresh):
     fresh.set_setting("room_browser", "1")
     s = client.get("/api/settings").json()
     assert s["app_terminal"] is True and s["room_browser"] is True
-    assert terminal_pty.enabled() is (__import__("sys").platform != "win32")
+    assert terminal_pty.enabled() is terminal_pty.available()  # Windows too, on a pseudo console (design 0011)
     assert room_browser.enabled() is True
     # and switched off again through Settings, off is stored
     assert client.put("/api/settings", json={"app_terminal": False, "room_browser": False}).json()["app_terminal"] is False

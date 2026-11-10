@@ -241,6 +241,227 @@ migrate. Rollback: revert the branch's commits (the built `dist` is committed wi
     `premium-foundation`, `brand-mark` and `workroom-shell` tests were updated where the spec changes what they guard
     (palette, type scale, radius and shadow values, the two new motions, the door colour).
 
+## Unreleased · Windows and the work suites · branch feat/windows
+
+Design records `docs/design/0011-windows.md` (Windows on a par with macOS and Linux) and
+`docs/design/0012-work-suites.md` (Microsoft 365 and Google Workspace). No schema change in the entries below, except
+the work account (schema version 6, its own entry). Rollback: revert the commits.
+
+Merged into `release/1.1` on top of the industrial redesign and the Room for workplace teams: the Windows terminals and
+the Room's browser on Windows follow the owner's rule from `feat/room-pro`. On Windows too, the Room's Terminal and
+Browser (and the app's own Terminal page) are off on a new install and appear only with "Show developer tools" on; the
+New terminal menu (PowerShell, Git Bash) shows only while terminals are on, and Advanced on a Windows Room names the
+group that keeps its programs together even while terminals are off. The Work apps page, Files from work, the Teams
+and Google Meet transcript sheet, the held work change in Needs you (a list of square lines with a hairline edge, the
+word in mono micro-label caps) and the Room browser's start detail use the industrial tokens: no radius, no shadow, no
+gradient.
+
+- **Terminals in the Room on Windows** (design 0011, section 1). On Windows 10 1809 and later the Room's Terminal window
+  works as it does on macOS and Linux: New terminal opens PowerShell (PowerShell 7 when installed, else Windows
+  PowerShell), and when Git for Windows is there a menu beside it offers Git Bash. A terminal keeps running when you
+  leave the page, shows its text again when you come back, says when a program is running and how the last command
+  ended, closes with code 129, and ends everything it started. Four at most, as elsewhere; Stop and Start over close
+  them; after a restart they are listed as ended with their text. Terminals Rooks opens use Git Bash when it is there
+  (as a quick command does), else PowerShell; each terminal and each result says which (`shell_kind`), so the assistant
+  writes the right kind of command. The app's own Terminal page is PowerShell too. Underneath: a pseudo console
+  (ConPTY) and a job object per terminal (`rooks-try/rooks_try/winproc.py`, plain `ctypes`), the shell in its job from
+  its first instruction. PowerShell gets the Room's profile as a command, so there is never an execution policy bypass
+  or an encoded command; it reads the Room's own `Documents\PowerShell\profile.ps1` when you make one. On Windows every
+  line sent from the phone row or `/room send` is recorded in the run log by its length only (Windows cannot say from
+  outside whether a terminal is waiting for a password). How a command ended reaches Rooks in the terminal's output and
+  through a private channel only your account can open (Advanced says so); on the windows-2022 runner both arrived.
+  Older Windows says "This version of Windows is too old for terminals in the Room." Tests that failed on the old code
+  (on windows-2022, commit 1703d0e): `rooks-try/tests/test_winproc.py` (could not import `winproc`) and all ten in
+  `workbench/backend/tests/test_room_terminal_windows.py` ("Terminals are switched off in Settings."), plus
+  `workbench/frontend/tests/room-windows.test.mjs` (four, locally). CI: a new job "Windows: Room terminals" in
+  `ci.yml`, and CI now also runs on pushes to `feat/windows`. Not tested: a real Windows 10 or 11 PC (the runner is
+  Server 2022), Windows on Arm, ConPTY before build 20348, PowerShell's constrained language mode, AppLocker or WDAC,
+  and a bundled `conpty.dll`/`OpenConsole.exe` (not shipped yet; Windows' own ConPTY is used).
+- **The Room's browser on Windows** (design 0011, section 2). The Browser window in the Room now works on Windows: it
+  uses Google Chrome when installed, else Microsoft Edge (which every Windows 10 and 11 has), only as an engine, with
+  the Room's own profile in the Room's folder, never your own browser profile, sign-ins or extensions. You see and use
+  it the same way as on macOS and Linux (the live picture, clicks, typing, tabs, downloads into the Room's Downloads,
+  the phone's still and taps), and the `rooks` terminal's `/room browse` and the assistant use it too. Rooks starts the
+  browser itself and talks to it over a private pipe, never a network port, and keeps every one of its processes
+  together so they all stop when it closes. If your organisation has switched this off in Edge or Chrome, the window
+  says "Your organisation has switched this off in Edge. Ask your IT team." and Rooks does not try another way around
+  it. Pages cannot open files outside the Room or files on other computers (a shared folder would be sent your Windows
+  sign-in). On a PC joined to a work account, Advanced says that Edge may sign in to work sites as you through Windows.
+  A download you let leave the Room keeps Windows' mark that it came from the internet, so SmartScreen and Office
+  still check it. The Room's status no longer says "The Room's browser is not on Windows yet." Tests that failed on the
+  old code on windows-2022 (run 42551257253, commit 907069e): `rooks-try/tests/test_browser_windows.py` (find_engine
+  found nothing on a runner with Chrome and Edge; no pipe block, policy check or Windows file rules), and the Mark of
+  the Web hand-off (run 42552146711); locally `workbench/backend/tests/test_room_browser.py` (policy and the Windows
+  status) and `workbench/frontend/tests/room-browser.test.mjs` (the policy words). CI: the job is now "Windows:
+  terminals and browser" and also runs the app's Room browser tests on Windows with Chrome; on windows-2022 Edge and
+  Chrome start over the pipe, show a local page, send a frame, take a click, keep every process in the job with no
+  listening port, and leave the job empty on close (run 42553967635). What the job cannot do on Windows: hold the
+  clipboard and other desktop settings back (Chromium's own sandbox does not start under those limits; pages still get
+  no permission to read the clipboard). Not tested: Edge or Chrome
+  under a real organisation's policies (the test sets the policy value itself), sign-in through a work account (no
+  work tenant), a real Windows 10 or 11 PC, Windows on Arm, and the packaged desktop app starting the browser on
+  Windows.
+- **On Windows the Room's programs are kept together, and the Room says what that is** (design 0011, section 3). Every
+  program the Room starts on Windows (each terminal, each quick command and the Room's browser) now runs in a group
+  Windows keeps together (a job), inside one group for the whole Room. Stopping the Room ends them all, and so does
+  Rooks ending, however it ends. Terminals and quick commands may not read or change your clipboard, use other
+  programs' windows, or change system or display settings. A quick command now runs with no window and, when it ends
+  or runs out of time, nothing it started keeps running; before, a command that ran out of time could leave its
+  programs running and never come back. The Room's programs keep their settings and temporary files in the Room
+  (`APPDATA`, `LOCALAPPDATA`, `TEMP`, `TMP`). None of this is a wall, and the Room says so: the line under the
+  commands reads "Commands run as you, in a folder of its own. Windows keeps them together, so they all stop when the
+  Room stops. It is not a locked off computer: they can read and change your files.", the badge still says "Not locked
+  off", and Advanced says they run with your Windows sign-in, can reach the network and what Windows keeps for you,
+  and that a program asking Windows for your folders still finds your own (offline: "a closed door, not a wall").
+  Status gains `containment` (`"job"` on Windows, `"none"` elsewhere); `isolation` stays `"none"`. The rooks terminal
+  shows the same note. Tests that failed on the old code on windows-2022 (run 42556804352, commit bac1a85):
+  `rooks-try/tests/test_room_job_windows.py` (a command that ran out of time never came back; a command kept running
+  after the Room stopped; a program the Room started outlived the app; a Room command read the clipboard; no Room job;
+  no `containment`; `APPDATA` still the person's) and the Room-job check in `test_browser_windows.py`; locally
+  `workbench/backend/tests/test_room.py::test_status_says_how_the_rooms_programs_are_kept_together` and two in
+  `workbench/frontend/tests/room-windows.test.mjs`. They pass on windows-2022 (run 42557685550).
+- **A Windows setup that installs for you alone and leaves nothing behind** (design 0011, section 4). The
+  `-setup.exe` installs into `%LOCALAPPDATA%\Rooks` with no administrator prompt and a Start menu entry named Rooks
+  with the Rooks icon. It puts a shortcut on the desktop only when you tick the box (it starts unticked; a silent
+  install makes none unless given `/DESKTOP`). Rooks does not start with Windows. It carries the Microsoft Edge WebView2
+  installer and uses it only when the PC lacks WebView2; if that fails it says "Rooks needs Microsoft Edge WebView2. Ask
+  your IT team to install it." The setup's other words are plain too. Removing Rooks now also removes the window's
+  saved data and the logs, the place the setup remembered its folder, and copies of the backend left in the temporary
+  folder. Your chats, keys and Room are kept unless you tick "Also remove my chats, keys and the Room" (`/CLEANDATA`
+  in a script): then the app's entries in Windows Credential Manager go first (only the app's own), then its data and
+  the Room. Tools `install.ps1` put in place stay. Ending Rooks in any way (closing it, a crash, Task Manager) ends its
+  backend and everything the backend started: the desktop shell puts the backend in a kill-on-close job; on a normal
+  exit it first lets the backend end by itself for up to 5 seconds. The MSI stays, for IT teams. CI: the Windows leg
+  of `desktop.yml` installs the built setup silently, checks the Start menu entry and its icon (the same picture as
+  `icon.ico`), starts the app, waits for its window titled Rooks and the backend's `/healthz`, ends it as Task Manager
+  does, and uninstalls twice, checking what is kept and that nothing else is left
+  (`desktop/scripts/check_windows_install.ps1`); screenshots of the window and the Start menu icon are the
+  `windows-install-shots` artifact. On the old setup 9 of those checks failed (run 42556804225: a desktop shortcut
+  after a silent install, the install location key, the window's data and logs left, and with `/CLEANDATA` the data,
+  link file, Room and Credential Manager entries left). The check that ending the app ends its backend passed on the
+  old code too (the backend already ended when its input closed); the job is the guarantee when that is not enough.
+  On the new setup every check passes (Desktop run 42559767638, all four builds green). Ending the app as Task
+  Manager does leaves the backend's unpacked copy in `%TEMP%` (it had no time to tidy up); the uninstaller removes it.
+  The frozen backend's Room smoke test (a quick command, then the browser over its pipe) now runs on Windows too, and
+  passes there.
+  `desktop/scripts/test_forget_secrets.py` failed first locally. Not tested: a real Windows 10 or 11 PC (the runner is
+  Server 2022), a PC without WebView2 or without internet, SmartScreen on the unsigned setup, the MSI, the setup's
+  pages by hand (only the silent path runs in CI), and Windows on Arm.
+- **The Room's browser starts in the packaged app** (2e939c0). The step that hands the browser its pipe ran Python with
+  `-c`; the desktop app is one packaged program with no Python, so on a Mac the Room's browser always said "could not
+  start". The packaged app now runs that step with its own program (`--rooks-pipe-step`).
+- **When the Room's browser does not start, it says why.** Instead of only "The Room's browser could not start.", the
+  Browser window, the phone view, the `rooks` terminal (`/room browse`) and the assistant say one of: no browser was
+  found on this computer to run it; the browser on this computer refused to start; the wall that keeps it inside the
+  Room could not be set up. What was run, its exit code and the last of what it printed are under **Advanced** in the
+  Browser window (`failed` in `GET /api/room/browser` and in the Room's status), never on the normal line and never in
+  the log. A wall that fails still keeps the browser closed: there is no fallback to running without it.
+  Tests that failed on the old code: `rooks-try/tests/test_browser_engine.py` (one per reason),
+  `workbench/backend/tests/test_room_browser.py::test_a_browser_that_did_not_start_says_why_with_the_detail_under_advanced`,
+  and `workbench/frontend/tests/room-browser.test.mjs` ("a browser that did not start says why").
+- **CI proves the packaged app's Room browser.** The desktop build (`.github/workflows/desktop.yml`, the macOS and Linux
+  jobs) now starts the frozen sidecar, opens the Room's browser through its API on a loopback test page, and checks the
+  page's text and a frame arrive (`desktop/scripts/smoke_sidecar.py --room-browser`). Windows is covered too since
+  the entry above.
+- **Your work account: Microsoft 365, one part at a time** (design 0012, Microsoft half). A new **Work apps** page
+  (Settings) connects the account your company gave you with Microsoft's own sign-in in your browser. The first sign-in
+  asks only who you are. Then one switch per part: Mail, Calendar, Files: read, Files: change, Chats: read, Chats: post,
+  Meeting transcripts and Tasks, each with a line saying what it allows. Turning one on opens a fresh sign-in that asks
+  only for that part's permissions (Microsoft's incremental consent), so files can be read without write permission
+  ever being asked for; turning one off stops it at once, even though Microsoft still allows it (the page says how to
+  remove it there too). When your company makes an IT admin approve apps, the switch says "Waiting for your IT team"
+  and **Copy the request for IT** copies a note naming each permission, why, and the address an admin uses to approve
+  it; that address and the permission names appear nowhere else but Advanced. A personal Microsoft account is told to
+  use Mail and calendar instead. Accounts connected before keep Mail and Calendar on.
+  What Rooks can do with it: search and list your OneDrive, the SharePoint sites you follow and files shared with you;
+  read a file in place with page and cell citations; save a copy to Files that remembers where it came from; open it
+  in the Room's browser (you sign in there once; Rooks never hands its access to a browser), or your own browser where
+  the Room has none. Read your Teams chats and the channels you are in. Bring a Teams meeting's transcript into
+  Meetings with its speakers ("This meeting has no transcript." when there is none). Show your Planner and To Do tasks
+  in Tasks with a Planner or To Do label. Reading never waits. **Every write waits for your yes in Needs you** and runs
+  exactly what the card showed, once: uploading to OneDrive (large files in parts), a new version of a Word file
+  (OneDrive keeps the old one), changing Excel cells, sharing with people or as a company link, posting in a chat or
+  channel (the card shows the chat and the exact text), and changing or adding a task (ticking a Planner or To Do task
+  on the Tasks page asks too). There is no delete. Disconnecting takes the Planner and To Do tasks and the names
+  Rooks saw out of Rooks; nothing is deleted at Microsoft. A conversation that read a file, chat or transcript holds every
+  later change as untrusted, so a Teams message saying "share this with x@evil" makes the share wait with that reason.
+  A background job can never answer for you: the bridge key the helpers and coding jobs share is refused by the work
+  routes and by Needs you, a chat turn started with that key (the terminal's `/v1/rooks/run_turn`) and a team lead's
+  sub-agents are not offered the work tools at all, and a scheduled run's request waits once, however often it runs. Files gains a **From work**
+  tab, Meetings a **From Teams** button, Channels a Teams card saying what a chat with Rooks inside Teams would need.
+  The `rooks` terminal gets `/work` (account and switches in the same words, `connect microsoft`, `on`/`off`, `files`,
+  `read`, `save`, `open`, `chats`, `chat`, `post` (held in Needs you), `tasks`, `it`) with its own Terminal access
+  token, never the bridge key. The assistant's tools: `work_search`, `work_files`, `work_file_read`, `work_file_save`,
+  `work_file_open`, `work_file_upload`, `work_file_share`, `work_file_edit`, `work_chats`, `work_chat_read`,
+  `work_chat_post`, `work_transcript`, `work_task_update`. Underneath: `work_scopes.py` (the one table of switches and
+  permissions), `work_suite.py` (account, switches, gate, Needs you titles), `work_graph.py` (Microsoft Graph: refresh
+  and one retry on 401, paging, waiting out a 429 with Retry-After up to 30 s, downloads and upload parts sent to
+  Microsoft's own address without the token), `work_suite_tools.py`, `work_suite_api.py` (`/api/work`). **Schema
+  version 6**: `linked_accounts` gains `work`, `tenant`, `subject` and `features` (old accounts: Mail and Calendar on),
+  `tasks` gains `origin`, `remote_id` and `remote_meta`, Files' table gains `remote`. Only columns are added, so no
+  backup is taken. Rollback: revert the commits, then set the database back to version 5 with
+  `sqlite3 workbench.db "PRAGMA user_version = 5"` (the older app ignores the new columns; without this its health
+  check reports "schema version 6, expected 5"). Tests that failed on the old code (commit 7a39b5a): all 23 in
+  `workbench/backend/tests/test_work_microsoft.py` (and the 3 added after it for the shared key, sub-agents and disconnecting,
+  each seen failing on the code without its fix) against `tests/fake_graph.py` (a fake Microsoft sign-in and Graph
+  whose tokens carry the consented permissions and refuse a call without one), the 8 in
+  `rooks-code/tests/test_work_terminal.py` and the 6 in `workbench/frontend/tests/work-apps.test.mjs`. CI: the Windows job (now "Windows: terminals, browser
+  and work account") also runs the work account and the mail and calendar tests on windows-2022. **Not tested,
+  because no real accounts exist here**: a real Microsoft 365 tenant or a real sign-in; real admin consent and its
+  workflow; which permissions a real company lets a person approve (the table of which need an admin follows
+  Microsoft's permissions reference and was not checked against a tenant); conditional access and multi-factor
+  sign-in; sensitivity labels that block downloads; real throttling; real meeting transcripts; SharePoint lists (only
+  document libraries); publisher verification of the shipped registration; and Windows Credential Manager holding the
+  tokens beyond the windows-2022 runner. **Not built**: Google Workspace (built since: the next entry), Rooks as its own chat inside Teams and answering Needs you from a Teams
+  card (it needs a bot and a relay the company runs, design 0012 section 2.2; the Channels card says so), and
+  `rooks-browser` opening a work file's address.
+- **Your work account: Google Workspace, the same way** (design 0012, section 2.3, G1 to G3). Work apps' **Google
+  Workspace** button now signs in with Google's own sign-in in your browser, and everything works as with Microsoft 365:
+  the first sign-in asks only who you are (`openid email profile`), each switch asks Google only for its own
+  permissions when you turn it on (`include_granted_scopes`, so the earlier ones stay), turning one off stops it at once,
+  and every write waits for your yes in Needs you and runs exactly what the card showed, once. A personal Gmail is told
+  to use Mail and calendar instead (Google names a company's domain only for a Workspace account). When your company's
+  Google admin has not allowed Rooks (`admin_policy_enforced`, on Google's page or from the sign-in), the switch says
+  "Waiting for your IT team" and **Copy the request for IT** copies a note with the app's client ID, each permission and
+  why, and where in the Google Admin console to trust the app. What Rooks can do with it: search and list My Drive,
+  your shared drives (Work apps calls them shared drives where Microsoft says SharePoint sites) and files shared with
+  you; read a file in place with citations (Google Docs, Sheets and Slides are exported as Word, Excel and PowerPoint
+  files, or as plain text and CSV when the files add-on is not installed, so reading works on a plain install too);
+  save a copy to Files that remembers it came from Google Drive; open it in the Room's browser or your own. Read your
+  Google Chat direct messages, group chats and spaces; search them (Google has no chat search for a person's own
+  access, so Rooks reads the latest 50 messages of up to 20 spaces). Bring a Google Meet call's transcript into Meetings
+  with its speakers. Show your Google Tasks in Tasks with a Google Tasks label. **Held writes**: uploading to Google Drive
+  (files over 5 MB in 4 MB parts sent to Google's own upload address without the token; "replace" makes a new version
+  of the file with that name), sharing with people (can view or can edit; Google emails them) or as a link people in
+  your company can open, **Google Docs changes** (replace words, add a paragraph at the end, or the whole new text),
+  **Google Sheets changes** (cells and their new values, written as plain values, never formulas), a new version of a
+  Word file in Drive, posting in a space (or answering in a message's thread), and changing or adding a Google Task. The
+  Needs you card now shows the change itself under the title: what a Docs change takes out and puts in, which cells get
+  which values, the exact text of a post (for Teams too: before, the card's reason line covered a post's text). A Docs
+  change is written only on top of the version Rooks just read, so if someone typed in between, nothing is overwritten
+  and the card's run says "Someone changed it in the meantime." Chat messages read with your own access carry no names
+  at Google, so a message says "You" or "Someone" (BACKLOG). Throttling: a 429 and Google's rate-limit 403 are waited
+  out like Microsoft's. The page, Files, Tasks, Meetings ("From Google Meet") and the terminal's `/work` use each
+  suite's own words, from one table (`work_suite.NAMES`); Channels gains a Google Chat card saying what a chat with
+  Rooks inside Google Chat would need. `rooks` terminal: `/work connect google`, and the rest of `/work` as before.
+  Underneath: `work_google.py` beside `work_graph.py` with the same functions (`work_suite.calls` picks one), so the
+  tools, `/api/work` (now also `/api/work/chats/search`) and the terminal do not change; `NAMES`, `change_lines` and the
+  Google IT note in `work_suite.py`; `connect.py` lets a Google work sign-in through, keeps Google's consent screen
+  (needed for a long-lived token) and reads `hd` and `sub` from the ID token. No schema change. Tests that failed on
+  the old code (commit 4d68b05): all 29 in `workbench/backend/tests/test_work_google.py` ("Google Workspace comes
+  next"), 4 in `rooks-code/tests/test_work_terminal.py` and 3 in `workbench/frontend/tests/work-apps.test.mjs`, against
+  `tests/fake_google.py` (a fake Google sign-in, Drive with shared drives, Docs, Sheets, Chat, Meet, Calendar events
+  and Tasks whose tokens carry the consented scopes and refuse a call without one, page their lists, answer one 429 or
+  rate-limit 403, take resumable uploads and record every write). CI: the Windows job runs them too. **Not tested,
+  because no real accounts exist here**: a real Google Workspace domain or a real Google sign-in; the admin console's
+  app access control and what a real block looks like (Google may show its own page and never send the person back,
+  which leaves the switch "Finish signing in" until it is tried again); Google's verification of the restricted Drive
+  scopes (until then a company uses its own client, or marks the app trusted); the Chat app a Cloud project must
+  configure before the Chat API answers at all; real Meet transcripts and how soon they appear after a call; real
+  throttling; export size limits (Google refuses to export a file over 10 MB); and Google Chat's threaded replies in a
+  real space. **Not built**: Rooks as its own chat inside Google Chat (a Chat app the company runs; the Channels card
+  says so), Google Slides edits, Drive comments, and names of the people in Chat messages.
+
 ## Unreleased · Workplace cleanup · branch cleanup/workplace
 
 The cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the old browser

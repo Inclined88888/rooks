@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import http.server
 import os
+import re
 import socket
 import sys
 import threading
@@ -89,7 +90,8 @@ def test_snap_chromium_is_skipped(tmp_path):
 def test_no_engine_and_windows_reasons(tmp_path):
     assert rb.off_reason(None, platform="linux") == "no_engine"
     assert rb.off_reason(rb.Engine("/x/chrome", "system"), platform="linux") is None
-    assert rb.off_reason(rb.Engine("C:/chrome.exe", "chrome"), platform="win32") == "windows"
+    # Windows has a browser now (design 0011): its only extra reason is the organisation's policy
+    assert rb.off_reason(rb.Engine("C:/chrome.exe", "chrome"), platform="win32", policy_read=lambda *a: None) is None
     assert rb.OFF_WORDS["no_engine"] == "The Room has no browser yet."
     assert rb.OFF_WORDS["windows"] == "The Room's browser is not on Windows yet."
 
@@ -224,7 +226,7 @@ def test_the_address_bar_rules_match_rooks_browser():
     assert rb.normalise(None) == rb.HOME_PAGE
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file addresses; the Room browser is off on Windows (design 0007)")
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file addresses; Windows ones are in test_browser_windows.py")
 def test_file_addresses_outside_the_rooms_home_and_the_apps_own_address_are_refused(tmp_path):
     home = tmp_path / "home"
     (home / "Desktop").mkdir(parents=True)
@@ -284,7 +286,7 @@ def _real_engine():
 
 REAL = _real_engine()
 needs_chromium = pytest.mark.skipif(REAL is None or sys.platform == "win32",
-                                    reason="no Chromium here, or Windows, where the Room browser is off (design 0007)")
+                                    reason="no Chromium here, or Windows (its real tests are in test_browser_windows.py)")
 
 
 def _listening_inodes() -> set[str]:
@@ -494,7 +496,7 @@ def test_real_offline_without_bwrap_loads_nothing(session, served):
 
 def test_the_room_loads_where_there_is_no_fcntl():
     """Windows has no fcntl. The Room (and saving a point, which asks the browser module which caches to skip) must
-    still load there; the browser itself is off on Windows (design 0007)."""
+    still load there; on Windows the browser starts through winproc, not fcntl (design 0011)."""
     import subprocess
 
     code = "import sys; sys.modules['fcntl'] = None; import rooks_try.browser, rooks_try.store; print('ok')"
@@ -508,6 +510,57 @@ def test_the_packaged_app_runs_the_pipe_step_with_its_own_program(monkeypatch, t
     monkeypatch.setattr(rb.sys, "frozen", True, raising=False)
     monkeypatch.setattr(rb.sys, "executable", "/Applications/Rooks.app/Contents/MacOS/workbench-server")
     engine = rb.Engine(path="/opt/chrome/chrome", kind="chrome")
-    argv, _ = rb.launch_argv(engine, tmp_path / "home", person_home=tmp_path, bwrap=None, fds=(7, 8))
+    argv, _ = rb.launch_argv(engine, tmp_path / "home", person_home=tmp_path, bwrap=None, fds=(7, 8), platform="darwin")
     assert argv[:4] == ["/Applications/Rooks.app/Contents/MacOS/workbench-server", rb.PIPE_STEP_FLAG, "7", "8"], argv
     assert "-c" not in argv[:4]
+
+
+# --- why it did not start: in plain words, with the detail for Advanced -----------------------------------------------------
+POSIX = pytest.mark.skipif(sys.platform == "win32", reason="POSIX scripts stand in for the engine")
+
+
+def _failing_start(tmp_path, engine_path: str, bwrap=False):
+    s = rb.Session(rb.Engine(engine_path, "system"), tmp_path / "home", person_home=tmp_path, bwrap=bwrap)
+    with pytest.raises(rb.StartError) as e:
+        s.start()
+    assert s.alive() is False
+    return e.value
+
+
+@POSIX
+def test_no_engine_says_no_browser_was_found(tmp_path):
+    """The engine found a moment ago is gone (uninstalled, an update moved it): the words say no browser was found, not
+    only "could not start", and Advanced names where it was looked for."""
+    err = _failing_start(tmp_path, str(tmp_path / "gone" / "chrome"))
+    assert err.reason == "no_engine"
+    assert str(err) == rb.START_WORDS["no_engine"] and "no browser" in str(err).lower()
+    assert str(tmp_path / "gone" / "chrome") in err.detail
+
+
+@POSIX
+def test_an_engine_that_refuses_to_start_says_so_with_its_last_words_under_advanced(tmp_path):
+    engine = _exe(tmp_path / "engine" / "chrome",
+                  "#!/bin/sh\necho 'chrome: Missing X server or $DISPLAY' >&2\nexit 7\n")
+    err = _failing_start(tmp_path, str(engine))
+    assert err.reason == "refused"
+    assert str(err) == rb.START_WORDS["refused"] and "refused to start" in str(err)
+    assert "Missing X server" in err.detail and "7" in err.detail
+
+
+@POSIX
+def test_a_wall_that_cannot_be_set_up_says_so(tmp_path):
+    """bwrap passed its probe but the real start failed (a namespace or a bind refused): the browser stays closed (no
+    fallback to running without the wall) and the words say the wall could not be set up."""
+    engine = _exe(tmp_path / "engine" / "chrome")
+    bwrap = _exe(tmp_path / "bin" / "bwrap",
+                 "#!/bin/sh\necho 'bwrap: setting up uid map: Permission denied' >&2\nexit 1\n")
+    err = _failing_start(tmp_path, str(engine), bwrap=str(bwrap))
+    assert err.reason == "wall"
+    assert str(err) == rb.START_WORDS["wall"] and "wall" in str(err)
+    assert "setting up uid map" in err.detail
+
+
+def test_the_start_words_are_plain():
+    for reason, words in rb.START_WORDS.items():
+        assert words.startswith("The Room's browser could not start"), reason
+        assert not re.search(r"https?:|bwrap|stderr|exit code|Traceback|errno|pipe|DevTools", words, re.I), reason

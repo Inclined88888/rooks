@@ -63,6 +63,24 @@ def test_status_is_honest_for_the_private_folder(client, room_home):
         assert word not in st["label"] and word not in st["note"], word
 
 
+def test_status_says_how_the_rooms_programs_are_kept_together(client, room_home, monkeypatch):
+    """Design 0011, section 3: on Windows every Room program is in a job ("containment": "job"), which is not a wall,
+    so isolation stays "none" and the note says they can read and change your files. Elsewhere there is no job. (The
+    driver's words on Windows are checked in rooks-try's test_room_job_windows.py; here, that the app passes them on.)"""
+    import sys
+
+    from rooks_try.drivers import shell as shell_mod
+
+    st = client.get("/api/room/status").json()
+    assert st["containment"] == ("job" if sys.platform == "win32" else "none")
+    plain = shell_mod.ShellDriver.status
+    monkeypatch.setattr(shell_mod.ShellDriver, "status", lambda self: {
+        **plain(self), "isolation": "none", "containment": "job", "note": shell_mod.NOTE_WINDOWS})
+    st = client.get("/api/room/status").json()
+    assert st.get("containment") == "job" and st["isolation"] == "none", st
+    assert "they all stop when the Room stops" in st["note"] and "they can read and change your files" in st["note"]
+
+
 def test_up_and_run_write_only_inside_the_room_and_are_in_the_run_log(client, room_home, tmp_path):
     from app import db
 

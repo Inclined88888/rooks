@@ -18,8 +18,8 @@ import { api, fetchFrame } from "../api";
 import { Button, EmptyState, IconButton, Input, useToast } from "../ui";
 import {
   addressShown, BROWSER_LABEL, browserOff, clickCount, closedWords, copySelection, isCopy, keyMessage, keyStaysInApp, modifiers, NOT_LOCKED, OPENING,
-  PHONE_LINE, ROOKS_USING, ROOKS_USING_LINE, stillMode, STILL_EVERY_MS, TABS_FULL, TAKEN_LINE, tabTitle, toViewPoint, type BrowserState,
-  type BrowserTab, type Size,
+  PHONE_LINE, ROOKS_USING, ROOKS_USING_LINE, stillMode, STILL_EVERY_MS, TABS_FULL, TAKEN_LINE, tabTitle, toViewPoint, type BrowserFailed,
+  type BrowserState, type BrowserTab, type Size,
 } from "./browser";
 import { isLoopbackHost } from "./desk";
 import { focusWindowTitle, RoomWindow, type RoomActions } from "./RoomView";
@@ -61,7 +61,7 @@ export function BrowserWindow({ status, act, stale }: { status: RoomState; act: 
         )}
       </>
     );
-  } else body = still ? <StillBrowser /> : <LiveBrowser />;
+  } else body = still ? <StillBrowser failed={status.browser.failed} /> : <LiveBrowser failed={status.browser.failed} />;
   return (
     <RoomWindow id="browser" title="Browser" stale={stale} label={BROWSER_LABEL}>
       {body}
@@ -136,10 +136,24 @@ function Lines({ state, line }: { state: BrowserState | null; line: string }) {
   );
 }
 
+/**
+ * Why the browser did not start, when the line on screen is that reason (no browser found, the browser refused to start,
+ * the wall could not be set up): what was run and what it printed, only under Advanced.
+ */
+function StartFailed({ failed, line }: { failed: BrowserFailed | null; line: string }) {
+  if (!failed || !failed.advanced || line !== failed.words) return null;
+  return (
+    <details className="room-browser-advanced">
+      <summary>Advanced</summary>
+      <pre>{failed.advanced}</pre>
+    </details>
+  );
+}
+
 /* ================================================================ the live page, on the computer running Rooks */
 type Closed = { line: string; again: boolean } | null;
 
-function LiveBrowser() {
+function LiveBrowser({ failed }: { failed: BrowserFailed | null }) {
   const toast = useToast();
   const [state, setState] = useState<BrowserState | null>(null);
   const [frame, setFrame] = useState("");
@@ -292,6 +306,7 @@ function LiveBrowser() {
       <div className="room-browser-closed">
         <EmptyState icon={<Globe size={24} />} title={closed.line} line={state?.tabs.length ? "Its tabs and sign-ins are kept." : undefined}
           action={closed.again ? <Button variant="secondary" size="sm" onClick={() => setGen((g) => g + 1)}>Open again</Button> : undefined} />
+        <StartFailed failed={failed} line={closed.line} />
       </div>
     );
   }
@@ -318,7 +333,7 @@ function LiveBrowser() {
 }
 
 /* ================================================================ a phone: a still, taps, scroll buttons, Type */
-function StillBrowser() {
+function StillBrowser({ failed }: { failed: BrowserFailed | null }) {
   const toast = useToast();
   const [state, setState] = useState<BrowserState | null>(null);
   const [src, setSrc] = useState("");
@@ -408,6 +423,7 @@ function StillBrowser() {
         <Button size="sm" variant="ghost" busy={busy === "enter"} onClick={() => void actOn("enter", { kind: "key", key: "Enter" })}>Enter</Button>
       </form>
       <Lines state={state} line={line} />
+      <StartFailed failed={failed} line={line} />
       <p className="room-browser-phone-line">{PHONE_LINE}</p>
     </div>
   );

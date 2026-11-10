@@ -82,6 +82,7 @@ class Ctx:
     held_repeats: int = 0              # calls that asked again for an OK already waiting; one ends the turn (B3)
     held_title: str = ""               # what that waiting request is, in Needs you's own words, for the turn's last line
     approved_call: bool = False        # the call running now is one a person said yes to (decide): it may take back the Room's browser
+    shared_key: bool = False           # started with the shared bridge key (helpers, coding jobs): no work account tools (design 0012)
 
     def trace(self) -> dict:
         return {"channel": self.channel, "conversation_id": self.conversation_id,
@@ -801,6 +802,8 @@ TOOLS: list[Tool] = [
 from . import work_tools  # noqa: E402 - files, analysis and work sites
 
 TOOLS += work_tools.build(Tool, S, I, B)
+from . import work_suite_tools  # noqa: E402 - design 0012: OneDrive, SharePoint, Teams, transcripts, Planner and To Do
+TOOLS += work_suite_tools.build(Tool, S, I, B)
 TOOL_MAP = {t.name: t for t in TOOLS}
 
 
@@ -871,6 +874,8 @@ def hold_reason(t: Tool, ctx: Ctx, args: dict) -> str:
 
     if kn_improve.hold_reason(t.name):
         return kn_improve.hold_reason(t.name)
+    if ctx.tainted and t.name in WORK_TAINT_HOLDS:  # design 0012: a work write after third party content says why
+        return HOLD_REASON
     if t.confirm:
         try:
             why = t.confirm(args)
@@ -904,6 +909,8 @@ def hold_reason(t: Tool, ctx: Ctx, args: dict) -> str:
         return LEARNED_ROUTINE_REASON
     return ""
 
+
+from .work_suite import TAINT_HOLDS as WORK_TAINT_HOLDS  # noqa: E402
 
 AUTOMATION_REASON = "An automation started this, so anything that sends or changes something outside the app waits for the user's OK."  # feat/v02-automations
 SCHEDULE_ASK_REASON = "A scheduled job runs by itself at the times set until you turn it off, so it needs your OK."
@@ -1055,7 +1062,9 @@ async def _run_tool(name: str, raw_args: str, ctx: Ctx, approved: bool = False) 
 
     from .teammates import hooks as tm_hooks  # feat/grok-style: teammates never send; a send becomes a draft the user sends
 
-    if not t or not t.when(ctx) or not tm_hooks.allows(ctx, t):  # a teammate runs only the tools it was offered
+    # a work tool the person said yes to still runs its own switch check, so the answer is in plain words (design 0012)
+    offered = bool(t) and (t.when(ctx) or (approved and t.name in work_suite_tools.GATED))
+    if not t or not offered or not tm_hooks.allows(ctx, t):  # a teammate runs only the tools it was offered
         return done(False, f"Unknown tool {name}", "unknown_tool")
 
     drafted = tm_hooks.as_draft(name, raw_args, ctx)  # feat/grok-style

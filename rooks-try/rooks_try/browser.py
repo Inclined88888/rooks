@@ -18,6 +18,11 @@ read-only at a fixed place when it lies under the person's home, no network when
 (macOS, or Linux without it) it runs as the person, in the Room's home, with no outer wall, and the app says so; an
 offline Room's browser then goes through a proxy that answers nothing (a closed door, not a wall).
 
+On Windows (design 0011, section 2) there is no step and no wall: the Room starts Edge or Chrome itself
+(winproc.PipedProcess) with the pipe at its C runtime fds 3 and 4, in a job of its own from its first instruction, and
+it runs as the person. IT policy that switches remote debugging off for the engine found is respected (policy_off):
+the browser stays off and the person is sent to their IT team. A `file://` address with a host is refused everywhere.
+
 Session drives one running browser: tabs (eight at most, the person's and the assistant's together), the address bar's
 rules (normalise, the same as rooks-browser's app/address.js), back, forward, reload, page text, screenshots, the live
 stream (Page.startScreencast, only while someone watches), input, downloads into the Room's Downloads (a safe, unique
@@ -61,6 +66,7 @@ OFF_WORDS = {
     "windows": "The Room's browser is not on Windows yet.",
     "helper": "The Room runs elsewhere, so its browser is not here.",
     "switched_off": "The Room's browser is switched off in Settings.",
+    "policy": "Your organisation has switched the Room's browser off. Ask your IT team.",
 }
 FILE_OUTSIDE = "That file is outside the Room, so the Room's browser does not open it."
 APP_ADDRESS = "The Room's browser does not open this app's own address."
@@ -71,13 +77,44 @@ DOWNLOAD_CUT = "A download stopped at 2 GB."
 RESTARTED = "The app restarted, so the browser closed. Your tabs and sign-ins are kept."
 NOT_LOCKED = "Not locked off: this browser runs as you."
 DID_NOT_START = "The Room's browser could not start."
+# Why it did not start, in plain words (StartError.reason); what was run and what it said last goes under Advanced.
+START_WORDS = {
+    "no_engine": "The Room's browser could not start: no browser was found on this computer to run it.",
+    "refused": "The Room's browser could not start: the browser on this computer refused to start.",
+    "wall": "The Room's browser could not start: the wall that keeps it inside the Room could not be set up.",
+    "policy": "The Room's browser could not start: your organisation has switched it off. Ask your IT team.",
+}
 CLOSED = "The Room's browser is closed."
 NO_SUCH_TAB = "No such tab."
+
+
+
+class StartError(RuntimeError):
+    """The browser did not start. `reason` is a START_WORDS key and the message its plain words; `detail` is for
+    Advanced only (where the engine is, its exit code and the last of what it printed)."""
+
+    def __init__(self, reason: str, detail: str = "") -> None:
+        super().__init__(START_WORDS[reason])
+        self.reason = reason
+        self.detail = str(detail or "")[-START_DETAIL_MAX:]
+
+
+START_DETAIL_MAX = 1500
+
 
 # --- limits and places ------------------------------------------------------------------------------------------------------
 TAB_MAX = 8
 MEMORY_SLEEP = 1536 * 1024 * 1024     # over this the least recently viewed background tab sleeps
 MEMORY_CLOSE = 2560 * 1024 * 1024     # over this the browser closes, its tabs kept
+# Windows: the job's own limit, a backstop under the watchdog. It counts memory set aside (commit), which for Chromium
+# runs well above what it really uses (the watchdog's working set), so it sits at twice the watchdog's line.
+JOB_MEMORY_LIMIT = 2 * MEMORY_CLOSE
+# Windows: no JOB_OBJECT_UILIMIT_* on the browser's job (design 0011, section 3 allows removing a limit the browser
+# fails under, with the reason). On windows-2022 every one of them, alone, stopped Chromium's sandbox from creating its
+# GPU and page processes ("GPU process launch failed: error_code=18", then "GPU process isn't usable. Goodbye."), with
+# Chrome and with Edge (to be confirmed per limit by CI). Pages still get no permission to read the clipboard
+# (--deny-permission-prompts), but the job itself does not hold the clipboard back: BACKLOG says so.
+BROWSER_UI_LIMITS = 0
 DOWNLOAD_MAX = 2 * 1024 * 1024 * 1024
 DISK_CACHE = 100 * 1024 * 1024
 FRAME_MAX = (1920, 1200)
@@ -103,6 +140,11 @@ class Engine:
     kind: str   # "own" | "playwright" | "system" | "chrome" | "edge"
 
 
+def _windows() -> bool:
+    """The real system is Windows (tests set sys.platform to see Windows words; this is what runs)."""
+    return os.name == "nt"
+
+
 def is_snap(path: str) -> bool:
     """A Snap Chromium: its path is under /snap, or it is the small wrapper script that runs the snap."""
     real = os.path.realpath(path)
@@ -122,7 +164,7 @@ def _executable(path: Path | str | None) -> str | None:
     if not path:
         return None
     p = Path(path)
-    return str(p) if p.is_file() and os.access(p, os.X_OK) else None
+    return str(p) if p.is_file() and (_windows() or os.access(p, os.X_OK)) else None
 
 
 def _own(root: Path) -> str | None:
@@ -133,7 +175,7 @@ def _own(root: Path) -> str | None:
     except (OSError, ValueError):
         return None
     rel = str((meta or {}).get("path") or "") if isinstance(meta, dict) else ""
-    if not rel or rel.startswith("/") or ".." in Path(rel).parts:
+    if not rel or rel.startswith(("/", "\\")) or ":" in rel or ".." in re.split(r"[\\/]", rel):
         return None
     return _executable(folder / rel)
 
@@ -148,8 +190,13 @@ def _playwright(home: Path, env: dict, platform: str) -> str | None:
     custom = str(env.get("PLAYWRIGHT_BROWSERS_PATH") or "").strip()
     if custom and custom != "0":
         caches.append(Path(custom).expanduser())
-    caches.append(home / "Library" / "Caches" / "ms-playwright" if platform == "darwin"
-                  else home / ".cache" / "ms-playwright")
+    if platform == "darwin":
+        caches.append(home / "Library" / "Caches" / "ms-playwright")
+    elif platform == "win32":
+        if env.get("LOCALAPPDATA"):
+            caches.append(Path(env["LOCALAPPDATA"]) / "ms-playwright")
+    else:
+        caches.append(home / ".cache" / "ms-playwright")
     for cache in caches:
         try:
             builds = sorted((p for p in cache.iterdir() if re.fullmatch(r"chromium-\d+", p.name)),
@@ -160,6 +207,8 @@ def _playwright(home: Path, env: dict, platform: str) -> str | None:
             if platform == "darwin":
                 tails = ["chrome-mac*/Chromium.app/Contents/MacOS/Chromium",
                          "chrome-mac*/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"]
+            elif platform == "win32":
+                tails = ["chrome-win64/chrome.exe", "chrome-win/chrome.exe"]
             else:
                 tails = ["chrome-linux64/chrome", "chrome-linux/chrome"]
             for tail in tails:
@@ -178,12 +227,25 @@ _MAC_APPS = [("system", "/Applications/Chromium.app/Contents/MacOS/Chromium"),
              ("edge", "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge")]
 
 
+def _windows_apps(env: dict) -> list[tuple[str, Path]]:
+    """Google Chrome (for every user, then for this person only), then Microsoft Edge, where Windows installs them."""
+    pf = env.get("ProgramFiles") or r"C:\Program Files"
+    pf86 = env.get("ProgramFiles(x86)") or r"C:\Program Files (x86)"
+    local = env.get("LOCALAPPDATA")
+    out = [("chrome", Path(pf) / "Google" / "Chrome" / "Application" / "chrome.exe"),
+           ("chrome", Path(pf86) / "Google" / "Chrome" / "Application" / "chrome.exe")]
+    if local:
+        out.append(("chrome", Path(local) / "Google" / "Chrome" / "Application" / "chrome.exe"))
+    out += [("edge", Path(pf86) / "Microsoft" / "Edge" / "Application" / "msedge.exe"),
+            ("edge", Path(pf) / "Microsoft" / "Edge" / "Application" / "msedge.exe")]
+    return out
+
+
 def find_engine(*, root: Path | None = None, home: Path | None = None, env: dict | None = None, which=None,
                 platform: str | None = None) -> Engine | None:
-    """The engine the Room's browser uses here, or None. Never the Snap Chromium."""
+    """The engine the Room's browser uses here, or None. Never the Snap Chromium. On Windows: the Room's own build,
+    Playwright's Chromium, Google Chrome, then Microsoft Edge (which every Windows 10 and 11 has)."""
     platform = platform or sys.platform
-    if platform == "win32":
-        return None
     env = dict(os.environ) if env is None else env
     home = Path(home) if home is not None else Path.home()
     if which is None:
@@ -191,9 +253,14 @@ def find_engine(*, root: Path | None = None, home: Path | None = None, env: dict
     own = _own(Path(root) if root is not None else store.root())
     if own:
         return Engine(own, "own")
-    pw = _playwright(home, env, "darwin" if platform == "darwin" else "linux")
+    pw = _playwright(home, env, platform if platform in ("darwin", "win32") else "linux")
     if pw:
         return Engine(pw, "playwright")
+    if platform == "win32":
+        for kind, app in _windows_apps(env):
+            if _executable(app):
+                return Engine(str(app), kind)
+        return None
     if platform == "darwin":
         for kind, app in _MAC_APPS:
             if _executable(app):
@@ -207,11 +274,81 @@ def find_engine(*, root: Path | None = None, home: Path | None = None, env: dict
     return None
 
 
-def off_reason(engine: Engine | None, platform: str | None = None) -> str | None:
-    """Why the Room has no browser here: "windows", "no_engine", or None."""
-    if (platform or sys.platform) == "win32":
-        return "windows"
-    return None if engine else "no_engine"
+def off_reason(engine: Engine | None, platform: str | None = None, *, policy_read=None) -> str | None:
+    """Why the Room has no browser here: "no_engine", "policy" (Windows: the organisation switched remote debugging off
+    for this engine), or None. "windows" is no longer said: the browser runs on Windows over its pipe (design 0011)."""
+    if engine is None:
+        return "no_engine"
+    if (platform or sys.platform) == "win32" and policy_off(engine, read=policy_read):
+        return "policy"
+    return None
+
+
+# --- IT policy on Windows: respected, never worked around (design 0011, section 2) ------------------------------------------
+POLICY_KEYS = {
+    "edge": (r"Software\Policies\Microsoft\Edge",),
+    "chrome": (r"Software\Policies\Google\Chrome",),
+    "own": (r"Software\Policies\Google\Chrome for Testing", r"Software\Policies\Google\Chrome",
+            r"Software\Policies\Chromium"),
+    "playwright": (r"Software\Policies\Chromium", r"Software\Policies\Google\Chrome"),
+    "system": (r"Software\Policies\Chromium",),
+}
+_BRAND = {"edge": "Edge", "chrome": "Chrome"}
+
+
+def _reg_dword(hive: str, key: str, name: str) -> int | None:
+    """A DWORD from the registry, or None when it is not set (or this is not Windows)."""
+    try:
+        import winreg
+    except ImportError:
+        return None
+    root = winreg.HKEY_LOCAL_MACHINE if hive == "HKLM" else winreg.HKEY_CURRENT_USER
+    try:
+        with winreg.OpenKey(root, key) as k:
+            value, kind = winreg.QueryValueEx(k, name)
+    except OSError:
+        return None
+    return int(value) if kind == winreg.REG_DWORD else None
+
+
+def policy_off(engine: Engine | None, read=None) -> bool:
+    """Whether the organisation set RemoteDebuggingAllowed = 0 for this engine, for the machine or for the person. The
+    browser then stays off: no download or other engine is offered to get around it."""
+    if engine is None:
+        return False
+    read = read or _reg_dword
+    for hive in ("HKLM", "HKCU"):
+        for key in POLICY_KEYS.get(engine.kind, ()):
+            if read(hive, key, "RemoteDebuggingAllowed") == 0:
+                return True
+    return False
+
+
+def policy_words(engine: Engine | None) -> str:
+    brand = _BRAND.get(getattr(engine, "kind", ""), "")
+    if brand:
+        return f"Your organisation has switched this off in {brand}. Ask your IT team."
+    return OFF_WORDS["policy"]
+
+
+def work_pc(read_keys=None) -> bool:
+    """Whether this PC is joined to a work account (Microsoft Entra): Edge may then sign in to work sites as the person
+    through Windows, without a password typed, even in the Room's own profile. Said under Advanced."""
+    if read_keys is None:
+        try:
+            import winreg
+        except ImportError:
+            return False
+        try:
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                                r"SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo") as k:
+                return winreg.QueryInfoKey(k)[0] > 0
+        except OSError:
+            return False
+    return bool(read_keys())
+
+
+WORK_SIGNIN = "On a work PC, Edge may sign in to work sites as you through Windows."
 
 
 def install_engine(archive: Path, expected_sha256: str, *, root: Path | None = None, inner: str) -> Path:
@@ -291,7 +428,10 @@ def chrome_flags(home: Path, platform: str | None = None) -> list[str]:
              "--disable-features=PasswordManagerOnboarding,AutofillServerCommunication,MediaRouter,"
              "OptimizationHints,Translate,DialMediaRouteProvider,InterestFeedContentSuggestions,"
              "CertificateTransparencyComponentUpdater"]
-    flags.append("--use-mock-keychain" if platform == "darwin" else "--password-store=basic")
+    if platform == "darwin":
+        flags.append("--use-mock-keychain")
+    elif platform != "win32":  # Windows always protects saved data with the person's own sign-in (DPAPI)
+        flags.append("--password-store=basic")
     return flags
 
 
@@ -322,7 +462,10 @@ PIPE_STEP_FLAG = "--rooks-pipe-step"
 
 def pipe_step(args: list[str]) -> None:
     """The same step for a packaged app, which has no Python to run `-c` with: its own program is started with
-    PIPE_STEP_FLAG, r, w, then the command (desktop/sidecar/workbench_server.py hands it here first thing)."""
+    PIPE_STEP_FLAG, r, w, then the command (desktop/sidecar/workbench_server.py hands it here first thing). Not used on
+    Windows, where the Room starts the engine itself with its pipe in place (winproc.PipedProcess)."""
+    if sys.platform == "win32":
+        raise SystemExit("Not used on Windows.")
     import fcntl
 
     r, w = int(args[0]), int(args[1])
@@ -360,10 +503,17 @@ def bwrap_path() -> str | None:
 
 def launch_argv(engine: Engine, room_home: Path, *, person_home: Path | None = None, offline: bool = False,
                 bwrap: str | None = None, uid: int | None = None, gid: int | None = None,
-                fds: tuple[int, int]) -> tuple[list[str], Path]:
-    """The argv that starts the engine with its pipe at fds 3 and 4, and the Room's home as the browser sees it."""
+                fds: tuple[int, int] | None = None, platform: str | None = None) -> tuple[list[str], Path]:
+    """The argv that starts the engine with its pipe at fds 3 and 4, and the Room's home as the browser sees it. On
+    Windows there is no step and no wall: the engine itself, which the Room starts with its pipe in place."""
     room_home = Path(room_home)
     person_home = Path(person_home or Path.home())
+    if (platform or sys.platform) == "win32":
+        argv = [engine.path, *chrome_flags(room_home, "win32"), *(OFFLINE_FLAGS if offline else [])]
+        check_flags(argv)
+        return argv, room_home
+    if fds is None:
+        raise ValueError("The Room's browser needs its pipe.")
     binary = os.path.realpath(engine.path) if os.path.exists(engine.path) else engine.path
     step = _step(fds)
     if not bwrap:
@@ -392,7 +542,7 @@ def launch_argv(engine: Engine, room_home: Path, *, person_home: Path | None = N
     return argv, person_home
 
 
-def browser_env(home: Path, base: dict | None = None, offline: bool = False) -> dict:
+def browser_env(home: Path, base: dict | None = None, offline: bool = False, platform: str | None = None) -> dict:
     """The Room's environment (room_env: no secrets, no app names), HOME the Room's home as the browser sees it, and
     nothing of the person's desktop session, keyring or agents."""
     from .drivers.shell import room_env
@@ -401,6 +551,16 @@ def browser_env(home: Path, base: dict | None = None, offline: bool = False) -> 
     for name in _SESSION_ENV:
         env.pop(name, None)
     env["HOME"] = str(home)
+    if (platform or sys.platform) == "win32":
+        # Windows: the person's own USERPROFILE stays. Chromium finds its folders through it, and without them it cannot
+        # tell the Room's profile from its default one and refuses the pipe ("DevTools remote debugging requires a
+        # non-default data directory", seen on windows-2022). The profile is the Room's all the same (--user-data-dir).
+        # APPDATA and LOCALAPPDATA stay the person's for the same reason (room_env points them into the Room for the
+        # Room's other programs); TEMP and TMP stay in the Room.
+        for name in ("USERPROFILE", "APPDATA", "LOCALAPPDATA"):
+            person = (os.environ if base is None else base).get(name)
+            if person:
+                env[name] = person
     return env
 
 
@@ -454,10 +614,16 @@ class Rules:
     home: Path
     app_ports: set = field(default_factory=set)
     host_home: Path | None = None
+    windows: bool = field(default_factory=_windows)
     _own: set | None = None
 
     def _file_inside(self, url: str) -> bool:
-        path = unquote(urlsplit(url).path or "/")
+        u = urlsplit(url)
+        if (u.netloc or "").lower() not in ("", "localhost"):
+            return False  # a file on another computer (on Windows a share, which would be sent the person's sign-in)
+        path = unquote(u.path or "/")
+        if self.windows:
+            return self._file_inside_windows(path)
         home = os.path.normpath(str(self.home))
         norm = os.path.normpath(path)
         if not (norm == home or norm.startswith(home.rstrip("/") + "/")):
@@ -465,6 +631,24 @@ class Rules:
         real_home = os.path.realpath(str(self.host_home or self.home))
         real = os.path.realpath(real_home + norm[len(home):])  # a link in the Room that leads outside is outside
         return real == real_home or real.startswith(real_home.rstrip("/") + "/")
+
+    def _file_inside_windows(self, path: str) -> bool:
+        """Windows paths: drive letters and names compared without case, a share never, and a link (or a short name)
+        in the Room that leads outside is outside: both sides are resolved first."""
+        import ntpath
+
+        if re.match(r"^/[A-Za-z]:", path):
+            path = path[1:]
+        if not re.match(r"^[A-Za-z]:([\\/]|$)", path):
+            return False  # no drive: a share (\\server\share), a device or a relative name
+        try:
+            home = ntpath.normcase(ntpath.realpath(str(self.host_home or self.home)))
+            real = ntpath.normcase(ntpath.realpath(ntpath.normpath(path)))
+        except (OSError, ValueError):
+            return False
+        if real.startswith("\\\\"):
+            return False
+        return real == home or real.startswith(home.rstrip("\\") + "\\")
 
     def _app(self, url: str) -> bool:
         if not self.app_ports:
@@ -654,6 +838,23 @@ class Pipe:
         return answer.get("result") or {}
 
     def close(self) -> None:
+        with self._lock:
+            if getattr(self, "_fds_closed", False):
+                return  # never twice: the number may belong to another file by now
+            self._fds_closed = True
+        if os.name == "nt":
+            # Closing a handle under a blocked ReadFile can hang: the write end first, and the read end only once the
+            # reader saw the end (the browser's job has ended by now, so the pipe breaks).
+            try:
+                os.close(self.wfd)
+            except OSError:
+                pass
+            if self.closed.wait(5):
+                try:
+                    os.close(self.rfd)
+                except OSError:
+                    pass
+            return
         for fd in (self.wfd, self.rfd):
             try:
                 os.close(fd)
@@ -741,6 +942,25 @@ def _kill_tree(proc: subprocess.Popen, known: list[int] | None = None) -> None:
         time.sleep(0.05)
 
 
+def _end_job(job, proc, known: list[int] | None = None) -> None:
+    """Windows: end everything in the browser's job (nested jobs Chromium made for its sandboxed processes included) and
+    wait, briefly, until the job is empty, so the profile is free for the next start. Then close the job."""
+    from . import winproc
+
+    try:
+        job.terminate(1)
+    except OSError:
+        pass
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        pass
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline and (job.pids() or any(winproc.alive(p) for p in (known or []))):
+        time.sleep(0.05)
+    job.close()
+
+
 def _running(pid: int) -> bool:
     try:
         stat = Path(f"/proc/{pid}/stat").read_text()
@@ -793,6 +1013,41 @@ def _quiet_url(url: str) -> str:
     return f"{u.scheme}://{u.netloc}{u.path}" if u.netloc or u.scheme == "file" else url.split("?")[0][:200]
 
 
+class _Tail:
+    """The engine's own output, read until it ends so the engine never blocks on it, keeping only the last few KB: what
+    it said last is the Advanced detail when it does not start. Nothing of it is logged or kept on disk."""
+
+    def __init__(self, stream, keep: int = 4096) -> None:
+        self._buf = bytearray()
+        self._keep = keep
+        self._lock = threading.Lock()
+        self.done = threading.Event()
+        threading.Thread(target=self._drain, args=(stream,), name="room-browser-output", daemon=True).start()
+
+    def _drain(self, stream) -> None:
+        try:
+            while True:
+                chunk = os.read(stream.fileno(), 4096)
+                if not chunk:
+                    break
+                with self._lock:
+                    self._buf += chunk
+                    del self._buf[:-self._keep]
+        except (OSError, ValueError):
+            pass
+        finally:
+            self.done.set()
+            try:
+                stream.close()
+            except OSError:
+                pass
+
+    def text(self, wait: float = 0.0) -> str:
+        self.done.wait(wait)
+        with self._lock:
+            return bytes(self._buf).decode("utf-8", "replace").strip()
+
+
 class Session:
     """One running Room browser. Thread safe; every method blocks (the app calls it off its event loop)."""
 
@@ -832,6 +1087,9 @@ class Session:
         self._ready = threading.Event()   # set once start has closed the window headless opens with
         self._watchdog: threading.Thread | None = None
         self.started_at = 0.0
+        self._output: _Tail | None = None
+        self.job = None                    # Windows: the job every engine process is in from its first instruction
+        self._own_reader = memory_reader is not None
 
     # --- where things are ------------------------------------------------------------------------------------------------
     @property
@@ -844,6 +1102,8 @@ class Session:
 
     # --- start and close -------------------------------------------------------------------------------------------------------
     def start(self) -> None:
+        """Start the engine and take its pipe. Raises StartError saying why not: no engine, the engine refused to start,
+        or the wall could not be set up (never a fallback to running without the wall)."""
         self.dir.mkdir(parents=True, exist_ok=True)
         try:
             self.dir.chmod(0o700)
@@ -852,11 +1112,17 @@ class Session:
         self.downloads_dir.mkdir(parents=True, exist_ok=True)
         _prefs(profile_dir(self.room_home))
         _drop_stale_locks(profile_dir(self.room_home))
+        if not _executable(self.engine.path):  # found a moment ago, gone now (uninstalled, moved by an update)
+            raise StartError("no_engine", f"No program at {self.engine.path} ({self.engine.kind}).")
+        if _windows():
+            self._start_windows()
+            return
         bwrap = bwrap_path() if self._bwrap == "auto" else (self._bwrap or None)
         to_r, to_w = os.pipe()
         fr_r, fr_w = os.pipe()
         for fd in (to_w, fr_r):
             os.set_inheritable(fd, False)  # portable; fcntl does not exist on Windows
+        argv: list[str] = []
         try:
             argv, inside = launch_argv(self.engine, self.room_home, person_home=self.person_home, offline=self.offline,
                                        bwrap=bwrap, fds=(to_r, fr_w))
@@ -864,35 +1130,92 @@ class Session:
             self.rules = Rules(home=inside, app_ports=self.app_ports, host_home=self.room_home)
             env = browser_env(inside, offline=self.offline)
             self.proc = subprocess.Popen(argv, pass_fds=(to_r, fr_w), stdin=subprocess.DEVNULL,
-                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                                          cwd=str(self.room_home), env=env, start_new_session=True)
-        except BaseException:
+        except BaseException as e:
             for fd in (to_r, to_w, fr_r, fr_w):
                 try:
                     os.close(fd)
                 except OSError:
                     pass
+            if isinstance(e, OSError):  # the program that puts the pipe in place could not be run at all
+                raise StartError("refused", f"{argv[0] if argv else self.engine.path}: "
+                                            f"{e.strerror or e.__class__.__name__}") from e
             raise
         os.close(to_r)
         os.close(fr_w)
+        self._output = _Tail(self.proc.stderr)
         self.pipe = Pipe(fr_r, to_w, self._event, self._gone)
+        self._handshake(bwrap)
+
+    def _start_windows(self) -> None:
+        """Windows (design 0011, section 2): IT policy first, then the engine itself, started by the Room in a job of its
+        own with the pipe at its C runtime fds 3 and 4 (STARTUPINFO.lpReserved2), inheriting nothing else. No port, no
+        step, no wall: it runs as the person, in the Room's home, and the window says so."""
+        from . import winproc
+
+        if policy_off(self.engine):
+            raise StartError("policy", f"RemoteDebuggingAllowed is 0 for {self.engine.kind} ({self.engine.path}).")
+        argv, inside = launch_argv(self.engine, self.room_home, offline=self.offline, platform="win32")
+        self.walled, self.inside_home = False, inside
+        self.rules = Rules(home=inside, app_ports=self.app_ports, host_home=self.room_home, windows=True)
+        env = browser_env(inside, offline=self.offline, platform="win32")
+        try:
+            self.job = winproc.Job(memory_limit=JOB_MEMORY_LIMIT, ui_limits=BROWSER_UI_LIMITS)
+            # nested in the Room job: stopping the Room, or the app ending however it ends, ends the browser too
+            piped = winproc.PipedProcess(argv, env, str(self.room_home), self.job, parent=winproc.room_job())
+        except OSError as e:
+            if self.job is not None:
+                self.job.close()
+            raise StartError("refused", f"{self.engine.path}: {e.strerror or e}") from e
+        self.proc = piped.proc
+        self._output = _Tail(os.fdopen(piped.err, "rb", buffering=0))
+        self.pipe = Pipe(piped.rfd, piped.wfd, self._event, self._gone)
+        self._handshake(None)
+
+    def _handshake(self, bwrap: str | None) -> None:
         self.started_at = time.monotonic()
         try:
             self.pipe.call("Browser.getVersion", timeout=30)
             self.pipe.call("Fetch.enable", {"patterns": self.rules.patterns()})
             self.pipe.call("Browser.setDownloadBehavior", {"behavior": "allowAndName", "eventsEnabled": True,
-                                                            "downloadPath": str(inside / "Downloads")})
+                                                            "downloadPath": str(self.inside_home / "Downloads")})
             self.pipe.call("Target.setDiscoverTargets", {"discover": True})
             for info in self.pipe.call("Target.getTargets").get("targetInfos") or []:
                 if info.get("type") == "page":  # the window headless opens with: not a tab of ours
                     self.pipe.send("Target.closeTarget", {"targetId": info["targetId"]})
         except ProtocolError as e:
+            why = self._why_not(bwrap, str(e))
             self.close("did not start")
-            raise RuntimeError(DID_NOT_START) from e
+            raise why from e
         self._ready.set()
         self._write_state(open_=True)
         self._watchdog = threading.Thread(target=self._watch, name="room-browser-memory", daemon=True)
         self._watchdog.start()
+
+    def _why_not(self, bwrap: str | None, said: str) -> StartError:
+        """The engine never answered on its pipe: tell the wall failing from the engine refusing, from what was printed
+        before the process ended."""
+        proc = self.proc
+        code = None
+        if proc is not None:
+            try:
+                code = proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                code = None
+        out = self._output.text(wait=1.0) if self._output else ""
+        lines = [f"Engine: {self.engine.path} ({self.engine.kind})"]
+        if bwrap:
+            lines.append(f"Wall: {bwrap}")
+        lines.append(f"Exit code: {code}" if code is not None else f"Still running, but: {said}")
+        if out:
+            lines += ["Last output:", out]
+        detail = "\n".join(lines)
+        if bwrap and ("bwrap:" in out or (code is not None and os.path.basename(bwrap) in out)):
+            return StartError("wall", detail)
+        if not _executable(self.engine.path):
+            return StartError("no_engine", detail)
+        return StartError("refused", detail)
 
     def alive(self) -> bool:
         return self.proc is not None and self.proc.poll() is None and self.pipe is not None \
@@ -909,7 +1232,7 @@ class Session:
             reason = self.closed_reason
         self._stop.set()
         pipe, proc = self.pipe, self.proc
-        known = _tree(proc.pid) if proc is not None else []
+        known = self._pids()
         if pipe is not None and not pipe.closed.is_set():
             try:
                 pipe.call("Browser.close", timeout=CLOSE_WAIT_S)
@@ -920,7 +1243,10 @@ class Session:
                 proc.wait(timeout=CLOSE_WAIT_S)
             except subprocess.TimeoutExpired:
                 pass
-            _kill_tree(proc, known)
+            if self.job is not None:
+                _end_job(self.job, proc, known)
+            else:
+                _kill_tree(proc, known)
         if pipe is not None:
             pipe.close()
         self._write_state(open_=False, reason=reason)
@@ -1250,8 +1576,23 @@ class Session:
         return str(self.evaluate(None, "String(window.getSelection ? window.getSelection() : '')") or "")
 
     # --- memory ------------------------------------------------------------------------------------------------------------------------
+    def _pids(self) -> list[int]:
+        """The browser's processes now: its job's on Windows, else its process tree."""
+        if self.job is not None:
+            try:
+                return self.job.pids()
+            except OSError:
+                return []
+        return _tree(self.proc.pid) if self.proc is not None else []
+
     def memory(self) -> int:
-        return self.memory_reader(self.proc.pid) if self.proc is not None else 0
+        if self.proc is None:
+            return 0
+        if self._own_reader:  # a reader that answers None leaves it to the browser's own (the app's, without a fake)
+            used = self.memory_reader(self.proc.pid)
+            if used is not None:
+                return used
+        return self.job.memory() if self.job is not None else tree_memory(self.proc.pid)
 
     def check_memory(self) -> str | None:
         """One memory step: "slept" (a background tab), "closed" (the whole browser) or None."""

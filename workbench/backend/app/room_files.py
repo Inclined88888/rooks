@@ -42,17 +42,25 @@ def can(driver, remote: bool) -> dict:
     from . import terminal_pty
 
     files = getattr(driver, "name", "") in FOLDER_DRIVERS
-    if os.name != "posix" or sys.platform == "win32":  # no pseudo terminal on Windows
-        return {"terminal": False, "files": files, "terminal_off_reason": "windows" if files else None}
+    windows = sys.platform == "win32"
+    if windows and not terminal_pty.available():  # Windows older than 10 1809: no pseudo console
+        return {"terminal": False, "files": files, "terminal_off_reason": "windows" if files else None,
+                "terminal_shells": []}
     try:
         from rooks_try import store
 
         shell = driver.terminal_argv(store.guest_home()) is not None
     except Exception:  # noqa: BLE001 - a driver that cannot say has no terminal
         shell = False
+    kinds: list[str] = []
+    if windows and shell:  # PowerShell, and Git Bash when Git for Windows is there (the New terminal menu)
+        try:
+            kinds = list(driver.terminal_shells())
+        except Exception:  # noqa: BLE001
+            kinds = ["powershell"]
     if shell and not terminal_pty.enabled():
-        return {"terminal": False, "files": files, "terminal_off_reason": "switched_off"}
-    return {"terminal": shell, "files": files, "terminal_off_reason": None}
+        return {"terminal": False, "files": files, "terminal_off_reason": "switched_off", "terminal_shells": []}
+    return {"terminal": shell, "files": files, "terminal_off_reason": None, "terminal_shells": kinds}
 
 
 def _when(ts: float) -> str:

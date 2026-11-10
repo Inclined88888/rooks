@@ -203,6 +203,13 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   `dovecot-imapd` in the backend job, or add a variant on the suite's mail fake.
 * **Windows: no containment for terminal commands.** The default mode runs them with the user's permissions and the approval line
   says so. A Windows sandbox (AppContainer or a restricted token) is the real fix.
+* **The Room on Windows is kept together, not walled** (design 0011, section 3, built on `feat/windows`). Every Room
+  program is in a job inside one Room job (they stop together; terminals and quick commands have the UI limits), and
+  the words say it is not a wall. Left: a real wall (AppContainer, or a restricted, low-integrity token, or a Hyper-V or
+  QEMU guest); programs that ask Windows for known folders still find the person's own; rooks-code's `_run_windows`
+  still ends a timed-out tree with `taskkill /T` rather than a job; the desktop shell assigns the one-file sidecar's
+  unpacking step to its job a moment after it starts (the shell plugin has no suspended start), so only what that step
+  starts is in the job from its first instruction.
 * **The Companion token in `~/.rooks/companion.json`** is read by the notch app and by agent hooks and answers Companion requests,
   so it sits inside the same operating-system-user boundary as the other 0600 files (docs/security/agent-credentials.md).
 * **Glass navigation is a design decision for the owner to confirm** (CHANGELOG 2026-11-07, integration entry).
@@ -220,6 +227,46 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
+### Work suites (design 0012): what is left (branch feat/windows)
+
+* **A real Google Workspace domain**: Google was tested against `tests/fake_google.py` only. Check against a Workspace
+  test domain: incremental consent per switch with `include_granted_scopes`, what the admin console's App access
+  control block really looks like (Google may show its own page and never send the person back; the switch then stays
+  "Finish signing in" until it is tried again, and a timeout could turn that into "Waiting for your IT team"), the
+  `hd` claim for every Workspace account, shared drive listings with `corpora=drive`, Docs `writeControl` on a real
+  document, resumable uploads (whether Google wants the token on the upload address; Rooks sends none), exports over
+  10 MB (Google refuses them; Rooks should fall back to the file's export links), Meet transcripts and how soon they
+  appear, and real throttling. Then Google's verification of the restricted Drive scopes for the shipped client.
+* **The Chat API needs a Chat app configured in the Cloud project** even for calls made as the person: a maintainer
+  step for the shipped client, not yet in `docs/connect-google-microsoft.md` as a tested step.
+* **Names in Google Chat**: messages read with the person's own access name the sender only by an id, so Rooks says
+  "You" or "Someone". The People API (`directory.readonly`) could name colleagues; it would be one more permission
+  under Chats: read, so it waits for a decision.
+* **Google Chat search** reads the latest 50 messages of up to 20 spaces; older messages are not searched.
+* **A Google Task deleted at Google** stays in Rooks' list after the next sync, as with Planner and To Do.
+* **Google Slides edits, Drive comments and suggestions**: not built; Docs edits are written directly (with the version
+  check), not as suggestions.
+* **Rooks as its own chat inside Google Chat** (0012 section 2.3): a Chat app the company runs in its own Google
+  Cloud project, with Pub/Sub the computer pulls from. Same gate as the Teams bot: only with the owner's yes and a test
+  company. The Channels page says so.
+* **Rooks as a chat inside Teams, and Needs you answered from a Teams card** (0012 section 2.2, last phase): needs an
+  Entra app and Azure Bot in the company's subscription, a Teams app package the admin allows, and a relay the company
+  owns (Azure Relay) or the Rooks cloud. Only with the owner's yes and a test company. The Channels page says so.
+* **A real tenant**: everything was tested against `tests/fake_graph.py` only. Check against a Microsoft 365 developer
+  tenant: incremental consent per switch, which permissions need an admin (the `ADMIN` set in `work_scopes.py`
+  follows Microsoft's permissions reference), the admin consent address in the IT note, a consumer account refused,
+  SharePoint search across sites, transcripts (`OnlineMeetingTranscript.Read.All` and the organiser rule), Planner's
+  version tags, and throttling. Then publisher verification of the shipped registration.
+* **`rooks-browser` opening a work file's address** (0012 section 3.4): the app's Room browser and the terminal's
+  `/work open` do; the separate browser agent does not yet.
+* **SharePoint lists** (`listItem` in search) and site pages: only document libraries are read.
+* **`cloud_mail.py` tests** (architecture section h, rank 3): the work account reuses it for Mail and Calendar, but it
+  still has no suite of its own against a fake Gmail and Graph beyond `test_connect_mail_calendar.py`.
+* **A Planner or To Do task deleted at Microsoft** stays in Rooks' list after the next sync (sync adds and updates,
+  never removes). Removing one needs a yes like every other change and is not built.
+* **Turning a switch off does not remove the permission at Microsoft**: the page says where to remove it (My Apps).
+  Graph has no call for an app to give back one delegated permission.
+
 ### Rooks as its own program (design 0007 part 2): not done here
 * **Not run in a real WebKit window.** Playwright's WebKit is not installed on the build machine, and no Mac was at
   hand. Not verified, each needs a run in the built app: `<a download>` and blob downloads reaching `on_download` in
@@ -235,10 +282,27 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   checked as files only (`desktop/scripts/test_icons.py`), not seen in a built app; a phone build (`eas build`) has not
   been run with the new layers; the terminal banner keeps the word "Rooks" (no glyph reads well in every terminal font).
 * **Windows**: the NSIS install folder follows the product name (`%LOCALAPPDATA%\Rooks`); the installer quietly runs
-  the old folder's uninstaller. Not run on a real PC.
+  the old folder's uninstaller. The setup is installed, started and uninstalled in CI on windows-2022 (design 0011,
+  section 4, `desktop/scripts/check_windows_install.ps1`), silently only. Not run on a real Windows 10 or 11 PC; its
+  pages (the unticked desktop box, "Also remove my chats, keys and the Room") are not clicked through by any test; the
+  MSI is built but never installed in CI; a PC without WebView2 or without internet, and SmartScreen on the unsigned
+  setup, are untested.
 * **macOS in-place update** from 1.0.5 keeps the bundle's old name ("AI Workspace.app") until the installer runs again.
 
 ### The Room's browser (design 0007), engine and API lane: not done here
+
+* **The packaged app's browser is proved only in CI with the runner's Chrome** (`smoke_sidecar.py --room-browser`,
+  macOS and Linux). Not covered there: a Mac with only Edge or Chromium, a Linux runner where bwrap's wall is on (the
+  Ubuntu runner may run it without the wall, which the window says). On Windows `smoke_sidecar.py --room-browser` now
+  starts it through the frozen sidecar too, with the runner's Chrome.
+* **The Room's browser on Windows: what is left** (built on `feat/windows`, design 0011 section 2). Not walled: it runs
+  as the person (the window says "Not locked off"), with the person's own `USERPROFILE` (Chromium needs it), in a job
+  with no UI limits: under any one of them Chromium's sandbox could not start its GPU process, so the job does not hold
+  the person's clipboard back (pages still get no clipboard permission). Its job is nested in the Room job (section 3)
+  and the frozen sidecar's smoke test starts it. Left: Edge and Chrome under a real organisation's policies and with a
+  work account's sign-in; Windows on Arm; a real Windows 10 and 11 PC.
+* **Telling a wall failure apart** reads what bwrap printed (`bwrap: …`). A wall that fails without printing that is
+  reported as "the browser refused to start"; the Advanced detail still shows what was printed.
 
 * **The Room's own engine download.** `install_engine` checks a downloaded archive against a SHA-256 and refuses one
   that reaches outside its folder, but no Chrome for Testing build is pinned yet (URL, version and its real SHA-256 per
@@ -301,8 +365,12 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Terminals through the helper.** `rooks-try serve` (`TRY_URL`) hosts no terminals and no Files; its status says
   `can: {terminal: false, files: false}` and the page keeps the Commands window ("A terminal needs the Room on this
   computer."). Hosting the registry in the helper and proxying the WebSocket through the app would close it.
-* **Windows terminals.** `terminal_pty` and the Room's terminals are POSIX only; a pseudo terminal through ConPTY is
-  the way. Windows keeps the Commands window with a login Git bash (or Command Prompt, which says so).
+* **Windows terminals: what is left** (built on `feat/windows`, design 0011 section 1). The Room's terminals and the app's
+  own terminal run on ConPTY with PowerShell or Git Bash. Left: ship Microsoft's `conpty.dll` and `OpenConsole.exe` in
+  the sidecar (newer ConPTY than an old Windows 10 has) and open a ConPTY terminal from `smoke_sidecar.py` on Windows
+  (it runs a quick command there, not a terminal); a real Windows 10 and 11 PC,
+  Windows on Arm, constrained language mode and AppLocker/WDAC are untested. On Windows a line sent through the send
+  route is logged by its length only, always, because the console's echo mode cannot be read from outside.
 * **A shell inside a QEMU guest** (serial or ssh console). Until then a separate computer has no Terminal window and no
   Files (`terminal_argv` is None), and Advanced says "Files live inside the separate computer. Use its screen."
 * **Shells that survive an app restart** (`tmux` around the login shell). Today a restart ends every Room terminal; it

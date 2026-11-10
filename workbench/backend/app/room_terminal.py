@@ -20,6 +20,15 @@ the terminal was waiting for hidden input, a password prompt), and one coarse "Y
 when a socket that typed detaches. Keystrokes over the socket are never recorded. tail gives plain text: no escape
 sequences reach the model or the rooks terminal.
 
+On Windows (design 0011, section 1) the shell is PowerShell, or Git Bash when Git for Windows is there, on a pseudo
+console (ConPTY, rooks_try.winproc) in a job of its own; the registry, ring, log, scrollback, socket and refusals are
+the same. Where POSIX differs, Windows does this: ConPTY re-renders the screen and may drop the in-band marker, so the
+shell also writes "code;nonce;n" to a named pipe only the person can open (the count n keeps a prompt from counting
+twice when both arrive), and a command ends when its code arrives and the output has been quiet for 150 ms (at most
+1 s); busy is a started command, or a process in the terminal's job other than the shell's own; every line sent
+through the send route is recorded by its length only (the console's echo mode cannot be read from outside); hanging
+up closes the console on a worker thread while the reader drains, and after 3 s the job ends with 129, as on POSIX.
+
 At most four Room terminals, live or ended, counted apart from the app terminal's six. Stop closes them (the ended ones
 stay listed, greyed, with their text); Start over closes and forgets them. When the app exits, every live shell is hung
 up and its record says "restart"; the next start lists it as ended with its log as its text (load_ended), and the
@@ -65,6 +74,9 @@ RING_MAX = 256 * 1024
 LOG_MAX = 2 * 1024 * 1024
 LOG_KEEP = 1024 * 1024
 PROMPT_WAIT_S = 5.0     # a started command waits for the shell's first prompt this long
+PROMPT_WAIT_WIN_S = 30.0  # PowerShell on a cold Windows runner can take this long to show its first prompt
+HANG_UP_GRACE_S = 3.0   # Windows: after closing the console, the job ends with 129 after this long
+QUIET_S, QUIET_MAX_S = 0.15, 1.0  # Windows: a code from the side channel waits for the output to settle
 DONE_LINES = 20
 TAIL_DEFAULT, TAIL_MAX = 200, 2000
 COLS, ROWS = 80, 24
@@ -81,6 +93,8 @@ NO_SUCH = "No such terminal."
 ENDED = "This terminal has ended."
 ROOKS_BUSY = "Rooks is working in that terminal. Take it first, or open your own."
 DID_NOT_START = "The terminal could not start in the Room."
+NO_GIT_BASH = "Git Bash is not on this computer. Install Git for Windows to get it."
+BAD_SHELL = "That kind of terminal is not offered here."
 BAD_NAME = "A terminal's name is 1 to 40 characters."
 TAKEN_NOTE = "The person took this terminal; what it prints now is theirs."
 STARTED_NOTE = "Started in the Room's terminal. Use tail to see how it goes."
@@ -98,9 +112,11 @@ QUEUE_MAX = RING_MAX     # output queued for one socket; past this the socket ge
 # The exit code marker the Room's profile prints at each prompt: ESC ] 7777 ; code ; nonce BEL, the nonce this
 # terminal's own (ROOKS_MARK in its environment, kept unexported by the profile), so what a command prints cannot end
 # it. A profile seeded before the nonce prints ESC ] 7777 ; code BEL: read while the terminal has never shown a nonce.
-_MARK = re.compile(rb"\x1b\]7777;(-?\d{0,6})(?:;([0-9a-f]{0,64}))?\x07")
+# On Windows a third field counts the prompts (the same line also goes through the side channel; see the top).
+_MARK = re.compile(rb"\x1b\]7777;(-?\d{0,10})(?:;([0-9a-f]{0,64})(?:;(\d{1,9}))?)?\x07")
 _MARK_HEAD = b"\x1b]7777;"
-_MARK_PART = re.compile(rb"\x1b\]7777;-?\d{0,6}(?:;[0-9a-f]{0,64})?")
+_MARK_PART = re.compile(rb"\x1b\]7777;-?\d{0,10}(?:;[0-9a-f]{0,64}(?:;\d{0,9})?)?")
+_SIDE = re.compile(r"(-?\d{1,10});([0-9a-f]{0,64})(?:;(\d{1,9}))?")
 # What tail gives is plain text (the model and the rooks terminal read it): escape sequences out, carriage returns
 # settled. CSI; OSC, DCS, APC, PM and SOS strings to their end; two and three byte escapes; a lone ESC; C1 controls.
 _ESCAPES = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b[\]P_^X][^\x07\x1b]*(?:\x07|\x1b\\?|$)|\x1b[ -/]*[0-~]|\x1b$"
@@ -182,6 +198,12 @@ class RoomTerminal:
     last_out: float = 0.0           # monotonic time of the last output
     nonce: str = field(default_factory=lambda: uuid.uuid4().hex)  # what this terminal's own exit code markers carry
     nonce_seen: bool = False        # its profile prints the nonce: a marker without it is not the shell's
+    kind: str = ""                  # "powershell" | "bash" | "zsh" | "sh": so the assistant writes the right syntax
+    win: object | None = None       # Windows: the rooks_try.winproc.Terminal (pseudo console, job, shell)
+    mark_pipe: object | None = None  # Windows: the side channel the shell writes its exit codes to
+    seq_seen: int = 0               # Windows: the last prompt counted (in-band and side channel both carry it)
+    idle_pids: frozenset | None = None  # Windows: what is in the job at the first prompt (the shell's own)
+    channel: str | None = None      # Windows: how the first exit code arrived, "in-band" or "pipe" (said under Advanced)
 
     # --- what it is now -------------------------------------------------------------------------------------------------
     @property
@@ -191,7 +213,19 @@ class RoomTerminal:
     def busy(self) -> bool:
         """A foreground program runs (the pty's foreground process group is not the shell's), or a command Rooks
         started has not reported its end."""
-        if self.ended or self.master is None or self.proc is None:
+        if self.ended:
+            return False
+        if self.win is not None:  # Windows: no foreground process group; a program in the job besides the shell
+            if self.pending:
+                return True
+            idle = self.idle_pids
+            if idle is None:
+                return False
+            try:
+                return bool(set(self.win.pids()) - idle)
+            except OSError:
+                return False
+        if self.master is None or self.proc is None:
             return False
         if self.pending:
             return True
@@ -235,9 +269,9 @@ class RoomTerminal:
     def row(self, extra: bool = False) -> dict:
         out = {"id": self.id, "name": self.name, "owner": self.owner, "alive": self.alive, "busy": self.busy(),
                "started": self.started, "exit_code": self.code(), "ended_reason": self.ended_reason,
-               "command": self.command, "elapsed_s": self.elapsed(), "taken": self.taken}
+               "command": self.command, "elapsed_s": self.elapsed(), "taken": self.taken, "shell_kind": self.kind}
         if extra:
-            out.update(cols=self.cols, rows=self.rows, shell=self.shell)
+            out.update(cols=self.cols, rows=self.rows, shell=self.shell, marker=self.channel)
         return out
 
     def meta_dict(self) -> dict:
@@ -245,7 +279,8 @@ class RoomTerminal:
                 "started_ts": self.started_ts, "command": self.command, "command_ts": self.command_ts,
                 "command_code": self.command_code, "ended": self.ended, "exit_code": self.exit_code,
                 "ended_reason": self.ended_reason, "ended_ts": self.ended_ts, "run": self.run,
-                "restart_seen": self.restart_seen, "shell": self.shell, "cols": self.cols, "rows": self.rows}
+                "restart_seen": self.restart_seen, "shell": self.shell, "kind": self.kind, "cols": self.cols,
+                "rows": self.rows}
 
     def save(self) -> None:
         try:
@@ -361,6 +396,7 @@ def _record(folder: Path, path: Path) -> tuple[RoomTerminal, bool] | None:
                          starter=str(meta.get("starter") or meta.get("owner") or "person"),
                          started=str(meta.get("started") or ""), started_ts=float(meta.get("started_ts") or 0),
                          log=folder / f"{tid}.log", meta=path, shell=str(meta.get("shell") or ""),
+                         kind=str(meta.get("kind") or "")[:20],
                          cols=int(meta.get("cols") or COLS), rows=int(meta.get("rows") or ROWS),
                          command=str(meta["command"]) if meta.get("command") is not None else None,
                          command_ts=float(meta["command_ts"]) if meta.get("command_ts") is not None else None,
@@ -415,7 +451,10 @@ def _at_exit() -> None:
     """The app is going away: hang every live shell up and write that a restart ended it."""
     for t in list(_TERMS.values()):
         if not t.ended and t.proc is not None:
-            terminal_pty._hang_up(t.proc)
+            if t.win is not None:
+                t.win.kill_now()
+            else:
+                terminal_pty._hang_up(t.proc)
             t.ended, t.ended_reason, t.ended_ts = True, "restart", time.time()
             t.stop.set()
             t.save()
@@ -442,8 +481,11 @@ def reset_for_tests(restart: bool = True) -> None:
 def _split_marks(data: bytes) -> tuple[bytes, list[tuple[int, str | None]], bytes]:
     """The output without exit code markers, the (code, nonce) each carried (nonce None from a profile seeded before
     the nonce), and a tail held back because it may be the start of a marker cut by the read."""
-    marks = [(int(m.group(1)) if m.group(1) not in (b"", b"-") else 0,
-              m.group(2).decode() if m.group(2) is not None else None) for m in _MARK.finditer(data)]
+    marks = []
+    for m in _MARK.finditer(data):
+        mark = (int(m.group(1)) if m.group(1) not in (b"", b"-") else 0,
+                m.group(2).decode() if m.group(2) is not None else None)
+        marks.append(mark if m.group(3) is None else (*mark, int(m.group(3))))
     clean = _MARK.sub(b"", data)
     i = clean.rfind(b"\x1b")
     if i != -1:
@@ -529,10 +571,12 @@ def _command_output(t: RoomTerminal) -> str:
     return "\n".join([ln for ln in text.split("\n") if ln.strip()][-DONE_LINES:])
 
 
-def _marker(t: RoomTerminal, code: int, nonce: str | None = None) -> None:
+def _marker(t: RoomTerminal, code: int, nonce: str | None = None, seq: int | None = None,
+            channel: str = "in-band") -> None:
     """The shell came back to its prompt: the last command ended with this code. A marker without this terminal's
-    nonce is something a command printed, once the profile has shown it prints the nonce; it is cut out and ignored."""
-    done = False
+    nonce is something a command printed, once the profile has shown it prints the nonce; it is cut out and ignored.
+    On Windows each prompt carries a count, so the in-band marker and the side channel's line count once."""
+    done = first = False
     with t.lock:
         if nonce is not None:
             if nonce != t.nonce:
@@ -540,10 +584,21 @@ def _marker(t: RoomTerminal, code: int, nonce: str | None = None) -> None:
             t.nonce_seen = True
         elif t.nonce_seen:
             return
+        if seq is not None:
+            if seq <= t.seq_seen:
+                return
+            t.seq_seen = seq
         t.prompts += 1
+        first = t.prompts == 1
         t.last_code = code
         if t.pending:
             t.pending, t.command_code, t.done_ts, done = False, code, time.time(), True
+    if first and t.win is not None:  # the shell's own processes, at its first prompt: anything more is a program
+        t.channel = channel
+        try:
+            t.idle_pids = frozenset(t.win.pids())
+        except OSError:
+            t.idle_pids = frozenset()
     if done:
         t.save()
         # The end of a command Rooks started, with its last lines; not when the person took the terminal (theirs).
@@ -555,8 +610,8 @@ def _marker(t: RoomTerminal, code: int, nonce: str | None = None) -> None:
 def _take(t: RoomTerminal, data: bytes) -> None:
     clean, marks, t.carry = _split_marks(t.carry + data)
     _emit(t, clean)
-    for code, nonce in marks:
-        _marker(t, code, nonce)
+    for code, nonce, *seq in marks:
+        _marker(t, code, nonce, seq[0] if seq else None)
 
 
 def _shell_gone(t: RoomTerminal) -> bool:
@@ -603,6 +658,48 @@ def _read_loop(t: RoomTerminal) -> None:
             _take(t, data)
     if not t.stop.is_set():  # the shell exited by itself
         _finish(t, "exited", hang_up=left)
+
+
+def _read_loop_win(t: RoomTerminal) -> None:
+    """Windows: read what the pseudo console draws until it closes (it closes when the console is closed: by a hang
+    up, or by the watcher once the shell has exited)."""
+    win = t.win
+    while True:
+        data = win.read()
+        if not data:
+            break
+        _take(t, data)
+    if t.carry:
+        carry, t.carry = t.carry, b""
+        _emit(t, carry)
+    if not t.stop.is_set():  # the shell exited by itself
+        _finish(t, "exited", hang_up=False)
+
+
+def _watch_win(t: RoomTerminal) -> None:
+    """Windows: a pseudo console outlives its shell, so once the shell exits its console is closed (and the reader sees
+    the end), after a moment for its last output."""
+    try:
+        t.proc.wait()
+    except Exception:  # noqa: BLE001 - a closed handle: the terminal was ended
+        return
+    if not t.stop.is_set():
+        time.sleep(0.2)
+        if not t.stop.is_set():
+            t.win.close_console_async()
+
+
+def _side_mark(t: RoomTerminal, line: str) -> None:
+    """Windows: a line from the side channel, "code;nonce;n". It waits for the output to settle (at least 150 ms of
+    quiet, at most 1 s), so a command's last lines are in the ring when it is said to have ended."""
+    m = _SIDE.fullmatch(line.strip())
+    if not m or t.ended:
+        return
+    start = time.monotonic()
+    time.sleep(QUIET_S)
+    while time.monotonic() - start < QUIET_MAX_S and time.monotonic() - t.last_out < QUIET_S:
+        time.sleep(0.03)
+    _marker(t, int(m.group(1)), m.group(2), int(m.group(3)) if m.group(3) else None, channel="pipe")
 
 
 # --- opening, typing, closing ------------------------------------------------------------------------------------------------
@@ -665,6 +762,40 @@ def _spawn(t: RoomTerminal, argv: list[str], home: Path, env: dict) -> None:
     raise HTTPException(409, ENDED)
 
 
+def _spawn_win(t: RoomTerminal, argv: list[str], home: Path, env: dict) -> None:
+    """In a worker thread, on Windows: the side channel, then the shell on a pseudo console in a job of its own, its
+    reader and its watcher."""
+    from rooks_try import winproc
+
+    if t.ended:
+        raise HTTPException(409, ENDED)
+    pipe = winproc.MarkPipe(lambda line: _side_mark(t, line))
+    env = {**env, "ROOKS_MARK_PIPE": pipe.name}
+    try:
+        term = winproc.Terminal(argv, env, str(home), t.cols, t.rows)
+    except OSError:
+        pipe.close()
+        raise
+    with t.lock:
+        if not t.ended:
+            t.win, t.proc, t.mark_pipe = term, term.proc, pipe
+            t.reader = threading.Thread(target=_read_loop_win, args=(t,), name=f"room-terminal-{t.id}", daemon=True)
+            t.reader.start()
+            threading.Thread(target=_watch_win, args=(t,), name=f"room-terminal-watch-{t.id}", daemon=True).start()
+            return
+    term.end(grace=0.5)
+    term.close()
+    pipe.close()
+    raise HTTPException(409, ENDED)
+
+
+def _resize(t: RoomTerminal, cols: int, rows: int) -> None:
+    if t.win is not None:
+        t.win.resize(cols, rows)
+    elif t.master is not None:
+        terminal_pty._resize(t.master, cols, rows)
+
+
 def _host_which(name: str) -> str | None:
     """A program on this computer, never in the Room's folders (rooks_try's host_which; shutil's when it is older)."""
     try:
@@ -690,6 +821,14 @@ def _env(room, driver, home: Path) -> dict:
 
 
 async def _typed(t: RoomTerminal, data: bytes) -> None:
+    if t.win is not None:  # Windows: a blocking pipe write, off the event loop
+        if t.ended:
+            raise HTTPException(409, ENDED)
+        try:
+            await asyncio.to_thread(t.win.write, data)
+        except OSError as e:
+            raise HTTPException(409, ENDED) from e
+        return
     while data:
         if t.ended or t.master is None:
             raise HTTPException(409, ENDED)
@@ -701,9 +840,19 @@ async def _typed(t: RoomTerminal, data: bytes) -> None:
             raise HTTPException(409, ENDED) from e
 
 
-async def open_terminal(name: str | None = None, owner: str = "person", command: str | None = None) -> RoomTerminal:
+def _kinds(driver) -> list[str]:
+    """The kinds of terminal this Room offers on Windows (PowerShell, Git Bash); [] elsewhere (the person's own shell)."""
+    try:
+        return list(driver.terminal_shells()) if sys.platform == "win32" else []
+    except Exception:  # noqa: BLE001 - a driver that cannot say offers its one shell
+        return []
+
+
+async def open_terminal(name: str | None = None, owner: str = "person", command: str | None = None,
+                        shell: str | None = None) -> RoomTerminal:
     """Open a Room terminal (or, for a command, reuse Rooks's idle one of that name) and, with a command, type it.
-    Returns at once; nothing here waits for the command."""
+    Returns at once; nothing here waits for the command. `shell` picks the kind on Windows ("powershell", "bash");
+    PowerShell is the person's default and Git Bash, when there, Rooks's (as a quick command uses it)."""
     from . import room
 
     command = (command or "").strip() or None
@@ -744,13 +893,27 @@ async def open_terminal(name: str | None = None, owner: str = "person", command:
         driver = await asyncio.to_thread(tryroom.driver)
         home = store.guest_home()
         await asyncio.to_thread(store.seed_home, home)
-        argv = await asyncio.to_thread(driver.terminal_argv, home)
+        if sys.platform == "win32":
+            kinds = await asyncio.to_thread(_kinds, driver)
+            if shell and shell not in ("powershell", "bash"):
+                raise HTTPException(400, BAD_SHELL)
+            if shell == "bash" and "bash" not in kinds:
+                raise HTTPException(409, NO_GIT_BASH)
+            kind = shell or ("bash" if owner == "rooks" and "bash" in kinds else "powershell")
+            argv = await asyncio.to_thread(driver.terminal_argv, home, kind)
+        else:
+            kind = None
+            argv = await asyncio.to_thread(driver.terminal_argv, home)
         if not argv:
             raise HTTPException(501, NO_TERMINAL)
         env = await asyncio.to_thread(_env, tryroom, driver, home)
         env["ROOKS_MARK"] = t.nonce  # the profile keeps it, unexported, and prints it in each exit code marker
-        t.shell = env.get("SHELL") or "/bin/sh"
-        await asyncio.to_thread(_spawn, t, argv, home, env)
+        if kind:
+            t.shell, t.kind = argv[0], kind
+        else:
+            t.shell = env.get("SHELL") or "/bin/sh"
+            t.kind = Path(t.shell).name or "sh"
+        await asyncio.to_thread(_spawn_win if kind else _spawn, t, argv, home, env)
     except HTTPException:
         _forget(t)  # it never opened (or was closed while it opened): nothing of it stays
         raise
@@ -769,9 +932,11 @@ async def open_terminal(name: str | None = None, owner: str = "person", command:
 async def _ready(t: RoomTerminal) -> None:
     """Wait for a new shell's first prompt (PROMPT_WAIT_S at most). Text typed before it is echoed once by the terminal
     and again at the prompt, so a command sent to a brand new terminal showed twice."""
-    deadline = time.monotonic() + PROMPT_WAIT_S
+    # Windows: the console draws an empty screen before the shell has started, so quiet means more there
+    wait, quiet = (PROMPT_WAIT_WIN_S, 3.0) if t.win is not None else (PROMPT_WAIT_S, 0.5)
+    deadline = time.monotonic() + wait
     while t.prompts == 0 and not t.ended and time.monotonic() < deadline:
-        if t.total and not t.busy() and time.monotonic() - t.last_out > 0.5:
+        if t.total and not t.busy() and time.monotonic() - t.last_out > quiet:
             break  # a shell without the Room's marker (not bash or zsh, or a profile the person replaced): it is waiting
         await asyncio.sleep(0.05)
     if t.ended:
@@ -790,7 +955,7 @@ async def _start(t: RoomTerminal, command: str) -> None:
         t.pending = t.prompts > 0  # without the profile's marker, busy is the foreground process group alone
     t.save()
     _row("start", {"name": t.name, "command": command}, "ok", f"started in {t.name}", time.monotonic())
-    await _typed(t, (command + "\n").encode())
+    await _typed(t, (command + ("\r" if t.win is not None else "\n")).encode())
 
 
 def _end_now(t: RoomTerminal, reason: str, hang_up: bool = True) -> bool:
@@ -803,7 +968,16 @@ def _end_now(t: RoomTerminal, reason: str, hang_up: bool = True) -> bool:
         t.stop.set()
         attached, t.attached = t.attached, None
     proc = t.proc
-    if proc is not None:
+    if t.win is not None:  # Windows: close the console, then after the grace end the job; a hung-up shell shows 129
+        from rooks_try import winproc
+
+        exited_first = proc.poll() is not None
+        rc = t.win.end(grace=HANG_UP_GRACE_S)
+        t.exit_code = rc if exited_first and rc is not None else winproc.HUNG_UP
+        if t.mark_pipe is not None:
+            t.mark_pipe.close()
+        t.win.close(reader=t.reader)
+    elif proc is not None:
         if hang_up:
             terminal_pty._hang_up(proc)
         terminal_pty._reap(proc)
@@ -870,6 +1044,8 @@ def _forget(t: RoomTerminal) -> None:
 def hidden_input(t: RoomTerminal) -> bool:
     """The terminal is waiting for an answer it does not show (sudo, passwd, ssh, read -s): echo off in line mode. A
     shell's own line editor (readline, zle) also turns echo off, but reads key by key, so it is not counted."""
+    if t.win is not None:  # Windows: the console's echo mode cannot be read from outside, so every line counts as hidden
+        return True
     import termios
 
     master = t.master
@@ -901,7 +1077,7 @@ def tail(t: RoomTerminal, lines: int = TAIL_DEFAULT) -> dict:
     text = "\n".join(plain(t.text()).split("\n")[-lines:])
     out = {"id": t.id, "name": t.name, "text": text, "alive": t.alive, "busy": t.busy(), "exit_code": t.code(),
            "owner": t.owner, "taken": t.taken, "elapsed_s": t.elapsed(), "started": t.started,
-           "ended_reason": t.ended_reason}
+           "ended_reason": t.ended_reason, "shell_kind": t.kind}
     if t.taken:
         out["note"] = TAKEN_NOTE
     return out
@@ -931,8 +1107,10 @@ async def open_route(request: Request):
     body = await _body(request)
     command = str(body.get("command") or "").strip() or None
     name = str(body.get("name") or "").strip()[:40] or None
-    t = await open_terminal(name=name, owner="rooks" if command else "person", command=command)
-    return {"id": t.id, "name": t.name, "owner": t.owner, "alive": t.alive, "started": t.started}
+    shell = str(body.get("shell") or "").strip().lower() or None
+    t = await open_terminal(name=name, owner="rooks" if command else "person", command=command, shell=shell)
+    return {"id": t.id, "name": t.name, "owner": t.owner, "alive": t.alive, "started": t.started,
+            "shell_kind": t.kind}
 
 
 @terminal.get("/terminals/{tid}/tail")
@@ -1054,11 +1232,11 @@ async def attach(ws: WebSocket, tid: str):
                     continue  # Rooks is working here; the page says so and offers Take this one
                 await _typed(t, str(msg.get("data", "")).encode())
                 typed = True
-            elif msg.get("type") == "resize" and t.master is not None:
+            elif msg.get("type") == "resize" and (t.master is not None or t.win is not None) and not t.ended:
                 cols, rows = int(msg.get("cols") or COLS), int(msg.get("rows") or ROWS)
                 if not resized and (cols, rows) == (t.cols, t.rows) and rows > 2:
-                    terminal_pty._resize(t.master, cols, rows - 1)  # the same size: nudge it, so a full screen redraws
-                terminal_pty._resize(t.master, cols, rows)
+                    _resize(t, cols, rows - 1)  # the same size: nudge it, so a full screen redraws
+                _resize(t, cols, rows)
                 t.cols, t.rows, resized = max(2, min(cols, 1000)), max(2, min(rows, 500)), True
     except Exception:  # noqa: BLE001 - a socket that went away, or a frame that was not ours
         pass

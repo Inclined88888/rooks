@@ -246,6 +246,8 @@ def _shape(st: dict, available: bool = True) -> dict:
         "isolation": st.get("isolation") or "none",
         "label": plain_label(st) if st.get("driver") else (st.get("label") or ""),  # plain words, every screen
         "label_detail": st.get("label") or "",  # advanced only: the kind's own exact label
+        # design 0011, section 3: "job" on Windows (every Room program in a job: they stop together; not a wall)
+        "containment": st.get("containment") or "none",
         "note": st.get("note") or "",
         "driver": st.get("driver"),          # advanced only
         "home": st.get("home"),              # advanced only

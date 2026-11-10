@@ -18,3 +18,15 @@
 .needs-link:hover { text-decoration-color: currentColor; }
 .needs-card { max-width: none; }
 @media (pointer: coarse) { .needs-link { min-height: var(--touch); } }
+/* design 0012: a held work change as a redline in words. Industrial: square marks, a hairline edge per line, the
+   word that says what changes in mono micro-label caps. Tokens only. */
+.needs-change { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; border-top: var(--line); }
+.needs-change li { padding: var(--space-1) var(--space-2); border-bottom: var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
+.needs-change-word {
+  font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: var(--tracking-micro);
+  margin-right: var(--space-2);
+}
+.needs-change-remove { background: var(--color-danger-soft); color: var(--color-danger-text); text-decoration: line-through; text-decoration-thickness: 1px; }
+.needs-change-remove .needs-change-word { text-decoration: none; display: inline-block; }
+.needs-change-add { background: var(--color-success-soft); color: var(--color-success-text); }
+.needs-change-set { background: var(--color-warning-soft); color: var(--color-warning-text); }

@@ -62,6 +62,26 @@ test("off, the window says why in plain words", () => {
   }
 });
 
+test("on Windows: the organisation's policy is said in plain words, with the browser named, and kept through the store", () => {
+  // design 0011, section 2: Windows has the Room's browser; IT can switch it off, and the window sends the person to IT
+  assert.ok(br.BROWSER_OFF_REASONS.includes("policy"));
+  const policy = { ...ON, can: { browser: false, browser_off_reason: "policy", browser_off_words: "Your organisation has switched this off in Edge. Ask your IT team." } };
+  const w = br.browserOff(policy);
+  assert.equal(w.reason, "policy");
+  assert.equal(w.title, "Your organisation has switched off the Room's browser.");
+  assert.equal(w.line, "Your organisation has switched this off in Edge. Ask your IT team.");
+  assert.match(br.browserOff({ ...ON, can: { browser: false, browser_off_reason: "policy" } }).line, /IT team/);
+  assert.doesNotMatch(`${w.title} ${w.line}`, /https?:|registry|policy|RemoteDebugging|DevTools/i);
+  const st = store.roomFromWire(policy);
+  assert.equal(st.can.browser_off_reason, "policy");
+  assert.equal(st.can.browser_off_words, "Your organisation has switched this off in Edge. Ask your IT team.");
+  const work = store.roomFromWire({ ...ON, can: { browser: true, browser_off_reason: null, browser_advanced: "On a work PC, Edge may sign in to work sites as you through Windows." } });
+  assert.equal(work.can.browser_advanced, "On a work PC, Edge may sign in to work sites as you through Windows.");
+  assert.equal(store.roomFromWire(WITH).can.browser_advanced, "");
+  const page = maybe("../src/room/RoomPage.tsx");
+  assert.match(page, /browser_advanced/, "the Room's Advanced sheet says what Edge may do on a work PC");
+});
+
 test("the phone gets a still, taps and a Type field, and says what needs the computer", () => {
   assert.ok(br, "src/room/browser.ts exists");
   assert.equal(br.PHONE_LINE, "On a phone you can tap, scroll and type. Dragging, hovering and shortcuts need the computer.");
@@ -178,4 +198,27 @@ test("switched off, the window points to a switch that is really in Settings (re
   const term = read("../src/room/TerminalWindow.tsx");
   assert.match(term, /to="\/settings\?section=tools"/);
   assert.match(term, /Settings, under Tools/);
+});
+
+test("a browser that did not start says why in plain words, with the detail only under Advanced", () => {
+  assert.ok(br && store, "src/room/browser.ts and status.ts exist");
+  const words = {
+    no_engine: "The Room's browser could not start: no browser was found on this computer to run it.",
+    refused: "The Room's browser could not start: the browser on this computer refused to start.",
+    wall: "The Room's browser could not start: the wall that keeps it inside the Room could not be set up.",
+  };
+  for (const [reason, line] of Object.entries(words)) {
+    const failed = { reason, words: line, advanced: "Exit code: 1\nLast output:\nbwrap: setting up uid map: Permission denied" };
+    assert.deepEqual(br.startFailed(failed), failed, reason);
+    const st = store.roomFromWire({ ...WITH, browser: { open: false, tabs: [], failed } });
+    assert.deepEqual(st.browser.failed, failed, `${reason}: status keeps why the last start failed`);
+    assert.doesNotMatch(br.startFailed(failed).words, /bwrap|Exit code|https?:|Traceback/, "the normal line stays plain");
+  }
+  assert.equal(br.startFailed(null), null);
+  assert.equal(br.startFailed({ reason: "refused" }), null, "no words: nothing to say");
+  assert.equal(store.roomFromWire({ ...WITH }).browser.failed, null);
+  const win = maybe("../src/room/BrowserWindow.tsx");
+  assert.match(win, /<details[^>]*>\s*<summary>Advanced<\/summary>/, "the detail is under Advanced");
+  assert.match(win, /failed\.advanced/, "Advanced shows what was run and what it printed");
+  assert.match(win, /failed\.words/, "the window shows the plain reason");
 });

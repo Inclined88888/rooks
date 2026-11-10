@@ -4,7 +4,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, feat/windows, release/1.1]  # feat/windows, release/1.1: the runners are the only real Windows and Mac (design 0011)
 
 permissions:
   contents: read
@@ -48,6 +48,46 @@ jobs:
         run: python -m pytest -q ../../cli/tests
       - name: Desktop release scripts (updater manifest)
         run: python -m pytest -q ../../desktop/scripts
+
+  windows-terminals:
+    # Design 0011, sections 5.2 and 5.3: the backend on Windows, these files only. The Room's terminals (PowerShell and Git Bash
+    # on a real pseudo console) through the app's own routes and WebSocket, and the app's own terminal. The Try Room
+    # job's Windows leg runs rooks-try/tests/test_winproc.py (ConPTY, jobs, the side channel) as part of its suite.
+    name: "Windows: terminals, browser and work account"
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: workbench/backend
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            workbench/backend/requirements.txt
+            workbench/backend/requirements-dev.txt
+            rooks-try/pyproject.toml
+      - run: python -m pip install -r requirements.txt -r requirements-dev.txt -e ../../rooks-try
+      - name: What this runner has (Windows build, PowerShell, Git Bash)
+        shell: pwsh
+        run: |
+          [System.Environment]::OSVersion.Version
+          Get-Command pwsh, powershell, git -ErrorAction SilentlyContinue | Format-Table Name, Source -AutoSize
+      - name: The Room's terminals and the app's own terminal on a real pseudo console
+        # a test past 120 s prints every thread's stack, so a hang says where it is
+        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 tests/test_room_terminal_windows.py tests/test_room_terminal.py tests/test_app_terminal.py
+      - name: The ConPTY, job and side channel tests, and the Room's job, on their own (also in the Try Room job)
+        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 ../../rooks-try/tests/test_winproc.py ../../rooks-try/tests/test_room_job_windows.py
+      - name: The work account (Microsoft 365 and Google Workspace) against the fake sign-ins, Graph and Google APIs (design 0012)
+        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 tests/test_work_microsoft.py tests/test_work_google.py tests/test_connect_mail_calendar.py
+      - name: The Room's browser on Edge and Chrome over its pipe (design 0011, section 5.3; also in the Try Room job)
+        env:
+          ROOM_BROWSER_TESTS_REQUIRED: "1"  # never skipped quietly: a browser that cannot start here fails the job
+        run: python -m pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120 ../../rooks-try/tests/test_browser_windows.py tests/test_room_browser.py
 
   rooks-code:
     name: Terminal coding agent (${{ matrix.os }})

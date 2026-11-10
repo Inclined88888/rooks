@@ -236,7 +236,8 @@ flowchart LR
 Notes:
 
 - The Room only shows a screen when a real display exists. Its status always names the screen, the pointer, how isolated it is, and a plain label.
-- There is no browser inside the Room yet. Today the browser is a separate helper program (`rooks-browser`) reached through `browser_proxy.py`, and the Browser page shows its steps and screenshots rather than a page the person can click in. A Room browser is planned (task 49) and is being built on another branch.
+- The Room has its own browser (`room_browser.py`, engine in `rooks-try/rooks_try/browser.py`): a real Chrome, Edge or Chromium run headless with the Room's own profile and driven only over a pipe, never a port. On Windows the Room starts it itself with the pipe in place and keeps every one of its processes in a job (`rooks_try/winproc.py`); when the organisation has switched remote debugging off for that browser, the Room says so and sends the person to their IT team. The separate helper program (`rooks-browser`, reached through `browser_proxy.py`) still drives the person's own signed-in browser for the Browser page and Sites.
+- On Windows every program the Room starts (each terminal, each quick command and the browser) runs in a job of its own nested in one Room job that the app's backend holds (`winproc.room_job()`, kill on close): stopping the Room ends them all, and so does the backend ending however it ends. The desktop shell in turn holds its backend in a kill-on-close job (`desktop/src-tauri/src/sidecars.rs`), so ending Rooks ends everything. A job keeps them together; it is not a wall, and status says `isolation: "none"`, `containment: "job"`.
 - The app also has its own Terminal page (`terminal_pty.py`), a shell on the person's own computer, separate from the Room's terminals.
 
 ### d.4 Memory and learning
@@ -430,7 +431,12 @@ step in section g; a row it changed says so in its status. Everything else is as
 |---|---|---|
 | mail.py | Read and send mail on any standard server; routes Google, Microsoft and Mac accounts | live |
 | cloud_mail.py | Gmail and Microsoft mail and calendar for accounts connected with one sign-in | live (no tests) |
-| connect.py | "Connect Google" and "Connect Microsoft" sign-in; tokens stored encrypted | live |
+| connect.py | "Connect Google" and "Connect Microsoft" sign-in; tokens stored encrypted; the work sign-in asks only who you are, then one switch's permissions at a time | live |
+| work_scopes.py | The work account's switches and the permissions each asks for (design 0012) | live |
+| work_suite.py | The work account, its switches, the gate every work tool passes, each suite's words, Needs you titles and change lines, the IT note | live |
+| work_graph.py | OneDrive, SharePoint, Teams, meeting transcripts, Planner and To Do through Microsoft Graph | live, tested against a fake only |
+| work_google.py | Drive and shared drives, Docs, Sheets, Google Chat, Meet transcripts and Google Tasks (same functions as work_graph.py) | live, tested against a fake only |
+| work_suite_tools.py, work_suite_api.py | The assistant's `work_*` tools and `/api/work` (the Work apps page and the terminal's `/work`) | live |
 | oauth_clients.py | The public app identifiers used for that sign-in | live |
 | mail_autodetect.py | Finds mail and calendar settings from an address | live |
 | mac_mail.py | Mail through accounts already in Apple Mail | live (Mac only) |
@@ -442,9 +448,10 @@ step in section g; a row it changed says so in its status. Everything else is as
 | Module | What it does | Status |
 |---|---|---|
 | room.py | The Room: status, start, stop, save points, reset, run, click, type, picture, hand-off | live |
-| room_terminal.py | Real shells inside the Room, kept on the server, with private logs | live |
+| room_terminal.py | Real shells inside the Room, kept on the server, with private logs (on Windows PowerShell or Git Bash on ConPTY, through rooks_try/winproc.py) | live |
 | room_files.py | Read-only listing of the Room folder | live |
-| terminal_pty.py | The app's own Terminal page on the person's computer | live (page hidden behind Advanced, g.3a) |
+| room_browser.py | The Room's own browser: one engine over a pipe, its tabs, the live picture and input (on Windows in a job, with IT policy respected) | live |
+| terminal_pty.py | The app's own Terminal page on the person's computer (PowerShell on ConPTY on Windows) | live (page hidden behind Advanced, g.3a) |
 | browser_proxy.py | Passes Browser page requests to the separate browser helper | live |
 | desk_proxy.py | Passes Computer page requests to the computer-use helper | live |
 | handoff.py | Notes the browser leaves for the Computer page | live |
@@ -799,7 +806,7 @@ Ranked by how soon a workplace buyer would notice. Each line names the existing 
 | 4 | **Microsoft 365 files and tasks**: OneDrive, SharePoint, Planner, To Do | Only Outlook mail and calendar | `cloud_mail.py` (Graph calls) and `connect.py` (permissions); files into `analysis.py` (Files library); tasks into `services.py` |
 | 5 | **Jira and Asana that work both ways; Monday** | Read-only import of Jira, Asana and Trello into the Team board with a personal token; no Monday | `team/trackers.py` (add write-back, comments, Monday); show the items in the personal Tasks list |
 | 6 | **ServiceNow** | Nothing in any part of the code | A new connector beside `team/trackers.py`; tickets into the jobs board (`jobs.py`) and approvals through `needs_you.py`. Today only the Sites feature could read it by screen. |
-| 7 | **Google Workspace beyond Gmail and Calendar**: Drive, Docs, Sheets, Chat, Meet | Gmail and Google Calendar only | `connect.py` (Google permissions) and `cloud_mail.py`; Google Chat as a channel in `teammates/channels.py` |
+| 7 | **Google Workspace beyond Gmail and Calendar**: Drive, Docs, Sheets, Chat, Meet (built on feat/windows: `work_google.py`, design 0012) | Gmail and Google Calendar only | `connect.py` (Google permissions) and `cloud_mail.py`; Google Chat as a channel in `teammates/channels.py` |
 | 8 | **A built-in browser the person and the assistant share** for web apps without a connector | A separate browser helper with steps and screenshots; Sites scrape records after one sign-in | `room.py` (the planned Room browser), taking over `browser_proxy.py`, `local_agents.py` and the browser parts of `sites.py` |
 | 9 | **Company tenant sign-in approval** | The app uses its own shipped sign-in identifiers, registered under the old name; tenants that block user consent need an admin, and there is no admin flow | `oauth_clients.py`, `connect.py` |
 | 10 | **Audit records an IT team would accept**: export, retention, a manager's view | The run log and outbound record are strong but stay on each computer | `actions.py`, `egress.py`, `history.py` (already exports CSV and PDF) |
