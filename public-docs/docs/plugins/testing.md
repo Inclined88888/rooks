@@ -7,6 +7,12 @@ Test on a dedicated Timon instance and data directory. Set `TIMON_HOME` for ever
 
 ## Developer admission
 
+:::warning Timon 0.1.7 on Free
+In Timon 0.1.7, a Free installation installs an unsigned plugin, which includes any plugin you write yourself, but does not load it, whatever the value of `developer.unsignedPlugins`.
+
+This is a defect, fixed in the next version: Free will load unsigned plugins once developer mode is turned on. Until then, an unsigned plugin loads only on an installation where a licence key is activated.
+:::
+
 Unsigned plugins require a **valid Timon licence**. On a licensed installation, `developer.unsignedPlugins: true` allows unsigned packages; when the setting is absent or `false`, they are installed but not loaded. A development machine therefore sets it explicitly:
 
 ```json
