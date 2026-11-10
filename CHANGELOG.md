@@ -255,6 +255,10 @@ group that keeps its programs together even while terminals are off. The Work ap
 and Google Meet transcript sheet, the held work change in Needs you (a list of square lines with a hairline edge, the
 word in mono micro-label caps) and the Room browser's start detail use the industrial tokens: no radius, no shadow, no
 gradient.
+The packaged-app browser smoke test (`desktop/scripts/smoke_sidecar.py --room-browser`) now first checks that a new
+install's Room browser is off ("switched_off"), then switches it on in Settings as a developer would, then opens the
+page; on feat/windows it assumed the browser was on. The Rooks Browser Docker image installs `libatomic1`, which
+Playwright's bundled node needs and the slim Python image stopped carrying (the CI job failed on that, not on code).
 
 - **Terminals in the Room on Windows** (design 0011, section 1). On Windows 10 1809 and later the Room's Terminal window
   works as it does on macOS and Linux: New terminal opens PowerShell (PowerShell 7 when installed, else Windows

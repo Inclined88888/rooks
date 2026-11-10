@@ -12,7 +12,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
 WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY rooks_browser ./rooks_browser
-RUN pip install --no-cache-dir . \
+# libatomic1: Playwright's bundled node needs it, and the slim image no longer has it (CI, 2026-11-10).
+RUN apt-get update && apt-get install -y --no-install-recommends libatomic1 && rm -rf /var/lib/apt/lists/* \
+ && pip install --no-cache-dir . \
  && playwright install --with-deps chromium \
  && useradd --create-home --uid 1000 agent && mkdir -p /data && chown agent /data
 USER agent

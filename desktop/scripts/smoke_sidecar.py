@@ -127,6 +127,18 @@ def room_browser(app: Signed, scratch: Path) -> int:
             print(f"FAIL a quick command in the Room did not run ({status}): {body[:400]!r}")
             return 1
         print(f"ok   a quick command ran in the Room ({out.get('shell')})")
+        # The Room's browser is a developer tool (feat/room-pro): off on a new install, so the packaged program must say
+        # so first; then it is switched on in Settings, as a person with developer tools on would.
+        _, _, body = app.call("GET", "/api/room/status")
+        can = json.loads(body).get("can") or {}
+        if can.get("browser") is not False or can.get("browser_off_reason") != "switched_off":
+            print(f"FAIL a new install's Room browser is not off: {can.get('browser')} {can.get('browser_off_reason')}")
+            return 1
+        print("ok   a new install's Room browser is off")
+        status, _, body = app.call("PUT", "/api/settings", {"room_browser": True})
+        if status != 200 or json.loads(body).get("room_browser") is not True:
+            print(f"FAIL the Room's browser did not switch on in Settings ({status}): {body[:300]!r}")
+            return 1
         _, _, body = app.call("GET", "/api/room/status")
         can = json.loads(body).get("can") or {}
         if can.get("browser") is not True:
