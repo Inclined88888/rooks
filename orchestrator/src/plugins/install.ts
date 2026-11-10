@@ -12,7 +12,7 @@
  * `npm` and not `pnpm`: npm is there as soon as Node is, and a plugin is an
  * ordinary npm package (§10.3). No dependency added.
  */
-import { assertCompositionMutable, fixedComposition, withCompositionWrite } from '../license/capabilities.js';
+import { LicenseCapabilityError, assertCompositionMutable, fixedComposition, withCompositionWrite } from '../license/capabilities.js';
 import { mutationLicenseState } from '../license/runtime.js';
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -947,7 +947,9 @@ export function developerModeState(): DeveloperModeState {
     requested: setting === true,
     effective: unsignedPluginsAllowed(setting),
     available,
-    blockedBy: fixedComposition(mutationLicenseState()) ? 'plugin_composition_fixed' : available ? null : 'license',
+    // Named after the rule's answer, never ahead of it: should the rule one day
+    // admit a fixed composition, the switch opens with it.
+    blockedBy: available ? null : fixedComposition(mutationLicenseState()) ? 'plugin_composition_fixed' : 'license',
   };
 }
 
@@ -957,13 +959,18 @@ export function developerModeState(): DeveloperModeState {
  * and the loader's `allowUnsigned` reads it on every pass. Without the merge the
  * next `loader.update()` would still judge with the boot's value.
  *
- * Turning it off only narrows what loads, so it is allowed under any licence;
- * turning it on changes the plugin composition, which a fixed one refuses.
+ * Turning it off only narrows what loads, so it is allowed under any licence.
+ * Turning it on is refused with `plugin_composition_fixed` when the admission
+ * rule shuts a fixed composition out; any other licence refusal keeps the
+ * wish, which `developerModeState` then reports as not effective.
  * `false` is written, not deleted: an explicit refusal, whatever default the
  * key registry would resolve.
  */
 export function setUnsignedPluginsSetting(enabled: boolean, file: string = CONFIG_FILE): void {
-  if (enabled) assertCompositionMutable(mutationLicenseState());
+  if (enabled && !unsignedPluginsAllowed(true) && fixedComposition(mutationLicenseState())) {
+    throw new LicenseCapabilityError('plugin_composition_fixed',
+      'This licence includes a fixed plugin composition: developer mode cannot be turned on.');
+  }
   const cfg = readJson(file);
   const developer = (typeof cfg.developer === 'object' && cfg.developer !== null && !Array.isArray(cfg.developer))
     ? (cfg.developer as Json)
