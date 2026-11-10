@@ -1,4 +1,5 @@
 // feat/team-lead: shapes returned by /api/team.
+import { PRODUCT } from "../product";
 export type Risk = { level: "late" | "at_risk" | "stuck"; label: string } | null;
 export type Load = { member_id: number; open: number; hours: number; capacity: number; percent: number; label: string };
 export type Member = {
@@ -30,7 +31,7 @@ export type Notice = { id: number; kind: string; title: string; body: string; se
 
 export const STATUS_LABEL: Record<string, string> = { todo: "To do", doing: "Doing", blocked: "Stuck", done: "Done" };
 export const PRIORITY_LABEL = ["", "Low", "High", "Urgent"];
-export const CHANNEL_LABEL: Record<string, string> = { email: "Email", sms: "Text", telegram: "Telegram", slack: "Slack", link: "Private link", app: "AI Workspace app" };
+export const CHANNEL_LABEL: Record<string, string> = { email: "Email", sms: "Text", telegram: "Telegram", slack: "Slack", link: "Private link", app: `${PRODUCT} app` };
 
 /** Days between two ISO dates (b - a). */
 export function daysBetween(a: string, b: string): number {

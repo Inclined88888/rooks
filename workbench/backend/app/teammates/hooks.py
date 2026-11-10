@@ -59,6 +59,14 @@ def filter_tools(ctx, tools: list) -> list:
         return tools
 
 
+def allows(ctx, tool) -> bool:
+    """assistant.run_tool: a teammate runs only the tools it was offered (filter_tools), so naming a hidden tool, made
+    up or asked for by a page it read, does nothing. A send stays allowed here because as_draft turns it into a draft."""
+    if tool.name in SEND_TOOLS:
+        return True
+    return any(x.name == tool.name for x in filter_tools(ctx, [tool]))
+
+
 def _draft_message(channel: str, to: str, body: str, subject: str = "", ctx=None) -> dict:
     from . import outbox, store
 
@@ -119,6 +127,95 @@ def parse_choices(options) -> list[str]:
         if o and o not in out:
             out.append(o)
     return out[:6]
+
+
+def choices_from_calls(raw) -> dict | None:
+    """The last offer_choices in a stored tool-call list. A numbered list in the reply text is not a choice card."""
+    import json
+
+    if not raw:
+        return None
+    try:
+        calls = json.loads(raw) if isinstance(raw, str) else raw
+    except ValueError:
+        return None
+    if not isinstance(calls, list):
+        return None
+    found = None
+    for tc in calls:
+        if not isinstance(tc, dict):
+            continue
+        fn = tc.get("function") or {}
+        if fn.get("name") != "offer_choices":
+            continue
+        args = fn.get("arguments") or {}
+        if isinstance(args, str):
+            try:
+                args = json.loads(args or "{}")
+            except ValueError:
+                args = {}
+        if not isinstance(args, dict):
+            args = {}
+        opts = parse_choices(args.get("options"))
+        if len(opts) >= 2:
+            found = {"question": str(args.get("question") or "")[:300], "options": opts}
+    return found
+
+
+def choices_for_latest_turn(conversation_id: int) -> dict | None:
+    """offer_choices from the current turn (after the last real user message)."""
+    from .. import db
+
+    rows = db.all("SELECT role, name, tool_calls FROM messages WHERE conversation_id = ? ORDER BY id", conversation_id)
+    start = 0
+    for i, r in enumerate(rows):
+        if r["role"] == "user" and (r.get("name") or "") != "claim_check":
+            start = i + 1
+    found = None
+    for r in rows[start:]:
+        ch = choices_from_calls(r.get("tool_calls"))
+        if ch:
+            found = ch
+    return found
+
+
+def stamp_choices(rows: list[dict]) -> None:
+    """Put each turn's last offer_choices on the last assistant reply of that turn.
+
+    A row may carry a precomputed `_choice` (when tool_calls has already been reduced to names).
+    """
+    def flush(chunk: list[dict]) -> None:
+        choice = None
+        last = None
+        for r in chunk:
+            if r.get("role") != "assistant":
+                continue
+            ch = r.pop("_choice", None)
+            if ch:
+                choice = ch
+            if (r.get("content") or "").strip():
+                last = r
+        if not choice:
+            return
+        target = last
+        if target is None:
+            for r in reversed(chunk):
+                if r.get("role") == "assistant":
+                    target = r
+                    break
+        if target is not None:
+            target["choices"] = choice
+
+    chunk: list[dict] = []
+    for r in rows:
+        if r.get("role") == "user" and (r.get("name") or "") != "claim_check":
+            flush(chunk)
+            chunk = []
+        else:
+            chunk.append(r)
+    flush(chunk)
+    for r in rows:
+        r.pop("_choice", None)
 
 
 def register_tools() -> None:

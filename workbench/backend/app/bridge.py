@@ -18,8 +18,6 @@ tool calls are only usable complete.
 import asyncio
 import base64
 import binascii
-import hashlib
-import hmac
 import json
 import time
 import uuid
@@ -35,13 +33,11 @@ MAX_ATTACHMENTS_BYTES = 20 * 1024 * 1024
 
 
 def require_bridge_key(request: Request) -> None:
+    from .security import check_bridge_key, check_cli_token
+
     auth = request.headers.get("authorization", "")
     token = auth[7:] if auth.lower().startswith("bearer ") else ""
-    keys = [k for k in (config.BROWSER_API_KEY, config.DESK_API_KEY, config.CODING_BRIDGE_KEY) if k]
-    if token and any(hmac.compare_digest(token, k) for k in keys):
-        return
-    cli = db.get_setting("cli_token_hash", "") or ""
-    if token and cli and hmac.compare_digest(hashlib.sha256(token.encode()).hexdigest(), cli):
+    if check_bridge_key(token) or check_cli_token(token):
         return
     raise HTTPException(401, "Invalid or missing bridge key (use BROWSER_API_KEY from .env, or the Terminal access token)")
 

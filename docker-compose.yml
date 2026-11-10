@@ -95,6 +95,11 @@ services:
     environment:
       APP_SECRET: ${APP_SECRET:-}
       TOOLS_API_KEY: ${TOOLS_API_KEY:-}
+      # One time code the first run setup screen asks for (setup.sh writes it to .env). Without it, whoever opens
+      # /setup first owns the workspace.
+      SETUP_CODE: ${SETUP_CODE:-}
+      # Set to your reverse proxy's address if it should be trusted for X-Forwarded-For.
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
       WORKSPACE_NAME: ${WORKSPACE_NAME:-AI Workspace}
       WORKSPACE_TIMEZONE: ${WORKSPACE_TIMEZONE:-UTC}
       DEFAULT_MODEL: ${DEFAULT_MODEL:-qwen3:4b}

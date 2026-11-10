@@ -22,12 +22,42 @@ function detail(body: unknown, fallback: string): string {
   return fallback;
 }
 
+const BROWSER_TOKEN = "rooks.browser";
+
+/** A paired browser keeps its token here. The desktop app and a signed-in tab still use the cookie. */
+export function browserToken(): string {
+  try {
+    return localStorage.getItem(BROWSER_TOKEN) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function saveBrowserToken(token: string) {
+  localStorage.setItem(BROWSER_TOKEN, token);
+}
+
+function authHeaders(): Record<string, string> {
+  const token = browserToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/**
+ * One picture from the service (a live screen's frame) as a blob. An <img src> sends the cookie but no header, so a
+ * browser paired with a code (signed in by its token) would get "not signed in" for every frame; this sends both.
+ */
+export async function fetchFrame(path: string): Promise<Blob> {
+  const res = await fetch(`/api${path}`, { credentials: "same-origin", headers: { "X-Workbench": "1", ...authHeaders() }, cache: "no-store" });
+  if (!res.ok) throw new ApiError(res.status, `${res.status} ${res.statusText}`);
+  return res.blob();
+}
+
 export async function api<T = unknown>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
   const method = options.method ?? (options.body === undefined ? "GET" : "POST");
   const res = await fetch(`/api${path}`, {
     method,
     credentials: "same-origin",
-    headers: { "Content-Type": "application/json", "X-Workbench": "1" },
+    headers: { "Content-Type": "application/json", "X-Workbench": "1", ...authHeaders() },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
   const text = await res.text();
@@ -66,7 +96,7 @@ export async function stream(path: string, body: unknown, onEvent: (e: StreamEve
   const res = await fetch(`/api${path}`, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "Content-Type": "application/json", "X-Workbench": "1" },
+    headers: { "Content-Type": "application/json", "X-Workbench": "1", ...authHeaders() },
     body: JSON.stringify(body),
     signal,
   });

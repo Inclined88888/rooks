@@ -4,8 +4,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
-const chat = read("../src/pages/Assistant.tsx");
-const app = read("../src/App.tsx");
+const chat = ["../src/pages/Assistant.tsx", "../src/chat/Thread.tsx", "../src/chat/ThreadHeader.tsx", "../src/chat/Composer.tsx", "../src/chat/events.ts"].map(read).join("\n"); // the chat page is split (package F2)
+const app = read("../src/pages/registry.ts"); // the one page registry App.tsx builds the nav from
 const research = read("../src/pages/Research.tsx");
 const skills = read("../src/pages/Skills.tsx");
 
@@ -18,15 +18,20 @@ test("Chat has modes, an approval strip, and a diff", () => {
   assert.match(chat, />Build<\/button>/);
   assert.match(chat, /Chat is for the day/);
   assert.doesNotMatch(chat, /<option value="chat">/);
-  assert.match(chat, /approvals-header/);
+  assert.match(chat, /Something is waiting for your approval/);
+  assert.doesNotMatch(chat, /approvals-header/);
   assert.match(chat, /DiffView/);
 });
 
-test("Show me how sits in the top group beside Chat", () => {
-  const top = app.slice(app.indexOf("const NAV"), app.indexOf("section: \"More\""));
-  assert.match(top, /label: "Chat"/);
-  assert.match(top, /label: "Show me how"/);
-  assert.ok(top.indexOf('label: "Chat"') < top.indexOf('label: "Show me how"'));
+test("Chat is on the rail, Code is a page; Customize sits with settings", () => {
+  assert.match(app, /path: "\/assistant", label: "Chat", icon: \w+, rail: "chat"/);
+  assert.match(app, /path: "\/code", label: "Code"/);
+  assert.match(app, /path: "\/customize", label: "Customize", icon: \w+, section: "Settings"/);
+  const settings = app.indexOf('label: "Settings"');
+  const customize = app.indexOf('label: "Customize"');
+  assert.ok(settings > 0 && customize > settings);
+  assert.match(app, /label: "Show me how"/);
+  assert.ok(app.indexOf('label: "Chat"') < app.indexOf('label: "Show me how"'));
 });
 
 test("Research can look a report up in the browser and stay on the report", () => {

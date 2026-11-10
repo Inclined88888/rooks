@@ -100,6 +100,7 @@ describe('lock-screen handler', () => {
   const deps = (ok: boolean, fail = false) => {
     const log: string[] = [];
     return { log, d: { confirm: async () => ({ ok }), decide: async (id: number, a: boolean) => { if (fail) throw new Error('x'); log.push(`decide ${id} ${a}`); },
+      companionDecide: async (id: string, dec: string, ans?: string) => { if (fail) throw new Error('x'); log.push(`companion ${id} ${dec}${ans ? ' ' + ans : ''}`); },
       open: (p: string) => log.push(`open ${p}`), notify: (t: string) => { log.push(`notify ${t}`); } } };
   };
   it('approves only after Face ID', async () => {
@@ -116,5 +117,25 @@ describe('lock-screen handler', () => {
     const b = deps(true, true);
     expect(await handleLockAction('approve', { kind: 'approval', id: 5 }, b.d)).toBe('failed');
     expect(b.log).toEqual(['open /approvals']);
+  });
+  it('sends Companion decisions to the Companion, never to Approvals', async () => {
+    const perm = { kind: 'companion', request_id: 'abc', request_kind: 'permission', request_title: 'Run npm test' };
+    const a = deps(true);
+    expect(await handleLockAction('allow', perm, a.d)).toBe('allowed');
+    expect(await handleLockAction('deny', perm, a.d)).toBe('declined');
+    const q = { kind: 'companion', request_id: 'q1', request_kind: 'question' };
+    expect(await handleLockAction('decline', q, a.d)).toBe('declined');
+    expect(await handleLockAction('answer', q, a.d, 'main')).toBe('answered');
+    expect(a.log).toEqual(['companion abc allow', 'notify Allowed', 'companion abc deny', 'notify Declined',
+      'companion q1 deny', 'notify Declined', 'companion q1 answer main', 'notify Answered']);
+  });
+  it('checks Face ID for Companion too, and falls back to the Companion screen', async () => {
+    const perm = { kind: 'companion', request_id: 'abc', request_kind: 'permission' };
+    const a = deps(false);
+    expect(await handleLockAction('allow', perm, a.d)).toBe('not-confirmed');
+    expect(a.log).toEqual(['open /companion']);
+    const b = deps(true, true);
+    expect(await handleLockAction('allow', perm, b.d)).toBe('failed');
+    expect(b.log).toEqual(['open /companion']);
   });
 });

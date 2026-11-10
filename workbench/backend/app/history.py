@@ -158,6 +158,11 @@ def _r(result) -> dict:
     return result if isinstance(result, dict) else {}
 
 
+def _subject(title: str, subject) -> str:
+    text = " ".join(str(subject).split()) if isinstance(subject, (str, int)) else ""
+    return f"{title}: {text[:80]}{'…' if len(text) > 80 else ''}" if text else title
+
+
 def describe(name: str, a: dict, result, snap: dict) -> dict | None:
     """Category, title and undo recipe for one change."""
     r = _r(result)
@@ -263,6 +268,30 @@ def describe(name: str, a: dict, result, snap: dict) -> dict | None:
     if name == "run_skill_script":
         return {"category": "skill", "title": f"Ran {a.get('script')} from skill {a.get('skill')}", "undo_kind": "cannot",
                 "fix": "Skill scripts run in a sandbox with only the permissions you granted. Check the skill's output."}
+    if name == "use_room":
+        action = str(a.get("action") or "status").strip().lower()
+        fix = "Start over from a saved point on the Room page."
+        if action == "up":
+            title = _subject("Started the Room", a.get("goal"))
+        elif action == "down":
+            title = "Stopped the Room"
+        elif action == "run":
+            title = _subject("Ran in the Room", a.get("command"))
+        elif action == "start":
+            title = _subject("Started in the Room's terminal", a.get("command"))
+        elif action == "checkpoint":
+            title = _subject("Saved a point in the Room", a.get("label") or r.get("name"))
+        elif action == "reset":
+            point = a.get("name") or r.get("name")
+            title = f"Started the Room over from {q(point, 60)}" if point else "Started the Room over"
+        elif action == "handoff":
+            if not r.get("ok"):
+                return None  # only asked: the held request in Needs you is the record until a yes copies it
+            title = _subject("Copied a file out of the Room", f"{a.get('src') or ''} to {a.get('dest') or ''}")
+            fix = "The copy is on this computer now. Delete it there if you do not want it."
+        else:
+            return None  # a status check changes nothing
+        return {"category": "computer", "title": title, "undo_kind": "cannot", "fix": fix}
     return {"category": "other", "title": f"Ran {name}", "undo_kind": "cannot",
             "fix": "This can't be undone automatically. Ask me in chat to change it back."}
 

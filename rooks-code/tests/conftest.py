@@ -21,6 +21,18 @@ def no_local_servers(monkeypatch, tmp_path):
     monkeypatch.setenv("ROOKS_CONFIG", str(tmp_path / "isolated-rooks.toml"))
 
 
+def _can_contain() -> bool:
+    """Whether this machine can keep project-mode commands inside the folder (tools._command_argv)."""
+    import shutil
+    if sys.platform == "darwin":
+        return bool(shutil.which("sandbox-exec"))
+    if sys.platform.startswith("linux"):
+        from rooks_code import tools
+        b = shutil.which("bwrap")
+        return bool(b) and tools._bwrap_problem((b, "--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev")) == ""
+    return False
+
+
 @pytest.fixture
 def project(tmp_path, monkeypatch):
     p = tmp_path / "proj"
@@ -28,7 +40,9 @@ def project(tmp_path, monkeypatch):
     (p / "calc.py").write_text("def add(a, b):\n    return a - b\n")
     (p / "test_calc.py").write_text("from calc import add\nassert add(2, 3) == 5, 'add is broken'\nprint('tests pass')\n")
     cfg = tmp_path / "rooks.toml"
-    cfg.write_text("")
+    # These tests are about approvals, diffs and receipts, not containment (test_units covers that). On a Linux machine
+    # without a working bubblewrap the project default refuses commands, so the fixture turns containment off there.
+    cfg.write_text("" if _can_contain() else 'sandbox = "full"\n')
     monkeypatch.setenv("ROOKS_CONFIG", str(cfg))
     monkeypatch.setenv("AI_WORKSPACE_APP_FILE", str(tmp_path / "no-app.json"))  # never pick up a real running app
     monkeypatch.setenv("ROOKS_DESK_MCP", "0")  # an installed Rooks Desk must not add an MCP server to every test

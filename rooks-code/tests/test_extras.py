@@ -216,7 +216,7 @@ def test_claude_style_tool_lines_and_modes(tmp_path, capsys):
     ui.tool_result(plan, "exit code 0\n3 passed", "ok")
     ui.assistant("Done. `/version` works.<function_calls><invoke name=\"x\"></invoke></function_calls>", final=True)
     text = out.getvalue() + capsys.readouterr().out
-    assert "⏺ Read src/app.py" in text and "⏺ Bash pytest -q" in text and "3 passed" in text and "* Done." in text
+    assert "● Read src/app.py" in text and "● Run pytest -q" in text and "3 passed" in text and "● Done." in text
     assert "read-only" not in text and "function_calls" not in text and "Done." in text
 
     class S:
@@ -239,7 +239,7 @@ def test_mcp_add_only_records_the_server():
     again, listed = config.mcp_plain("list", servers)
     assert again["notes"]["command"] == "npx" and "notes:" in listed
     # /mcp in the terminal uses this and does not start the command
-    src = (Path(__file__).resolve().parents[1] / "rooks_code" / "tui.py").read_text()
+    src = (Path(__file__).resolve().parents[1] / "rooks_code" / "tui.py").read_text(encoding="utf-8")
     assert 'cmd == "/mcp"' in src and "mcp_plain" in src
 
 

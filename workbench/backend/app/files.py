@@ -564,8 +564,8 @@ def _ocr_pages(path: Path, pages: list[int], out: Out) -> None:
     rest = [i for i in pages if i not in read]
     if rest:
         out.note(f"Pages {_ranges(rest)} are scanned images with no text layer. "
-                 + ("They were rendered as pictures for a vision-capable model to read (describe_image)." if out.d["images"] else "")
-                 + ("" if tess else " Installing Tesseract (free) lets them be read on this computer."))
+                 + ("They were turned into pictures so a model that can see can read them." if out.d["images"] else "")
+                 + ("" if tess else " Installing the free text reader lets them be read on this computer."))
 
 
 def _ranges(nums: list[int]) -> str:
@@ -963,7 +963,7 @@ def _image(path: Path, out: Out) -> None:
                 out.d["images"] = [str(tmp)]
     except Exception as e:  # noqa: BLE001
         out.note(f"The picture could not be opened ({str(e)[:120]}).")
-    out.note("What the picture shows is read by a vision-capable model (describe_image); text in it can be read the same way.")
+    out.note("What the picture shows is read by a model that can see. Words in the picture can be read the same way.")
 
 
 def _media(path: Path, out: Out, video: bool) -> None:

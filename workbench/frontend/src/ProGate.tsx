@@ -1,11 +1,13 @@
 // Pro gating in the UI. Free features are never wrapped. When a Pro feature is locked we show a friendly card,
 // never an error, and nothing the user already made is hidden or removed.
-import { Lock, Sparkles, X } from "lucide-react";
+import { Lock, X } from "lucide-react";
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { hasFeature, themeLocked, useAccount } from "./account";
 import { DEFAULTS, applyTo, useAppearance } from "./appearance";
 import { AccountSetup } from "./pages/Plan";
+import "./pages/settings/settings.css";
+import { Badge, Button, IconButton } from "./ui";
 
 type Upgrade = { feature?: string; label?: string; message?: string };
 
@@ -14,23 +16,23 @@ export function UpgradeCard({ feature, label, message, onClose }: Upgrade & { on
   const [account] = useAccount();
   const go = () => { onClose?.(); navigate(`/plan${feature ? `?feature=${encodeURIComponent(feature)}` : ""}`); };
   return (
-    <div className="card col gap-lg upgrade-card" role="region" aria-label="Upgrade to Pro">
-      <div className="row">
-        <span className="badge accent"><Sparkles size={12} /> Pro</span>
-        <div className="spacer" />
-        {onClose && <button className="btn ghost icon sm" onClick={onClose} aria-label="Close"><X size={16} /></button>}
+    <section className="st-upgrade" aria-label="Upgrade to Pro">
+      <div className="st-upgrade-head">
+        <Badge>Pro</Badge>
+        <span className="st-grow" />
+        {onClose && <IconButton size="sm" label="Close" onClick={onClose}><X size={16} /></IconButton>}
       </div>
-      <div className="col" style={{ gap: 6 }}>
-        <h2 style={{ margin: 0 }}>{label ?? "This"} is part of Pro</h2>
-        <p className="muted" style={{ margin: 0 }}>
+      <div className="st-stack">
+        <h2 className="st-upgrade-title">{label ?? "This"} is part of Pro</h2>
+        <p className="st-small">
           {message ?? "Upgrade to unlock it."} Everything you already made stays right where it is, and the free app keeps working.
         </p>
       </div>
-      <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-        <button className="btn primary" onClick={go}><Lock size={14} /> {account?.signed_in ? "See plans" : "Sign in or upgrade"}</button>
-        {onClose && <button className="btn ghost" onClick={onClose}>Not now</button>}
+      <div className="st-form-actions">
+        <Button variant="primary" icon={<Lock size={14} />} onClick={go}>{account?.signed_in ? "See plans" : "Sign in or upgrade"}</Button>
+        {onClose && <Button variant="ghost" onClick={onClose}>Not now</Button>}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -52,8 +54,8 @@ export function UpgradePrompt() {
   }, []);
   if (!up) return null;
   return (
-    <div className="modal-back" onClick={() => setUp(null)}>
-      <div className="modal" style={{ padding: 0, border: "none" }} onClick={(e) => e.stopPropagation()}>
+    <div className="st-modal" onClick={() => setUp(null)} role="dialog" aria-modal="true" aria-label="Upgrade to Pro">
+      <div onClick={(e) => e.stopPropagation()} className="st-modal-body">
         <UpgradeCard {...up} onClose={() => setUp(null)} />
       </div>
     </div>
@@ -73,7 +75,7 @@ export function AccountLayer() {
     <>
       <UpgradePrompt />
       {account?.setup_prompt && !stepDone && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "var(--bg)", overflow: "auto" }}>
+        <div className="st-cover">
           <AccountSetup onDone={() => setStepDone(true)} />
         </div>
       )}

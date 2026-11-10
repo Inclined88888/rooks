@@ -41,7 +41,9 @@ def _hook(event, args):
             raise PermissionError("The sandbox can only read its input files: " + p)
     elif event in ("socket.getaddrinfo", "socket.connect", "socket.bind") :
         raise PermissionError("No network in the analysis sandbox")
-    elif event in ("subprocess.Popen", "os.system", "os.exec", "os.posix_spawn", "os.spawn", "os.fork", "ctypes.dlopen") and not (event == "ctypes.dlopen" and _cfg.get("allow_dlopen")):
+    elif event in ("subprocess.Popen", "os.system", "os.exec", "os.posix_spawn", "os.spawn", "os.fork", "ctypes.dlopen", "ctypes.dlsym", "ctypes.call_function") and not (event == "ctypes.dlopen" and _cfg.get("allow_dlopen")):
+        # ctypes.pythonapi exists before this hook is installed (numpy imports ctypes), so calls through it are
+        # audited too (dlsym, call_function), not only new libraries (dlopen)
         raise PermissionError("The analysis sandbox cannot start other programs")
 os.environ["MPLBACKEND"] = "Agg"
 try:
@@ -115,7 +117,7 @@ def run(code: str, file_ids: list[int] | None = None, timeout: int = TIMEOUT) ->
     read_ok += [p for p in sys.path if p and os.path.isdir(p)] + _link_dirs(sys.executable) + [os.path.realpath(sys.base_prefix)]
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": str(tmp), "TMPDIR": str(tmp), "TEMP": str(tmp), "TMP": str(tmp),
            "LANG": "C.UTF-8", "PYTHONDONTWRITEBYTECODE": "1", "MPLCONFIGDIR": str(mpl), "OPENBLAS_NUM_THREADS": "2", "OMP_NUM_THREADS": "2",
-           "WB_COMPUTE": json.dumps({"root": str(tmp), "read": read_ok, "cache": [str(mpl)], "allow_dlopen": True})}
+           "WB_COMPUTE": json.dumps({"root": str(tmp), "read": read_ok, "cache": [str(mpl)], "allow_dlopen": False})}
     if os.name == "nt":
         env.update({k: os.environ[k] for k in ("SYSTEMROOT", "COMSPEC", "WINDIR") if k in os.environ})
     cmd = [*_python(), "-c", BOOT]
@@ -148,6 +150,12 @@ def run(code: str, file_ids: list[int] | None = None, timeout: int = TIMEOUT) ->
     shutil.rmtree(tmp, ignore_errors=True)
     return {"status": status, "isolation": layer, "inputs": inputs, "stdout": out[-20000:], "error": err[-6000:] if status != "ok" else "",
             "outputs": [{"id": m["id"], "name": m["name"], "url": f"/api/files/{m['id']}/download"} for m in made]}
+
+
+def os_sandboxed() -> bool:
+    """True when code runs in bubblewrap. Otherwise only the audit hook stands between the code and the machine, and
+    an audit hook is not a security boundary, so the assistant asks before running code in a tainted conversation."""
+    return skill_sandbox._bwrap_ok()
 
 
 def _wrap(cmd: list[str], work: Path) -> tuple[list[str], str]:

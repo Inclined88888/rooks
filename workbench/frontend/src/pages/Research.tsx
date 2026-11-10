@@ -1,9 +1,11 @@
-import { ExternalLink, FileText, Loader2, Search, Trash2 } from "lucide-react";
+// Research: ask a question, I search, read and write a report with sources. Premium pass (package C).
+import { ExternalLink, FileText, Search, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
-import { Tracer } from "../Tracer";
-import { Empty, Markdown, ModelSelect, relTime, useModels, useToast } from "../util";
+import { Markdown, ModelSelect, relTime, useModels, useToast } from "../util";
+import { Badge, Button, Card, EmptyState, ErrorState, IconButton, List, Loading, Page, Row, Select, Textarea } from "../ui";
+import { Gate, Split, StatusText, plainError, useLoad } from "./agents/kit";
 import { WebSearchSetup } from "./ModelSignIn";
 
 type Item = { id: number; question: string; model: string; status: "running" | "done" | "error"; progress: string; created_at: string };
@@ -12,15 +14,17 @@ type Full = Item & { report: string; error: string; sources: { title: string; ur
 export default function Research() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [items, setItems] = useState<Item[]>([]);
+  const list = useLoad(() => api<Item[]>("/research"), []);
   const [current, setCurrent] = useState<Full | null>(null);
+  const [openErr, setOpenErr] = useState<unknown>(null);
+  const [tick, setTick] = useState(0);
   const [question, setQuestion] = useState("");
   const [depth, setDepth] = useState(3);
   const [model, setModel] = useState("");
   const { models } = useModels();
   const toast = useToast();
 
-  const loadList = () => api<Item[]>("/research").then(setItems).catch(toast.err);
+  const loadList = list.reload;
   const lookUp = async () => {
     const goal = (current?.question || question).trim();
     if (goal.length < 3) return;
@@ -32,9 +36,8 @@ export default function Research() {
       toast.err(e);
     }
   };
-  useEffect(() => { loadList(); }, []);
-
   useEffect(() => {
+    setOpenErr(null);
     if (!id) return setCurrent(null);
     let stop = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -42,16 +45,16 @@ export default function Research() {
       try {
         const r = await api<Full>(`/research/${id}`);
         if (stop) return;
-        setCurrent(r);
+        setCurrent(r); setOpenErr(null);
         if (r.status === "running") timer = setTimeout(poll, 1500);
         else loadList();
       } catch (e) {
-        toast.err(e);
+        if (!stop) setOpenErr(e);
       }
     };
     poll();
     return () => { stop = true; clearTimeout(timer); };
-  }, [id]);
+  }, [id, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const start = async (e: FormEvent) => {
     e.preventDefault();
@@ -73,73 +76,75 @@ export default function Research() {
     }
   };
   const remove = async (rid: number) => {
-    await api(`/research/${rid}`, { method: "DELETE" });
+    try { await api(`/research/${rid}`, { method: "DELETE" }); } catch (e) { toast.err(e); return; }
     if (current?.id === rid) navigate("/research");
     loadList();
   };
+  const STATUS: Record<Item["status"], string> = { running: "Working", done: "Done", error: "Stopped" };
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <div><h1>Research</h1><p className="muted">Ask a question. I search the web, read the pages and write a report with the sources.</p></div>
-      </div>
-      <div className="card col" style={{ marginBottom: 12 }}><WebSearchSetup compact /></div>
-      <form className="card col" onSubmit={start} style={{ marginBottom: 20 }}>
-        <textarea className="input" rows={3} value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="What do you want to know? Be specific: scope, timeframe, region…" />
-        <div className="row wrap">
-          <div style={{ width: 220 }}><ModelSelect value={model} onChange={setModel} models={models} /></div>
-          <label className="row small muted">Depth
-            <select className="input" style={{ width: 150 }} value={depth} onChange={(e) => setDepth(Number(e.target.value))}>
-              <option value={1}>Quick (2 searches)</option><option value={3}>Standard (4)</option><option value={5}>Deep (6)</option>
-            </select>
-          </label>
-          <div className="spacer" />
-          <button className="btn primary" disabled={question.trim().length < 5}><Search size={15} /> Start research</button>
-        </div>
-      </form>
-
-      <div style={{ display: "grid", gridTemplateColumns: "280px minmax(0,1fr)", gap: 16 }} className="research-layout">
-        <div className="card flush" style={{ alignSelf: "start" }}>
-          {items.length === 0 && <Empty icon={<Search size={22} />} title="No research yet" />}
-          {items.map((r) => (
-            <div key={r.id} className={`list-item has-tracer ${current?.id === r.id ? "active" : ""}`} onClick={() => navigate(`/research/${r.id}`)}>
-              <Tracer active={r.status === "running"} />
-              <div className="grow">
-                <div className="truncate">{r.question}</div>
-                <div className="row small faint">{r.status === "running" ? <Loader2 size={11} className="spin" /> : null}{r.status} · {relTime(r.created_at)}</div>
-              </div>
-              <button className="btn ghost sm icon" onClick={(e) => { e.stopPropagation(); remove(r.id); }}><Trash2 size={13} /></button>
+    <Page wide className="ag-page rs-page" title="Research" description="Ask a question. I search the web, read the pages and write a report with the sources.">
+      <div className="ag-stack-lg">
+        <Card><WebSearchSetup compact /></Card>
+        <Card as="section" aria-label="New research">
+          <form className="ag-form" onSubmit={start}>
+            <Textarea aria-label="Your question" rows={3} value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="What do you want to know? Be specific: scope, timeframe, region…" />
+            <div className="ag-bar">
+              <div className="rs-model"><ModelSelect value={model} onChange={setModel} models={models} /></div>
+              <Select aria-label="Depth" className="rs-depth" value={depth} onChange={(e) => setDepth(Number(e.target.value))}>
+                <option value={1}>Quick (2 searches)</option><option value={3}>Standard (4)</option><option value={5}>Deep (6)</option>
+              </Select>
+              <span className="ag-bar-end"><Button type="submit" variant="primary" icon={<Search size={14} />} disabled={question.trim().length < 5}>Start research</Button></span>
             </div>
-          ))}
-        </div>
-        <div>
-          {!current && <div className="card"><Empty icon={<FileText size={24} />} title="Pick a report or start a new one" /></div>}
+          </form>
+        </Card>
+
+        <Split solo={!id && list.data?.length === 0} list={
+          <Gate state={list} rows={4}>{(items) => items.length === 0
+            ? <EmptyState icon={<Search size={20} />} title="No research yet" line="Ask a question above to start your first report." />
+            : <List className="ag-list" label="Reports">
+              {items.map((r) => (
+                <Row key={r.id} active={current?.id === r.id} onClick={() => navigate(`/research/${r.id}`)} title={r.question}
+                  meta={<StatusText live={r.status === "running"}>{STATUS[r.status] ?? r.status} · {relTime(r.created_at)}</StatusText>}
+                  actions={<IconButton size="sm" label="Delete this report" onClick={() => remove(r.id)}><Trash2 size={14} /></IconButton>} />
+              ))}
+            </List>}
+          </Gate>
+        }>
+          {!id && <Card>{list.data?.length === 0
+            ? <EmptyState icon={<Search size={20} />} title="No research yet" line="Ask a question above to start your first report." />
+            : <EmptyState icon={<FileText size={20} />} title="Pick a report or start a new one" line="Reports you start appear in the list." />}</Card>}
+          {id && !current && !openErr && <Card><Loading rows={4} /></Card>}
+          {id && !!openErr && !current && <ErrorState title="That report did not open" line={plainError(openErr)} onRetry={() => setTick((t) => t + 1)} />}
           {current && (
-            <div className="card col gap-lg has-tracer">
-              <Tracer active={current.status === "running"} label="Research in progress" />
-              <div className="row" style={{ alignItems: "flex-start" }}>
-                <h2 className="grow">{current.question}</h2>
-                <button type="button" className="btn sm" onClick={lookUp} disabled={current.question.trim().length < 3}><Search size={14} /> Look this up</button>
-                {current.status === "done" && <button className="btn sm" onClick={save}><FileText size={14} /> Save to documents</button>}
+            <Card as="article" className="ag-stack">
+              {current.status === "running" && <span className="sr-only" role="status">Research in progress</span>}
+              <div className="ag-panel-head">
+                <h2 className="ag-title ag-grow">{current.question}</h2>
+                <div className="ag-bar">
+                  <Button size="sm" icon={<Search size={14} />} onClick={lookUp} disabled={current.question.trim().length < 3}>Look this up</Button>
+                  {current.status === "done" && <Button size="sm" icon={<FileText size={14} />} onClick={save}>Save to documents</Button>}
+                </div>
               </div>
-              <div className="faint small mono">{current.model}</div>
-              {current.status === "running" && <div className="row muted"><Loader2 size={15} className="spin" /> {current.progress}</div>}
-              {current.status === "error" && <div className="alert err">{current.error}</div>}
+              {current.status === "running" && <StatusText live>{current.progress || "Working"}</StatusText>}
+              {current.status === "error" && <ErrorState title="The research stopped" line={current.error || "Try again with a narrower question."} />}
               {current.status === "done" && <Markdown text={current.report} />}
               {current.status !== "done" && current.sources.length > 0 && (
-                <div className="col">
-                  <h3>Sources found</h3>
-                  {current.sources.map((s, i) => (
-                    <a key={s.url} href={s.url} target="_blank" rel="noreferrer noopener" className="row small"><span className="badge">{i + 1}</span><span className="truncate">{s.title || s.url}</span><ExternalLink size={11} /></a>
-                  ))}
+                <div className="ag-stack">
+                  <h3 className="ag-h3">Sources found</h3>
+                  <ol className="rs-sources">
+                    {current.sources.map((s, i) => (
+                      <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer noopener"><Badge>{i + 1}</Badge><span className="ag-grow">{s.title || "Untitled page"}</span><ExternalLink size={12} aria-hidden="true" /></a></li>
+                    ))}
+                  </ol>
                 </div>
               )}
-              {current.status === "done" && <div className="muted small">Check claims against the linked sources before relying on them. Small local models can misread pages.</div>}
-            </div>
+              {current.status === "done" && <p className="ag-note">Check claims against the linked sources before relying on them. Small local models can misread pages.</p>}
+              <details className="rs-advanced"><summary>Advanced</summary><p className="ag-meta ag-mono">{current.model}</p></details>
+            </Card>
           )}
-        </div>
+        </Split>
       </div>
-      {toast.node}
-    </div>
+    </Page>
   );
 }

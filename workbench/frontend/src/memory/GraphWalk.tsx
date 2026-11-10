@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
+import { ErrorState, Input, List, Loading, Row, Section, Select } from "../ui";
 
 type Step = { from: number; rel: string; to: number };
 type WalkNode = { id: number; type: string; name: string; rel: string; direction: "in" | "out"; hops: number; path: Step[] };
@@ -29,42 +30,36 @@ export default function GraphWalk({ id, name }: { id: number; name: string }) {
   const byHop = (walk?.nodes ?? []).reduce<Record<number, WalkNode[]>>((a, n) => ((a[n.hops] ??= []).push(n), a), {});
 
   return (
-    <section className="kn-section" aria-labelledby="graph-walk-h">
-      <h3 id="graph-walk-h">Connections</h3>
-      <div className="row gap graph-walk-controls">
-        <label className="field">How far
-          <select className="input" value={depth} onChange={(e) => setDepth(Number(e.target.value))}>
-            {[1, 2, 3, 4].map((d) => <option key={d} value={d}>{d === 1 ? "Direct links" : `${d} steps`}</option>)}
-          </select>
-        </label>
-        <label className="field">Direction
-          <select className="input" value={direction} onChange={(e) => setDirection(e.target.value)}>
-            <option value="both">Both ways</option><option value="out">From {name}</option><option value="in">To {name}</option>
-          </select>
-        </label>
-        <label className="field">Only this link <input className="input" placeholder="e.g. works_at" value={rel} onChange={(e) => setRel(e.target.value)} /></label>
+    <Section title="Connections">
+      <div className="ag-form-row kn-walk">
+        <Select label="How far" value={depth} onChange={(e) => setDepth(Number(e.target.value))}>
+          {[1, 2, 3, 4].map((d) => <option key={d} value={d}>{d === 1 ? "Direct links" : `${d} steps`}</option>)}
+        </Select>
+        <Select label="Direction" value={direction} onChange={(e) => setDirection(e.target.value)}>
+          <option value="both">Both ways</option><option value="out">From {name}</option><option value="in">To {name}</option>
+        </Select>
+        <Input label="Only this link" placeholder="for example works at" value={rel} onChange={(e) => setRel(e.target.value)} />
       </div>
-      <div aria-live="polite">
-        {err && <div role="alert" className="muted">Could not walk the graph: {err}</div>}
-        {walk && !walk.nodes.length && <div className="muted">No connections{rel.trim() ? ` by "${nice(rel.trim())}"` : ""} within {depth} step{depth > 1 ? "s" : ""}.</div>}
+      <div aria-live="polite" className="ag-stack ag-gap-top">
+        {err && <ErrorState title="I could not follow the links" line="Try fewer steps, or try again in a moment." />}
+        {!walk && !err && <Loading rows={2} />}
+        {walk && !walk.nodes.length && <p className="ag-note">No connections{rel.trim() ? ` by "${nice(rel.trim())}"` : ""} within {depth} step{depth > 1 ? "s" : ""}.</p>}
         {Object.entries(byHop).map(([hop, list]) => (
-          <div key={hop} className="graph-hop">
-            <h4 className="kn-sub">{hop === "1" ? "Directly linked" : `${hop} steps away`} ({list.length})</h4>
-            <ul className="graph-list">
+          <div key={hop}>
+            <p className="ag-label">{hop === "1" ? "Directly linked" : `${hop} steps away`} ({list.length})</p>
+            <List className="ag-list">
               {list.map((n) => (
-                <li key={n.id} className="kn-row">
-                  <button className="btn ghost sm" onClick={() => setParams({ entity: String(n.id) })}>{n.name}</button>
-                  <span className="kn-sub">{n.type}</span>
-                  <span className="graph-path grow" aria-label={`Path: ${n.path.map((s) => `${names[s.from] ?? s.from} ${nice(s.rel)} ${names[s.to] ?? s.to}`).join(", then ")}`}>
-                    {n.path.map((s, i) => <span key={i} className="graph-step">{names[s.from] ?? s.from} <ArrowRight size={12} aria-hidden /> <em>{nice(s.rel)}</em> <ArrowRight size={12} aria-hidden /> {names[s.to] ?? s.to}</span>)}
-                  </span>
-                </li>
+                <Row key={n.id} title={n.name} onClick={() => setParams({ entity: String(n.id) })}
+                  meta={<span className="graph-path" aria-label={`${n.type}. Path: ${n.path.map((s) => `${names[s.from] ?? s.from} ${nice(s.rel)} ${names[s.to] ?? s.to}`).join(", then ")}`}>
+                    <span>{n.type}</span>
+                    {n.path.map((s, i) => <span key={i} className="graph-step">{names[s.from] ?? s.from} <ArrowRight size={12} aria-hidden /> {nice(s.rel)} <ArrowRight size={12} aria-hidden /> {names[s.to] ?? s.to}</span>)}
+                  </span>} />
               ))}
-            </ul>
+            </List>
           </div>
         ))}
-        {walk?.truncated && <div className="muted small">Showing the first {walk.nodes.length}. Narrow it with a link type or fewer steps.</div>}
+        {walk?.truncated && <p className="ag-note">Showing the first {walk.nodes.length}. Narrow it with a link type or fewer steps.</p>}
       </div>
-    </section>
+    </Section>
   );
 }

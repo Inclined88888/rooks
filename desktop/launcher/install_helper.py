@@ -125,11 +125,37 @@ def portable_node(cache: Path) -> tuple[str, dict]:
     return str(bindir / ("npm.cmd" if WIN else "npm")), env
 
 
+def missing_web_files(dist: Path) -> list[str]:
+    """Files the built web UI asks for that are not there. Empty means the prebuilt copy is complete.
+
+    A built UI is index.html plus hashed files under assets/. index.html names the entry script and style; the scripts
+    load the rest by name ("./Page-hash.js" between chunks, "assets/Page-hash.css" for preloads). A copy with a missing
+    file opens as a blank window, so it is treated as not built at all.
+    """
+    import re
+
+    index = dist / "index.html"
+    if not index.is_file():
+        return ["index.html"]
+    assets = dist / "assets"
+    wanted = set(re.findall(r'(?:src|href)="/assets/([^"?#]+)"', index.read_text(encoding="utf-8", errors="replace")))
+    if not wanted:
+        return ["index.html (names no script)"]
+    for js in assets.glob("*.js") if assets.is_dir() else []:
+        text = js.read_text(encoding="utf-8", errors="replace")
+        wanted.update(re.findall(r'["\'`]\./([\w.-]+\.(?:js|css))["\'`]', text))
+        wanted.update(re.findall(r'["\'`]assets/([\w.-]+\.(?:js|css))["\'`]', text))
+    return sorted(f"assets/{n}" for n in wanted if not (assets / n).is_file())
+
+
 def ensure_frontend(src: Path, home: Path) -> None:
-    dist = src / "workbench" / "frontend" / "dist" / "index.html"
-    if dist.exists():
+    dist = src / "workbench" / "frontend" / "dist"
+    missing = missing_web_files(dist)
+    if not missing:
         say("web UI: prebuilt")
         return
+    if (dist / "index.html").exists():
+        say(f"web UI: the prebuilt copy is incomplete ({len(missing)} files missing), building it instead")
     npm, env = shutil.which("npm"), {**os.environ, "npm_config_update_notifier": "false"}
     fetched = False
     if not npm:
@@ -137,8 +163,8 @@ def ensure_frontend(src: Path, home: Path) -> None:
             npm, env = portable_node(home / "cache")
             fetched = True
         except Exception as e:  # noqa: BLE001 - explain and stop
-            sys.exit(f"This copy has no prebuilt web UI and Node.js could not be fetched ({e}). Use the release zip, or "
-                     "install Node.js 20+ (nodejs.org) and run the installer again.")
+            sys.exit(f"The web UI in this copy is missing or incomplete, and Node.js could not be fetched ({e}). Use the "
+                     "release zip, or install Node.js 20+ (nodejs.org) and run the installer again.")
     log_file = home / "logs" / "frontend-build.log"
     say(f"web UI: building (one or two minutes, log: {log_file})…")
     fe = src / "workbench" / "frontend"
@@ -162,7 +188,12 @@ def make_venv(home: Path, app: Path) -> Path:
 
 
 def install_tools(src: Path, desk: bool = True) -> None:
-    for pkg in ("rooks-code", "rooks-browser", *(("rooks-desk",) if desk and (src / "rooks-desk").exists() else ())):
+    pkgs = ["rooks-code", "rooks-browser"]
+    if desk and (src / "rooks-desk").exists():
+        pkgs.append("rooks-desk")
+    if (src / "rooks-try").exists():
+        pkgs.append("rooks-try")
+    for pkg in pkgs:
         run([uv(), "tool", "install", "--quiet", "--force", "--reinstall", "--python", "3.12", str(src / pkg)])
         say(f"{pkg}: installed")
 
@@ -306,13 +337,36 @@ def native_asset(repo: str) -> tuple[str, str] | None:
     return None
 
 
+def _quit_desktop_app() -> None:
+    """The old app has to be closed before it can be replaced. Ignore it when it is not running."""
+    if MAC:
+        subprocess.run(["osascript", "-e", f'quit app "{NAME}"'], capture_output=True)
+    elif WIN:
+        for image in ("ai-workspace-desktop.exe", f"{NAME}.exe"):
+            subprocess.run(["taskkill", "/IM", image, "/F"], capture_output=True)
+
+
 def remove_stale_desktop_app() -> None:
-    """The published Mac app is older than this branch. If it stays, opening AI Workspace loads that old one."""
-    if not MAC:
-        return
-    app = Path("/Applications") / f"{NAME}.app"
-    if (app / "Contents" / "MacOS" / "ai-workspace-desktop").is_file():
-        shutil.rmtree(app, ignore_errors=True)
+    """An older desktop app, if left in place, is what opens. Remove it so this install is the one that runs."""
+    _quit_desktop_app()
+    leftovers: list[Path] = []
+    if MAC:
+        leftovers = [d / f"{NAME}.app" for d in (Path("/Applications"), Path.home() / "Applications")]
+    elif WIN:
+        local = os.environ.get("LOCALAPPDATA", "")
+        leftovers = [Path(r) / NAME for r in filter(None, (local, os.path.join(local, "Programs") if local else ""))]
+    else:
+        leftovers = [Path.home() / ".ai-workspace" / "bin" / "AI-Workspace.AppImage"]
+    for path in leftovers:
+        if not path.exists():
+            continue
+        if path.is_dir():
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            path.unlink(missing_ok=True)
+        if path.exists():
+            say(f"The older {NAME} app is still at {path}. Drag it to the Trash and open {NAME} again, "
+                "or the old one keeps opening.")
 
 
 def install_native(repo: str, home: Path) -> str:
@@ -433,7 +487,10 @@ def main() -> int:
     print("     • Local Ollama: private and offline, needs a strong computer")
     print("  3. After connecting a model, you land in Chat. Ask anything.")
     print("\nAlso installed:")
-    print("  rooks (coding agent)   rooks-browser (browser agent)" + ("   rooks-desk (computer use)" if not a.no_desk else ""))
+    extras = "   rooks-desk (computer use)" if not a.no_desk else ""
+    if (src / "rooks-try").exists():
+        extras += "   rooks-try (the Room)"
+    print("  rooks (coding agent)   rooks-browser (browser agent)" + extras)
     if not a.no_desk:
         for line in desk_notes():
             print(f"\n{line}" if not line.startswith("  ") else line)

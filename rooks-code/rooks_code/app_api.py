@@ -1,4 +1,4 @@
-"""Small client for the AI Workspace app's terminal API (/v1/rooks/*), used by `rooks pack`, `rooks egress`, ...
+"""Small client for the Rooks app's terminal API (/v1/rooks/*), used by `rooks pack`, `rooks egress`, ...
 
 Uses the same connection as chat (provider workbench: WORKBENCH_URL, the Terminal access token from `rooks login`).
 """
@@ -23,7 +23,7 @@ class App:
     def __init__(self, root: Path):
         s = config.resolve({"provider": "workbench"}, root)
         if not s.base_url or not s.api_key:
-            raise AppError("not connected to AI Workspace: run `rooks login` and choose the AI Workspace server")
+            raise AppError("not connected to the Rooks app: run `rooks login` and choose the Rooks app server")
         self.base = s.base_url.rstrip("/")  # ends in /v1
         self.hdr = {"Authorization": f"Bearer {s.api_key}", "Content-Type": "application/json"}
 
@@ -43,7 +43,7 @@ class App:
                 detail = "the app refused the Terminal access token: make a new one in Settings > Terminal access, then `rooks login`"
             raise AppError(str(detail or f"HTTP {e.code}")) from None
         except (urllib.error.URLError, OSError) as e:
-            raise AppError(f"cannot reach AI Workspace at {self.base}: {getattr(e, 'reason', e)}") from None
+            raise AppError(f"cannot reach the Rooks app at {self.base}: {getattr(e, 'reason', e)}") from None
 
 
 def run(fn) -> int:

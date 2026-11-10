@@ -1,12 +1,17 @@
-"""Terminal colours that follow the theme chosen in AI Workspace (Sunshine, Paper, Cherry & Ink, Neon, Dark, High contrast).
+"""Terminal colours that follow the app's three themes: Light, Dark and High contrast, or auto (match the terminal).
 
-Which theme: --theme, then ROOKS_THEME, then the app's choice in ~/.ai-workspace/appearance.json (written by the desktop
-app; AI_WORKSPACE_APPEARANCE_FILE overrides the path), then Sunshine.
-Which variant: every theme has a set for dark terminals and one for light terminals, because a colour that reads on
-black fails on white. ROOKS_TERMINAL=light|dark decides; otherwise COLORFGBG (set by many terminals); otherwise dark.
+Restraint, like the app (design record 0003, section 6): text is neutral, and one amber accent marks only what is live or
+needs you. ok and error are calm greens and reds for diffs and results; nothing else is coloured.
+
+Which theme: --theme, then ROOKS_THEME, then the app's choice in ~/.ai-workspace/appearance.json (written by the app;
+AI_WORKSPACE_APPEARANCE_FILE overrides the path), then auto. An older saved name is mapped the way the app maps it:
+night, lamp, neon, cherry -> dark; contrast -> contrast; everything else -> light.
+Which variant: a colour that reads on black fails on white, so every theme has a set for dark terminals and one for
+light terminals. ROOKS_TERMINAL=light|dark decides; otherwise COLORFGBG (set by many terminals); otherwise the chosen
+theme (light or dark) is taken as a hint; otherwise dark. auto is the terminal's own background.
 How: 24-bit colour when the terminal says it supports it (COLORTERM=truecolor/24bit, Windows Terminal, iTerm, VS Code,
-WezTerm), else the nearest of the 256 xterm colours. NO_COLOR and --no-color still turn colour off (handled by the
-caller). Every colour meets WCAG AA (4.5:1) against a black or white background (scripts/check-theme-contrast.py).
+WezTerm), else the nearest of the 256 xterm colours. NO_COLOR and --no-color turn colour off (handled by the caller).
+Every colour meets WCAG AA (4.5:1) against a black or white background.
 """
 
 from __future__ import annotations
@@ -17,34 +22,24 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROLES = ("accent", "ok", "error", "warn", "dim", "prompt")
-THEMES = ("sunshine", "paper", "cherry", "neon", "night", "contrast")
-ALIASES = {"dark": "night", "light": "sunshine", "linen": "paper", "gallery": "paper", "auto": "sunshine", "high-contrast": "contrast"}
+THEMES = ("light", "dark", "contrast")
+CHOICES = ("auto", *THEMES)
+DARK_NAMES = ("night", "lamp", "neon", "cherry", "dark")
+ALIASES = {**{n: "dark" for n in DARK_NAMES}, "high-contrast": "contrast", "contrast": "contrast", "auto": "auto",
+           "match": "auto", "system": "auto"}
+KNOWN_LIGHT = ("light", "sunshine", "paper", "linen", "gallery", "studio")
 
-# theme -> terminal background -> role -> colour
+# theme -> terminal background -> role -> colour. The app's tokens: ink, ink-muted, accent-text, success/danger/warning-text.
+_NEUTRAL = {
+    "dark": {"accent": "#e9b949", "ok": "#8fd8ab", "error": "#f2a193", "warn": "#f0c870", "dim": "#a3a29e", "prompt": "#ededec"},
+    "light": {"accent": "#7a5300", "ok": "#1e5a37", "error": "#82231a", "warn": "#7a4300", "dim": "#5e5d59", "prompt": "#1a1a19"},
+}
 PALETTES: dict[str, dict[str, dict[str, str]]] = {
-    "sunshine": {
-        "dark": {"accent": "#ffc83d", "ok": "#7fd18b", "error": "#ff7a6e", "warn": "#ffd466", "dim": "#a39c8f", "prompt": "#ffc83d"},
-        "light": {"accent": "#8a5a00", "ok": "#2f6b3a", "error": "#b42318", "warn": "#8a5a00", "dim": "#615a4e", "prompt": "#8a5a00"},
-    },
-    "paper": {
-        "dark": {"accent": "#efeae0", "ok": "#8fc79a", "error": "#ff6b78", "warn": "#e2b15a", "dim": "#aca598", "prompt": "#efeae0"},
-        "light": {"accent": "#141311", "ok": "#2d6236", "error": "#a61c1c", "warn": "#7a4c00", "dim": "#5a554c", "prompt": "#141311"},
-    },
-    "cherry": {
-        "dark": {"accent": "#ff6b78", "ok": "#8fc79a", "error": "#ff8379", "warn": "#e2b15a", "dim": "#aca598", "prompt": "#ff6b78"},
-        "light": {"accent": "#a50d26", "ok": "#2d6236", "error": "#a50d26", "warn": "#7a4c00", "dim": "#57524a", "prompt": "#a50d26"},
-    },
-    "neon": {
-        "dark": {"accent": "#d4ff3a", "ok": "#5ef0a0", "error": "#ff7a86", "warn": "#ffc94d", "dim": "#a3adb8", "prompt": "#d4ff3a"},
-        "light": {"accent": "#476000", "ok": "#006b3c", "error": "#b0122b", "warn": "#7a5200", "dim": "#56606b", "prompt": "#476000"},
-    },
-    "night": {
-        "dark": {"accent": "#ff6b78", "ok": "#7fc08a", "error": "#ff8379", "warn": "#e2b15a", "dim": "#aca598", "prompt": "#ff6b78"},
-        "light": {"accent": "#b5122b", "ok": "#2d6236", "error": "#a61c1c", "warn": "#7a4c00", "dim": "#5a554c", "prompt": "#b5122b"},
-    },
+    "light": _NEUTRAL,
+    "dark": _NEUTRAL,  # the app's Dark and Light differ in the surface; in a terminal the surface is the terminal's own
     "contrast": {
-        "dark": {"accent": "#8ab4ff", "ok": "#5ef08a", "error": "#ff9a9a", "warn": "#ffd75e", "dim": "#e0e0e0", "prompt": "#ffffff"},
-        "light": {"accent": "#0033aa", "ok": "#005c1f", "error": "#a00000", "warn": "#6b4000", "dim": "#1f1f1f", "prompt": "#000000"},
+        "dark": {"accent": "#ffd75e", "ok": "#5ef08a", "error": "#ff9a9a", "warn": "#ffd75e", "dim": "#e0e0e0", "prompt": "#ffffff"},
+        "light": {"accent": "#6b4000", "ok": "#005c1f", "error": "#a00000", "warn": "#6b4000", "dim": "#1f1f1f", "prompt": "#000000"},
     },
 }
 BOLD_THEMES = ("contrast",)  # high contrast also makes every coloured line bold
@@ -56,11 +51,13 @@ def appearance_file() -> Path:
 
 
 def normalise(name: str | None) -> str | None:
+    """'light', 'dark', 'contrast' or 'auto'; an older theme name is mapped like the app maps it; None when unknown."""
     if not name:
         return None
     n = name.strip().lower()
-    n = ALIASES.get(n, n)
-    return n if n in THEMES else None
+    if n in ALIASES:
+        return ALIASES[n]
+    return "light" if n in KNOWN_LIGHT else None
 
 
 def theme_from_app() -> str | None:
@@ -70,11 +67,12 @@ def theme_from_app() -> str | None:
         return None
     if not isinstance(data, dict):
         return None
-    return normalise(data.get("resolved")) or normalise(data.get("theme"))
+    resolved = normalise(data.get("resolved"))
+    return resolved if resolved and resolved != "auto" else normalise(data.get("theme"))
 
 
-def terminal_background(env: dict | None = None) -> str:
-    env = os.environ if env is None else env
+def _told(env) -> str | None:
+    """The background the terminal (or the person) says it has, or None."""
     forced = (env.get("ROOKS_TERMINAL") or "").strip().lower()
     if forced in ("light", "dark"):
         return forced
@@ -85,7 +83,12 @@ def terminal_background(env: dict | None = None) -> str:
             return "light" if bg in (7, 15) or 9 < bg < 16 and bg != 8 else "dark"
         except ValueError:
             pass
-    return "dark"
+    return None
+
+
+def terminal_background(env: dict | None = None) -> str:
+    env = os.environ if env is None else env
+    return _told(env) or "dark"
 
 
 def truecolor(env: dict | None = None) -> bool:
@@ -141,11 +144,18 @@ class TerminalTheme:
         return f"1;{base}" if self.name in BOLD_THEMES else base
 
 
-# What the older hard-coded ANSI codes meant, so callers can keep passing them.
-LEGACY_CODES = {"31": "error", "32": "ok", "33": "warn", "36": "prompt", "2": "dim", "1": "bold", "35": "accent", "34": "accent"}
+# What the older hard-coded ANSI codes meant, so callers can keep passing them. Cyan and magenta were decoration: they
+# are neutral ink now, so the accent stays for what is live or needs you.
+LEGACY_CODES = {"31": "error", "32": "ok", "33": "warn", "36": "prompt", "2": "dim", "1": "bold", "35": "prompt", "34": "prompt"}
 
 
 def load(name: str | None = None, env: dict | None = None) -> TerminalTheme:
     env = os.environ if env is None else env
-    chosen = normalise(name) or normalise(env.get("ROOKS_THEME")) or theme_from_app() or "sunshine"
-    return TerminalTheme(chosen, terminal_background(env), truecolor(env))
+    chosen = normalise(name) or normalise(env.get("ROOKS_THEME")) or theme_from_app() or "auto"
+    told = _told(env)
+    if chosen == "auto":
+        background = told or "dark"
+        chosen = background
+    else:
+        background = told or ("light" if chosen == "light" else "dark")
+    return TerminalTheme(chosen, background, truecolor(env))

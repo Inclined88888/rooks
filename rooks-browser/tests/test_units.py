@@ -152,6 +152,12 @@ def test_anthropic_shape(fake_api):
     path, headers, body = Recorder.seen[0]
     assert path == "/v1/messages" and headers["x-api-key"] == "k" and body["system"] == "sys"
     assert body["messages"][0]["content"][0]["source"]["data"] == "BBBB"
+    # current Claude models (Sonnet 5.5 and later) reject a non-default temperature with a 400
+    assert "temperature" not in body and "top_p" not in body
+
+
+def test_anthropic_default_is_current():
+    assert llm.PROVIDERS["anthropic"].default_model == "claude-sonnet-5-5"
 
 
 def test_ollama_and_openrouter_shapes(fake_api):

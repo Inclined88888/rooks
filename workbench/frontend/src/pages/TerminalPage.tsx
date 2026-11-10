@@ -1,94 +1,25 @@
 // A real terminal in the app window. Each tab is its own shell and stays running when you switch tabs.
-// The server allows six at once (terminal_pty.MAX_SESSIONS). xterm.js talks to /api/terminal/ws.
-import { FitAddon } from "@xterm/addon-fit";
-import { Terminal } from "@xterm/xterm";
-import "@xterm/xterm/css/xterm.css";
-import { Plus, SquareTerminal, X } from "lucide-react";
+// The server allows six at once (terminal_pty.MAX_SESSIONS). Each tab is a Shell (terminal/Shell.tsx, shared with the
+// Room's terminals) on /api/terminal/ws.
+import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Shell, type Phase } from "../terminal/Shell";
+import { publishTerminals } from "../terminalHost";
+import { Button, Page } from "../ui";
 import "../work.css";
 
 const MAX = 6;
 const REASON: Record<number, string> = {
   4401: "You are signed out. Sign in again, then reopen the terminal.",
-  4403: "The terminal only opens on the computer running Rooks, and only when it is switched on in Settings.",
+  4403: "The terminal only opens on the computer running this app, and only when it is switched on in Settings.",
   4429: "Too many terminals are open. Close one and try again.",
 };
 
-type Phase = "connecting" | "open" | "closed";
-
-function Shell({ active, label, onPhase, onSend }: {
-  active: boolean;
-  label: string;
-  onPhase: (phase: Phase, why: string) => void;
-  onSend: (send: (cmd: string) => void) => void;
-}) {
-  const box = useRef<HTMLDivElement>(null);
-  const termRef = useRef<Terminal | null>(null);
-  const fitRef = useRef<FitAddon | null>(null);
-  const [phase, setPhase] = useState<Phase>("connecting");
-  const [why, setWhy] = useState("");
-  const [gen, setGen] = useState(0);
-
-  useEffect(() => {
-    if (!box.current) return;
-    const css = getComputedStyle(document.documentElement);
-    const term = new Terminal({
-      cursorBlink: true, fontSize: 13, scrollback: 5000, screenReaderMode: true,
-      fontFamily: css.getPropertyValue("--mono").trim() || "ui-monospace, Menlo, monospace",
-    });
-    const fit = new FitAddon();
-    term.loadAddon(fit);
-    term.open(box.current);
-    termRef.current = term;
-    fitRef.current = fit;
-    try { fit.fit(); } catch { /* hidden or not laid out yet */ }
-    setPhase("connecting");
-    setWhy("");
-    const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/api/terminal/ws`);
-    const send = (m: object) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(m)); };
-    const run = (cmd: string) => send({ type: "input", data: cmd + "\r" });
-    onSend(run);
-    ws.onopen = () => {
-      setPhase("open");
-      send({ type: "resize", cols: term.cols, rows: term.rows });
-      if (active) term.focus();
-    };
-    ws.onmessage = (e) => term.write(typeof e.data === "string" ? e.data : "");
-    ws.onclose = (e) => { setPhase("closed"); setWhy(REASON[e.code] ?? (e.reason || "The shell exited.")); };
-    const input = term.onData((d) => send({ type: "input", data: d }));
-    const resized = term.onResize(({ cols, rows }) => send({ type: "resize", cols, rows }));
-    const ro = new ResizeObserver(() => { try { fit.fit(); } catch { /* hidden */ } });
-    ro.observe(box.current);
-    return () => {
-      ro.disconnect();
-      input.dispose();
-      resized.dispose();
-      ws.close();
-      term.dispose();
-      termRef.current = null;
-      fitRef.current = null;
-    };
-  }, [gen]);
-
-  const report = useRef(onPhase);
-  report.current = onPhase;
-  useEffect(() => { if (active) report.current(phase, why); }, [phase, why, active]);
-
-  useEffect(() => {
-    if (!active) return;
-    try { fitRef.current?.fit(); } catch { /* not open yet */ }
-    termRef.current?.focus();
-  }, [active, phase]);
-
-  return (
-    <div className={`terminal-pane${active ? "" : " is-hidden"}`} aria-hidden={!active}>
-      <div role="status" aria-live="polite" className="small">{phase === "connecting" ? "Connecting…" : phase === "closed" ? why : ""}</div>
-      <div ref={box} className="terminal-box" aria-label={label} />
-      {phase === "closed" && (
-        <button type="button" className="btn sm" onClick={() => setGen((n) => n + 1)}>Reopen this terminal</button>
-      )}
-    </div>
-  );
+function terminalWhy(code: number, reason: string): string {
+  if (REASON[code]) return REASON[code];
+  if (reason) return reason;
+  if (code === 1006 || code === 1005) return "The terminal could not connect. Press Reopen this terminal.";
+  return "The shell exited.";
 }
 
 function TabChip({ pane, active, over, onPick, onRename, onClose, onDragStart, onDragOver, onDrop, onDragEnd }: {
@@ -100,7 +31,7 @@ function TabChip({ pane, active, over, onPick, onRename, onClose, onDragStart, o
   const [draft, setDraft] = useState(pane.name);
   const commit = () => { setEditing(false); onRename(draft); setDraft((d) => d.trim() || pane.name); };
   return (
-    <div className={`tab terminal-tab${active ? " active" : ""}${over ? " is-over" : ""}`}
+    <div className={`terminal-tab${active ? " is-active" : ""}${over ? " is-over" : ""}`}
       draggable={!editing}
       onDragStart={(e) => { e.dataTransfer.setData("text/plain", String(pane.id)); e.dataTransfer.effectAllowed = "move"; onDragStart(); }}
       onDragOver={(e) => { e.preventDefault(); onDragOver(); }}
@@ -137,7 +68,7 @@ function readSaved(): { panes: Pane[]; active: number; next: number } | null {
   }
 }
 
-export default function TerminalPage() {
+export default function TerminalPage({ bare = false, parked = false }: { bare?: boolean; parked?: boolean }) {
   const saved = useRef(readSaved());
   const [panes, setPanes] = useState<Pane[]>(saved.current?.panes ?? [{ id: 1, name: "Terminal 1" }]);
   const [active, setActive] = useState(saved.current?.active ?? 1);
@@ -150,6 +81,7 @@ export default function TerminalPage() {
 
   useEffect(() => {
     localStorage.setItem(STORE, JSON.stringify({ panes, active, next: next.current }));
+    publishTerminals(panes, active);
   }, [panes, active]);
 
   const add = () => {
@@ -190,35 +122,35 @@ export default function TerminalPage() {
   };
 
   return (
-    <div className="page terminal-page">
-      <div className="page-head row">
-        <SquareTerminal size={18} aria-hidden />
-        <h1 className="grow">Terminal</h1>
-        <button className="btn sm" onClick={() => senders.current.get(active)?.("rooks")} disabled={phase !== "open"} title="Start the rooks coding agent in this terminal">Start rooks</button>
-      </div>
-      <div className="muted small">Drag a name to move it. Double-click a name to rename it. Each one keeps running when you switch. Up to six.</div>
-      <div className="terminal-tabs">
-        <div className="tabs" role="tablist" aria-label="Terminals">
-          {panes.map((p) => (
-            <TabChip key={p.id} pane={p} active={p.id === active} over={over === p.id}
-              onPick={() => setActive(p.id)} onRename={(name) => rename(p.id, name)} onClose={() => close(p.id)}
-              onDragStart={() => { dragId.current = p.id; }}
-              onDragOver={() => setOver(p.id)}
-              onDrop={() => { if (dragId.current != null) move(dragId.current, p.id); dragId.current = null; setOver(null); }}
-              onDragEnd={() => { dragId.current = null; setOver(null); }} />
-          ))}
-        </div>
-        <button type="button" className="btn sm" onClick={add} disabled={full} title={full ? "Six terminals can run at once. Close one to open another." : "Open another shell. The ones already open keep running."}>
-          <Plus size={14} /> New terminal
-        </button>
-      </div>
-      <div className="terminal-stage">
+    <Page wide className={`ag-page terminal-page${bare ? " is-bare" : ""}`} title="Terminal"
+      description="Drag a name to move it. Double-click a name to rename it. Each one keeps running when you leave for chat or settings. Up to six."
+      actions={<>
+        <Button size="sm" onClick={() => senders.current.get(active)?.("rooks")} disabled={phase !== "open"} title="Start the coding assistant in this terminal">Start coding</Button>
+        <Button size="sm" icon={<Plus size={14} />} onClick={add} disabled={full} title={full ? "Six terminals can run at once. Close one to open another." : "Open another shell. The ones already open keep running."}>New terminal</Button>
+      </>}>
+      <div className="terminal-tabs" role="tablist" aria-label="Terminals">
         {panes.map((p) => (
-          <Shell key={p.id} active={p.id === active} label={p.name}
-            onPhase={(ph, _why) => { if (p.id === active) setPhase(ph); }}
-            onSend={(send) => { senders.current.set(p.id, send); }} />
+          <TabChip key={p.id} pane={p} active={p.id === active} over={over === p.id}
+            onPick={() => setActive(p.id)} onRename={(name) => rename(p.id, name)} onClose={() => close(p.id)}
+            onDragStart={() => { dragId.current = p.id; }}
+            onDragOver={() => setOver(p.id)}
+            onDrop={() => { if (dragId.current != null) move(dragId.current, p.id); dragId.current = null; setOver(null); }}
+            onDragEnd={() => { dragId.current = null; setOver(null); }} />
         ))}
       </div>
-    </div>
+      <div className="terminal-screen">
+        <div className="terminal-screen-bar">
+          <span className="terminal-dots" aria-hidden><i /><i /><i /></span>
+          <span className="terminal-screen-title">{panes.find((p) => p.id === active)?.name || "Terminal"}</span>
+        </div>
+        <div className="terminal-stage">
+          {panes.map((p) => (
+            <Shell key={p.id} url="/api/terminal/ws" active={p.id === active} hold={parked} label={p.name} why={terminalWhy}
+              onPhase={(ph, _why) => { if (p.id === active) setPhase(ph); }}
+              onSend={(send) => { senders.current.set(p.id, send); }} />
+          ))}
+        </div>
+      </div>
+    </Page>
   );
 }

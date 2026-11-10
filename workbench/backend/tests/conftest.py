@@ -70,6 +70,9 @@ async def completions(req: Request):
         msg = nxt(body["messages"]) if callable(nxt) else nxt
     else:
         msg = {"role": "assistant", "content": "ok"}
+    if isinstance(msg, dict) and msg.get("_error"):  # a scripted provider error: {"_error": text, "_status": 400, "_code": ...}
+        return JSONResponse({"error": {"message": msg["_error"], "type": "invalid_request_error", "code": msg.get("_code", "")}},
+                            status_code=int(msg.get("_status", 400)))
     if body.get("stream"):  # a tool-using turn read as a stream: the same reply, in OpenAI's chunk format
         text = msg.get("content") or ""
         chunks = [{"choices": [{"index": 0, "delta": {"content": p}}]} for p in (text[: len(text) // 2], text[len(text) // 2:]) if p]
@@ -312,6 +315,7 @@ def client(fake_url, tmp_path_factory):
             os.environ.pop(name, None)
     os.environ.update(APP_SECRET="a" * 40, TOOLS_API_KEY="k" * 30, DATA_DIR=str(tmp_path_factory.mktemp("data")),
                       ROOKS_COMPANION_FILE=str(tmp_path_factory.mktemp("companion") / "companion.json"),
+                      ROOKS_TRY_HOME=str(tmp_path_factory.mktemp("room")),  # the Room's folder never lands in a real home
                       MODEL_CATALOG_REFRESH="0")  # tests never download the model catalog
     from fastapi.testclient import TestClient
 

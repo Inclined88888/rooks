@@ -118,8 +118,10 @@ def test_a_broken_audit_write_never_breaks_the_call(client, monkeypatch):
 def test_no_unaudited_network_library_in_the_app():
     """Coverage of the audit log, checked in the source: only wrapped libraries may reach the network."""
     allowed = {"httpx": None, "imaplib": {"mail.py"}, "smtplib": {"mail.py"}, "caldav": {"calendar_sync.py"},
-               "socket": {"research.py", "mobile.py"}}  # research: DNS lookups only, to refuse private addresses;
-    # mobile: this machine's own LAN address for the pairing QR (a UDP connect sends no packet)
+               "socket": {"research.py", "mobile.py", "local_agents.py"}}  # research: DNS lookups only, to refuse private addresses;
+    # mobile: this machine's own LAN address for the pairing QR (a UDP connect sends no packet);
+    # local_agents: binds a loopback port to find a free one for the helper it starts (a bind sends no packet);
+    # its health checks of the helper go through httpx and are audited
     forbidden = re.compile(r"^\s*(?:import|from)\s+(requests|urllib3|urllib\.request|http\.client|aiohttp|ftplib|telnetlib|"
                            r"websockets?|paramiko|pycurl|grpc)\b", re.M)
     app = pathlib.Path(__file__).resolve().parent.parent / "app"
@@ -135,6 +137,9 @@ def test_no_unaudited_network_library_in_the_app():
     assert set(re.findall(r"socket\.(\w+)", research)) <= {"getaddrinfo", "gaierror", "AF_INET", "AF_INET6"}
     mobile = (app / "mobile.py").read_text()
     assert set(re.findall(r"\bsocket\.(\w+)", mobile)) <= {"getaddrinfo", "gethostname", "socket", "AF_INET", "SOCK_DGRAM"}
+    local_agents = (app / "local_agents.py").read_text()
+    assert set(re.findall(r"\bsocket\.(\w+)", local_agents)) <= {"socket"}
+    assert "connect(" not in local_agents and "urlopen" not in local_agents
     assert not offenders, offenders
 
 

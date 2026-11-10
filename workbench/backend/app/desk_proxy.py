@@ -19,13 +19,13 @@ def enabled() -> bool:
 
 async def call(method: str, path: str, json: dict | None = None, params: dict | None = None, timeout: float = 30) -> httpx.Response:
     if not enabled():
-        raise HTTPException(503, "Computer use is off. The one-command installer adds Rooks Desk (unless --no-desk was used); then open the desktop app.")
+        raise HTTPException(503, "Using this computer from the app is turned off. Open the desktop app on this same computer to turn it on.")
     try:
         async with httpx.AsyncClient(timeout=timeout) as c:
             r = await c.request(method, f"{config.DESK_URL}{path}", json=json, params=params,
                                 headers={"Authorization": f"Bearer {config.DESK_API_KEY}"})
     except httpx.HTTPError as e:
-        raise HTTPException(502, f"Rooks Desk unreachable: {e}") from e
+        raise HTTPException(502, "The computer helper could not be reached.") from e
     if r.status_code >= 400:
         try:
             detail = r.json().get("detail", r.text)

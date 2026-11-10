@@ -24,12 +24,13 @@ def _port() -> int:
 
 
 class App:
-    def __init__(self, tmp: Path):
+    def __init__(self, tmp: Path, extra_env: dict | None = None):
         self.port = _port()
         self.url = f"http://127.0.0.1:{self.port}"
         env = {k: v for k, v in os.environ.items() if not k.endswith(("_API_KEY", "_TOKEN"))}
         env.update(APP_SECRET="a" * 40, TOOLS_API_KEY="k" * 30, DATA_DIR=str(tmp / "data"), MODEL_CATALOG_REFRESH="0",
                    ROOKS_COMPANION_FILE=str(tmp / "companion.json"), PYTHONPATH=str(BACKEND))
+        env.update(extra_env or {})
         self.log = open(tmp / "backend.log", "w")  # noqa: SIM115
         self.proc = subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(self.port),
                                       "--log-level", "warning"], cwd=BACKEND, env=env, stdout=self.log, stderr=subprocess.STDOUT)

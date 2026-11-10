@@ -3,9 +3,10 @@ from __future__ import annotations
 """The run log: every agent action is one row in `actions` (R2). There is no other ledger.
 Kinds and their outcomes:
   turn        running | no_claim | backed | fixed | unbacked | model_error | step_limit | empty_answer | budget_paused | interrupted
-              | repeat_blocked
+              | repeat_blocked | held (the turn stopped at a call that waits for the user's OK)
   model_call  ok | error
   tool_call   verified | ok | check_failed | bad_args | unknown_tool | rejected | tool_error | held | denied | duplicate
+              (the same change already made this turn, or the same call already waiting for the user's OK)
               | repeat_blocked (refused: the same call already failed the same way REPEAT_LIMIT times in a row)
   decision    approved | denied        (the user's answer to a held tool_call, which is its parent)
 
@@ -16,6 +17,7 @@ kept encrypted in payload_enc and never logged.
 """
 
 import json
+import re
 import sqlite3
 import uuid
 
@@ -73,15 +75,21 @@ def finish(action_id: int, outcome: str, **fields) -> None:
     db.run(f"UPDATE actions SET {sets} WHERE id = ?", outcome, *fields.values(), action_id)
 
 
+RESTART_REASON = "Rooks restarted during the turn"
+
+
 def recover() -> int:
-    """Turns still 'running' at startup were cut off by a restart."""
-    return db.run("UPDATE actions SET outcome = 'interrupted', failure_reason = 'Workbench restarted during the turn' "
-                  "WHERE kind = 'turn' AND outcome = 'running'")
+    """Turns still 'running' at startup were cut off by a restart (restart.py then tells each conversation so)."""
+    return db.run("UPDATE actions SET outcome = 'interrupted', failure_reason = ? WHERE kind = 'turn' AND outcome = 'running'",
+                  RESTART_REASON)
 
 
 # Approvals are held tool_call rows; a decision row answers each one exactly once (unique index on its parent).
 _PENDING = ("SELECT a.* FROM actions a WHERE a.kind = 'tool_call' AND a.outcome = 'held' AND NOT EXISTS "
             "(SELECT 1 FROM actions d WHERE d.kind = 'decision' AND d.parent_action_id = a.id)")
+
+
+_STILL_HELD = re.compile(r'"held":\s*true')
 
 
 def approval(action_id: int) -> dict:
@@ -98,6 +106,8 @@ def approval(action_id: int) -> dict:
         run = db.one("SELECT * FROM actions WHERE kind = 'tool_call' AND parent_action_id = ?", d["id"])
         status = "denied" if d["outcome"] == "denied" else ("approved" if not run else ("done" if run["outcome"] in ("ok", "verified") else "failed"))
         result = (run["detail"] or run["failure_reason"]) if run else ""
+        if status == "done" and a["tool"] == "use_room" and _STILL_HELD.search(result or ""):
+            status = "held"  # the yes ran, and what it ran only asked again (a Room hand-off): nothing was done yet
     return {"id": a["id"], "conversation_id": a["conversation_id"], "tool": a["tool"],
             "args": decrypt(a["payload_enc"]) or a["args"], "effect": a["effect"], "reason": a["detail"],
             "status": status, "result": result, "created_at": a["ts"], "decided_at": decided_at}
@@ -109,6 +119,12 @@ def pending(conversation_id: int | None = None) -> list[dict]:
     else:
         rows = db.all(_PENDING + " ORDER BY a.id DESC LIMIT 200")
     return [approval(r["id"]) for r in rows]
+
+
+def pending_count() -> int:
+    """How many held calls still wait for an answer, across every conversation (the Needs you pill; one COUNT, no
+    decrypting)."""
+    return db.one(f"SELECT COUNT(*) AS n FROM ({_PENDING})")["n"]
 
 
 def decide(action_id: int, approve: bool, channel: str = "web") -> int:

@@ -50,6 +50,7 @@ class Settings:
     slow_mo: int = 0
     screenshot_events: bool = False
     downloads: str | None = None
+    electron: dict | None = None  # {"url", "token", "tab", "job"}: drive a tab in the Rooks Browser app (electron.py)
 
 
 async def run_task(goal: str, s: Settings, *, approver: Approver = deny_all, on_event: EventFn | None = None,
@@ -60,8 +61,14 @@ async def run_task(goal: str, s: Settings, *, approver: Approver = deny_all, on_
     m = model or llm.make(s.provider, s.model, base_url=s.base_url, api_key=s.api_key,
                           on_egress=lambda meth, url, outcome, ms, err: log.egress(meth, url, outcome, ms, None, tool="model", error=err))
     log.provider, log.model = m.provider, m.model
-    browser = Browser(policy=policy, log=log, headless=s.headless, engine=s.engine, cdp_url=s.cdp_url,
-                      downloads=Path(s.downloads) if s.downloads else h / "downloads", slow_mo=s.slow_mo)
+    if s.electron:  # the person's own Rooks Browser window: same agent, same rules, the app's tab
+        from .electron import ElectronBrowser
+
+        browser = ElectronBrowser(policy=policy, log=log, control=s.electron,
+                                  downloads=Path(s.downloads) if s.downloads else h / "downloads")
+    else:
+        browser = Browser(policy=policy, log=log, headless=s.headless, engine=s.engine, cdp_url=s.cdp_url,
+                          downloads=Path(s.downloads) if s.downloads else h / "downloads", slow_mo=s.slow_mo)
     async with browser:
         agent = Agent(m, browser, approver=approver, pre_approved=s.pre_approved, ask_extra=s.ask, max_steps=s.max_steps,
                       vision=llm.sees(m.provider, m.model, s.vision), on_event=on_event, start_url=s.start_url,

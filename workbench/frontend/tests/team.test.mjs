@@ -9,14 +9,16 @@ test("team styles use theme variables only and respect motion settings", () => {
   const css = read("../src/team/team.css").replace(/\/\*[\s\S]*?\*\//g, "");
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "no hex colours");
   assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, "no literal colours");
-  assert.match(css, /prefers-reduced-motion: no-preference/);
+  // the OS reduced-motion setting is honoured once, in motion/tokens.css; the team sheet gates on data-motion only
+  assert.doesNotMatch(css, /prefers-reduced-motion/);
   for (const m of css.matchAll(/animation:[^;]+;/g)) assert.ok(css.slice(0, m.index).lastIndexOf('data-motion="full"') > css.slice(0, m.index).lastIndexOf("}\n}"), "animation only under full motion");
 });
 
 test("Team is in the nav and routed, including the person page", () => {
-  const app = read("../src/App.tsx");
-  assert.ok(app.includes('{ to: "/team"'));
-  assert.ok(app.includes('<Route path="/team"') && app.includes('<Route path="/team/people/:id"'));
+  const registry = read("../src/pages/registry.ts");
+  assert.ok(registry.includes('{ path: "/team"'));
+  assert.ok(registry.includes('also: ["/team/people/:id"]'));
+  assert.match(read("../src/App.tsx"), /PAGES\.flatMap\(/, "every registered page becomes a route");
 });
 
 test("every view is there and nothing is sent without a button press", () => {

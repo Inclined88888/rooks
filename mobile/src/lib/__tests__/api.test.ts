@@ -73,4 +73,18 @@ describe('api', () => {
       globalThis.fetch = real;
     }
   });
+
+  it('reads and answers Companion requests on the routes the server has, with the device token', async () => {
+    // They went to /api/mobile/companion/..., which the server never served: every Allow, Decline and Answer was a 404.
+    const { f, calls } = fakeFetch({
+      'http://c/api/companion/state': { body: { requests: [] } },
+      'http://c/api/companion/requests/q1/decide': { body: { id: 'q1', status: 'answered' } },
+    });
+    const c = new Client('http://c', 'wbd_t', f);
+    await c.companionState();
+    await c.companionDecide('q1', 'answer', 'dev');
+    expect(calls.map((x) => x.url)).toEqual(['http://c/api/companion/state', 'http://c/api/companion/requests/q1/decide']);
+    expect((calls[1].init?.headers as Record<string, string>).Authorization).toBe('Bearer wbd_t');
+    expect(JSON.parse(String(calls[1].init?.body))).toEqual({ decision: 'answer', answer: 'dev' });
+  });
 });

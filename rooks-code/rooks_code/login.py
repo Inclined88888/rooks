@@ -1,6 +1,6 @@
 """rooks login: connect a model in one step, check it really answers, and remember the choice.
 
-  rooks login                       menu: paste a key (provider found from its shape), an AI Workspace server, or Ollama
+  rooks login                       menu: paste a key (provider found from its shape), a Rooks app server, or Ollama
   rooks login -P nvidia             a provider by name; the key is asked for without echo
   rooks login -P workbench --url http://localhost:3100
   echo "$KEY" | rooks login -P groq --key-stdin
@@ -105,7 +105,7 @@ def main(a, root: Path) -> int:
             print("rooks login: pass -P PROVIDER (and --key-stdin) when not at a terminal", file=sys.stderr)
             return 2
         print("Connect a model:\n  1  paste an API key (the provider is recognised from it)\n"
-              "  2  my AI Workspace server (Docker or remote)\n  3  Ollama on this computer")
+              "  2  my Rooks app server (Docker or remote)\n  3  Ollama on this computer")
         name = _ask("Choose [1]/2/3: ", {"1": "key", "2": "workbench", "3": "ollama"}, "key")
     key = ""
     if name == "key":

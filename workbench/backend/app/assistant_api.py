@@ -27,6 +27,10 @@ def require_user_or_cli(request: Request) -> None:
     stored = db.get_setting("cli_token_hash", "") or ""
     if token and stored and hmac.compare_digest(hashlib.sha256(token.encode()).hexdigest(), stored):
         return
+    from . import surfaces
+
+    if surfaces.bearer_ok(request):
+        return
     raise HTTPException(401, "Not signed in")
 
 
@@ -154,14 +158,23 @@ def regenerate(cid: int):
 
 
 @router.get("/conversations")
-def conversations(channel: str | None = None, q: str = ""):
+def conversations(channel: str | None = None, q: str = "", archived: int = 0):
+    flag = 1 if archived else 0
     if q:
         hits = assistant.search_history(q, 30)
         ids = list(dict.fromkeys(h["conversation_id"] for h in hits))
-        return [db.one("SELECT * FROM conversations WHERE id = ?", i) for i in ids]
+        rows = [db.one("SELECT * FROM conversations WHERE id = ?", i) for i in ids]
+        return [r for r in rows if r and int(r.get("archived") or 0) == flag]
     if channel:
-        return db.all("SELECT * FROM conversations WHERE channel = ? ORDER BY updated_at DESC LIMIT 200", channel)
-    return db.all("SELECT * FROM conversations WHERE channel IN ('web', 'cli', 'mobile', 'telegram', 'schedule') ORDER BY updated_at DESC LIMIT 200")
+        return db.all(
+            "SELECT * FROM conversations WHERE channel = ? AND COALESCE(archived, 0) = ? ORDER BY updated_at DESC LIMIT 200",
+            channel, flag,
+        )
+    return db.all(
+        "SELECT * FROM conversations WHERE channel IN ('web', 'cli', 'mobile', 'telegram', 'schedule') "
+        "AND COALESCE(archived, 0) = ? ORDER BY updated_at DESC LIMIT 200",
+        flag,
+    )
 
 
 @router.get("/conversations/{cid}")
@@ -169,18 +182,42 @@ def conversation(cid: int):
     c = db.one("SELECT * FROM conversations WHERE id = ?", cid)
     if not c:
         raise HTTPException(404, "Not found")
-    rows = db.all("SELECT id, role, content, tool_calls, name, attachments, created_at FROM messages WHERE conversation_id = ? ORDER BY id", cid)
+    from .teammates.hooks import choices_from_calls, stamp_choices
+
+    from . import front_door
+
+    rows = db.all("SELECT id, role, content, tool_calls, tool_call_id, name, attachments, created_at FROM messages WHERE conversation_id = ? ORDER BY id", cid)
+    pending_calls: dict = {}
     for r in rows:
-        r["attachments"] = [attachments_mod.public(a) for a in json.loads(r["attachments"])] if r["attachments"] else []
-        r["tool_calls"] = [tc["function"]["name"] for tc in json.loads(r["tool_calls"])] if r["tool_calls"] else []
+        raw_calls = r["tool_calls"]
+        r["_choice"] = choices_from_calls(raw_calls)
+        if r["role"] == "assistant" and raw_calls:
+            try:
+                for tc in json.loads(raw_calls):
+                    fn = (tc or {}).get("function") or {}
+                    pending_calls[tc.get("id")] = (fn.get("name") or "", fn.get("arguments"))
+            except ValueError:
+                pass
         if r["role"] == "tool":
-            r["content"] = r["content"][:400]
+            name, arguments = r["name"], None
+            paired = pending_calls.get(r.get("tool_call_id"))
+            if paired:
+                name, arguments = paired
+            card = front_door.card_from(name, r["content"], arguments)
+            if card:
+                r["_card"] = card
+            r["content"] = (r["content"] or "")[:400]
+        r["attachments"] = [attachments_mod.public(a) for a in json.loads(r["attachments"])] if r["attachments"] else []
+        r["tool_calls"] = [tc["function"]["name"] for tc in json.loads(raw_calls)] if raw_calls else []
+    stamp_choices(rows)
+    front_door.stamp_cards(rows)
     return {**c, "messages": rows}
 
 
 class ConvPatch(BaseModel):
     title: str | None = Field(None, max_length=120)
     model: str | None = None
+    archived: bool | None = None
 
 
 @router.patch("/conversations/{cid}")
@@ -189,6 +226,8 @@ def rename(cid: int, data: ConvPatch):
         db.run("UPDATE conversations SET title = ? WHERE id = ?", data.title.strip() or "Chat", cid)
     if data.model is not None:
         db.run("UPDATE conversations SET model = ? WHERE id = ?", data.model, cid)
+    if data.archived is not None:
+        db.run("UPDATE conversations SET archived = ? WHERE id = ?", int(data.archived), cid)
     return db.one("SELECT * FROM conversations WHERE id = ?", cid)
 
 
@@ -398,6 +437,48 @@ def delete_skill(sid: int):
     return {"ok": True}
 
 
+@router.get("/skills/store")
+def skill_store():
+    from . import skill_store as store
+
+    return store.listing()
+
+
+@router.post("/skills/store/{skill_id}")
+def add_store_skill(skill_id: str):
+    from . import skill_store as store
+
+    return store.add(skill_id)
+
+
+@router.get("/assistant/main")
+def assistant_main():
+    """The one conversation Home opens."""
+    from . import front_door
+
+    return {"id": front_door.main_conversation()}
+
+
+@router.get("/assistant/routines")
+def assistant_routines():
+    from . import front_door
+
+    return {"routines": front_door.routines()}
+
+
+class RoutineToggle(BaseModel):
+    kind: str = Field(..., pattern="^(schedule|automation)$")
+    id: int
+    enabled: bool
+
+
+@router.post("/assistant/routines/pause")
+def assistant_routine_pause(data: RoutineToggle):
+    from . import front_door
+
+    return front_door.set_enabled(data.kind, data.id, data.enabled)
+
+
 # Schedules and inbox
 class ScheduleIn(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
@@ -426,6 +507,13 @@ def toggle_schedule(sid: int, data: ScheduleToggle):
     s = db.one("SELECT * FROM schedules WHERE id = ?", sid)
     if not s:
         raise HTTPException(404, "Not found")
+    from . import starters  # a job a profession setup proposed: turning it on answers its card (refused while its connection is missing)
+
+    starters._ensure()
+    card = db.one("SELECT approved_at FROM starter_items WHERE kind = 'schedule' AND ref_id = ?", sid)
+    if data.enabled and card and card["approved_at"] is None:
+        starters.decide(sid, True)
+        return db.one("SELECT * FROM schedules WHERE id = ?", sid)
     db.run("UPDATE schedules SET enabled = ?, next_run = ? WHERE id = ?", int(data.enabled), scheduler.next_run(s["cron"]), sid)
     return db.one("SELECT * FROM schedules WHERE id = ?", sid)
 
@@ -471,6 +559,7 @@ class AssistantSettings(BaseModel):
     tavily_api_key: str | None = Field(None, max_length=200)
     telegram_token: str | None = Field(None, max_length=200)
     telegram_allowed_users: str | None = Field(None, max_length=500)
+    reach_channel: str | None = Field(None, pattern="^(off|telegram|slack)$")
 
 
 @router.get("/assistant/settings")
@@ -482,6 +571,7 @@ def get_assistant_settings():
         "search_provider": search.provider(),
         "telegram": telegram.status(),
         "cli_token_set": bool(db.get_setting("cli_token_hash", "")),
+        "reach_channel": db.get_setting("reach_channel", "off") or "off",
     }
 
 
@@ -490,7 +580,13 @@ def put_assistant_settings(data: AssistantSettings):
     from zoneinfo import ZoneInfo
 
     if data.assistant_name is not None:
-        db.set_setting("assistant_name", data.assistant_name.strip() or "Atlas")
+        name = " ".join(data.assistant_name.split())[:40] or "Atlas"
+        db.set_setting("assistant_name", name)
+        from .teammates import store as teammate_store
+
+        teammate_store.sync_default_name(name)
+    if data.reach_channel is not None:
+        db.set_setting("reach_channel", data.reach_channel)
     if data.timezone is not None:
         try:
             ZoneInfo(data.timezone)

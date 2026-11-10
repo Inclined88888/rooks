@@ -2,6 +2,10 @@
 
 The desktop app starts it on launch. A dev server often does not, which used to hide the tool and make chat
 say a work site was missing. Tests never start a process (PYTEST_CURRENT_TEST).
+
+Network: the health check goes through httpx, which the outbound audit wraps (R8, egress.py), so every probe of a
+helper is a row in the run log like any other call. The only other use of the network stack is binding a loopback
+port to find a free one for the helper; nothing is sent (tests/test_egress.py lists it).
 """
 
 from __future__ import annotations
@@ -11,13 +15,21 @@ import shutil
 import socket
 import subprocess
 import time
-import urllib.request
 from pathlib import Path
+
+import httpx
 
 from . import config
 
 _PROC: subprocess.Popen | None = None
 _DESK: subprocess.Popen | None = None
+
+
+def helper_env(key: str, extra: dict) -> dict:
+    """A helper's environment: none of the app's own secrets, only the one key it is given."""
+    from .security import scrub_env
+
+    return {**scrub_env(os.environ), **extra, "WORKBENCH_API_KEY": key}
 
 
 def _installed() -> str | None:
@@ -41,9 +53,9 @@ def _port() -> int:
 
 
 def _up(url: str) -> bool:
+    """Whether a helper answers on this address. Audited like every outbound call (egress.py wraps httpx)."""
     try:
-        urllib.request.urlopen(f"{url}/healthz", timeout=0.4).close()
-        return True
+        return httpx.get(f"{url}/healthz", timeout=0.4).status_code < 400
     except Exception:  # noqa: BLE001 - not up yet, or not our process
         return False
 
@@ -73,8 +85,8 @@ def _start(exe: str) -> bool:
     port = _port()
     url = f"http://127.0.0.1:{port}"
     app_url = os.environ.get("WORKBENCH_URL") or "http://127.0.0.1:8000"
-    env = {**os.environ, "ROOKS_BROWSER_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
-           "ROOKS_BROWSER_PROVIDER": os.environ.get("ROOKS_BROWSER_PROVIDER", "workbench")}
+    env = helper_env(key, {"ROOKS_BROWSER_TOKEN": key, "WORKBENCH_URL": app_url,
+                           "ROOKS_BROWSER_PROVIDER": os.environ.get("ROOKS_BROWSER_PROVIDER", "workbench")})
     # A visible Chrome at idle is the window that sits there loading. The Browser page shows the steps.
     headed = os.environ.get("ROOKS_BROWSER_HEADED") == "1"
     log_dir = Path(config.DATA_DIR)
@@ -138,8 +150,8 @@ def _start_desk(exe: str) -> bool:
     port = _port()
     url = f"http://127.0.0.1:{port}"
     app_url = os.environ.get("WORKBENCH_URL") or "http://127.0.0.1:8000"
-    env = {**os.environ, "ROOKS_DESK_TOKEN": key, "WORKBENCH_URL": app_url, "WORKBENCH_API_KEY": key,
-           "ROOKS_DESK_PROVIDER": os.environ.get("ROOKS_DESK_PROVIDER", "workbench")}
+    env = helper_env(key, {"ROOKS_DESK_TOKEN": key, "WORKBENCH_URL": app_url,
+                           "ROOKS_DESK_PROVIDER": os.environ.get("ROOKS_DESK_PROVIDER", "workbench")})
     log_dir = Path(config.DATA_DIR)
     log_dir.mkdir(parents=True, exist_ok=True)
     log = open(log_dir / "rooks-desk.log", "ab")  # noqa: SIM115 - lives with the child

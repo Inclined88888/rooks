@@ -1,5 +1,7 @@
-"""The interactive session at a real terminal: a welcome banner, a command menu that opens as you type /, @ to point at
-files, history that survives restarts, a status bar, answers rendered as formatted text, and plain-language prompts.
+"""The interactive session at a real terminal: one quiet header line, a command menu that opens as you type /, @ to point
+at files, history that survives restarts, a status bar, answers rendered as formatted text, and plain-language prompts.
+The look is the app's design system v3 (restraint): neutral text, one amber accent only for what is live or needs you,
+no emoji, no boxes, no animation; the working line is static and says what is happening in plain words.
 
 Used only when stdin and stdout are a terminal and prompt_toolkit and rich are installed; pipes, scripts and tests keep
 the plain line mode in cli.repl. Nothing here changes what the agent may do: every edit and command is still asked
@@ -17,7 +19,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import __version__, config
+from . import __version__, config, words, workroom
 from .learning import local_path as learning_path
 from .cli import UI, HELP, app_models, effort_command, load_session, mode_command, model_command, provider_command, set_model, short_model, undo_text
 
@@ -32,51 +34,14 @@ try:
     from rich.live import Live
     from rich.markdown import Markdown
     from rich.padding import Padding
-    from rich.panel import Panel
     from rich.table import Table
     from rich.text import Text
 except ImportError:  # the plain line mode still works; available() is False, so nothing below is used
     PromptSession = None  # type: ignore[assignment,misc]
     Completer = object  # type: ignore[assignment,misc]
 
-LOGO = """\
-██████   ██████   ██████  ██   ██ ███████
-██   ██ ██    ██ ██    ██ ██  ██  ██
-██████  ██    ██ ██    ██ █████   ███████
-██   ██ ██    ██ ██    ██ ██  ██       ██
-██   ██  ██████   ██████  ██   ██ ███████"""
-
-# command -> (what it does, in plain words). Order is the order shown in the menu and in /help.
-COMMANDS: dict[str, str] = {
-    "/help": "what you can do here",
-    "/new": "start a fresh conversation",
-    "/model": "pick the AI, the model and how hard it thinks (arrow keys)",
-    "/effort": "how hard a plan's model thinks: /effort low, medium, high or auto",
-    "/mode": "chat talks, plan reads, build can change files: /mode chat",
-    "/mcp": "connect an extra tool in plain words: /mcp add notes npx notes-server",
-    "/provider": "switch the AI service: /provider NAME",
-    "/login": "connect an AI service (paste a key, or use your AI Workspace app)",
-    "/memory": "what Rooks remembers about you; /memory forget <words> drops one",
-    "/history": "search past Chat and terminal turns: /history words",
-    "/skills": "procedures Rooks learned; /skills add GITHUB-LINK checks a new one",
-    "/undo": "put back the files changed by the last request",
-    "/diff": "what changed in this folder (git), as a diff",
-    "/jobs": "background jobs (servers, watchers): /jobs, /jobs stop ID",
-    "/init": "write AGENTS.md: the project's rules and commands, so every session starts informed",
-    "/context": "how full the conversation is, and which project instruction files are followed",
-    "/sessions": "earlier conversations in this folder",
-    "/resume": "continue an earlier conversation: /resume ID",
-    "/copy": "copy the last answer to the clipboard",
-    "/image": "ask about a picture: /image PATH [question] (or mention @shot.png in a request)",
-    "/compact": "summarise the conversation so far to make room",
-    "/cost": "tokens used and cost so far",
-    "/auto": "turn asking before changes off or on",
-    "/dry-run": "show what would change without changing anything",
-    "/doctor": "check that everything works and say what to fix",
-    "/receipt": "where this session's record is saved",
-    "/exit": "quit (or Ctrl+D)",
-}
-ALIASES = {"/clear": "/new", "/yes": "/auto", "/quit": "/exit", "/?": "/help"}
+COMMANDS = words.COMMANDS  # one list for the menu, /help and the plain line mode
+ALIASES = words.ALIASES
 
 
 def available() -> bool:
@@ -94,11 +59,12 @@ class RichUI(UI):
         super().__init__(*a, **kw)
         from rich.theme import Theme
 
-        accent = self.hexcolour("accent") if self.color else ""
-        self.console = Console(highlight=False, soft_wrap=False, no_color=not self.color,
-                               theme=Theme({"markdown.code": f"bold {accent}" if accent else "bold",  # inline `code`: coloured, no block
-                                            "markdown.h1": "bold", "markdown.h2": "bold underline", "markdown.link": accent or "underline",
-                                            "markdown.block_quote": "italic #9a9a9a"}))
+        dim = self.hexcolour("dim") if self.color else ""
+        own = self.out not in (sys.stdout, sys.__stdout__)  # a buffer (tests, captures) gets the formatted text too
+        self.console = Console(file=self.out if own else None, highlight=False, soft_wrap=False, no_color=not self.color,
+                               theme=Theme({"markdown.code": "bold",  # inline `code`: bold ink, no colour, no block
+                                            "markdown.h1": "bold", "markdown.h2": "bold", "markdown.link": "underline",
+                                            "markdown.block_quote": f"italic {dim}" if dim else "italic"}))
         self._started = 0.0
         self.activity = "Thinking"  # what the agent is doing now, shown on the Working line
 
@@ -113,11 +79,11 @@ class RichUI(UI):
         if not text:
             return
         self.console.print()
-        self.bullet(Markdown(_hide_markup(text), code_theme=self.code_theme()), "ok" if final else "text")
+        self.bullet(Markdown(_hide_markup(text), code_theme=self.code_theme()), "prompt" if final else "dim")
 
-    def bullet(self, renderable, role: str = "ok") -> None:
-        """'⏺ ' before the first line, the rest indented under it (how Claude Code and Hermes lay out answers)."""
-        self.console.print(self._dotted(renderable, role if role != "text" else "dim"))
+    def bullet(self, renderable, role: str = "prompt") -> None:
+        """'● ' before the first line, the rest indented under it."""
+        self.console.print(self._dotted(renderable, role))
 
     def can_stream(self) -> bool:
         return bool(self.color)
@@ -132,11 +98,11 @@ class RichUI(UI):
         self._buf += delta
         self._live.update(self._dotted(Markdown(_hide_markup(self._buf), code_theme=self.code_theme())))
 
-    def _dotted(self, renderable, role: str = "ok"):
+    def _dotted(self, renderable, role: str = "prompt"):
         g = Table.grid()
         g.add_column(width=2, no_wrap=True)
         g.add_column()
-        g.add_row(Text("⏺", style=self.hexcolour(role)) if self.color else Text("*"), renderable)
+        g.add_row(Text("●", style=self.hexcolour(role) if self.color else ""), renderable)
         return g
 
     def stream_end(self) -> None:
@@ -146,44 +112,54 @@ class RichUI(UI):
             self._live = None
 
     def thinking(self, on: bool) -> None:
+        """One static working line, redrawn in place only when its words or its seconds change. No spinner."""
         if not self.color:
             return
         if on:
+            if self._spin:
+                return
             self._started = self._started or time.monotonic()
             self._spin = threading.Event()
             stop, started = self._spin, self._started
 
-            def spin():
-                frames, i = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏", 0
-                while not stop.wait(0.1):
-                    secs = int(time.monotonic() - started)
-                    what = self.activity[:70]
-                    agent = getattr(self, "agent", None)
-                    tok = ""
-                    if agent is not None:
-                        t = agent.log.totals()
-                        tok = f" · ↓ {_k(t['tokens_in'] + t['tokens_out'])} tokens"
-                    star = "✻✳✶✷✸✹"[(i // 3) % 6]
-                    line = (f"\r\033[2K{self.c('accent', star)} {self.c('accent', what + '…')} "
-                            f"{self.c('dim', f'({secs}s{tok} · Ctrl+C to stop)')}")
-                    self.out.write(line); self.out.flush(); i += 1
+            def line():
+                secs = int(time.monotonic() - started)
+                return self.c("dim", f"  {self.activity[:70]}…  ({secs}s · Ctrl+C to stop)")
+
+            def keep():
+                shown = None
+                while True:
+                    now = line()
+                    if now != shown:
+                        self.out.write("\r\033[2K" + now); self.out.flush()
+                        shown = now
+                    if stop.wait(0.25):
+                        break
                 self.out.write("\r\033[2K"); self.out.flush()
-            threading.Thread(target=spin, daemon=True).start()
+            threading.Thread(target=keep, daemon=True).start()
         elif self._spin:
-            self._spin.set(); time.sleep(0.12); self._spin = None
+            self._spin.set(); time.sleep(0.05); self._spin = None
+
+    def working(self, text: str) -> None:
+        self.activity = text
+
+    def notice(self, text: str, needs_you: bool = False) -> None:
+        """One quiet line about the conversation itself: picked up after a restart, summarised to fit, an OK waiting."""
+        self.console.print(Text(f"  {text}", style=self.hexcolour("accent" if needs_you else "dim") if self.color else ""),
+                           overflow="fold")
 
     QUIET = ("read-only", "auto-approved (--yes)", "trusted folder", "approved for this session", "dry run: not applied")
 
-    def _head(self, verb: str, arg: str, role: str = "accent") -> None:
+    def _head(self, verb: str, arg: str, role: str = "dim") -> None:
         t = Text()
-        t.append("⏺ ", style=self.hexcolour(role))
+        t.append("● ", style=self.hexcolour(role) if self.color else "")
         t.append(verb, style="bold")
         if arg:
             t.append(f" {arg}" if not arg.startswith(" ") else arg, style=self.hexcolour("dim") if verb in ("Thinking",) else "")
         self.console.print(t, overflow="ellipsis", no_wrap=True)
 
     def _sub(self, text: str, role: str = "dim") -> None:
-        self.console.print(Text("  ⎿  ", style=self.hexcolour("dim")) + Text(text, style=self.hexcolour(role)),
+        self.console.print(Text("     ") + Text(text, style=self.hexcolour(role)),  # a plain indent under the step
                            overflow="ellipsis", no_wrap=True)
 
     def tool_note(self, text: str, read: bool = False) -> None:
@@ -195,7 +171,6 @@ class RichUI(UI):
         if not read:
             self._sub(text, "error" if text.startswith("failed") else "dim")
             return
-        self.activity = text[:1].upper() + text[1:]
         if text.startswith("checklist"):
             return  # the checklist panel shows it
         verb, _, arg = text.partition(" ")
@@ -210,11 +185,10 @@ class RichUI(UI):
         self._head(verb, arg.strip())
 
     def show_plan(self, plan) -> None:
-        self.activity = plan.summary[:1].upper() + plan.summary[1:]
         s = plan.summary
         if plan.effect == "command":
             cmd = s.split(": ", 1)[1] if ": " in s else s
-            self._head("Bash" if not s.startswith(("start", "stop")) else ("Background" if s.startswith("start") else "Stop"), cmd)
+            self._head("Run" if not s.startswith(("start", "stop")) else ("Start job" if s.startswith("start") else "Stop job"), cmd)
         elif plan.effect == "write":
             verb, _, path = s.partition(" ")
             self._head({"edit": "Update", "create": "Write", "overwrite": "Write"}.get(verb, verb.capitalize()), path)
@@ -223,8 +197,8 @@ class RichUI(UI):
 
                 lines = plan.preview.rstrip("\n").splitlines()
                 body = "\n".join(l for l in lines[:120] if not l.startswith(("---", "+++")))
-                self.console.print(Padding(Panel(Syntax(body, "diff", theme=self.code_theme(), background_color="default", word_wrap=True),
-                                                 border_style=self.hexcolour("dim"), padding=(0, 1), expand=True), (0, 0, 0, 2)))
+                self.console.print(Padding(Syntax(body, "diff", theme=self.code_theme(), background_color="default", word_wrap=True),
+                                           (0, 0, 0, 4)))
                 if len(lines) > 120:
                     self._sub(f"… {len(lines) - 120} more lines")
         else:
@@ -260,27 +234,30 @@ class RichUI(UI):
             elif not out:
                 self._sub(code or "done")
             return
-        self._sub(("✓ " + (lines[0] if lines else "done")) if outcome in ("verified", "ok") else outcome, "ok")
+        self._sub(("✓ " + (lines[0] if lines else "done")) if outcome in ("verified", "ok") else outcome, "dim")
 
     def todos(self, items: list[dict]) -> None:
         t = Table.grid(padding=(0, 1))
         t.add_column(no_wrap=True)
         t.add_column()
-        marks = {"done": ("✓", "ok"), "doing": ("▸", "accent"), "pending": ("○", "dim")}
+        marks = {"done": ("✓", "dim"), "doing": ("▸", "accent"), "pending": ("○", "dim")}  # doing is live: the accent
         for i in items:
             mark, role = marks[i["status"]]
-            t.add_row(Text(mark, style=self.hexcolour(role)), Text(i["text"], style=self.hexcolour("dim") if i["status"] == "done" else ""))
+            t.add_row(Text(mark, style=self.hexcolour(role) if self.color else ""),
+                      Text(i["text"], style=self.hexcolour("dim") if i["status"] == "done" and self.color else ""))
         done = sum(i["status"] == "done" for i in items)
-        self.console.print(Padding(Panel(t, title=f"Plan · {done}/{len(items)}", title_align="left", border_style=self.hexcolour("dim"),
-                                         expand=False, padding=(0, 1)), (0, 0, 0, 2)))
+        self.console.print(Padding(Text(f"Plan {done}/{len(items)}", style=self.hexcolour("dim") if self.color else ""), (0, 0, 0, 2)))
+        self.console.print(Padding(t, (0, 0, 0, 2)))
 
     def ask(self, plan) -> str:
         from . import shared_approval
 
-        label = {"write": "Make this change", "command": "Run this command", "external": "Use this tool"}[plan.effect]
+        from .cli import ASK_LABELS
+
         self.p("")
-        self.p("  " + self.c("bold", f"{label}?") + "  " + self.c("ok", "y") + " yes   " + self.c("error", "n") + " no   "
-               + self.c("accent", "a") + " yes, and don't ask again this session")
+        self.p("  " + self.c("accent", "Needs your OK") + f": {ASK_LABELS[plan.effect]}.   "
+               + self.c("bold", "y") + " Approve   " + self.c("bold", "n") + " Deny   "
+               + self.c("bold", "a") + " Approve for this session")
 
         def show():
             sys.stdout.write("  › ")
@@ -377,9 +354,9 @@ def sessions(root) -> list[tuple[str, str]]:
 
 
 def model_label(s, dim: str) -> str:
-    """'Auto, through your AI Workspace app' rather than 'default (workbench)'."""
+    """'Auto, through your Rooks app' rather than 'default (workbench)'."""
     if s.provider == "workbench":
-        return f"{short_model(s)}  [{dim}](through your AI Workspace app: same models, keys and plans · /model to change)[/]"
+        return f"{short_model(s)}  [{dim}](through the Rooks app: same models, keys and plans · /model to change)[/]"
     return f"{short_model(s)}  [{dim}]({s.provider})[/]"
 
 
@@ -461,37 +438,24 @@ def _hide_markup(text: str) -> str:
 
 
 def banner(agent, ui: RichUI) -> None:
-    """A compact welcome, like Claude Code's: who, where, what it follows, and the few keys that matter."""
+    """One quiet header line: who, which model, where. Everything else is one /help away."""
     s = agent.s
-    accent, dim = ui.hexcolour("accent"), ui.hexcolour("dim")
+    dim = ui.hexcolour("dim") if ui.color else ""
     branch = git_branch(agent.root)
     home = str(Path.home())
     folder = str(agent.root).replace(home, "~", 1) if str(agent.root).startswith(home) else str(agent.root)
-    files = getattr(agent, "instruction_files", [])
-    head = Text.from_markup(f"[bold {accent}]♜ Rooks[/] [{dim}]{__version__}[/]   [bold]{short_model(s)}[/]"
-                            + (f" [{dim}]· through your AI Workspace app[/]" if s.provider == "workbench" else f" [{dim}]· {s.provider}[/]"))
-    where = Text.from_markup(f"[{dim}]{folder}[/]" + (f"  [{accent}]⎇ {branch}[/]" if branch else "")
-                             + (f"  [{dim}]· follows {', '.join(Path(f).name for f in files)}[/]" if files else f"  [{dim}]· /init writes AGENTS.md[/]"))
-    tools = len(agent.tool_specs())
-    what = Text.from_markup(f"[{dim}]{tools} tools: files, terminal, web, background jobs, sub-agents"
-                            + (", your computer" if any("desk" in n for n in (s.mcp_servers or {})) else "")
-                            + " · remembers what you teach it[/]")
-    ui.console.print(head)
-    ui.console.print(where)
-    ui.console.print(what)
-    ui.console.print(Text.from_markup(f"  [{dim}]Type a request in plain words.  [/][{accent}]/[/][{dim}] commands  [/][{accent}]@[/][{dim}] add a file  "
-                                      f"[/][{accent}]⇧Tab[/][{dim}] mode  [/][{accent}]?[/][{dim}] shortcuts[/]"))
-    recent = sessions(agent.root)[-3:]
-    if recent:
-        ui.console.print(Text.from_markup(f"  [{dim}]Recent: " + " · ".join(f"{t[:38]}" for _, t in reversed(recent)) + "   (/resume)[/]"),
-                         overflow="ellipsis", no_wrap=True)
+    head = f" {__version__}  ·  {short_model(s)}  ·  "
+    tail = (f" on {branch}" if branch else "") + "  ·  /help for commands and keys"
+    room = (ui.console.width or 80) - len("Rooks") - len(head) - len(tail)
+    if len(folder) > room:  # a long folder loses its middle, never the way to /help
+        folder = "…" + folder[-max(room - 1, 12):]
+    line = Text("Rooks", style="bold")
+    line.append(head + folder + tail, style=dim)
+    ui.console.print(line, overflow="ellipsis", no_wrap=True)
     ui.console.print()
 
 
-SHORTCUTS = [("/", "commands, with what each does"), ("@", "add a file or folder to your request"),
-             ("⇧Tab", "switch mode: asks first → auto-accept → plan only"), ("Esc Enter", "new line (paste keeps lines too)"),
-             ("↑ ↓", "earlier requests"), ("Ctrl+R", "search earlier requests"), ("Ctrl+C", "stop the current task"),
-             ("Ctrl+D", "quit"), ("model", "same as /model (plain words work for every command)")]
+SHORTCUTS = words.KEYS
 
 MODES = ["asks first", "auto-accept", "plan only"]
 
@@ -509,28 +473,20 @@ def _k(n: int) -> str:
     return f"{n / 1000:.1f}k" if n >= 1000 else str(n)
 
 
-def help_table(ui: RichUI) -> None:
-    categories = {
-        "Session": ["/help", "/new", "/undo", "/diff", "/compact", "/cost", "/receipt", "/exit"],
-        "Model": ["/model", "/effort", "/mode", "/provider", "/login", "/mcp"],
-        "Context": ["/memory", "/history", "/skills", "/init", "/context", "/sessions", "/resume"],
-        "Behavior": ["/auto", "/dry-run", "/doctor", "/copy", "/image", "/jobs"],
-    }
-    listed = {c for cmds in categories.values() for c in cmds}
-    other = [c for c in COMMANDS if c not in listed]
-    if other:
-        categories["Other"] = other  # a command added later is never hidden from /help
-    for cat, cmds in categories.items():
+def help_table(ui) -> None:
+    """Every command and every key, in one list (the plain line mode prints the same list as text)."""
+    if not hasattr(ui, "console"):
+        ui.p(words.help_text())
+        return
+    for name, rows in [*words.sections(), ("Keys", words.KEYS)]:
         t = Table.grid(padding=(0, 3))
-        t.add_column(style=f"bold {ui.hexcolour('accent')}", no_wrap=True)
+        t.add_column(style="bold", no_wrap=True)
         t.add_column()
-        for cmd in cmds:
-            if cmd in COMMANDS:
-                t.add_row(cmd, COMMANDS[cmd])
-        ui.console.print(Padding(Text(cat, style=f"bold {ui.hexcolour('accent')}"), (1, 2, 0, 2)))
+        for k, v in rows:
+            t.add_row(Text(k), Text(v))  # Text, not markup: "[question]" is shown as typed
+        ui.console.print(Padding(Text(name, style=ui.hexcolour("dim") if ui.color else ""), (1, 2, 0, 2)))
         ui.console.print(Padding(t, (0, 2)))
-    ui.console.print(Padding(Text("Anything that is not a command is a request. Mention a file with @, for example: "
-                                  "summarise @notes.md", style=ui.hexcolour("dim")), (0, 2, 1, 2)))
+    ui.console.print(Padding(Text(words.NOTE, style=ui.hexcolour("dim") if ui.color else ""), (1, 2, 1, 2)))
 
 
 def copy_text(text: str) -> bool:
@@ -594,39 +550,42 @@ def run(agent, ui: RichUI) -> int:
         window = s.context_tokens or 0
         used = agent._estimate() if window else 0
         pct = min(100, used * 100 // window) if window else 0
-        bar = "█" * (pct // 10) + "░" * (10 - pct // 10)
-        sep = ("class:sep", " · ")
+        sep = ("class:sep", "  ·  ")
         parts = [("class:model", f" {short_model(s)}"), sep,
-                 ("class:dim", f"{Path(agent.root).name or agent.root}"), *([("class:branch", f" ⎇ {branch}")] if branch else []), sep,
-                 ("class:dim", f"context [{bar}] {pct}%"), sep,
+                 ("class:dim", f"{Path(agent.root).name or agent.root}" + (f" on {branch}" if branch else "")), sep,
+                 ("class:dim", f"context {pct}%"), sep,
                  ("class:dim", f"{_k(t['tokens_in'] + t['tokens_out'])} tokens")]
         if todos:
             parts += [sep, ("class:dim", f"plan {sum(i['status'] == 'done' for i in todos)}/{len(todos)}")]
-        style = {"asks first": "class:dim", "auto-accept": "class:warn", "plan only": "class:plan"}[mode]
-        parts += [sep, (style, f"⏵⏵ {mode}"), ("class:hint", " ⇧Tab")]
+        if workroom.room_working():  # a /room open command still running, as the last /room verb saw it
+            parts += [sep, ("class:mode", "● Room running")]
+        parts += [sep, ("class:dim" if mode == "asks first" else "class:mode", mode), ("class:hint", "  Shift+Tab")]
         return FormattedText(parts)
 
-    accent = ui.hexcolour("accent") if ui.color else ""
+    # neutral greys only; the accent is kept for what is live or needs you, never for chrome
+    p = ui.theme.palette
+    ink, dim = (p["prompt"], p["dim"]) if ui.color else ("", "")
     dark = ui.theme.background != "light"
     style = Style.from_dict({
-        "prompt": f"bold {accent}" if accent else "bold",
+        "prompt": f"bold {ink}".strip(),
         "bottom-toolbar": "noreverse bg:default",
         "bottom-toolbar.text": "bg:default",
-        "model": f"bold {accent}" if accent else "bold",
-        "branch": accent or "",
-        "dim": "#9a9a9a" if dark else "#666666",
-        "sep": "#555555" if dark else "#aaaaaa",
-        "hint": "#6f6f6f" if dark else "#999999",
-        "warn": "bold #e5a50a",
-        "plan": "bold #5fafff",
-        "placeholder": "#6f6f6f italic" if dark else "#999999 italic",
-        "completion-menu.completion": "bg:#333333 #e6e6e6",
-        "completion-menu.completion.current": f"bg:{accent or '#555555'} #000000",
-        "completion-menu.meta.completion": "bg:#262626 #a0a0a0",
-        "completion-menu.meta.completion.current": "bg:#3a3a3a #ffffff",
+        "model": f"bold {ink}".strip(),
+        "mode": f"bold {ink}".strip(),
+        "dim": dim,
+        "sep": dim,
+        "hint": dim,
+        "placeholder": f"{dim} italic".strip(),
+        "completion-menu.completion": "bg:#2a2a2a #ededec" if dark else "bg:#f4f4f2 #1a1a19",
+        "completion-menu.completion.current": "bg:#3c3c3c #ffffff bold" if dark else "bg:#d4d3cf #000000 bold",
+        "completion-menu.meta.completion": "bg:#242424 #a3a29e" if dark else "bg:#fafaf9 #5e5d59",
+        "completion-menu.meta.completion.current": "bg:#3c3c3c #ededec" if dark else "bg:#d4d3cf #1a1a19",
     })
+    from prompt_toolkit.output import ColorDepth
+
     history_path().parent.mkdir(parents=True, exist_ok=True)
     session = PromptSession(history=FileHistory(str(history_path())), completer=RooksCompleter(agent),
+                            color_depth=None if ui.color else ColorDepth.DEPTH_1_BIT,
                             complete_while_typing=True, key_bindings=keys, bottom_toolbar=toolbar, style=style,
                             complete_style="column", reserve_space_for_menu=8,
                             placeholder=FormattedText([("class:placeholder", "Ask anything, or describe a job. / for commands, @ to add a file")]))
@@ -650,13 +609,7 @@ def run(agent, ui: RichUI) -> int:
             # "model" or "exit" typed without the slash: do what was meant, not send it to the model as a request
             line = "/exit" if line.lower() in ("exit", "quit", "bye") else "/" + line.lower()
         if line == "?":
-            t = Table.grid(padding=(0, 3))
-            t.add_column(style=f"bold {ui.hexcolour('accent')}", no_wrap=True)
-            t.add_column()
-            for k, v in SHORTCUTS:
-                t.add_row(k, v)
-            ui.console.print(Padding(t, (0, 2, 1, 2)))
-            continue
+            line = "/help"
         if line.startswith("/"):
             cmd, _, rest = line.partition(" ")
             cmd = ALIASES.get(cmd.lower(), cmd.lower())
@@ -711,6 +664,10 @@ def show_diff(agent, ui, rest: str) -> None:
     if not diff.stdout.strip():
         ui.p("  No changes since the last commit.")
         return
+    if not hasattr(ui, "console"):  # the plain line mode: the diff as text
+        ui.p(stat.stdout.rstrip())
+        ui.p(diff.stdout.rstrip())
+        return
     from rich.syntax import Syntax
 
     ui.console.print(Padding(Text(stat.stdout.rstrip(), style=ui.hexcolour("dim")), (0, 0, 0, 2)))
@@ -727,7 +684,7 @@ def add_skill(agent, ui, url: str) -> None:
         ui.p("  /skills add https://github.com/OWNER/REPO (or a link to a skill folder in it)")
         return
     if not learning or not learning.app:
-        ui.error("Skills from GitHub are checked and installed through the AI Workspace app. Open the app, then try again.")
+        ui.error("Skills from GitHub are checked and installed through the Rooks app. Open the app, then try again.")
         return
     ui.p(ui.c("dim", "  Checking it for safety (pinned version, code scan, prompt-injection scan, sandboxed trial)…"))
     r = learning.check_skill(url)
@@ -762,8 +719,14 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
     elif cmd == "/new":
         agent.messages.clear()
         ui.p(ui.c("ok", "  Fresh start: the conversation is cleared (files are not touched)."))
+    elif cmd == "/room":
+        workroom.room_command(agent, ui, rest)
+    elif cmd == "/needs":
+        workroom.needs_command(agent, ui, rest)
+    elif cmd == "/team":
+        workroom.team_command(agent, ui, rest)
     elif cmd == "/model":
-        if rest or not pick_model(agent, ui):
+        if rest or not isinstance(ui, RichUI) or not pick_model(agent, ui):
             model_command(agent, ui, rest)
     elif cmd == "/effort":
         effort_command(agent, ui, rest)
@@ -793,12 +756,12 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         for f in facts[:40]:
             ui.p(f"  • {f}")
         if facts:
-            ui.p(ui.c("dim", "  Shared with the AI Workspace app (About you page)." if learning.app else
+            ui.p(ui.c("dim", "  Shared with the Rooks app (Memory)." if learning.app else
                       f"  Kept in {learning_path()}. Connect the app to share it with chat."))
     elif cmd == "/history":
         learning = getattr(agent, "learning", None)
         if not learning or not learning.app:
-            ui.p("  History search needs the AI Workspace app connected (provider workbench).")
+            ui.p("  Searching past chats needs the Rooks app connected (rooks login, then choose the app).")
         else:
             found = learning.history(rest.strip())
             if not found:
@@ -807,7 +770,7 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
                 ch = r.get("channel") or "?"
                 title = (r.get("title") or "Chat")[:40]
                 snip = (r.get("snippet") or "").replace("\n", " ")[:120]
-                ui.p(f"  {ui.c('accent', ch)} · {title}\n    {snip}")
+                ui.p(f"  {ui.c('dim', ch)} · {title}\n    {snip}")
     elif cmd == "/skills" and rest.split(" ", 1)[0].lower() in ("add", "install"):
         add_skill(agent, ui, rest.split(" ", 1)[1].strip() if " " in rest else "")
     elif cmd == "/skills":
@@ -815,21 +778,29 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         found = learning.skill_list() if learning else []
         if not found:
             ui.p("  No saved skills yet. After a task of several steps, the app saves the procedure so next time is faster."
-                 if learning and learning.app else "  Skills are learned through the AI Workspace app; it isn't connected.")
+                 if learning and learning.app else "  Skills are learned through the Rooks app; it isn't connected.")
         for sk in found:
-            ui.p(f"  {ui.c('accent', sk['name'])}  {sk.get('description', '')}")
+            ui.p(f"  {ui.c('bold', sk['name'])}  {sk.get('description', '')}")
     elif cmd == "/undo":
         ui.p(undo_text(agent.changes))
     elif cmd == "/diff":
         show_diff(agent, ui, rest)
     elif cmd == "/jobs":
         ex = agent.extras
-        try:
-            parts = rest.split()
-            out = ex.jobs.stop(parts[1]) if parts[:1] == ["stop"] and len(parts) > 1 else ex.jobs.check(rest.strip(), 30)
-            ui.p("  " + out.replace("\n", "\n  "))
-        except Exception as e:  # noqa: BLE001 - ToolError: say it
-            ui.error(str(e))
+        parts = rest.split()
+        stopping = parts[:1] == ["stop"]
+        if ex is not None:
+            try:
+                out = ex.jobs.stop(parts[1]) if stopping and len(parts) > 1 else ex.jobs.check("" if stopping else rest.strip(), 30)
+                if stopping:
+                    ui.p("  " + out.replace("\n", "\n  "))
+                else:
+                    ui.p("  Here")
+                    ui.p("    " + out.replace("\n", "\n    "))
+            except Exception as e:  # noqa: BLE001 - ToolError: say it
+                ui.error(str(e))
+        if not stopping and not rest.strip():
+            workroom.app_jobs(agent, ui)
     elif cmd == "/init":
         agent.run(INIT_PROMPT)
     elif cmd == "/context":
@@ -843,7 +814,7 @@ def command(agent, ui: RichUI, cmd: str, rest: str) -> None:
         if not found:
             ui.p("  No earlier conversations in this folder yet.")
         for sid, first in found[-15:]:
-            ui.p(f"  {ui.c('accent', sid)}  {first}")
+            ui.p(f"  {ui.c('bold', sid)}  {first}")
         if found:
             ui.p(ui.c("dim", "  /resume ID continues one (start typing the id for the list)."))
     elif cmd == "/resume":

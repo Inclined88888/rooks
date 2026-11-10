@@ -32,8 +32,9 @@ curl -fsSL https://raw.githubusercontent.com/Inclined88888/rooks/main/install.sh
 irm https://raw.githubusercontent.com/Inclined88888/rooks/main/install.ps1 | iex
 ```
 
-This installs three commands for your user only (no admin password): `ai-workspace` (the app, in its own window),
-`rooks` (terminal coding agent) and `rooks-browser` (AI browser agent). The only prerequisite is `curl` (built into macOS
+This installs five commands for your user only (no admin password): `ai-workspace` (the app, in its own window),
+`rooks` (terminal coding agent), `rooks-browser` (AI browser agent), `rooks-desk` (computer use) and `rooks-try` (the
+Room, the assistant's own computer on this machine). The only prerequisite is `curl` (built into macOS
 and Windows 10/11). Run it again to upgrade; your chats, keys and settings are kept.
 
 Something wrong? `ai-workspace --status` checks the app and its web UI, and `ai-workspace --logs` prints the log
@@ -48,13 +49,10 @@ and you land in chat.
 
 | | Download |
 | --- | --- |
-| **macOS** (Apple silicon) | `AI Workspace_<version>_aarch64.dmg` from [Releases](https://github.com/Inclined88888/ai-workspace/releases) |
-| **macOS** (Intel) | `AI Workspace_<version>_x64.dmg` from [Releases](https://github.com/Inclined88888/ai-workspace/releases) |
-| **Windows** 10/11 | `AI Workspace_<version>_x64-setup.exe` (or `.msi`) from [Releases](https://github.com/Inclined88888/ai-workspace/releases) |
-| Linux | `.AppImage` or `.deb` from [Releases](https://github.com/Inclined88888/ai-workspace/releases) |
-
-No release has been published yet: until one is, use the one-command install above (same app, same data), or build
-the installers with the `desktop` workflow in GitHub Actions.
+| **macOS** (Apple silicon) | [AI.Workspace_1.0.6_aarch64.dmg](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.6/AI.Workspace_1.0.6_aarch64.dmg) |
+| **macOS** (Intel) | [AI.Workspace_1.0.6_x64.dmg](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.6/AI.Workspace_1.0.6_x64.dmg) |
+| **Windows** 10/11 | [AI.Workspace_1.0.6_x64-setup.exe](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.6/AI.Workspace_1.0.6_x64-setup.exe) |
+| Linux | [AppImage](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.6/AI.Workspace_1.0.6_amd64.AppImage) or [deb](https://github.com/Inclined88888/rooks/releases/download/desktop-v1.0.6/AI.Workspace_1.0.6_amd64.deb) |
 
 Preview builds are **not code-signed yet**. On macOS, right-click the app → **Open** the first time; on Windows, click
 **More info → Run anyway**. Signing, notarisation and auto-updates switch on once the keys exist
@@ -81,14 +79,14 @@ Requirements: Docker with Compose v2 (Docker Desktop or OrbStack on a Mac), 1 GB
 One command (Linux or macOS):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Inclined88888/ai-workspace/main/install-server.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Inclined88888/rooks/main/install-server.sh | bash
 ```
 
 With add-ons, or with no questions:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Inclined88888/ai-workspace/main/install-server.sh | bash -s -- --with search,browser
-curl -fsSL https://raw.githubusercontent.com/Inclined88888/ai-workspace/main/install-server.sh | bash -s -- --yes
+curl -fsSL https://raw.githubusercontent.com/Inclined88888/rooks/main/install-server.sh | bash -s -- --with search,browser
+curl -fsSL https://raw.githubusercontent.com/Inclined88888/rooks/main/install-server.sh | bash -s -- --yes
 ```
 
 The installer checks Docker (on Linux it offers to install it with Docker's official script; on a Mac install Docker Desktop or OrbStack first), downloads the code to `~/ai-workspace` (`AI_WORKSPACE_DIR` changes that), and runs `setup.sh`. Run the same command again to upgrade. Prefer to read it first? `curl -fsSL .../install-server.sh -o install-server.sh`, read it, then `bash install-server.sh`.
@@ -96,7 +94,7 @@ The installer checks Docker (on Linux it offers to install it with Docker's offi
 From a clone instead:
 
 ```bash
-git clone https://github.com/Inclined88888/ai-workspace && cd ai-workspace
+git clone https://github.com/Inclined88888/rooks && cd rooks
 ./setup.sh                        # core only
 ./setup.sh --with search,browser  # core plus add-ons (comma separated)
 ./setup.sh --with none            # turn all add-ons off again
@@ -114,7 +112,7 @@ Re-running is safe and is how you upgrade or change add-ons: it adds new setting
 brew install ollama && brew services start ollama
 ollama pull qwen3:4b
 # 3. Install:
-curl -fsSL https://raw.githubusercontent.com/Inclined88888/ai-workspace/main/install-server.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Inclined88888/rooks/main/install-server.sh | bash
 ```
 
 Native Ollama uses the Mac GPU; the `local-models` add-on would run on CPU inside Docker's VM, so skip it on a Mac.
@@ -126,7 +124,7 @@ Native Ollama uses the Mac GPU; the `local-models` add-on would run on CPU insid
 * **Tools.** Notes (search, read, create, append), tasks, calendar (agenda, create event), mail (search, read, save draft; send only after you approve each email), web search and page reading, the browser agent when that add-on is on, memory, skills and schedules. Each tool step shows live in the chat.
 * **Memory.** After a conversation it quietly extracts durable facts about you (profile, preferences, facts), at most 5 per conversation, skipping duplicates. Relevant ones are injected into every new conversation. You can also say "remember that…" or "forget…". Review and edit everything under **Memory & skills**. Turn learning off in Assistant settings.
 * **Skills.** When a task took 3 or more tool calls, it can save the procedure as a named skill and improve it on later use. Skills are listed to the model and loaded on demand, so they cost almost nothing until used.
-* **Approvals.** Web pages and email can contain instructions written by someone else (prompt injection). Once a conversation has read either, actions that leave the workspace or change the assistant's future behaviour (remember, forget, save a skill, schedule a task, create a calendar event, browse, delegate) are held until you approve them in the chat, with `ws approve <id>`, or refused outright in unattended runs (schedules, company agents). Sending an email and sending calendar invitations are always held for approval, even in a clean conversation. Web and email content is labelled as untrusted for the model, and skills are never learned from such turns. This narrows the damage an injection can do; it does not make the model immune to it.
+* **Approvals.** Web pages and email can contain instructions written by someone else (prompt injection). Once a conversation has read either, actions that leave the workspace or change the assistant's future behaviour (remember, forget, save a skill, schedule a task, create a calendar event, browse, delegate) are held until you approve them in the chat, with `ws approve <id>`, or refused outright in unattended runs (schedules, company agents). Sending an email and sending calendar invitations are always held for approval, even in a clean conversation. Web and email content is labelled as untrusted for the model, and skills are never learned from such turns. This narrows the damage an injection can do; it does not make the model immune to it. Everything waiting on you, from chat, jobs, the Room and the browser and computer agents, is in one inbox, **Needs you**, at the top of the app; answering there runs it once.
 * **Receipts.** Every change the assistant makes is checked in the database after the tool runs (the task, note, event, draft, memory, skill or schedule must exist as asked), and the chat shows what was confirmed. If an answer says something was done and nothing confirms it, the answer is withdrawn and the model gets one chance to act or correct itself; if it still is not true you see it marked **Not verified**.
 * **Reliability record.** Every tool call and every answer is recorded per model, so you can see how a model really performs with your tools: the model menu shows the share of tool calls that worked, and `ws reliability` adds false claims caught. To measure a local model before relying on it: `cd workbench/backend && python bench/local_tasks.py --model qwen3:4b` (50 everyday requests, each checked against the database).
 * **History.** Every conversation is full text searchable, by you and by the assistant (`search_history`).
@@ -168,7 +166,7 @@ enforced, and every action is written to a receipt you can import into Workbench
 nor Docker.
 
 ```sh
-uv tool install "git+https://github.com/Inclined88888/ai-workspace#subdirectory=rooks-code"
+uv tool install "git+https://github.com/Inclined88888/rooks#subdirectory=rooks-code"
 cd your-project && rooks -P ollama -m qwen2.5:7b
 ```
 
@@ -314,6 +312,24 @@ in five steps:
   * `rooks-desk "task"`;
   * `rooks-desk mcp` (Rooks Code adds it automatically).
   * It can use other MCP servers too, such as an AutoCAD one ([recipe](rooks-desk/docs/AUTOCAD.md)).
+
+### The Room: the assistant's own computer (no add-on needed)
+
+The Room (`rooks-try`) is a computer of its own for the assistant, on this machine, so it can try things without
+touching your desktop. It always says what it is: on Linux with Xvfb a private desktop with a real terminal in it; with
+QEMU and a Linux image a Linux guest; anywhere else a private folder and shell ("Commands run as you, in a folder of its
+own. It is not a locked off computer."). A picture is shown only when the Room has a real screen.
+
+* **What you can do.** Watch it on the **Room** page or on the Stage beside the chat, step in with your own mouse and
+  keyboard, hand back, save a point, start over from one. Copying a file out of the Room waits for your yes in
+  **Needs you**. Every start, stop, saved point, command and copy is in the run log.
+* **How you reach it:**
+  * the app's **Room** page and the Stage;
+  * the assistant's `use_room` tool;
+  * `rooks-try up`, `rooks-try run "..."`, `rooks-try checkpoint`, `rooks-try reset`, `rooks-try down`;
+  * `rooks-try mcp` (Rooks Code adds it automatically as the server `room`).
+
+Details: [rooks-try/README.md](rooks-try/README.md).
 
 ## Models and providers
 

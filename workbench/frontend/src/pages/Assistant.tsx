@@ -1,109 +1,250 @@
-import { SquareTerminal, ArrowLeft, ArrowUp, BookOpen, Brain, Check, Copy, KeyRound, MessageSquare, Pencil, Plus, RotateCcw, Search, ShieldAlert, Square, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
-import { FormEvent, useEffect, useRef, useState } from "react";
+/**
+ * The Chat page (/assistant, /assistant/:id) and the chat's Memory and Settings tabs (/assistant-memory,
+ * /assistant-settings). This file owns the turn: one POST to /api/assistant/chat read as a stream, folded into the
+ * turn's record by chat/events.ts, drawn by chat/Thread.tsx. Every turn's steps stay with its reply (rebuilt from
+ * the server after a reload), the reply is revealed once, and ids become the server's as soon as the turn is done.
+ */
+import { ArrowLeft } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { api, stream } from "../api";
-import { Tracer } from "../Tracer";
-import { EffortSelect, Empty, Markdown, ModelSelect, relTime, RouterInfo, RouterVia, SkeletonList, useEffort, useModels, useToast } from "../util";
-import { Thinking, useExit } from "../motion";
-import { LiveMarkdown } from "../v02/LiveBlocks"; // feat/v02-automations: live docs, sheets and charts in replies
-import { DictateButton } from "../voice/DictateButton"; // feat/v02-anywhere-voice (drawn as the motion voice orb)
-import { CheckThis, CheckToggle, ProjectSwitcher } from "../v02/ChatExtras"; // feat/v02-core
-import { WebSearchSetup } from "./ModelSignIn";
+import { api, stream, type StreamEvent } from "../api";
+import { useEffort, useModels, useToast, type RouterInfo } from "../util";
+import { useExit } from "../motion";
 import { askNotifyPermission, inBackground, notify } from "../desktop"; // feat/tauri-native
-import { Att, AttachButton, filesFrom, MessageAttachments, PendingChips, useAttachments } from "../Attachments"; // feat/attachments
-import { DiffView, extractDiffFromArgs } from "../components/DiffView";
-import { plainStep } from "../plainStep";
+import { useAttachments, type Att } from "../Attachments"; // feat/attachments
+import { openBeside } from "../Beside";
+import { ChatList } from "../chat/ChatList"; // the Chats column: recent chats, archive, projects
+import { matches, narrowQuery, useMediaQuery, wideQuery } from "../shell/breakpoints";
+import { openStage, surfaceOf } from "../shell/StageHost";
+import { refreshPresence, useRevs } from "../shell/presence";
+import { loadCached, peekCached, putCached } from "../lib/cache";
+import { emptyTurn, parseEvent, reduceTurn, type Approval, type Offer, type TurnState, type Watch } from "../chat/events";
+import { adoptServerIds, mergeSteps, rebuildTurns, stepTitle, type Row } from "../chat/turns";
+import { Thread, type Fresh } from "../chat/Thread";
+import { followBehavior, isPinned } from "../chat/scroll";
+import { isShortcut } from "../lib/shortcuts";
+import { Composer } from "../chat/Composer";
+import { ThreadHeader } from "../chat/ThreadHeader";
+import { EmptyChat } from "../chat/EmptyChat";
+import { refreshHistory } from "../chat/ResultCards";
+import { forgetRuns } from "../chat/receipts";
+import { MemoryTab } from "../chat/tabs/MemoryTab";
+import { SkillsTab } from "../chat/tabs/SkillsTab";
+import { SettingsTab } from "../chat/tabs/SettingsTab";
+import type { Conv, Msg, WorkMode } from "../chat/types";
+import { motionOff } from "../appearance";
+import "../chat/chat.css";
 
-type Conv = { id: number; title: string; channel: string; updated_at: string; model: string };
-type Msg = { id: number; role: string; content: string; tool_calls: string[]; name: string; via?: RouterInfo; attachments?: Att[] };
-type Step = { kind: "call" | "check"; name: string; text: string; line: string; ok?: boolean };
-type Approval = { id: number; tool: string; args: string; effect: string; reason: string };
-type Memory = { id: number; content: string; kind: string; source: string; updated_at: string };
-type Skill = { id: number; name: string; description: string; steps: string; uses: number; source: string; enabled: number };
+/** While a call is held in this chat it is also asked this often (else only when the pulse says something moved). */
+const HELD_POLL_MS = 15000;
 
-const CHANNEL: Record<string, string> = { web: "Web", cli: "Terminal", telegram: "Telegram", schedule: "Schedule" };
+export { SkillsTab };
 
-function Chat({ tabs }: { tabs: React.ReactNode }) {
+const CHATLIST_KEY = "rooks.chatlist";
+/** The Chats column is open by default above the wide breakpoint; the toggle in the thread header is remembered. */
+function readChatListOpen(): boolean {
+  if (matches(narrowQuery)) return false; // on a phone the column floats over the thread: it never opens by itself
+  try {
+    const saved = localStorage.getItem(CHATLIST_KEY);
+    if (saved === "open") return true;
+    if (saved === "closed") return false;
+  } catch { /* storage unavailable */ }
+  return matches(wideQuery);
+}
+
+function mailLine(err: unknown): string {
+  const msg = err instanceof Error ? err.message.trim() : "";
+  if (!msg || /^\d{3}\b/.test(msg) || /gateway timeout/i.test(msg)) return "Mail did not answer in time.";
+  return msg;
+}
+
+type Routine = { kind: string; id: number; name: string; sentence: string; enabled: boolean };
+
+/** The server's rows as messages, each turn's steps rebuilt and kept with its reply. */
+function fromRows(rows: Row[], via: Map<string, RouterInfo>): Msg[] {
+  const byReply = new Map<number, Msg["steps"]>();
+  const byUser = new Map<number, Msg["steps"]>();
+  for (const t of rebuildTurns(rows)) {
+    if (!t.steps.length) continue;
+    if (t.replyId !== null) byReply.set(t.replyId, t.steps); else byUser.set(t.userId, t.steps);
+  }
+  return rows.map((r) => {
+    const m = { ...(r as unknown as Msg), key: `s${r.id}`, tool_calls: Array.isArray(r.tool_calls) ? r.tool_calls : [] };
+    if (m.role === "assistant" && via.has(m.content)) m.via = via.get(m.content);
+    const steps = byReply.get(r.id);
+    if (steps) m.steps = steps;
+    const orphan = byUser.get(r.id);
+    if (orphan) m.orphanSteps = orphan;
+    return m;
+  });
+}
+
+/** Fresh rows from the server, keeping what only this session knows (receipts, notices, the verdict, stable keys).
+ *  The rebuilt timeline brings the newer truth (a held step closed by a yes or no); the live one keeps its words. */
+function mergeLoaded(cur: Msg[], loaded: Msg[]): Msg[] {
+  const known = new Map(cur.map((m) => [m.id, m]));
+  return loaded.map((m) => {
+    const k = known.get(m.id);
+    if (!k) return m;
+    const out: Msg = { ...m, key: k.key };
+    if (k.role === "assistant") {
+      const steps = mergeSteps(k.steps, m.steps);
+      if (steps?.length) out.steps = steps;
+      if (k.notices?.length) out.notices = k.notices;
+      if (k.outcome) out.outcome = k.outcome;
+      if (k.via && !out.via) out.via = k.via;
+      if (k.cards && !out.cards) out.cards = k.cards;
+    }
+    return out;
+  });
+}
+
+function Chat() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [convs, setConvs] = useState<Conv[] | null>(null);
-  const [freshId, setFreshId] = useState<number | null>(null);
-  const composerRef = useRef<HTMLTextAreaElement>(null);
-  const [q, setQ] = useState("");
-  const [messages, setMessages] = useState<Msg[]>([]);
-  const [steps, setSteps] = useState<Step[]>([]);
-  const [lookAt, setLookAt] = useState<number | null>(null);
-  const [approvals, setApprovals] = useState<Approval[]>([]);
   const location = useLocation();
-  const [text, setText] = useState(((location.state as { draft?: string; start?: boolean } | null)?.start ? "" : (location.state as { draft?: string } | null)?.draft) ?? ""); // pre-filled from Files / Sites; Home sends straight away
-  // feat/v02-anywhere-voice: a draft handed over while Chat is already open (the ask bar's "Do it in Chat")
+  const toast = useToast();
+  const cid = id ? Number(id) : null;
+  const cidRef = useRef(cid);
+  cidRef.current = cid;
+  const [convs, setConvs] = useState<Conv[] | null>(null);
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [live, setLive] = useState<TurnState | null>(null);
+  const liveRef = useRef<TurnState | null>(null);
+  const [fresh, setFresh] = useState<Fresh | null>(null);
+  const [openSteps, setOpenSteps] = useState<Record<string, boolean>>({});
+  const [approvals, setApprovals] = useState<Approval[]>([]);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  // Chat can sit beside another screen. Follow this screen's own address, and do not
+  // send the person back here after they have left it.
+  const mounted = useRef(true);
+  const pathRef = useRef(location.pathname);
+  pathRef.current = location.pathname;
   useEffect(() => {
-    if (!window.location.pathname.startsWith("/assistant")) return;
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+  const [text, setText] = useState(((location.state as { draft?: string; start?: boolean } | null)?.start ? "" : (location.state as { draft?: string } | null)?.draft) ?? ""); // pre-filled from Files / Sites; Home sends straight away
+  // a draft handed over while Chat is already open (the ask bar's "Do it in Chat")
+  useEffect(() => {
+    if (!location.pathname.startsWith("/assistant")) return;
     const s = location.state as { draft?: string; start?: boolean } | null;
     if (s?.draft && !s.start) setText(s.draft);
   }, [location.state]);
   const [busy, setBusy] = useState(false);
-  const [draft, setDraft] = useState("");  // the answer as it is being written (cleared when the step ends)
-  const [model, setModel] = useState("");
+  const busyRef = useRef(false);
   const [busySince, setBusySince] = useState(0);
-  const exit = useExit<number>(200);
-  const { models } = useModels();
+  const [model, setModel] = useState("");
+  const exit = useExit<number>(120);
+  const { models, defaultRef } = useModels();
+  const [broken, setBroken] = useState("");
   const [effort, setEffort] = useEffort();
-  const [workMode, setWorkMode] = useState<"chat" | "plan" | "build">(() => {
+  const [workMode, setWorkMode] = useState<WorkMode>(() => {
     const saved = localStorage.getItem("aiw.workMode");
     return saved === "plan" || saved === "build" ? saved : "chat";
   });
   // The last Code depth, so leaving for Chat and coming back restores Plan or Build.
   const codeDepth = useRef<"plan" | "build">(workMode === "build" ? "build" : "plan");
-  const chooseMode = (next: "chat" | "plan" | "build") => {
+  const chooseMode = (next: WorkMode) => {
     if (next !== "chat") codeDepth.current = next;
     setWorkMode(next);
     localStorage.setItem("aiw.workMode", next);
   };
   const isPlan = !!models.find((m) => m.ref === model)?.effort;
-  const endRef = useRef<HTMLDivElement>(null);
-  const toast = useToast();
-  const cid = id ? Number(id) : null;
   // Who answered each reply this session (the smart router's "via" line); kept across the reload after a new chat
   const viaByReply = useRef(new Map<string, RouterInfo>());
   const abortRef = useRef<AbortController | null>(null); // the in-flight turn; only Stop aborts it
-  const busyRef = useRef(false);
   const [editing, setEditing] = useState<number | null>(null); // user message being edited inline
   const [editText, setEditText] = useState("");
-  const att = useAttachments(); // feat/attachments: files waiting to go with the next message
-  const [dropping, setDropping] = useState(false);
-  const [offer, setOffer] = useState<{ key: string; name: string; request: string; line: string } | null>(null);
+  const att = useAttachments(); // files waiting to go with the next message
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [who, setWho] = useState("Atlas");
+  const [mainId, setMainId] = useState<number | null>(null);
+  const [routines, setRoutines] = useState<Routine[] | null>(null);
+  const [showRoutines, setShowRoutines] = useState(Boolean((location.state as { routines?: boolean } | null)?.routines));
+  const [listOpen, setListOpen] = useState<boolean>(readChatListOpen);
+  const narrow = useMediaQuery(narrowQuery);
+  const toggleList = () => setListOpen((v) => {
+    const next = !v;
+    // only the wide layout's choice is remembered; the floating column on a narrow window is opened each time
+    if (!matches(narrowQuery)) { try { localStorage.setItem(CHATLIST_KEY, next ? "open" : "closed"); } catch { /* storage unavailable */ } }
+    return next;
+  });
+  useEffect(() => { api<{ assistant_name: string }>("/assistant/settings").then((r) => setWho(r.assistant_name || "Atlas")).catch(() => undefined); }, []);
+  useEffect(() => {
+    let stop = false;
+    api<{ id: number }[]>("/mail/accounts").then(async (accounts) => {
+      const first = accounts[0];
+      if (!first || stop) return;
+      try {
+        await api(`/mail/${first.id}/messages`);
+      } catch (err) {
+        if (!stop) setBroken(mailLine(err));
+      }
+    }).catch((err) => { if (!stop) setBroken(mailLine(err)); });
+    return () => { stop = true; };
+  }, []);
+  useEffect(() => { api<{ id: number }>("/assistant/main").then((r) => setMainId(r.id)).catch(() => undefined); }, []);
+  const freshChat = Boolean((location.state as { fresh?: boolean } | null)?.fresh);
+  const listing = Boolean((location.state as { list?: boolean } | null)?.list);
+  useEffect(() => {
+    if (cid || freshChat || listing || busyRef.current) return;
+    let stop = false;
+    api<{ id: number }>("/assistant/main").then((r) => {
+      if (!stop && location.pathname === "/assistant") navigate(`/assistant/${r.id}`, { replace: true });
+    }).catch(() => undefined);
+    return () => { stop = true; };
+  }, [cid, freshChat, listing, location.pathname]);
 
-  const loadConvs = () => api<Conv[]>(`/conversations${q ? `?q=${encodeURIComponent(q)}` : ""}`).then(setConvs).catch(toast.err);
-  useEffect(() => { const t = setTimeout(loadConvs, 200); return () => clearTimeout(t); }, [q]);
+  const loadConvs = () => api<Conv[]>("/conversations").then(setConvs).catch(toast.err);
+  useEffect(() => { loadConvs(); }, []);
   const loadConv = (id: number) => {
-    api<{ messages: Msg[]; model: string }>(`/conversations/${id}`).then((c) => {
-      setMessages(c.messages.map((m) => (m.role === "assistant" && viaByReply.current.has(m.content) ? { ...m, via: viaByReply.current.get(m.content) } : m)));
+    loadCached(`conv:${id}`, () => api<{ messages: Row[]; model: string }>(`/conversations/${id}`)).then((c) => {
+      setMessages((cur) => mergeLoaded(cur, fromRows(c.messages, viaByReply.current)));
       setModel(c.model || "");
     }).catch(toast.err);
     api<Approval[]>(`/approvals?conversation_id=${id}`).then(setApprovals).catch(toast.err);
   };
-  // Approvals raised elsewhere (the rooks terminal on this conversation) show up while the chat is open
+  // Approvals raised elsewhere (the rooks terminal on this conversation) show up while the chat is open. A turn in this
+  // tab says so itself (its approval_required event); for the rest the shell's pulse says when a call was held or
+  // answered anywhere (its `held` revision), and only while something is held here is it also asked every 15 s.
+  const loadApprovals = (id: number) => api<Approval[]>(`/approvals?conversation_id=${id}`).then((list) => setApprovals((cur) => {
+    const ids = new Set(list.map((a) => a.id));
+    const same = cur.length === list.length && cur.every((a) => ids.has(a.id));
+    return same ? cur : list;
+  })).catch(() => {});
+  const holding = approvals.length > 0;
   useEffect(() => {
-    if (!cid) return;
-    const t = setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      api<Approval[]>(`/approvals?conversation_id=${cid}`).then((fresh) => setApprovals((cur) => {
-        const ids = new Set(fresh.map((a) => a.id));
-        const same = cur.length === fresh.length && cur.every((a) => ids.has(a.id));
-        return same ? cur : fresh;
-      })).catch(() => {});
-    }, 3000);
+    if (!cid || !holding) return;
+    const t = setInterval(() => { if (document.visibilityState === "visible") void loadApprovals(cid); }, HELD_POLL_MS);
     return () => clearInterval(t);
+  }, [cid, holding]);
+  // Replies that arrived another way (the terminal on this conversation, a job) join the thread: asked when the
+  // pulse's `chats` revision moves, not on a timer.
+  const loadOthers = (id: number) => api<{ messages: Row[] }>(`/conversations/${id}`).then((c) => {
+    setMessages((cur) => {
+      const known = new Set(cur.map((m) => m.id));
+      const said = new Set(cur.filter((m) => m.role === "assistant").map((m) => m.content));
+      const extra = fromRows(c.messages, viaByReply.current).filter((m) => m.role === "assistant" && !known.has(m.id) && !said.has(m.content));
+      return extra.length ? [...cur, ...extra] : cur;
+    });
+  }).catch(() => undefined);
+  useRevs((r, before) => {
+    if (!cid || busyRef.current) return;
+    if (r.held !== before.held) void loadApprovals(cid);
+    if (r.chats !== before.chats) void loadOthers(cid);
   }, [cid]);
   useEffect(() => {
     // Opening the chat list while a reply is still being written must not wipe it.
     if (!cid && busyRef.current) return;
-    setSteps([]);
-    setLookAt(null);
     setApprovals([]);
     setEditing(null);
+    setOpenSteps({});
     if (!cid) return setMessages([]);
+    // A chat you open again shows what it showed last time at once; the stored rows replace it when they arrive.
+    const kept = peekCached<{ messages: Row[]; model: string }>(`conv:${cid}`);
+    if (kept) { setMessages((cur) => mergeLoaded(cur, fromRows(kept.messages, viaByReply.current))); setModel(kept.model || ""); }
     loadConv(cid);
   }, [cid]);
 
@@ -112,10 +253,40 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
       const r = await api<{ status: string; result: string }>(`/approvals/${a.id}`, { method: "POST", body: { approve } });
       exit.run(a.id, () => setApprovals((xs) => xs.filter((x) => x.id !== a.id)));
       if (r.status === "failed") toast.err(r.result);
-      if (cid) loadConv(cid);
+      if (cid) { loadConv(cid); void refreshHistory(cid); }
     } catch (e) { toast.err(e); }
   };
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, steps]);
+  // reduced motion (Appearance or the OS setting) jumps instead of animating the scroll on every streamed word
+  // The thread stays pinned to the newest line while a reply streams in, unless you scrolled up to read (chat/scroll.ts).
+  // Sending something pins it again.
+  const pinnedRef = useRef(true);
+  useEffect(() => {
+    const el = endRef.current?.closest(".chat-scroll");
+    if (!el) return;
+    const onScroll = () => { pinnedRef.current = isPinned(el); };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [cid, messages.length > 0]);
+  useEffect(() => {
+    if (!pinnedRef.current) return;
+    endRef.current?.scrollIntoView({ behavior: followBehavior(busyRef.current, motionOff()), block: "end" });
+  }, [messages, live?.steps.length, live?.draft.length]);
+
+  /** A job started on a surface: the Stage shows it (the Room, a browser, the desktop). */
+  const openWatch = (w: Watch) => {
+    if (!w.job_id) return;
+    openStage({ surface: surfaceOf(w.surface), jobId: w.job_id, goal: w.goal || undefined });
+  };
+
+  /** Once the turn is done, the fresh messages take the ids the server stored them under (same keys, nothing re-mounts). */
+  const adoptIds = async (id: number) => {
+    try {
+      const c = await api<{ messages: Row[]; model: string }>(`/conversations/${id}`);
+      putCached(`conv:${id}`, c);
+      if (!mounted.current) return;
+      setMessages((cur) => adoptServerIds(cur, c.messages));
+    } catch { /* the next load names them */ }
+  };
 
   /** One streamed turn. echo: show the user's text as a fresh bubble (not on resend, where it's already on screen
    *  and stored). resend: the server skips saving the user message again. */
@@ -123,64 +294,86 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     busyRef.current = true;
     setBusy(true);
     setBusySince(Date.now());
-    setSteps([]);
-    setLookAt(null);
     setEditing(null);
-    if (opts.echo) setMessages((m) => [...m, { id: Date.now(), role: "user", content: msg, tool_calls: [], name: "", attachments: opts.files }]);
+    setFresh(null);
+    const turn0 = emptyTurn(cid);
+    liveRef.current = turn0;
+    setLive(turn0);
+    pinnedRef.current = true; // what you just sent, and the reply to it, are shown
+    if (opts.echo) {
+      const uid = Date.now();
+      setMessages((m) => [...m, { id: uid, key: `t${uid}`, role: "user", content: msg, tool_calls: [], name: "", attachments: opts.files }]);
+    }
     let newId = cid;
-    let via: RouterInfo | undefined;
     let stopped = false;
     let lastReply = "";
+    let replyKey = "";
     const ctrl = new AbortController();
     abortRef.current = ctrl;
-    try {
-      await stream("/assistant/chat", { message: msg, conversation_id: cid, model: model || null, effort: isPlan ? effort : "", mode: workMode, resend: !!opts.resend, attachments: (opts.files ?? []).map((a) => a.id) }, (ev) => {
-        const t = ev.type as string | undefined;
-        if (t === "writing") { setDraft((d) => d + String(ev.text)); return; }
-        if (t !== "router") setDraft("");
-        if (t === "start") newId = Number(ev.conversation_id);
-        if (t === "router") via = ev as unknown as RouterInfo;
-        if (t === "tool_call") setSteps((s) => [...s, { kind: "call", name: String(ev.name), text: String(ev.args), line: plainStep(String(ev.name), String(ev.args)) }]);
-        if (t === "tool_result") {
-          setSteps((s) => {
-            const name = String(ev.name);
-            let idx = -1;
-            for (let i = s.length - 1; i >= 0; i--) if (s[i].kind === "call" && s[i].name === name && s[i].ok == null) { idx = i; break; }
-            if (idx < 0) return s;
-            const next = s.slice();
-            next[idx] = { ...next[idx], ok: Boolean(ev.ok) };
-            return next;
-          });
+    const onEvent = (raw: StreamEvent) => {
+      const ev = parseEvent(raw as Record<string, unknown>);
+      if (!ev) { if (!raw.type && raw.error) toast.err(String(raw.error)); return; }
+      const next = reduceTurn(liveRef.current ?? emptyTurn(cid), ev);
+      liveRef.current = next;
+      setLive(next);
+      switch (ev.type) {
+        case "start": newId = ev.conversation_id; void refreshPresence(); break; // the strip says "Thinking" now, not at the next tick
+        case "approval_required": {
+          setApprovals((a) => (a.some((x) => x.id === ev.approval.id) ? a : [...a, ev.approval]));
+          if (inBackground()) void notify("Needs your OK", `${stepTitle(ev.approval.tool, ev.approval.args)}: ${ev.approval.reason || "waiting for your OK"}`, { tag: "approval" });
+          break;
         }
-        if (t === "claim_check") setSteps((s) => [...s, { kind: "check", name: "", text: "", ok: false,
-          line: ev.retrying ? "That claim needs a check. Asking again." : "That claim is still unchecked." }]);
-        if (t === "approval_required") {
-          setApprovals((a) => [...a, { id: Number(ev.id), tool: String(ev.tool), args: String(ev.args), effect: String(ev.effect), reason: String(ev.reason) }]);
-          if (inBackground()) void notify("Approval needed", `${String(ev.tool)}: ${String(ev.reason || "waiting for your OK")}`, { tag: "approval" });
-        }
-        if (t === "message") {
-          lastReply = String(ev.content);
+        case "watch": openWatch(ev.watch); break;
+        case "card": if (ev.card.kind === "watch" && ev.card.job_id) openWatch({ surface: ev.card.surface || "computer", job_id: ev.card.job_id, goal: ev.card.goal || "" }); break;
+        case "message": {
+          lastReply = ev.content;
           const mid = Date.now() + 1;
-          if (via) viaByReply.current.set(String(ev.content), via);
-          setFreshId(mid);
-          setMessages((m) => [...m, { id: mid, role: "assistant", content: String(ev.content), tool_calls: [], name: "", via }]);
+          replyKey = `t${mid}`;
+          if (next.via) viaByReply.current.set(ev.content, next.via);
+          setFresh({ key: replyKey, from: next.revealFrom });
+          setOpenSteps((o) => ({ ...o, [replyKey]: true }));
+          setMessages((m) => [...m, {
+            id: mid, key: replyKey, role: "assistant", content: ev.content, tool_calls: [], name: "", via: next.via,
+            choices: next.choices ?? undefined, cards: next.cards.length ? next.cards : undefined,
+            steps: next.steps.length ? next.steps : undefined, notices: next.notices.length ? next.notices : undefined,
+          }]);
+          break;
         }
-        if (t === "automate_offer") setOffer({ key: String(ev.key), name: String(ev.name), request: String(ev.request), line: String(ev.line) });
-        if (t === "stopped") stopped = true;
-        if (t === "error" || (!t && ev.error)) toast.err(String(ev.error));
-      }, ctrl.signal);
+        case "done": {
+          const key = replyKey;
+          if (key) setMessages((m) => m.map((x) => (x.key === key ? { ...x, outcome: ev.done.outcome } : x)));
+          break;
+        }
+        case "automate_offer": setOffer(ev.offer); break;
+        case "stopped": stopped = true; break;
+        case "error": toast.err(ev.error); break;
+        default: break;
+      }
+    };
+    try {
+      await stream("/assistant/chat", { message: msg, conversation_id: cid, model: model || null, effort: isPlan ? effort : "", mode: workMode, resend: !!opts.resend, attachments: (opts.files ?? []).map((a) => a.id) }, onEvent, ctrl.signal);
     } catch {
       stopped = stopped || ctrl.signal.aborted; // the abort drops the fetch before the server's "stopped" line arrives
     }
     abortRef.current = null;
     busyRef.current = false;
     setBusy(false);
-    setDraft("");
+    setLive(null);
+    liveRef.current = null;
+    void refreshPresence();
     if (!stopped && lastReply && inBackground()) void notify("Reply ready", lastReply.replace(/\s+/g, " ").slice(0, 160), { tag: "reply" });
     loadConvs();
     const doneCid = newId || cid;
+    if (doneCid) forgetRuns(doneCid);
     if (stopped && doneCid) loadConv(doneCid); // pick up what the turn kept before it stopped
-    else if (newId && newId !== cid && window.location.pathname.startsWith("/assistant")) navigate(`/assistant/${newId}`, { replace: true });
+    else if (doneCid) { await adoptIds(doneCid); void refreshHistory(doneCid); }
+    if (!stopped && newId && newId !== cid && mounted.current && pathRef.current.startsWith("/assistant")) navigate(`/assistant/${newId}`, { replace: true });
+  };
+
+  const pickChoice = (option: string) => {
+    if (busy || att.uploading) return;
+    askNotifyPermission();
+    void run(option, { echo: true });
   };
 
   const send = async (e?: FormEvent) => {
@@ -195,11 +388,18 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     await run(msg, { echo: true, files });
   };
 
+  /** A suggestion chip or a handed over sentence: send it as if typed. */
+  const sendText = (msg: string) => {
+    if (busy || att.uploading || !msg.trim()) return;
+    askNotifyPermission();
+    void run(msg.trim(), { echo: true });
+  };
+
   // Home hands over a sentence and means it: send once, then drop the handoff so a refresh does not send it again.
   const runRef = useRef(run);
   runRef.current = run;
   useEffect(() => {
-    if (!window.location.pathname.startsWith("/assistant")) return;
+    if (!location.pathname.startsWith("/assistant")) return;
     const handed = location.state as { draft?: string; start?: boolean } | null;
     const msg = handed?.start ? handed.draft?.trim() : "";
     if (!msg) return;
@@ -214,9 +414,25 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
   const stopTurn = async () => {
     abortRef.current?.abort();
     try {
-      if (cid) await api("/assistant/stop", { body: { conversation_id: cid } });
+      if (cidRef.current) await api("/assistant/stop", { body: { conversation_id: cidRef.current } });
     } catch { /* the abort already ended our side */ }
   };
+  const stopTurnRef = useRef(stopTurn);
+  stopTurnRef.current = stopTurn;
+  const newChat = () => navigate("/assistant", { state: { fresh: true } });
+  const focusComposer = () => composerRef.current?.focus();
+
+  // Keyboard, from the one shortcut list (lib/shortcuts.ts): Esc stops a running turn, Ctrl/⌘+/ goes to the message box.
+  // Ctrl/⌘+Shift+O (a new chat) works on every page, so the shell reads it.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
+      if (busyRef.current && isShortcut("stop", e)) { e.preventDefault(); void stopTurnRef.current(); return; }
+      if (isShortcut("focus-composer", e)) { e.preventDefault(); composerRef.current?.focus(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navigate]);
 
   const regenerate = async () => {
     if (busy || !cid) return;
@@ -240,204 +456,70 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
     } catch (e) { toast.err(e); if (cid) loadConv(cid); }
   };
 
-  const remove = async (c: Conv) => {
-    if (!confirm(`Delete "${c.title}"? Memories learned from it are kept.`)) return;
-    await api(`/conversations/${c.id}`, { method: "DELETE" });
-    if (c.id === cid) navigate("/assistant");
-    loadConvs();
-  };
-
-  const visible = messages.filter((m) => (m.role === "user" && m.name !== "claim_check") || (m.role === "assistant" && (m.content || m.tool_calls.length)));
-  const lastReply = [...visible].reverse().find((m) => m.role === "assistant" && m.content);
-  const look = lookAt == null || lookAt >= steps.length ? steps.length - 1 : lookAt;
-  const shown = look >= 0 ? steps[look] : null;
-  const shownDiff = shown?.kind === "call" && (shown.name === "edit_file" || shown.name === "write_file") ? extractDiffFromArgs(shown.text) : null;
-  // Screen reader only utility
-  const srOnly: React.CSSProperties = {
-    position: "absolute",
-    width: "1px",
-    height: "1px",
-    padding: 0,
-    margin: "-1px",
-    overflow: "hidden",
-    clip: "rect(0, 0, 0, 0)",
-    whiteSpace: "nowrap",
-    border: 0
-  };
+  useEffect(() => {
+    if (!showRoutines) return;
+    api<{ routines: Routine[] }>("/assistant/routines").then((r) => setRoutines(r.routines)).catch(toast.err);
+  }, [showRoutines]);
+  const title = cid === mainId ? who : (convs?.find((c) => c.id === cid)?.title ?? "New chat");
+  const emptyLine = approvals.length > 0 ? "Something is waiting for your approval." : broken || undefined;
 
   return (
-    <div className={`split ${cid !== null ? "has-selection" : ""}`}>
-      <div className="split-list">
-        <div className="col" style={{ padding: "14px 12px 10px", gap: 10 }}>
-          <div className="row"><h2 className="grow">Chats</h2><button className="btn primary sm" onClick={() => navigate("/assistant")}><Plus size={14} /> New</button></div>
-          <div className="row" style={{ position: "relative" }}>
-            <Search size={14} className="faint" style={{ position: "absolute", left: 10 }} aria-hidden="true" />
-            <input className="input" style={{ paddingLeft: 30, height: 32 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search conversations" aria-label="Search conversations" />
-          </div>
-        </div>
-        <div className="scroll">
-          {convs === null && <SkeletonList rows={5} />}
-          {convs?.length === 0 && <Empty icon={<MessageSquare size={22} />} title={q ? "No matches" : "No conversations yet"} hint={q ? undefined : "Start one on the right."} />}
-          {convs?.map((c) => (
-            <div key={c.id} className={`list-item ${c.id === cid ? "active" : ""}`} role="link" tabIndex={0} aria-current={c.id === cid ? "page" : undefined}
-              onClick={() => navigate(`/assistant/${c.id}`)} onKeyDown={(e) => { if (e.key === "Enter") navigate(`/assistant/${c.id}`); }}>
-              <div className="grow">
-                <div className="truncate" style={{ fontWeight: c.id === cid ? 550 : 450 }}>{c.title}</div>
-                <div className="faint small">{CHANNEL[c.channel] ?? c.channel} · {relTime(c.updated_at)}</div>
-              </div>
-              <button className="btn ghost sm icon" aria-label={`Delete ${c.title}`} onClick={(e) => { e.stopPropagation(); remove(c); }}><Trash2 size={13} /></button>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="split-main">
-        <div className="toolbar">
-          <button className="btn ghost sm mobile-only" onClick={() => navigate("/assistant")} aria-label="Back to chats"><ArrowLeft size={14} /></button>
-          <div className="toolbar-title truncate">{convs?.find((c) => c.id === cid)?.title ?? "New chat"}</div>
-          <div className="spacer" />
-          <ProjectSwitcher cid={cid} /><CheckToggle cid={cid} />{/* feat/v02-core */}
-          {cid ? (
-            <button className="btn ghost sm" title="Continue this chat in the rooks terminal" aria-label="Continue in terminal"
-              onClick={() => api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } })
-                .then((h) => { navigator.clipboard?.writeText(h.command); toast.ok(`Copied: ${h.command} (one use, ${Math.round(h.expires_in / 60)} min)`); })
-                .catch(toast.err)}>
-              <SquareTerminal size={14} />
-            </button>
-          ) : null}
-          {tabs}
-        </div>
-        <div className="work-switch">
-          <div className="row">
-            <div className="tabs" role="group" aria-label="Mode">
-              <button type="button" className={`tab ${workMode === "chat" ? "active" : ""}`} onClick={() => chooseMode("chat")}>Chat</button>
-              <button type="button" className={`tab ${workMode !== "chat" ? "active" : ""}`} onClick={() => { if (workMode === "chat") chooseMode(codeDepth.current); }}>Code</button>
-            </div>
-            {workMode !== "chat" && (
-              <div className="tabs" role="group" aria-label="Code">
-                <button type="button" className={`tab ${workMode === "plan" ? "active" : ""}`} onClick={() => chooseMode("plan")}>Plan</button>
-                <button type="button" className={`tab ${workMode === "build" ? "active" : ""}`} onClick={() => chooseMode("build")}>Build</button>
-              </div>
-            )}
-          </div>
-          <p className="muted small" style={{ margin: 0 }}>Chat is for the day. Code is for changing a project, and it asks before it changes files.</p>
-        </div>
-        {approvals.length > 0 && (
-          <div className="approvals-header" role="region" aria-label="Pending approvals" aria-live="polite">
-            <div className="approvals-header-inner">
-              <div className="approvals-header-title">
-                <ShieldAlert size={16} style={{ color: "var(--warn-text)" }} />
-                <span><strong>{approvals.length}</strong> pending approval{approvals.length > 1 ? "s" : ""}</span>
-              </div>
-              <div className="approvals-header-list">
-                {approvals.slice(0, 3).map((a) => (
-                  <div key={a.id} className="approval-header-item">
-                    <span className="tool-name">{plainStep(a.tool, a.args)}</span>
-                    <span className="tool-reason">{a.reason}</span>
-                  </div>
-                ))}
-                {approvals.length > 3 && (
-                  <div className="approval-header-more">+{approvals.length - 3} more</div>
-                )}
-              </div>
-            </div>
+    <div className={`agents-chat chat-layout${listOpen ? " has-list" : ""}`}>
+      <ChatList open={listOpen} id="chat-list" floating={narrow} onClose={() => setListOpen(false)} />
+      <div className="agents-chat-main chat-main">
+        <ThreadHeader
+          title={title} cid={cid} listOpen={listOpen} onToggleList={toggleList}
+          workMode={workMode} onMode={chooseMode} codeDepth={codeDepth.current}
+          model={model} onModel={setModel} models={models} defaultRef={defaultRef} isPlan={isPlan} effort={effort} onEffort={setEffort}
+          busy={busy} showRoutines={showRoutines} onRoutines={() => { setShowRoutines((v) => !v); setRoutines(null); }}
+          onTerminal={() => api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } })
+            .then((h) => { navigator.clipboard?.writeText(h.command); toast.ok(`Copied: ${h.command}`); })
+            .catch(toast.err)}
+          onBeside={async () => {
+            try {
+              const accounts = await api<{ id: number }[]>("/mail/accounts");
+              const first = accounts[0];
+              if (!first) { setBroken("No mailbox is connected."); return; }
+              await api(`/mail/${first.id}/messages`);
+              openBeside("/mail");
+            } catch (err) {
+              setBroken(mailLine(err));
+            }
+          }}
+          onNewChat={newChat} onStop={() => void stopTurn()} onFocusComposer={focusComposer}
+        />
+        {showRoutines && (
+          <div className="routines-panel" aria-label="Routines">
+            <div className="row"><strong className="grow">Routines</strong><span className="small muted">Pause any time. Sending still asks you.</span></div>
+            {routines === null && <p className="small muted">Loading…</p>}
+            {routines?.length === 0 && <p className="small muted">None yet. Say “every weekday morning, summarise my inbox”.</p>}
+            <ul>
+              {routines?.map((r) => (
+                <li key={`${r.kind}-${r.id}`}>
+                  <span className="grow small">{r.sentence}</span>
+                  <button type="button" className="btn sm" onClick={async () => {
+                    const next = await api<Routine>("/assistant/routines/pause", { body: { kind: r.kind, id: r.id, enabled: !r.enabled } });
+                    setRoutines((list) => (list || []).map((item) => (item.kind === r.kind && item.id === r.id ? { ...item, enabled: next.enabled } : item)));
+                  }}>{r.enabled ? "Pause" : "Resume"}</button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
         <div className="chat-stage">
-        <div className="chat-scroll" aria-live="polite">
-          <main className="chat-thread" role="main" aria-label="Chat conversation">
-            <h1 style={srOnly}>Chat conversation</h1>
-            {visible.map((m) => m.role === "user"
-              ? <div key={m.id} className="msg user">
-                  {editing === m.id ? (
-                    <div className="col" style={{ gap: 6, alignItems: "flex-end" }}>
-                      <textarea className="input" rows={3} value={editText} aria-label="Edit message" autoFocus
-                        onChange={(e) => setEditText(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(m); } if (e.key === "Escape") setEditing(null); }} />
-                      <div className="row" style={{ gap: 6 }}>
-                        <button className="btn sm primary" disabled={busy || !editText.trim()} onClick={() => saveEdit(m)}>Send</button>
-                        <button className="btn sm ghost" onClick={() => setEditing(null)}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="msg-user-row">
-                      <div className="col" style={{ gap: 0, alignItems: "flex-end" }}>
-                        <MessageAttachments items={m.attachments} />
-                        {m.content && <div className="bubble-user">{m.content}</div>}
-                      </div>
-                      <button className="btn ghost sm icon msg-edit" aria-label="Edit and resend" title="Edit and resend" disabled={busy}
-                        onClick={() => { setEditing(m.id); setEditText(m.content); }}><Pencil size={12} /></button>
-                    </div>
-                  )}
-                </div>
-              : <div key={m.id} className="msg">
-                  <div className="msg-body">
-                    <div className="msg-byline" aria-hidden="true">Workspace</div>
-                    {m.content && (m.id === freshId
-                      ? <LiveMarkdown text={m.content} messageId={m.id} streaming onDone={() => setFreshId(null)} />
-                      : <LiveMarkdown text={m.content} messageId={m.id} />)}
-                    {m.via && <RouterVia r={m.via} />}
-                    {m.content && m.id !== freshId && <MessageFeedback msg={m} />}
-                    {m.content && m.id !== freshId && <CheckThis cid={cid} content={m.content} fresh={m.id > 1e12} />}{/* feat/v02-core */}
-                    {m.content && m.id !== freshId && lastReply?.id === m.id && !busy && (
-                      <div className="row" style={{ gap: 4, marginTop: 4 }}>
-                        <button className="btn ghost sm" aria-label="Regenerate reply" title="Drop this reply and answer again" onClick={regenerate}><RotateCcw size={13} /> Regenerate</button>
-                      </div>
-                    )}
-                  </div>
-                </div>)}
-            {approvals.map((a) => {
-              const diff = (a.tool === "edit_file" || a.tool === "write_file")
-                ? extractDiffFromArgs(a.args)
-                : null;
-              return (
-                <div key={a.id} className={`card col approval-card spring-in${exit.leaving(a.id) ? " leaving-out" : ""}`} style={{ gap: 10 }} role="alertdialog" aria-label={plainStep(a.tool, a.args)}>
-                  <div className="row"><ShieldAlert size={16} style={{ color: "var(--warn-text)" }} /> <b>{plainStep(a.tool, a.args)}</b></div>
-                  <div className="small muted">{a.reason} {{
-                    persistent: "This would change how the assistant behaves from now on.",
-                    write: "This changes a file on your computer.",
-                    command: "This runs a command on your computer.",
-                  }[a.effect] ?? "This acts outside the workspace."}</div>
-                  {a.effect === "command" && !diff && <pre className="small" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{(() => { try { return String(JSON.parse(a.args).command ?? ""); } catch { return ""; } })()}</pre>}
-                  {diff && <DiffView diff={diff} compact />}
-                  <div className="row">
-                    <button className="btn primary sm" onClick={() => decide(a, true)}>Approve</button>
-                    <button className="btn sm" onClick={() => decide(a, false)}>Deny</button>
-                  </div>
-                </div>
-              );
-            })}
-            {busy && (
-              <div className="msg msg-thinking" aria-label="Assistant is working">
-                <div className="msg-body">
-                  <div className="msg-byline is-thinking" aria-hidden="true">Workspace</div>
-                  {draft && <div className="msg-text"><Markdown text={draft} /></div>}
-                  <Thinking since={busySince} line={steps.at(-1)?.line} />
-                </div>
-              </div>
-            )}
-            <div ref={endRef} />
-          </main>
-        </div>
-        {steps.length > 0 && shown && (
-          <aside className="shoulder" aria-label="What Rooks is doing">
-            <h2>Working</h2>
-            <p className="shoulder-now">{shown.line}</p>
-            {shownDiff && <DiffView diff={shownDiff} compact />}
-            <ol>
-              {steps.map((s, i) => (
-                <li key={i}>
-                  <button type="button" className={i === look ? "on" : ""} aria-current={i === look ? "step" : undefined} onClick={() => setLookAt(i)}>
-                    {s.ok === false ? <X size={12} /> : s.ok ? <Check size={12} /> : <span className="shoulder-dot" />}
-                    <span>{s.line}</span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </aside>
-        )}
+          <Thread
+            who={who} cid={cid} messages={messages} live={live} busy={busy} busySince={busySince}
+            approvals={approvals} leaving={exit.leaving} onDecide={decide}
+            fresh={fresh} onRevealDone={() => setFresh(null)}
+            onPickChoice={pickChoice} onRegenerate={regenerate}
+            editing={editing} editText={editText} onEditStart={(m) => { setEditing(m.id); setEditText(m.content); }} onEditChange={setEditText} onEditSave={saveEdit} onEditCancel={() => setEditing(null)}
+            open={openSteps} onToggleSteps={(key) => setOpenSteps((o) => ({ ...o, [key]: !o[key] }))}
+            empty={<EmptyChat who={who} line={emptyLine} onSend={sendText} disabled={busy || att.uploading} />}
+            endRef={endRef}
+          />
         </div>
         {offer && (
-          <div className="card row" style={{ margin: "0 12px 8px", alignItems: "center", gap: 10 }}>
+          <div className="card row chat-offer" style={{ alignItems: "center", gap: 10 }}>
             <div className="grow">
               <div>{offer.line}</div>
               <div className="small muted truncate">{offer.name}</div>
@@ -449,262 +531,24 @@ function Chat({ tabs }: { tabs: React.ReactNode }) {
             <button type="button" className="btn ghost sm" onClick={() => { api("/automations/offer-skip", { body: { key: offer.key } }).catch(() => undefined); setOffer(null); }}>Not now</button>
           </div>
         )}
-        <form className="composer-wrap" onSubmit={send}>
-          <div className={`composer has-tracer${busy ? " is-working" : ""}${dropping ? " drop-target" : ""}`}
-            onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setDropping(true); } }}
-            onDragLeave={() => setDropping(false)}
-            onDrop={(e) => { const f = filesFrom(e.dataTransfer); setDropping(false); if (f.length) { e.preventDefault(); att.add(f); } }}>
-            <Tracer active={busy} label="Assistant is working" />
-            <PendingChips items={att.items} onRemove={att.remove} />
-            <textarea ref={composerRef} rows={1} value={text} aria-label="Message"
-              onChange={(e) => { setText(e.target.value); const t = e.target; t.style.height = "auto"; t.style.height = `${Math.min(240, t.scrollHeight)}px`; }}
-              placeholder="Ask anything, or describe a job to do…"
-              onPaste={(e) => { const f = filesFrom(e.clipboardData); if (f.length) { e.preventDefault(); att.add(f); } }}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
-            <div className="composer-bar">
-              <AttachButton onFiles={att.add} disabled={busy} />
-              <ModelSelect value={model} onChange={setModel} models={models} />
-              {isPlan && <EffortSelect value={effort} onChange={setEffort} />}
-              <div className="spacer" />
-              <span className="composer-hint">Shift + Enter for a new line</span>
-              {/* feat/v02-anywhere-voice + motion: one mic. Local/cloud speech-to-text with browser fallback, drawn as the voice orb */}
-              <DictateButton orb disabled={busy} onText={(t) => { setText((v) => (v ? v + " " : "") + t); composerRef.current?.focus(); }} />
-              {busy
-                ? <button type="button" className="btn send" onClick={stopTurn} aria-label="Stop" title="Stop; what was written so far is kept"><Square size={15} /></button>
-                : <button className="btn primary send" disabled={(!text.trim() && !att.ready.length) || att.uploading} aria-label="Send"><ArrowUp size={16} /></button>}
-            </div>
-          </div>
-        </form>
+        <Composer text={text} onText={setText} busy={busy} att={att} onSend={send} onStop={() => void stopTurn()} composerRef={composerRef} />
       </div>
-      {toast.node}
-    </div>
-  );
-}
-
-function MemoryTab() {
-  const [items, setItems] = useState<Memory[]>([]);
-  const [q, setQ] = useState("");
-  const [form, setForm] = useState({ content: "", kind: "fact" });
-  const toast = useToast();
-  const load = () => api<Memory[]>(`/memories${q ? `?q=${encodeURIComponent(q)}` : ""}`).then(setItems).catch(toast.err);
-  useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t); }, [q]);
-  const add = async (e: FormEvent) => {
-    e.preventDefault();
-    try { await api("/memories", { body: form }); setForm({ content: "", kind: "fact" }); load(); } catch (err) { toast.err(err); }
-  };
-  const groups: [string, Memory[]][] = [["Who you are", items.filter((m) => m.kind === "profile")], ["Preferences", items.filter((m) => m.kind === "preference")], ["Facts", items.filter((m) => m.kind === "fact")]];
-  return (
-    <div className="col gap-lg">
-      <p className="muted" style={{ margin: 0 }}>Learned automatically from your conversations on every channel. "Who you are" is always in context; the rest is recalled when relevant. Edit or delete anything.</p>
-      <form className="card row wrap" onSubmit={add}>
-        <input className="input grow" style={{ minWidth: 220 }} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="Teach it something, e.g. I prefer short answers" />
-        <select className="input" style={{ width: 150 }} aria-label="Kind of memory" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
-          <option value="profile">Who I am</option><option value="preference">Preference</option><option value="fact">Fact</option>
-        </select>
-        <button className="btn primary" disabled={form.content.trim().length < 3}>Add</button>
-      </form>
-      <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search memories" />
-      {items.length === 0 && <Empty icon={<Brain size={24} />} title="Nothing remembered yet" hint="Chat normally; it learns as you go." />}
-      {groups.filter(([, l]) => l.length).map(([title, list]) => (
-        <div key={title}>
-          <h3 style={{ marginBottom: 6 }}>{title}</h3>
-          <div className="card flush">
-            {list.map((m) => (
-              <div key={m.id} className="list-item" style={{ cursor: "default" }}>
-                <div className="grow">{m.content}<div className="faint small">{m.source === "auto" ? "learned" : m.source === "user" ? "added by you" : "saved by assistant"} · {relTime(m.updated_at)}</div></div>
-                <button className="btn ghost sm icon" onClick={async () => { await api(`/memories/${m.id}`, { method: "DELETE" }); load(); }}><Trash2 size={13} /></button>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-      {toast.node}
-    </div>
-  );
-}
-
-export function SkillsTab() {
-  const [items, setItems] = useState<Skill[]>([]);
-  const [open, setOpen] = useState<number | null>(null);
-  const [draft, setDraft] = useState<Skill | null>(null);
-  const toast = useToast();
-  const load = () => api<Skill[]>("/skills").then((r) => setItems(r.filter((s) => s.source !== "github"))).catch(toast.err);
-  useEffect(() => { load(); }, []);
-  const save = async () => {
-    if (!draft) return;
-    try {
-      if (draft.id) await api(`/skills/${draft.id}`, { method: "PUT", body: { ...draft, enabled: !!draft.enabled } });
-      else await api("/skills", { body: { ...draft, enabled: true } });
-      setDraft(null); load();
-    } catch (e) { toast.err(e); }
-  };
-  return (
-    <div className="col gap-lg">
-      <div className="row"><p className="muted grow" style={{ margin: 0 }}>Procedures written here or learned by the assistant after complex tasks. Edit, disable or add your own.</p>
-        <button className="btn" onClick={() => setDraft({ id: 0, name: "", description: "", steps: "", uses: 0, source: "user", enabled: 1 })}><Plus size={14} /> Skill</button></div>
-      {draft && (
-        <div className="card col">
-          <input className="input mono" disabled={!!draft.id} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="short-kebab-name" />
-          <input className="input" value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="When to use it" />
-          <textarea className="input mono" rows={8} value={draft.steps} onChange={(e) => setDraft({ ...draft, steps: e.target.value })} placeholder={"1. ...\n2. ..."} />
-          <div className="row"><button className="btn primary" onClick={save}>Save</button><button className="btn ghost" onClick={() => setDraft(null)}>Cancel</button></div>
-        </div>
-      )}
-      {items.length === 0 && !draft && <Empty icon={<BookOpen size={24} />} title="No skills yet" hint="Ask for something multi step, like 'plan my week from my calendar and tasks'." />}
-      <div className="card flush">
-        {items.map((s) => (
-          <div key={s.id} className="col" style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>
-            <div className="row" style={{ cursor: "pointer" }} onClick={() => setOpen(open === s.id ? null : s.id)}>
-              <strong className="mono grow">{s.name}</strong>
-              <span className="badge">{s.source === "auto" ? "learned" : s.source}</span>
-              <span className="faint small">used {s.uses}×</span>
-            </div>
-            <div className="muted small">{s.description}</div>
-            {open === s.id && (
-              <>
-                <Markdown text={s.steps} />
-                <div className="row">
-                  <button className="btn sm" onClick={() => setDraft(s)}>Edit</button>
-                  <button className="btn sm" onClick={async () => { await api(`/skills/${s.id}`, { method: "PUT", body: { ...s, enabled: !s.enabled } }); load(); }}>{s.enabled ? "Disable" : "Enable"}</button>
-                  <button className="btn ghost sm danger" onClick={async () => { if (confirm(`Delete skill ${s.name}?`)) { await api(`/skills/${s.id}`, { method: "DELETE" }); load(); } }}><Trash2 size={13} /></button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
-      {toast.node}
-    </div>
-  );
-}
-
-type ASettings = { assistant_name: string; timezone: string; learning_enabled: boolean; search_provider: string; cli_token_set: boolean;
-  telegram: { configured: boolean; running: boolean; bot: string; error: string; allowed_users: string } };
-
-function SettingsTab() {
-  const [s, setS] = useState<ASettings | null>(null);
-  const [f, setF] = useState({ assistant_name: "", timezone: "", tg_token: "", tg_users: "" });
-  const [token, setToken] = useState("");
-  const toast = useToast();
-  const load = () => api<ASettings>("/assistant/settings").then((r) => { setS(r); setF((x) => ({ ...x, assistant_name: r.assistant_name, timezone: r.timezone, tg_users: r.telegram.allowed_users })); });
-  useEffect(() => { load(); }, []);
-  const put = async (body: Record<string, unknown>, msg = "Saved") => {
-    try { setS(await api<ASettings>("/assistant/settings", { method: "PUT", body })); toast.ok(msg); } catch (e) { toast.err(e); }
-  };
-  if (!s) return null;
-  const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return (
-    <div className="col gap-lg">
-      <div className="card col">
-        <h3>Basics</h3>
-        <div className="row wrap">
-          <label className="field grow">Assistant name<input className="input" value={f.assistant_name} onChange={(e) => setF({ ...f, assistant_name: e.target.value })} /></label>
-          <label className="field grow">Timezone (schedules follow it)<input className="input" value={f.timezone} onChange={(e) => setF({ ...f, timezone: e.target.value })} placeholder={browserTz} /></label>
-        </div>
-        <div className="row">
-          {f.timezone !== browserTz && <button className="btn sm ghost" onClick={() => setF({ ...f, timezone: browserTz })}>Use {browserTz}</button>}
-          <div className="spacer" />
-          <button className="btn primary" onClick={() => put({ assistant_name: f.assistant_name, timezone: f.timezone })}>Save</button>
-        </div>
-        <label className="check"><input type="checkbox" checked={s.learning_enabled} onChange={(e) => put({ learning_enabled: e.target.checked })} /> Learn memories and skills automatically (uses extra model calls)</label>
-      </div>
-      <div className="card col">
-        <h3>Web search</h3>
-        <WebSearchSetup />
-      </div>
-      <div className="card col">
-        <div className="row"><h3 className="grow">Telegram</h3>{s.telegram.running ? <span className="badge ok">@{s.telegram.bot} online</span> : s.telegram.configured ? <span className="badge danger">offline</span> : <span className="badge">not set up</span>}</div>
-        {s.telegram.error && <div className="alert err">{s.telegram.error}</div>}
-        <div className="muted small">1. Message @BotFather in Telegram, send /newbot, paste the token. 2. Message @userinfobot for your user id. Only listed ids get answers; scheduled reports go to the first one.</div>
-        <div className="row wrap">
-          <input className="input grow" type="password" placeholder={s.telegram.configured ? "Token saved (paste to replace)" : "Bot token"} value={f.tg_token} onChange={(e) => setF({ ...f, tg_token: e.target.value })} />
-          <input className="input" style={{ width: 200 }} placeholder="Your user id(s), comma separated" value={f.tg_users} onChange={(e) => setF({ ...f, tg_users: e.target.value })} />
-          <button className="btn" onClick={() => put({ ...(f.tg_token ? { telegram_token: f.tg_token } : {}), telegram_allowed_users: f.tg_users }, "Telegram saved; connecting…").then(() => setTimeout(load, 4000))}>Save</button>
-          {s.telegram.configured && <button className="btn ghost danger" onClick={() => put({ telegram_token: "" }, "Telegram disconnected")}>Disconnect</button>}
-        </div>
-      </div>
-      <div className="card col">
-        <div className="row"><KeyRound size={15} /><h3 className="grow">Terminal access</h3>{s.cli_token_set && <span className="badge ok">token active</span>}</div>
-        <div className="muted small">Install the <span className="mono">ws</span> command (cli/ws in the repository, Python 3 only), then run <span className="mono">ws login {window.location.origin}</span> and paste the token.</div>
-        <div className="row">
-          <button className="btn" onClick={async () => { const r = await api<{ token: string }>("/cli-token", { method: "POST" }); setToken(r.token); load(); }}>{s.cli_token_set ? "Replace token" : "Create token"}</button>
-          {token && <><span className="mono small truncate grow">{token}</span><button className="btn sm" onClick={() => { navigator.clipboard.writeText(token); toast.ok("Copied"); }}><Copy size={13} /></button></>}
-        </div>
-        {token && <div className="alert">Shown once. It replaces any previous token.</div>}
-      </div>
-      {toast.node}
     </div>
   );
 }
 
 export default function Assistant({ tab }: { tab: "chat" | "memory" | "skills" | "settings" }) {
   const navigate = useNavigate();
-  const tabs = (
-    <div className="tabs">
-      {(["chat", "memory", "skills", "settings"] as const).map((t) => (
-        <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => navigate(t === "chat" ? "/assistant" : `/assistant-${t}`)}>{t[0].toUpperCase() + t.slice(1)}</button>
-      ))}
-    </div>
-  );
-  if (tab === "chat") return <Chat tabs={tabs} />;
+  if (tab === "chat") return <Chat />;
   return (
-    <div className="page" style={{ maxWidth: 900 }}>
-      <div className="page-head"><h1 className="grow">Assistant</h1>{tabs}</div>
+    <div className="page" style={{ maxWidth: 720 }}>
+      <div className="page-head">
+        <button type="button" className="btn ghost sm" onClick={() => navigate("/assistant")}><ArrowLeft size={14} /> Chat</button>
+        <h1 className="grow">{tab === "memory" ? "Memory" : tab === "skills" ? "Skills" : "Chat settings"}</h1>
+      </div>
       {tab === "memory" && <MemoryTab />}
       {tab === "skills" && <SkillsTab />}
       {tab === "settings" && <SettingsTab />}
-    </div>
-  );
-}
-
-
-/** Thumbs and "Fix this" under each reply: both go to /api/learn/feedback, so the next answer follows the lesson. */
-function MessageFeedback({ msg }: { msg: Msg }) {
-  const [rating, setRating] = useState(0);
-  const [mode, setMode] = useState<"" | "why" | "edit">("");
-  const [comment, setComment] = useState("");
-  const [edited, setEdited] = useState(msg.content);
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-  const toast = useToast();
-  const send = async (body: { rating?: number; comment?: string; edited?: string }) => {
-    setBusy(true);
-    try {
-      const r = await api<{ note: string }>("/learn/feedback", {
-        body: { target_kind: "message", target_id: String(msg.id), original: body.edited !== undefined ? msg.content : "", ...body },
-      });
-      setNote(r.note || "Thanks, noted.");
-      setMode("");
-    } catch (e) { toast.err(e); } finally { setBusy(false); }
-  };
-  const thumb = (r: number) => {
-    setRating(r);
-    if (r > 0) send({ rating: 1 }); else setMode("why");
-  };
-  return (
-    <div className="msg-feedback">
-      {toast.node}
-      <div className="row" style={{ gap: 4 }}>
-        <button className={`btn ghost sm icon${rating > 0 ? " on" : ""}`} aria-pressed={rating > 0} aria-label="Good answer" title="Good answer" disabled={busy} onClick={() => thumb(1)}><ThumbsUp size={13} /></button>
-        <button className={`btn ghost sm icon${rating < 0 ? " on" : ""}`} aria-pressed={rating < 0} aria-label="Not right" title="Not right" disabled={busy} onClick={() => thumb(-1)}><ThumbsDown size={13} /></button>
-        <button className="btn ghost sm" title="Change the answer the way you wanted it; I learn from the difference" disabled={busy} onClick={() => setMode(mode === "edit" ? "" : "edit")}><Pencil size={13} /> Fix this</button>
-        {note && <span className="muted small" role="status">{note}</span>}
-      </div>
-      {mode === "why" && (
-        <div className="row" style={{ gap: 6, marginTop: 6 }}>
-          <input className="input grow" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="What should I do differently? (optional)" aria-label="What should I do differently?" />
-          <button className="btn sm primary" disabled={busy} onClick={() => send({ rating: -1, comment })}>Send</button>
-        </div>
-      )}
-      {mode === "edit" && (
-        <div className="col" style={{ gap: 6, marginTop: 6 }}>
-          <textarea className="input" rows={6} value={edited} onChange={(e) => setEdited(e.target.value)} aria-label="Your version" />
-          <div className="row" style={{ gap: 6 }}>
-            <button className="btn sm primary" disabled={busy || edited.trim() === msg.content.trim()} onClick={() => send({ rating, edited })}>Save my version</button>
-            <button className="btn sm ghost" onClick={() => setMode("")}>Cancel</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

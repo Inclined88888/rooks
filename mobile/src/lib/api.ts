@@ -162,7 +162,9 @@ export class Client {
     const write = method !== 'GET';
     let r: Response;
     try {
-      r = await this.f(`${this.base}/api/mobile${path}`, {
+      // Most routes live under /api/mobile; a path that already starts with /api/ is used as is (Companion is shared
+      // with the desktop and the notch app, and takes the paired phone's token).
+      r = await this.f(path.startsWith('/api/') ? `${this.base}${path}` : `${this.base}/api/mobile${path}`, {
         method,
         headers: this.headers(write),
         body: body === undefined ? undefined : JSON.stringify(body),
@@ -218,10 +220,10 @@ export class Client {
 
   // Companion -------------------------------------------------------------------
   /** Poll /api/companion/state for the live view of all agents and requests. */
-  companionState = () => this.req<CompanionState>('GET', '/companion/state');
+  companionState = () => this.req<CompanionState>('GET', '/api/companion/state');
   /** Decide on a companion request (allow, deny, always, or answer). */
   companionDecide = (id: string, decision: 'allow' | 'deny' | 'always' | 'answer', answer?: unknown) =>
-    this.req<CompanionRequest>('POST', `/companion/requests/${id}/decide`, { decision, answer });
+    this.req<CompanionRequest>('POST', `/api/companion/requests/${id}/decide`, { decision, answer });
 }
 
 export function newKey(): string {

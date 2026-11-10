@@ -1,22 +1,21 @@
 // Live documents in replies (feat/v02-automations): docs, sheets with formulas and charts the user can edit in place,
 // ask the assistant to change, and export. Edits are kept on this device, per message and block.
-import { BarChart3, Check, Download, FileText, Loader2, Pencil, Plus, RotateCcw, Sparkles, Table2 } from "lucide-react";
+import { BarChart3, Check, Download, FileText, Loader2, Pencil, PencilLine, Plus, RotateCcw, Table2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import { Markdown } from "../util";
-import { StreamText } from "../motion"; // integration/v0.2: word-by-word reveal from the motion system
 import { Chart, chartCsv, colName, evaluate, fmtCell, liveKey, LiveKind, niceScale, pieSlices, Sheet, sheetCsv, splitLive } from "./live";
 import "./v02.css";
 
 type Data = Sheet | Chart | string;
 
 /** Drop-in for <Markdown> on assistant replies: live blocks render as documents, the rest as Markdown. */
-export function LiveMarkdown({ text, messageId, streaming = false, onDone }: { text: string; messageId?: number | string; streaming?: boolean; onDone?: () => void }) {
+export function LiveMarkdown({ text, messageId, streaming = false, onDone }: { text: string; messageId?: number | string; streaming?: boolean; onDone?: () => void; from?: number }) {
   const pieces = useMemo(() => splitLive(text), [text]);
   const hasLive = pieces.some((p) => p.kind !== "md");
-  // Live blocks render at once (no word reveal), so finish the "fresh" state straight away.
-  useEffect(() => { if (streaming && hasLive) onDone?.(); }, [streaming, hasLive]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!hasLive) return streaming ? <StreamText text={text} onDone={onDone} /> : <Markdown text={text} />;
+  // Text is shown as it streams from the model, never replayed word by word, so the "fresh" state finishes at once.
+  useEffect(() => { if (streaming) onDone?.(); }, [streaming]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!hasLive) return <Markdown text={text} />;
   return (
     <div className="live-reply">
       {pieces.map((p, i) => p.kind === "md"
@@ -136,7 +135,7 @@ export function LiveBlock({ kind, initial, storeKey = "" }: { kind: LiveKind; in
         {edited && <span className="live-edited">Edited</span>}
         <span className="grow" />
         <button className="btn ghost sm" onClick={() => setEditing((e) => !e)} aria-pressed={editing}>{editing ? <><Check size={13} /> Done</> : <><Pencil size={13} /> Edit</>}</button>
-        <button className="btn ghost sm" onClick={() => setAsking((a) => !a)} aria-expanded={asking}><Sparkles size={13} /> Ask to change</button>
+        <button className="btn ghost sm" onClick={() => setAsking((a) => !a)} aria-expanded={asking}><PencilLine size={13} /> Ask to change</button>
         {edited && <button className="btn ghost sm icon" title="Back to the original" aria-label="Back to the original" onClick={() => setData(initial)}><RotateCcw size={13} /></button>}
       </figcaption>
 

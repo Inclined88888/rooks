@@ -58,17 +58,59 @@ class Steps(llm.ScriptedModel):
     def __init__(self, script):
         super().__init__(script)
 
+    waits = 0
+
     def complete(self, system, user, image_b64=None):
         if "previous session did not end normally" in user:
             self.prompts.append(user)
             return llm.Reply('{"thought": "an unexpected dialog; do not restore", "action": "click", "args": {"id": %d}}'
                              % find(user, r"button 'No'"))
+        nxt = self.script[0] if self.script else None
+        expects = getattr(nxt, "expects", None)
+        if expects and expects not in user and self.waits < 5:
+            # A window that has not opened yet (the save dialog after ctrl+s on a slow runner): a person waits a moment
+            self.prompts.append(user)
+            self.waits += 1
+            return llm.Reply('{"thought": "waiting for %s to open", "action": "wait", "args": {"seconds": 1}}' % expects)
         return super().complete(system, user, image_b64)
+
+
+def screen(prompt, elements=15):
+    """What the model saw, for a failure message: the step, the windows and the first elements. The tail of the prompt
+    (folders, rules) says nothing about why a step went wrong, and pytest cuts long messages in the middle."""
+    keep, lines, in_elements = [], prompt.splitlines(), False
+    for line in lines:
+        if line.startswith(("Step ", "SCREEN", "WINDOW IN FRONT", "OTHER WINDOWS")):
+            keep.append(line)
+            in_elements = False
+        elif line.startswith("ELEMENTS"):
+            keep.append(line)
+            in_elements = True
+        elif in_elements and elements > 0 and line.startswith("["):
+            keep.append(line)
+            elements -= 1
+    return "\n".join(keep) or prompt[-1500:]
+
+
+def timeline(model):
+    """The window in front at every step, so a failed run shows where the keyboard was going."""
+    rows = []
+    for i, p in enumerate(getattr(model, "prompts", []), 1):
+        front = next((l for l in p.splitlines() if l.startswith("WINDOW IN FRONT")), "WINDOW IN FRONT: ?")
+        others = next((l for l in p.splitlines() if l.startswith("OTHER WINDOWS")), "")
+        rows.append(f"  prompt {i}: {front}" + (f" | {others}" if others else ""))
+    return "\n".join(rows)
+
+
+def expecting(text, fn):
+    """A scripted step that needs `text` on screen; Steps waits for it (a few seconds at most) before running it."""
+    fn.expects = text
+    return fn
 
 
 def find(prompt, pattern):
     m = re.search(r"\[(\d+)\] " + pattern, prompt)
-    assert m, f"{pattern!r} not in the element list:\n{prompt[-2500:]}"
+    assert m, f"{pattern!r} not in the element list:\n{screen(prompt, 60)}"
     return int(m.group(1))
 
 
@@ -91,24 +133,24 @@ def test_editor_write_and_save(work):
         return editor_type_action(prompt, text)
 
     def save_name(prompt):
-        assert "Save As" in prompt, prompt[-1500:]
+        assert "Save As" in prompt, screen(prompt)
         return {"action": "type", "args": {"text": str(target), "clear": True}}
 
     def click_save(prompt):
         if re.search(r"\[\d+\] button 'Save'", prompt):
             return {"thought": "press the dialog's Save button", "action": "click", "args": {"id": find(prompt, r"button 'Save'")}}
         # The GTK dialog sometimes publishes no element list (seen on CI); a person would just press Enter in the name field
-        assert "Save As" in prompt, prompt[-1500:]
+        assert "Save As" in prompt, screen(prompt)
         return {"thought": "no Save button listed; Enter saves", "action": "hotkey", "args": {"keys": "enter"}}
 
     script = [{"action": "open_app", "args": {"name": "mousepad", "wait": 2.5}}, type_in_editor,
-              {"action": "hotkey", "args": {"keys": "ctrl+s"}}, save_name, click_save, {"action": "wait", "args": {"seconds": 1}},
+              {"action": "hotkey", "args": {"keys": "ctrl+s"}}, expecting("Save As", save_name), click_save, {"action": "wait", "args": {"seconds": 1}},
               {"action": "done", "args": {"answer": f"saved {target}", "success": True}}]
     m = real_model() or Steps(script)
     res = runner.run_task(f"Open Mousepad, type exactly this text:\n{text}\nand save it as {target}", runner.Settings(max_steps=15),
                           approver=lambda a: True, model=m)
     keep(res, "editor")
-    assert res.success, res.errors
+    assert res.success, "\n".join(map(str, res.errors)) + "\n\nWhat was in front at each step:\n" + timeline(m)
     assert target.read_text(encoding="utf-8").rstrip("\n") == text
     pkill("mousepad")
 

@@ -349,9 +349,11 @@ class Desk:
             b.hotkey(keys)
             return f"pressed {'+'.join(keys)}"
         if name == "open_app":
-            r = b.open_app(str(args.get("name") or args.get("value")), args.get("args"))
+            app = str(args.get("name") or args.get("value"))
+            before = {w.id for w in b.windows()}
+            r = b.open_app(app, args.get("args"))
             time.sleep(float(args.get("wait") or 1.5))
-            return r
+            return r + self._bring_forward(b, app, before)
         if name == "focus_window":
             q = str(args.get("title") or args.get("name") or args.get("value") or "").lower()
             for w in b.windows():
@@ -418,6 +420,26 @@ class Desk:
                 time.sleep(0.1)
             return "waited"
         raise ValueError(f"unknown action {name!r}")
+
+    @staticmethod
+    def _bring_forward(b, app: str, before: set) -> str:
+        """A window manager may map the new window without focusing it (Xvfb + xfwm4 does, now and then): nothing is in
+        front and every key is lost. A person would click the window; this focuses it. Only a window that opened just
+        now, preferring one whose app or title names what was asked for."""
+        try:
+            wins = [w for w in b.windows() if "Rooks Desk overlay" not in w.title]
+        except Exception:  # noqa: BLE001
+            return ""
+        new = [w for w in wins if w.id not in before]
+        q = app.lower().removesuffix(".app")
+        named = [w for w in new if q in w.app.lower() or q in w.title.lower()] or new
+        if not named or any(w.focused for w in named):
+            return ""
+        try:
+            b.focus_window(named[0])
+        except Exception:  # noqa: BLE001
+            return ""
+        return f"; brought {named[0].app} to the front"
 
     def _point(self, args: dict, obs: Observation) -> tuple[int, int]:
         if args.get("id") is not None:

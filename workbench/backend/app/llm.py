@@ -188,7 +188,7 @@ def default_model_ref() -> str:
         return f"{local['id']}/{_local_default(local['id'])}"
     conns = db.all("SELECT id, base_url FROM connections WHERE enabled = 1 ORDER BY id")
     if not conns:
-        raise HTTPException(400, "No model provider configured. Add an API key in Settings.")
+        raise HTTPException(400, "No model is connected yet. Open AI models and connect one.")
     # Sensible current defaults when the provider lists them; otherwise the first model it lists
     preferred = {"api.anthropic.com": "claude-sonnet-5-5", "openrouter.ai": "anthropic/claude-sonnet-5.5",
                  "generativelanguage.googleapis.com": "gemini-3.8-flash"}
@@ -200,7 +200,7 @@ def default_model_ref() -> str:
         models = list_models_for(c["id"])
         if models:
             return models[0]["ref"]
-    raise HTTPException(400, "No models available. Pick a default model in Settings.")
+    raise HTTPException(400, "No model is ready yet. Open AI models and choose one.")
 
 
 def _local_default(cid: int) -> str:

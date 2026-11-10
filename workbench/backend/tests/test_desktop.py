@@ -50,6 +50,50 @@ def test_desktop_session_needs_the_launch_token(client, desktop):
     assert "wb_session" in r.headers.get("set-cookie", "")
 
 
+def test_local_session_refuses_the_tools_key_and_a_wrong_key(client, monkeypatch):
+    """Native window on a service already running: only the native key (native.json) trades for wb_session. The tools
+    key used to work here too; it is handed to add-ons and the Room's server, so it must not."""
+    from app import config, security
+    from starlette.testclient import TestClient
+
+    monkeypatch.setattr(config, "TOOLS_API_KEY", "k" * 30)
+    monkeypatch.setattr(config, "NATIVE_SIGNIN_KEY", "n" * 30)
+    monkeypatch.setattr(security, "_attempts", {})  # three refusals here must not trip the throttle for later tests
+    # Same CSRF header the native shell sends on every write (main.py guard).
+    h = {"X-Workbench": "1"}
+    anon = TestClient(client.app)
+    assert anon.post("/api/desktop/local-session", headers=h).status_code == 401
+    assert anon.post(
+        "/api/desktop/local-session",
+        headers={**h, "Authorization": "Bearer wrong-key-xxxxxxxxxxxxxxxx"},
+    ).status_code == 401
+    assert anon.post("/api/desktop/local-session", headers={**h, "Authorization": f"Bearer {'k' * 30}"}).status_code == 401
+    r = anon.post("/api/desktop/local-session", headers={**h, "Authorization": f"Bearer {'n' * 30}"})
+    assert r.status_code == 200 and r.json() == {"ok": True}
+    assert "wb_session" in r.headers.get("set-cookie", "")
+
+
+def test_local_session_takes_the_native_key_not_the_shared_app_json_key(client, monkeypatch):
+    """The native window reads its own key from native.json and trades it for a cookie. The app.json key (the bridge
+    key the helpers, the terminal and anything able to read app.json share) never signs in or opens the account."""
+    from app import config, security
+    from starlette.testclient import TestClient
+
+    monkeypatch.setattr(config, "TOOLS_API_KEY", "t" * 30)
+    monkeypatch.setattr(config, "BROWSER_API_KEY", "b" * 30)
+    monkeypatch.setattr(config, "NATIVE_SIGNIN_KEY", "n" * 30)
+    monkeypatch.setattr(security, "_attempts", {})  # the wrong keys below must not throttle later tests
+    h = {"X-Workbench": "1"}
+    window = TestClient(client.app)
+    r = window.post("/api/desktop/local-session", headers={**h, "Authorization": f"Bearer {'n' * 30}"})
+    assert r.status_code == 200 and "wb_session" in r.headers.get("set-cookie", "")
+    assert window.get("/api/conversations").status_code == 200  # the window's calls ride on that cookie
+    bare = TestClient(client.app)
+    assert bare.post("/api/desktop/local-session", headers={**h, "Authorization": f"Bearer {'b' * 30}"}).status_code == 401
+    assert bare.get("/api/conversations", headers={"Authorization": f"Bearer {'b' * 30}"}).status_code == 401
+    assert bare.get("/api/conversations", headers={"Authorization": f"Bearer {'n' * 30}"}).status_code == 401
+
+
 def test_welcome_flag_is_reported_and_routes_the_session(client, desktop):
     from app import db
 
@@ -171,6 +215,31 @@ def test_an_api_key_connection_without_a_key_says_so_and_never_calls_out(client)
     reason, park, fallback = router.classify(e.value)
     assert reason.startswith("no key saved") and park == 0 and fallback
     db.run("DELETE FROM connections WHERE id = ?", cid)
+
+
+def test_a_keychain_read_is_not_repeated_after_allow_or_deny(monkeypatch):
+    """Always Allow does not stick on an ad hoc app, so a second read must not open the box again."""
+    from app import keychain
+
+    keychain.unseal()
+    calls = {"n": 0}
+
+    class Once:
+        @staticmethod
+        def get_password(service, name):
+            calls["n"] += 1
+            return "kept" if name == "connection:1" else ""
+
+    monkeypatch.setattr(keychain, "_keyring", lambda: Once)
+    try:
+        assert keychain.get("keychain:connection:1") == "kept"
+        assert keychain.get("keychain:connection:1") == "kept"
+        assert calls["n"] == 1
+        keychain.seal()
+        assert keychain.get("keychain:connection:2") == ""
+        assert calls["n"] == 1
+    finally:
+        keychain.unseal()
 
 
 def test_keychain_refs_move_into_the_database_when_the_keychain_is_switched_off(client, desktop, monkeypatch, fake_url):

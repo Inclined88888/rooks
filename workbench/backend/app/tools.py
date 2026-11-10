@@ -116,7 +116,7 @@ def list_calendars() -> list[dict]:
 async def search_email(query: str = "", account_id: int | None = None) -> list[dict]:
     acct = db.one("SELECT * FROM mail_accounts WHERE id = ?", account_id) if account_id else db.one("SELECT * FROM mail_accounts ORDER BY id LIMIT 1")
     if not acct:
-        raise HTTPException(404, "No mail account connected in Workbench")
+        raise HTTPException(404, "No mailbox is connected yet. Connect one on the Mail page.")
     messages = await asyncio.to_thread(mail.list_messages, acct, "INBOX", 20, query)
     return [m | {"account_id": acct["id"]} for m in messages]
 

@@ -222,3 +222,22 @@ def test_done_is_verified_against_the_file_the_task_asked_for(desk_home):
     res = runner.run_task(f"write hi and save it as {target}", runner.Settings(backend="fake"), approver=lambda a: True,
                           model=llm.ScriptedModel([lie]))
     assert res.success is True and res.steps == 1
+
+
+def test_an_app_that_opens_behind_is_brought_to_the_front(desk_home):
+    """Some window managers map a new window without focusing it (CI's Xvfb + xfwm4, now and then): nothing is in front
+    and every key is lost. open_app focuses the window it just opened, as a person would click it."""
+    b = FakeBackend(save_dir=desk_home / "work", focus_on_open=False)
+    res, b, _ = run([{"action": "open_app", "args": {"name": "Text Editor", "wait": 0}},
+                     {"action": "type", "args": {"text": "typed without clicking"}},
+                     {"action": "hotkey", "args": {"keys": "ctrl+s"}},
+                     {"action": "done", "args": {"answer": "saved", "success": True}}], backend=b)
+    assert ("focus", "Text Editor") in b.events
+    assert "typed without clicking" in b.saved.values(), b.events
+
+
+def test_an_app_already_in_front_is_left_alone(desk_home):
+    b = FakeBackend(save_dir=desk_home / "work")
+    run([{"action": "open_app", "args": {"name": "Text Editor", "wait": 0}},
+         {"action": "done", "args": {"answer": "opened", "success": True}}], backend=b)
+    assert not [e for e in b.events if e[0] == "focus"]

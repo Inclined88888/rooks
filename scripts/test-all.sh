@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Run every test suite in the repo. Provider keys are hidden from the tests, so nothing calls a real model.
 #
-#   scripts/test-all.sh            backend, Rooks Code, frontend, scorecard selftest, compose files
+#   scripts/test-all.sh            backend, Rooks Code, Try Room, browser and computer agents, frontend, scorecard selftest,
+#                                  compose files
 #   scripts/test-all.sh --quick    skip the frontend build and the backend suite's slow sandbox tests
 #   scripts/test-all.sh --live     also run the 11 hard benchmark tasks against a real model (NVIDIA_API_KEY)
 #
@@ -39,8 +40,10 @@ if [[ ! -x "$PY" ]]; then
   uv venv -q -p 3.12 "$VENV" || exit 1
 fi
 VIRTUAL_ENV="$VENV" uv pip install -q -r workbench/backend/requirements.txt -r workbench/backend/requirements-dev.txt \
-  -r workbench/backend/requirements-files.txt "prompt_toolkit>=3.0.43" "rich>=13.7" && ok "dependencies" || bad "dependencies"
+  -r workbench/backend/requirements-files.txt "prompt_toolkit>=3.0.43" "rich>=13.7" \
+  "mss>=9" "Pillow>=10" "python-xlib>=0.33; sys_platform == 'linux'" && ok "dependencies" || bad "dependencies"
 # prompt_toolkit and rich are Rooks Code's interactive terminal (rooks-code/pyproject.toml): without them its tests skip
+# mss, Pillow and python-xlib are the Try Room's screen capture (rooks-try/pyproject.toml): without them its tests fail
 
 step "Backend (workbench/backend)"
 EXTRA=(); $QUICK && EXTRA=(-k "not sandbox and not run_python")
@@ -53,8 +56,31 @@ step "Scorecard selftest (every benchmark check judged against gold answers, no 
   && ok "scorecard selftest" || bad "scorecard selftest"
 
 step "Rooks Code (rooks-code)"
-(cd desktop/scripts && "$PY" -m pytest -q -p no:cacheprovider test_make_latest_json.py) && ok "desktop-scripts" || bad "desktop-scripts"
+(cd desktop/scripts && "$PY" -m pytest -q -p no:cacheprovider .) && ok "desktop-scripts" || bad "desktop-scripts"
 (cd rooks-code && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore tests) && ok "rooks" || bad "rooks"
+
+step "Try Room (rooks-try)"
+(cd rooks-try && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore tests) && ok "try-room" || bad "try-room"
+
+# The browser and computer agents (CI runs them on Linux, macOS and Windows). Without these steps a backend change
+# (its redaction patterns, say) could leave their vendored copies behind and only CI would notice.
+step "Browser and computer agents (rooks-browser, rooks-desk)"
+VIRTUAL_ENV="$VENV" uv pip install -q -e "rooks-browser[dev]" -e "rooks-desk[dev]" && ok "agent dependencies" || bad "agent dependencies"
+# Playwright's own Chromium is optional: the tests fall back to Chrome, Edge or a Chromium already on this computer
+"$PY" -m playwright install chromium >/dev/null 2>&1 \
+  || echo "note: could not download Playwright's Chromium; the browser tests use Chrome, Edge or a Chromium already on this computer"
+# Under a virtual display when there is no screen, so the Rooks Browser app's tests (tests/test_electron_app.py) run too
+XVFB=(); [[ "$(uname -s)" == Linux && -z "${DISPLAY:-}" ]] && command -v xvfb-run >/dev/null && XVFB=(xvfb-run -a)
+(cd rooks-browser && ${XVFB[@]+"${XVFB[@]}"} "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore) && ok "rooks-browser" || bad "rooks-browser"
+# The Rooks Browser app (rooks-browser/app, Electron, a preview): its own tests need npm and a virtual display
+if command -v npm >/dev/null && command -v xvfb-run >/dev/null; then
+  (cd rooks-browser/app && { [[ -x node_modules/electron/dist/electron ]] || { npm ci --silent --no-audit --no-fund && node node_modules/electron/install.js; }; } \
+    && xvfb-run -a node --test test/*.test.mjs 2>&1 | tail -3) && ok "browser-app" || bad "browser-app"
+else
+  echo "note: npm or xvfb-run is not installed, so the Rooks Browser app's tests (rooks-browser/app) were skipped"
+fi
+# Real-screen tests stay opt in (ROOKS_DESK_E2E=1 with a display, as in rooks-desk/tests/test_e2e_linux.py)
+(cd rooks-desk && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore) && ok "rooks-desk" || bad "rooks-desk"
 
 if ! $QUICK; then
   step "Frontend (workbench/frontend: typecheck, build, tests)"

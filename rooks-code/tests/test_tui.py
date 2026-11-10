@@ -107,7 +107,7 @@ def test_app_models_read_as_auto_and_auto_is_listed_first(tmp_path):
     from rooks_code import cli
 
     s = type("S", (), {"model": "default", "provider": "workbench"})()
-    assert tui.model_label(s, "#999").startswith("Auto  ") and "AI Workspace app" in tui.model_label(s, "#999")
+    assert tui.model_label(s, "#999").startswith("Auto  ") and "the Rooks app" in tui.model_label(s, "#999")
 
     class Model:
         model = "default"
@@ -119,3 +119,27 @@ def test_app_models_read_as_auto_and_auto_is_listed_first(tmp_path):
     agent.s, agent.model = s, Model()
     cli.model_command(agent, cli.UI(out=io.StringIO(), color=False), "")
     assert agent._listed_models[:2] == ["auto", "auto:fast"]
+
+
+
+def test_tool_results_sit_under_a_plain_indent_and_the_app_is_called_rooks(monkeypatch, capsys):
+    """Design 0003, Terminal: the same calm look and names as the app: no decorative connector, no "AI Workspace"."""
+    import inspect
+    import io
+
+    from rooks_code import cli
+
+    out = io.StringIO()
+    ui = tui.RichUI(out=out, color=False)
+    ui.tool_note("3 matches")
+    ui._sub("done")
+    text = out.getvalue()
+    assert "⎿" not in text and "     3 matches" in text and "     done" in text, text
+
+    for mod in (cli, tui):  # first-run setup, open_app_and_link, rooks --help, the provider label
+        assert "AI Workspace" not in inspect.getsource(mod), mod.__name__
+    monkeypatch.setattr(cli.config, "app_link", lambda: {})
+    monkeypatch.setattr(cli.subprocess, "Popen", lambda *a, **k: None)
+    assert cli.open_app_and_link(wait_s=0) is False
+    said = capsys.readouterr().out
+    assert "Opening the Rooks app" in said and "The Rooks app did not answer" in said, said

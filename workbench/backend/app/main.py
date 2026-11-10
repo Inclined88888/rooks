@@ -21,9 +21,11 @@ egress.install()  # before anything connects: every outbound request is in the a
 from . import actions, api, appearance, assistant_api, bridge, browser_proxy, cli_agents_api, company, plan_signin, config, connect, db, desk_proxy, health, llm, mobile, scheduler, sites, skills_hub, telegram, work_api  # noqa: E402
 from . import terminal_pty  # noqa: E402 - #7 app terminal
 from . import compression  # AIW-Phase1: rolling compression of long chats
+from . import starters  # noqa: E402 - feat/coworkers
 from . import finetune, media  # noqa: E402 - phase 4
 from . import catalog  # noqa: E402 - model facts from models.dev
 from . import companion  # noqa: E402 - Companion: every agent's live steps, approvals and questions in one place
+from . import restart  # noqa: E402 - B3: a restart reported honestly; goals that opted in continue
 from .mcp_server import mcp, mcp_app
 from . import mcp_client_api  # noqa: E402 - feat/mcp-client: Workbench as an MCP client (the user's own servers)
 from .adapt import hooks as adapt_hooks, routes as adapt_routes  # adapt and learn (feat/learn-and-adapt)
@@ -36,27 +38,42 @@ from .tools import tools
 
 
 def _migrate_keychain() -> None:
+    """Copy anything still in the OS keychain into the database, then stop asking.
+
+    The desktop build is signed ad hoc, so "Always Allow" does not stick. Reading the same
+    item again opens the password box again. Do this once, before the window is usable.
+    """
+    import os
+
+    from . import config, keychain
     from .security import migrate_keychain_refs
 
+    log = logging.getLogger("workbench")
     try:
         migrate_keychain_refs()
-    except Exception:  # noqa: BLE001 - never block startup on this; the refs still read through the keychain
-        logging.getLogger("workbench").warning("Keychain migration failed", exc_info=True)
+    except Exception:  # noqa: BLE001 - never block startup on this
+        log.warning("Keychain migration failed", exc_info=True)
+    try:
+        from .knowledge.crypto import migrate_off_keychain
+
+        migrate_off_keychain()
+    except Exception:  # noqa: BLE001
+        log.warning("Memory key migration failed", exc_info=True)
+    if os.environ.get("WORKBENCH_DESKTOP") == "1" and config.SECRET_BACKEND != "keychain":
+        keychain.seal()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     db.init()
+    _migrate_keychain()  # once, before any page reads a saved key
     compression.init_compression_table()  # AIW-Phase1
     compression.init_summary_table()  # rolling summary of messages that fall out of the window
     finetune.ensure()  # phase 4
-    # Keychain migration on a thread: never block startup, never lose the key if denied
-    import threading
-    threading.Thread(target=_migrate_keychain, daemon=True).start()
     llm.seed_connections()
     catalog.refresh_in_background()  # newer model facts (context, price, vision) at most once a day
     api.recover_interrupted()
-    actions.recover()
+    restart.recover()  # B3: turns cut off by the restart are closed (actions.recover) and their chats are told
     company.recover()
     mobile.boot()
     loops = [asyncio.create_task(fn()) for fn in (api.calendar_loop, scheduler.loop, telegram.loop, company.loop, sites.loop)]
@@ -85,6 +102,7 @@ async def lifespan(_: FastAPI):
     tm = [(n, asyncio.create_task(fn())) for n, fn in tm_routes.background()]
     health.LOOPS.update(dict(tm))
     loops += [t for _, t in tm]
+    restart.start()  # B3: goals that asked to carry on after a restart continue now, in the background
     async with mcp.session_manager.run():
         yield
     mobile.lan_stop()
@@ -153,6 +171,21 @@ app.include_router(appearance.owner)  # the chosen look, shared with the phone a
 app.include_router(appearance.device)
 app.include_router(browser_proxy.router)
 app.include_router(desk_proxy.router)
+from . import room  # noqa: E402 - the Room (design 0003): Rooks's own computer inside the app
+
+app.include_router(room.router)
+app.include_router(room.terminal)  # /room in the terminal: status, start, stop, run, files, save, back, hand off
+from . import room_terminal  # noqa: E402 - design 0006: the Room's own terminals, kept on the server
+
+app.include_router(room_terminal.terminal)  # /room open, tail, send, close (the rooks terminal's key too)
+app.include_router(room_terminal.router)    # take a terminal from Rooks, name it: the person's
+app.include_router(room_terminal.sockets)   # the terminal's screen: loopback, same origin, signed in
+from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): the presence strip and the Needs you inbox
+
+app.include_router(presence.router)
+app.include_router(presence.pulse_router)  # GET /api/pulse: presence, Needs you, job notices and revisions in one poll
+app.include_router(needs_you.router)
+app.include_router(starters.router)  # feat/coworkers: profession setups, coworkers and job cards (design record 0004)
 app.include_router(work_api.router)  # Files (any file, analysis, sandboxed Python) and Sites (any website the user works in)
 app.include_router(skills_hub.router)  # Skills from GitHub behind the security gate
 app.include_router(mcp_client_api.router)  # feat/mcp-client: connect Workbench to the user's own MCP servers
@@ -162,6 +195,7 @@ app.include_router(adapt_routes.router)  # /api/learn: What I know about you, Sh
 adapt_hooks.register_tools()
 app.include_router(v02_api.router)  # feat/v02-automations: automations, jobs board, live documents
 app.include_router(v02_api.phone)
+app.include_router(v02_api.terminal)  # /jobs in the terminal reads the board
 auto_tools.register_tools()
 # feat/v02-anywhere-voice: Ask from anywhere, voice, meeting companion
 from . import anywhere, meetings, voice  # noqa: E402

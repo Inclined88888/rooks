@@ -9,20 +9,21 @@ test("v02 styles use theme variables only (every theme restyles them)", () => {
   const css = read("../src/v02/v02.css").replace(/\/\*[\s\S]*?\*\//g, "");
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "no hex colours");
   assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, "no literal colours");
-  assert.match(css, /prefers-reduced-motion/);
+  assert.doesNotMatch(css, /prefers-reduced-motion/, "the OS setting is honoured once, in motion/tokens.css");
+  assert.match(css, /data-motion="off"/, "still states against the motion setting");
   assert.match(css, /data-motion="full"/, "animations only under full motion");
 });
 
 test("Projects and History are in the nav and routed", () => {
+  const registry = read("../src/pages/registry.ts");
   const app = read("../src/App.tsx");
-  for (const path of ["/projects", "/history"]) {
-    assert.ok(app.includes(`{ to: "${path}"`), `${path} in NAV`);
-    assert.ok(app.includes(`<Route path="${path}"`), `${path} routed`);
-  }
+  for (const path of ["/projects", "/history"]) assert.ok(registry.includes(`{ path: "${path}"`), `${path} registered`);
+  assert.ok(registry.includes('also: ["/projects/:id"]'), "a project page is routed");
+  assert.match(app, /PAGES\.flatMap\(/, "every registered page becomes a route");
 });
 
 test("chat has the project switcher, the check toggle and Check this", () => {
-  const chat = read("../src/pages/Assistant.tsx");
+  const chat = ["../src/pages/Assistant.tsx", "../src/chat/ThreadHeader.tsx", "../src/chat/Thread.tsx"].map(read).join("\n"); // the chat page is split (package F2)
   for (const c of ["<ProjectSwitcher", "<CheckToggle", "<CheckThis"]) assert.ok(chat.includes(c), c);
 });
 

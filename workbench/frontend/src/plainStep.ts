@@ -14,6 +14,25 @@ function clip(text: string, n = 72): string {
   return t.length > n ? `${t.slice(0, n - 1)}…` : t;
 }
 
+/** The Room (use_room): one sentence per action, with what it does there. Mirror the backend's presence vocabulary. */
+const ROOM: Record<string, (args: string) => string> = {
+  status: () => "Checking the Room",
+  up: (a) => withSubject("Starting the Room", field(a, "goal")),
+  down: () => "Stopping the Room",
+  run: (a) => withSubject("Running in the Room", field(a, "command")),
+  checkpoint: (a) => withSubject("Saving a point in the Room", field(a, "label")),
+  reset: (a) => {
+    const name = field(a, "name");
+    return name ? `Starting the Room over from ${clip(name)}` : "Starting the Room over";
+  },
+  handoff: (a) => withSubject("Copying a file out of the Room", field(a, "src")),
+  // design 0006: a long command in a Room terminal (an install, a build, a server: what it is, not a guess), and
+  // watching it (presence.py _ROOM says the same)
+  start: (a) => withSubject("Running in the Room's terminal", field(a, "command")),
+  tail: () => "Watching the Room's terminal",
+  files: () => "Looking through the Room's files",
+};
+
 const SAY: Record<string, (args: string) => string> = {
   web_search: (a) => withSubject("Searching", field(a, "query")),
   read_page: () => "Reading a page",
@@ -40,6 +59,7 @@ const SAY: Record<string, (args: string) => string> = {
   edit_file: () => "Editing a file",
   run_command: () => "Running something on this computer",
   use_computer: () => "Using this computer",
+  use_room: (a) => (ROOM[field(a, "action").toLowerCase()] ?? (() => "Using the Room"))(a),
   remember: () => "Remembering that",
   forget: () => "Forgetting that",
   search_memory: () => "Looking through what it remembers",

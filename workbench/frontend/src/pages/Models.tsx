@@ -1,8 +1,11 @@
-import { ArrowDown, ArrowUp, Cloud, Cpu, KeyRound, Loader2, RotateCcw, Sparkles, ChevronRight } from "lucide-react";
+import { ArrowDown, ArrowUp, BadgeCheck, Cloud, Cpu, KeyRound, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { Badge, Button, EmptyState, ErrorState, IconButton, Loading, Page, Section, Select } from "../ui";
+import { errorText } from "../ui/toast";
 import { quotaText, resetTime, RouterQuota, useToast } from "../util";
 import { Providers } from "./Settings";
+import { Advanced, Notice, SettingRow, SettingsGroup, Switch } from "./settings/index";
 
 /** The smart router, laid out: who answers first, which model each provider uses for quick and for hard jobs,
  * and how much free quota is left. */
@@ -25,18 +28,19 @@ function kindLabel(r: Row) {
 function Meter({ q }: { q: RouterQuota }) {
   if (q.limit == null || q.remaining == null || q.window !== "day") return null;
   const pct = Math.max(0, Math.min(100, (q.remaining / q.limit) * 100));
-  return <div className="meter" aria-label={`${Math.round(pct)}% left`}><div style={{ width: `${pct}%` }} /></div>;
+  return <div className="st-meter" role="img" aria-label={`${Math.round(pct)}% left`}><div style={{ width: `${pct}%` }} /></div>;
 }
 
 export default function Models() {
   const [s, setS] = useState<Status | null>(null);
+  const [failed, setFailed] = useState("");
   const [def, setDef] = useState("");
   const toast = useToast();
-  const load = () => api<Status>("/router").then(setS).catch(toast.err);
+  const load = () => api<Status>("/router").then((r) => { setS(r); setFailed(""); }).catch((e) => setFailed(errorText(e)));
   useEffect(() => {
     load();
     api<{ default: string }>("/models").then((m) => setDef(m.default)).catch(() => undefined);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = async (body: Partial<Status["settings"]>) => {
     try { setS(await api<Status>("/router", { method: "PUT", body })); } catch (e) { toast.err(e); }
@@ -56,83 +60,84 @@ export default function Models() {
     save({ models: m });
   };
   const useAuto = async () => {
-    await api("/settings", { method: "PUT", body: { default_model: "auto" } });
-    setDef("auto");
-    toast.ok("New chats use the smart router");
+    try {
+      await api("/settings", { method: "PUT", body: { default_model: "auto" } });
+      setDef("auto");
+      toast.ok("New chats use the smart router");
+    } catch (e) { toast.err(e); }
+  };
+  const retryNow = async (r: Row) => {
+    try { setS(await api<Status>(`/router/reset/${r.id}`, { method: "POST" })); } catch (e) { toast.err(e); }
   };
 
   return (
-    <div className="page models-page" style={{ maxWidth: 980 }}>
-      <div className="page-head col" style={{ alignItems: "flex-start", gap: 6 }}>
-        <h1>AI models</h1>
-        <p className="lede">Connect the AI you want to use. With more than one, quick jobs go to a fast model, real work to a strong one, and when one runs out for the day the next picks up.</p>
-      </div>
-      <Providers onChange={load} />
+    <Page title="AI models" className="st-page"
+      description="Connect the AI you want to use. With more than one, quick jobs go to a fast model, real work to a strong one, and when one runs out for the day the next picks up.">
       {def && !def.startsWith("auto") && (
-        <div className="alert row">Chats use a fixed model right now. <div className="spacer" /><button className="btn sm primary" onClick={useAuto}>Use the smart router</button></div>
+        <div className="st-notice-gap">
+          <Notice action={<Button size="sm" variant="primary" onClick={useAuto}>Use the smart router</Button>}>Chats use a fixed model right now.</Notice>
+        </div>
       )}
-      {!s && <Loader2 className="spin" size={18} />}
-      {s && routed.length > 0 && (
-        <>
-          <h2 style={{ marginTop: 28 }}>Which model does what</h2>
-          <div className="tier-strip">
-            <div><span className="kicker">Quick jobs</span><strong>{s.tiers.fast ?? "Nothing connected"}</strong><span className="muted small">summaries, titles, memory</span></div>
-            <div><span className="kicker">Real work</span><strong>{s.tiers.strong ?? "Nothing connected"}</strong><span className="muted small">chat with tools, research, browser, Rooks Code</span></div>
-          </div>
-          <p className="muted small">Auto handles this for you. Open the list below only if you want to change the order or pin a model.</p>
-          <details className="settings-more">
-          <summary><ChevronRight size={13} /> Change which model answers ({routed.length} connected)</summary>
-          <ol className="route-list">
-            {routed.map((r, i) => (
-              <li key={r.id} className={`route-item ${r.disabled ? "off" : ""} ${r.quota.cooling_until ? "cooling" : ""}`}>
-                <div className="route-n">{String(i + 1).padStart(2, "0")}</div>
-                <div className="route-main">
-                  <div className="row" style={{ gap: 10 }}>
-                    {r.auth_kind === "oauth_subscription" || r.auth_kind === "cli_subscription" ? <Sparkles size={15} /> : r.local ? <Cpu size={15} /> : r.free ? <Cloud size={15} /> : <KeyRound size={15} />}
-                    <strong className="route-name">{r.name}</strong>
-                    <span className={`tag-kind ${r.free ? "free" : ""}`}>{kindLabel(r)}</span>
-                    {r.quota.cooling_until && <span className="badge warn">Resting until {resetTime(r.quota.cooling_until)} · {r.quota.cooling_reason}</span>}
-                    {r.state === "needs_auth" && <span className="badge danger">Sign in again</span>}
-                  </div>
-                  <div className="route-models">
-                    {(["fast", "strong"] as const).map((tier) => (
-                      <label key={tier} className="route-model">
-                        <span className="kicker">{tier === "fast" ? "Fast" : "Strong"}</span>
-                        <select className="input sm" value={s.settings.models[String(r.id)]?.[tier] ?? ""} onChange={(e) => pickModel(r, tier, e.target.value)} disabled={r.disabled}>
-                          <option value="">{(r[tier] ?? "none").split("/").pop()} (auto)</option>
-                          {r.models.map((m) => <option key={m} value={m}>{m}</option>)}
-                        </select>
-                      </label>
-                    ))}
-                  </div>
-                  <div className="route-quota">
-                    <span>{quotaText(r.quota, r.auth_kind === "oauth_subscription")}</span>
-                    <Meter q={r.quota} />
-                    {r.free && <span className="faint">resets {resetTime(r.quota.resets_at)}</span>}
-                    {r.quota.note && <span className="faint">{r.quota.note}</span>}
-                  </div>
-                </div>
-                <div className="route-actions">
-                  <button className="btn ghost sm icon" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)}><ArrowUp size={14} /></button>
-                  <button className="btn ghost sm icon" aria-label="Move down" disabled={i === routed.length - 1} onClick={() => move(i, 1)}><ArrowDown size={14} /></button>
-                  {r.quota.cooling_until && (
-                    <button className="btn ghost sm icon" aria-label="Try again now" title="Try again now" onClick={async () => setS(await api<Status>(`/router/reset/${r.id}`, { method: "POST" }))}><RotateCcw size={14} /></button>
-                  )}
-                  <label className="switch-label small"><input type="checkbox" checked={!r.disabled} onChange={() => toggle(r)} /> Use</label>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <div className="row wrap" style={{ gap: 14 }}>
-            {s.providers.some((p) => p.local) && (
-              <label className="switch-label small"><input type="checkbox" checked={s.settings.local_fallback} onChange={(e) => save({ local_fallback: e.target.checked })} />
-                Fall back to local Ollama when every cloud provider is out</label>
-            )}
-          </div>
-          <p className="faint small">The order is who answers first. The terminal (rooks) and the Browser agent use these same models.</p>
-          </details>
-        </>
-      )}
-    </div>
+      <Providers onChange={load} />
+      <Section title="Which model does what" description="Auto handles this for you. Change the order or pin a model only if you want to.">
+        {failed && !s ? <ErrorState title="The model list did not load" line={failed} onRetry={load} />
+          : !s ? <Loading rows={3} label="Loading which model does what" />
+          : routed.length === 0 ? <EmptyState title="Nothing connected yet" line="Sign in with a plan or paste a key above, and the models show up here." />
+          : (
+            <div className="st-stack">
+              <div className="st-tiers">
+                <div className="st-tier"><span className="st-tier-label">Quick jobs</span><span className="st-tier-model">{s.tiers.fast ?? "Nothing connected"}</span><span className="st-tier-line">Summaries, titles, memory</span></div>
+                <div className="st-tier"><span className="st-tier-label">Real work</span><span className="st-tier-model">{s.tiers.strong ?? "Nothing connected"}</span><span className="st-tier-line">Chat with tools, research, browser, Rooks Code</span></div>
+              </div>
+              <Advanced label={`Change which model answers (${routed.length} connected)`}>
+                <ol className="st-group st-routes" aria-label="Who answers first">
+                  {routed.map((r, i) => (
+                    <li key={r.id} className={`st-route${r.disabled ? " is-off" : ""}`}>
+                      <span className="st-route-n">{i + 1}</span>
+                      <div className="st-route-main">
+                        <div className="st-route-head">
+                          {r.auth_kind === "oauth_subscription" || r.auth_kind === "cli_subscription" ? <BadgeCheck size={15} /> : r.local ? <Cpu size={15} /> : r.free ? <Cloud size={15} /> : <KeyRound size={15} />}
+                          <span className="st-plan-name">{r.name}</span>
+                          <Badge tone={r.free ? "ok" : "neutral"}>{kindLabel(r)}</Badge>
+                          {r.quota.cooling_until && <Badge tone="warn">Resting until {resetTime(r.quota.cooling_until)} · {r.quota.cooling_reason}</Badge>}
+                          {r.state === "needs_auth" && <Badge tone="danger">Sign in again</Badge>}
+                        </div>
+                        <div className="st-route-models">
+                          {(["fast", "strong"] as const).map((tier) => (
+                            <Select key={tier} label={tier === "fast" ? "Fast" : "Strong"} value={s.settings.models[String(r.id)]?.[tier] ?? ""} onChange={(e) => pickModel(r, tier, e.target.value)} disabled={r.disabled}>
+                              <option value="">{(r[tier] ?? "none").split("/").pop()} (auto)</option>
+                              {r.models.map((m) => <option key={m} value={m}>{m}</option>)}
+                            </Select>
+                          ))}
+                        </div>
+                        <div className="st-route-quota">
+                          <span>{quotaText(r.quota, r.auth_kind === "oauth_subscription")}</span>
+                          <Meter q={r.quota} />
+                          {r.free && <span>resets {resetTime(r.quota.resets_at)}</span>}
+                          {r.quota.note && <span>{r.quota.note}</span>}
+                        </div>
+                      </div>
+                      <div className="st-route-actions">
+                        <IconButton size="sm" label="Move up" disabled={i === 0} onClick={() => move(i, -1)}><ArrowUp size={14} /></IconButton>
+                        <IconButton size="sm" label="Move down" disabled={i === routed.length - 1} onClick={() => move(i, 1)}><ArrowDown size={14} /></IconButton>
+                        {r.quota.cooling_until && <IconButton size="sm" label="Try again now" onClick={() => retryNow(r)}><RotateCcw size={14} /></IconButton>}
+                        <Switch checked={!r.disabled} onChange={() => toggle(r)} label={`Use ${r.name}`} />
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                {s.providers.some((p) => p.local) && (
+                  <SettingsGroup>
+                    <SettingRow label="Fall back to this computer" help="Use local Ollama when every cloud provider is out.">
+                      <Switch checked={s.settings.local_fallback} onChange={(on) => save({ local_fallback: on })} label="Fall back to local Ollama when every cloud provider is out" />
+                    </SettingRow>
+                  </SettingsGroup>
+                )}
+                <p className="st-small">The order is who answers first. The terminal (rooks) and the Browser agent use these same models.</p>
+              </Advanced>
+            </div>
+          )}
+      </Section>
+    </Page>
   );
 }

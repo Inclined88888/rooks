@@ -101,13 +101,13 @@ def test_rooks_runs_on_the_apps_shared_loop_and_the_edit_is_approved_in_the_term
                   env={"WORKBENCH_URL": app.url, "WORKBENCH_API_KEY": token})
         out = r.stdout + r.stderr
         assert r.returncode == 0, out
-        assert "Linked to Workbench conversation #" in out
-        cid = int(out.split("Linked to Workbench conversation #")[1].split()[0])
+        assert "Linked to the app's chat" in out and "#" not in out.split("Linked to the app's chat")[1].splitlines()[0]
+        cid = next(c["id"] for c in app.call("GET", "/api/conversations") if c.get("channel") == "cli")
 
         # the change really happened, after the diff and the prompt
         assert (project / "calc.py").read_text() == "def add(a, b):\n    return a + b\n"
         assert "-    return a - b" in out and "+    return a + b" in out
-        assert f"Also waiting in the app (Approvals #" in out
+        assert "Also waiting in Needs you in the app. Answer here or there." in out
         assert "Fixed add()" in out
 
         # the app saw the same turn: one conversation, the delegated step, the final answer
@@ -120,9 +120,16 @@ def test_rooks_runs_on_the_apps_shared_loop_and_the_edit_is_approved_in_the_term
         assert tool_msg["content"].startswith("edited calc.py")
 
         # the approval was recorded once, answered in the terminal, with the diff the app's card renders
-        aid = int(out.split("Approvals #")[1].split(")")[0])
-        st = app.call("GET", f"/v1/rooks/approvals/{aid}", token=token)
-        assert st["status"] == "approved"
+        # (the terminal no longer prints the id: it is found the way the app finds terminal approvals, by asking)
+        import urllib.error
+
+        found = []
+        for aid in range(1, 60):
+            try:
+                found.append(app.call("GET", f"/v1/rooks/approvals/{aid}", token=token))
+            except urllib.error.HTTPError as e:
+                assert e.code == 404
+        assert [st["status"] for st in found] == ["approved"]
         assert not [a for a in app.call("GET", f"/api/approvals?conversation_id={cid}") if a["status"] == "pending"]
 
         # the model was never asked to run the workspace's own read_file/edit tools: it got the terminal's

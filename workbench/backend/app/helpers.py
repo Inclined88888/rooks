@@ -10,11 +10,11 @@ import threading
 from pathlib import Path
 
 HELPERS = {
-    "tesseract": {"label": "Tesseract", "why": "reads scanned pages and photos of text", "brew": ["brew", "install", "--quiet", "tesseract"],
+    "tesseract": {"label": "Text reader", "why": "reads words in scanned pages and photos", "brew": ["brew", "install", "--quiet", "tesseract"],
                   "winget": "UB-Mannheim.TesseractOCR", "apt": "tesseract-ocr"},
-    "ffmpeg": {"label": "FFmpeg", "why": "reads video length and details", "brew": ["brew", "install", "--quiet", "ffmpeg"],
+    "ffmpeg": {"label": "Video reader", "why": "reads how long a video is", "brew": ["brew", "install", "--quiet", "ffmpeg"],
                "winget": "Gyan.FFmpeg", "apt": "ffmpeg"},
-    "libreoffice": {"label": "LibreOffice", "why": "opens old .doc, .xls and .ppt files", "brew": ["brew", "install", "--cask", "--quiet", "libreoffice"],
+    "libreoffice": {"label": "Older documents", "why": "opens older Word, Excel and PowerPoint files", "brew": ["brew", "install", "--cask", "--quiet", "libreoffice"],
                     "winget": "TheDocumentFoundation.LibreOffice", "apt": "libreoffice"},
 }
 

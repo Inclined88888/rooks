@@ -5,6 +5,8 @@ import { ShieldCheck } from "lucide-react";
 import { api } from "../api";
 import { tierLabel } from "../packs/logic";
 import { useToast } from "../util";
+import { Badge, Button, EmptyState, ErrorState, Loading, Page } from "../ui";
+import { plainError } from "./agents/kit";
 import "../packs/packs.css";
 
 type Gate = Record<string, { risk: string; findings: number; extra_permissions: string[] }>;
@@ -15,9 +17,10 @@ export type Pack = {
 
 export default function Packs() {
   const [packs, setPacks] = useState<Pack[] | null>(null);
+  const [err, setErr] = useState<unknown>(null);
   const [busy, setBusy] = useState("");
   const toast = useToast();
-  const load = () => api<Pack[]>("/packs").then(setPacks).catch(toast.err);
+  const load = () => api<Pack[]>("/packs").then((p) => { setPacks(p); setErr(null); }).catch(setErr);
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const act = async (p: Pack, what: "add" | "remove") => {
@@ -31,43 +34,38 @@ export default function Packs() {
   };
 
   return (
-    <div className="page" style={{ maxWidth: 1120 }}>
-      <div className="page-head">
-        <div>
-          <p className="kicker">Your work</p>
-          <h1>Packs</h1>
-          <p className="muted">Shortcuts for the work you do. Add one in a click, remove it any time. Your assistant works the same without them.</p>
-        </div>
-      </div>
-      <div className="pk-gallery">
-        {(packs ?? []).map((p, i) => (
+    <Page wide className="ag-page pk-page" kicker="Your work" title="Packs"
+      description="Shortcuts for the work you do. Add one in a click, remove it any time. Your assistant works the same without them.">
+      {err && !packs ? <ErrorState title="The packs did not load" line={plainError(err)} onRetry={load} />
+        : !packs ? <Loading rows={3} />
+        : !packs.length ? <EmptyState title="No packs here yet" line="Packs arrive with updates; your assistant works the same without them." />
+        : <div className="pk-gallery">
+        {packs.map((p) => (
           <section key={p.id} className="pk-tile" aria-labelledby={`pk-${p.id}`}>
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <span className="pk-num" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
-              <span className={`badge ${p.tier === "free" ? "ok" : "accent"}`}>{tierLabel(p.tier, p.allowed)}</span>
+            <div className="pk-between">
+              <h2 id={`pk-${p.id}`} className="pk-title">{p.name}</h2>
+              <Badge tone={p.tier === "free" ? "ok" : "neutral"}>{tierLabel(p.tier, p.allowed)}</Badge>
             </div>
-            <h2 id={`pk-${p.id}`} className="pk-serif">{p.name}</h2>
-            <p className="muted" style={{ margin: 0 }}>{p.tagline}</p>
-            <p className="label" style={{ margin: 0 }}>For {p.for.toLowerCase()}</p>
+            <p className="ag-note">{p.tagline}</p>
+            <p className="ag-meta">For {p.for.toLowerCase()}</p>
             <ul>{p.includes.map((x) => <li key={x}>{x}</li>)}</ul>
             {p.installed && (
               <div className="pk-gate-result" aria-label="Security check">
-                <span className="ok"><ShieldCheck size={12} /> {Object.keys(p.gate).length} skills passed the security check</span>
+                <span className="ok"><ShieldCheck size={12} aria-hidden="true" /> {Object.keys(p.gate).length} skills passed the security check</span>
                 {Object.entries(p.gate).map(([n, g]) => <span key={n}>{n}: {g.risk} risk, {g.findings} findings</span>)}
               </div>
             )}
             <div className="pk-foot">
               {p.installed ? <>
-                <Link className="btn primary" to={p.page}>Open</Link>
-                <button className="btn ghost" disabled={busy === p.id} onClick={() => act(p, "remove")}>Remove</button>
+                <Link className="ui-btn ui-btn-primary" to={p.page}>Open</Link>
+                <Button variant="ghost" busy={busy === p.id} onClick={() => act(p, "remove")}>Remove</Button>
               </> : (
-                <button className="btn primary" disabled={!!busy} onClick={() => act(p, "add")}>{busy === p.id ? "Checking…" : "Add"}</button>
+                <Button variant="primary" busy={busy === p.id} disabled={!!busy && busy !== p.id} onClick={() => act(p, "add")}>{busy === p.id ? "Checking…" : "Add"}</Button>
               )}
             </div>
           </section>
         ))}
-      </div>
-      {toast.node}
-    </div>
+      </div>}
+    </Page>
   );
 }

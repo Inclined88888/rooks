@@ -179,7 +179,7 @@ def test_learning_with_the_app(app, tmp_path):
     assert "Name is Azad" in ctx and "weekly-report" in ctx
     assert {x["name"] for x in learn.specs()} == {"remember", "load_skill"}
     assert learn.prepare("load_skill", {"name": "weekly-report"}).apply()[0].endswith("1. read sales.csv")
-    assert learn.remember("Uses pnpm, not npm") == "Saved to your AI Workspace memory."
+    assert learn.remember("Uses pnpm, not npm") == "Saved to your Rooks memory."
     msgs = [{"role": "user", "content": "make it"},
             {"role": "assistant", "content": "", "tool_calls": [{"id": "c1", "function": {"name": "read_file", "arguments": "{}"}}]},
             {"role": "tool", "tool_call_id": "c1", "content": "1|a"},

@@ -26,9 +26,15 @@ for pkg in ("trafilatura", "justext", "htmldate", "courlan", "tzdata", "keyring"
     binaries += b
     hiddenimports += h
 
+TRY = REPO / "rooks-try"
+_pathex = [str(BACKEND)]
+if (TRY / "rooks_try").is_dir():
+    _pathex.append(str(TRY))
+    hiddenimports += collect_submodules("rooks_try")
+
 a = Analysis(
     [str(Path(SPECPATH) / "workbench_server.py")],
-    pathex=[str(BACKEND)],
+    pathex=_pathex,
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

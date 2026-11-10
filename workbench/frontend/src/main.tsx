@@ -4,15 +4,12 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./tokens.css";
 import "./styles.css";
+import "./ui/ui.css";
+import "./shell/shell.css";
 import "./appearance.css";
 import "./code.css";
 import "./skills.css";
 import "./models.css";
-import "./motion.css";
-import "./sunshine.css";
-import "./themes.css";
-import "./motion/tokens.css";
-import "./motion/signature.css";
 import { applyTo, readAppearance } from "./appearance";
 import { startThemeSync } from "./themeSync";
 

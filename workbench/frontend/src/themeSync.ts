@@ -12,17 +12,22 @@ import { inDesktopShell, invoke } from "./desktop";
  */
 let timer: ReturnType<typeof setTimeout> | undefined;
 
+/** The backend (and Rooks Code, Rooks Browser and the phone that read it) still know the older theme names: Light is
+ *  saved as "gallery" and Dark as "night"; High contrast and Match my computer keep their own. */
+const REMOTE: Record<string, string> = { light: "gallery", dark: "night", contrast: "contrast", auto: "auto" };
+
 export function saveAppearanceRemote(a: Appearance) {
   clearTimeout(timer);
   timer = setTimeout(() => {
-    api("/appearance", { method: "PUT", body: { ...a, resolved: resolveTheme(a.theme), dark: isDark(a.theme) } }).catch(() => undefined);
+    const body = { ...a, theme: REMOTE[a.theme], resolved: REMOTE[resolveTheme(a.theme)], dark: isDark(a.theme), accent: "theme" };
+    api("/appearance", { method: "PUT", body }).catch(() => undefined);
   }, 250);
 }
 
 export async function applyWindowChrome(a: Appearance) {
   if (!inDesktopShell()) return;
   const id = resolveTheme(a.theme);
-  const bg = THEMES.find((t) => t.id === id)?.swatch.paper ?? "#fffdf8";
+  const bg = THEMES.find((t) => t.id === id)?.swatch.paper ?? "#fafaf9";
   const theme = isDark(a.theme) ? "dark" : "light";
   // Tauri 2 core window commands (granted in desktop/src-tauri/capabilities/default.json). Older shells ignore them.
   await invoke("plugin:window|set_theme", { label: "main", value: a.theme === "auto" ? null : theme }).catch(() => undefined);

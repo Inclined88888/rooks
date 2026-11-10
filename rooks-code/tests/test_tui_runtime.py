@@ -49,7 +49,7 @@ def test_init_command_has_a_real_prompt():
 
 
 def test_tui_has_no_shadowed_definitions():
-    tree = ast.parse(Path(tui.__file__).read_text())
+    tree = ast.parse(Path(tui.__file__).read_text(encoding="utf-8"))
     for node in [tree, *(n for n in ast.walk(tree) if isinstance(n, ast.ClassDef))]:
         names = Counter(n.name for n in node.body if isinstance(n, (ast.ClassDef, ast.FunctionDef)))
         assert not {name: count for name, count in names.items() if count > 1}

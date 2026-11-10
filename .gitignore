@@ -1,6 +1,9 @@
 .env
 node_modules/
 dist/
+# The built web UI is committed so the one-command install needs no Node.js. Ignoring it made `git add` skip every
+# newly hashed file while still recording the new index.html, which shipped a blank window.
+!/workbench/frontend/dist/
 __pycache__/
 *.pyc
 .venv/
@@ -17,3 +20,26 @@ out/
 
 # SwiftPM build output
 companion/macos/.build/
+
+# Local desktop installers (too large for git)
+dist-installers/
+desktop/rooks-native/target/
+
+# Secrets and local data: never commit (see SECURITY_TOOLING.md)
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.db
+*.sqlite
+*.sqlite3
+app_secret
+tools_api_key
+
+# TypeScript's incremental build cache (tsc -b rewrites it on every build)
+*.tsbuildinfo
+
+# Scratch worktrees made by Claude Code review agents
+.claude/worktrees/

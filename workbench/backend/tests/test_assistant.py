@@ -95,13 +95,91 @@ def test_schedule_runs_and_delivers_to_inbox(client):
     assert "schedule_task" not in {t["function"]["name"] for t in last.get("tools", [])}
 
 
+def test_named_assistant_offers_real_choice_cards(client):
+    assert client.put("/api/assistant/settings", json={"assistant_name": "  Sam  "}).json()["assistant_name"] == "Sam"
+    from app.assistant import Ctx, system_prompt
+
+    web = system_prompt(Ctx(channel="web", conversation_id=1), "hi")
+    assert "You are Sam," in web and "offer_choices" in web
+    tele = system_prompt(Ctx(channel="telegram", conversation_id=1), "hi")
+    assert "You are Sam," in tele and "offer_choices" not in tele
+
+    SCRIPT[:] = [
+        tool_call("offer_choices", {"question": "Which day?", "options": "Monday | Tuesday | Monday | Friday"}),
+        {"role": "assistant", "content": "Pick a day."},
+    ]
+    ev = events(client.post("/api/assistant/chat", json={"message": "book a visit"}))
+    types = [e["type"] for e in ev]
+    ch = next(e for e in ev if e["type"] == "choices")
+    assert ch["options"] == ["Monday", "Tuesday", "Friday"] and ch["question"] == "Which day?"
+    assert types.index("choices") < types.index("message")
+    cid = ev[0]["conversation_id"]
+    msgs = client.get(f"/api/conversations/{cid}").json()["messages"]
+    reply = next(m for m in msgs if m["role"] == "assistant" and m["content"] == "Pick a day.")
+    assert reply["choices"]["options"] == ["Monday", "Tuesday", "Friday"]
+
+    SCRIPT[:] = [{"role": "assistant", "content": "1. Tuesday\n2. Friday\nWhich one?"}]
+    ev2 = events(client.post("/api/assistant/chat", json={"message": "Monday", "conversation_id": cid}))
+    assert not [e for e in ev2 if e["type"] == "choices"]
+    again = client.get(f"/api/conversations/{cid}").json()["messages"]
+    prose = next(m for m in again if m["content"].startswith("1. Tuesday"))
+    assert "choices" not in prose
+    from app import db
+    db.set_setting("assistant_name", "Atlas")
+
+
+def test_renaming_the_assistant_renames_the_default_teammate(client):
+    from app import db
+    from app.teammates import store
+
+    db.set_setting("assistant_name", "Atlas")
+    store.seed_default()
+    # Through the API, so the default teammate is renamed too: an earlier test may have renamed it to Sam
+    assert client.put("/api/assistant/settings", json={"assistant_name": "Atlas"}).status_code == 200
+    client.post("/api/teammates", json={"name": "Sam"})
+    assert client.put("/api/assistant/settings", json={"assistant_name": "Sam"}).status_code == 200
+    mates = {t["name"]: t for t in client.get("/api/teammates").json()["teammates"]}
+    assert mates["Sam"]["is_default"] is False  # the name was already taken, so the default stays
+    default = next(t for t in mates.values() if t["is_default"])
+    assert default["name"] != "Sam"
+    client.put("/api/assistant/settings", json={"assistant_name": "Riley"})
+    mates = {t["name"]: t for t in client.get("/api/teammates").json()["teammates"]}
+    assert mates["Riley"]["is_default"] is True
+
+
+def test_home_lists_unread_results_under_the_assistant_name(client):
+    from app import db
+
+    db.set_setting("assistant_name", "Riley")
+    db.run("INSERT INTO inbox(title, body, source, read, created_at) VALUES (?, ?, ?, ?, ?)",
+           "Morning note", "You have two meetings.", "schedule", 0, db.now())
+    db.run("INSERT INTO inbox(title, body, source, read, created_at) VALUES (?, ?, ?, ?, ?)",
+           "Old note", "Already seen.", "schedule", 1, db.now())
+    dash = client.get("/api/dashboard").json()
+    assert dash["assistant_name"] == "Riley"
+    titles = [i["title"] for i in dash["arrived"]]
+    assert "Morning note" in titles and "Old note" not in titles
+    note = next(i for i in dash["arrived"] if i["title"] == "Morning note")
+    assert note["body"] == "You have two meetings."
+    db.set_setting("assistant_name", "Atlas")
+
+
 def test_timezone_validation(client):
     assert client.put("/api/assistant/settings", json={"timezone": "Mars/Base"}).status_code == 400
     assert client.put("/api/assistant/settings", json={"timezone": "Australia/Sydney"}).json()["timezone"] == "Australia/Sydney"
 
 
-def test_company_delegation_and_budget_pause(client):
+def test_company_delegation_and_budget_pause(client, monkeypatch):
     from app import company, db
+
+    # The app's background worker (company.loop, every 10 s) picks up queued tasks on its own. Keep it out of this
+    # test so a delegated task stays queued until the test runs it; the test drives run_task directly.
+    run_task = company.run_task
+
+    async def _worker_paused(task_id: int) -> None:
+        return None
+
+    monkeypatch.setattr(company, "run_task", _worker_paused)
 
     ceo = client.post("/api/company/agents", json={"name": "Ava", "title": "CEO", "monthly_budget_cents": 0, "monthly_token_limit": 100000}).json()
     eng = client.post("/api/company/agents", json={"name": "Kai", "title": "Engineer", "reports_to": ceo["id"], "monthly_token_limit": 1000}).json()
@@ -114,13 +192,13 @@ def test_company_delegation_and_budget_pause(client):
                       if "nurse rostering" in msgs[0]["content"] and "Ava" in msgs[0]["content"] else {"role": "assistant", "content": "NO CONTEXT"}),
         {"role": "assistant", "content": "Roadmap drafted; Kai is estimating."},
     ]
-    asyncio.run(company.run_task(t["id"]))
+    asyncio.run(run_task(t["id"]))
     tasks = {x["title"]: x for x in client.get("/api/company").json()["tasks"]}
     assert tasks["Draft the roadmap"]["status"] == "done"
     assert tasks["Estimate effort"]["status"] == "queued" and tasks["Estimate effort"]["agent_name"] == "Kai"
     # Budgets are checked before each model call, so one call (1500 tokens) may overshoot the 1000 limit; the next check pauses him
     SCRIPT[:] = [tool_call("list_tasks", {}), {"role": "assistant", "content": "never reached"}]
-    asyncio.run(company.run_task(tasks["Estimate effort"]["id"]))
+    asyncio.run(run_task(tasks["Estimate effort"]["id"]))
     kai = db.one("SELECT * FROM agents WHERE id = ?", eng["id"])
     assert kai["status"] == "paused" and "token limit" in kai["paused_reason"]
     assert db.one("SELECT status FROM agent_tasks WHERE id = ?", tasks["Estimate effort"]["id"])["status"] == "blocked"

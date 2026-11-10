@@ -13,10 +13,11 @@ from pydantic import BaseModel, Field
 
 from . import automations, jobs, livedocs
 from .mobile import require_device
-from .security import require_user
+from .security import require_user, require_user_or_terminal
 
 router = APIRouter(prefix="/api", dependencies=[Depends(require_user)])
 phone = APIRouter(prefix="/api/mobile")
+terminal = APIRouter(prefix="/api", dependencies=[Depends(require_user_or_terminal)])  # the rooks terminal's /jobs reads the board
 
 
 # --- automations -----------------------------------------------------------------------------------------------------------
@@ -132,7 +133,7 @@ class JobIn(BaseModel):
     title: str = Field("", max_length=120)
 
 
-@router.get("/jobs")
+@terminal.get("/jobs")
 def board():
     return jobs.board()
 

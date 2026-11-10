@@ -17,8 +17,8 @@ from .adapters import ALLOWED, validate
 from .db import OFFICIAL_HOSTS
 from .redact import redact, redact_obj
 from .security import (
-    COOKIE, check_session, decrypt, encrypt, forget_connection_secret, hash_password, make_session, require_user,
-    store_connection_secret, throttle, verify_password,
+    COOKIE, check_bearer, check_native_key, check_session, decrypt, encrypt, forget_connection_secret, hash_password, make_session,
+    require_user, store_connection_secret, throttle, verify_password,
 )
 
 public = APIRouter(prefix="/api")
@@ -71,6 +71,20 @@ def status(request: Request):
         "welcome_pending": db.get_setting("desktop_welcome_done") == "0",
         "trade": _trade(),
     }
+
+
+@api.post("/browser/pair/start")
+def browser_pair_start():
+    from . import surfaces
+
+    return surfaces.start_pair()
+
+
+@api.get("/surfaces")
+def surfaces_status():
+    from . import surfaces
+
+    return surfaces.status()
 
 
 @api.get("/connections/doctor")
@@ -151,6 +165,26 @@ def desktop_session(token: str, request: Request):
     return response
 
 
+# Native window attaching to a service that is already up: it reads native.json (its own key, written only for it by the
+# sidecar) and trades that key for a session cookie here. Loopback only. Neither the shared app.json key nor the tools
+# key (handed to add-ons and the Room's server) signs in: the native key is the only way in without a password.
+@public.post("/desktop/local-session")
+def desktop_local_session(request: Request, response: Response):
+    host = request.client.host if request.client else ""
+    if host not in ("127.0.0.1", "::1", "localhost", "testclient"):
+        throttle(host or "?")
+        raise HTTPException(403, "Only on this computer")
+    if not check_native_key(request):
+        throttle(host or "?")
+        raise HTTPException(401, "Invalid key")
+    if db.get_setting("setup_complete") != "1":
+        db.set_setting("password_hash", hash_password(secrets.token_urlsafe(32)))
+        db.set_setting("setup_complete", "1")
+        services.local_calendar_id()
+    _login(response)
+    return {"ok": True}
+
+
 # The launcher (`ai-workspace`) opens the app in a Chrome/Edge window. Putting the launch token on that browser's command
 # line would show it to other local users (ps), so the launcher trades it for a one-time code that expires in two
 # minutes, and opens /api/desktop/handoff?code=... instead.
@@ -196,6 +230,16 @@ def desktop_handoff(code: str, request: Request):
 
 class LoginIn(BaseModel):
     password: str
+
+
+@public.post("/browser/pair/claim")
+def browser_pair_claim(data: dict):
+    """A browser that is not signed in trades a one-time code for a token. The code is made while signed in."""
+    from . import surfaces
+
+    throttle("pair")
+    code = str((data or {}).get("code") or "")
+    return surfaces.claim(code)
 
 
 @public.post("/login")
@@ -651,6 +695,8 @@ def dashboard():
         "research": db.all("SELECT id, question, status, created_at FROM research ORDER BY id DESC LIMIT 5"),
         "customers": customers,
         "trade": _trade(),
+        "assistant_name": db.get_setting("assistant_name", "Atlas") or "Atlas",
+        "arrived": db.all("SELECT id, title, body, source, created_at FROM inbox WHERE read = 0 ORDER BY id DESC LIMIT 6"),
     }
 
 

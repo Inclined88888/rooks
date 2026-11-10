@@ -504,6 +504,7 @@ ADDED_COLUMNS = (
     ("mail_accounts", "life_role", "TEXT NOT NULL DEFAULT 'other'"),  # work | personal | other
     ("calendars", "linked_account_id", "INTEGER REFERENCES linked_accounts(id) ON DELETE CASCADE"),
     ("messages", "attachments", "TEXT NOT NULL DEFAULT ''"),  # feat/attachments
+    ("conversations", "archived", "INTEGER NOT NULL DEFAULT 0"),
 )
 
 

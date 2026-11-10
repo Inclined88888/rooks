@@ -134,8 +134,25 @@ def read_skill_file(skill: str, path: str) -> dict:
 
 
 @mcp.tool(description="Run a helper script from a skill installed from GitHub, sandboxed with the user's grants. args: list of strings.")
-def run_skill_script(skill: str, script: str, args: list[str] | None = None) -> dict:
-    from . import skills_hub
+async def run_skill_script(skill: str, script: str, args: list[str] | None = None) -> dict:
+    """Never runs straight away: the call is held in Needs you (assistant.hold_reason, channel "mcp") and runs once when
+    the owner says yes. The same call asked again while it waits returns the same request."""
+    import json
+    import shlex
 
-    return _call(skills_hub.run_script, skill, script, args or [])
+    from . import assistant, db
+
+    conv = db.one("SELECT id FROM conversations WHERE channel = 'mcp' AND external_id = 'server' ORDER BY id LIMIT 1")
+    cid = conv["id"] if conv else assistant.new_conversation("mcp", "Requests from connected programs", "server")
+    ctx = assistant.Ctx(channel="mcp", conversation_id=cid)
+    raw = json.dumps({"skill": skill, "script": script, "args": shlex.join(str(a) for a in (args or [])[:20])})
+    ok, out = await assistant.run_tool("run_skill_script", raw, ctx)
+    r = ctx.receipts[-1] if ctx.receipts else {}
+    request = r.get("waiting") or (r.get("action_id") if r.get("outcome") == "held" else None)
+    if request:
+        return {"status": "waiting", "request": request,
+                "message": f"Waiting for the owner's OK in Needs you (request #{request}). Do not call it again; it runs once approved."}
+    if not ok:
+        raise ToolError(out[:500])
+    return {"status": "done", "result": out}
 

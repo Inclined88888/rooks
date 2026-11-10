@@ -4,6 +4,261 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## 2026-11-08 · The Room as a small computer · branch feat/room-desktop
+
+The Room keeps what you do in it. Design record: `docs/design/0006-room-desktop.md`. This entry was written by the
+backend lane; the Room page's desk and the terminal's `/room` verbs land in the same branch from their own lanes.
+
+- **A terminal that stays.** The Room has real terminals: a login shell inside the Room's own folder, kept on this
+  computer's app while you go to chat and back, with its text there again when you return. Nothing run in one has a
+  time limit, so a long installer finishes. Up to four at a time, apart from the app's own terminal.
+- **What you install is found.** Every shell and every quick command in the Room reads the Room's own profile, and
+  the Room's `~/.local/bin`, `~/bin` and `~/.cargo/bin` come first on its PATH, so a tool an installer put there works
+  in the next terminal and in the assistant's next command. The Room writes `~/.profile` and `~/.zprofile` once, only
+  when they are missing; it never changes yours.
+- **Files.** The Room's folder can be looked through whether the Room is on or off; nothing in it is changed from there.
+- **Stop and Start over close the terminals first** and say how many. Stopped terminals stay listed with their text;
+  after Start over one new terminal opens. A restart of the app ends them too, and a chat that was cut off by it says
+  "Terminals in the Room ended; their files are still there."
+- **The assistant can start long work in the Room** (`use_room` start, then tail to watch it, files to look) and says
+  honestly whether it is still running and how it ended. A terminal the assistant works in takes no typing until you
+  press Take this one, so your keys are never read as its output. A quick command still stops after two minutes and now
+  says "Stopped after 120 seconds. For something long, start it in a Room terminal."
+- **The run log** records each terminal opening and closing, every command Rooks starts and how it ended, and lines
+  sent from a phone or `/room send`; what you type in a terminal is not recorded, only "You used the terminal for N min".
+- **The rooks terminal reaches more of the Room** with its Terminal access token: its terminals, Files, Save a point,
+  Start over and Hand off (a hand-off still waits for your yes in Needs you). The app.json key still only reads.
+- Migration: none; the schema is unchanged. The Room's terminals keep their text in the Room's folder
+  (`~/.ai-workspace/try-room/work/terminals`, at most 2 MB each). Rollback: previous commit; the seeded `~/.profile` and
+  `~/.zprofile` in the Room's home stay and are harmless. No secrets changed; a Room terminal gets none of the app's
+  secrets and no key, token, secret or password from its environment.
+
+## 2026-11-07 · Rooks Browser app (preview) · branch feat/browser-app-landing
+
+A browser of our own that the browser agent can drive: `rooks-browser/app`, an Electron window with tabs, an address bar,
+private tabs and an **Ask Rooks** panel that reads the page you are on or does a task in it while you watch, with the same
+site rules, approvals and receipts as the agent in Chrome. Design and security model: `docs/design/0005-rooks-browser-app.md`.
+
+- **Start it** with `cd rooks-browser/app && npm install && npm start`. Tasks need the `rooks-browser` command on this
+  computer (the Rooks installer puts it there); without it the panel says so and browsing still works.
+- **Preview only.** It is not in the installers, the desktop app or the Room yet, and it has been tested on Linux only
+  (macOS and Windows are untried). BACKLOG lists what is still missing.
+- **What the review changed before landing.** A page the rules refuse is one blocked row in the receipt, never the app's
+  own "could not open" page as a visited page, and rows keep the order things happened. After a page fails the address
+  bar keeps the address that failed and says "Could not open", never "Secure". A permission you allowed a site earlier in
+  the run reads as denied inside the agent's tab, the same as asking for it. The control channel refuses a private tab
+  and never takes a private tab that is in front. The app's local-address and host-pattern rules give the same answers
+  as the Python agent's for every reserved range and for `[...]` patterns, and the parity test now guards them. Typing
+  a LAN or link-local address, or `[::1]`, opens it over plain http like `localhost`. The task helper gets none of the app's
+  secrets and no other key, token, secret or password from the app's environment, only its own token and the model keys
+  it reads itself (such as a key for OpenAI or Anthropic exported in the terminal you started the app in). Panel messages are plain sentences with the technical reason under
+  "Details". CI runs the app's tests on Linux under a virtual display, and `scripts/test-all.sh` runs them when `npm`
+  and `xvfb-run` are present.
+- Migration: none. Rollback: previous commit. No secrets changed.
+
+## 2026-11-07 · The session branches, integrated · branch integration/2026-11-07
+
+Merges feat/coworkers (#13) with fix/coworker-guards, fix/main-ci-green (#16) with claude/agents-on-ci-green, fix/install-blank-window (#19),
+fix/mobile-companion-lock-actions (#18), design/chat-controls (#17, which carries design/glass-shell #15), security/hardening-2026-11
+and fix/model-defaults-sync, with the unique pieces of fix/test-isolation-and-linux-sandbox (#14) ported onto #16. Each branch was reviewed
+and its serious findings fixed here. The entries below this one describe the security hardening and the Room's shell field in full.
+
+- **Coworkers in the terminal.** `/team` shows your coworkers and the lines of work, `/team set up construction` shows the
+  team Rooks proposes, `/team create construction` makes it (its jobs wait in `/needs`), `/team remove construction` removes it.
+  The app.json key only reads; creating or removing a team needs the terminal's own sign in (Settings, Terminal access).
+- **Coworkers.** Welcome has a fifth, skippable step ("What do you do?") and a Coworkers page proposes a small team for a line of work.
+  Scheduled and coworker runs no longer refuse a step that needs a yes: it waits in Needs you, the inbox says so, and a later yes
+  runs it once as that coworker. Asking the assistant to schedule something shows an approval card first. The app's own connector
+  (`/mcp`) no longer runs skill scripts outright: the call waits in Needs you, and the tools key cannot answer it.
+- **Glass navigation.** The left rail is a floating top bar with one sliding pill; phones get a floating dock. AI-cliché icons are
+  gone, Team's "AI runs" is "Split tasks", and the chat and three more pages draw the shared controls. Motion off, reduced motion,
+  high contrast and reduced transparency all get a solid, still bar. Owner's call to keep: `--glass-filter`, `--glass-shadow` and
+  `--dur-slide` in `workbench/frontend/src/tokens.css` revert it.
+- **Terminal containment on Linux.** `sandbox = "project"` now holds on Linux with bubblewrap (`install.sh` offers it with the other
+  helper apps). Without a working bubblewrap a command is refused before you are asked about it, never run uncontained. Windows has
+  no containment yet; the approval line says "not kept inside the project folder on Windows". `sandbox = "full"` is unchanged.
+- **Phone.** Allow, Decline and Answer on a Companion notification work from the lock screen; Answer takes typed text and never
+  answers for you. The phone's Companion calls now reach routes the server has (they went to a path that did not exist).
+- **Installs.** A fresh one-command install opens the app again: the committed web UI was missing its files, so every install from
+  `main` since 02:31 UTC today opened a blank window. The web UI is committed in full, CI fails when it is out of date, `--status`
+  checks the page's files, and the release zip ships the build it just made.
+- **Sign in.** The tools key no longer mints a window session; only the native window's own key does. Breaking only for something
+  outside this repository that used the tools key at `/api/desktop/local-session`.
+- **Models.** The terminal, browser and desk default to `claude-sonnet-5-5` like the app, send no temperature to Claude (current
+  models refuse one), and price the current Claude models.
+- **Analysis sandbox.** Calls into libc through `ctypes.pythonapi` are refused, not only newly opened libraries.
+- Migration: none. Rollback: `main` at 5579160. Secrets are unchanged; nothing needs rotating.
+
+## 2026-11-07 · The Room says which shell it has; agent receipts are tested for secrets · branch claude/agents-on-ci-green
+
+Builds on `fix/main-ci-green` (its redaction resync and Git for Windows shell for the Room).
+
+- **The Room on Windows without Git for Windows** still runs commands in Command Prompt, which reads `a; b` as one
+  command and exits 0. Status and every result now carry `shell` (`"sh"` or `"cmd"`), with a plain note in the `cmd`
+  case, and the Room's run tool tells the model so.
+- Rooks Desk gets the redaction copy guard Rooks Browser already had, and both agents get a test that a receipt never
+  stores a private key or an AWS key id.
+- `scripts/test-all.sh` runs the rooks-browser and rooks-desk suites (CI already did). Playwright's Chromium download
+  is optional there.
+- Migration: none. Rollback: previous commit.
+## 2026-11-07 · Security hardening · branch security/hardening-2026-11
+
+- Breaking (Docker): the Workbench image no longer trusts `X-Forwarded-For` from any client. Behind a reverse proxy,
+  set `FORWARDED_ALLOW_IPS` to its address. `SETUP_CODE` now reaches the container, so first run setup asks for it.
+  Rebuild or pull the image: the old one still trusts every client.
+- Breaking: `TOOLS_API_KEY` no longer opens the account (`/api`). It still opens `/tools` and `/mcp` for the add-ons.
+- Skill scripts ask before every run where bubblewrap is not available (Docker, macOS, Windows); in an unattended run
+  (a scheduled job, a coworker, another program through the app's connector) the run waits in Needs you. `run_python` asks in a conversation with untrusted content on those systems. Both sandboxes
+  block `ctypes`.
+- Output from MCP tools keeps the conversation marked untrusted on later turns.
+- Files open with a sandboxed content policy, so an SVG from an email cannot run script.
+- `rooks-desk serve` and `rooks-browser serve` refuse requests a browser marks as cross site and anything not sent as
+  `application/json`.
+- Docs and installers point at `Inclined88888/rooks`.
+- If a Docker install was ever reachable from the network or other containers: reset the password and rotate the
+  keys it held. Migration: none. Rollback: previous commit.
+
+## 2026-11-07 · Separate keys for the native window, background jobs and helpers · branch integration/auth-native-workroom
+
+- The native window signs in with its own key (`NATIVE_SIGNIN_KEY`, written each launch to `native.json`, 0600, never
+  to `app.json`); it only mints a session on loopback and is not a bearer. The shared `app.json` key (PR #10's sign in)
+  no longer signs in or opens the account.
+- Coding jobs get their own key, never the `app.json` key: `/v1` only, no Workroom, no answers to terminal prompts.
+- Coding jobs, model CLIs, user MCP servers and the browser and desk helpers no longer inherit the app's secrets
+  (`APP_SECRET`, `TOOLS_API_KEY`, the bridge keys) from its environment. This hole existed on `main`.
+- Record: `docs/security/agent-credentials.md`. Migration: none; the sidecar writes `native.json` on the next launch.
+  Rollback: previous commit (restores the shared key sign in).
+
+## 2026-11-07 · Premium pass: restraint · branch feat/workroom
+
+Design record: `docs/design/0003-workroom.md` section 6 (design system v3, restraint).
+
+- **Removed:** the thinking shimmer, word by word reply reveal, cursor trail, approval spring, drawn tick, working
+  border and every decorative glow; the Motion page; the Sunshine, Paper, Cherry, Neon, Linen, Gallery, Studio and Lamp
+  themes; the Bodoni serif.
+- **Look:** Light, Dark and High contrast; one sans family, mono only for code, commands and receipts; one type scale
+  (12/13/14/16/20/28), one 4 px grid, radius 6/10, hairline borders, one shadow for floating things only; neutral
+  colours with amber only for what is live or needs you. The only motion is a fade of 150 ms or less. The Room keeps a
+  still amber border while you have stepped in.
+- **Every page** rebuilt on the shared primitives with loading, empty and error states and a phone layout.
+- **Speed:** one pulse request carries presence, Needs you and job notices. Background requests a minute: chat 62 to
+  6, the Room 94 to 28, Jobs 48 to 10, Tasks 24 to 6. Pages warm on hover; Jobs, Tasks and chats reopen from cache.
+- **Keyboard:** everything in ⌘K with shortcut hints; `?` lists every shortcut; g then c, r, j, t, m or s moves
+  between Chat, Room, Jobs, Tasks, Mail and Settings.
+- **Terminal:** the same three themes, names and calm look; `/room`, `/needs`, `/jobs` and one `/help`. The terminal's
+  own sign in (Terminal access) can start the Room and answer Needs you; the app.json bridge key, which coding jobs the
+  app starts also hold, can only read them.
+- **Moved:** Extra tools is at `/extra-tools` (`/mcp` redirects); Packs is reachable again under More.
+- Migration: none. A saved theme maps to the nearest of the three. Rollback: check out the previous commit.
+
+## 2026-11-06 · The Workroom: presence, Needs you, the Room, reliability · branch feat/workroom
+
+Design record: `docs/design/0003-workroom.md` (binding for this branch). Packages: F1 to F4 (the app) and B1 to B3 (the service), listed in the order a person meets them.
+
+- **The Workroom shell and design system (F1).** One set of colour, type and spacing tokens with two modes, Studio
+  (light) and Lamp (dark); the older themes stay in Appearance as layers on top. A rail of pages with flyouts and a
+  More sheet, the presence line at the top with the Needs you pill, the Stage beside the chat, and a bar at the
+  bottom on phones, all built from one page list (`pages/registry.ts`) that also feeds the palette. Shared parts
+  (buttons, cards, tabs, sheets, toasts, the approval card, the Stage frame) live in `src/ui/`. The chat list is a
+  column inside the chat. The app calls itself Rooks. One main landmark, a skip link, focus rings everywhere, and
+  every sheet and flyout keeps focus inside and closes on Escape.
+- **The chat as a living record (F2).** Every turn keeps its step timeline after it finishes, with receipts and Undo
+  inline, one approval card everywhere, and a stored answer shown in plain words (no ids or raw JSON). A yes or no
+  given later closes the step it answers. The Room's steps read in plain words, and a watch event opens the Room on
+  the Stage.
+- **Presence (B1).** `GET /api/presence` says what the assistant is doing right now: its name, a mood (idle, thinking,
+  working, needs, done), the current step in plain words with the tool and a redacted summary of its arguments,
+  where it is working (chat, terminal, browser, desktop, Room), what it watches (mail, calendar, jobs, Room), how many
+  things need you, and the turns and jobs in flight. It reads state the app already keeps, never calls a model, asks
+  the helpers on this computer at most every five seconds (half a second per request), and is cached for one second.
+- **Needs you (B1, F3).** `GET /api/needs-you` is one inbox for everything waiting on you, newest first: held actions from
+  chat, jobs and schedules, jobs that ask before they start, and steps the desk and browser helpers paused on.
+  `POST /api/needs-you/{id}/approve` and `/deny` answer each item in the system it came from, exactly once: a second
+  answer is refused, so nothing is run twice from the inbox. Both routes need the signed in user.
+  In the app the inbox is a side sheet opened from the pill at the top, the phone bar and the Jobs page; it lists
+  every item with the one approval card, and a Room hand-off reads as what it is about, never by its request number.
+- **The Room (B2, F3).** The assistant's own computer is back in the app, honestly this time. It is the `rooks-try`
+  package: a Linux guest when QEMU and an image exist, a private desktop with a real terminal in it when Xvfb exists
+  (Linux), else a private folder and shell. The app side is `app/room.py` (`/api/room`: status, up, down, checkpoint,
+  reset, click, drag, scroll, type, key, run, handoff, screenshot) and the chat tool `use_room`, offered only when a
+  real driver is there; the terminal gets the same package as the MCP server `room`; the installer installs it when
+  the folder exists.
+  - What it says about itself: status carries `screen`, `pointer`, `isolation` (`none`, `namespace` or `vm`), a plain
+    label and a note, and `/api/surfaces` carries `room: {available, label, isolation}`. A picture is served only when
+    a real screen exists and the Room is on; the drawn terminal ("A drawing of a terminal") is never picked on its own,
+    has no pointer, and does not count as a Room for the chat tool. The private folder says "Commands run as you, in a
+    folder of its own. It is not a locked off computer."; on Linux its commands run in a private mount namespace (and
+    with no network when the Room is offline) when `unshare` works, which is what `namespace` means.
+  - What it keeps: saved points never collide in a name, the twenty newest are kept and status names the ones removed;
+    "Save a point" and "Start over" are checked against the store before they are reported done.
+  - What it never does alone: copying a file out of the Room holds a request in Needs you (`kind: room`) and copies
+    once, after a yes there or on the approval card; the chat tool cannot approve it. Every up, down, saved point,
+    start over, command and copy is a row in the run log on channel `room`; a refused request is on record too.
+  - For the Stage: `use_room` with `action: up` publishes a watch event `{surface: "room", job_id: "room", goal}`, and
+    the same card is saved with the reply. Presence reports `where: room` and watches the Room while it is on.
+  - The package itself: the nested desktop no longer starts a black canvas with the system Python; it starts a window
+    manager when one exists and otherwise a terminal that fills the screen, with this interpreter for any helper; a
+    command run in it sees the Room's display; the local HTTP helper compares its key in constant time, serves the last
+    picture without waiting behind a running command, and has drag and scroll.
+  - In the app (F3): a **Room** page and the Room on the Stage. The picture is drawn only while the Room is on and has
+    a real screen; Watch, Step in and Hand back appear only when clicks reach something real; without a screen the
+    page is a real command view. Save a point, Start over and Hand off a file are on the page; the rail shows a live
+    dot while the Room is on. Jobs and History are rebuilt on the shared parts, with Undo inline in History.
+- **Reliability people feel (B3).**
+  - A chat that got too long no longer dies on the model's context error. The error is recognised for what it is
+    (`prompt too long`, from OpenAI, Anthropic, Gemini and compatible servers, and Ollama's full window), the router
+    stops there instead of trying every other provider with the same prompt, and the turn compacts the window and
+    asks again, up to three times: the budget is halved, the oldest tool results become one line stubs that still
+    lead to the full result through `read_tool_result` (kept under `tool_results`, id `m<message>`), whole old
+    exchanges go only after that, and the chat gets a `compacted` event `{dropped_rows, summary_words}` each time.
+    When nothing can be left out, or three tries were not enough, the turn ends with "This chat got too long for the
+    model. Start a new chat or pick a model with more room." The record is never touched: every result stays whole in
+    the thread; only what the model is sent shrinks. The next turn in that chat starts from the window that fitted.
+  - The rolling summary is tool aware: tool rows are in it, one line each (the tool, ok or failed, the first 80
+    characters of its result), and a note the app wrote (a restart) as a note. When the window is already over budget
+    at the start of a turn, or is being compacted, the summary of what fell out is refreshed before the model is
+    asked, so it sees it now rather than next turn; otherwise the refresh runs in the background as before.
+  - A restart is reported honestly. Every turn still running when the app comes back is closed as interrupted
+    ("Rooks restarted during the turn") and its conversation gets a plain note as a system row ("Rooks restarted
+    during this turn. These steps were cut off and not run: ..."). The next turn in that conversation opens with a
+    `resumed` event `{reason: "restart", at}`. Goals that asked to carry on (`resume_on_restart`) are continued by a
+    task that starts with the app, one more round each as a normal turn (registered like any turn, so Stop works),
+    never past a held approval. Jobs keep their rule: paused, with Resume.
+  - Approvals are never duplicated. A call that is already waiting for your OK with the same arguments is not held
+    again: the model is told it is waiting (request number included) and the turn stops with an honest line ("I asked
+    once and stopped instead of asking again") instead of asking the model on; the run log records the repeat as
+    `duplicate` and the turn as `held`. The Room's hand-off does the same: a second ask for the same file and place
+    joins the request that is already in Needs you.
+  - The check that catches a false "I sent the email" no longer catches a true one. A send that ran in the turn, or
+    one you approved from the card or Needs you, backs the sentence; without one the reply is still withdrawn, with the
+    reason in plain words ("no email was sent in this conversation").
+- **Sweep (F4).** Colours come only from the tokens (no hex left in feature styles), one reduced motion rule that
+  Appearance also applies, two breakpoints (900 and 1280 px), one main landmark on every page, dead code removed, and
+  the theme picker previews the Workroom itself. Every page was checked in the shell on a laptop and a phone in both
+  modes.
+- **Outbound audit (R8, B1).** The helpers' health checks (browser, computer use) now go through the audited client;
+  `tests/test_egress.py::test_no_unaudited_network_library_in_the_app` passes again. The loopback port probe that
+  finds a free port for a helper is listed there with its reason (a bind sends nothing).
+- Migration: none (no schema version change, no data rewritten). The restart notes are ordinary rows in `messages`
+  (`role: system`, `name: restart`); compacted results reuse the `tool_results` table with ids `m<message id>`. New
+  settings `TRY_URL` and `TRY_API_KEY` are optional (a separate `rooks-try serve`); without them the Room runs in
+  process when the package is installed.
+- Rollback: check out the previous commit. Set `ROOKS_TRY_MCP=0` so the terminal stops adding the `room` server, and
+  ignore `/room` in the app (the tool is only offered while the package is installed; uninstall `rooks-try` to remove
+  it). Nothing in the database changes shape: held hand-offs are ordinary held actions and can be denied from Needs
+  you, the restart notes are plain messages the older code ignores, and the leftover `tool_results` rows are harmless.
+## 2026-11-06 · Ask in the native window; the bridge key signs in · branch feat/native-ask
+
+- **Ask.** The native Rooks window (`desktop/rooks-native`, 0.4.0) can give Rooks a task. Home has a box; the rail has
+  an Ask page with the transcript, recent chats, and a composer. The reply streams in as it is written; each tool shows
+  as one short line; an `approval_required` event becomes an Allow / No card; Stop calls `POST /api/assistant/stop`.
+  Thoughts, receipts and cards never leave the service.
+- **Fix: the native window could not attach to a running service.** `workbench_server.py` writes the bridge key
+  (`BROWSER_API_KEY`) into `app.json`, but `POST /api/desktop/local-session` and bearer auth compared it with
+  `TOOLS_API_KEY`, so a second window always got `401 Invalid key`. New `security.check_app_key` accepts either key
+  (both per-install random secrets, loopback only); `local-session` and `surfaces.bearer_ok` use it.
+- Migration: none. Data: none. Rollback: revert the commit.
+
 ## 2026-11-01 · Long tool results, step limit setting, repeat guard · branch feat/rea-p0-harness
 
 From the competitor review (P0 items 1, 2 and 4):
