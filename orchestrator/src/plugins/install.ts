@@ -12,7 +12,7 @@
  * `npm` and not `pnpm`: npm is there as soon as Node is, and a plugin is an
  * ordinary npm package (§10.3). No dependency added.
  */
-import { assertCompositionMutable, withCompositionWrite } from '../license/capabilities.js';
+import { assertCompositionMutable, fixedComposition, withCompositionWrite } from '../license/capabilities.js';
 import { mutationLicenseState } from '../license/runtime.js';
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -22,7 +22,7 @@ import { getHost } from '../host/index.js';
 import { PLUGINS_DIR } from '../paths.js';
 import { discoverPlugins, engineRefusal, hasHostHalf, installedPackages } from './loader.js';
 import { readManifest, type PluginManifest, type PluginPermission } from './manifest.js';
-import { PLUGIN_PUBLIC_KEYS, type PluginPublicKey } from './pubkey.js';
+import { PLUGIN_PUBLIC_KEYS, unsignedPluginsAllowed, type PluginPublicKey } from './pubkey.js';
 import { verifyPluginDirectory } from './signature.js';
 import { currentNodeRuntime, nodeEngineProblem, type NodeRuntimeFacts } from './node-engine.js';
 import { resolveBuiltins, type ResolvedBuiltin } from './builtin.js';
@@ -923,6 +923,57 @@ export function setPluginEnabled(
   }
   cfg.plugins = plugins;
   writeJson(file, cfg);
+}
+
+/**
+ * Developer mode as the Settings switch shows it. `requested` is the wish the
+ * config holds, `effective` what the loader applies right now: the licence can
+ * refuse a wish, and the switch must not show "on" for code that will not load.
+ * `available` says whether turning it on would take effect, so the switch is
+ * greyed out before a click rather than after. Both go through
+ * `unsignedPluginsAllowed`, never a copy of its licence rule.
+ */
+export type DeveloperModeState = {
+  requested: boolean;
+  effective: boolean;
+  available: boolean;
+  blockedBy: 'plugin_composition_fixed' | 'license' | null;
+};
+
+export function developerModeState(): DeveloperModeState {
+  const setting = config().developer.unsignedPlugins;
+  const available = unsignedPluginsAllowed(true);
+  return {
+    requested: setting === true,
+    effective: unsignedPluginsAllowed(setting),
+    available,
+    blockedBy: fixedComposition(mutationLicenseState()) ? 'plugin_composition_fixed' : available ? null : 'license',
+  };
+}
+
+/**
+ * Writes `developer.unsignedPlugins` and makes the live config follow (narrow
+ * merge, like `forgetPluginHttpHosts`): `config()` is memoized for the process,
+ * and the loader's `allowUnsigned` reads it on every pass. Without the merge the
+ * next `loader.update()` would still judge with the boot's value.
+ *
+ * Turning it off only narrows what loads, so it is allowed under any licence;
+ * turning it on changes the plugin composition, which a fixed one refuses.
+ * `false` is written, not deleted: an explicit refusal, whatever default the
+ * key registry would resolve.
+ */
+export function setUnsignedPluginsSetting(enabled: boolean, file: string = CONFIG_FILE): void {
+  if (enabled) assertCompositionMutable(mutationLicenseState());
+  const cfg = readJson(file);
+  const developer = (typeof cfg.developer === 'object' && cfg.developer !== null && !Array.isArray(cfg.developer))
+    ? (cfg.developer as Json)
+    : {};
+  cfg.developer = { ...developer, unsignedPlugins: enabled };
+  writeJson(file, cfg);
+  if (file === CONFIG_FILE) {
+    const live = config();
+    setConfig({ ...live, developer: { ...live.developer, unsignedPlugins: enabled } });
+  }
 }
 
 /** Offline inventory: what is installed, and what the config says about it. */
