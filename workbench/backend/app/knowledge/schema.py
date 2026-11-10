@@ -197,6 +197,13 @@ def _m2_knowledge(c: sqlite3.Connection) -> None:
     _exec_many(c, TRIGGERS_SQL)
 
 
+def _m4_index_moved(c: sqlite3.Connection) -> None:
+    """Version 4: the facts db.migrate_v5 moved in from the two older memory stores go into the search index."""
+    from . import memory
+
+    memory.index_missing()
+
+
 def _m3_backfill(c: sqlite3.Connection) -> None:
     """Version 3: index what already exists (projects, people on projects, tasks, files, sites, events, notes, the
     "What I know about you" facts) into the entity graph and memory tiers. Existing tables are not changed."""
@@ -209,6 +216,7 @@ MIGRATIONS: list[tuple[int, str, Callable[[sqlite3.Connection], None]]] = [
     (1, "adopt feature tables (projects, history, adapt, jobs, automations, sites, files, meetings, checked, packs)", _m1_adopt),
     (2, "knowledge graph, memories, search index, conflicts, filings, change log, improvements", _m2_knowledge),
     (3, "backfill the graph and memories from existing stores", _m3_backfill),
+    (4, "index the facts moved in from the older memory stores", _m4_index_moved),
 ]
 LATEST = MIGRATIONS[-1][0]
 
@@ -254,25 +262,32 @@ def migrate(c: sqlite3.Connection | None = None, path: Path | str | None = None,
     pending = [m for m in MIGRATIONS if m[0] not in done and (upto is None or m[0] <= upto)]
     if not pending:
         return []
-    has_data = c.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('conversations','projects','adapt_facts')").fetchone()[0]
+    has_data = c.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('conversations','projects','kn_memories')").fetchone()[0]
     if has_data and str(path) != ":memory:" and Path(path).exists():
         backup = Path(f"{path}.pre-kn{pending[-1][0]}-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.bak")
         if not backup.exists():
             with sqlite3.connect(backup) as dest:
                 c.backup(dest)
     out = []
-    for version, name, step in pending:
-        c.execute("BEGIN IMMEDIATE")
-        try:
-            step(c)
-            c.execute("INSERT INTO schema_migrations(version, name, checksum, applied_at) VALUES (?, ?, ?, ?)",
-                      (version, name, _checksum(name), db.now()))
-            c.execute("COMMIT")
-        except BaseException:
-            c.execute("ROLLBACK")
-            log.exception("knowledge migration %s failed; database left at the previous version", version)
-            raise
-        out.append(version)
+    key = str(path)
+    mine = key not in _running  # steps call back into the API (backfill, indexing): ensure() must not migrate again
+    _running.add(key)
+    try:
+        for version, name, step in pending:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                step(c)
+                c.execute("INSERT INTO schema_migrations(version, name, checksum, applied_at) VALUES (?, ?, ?, ?)",
+                          (version, name, _checksum(name), db.now()))
+                c.execute("COMMIT")
+            except BaseException:
+                c.execute("ROLLBACK")
+                log.exception("knowledge migration %s failed; database left at the previous version", version)
+                raise
+            out.append(version)
+    finally:
+        if mine:
+            _running.discard(key)
     return out
 
 
@@ -288,9 +303,20 @@ def ensure() -> None:
             _running.add(key)
             try:
                 migrate()
+                _merge_leftovers()
             finally:
                 _running.discard(key)
             _ready.add(key)
+
+
+def _merge_leftovers() -> None:
+    """Facts still in the older stores (the memory key was locked when the app upgraded) move in now."""
+    from . import crypto, facts
+
+    try:
+        facts.merge_leftovers()
+    except crypto.KeyMissing as e:
+        log.warning("older memories not moved yet: %s", e)
 
 
 def reset_ready() -> None:

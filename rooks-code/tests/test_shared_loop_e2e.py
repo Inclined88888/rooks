@@ -45,12 +45,13 @@ def _port() -> int:
 
 
 class App:
-    def __init__(self, tmp: Path):
+    def __init__(self, tmp: Path, extra_env: dict | None = None):
         self.port = _port()
         self.url = f"http://127.0.0.1:{self.port}"
         env = {k: v for k, v in os.environ.items() if not k.endswith(("_API_KEY", "_TOKEN"))}
         env.update(APP_SECRET="a" * 40, TOOLS_API_KEY="k" * 30, DATA_DIR=str(tmp / "data"), MODEL_CATALOG_REFRESH="0",
                    ROOKS_COMPANION_FILE=str(tmp / "companion.json"), PYTHONPATH=str(BACKEND))
+        env.update(extra_env or {})
         self.log = open(tmp / "backend.log", "w")  # noqa: SIM115
         self.proc = subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(self.port),
                                       "--log-level", "warning"], cwd=BACKEND, env=env, stdout=self.log, stderr=subprocess.STDOUT)
@@ -141,6 +142,113 @@ def test_rooks_runs_on_the_apps_shared_loop_and_the_edit_is_approved_in_the_term
         model.close()
 
 
+APP_KEY = "app-json-key-for-tests-0123456789abcdef"  # what the open app writes to app.json (BROWSER_API_KEY)
+
+
+@pytest.fixture
+def app_with_key(tmp_path):
+    a = App(tmp_path, {"BROWSER_API_KEY": APP_KEY})
+    yield a
+    a.close()
+
+
+def _terminal_statuses(app, token):
+    import urllib.error
+
+    found = []
+    for aid in range(1, 60):
+        try:
+            found.append(app.call("GET", f"/v1/rooks/approvals/{aid}", token=token)["status"])
+        except urllib.error.HTTPError as e:
+            assert e.code == 404
+    return found
+
+
+def _fix_with_the_app_key(project, app, stored_token: bool):
+    model = FakeModel([
+        openai_reply("", [("edit_file", {"path": "calc.py", "old_text": "return a - b", "new_text": "return a + b"})]),
+        openai_reply("Fixed add()."),
+    ])
+    try:
+        app.call("POST", "/api/setup", {"password": "testpassword1"})
+        pid = app.call("POST", "/api/providers", {"name": "Fake", "kind": "openai", "base_url": model.url, "api_key": "x"})["id"]
+        app.call("PUT", "/api/settings", {"default_model": f"{pid}/fake-model"})
+        token = app.call("POST", "/api/cli-token")["token"]
+        if stored_token:  # what `rooks login` keeps for the app (rooks-keys.json next to the config file)
+            keys = Path(os.environ["ROOKS_CONFIG"]).parent / "rooks-keys.json"
+            keys.write_text(json.dumps({"workbench": token}))
+        r = rooks(project, "-P", "workbench", "fix add in calc.py", stdin="y\n",
+                  env={"WORKBENCH_URL": app.url, "WORKBENCH_API_KEY": APP_KEY})
+        out = r.stdout + r.stderr
+        assert r.returncode == 0, out
+        assert (project / "calc.py").read_text() == "def add(a, b):\n    return a + b\n"  # the person's yes stood
+        assert not [a for a in app.call("GET", "/api/approvals") if a["status"] == "pending"]  # the card closed
+        return out, _terminal_statuses(app, token)
+    finally:
+        model.close()
+
+
+def test_the_open_apps_key_cannot_record_the_terminals_answer_so_the_card_is_withdrawn(project, app_with_key):
+    """The app.json key never records an answer (any program can read it, a command the agent ran included). The
+    person's y in the terminal still stands, and the terminal closes the app's card by withdrawing its request."""
+    out, statuses = _fix_with_the_app_key(project, app_with_key, stored_token=False)
+    assert statuses == ["withdrawn"]
+    assert "rooks login" in out
+
+
+def test_with_rooks_login_the_terminals_answer_is_recorded_in_the_app(project, app_with_key):
+    out, statuses = _fix_with_the_app_key(project, app_with_key, stored_token=True)
+    assert statuses == ["approved"]
+
+
+def test_a_program_holding_the_apps_key_cannot_answer_the_terminals_prompt(project, app_with_key):
+    """The hole phase 1a closes: with nobody at the keyboard, any program on this computer (a command the agent ran
+    earlier, say) reads the open app's key from app.json and answers the pending prompt itself. Refused; the edit waits
+    for the person, who says no in the app, and the file is left alone."""
+    import threading
+    import urllib.error
+
+    app = app_with_key
+    model = FakeModel([
+        openai_reply("", [("edit_file", {"path": "calc.py", "old_text": "return a - b", "new_text": "return a * b"})]),
+        openai_reply("Left it alone."),
+    ])
+    seen = {}
+    try:
+        app.call("POST", "/api/setup", {"password": "testpassword1"})
+        pid = app.call("POST", "/api/providers", {"name": "Fake", "kind": "openai", "base_url": model.url, "api_key": "x"})["id"]
+        app.call("PUT", "/api/settings", {"default_model": f"{pid}/fake-model"})
+
+        def sneak_then_person():
+            for _ in range(300):
+                pending = [a for a in app.call("GET", "/api/approvals") if a["status"] == "pending" and a["tool"] == "edit_file"]
+                if pending:
+                    aid = pending[0]["id"]
+                    try:
+                        seen["sneak"] = app.call("POST", f"/v1/rooks/approvals/{aid}", {"approve": True}, token=APP_KEY)
+                    except urllib.error.HTTPError as e:
+                        seen["sneak"] = e.code
+                    time.sleep(1.5)  # long enough for the terminal to see a yes, had one been recorded
+                    try:
+                        app.call("POST", f"/api/approvals/{aid}", {"approve": False})  # the person, signed in
+                    except urllib.error.HTTPError as e:
+                        seen["person"] = e.code
+                    return
+                time.sleep(0.1)
+
+        t = threading.Thread(target=sneak_then_person, daemon=True)
+        t.start()
+        r = rooks(project, "-P", "workbench", "change add", stdin="",
+                  env={"WORKBENCH_URL": app.url, "WORKBENCH_API_KEY": APP_KEY})
+        t.join(5)
+        out = r.stdout + r.stderr
+        assert seen.get("sneak") == 403, seen
+        assert (project / "calc.py").read_text() == "def add(a, b):\n    return a - b\n", out
+        assert "Denied in the app." in out
+    finally:
+        model.close()
+
+
 def test_an_edit_denied_in_the_app_is_not_made(project, app):
     """No keyboard answer (stdin closed): the request waits in the app; denying it there leaves the file alone."""
     import threading
@@ -169,7 +277,7 @@ def test_an_edit_denied_in_the_app_is_not_made(project, app):
                   env={"WORKBENCH_URL": app.url, "WORKBENCH_API_KEY": token})
         t.join(5)
         out = r.stdout + r.stderr
-        assert r.returncode == 0, out
+        assert r.returncode == 3, out  # a denied change: the job was not done as asked (README, exit codes)
         assert "Denied in the app." in out
         assert (project / "calc.py").read_text() == "def add(a, b):\n    return a - b\n"
     finally:

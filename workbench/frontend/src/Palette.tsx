@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { FONTS, setAppearance, THEMES } from "./appearance";
 import { api } from "./api";
 import { IS_MAC } from "./keys";
+import { devToolsOn, useDevTools } from "./lib/devTools";
 import { keyCaps, shortcut, shortcutForPath, type Shortcut } from "./lib/shortcuts";
 import { Hit, KIND_ROUTE } from "./memory/types"; // feat/memory-core: universal search
 import { openNeedsYou } from "./needs/store";
@@ -80,7 +81,8 @@ export function paletteActions(o: {
       ? { id: "room-stop", label: "Stop the Room", group: "Actions", icon: Power, keywords: "room computer off turn off", run: () => void room(false) }
       : { id: "room-start", label: "Start the Room", group: "Actions", icon: Power, keywords: "room computer on turn on", run: () => void room(true) },
     // The Room's desk (docs/design/0006-room-desktop.md): each opens the Room page on the window it names.
-    { id: "room-terminal", label: "Open a terminal in the Room", group: "Actions", icon: SquareTerminal, keywords: "room shell command line install", to: "/room", run: () => navigate("/room", { state: { room: "terminal" } }) },
+    // a developer tool (terminals are off on a new install): offered only with Show developer tools on
+    ...(devToolsOn() ? [{ id: "room-terminal", label: "Open a terminal in the Room", group: "Actions", icon: SquareTerminal, keywords: "room shell command line install", to: "/room", run: () => navigate("/room", { state: { room: "terminal" } }) }] : []),
     { id: "room-point", label: "Save a point in the Room", group: "Actions", icon: Bookmark, keywords: "room checkpoint snapshot undo", to: "/room", run: () => navigate("/room", { state: { room: "point" } }) },
     { id: "room-over", label: "Start the Room over from a saved point", group: "Actions", icon: RotateCcw, keywords: "room undo restore reset checkpoint", to: "/room", run: () => navigate("/room", { state: { room: "over" } }) },
     { id: "room-files", label: "Show the Room's files", group: "Actions", icon: Folder, keywords: "room folder home files", to: "/room", run: () => navigate("/room", { state: { room: "files" } }) },
@@ -104,6 +106,7 @@ export function CommandPalette({ open, onClose, pages }: { open: boolean; onClos
   const navigate = useNavigate();
   const presence = usePresence();
   const roomRunning = roomOn(presence);
+  const devTools = useDevTools(); // the Room's terminal action is listed only with it on
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
   const [scope, setScope] = useState<Scope>(null);
@@ -114,7 +117,7 @@ export function CommandPalette({ open, onClose, pages }: { open: boolean; onClos
   const items: PaletteItem[] = useMemo(() => [
     ...paletteActions({ navigate, roomRunning, setScope: (s) => { setScope(s); setQ(""); requestAnimationFrame(() => inputRef.current?.focus()); } }),
     ...pages.map((p) => ({ id: `go-${p.to}`, label: p.label, group: "Go to", icon: p.icon, hint: "Page", to: p.to, keys: shortcutForPath(p.to), run: () => navigate(p.to) })),
-  ], [pages, navigate, roomRunning]);
+  ], [pages, navigate, roomRunning, devTools]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const query = q.trim().toLowerCase();
   // feat/memory-core: Cmd/Ctrl+K also searches chats, files, notes, tasks, people, projects, meetings and memories

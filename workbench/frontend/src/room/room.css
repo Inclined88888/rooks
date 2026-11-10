@@ -3,6 +3,9 @@
    of windows, the dock; the Terminal window and its phone views; the Stage's compact desk; the screen's picture, the
    Commands window and the small forms. Tokens only, all solid (no glass on this page), the one ui-fade, 44 px targets,
    the 4 px grid. The dark --screen colours belong to the terminal's box and the phone's last lines only.
+   Industrial (CHANGELOG step 4): square, 1 px hairlines; the desk is an empty area, so it sits on the faint blueprint
+   grid; each window's title bar is a mono uppercase label beside an orange square over a hairline; what is pressed
+   (a dock item, a mode, a key) gets an ink edge, never a shadow. The terminal keeps its own dark screen colours.
    The breakpoint literals are 900px (--bp-narrow) and 1280px (--bp-wide), the numbers the shell uses.
    ========================================================================== */
 
@@ -15,18 +18,19 @@
 /* ---- the Room bar: the state in words, then the verbs (the one toolbar with verbs) ---- */
 .room-bar {
   flex: none; display: flex; align-items: center; gap: var(--space-3); min-height: 48px; padding: 0 var(--space-4);
-  background: var(--color-surface); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-surface); border: var(--line); border-radius: 0;
 }
 .room-bar-state { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-md); }
 .room-live-dot { flex: none; width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--color-live); }
-.room-bar-word { flex: none; color: var(--color-ink); font-weight: var(--weight-medium); }
+.room-bar-word { flex: none; color: var(--color-ink); font-family: var(--font-mono); font-size: var(--text-xs); font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: var(--tracking-button); }
 .room-bar-sep { flex: none; color: var(--color-ink-muted); }
 .room-bar-label { min-width: 0; color: var(--color-ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .room-bar-verbs { flex: none; display: flex; align-items: center; gap: var(--space-2); }
 /* Start over is a Menu (the primitive draws an icon button); here it wears the secondary button's face and its word */
 .room-over .ui-iconbtn {
-  width: auto; height: 28px; padding: 0 var(--space-3); border: var(--border-w) solid var(--color-border-strong);
-  background: var(--color-surface); color: var(--color-ink); font-size: var(--text-sm); font-weight: var(--weight-medium);
+  width: auto; height: 28px; padding: 0 var(--space-3); border: var(--line-ink);
+  background: var(--color-surface); color: var(--color-ink); font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium);
+  text-transform: uppercase; letter-spacing: var(--tracking-button);
 }
 .room-over .ui-iconbtn:hover { background: var(--color-bg-hover); }
 .room-over-face { display: inline-flex; align-items: center; gap: var(--space-2); }
@@ -35,12 +39,13 @@
 /* ---- the panels under the bar ---- */
 .room-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-ink); }
 .room-confirm-line { flex: 1 1 200px; min-width: 0; }
-.room-page > .room-panel, .room-page > .room-held { border: var(--border-w) solid var(--color-border); border-radius: var(--radius-md); }
+.room-page > .room-panel, .room-page > .room-held { border: var(--line); border-radius: 0; }
 
 /* ---- the desk: a flat sunken surface, no wallpaper, no icons; the grid places the windows ---- */
 .room-desk {
   flex: 1 1 auto; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--space-4); padding: var(--space-4);
-  min-height: 560px; background: var(--color-surface-sunken); border-radius: var(--radius-md);
+  min-height: 560px; border: var(--line); border-radius: 0;
+  background-color: var(--color-bg); background-image: var(--bg-grid); background-size: var(--bg-grid-size); background-position: -1px -1px;
 }
 .room-desk.is-primary-only, .room-desk.is-side-only, .room-desk.is-single { grid-template-columns: minmax(0, 1fr); }
 .room-desk.is-single { place-items: center; }
@@ -54,11 +59,15 @@
 /* ---- a window: the app's Card, a 36 px title bar, a label line, the body ---- */
 .room-window { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; animation: ui-fade var(--dur-fade) var(--ease-out) both; }
 .room-window.is-captured { border: 2px solid var(--color-accent); }
-.room-window-bar { flex: none; display: flex; align-items: center; gap: var(--space-2); min-height: 36px; padding: var(--space-1) var(--space-2) 0 var(--space-3); }
-.room-window-title { flex: 1; min-width: 0; margin: 0; font-family: var(--font-sans); font-size: var(--text-md); font-weight: var(--weight-medium); color: var(--color-ink); }
-.room-window-title:focus-visible { outline: var(--focus-w) solid var(--color-border-focus); outline-offset: 2px; border-radius: var(--radius-xs); }
+.room-window-bar { flex: none; display: flex; align-items: center; gap: var(--space-2); min-height: 40px; padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3); border-bottom: var(--line); }
+.room-window-title {
+  flex: 1; min-width: 0; margin: 0; display: flex; align-items: center; gap: var(--space-2);
+  font-family: var(--font-mono); font-size: var(--text-xs); font-weight: var(--weight-bold); line-height: var(--leading-snug); text-transform: uppercase; letter-spacing: var(--tracking-button); color: var(--color-ink);
+}
+.room-window-title::before { content: ""; width: 6px; height: 6px; flex: none; background: var(--color-accent); }
+.room-window-title:focus-visible { outline: var(--focus-w) solid var(--color-focus); outline-offset: 2px; border-radius: 0; }
 .room-window-verbs { flex: none; display: inline-flex; align-items: center; gap: var(--space-1); }
-.room-window-label { flex: none; margin: 0; padding: 0 var(--space-3) var(--space-2); font-size: var(--text-sm); color: var(--color-ink-muted); overflow-wrap: anywhere; }
+.room-window-label { flex: none; margin: 0; padding: var(--space-2) var(--space-3); font-size: var(--text-sm); color: var(--color-ink-muted); overflow-wrap: anywhere; }
 .room-window-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
 .room-window-foot { flex: none; margin: 0; padding: var(--space-2) var(--space-3); border-top: var(--border-w) solid var(--color-border); font-size: var(--text-sm); color: var(--color-ink-muted); }
 .room-window .ui-empty { padding: var(--space-8) var(--space-4); }
@@ -66,12 +75,12 @@
 /* ---- the dock: opens and closes windows; the honest line at its end ---- */
 .room-dock {
   flex: none; display: flex; align-items: center; gap: var(--space-4); min-height: 56px; padding: 0 var(--space-4);
-  background: var(--color-surface); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-surface); border: var(--line); border-radius: 0;
 }
 .room-dock:focus { outline: none; }
 .room-dock-items { flex: none; display: flex; align-items: center; gap: var(--space-2); }
 .room-dock-item { display: inline-flex; align-items: center; min-height: 44px; }
-.room-dock-item .ui-btn[aria-pressed="true"] { background: var(--color-bg-active); color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+.room-dock-item .ui-btn[aria-pressed="true"] { background: var(--color-bg-active); color: var(--color-ink); border-color: var(--color-ink); }
 .room-dock-item .ui-btn[aria-pressed="true"]:disabled { opacity: 1; cursor: default; }
 .room-dock-honest {
   flex: 1; min-width: 0; margin: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2);
@@ -79,14 +88,14 @@
 }
 
 /* ---- the Terminal window ---- */
-.room-window-terminal .room-window-body, .room-term-bare .room-window-body { overflow: hidden; gap: var(--space-2); padding: 0 var(--space-3) var(--space-3); }
+.room-window-terminal .room-window-body, .room-term-bare .room-window-body { overflow: hidden; gap: var(--space-2); padding: var(--space-2) var(--space-3) var(--space-3); }
 .room-tabs { flex: none; margin: 0; }
 /* a tab is picked with a click and renamed with a double-click or F2; Room tabs are never dragged (order is the service's) */
 .terminal-tab.room-tab { cursor: pointer; }
 .room-tab-name { display: inline-flex; align-items: center; gap: 6px; }
 .room-tab.is-ended, .room-tab.is-ended.is-active { color: var(--color-ink-muted); font-style: italic; }
 .room-tab-dot { flex: none; width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--color-live); }
-.room-tab-note { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--color-ink-muted); }
+.room-tab-note { font-family: var(--font-mono); font-size: var(--text-micro); text-transform: uppercase; letter-spacing: var(--tracking-button); color: var(--color-ink-muted); }
 .room-term { position: relative; flex: 1; min-height: 240px; box-shadow: none; }
 .room-term-bar { grid-template-columns: 52px minmax(0, 1fr) auto; gap: var(--space-2); }
 .room-term-status { justify-self: end; min-width: 0; display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--screen-ink); }
@@ -109,10 +118,10 @@
 /* the phone's key row (touch only): Esc, Tab, Ctrl, arrows */
 .room-keys { flex: none; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .room-key {
-  min-width: 44px; min-height: 44px; padding: 0 var(--space-2); border: var(--border-w) solid var(--color-border-strong); border-radius: var(--radius-sm);
-  background: var(--color-surface-sunken); color: var(--color-ink); font-family: var(--font-mono); font-size: var(--text-sm); cursor: pointer;
+  min-width: 44px; min-height: 44px; padding: 0 var(--space-2); border: var(--border-w) solid var(--color-border-strong); border-radius: 0;
+  background: var(--color-surface); color: var(--color-ink); font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-button); cursor: pointer;
 }
-.room-key[aria-pressed="true"] { background: var(--color-bg-active); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+.room-key[aria-pressed="true"] { background: var(--color-bg-active); border-color: var(--color-ink); }
 /* the phone that is not this computer: the terminal's last lines and a command row */
 .room-tail-view { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .room-tail {
@@ -127,10 +136,10 @@
 .room-tail-row .ui-btn { min-height: 44px; }
 
 /* ---- the Files window ---- */
-.room-crumbs { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); padding: 0 var(--space-3) var(--space-2); font-size: var(--text-sm); }
+.room-crumbs { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-3); border-bottom: var(--line); font-size: var(--text-sm); }
 .room-crumb { display: inline-flex; align-items: center; gap: var(--space-1); }
 .room-crumb-sep { color: var(--color-ink-faint); }
-.room-crumb-btn { min-height: 32px; padding: 0 var(--space-1); border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--color-ink-muted); font: inherit; cursor: pointer; }
+.room-crumb-btn { min-height: 32px; padding: 0 var(--space-1); border: 0; border-radius: 0; background: transparent; color: var(--color-ink-muted); font: inherit; font-family: var(--font-mono); font-size: var(--text-xs); cursor: pointer; }
 .room-crumb-btn:hover { color: var(--color-ink); background: var(--color-bg-hover); }
 .room-crumb-btn[aria-current] { color: var(--color-ink); font-weight: var(--weight-medium); }
 .room-files-body { flex: 1; min-height: 0; overflow: auto; }
@@ -138,7 +147,7 @@
 .room-file .ui-row-meta { font-family: var(--font-mono); font-size: var(--text-2xs); }
 
 /* ---- the Saved points window ---- */
-.room-point-form { flex: none; display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-2); padding: 0 var(--space-3) var(--space-3); border-bottom: var(--border-w) solid var(--color-border); animation: ui-fade var(--dur-fade) var(--ease-out) both; }
+.room-point-form { flex: none; display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-2); padding: var(--space-3); border-bottom: var(--line); animation: ui-fade var(--dur-fade) var(--ease-out) both; }
 .room-point-form .ui-field { flex: 1 1 200px; }
 .room-point-form-verbs { display: inline-flex; gap: var(--space-1); padding-bottom: 22px; }
 .room-points-list { padding: 0 var(--space-2); }
@@ -159,22 +168,22 @@
 
 /* ---- the screen's modes, the goal line, the picture (only while the Room is running with a real screen) ---- */
 .room-space { flex: 1; }
-.room-modes { display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px; border-radius: var(--radius-sm); background: var(--color-surface-sunken); }
+.room-modes { display: inline-flex; align-items: center; gap: 0; padding: 0; border-radius: 0; background: var(--color-surface-sunken); }
 /* the current mode is the pressed one (Watch, or Step in); Hand back is the one call to action while stepped in */
-.room-modes .ui-btn[aria-pressed="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+.room-modes .ui-btn[aria-pressed="true"] { background: var(--color-surface); color: var(--color-ink); border-color: var(--color-ink); }
 .room-line { margin: 0; padding: var(--space-4); font-family: var(--font-mono); font-size: var(--text-mono); color: var(--color-ink-muted); }
-.room-goal { margin: 0; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-border); background: var(--color-surface); font-size: var(--text-sm); color: var(--color-ink); overflow-wrap: anywhere; }
-.room-goal-k { color: var(--color-ink-muted); }
+.room-goal { margin: 0; padding: var(--space-2) var(--space-3); border-bottom: var(--line); background: var(--color-surface); font-size: var(--text-sm); color: var(--color-ink); overflow-wrap: anywhere; }
+.room-goal-k { color: var(--color-ink-muted); font-family: var(--font-mono); font-size: var(--text-micro); text-transform: uppercase; letter-spacing: var(--tracking-micro); }
 .room-screen {
   position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
   padding: var(--space-2); background: var(--color-surface-sunken); outline: none;
 }
-.room-screen img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border-radius: var(--radius-xs); user-select: none; -webkit-user-drag: none; }
+.room-screen img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border: var(--line); border-radius: 0; user-select: none; -webkit-user-drag: none; }
 .room-screen.is-captured, .room-screen.is-captured img { cursor: crosshair; }
 .room-screen:focus-visible { outline: var(--focus-w) solid var(--color-border-focus); outline-offset: -2px; }
 .room-stale, .room-hint {
-  position: absolute; left: var(--space-3); bottom: var(--space-3); padding: 3px 8px; border-radius: var(--radius-full);
-  background: var(--color-ink); color: var(--color-bg); font-family: var(--font-mono); font-size: var(--text-2xs); opacity: 0.85; pointer-events: none;
+  position: absolute; left: var(--space-3); bottom: var(--space-3); padding: 4px 8px; border-radius: 0;
+  background: var(--color-ink); color: var(--color-bg); font-family: var(--font-mono); font-size: var(--text-micro); text-transform: uppercase; letter-spacing: var(--tracking-micro); opacity: 0.9; pointer-events: none;
 }
 .room-hint { opacity: 0; transition: opacity var(--dur-fade) var(--ease-out); }
 .room-screen:hover .room-hint { opacity: 0.85; }
@@ -182,8 +191,8 @@
 /* ---- the Commands window (only where a terminal cannot exist) ---- */
 .room-cmd { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-2); padding: 0 var(--space-3) var(--space-3); }
 .room-cmd-out {
-  flex: 1; min-height: 160px; margin: 0; overflow: auto; padding: var(--space-3); border-radius: var(--radius-sm);
-  background: var(--color-code-bg); border: 1px solid var(--color-border); font-family: var(--font-mono); font-size: var(--text-mono);
+  flex: 1; min-height: 160px; margin: 0; overflow: auto; padding: var(--space-3); border-radius: 0;
+  background: var(--color-code-bg); border: var(--line); font-family: var(--font-mono); font-size: var(--text-mono);
   line-height: 1.5; color: var(--color-ink); white-space: pre-wrap; overflow-wrap: anywhere;
 }
 .room-cmd-line.is-cmd { color: var(--color-ink); font-weight: 500; }
@@ -196,7 +205,7 @@
 .room-honest { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--text-mono); color: var(--color-ink-muted); }
 
 /* ---- the small forms (the Stage's panels, the hand off form under the Room bar) ---- */
-.room-panel { flex: none; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border-top: 1px solid var(--color-border); background: var(--color-surface); animation: ui-fade var(--dur-fade) var(--ease-out) both; }
+.room-panel { flex: none; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border-top: var(--line); background: var(--color-surface); animation: ui-fade var(--dur-fade) var(--ease-out) both; }
 .room-panel.room-confirm { flex-direction: row; }
 .room-panel-line { margin: 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
 .room-panel-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-2); }
@@ -205,7 +214,7 @@
 .room-panel-row .ui-field:has(.ui-field-hint) ~ .ui-btn { margin-bottom: 22px; }
 .room-held {
   flex: none; display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2) var(--space-3);
-  border-top: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-ink); font-size: var(--text-sm);
+  border-top: var(--line); border-left: 2px solid var(--color-accent); background: var(--color-surface); color: var(--color-ink); font-size: var(--text-sm);
 }
 .room-held-text { flex: 1; min-width: 200px; }
 
@@ -224,6 +233,72 @@
   .room-page .ui-btn, .room-page .ui-iconbtn, .room-frame .ui-btn, .room-frame .ui-iconbtn,
   .room-panel .ui-btn, .room-panel .ui-iconbtn, .room-held .ui-btn, .room-held .ui-iconbtn { min-width: 44px; min-height: 44px; }
 }
+
+/* ---- the Browser window (docs/design/0007): tabs, the address bar, the live page; a still with taps on a phone ---- */
+.room-desk-side > .room-window-browser { flex: 1 1 0; min-height: 320px; }
+.room-browser { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.room-browser-tabs { flex: none; display: flex; align-items: flex-end; gap: var(--space-1); padding: var(--space-1) var(--space-2) 0; border-bottom: var(--border-w) solid var(--color-border); }
+.room-browser-tablist { flex: 0 1 auto; min-width: 0; display: flex; align-items: flex-end; gap: var(--space-1); overflow-x: auto; scrollbar-width: none; }
+.room-browser-tab {
+  flex: 0 1 200px; min-width: 96px; display: inline-flex; align-items: center; height: 32px; padding: 0 var(--space-1) 0 0;
+  border: var(--border-w) solid transparent; border-bottom: 0; border-radius: 0; color: var(--color-ink-muted);
+}
+.room-browser-tab:hover { background: var(--color-bg-hover); }
+.room-browser-tab.is-active { position: relative; background: var(--color-surface-sunken); border-color: var(--color-border); color: var(--color-ink); }
+.room-browser-tab.is-active::before { content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 2px; background: var(--color-accent); }
+.room-browser-tab.is-asleep .room-browser-tab-name { font-style: italic; }
+.room-browser-tab-face {
+  flex: 1; min-width: 0; height: 100%; display: inline-flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-2);
+  background: none; border: 0; color: inherit; font: inherit; font-size: var(--text-sm); text-align: left; cursor: pointer;
+}
+.room-browser-tab-face:focus-visible, .room-browser-tab-close:focus-visible { outline: var(--focus-w) solid var(--color-border-focus); outline-offset: -2px; border-radius: var(--radius-xs); }
+.room-browser-tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-browser-tab-close {
+  flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0; background: none; border: 0;
+  border-radius: var(--radius-xs); color: var(--color-ink-muted); cursor: pointer;
+}
+.room-browser-tab-close:hover { background: var(--color-bg-active); color: var(--color-ink); }
+/* a tab that is loading: a still ring (the app has one animation, the fade) */
+.room-browser-spin { flex: none; width: 10px; height: 10px; border-radius: var(--radius-full); border: 2px solid var(--color-border-strong); border-top-color: var(--color-accent); }
+.room-browser-bar { flex: none; display: flex; align-items: center; gap: var(--space-1); padding: var(--space-2); background: var(--color-surface-sunken); }
+.room-browser-address { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: var(--text-sm); }
+.room-browser-view {
+  position: relative; flex: 1; min-height: 240px; overflow: hidden; display: flex; align-items: flex-start; justify-content: flex-start;
+  background: var(--color-surface-sunken); border-top: var(--border-w) solid var(--color-border);
+}
+.room-browser-view:focus { outline: none; }
+.room-browser-view:focus-visible { box-shadow: inset 0 0 0 var(--focus-w) var(--color-border-focus); }
+.room-browser-frame { display: block; max-width: 100%; max-height: 100%; object-fit: contain; object-position: left top; user-select: none; touch-action: none; cursor: default; }
+.room-browser-frame.is-still { width: 100%; height: auto; max-height: none; touch-action: manipulation; }
+.room-browser-view.is-still { overflow: auto; min-height: 0; flex: none; }
+.room-browser-wait { margin: auto; color: var(--color-ink-muted); font-size: var(--text-sm); }
+.room-browser-blocked {
+  position: absolute; inset: var(--space-4) var(--space-4) auto; margin: 0; padding: var(--space-3) var(--space-4); background: var(--color-surface);
+  border: var(--line-ink); border-radius: 0; color: var(--color-ink); font-size: var(--text-sm);
+}
+.room-browser-note { flex: none; margin: 0; min-height: 28px; padding: var(--space-1) var(--space-3); font-size: var(--text-sm); color: var(--color-ink-muted); border-top: var(--border-w) solid var(--color-border); }
+.room-browser-note:empty { display: none; }
+.room-browser-rooks {
+  flex: none; display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-active); color: var(--color-ink); font-size: var(--text-sm); border-top: var(--border-w) solid var(--color-border);
+}
+.room-browser-saved { margin: 0; padding: 0 var(--space-4) var(--space-4); text-align: center; font-size: var(--text-sm); color: var(--color-ink-muted); }
+.room-browser-closed { flex: 1; display: grid; place-items: center; }
+/* Why the browser did not start, under Advanced (feat/windows), industrial: a mono micro-label summary, a sunken
+   square well with a hairline edge for what was run and what it printed. */
+.room-browser-advanced { flex: none; max-width: 100%; margin: 0; padding: 0 var(--space-4) var(--space-3); font-size: var(--text-sm); color: var(--color-ink-muted); }
+.room-browser-advanced summary {
+  cursor: pointer; font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium); text-transform: uppercase;
+  letter-spacing: var(--tracking-micro); color: var(--color-ink-muted);
+}
+.room-browser-advanced summary:hover, .room-browser-advanced[open] > summary { color: var(--color-ink); }
+.room-browser-advanced pre {
+  max-height: 12rem; overflow: auto; margin: var(--space-2) 0 0; padding: var(--space-2); white-space: pre-wrap; overflow-wrap: anywhere;
+  font-family: var(--font-mono); font-size: var(--text-xs); background: var(--color-surface-sunken); border: var(--line); border-radius: 0;
+}
+.room-browser-phone-row { flex: none; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3) 0; }
+.room-browser-phone-row .ui-input { flex: 1; min-width: 0; }
+.room-browser-phone-line { flex: none; margin: 0; padding: var(--space-2) var(--space-3) var(--space-3); font-size: var(--text-sm); color: var(--color-ink-muted); }
 
 /* ---- under 1280 px the bar's verbs keep their icons and lose their words (the title keeps the word) ---- */
 @media (max-width: 1280px) {
@@ -248,4 +323,7 @@
   .room-dock.is-phone .ui-tab { flex: 1; min-height: 44px; }
   .room-dock.is-phone .room-dock-honest { justify-content: flex-start; text-align: left; font-size: var(--text-2xs); }
   .room-desk-side > .room-window-points { max-height: none; }
+  .room-browser-tab { flex-basis: 140px; min-width: 88px; height: 40px; }
+  .room-browser-tab-close { width: 40px; height: 40px; }
+  .room-browser-bar .ui-iconbtn, .room-browser-tabs .ui-iconbtn, .room-browser-phone-row .ui-btn { min-width: 44px; min-height: 44px; }
 }

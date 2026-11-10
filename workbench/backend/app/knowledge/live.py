@@ -1,10 +1,11 @@
 """Live wiring (feat/memory-core): the knowledge layer follows the rest of the app as it changes.
 
-* context(ctx, user_text): the budgeted memory block for the assistant's system prompt. Memories marked
-  privacy="sensitive" are only included when the turn's model runs on this computer (connection residency "local").
+* context(ctx, user_text): the budgeted memory block for the assistant's system prompt, the only one (knowledge/facts.py).
+  Memories marked privacy="sensitive" are only included when the turn's model runs on this computer (connection
+  residency "local"). Off when the person turns off "Use what I know in answers".
 * after_turn(conv_id): index the new chat messages and file the chat under its project.
-* sync_once(): incremental pass over tasks, files, sites, events, meetings, projects and the "What I know about you"
-  facts (new, changed, removed); loop() runs it every LIVE_SECONDS. Every new item is auto-filed.
+* sync_once(): incremental pass over tasks, files, sites, events, meetings and projects (new, changed, removed);
+  loop() runs it every LIVE_SECONDS. Every new item is auto-filed.
 * file_item(): auto-filing - attach an item to the Project it names (project name or keywords), recorded in
   kn_filings so the UI can show "Filed under X, change?" and refile_item() can change or undo it.
 """
@@ -15,7 +16,7 @@ import logging
 import re
 
 from .. import db
-from . import adapters, crypto, graph, index, memory, schema
+from . import adapters, facts, graph, index, schema
 from .recall import context_for, visible_scopes
 from .text import norm_name, words
 
@@ -39,7 +40,7 @@ def model_is_local(model_ref: str | None) -> bool:
 
 def context(ctx, user_text: str) -> list[str]:
     try:
-        if not enabled() or not (user_text or "").strip():
+        if not enabled() or not facts.context_on() or not (user_text or "").strip():
             return []
         schema.ensure()
         pid = None
@@ -48,7 +49,7 @@ def context(ctx, user_text: str) -> list[str]:
         agent = getattr(ctx, "agent", None)
         scopes = visible_scopes(assistant=str(agent["id"]) if agent else None)
         res = context_for(user_text, budget_tokens=500, scopes=scopes, project_id=pid,
-                          allow_sensitive=model_is_local(getattr(ctx, "model", None)), skip_adapt_mirrors=True)
+                          allow_sensitive=model_is_local(getattr(ctx, "model", None)), recent=3)
         return [res["block"]] if res["block"] else []
     except Exception as e:  # noqa: BLE001 - never break a chat turn
         log.warning("knowledge context skipped: %s", e)
@@ -270,20 +271,9 @@ def _site_record_row(r):
         graph.upsert("person", r["person"], source="adapter")
 
 
-def _sync_facts() -> int:
-    n = adapters.sync_adapt_facts()
-    if _has("adapt_facts"):
-        live = {f"adapt_fact:{r['id']}" for r in db.all("SELECT id FROM adapt_facts")}
-        for m in db.all("SELECT id, source_ref FROM kn_memories WHERE source_ref LIKE 'adapt_fact:%'"):
-            if m["source_ref"] not in live:  # forgotten on "What I know about you" -> forgotten here too
-                memory.forget(m["id"])
-                n += 1
-    return n
-
-
 def sync_once() -> dict:
     schema.ensure()
-    out = {"projects": _sync_projects(), "tasks": _sync_tasks(), "facts": _sync_facts()}
+    out = {"projects": _sync_projects(), "tasks": _sync_tasks()}
     out["files"] = _sync_by_id("files", "work_files", "SELECT * FROM work_files WHERE id > ? ORDER BY id LIMIT 500", _file_row)
     out["sites"] = _sync_by_id("sites", "sites", "SELECT * FROM sites WHERE id > ? ORDER BY id LIMIT 500", _site_row)
     out["events"] = _sync_by_id("events", "events", "SELECT * FROM events WHERE id > ? ORDER BY id LIMIT 1000", _event_row)

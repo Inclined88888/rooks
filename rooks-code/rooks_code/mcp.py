@@ -1,6 +1,10 @@
 """A minimal MCP client for stdio servers (JSON-RPC 2.0, one message per line), protocol 2025-06-18 with fallback to
 whatever version the server answers. Lists each server's tools and calls them; tools are exposed to the model as
-mcp__<server>__<tool>."""
+mcp__<server>__<tool>.
+
+A server may ask the person a question while a tool runs (MCP elicitation: rooks-try's handoff and Rooks Desk do, before
+anything leaves the Room or touches the screen). Given an `elicit` callback the client says it can ask, and the
+question goes to the person in the terminal, never to the model."""
 
 from __future__ import annotations
 
@@ -12,6 +16,8 @@ import subprocess
 import sys
 import threading
 
+from . import __version__
+
 PROTOCOL = "2025-06-18"
 
 
@@ -21,8 +27,10 @@ class MCPError(Exception):
 
 class StdioServer:
     def __init__(self, name: str, command: str, args: list[str] | None = None, env: dict | None = None,
-                 cwd: str | None = None, timeout: float = 60):
+                 cwd: str | None = None, timeout: float = 60, elicit=None):
         self.name, self.timeout = name, timeout
+        self.elicit = elicit  # (server name, tool name, params) -> the result for elicitation/create
+        self._calling = ""
         exe = shutil.which(command) or command  # Windows: finds npx.cmd and friends
         self.proc = subprocess.Popen([exe, *(args or [])], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE, cwd=cwd, env={**os.environ, **(env or {})},
@@ -32,8 +40,9 @@ class StdioServer:
         self.stderr: list[str] = []
         threading.Thread(target=self._read, daemon=True).start()
         threading.Thread(target=self._drain, daemon=True).start()
-        info = self.request("initialize", {"protocolVersion": PROTOCOL, "capabilities": {},
-                                           "clientInfo": {"name": "rooks-code", "version": "0.1.0"}})
+        caps = {"elicitation": {}} if elicit else {}
+        info = self.request("initialize", {"protocolVersion": PROTOCOL, "capabilities": caps,
+                                           "clientInfo": {"name": "rooks-code", "version": __version__}})
         self.server_info = info.get("serverInfo", {})
         self.notify("notifications/initialized")
         self.tools = self.request("tools/list", {}).get("tools", [])
@@ -50,6 +59,11 @@ class StdioServer:
                 continue  # servers that print banners to stdout
             if "id" in msg and ("result" in msg or "error" in msg):
                 self._replies.put(msg)
+            elif "id" in msg and msg.get("method") == "elicitation/create":
+                if self.elicit:  # asked on the thread that waits for the tool, so the person answers there
+                    self._replies.put(msg)
+                else:
+                    self._send({"jsonrpc": "2.0", "id": msg["id"], "result": {"action": "decline"}})
             elif "id" in msg and "method" in msg:  # server -> client request (ping, roots): answer minimally
                 result = {"roots": []} if msg["method"] == "roots/list" else {}
                 self._send({"jsonrpc": "2.0", "id": msg["id"], "result": result})
@@ -83,15 +97,29 @@ class StdioServer:
             if msg is None:
                 self._replies.put(None)
                 raise MCPError(f"MCP server {self.name} exited: {' | '.join(self.stderr[-3:])}")
+            if msg.get("method") == "elicitation/create":
+                self._send({"jsonrpc": "2.0", "id": msg["id"], "result": self._ask(msg.get("params") or {})})
+                continue  # the wait for the tool starts again after the person answered
             if msg.get("id") != rid:
                 continue
             if "error" in msg:
                 raise MCPError(f"{self.name}: {msg['error'].get('message', msg['error'])}")
             return msg.get("result") or {}
 
+    def _ask(self, params: dict) -> dict:
+        try:
+            r = self.elicit(self.name, self._calling, params) if self.elicit else None
+        except Exception:  # noqa: BLE001 - a question that could not be put to the person is a no
+            r = None
+        return r if isinstance(r, dict) and r.get("action") in ("accept", "decline", "cancel") else {"action": "decline"}
+
     def call(self, tool: str, arguments: dict) -> tuple[bool, str]:
         """Returns (ok, text). Non-text content is summarised by type."""
-        r = self.request("tools/call", {"name": tool, "arguments": arguments})
+        self._calling = tool
+        try:
+            r = self.request("tools/call", {"name": tool, "arguments": arguments})
+        finally:
+            self._calling = ""
         parts = []
         for c in r.get("content", []):
             parts.append(c.get("text", "") if c.get("type") == "text" else f"[{c.get('type')} content]")
@@ -109,7 +137,7 @@ class StdioServer:
 
 
 class MCPManager:
-    def __init__(self, servers: dict[str, dict], cwd: str, warn=lambda m: print(m, file=sys.stderr)):
+    def __init__(self, servers: dict[str, dict], cwd: str, warn=lambda m: print(m, file=sys.stderr), elicit=None):
         self.servers: dict[str, StdioServer] = {}
         self.trusted: set[str] = set()
         for name, spec in servers.items():
@@ -120,7 +148,7 @@ class MCPManager:
                 continue
             try:
                 self.servers[name] = StdioServer(name, spec["command"], spec.get("args", []), spec.get("env"), cwd,
-                                                 float(spec.get("timeout", 60)))
+                                                 float(spec.get("timeout", 60)), elicit=elicit)
                 if spec.get("trusted"):
                     self.trusted.add(name)
             except (OSError, MCPError, KeyError) as e:

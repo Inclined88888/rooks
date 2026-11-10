@@ -5,10 +5,10 @@
  */
 import type { LucideIcon } from "lucide-react";
 import {
-  Activity, AudioLines, BookMarked, Building2, CalendarClock, CalendarDays, CheckSquare, Code2, CreditCard, Columns3, FileText, FlaskConical,
+  Activity, AudioLines, BookMarked, Briefcase, Building2, CalendarClock, CalendarDays, CheckSquare, Code2, CreditCard, Columns3, FileText, FlaskConical,
   FolderKanban, FolderOpen, Gauge, Globe, Globe2, GraduationCap, Hammer, History, Home, Info, Laptop, Layers, LineChart, ListChecks, ListTree, Lock,
-  Mail, MessageCircle, MessageSquare, Mic, Monitor, NotebookPen, Package, Palette, Plug, Scale, Search, Settings, Shield, SlidersHorizontal,
-  SquareTerminal, UserRound, Users, UsersRound, Video,
+  Mail, MessageCircle, MessageSquare, Mic, Monitor, NotebookPen, Package, Palette, Plug, Scale, Search, Settings, Shield,
+  SquareTerminal, Users, UsersRound, Video,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -17,7 +17,16 @@ export type GroupId = "day" | "memory" | "library";
 export type Section = "Workspace" | "Settings" | "Advanced";
 
 /** The parts of /api/status the registry gates on. */
-export type StatusLike = { browser_enabled?: boolean; desk_enabled?: boolean };
+export type StatusLike = {
+  browser_enabled?: boolean;
+  desk_enabled?: boolean;
+  /** Settings, Advanced, "Show developer tools": off on a new install, kept by the install (the server). */
+  dev_tools?: boolean;
+  /** Other AI front ends the Docker setup can run beside Rooks (developer links). */
+  chat_url?: string;
+  paperclip_url?: string;
+  hermes_url?: string;
+};
 
 export type PageContext = { refresh: () => void };
 
@@ -39,6 +48,11 @@ export type PageEntry = {
   section?: Section;
   /** Only when that part is running on this computer. */
   addon?: "browser" | "desk";
+  /**
+   * A developer page (docs/architecture.md, section g.3): listed in the More sheet and the command menu only while
+   * "Show developer tools" is on. Its address opens either way.
+   */
+  dev?: true;
   /** Hide for this status (the registry's own addon rule is the common case). */
   hideWhen?: (s: StatusLike) => boolean;
   /** Not in the More sheet (default: listed when it has a section). */
@@ -69,7 +83,6 @@ export const PAGES: PageEntry[] = [
   // ---- Memory: facts, skills, what it noticed ----
   { path: "/knowledge", label: "Memory", icon: BookMarked, group: "memory", load: () => import("../memory/Knowledge") },
   { path: "/skills", label: "Skills", icon: ListChecks, group: "memory", load: () => import("./Skills") },
-  { path: "/about-you", label: "About you", icon: UserRound, group: "memory", load: () => import("./AboutYou") },
   { path: "/teach", label: "Show me how", icon: GraduationCap, group: "memory", load: () => import("./Teach"), also: ["/teach/:id"] },
 
   // ---- Library ----
@@ -82,8 +95,6 @@ export const PAGES: PageEntry[] = [
   // ---- More: Workspace ----
   { path: "/home", label: "Home", icon: Home, section: "Workspace", load: () => import("./Dashboard") },
   { path: "/automations", label: "Automations", icon: CalendarClock, section: "Workspace", load: () => import("./Automations") },
-  { path: "/code", label: "Code", icon: Code2, section: "Workspace", load: () => import("./Code"), also: ["/code/:id"] },
-  { path: "/terminal", label: "Terminal", icon: SquareTerminal, section: "Workspace", load: () => import("../terminalHost").then((m) => ({ default: m.TerminalSlot })) },
   { path: "/browser", label: "Browser", icon: Globe, section: "Workspace", addon: "browser", load: () => import("./Browser"), also: ["/browser/:id"] },
   { path: "/computer", label: "Computer", icon: Monitor, section: "Workspace", addon: "desk", load: () => import("./Computer"), also: ["/computer/:id"] },
   { path: "/research", label: "Research", icon: Search, section: "Workspace", load: () => import("./Research"), also: ["/research/:id"] },
@@ -95,11 +106,10 @@ export const PAGES: PageEntry[] = [
   { path: "/talk", label: "Talk", icon: AudioLines, section: "Workspace", load: () => import("./Talk") },
   { path: "/vault", label: "Vault", icon: Lock, section: "Workspace", load: () => import("../teammates/Vault") },
   { path: "/coworkers", label: "Coworkers", icon: UsersRound, section: "Workspace", load: () => import("./Coworkers") },  // feat/coworkers
-  { path: "/packs", label: "Packs", icon: Package, section: "Workspace", load: () => import("./Packs") },
 
   // ---- More: Settings ----
   { path: "/models", label: "AI models", icon: Gauge, section: "Settings", load: () => import("./Models") },
-  { path: "/customize", label: "Customize", icon: SlidersHorizontal, section: "Settings", load: () => import("./Customize") },
+  { path: "/work", label: "Work apps", icon: Briefcase, section: "Settings", load: () => import("./WorkApps") },  // design 0012
   { path: "/voice", label: "Ask anywhere & voice", icon: Mic, section: "Settings", load: () => import("./VoiceSettings") },
   { path: "/appearance", label: "Appearance", icon: Palette, section: "Settings", load: () => import("./Appearance") },
   { path: "/plan", label: "Your plan", icon: CreditCard, section: "Settings", load: () => import("./Plan") },
@@ -108,29 +118,35 @@ export const PAGES: PageEntry[] = [
 
   // ---- More: Advanced ----
   { path: "/history", label: "History", icon: History, section: "Advanced", load: () => import("./History") },
-  { path: "/runs", label: "Run log", icon: ListTree, section: "Advanced", load: () => import("./Runs"), also: ["/runs/:id"] },
-  { path: "/insights", label: "Insights", icon: LineChart, section: "Advanced", load: () => import("./Insights") },
-  { path: "/compare", label: "Compare models", icon: Columns3, section: "Advanced", load: () => import("./Compare") },
-  { path: "/fine-tune", label: "Fine-tune", icon: FlaskConical, section: "Advanced", load: () => import("./FineTune") },
   { path: "/company", label: "Company", icon: Building2, section: "Advanced", load: () => import("./Company") },
-  { path: "/status", label: "System status", icon: Activity, section: "Advanced", load: () => import("./Status") },
+  // Developer tools (section g.3): listed only while "Show developer tools" is on (Settings, Advanced)
+  { path: "/code", label: "Code", icon: Code2, section: "Advanced", dev: true, load: () => import("./Code"), also: ["/code/:id"] },
+  { path: "/terminal", label: "Terminal", icon: SquareTerminal, section: "Advanced", dev: true, load: () => import("../terminalHost").then((m) => ({ default: m.TerminalSlot })) },
+  { path: "/runs", label: "Run log", icon: ListTree, section: "Advanced", dev: true, load: () => import("./Runs"), also: ["/runs/:id"] },
+  { path: "/insights", label: "Insights", icon: LineChart, section: "Advanced", dev: true, load: () => import("./Insights") },
+  { path: "/compare", label: "Compare models", icon: Columns3, section: "Advanced", dev: true, load: () => import("./Compare") },
+  { path: "/fine-tune", label: "Fine-tune", icon: FlaskConical, section: "Advanced", dev: true, load: () => import("./FineTune") },
+  { path: "/status", label: "System status", icon: Activity, section: "Advanced", dev: true, load: () => import("./Status") },
   // /mcp itself belongs to the service (the MCP endpoint), so a page there would be answered by the service on a reload
-  { path: "/extra-tools", label: "Extra tools", icon: Plug, section: "Advanced", load: () => import("./McpServers") },
+  { path: "/extra-tools", label: "Extra tools", icon: Plug, section: "Advanced", dev: true, load: () => import("./McpServers") },
+  { path: "/packs", label: "Packs", icon: Package, section: "Advanced", dev: true, load: () => import("./Packs") },
 
   // ---- routes without a place in the nav (reached from inside pages) ----
   // the packs' own pages: opened from the Packs page, from a pack's result in chat ("/packs/trade?doc=…") and from ⌘K
-  { path: "/packs/legal", label: "Legal pack", icon: Scale, load: () => import("./PackLegal") },
-  { path: "/packs/study", label: "Study pack", icon: GraduationCap, load: () => import("./PackStudy") },
-  { path: "/packs/trade", label: "Trade pack", icon: Hammer, load: () => import("./PackTrade") },
-  { path: "/assistant-memory", label: "Chat memory", icon: BookMarked, load: () => import("./Assistant"), props: { tab: "memory" }, palette: false },
+  { path: "/packs/legal", label: "Legal pack", icon: Scale, dev: true, load: () => import("./PackLegal") },
+  { path: "/packs/study", label: "Study pack", icon: GraduationCap, dev: true, load: () => import("./PackStudy") },
+  { path: "/packs/trade", label: "Trade pack", icon: Hammer, dev: true, load: () => import("./PackTrade") },
   { path: "/assistant-settings", label: "Chat settings", icon: Settings, load: () => import("./Assistant"), props: { tab: "settings" }, palette: false },
   { path: "/groups/:id", label: "Group", icon: Users, load: () => import("../teammates/Groups"), palette: false },
 ];
 
 export const REDIRECTS: Redirect[] = [
   { from: "/", to: "/assistant" },
-  { from: "/connect", to: "/customize" },
+  { from: "/connect", to: "/settings" },
+  { from: "/customize", to: "/settings" },  // the Customize page only linked to other pages; Settings has them all
   { from: "/assistant-skills", to: "/skills" },
+  { from: "/about-you", to: "/knowledge" },  // one memory (architecture g.2): About you and the chat's Memory tab are the Memory page
+  { from: "/assistant-memory", to: "/knowledge" },
   { from: "/packs/*", to: "/packs" },
   { from: "/mcp", to: "/extra-tools" },
   { from: "/welcome", to: "/assistant" },
@@ -146,6 +162,7 @@ export const RAIL_GROUPS: Record<GroupId, { label: string; icon: LucideIcon }> =
 };
 
 export function allowed(p: PageEntry, s: StatusLike | null | undefined): boolean {
+  if (p.dev && !s?.dev_tools) return false;
   if (p.addon === "browser" && !s?.browser_enabled) return false;
   if (p.addon === "desk" && !s?.desk_enabled) return false;
   if (p.hideWhen && s && p.hideWhen(s)) return false;
@@ -197,4 +214,19 @@ export function morePages(s: StatusLike | null | undefined): { section: Section;
 /** The palette's "Go to" group: every reachable page with a place in the app. */
 export function palettePages(s: StatusLike | null | undefined): PageEntry[] {
   return visiblePages(s).filter((p) => p.palette !== false && !p.path.includes(":"));
+}
+
+/** A page outside Rooks the More sheet links to. */
+export type ExternalLink = { label: string; href: string; icon: LucideIcon };
+
+/** Open WebUI, Paperclip and Hermes (other AI front ends the Docker setup can run): developer links, so only while
+ *  "Show developer tools" is on, and only those with an address. */
+export function externalLinks(s: StatusLike | null | undefined): ExternalLink[] {
+  if (!s?.dev_tools) return [];
+  const links: (ExternalLink | null)[] = [
+    s.chat_url ? { label: "Open WebUI", href: s.chat_url, icon: MessageSquare } : null,
+    s.paperclip_url ? { label: "Paperclip", href: s.paperclip_url, icon: Building2 } : null,
+    s.hermes_url ? { label: "Hermes agent", href: s.hermes_url, icon: Plug } : null,
+  ];
+  return links.filter((l): l is ExternalLink => l !== null);
 }

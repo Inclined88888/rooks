@@ -11,7 +11,7 @@ from conftest import CALLS, SCRIPT, events, tool_call
 
 @pytest.fixture(autouse=True)
 def quiet_learning(monkeypatch):
-    from app.adapt import knowledge
+    from app.knowledge import facts as knowledge
 
     async def nothing(*a, **k):
         return []

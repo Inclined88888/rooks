@@ -5,9 +5,10 @@ import { warmProps } from "../pages/warm";
 import { roomOn, usePresence } from "./presence";
 
 /**
- * Below 900px the top bar becomes this floating glass dock: a pill with Chat, Room, Jobs and More (the current one
- * widens to show its name), and Needs you in its own glass circle with the count. The Room item carries a live dot
- * while the Room runs; Needs you opens the inbox sheet in place.
+ * Below 900px the top bar becomes this bar docked at the bottom: square cells split by hairlines for Chat, Room, Jobs
+ * and More (an icon over a small mono name; the current one an ink block), and Needs you in its own cell with the
+ * count on an orange square. The Room item carries a live dot while the Room runs; Needs you opens the inbox sheet in
+ * place.
  */
 export function MobileBar({ onMore }: { onMore: () => void }) {
   const p = usePresence();

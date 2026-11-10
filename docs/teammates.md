@@ -1,4 +1,7 @@
-# Teammates, groups, Vault, drafts, Pages, channels and the phone link (feat/grok-style)
+# Teammates, groups, Vault, drafts, Pages, channels and the phone link
+
+In the app on `main`. It was built on branch `feat/grok-style`; the `# feat/grok-style` tags in the code only mark where
+it hooks into shared files.
 
 Backend: `workbench/backend/app/teammates/`. Shared files get one tagged hook line each (`# feat/grok-style`):
 `main.py` (routers + Slack, Discord and phone-relay loops), `assistant.system_prompt`, `assistant.available_tools`, `telegram._conversation`.
@@ -6,7 +9,7 @@ Backend: `workbench/backend/app/teammates/`. Shared files get one tagged hook li
 | Area | API | Notes |
 |---|---|---|
 | Teammates | `GET/POST /api/teammates`, `GET/PATCH/DELETE /api/teammates/{id}`, `POST /api/teammates/{id}/chat` (SSE) | Templates: personal, work, study, trade, research, legal. Persona, avatar, colour, sections, tool groups, model. The default teammate can't be deleted. |
-| Memory | `POST/DELETE /api/teammates/{id}/notes` | `memory.py` is a thin adapter; it switches to `app.knowledge.scoped` when feat/memory-core lands. Scope `own` or `shared`. |
+| Memory | `POST/DELETE /api/teammates/{id}/notes` | `memory.py` is a thin adapter. A teammate's own notes are still kept in `tm_notes`, apart from the one memory store; the shared facts about you come from that store. Moving the notes into `knowledge.scoped` is in BACKLOG.md. Scope `own` or `shared`. |
 | Routines | `POST /api/teammates/{id}/routines` | Plain words, then `automations.parse/create` (ask first), mapped to the teammate. Job conversations resolve to the owner teammate. |
 | Computer | `POST /api/teammates/{id}/computer/sign-in` | Own working folder `DATA_DIR/teammates/<id>/work` and Rooks Browser profile `tm-<id>`. |
 | Templates | `GET /api/teammates/{id}/template`, `POST /api/teammates/import` | JSON `ai-workspace.teammate` v1. No notes or secrets; routines come in as words for review. |

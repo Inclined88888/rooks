@@ -7,6 +7,7 @@ Both are recorded per model, so how reliable each model is with your tools is me
 """
 
 from __future__ import annotations
+import json
 import re
 import time
 from typing import Any, Callable
@@ -87,12 +88,12 @@ def _outbox_draft(args: dict, r: Any) -> Check:
 def _memory(args: dict, r: Any) -> Check:
     if (r or {}).get("saved") is None and (r or {}).get("note"):
         return True, "already known, nothing new saved"
-    m = db.one("SELECT * FROM adapt_facts WHERE id = ?", (r or {}).get("saved"))
+    m = db.one("SELECT id FROM kn_memories WHERE id = ?", (r or {}).get("saved"))
     return (True, f"memory #{m['id']} saved (encrypted)") if m else (False, "no memory was saved")
 
 
 def _forget(args: dict, r: Any) -> Check:
-    gone = not db.one("SELECT id FROM adapt_facts WHERE id = ?", args.get("memory_id"))
+    gone = not db.one("SELECT id FROM kn_memories WHERE id = ?", args.get("memory_id"))
     return (True, f"memory #{args.get('memory_id')} deleted") if gone else (False, "the memory still exists")
 
 
@@ -304,11 +305,25 @@ def unbacked_claim(text: str, receipts: list[dict], conversation_id: int | None 
 
 
 # The ledger: tool calls and turns are rows in `actions` (actions.py), next to the model calls llm.py records
+def _room_args(raw: str) -> str:
+    try:
+        args = json.loads(raw or "{}")
+    except ValueError:
+        return raw
+    if not isinstance(args, dict):
+        return raw
+    from .room_browser_tool import scrub
+
+    return json.dumps(scrub(args), ensure_ascii=False)
+
+
 def record_tool(ctx, tool: str, outcome: str, verified: bool | None, evidence: str, from_text: bool, ms: int, *,
                 effect: str = "", args: str = "", payload: str | None = None, detail: str = "", failure: str = "",
                 request_id: str | None = None) -> int:
     from . import actions
 
+    if tool == "use_room":  # the Room's browser: typed text as "(N characters)", an address without its query
+        args = _room_args(args)
     return actions.add("tool_call", outcome, trace=ctx.trace(), payload=payload, model=ctx.model, tool=tool, effect=effect,
                        args=actions.args_preview(args), verified=None if verified is None else int(verified), evidence=evidence,
                        from_text=int(from_text), latency_ms=ms, detail=detail, failure_reason=failure,

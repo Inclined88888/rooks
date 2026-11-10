@@ -199,12 +199,14 @@ test("a new chat greets by the time of day and offers three things to do", () =>
 });
 
 // ---------------------------------------------------------------------------------------------- the source
-test("the chat page is split: thread, composer, result cards, header, empty state and the three tabs", () => {
-  for (const f of ["Thread.tsx", "Composer.tsx", "ResultCards.tsx", "ThreadHeader.tsx", "EmptyChat.tsx", "tabs/MemoryTab.tsx", "tabs/SkillsTab.tsx", "tabs/SettingsTab.tsx"]) {
+test("the chat page is split: thread, composer, result cards, header, empty state and the settings tab", () => {
+  // the chat's Memory tab is the Memory page now (one memory, tests/one-memory.test.mjs)
+  for (const f of ["Thread.tsx", "Composer.tsx", "ResultCards.tsx", "ThreadHeader.tsx", "EmptyChat.tsx", "tabs/SettingsTab.tsx"]) {
     assert.ok(exists(`../src/chat/${f}`), `src/chat/${f} exists`);
   }
   const page = read("../src/pages/Assistant.tsx");
-  assert.match(page, /export \{ SkillsTab \}/, "the Skills page keeps importing SkillsTab from the chat page");
+  // the old Skills tab had no route; its list lives on the Skills page now ("Learned or written here")
+  assert.match(read("../src/pages/Skills.tsx"), /function LearnedSkills\(\)/);
   assert.match(page, /<Thread/);
   assert.match(page, /<Composer/);
   assert.match(page, /<ThreadHeader/);
@@ -281,7 +283,9 @@ test("a new chat gets a greeting line, three suggestion chips and the Needs you 
   assert.match(empty, /suggestionChips/);
   assert.match(empty, /needs_you|needsYou/);
   const css = strip(read("../src/chat/chat.css"));
-  assert.match(css, /\.chat-empty-title \{[^}]*font-family: var\(--font-sans\)/, "the greeting is the sans heading (Bodoni is gone)");
+  // the industrial redesign (step 4) changes what this guarded: a new chat is an empty-state hero, so the greeting is
+  // the condensed display headline (tests/industrial-pages.test.mjs); still not the old Bodoni
+  assert.match(css, /\.chat-empty-title \{[^}]*font-family: var\(--font-display\)/, "the greeting is the display headline (Bodoni is gone)");
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "chat.css has no hex colours");
   assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, "chat.css has no literal colours");
 });

@@ -8,7 +8,10 @@ the app; the extension shows a link when that happens.
 
 1. In AI Workspace, open **Assistant**, then **Terminal access**, and choose **Create token**.
 2. In VS Code run **AI Workspace: Set terminal access token** and paste it. It is kept in VS Code's secret storage.
-3. If the Workbench isn't at `http://127.0.0.1:3100`, set `aiWorkspace.url`.
+3. Nothing else for the app on this computer: the add-on finds it each time, even though the app starts on a new
+   port every launch (it reads the address from the app's `app.json`, as the `rooks` terminal does; only the
+   address, never the key in that file). For a server install, set `aiWorkspace.url`, for example
+   `http://127.0.0.1:3100`. With the setting empty and no app open, that server address is tried.
 
 ## Use
 
@@ -23,6 +26,6 @@ Answers and tool activity appear in the **AI Workspace** output panel.
 
 ```
 npm install
-npm test          # compiles and runs the client tests against a local fake server
+npm test          # compiles and runs the client and address tests against a local fake server
 npm run package   # builds ai-workspace-0.1.0.vsix (install with: code --install-extension ai-workspace-0.1.0.vsix)
 ```

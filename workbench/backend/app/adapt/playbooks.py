@@ -19,7 +19,8 @@ import httpx
 from fastapi import HTTPException
 
 from .. import config, db
-from . import jobs, knowledge, recorder, store
+from ..knowledge import facts
+from . import jobs, recorder, store
 
 SENSITIVE = re.compile(r"\b(send|submit|pay|purchase|buy|delete|remove|approve|sign|post|publish|transfer|book)\b", re.I)
 
@@ -127,7 +128,7 @@ async def refine(pb: dict, narration: str, model: str | None = None) -> dict:
     try:
         payload = json.dumps({"captured_steps": [s["text"] for s in pb["steps"]], "parameters": pb["params"],
                               "narration": narration[:4000], "start": pb["start_url"]}, ensure_ascii=False)
-        out = await knowledge.model_json(REFINE_PROMPT, payload, model, "teach")
+        out = await facts.model_json(REFINE_PROMPT, payload, model, "teach")
     except Exception:  # noqa: BLE001 - no model, offline, bad JSON: the compiled playbook is already usable
         return pb
     if not isinstance(out, dict):

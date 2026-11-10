@@ -4,7 +4,9 @@ Through the Rooks app (provider workbench) Rooks shares the app's memory and ski
 chat helps in the terminal and the other way round:
   * before a request, the facts that fit it and the index of saved skills go into the system prompt
   * the remember tool saves a fact you state ("I use pnpm", "my name is Azad") in the app's memory
-  * the load_skill tool reads a saved procedure's steps
+  * the load_skill tool reads a saved procedure's steps: the app's, or a skill kept in files (skills.py: this folder's
+    .rooks/skills and .claude/skills once the folder is trusted, and the person's own ~/.rooks/skills and
+    ~/.claude/skills), which work with the app off too
   * after a request, it is sent to the app, which keeps it in the chat history as a terminal chat and, in the
     background, learns facts and (after a task of several steps) saves or improves a reusable skill
 
@@ -24,6 +26,7 @@ import urllib.request
 from pathlib import Path
 
 from . import config
+from .skills import Library, held_skill_note, skills_block
 from .tools import Plan, ToolError
 
 TIMEOUT = 4  # seconds; the app is local
@@ -65,11 +68,31 @@ def _norm(s: str) -> str:
     return " ".join("".join(c for c in s.lower() if c.isalnum() or c == " ").split())
 
 
+def skill_plan(library: Library | None, app=None, name: str = "") -> Plan:
+    """The load_skill step: a skill kept in files first (this folder's, once trusted, then yours), then the app's."""
+    skill = str(name or "").strip()
+    if not skill:
+        raise ToolError("name is required")
+
+    def load() -> str:
+        item = library.find_skill(skill) if library else None
+        if item is not None:
+            return library.load(item)
+        if library and library.held_skill(skill):
+            return held_skill_note(skill)
+        if app is not None and app.app:
+            return app.load_skill(skill)
+        return f"Error: no skill named {skill}"
+    return Plan("read", f"load skill {skill}", skill, lambda: (load(), None, ""))
+
+
 class Learning:
-    def __init__(self, settings, session_id: str = ""):
+    def __init__(self, settings, session_id: str = "", library: Library | None = None):
         self.s = settings
         self.session = session_id
-        self.skills: list[dict] = []
+        self.skills: list[dict] = []  # the app's saved skills
+        self.library = library  # skills kept in files (skills.py)
+        self.local: list = []  # of those, the ones in use, as of this request
 
     # where ---------------------------------------------------------------------------------------------------------
     @property
@@ -90,27 +113,33 @@ class Learning:
 
     # before a request ----------------------------------------------------------------------------------------------
     def context(self, prompt: str) -> str:
-        """Extra system prompt text for this request: what is known that fits, and the saved skills."""
+        """Extra system prompt text for this request: what is known that fits, and the saved skills (the app's and
+        those kept in files, names and descriptions only)."""
+        self.local = self.library.skills() if self.library else []
+        parts: list[str] = []
         if self.app:
             try:
                 d = self._req("GET", "/context?" + urllib.parse.urlencode({"q": prompt[:2000]}))
             except (OSError, ValueError, urllib.error.URLError):
-                return ""
+                d = {}
             self.skills = [s for s in d.get("skills") or [] if isinstance(s, dict) and s.get("name")]
-            parts = [d["context"]] if d.get("context") else []
-            if self.skills:
-                parts.append("Your saved skills (call load_skill before doing that kind of task):\n" +
-                             "\n".join(f"- {s['name']}: {s.get('description', '')}" for s in self.skills))
-            return "\n\n".join(parts)
-        facts = _load_local()
-        return ("What you remember about the user (from earlier sessions):\n" + "\n".join(f"- {f}" for f in facts[-40:])
-                if facts else "")
+            if d.get("context"):
+                parts.append(d["context"])
+        else:
+            facts = _load_local()
+            if facts:
+                parts.append("What you remember about the user (from earlier sessions):\n" + "\n".join(f"- {f}" for f in facts[-40:]))
+        block = skills_block(self.local, self.skills)
+        if block:
+            parts.append(block)
+        return "\n\n".join(parts)
 
     def specs(self) -> list[dict]:
-        return SPECS + ([SKILL_SPEC] if self.skills else [])
+        return SPECS + ([SKILL_SPEC] if self.skills or self.local else [])
 
     def names(self) -> set[str]:
-        return {s["name"] for s in self.specs()}
+        # load_skill answers even when not offered: a held back skill of an untrusted folder gets the plain reason
+        return {s["name"] for s in self.specs()} | ({"load_skill"} if self.library else set())
 
     # tools ---------------------------------------------------------------------------------------------------------
     def prepare(self, name: str, a: dict) -> Plan:
@@ -121,10 +150,7 @@ class Learning:
             kind = str(a.get("kind")) if a.get("kind") in ("profile", "preference", "fact") else "fact"
             return Plan("read", f"remember: {fact}", fact, lambda: (self.remember(fact, kind), None, ""))
         if name == "load_skill":
-            skill = str(a.get("name") or "").strip()
-            if not skill:
-                raise ToolError("name is required")
-            return Plan("read", f"load skill {skill}", skill, lambda: (self.load_skill(skill), None, ""))
+            return skill_plan(self.library, self, a.get("name"))
         raise ToolError(f"unknown tool {name}")
 
     def remember(self, fact: str, kind: str = "fact") -> str:

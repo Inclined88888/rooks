@@ -130,7 +130,7 @@ def _notes(source: str, data: bytes) -> dict:
 
 def _memories(data: bytes) -> dict:
     """A file of facts you already keep: {"facts": ["..."]} or a list of sentences. Filed into our memory, not copied as-is."""
-    from ..adapt import knowledge
+    from . import facts as one_store
 
     raw = json.loads(data)
     facts = raw.get("facts") if isinstance(raw, dict) else raw
@@ -145,7 +145,7 @@ def _memories(data: bytes) -> dict:
         if len(text) < 4:
             continue
         try:
-            if knowledge.add(text, source="import"):
+            if one_store.add(text, source="import"):
                 saved += 1
         except HTTPException:
             continue

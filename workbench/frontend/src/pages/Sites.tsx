@@ -5,6 +5,7 @@ import { api } from "../api";
 import { ApprovalCard, Badge, Button, Card, EmptyState, ErrorState, IconButton, Input, List, Loading, Page, Row, Section, Select, Tabs, Textarea } from "../ui";
 import { relTime, useToast } from "../util";
 import { Busy, Notice, plainError, Split } from "./day/parts";
+import { download } from "../desktop";
 
 type Watch = { id: number; request: string; cron: string; in_words?: string; next_run: string | null; last_run: string | null; last_result?: string };
 type Form = { name: string; submit: string; page_url: string; fields: { name: string; label: string; type: string; options: { value: string; label: string }[]; value: string }[] };
@@ -192,7 +193,7 @@ export default function Sites() {
           <div className="day-actions">
             {collections.length > 1 && <Select aria-label="Show" className="day-auto" value={coll} onChange={(e) => setColl(e.target.value)}><option value="">Everything</option>{collections.map((c) => <option key={c.name} value={c.name}>{c.name} ({c.count})</option>)}</Select>}
             <span className="day-grow" />
-            <Button size="sm" icon={<Download size={14} />} onClick={() => void act("Making the spreadsheet…", () => api<{ download: string }>(`/sites/${sel.id}/export`, { method: "POST" }).then((r) => window.open(r.download, "_blank")))}>Excel</Button>
+            <Button size="sm" icon={<Download size={14} />} onClick={() => void act("Making the spreadsheet…", () => api<{ download: string }>(`/sites/${sel.id}/export`, { method: "POST" }).then((r) => download(r.download)))}>Excel</Button>
             <Button size="sm" onClick={() => navigate("/assistant", { state: { draft: `Looking at ${sel.name} (site ${sel.id}): ` } })}>Ask about these</Button>
           </div>
           {!shown.length ? <EmptyState className="day-empty-sm" title="No items found yet" line="If the site needs a sign-in, sign in once first." action={<Button size="sm" onClick={() => void act("Reading the site…", () => api(`/sites/${sel.id}/check`, { method: "POST" }))}>Check now</Button>} /> : (

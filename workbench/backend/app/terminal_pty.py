@@ -8,14 +8,17 @@ Who may open one, all of these:
   - a signed-in session (the same cookie as every /api page)
   - the page's own origin (a WebSocket carries cookies cross-site, so another site must not open a shell)
   - a client on this machine (loopback): a self-hosted server reached over the network never hands out a shell
-  - not switched off in Settings (app_terminal = 0)
+  - switched on in Settings (app_terminal = 1; off on a new install, a developer tool)
 The shell gets the user's environment minus the app's own secrets (APP_SECRET, provider keys, tokens).
-POSIX only (macOS, Linux); Windows gets a clear refusal.
+On Windows (design 0011, section 1) the shell is PowerShell on a pseudo console (ConPTY, rooks_try.winproc) in a job of
+its own, so closing the tab ends it and everything it started. Windows older than 10 1809 has no pseudo console: there
+the terminal is off, and status says why.
 """
 
 from __future__ import annotations
 
 import asyncio
+import codecs
 import json
 import os
 import re
@@ -24,6 +27,7 @@ import struct
 import subprocess
 import sys
 import threading
+import time
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
@@ -40,8 +44,34 @@ _APP_ONLY = ("APP_SECRET", "TOOLS_API_KEY", "DATA_DIR", "STATIC_DIR", "DATABASE_
 LOOPBACK = {"127.0.0.1", "::1", "localhost"}
 
 
+def conpty() -> bool:
+    """Windows: whether this computer has pseudo consoles (and rooks_try, which drives them, is installed)."""
+    try:
+        from rooks_try import winproc
+    except ImportError:
+        return False
+    return winproc.conpty_available()
+
+
+def available() -> bool:
+    """A terminal can exist on this system at all: POSIX, or Windows with pseudo consoles."""
+    return sys.platform != "win32" or conpty()
+
+
 def enabled() -> bool:
-    return db.get_setting("app_terminal", "1") == "1" and sys.platform != "win32"
+    """Terminals are a developer tool: off on a new install, on only where someone switched them on (Settings).
+    On Windows they run on a pseudo console (ConPTY) where the system has one (design 0011)."""
+    return db.get_setting("app_terminal", "0") == "1" and available()
+
+
+def windows_argv() -> list[str]:
+    """The app terminal's shell on Windows: PowerShell 7 when installed, else Windows PowerShell, by its full path."""
+    from rooks_try.drivers.shell import windows_powershell
+
+    ps = windows_powershell()
+    if not ps:
+        raise OSError("PowerShell is not on this computer")
+    return [ps, "-NoLogo"]
 
 
 def shell_env() -> dict[str, str]:
@@ -71,7 +101,7 @@ def refusal(ws: WebSocket) -> tuple[int, str] | None:
     if not _same_origin(ws):
         return 4403, "Wrong origin"
     if not _is_local(ws):
-        return 4403, "The terminal only opens on the computer running AI Workspace"
+        return 4403, "The terminal only opens on the computer running Rooks"
     if len(_open) >= MAX_SESSIONS:
         return 4429, f"At most {MAX_SESSIONS} terminals at once"
     return None
@@ -126,6 +156,9 @@ async def terminal(ws: WebSocket):
     if no:
         await ws.accept()  # accept-then-close so the page can show the reason
         await ws.close(code=no[0], reason=no[1])
+        return
+    if sys.platform == "win32":
+        await _windows_terminal(ws)
         return
     import pty
 
@@ -184,6 +217,74 @@ async def terminal(ws: WebSocket):
         os.close(master)
         _open.discard(proc.pid)
         threading.Thread(target=_reap, args=(proc,), name="terminal-reap", daemon=True).start()
+
+
+async def _windows_terminal(ws: WebSocket) -> None:
+    """The same terminal on Windows: PowerShell on a pseudo console, in a job, read by a thread."""
+    from rooks_try import winproc
+
+    await ws.accept()
+    try:
+        # the person's own terminal, not the Room's: no Room job, no UI limits
+        term = await asyncio.to_thread(lambda: winproc.Terminal(windows_argv(), shell_env(), os.path.expanduser("~"),
+                                                                room=False))
+    except OSError:
+        await ws.close(code=1011, reason="The terminal could not start")
+        return
+    _open.add(term.pid)
+    loop = asyncio.get_running_loop()
+    out: asyncio.Queue[bytes | None] = asyncio.Queue()
+
+    def reader() -> None:
+        while True:
+            data = term.read()
+            try:
+                loop.call_soon_threadsafe(out.put_nowait, data or None)
+            except RuntimeError:  # the loop is gone
+                return
+            if not data:
+                return
+
+    def watcher() -> None:  # a pseudo console outlives its shell: close it when the shell exits
+        try:
+            term.proc.wait()
+        except Exception:  # noqa: BLE001
+            return
+        time.sleep(0.2)
+        term.close_console_async()
+
+    read_thread = threading.Thread(target=reader, name="terminal-read", daemon=True)
+    read_thread.start()
+    threading.Thread(target=watcher, name="terminal-watch", daemon=True).start()
+    decoder = codecs.getincrementaldecoder("utf-8")("replace")
+
+    async def pump_out() -> None:
+        while (chunk := await out.get()) is not None:
+            text = decoder.decode(chunk)
+            if text:
+                await ws.send_text(text)
+        await ws.close(code=1000, reason="The shell exited")
+
+    sender = asyncio.create_task(pump_out())
+    try:
+        while True:
+            msg = json.loads(await ws.receive_text())
+            if msg.get("type") == "input":
+                await asyncio.to_thread(term.write, str(msg.get("data", "")).encode())
+            elif msg.get("type") == "resize":
+                term.resize(msg.get("cols", 80), msg.get("rows", 24))
+    except (WebSocketDisconnect, RuntimeError, ValueError, OSError):
+        pass
+    finally:
+        sender.cancel()
+        term.kill_now()  # the shell and everything it started, at once (the slot frees now, as on POSIX)
+        _open.discard(term.pid)
+
+        def finish() -> None:
+            term.end(grace=0.5)
+            term.close(reader=read_thread)
+
+        threading.Thread(target=finish, name="terminal-reap", daemon=True).start()
 
 
 @router.get("/api/terminal/status", dependencies=[Depends(require_user)])

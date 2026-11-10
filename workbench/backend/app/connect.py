@@ -116,8 +116,14 @@ def providers_info() -> dict:
     return out
 
 
+# The sign-in apps registered with Google and Microsoft still carry the old name until the owner renames them in their
+# consoles (BACKLOG.md), so an IT admin looking for the app needs that name too.
+ADMIN_NEEDED = ("Your organisation needs an administrator to approve Rooks for mail and calendar (the sign-in page may "
+                "still show its old name, AI Workspace). Ask your IT admin, or connect a personal account.")
+
+
 # Loopback listener -------------------------------------------------------------------------------------------------
-_PAGE = ("<!doctype html><meta charset=utf-8><title>AI Workspace</title><body style=\"font:16px/1.5 system-ui,sans-serif;"
+_PAGE = ("<!doctype html><meta charset=utf-8><title>Rooks</title><body style=\"font:16px/1.5 system-ui,sans-serif;"
          "background:#FFFDF6;color:#1d1b16;display:grid;place-items:center;height:100vh;margin:0\"><div style=\"max-width:460px\">"
          "<h1 style=\"font-weight:500\">{title}</h1><p>{body}</p></div>")
 
@@ -136,9 +142,10 @@ async def _serve(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> 
             ok = res.get("status") == "connected"
             import html
 
-            page = _PAGE.format(title="Connected." if ok else "That didn't finish.",
-                                body=html.escape(f"{res.get('email', '')} is set up for mail and calendar. You can close this tab."
-                                                 if ok else res.get("error", "Go back to AI Workspace and try again.")))
+            done = res.get("message") or f"{res.get('email', '')} is set up for mail and calendar. You can close this tab."
+            page = _PAGE.format(title="Connected." if ok else ("Waiting for your IT team." if res.get("status") == "needs_admin"
+                                                               else "That didn't finish."),
+                                body=html.escape(done if ok else res.get("error", "Go back to Rooks and try again.")))
             data = page.encode()
             writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\n"
                          b"Connection: close\r\nContent-Length: " + str(len(data)).encode() + b"\r\n\r\n" + data)
@@ -176,7 +183,9 @@ def _b64url(b: bytes) -> str:
 
 
 # The flow ----------------------------------------------------------------------------------------------------------
-async def start(provider: str, login_hint: str = "") -> dict:
+async def start(provider: str, login_hint: str = "", work: bool = False, feature: str = "") -> dict:
+    """Start a sign-in. A work sign-in (design 0012) asks only who you are, or, when turning a switch on, who you are
+    plus that switch's permissions (work_scopes.py); the personal one asks for mail and calendar as before."""
     if provider not in PROVIDERS:
         raise HTTPException(404, "Unknown provider")
     info = providers_info()[provider]
@@ -189,13 +198,24 @@ async def start(provider: str, login_hint: str = "") -> dict:
     redirect = f"http://{ep['host']}:{port}{CALLBACK_PATH}"
     verifier = _b64url(secrets.token_bytes(48))
     state = secrets.token_urlsafe(24)
-    params = {"client_id": cfg["client_id"], "response_type": "code", "redirect_uri": redirect, "scope": " ".join(ep["scopes"]),
+    scopes = ep["scopes"]
+    extra = dict(ep["extra"])
+    if work:
+        from .work_suite import sign_in_scopes
+
+        scopes = sign_in_scopes(provider, feature)
+        if feature and login_hint and provider == "microsoft":
+            extra.pop("prompt", None)  # the same person adds a permission: no account picker
+        # Google keeps prompt=consent: a long-lived token comes back only with a consent screen, and adding a permission
+        # shows one anyway; include_granted_scopes=true keeps every switch granted before (design 0012, 1.2)
+    params = {"client_id": cfg["client_id"], "response_type": "code", "redirect_uri": redirect, "scope": " ".join(scopes),
               "state": state, "code_challenge": _b64url(hashlib.sha256(verifier.encode()).digest()),
-              "code_challenge_method": "S256", **ep["extra"]}
+              "code_challenge_method": "S256", **extra}
     if login_hint:
         params["login_hint"] = login_hint
     _attempts[state] = {"provider": provider, "verifier": verifier, "redirect": redirect, "port": port, "created": time.time(),
-                        "status": "pending", "error": "", "account_id": None, "email": ""}
+                        "status": "pending", "error": "", "account_id": None, "email": "", "work": work, "feature": feature,
+                        "scopes": scopes}
     url = f"{ep['authorize']}?{urlencode(params)}"
     opened = False
     if config.DESKTOP and os.getenv("CONNECT_OPEN_BROWSER", "1") != "0":
@@ -233,9 +253,8 @@ def _token_error(provider: str, r: httpx.Response) -> str:
     name = "Google" if provider == "google" else "Microsoft"
     if code == "invalid_client":
         return f"{name} rejected this app's client ID or secret. The maintainer needs to check the app registration."
-    if "AADSTS65001" in desc or "AADSTS90094" in desc or code == "consent_required":
-        return ("Your organisation needs an administrator to approve AI Workspace for mail and calendar. "
-                "Ask your IT admin, or connect a personal account.")
+    if "AADSTS65001" in desc or "AADSTS90094" in desc or code in ("consent_required", "admin_policy_enforced"):
+        return ADMIN_NEEDED  # Google: the Workspace admin has not allowed this app (admin_policy_enforced)
     return f"{name} refused the sign-in ({code or r.status_code}). Try again."
 
 
@@ -250,9 +269,9 @@ async def complete(callback_url: str) -> dict:
     provider = a["provider"]
     if q.get("error"):
         desc = q.get("error_description", "")
-        if "AADSTS90094" in desc or "AADSTS65001" in desc or q["error"] == "consent_required" or "admin" in desc.lower():
-            return _fail(a, "Your organisation needs an administrator to approve AI Workspace for mail and calendar. "
-                            "Ask your IT admin, or connect a personal account.")
+        if ("AADSTS90094" in desc or "AADSTS65001" in desc or q["error"] in ("consent_required", "admin_policy_enforced")
+                or "admin" in desc.lower()):
+            return _needs_admin(a) if a.get("work") else _fail(a, ADMIN_NEEDED)
         if q["error"] == "access_denied":
             return _fail(a, "You didn't allow access, so nothing was connected.")
         return _fail(a, f"Sign-in failed: {desc[:200] or q['error']}")
@@ -264,18 +283,19 @@ async def complete(callback_url: str) -> dict:
     if provider == "google":
         form["client_secret"] = cfg["client_secret"]
     else:
-        form["scope"] = " ".join(ep["scopes"])
+        form["scope"] = " ".join(a.get("scopes") or ep["scopes"])
     try:
         async with httpx.AsyncClient(timeout=20) as c:
             r = await c.post(ep["token"], data=form, headers={"Accept": "application/json"})
     except httpx.HTTPError:
         return _fail(a, "Couldn't reach the sign-in server. Check your connection and try again.")
     if r.status_code >= 400:
-        return _fail(a, _token_error(provider, r))
+        why = _token_error(provider, r)
+        return _needs_admin(a) if a.get("work") and why == ADMIN_NEEDED else _fail(a, why)
     tok = r.json()
     if not tok.get("access_token") or not tok.get("refresh_token"):
         return _fail(a, "The sign-in didn't return a long-lived token, so the connection would stop working within an hour. Try again.")
-    granted = set((tok.get("scope") or " ".join(ep["scopes"])).split())
+    granted = set((tok.get("scope") or " ".join(a.get("scopes") or ep["scopes"])).split())
     from . import cloud_mail
 
     record = {"access_token": tok["access_token"], "refresh_token": tok["refresh_token"],
@@ -285,6 +305,8 @@ async def complete(callback_url: str) -> dict:
         me = await asyncio.to_thread(cloud_mail.whoami, provider, tok["access_token"])
     except HTTPException as e:
         return _fail(a, f"Signed in, but couldn't read the account's address: {e.detail}")
+    if a.get("work"):
+        return await _complete_work(a, provider, me, tok, record)
     mail_ok, cal_ok = cloud_mail.capabilities(provider, granted)
     if not mail_ok and not cal_ok:
         return _fail(a, "You signed in but didn't tick the boxes for mail or calendar, so there's nothing to connect. "
@@ -300,6 +322,50 @@ async def complete(callback_url: str) -> dict:
     except HTTPException:
         pass
     return {"status": "connected", "account_id": aid, "email": me["email"], "mail": mail_ok, "calendar": cal_ok}
+
+
+def _claims(id_token: str) -> dict:
+    """The ID token's claims (tid, oid, sub, hd). It came straight from the token endpoint over TLS in this exchange,
+    so its signature is not checked again here (OpenID Connect Core 3.1.3.7); it only names the company and the person."""
+    try:
+        payload = (id_token or "").split(".")[1]
+        return json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+    except (IndexError, ValueError):
+        return {}
+
+
+def _needs_admin(a: dict) -> dict:
+    """A work switch the company must approve first: the switch waits for the IT team (design 0012, 1.3)."""
+    from . import work_suite
+
+    work_suite.mark_waiting(a.get("feature") or "")
+    words = work_suite.WAITING_GOOGLE if a.get("provider") == "google" else work_suite.WAITING
+    a.update(status="needs_admin", error=words)
+    _close(a["port"])
+    return {"status": "needs_admin", "error": words}
+
+
+async def _complete_work(a: dict, provider: str, me: dict, tok: dict, record: dict) -> dict:
+    from . import work_suite
+
+    try:
+        aid = work_suite.finish_sign_in(provider, me, _claims(tok.get("id_token", "")), record, a.get("feature") or "")
+    except HTTPException as e:
+        return _fail(a, str(e.detail))
+    a.update(status="connected", account_id=aid, email=me["email"])
+    _close(a["port"])
+    feat = a.get("feature") or ""
+    msg = ("Your work account is connected. You can close this tab and go back to Rooks." if not feat else
+           f"{work_suite.work_scopes.BY_ID[feat]['label']} is on. You can close this tab and go back to Rooks.")
+    if feat == "calendar":
+        try:
+            from . import calendar_sync
+
+            for c in db.all("SELECT id FROM calendars WHERE linked_account_id = ?", aid):
+                await asyncio.to_thread(calendar_sync.sync, c["id"])
+        except HTTPException:
+            pass
+    return {"status": "connected", "account_id": aid, "email": me["email"], "work": True, "feature": feat, "message": msg}
 
 
 # Storage -----------------------------------------------------------------------------------------------------------
@@ -336,19 +402,29 @@ def save_account(provider: str, email: str, name: str, record: dict, mail_ok: bo
         db.run("UPDATE linked_accounts SET name = ?, status = 'connected', last_error = '', scopes = ?, updated_at = ? WHERE id = ?",
                name, " ".join(record["scopes"]), now, aid)
     else:
-        aid = db.run("INSERT INTO linked_accounts(provider, email, name, scopes, secret_enc, status, created_at, updated_at) "
-                     "VALUES (?, ?, ?, ?, '', 'connected', ?, ?)", provider, email, name, " ".join(record["scopes"]), now, now)
+        feats = json.dumps({"on": [f for f, ok in (("mail", mail_ok), ("calendar", cal_ok)) if ok], "waiting": []})
+        aid = db.run("INSERT INTO linked_accounts(provider, email, name, scopes, secret_enc, status, features, created_at, updated_at) "
+                     "VALUES (?, ?, ?, ?, '', 'connected', ?, ?, ?)", provider, email, name, " ".join(record["scopes"]), feats, now, now)
     _store(aid, record)
-    mail_label, cal_label = LABELS[provider]
-    if mail_ok and not db.one("SELECT id FROM mail_accounts WHERE linked_account_id = ?", aid):
+    if mail_ok:
+        save_mailbox(aid, provider, email, name)
+    if cal_ok:
+        save_calendar(aid, provider, email)
+    return aid
+
+
+def save_mailbox(aid: int, provider: str, email: str, name: str) -> None:
+    if not db.one("SELECT id FROM mail_accounts WHERE linked_account_id = ?", aid):
         host = API_HOSTS[provider]
         db.run("INSERT INTO mail_accounts(name, email, imap_host, imap_port, smtp_host, smtp_port, smtp_security, username, password_enc, "
                "kind, linked_account_id) VALUES (?, ?, ?, 443, ?, 443, 'ssl', ?, '', ?, ?)",
                name or email, email, host, host, email, provider, aid)
-    if cal_ok and not db.one("SELECT id FROM calendars WHERE linked_account_id = ?", aid):
+
+
+def save_calendar(aid: int, provider: str, email: str) -> None:
+    if not db.one("SELECT id FROM calendars WHERE linked_account_id = ?", aid):
         db.run("INSERT INTO calendars(name, kind, url, color, enabled, linked_account_id) VALUES (?, ?, '', ?, 1, ?)",
-               f"{cal_label} · {email}", provider, COLORS[provider], aid)
-    return aid
+               f"{LABELS[provider][1]} · {email}", provider, COLORS[provider], aid)
 
 
 def mark_reauth(aid: int, why: str) -> None:
@@ -373,6 +449,8 @@ def access_token(aid: int, force: bool = False) -> str:
                 "refresh_token": rec.get("refresh_token", "")}
         if provider == "google":
             form["client_secret"] = cfg["client_secret"]
+        elif rec.get("work"):  # a work account asks again for exactly what it was granted, switch by switch
+            form["scope"] = " ".join(dict.fromkeys(["offline_access", *rec.get("scopes", [])]))
         else:
             form["scope"] = " ".join(ep["scopes"])
         try:
@@ -384,6 +462,9 @@ def access_token(aid: int, force: bool = False) -> str:
             raise HTTPException(401, f"Access to {db.one('SELECT email FROM linked_accounts WHERE id = ?', aid)['email']} "
                                      "has expired or was revoked. Connect it again in Settings.")
         tok = r.json()
+        if rec.get("work") and tok.get("scope"):
+            rec["scopes"] = sorted(set(tok["scope"].split()))
+            db.run("UPDATE linked_accounts SET scopes = ? WHERE id = ?", " ".join(rec["scopes"]), aid)
         rec.update(access_token=tok["access_token"], refresh_token=tok.get("refresh_token") or rec.get("refresh_token", ""),
                    expires_at=time.time() + float(tok.get("expires_in") or 3600), saved_at=db.now())
         _store(aid, rec)

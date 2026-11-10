@@ -36,7 +36,7 @@ def test_skills_index_and_steps_reach_the_terminal(client, auth):
 
 
 def test_a_fact_saved_in_the_terminal_is_the_one_chat_sees(client, auth):
-    from app.adapt import knowledge
+    from app.knowledge import facts as knowledge
 
     r = client.post("/v1/rooks/remember", headers=auth, json={"content": "Prefers tabs over spaces in Python files", "kind": "preference"})
     assert r.status_code == 200 and r.json().get("saved")
@@ -108,7 +108,7 @@ def test_terminal_web_search_and_read_go_through_the_app(client, auth, monkeypat
 
 def test_the_terminal_can_forget_one_memory(client, auth):
     """What you forget in the terminal is gone for chat too. A phrase that does not match leaves the rest."""
-    from app.adapt import knowledge
+    from app.knowledge import facts as knowledge
 
     kept = knowledge.add("Name is Azad", "about", "user")
     gone = knowledge.add("I use pnpm for this repo", "fact", "user")
@@ -124,8 +124,8 @@ def test_the_terminal_can_forget_one_memory(client, auth):
         missing = client.post("/v1/rooks/forget", headers=auth, json={"text": "pnpm"})
         assert missing.status_code == 200 and missing.json()["forgotten"] == []
     finally:
-        knowledge.delete(kept["id"])
-        knowledge.delete(gone["id"])
+        knowledge.forget_matching("Name is Azad")
+        knowledge.forget_matching("pnpm")
 
 
 def test_history_searches_past_chat_and_terminal_turns(client, auth):
@@ -162,7 +162,7 @@ def test_refining_a_skill_shows_what_changed():
 
 
 def test_a_memory_file_is_filed_into_our_memory(client):
-    from app.adapt import knowledge
+    from app.knowledge import facts as knowledge
     from app.knowledge import importers
 
     out = importers.run("memories", b'{"facts": ["The vendor quotes in dollars", "I use pnpm"]}')

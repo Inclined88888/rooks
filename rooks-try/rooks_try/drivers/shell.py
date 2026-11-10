@@ -22,11 +22,17 @@ import sys
 import time
 from pathlib import Path
 
-from .. import store
+from .. import store, winproc
 from .base import Driver, DriverInfo
 
 LABEL = "A private folder and shell"
 NOTE = "Commands run as you, in a folder of its own. It is not a locked off computer."
+# Windows (design 0011, section 3): every Room program is in a job, so they stop together. A job is not a wall, and a
+# program Windows itself starts on their behalf (Task Scheduler, WMI's Win32_Process.Create, a COM server such as
+# explorer's ShellExecute) is outside the job and outlives it: said in plain words.
+NOTE_WINDOWS = ("Commands run as you, in a folder of its own. What they start stops when the Room stops, except a program "
+                "handed to Windows to start, such as a scheduled task. It is not a locked off computer: they can read and "
+                "change your files.")
 RAN_NOTE = "This ran as you, in the private folder."
 NO_SCREEN = "This room has no screen. It is a private folder and shell."
 _SECRET_NAMES = {"APP_SECRET", "TOOLS_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "NVIDIA_API_KEY"}
@@ -167,6 +173,10 @@ def secret_env(name: str) -> bool:
             or upper.endswith(("_API_KEY", "_TOKEN", "_SECRET", "_PASSWORD")))
 
 
+WINDOWS_FOLDERS = {"APPDATA": Path("AppData") / "Roaming", "LOCALAPPDATA": Path("AppData") / "Local",
+                   "TEMP": Path("AppData") / "Local" / "Temp", "TMP": Path("AppData") / "Local" / "Temp"}
+
+
 def room_env(home: Path, offline: bool = False, base: dict | None = None) -> dict:
     """The environment of everything that runs in the Room: HOME is the Room's home, the host's secrets and the app's
     own names are left out, and when offline every proxy points nowhere. The PATH is the computer's own without the
@@ -175,11 +185,85 @@ def room_env(home: Path, offline: bool = False, base: dict | None = None) -> dic
     env = {k: v for k, v in (os.environ if base is None else base).items() if not secret_env(k)}
     env["HOME"] = str(home)
     env["ROOKS_TRY"] = "1"
+    if sys.platform == "win32":
+        # PowerShell's $HOME and ~, and most programs, read USERPROFILE; settings and temporary files go where APPDATA,
+        # LOCALAPPDATA, TEMP and TMP say. All of them point into the Room. A program that asks Windows itself for
+        # these folders (the known folders) still finds the person's own: Advanced says so.
+        env["USERPROFILE"] = str(home)
+        for name, rel in WINDOWS_FOLDERS.items():
+            folder = home / rel
+            try:
+                folder.mkdir(parents=True, exist_ok=True)
+            except OSError:
+                pass
+            env[name] = str(folder)
     if offline:  # belt and braces next to the empty network namespace: proxy-aware programs stop at once
         for key in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"):
             env[key] = "http://127.0.0.1:9"
     env["PATH"] = host_path(env.get("PATH", ""), home) or (_SYSTEM_PATH if os.name == "posix" else "")
     return env
+
+
+# --- Windows terminals (design 0011, section 1) ---------------------------------------------------------------------------
+# The Room's PowerShell profile, given as a command (a command is not subject to execution policy, so there is never an
+# -ExecutionPolicy Bypass, and never -EncodedCommand, which security software flags). It takes the marker nonce and the
+# side channel's name out of the environment into variables a program the shell starts does not see (a child process).
+# A script the shell runs in its own process (any .ps1) can read them, as anything in that process can read its state
+# (PowerShell has no private scope a script cannot reach), and so can forge "this command ended with code 0". That only
+# misreports a command's end to the model and the person: no yes, hold or hand-off depends on it. Makes ~ the Room's
+# home (Windows PowerShell's $HOME is the person's own), puts the Room's bins first on PATH, reads the person's own Room profile when they made one, and defines a prompt that reports how
+# the last command ended: in-band (ESC ] 7777 ; code ; nonce ; n BEL, which ConPTY may drop) and through the side
+# channel. Single quotes only: the text is one argument on a Windows command line.
+PS_PROFILE = (
+    "$global:__rooksMark = $env:ROOKS_MARK; Remove-Item Env:ROOKS_MARK -ErrorAction SilentlyContinue; "
+    "$global:__rooksPipe = $env:ROOKS_MARK_PIPE; Remove-Item Env:ROOKS_MARK_PIPE -ErrorAction SilentlyContinue; "
+    "$global:__rooksN = 0; "
+    "if ($env:HOME) { (Get-PSProvider FileSystem).Home = $env:HOME }; "
+    "$env:PATH = (Join-Path $env:HOME '.local\\bin') + ';' + (Join-Path $env:HOME 'bin') + ';' + "
+    "(Join-Path $env:HOME '.cargo\\bin') + ';' + $env:PATH; "
+    "$__rooksOwn = Join-Path $env:HOME 'Documents\\PowerShell\\profile.ps1'; "
+    "if (Test-Path $__rooksOwn) { try { . $__rooksOwn } catch { Write-Host ('Your Room profile did not run: ' + "
+    "$_.Exception.Message) } }; "
+    "function global:prompt { "
+    "$ok = $?; $c = if ($ok) { 0 } elseif ($global:LASTEXITCODE) { $global:LASTEXITCODE } else { 1 }; "
+    "$global:__rooksN++; $line = ('{0};{1};{2}' -f $c, $global:__rooksMark, $global:__rooksN); "
+    "[Console]::Write([string][char]27 + ']7777;' + $line + [string][char]7); "
+    "if ($global:__rooksPipe) { try { "
+    "$p = New-Object System.IO.Pipes.NamedPipeClientStream('.', $global:__rooksPipe, "
+    "[System.IO.Pipes.PipeDirection]::Out); $p.Connect(2000); "
+    "$b = [Text.Encoding]::ASCII.GetBytes($line + [string][char]10); $p.Write($b, 0, $b.Length); $p.Flush(); "
+    "$p.Dispose() } catch { } }; "
+    "'PS ' + $executionContext.SessionState.Path.CurrentLocation + '> ' }"
+)
+TERMINAL_SHELLS = ("powershell", "bash")
+
+
+def windows_powershell() -> str | None:
+    """PowerShell 7 (pwsh.exe) when installed, else Windows PowerShell, by its full path on this computer."""
+    found = host_which("pwsh.exe") or host_which("pwsh")
+    if found:
+        return found
+    root = os.environ.get("SystemRoot") or os.environ.get("windir") or r"C:\Windows"
+    path = Path(root) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    return str(path) if path.is_file() else (host_which("powershell.exe") or host_which("powershell"))
+
+
+def windows_terminal_shells() -> list[str]:
+    """The terminals a Room on Windows offers: PowerShell, and Git Bash when Git for Windows is there."""
+    out = ["powershell"] if windows_powershell() else []
+    if windows_sh():
+        out.append("bash")
+    return out
+
+
+def windows_terminal_argv(home: Path, shell: str | None = None) -> list[str] | None:
+    """A Room terminal on Windows: PowerShell (the default) with the Room's profile, or Git Bash as a login shell
+    (it reads the Room's .profile and its marker). None when that shell is not on this computer."""
+    if shell == "bash":
+        bash = windows_sh()
+        return [bash, "--login", "-i"] if bash else None
+    ps = windows_powershell()
+    return [ps, "-NoLogo", "-NoProfile", "-NoExit", "-Command", PS_PROFILE] if ps else None
 
 
 def room_bins(home: Path) -> str:
@@ -219,6 +303,11 @@ def _kill_tree(proc: subprocess.Popen) -> None:
         pass
 
 
+def _note() -> str:
+    note = NOTE_WINDOWS if sys.platform == "win32" else NOTE
+    return note if shell_kind() == "sh" else f"{note} {CMD_NOTE}"
+
+
 class ShellDriver(Driver):
     name = "shell"
 
@@ -244,6 +333,8 @@ class ShellDriver(Driver):
         return self.status()
 
     def down(self) -> dict:
+        if winproc.WINDOWS:  # everything the Room started, still running, ends with it (design 0011, section 3)
+            winproc.end_room()
         state = store.load_state()
         state["running"] = False
         store.save_state(state)
@@ -257,11 +348,13 @@ class ShellDriver(Driver):
             "screen": False,
             "pointer": False,
             "isolation": isolation_level(),
+            # Windows: every Room program is in a job (they stop together); it is not a wall, so isolation stays "none"
+            "containment": "job" if sys.platform == "win32" else "none",
             "home": str(store.guest_home()),
             "offline": self.offline,
             "shell": shell_kind(),
             "label": LABEL,
-            "note": NOTE if shell_kind() == "sh" else f"{NOTE} {CMD_NOTE}",
+            "note": _note(),
             "last_checkpoint": state.get("last_checkpoint"),
         }
 
@@ -292,6 +385,8 @@ class ShellDriver(Driver):
         kind = "cmd" if argv is None else "sh"
         if argv is None:  # Command Prompt reads no profile: the Room's bins go on its PATH here
             env["PATH"] = room_bins(home) + (os.pathsep + env["PATH"] if env.get("PATH") else "")
+        if winproc.WINDOWS:
+            return self._run_windows(command, argv, env, home, timeout, kind)
         try:
             proc = subprocess.Popen(
                 argv if argv else command,
@@ -323,15 +418,41 @@ class ShellDriver(Driver):
             "shell": kind,
         }
 
+    def _run_windows(self, command: str, argv: list[str] | None, env: dict, home: Path, timeout: float,
+                     kind: str) -> dict:
+        """Windows: the command in a job of its own inside the Room job, with no window and the UI limits. When it
+        ends or runs out of time, whatever it started ends too (winproc.run_captured)."""
+        line = None
+        if argv is None:  # Command Prompt, as subprocess's shell=True builds it
+            line = '{} /c "{}"'.format(os.environ.get("ComSpec") or "cmd.exe", command)
+        try:
+            code, out, err, timed_out = winproc.run_captured(argv, env, str(home), timeout, command_line=line)
+        except OSError as exc:
+            return {"ok": False, "code": 127, "stdout": "", "stderr": "", "error": str(exc),
+                    "isolation": isolation_level(), "shell": kind}
+        if timed_out:
+            return {"ok": False, "error": f"Timed out after {timeout}s", "stdout": out[-8000:], "stderr": err[-4000:],
+                    "code": 124, "isolation": isolation_level(), "shell": kind}
+        return {"ok": code == 0, "code": code, "stdout": out[-8000:], "stderr": err[-4000:],
+                "note": RAN_NOTE if kind == "sh" else f"{RAN_NOTE} {CMD_NOTE}", "isolation": isolation_level(),
+                "shell": kind}
+
     def _env(self, home: Path, extra: dict | None) -> dict:
         env = room_env(home, self.offline)
         for key, value in (extra or {}).items():
             env[str(key)] = str(value)
         return env
 
-    def terminal_argv(self, home: Path) -> list[str] | None:
-        """The Room's terminal: a login shell inside it. None on Windows, where the app has no pseudo terminal."""
-        return None if sys.platform == "win32" else login_argv(home, self.offline)
+    def terminal_argv(self, home: Path, shell: str | None = None) -> list[str] | None:
+        """The Room's terminal: a login shell inside it. On Windows, PowerShell by default, or Git Bash (`shell`
+        "bash") when Git for Windows is there; the app puts it on a pseudo console (ConPTY)."""
+        if sys.platform == "win32":
+            return windows_terminal_argv(home, shell)
+        return login_argv(home, self.offline)
+
+    def terminal_shells(self) -> list[str]:
+        """Which terminals this Room offers: on Windows PowerShell and, with Git for Windows, Git Bash."""
+        return windows_terminal_shells() if sys.platform == "win32" else []
 
     def supports_screen(self) -> bool:
         return False

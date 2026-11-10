@@ -380,7 +380,7 @@ def import_template(data: dict) -> dict:
     if data.get("kind") != "ai-workspace.teammate":
         raise HTTPException(400, "That file isn't a teammate template")
     if int(data.get("version") or 0) > TEMPLATE_VERSION:
-        raise HTTPException(400, "This template was made by a newer version of AI Workspace. Update the app first.")
+        raise HTTPException(400, "This template was made by a newer version of Rooks. Update the app first.")
     name = _clean_name(str(data.get("name", "")))
     base, n = name, 2
     while by_name(name):

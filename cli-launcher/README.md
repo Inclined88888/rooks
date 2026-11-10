@@ -23,7 +23,7 @@ keys are forwarded. A run requires both successful `claude auth status` exit and
 JSON `loggedIn: true, authMethod: "claude.ai"`; API-key login is refused.
 Login does not restart the service and is rechecked before every task.
 
-`./setup.sh --with none` disables add-ons and clears `CLAUDE_CODE_URL`. Volumes
+`./setup.sh --with none` disables add-ons. Volumes
 survive disabling and `docker compose down`. To sign out, use
 `docker compose exec claude-code claude auth logout`. Deleting the auth volume
 removes its saved login; deleting the workspace volume removes its files.
@@ -31,10 +31,12 @@ removes its saved login; deleting the workspace volume removes its files.
 ## Internal API
 
 The service has **no published host port**. Call it from a trusted stack client
-at `http://claude-code:8110`, using the generated `CLAUDE_CODE_API_KEY` as a bearer
-key. Workbench receives `CLAUDE_CODE_URL` and `CLAUDE_CODE_API_KEY`, following the
-browser add-on config pattern. This item adds no model-provider slot or automatic
-assistant delegation; callers must explicitly choose this CLI hand-off.
+at `http://claude-code:8110`, using the generated `CLAUDE_CODE_API_KEY` from `.env`
+as a bearer key. The app does not call it and is not given its address or key
+(nothing in the app read them). This item adds no model-provider slot or automatic
+assistant delegation; callers must explicitly choose this CLI hand-off. Running
+your own Claude Code on your own computer works without this add-on
+([docs/CLAUDE-CODE.md](../docs/CLAUDE-CODE.md)).
 
 * `GET /health`: liveness only, no authentication or CLI invocation.
 * `GET /auth/status`: bearer required; returns only `{"authenticated":true|false}`.
@@ -43,13 +45,15 @@ assistant delegation; callers must explicitly choose this CLI hand-off.
   Output is delivered only in that response and is never logged or persisted by
   the launcher. Treat it as private content; callers must not log response bodies.
 
-Example from inside Workbench (does not print the bearer key):
+Example from the app's container, on the same network (does not print the bearer
+key; it is passed in from `.env` for this one command only):
 
 ```sh
-docker compose exec -T workbench python - <<'PY'
+CLAUDE_CODE_API_KEY=$(sed -n 's/^CLAUDE_CODE_API_KEY=//p' .env) \
+  docker exec -i -e CLAUDE_CODE_API_KEY "$(docker compose ps -q workbench)" python - <<'PY'
 import os
 import httpx
-r = httpx.post(os.environ['CLAUDE_CODE_URL'] + '/run',
+r = httpx.post('http://claude-code:8110/run',
     headers={'Authorization': 'Bearer ' + os.environ['CLAUDE_CODE_API_KEY']},
     json={'task': 'Reply with hello'}, timeout=250)
 print(r.status_code)

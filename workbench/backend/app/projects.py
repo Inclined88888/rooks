@@ -5,7 +5,7 @@ studio brief. It holds files, work sites, chats, notes, people and deadlines. Th
 chat or file belongs to (deterministic scoring on names, keywords, people and sites, so it is instant, free and works
 offline) and pulls that project's context, plus what the learn store knows about it, into the turn.
 
-Free: FREE_LIMITS["projects"] active projects. Pro: unlimited (features_v02).
+Free: FREE_LIMITS["projects"] active projects. Pro: unlimited (plan_tiers).
 Notes and person details are encrypted at rest with the workspace key, like the learn store.
 """
 
@@ -19,7 +19,7 @@ from datetime import date, datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from . import config, db, features_v02
+from . import config, db, plan_tiers
 from .security import decrypt, encrypt, require_user
 
 log = logging.getLogger("projects")
@@ -103,16 +103,16 @@ def active_count() -> int:
 
 
 def limit_info() -> dict:
-    unlimited = features_v02.allowed("projects_unlimited")
-    free = features_v02.FREE_LIMITS["projects"]
+    unlimited = plan_tiers.allowed("projects_unlimited")
+    free = plan_tiers.FREE_LIMITS["projects"]
     return {"unlimited": unlimited, "free_limit": free, "active": active_count(),
             "can_add": unlimited or active_count() < free}
 
 
 def _check_limit() -> None:
     if not limit_info()["can_add"]:
-        d = features_v02.upgrade_detail("projects_unlimited")
-        d["message"] = (f"The free plan keeps {features_v02.FREE_LIMITS['projects']} project going at a time. Archive one, "
+        d = plan_tiers.upgrade_detail("projects_unlimited")
+        d["message"] = (f"The free plan keeps {plan_tiers.FREE_LIMITS['projects']} project going at a time. Archive one, "
                         "or upgrade to Pro for unlimited projects.")
         raise HTTPException(402, d)
 
@@ -611,13 +611,6 @@ def current_trade() -> str:
     return t if t in TRADES else ""
 
 
-def set_trade(value: str) -> str:
-    if value not in TRADES:
-        raise HTTPException(400, "Choose an architect, a waste office, a small business, or leave it blank.")
-    db.set_setting("trade", value)
-    return value
-
-
 def dismiss(pid: int, kind: str, ref: str) -> dict:
     get(pid)
     db.run("INSERT OR IGNORE INTO project_dismissed(project_id, kind, ref) VALUES (?, ?, ?)", pid, kind, str(ref))
@@ -626,12 +619,12 @@ def dismiss(pid: int, kind: str, ref: str) -> dict:
 
 # Context for the assistant ----------------------------------------------------------------------------------------
 def related_facts(p: dict, limit: int = 6) -> list[dict]:
-    """What the learn store knows that relates to this project (encrypted facts, BM25 over their words)."""
+    """What the one memory store knows that relates to this project (encrypted facts, BM25 over keyed words)."""
     try:
-        from .adapt import knowledge
+        from .knowledge import facts
 
         q = " ".join([p["name"], p["keywords"].replace(",", " "), p["description"][:200]])
-        return [{"id": f["id"], "content": f["content"], "category": f["category"]} for f in knowledge.search(q, limit)]
+        return [{"id": f["id"], "content": f["content"], "category": f["category"]} for f in facts.search(q, limit)]
     except Exception as e:  # noqa: BLE001
         log.debug("facts unavailable: %s", e)
         return []

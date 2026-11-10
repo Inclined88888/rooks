@@ -255,3 +255,55 @@ def test_keychain_refs_move_into_the_database_when_the_keychain_is_switched_off(
     stored = db.one("SELECT secret_enc FROM connections WHERE id = ?", pid)["secret_enc"]
     assert not stored.startswith("keychain:") and decrypt(stored) == "sk-moved-0001"
     assert migrate_keychain_refs() == 0
+
+
+def test_the_launcher_handoff_keeps_the_shell_word(client, desktop, monkeypatch):
+    """docs/design/0007 2.2: a launch that is not in the Rooks app passes ?shell=window (or ask) so the page can say so
+    and offer the choice. Only those words pass; anything else is dropped."""
+    from app import api, db
+
+    db.set_setting("desktop_welcome_done", "1")
+    for word, want in (("window", "/?shell=window"), ("ask", "/?shell=ask"), ("javascript:x", "/"), (None, "/")):
+        monkeypatch.setitem(api._handoffs, "C" * 20, 10**12)
+        params = {"code": "C" * 20, **({"shell": word} if word else {})}
+        r = client.get("/api/desktop/handoff", params=params, follow_redirects=False)
+        assert r.status_code == 303 and r.headers["location"] == want
+
+
+def test_the_page_saves_the_shell_answer_for_the_launcher(client, desktop, monkeypatch, tmp_path):
+    """The bar's answer goes to the launcher's install.json. Only a signed-in person's window can give it: not the
+    app.json key the helpers share, not the tools key, and only the two answers."""
+    import json
+
+    from app import config, security
+    from starlette.testclient import TestClient
+
+    install = tmp_path / "install.json"
+    install.write_text(json.dumps({"channel": "stable", "app": "/x"}))
+    h = {"X-Workbench": "1"}
+    monkeypatch.delenv("AI_WORKSPACE_INSTALL_FILE", raising=False)
+    assert client.post("/api/desktop/shell", json={"shell": "browser"}, headers=h).status_code == 404  # not from the launcher
+    monkeypatch.setenv("AI_WORKSPACE_INSTALL_FILE", str(install))
+    assert client.post("/api/desktop/shell", json={"shell": "chrome"}, headers=h).status_code == 400
+    r = client.post("/api/desktop/shell", json={"shell": "browser"}, headers=h)
+    assert r.status_code == 200 and r.json() == {"ok": True, "shell": "browser"}
+    assert json.loads(install.read_text()) == {"channel": "stable", "app": "/x", "shell": "browser"}
+
+    monkeypatch.setattr(config, "BROWSER_API_KEY", "b" * 30)
+    monkeypatch.setattr(config, "TOOLS_API_KEY", "k" * 30)
+    monkeypatch.setattr(security, "_attempts", {})
+    bare = TestClient(client.app)
+    for key in ("b" * 30, "k" * 30):
+        r = bare.post("/api/desktop/shell", json={"shell": "window"}, headers={**h, "Authorization": f"Bearer {key}"})
+        assert r.status_code == 401
+    assert json.loads(install.read_text())["shell"] == "browser"
+    monkeypatch.setenv("AI_WORKSPACE_INSTALL_FILE", str(tmp_path / "other.json"))
+    assert client.post("/api/desktop/shell", json={"shell": "window"}, headers=h).status_code == 404  # only install.json
+
+
+def test_a_used_sign_in_link_names_rooks(client, desktop):
+    """The page a used or expired launcher link shows says the app's name, Rooks, in plain words."""
+    r = client.get("/api/desktop/handoff", params={"code": "N" * 20}, follow_redirects=False)
+    assert r.status_code == 403
+    assert "<title>Rooks</title>" in r.text and "open Rooks again" in r.text
+    assert "AI Workspace" not in r.text

@@ -23,13 +23,11 @@ test("Chat has modes, an approval strip, and a diff", () => {
   assert.match(chat, /DiffView/);
 });
 
-test("Chat is on the rail, Code is a page; Customize sits with settings", () => {
+test("Chat is on the rail, Code is a page; old Customize links open Settings", () => {
   assert.match(app, /path: "\/assistant", label: "Chat", icon: \w+, rail: "chat"/);
   assert.match(app, /path: "\/code", label: "Code"/);
-  assert.match(app, /path: "\/customize", label: "Customize", icon: \w+, section: "Settings"/);
-  const settings = app.indexOf('label: "Settings"');
-  const customize = app.indexOf('label: "Customize"');
-  assert.ok(settings > 0 && customize > settings);
+  assert.doesNotMatch(app, /path: "\/customize"/);
+  assert.match(app, /\{ from: "\/customize", to: "\/settings" \}/);
   assert.match(app, /label: "Show me how"/);
   assert.ok(app.indexOf('label: "Chat"') < app.indexOf('label: "Show me how"'));
 });

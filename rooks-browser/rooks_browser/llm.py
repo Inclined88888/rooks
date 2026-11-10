@@ -46,7 +46,7 @@ PROVIDERS = {p.name: p for p in [
                  "Vision on by default."),
     ProviderInfo("ollama", "Ollama (local, free)", (), "qwen2.5:7b", "OLLAMA_HOST, default http://localhost:11434. Text only unless the model can see (llava, qwen2.5vl, gemma3, ...)."),
     ProviderInfo("openai-compatible", "Any OpenAI-compatible server", ("OPENAI_COMPATIBLE_BASE_URL",), "", "LM Studio, vLLM, llama.cpp, Groq, ..."),
-    ProviderInfo("workbench", "AI Workspace app (its smart router)", ("WORKBENCH_URL",), "default",
+    ProviderInfo("workbench", "Rooks app (its smart router)", ("WORKBENCH_URL",), "default",
                  "Found automatically while the desktop app is open; or set WORKBENCH_URL and WORKBENCH_API_KEY."),
     ProviderInfo("scripted", "Scripted (tests and demos, no model)", (), "", "--model is a JSON file of actions."),
 ]}
@@ -417,7 +417,7 @@ def make(provider: str | None, model: str | None = None, *, base_url: str | None
         link = {} if base_url else app_link()
         base = (base_url or link.get("url") or "").rstrip("/")
         if not base:
-            raise ValueError("the workbench provider needs the AI Workspace app open, or WORKBENCH_URL (e.g. http://localhost:3100)")
+            raise ValueError("the workbench provider needs the Rooks app open, or WORKBENCH_URL (e.g. http://localhost:3100)")
         return OpenAIChat("workbench", m, f"{base}/v1", api_key or link.get("key") or _env("WORKBENCH_API_KEY", "BROWSER_API_KEY"),
                           on_egress, json_mode=False, extra_headers={"X-Workbench-Channel": "rooks-browser"})
     base = base_url or _env("OPENAI_COMPATIBLE_BASE_URL")

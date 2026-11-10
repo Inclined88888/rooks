@@ -5,11 +5,12 @@
  * dock of icon buttons that swaps the window shown, and the honest line. The frame's controls keep Start or Stop, the
  * modes, Save a point, Start over, Hand off a file, Open the Room page and Close. Never two windows side by side.
  */
-import { Bookmark, Folder, Monitor, SquareTerminal, type LucideIcon } from "lucide-react";
+import { Bookmark, Folder, Globe, Monitor, SquareTerminal, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { Stage } from "../shell/StageHost";
 import { TerminalSlot } from "../terminalHost";
 import { IconButton, StageFrame } from "../ui";
+import { BrowserWindow } from "./BrowserWindow";
 import { dockItems, pickActive, windowsFor, type WindowId } from "./desk";
 import { FilesWindow } from "./FilesWindow";
 import { PointsWindow } from "./PointsWindow";
@@ -18,7 +19,7 @@ import { TerminalWindow } from "./TerminalWindow";
 import { useRoomStatus } from "./status";
 import { useTerms } from "./terms";
 
-const ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, files: Folder, points: Bookmark, screen: Monitor };
+const ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, browser: Globe, files: Folder, points: Bookmark, screen: Monitor };
 
 export function RoomStage({ stage, close }: { stage: Stage; close: () => void }) {
   // the same store the frame reads: which window shows decides whether the frame keeps its point verbs
@@ -34,6 +35,7 @@ export function RoomStage({ stage, close }: { stage: Stage; close: () => void })
   if (!main) {
     if (shown === "screen") main = f.picture;
     else if (shown === "terminal") main = <TerminalWindow bare status={status} act={f.act} slot={<TerminalSlot kind="room" />} />;
+    else if (shown === "browser") main = <BrowserWindow status={status} act={f.act} stale={!status.reachable} />;
     else if (shown === "commands") main = <CommandView status={status} />;
     else if (shown === "files") main = <FilesWindow status={status} terminal={terminal} onHandOff={f.openHandoff} />;
     else if (shown === "points") main = <PointsWindow status={status} act={f.act} stale={!status.reachable} />;

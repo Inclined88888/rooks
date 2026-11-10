@@ -1,9 +1,5 @@
-// Plain-English helpers for the "What I know about you" and "Show me how" pages (pure, unit-tested).
+// Plain-English helpers for the "Show me how" page (pure, unit-tested).
 
-export type Fact = {
-  id: number; content: string; category: string; category_label: string; source: string; evidence: string;
-  confidence: number; pinned: boolean; uses: number; created_at: string; updated_at: string;
-};
 export type Param = { name: string; label: string; example: string };
 export type Step = { n?: number; action?: string; text: string; param?: string; sensitive?: boolean; needs_user?: boolean; url?: string; target?: Record<string, string> };
 export type Playbook = {
@@ -27,25 +23,13 @@ export function stepParts(text: string, values: Record<string, string> = {}): { 
   return out;
 }
 
-/** Facts grouped by category in the page's order, empty groups dropped, pinned first inside each group. */
-export function groupFacts(facts: Fact[], categories: Record<string, string>): { key: string; label: string; facts: Fact[] }[] {
-  const keys = [...Object.keys(categories), ...new Set(facts.map((f) => f.category).filter((c) => !(c in categories)))];
-  return keys
-    .map((key) => ({ key, label: categories[key] || key, facts: facts.filter((f) => f.category === key).sort((a, b) => Number(b.pinned) - Number(a.pinned)) }))
-    .filter((g) => g.facts.length);
-}
-
 const RUN: Record<string, string> = {
   queued: "Getting ready", running: "Working on it", needs_you: "Waiting for your OK", done: "Done", error: "Got stuck", failed: "Got stuck", cancelled: "Stopped",
 };
 export const runLabel = (s: string) => RUN[s] || s;
 export const runFinished = (s: string) => ["done", "error", "failed", "cancelled"].includes(s);
 
-const SOURCE: Record<string, string> = {
-  chat: "from a chat", teach: "from something you showed me", file: "from a file", task: "from a task", site: "from a website",
-  feedback: "from your feedback", you: "you told me", user: "you told me", routine: "from a routine", note: "from a note",
-};
-export const sourceLabel = (s: string) => SOURCE[s] || (s ? `from ${s}` : "");
+
 
 /** Missing values for a run, in the playbook's order. */
 export function missingValues(params: Param[], values: Record<string, string>): Param[] {

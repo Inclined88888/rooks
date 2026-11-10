@@ -7,13 +7,15 @@
  * Everything here is solid (the app's own chrome around the Room); the only dark surface is the terminal's own box.
  * Which windows exist comes from status (windowsFor); the browser remembers only which are open (desk.ts).
  */
-import { Bookmark, ChevronDown, Columns2, FileOutput, Folder, Monitor, MoreHorizontal, Power, RotateCcw, SquareTerminal, type LucideIcon } from "lucide-react";
+import { Bookmark, ChevronDown, Columns2, FileOutput, Folder, Globe, Monitor, MoreHorizontal, Power, RotateCcw, SquareTerminal, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { narrowQuery, useMediaQuery } from "../shell/breakpoints";
 import { openStage } from "../shell/StageHost";
 import { TerminalSlot } from "../terminalHost";
 import { Badge, Button, Menu, Sheet, Tabs, type ButtonProps, type MenuItem } from "../ui";
+import { BROWSER_CHECKS, BROWSER_LIMITS } from "./browser";
+import { BrowserWindow } from "./BrowserWindow";
 import { deskLayout, dockItems, pickActive, readDesk, terminalsCounted, terminalsFull, toggleWindow, windowsFor, writeDesk, type WindowId } from "./desk";
 import { FilesWindow } from "./FilesWindow";
 import { PointsWindow, type PointsAsk } from "./PointsWindow";
@@ -23,9 +25,12 @@ import {
 import { useRoomStatus } from "./status";
 import { TerminalWindow } from "./TerminalWindow";
 import { setActiveTerminal, useTerms } from "./terms";
-import { advancedDetails, commandsLabelFor, commandViewLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, terminalCountLine } from "./words";
+import {
+  advancedDetails, commandsLabelFor, containmentLine, dockLine, isolationWords, pointLine, RECORDED_LINE, roomBarWord, shellName, terminalCountLine,
+  WINDOWS_MARKER_LINE, WINDOWS_PROFILE_LINE,
+} from "./words";
 
-const DOCK_ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, files: Folder, points: Bookmark, screen: Monitor };
+const DOCK_ICON: Record<WindowId, LucideIcon> = { terminal: SquareTerminal, commands: SquareTerminal, browser: Globe, files: Folder, points: Bookmark, screen: Monitor };
 
 /** A verb in the Room bar: its icon and its word; under 1280 px the word is kept for the title and screen readers only. */
 function Verb({ icon, word, ...rest }: { icon: ReactNode; word: string } & Omit<ButtonProps, "icon" | "children">) {
@@ -68,10 +73,9 @@ export default function RoomPage() {
 
   const setDesk = (next: WindowId[]) => { setOpen(next); writeDesk(next); };
   const openWindow = (id: WindowId) => {
-    const w = id === "terminal" && !offered.includes("terminal") ? "commands" : id;
-    if (!offered.includes(w)) return;
-    if (!open.includes(w)) setDesk([...open, w]);
-    setTab(w);
+    if (!offered.includes(id)) return; // a window status does not offer (a switched off Terminal or Browser) never opens
+    if (!open.includes(id)) setDesk([...open, id]);
+    setTab(id);
   };
   const askPoints = (ask: Omit<NonNullable<PointsAsk>, "n">) => { openWindow("points"); setPointsAsk((p) => ({ ...ask, n: (p?.n ?? 0) + 1 })); };
   const openHandoff = (src = "") => setHandoff((h) => ({ src, n: (h?.n ?? 0) + 1 }));
@@ -80,7 +84,7 @@ export default function RoomPage() {
   useEffect(() => {
     const want = (location.state as { room?: string } | null)?.room;
     if (!want || !status.checked) return;
-    if (want === "terminal") {
+    if (want === "terminal" && status.can.terminal) { // terminals switched off: nothing opens, nothing starts
       openWindow("terminal");
       const alive = status.terminals.filter((t) => t.alive);
       if (status.running && status.can.terminal && !alive.length && !terminalsFull(status)) void act.newTerminal();
@@ -88,6 +92,7 @@ export default function RoomPage() {
     } else if (want === "point") askPoints({ kind: "save" });
     else if (want === "over") openWindow("points");
     else if (want === "files") openWindow("files");
+    else if (want === "browser") openWindow("browser");
     navigate(location.pathname, { replace: true, state: null });
   }, [location.key, status.checked]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -100,7 +105,10 @@ export default function RoomPage() {
   const alive = status.terminals.filter((t) => t.alive);
   const advancedItems: MenuItem[] = [
     { id: "advanced", label: "Advanced", onSelect: () => setAdvanced(true) },
-    { id: "close-all", label: "Close every terminal", danger: true, disabled: !status.terminals.length, onSelect: () => setClosingAll(true) },
+    // only where terminals are on, or some are still listed from when they were
+    ...(offered.includes("terminal") || status.terminals.length
+      ? [{ id: "close-all", label: "Close every terminal", danger: true, disabled: !status.terminals.length, onSelect: () => setClosingAll(true) }]
+      : []),
   ];
   const phoneItems: MenuItem[] = available ? [
     status.running
@@ -182,6 +190,8 @@ export default function RoomPage() {
         );
       case "terminal":
         return <TerminalWindow key="terminal" status={status} act={act} stale={stale} slot={<TerminalSlot kind="room" />} />;
+      case "browser":
+        return <BrowserWindow key="browser" status={status} act={act} stale={stale} />;
       case "commands":
         return <RoomWindow key="commands" id="commands" title="Commands" label={commandsLabelFor(status)} stale={stale}><CommandView status={status} /></RoomWindow>;
       case "files":
@@ -191,9 +201,10 @@ export default function RoomPage() {
     }
   };
 
+  const line = dockLine(status); // says commands run as you: only while terminals are on
   const honest = (
     <p className="room-dock-honest">
-      <span className="room-dock-line">{commandViewLine(status)}</span>
+      {line && <span className="room-dock-line">{line}</span>}
       <Badge tone="neutral" title="How separate the Room is">{isolationWords(status.isolation, !!status.offline)}</Badge>
       {status.offline && <Badge tone="neutral">No network</Badge>}
     </p>
@@ -244,6 +255,8 @@ export default function RoomPage() {
 
   const { kind, folder } = advancedDetails(status);
   const shellPath = status.terminals.find((t) => t.shell)?.shell || "";
+  // a Room on Windows: PowerShell, and Git Bash when there (offered only with terminals on); its programs share a job
+  const windows = status.can.terminal_shells.length > 0 || status.containment === "job";
   return (
     <div className="room-page">
       <h1 className="sr-only">The Room</h1>
@@ -254,11 +267,24 @@ export default function RoomPage() {
       <Sheet open={advanced} onClose={() => setAdvanced(false)} title="Advanced">
         <dl className="room-advanced-list">
           {kind && <><dt>Kind</dt><dd>{kind}</dd></>}
+          {status.label_detail && <><dt>Label</dt><dd>{status.label_detail}</dd></>}
           {folder && <><dt>Folder</dt><dd>{folder}</dd></>}
-          <dt>Shell</dt><dd>{shellPath || "The login shell of this computer's account"}</dd>
-          <dt>Profile files read</dt><dd>~/.profile and, for bash, ~/.bashrc; for zsh ~/.zprofile and ~/.zshrc</dd>
-          <dt>Terminals</dt><dd>{terminalCountLine({ counted: terminalsCounted(status), open: alive.length, max: status.terminal_max })}</dd>
+          {windows ? (
+            <>
+              {status.can.terminal_shells.length > 0 && <><dt>Shells</dt><dd>{status.can.terminal_shells.map(shellName).join(" and ")}</dd></>}
+              <dt>Profile files read</dt><dd>{WINDOWS_PROFILE_LINE}</dd>
+              <dt>How Rooks knows a command ended</dt><dd>{WINDOWS_MARKER_LINE}</dd>
+            </>
+          ) : (
+            <>
+              <dt>Shell</dt><dd>{shellPath || "The login shell of this computer's account"}</dd>
+              <dt>Profile files read</dt><dd>~/.profile and, for bash, ~/.bashrc; for zsh ~/.zprofile and ~/.zshrc</dd>
+            </>
+          )}
+          {status.containment === "job" && <><dt>What keeps it together</dt><dd>{containmentLine(!!status.offline)}</dd></>}
+          {offered.includes("terminal") && <><dt>Terminals</dt><dd>{terminalCountLine({ counted: terminalsCounted(status), open: alive.length, max: status.terminal_max })}</dd></>}
           <dt>What is recorded</dt><dd>{RECORDED_LINE}</dd>
+          {offered.includes("browser") && <><dt>The browser</dt><dd>{BROWSER_LIMITS}{status.can.browser_advanced ? ` ${status.can.browser_advanced}` : ""}</dd><dt>What Rooks asks about</dt><dd>{BROWSER_CHECKS}</dd></>}
           {!status.can.files && status.isolation === "vm" && <><dt>Files</dt><dd>Files live inside the separate computer. Use its screen.</dd></>}
         </dl>
       </Sheet>

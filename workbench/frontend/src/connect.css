@@ -1,20 +1,21 @@
-/* The mail sign-in card (pages/ConnectMailCalendar.tsx), shown on Mail and in Settings. Design system v3: neutral,
-   the type scale, hairlines, radius 6/10/full. Brand logos keep their own colours (pages/day/logos.tsx). */
+/* The mail sign-in card (pages/ConnectMailCalendar.tsx), shown on Mail and in Settings. Industrial (CHANGELOG step 4):
+   square, hairlines, the title in the condensed uppercase face, connected accounts as square mono cells, the steps
+   numbered in square ink cells. Brand logos keep their own colours (pages/day/logos.tsx). */
 .cmc { display: flex; flex-direction: column; gap: var(--space-4); }
 .cmc.is-compact { margin-bottom: var(--space-4); }
 .cmc-head { display: flex; align-items: flex-start; gap: var(--space-3); }
 .cmc-titles { flex: 1; min-width: 0; }
-.cmc-title { margin: 0; font-family: var(--font-sans); font-size: var(--text-xl); font-weight: var(--weight-medium); line-height: var(--leading-snug); color: var(--color-ink); }
+.cmc-title { margin: 0; font-family: var(--font-display); font-weight: var(--weight-bold); font-stretch: var(--stretch-display); text-transform: uppercase; letter-spacing: var(--tracking-display); line-height: var(--leading-tight); font-size: var(--text-2xl); color: var(--color-ink); }
 .cmc-line { margin: var(--space-1) 0 0; font-size: var(--text-md); color: var(--color-ink-muted); }
 .cmc-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .cmc-btn.ui-btn { height: 44px; padding: 0 var(--space-5); gap: var(--space-3); }
 .cmc-accounts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.cmc-account { display: inline-flex; align-items: center; gap: var(--space-2); max-width: 100%; min-height: 36px; padding: 0 var(--space-1) 0 var(--space-3); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); font-size: var(--text-sm); color: var(--color-ink); }
+.cmc-account { display: inline-flex; align-items: center; gap: var(--space-2); max-width: 100%; min-height: 36px; padding: 0 var(--space-1) 0 var(--space-3); border: var(--line); border-radius: 0; background: var(--color-surface); font-size: var(--text-sm); color: var(--color-ink); }
 .cmc-account.is-reauth { border-color: var(--color-warning); }
-.cmc-account-email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-ink); }
-.cmc-account-what { font-size: var(--text-xs); color: var(--color-ink-muted); white-space: nowrap; }
+.cmc-account-email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-ink); font-family: var(--font-mono); font-size: var(--text-xs); }
+.cmc-account-what { font-family: var(--font-mono); font-size: var(--text-micro); font-weight: var(--weight-medium); text-transform: uppercase; letter-spacing: var(--tracking-micro); color: var(--color-ink-muted); white-space: nowrap; }
 .cmc-ok { color: var(--color-success-text); flex: none; }
-.cmc-link { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-ink); text-decoration: underline; text-underline-offset: 3px; }
+.cmc-link { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-accent); text-underline-offset: 3px; }
 .cmc-row { display: flex; align-items: center; gap: var(--space-2); margin: 0; min-width: 0; }
 .cmc-wrap { flex-wrap: wrap; }
 .cmc-grow { flex: 1 1 auto; min-width: 0; }
@@ -23,11 +24,11 @@
 .cmc-small { font-size: var(--text-sm); margin: 0; }
 .cmc-muted { color: var(--color-ink-muted); }
 .cmc-mono, .cmc-mono.ui-input { font-family: var(--font-mono); font-size: var(--text-mono); }
-.cmc-other { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border: var(--border-w) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-sunken); }
+.cmc-other { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border: var(--line); border-radius: 0; background: var(--color-surface-sunken); }
 .cmc-other-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.cmc-sub { flex: 1 0 auto; margin: 0; font-family: var(--font-sans); font-size: var(--text-md); font-weight: var(--weight-medium); color: var(--color-ink); white-space: nowrap; }
+.cmc-sub { flex: 1 0 auto; margin: 0; font-family: var(--font-sans); font-size: var(--text-md); font-weight: var(--weight-bold); color: var(--color-ink); white-space: nowrap; }
 .cmc-step { display: flex; align-items: flex-start; gap: var(--space-3); }
-.cmc-step-num { display: grid; place-items: center; flex: none; width: 24px; height: 24px; margin-top: var(--space-1); border-radius: 50%; background: var(--color-primary); color: var(--color-on-primary); font-size: var(--text-sm); font-weight: var(--weight-medium); }
+.cmc-step-num { display: grid; place-items: center; flex: none; width: 24px; height: 24px; margin-top: var(--space-1); border-radius: 0; background: var(--color-primary); color: var(--color-on-primary); font-family: var(--font-mono); font-size: var(--text-xs); font-weight: var(--weight-medium); }
 .cmc-bullets { margin: 0; padding-left: var(--space-5); font-size: var(--text-sm); color: var(--color-ink-muted); }
 .cmc-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
 .cmc-servers { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: var(--space-2); }

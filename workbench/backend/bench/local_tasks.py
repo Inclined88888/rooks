@@ -54,7 +54,9 @@ def status(word: str, want: str):
 
 def memory(word: str):
     def check():
-        m = _like("memories", "content", word)
+        from app.knowledge import facts
+
+        m = next((f for f in facts.all_facts() if word.lower() in f["content"].lower()), None)
         return bool(m), f"memory={m['content'] if m else None}"
     return check
 
@@ -77,7 +79,7 @@ def snapshot() -> str:
     from app import db
 
     rows = db.all("SELECT 'task' AS k, id, title, status, due FROM tasks UNION ALL SELECT 'doc', id, title, body, '' FROM docs "
-                  "UNION ALL SELECT 'event', id, title, start, '' FROM events UNION ALL SELECT 'memory', id, content, '', '' FROM memories "
+                  "UNION ALL SELECT 'event', id, title, start, '' FROM events UNION ALL SELECT 'memory', id, content_enc, status, '' FROM kn_memories "
                   "UNION ALL SELECT 'draft', id, to_addr, body, '' FROM mail_drafts")
     return json.dumps(rows, sort_keys=True)
 

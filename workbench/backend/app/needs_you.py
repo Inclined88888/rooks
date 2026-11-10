@@ -29,10 +29,10 @@ from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from . import actions, browser_proxy, config, db, desk_proxy, jobs, starters
-from .security import require_user_or_terminal
+from .security import is_signed_in, require_user_or_terminal
 
 log = logging.getLogger("needs_you")
 # The terminal's /needs lists and answers the same items with its own key (security.require_user_or_terminal).
@@ -81,6 +81,13 @@ ROOM_TITLES: dict[str, tuple[str, str]] = {  # use_room action: (title, the argu
     "status": ("Check the Room", ""),
     "handoff": ("Copy a file out of the Room", "src"),
     "start": ("Start in the Room's terminal", "command"),
+    # design 0007: the Room's own browser (typed text is never in a title; an address by its site only)
+    "browse": ("Open a page in the Room's browser", "address"),
+    "click": ("Click in the Room's browser", "on"),
+    "type": ("Type in the Room's browser", "on"),
+    "scroll": ("Scroll in the Room's browser", ""),
+    "key": ("Press a key in the Room's browser", "key"),
+    "back": ("Go back in the Room's browser", ""),
 }
 
 
@@ -88,9 +95,23 @@ def _title(tool: str, args: dict) -> str:
     from .presence import clip
 
     if tool == "use_room":  # the Room's own verbs, with what they are about
-        title, key = ROOM_TITLES.get(str(args.get("action") or "status").lower(), ("Use the Room", "goal"))
+        from .room_browser_tool import WHY_TITLE
+
+        why = str(args.get("why") or "")
+        title, key = ((WHY_TITLE[why], "on") if why in WHY_TITLE  # a browser step that waits: what it would really do
+                      else ROOM_TITLES.get(str(args.get("action") or "status").lower(), ("Use the Room", "goal")))
         subject = args.get(key) if key else None
+        if key == "address" and isinstance(subject, str):
+            from .presence import _site
+
+            subject = _site(subject)
         return f"{title}: {clip(' '.join(str(subject).split()))}" if isinstance(subject, (str, int)) and str(subject).strip() else title
+    if tool.startswith("work_"):  # design 0012: the file, the people, the chat or the task, from names already seen
+        from .work_suite import title as work_title
+
+        said = work_title(tool, args)
+        if said:
+            return said
     if tool.startswith("mcp__"):  # mcp__<server>__<tool>: a tool on one of the user's own connected servers
         parts = tool.split("__", 2)
         server, name = (parts[1], parts[2]) if len(parts) == 3 else ("", parts[-1])
@@ -118,10 +139,21 @@ def _action_item(a: dict) -> dict:
     except ValueError:
         args = {}
     args = args if isinstance(args, dict) else {}
-    return {"id": f"a:{a['id']}", "kind": "room" if a["tool"] == "use_room" else "approval", "title": _title(a["tool"], args),
+    from .rooks_link import raised_by_job
+
+    extra = {}
+    if a["tool"].startswith("work_"):  # design 0012: what a work change takes out and puts in, on the card itself
+        from .work_suite import change_lines
+
+        lines = change_lines(a["tool"], args)
+        if lines is not None:
+            extra["change"] = lines
+    return {**extra, "id": f"a:{a['id']}", "kind": "room" if a["tool"] == "use_room" else "approval", "title": _title(a["tool"], args),
             "detail": args_summary(args, 200), "since": a["created_at"], "conversation_id": a["conversation_id"],
             "job_id": None, "actions": ACTIONS, "tool": a["tool"], "effect": a["effect"], "reason": a["reason"] or "",
-            "args": a["args"]}
+            "args": a["args"],
+            # a coding job's own prompt: answered only in the signed in app, never with a key its commands could read
+            "in_app_only": raised_by_job(a["id"])}
 
 
 def _job_item(j: dict) -> dict:
@@ -249,15 +281,35 @@ async def count() -> int:
     return actions.pending_count() + starts + len(starters.waiting()) + len(await helper_items())
 
 
+WORK_HIDDEN = "A change in your work apps"
+
+
+def _hide_work(item: dict) -> dict:
+    """A held work call as the shared bridge key may see it: that something waits, not what (no file, person, chat or
+    text). The work account stays out of that key's reach, reads included (design 0012)."""
+    if not str(item.get("tool") or "").startswith("work_"):
+        return item
+    hidden = {k: v for k, v in item.items() if k not in ("change", "detail", "reason")}
+    return {**hidden, "title": WORK_HIDDEN, "detail": "Open the app to see it.", "args": "{}"}
+
+
 @router.get("")
-async def inbox():
-    """Everything waiting on you, newest first: held actions, jobs that ask first, and steps the desk and browser paused on."""
-    return await items()
+async def inbox(request: Request):
+    """Everything waiting on you, newest first: held actions, jobs that ask first, and steps the desk and browser paused on.
+    Read with the shared bridge key (the terminal without its own token), a work item says only that it waits."""
+    out = await items()
+    if not is_signed_in(request):
+        from .rooks_link import shared_key
+
+        if shared_key(request):
+            out = [_hide_work(i) for i in out]
+    return out
 
 
 @router.post("/{item_id}/{answer}")
-async def decide(item_id: str, answer: str):
-    """Approve or deny one item in the system it came from. Answered once: a repeat is refused."""
+async def decide(item_id: str, answer: str, request: Request):
+    """Approve or deny one item in the system it came from. Answered once: a repeat is refused. A prompt a coding job
+    raised is answered only by the signed in person, never with the Terminal access token (rooks_link.raised_by_job)."""
     if answer not in ACTIONS:
         raise HTTPException(404, "Nothing is waiting under that name.")
     approve = answer == "approve"
@@ -266,7 +318,10 @@ async def decide(item_id: str, answer: str):
     plain_number = rest.isascii() and rest.isdecimal()  # "²" passes isdigit() but not int()
     if kind == "a" and plain_number:
         from . import assistant
+        from .rooks_link import JOB_ANSWER_REFUSED, raised_by_job
 
+        if raised_by_job(int(rest)) and not is_signed_in(request):
+            raise HTTPException(403, JOB_ANSWER_REFUSED)
         a = await assistant.decide(int(rest), approve)  # 404 unknown, 409 already answered
         return {"id": item_id, "status": a["status"], "result": a.get("result", "")}
     if kind == "j" and plain_number:

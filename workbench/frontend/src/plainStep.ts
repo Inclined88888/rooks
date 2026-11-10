@@ -31,7 +31,27 @@ const ROOM: Record<string, (args: string) => string> = {
   start: (a) => withSubject("Running in the Room's terminal", field(a, "command")),
   tail: () => "Watching the Room's terminal",
   files: () => "Looking through the Room's files",
+  // design 0007: the Room's own browser (presence.py _ROOM). Typed text is never said; an address only by its site
+  browse: (a) => withSubject("Opening a page in the Room's browser", siteOf(field(a, "address"))),
+  page: () => "Looking at a page in the Room's browser",
+  shot: () => "Looking at a page in the Room's browser",
+  click: () => "Clicking in the Room's browser",
+  type: () => "Typing in the Room's browser",
+  scroll: () => "Scrolling in the Room's browser",
+  key: () => "Pressing a key in the Room's browser",
+  back: () => "Going back in the Room's browser",
+  tabs: () => "Checking the Room browser's tabs",
 };
+
+function siteOf(address: string): string {
+  const a = address.trim();
+  if (!a) return "";
+  try {
+    return new URL(a.includes("://") ? a : `http://${a}`).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
 
 const SAY: Record<string, (args: string) => string> = {
   web_search: (a) => withSubject("Searching", field(a, "query")),

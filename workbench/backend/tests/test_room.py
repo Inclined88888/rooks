@@ -26,7 +26,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
-PLAIN_LABEL = "A private folder and shell"
+PLAIN_LABEL = "A private folder on this computer"  # room-pro: no "shell" on a normal screen (label_detail keeps it)
 
 
 @pytest.fixture()
@@ -61,6 +61,24 @@ def test_status_is_honest_for_the_private_folder(client, room_home):
     assert st["driver"] == "shell" and st["checkpoints"] == [] and st["last_checkpoint"] is None
     for word in ("Xvfb", "unshare", "namespace", "driver", "http", "Workbench"):
         assert word not in st["label"] and word not in st["note"], word
+
+
+def test_status_says_how_the_rooms_programs_are_kept_together(client, room_home, monkeypatch):
+    """Design 0011, section 3: on Windows every Room program is in a job ("containment": "job"), which is not a wall,
+    so isolation stays "none" and the note says they can read and change your files. Elsewhere there is no job. (The
+    driver's words on Windows are checked in rooks-try's test_room_job_windows.py; here, that the app passes them on.)"""
+    import sys
+
+    from rooks_try.drivers import shell as shell_mod
+
+    st = client.get("/api/room/status").json()
+    assert st["containment"] == ("job" if sys.platform == "win32" else "none")
+    plain = shell_mod.ShellDriver.status
+    monkeypatch.setattr(shell_mod.ShellDriver, "status", lambda self: {
+        **plain(self), "isolation": "none", "containment": "job", "note": shell_mod.NOTE_WINDOWS})
+    st = client.get("/api/room/status").json()
+    assert st.get("containment") == "job" and st["isolation"] == "none", st
+    assert "stops when the Room stops, except a program handed to Windows to start" in st["note"] and "they can read and change your files" in st["note"]
 
 
 def test_up_and_run_write_only_inside_the_room_and_are_in_the_run_log(client, room_home, tmp_path):
@@ -177,7 +195,8 @@ def test_screenshot_only_when_there_is_a_screen(client, room_home, monkeypatch):
     monkeypatch.setenv("ROOKS_TRY_DRIVER", "display")
     room.reset()
     st = client.get("/api/room/status").json()
-    assert st["screen"] is True and st["pointer"] is False and st["label"] == "A drawing of a terminal"
+    assert st["screen"] is True and st["pointer"] is False and st["label"] == "A picture of a screen, not a computer" \
+        and st["label_detail"] == "A drawing of a terminal"  # room-pro: plain words; the exact label for Advanced
     assert client.get("/api/room/screenshot").status_code == 404  # off: nothing to show yet
     client.post("/api/room/up")
     r = client.get("/api/room/screenshot")
@@ -610,13 +629,18 @@ def test_status_says_what_this_room_can_do(client, room_home, remote_room):
     from app import config, room
 
     st = client.get("/api/room/status").json()  # the helper (TRY_URL): no terminal and no folder on this computer
-    assert st["can"] == {"terminal": False, "files": False, "terminal_off_reason": "helper"} and st["terminals"] == []
+    assert st["can"] == {"terminal": False, "files": False, "terminal_off_reason": "helper", "browser": False,
+                         "browser_off_reason": "helper", "run": True} and st["terminals"] == []  # room-pro: run
     assert client.get("/api/room/files").status_code == 501
     config.TRY_URL = ""
     room.reset()
     st = client.get("/api/room/status").json()
     if sys.platform != "win32":
-        assert st["can"] == {"terminal": True, "files": True, "terminal_off_reason": None}, st["can"]
+        shown = {k: st["can"][k] for k in ("terminal", "files", "terminal_off_reason")}
+        assert shown == {"terminal": True, "files": True, "terminal_off_reason": None}, st["can"]
+        # the browser: here when an engine is found, else said why (design 0007)
+        assert st["can"]["browser"] is (st["can"]["browser_off_reason"] is None), st["can"]
+        assert st["can"]["browser_off_reason"] in (None, "no_engine"), st["can"]
     assert st["terminals"] == [] and st["terminal_max"] == 4
 
 

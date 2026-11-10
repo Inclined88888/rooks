@@ -16,12 +16,6 @@
       "url": "http://workbench:8000/mcp/",
       "enabled": true,
       "headers": { "Authorization": "Bearer {env:TOOLS_API_KEY}" }
-    },
-    "browser": {
-      "type": "remote",
-      "url": "http://browser:8100/mcp",
-      "enabled": true,
-      "headers": { "Authorization": "Bearer {env:BROWSER_API_KEY}" }
     }
   }
 }

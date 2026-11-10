@@ -3,7 +3,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, stream } from "../api";
 import { AppInfo, Sidecar, appInfo, inDesktopShell, listSidecars, openDataDir, openLogs, requestApproval } from "../desktop";
-import { Badge, Button, ErrorState, IconButton, Input, Loading, Page, Section, Select } from "../ui";
+import { Badge, Button, ErrorState, IconButton, Input, Loading, Page, Section, Select, Stat } from "../ui";
 import { errorText } from "../ui/toast";
 import { ModelSelect, useModels, useToast } from "../util";
 import ConnectSection from "./ConnectSection";
@@ -11,9 +11,24 @@ import { AddKey, KeyInfo, SignInWithPlan, WebSearchSetup } from "./ModelSignIn";
 import { PhoneCard } from "./Phone";
 import { Advanced, ButtonLink, CategoryNav, Notice, Progress, SettingRow, SettingsGroup, Switch } from "./settings/index";
 import { SETTINGS_SECTIONS as SECTIONS } from "./settings/sections";
+import { PAGES } from "./registry";
+import { setDevTools, useDevTools } from "../lib/devTools";
+
+// What each developer page is for, in plain words (Settings, Advanced, with "Show developer tools" on).
+const DEV_HELP: Record<string, string> = {
+  "/code": "Coding jobs in a project folder, and continuing a chat in the terminal.",
+  "/terminal": "A command line on this computer, inside the app.",
+  "/runs": "Every turn and model call, with what it did.",
+  "/insights": "Which models answered, how fast, and what they cost.",
+  "/compare": "Ask several models the same thing side by side.",
+  "/fine-tune": "Train a model on your own examples.",
+  "/status": "Each part of the app, checked when you open it.",
+  "/extra-tools": "Outside tools you add yourself. Their actions still ask before they leave this computer.",
+  "/packs": "Ready-made skill sets for trades, legal work and study.",
+};
 
 type DesktopInfo = { desktop: boolean; data_dir: string; secret_backend: string };
-type SettingsData = { workspace_name: string; default_model: string; chat_url: string; tools_url: string; model_catalog_refresh: boolean; model_catalog_env: boolean };
+type SettingsData = { workspace_name: string; default_model: string; chat_url: string; tools_url: string; model_catalog_refresh: boolean; model_catalog_env: boolean; app_terminal: boolean; room_browser: boolean; dev_tools: boolean };
 
 function BrowserPair() {
   const [code, setCode] = useState("");
@@ -271,10 +286,14 @@ function Usage() {
     try { setU(await api<UsageSummary>("/usage/prices", { method: "PUT", body: { prices } })); toast.ok("Prices saved"); } catch (e) { toast.err(e); }
   };
   return (
-    <Section title="Usage this month" description="Everything the AI did this month, by model. Free tiers and plans cost nothing extra here. A paid key shows $0 until you set its price."
-      actions={u ? <Badge>${(u.month_cents / 100).toFixed(2)} · {u.month_tokens.toLocaleString()} tokens</Badge> : undefined}>
+    <Section title="Usage this month" description="Everything the AI did this month, by model. Free tiers and plans cost nothing extra here. A paid key shows $0 until you set its price.">
       {failed ? <ErrorState title="Usage did not load" line={failed} onRetry={load} /> : !u ? <Loading rows={2} label="Loading usage" /> : (
         <div className="st-stack">
+          {/* the month's two numbers (they sat in a badge beside the title) as the stat strip */}
+          <div className="st-stats is-two">
+            <Stat label="Cost" value={`$${(u.month_cents / 100).toFixed(2)}`} />
+            <Stat label="Tokens" value={u.month_tokens.toLocaleString()} />
+          </div>
           <SettingsGroup label="Usage by model">
             {u.by_model.length === 0 && <SettingRow label="No usage yet" help="Chat with the assistant and what it uses shows here." />}
             {u.by_model.map((m) => (
@@ -344,8 +363,26 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
     catch (e) { toast.err(e); }
     finally { setSaving(false); }
   };
+  const devTools = useDevTools();
+  const setDev = async (on: boolean) => {
+    try {
+      setS(await api("/settings", { method: "PUT", body: { dev_tools: on } }));
+      setDevTools(on);
+      toast.ok(on ? "Developer tools are listed again" : "Developer tools are hidden");
+      onChanged();
+    } catch (e) { toast.err(e); }
+  };
   const setCatalog = async (on: boolean) => {
     try { setS(await api("/settings", { method: "PUT", body: { model_catalog_refresh: on } })); toast.ok(on ? "Model prices will update once a day" : "Model price updates are off"); }
+    catch (e) { toast.err(e); }
+  };
+  // the switches the Room's Terminal and Browser windows point to when they are off
+  const setTerminals = async (on: boolean) => {
+    try { setS(await api("/settings", { method: "PUT", body: { app_terminal: on } })); toast.ok(on ? "Terminals are on" : "Terminals are off"); }
+    catch (e) { toast.err(e); }
+  };
+  const setRoomBrowser = async (on: boolean) => {
+    try { setS(await api("/settings", { method: "PUT", body: { room_browser: on } })); toast.ok(on ? "The Room's browser is on" : "The Room's browser is off. Its tabs are kept."); }
     catch (e) { toast.err(e); }
   };
   const changePw = async (e: FormEvent) => {
@@ -431,12 +468,26 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
           <>
             <Section title="Tools">
               <SettingsGroup>
-                <Go primary label="Extra tools" help="Outside tools you add yourself. Their actions still ask before they leave this computer." to="/extra-tools" />
-                <Go label="Computer" help="Let the assistant click and type on this machine, when you allow it." to="/computer" />
-                <Go label="Browser" help="Let the assistant work in a browser, when you allow it." to="/browser" />
-                <Go label="Customize tools" help="Every tool in one list." to="/customize?tab=tools" />
+                <Go primary label="Computer" help="Let the assistant click and type on this machine, when you allow it." to="/computer" />
+                {devTools && <Go label="Browser" help="Let the assistant work in a browser, when you allow it." to="/browser" />}
               </SettingsGroup>
             </Section>
+            {/* the Room's Terminals and browser are developer tools: off on a new install, their switches here only with
+                Show developer tools on (Settings, Advanced). Switched off, they are not shown in the Room. */}
+            {devTools && (
+            <Section title="The Room" description="Tools for people who build with Rooks. Switched off, they are not shown in the Room and nothing in them runs.">
+              {!s ? settingsState : (
+                <SettingsGroup>
+                  <SettingRow label="Terminals" help="Terminals in the Room and on the Terminal page.">
+                    <Switch checked={s.app_terminal === true} onChange={setTerminals} label="Terminals" />
+                  </SettingRow>
+                  <SettingRow label="The Room's browser" help="A real browser inside the Room. Switching it off closes it; its tabs and sign-ins are kept.">
+                    <Switch checked={s.room_browser === true} onChange={setRoomBrowser} label="The Room's browser" />
+                  </SettingRow>
+                </SettingsGroup>
+              )}
+            </Section>
+            )}
             <Section title="Another device">
               <BrowserPair />
             </Section>
@@ -447,9 +498,7 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
           <Section title="Skills and rules">
             <SettingsGroup>
               <Go primary label="Skills" help="Saved ways of working. Add more whenever you like." to="/skills" />
-              <Go label="About you" help="Standing instructions and what it already knows about you." to="/about-you" />
-              <Go label="Memory" help="Everything it remembers, in one place." to="/knowledge" />
-              <Go label="Customize" help="One place for apps, tools, skills and rules." to="/customize" />
+              <Go label="Memory" help="Everything it knows about you and your work, in one place. Correct or forget anything." to="/knowledge" />
             </SettingsGroup>
           </Section>
         )}
@@ -476,6 +525,17 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
 
         {section === "advanced" && (
           <>
+            <Section title="Developer tools" description="Pages for people who build with Rooks. Hidden from the menus unless you turn them on; their addresses still open.">
+              <SettingsGroup>
+                <SettingRow label="Show developer tools"
+                  help="Lists the Terminal, Code, the run log, Insights, System status, Compare models, Fine-tune, Extra tools and Packs in the menus, and shows Plan and Build in Chat. This computer remembers your choice.">
+                  <Switch checked={devTools} onChange={setDev} label="Show developer tools" />
+                </SettingRow>
+                {devTools && PAGES.filter((p) => p.dev && p.section).map((p) => (
+                  <Go key={p.path} label={p.label} help={DEV_HELP[p.path] ?? ""} to={p.path} />
+                ))}
+              </SettingsGroup>
+            </Section>
             <Section title="Model prices and limits">
               {!s ? settingsState : (
                 <SettingsGroup>
@@ -487,7 +547,7 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
               )}
             </Section>
             <Usage />
-            {s?.chat_url && (
+            {devTools && s?.chat_url && (
               <Section title="Open WebUI">
                 <SettingsGroup>
                   <SettingRow label="Open WebUI" help="Optional chat that can use your notes, tasks, calendar and mail drafts (it can never send mail).">
@@ -498,8 +558,6 @@ export default function Settings({ onChanged }: { onChanged: () => void }) {
             )}
             <Section title="System">
               <SettingsGroup>
-                <Go label="System status" help="Each part of the app, checked when you open it." to="/status" />
-                <Go label="Run log" help="Every turn and model call, with what it did." to="/runs" />
                 <Go label="History" help="Everything you have asked, by day." to="/history" />
               </SettingsGroup>
             </Section>

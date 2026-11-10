@@ -182,6 +182,15 @@ def is_coding_job_key(token: str) -> bool:
     return bool(token) and bool(key) and hmac.compare_digest(token, key)
 
 
+def is_signed_in(request: Request) -> bool:
+    """The person themselves: a session cookie, or a browser they paired. Never a bearer key a program could read."""
+    try:
+        require_user(request)
+        return True
+    except HTTPException:
+        return False
+
+
 def require_user_or_terminal(request: Request) -> None:
     """The signed in user, or the rooks terminal on this computer with its own key: only for the Workroom routes the
     terminal's /room, /needs and /jobs use (room status/up/down/run, Needs you, the Jobs board). The Terminal access
@@ -200,6 +209,20 @@ def require_user_or_terminal(request: Request) -> None:
     # Answering and acting need the Terminal access token, which a person creates, or a signed in session.
     if (request.method == "GET" and request.headers.get("x-workbench-channel") == "rooks-code"
             and check_bridge_key(token) and not is_coding_job_key(token)):
+        return
+    raise HTTPException(status_code=401, detail="Not signed in")
+
+
+def require_user_or_terminal_token(request: Request) -> None:
+    """The signed in user, or the rooks terminal with its own Terminal access token, which a person creates: for the
+    Room's browser (open a page, list the tabs, read a page). Never a shared bridge key, not even to read: the Room's
+    browser holds the person's sign-ins, and the browser and desk helpers that share that key are steered by pages."""
+    try:
+        require_user(request)
+        return
+    except HTTPException:
+        pass
+    if check_cli_token(_bearer_token(request)):
         return
     raise HTTPException(status_code=401, detail="Not signed in")
 

@@ -14,7 +14,7 @@ from . import db, mail, research, services
 from .security import require_tool_key
 
 tools = FastAPI(
-    title="Workbench",
+    title="Rooks",
     version="1.0.0",
     description="Personal workspace tools: notes and documents, tasks, calendar, email search and drafts, web search.",
     dependencies=[Depends(require_tool_key)],
@@ -138,7 +138,7 @@ class DraftIn(BaseModel):
 
 
 @tools.post("/mail/drafts", operation_id="save_email_draft",
-            summary="Save an email draft for the user to review and send in Workbench. This never sends email.")
+            summary="Save an email draft for the user to review and send in Rooks. This never sends email.")
 def save_draft(data: DraftIn) -> dict:
     acct = db.one("SELECT * FROM mail_accounts WHERE id = ?", data.account_id) if data.account_id else db.one("SELECT * FROM mail_accounts ORDER BY id LIMIT 1")
     now = db.now()

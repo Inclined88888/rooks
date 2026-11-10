@@ -1,6 +1,6 @@
 /**
- * The Chat page (/assistant, /assistant/:id) and the chat's Memory and Settings tabs (/assistant-memory,
- * /assistant-settings). This file owns the turn: one POST to /api/assistant/chat read as a stream, folded into the
+ * The Chat page (/assistant, /assistant/:id) and the chat's Settings tab (/assistant-settings; what it remembers is
+ * on the Memory page). This file owns the turn: one POST to /api/assistant/chat read as a stream, folded into the
  * turn's record by chat/events.ts, drawn by chat/Thread.tsx. Every turn's steps stay with its reply (rebuilt from
  * the server after a reload), the reply is revealed once, and ids become the server's as soon as the turn is done.
  */
@@ -10,7 +10,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { api, stream, type StreamEvent } from "../api";
 import { useEffort, useModels, useToast, type RouterInfo } from "../util";
 import { useExit } from "../motion";
-import { askNotifyPermission, inBackground, notify } from "../desktop"; // feat/tauri-native
+import { askNotifyPermission, copyLater, inBackground, notify } from "../desktop"; // feat/tauri-native
 import { useAttachments, type Att } from "../Attachments"; // feat/attachments
 import { openBeside } from "../Beside";
 import { ChatList } from "../chat/ChatList"; // the Chats column: recent chats, archive, projects
@@ -23,13 +23,12 @@ import { adoptServerIds, mergeSteps, rebuildTurns, stepTitle, type Row } from ".
 import { Thread, type Fresh } from "../chat/Thread";
 import { followBehavior, isPinned } from "../chat/scroll";
 import { isShortcut } from "../lib/shortcuts";
+import { chatMode, useDevTools } from "../lib/devTools";
 import { Composer } from "../chat/Composer";
 import { ThreadHeader } from "../chat/ThreadHeader";
 import { EmptyChat } from "../chat/EmptyChat";
 import { refreshHistory } from "../chat/ResultCards";
 import { forgetRuns } from "../chat/receipts";
-import { MemoryTab } from "../chat/tabs/MemoryTab";
-import { SkillsTab } from "../chat/tabs/SkillsTab";
 import { SettingsTab } from "../chat/tabs/SettingsTab";
 import type { Conv, Msg, WorkMode } from "../chat/types";
 import { motionOff } from "../appearance";
@@ -37,8 +36,6 @@ import "../chat/chat.css";
 
 /** While a call is held in this chat it is also asked this often (else only when the pulse says something moved). */
 const HELD_POLL_MS = 15000;
-
-export { SkillsTab };
 
 const CHATLIST_KEY = "rooks.chatlist";
 /** The Chats column is open by default above the wide breakpoint; the toggle in the thread header is remembered. */
@@ -140,12 +137,16 @@ function Chat() {
   const { models, defaultRef } = useModels();
   const [broken, setBroken] = useState("");
   const [effort, setEffort] = useEffort();
-  const [workMode, setWorkMode] = useState<WorkMode>(() => {
+  const [savedMode, setWorkMode] = useState<WorkMode>(() => {
     const saved = localStorage.getItem("aiw.workMode");
     return saved === "plan" || saved === "build" ? saved : "chat";
   });
+  // Plan and Build are coding modes: only while "Show developer tools" is on (Settings, Advanced). With it off every
+  // chat is a plain chat, and a Build mode saved earlier does not come back until the switch is on again.
+  const devTools = useDevTools();
+  const workMode = chatMode(savedMode, devTools);
   // The last Code depth, so leaving for Chat and coming back restores Plan or Build.
-  const codeDepth = useRef<"plan" | "build">(workMode === "build" ? "build" : "plan");
+  const codeDepth = useRef<"plan" | "build">(savedMode === "build" ? "build" : "plan");
   const chooseMode = (next: WorkMode) => {
     if (next !== "chat") codeDepth.current = next;
     setWorkMode(next);
@@ -269,6 +270,8 @@ function Chat() {
   }, [cid, messages.length > 0]);
   useEffect(() => {
     if (!pinnedRef.current) return;
+    // a new chat starts at its top: the greeting is a tall hero, so following the (empty) end would cut its first line
+    if (messages.length === 0) return;
     endRef.current?.scrollIntoView({ behavior: followBehavior(busyRef.current, motionOff()), block: "end" });
   }, [messages, live?.steps.length, live?.draft.length]);
 
@@ -469,12 +472,14 @@ function Chat() {
       <div className="agents-chat-main chat-main">
         <ThreadHeader
           title={title} cid={cid} listOpen={listOpen} onToggleList={toggleList}
-          workMode={workMode} onMode={chooseMode} codeDepth={codeDepth.current}
+          workMode={workMode} onMode={chooseMode} codeDepth={codeDepth.current} devTools={devTools}
           model={model} onModel={setModel} models={models} defaultRef={defaultRef} isPlan={isPlan} effort={effort} onEffort={setEffort}
           busy={busy} showRoutines={showRoutines} onRoutines={() => { setShowRoutines((v) => !v); setRoutines(null); }}
-          onTerminal={() => api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } })
-            .then((h) => { navigator.clipboard?.writeText(h.command); toast.ok(`Copied: ${h.command}`); })
-            .catch(toast.err)}
+          onTerminal={() => {
+            // copyLater: the copy starts in the click, so WebKit (the Rooks app) allows it after the server answers
+            const command = api<{ command: string; expires_in: number }>("/assistant/handoff", { body: { conversation_id: cid } }).then((h) => h.command);
+            void copyLater(command).then((ok) => command.then((c) => toast.ok(ok ? `Copied: ${c}` : `Run this in a terminal: ${c}`))).catch(toast.err);
+          }}
           onBeside={async () => {
             try {
               const accounts = await api<{ id: number }[]>("/mail/accounts");
@@ -537,18 +542,16 @@ function Chat() {
   );
 }
 
-export default function Assistant({ tab }: { tab: "chat" | "memory" | "skills" | "settings" }) {
+export default function Assistant({ tab }: { tab: "chat" | "settings" }) {
   const navigate = useNavigate();
   if (tab === "chat") return <Chat />;
   return (
     <div className="page" style={{ maxWidth: 720 }}>
       <div className="page-head">
         <button type="button" className="btn ghost sm" onClick={() => navigate("/assistant")}><ArrowLeft size={14} /> Chat</button>
-        <h1 className="grow">{tab === "memory" ? "Memory" : tab === "skills" ? "Skills" : "Chat settings"}</h1>
+        <h1 className="grow">Chat settings</h1>
       </div>
-      {tab === "memory" && <MemoryTab />}
-      {tab === "skills" && <SkillsTab />}
-      {tab === "settings" && <SettingsTab />}
+      <SettingsTab />
     </div>
   );
 }

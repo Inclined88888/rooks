@@ -32,9 +32,9 @@ def context(q: str = ""):
     block = ""
     if learn.enabled():
         try:
-            from .adapt import knowledge
+            from .knowledge import facts
 
-            block = knowledge.context_block(q[:2000]) if q.strip() else ""
+            block = facts.context_block(q[:2000]) if q.strip() else ""
         except Exception:  # noqa: BLE001 - context is a help, never a reason for the terminal to fail
             block = ""
     skills = db.all("SELECT name, description FROM skills WHERE enabled = 1 ORDER BY uses DESC, updated_at DESC LIMIT 30")
@@ -43,16 +43,30 @@ def context(q: str = ""):
 
 @router.get("/memory")
 def memory():
-    """What the app knows about the user (the terminal's /memory), newest and pinned first."""
-    from .adapt import knowledge
+    """What the app knows about the user (the terminal's /memory): the same rows as the Memory page, pinned and
+    newest first."""
+    from .knowledge import facts
 
-    facts = [{"content": f["content"], "category": f.get("category", "")} for f in knowledge.all_facts()[:40]]
-    return {"facts": facts, "learning": learn.enabled()}
+    known = [{"id": f["id"], "content": f["content"], "category": f["category"]} for f in facts.all_facts(40)]
+    return {"facts": known, "learning": learn.enabled()}
+
+
+def shared_key(request: Request) -> bool:
+    """The caller holds the shared bridge key (app.json: the helpers and coding jobs have it), not the person's own
+    Terminal access token. The work account stays out of its reach, reads included (design 0012)."""
+    from .security import _bearer_token, check_cli_token
+
+    return not check_cli_token(_bearer_token(request))
+
+
+# conversations that read or changed something in the work account: what they say came from the company's files and chats
+_WORK_CONVERSATIONS = ("SELECT DISTINCT conversation_id FROM messages WHERE name LIKE 'work\\_%' ESCAPE '\\'")
 
 
 @router.get("/history")
-def history(q: str = "", limit: int = 12):
-    """Full-text search over past Chat and terminal messages. Used by rooks /history."""
+def history(request: Request, q: str = "", limit: int = 12):
+    """Full-text search over past Chat and terminal messages. Used by rooks /history. With the shared key, never a
+    conversation that used the work account."""
     q = (q or "").strip()
     limit = max(1, min(int(limit or 12), 30))
     if not q:
@@ -83,10 +97,11 @@ def history(q: str = "", limit: int = 12):
                 "FROM messages m JOIN conversations c ON c.id = m.conversation_id "
                 "WHERE m.role IN ('user', 'assistant') AND m.content LIKE ? "
                 "ORDER BY m.id DESC LIMIT ?", f"%{q[:80]}%", limit)
+    hidden = {r["conversation_id"] for r in db.all(_WORK_CONVERSATIONS)} if shared_key(request) else set()
     return {"results": [
         {"conversation_id": r["conversation_id"], "title": r["title"] or "Chat", "channel": r["channel"],
          "role": r["role"], "when": r["created_at"], "snippet": (r["content"] or "")[:280]}
-        for r in rows
+        for r in rows if r["conversation_id"] not in hidden
     ]}
 
 
@@ -174,10 +189,10 @@ class ForgetIn(BaseModel):
 
 @router.post("/forget")
 def forget(data: ForgetIn):
-    """Drop memories that contain these words. Chat then stops seeing them too."""
-    from .adapt import knowledge
+    """Drop memories that contain these words. Chat and the Memory page then stop seeing them too."""
+    from .knowledge import facts
 
-    return {"forgotten": knowledge.forget_matching(data.text)}
+    return {"forgotten": facts.forget_matching(data.text)}
 
 
 class DraftMailIn(BaseModel):
@@ -197,11 +212,14 @@ def draft_mail(data: DraftMailIn):
 
 
 @router.get("/calendar")
-def calendar_soon():
-    """The next events already on this computer."""
+def calendar_soon(request: Request):
+    """The next events already on this computer. With the shared key, never the work account's calendar."""
     from . import db
 
-    rows = db.all("SELECT title, start FROM events WHERE start >= ? ORDER BY start LIMIT 8", db.now()[:10])
+    work = (" AND COALESCE(c.linked_account_id, 0) != COALESCE((SELECT id FROM linked_accounts WHERE work = 1 ORDER BY id LIMIT 1), -1)"
+            if shared_key(request) else "")
+    rows = db.all("SELECT e.title, e.start FROM events e JOIN calendars c ON c.id = e.calendar_id WHERE e.start >= ?"
+                  + work + " ORDER BY e.start LIMIT 8", db.now()[:10])
     return {"events": [{"title": r["title"], "start": r["start"]} for r in rows]}
 
 
@@ -294,7 +312,7 @@ class RunTurnIn(BaseModel):
 
 
 @router.post("/run_turn")
-async def run_turn(data: RunTurnIn):
+async def run_turn(data: RunTurnIn, request: Request):
     """Run one turn via the backend's shared agent loop.
     Returns SSE stream of events: tool_call, tool_result, message, error, done, writing."""
     from .api import sse
@@ -304,12 +322,16 @@ async def run_turn(data: RunTurnIn):
         raise HTTPException(404, "Conversation not found")
     if data.model:
         db.run("UPDATE conversations SET model = ? WHERE id = ?", data.model, data.conversation_id)
+    # The shared bridge key is also held by the helpers and the coding jobs the app starts: a turn it starts gets no
+    # work account tools (design 0012). The person's own Terminal access token gets them.
+    shared = shared_key(request)
 
     async def events():
         import asyncio
 
         cid = data.conversation_id
-        ctx = assistant.Ctx(channel=CHANNEL, conversation_id=cid, request_key="", skip_save=False, attachments=[])
+        ctx = assistant.Ctx(channel=CHANNEL, conversation_id=cid, request_key="", skip_save=False, attachments=[],
+                            shared_key=shared)
         task = asyncio.current_task()
         if task is not None:
             assistant.TURNS[cid] = task  # the app's Stop button (/api/assistant/stop) reaches a terminal turn too
@@ -372,7 +394,23 @@ async def turn(data: TurnIn):
 # Terminal approvals (one row per terminal action). The terminal asks for an OK before it changes a file or runs a command
 # on its own machine; the same request appears in the app's Approvals with its diff, and whichever side answers first
 # decides. The app never runs these actions itself: an approval from the app only tells the terminal to go ahead.
+#
+# Who may record an answer: only the person. A bridge key (the app.json key, the desk key, a coding job's key) never
+# can, since any program on this computer can read app.json, a command the agent ran included, and could answer its
+# own prompt. The Terminal access token (rooks login) can, for prompts the person's own terminal raised. A prompt a
+# coding job raised (its own key) is answered in the signed in app only: the job runs as the person and its commands
+# could read the stored token too. The terminal that asked may withdraw its prompt (it never becomes an approval).
 TERMINAL_REQUEST = "terminal:"
+JOB_REQUEST = TERMINAL_REQUEST + "job:"  # raised by a coding job the app started
+
+
+def raised_by_job(aid: int) -> bool:
+    """True for a terminal prompt a coding job raised: only the signed in app answers it (here and in Needs you)."""
+    row = db.one("SELECT request_id FROM actions WHERE id = ?", aid)
+    return bool(row) and (row["request_id"] or "").startswith(JOB_REQUEST)
+
+
+JOB_ANSWER_REFUSED = "A background job can't answer for you. Answer it in the app, under Needs you."
 
 
 class TerminalApprovalIn(BaseModel):
@@ -384,26 +422,28 @@ class TerminalApprovalIn(BaseModel):
 
 
 @router.post("/approvals")
-def terminal_approval(data: TerminalApprovalIn):
+def terminal_approval(data: TerminalApprovalIn, request: Request):
     import uuid
 
     from . import actions, push
+    from .security import _bearer_token, is_coding_job_key
 
     if not _terminal_conversation(data.conversation_id):
         raise HTTPException(404, "Conversation not found")
     effect = "external" if data.effect == "command" else data.effect
     args = json.dumps({"summary": data.summary, "diff": data.preview} if data.effect == "write"
                       else {"summary": data.summary, "command": data.preview})
+    prefix = JOB_REQUEST if is_coding_job_key(_bearer_token(request)) else TERMINAL_REQUEST
     aid = actions.add("tool_call", "held", trace={"channel": CHANNEL, "conversation_id": data.conversation_id},
                       tool=data.tool, effect=effect, args=args[:4000], payload=args,
                       detail="Rooks is asking before it changes something on your computer.",
-                      request_id=TERMINAL_REQUEST + uuid.uuid4().hex)
+                      request_id=prefix + uuid.uuid4().hex)
     push.approval_needed(aid, data.tool)
     return {"id": aid}
 
 
 def _terminal_row(aid: int) -> dict:
-    row = db.one("SELECT id, request_id FROM actions WHERE id = ? AND kind = 'tool_call'", aid)
+    row = db.one("SELECT id, request_id, outcome FROM actions WHERE id = ? AND kind = 'tool_call'", aid)
     if not row or not (row["request_id"] or "").startswith(TERMINAL_REQUEST):
         raise HTTPException(404, "No terminal approval with this id")
     return row
@@ -413,7 +453,8 @@ def _terminal_row(aid: int) -> dict:
 def terminal_approval_status(aid: int):
     from . import actions
 
-    _terminal_row(aid)
+    if _terminal_row(aid)["outcome"] == WITHDRAWN:
+        return {"id": aid, "status": WITHDRAWN, "decided_at": None}
     a = actions.approval(aid)
     return {"id": aid, "status": a["status"], "decided_at": a["decided_at"]}
 
@@ -424,16 +465,44 @@ class TerminalDecisionIn(BaseModel):
 
 @router.post("/approvals/{aid}")
 def terminal_approval_answer(aid: int, data: TerminalDecisionIn, request: Request):
-    """The user answered in the terminal: record it so the app's card closes. 409 when the app answered first.
-    A coding job the app started holds its own key and may never record an answer: nobody is at its keyboard."""
+    """The person answered in the terminal: record it so the app's card closes. 409 when the app answered first.
+    Only the Terminal access token records an answer, and never for a prompt a coding job raised (see above)."""
+    from . import actions
+    from .security import _bearer_token, check_cli_token
+
+    if not check_cli_token(_bearer_token(request)):
+        raise HTTPException(403, "Only you can answer this. Answer it in Needs you, or sign the terminal in with rooks login.")
+    _terminal_row(aid)
+    if raised_by_job(aid):
+        raise HTTPException(403, JOB_ANSWER_REFUSED)
+    actions.decide(aid, data.approve, CHANNEL)
+    return {"id": aid, "status": actions.approval(aid)["status"]}
+
+
+WITHDRAWN = "withdrawn"
+
+
+@router.post("/approvals/{aid}/withdraw")
+def terminal_approval_withdraw(aid: int, request: Request):
+    """The terminal that asked no longer waits (the person answered there and the app could not record it, or the
+    terminal stopped). The card closes; nothing is approved, and the app can no longer approve it. 409 once answered.
+    Only the side that asked withdraws: a coding job its own prompts, the person's terminal (the app.json key or the
+    Terminal access token) the others. The desk helper's key is often the app.json key, so it is not told apart."""
     from . import actions
     from .security import _bearer_token, is_coding_job_key
 
-    if is_coding_job_key(_bearer_token(request)):
-        raise HTTPException(403, "A background job can't answer for you. Answer it in Needs you.")
-    _terminal_row(aid)
-    actions.decide(aid, data.approve, CHANNEL)
-    return {"id": aid, "status": actions.approval(aid)["status"]}
+    row = _terminal_row(aid)
+    if is_coding_job_key(_bearer_token(request)) != raised_by_job(aid):
+        raise HTTPException(403, "Only the terminal that asked can take this back.")
+    if row["outcome"] == WITHDRAWN:
+        return {"id": aid, "status": WITHDRAWN}
+    if actions.approval(aid)["status"] != "pending":
+        raise HTTPException(409, "Already answered")
+    # only a held row with no decision changes, so an answer that lands at the same moment always wins
+    db.run("UPDATE actions SET outcome = ?, detail = ? WHERE id = ? AND outcome = 'held' AND NOT EXISTS "
+           "(SELECT 1 FROM actions d WHERE d.kind = 'decision' AND d.parent_action_id = ?)",
+           WITHDRAWN, "Answered in the terminal.", aid, aid)
+    return {"id": aid, "status": terminal_approval_status(aid)["status"]}
 
 
 # ---- B3 packs from the terminal: the same gallery, add and remove as the app's Packs page ------------------------------

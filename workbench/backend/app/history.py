@@ -114,9 +114,9 @@ def before_tool(name: str, args: dict) -> dict:
             t = db.one("SELECT * FROM tasks WHERE id = ?", a.get("task_id"))
             return {"task": t} if t else {}
         if name == "forget":
-            from .adapt import knowledge
+            from .knowledge import facts
 
-            f = knowledge.get(int(a.get("memory_id")))
+            f = facts.get(int(a.get("memory_id")))
             return {"fact": {"content": f["content"], "category": f["category"], "pinned": f.get("pinned")}}
         if name == "save_skill":
             s = db.one("SELECT * FROM skills WHERE name = ?", str(a.get("name", "")).strip().lower().replace(" ", "-"))
@@ -430,18 +430,18 @@ def _undo(kind: str, u: dict) -> str:
             return f"Draft discarded here. Also delete the copy in {'Gmail' if d['kind'] == 'google' else 'Outlook'} Drafts."
         return "Draft discarded."
     if kind == "delete_fact":
-        from .adapt import knowledge
+        from .knowledge import facts
 
         try:
-            knowledge.delete(int(u["fact_id"]))
+            facts.delete(int(u["fact_id"]))
         except HTTPException:
             return "It was already forgotten."
         return "Forgotten."
     if kind == "restore_fact":
-        from .adapt import knowledge
+        from .knowledge import facts
 
         f = u.get("fact") or {}
-        knowledge.add(f.get("content", ""), f.get("category") or "fact", "user", confidence=0.9, pinned=bool(f.get("pinned")))
+        facts.add(f.get("content", ""), f.get("category") or "fact", "user", confidence=0.9, pinned=bool(f.get("pinned")))
         return "Remembered again."
     if kind == "delete_skill":
         db.run("DELETE FROM skills WHERE name = ? AND source != 'github'", u.get("name"))

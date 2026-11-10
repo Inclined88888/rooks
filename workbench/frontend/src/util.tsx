@@ -20,32 +20,66 @@ type MermaidApi = typeof import("mermaid")["default"];
 let mermaidP: Promise<MermaidApi> | null = null;
 const loadMermaid = () => (mermaidP ??= import("mermaid").then((m) => m.default));
 
-const MERMAID_THEME_VARS = {
-  fontFamily: "var(--font)",
-  primaryColor: "var(--panel-2)",
-  primaryBorderColor: "var(--border-strong)",
-  primaryTextColor: "var(--text)",
-  lineColor: "var(--muted)",
-  textColor: "var(--text)",
-  mainBkg: "var(--panel-2)",
-  nodeBorder: "var(--border-strong)",
-  clusterBkg: "var(--code-bg)",
-  titleColor: "var(--text)",
-  edgeLabelBackground: "var(--panel)",
-};
+/** The diagram in the app's language (the industrial redesign): white boxes with an ink edge, ink words and lines,
+ *  grey for what is secondary, the one orange for notes and highlights; square, thin lines. Mermaid works its other
+ *  colours out from these with colour maths, so it gets the theme's real colours (read from the tokens when a diagram
+ *  is drawn, so a diagram drawn after a theme change follows it), never var() strings it cannot parse. */
+function mermaidTheme() {
+  const css = getComputedStyle(document.documentElement);
+  const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+  const ink = v("--color-ink", "#111111");
+  const surface = v("--color-surface", "#FFFFFF");
+  const muted = v("--color-surface-muted", "#EDEDEA");
+  const line = v("--color-border", "#D8D8D5");
+  const grey = v("--color-ink-muted", "#5A5A57");
+  const accent = v("--color-accent", "#FF4D00");
+  // pies: the share is written on each slice in one colour, so the slices are light (the orange, greys, white), each
+  // outlined in ink, with ink words: AA on every slice in every theme (tokens.css --color-pie-*)
+  const pieInk = v("--color-pie-ink", "#111111");
+  const pie = [1, 2, 3, 4, 5].map((i) => v(`--color-pie-${i}`, ["#FF4D00", "#A6A6A2", "#C1C1BD", "#DEDEDA", "#FFFFFF"][i - 1]));
+  // mermaid takes twelve slice colours; after five they repeat
+  const pies = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, pie[i % pie.length]]));
+  const variables = {
+    fontFamily: v("--font-sans", "sans-serif"),
+    background: surface,
+    primaryColor: surface, primaryBorderColor: ink, primaryTextColor: ink,
+    secondaryColor: muted, secondaryBorderColor: grey, secondaryTextColor: ink,
+    tertiaryColor: surface, tertiaryBorderColor: line, tertiaryTextColor: ink,
+    lineColor: ink, textColor: ink, titleColor: ink,
+    mainBkg: surface, nodeBorder: ink, clusterBkg: muted, clusterBorder: line,
+    edgeLabelBackground: surface, noteBkgColor: surface, noteBorderColor: accent, noteTextColor: ink,
+    actorBkg: surface, actorBorder: ink, actorTextColor: ink, signalColor: ink, signalTextColor: ink,
+    // solid slices: mermaid's default 0.7 opacity would blend each fill with the page and drop its words under AA
+    ...pies, pieOpacity: "1", pieStrokeColor: pieInk, pieStrokeWidth: "1px", pieOuterStrokeColor: ink, pieOuterStrokeWidth: "1px",
+    pieSectionTextColor: pieInk, pieTitleTextColor: ink, pieLegendTextColor: ink,
+  };
+  // thin lines, square boxes
+  const themeCSS = "rect, polygon, path.basic, .node rect, .cluster rect { stroke-width: 1px; } .node rect, .cluster rect { rx: 0; ry: 0; } .flowchart-link, .edgePath .path { stroke-width: 1px; }"
+    // the legend's swatches outlined, so the white one shows on a white card (mermaid writes the swatch's stroke inline)
+    + ` .legend rect { stroke: ${ink} !important; stroke-width: 1px; }`;
+  return { variables, themeCSS };
+}
 
-// Rendered once per app run; theme switching happens via mermaid's own CSS variables (themeCSS below).
+// Mermaid keeps one configuration: it is set once, and again only when the theme's colours have changed since (a
+// diagram drawn after a switch to dark follows it).
 let mermaidReady: Promise<MermaidApi> | null = null;
+let mermaidKey = "";
 function initMermaid(): Promise<MermaidApi> {
-  return (mermaidReady ??= loadMermaid().then((m) => {
-    m.initialize({
-      startOnLoad: false,
-      securityLevel: "strict",
-      theme: "base",
-      themeVariables: MERMAID_THEME_VARS,
-    });
+  return (mermaidReady ??= loadMermaid()).then((m) => {
+    const theme = mermaidTheme();
+    const key = JSON.stringify(theme);
+    if (key !== mermaidKey) {
+      mermaidKey = key;
+      m.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: theme.variables,
+        themeCSS: theme.themeCSS,
+      });
+    }
     return m;
-  }));
+  });
 }
 
 /** A ```mermaid fence rendered as an SVG diagram. Falls back to the escaped source when the source is
@@ -116,7 +150,7 @@ export function SkeletonList({ rows = 4, avatar = false }: { rows?: number; avat
     <div role="status" aria-label="Loading">
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="skeleton-row">
-          {avatar && <Skeleton w={18} h={18} style={{ borderRadius: 6, flex: "none" }} />}
+          {avatar && <Skeleton w={18} h={18} style={{ flex: "none" }} />}
           <div className="grow col" style={{ gap: 7 }}>
             <Skeleton w={`${62 - ((i * 13) % 30)}%`} h={11} />
             <Skeleton w={`${34 - ((i * 7) % 14)}%`} h={9} />

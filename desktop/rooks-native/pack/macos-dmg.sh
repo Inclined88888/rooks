@@ -1,12 +1,13 @@
 #!/bin/bash
-# Turn the Rooks binary into a disk image. Unsigned: the person right-clicks and chooses Open the first time.
+# Turn the Rooks palette binary into a disk image, as "Rooks Ask.app": the Rooks app itself is Rooks.app
+# (desktop/src-tauri), and two Rooks.app in Applications would replace each other. Unsigned: the person right-clicks and chooses Open the first time.
 set -euo pipefail
 bin=${1:?binary}
 out=${2:?dmg}
 here=$(cd "$(dirname "$0")" && pwd)
 icon_src=${ROOKS_ICON:-"$here/../assets/app-icon.png"}
 stage=$(mktemp -d)
-app="$stage/Rooks.app"
+app="$stage/Rooks Ask.app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin" "$app/Contents/MacOS/rooks-native"
 chmod +x "$app/Contents/MacOS/rooks-native"
@@ -27,8 +28,8 @@ cat > "$app/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>CFBundleName</key><string>Rooks</string>
-  <key>CFBundleDisplayName</key><string>Rooks</string>
+  <key>CFBundleName</key><string>Rooks Ask</string>
+  <key>CFBundleDisplayName</key><string>Rooks Ask</string>
   <key>CFBundleIdentifier</key><string>com.inclined88888.rooks.native</string>
   <key>CFBundleVersion</key><string>0.4.0</string>
   <key>CFBundleShortVersionString</key><string>0.4.0</string>
@@ -39,5 +40,5 @@ cat > "$app/Contents/Info.plist" <<EOF
 ${icon_plist}
 </dict></plist>
 EOF
-hdiutil create -volname Rooks -srcfolder "$stage" -ov -format UDZO "$out"
+hdiutil create -volname "Rooks Ask" -srcfolder "$stage" -ov -format UDZO "$out"
 rm -rf "$stage"

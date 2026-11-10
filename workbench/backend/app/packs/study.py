@@ -1,5 +1,5 @@
 """Study & research pack: flashcards with spaced repetition, worked maths checked by sympy, references (BibTeX, RIS,
-Zotero) and a lab notebook (feat/v02-packs). Free for students; the lab notebook is Pro (features_v02.FEATURE_TIERS).
+Zotero) and a lab notebook (feat/v02-packs). Free for students; the lab notebook is Pro (plan_tiers.FEATURE_TIERS).
 
 Maths runs inside the Files sandbox (compute.run: no network, no access to the user's files), so a typed expression is
 never evaluated in the app's own process.

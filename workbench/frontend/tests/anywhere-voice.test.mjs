@@ -34,6 +34,17 @@ test("wake word is found at the start, loosely heard, and nowhere else", () => {
   assert.equal(v.afterWake("computer, lights", "computer"), "lights");
 });
 
+test("the wake phrase is hey rooks, and hey workspace still wakes it for people who learned the old one", () => {
+  assert.equal(v.WAKE_PHRASE, "hey rooks");
+  assert.equal(v.afterWake("Hey Rooks, what's on today?", ""), "what's on today");
+  assert.equal(v.afterWake("hey rooks", "hey rooks"), "");
+  assert.equal(v.afterWake("okay rooks remind me", "hey rooks"), "remind me");
+  assert.equal(v.afterWake("Hey Workspace, what's on today?", "hey rooks"), "what's on today");
+  assert.equal(v.afterWake("hey workspace add milk", ""), "add milk");
+  assert.equal(v.afterWake("hey workspace add milk", "computer"), null, "a phrase of their own replaces both");
+  assert.equal(v.afterWake("open the rooks page", "hey rooks"), null);
+});
+
 test("replies are spoken a sentence at a time without markdown, code or links", () => {
   const s = v.sentences("**Done.** I saved it to [Notes](/notes/3). See https://example.com for more.\n\n```js\nx()\n```\n- one\n- two");
   assert.deepEqual(s.slice(0, 3), ["Done.", "I saved it to Notes.", "See the link on screen for more."]);

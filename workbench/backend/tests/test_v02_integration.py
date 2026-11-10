@@ -10,36 +10,36 @@ from tests.test_account import FakeCloud, cloud  # noqa: F401 - reuse the fake s
 
 
 def test_v02_pro_ids_are_account_pro_features(client):
-    from app import account, features_v02
+    from app import account, plan_tiers
 
-    pro = features_v02.pro_features()
+    pro = plan_tiers.pro_features()
     assert {"jobs_board", "voice_conversation", "meeting_companion", "projects_unlimited", "checked_answers",
             "packs.trade", "packs.legal", "packs.study.lab_notebook", "automations_unlimited"} <= pro
     for f in pro:
         assert f in account.PRO_FEATURES and account.LABELS[f]
-    assert features_v02.tier("action_history_export") == "free"  # exports are never gated
+    assert plan_tiers.tier("action_history_export") == "free"  # exports are never gated
     assert "neon" not in account.PREMIUM_THEMES and "cherry" in account.PREMIUM_THEMES
 
 
 def test_everything_unlocked_while_billing_is_off(client, monkeypatch):
-    from app import account, features_v02
+    from app import account, plan_tiers
 
     monkeypatch.delenv("AIW_CLOUD_URL", raising=False)
     monkeypatch.delenv("AIW_ENFORCE_PLANS", raising=False)
     assert not account.billing_live()
-    assert all(features_v02.allowed(f) for f in features_v02.FEATURE_TIERS)
+    assert all(plan_tiers.allowed(f) for f in plan_tiers.FEATURE_TIERS)
     s = client.get("/api/account").json()
-    assert {p["id"] for p in s["pro_features"]} >= features_v02.pro_features()
+    assert {p["id"] for p in s["pro_features"]} >= plan_tiers.pro_features()
     assert all(p["unlocked"] for p in s["pro_features"])
 
 
 def test_free_plan_gates_v02_and_paid_plan_unlocks_even_with_an_older_token(client, cloud, monkeypatch):  # noqa: F811
-    from app import account, features_v02
+    from app import account, plan_tiers
 
     client.get("/api/account")  # learns billing_live from the cloud
     assert account.billing_live()
-    assert not features_v02.allowed("checked_answers") and not features_v02.allowed("packs.trade")
-    assert features_v02.allowed("packs.study") and features_v02.allowed("ask_anywhere")
+    assert not plan_tiers.allowed("checked_answers") and not plan_tiers.allowed("packs.trade")
+    assert plan_tiers.allowed("packs.study") and plan_tiers.allowed("ask_anywhere")
     assert client.get("/api/history/export.csv").status_code == 200  # exports never gated, even on Free
     assert client.get("/api/history").json()["export_allowed"] is True
     # Sign in to Pro: the fake cloud's Pro token lists only the v0.1 ids, the signed plan still unlocks every v0.2 id
@@ -47,7 +47,7 @@ def test_free_plan_gates_v02_and_paid_plan_unlocks_even_with_an_older_token(clie
     client.post("/api/account/sign-in/code", json={"code": "123456"})
     cloud.plan = "pro"
     client.post("/api/account/refresh")
-    assert all(features_v02.allowed(f) for f in features_v02.pro_features())
+    assert all(plan_tiers.allowed(f) for f in plan_tiers.pro_features())
     client.post("/api/account/sign-out")
 
 
@@ -68,7 +68,7 @@ def test_unattended_runners_respect_the_plan(client, monkeypatch):
     assert e.value.status_code == 402
     # background learning after a chat turn does nothing on Free
     mined = []
-    monkeypatch.setattr(adapt_hooks.knowledge, "mine_conversation", lambda cid: mined.append(cid))
+    monkeypatch.setattr(adapt_hooks.facts, "mine_conversation", lambda cid: mined.append(cid))
     asyncio.run(adapt_hooks.after_turn(1, "chat"))
     assert not mined
     # a computer-use job queued by an automation fails politely instead of driving the screen

@@ -5,6 +5,16 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 
+OLD_ADAPT_FACTS = """
+CREATE TABLE IF NOT EXISTS adapt_facts (
+  id INTEGER PRIMARY KEY, content_enc TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'fact', source TEXT NOT NULL DEFAULT 'chat',
+  evidence_enc TEXT NOT NULL DEFAULT '', confidence REAL NOT NULL DEFAULT 0.7, pinned INTEGER NOT NULL DEFAULT 0,
+  uses INTEGER NOT NULL DEFAULT 0, fingerprint TEXT NOT NULL DEFAULT '', conversation_id INTEGER,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+"""
+
+
 @pytest.fixture
 def kn(client):
     from app import db, knowledge
@@ -20,7 +30,7 @@ def kn(client):
 def test_migrations_recorded_and_integrity(kn):
     st = kn.schema.integrity()
     assert st["ok"], st
-    assert st["versions"] == [1, 2, 3]
+    assert st["versions"] == [1, 2, 3, 4]
 
 
 def test_migrate_v01_shaped_db(tmp_path, monkeypatch):
@@ -35,6 +45,7 @@ def test_migrate_v01_shaped_db(tmp_path, monkeypatch):
     c.executescript(db.SCHEMA)
     c.executescript(projects.SCHEMA)
     c.executescript(adapt_store.SCHEMA)
+    c.executescript(OLD_ADAPT_FACTS)  # the encrypted facts table v0.1 made (moved into kn_memories by db.migrate_v5)
     c.execute("PRAGMA user_version = 2")
     now = "2026-01-01T00:00:00+00:00"
     c.execute("INSERT INTO projects(name, kind, created_at, updated_at) VALUES ('Smith St reno', 'job', ?, ?)", (now, now))
@@ -96,13 +107,19 @@ def test_memory_dedupe_supersede_conflict_why_forget(kn):
     assert kn.get_memory(m1["memory"]["id"])["status"] == "superseded"
     w = kn.why(m2["memory"]["id"])
     assert w["replaced"][0]["content"] == "Sam lives in Paddington" and "From a chat" in w["summary"]
-    # about the user: the user decides
+    # about the user: their newer word replaces the older one (one-memory merge, architecture g.2)
     u1 = kn.remember("I live in Brisbane", "profile", source_kind="user")
     u2 = kn.remember("I live in Sydney", "profile", source_kind="user")
-    assert u2["outcome"] == "conflict"
-    card = kn.conflicts()[0]
-    kn.resolve(card["id"], "new")
+    assert u2["outcome"] == "superseded"
     assert kn.get_memory(u1["memory"]["id"])["status"] == "superseded"
+    # a guess that disagrees with what they said is a question for them; their word stays in use meanwhile
+    g = kn.remember("Lives in Perth", "profile", source_kind="chat")
+    assert g["outcome"] == "conflict"
+    assert kn.get_memory(u2["memory"]["id"])["status"] == "active"
+    card = kn.conflicts()[0]
+    assert (card["old"]["id"], card["new"]["id"]) == (u2["memory"]["id"], g["memory"]["id"])
+    kn.resolve(card["id"], "old")
+    assert kn.get_memory(g["memory"]["id"])["status"] == "superseded"
     assert kn.get_memory(u2["memory"]["id"])["status"] == "active"
     kn.forget(u2["memory"]["id"])
     assert not kn.recall("Sydney")

@@ -1,6 +1,6 @@
 """Item 103 core: OpenAI's own SDK, pointed at Workbench's /v1, reaches every backend through the adapter layer.
 
-This is how the browser agent's browser-use library talks to models in the stack: structured output (strict json_schema)
+This is how the browser and desk helpers talk to models in the stack: structured output (strict json_schema)
 and screenshots (image_url data URLs), with no provider key outside Workbench and every call in the run log.
 """
 

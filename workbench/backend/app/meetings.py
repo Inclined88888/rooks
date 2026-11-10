@@ -15,12 +15,12 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from . import db, features_v02, llm, voice
+from . import db, plan_tiers, llm, voice
 from .security import require_user
 
 
 def _pro() -> None:
-    if not features_v02.allowed("meeting_companion"):
+    if not plan_tiers.allowed("meeting_companion"):
         raise HTTPException(402, "The meeting companion is part of Pro.")
 
 
@@ -30,7 +30,7 @@ SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS meetings (
   id INTEGER PRIMARY KEY,
   title TEXT NOT NULL,
-  source TEXT NOT NULL DEFAULT 'recording',     -- recording | audio | transcript
+  source TEXT NOT NULL DEFAULT 'recording',     -- recording | audio | transcript | teams (design 0012)
   status TEXT NOT NULL DEFAULT 'recording',     -- recording | ready | summarised
   consent_at TEXT,                              -- when the user confirmed attendees were told (recordings)
   project TEXT NOT NULL DEFAULT '',
@@ -240,6 +240,19 @@ async def import_file(request: Request, name: str, title: str = "", project: str
     mid = db.run("INSERT INTO meetings(title, source, status, project, segments, transcript, seconds, created_at, updated_at) "
                  "VALUES (?, ?, 'ready', ?, ?, ?, ?, ?, ?)", title.strip() or stem or "Imported meeting", source, project,
                  json.dumps(segs), render(segs), max([0.0] + [float(s.get("end") or 0) for s in segs]), now, now)
+    return _out(_get(mid))
+
+
+def create_from_transcript(title: str, text: str, source: str = "transcript", name: str = "transcript.vtt") -> dict:
+    """A meeting from a transcript's text (a Teams transcript's WebVTT, design 0012): the same as an imported file."""
+    ensure()
+    segs = [s for s in parse_transcript(text, name.lower()) if s.get("text")]
+    if not segs:
+        raise HTTPException(422, "There were no words in that transcript.")
+    now = db.now()
+    mid = db.run("INSERT INTO meetings(title, source, status, project, segments, transcript, seconds, created_at, updated_at) "
+                 "VALUES (?, ?, 'ready', '', ?, ?, ?, ?, ?)", (title or "Meeting").strip()[:200], source, json.dumps(segs), render(segs),
+                 max([0.0] + [float(s.get("end") or 0) for s in segs]), now, now)
     return _out(_get(mid))
 
 

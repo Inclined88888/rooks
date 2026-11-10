@@ -12,18 +12,22 @@ import DesktopBridge from "./DesktopBridge"; // feat/tauri-native: aiworkspace:/
 import JobNotifier from "./v02/JobNotifier"; // feat/v02-automations: desktop notifications for jobs
 import AskBar from "./pages/AskBar";
 import { PAGES, palettePages, REDIRECTS, type PageEntry } from "./pages/registry";
+import { placeOf } from "./pages/places";
 import { Rail } from "./shell/Rail";
 import { PresenceStrip } from "./shell/PresenceStrip";
 import { StageHost } from "./shell/StageHost";
 import { MobileBar } from "./shell/MobileBar";
 import { MoreSheet } from "./shell/MoreSheet";
-import { Loading, Page, ToastHost } from "./ui";
+import { Loading, Page, PageMark, ToastHost } from "./ui";
+import { RooksMark } from "./ui/RooksMark";
 import { pageComponent, warmWhenIdle } from "./pages/warm";
 import { createKeyReader, SHORTCUTS } from "./lib/shortcuts";
+import { setDevTools } from "./lib/devTools";
 import { IS_MAC, MOD_KEY } from "./keys";
 import { registerStageSurfaces } from "./stage/surfaces";
 import { NeedsYouSheet } from "./needs/NeedsYou";
 import { ShortcutsSheet, toggleShortcuts } from "./shell/ShortcutsSheet";
+import { ShellChoiceBar } from "./shell/ShellChoiceBar";
 
 export { MOD_KEY };
 
@@ -49,6 +53,8 @@ export type Status = {
   signins_offered?: boolean;
   welcome_pending?: boolean;
   needs_models?: boolean;
+  /** Settings, Advanced, "Show developer tools": off on a new install, kept by the install. */
+  dev_tools?: boolean;
 };
 
 /** While Rooks Desk is driving the computer (from any page, chat or Rooks Code), a small still notice says so and offers Stop. */
@@ -79,7 +85,7 @@ function DeskNotice({ enabled }: { enabled: boolean }) {
 }
 
 function Boot() {
-  return <div className="boot" role="status" aria-label="Loading"><div className="wordmark lg">{PRODUCT}</div></div>;
+  return <div className="boot" role="status" aria-label="Loading"><div className="boot-brand"><RooksMark size={40} /><div className="wordmark lg">{PRODUCT}</div></div></div>;
 }
 
 // Sign in, the first welcome and the ask bar stay in the first load. Every registered page is its own chunk, warmed on
@@ -93,8 +99,12 @@ function PageFrameLoading({ entry }: { entry: PageEntry }) {
 function PageElement({ entry, refresh }: { entry: PageEntry; refresh: () => void }) {
   const { C, ready } = useMemo(() => pageComponent(entry), [entry]);
   const props = typeof entry.props === "function" ? entry.props({ refresh }) : entry.props ?? {};
-  if (ready) return <C {...props} />;
-  return <Suspense fallback={<PageFrameLoading entry={entry} />}><C {...props} /></Suspense>;
+  // the page's place in the navigation ([04 // DAY]) for its header's meta column
+  return (
+    <PageMark.Provider value={placeOf(entry)}>
+      {ready ? <C {...props} /> : <Suspense fallback={<PageFrameLoading entry={entry} />}><C {...props} /></Suspense>}
+    </PageMark.Provider>
+  );
 }
 
 /** Every route and redirect, from the page registry. */
@@ -121,6 +131,7 @@ export default function App() {
     api<Status>("/status")
       .then((s) => {
         setStatus(s);
+        setDevTools(!!s.dev_tools);
         setError("");
         // the product name, after the workspace's own name when it has one
         const own = (s.workspace_name || "").trim();
@@ -196,6 +207,7 @@ export default function App() {
       <a className="skip-link" href={onChat ? "#thread" : "#main"}>{onChat ? "Skip to the conversation" : "Skip to the page"}</a>
       <Rail status={status} name={shellName} onMore={openMore} onSearch={openSearch} />
       <div className="shell-main">
+        <ShellChoiceBar />
         <PresenceStrip />
         <main id="main" className="main agents-main" tabIndex={-1}>
           <StageHost renderRoutes={() => (

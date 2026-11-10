@@ -26,7 +26,7 @@ import re
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from . import config, db, features_v02, llm
+from . import config, db, plan_tiers, llm
 from .security import require_user
 
 log = logging.getLogger("checked")
@@ -60,7 +60,7 @@ def mode(conversation_id: int | None) -> bool:
 def set_mode(conversation_id: int | None, on: bool, default: bool = False) -> bool:
     ensure()
     if on:
-        features_v02.require("checked_answers")
+        plan_tiers.require("checked_answers")
     if default or not conversation_id:
         db.set_setting("checked_default", "1" if on else "0")
     if conversation_id:
@@ -77,7 +77,7 @@ PROMPT = ("Check mode is on: the user will verify every claim. Base each factual
 
 def context(ctx) -> list[str]:
     try:
-        return [PROMPT] if mode(getattr(ctx, "conversation_id", None)) and features_v02.allowed("checked_answers") else []
+        return [PROMPT] if mode(getattr(ctx, "conversation_id", None)) and plan_tiers.allowed("checked_answers") else []
     except Exception:  # noqa: BLE001
         return []
 
@@ -291,7 +291,7 @@ VERDICT_TEXT = {"supported": "Backed by a source", "partly": "Partly backed", "u
 
 
 async def check(conversation_id: int, content: str | None = None, model: str | None = None) -> dict:
-    features_v02.require("checked_answers")
+    plan_tiers.require("checked_answers")
     ensure()
     answer, sources, question = turn_sources(conversation_id, content)
     key = hashlib.sha256(answer.encode()).hexdigest()
@@ -383,7 +383,7 @@ async def api_check(data: CheckIn):
 @router.get("/mode")
 def api_mode(conversation_id: int | None = None):
     return {"on": mode(conversation_id), "default": db.get_setting("checked_default") == "1",
-            "allowed": features_v02.allowed("checked_answers"), "upgrade": features_v02.upgrade_detail("checked_answers")}
+            "allowed": plan_tiers.allowed("checked_answers"), "upgrade": plan_tiers.upgrade_detail("checked_answers")}
 
 
 @router.put("/mode")

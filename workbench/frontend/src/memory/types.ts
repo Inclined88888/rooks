@@ -10,6 +10,13 @@ export type Filing = { id: number; item_kind: string; item_ref: string; project_
 export type Tidy = { duplicates: { type: string; a: Entity; b: Entity; why: string }[]; conflicts: Conflict[] };
 
 export const TIER_LABEL: Record<string, string> = { profile: "About you", project: "Projects", procedural: "How you like things done", episodic: "Recent happenings" };
+const SOURCE_LINE: Record<string, string> = {
+  user: "You told me", chat: "From a chat", file: "From a file", email: "From an email", site: "From a work site", task: "From a task",
+  teach: "From something you showed me", feedback: "From your changes", import: "Imported", consolidation: "Summed up from earlier notes",
+  adapter: "From your earlier memory", note: "From a note", other: "From your work",
+};
+/** Where a memory came from, in plain words (the server's memory.why says the same). */
+export const sourceLine = (kind: string) => SOURCE_LINE[kind] || "I picked this up";
 export const SCOPE_LABEL = (s: string) => s === "shared" ? "Shared with all your assistants" : s === "private" ? "Only you" : s.startsWith("assistant:") ? "One assistant only" : s.startsWith("team:") ? "Your team" : s;
 export const KIND_ROUTE: Record<string, (ref: string) => string> = {
   message: () => "/assistant", task: () => "/tasks", file: () => "/files", note: (r) => `/notes/${r}`, event: () => "/calendar",

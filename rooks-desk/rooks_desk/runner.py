@@ -62,12 +62,12 @@ def load_mcp_servers() -> dict:
 
 
 def workbench_mailer(link: dict | None = None):
-    """Send through the person's own mail account in AI Workspace (POST /v1/desk/send_email). Files travel inside the
+    """Send through the person's own mail account in the Rooks app (POST /v1/desk/send_email). Files travel inside the
     request, so it works when the app runs in Docker or on another machine."""
     def send(msg: dict) -> str:
         lk = link or llm.app_link()
         if not lk:
-            raise ValueError("email goes through AI Workspace: open the app and connect a mail account under Settings > Mail")
+            raise ValueError("email goes through the Rooks app: open it and connect a mail account under Settings > Mail")
         atts = []
         total = 0
         for p in msg.get("attachments") or []:

@@ -13,9 +13,10 @@ import { useEffect, useSyncExternalStore } from "react";
 import { api, ApiError } from "../api";
 import { createPoller } from "../lib/poller";
 import { busy, getPresence, roomOn, subscribePresence, type Presence } from "../shell/presence";
+import { BROWSER_OFF_REASONS, startFailed, type BrowserFailed, type BrowserOffReason, type BrowserTab } from "./browser";
 import type { TerminalOffReason } from "./desk";
 import { clearSwitchedOff } from "./terms";
-import { NOT_HERE_LINE, type RoomStatus, type RoomTerminal } from "./words";
+import { NOT_HERE_LINE, TERMINAL_SHELLS, type RoomStatus, type RoomTerminal, type TerminalShell } from "./words";
 
 /** A line of the Commands window: the command, its output, its errors, a note. */
 export type CommandLine = { kind: "cmd" | "out" | "err" | "note"; text: string };
@@ -31,7 +32,15 @@ export type RoomState = RoomStatus & {
   terminal_max: number;
   /** What the cap counts (ended terminals included), when the service says; else the length of `terminals`. */
   terminal_count: number | null;
-  can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null };
+  can: { terminal: boolean; files: boolean; terminal_off_reason: TerminalOffReason | null; browser: boolean; browser_off_reason: BrowserOffReason | null; run: boolean;
+    /** design 0011: IT's switch, in words naming the browser (""), and what Edge may do on a work PC, for Advanced (""). */
+    browser_off_words: string; browser_advanced: string;
+    /** design 0011: the kinds of terminal offered on Windows ([] elsewhere: the person's own shell). */
+    terminal_shells: TerminalShell[] };
+  /** The kind's own exact label, for Advanced only. */
+  label_detail: string;
+  /** design 0007: the Room's browser as status last saw it (open, and its tabs: the saved ones while it is closed). */
+  browser: { open: boolean; tabs: BrowserTab[]; failed: BrowserFailed | null };
   /** The Commands window's lines, for this session. */
   commandLines: CommandLine[];
 };
@@ -41,9 +50,12 @@ export const TERMINAL_MAX = 4;
 const COMMAND_LINES_MAX = 500;
 
 const START: RoomState = {
-  checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none",
+  checked: false, reachable: true, answered: false, available: false, running: false, screen: false, pointer: false, isolation: "none", containment: "none",
   label: "", note: "", checkpoints: [], last_checkpoint: null, error: null,
-  terminals: [], terminal_max: TERMINAL_MAX, terminal_count: null, can: { terminal: false, files: false, terminal_off_reason: null }, commandLines: [],
+  terminals: [], terminal_max: TERMINAL_MAX, terminal_count: null,
+  can: { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null, run: false, browser_off_words: "", browser_advanced: "", terminal_shells: [] },
+  label_detail: "",
+  browser: { open: false, tabs: [], failed: null }, commandLines: [],
 };
 
 const OFF_REASONS: TerminalOffReason[] = ["switched_off", "helper", "windows"];
@@ -67,6 +79,7 @@ function terminalFromWire(t: unknown): RoomTerminal | null {
     elapsed_s: num(w.elapsed_s),
     taken: w.taken === true,
     shell: str(w.shell),
+    shell_kind: str(w.shell_kind),
   };
 }
 
@@ -75,6 +88,7 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
   const terminals = Array.isArray(w.terminals) ? w.terminals.map(terminalFromWire).filter((t): t is RoomTerminal => t !== null) : [];
   const max = typeof w.terminal_max === "number" && w.terminal_max > 0 ? w.terminal_max : TERMINAL_MAX;
   const why = w.can?.terminal_off_reason;
+  const bwhy = w.can?.browser_off_reason;
   const counted = w.terminal_count;
   return {
     ...w,
@@ -86,7 +100,9 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
     screen: w.screen === true,
     pointer: w.pointer === true,
     isolation: w.isolation || "none",
+    containment: w.containment === "job" ? "job" : "none",
     label: w.label || "",
+    label_detail: typeof w.label_detail === "string" ? w.label_detail : "",
     note: w.note || "",
     checkpoints: Array.isArray(w.checkpoints) ? w.checkpoints.filter((c) => c && typeof c.name === "string") : [],
     last_checkpoint: w.last_checkpoint || null,
@@ -97,6 +113,18 @@ export function roomFromWire(w: RoomStatus): Omit<RoomState, "commandLines"> {
       terminal: w.can?.terminal === true,
       files: w.can?.files === true,
       terminal_off_reason: why && OFF_REASONS.includes(why) ? why : null,
+      browser: w.can?.browser === true,
+      browser_off_reason: bwhy && (BROWSER_OFF_REASONS as string[]).includes(bwhy) ? (bwhy as BrowserOffReason) : null,
+      run: w.can?.run === true,
+      browser_off_words: typeof w.can?.browser_off_words === "string" ? w.can.browser_off_words : "",
+      browser_advanced: typeof w.can?.browser_advanced === "string" ? w.can.browser_advanced : "",
+      terminal_shells: Array.isArray(w.can?.terminal_shells)
+        ? TERMINAL_SHELLS.filter((k) => (w.can?.terminal_shells as unknown[]).includes(k)) : [],
+    },
+    browser: {
+      open: w.browser?.open === true,
+      tabs: Array.isArray(w.browser?.tabs) ? w.browser!.tabs.filter((t): t is BrowserTab => !!t && typeof t.id === "string") : [],
+      failed: startFailed((w.browser as { failed?: unknown } | undefined)?.failed),
     },
   };
 }

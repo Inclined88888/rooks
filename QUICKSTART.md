@@ -1,9 +1,10 @@
-# AI Workspace: Quick start
+# Rooks: Quick start
 
 One command installs everything for your user account, with no admin rights, Docker or Node.js needed:
 
-* **AI Workspace**, the app: chat, memory, notes, tasks, calendar, mail drafts, automations, skills, research and the
-  Browser agent page.
+* **Rooks**, the app: chat, memory, notes, tasks, calendar, mail (an email is sent only after your yes), automations,
+  skills, research and the Browser page. Its command, shortcut and download files still carry the older name AI
+  Workspace.
 * **`rooks`**, the terminal coding agent (Rooks Code).
 * **`rooks-browser`**, the AI browser agent (Rooks Browser), plus a browser for it. It uses your Chrome or Edge if you
   have one, and otherwise downloads Chromium.
@@ -56,20 +57,23 @@ $env:AI_WORKSPACE_REF='main'; irm https://raw.githubusercontent.com/Inclined8888
 2. It installs the app into `~/.ai-workspace`, and `rooks` and `rooks-browser` as uv tools.
 3. It finds Chrome or Edge, or downloads Chromium for the browser agent.
 4. It adds the `ai-workspace` command and a shortcut.
-5. When a signed or unsigned **native app** (.dmg / .exe) is published on GitHub Releases for your computer, it installs
-   that too. Otherwise the app opens in its own Chrome/Edge app window. That's the same app with the same data.
+5. It installs the **Rooks app** (.dmg / .exe / AppImage) when a release at or above this version has one for your
+   computer. When there is none yet, it asks once: open Rooks in a Chrome or Edge window of its own, or in your usual
+   browser? It is the same app with the same data either way, and it never opens a window you did not choose.
 6. It opens the app.
 
 Installer options:
 
 * `--no-start` (Windows: `$env:AI_WORKSPACE_NO_START=1`): install without opening the app.
-* `--native no` (Windows: `$env:AI_WORKSPACE_NATIVE='no'`): skip the native app download.
+* `--native no` (Windows: `$env:AI_WORKSPACE_NATIVE='no'`): skip the Rooks app download (the default is `auto`).
+* `--shell window` or `--shell browser` (Windows: `$env:AI_WORKSPACE_SHELL`): answer the window question in advance.
 
 Run the same command again to upgrade. Your chats, keys and settings are kept.
 
 ## 2. First run
 
-1. Run `ai-workspace` (or click the **AI Workspace** shortcut). The app opens in its own window.
+1. Run `ai-workspace` (or click **Rooks** in your apps). Rooks opens in the Rooks app, or where you chose. When you
+   start it from the Dock or the Start menu before choosing, it opens in your usual browser and asks there once.
 2. **Choose how to think**:
    * **Free cloud** (recommended): paste a free Gemini or Groq key. It takes two minutes and needs no card. The screen
      links to the key pages.
@@ -144,18 +148,19 @@ rooks-desk run --dry-run "rename every .jpeg in ~/Pictures/trip to .jpg"   # sho
 | `ai-workspace --stop` | Stops it. |
 | `ai-workspace --no-open` | Starts without a window and prints a one-time sign-in link (valid 2 minutes). |
 | `ai-workspace --no-open` | Starts the app without a window and prints a one-time sign-in link. |
-| `ai-workspace --web` | Uses the app window even when the native app is installed. |
+| `ai-workspace --shell window` / `--shell browser` | Without the Rooks app: open in a Chrome or Edge window of its own, or in your usual browser. Kept. `--status` says which is in use. |
+| `ai-workspace --web` | This once, uses a Chrome or Edge window even when the Rooks app is installed. |
 
 ## 5. Unsigned-app warnings (native app)
 
 The native desktop builds aren't code-signed yet. The first time you open them:
 
-* **macOS (Gatekeeper)**: "AI Workspace can't be opened because Apple cannot check it…". **Right-click** (or
+* **macOS (Gatekeeper)**: "Rooks can't be opened because Apple cannot check it…". **Right-click** (or
   Control-click) the app in Applications → **Open** → **Open**. You only need to do this once. On macOS 15 and later, if
   there's no Open button: System Settings → Privacy & Security → scroll down → **Open Anyway**.
 * **Windows (SmartScreen)**: "Windows protected your PC". Click **More info** → **Run anyway**.
 
-The `ai-workspace` command and the app window it opens (the default when no native app is published) don't trigger
+The `ai-workspace` command and the window or browser it opens (when no Rooks app is published) don't trigger
 either warning, because they run from your own user folder.
 
 ## 6. Where things live
@@ -167,7 +172,7 @@ either warning, because they run from your own user folder.
 | Your data (chats, notes, settings, logs) | `~/Library/Application Support/com.inclined88888.aiworkspace` | `%APPDATA%\com.inclined88888.aiworkspace` | `~/.local/share/com.inclined88888.aiworkspace` |
 | Agent ↔ app link (private, 0600) | `~/.config/ai-workspace/app.json` | `%APPDATA%\ai-workspace\app.json` | `~/.config/ai-workspace/app.json` |
 
-The native app and the `ai-workspace` window share the same data folder.
+The Rooks app and the `ai-workspace` window share the same data folder. Renaming the app to Rooks did not move it.
 
 **Uninstall**:
 
@@ -178,9 +183,10 @@ The native app and the `ai-workspace` window share the same data folder.
 
 ## 7. Known limits in this release candidate
 
-* **Native .dmg / .exe / .msi installers aren't published yet.** The `Desktop app` GitHub Actions workflow builds them,
-  but they're unsigned, and macOS and Windows builds haven't been opened on a real Mac or PC by us yet. Until they're
-  published, `ai-workspace` opens the app in a Chrome/Edge app window, which is the same app.
+* **No Rooks app release for this version yet.** The `Desktop app` GitHub Actions workflow builds the installers, but
+  they're unsigned, and macOS and Windows builds haven't been opened on a real Mac or PC by us yet. Until a release at
+  or above this version is published, `ai-workspace` opens Rooks in a Chrome or Edge window or your usual browser, as
+  you chose. The older 1.0.5 release is not installed: it is older than this copy.
 * **Tested end to end on Linux only**: clean user, one command, onboarding, chat, `rooks`, `rooks-browser`. On macOS and
   Windows, the installer is checked in CI (install, start, answer, stop) but hasn't been run by hand.
 * **Small local models are weak agents.** With Ollama 7B models on a CPU, chat answers take 30–120 s. They sometimes

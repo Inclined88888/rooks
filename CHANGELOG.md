@@ -4,6 +4,959 @@ Every user-visible change that needs action, or changes data on upgrade, gets an
 migration steps, rollback steps. Workbench has no release numbers yet (BACKLOG). Entries are identified by schema
 version and the merge commit on `main`.
 
+## Unreleased · release/1.1 security review of the work apps and Windows
+
+No data changes; nothing to migrate.
+
+- A held share lists every person it invites, one line each and never clipped, in Needs you, on the chat's approval
+  card and in the terminal's /needs, and its title counts them: "Share Budget.csv with 9 people, 1 outside your
+  company (can edit)". Before, a long list was clipped and an address at its end could not be seen before a yes.
+- A Sheets or Excel change given as {"cells": [...]} or as one {sheet, range, values} shows its cells on the card, as
+  the list form always did. Before, the card showed no change at all for those two forms.
+- A conversation that listed work files, folders, sites, chats or spaces counts as holding other people's words (they
+  name those), so a later step that reaches outside waits, as after reading a file or a chat.
+- When the app hands a command or a file change to the rooks terminal after the conversation read other people's
+  words (a work chat or file, a page, an email), the terminal asks about it even with --yes, in a trusted folder, under
+  an allow rule or after "always". A deny rule still wins.
+- The shared bridge key (app.json, held by the helpers and coding jobs) no longer sees work items in Needs you (it
+  sees "A change in your work apps" only), conversations that used the work account in /history, or the work calendar
+  in /v1/rooks/calendar. The person's Terminal access token still sees everything. Not changed: the work mailbox and
+  calendar are ordinary mailboxes (design 0012), so mail and calendar tools reach them as they reach a personal one.
+- A terminal conversation rebuilt without its request (a goal resumed after a restart, a job) gets no work tools,
+  since only the request knows whether the shared key or the Terminal access token started it.
+- Disconnecting the work account withdraws its changes still waiting in Needs you, so a later yes cannot run them as
+  another work account.
+- On a Windows work PC where Edge may sign in to company sites through Windows, every form, message or sign-in the
+  Room's browser would send waits for a yes, even on a site the person asked for, and the work file tool says so
+  instead of "Rooks never hands its access there".
+- Google: the Meeting transcripts and Files: change switches say that Google's permission lets Rooks read all of
+  Drive; the note for the IT team says why transcripts ask for Drive.
+- Windows: the Room's note no longer says everything stops with the Room. A program handed to Windows to start, such
+  as a scheduled task, is outside the Room's group and keeps running, and the note and Advanced say so.
+
+## Unreleased · The Room for workplace teams · branch feat/room-pro
+
+The Room shows a normal person its Files and Saved points only. The Room's Terminal and its Browser are developer
+tools: off on a new install, not shown while off (no "switched off" window, no Commands window in their place), and their
+switches in Settings (Tools, "The Room"), with the Browser link row, appear only with "Show developer tools" on
+(Settings, Advanced). The assistant is not offered use_room's terminal actions (start, tail) or browser actions (browse,
+page, shot, click, type, scroll, key, back, tabs) while they are off, and a call that comes anyway is refused without
+trying. The line "Commands run as you, in a folder of its own" shows only while terminals are on; how separate the Room
+is still shows. The Files window drops Show in terminal while terminals are off, and Open a terminal in the Room leaves
+the command menu unless developer tools are on. The code behind both stays; the browser returns later as a browser
+extension.
+
+- Plain words in the Room. Files hides hidden entries (names that start with a dot, such as .profile or .config)
+  unless Show developer tools is on. The Room's label is plain for each kind of Room ("A private folder on this
+  computer", "A private desktop on this computer", "A separate computer inside this one"): no "shell", "terminal" or
+  "bash" on a normal screen, in the chat's Room card or in what the assistant repeats. The kind's exact label is kept as
+  `label_detail` and shown under Advanced. Status gains `can.run` (Rooks can run commands there). While it can, the dock
+  says "Rooks works here as you, in a folder of its own." (the full "Commands run as you" line while terminals are on);
+  where nothing can run, no line.
+- Upgrade: an install that never touched the switches had both on; after this it has both off. An install that switched
+  one on (stored `app_terminal` or `room_browser` = 1) keeps it on. To switch them back on: Settings, Advanced, Show
+  developer tools, then Settings, Tools, The Room. The `rooks` terminal's `/room` commands work against an app where they
+  are on.
+- No schema change, nothing to migrate. Rollback: revert the branch's commits (the built `dist` is committed).
+
+## Unreleased · Industrial redesign · branch feat/industrial-ui
+
+The app's look moves to an industrial, technical design: off-white paper (#F2F2F0), white cards, ink (#111111),
+1 px hairlines (#D8D8D5) and one safety orange (#FF4D00) used sparingly; square corners, no shadows, no gradients
+(only a faint blueprint grid behind hero and empty areas), condensed uppercase headlines. Every feature, page, route,
+call and word stays as it was; only the visual design system changes, step by step. No data change, nothing to
+migrate. Rollback: revert the branch's commits (the built `dist` is committed with each step).
+
+- **Review fixes.** A reviewer drove every page in light, dark and high contrast; what was real is fixed, each with a
+  guard in `tests/industrial-review.test.mjs` (all eleven tests failed on the tree before the fixes):
+  - Focus: the current Chat/Code tab drew its frame as an outline, which replaced the orange focus ring (in dark it
+    was invisible): the frame is a border now. Older buttons, the chat's chips, the model select, the suggestion
+    buttons, Packs and the Team's assign field no longer cancel the ring's ink halo, and a focused field keeps it
+    (orange alone is 2.97:1 on the paper). The Home ask box shows the orange ring when its field has focus (its ink
+    frame did not change on focus). The selected day in the Calendar shows the orange ring when focused (its ring
+    was ink, the same as its selected outline).
+  - Charts: six series that can be told apart (`--color-chart-1` to `6`): the ink, the orange, then greys and a burnt
+    orange set per theme, every pair at least 1.25:1 apart in lightness, so they differ without colour vision too
+    (series 4 and 5 were two greys 1.16:1 apart; in high contrast series 5 was the same black as series 1). Live
+    charts read all six again (they read five, so the sixth repeated the first). The Team's timeline bars keep a grey
+    edge (`--color-border-strong`).
+  - Mermaid pies: the share written on each slice was white on a light grey slice (1.43:1). Slices are now solid (not
+    mermaid's 70% blend), the orange, three greys and white, outlined in ink with ink words (5.7:1 or more on every
+    slice, every theme); legend swatches are outlined. Mermaid's settings are set once and again only when the
+    theme's colours change (the redesign had set them before every diagram). Seen drawn in a browser in all three
+    themes.
+  - Status: Connections is back to its rows with their sentences whole ("Models: 0 connections", "Mail: 0 accounts ·
+    Docker is not required"); Ready and Off were shown as huge numbers.
+  - The welcome step is read aloud as "Step 1 of 5": the brackets of its micro-label are drawn, not read.
+  - Micro-labels: section labels read `[01 // NAME]` like every other one (they read `01 //`). Settings writes its
+    place once, in the side list (`[08 // SETTINGS]`); the page head beside it no longer repeats it.
+  - Headlines: a hero headline stays two lines on a wide window, each line on one row, sized to fit its column
+    (welcome, sign-in, Home, a new chat; three lines before). Phones keep wrapping at the phone size.
+  - The welcome and sign-in footer is the dark section (#1A1A1A in every mode) with small mono words and the product's
+    name as a giant low-opacity wordmark (decoration, not read aloud).
+  - The chat's model select is a mono uppercase chip like the ones beside it; the Calendar's show-calendar tick is
+    44 px wide on a phone (it was 32).
+  - Kept, with the reason: Insights' note says "Orange: calls that failed" because the failed bars are orange now
+    (the word "Red" would be false); Usage this month shows its cost and tokens as the stat strip the spec names for
+    usage, labelled with Insights' own words (Cost, Tokens); a new chat does not follow its empty end, because the
+    taller greeting would lose its first line on a phone. The owner decides each (BACKLOG). The Rooks mark keeps its
+    rounded tile and the assistant's face stays round: the mark is the logo the owner asked to keep (only its door
+    recoloured) and the face is a drawing, not a card, button, field or window.
+  - `scripts/check-theme-contrast.py` also checks that chart series and pie slices are apart and pie words are AA.
+    Guards updated where the fix changes what they guard: `industrial-pages` (six chart tokens; Status not a strip),
+    `industrial-primitives` (the section label's format), `premium-pages-b` (the wordmark's display size),
+    `workroom-review` (the model chip's ring is the app's one ring).
+
+- **Step 5: the sweep.** Every route in `pages/registry.ts` (49, with the developer pages on), plus sign-in and the
+  first welcome, at 1440x900 and 390x844 (a touch phone) in light and dark: 204 screenshots, each looked at, and an
+  automatic check of every element (page overflow, corners, shadows, gradients, blue or purple, gold, text contrast,
+  44 px touch targets, focus rings on the first Tab stops, console errors). What it found and what changed:
+  - Page titles broke inside a word on a phone (AUTOMA / TIONS, MEE / TIN / GS, COMPAN / Y, TERMI / NAL) because the
+    title allowed a break anywhere and the page's buttons took the row first: titles now break only between words
+    (`overflow-wrap: break-word`), take their row first, and the buttons wrap under them (`.ui-page-titles`).
+  - An error card in a narrow column (Computer) squeezed its words to one a line beside Try again: the button now
+    wraps under the words (`.ui-error`). Skills' sentence beside Add a skill does the same on a phone (`.ag-bar`).
+  - The terminal window's bar had red, yellow and green dots: now one orange square and two grey ones
+    (`--screen-mark`); program output keeps xterm's own colours.
+  - A new chat on a phone scrolled to its end and cut off the greeting's first line: it starts at its top now.
+  - Channels' setup steps put the step number beside the second line of a long step: each step is a block now.
+  - The team's three numbers broke into two rows on a phone: they stay one strip with 1 px dividers.
+  - Touch targets under 44 px on phones: chips (42), the skip link, summaries (Advanced, App manifest, More
+    providers), the chat's Chat and Code tabs, model and effort chips, the microphone, Appearance's choices and text
+    size slider, AI models' provider choices, Home's ask field, checkboxes (History, Computer), the terminal's tabs,
+    Channels' steps and buttons narrower than 44 px. All are 44 px on touch screens now; a button with a minimum width
+    never shrinks under its words.
+  - Left as they are, on purpose: a calendar's own colour (blue by default, BACKLOG), the dark theme's warning words
+    (#F0C870, AA, a status colour, not the accent), and the 503 and 409 answers the Browser, Computer and pack pages
+    get from the server when those parts are off (the browser lists them as failed loads; the pages show the plain
+    words). No script error and no console error from the app on any route.
+  - Guard: `tests/industrial-sweep.test.mjs` (9 tests, every one failed on the tree before this step; scratchpad
+    `industrial/step5/fail-first.txt`). No older guard changed.
+- **Step 4: the pages** (every feature stylesheet, `src/chat/EmptyChat.tsx`, `src/ui/headline.ts`, the stat strip in
+  `Settings.tsx` (Usage), `Status.tsx` and `team/Team.tsx`, the chart colours in `v02/LiveBlocks.tsx`, `util.tsx`'s
+  mermaid theme, `tokens.css` chart tokens).
+  - Everywhere: square corners, 1 px hairlines between panes, rows and cards, no shadows and no gradients left in any
+    stylesheet (the guard's lists of round, shadowed and gradient files are empty); fixed words (kinds, column heads,
+    weekdays, table heads, dates in History, "Advanced" toggles) are mono micro-labels, many beside the small orange
+    square; fixed titles (Jobs' columns, the calendar's month, a card's heading, the team's columns, Teach and the
+    mail sign-in) are the condensed uppercase face; the current item (a chat, a settings category, a teammate, a
+    browser or terminal tab, today in the calendar) has a thin orange edge; dots, ticks, swatches, avatars and tags are
+    squares; pressed and picked states are an ink edge or an ink block instead of an inset shadow. A person's own
+    words in a field keep their case.
+  - Chat: the chats column with micro-label groups and square rows, New chat the secondary button (1 px ink edge), the
+    row menu, the chat menu and the model and project chips square with an ink edge; result cards white with a hairline,
+    a micro-label on top beside the orange square and a thin divider above their actions; the undo question on a thin
+    warning edge; the byline, the code block's head and the composer's hints mono; the composer's edge turns ink on
+    focus. A new chat is an empty-state hero on the blueprint grid: the greeting is the huge two-line headline with the
+    second line offset (two sentences split after the first: `splitHeadline`), the line under it a mono intro.
+  - Needs you: hairline rows, the since line and the links as mono labels (no orange words). The Room: the desk on the
+    blueprint grid, each window's title bar a mono label beside an orange square over a hairline, square tabs, keys and
+    hints; the terminal keeps its own dark screen colours.
+  - Jobs and History, Mail, Files and Library, Calendar, Tasks, Projects, Sites: the split view's pane line is a border
+    (it was a gradient), the drop area is blueprint with a solid line, the selected day an ink outline (it was a
+    shadow), notices on a 2 px edge in their tone, Gantt bars thin in black, grey and orange with an orange now line.
+  - Memory, Skills, Automations, Coworkers, Team, Teammates, Teach, Packs, Talk and Meetings, Appearance, the developer
+    pages (Insights, a run, Status, Compare, Code, Company): the same language; the Talk button and its level ring are
+    squares; theme cards picked with an ink edge and the orange corner.
+  - Stat strip: the numbers the app already shows sit in a horizontal strip between hairlines with 1 px dividers, each a
+    huge number with a tiny mono label below: Insights and a run's detail (already a strip, now huge), the team's at a
+    glance numbers, Usage this month (its cost and tokens were a badge beside the title; now labelled Cost and Tokens,
+    the words Insights uses) and Status' connections (models, browser, computer, mail; the notes stay below).
+  - Charts: black, grey and orange only, thin lines (`--color-chart-1..5` in `tokens.css`: ink, orange, two greys and
+    the strong line, each 3:1 on the card). Insights' bars are ink with failed calls in orange; its note now says
+    "Orange: calls that failed" (it said Red, the old colour: the one word changed so the note stays true). Live charts
+    in replies use the chart tokens (no blue, red or green), 1.5 px lines and square markers. The team's workload and
+    timeline: ink bars, grey when light, orange when over or late, today a thin orange line. Mermaid diagrams get the
+    theme's real colours (white boxes, ink edges and lines, orange notes; it used to get var() names its colour maths
+    cannot read) and 1 px lines, set each time a diagram is drawn so they follow a theme change.
+  - Not changed: a calendar's colour is the person's own choice (the first offered is still blue, BACKLOG); routes,
+    calls and words are as they were.
+  - Guards: `tests/industrial-pages.test.mjs` (20 tests, each failed on the tree before this step: the headline split
+    against the old `headline.ts`; scratchpad `industrial/pages/fail-first.txt`). `industrial-tokens`' round, shadow and gradient lists and its inline
+    list are empty. The spec changes what four older guards guarded, so they now allow it: `premium-pages-a` and
+    `premium-pages-c` accept the micro and display sizes, the bold weights and uppercase in mono labels and display
+    titles (still never in body words); `workroom-chat` expects the new chat's greeting in the display face (still not
+    the old Bodoni). `check-theme-contrast.py` resolves tokens that name other tokens and checks the chart colours.
+- **Step 3: the shell, the page frame and the heroes** (`src/shell/`, `src/Palette.tsx` styles, `src/ui/`,
+  `src/pages/places.ts`, `src/pages/settings/AuthCard.tsx`, Home).
+  - Top bar: paper with a 1 px bottom edge (no floating glass, no blur, no shadow), a small mark (28 px), the presence
+    line behind a hairline, the links as small uppercase mono cells split by hairlines; the current link is ink and
+    bold with a thin orange rule under it that slides to the picked link (it now measures a group's tab correctly; it
+    used to slide to the left edge when Day, Memory or Library was current). Search is the one black rectangular call
+    to action (with its keys, Ctrl K or ⌘ K, beside the mark; it hovers to orange with ink words); More and Settings
+    are square buttons with a 1 px line.
+  - Group menus and More: square with an ink edge; their titles are micro-labels numbered by the page's place in the
+    navigation (`[04 // DAY]`, `[07 // WORKSPACE]`; decoration, the section's name is still read once); links are
+    small uppercase mono rows split by hairlines, the current one with a thin orange edge; More's sections sit side by
+    side between hairlines. 44 px rows on phones.
+  - Phone bar: docked flush at the bottom with a 1 px top edge, square cells split by hairlines, every cell shows its
+    icon over a small mono name (only the current one did), the current cell an ink block; Needs you's count is ink on
+    an orange square. Sheets and the command menu now sit above the bar.
+  - Command menu: micro-label groups with the orange square, hairline rows, the picked row marked by a thin orange edge,
+    mono uppercase hints and foot; the search field's focus is the row's orange rule (it drew a box inside the row).
+  - The page header pattern: each page's header has a left meta column with its place (`[08 // SETTINGS]`, from the
+    new `pages/places.ts`: the top bar's order, then More's sections; the route provides it through `PageMark`) and
+    its kicker, and the title, description and actions on the right, on the 12 column grid; stacked on phones, the
+    meta on top. A section's content now sits in its own `ui-section-body`; top level sections of a page (Automations,
+    Models, Teach today) put their number and title on the left and the content on the right on wide windows. Pages
+    that wrap their sections in their own layout keep it until the pages step.
+  - Heroes: the welcome steps and the sign-in (`AuthCard`) sit on the blueprint grid: the mark and name, the step as a
+    micro-label, the heading as a huge two-line uppercase headline with the second line offset (`Headline`,
+    `ui/headline.ts`: split at the space nearest the middle, the words unchanged), the line as a small mono intro and
+    the footer as a mono note on the left; the card on the right framed by a 1 px ink line with one orange square on
+    its corner. Stacked on phones (headline, card, footer). Home is the second hero (`Page hero`): its question as the
+    huge split headline on the blueprint between two hairlines, the date and place in the meta column, the ask box
+    framed in ink with the orange corner, the rest in the right nine columns. Each headline line gets the orange wipe
+    (off under reduced motion and Motion off). The numbered welcome steps are square.
+  - Accessibility: the current link never rests on orange alone (2.97:1 on paper): it is also ink, bold and
+    `aria-current`. `scripts/check-theme-contrast.py` checks grey words on the current row's fill.
+  - Guards: `tests/industrial-shell.test.mjs` (11 tests, all failed on the tree before this step). `industrial-tokens`
+    takes `shell/shell.css` off its round-corner and shadow lists and `settings.css` off the round-corner list.
+    `premium-pages-b`'s settings stylesheet scale now allows the micro size, the display sizes and the bold and display
+    weights (the hero's headline and labels; the spec changes what that guard guards), and the 901 px form of the narrow
+    breakpoint (as `workroom-sweep` already does).
+- **Step 2: the primitives** (`src/ui/ui.css`, `src/ui/index.tsx`, and their older twins in `styles.css`).
+  - Buttons: mono uppercase words, square; primary a black rectangle that hovers to orange with ink words, secondary
+    white with a 1 px ink edge, ghost bare, danger in the danger colour on white. A pressed primary keeps its colours
+    (it used to flash grey with white words on touch). The older `.btn` classes look the same.
+  - Inputs and selects: square, an edge that turns ink on hover and focus, and the one orange focus ring (the inputs no
+    longer replace it with a thinner ink one). The select's chevron is a token picture in each theme's ink
+    (`--icon-chevron`), not a gradient. Checkboxes and radios are drawn square everywhere (ink with a paper tick; a
+    picked radio holds a small orange square); the Settings switch is square.
+  - Cards: white, a 1 px line; `Card` takes an optional `label` (and `index`) for a micro-label on top and a `heading`
+    for a bold uppercase title, with a thin divider under them. The older `.card-head` titles are bold uppercase.
+  - `MicroLabel` and `microText`: the `[01 // NAME]` label beside the orange square, hidden from screen readers unless
+    it is the only place a name is written. Page kickers are micro-labels; page titles and section titles are the
+    condensed display face; each section shows its number (`01 //`, a CSS counter, decoration).
+  - Tables (`.ui-table`) and lists: hairline rows, mono uppercase column heads (tables in answers get mono heads and
+    keep their case); the current row has a thin orange edge.
+  - Sheets, menus, toasts, the palette and modals: square, a 1 px ink edge, no shadow; the scrim is darker (no blur).
+    Toast and receipt marks are squares.
+  - Tabs: square cells split by hairlines, mono uppercase, the current one an ink block with an orange count. Badges
+    are mono uppercase with a small square in their tone; chips square (their words keep their case).
+  - Empty states sit on the blueprint grid with a big uppercase line and a mono hint; stats show a huge number with a
+    tiny mono label below it (the label is still read first).
+  - On touch screens the controls are 44 px targets (buttons, icon buttons, fields, tabs, menu items, chips, toast
+    close).
+  - Not in this step: the left meta column for sections (number and label beside the content) needs the page layouts,
+    which come with the pages step; feature stylesheets keep their own rules until their step.
+  - Guards: `tests/industrial-primitives.test.mjs` (12 tests, all failed on the tree before this step).
+    `industrial-tokens` takes `ui/ui.css` off its round-corner, shadow and gradient lists (the lists only shrink);
+    `premium-pages-b` now allows the focus ring's halo as the settings stylesheet's one other box-shadow (the spec's
+    focus ring). `scripts/check-theme-contrast.py` checks the new pairs (badge words on the sunken fill, the square
+    marks on toasts and receipts, the ink edge of buttons).
+- **Step 1: tokens and global CSS.**
+  - `tokens.css` is design system v4: the palette for Light, Dark (ink on dark: #111111 paper, #1A1A1A surfaces,
+    #2B2B2B lines, #F2F2F0 words, the same orange) and High contrast; every `--radius-*` is 0; `--shadow-float` and
+    the navigation's glass tokens are none (the bar is solid now); `--bg-grid` is the blueprint grid; a type scale with
+    condensed display sizes (`clamp()`ed for phones), 15 px body and 10 to 11 px mono micro-labels at 0.12em; motion
+    tokens for an orange wipe across a headline and a line that draws in (both stop under the one reduced-motion rule
+    and Motion off).
+  - Fonts are bundled at exact versions, never fetched at run time: Archivo (with its width axis, for the condensed
+    headlines) and Inter are added, JetBrains Mono stays, Hanken Grotesk is removed. Appearance's "Clean" typeface
+    now reads "Inter, the default".
+  - Global CSS (`styles.css`): body text 15 px Inter, `h1`/`h2` in the condensed display face, extra bold, uppercase;
+    links in ink with an orange underline; the focus ring is an orange outline on a 1 px ink halo (3:1 against what is
+    next to it); selection is ink on orange; shared pieces for the next steps (`.micro`, `.reveal`, `.rule-draw`,
+    `.blueprint`, `.display-xl`, `.grid-12`). Headings inside written content (answers, notes) keep their case.
+  - Accessibility: orange is never small text (it is 2.97:1 on the paper); orange words use a burnt orange that is AA
+    (#B23800), and the primary button hovers to orange with ink words (white on orange is 3.3:1).
+    `scripts/check-theme-contrast.py` now reads `tokens.css` (it pointed at deleted files and could not run), covers
+    the new tokens, and `scripts/test-all.sh` runs it.
+  - The Rooks mark's door is the accent orange (the app and the browser tab); the desktop icon files keep the gold door
+    until they are regenerated (BACKLOG).
+  - Guards: `tests/industrial-tokens.test.mjs` (failed on the old tree: all ten tests) checks square corners, no
+    shadows but the focus ring, no gradients but the grid, the palette, the type, bundled fonts, the globals and the
+    motion; feature stylesheets not restyled yet are named in its lists, which must shrink to empty by the sweep step.
+    `premium-foundation`, `brand-mark` and `workroom-shell` tests were updated where the spec changes what they guard
+    (palette, type scale, radius and shadow values, the two new motions, the door colour).
+
+## Unreleased · Windows and the work suites · branch feat/windows
+
+Design records `docs/design/0011-windows.md` (Windows on a par with macOS and Linux) and
+`docs/design/0012-work-suites.md` (Microsoft 365 and Google Workspace). No schema change in the entries below, except
+the work account (schema version 6, its own entry). Rollback: revert the commits.
+
+Merged into `release/1.1` on top of the industrial redesign and the Room for workplace teams: the Windows terminals and
+the Room's browser on Windows follow the owner's rule from `feat/room-pro`. On Windows too, the Room's Terminal and
+Browser (and the app's own Terminal page) are off on a new install and appear only with "Show developer tools" on; the
+New terminal menu (PowerShell, Git Bash) shows only while terminals are on, and Advanced on a Windows Room names the
+group that keeps its programs together even while terminals are off. The Work apps page, Files from work, the Teams
+and Google Meet transcript sheet, the held work change in Needs you (a list of square lines with a hairline edge, the
+word in mono micro-label caps) and the Room browser's start detail use the industrial tokens: no radius, no shadow, no
+gradient.
+The packaged-app browser smoke test (`desktop/scripts/smoke_sidecar.py --room-browser`) now first checks that a new
+install's Room browser is off ("switched_off"), then switches it on in Settings as a developer would, then opens the
+page; on feat/windows it assumed the browser was on. The Rooks Browser Docker image installs `libatomic1`, which
+Playwright's bundled node needs and the slim Python image stopped carrying (the CI job failed on that, not on code).
+
+- **Terminals in the Room on Windows** (design 0011, section 1). On Windows 10 1809 and later the Room's Terminal window
+  works as it does on macOS and Linux: New terminal opens PowerShell (PowerShell 7 when installed, else Windows
+  PowerShell), and when Git for Windows is there a menu beside it offers Git Bash. A terminal keeps running when you
+  leave the page, shows its text again when you come back, says when a program is running and how the last command
+  ended, closes with code 129, and ends everything it started. Four at most, as elsewhere; Stop and Start over close
+  them; after a restart they are listed as ended with their text. Terminals Rooks opens use Git Bash when it is there
+  (as a quick command does), else PowerShell; each terminal and each result says which (`shell_kind`), so the assistant
+  writes the right kind of command. The app's own Terminal page is PowerShell too. Underneath: a pseudo console
+  (ConPTY) and a job object per terminal (`rooks-try/rooks_try/winproc.py`, plain `ctypes`), the shell in its job from
+  its first instruction. PowerShell gets the Room's profile as a command, so there is never an execution policy bypass
+  or an encoded command; it reads the Room's own `Documents\PowerShell\profile.ps1` when you make one. On Windows every
+  line sent from the phone row or `/room send` is recorded in the run log by its length only (Windows cannot say from
+  outside whether a terminal is waiting for a password). How a command ended reaches Rooks in the terminal's output and
+  through a private channel only your account can open (Advanced says so); on the windows-2022 runner both arrived.
+  Older Windows says "This version of Windows is too old for terminals in the Room." Tests that failed on the old code
+  (on windows-2022, commit 1703d0e): `rooks-try/tests/test_winproc.py` (could not import `winproc`) and all ten in
+  `workbench/backend/tests/test_room_terminal_windows.py` ("Terminals are switched off in Settings."), plus
+  `workbench/frontend/tests/room-windows.test.mjs` (four, locally). CI: a new job "Windows: Room terminals" in
+  `ci.yml`, and CI now also runs on pushes to `feat/windows`. Not tested: a real Windows 10 or 11 PC (the runner is
+  Server 2022), Windows on Arm, ConPTY before build 20348, PowerShell's constrained language mode, AppLocker or WDAC,
+  and a bundled `conpty.dll`/`OpenConsole.exe` (not shipped yet; Windows' own ConPTY is used).
+- **The Room's browser on Windows** (design 0011, section 2). The Browser window in the Room now works on Windows: it
+  uses Google Chrome when installed, else Microsoft Edge (which every Windows 10 and 11 has), only as an engine, with
+  the Room's own profile in the Room's folder, never your own browser profile, sign-ins or extensions. You see and use
+  it the same way as on macOS and Linux (the live picture, clicks, typing, tabs, downloads into the Room's Downloads,
+  the phone's still and taps), and the `rooks` terminal's `/room browse` and the assistant use it too. Rooks starts the
+  browser itself and talks to it over a private pipe, never a network port, and keeps every one of its processes
+  together so they all stop when it closes. If your organisation has switched this off in Edge or Chrome, the window
+  says "Your organisation has switched this off in Edge. Ask your IT team." and Rooks does not try another way around
+  it. Pages cannot open files outside the Room or files on other computers (a shared folder would be sent your Windows
+  sign-in). On a PC joined to a work account, Advanced says that Edge may sign in to work sites as you through Windows.
+  A download you let leave the Room keeps Windows' mark that it came from the internet, so SmartScreen and Office
+  still check it. The Room's status no longer says "The Room's browser is not on Windows yet." Tests that failed on the
+  old code on windows-2022 (run 42551257253, commit 907069e): `rooks-try/tests/test_browser_windows.py` (find_engine
+  found nothing on a runner with Chrome and Edge; no pipe block, policy check or Windows file rules), and the Mark of
+  the Web hand-off (run 42552146711); locally `workbench/backend/tests/test_room_browser.py` (policy and the Windows
+  status) and `workbench/frontend/tests/room-browser.test.mjs` (the policy words). CI: the job is now "Windows:
+  terminals and browser" and also runs the app's Room browser tests on Windows with Chrome; on windows-2022 Edge and
+  Chrome start over the pipe, show a local page, send a frame, take a click, keep every process in the job with no
+  listening port, and leave the job empty on close (run 42553967635). What the job cannot do on Windows: hold the
+  clipboard and other desktop settings back (Chromium's own sandbox does not start under those limits; pages still get
+  no permission to read the clipboard). Not tested: Edge or Chrome
+  under a real organisation's policies (the test sets the policy value itself), sign-in through a work account (no
+  work tenant), a real Windows 10 or 11 PC, Windows on Arm, and the packaged desktop app starting the browser on
+  Windows.
+- **On Windows the Room's programs are kept together, and the Room says what that is** (design 0011, section 3). Every
+  program the Room starts on Windows (each terminal, each quick command and the Room's browser) now runs in a group
+  Windows keeps together (a job), inside one group for the whole Room. Stopping the Room ends them all, and so does
+  Rooks ending, however it ends. Terminals and quick commands may not read or change your clipboard, use other
+  programs' windows, or change system or display settings. A quick command now runs with no window and, when it ends
+  or runs out of time, nothing it started keeps running; before, a command that ran out of time could leave its
+  programs running and never come back. The Room's programs keep their settings and temporary files in the Room
+  (`APPDATA`, `LOCALAPPDATA`, `TEMP`, `TMP`). None of this is a wall, and the Room says so: the line under the
+  commands reads "Commands run as you, in a folder of its own. Windows keeps them together, so they all stop when the
+  Room stops. It is not a locked off computer: they can read and change your files.", the badge still says "Not locked
+  off", and Advanced says they run with your Windows sign-in, can reach the network and what Windows keeps for you,
+  and that a program asking Windows for your folders still finds your own (offline: "a closed door, not a wall").
+  Status gains `containment` (`"job"` on Windows, `"none"` elsewhere); `isolation` stays `"none"`. The rooks terminal
+  shows the same note. Tests that failed on the old code on windows-2022 (run 42556804352, commit bac1a85):
+  `rooks-try/tests/test_room_job_windows.py` (a command that ran out of time never came back; a command kept running
+  after the Room stopped; a program the Room started outlived the app; a Room command read the clipboard; no Room job;
+  no `containment`; `APPDATA` still the person's) and the Room-job check in `test_browser_windows.py`; locally
+  `workbench/backend/tests/test_room.py::test_status_says_how_the_rooms_programs_are_kept_together` and two in
+  `workbench/frontend/tests/room-windows.test.mjs`. They pass on windows-2022 (run 42557685550).
+- **A Windows setup that installs for you alone and leaves nothing behind** (design 0011, section 4). The
+  `-setup.exe` installs into `%LOCALAPPDATA%\Rooks` with no administrator prompt and a Start menu entry named Rooks
+  with the Rooks icon. It puts a shortcut on the desktop only when you tick the box (it starts unticked; a silent
+  install makes none unless given `/DESKTOP`). Rooks does not start with Windows. It carries the Microsoft Edge WebView2
+  installer and uses it only when the PC lacks WebView2; if that fails it says "Rooks needs Microsoft Edge WebView2. Ask
+  your IT team to install it." The setup's other words are plain too. Removing Rooks now also removes the window's
+  saved data and the logs, the place the setup remembered its folder, and copies of the backend left in the temporary
+  folder. Your chats, keys and Room are kept unless you tick "Also remove my chats, keys and the Room" (`/CLEANDATA`
+  in a script): then the app's entries in Windows Credential Manager go first (only the app's own), then its data and
+  the Room. Tools `install.ps1` put in place stay. Ending Rooks in any way (closing it, a crash, Task Manager) ends its
+  backend and everything the backend started: the desktop shell puts the backend in a kill-on-close job; on a normal
+  exit it first lets the backend end by itself for up to 5 seconds. The MSI stays, for IT teams. CI: the Windows leg
+  of `desktop.yml` installs the built setup silently, checks the Start menu entry and its icon (the same picture as
+  `icon.ico`), starts the app, waits for its window titled Rooks and the backend's `/healthz`, ends it as Task Manager
+  does, and uninstalls twice, checking what is kept and that nothing else is left
+  (`desktop/scripts/check_windows_install.ps1`); screenshots of the window and the Start menu icon are the
+  `windows-install-shots` artifact. On the old setup 9 of those checks failed (run 42556804225: a desktop shortcut
+  after a silent install, the install location key, the window's data and logs left, and with `/CLEANDATA` the data,
+  link file, Room and Credential Manager entries left). The check that ending the app ends its backend passed on the
+  old code too (the backend already ended when its input closed); the job is the guarantee when that is not enough.
+  On the new setup every check passes (Desktop run 42559767638, all four builds green). Ending the app as Task
+  Manager does leaves the backend's unpacked copy in `%TEMP%` (it had no time to tidy up); the uninstaller removes it.
+  The frozen backend's Room smoke test (a quick command, then the browser over its pipe) now runs on Windows too, and
+  passes there.
+  `desktop/scripts/test_forget_secrets.py` failed first locally. Not tested: a real Windows 10 or 11 PC (the runner is
+  Server 2022), a PC without WebView2 or without internet, SmartScreen on the unsigned setup, the MSI, the setup's
+  pages by hand (only the silent path runs in CI), and Windows on Arm.
+- **The Room's browser starts in the packaged app** (2e939c0). The step that hands the browser its pipe ran Python with
+  `-c`; the desktop app is one packaged program with no Python, so on a Mac the Room's browser always said "could not
+  start". The packaged app now runs that step with its own program (`--rooks-pipe-step`).
+- **When the Room's browser does not start, it says why.** Instead of only "The Room's browser could not start.", the
+  Browser window, the phone view, the `rooks` terminal (`/room browse`) and the assistant say one of: no browser was
+  found on this computer to run it; the browser on this computer refused to start; the wall that keeps it inside the
+  Room could not be set up. What was run, its exit code and the last of what it printed are under **Advanced** in the
+  Browser window (`failed` in `GET /api/room/browser` and in the Room's status), never on the normal line and never in
+  the log. A wall that fails still keeps the browser closed: there is no fallback to running without it.
+  Tests that failed on the old code: `rooks-try/tests/test_browser_engine.py` (one per reason),
+  `workbench/backend/tests/test_room_browser.py::test_a_browser_that_did_not_start_says_why_with_the_detail_under_advanced`,
+  and `workbench/frontend/tests/room-browser.test.mjs` ("a browser that did not start says why").
+- **CI proves the packaged app's Room browser.** The desktop build (`.github/workflows/desktop.yml`, the macOS and Linux
+  jobs) now starts the frozen sidecar, opens the Room's browser through its API on a loopback test page, and checks the
+  page's text and a frame arrive (`desktop/scripts/smoke_sidecar.py --room-browser`). Windows is covered too since
+  the entry above.
+- **Your work account: Microsoft 365, one part at a time** (design 0012, Microsoft half). A new **Work apps** page
+  (Settings) connects the account your company gave you with Microsoft's own sign-in in your browser. The first sign-in
+  asks only who you are. Then one switch per part: Mail, Calendar, Files: read, Files: change, Chats: read, Chats: post,
+  Meeting transcripts and Tasks, each with a line saying what it allows. Turning one on opens a fresh sign-in that asks
+  only for that part's permissions (Microsoft's incremental consent), so files can be read without write permission
+  ever being asked for; turning one off stops it at once, even though Microsoft still allows it (the page says how to
+  remove it there too). When your company makes an IT admin approve apps, the switch says "Waiting for your IT team"
+  and **Copy the request for IT** copies a note naming each permission, why, and the address an admin uses to approve
+  it; that address and the permission names appear nowhere else but Advanced. A personal Microsoft account is told to
+  use Mail and calendar instead. Accounts connected before keep Mail and Calendar on.
+  What Rooks can do with it: search and list your OneDrive, the SharePoint sites you follow and files shared with you;
+  read a file in place with page and cell citations; save a copy to Files that remembers where it came from; open it
+  in the Room's browser (you sign in there once; on a work PC Edge may sign you in through Windows), or your own browser where
+  the Room has none. Read your Teams chats and the channels you are in. Bring a Teams meeting's transcript into
+  Meetings with its speakers ("This meeting has no transcript." when there is none). Show your Planner and To Do tasks
+  in Tasks with a Planner or To Do label. Reading never waits. **Every write waits for your yes in Needs you** and runs
+  exactly what the card showed, once: uploading to OneDrive (large files in parts), a new version of a Word file
+  (OneDrive keeps the old one), changing Excel cells, sharing with people or as a company link, posting in a chat or
+  channel (the card shows the chat and the exact text), and changing or adding a task (ticking a Planner or To Do task
+  on the Tasks page asks too). There is no delete. Disconnecting takes the Planner and To Do tasks and the names
+  Rooks saw out of Rooks; nothing is deleted at Microsoft. A conversation that read a file, chat or transcript holds every
+  later change as untrusted, so a Teams message saying "share this with x@evil" makes the share wait with that reason.
+  A background job can never answer for you: the bridge key the helpers and coding jobs share is refused by the work
+  routes and by Needs you, a chat turn started with that key (the terminal's `/v1/rooks/run_turn`) and a team lead's
+  sub-agents are not offered the work tools at all, and a scheduled run's request waits once, however often it runs. Files gains a **From work**
+  tab, Meetings a **From Teams** button, Channels a Teams card saying what a chat with Rooks inside Teams would need.
+  The `rooks` terminal gets `/work` (account and switches in the same words, `connect microsoft`, `on`/`off`, `files`,
+  `read`, `save`, `open`, `chats`, `chat`, `post` (held in Needs you), `tasks`, `it`) with its own Terminal access
+  token, never the bridge key. The assistant's tools: `work_search`, `work_files`, `work_file_read`, `work_file_save`,
+  `work_file_open`, `work_file_upload`, `work_file_share`, `work_file_edit`, `work_chats`, `work_chat_read`,
+  `work_chat_post`, `work_transcript`, `work_task_update`. Underneath: `work_scopes.py` (the one table of switches and
+  permissions), `work_suite.py` (account, switches, gate, Needs you titles), `work_graph.py` (Microsoft Graph: refresh
+  and one retry on 401, paging, waiting out a 429 with Retry-After up to 30 s, downloads and upload parts sent to
+  Microsoft's own address without the token), `work_suite_tools.py`, `work_suite_api.py` (`/api/work`). **Schema
+  version 6**: `linked_accounts` gains `work`, `tenant`, `subject` and `features` (old accounts: Mail and Calendar on),
+  `tasks` gains `origin`, `remote_id` and `remote_meta`, Files' table gains `remote`. Only columns are added, so no
+  backup is taken. Rollback: revert the commits, then set the database back to version 5 with
+  `sqlite3 workbench.db "PRAGMA user_version = 5"` (the older app ignores the new columns; without this its health
+  check reports "schema version 6, expected 5"). Tests that failed on the old code (commit 7a39b5a): all 23 in
+  `workbench/backend/tests/test_work_microsoft.py` (and the 3 added after it for the shared key, sub-agents and disconnecting,
+  each seen failing on the code without its fix) against `tests/fake_graph.py` (a fake Microsoft sign-in and Graph
+  whose tokens carry the consented permissions and refuse a call without one), the 8 in
+  `rooks-code/tests/test_work_terminal.py` and the 6 in `workbench/frontend/tests/work-apps.test.mjs`. CI: the Windows job (now "Windows: terminals, browser
+  and work account") also runs the work account and the mail and calendar tests on windows-2022. **Not tested,
+  because no real accounts exist here**: a real Microsoft 365 tenant or a real sign-in; real admin consent and its
+  workflow; which permissions a real company lets a person approve (the table of which need an admin follows
+  Microsoft's permissions reference and was not checked against a tenant); conditional access and multi-factor
+  sign-in; sensitivity labels that block downloads; real throttling; real meeting transcripts; SharePoint lists (only
+  document libraries); publisher verification of the shipped registration; and Windows Credential Manager holding the
+  tokens beyond the windows-2022 runner. **Not built**: Google Workspace (built since: the next entry), Rooks as its own chat inside Teams and answering Needs you from a Teams
+  card (it needs a bot and a relay the company runs, design 0012 section 2.2; the Channels card says so), and
+  `rooks-browser` opening a work file's address.
+- **Your work account: Google Workspace, the same way** (design 0012, section 2.3, G1 to G3). Work apps' **Google
+  Workspace** button now signs in with Google's own sign-in in your browser, and everything works as with Microsoft 365:
+  the first sign-in asks only who you are (`openid email profile`), each switch asks Google only for its own
+  permissions when you turn it on (`include_granted_scopes`, so the earlier ones stay), turning one off stops it at once,
+  and every write waits for your yes in Needs you and runs exactly what the card showed, once. A personal Gmail is told
+  to use Mail and calendar instead (Google names a company's domain only for a Workspace account). When your company's
+  Google admin has not allowed Rooks (`admin_policy_enforced`, on Google's page or from the sign-in), the switch says
+  "Waiting for your IT team" and **Copy the request for IT** copies a note with the app's client ID, each permission and
+  why, and where in the Google Admin console to trust the app. What Rooks can do with it: search and list My Drive,
+  your shared drives (Work apps calls them shared drives where Microsoft says SharePoint sites) and files shared with
+  you; read a file in place with citations (Google Docs, Sheets and Slides are exported as Word, Excel and PowerPoint
+  files, or as plain text and CSV when the files add-on is not installed, so reading works on a plain install too);
+  save a copy to Files that remembers it came from Google Drive; open it in the Room's browser or your own. Read your
+  Google Chat direct messages, group chats and spaces; search them (Google has no chat search for a person's own
+  access, so Rooks reads the latest 50 messages of up to 20 spaces). Bring a Google Meet call's transcript into Meetings
+  with its speakers. Show your Google Tasks in Tasks with a Google Tasks label. **Held writes**: uploading to Google Drive
+  (files over 5 MB in 4 MB parts sent to Google's own upload address without the token; "replace" makes a new version
+  of the file with that name), sharing with people (can view or can edit; Google emails them) or as a link people in
+  your company can open, **Google Docs changes** (replace words, add a paragraph at the end, or the whole new text),
+  **Google Sheets changes** (cells and their new values, written as plain values, never formulas), a new version of a
+  Word file in Drive, posting in a space (or answering in a message's thread), and changing or adding a Google Task. The
+  Needs you card now shows the change itself under the title: what a Docs change takes out and puts in, which cells get
+  which values, the exact text of a post (for Teams too: before, the card's reason line covered a post's text). A Docs
+  change is written only on top of the version Rooks just read, so if someone typed in between, nothing is overwritten
+  and the card's run says "Someone changed it in the meantime." Chat messages read with your own access carry no names
+  at Google, so a message says "You" or "Someone" (BACKLOG). Throttling: a 429 and Google's rate-limit 403 are waited
+  out like Microsoft's. The page, Files, Tasks, Meetings ("From Google Meet") and the terminal's `/work` use each
+  suite's own words, from one table (`work_suite.NAMES`); Channels gains a Google Chat card saying what a chat with
+  Rooks inside Google Chat would need. `rooks` terminal: `/work connect google`, and the rest of `/work` as before.
+  Underneath: `work_google.py` beside `work_graph.py` with the same functions (`work_suite.calls` picks one), so the
+  tools, `/api/work` (now also `/api/work/chats/search`) and the terminal do not change; `NAMES`, `change_lines` and the
+  Google IT note in `work_suite.py`; `connect.py` lets a Google work sign-in through, keeps Google's consent screen
+  (needed for a long-lived token) and reads `hd` and `sub` from the ID token. No schema change. Tests that failed on
+  the old code (commit 4d68b05): all 29 in `workbench/backend/tests/test_work_google.py` ("Google Workspace comes
+  next"), 4 in `rooks-code/tests/test_work_terminal.py` and 3 in `workbench/frontend/tests/work-apps.test.mjs`, against
+  `tests/fake_google.py` (a fake Google sign-in, Drive with shared drives, Docs, Sheets, Chat, Meet, Calendar events
+  and Tasks whose tokens carry the consented scopes and refuse a call without one, page their lists, answer one 429 or
+  rate-limit 403, take resumable uploads and record every write). CI: the Windows job runs them too. **Not tested,
+  because no real accounts exist here**: a real Google Workspace domain or a real Google sign-in; the admin console's
+  app access control and what a real block looks like (Google may show its own page and never send the person back,
+  which leaves the switch "Finish signing in" until it is tried again); Google's verification of the restricted Drive
+  scopes (until then a company uses its own client, or marks the app trusted); the Chat app a Cloud project must
+  configure before the Chat API answers at all; real Meet transcripts and how soon they appear after a call; real
+  throttling; export size limits (Google refuses to export a file over 10 MB); and Google Chat's threaded replies in a
+  real space. **Not built**: Rooks as its own chat inside Google Chat (a Chat app the company runs; the Channels card
+  says so), Google Slides edits, Drive comments, and names of the people in Chat messages.
+
+## Unreleased · Workplace cleanup · branch cleanup/workplace
+
+The cleanup the owner approved in `docs/architecture.md` (section g): delete what is dead, replace the old browser
+agent, move old reports into `docs/history/`, hide developer features behind Advanced (hidden, not deleted), and call
+the product Rooks on every normal screen, keep one memory, and correct the documents that contradicted the code
+(section i). One schema change: the memory move
+(`SCHEMA_VERSION` 5, below); one connection row is renamed (below). Rollback: revert the branch's commits, and for the
+memory move restore the backup it takes.
+
+- **Fixes from the review of the memory step** (each test failed on the tree before; `workbench/backend/tests/test_one_memory_review.py`
+  unless named).
+  - **`ws login` and `ws memory` work again.** The memory step removed `/api/memories`, which the terminal chat client
+    (`cli/ws`) uses to check its Terminal access token and to list memories; both answered "Error 404". `GET
+    /api/memories` is back, read-only, on the one store (search with `?q=`), and refuses a request without a session
+    or the token (401, the sample the CI image check expects). Writing stays on `/api/knowledge/memories`.
+    `test_assistant.py::test_cli_token_auth` checks it again.
+  - **A sensitive memory never reaches a cloud model by another way.** The prompt's memory block left memories marked
+    sensitive out for cloud models, but chat's `search_memory` tool, project context, the learner's "already known"
+    list and the bridge's `/v1/rooks/memory` gave them back. Now only a model on this computer finds them with the
+    search tool; the other lists leave them out. The Memory page shows them as before.
+  - **The upgrade keeps what you decided on the Memory page.** A copy of an old fact that you had replaced there (for
+    example "Lives in Sydney" replaced by "Lives in Melbourne") came back as a second, active fact. It now stays
+    replaced. Only installs that ran the memory step before this fix could have the extra fact; forget it on the
+    Memory page.
+  - **A pinned fact is not silently replaced by a guess.** Chat's remember pins what you say about yourself; a later
+    unpinned guess about the same thing (by the loose "is a" rule, "Their manager is a stickler" against "Is a nurse")
+    now waits under "Needs your call" and the pinned fact stays in use. A newer pinned fact still replaces it.
+  - **Forgetting a newer fact brings back the one it replaced.** Before, the older fact stayed stored but no screen
+    showed it, so it could not be seen or forgotten; undoing a remember lost the earlier fact. Forgetting an older
+    version keeps the chain, so "why" still shows what the fact in use replaced.
+  - **Only a secret with its value is refused.** "Works as a legal secretary" and "Prefers token rings" were refused
+    from chat and the terminal, and dropped from the old plaintext table at upgrade, because the check matched the
+    words alone. Now a secret word must come with its value ("my password is ...", "PIN 4471", "api key: ..."). Keys
+    by their shapes are refused as before.
+  - **A correction on the Memory page cannot store a key.** Editing a memory checked only its length; it now refuses
+    key shapes like adding one does.
+  - **Rooks Browser and Rooks Desk say "Rooks app"** for the app's smart router and in their messages
+    (`rooks-browser/tests/test_rooks_name.py`, `rooks-desk/tests/test_rooks_name.py`), as `rooks` already did. Rooks
+    Desk's macOS permission steps keep "AI Workspace", the name macOS shows until the desktop app is renamed.
+  - **Documents.** `docs/data-model.md` marks the two removed stores as history and describes the sensitive, forget
+    and secret rules; `adapt/__init__.py`, `adapt/feedback.py` and `main.py` no longer describe "What I know about
+    you".
+  - **Not changed, on purpose:** paid-plan checks stay off by default even on an install that once recorded billing
+    as live (the owner's decision in section g.3; no Rooks cloud sells plans). A build that sets `AIW_PLAN_CHECKS=1`
+    gets the remembered state back.
+
+- **Documents and small parts that contradicted the code** (section i; each item there now says fixed, partly fixed
+  or open: 17 fixed, 2 partly, 3 open).
+  - **VS Code add-on finds the app** (contradiction 20). It defaulted to `http://127.0.0.1:3100`, the server
+    install's port, but the desktop app starts on a new port each launch, so on a normal install the add-on could not
+    reach it. It now reads the open app's address from `app.json` the way `rooks` does (same file, same path rules, a
+    file left by an app that has quit is ignored after a health check), takes only the address and never the key next
+    to it (the add-on signs in with its own Terminal access token), and falls back to the server port. The
+    `aiWorkspace.url` setting is empty by default; an address typed there still wins. **Action:** none; a setting you
+    set by hand is kept. Test: `vscode-extension/test/address.test.mjs` (failed on the old code: no lookup existed and
+    the default was the server port).
+  - **The app is no longer given the CLI launchers' addresses or keys** (contradiction 11). `setup.sh` wrote
+    `CLAUDE_CODE_URL` and `CODEX_URL`, Docker passed them and `CLAUDE_CODE_API_KEY` and `CODEX_API_KEY` to the app's
+    container, and `config.py` defined all four; nothing read them. They are removed from `config.py`, `setup.sh`, the
+    `workbench` service and `.env.example`. The `claude-code` and `codex` launcher services keep their own key from
+    `.env` and `setup.sh` still makes it. An existing `.env` keeps its old `*_URL` lines; nothing reads them, and they
+    can be deleted. `cli-launcher/README.md` shows how to call a launcher with the key from `.env`. Test:
+    `test_repo_cleanup.py::test_the_app_is_not_given_the_cli_launchers_addresses_or_keys` (failed on the old code);
+    `cli-launcher/test/setup.test.mjs` now checks that no address is written. **Rollback:** revert the commit.
+  - **`scripts/test-all.sh` runs the suites it skipped** (contradiction 12): `cli/tests`, the CLI launcher's tests,
+    the VS Code add-on and the phone app (typecheck, lint, tests); the last two are skipped by `--quick`. AGENTS.md
+    says what it runs and what only the online checks run (security scan, installs on three systems, Docker images,
+    desktop and native window builds, real-screen runs).
+  - **Documents.** README: an email is sent after your yes (not draft-only); your own Claude Code, Codex or Copilot
+    works today (the "planned add-on, not built yet" line is gone) and the Code page is behind Show developer tools;
+    the browser sections describe Rooks Browser, which the app starts itself, with the `browser` add-on as the same
+    program for servers; "Why Rooks". QUICKSTART is titled Rooks. SECURITY.md supports `main` at 1.0.6 and the latest
+    release (not `integration/v0.3`) and no longer promises a signed updater, which is off until the signing key
+    exists. Design records 0003 to 0006 say what was merged and by which pull request. `docs/native-app-plan.md`
+    says its first milestone was built and then narrowed to the Ask palette. Decision record 0001 has a note pointing
+    at design records 0003 (W1) and 0007 (room-browser branch). docs/README's "100 reasons": false items corrected
+    (mail, "no shell tool", "inside your container", the tested/untested table) and shipped items lost their roadmap
+    marker (memory export, scopes and page, skills page, Signal, WhatsApp, Slack, Discord). The teammates, packs,
+    voice and team lead guides no longer read as unmerged branches. `companion.py`'s description names its real users
+    (the Mac notch app and the phone app; no web screen) (contradiction 15).
+
+- **One memory** (section g.2, first two rows; the audit found the Memory page showed nothing). What the assistant
+  knows about you was kept in three places: the old plaintext `memories` table, the encrypted "What I know about you"
+  store (`adapt_facts`: chat's remember and forget, the terminal's /memory) and `kn_memories` (the Memory page, copied
+  from adapt_facts once a minute). A fact told in chat did not show on the Memory page, forgetting it on the Memory
+  page left it in the prompt through the other store, and the prompt carried two memory lists whose ids meant
+  different things. Now there is one store, `kn_memories`, used through `knowledge/facts.py` by chat's remember,
+  forget and search tools, the background learner, the terminal (`/v1/rooks/memory`, `/context`, `/remember`,
+  `/forget`), feedback lessons, projects, history undo and imports; the prompt has one memory list.
+  - **A newer fact replaces an older one about the same thing**, using `knowledge/memory.py`'s predicates (lives_in,
+    works_at, role, phone, email, birthday, prefers:*) and its `superseded` status: "Moved to Melbourne" replaces
+    "Lives in Sydney" in the prompt, and "Why do you know this?" shows what it replaced. This changes the old rule for
+    facts about you: two of your own statements no longer become a question; the newer one wins. A guess that
+    disagrees with what you said yourself still waits under "Needs your call", and your word stays in use meanwhile
+    (before, both were set aside until you chose).
+  - **A key or password never goes into memory** from chat, the terminal or the Memory page (keys by their shapes:
+    sk-, AIza, ghp_, AKIA, JWTs, private keys), because memories go into prompts. Before, chat's remember tool saved
+    whatever it was given.
+  - **One screen.** The Memory page has "Tell me something", correct in place, why, pin, sensitive, forget, "Forget
+    everything", and a Learning tab with the four switches, the work it has seen and what it learned from your
+    changes. About you (`/about-you`) and the chat's Memory tab (`/assistant-memory`) are gone; both addresses open
+    the Memory page, and Settings, Privacy, Projects and the chat's menu link there.
+  - **Routes:** `/api/learn/facts` (and `/api/learn/legacy-memories`) and the write routes of `/api/memories` are
+    removed; use `/api/knowledge/memories` (with `POST /api/knowledge/memories/forget-all`). `GET /api/memories` stays,
+    read-only, for `cli/ws` (see the review fixes above). `/api/learn/work` gives the work list
+    `/api/learn/facts` used to carry. The terminal's routes are unchanged.
+  - **Data on upgrade (`SCHEMA_VERSION` 5, `db.migrate_v5`):** every fact in `memories` and `adapt_facts` moves into
+    `kn_memories`, encrypted with the memory key, de-duplicated by its words (the once-a-minute copies count as the
+    same fact), keeping its source, dates, pin and uses; then both tables are dropped. A backup
+    `workbench.db.pre-v5-<time>.bak` is taken first. Passwords and keys are not moved (the old code dropped those
+    from `memories` too); facts sealed with a different app secret cannot be read and stay in `adapt_facts`. If the
+    memory key is locked at upgrade (a desktop keychain), start-up is not blocked: nothing changes, and the move runs
+    the first time memory opens with the key. Knowledge migration 4 indexes the moved facts for search.
+    **Rollback:** stop the app, replace `workbench.db` with the newest `workbench.db.pre-v5-*.bak`, run the previous
+    build. Facts saved after the upgrade are then lost.
+  - **Tests** (each failed on the tree before): `workbench/backend/tests/test_one_memory.py` (remember in chat shows
+    on Memory, in the terminal's /memory and its prompt context; forget on the Memory page, in the terminal or in
+    chat is gone everywhere and from the next prompt; "Moved to Melbourne" replaces "Lives in Sydney" in the prompt;
+    a correction on the Memory page is what the next prompt uses; a key is refused; the move keeps every fact from
+    all three stores on a database built as the last release left it; a locked key at upgrade loses nothing) and
+    `workbench/frontend/tests/one-memory.test.mjs`. Existing tests that read the old stores now read the one store;
+    `test_knowledge.py`'s rule for two statements of your own changed with the behaviour above. Also checked on a copy
+    of a database the previous build made with facts in all three stores, and in a real run of the built app on a
+    fake model with Playwright (told a fact in chat, saw it on the Memory page, corrected it, the next prompt used the
+    correction, forgot it from the terminal); screenshots were taken locally and are not in the repository.
+
+- **Rooks on every normal screen** (section g.4, contradiction 3). The server's pages and messages say Rooks instead of
+  "AI Workspace" or "Workbench": the page a used sign-in link shows, the Google and Microsoft Connect results, the
+  name to give an app password (iCloud, Yahoo, Gmail), the Apple Mail and Mac steps, the backup's readme, calendar
+  exports, Slack and Discord set-up, shared teammate pages, and the descriptions of the email-draft tool. The Computer
+  page's Mac steps say to switch on Rooks. When an organisation must approve the sign-in, the message also gives the
+  old name, because Google and Microsoft still list the sign-in app as AI Workspace until it is renamed there.
+  Internal names are unchanged: `aiworkspace://` links, `~/.ai-workspace`, the `ai-workspace` command,
+  `AI_WORKSPACE_*` and `WORKBENCH_*` settings, the `X-Workbench` header, Docker project and image names.
+  - **Wake phrase.** A new install listens for "hey rooks". Anyone who never changed it keeps waking it with "hey
+    workspace" too; a phrase of your own (Settings, Voice) works as before and replaces both.
+  - **Data on upgrade:** a hosted-models connection named "AI Workspace Cloud" is renamed "Rooks Cloud" the next time
+    the plan is checked, keeping its id, history and default model. Rollback: after reverting, rename the row back to
+    "AI Workspace Cloud", or the old code adds a second connection beside it.
+  - **Docker server:** a new install is called Rooks (`WORKSPACE_NAME`, Open WebUI's title, the search server's name,
+    the tool server's name in Open WebUI). An existing `.env` keeps its `WORKSPACE_NAME`; change it there to rename.
+  - **Tests:** `workbench/backend/tests/test_rooks_name.py` scans the server's strings, the built screens and the Docker
+    defaults for the old names, with an explicit allow list (all six tests failed on the tree before); a wake phrase
+    test in `workbench/frontend/tests/anywhere-voice.test.mjs` (failed before).
+- **Modules named after old branches carry their purpose** (section g.4): `v02_api.py` is `automations_api.py`,
+  `v02_hooks.py` is `projects_hooks.py`, `v02_mobile.py` is `projects_mobile.py`, `features_v02.py` is
+  `plan_tiers.py`. Every route keeps its method and path (700 compared before and after). The model catalog builder
+  moved out of the app to `scripts/build_model_catalog.py` (run it with the app's Python; it used to be
+  `python -m app.catalog_build`).
+- **Developer tools are hidden behind one switch** (section g.3). The Terminal, Code (coding jobs), the run log,
+  Insights, System status, Compare models, Fine-tune, Extra tools, Packs and the Trade, Legal and Study pack pages are
+  no longer in the More sheet or the command menu (none was on the top bar or in its menus), and the More sheet no
+  longer links to Open WebUI, Paperclip or Hermes. Settings, Advanced has **Show developer tools**, off on a new
+  install and on an upgrade: turn it on to list them all again, under Advanced. The install remembers the choice (the
+  server's settings, `dev_tools`), so every window and paired browser agrees; only a signed in person or paired
+  browser can change it, never a helper or coding job with a bridge key. Every address still opens (`/terminal`,
+  `/code`, `/runs`, `/packs/trade` and the rest), so bookmarks and links from chat results keep working. With the
+  switch off, Chat has no Chat/Code tabs, no Plan or Build, no "Code" or "Continue in terminal" in its menu, and a
+  Build mode saved earlier does not come back until the switch is on; Settings, Tools and Connect no longer link to
+  Extra tools. The `rooks` terminal is unchanged. The goals routes had no screen to hide (goals are set from chat).
+  **Action:** someone who uses the Terminal or Code page turns the switch on once.
+- **Paid-plan checks are off by default** (`account.py`, section g.3). No Rooks cloud sells plans, so no feature asks
+  for an upgrade, even if a cloud address is set and says billing is live, or the install remembered it was live. The code stays; a build opts in with
+  `AIW_PLAN_CHECKS=1` (`AIW_ENFORCE_PLANS` still forces either way).
+- **Tests** (each failed on the tree before the change): `workbench/frontend/tests/developer-tools.test.mjs` (with the
+  switch off none of these pages is in the rail, a flyout, the More sheet or the command menu; with it on all are;
+  their addresses open; the outside links, the chat modes and the switch itself) and
+  `workbench/backend/tests/test_developer_tools.py` (off on a new install, kept by the install, never on when signed
+  out, a bridge key cannot flip it, plan checks off by default and still on when a build opts in). Screenshots of the
+  top bar and the More sheet, off and on, light and dark, 1440x900 and 390x844, were taken locally and are not in the
+  repository.
+
+- **Removed: 375 files, 3,226 text lines, 40,578,218 bytes** (measured with git against `f837498`): 347 old
+  screenshots (40 MB, tracked although `.gitignore` excludes the folder), draft launch posts with claims that are false
+  today, two stale root reports, a script that only ran in one developer's folder, three screens nothing could open,
+  and the old `browser-agent/`.
+- **Screens.** The Customize page is gone: `/customize` and the old `/connect` link open Settings, which has every row
+  it linked to. The chat's unreachable Skills tab is gone; its list of learned and hand-written skills is still on the
+  Skills page ("Learned or written here"), now with loading, empty and error states. The unused "What I improved" card
+  is gone. A test fails if any link, menu entry or redirect in the app points at a page that does not exist.
+- **Desktop app.** Settings, Desktop app no longer lists three "coming soon" helpers that will not ship that way.
+- **Server.** `GET` and `PUT /api/trade` are gone (no screen called them); a saved trade is still shown.
+- **Docker server: the `browser` add-on is now Rooks Browser.** Action needed on a server install: run
+  `./setup.sh` again (or `docker compose build browser && docker compose up -d`) so the new image is built. It is the
+  same agent and approvals as the desktop app: a sensitive step waits for a yes on the Browser page or in Needs you. It
+  needs `BROWSER_API_KEY` (setup.sh already makes one) and refuses localhost, the LAN and the stack's own hosts.
+  - **Paperclip, Hermes and Open WebUI no longer get a browser tool or the browser key.** That key answers approvals,
+    and those add-ons run agents on their own. Browse from Workbench's chat instead. An existing Hermes setup may still
+    list a `browser` tool server that no longer answers; remove it in the Hermes dashboard. `setup.sh` clears the old
+    Open WebUI entry.
+  - `BROWSER_MONTHLY_STEP_LIMIT` is gone (Rooks Browser has no monthly cap); each job still stops after 50 steps at
+    most, and model calls are counted in Workbench's usage.
+- **Old audits and evidence** (`docs/AUDIT.md`, `PHASE0-GATE.md`, `ROOKS-FINISH-REPORT.md`, `docs/evidence`,
+  `docs/night`, `scripts/audit`) moved to `docs/history/`, with links fixed.
+- **Tests.** `workbench/backend/tests/test_repo_cleanup.py` (removed files stay removed, the browser add-on is Rooks
+  Browser in service mode, Paperclip and Hermes never get the shared key, no CI job for the old agent),
+  `workbench/frontend/tests/removed-pages.test.mjs` (no removed screen, no link to a page that does not exist), a unit
+  test in `desktop/src-tauri/src/sidecars.rs`, and `test_customer_filing.py` for the trade routes. Each failed on the
+  tree before its change. The new CI job `browser-image` builds the add-on image and checks its health check and token;
+  the image was not built locally (no Docker daemon here).
+
+## Unreleased · The Room's browser and the installer after review: walls that hold · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, section 8. Every fix below has a test that failed on
+the code before it.
+
+- **The app's own address is refused from the browser's first start.** The rule only knew the ports the browser's own
+  routes had seen, so a browser the assistant opened first (after every app restart, the usual case) could open the
+  app. Now the ports this app's process listens on are read when the browser starts (`/proc` on Linux, `lsof` on
+  macOS, plus the phone's Wi-Fi door), every request to the app tells it (not only the browser's routes), and when no
+  port is known the browser does not start ("The Room's browser stays closed: it could not check that pages in it
+  cannot reach Rooks itself.").
+- **Names with a dot at the end** (`localhost.`, `foo.localhost.`), which Chromium sends to loopback, are refused like
+  `localhost`. An app on port 80 or 443 is matched without the port in the address too.
+- **Keys no longer get past a hold.** Enter or Space on a focused button or link is checked as a click on it (a
+  purchase on any site, a form or message on a site nobody asked for), any key in a card form as typing there; only
+  keys that move around (Tab, the arrows, Escape, PageDown and the like) skip the look. Tab, Tab, Enter on "Add to
+  cart" now waits for a yes in Needs you.
+- **The helpers' shared key no longer reads the Room's browser.** `GET /api/room/browser/tabs` and `/page` (and
+  `/open`) take the signed-in person or the Terminal access token only; the app.json and Rooks Desk keys, which the
+  browser and desk helpers hold and pages can steer, are refused even for reads. The rooks terminal says how to sign
+  in (`rooks login`) when the app refuses it. The Room's status still reads with that key.
+- **An offline Room's browser without bwrap** (macOS, Linux without it) goes through a proxy that answers nothing,
+  loopback included, instead of relying on proxy variables Chrome on macOS does not read.
+- **Settings has the switches the Room's windows point to**: Settings, Tools, The Room: Terminals and The Room's
+  browser. The windows say "Switch it on in Settings, under Tools" and their button opens that section.
+- **Installer**: the question "a Chrome or Edge window, or your usual browser?" was never asked from `curl | bash` (a
+  terminal opened "r+" cannot seek, so it read as no answer, and no answer was taken as the window). It is asked now,
+  and nobody answering in 60 s is no answer: the launcher asks later, never a window nobody chose. The Rooks app is
+  installed only when its SHA-256 matches the release's `SHA256SUMS-desktop`; prereleases are skipped; a cut download
+  says that once and no longer also says "none published".
+- **CI**: the backend job installs bubblewrap and sets `ROOM_BROWSER_TESTS_REQUIRED=1`, so the Room browser's real
+  Chromium tests fail instead of skipping when no browser can start.
+- Upgrade: nothing to do. Someone who used the rooks terminal's `/room tabs` or `/room page` with only the app.json key
+  runs `rooks login` once (Settings, Terminal access). Rollback: revert the branch; no data changes.
+
+## Unreleased · The new mark: a tower with a gold door · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, section 7.
+
+- **Rooks has its own mark**: the chess rook as a plain tower, one rounded slab with three merlons and an arched
+  doorway lit in gold (the light is on, the assistant is home), on an ink tile. At 16 px it is still a tower with a gold
+  door. It replaces the purple lines (desktop app), the letter R (browser tab), Expo's sample icons (phone) and the
+  first letter of the assistant's name (top bar).
+- Where it shows: the desktop app's icons (`desktop/src-tauri/icons`, every PNG size, `icon.icns`, `icon.ico`, made by
+  `npx tauri icon desktop/app-icon.svg`), the desktop splash, the Ask palette's icons (`desktop/rooks-native/assets`),
+  the browser tab (`favicon.svg`, also the Linux menu icon the installer writes), the phone app's icon, Android
+  layers, splash and web icon (`mobile/assets`), the top bar's search button, the welcome and sign-in cards beside
+  "Rooks", and the loading screen. `desktop/scripts/make_icons.py` draws the files Tauri does not make.
+- Not changed: the terminal banner keeps the word "Rooks" (a chess glyph is drawn wide or as an emoji by some
+  terminal fonts, so it did not read well as plain text); the README has no logo; `rooks-browser/app` has no icon
+  files. Shortcuts the installer made before keep the old picture until the installer runs again.
+- Upgrade: nothing to do; the next installer run or app update carries the new icons. Rollback: the icons are files
+  only, no data changes.
+
+## Unreleased · Rooks is its own program: the app by default, no Chrome window nobody chose · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, part 2 (as built: section 6).
+
+- **The installer installs the Rooks app by default** (`--native auto`; `install.ps1`: `AI_WORKSPACE_NATIVE`, default
+  `auto`). It takes only a real app release (`vX.Y.Z` or `desktop-vX.Y.Z`) at or above this copy's version, never the
+  Ask palette's `rooks-native-v*` release and never an older app. No such release exists for 1.0.6 yet, so today it
+  installs nothing and says "none published for this computer at version 1.0.6 or newer yet". A download that fails
+  under `auto` no longer stops the install.
+- **`ai-workspace` never opens a Chrome window nobody chose.** It opens the Rooks app when it is installed (under the
+  new or the old name). Without one it asks once: "There is no Rooks app for this computer yet. Open Rooks in a Chrome
+  or Edge window, or in your usual browser?" The installer asks it when someone is at the terminal; started from the
+  Dock, Finder or the Start menu with no answer yet, Rooks opens in the usual browser and the page asks with the same
+  words. The answer is kept (`install.json`); `ai-workspace --shell window|browser` changes it, `--status` says
+  "opens in: ...". The macOS Applications shortcut no longer forces `--web`. New: `install.sh --shell window|browser`
+  and `AI_WORKSPACE_SHELL`.
+- **The page's bar** (outside the Rooks app only) says that line with "A window of its own", "My usual browser" and
+  "Not now", and saves the answer for the launcher (`POST /api/desktop/shell`: a signed-in person only, never the
+  app.json key or the tools key; it writes only the `install.json` the launcher named, and only those two answers).
+- **The app is called Rooks**: product name, window title, splash, update prompt, macOS permission texts, the launcher
+  and the installer. The identifier stays `com.inclined88888.aiworkspace`, so the data folder, the webview's storage
+  and the keychain items do not move; the binary name and the `aiworkspace://` links stay. The Ask palette is packed
+  as "Rooks Ask" so the two cannot replace each other.
+- **What WebKit does not do, the Rooks app does**: links that would open a new window go to your browser
+  (`open_external`, web addresses only), downloads are saved to Downloads with a notification, the microphone prompt
+  is answered (camera, screen and location still ask), copies that wait for the server use a `ClipboardItem`, and
+  Meetings says "Recording the computer's sound needs Chrome. The microphone works." where it cannot. Compiled and
+  unit tested on Linux; not yet run in a real WebKit window (BACKLOG).
+- Upgrade: run the installer again. Nothing to migrate; data stays where it was. Rollback: `install.sh --native no`
+  keeps the window or browser; an earlier copy reads the same data folder. Copies of the 1.0.5 app named "AI Workspace"
+  are still found and opened until replaced.
+
+## Unreleased · The Room's Browser window, the assistant in it, and /room browse · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`, sections 1.3, 1.5 and 1.6 (as built: section 5).
+
+- **A Browser window on the Room's desk**, after Terminal in the dock. Tabs (eight at most), New tab, back, forward,
+  reload or stop, an address bar, and the live page: click, double click, type, scroll, copy (Ctrl or Cmd+C puts the
+  page's selection on your clipboard) and paste. F6 leaves the page. It is there only when the Room has a browser on
+  this computer; otherwise it says why in plain words ("The Room has no browser yet.", "switched off in Settings",
+  "not on Windows yet", "runs elsewhere"). With the Room off it says so and lists the tabs it kept. After an app
+  restart it says "The app restarted, so the browser closed. Your tabs and sign-ins are kept." The Stage beside the
+  chat shows it too.
+- **On a phone** (or any touch screen) the window shows a still of the page every 2 seconds, with taps, Scroll up and
+  down, a Type field and Enter: "On a phone you can tap, scroll and type. Dragging, hovering and shortcuts need the
+  computer."
+- **The assistant can use the Room's browser.** `use_room` gains browse, page, shot, click, type, scroll, key, back and
+  tabs. Looking (page, shot, tabs) is never asked about; every other step asks first, as in the rest of the Room. On
+  top of that a step waits for your yes in Needs you when it looks like a purchase (on any site, or a form with card
+  fields), sends a form, a message or a sign-in to a site you did not name in this chat or type into the address bar
+  yourself, or clicks inside another site's frame. Page text never counts as you naming a site. It never types a
+  password: it asks you to type it yourself. While it acts the window says "Rooks is using the browser"; your own click
+  or key takes it back, and its next step waits for your yes. Presence says "Looking at a page in the Room's browser".
+- **The run log** keeps the site and path (never the query), the element's name and "(N characters)" for typing, never
+  the text, also in the chat step's own row.
+- **The rooks terminal:** `/room browse ADDRESS` (`--new` for a new tab), `/room tabs` and `/room page` print the same
+  words through the app, with the terminal's own key.
+- **Fixes on the way.** A tab is named by its page's title also after a form posts and redirects (it showed the
+  address). A frame still drawn at the old size just after a resize is dropped, so a click lands where it was made (a
+  socket test that read the first frame failed now and then on it).
+- **No migration.** Nothing changes on upgrade; rollback is removing the branch.
+
+## Unreleased · A real browser in the Room (engine and API) · branch room-browser-native-app
+
+Design record: `docs/design/0007-room-browser-and-native-app.md`. This entry is the engine and API lane; the Browser
+window on the Room's desk, the assistant's `use_room` browse actions and the terminal's `/room browse` land from their
+own lanes.
+
+- **The Room has its own browser.** A real Chromium the app starts when the Room is on and a page is opened. It runs
+  headless, so no window appears on your screen; you see it only as the Room's live picture. It is driven over a pipe,
+  never a network port. Its sign-ins and cookies live in the Room's own folder (`.room-browser`), never in your own
+  browser's profile; passwords are never saved. On Linux with bubblewrap it runs with the Room's folder over your home
+  folder and no network when the Room is offline; elsewhere it runs as you, and the app says so.
+- **What it refuses.** A file outside the Room's folder, and this app's own address, are refused for every request,
+  typed or from a page.
+- **Downloads** land in the Room's `Downloads` with a safe name (`notes (2).txt` when the name is taken); one stops at
+  2 GB. They leave the Room only through Hand off and your yes in Needs you.
+- **Tabs and limits.** Eight tabs at most ("Eight tabs are open. Close one to open another."). Over 1.5 GB of memory
+  the least recently viewed background tab is put to sleep (kept as its address); over 2.5 GB the browser closes and
+  its tabs are kept. The disk cache is 100 MB.
+- **Stop, Save a point, Start over, restart.** Stop closes the browser and keeps its tabs. Save a point closes it for
+  the copy (caches left out) and opens it again. Start over closes it before the Room's folder is replaced, so sign-ins
+  made since that point are gone. When the app restarts, the browser closes cleanly, the next start reopens the tabs
+  (the front one loads, the others wait asleep) and says "The app restarted, so the browser closed. Your tabs and
+  sign-ins are kept."; a chat cut off by the restart says the same.
+- **Status** has `can.browser` and `can.browser_off_reason` (`no_engine`, `windows`, `helper`, `switched_off`) and a
+  `browser` part (open, tabs, notes). Settings has `room_browser` (on by default) to switch it off.
+- **API.** `WS /api/room/browser/ws` (signed in, same origin, this computer only, one window at a time): JPEG frames
+  as they change, state as JSON, and mouse, wheel, key, text, resize, address, back, forward, reload and tab messages.
+  `POST /api/room/browser/open`, `GET /api/room/browser/tabs` and `GET /api/room/browser/page` also take the rooks
+  terminal's Terminal access token (a bridge key only reads, and reads never start the browser). The phone's still
+  (`GET /frame`), taps (`POST /act`), `GET /shot`, `POST /start`, `POST /close` and closing a tab are yours only.
+- **Run log.** Opening and closing the browser, every page a route opens (host and path, never the query), and one
+  "You used the browser for N min" row; what you type is never recorded.
+- **No migration.** Nothing changes on upgrade; rollback is removing the branch (the `.room-browser` folder in the
+  Room's home can be deleted).
+
+## Unreleased · Phase 1a: terminal safety · branch phase-1a/terminal-safety
+
+No schema change, nothing to migrate. Rollback: revert the branch's commits.
+
+- **Fixes from the phase 1a review.** A coding job's own prompt is now refused in Needs you too when answered with the
+  Terminal access token (only the signed in app answers it; the terminal's `/needs` lists it as "answer in the app"
+  and sends nothing), and only a job withdraws a job's prompt. Deny rules in `rooks` now also catch a shell reading
+  from the input (`| bash -s`, `| sh -`, `| sudo -s`, `| su`), `bash -c "$X"`, `bash -c -- '...'`, brace expansion
+  (`{rm,-rf,x}`), `$'rm'`, a program name in a variable behind `sudo`, and `su -c`, `script -c`, `busybox`,
+  `unshare`, `fakeroot` and similar wrappers. The guard on Rooks' own rule files reads the command as the shell does,
+  so `.rooks/set''tings.json`, `cd .rooks && ...` and `./.rooks//settings.json` are asked about. "Always allow here"
+  is no longer offered in an unasked folder that has skills or commands of its own (choosing it would have trusted
+  them unseen). A Claude model priced under `[prices]` with two numbers gets Anthropic's cached price rule again, so
+  the dollar cap keeps counting. Tests: `rooks-code/tests/test_permissions.py` section 9, `test_caching.py`,
+  `test_workroom.py`, `workbench/backend/tests/test_auth_boundaries.py` (each failed before the fix; scripted fake
+  model, no real model key).
+
+- **Skills and your own commands in `rooks`, with the app off.** Skills are folders with a `SKILL.md` (a `name` and a
+  `description` in front matter, then the steps) in this folder's `.rooks/skills` or `.claude/skills` and your own
+  `~/.rooks/skills` or `~/.claude/skills`. Only names and descriptions go into the instructions; a skill's steps reach
+  the model only when it calls `load_skill`, the tool the app's saved skills already use (a skill file is used before
+  an app skill of the same name, and the app's skills still work when it is connected). `learn = false` does not turn
+  skill files off. Your own commands are `.rooks/commands/NAME.md` and `.claude/commands/NAME.md` (this folder and
+  yours): `/NAME words` sends the file's text with `$ARGUMENTS`, `$1`, `$2` filled in; `rooks "/NAME words"` and
+  `rooks -p "/NAME words"` too. Built-in command names always win. `/skills` lists the app's skills, skill files and
+  your commands, each saying where it comes from and whether it is used. **A folder's own skills and commands are used
+  only after you trust the folder** (the trust of the permission rules: the one-time question at start now also lists
+  them, or `/permissions trust`); until then they are listed as not used, the session start says so, `load_skill`
+  refuses them and `/NAME` says why instead of running (headless exits 3). A command file grants nothing: front matter
+  such as `allowed-tools` is not honoured and `!` shell lines are not run. A folder's skill or command file linking
+  outside the folder is never read; descriptions are shown without control codes. Not yet: the app does not show skill
+  files, and a session on the app's shared loop does not offer them. Tests: `rooks-code/tests/test_local_skills.py`
+  (each failed before the change; scripted fake model, no real model key).
+
+- **Prompt caching, charged at the cached price in `rooks`.** Anthropic requests already marked the system prompt,
+  the tool list and the conversation for caching; now what the provider reports is used. Input read from the cache
+  (Anthropic `cache_read_input_tokens`, OpenAI `prompt_tokens_details.cached_tokens`, DeepSeek
+  `prompt_cache_hit_tokens`) and input written to it (Anthropic `cache_creation_input_tokens`) are counted apart and
+  charged at the cached price: `/cost` shows them ("20,000 of the input read from the cache, 21,000 written to it"),
+  each receipt's model call has `cache_read_tokens` and `cache_write_tokens`, the headless result's `tokens` has
+  `cache_read` and `cache_write`, and the dollar cap counts the cached price. Before, every cached token was charged at
+  the full input price: cache reads were overcharged (a session could stop at the cap early) and Anthropic cache
+  writes, which cost 1.25x the input price, were undercharged (the cap could be crossed). The cap's estimate for the
+  next call now uses the cache write price when it is higher. Cached prices are in the built-in table (Claude models
+  by Anthropic's rule: a read 0.1x, a write 1.25x the input price); a `[prices]` entry takes them as
+  `[input, output, cache read, cache write]`. A call that used the cache with no known cached price has an unknown
+  cost, never a guess, and Rooks says once that the dollar cap cannot be enforced (the token cap still is). Tests:
+  `rooks-code/tests/test_caching.py` (all but the request-marks test failed before the change; scripted fake model,
+  no real key, so no live call has checked that a provider reports cache reads above zero).
+
+- **Headless `rooks` for scripts and CI.** `rooks -p "task"` (or the task piped in: `echo "task" | rooks -p`) runs one
+  task and never waits for input: a step that would need your OK (an edit, a command, an MCP tool, an MCP server's
+  question to you) is denied at once, reported, and the run exits with code 3. Only what you set up beforehand lets a
+  step run: a permission rule, a trusted folder, or `--yes` (which still never answers an MCP server's question to
+  you). A headless run is not linked to an app chat, so nothing waits in Needs you. `--output-format text` (the answer
+  on stdout, steps and denials on stderr), `json` (one result: answer, session id, model calls, tokens, cost, what was
+  denied and why, exit code) or `stream-json` (one event per line: start, assistant text, tool call, tool result,
+  approval asked, approval denied, notice, end). Both are described by `rooks-code/rooks_code/schema/headless.schema.json`.
+  Keys, tokens, emails and phone numbers are hidden in this output, as in the receipts. Exit codes: 0 done, 1 not
+  finished or an error, 2 bad usage or cannot start, 3 something was denied. `rooks_code.sdk.run(prompt, cwd=...,
+  on_event=...)` is the same run in-process for Python scripts, returning the same result object; `rooks -p` uses it.
+  `-P claude-code` and `-P codex` are refused in headless mode (use `claude -p` or `codex exec`). Tests:
+  `rooks-code/tests/test_headless.py` (each failed before the change; scripted fake model, no real model key).
+  `rooks-code[dev]` now needs `jsonschema` for that test.
+- **Only a person answers a terminal's question.** The open app's own key (app.json), Rooks Desk's key and a coding
+  job's key can no longer record an answer to a question the `rooks` terminal asked: any program on this computer can
+  read app.json, a command the agent ran included, so it could have said yes to its own question. An answer typed in
+  the terminal is recorded in the app with the Terminal access token (`rooks login`); without it the answer still
+  stands in the terminal and the app's card closes. A question from a coding job the app started is answered in the
+  app only, not even with the token. Breaking for scripts that answered `/v1/rooks/approvals/{id}` with the app.json
+  key: they get "Only you can answer this" (403) now.
+- **The Room asks you before a file leaves it, in the terminal too.** `rooks-try mcp`'s `handoff` no longer takes
+  `approve: true` from the agent calling it. The server asks the person itself (MCP elicitation, as Rooks Desk does),
+  and `rooks` now puts such a question to you, also with `--yes`, and mirrors it to Needs you. A program that cannot
+  ask gets "waiting for a person" and nothing is copied. The same goes for Rooks Desk's questions in `rooks`: a
+  sensitive step it used to refuse there (the terminal could not ask) is now put to you.
+- **Permission rules in `rooks`.** `[permissions] allow` and `deny` in `rooks.toml`, and a project's own in
+  `.rooks/settings.json`: `bash(pytest *)`, `bash(npm test)`, `edit(src/**)`, `mcp(notes/search)`. Deny wins and
+  applies in every mode, auto-accept (`--yes`) included; a refused step exits with code 3 in a one-shot run. A
+  compound command (`pytest; rm -rf x`, `&&`, pipes, `$(...)`, backticks, a redirect to a file, `VAR=value` in front)
+  never matches an allow rule unless every part does; a command too hard to read is asked about even in auto-accept
+  while a command deny rule exists. A project's allow rules apply only after you trust the folder (a one-time
+  question, kept by the folder's real path in `rooks-trust.json` next to `rooks.toml`; `/permissions trust` or
+  `untrust`); until then they are ignored and Rooks says so. A new choice at the question, `h`, always allows that
+  exact command in this folder (a precise rule in `.rooks/settings.json`). `/permissions` shows the rules in plain
+  words. A command naming Rooks' own rule files is asked about in every mode, so the agent cannot grant itself a
+  rule. Not in the app's Settings yet (phase 1b parity pass). Tests: `rooks-code/tests/test_permissions.py` (each
+  failed before the change; scripted fake model, no real model key).
+- **The terminal audit's defects, fixed in `rooks`** (each with a test in `rooks-code/tests/test_audit_defects.py` that
+  failed before the fix, run against the scripted fake model, no real model key):
+  - A no ends the turn. A reply that declines ("OK, I will not change it.", "I'll leave it as is.") is no longer taken
+    for an announced step, and after you deny a change Rooks never nudges the model to carry on.
+  - `a` approves only that exact command, changes to that one file, or that one tool of one MCP server, for the rest of
+    the session; the question says which ("Approve this exact command for this session"). It used to approve every
+    command (or every edit, or every MCP tool of every server) for the session. Breaking for anyone who relied on
+    one `a` covering all commands: you are asked again for each different one.
+  - `/init` reloads the project instructions, so the AGENTS.md it writes is followed from the next request on.
+  - `/doctor` in a session checks the address that session uses (`--base-url`, the app's), not only the config file's.
+  - A one-shot run exits with code 3 when a change or command was denied (typed `n`, no input, a hook). Exit codes
+    are listed in `rooks-code/README.md`: 0 finished, 1 not finished, 2 cannot start, 3 denied. Breaking for scripts
+    that treated a denial as success (it exited 0).
+  - A model error is said in plain words with no address ("The AI service is busy or down right now. Try again in a
+    minute. /doctor (or rooks doctor) shows the details."); the full detail stays in the session's record and /doctor.
+  - One meaning of "plan": Shift+Tab's settings are now asks first, auto-accept and dry run (was "plan only"), so they
+    never share a word with `/mode chat|plan|build`; the line under each answer says "build mode", and the agent's
+    checklist shows as "checklist 2/5" (was "plan 2/5").
+  - One version number: `rooks --version`, `rooks-code/pyproject.toml` and AGENTS.md now say 1.0.6, the `VERSION` file.
+  - The README says what is true: answers stream in as they are written.
+
 ## 2026-11-08 · The Room as a small computer · branch feat/room-desktop
 
 The Room keeps what you do in it. Design record: `docs/design/0006-room-desktop.md`. This entry was written by the
@@ -586,7 +1539,7 @@ secret rotation or manual SQL is needed. Existing schema-v2 installations are un
 
 No schema/key migration. Recreate enabled Paperclip containers to apply its new
 environment. Roll back the image/client if needed; preserve volumes and APP_SECRET.
-[Phase 0 gate](docs/PHASE0-GATE.md) records the acceptance assumptions and limits.
+[Phase 0 gate](docs/history/PHASE0-GATE.md) records the acceptance assumptions and limits.
 
 ## 2026-10-29 · Official Codex CLI launcher · Phase 1 item 117
 

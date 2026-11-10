@@ -4,16 +4,19 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { MOD_KEY } from "../keys";
 import { isActive, railItems, SETTINGS_PAGE, type GroupId, type RailItem, type StatusLike } from "../pages/registry";
 import { warmPath, warmProps } from "../pages/warm";
-import { useFocusTrap } from "../ui";
+import { placeOf } from "../pages/places";
+import { MicroLabel, useFocusTrap } from "../ui";
+import { RooksMark } from "../ui/RooksMark";
 import { PresenceStrip } from "./PresenceStrip";
 import { roomOn, usePresence } from "./presence";
 
 /**
- * The glass navigation bar (docs/design/0003-workroom.md, section 6): a floating top bar above 900px. Left: the mark
- * (search or jump) and the presence line. Centre: one frosted pill holding Chat, Room, Jobs and the Day, Memory and
- * Library groups, with a solid pill that slides to the page you are on. Right: round glass buttons for search, More
- * and Settings. Groups open a glass menu below their tab (focus trapped, Escape closes). Everything comes from the
- * page registry.
+ * The navigation bar (docs/design/0003-workroom.md, section 6; industrial since the redesign, CHANGELOG): a paper top
+ * bar with a 1 px edge above 900px. Left: the small mark, the Rooks tower (search or jump), and the presence line.
+ * Centre: Chat, Room, Jobs and the Day, Memory and Library groups as small uppercase mono links in hairline cells, with
+ * a thin orange rule that slides to the page you are on. Right: the one black call to action (search), then square
+ * buttons for More and Settings. Groups open a square menu below their tab (focus trapped, Escape closes), titled by a
+ * micro-label with the place's number. Everything comes from the page registry.
  */
 export function Rail({ status, onMore, onSearch, name }: { status: StatusLike | null; onMore: () => void; onSearch: () => void; name: string }) {
   const items = railItems(status);
@@ -25,11 +28,13 @@ export function Rail({ status, onMore, onSearch, name }: { status: StatusLike | 
   useEffect(() => setOpen(null), [location.pathname]);
   const pill = useRef<HTMLDivElement>(null);
   const [ind, setInd] = useState<{ x: number; w: number } | null>(null);
-  // the sliding pill: measure the tab that is current and move the indicator under it
+  // the sliding rule: measure the link that is current and move the orange rule under it
   useLayoutEffect(() => {
     const measure = () => {
       const on = pill.current?.querySelector<HTMLElement>(".rail-item.is-active");
-      setInd(on ? { x: on.offsetLeft, w: on.offsetWidth } : null);
+      // measured against the row itself: a group's tab sits inside its own positioned wrapper
+      const x = on && pill.current ? on.getBoundingClientRect().left - pill.current.getBoundingClientRect().left : 0;
+      setInd(on ? { x, w: on.offsetWidth } : null);
     };
     measure();
     window.addEventListener("resize", measure);
@@ -41,7 +46,7 @@ export function Rail({ status, onMore, onSearch, name }: { status: StatusLike | 
     <header className="topbar">
       <div className="topbar-start">
         <button type="button" className="rail-mark" onClick={onSearch} title={`Search or jump to (${MOD_KEY}K)`} aria-label={`${name}: search or jump to`}>
-          <span aria-hidden="true">{name.trim().charAt(0).toUpperCase() || "R"}</span>
+          <RooksMark size={28} />
         </button>
         <PresenceStrip />
       </div>
@@ -54,13 +59,14 @@ export function Rail({ status, onMore, onSearch, name }: { status: StatusLike | 
         </div>
       </nav>
       <div className="topbar-end">
-        <button type="button" className="glass-round" onClick={onSearch} aria-label={`Search or jump to (${MOD_KEY}K)`} title={`Search or jump to (${MOD_KEY}K)`}>
-          <Search size={18} aria-hidden="true" />
+        <button type="button" className="topbar-cta" onClick={onSearch} aria-label={`Search or jump to (${MOD_KEY}K)`} title={`Search or jump to (${MOD_KEY}K)`}>
+          <Search size={16} aria-hidden="true" />
+          <span className="topbar-cta-keys" aria-hidden="true">{MOD_KEY} K</span>
         </button>
-        <button type="button" className="glass-round" data-more-trigger onClick={onMore} aria-haspopup="dialog" aria-label="More pages" title="More pages">
+        <button type="button" className="topbar-btn" data-more-trigger onClick={onMore} aria-haspopup="dialog" aria-label="More pages" title="More pages">
           <MoreHorizontal size={18} aria-hidden="true" />
         </button>
-        <NavLink to={SETTINGS_PAGE.path} className={`glass-round${settingsOn ? " is-active" : ""}`} aria-label={SETTINGS_PAGE.label} title={SETTINGS_PAGE.label}
+        <NavLink to={SETTINGS_PAGE.path} className={`topbar-btn${settingsOn ? " is-active" : ""}`} aria-label={SETTINGS_PAGE.label} title={SETTINGS_PAGE.label}
           aria-current={settingsOn ? "page" : undefined} {...warmProps(SETTINGS_PAGE.path)}>
           <SETTINGS_PAGE.icon size={18} aria-hidden="true" />
         </NavLink>
@@ -113,7 +119,7 @@ function RailGroup({ item, pathname, open, onToggle, onClose }: { item: RailItem
       </button>
       {open && (
         <div ref={pop} id={id} className="rail-flyout glass-menu" role="menu" aria-label={item.label} tabIndex={-1} onKeyDown={onKey}>
-          <div className="rail-flyout-title" aria-hidden="true">{item.label}</div>
+          <div className="rail-flyout-title" aria-hidden="true"><MicroLabel n={placeOf({ group: item.group })?.n} name={item.label} /></div>
           {item.pages.map((p) => {
             const on = isActive(p, pathname);
             return (

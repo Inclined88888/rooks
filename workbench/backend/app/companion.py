@@ -1,7 +1,9 @@
 """Companion: one live view of every AI agent you run, with approvals and questions you can answer from anywhere.
 
-Surfaces that use it: the notch/top-edge app on the desktop (companion/macos, companion/desktop), the phone (push +
-Lock Screen / Dynamic Island), and the web app. Agents that report into it:
+Surfaces that use it: the Mac notch app (companion/macos, built by hand, not in any automatic check) and the phone app
+(mobile/: the agents and requests screen and push notifications; the Lock Screen and Dynamic Island view is only a
+plan, mobile/COMPANION-LIVE-ACTIVITY.md). No screen of the web app calls these
+routes today; the app's own approvals are answered in Needs you. Agents that report into it:
 
 - Rooks itself (assistant approvals held by actions.py) and coding jobs handed to Claude Code / Codex (cli_agents.py).
 - Any external agent through hooks (companion/hooks): Claude Code, Codex, Gemini CLI, Cursor. A hook posts its steps

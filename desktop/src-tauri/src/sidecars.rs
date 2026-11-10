@@ -1,9 +1,15 @@
-//! Sidecar processes: the Workbench backend now, and the agents later phases add.
+//! Sidecar processes: the Workbench backend.
 //!
 //! Every long-running helper the app ships is a frozen executable listed in `tauri.conf.json` →
-//! `bundle.externalBin` and described in [`SIDECARS`]. The [`Supervisor`] owns the running children, kills them on
+//! `bundle.externalBin` and described in [`SIDECARS`]. The [`Supervisor`] owns the running children, stops them on
 //! exit, and reports their state to the UI (`list_sidecars`). Each child also exits by itself if this shell dies,
 //! because it watches its stdin (`--exit-with-parent`).
+//!
+//! On exit the shell first closes a child's input and gives it a few seconds to end by itself: the one-file sidecar
+//! then removes the copy of itself it unpacked into the temporary folder. Only after that is it killed. On Windows
+//! each child is also put in a job that ends everything in it when its last handle closes (design 0011, section 3):
+//! this process holds the only handle, so when Rooks ends, however it ends (closed, crashed, or ended in Task
+//! Manager), Windows ends the sidecar and everything the sidecar started, the Room included.
 
 use std::collections::HashMap;
 use std::fs::{self, OpenOptions};
@@ -29,8 +35,10 @@ pub struct SidecarSpec {
     pub enabled: bool,
 }
 
-/// Registry of sidecars. Later phases flip `enabled`, add the binary to `bundle.externalBin`, and start it the same
-/// way as Workbench (see [`start_workbench`]); the UI already lists them so users see what is coming.
+/// Registry of sidecars. Only helpers that really ship are listed: Settings → Desktop app shows every row. A new
+/// helper adds its binary to `bundle.externalBin`, a row here, and starts the same way as Workbench (see
+/// [`start_workbench`]). The terminal (`rooks`), the browser helper (`rooks-browser`) and computer use (`rooks-desk`)
+/// are installed beside the app by the installer, not frozen into it.
 pub const SIDECARS: &[SidecarSpec] = &[
     SidecarSpec {
         name: "workbench",
@@ -39,32 +47,14 @@ pub const SIDECARS: &[SidecarSpec] = &[
         phase: 1,
         enabled: true,
     },
-    SidecarSpec {
-        name: "terminal-agent",
-        binary: "terminal-agent",
-        description: "Terminal coding agent that works with any model, including local ones",
-        phase: 2,
-        enabled: false,
-    },
-    SidecarSpec {
-        name: "browser-agent",
-        binary: "browser-agent",
-        description: "AI browser agent (the repo's browser-agent/, frozen with its own Chromium)",
-        phase: 3,
-        enabled: false,
-    },
-    SidecarSpec {
-        name: "computer-use",
-        binary: "computer-use",
-        description: "Computer-use and MCP bridge to apps on this machine (every action goes through approvals)",
-        phase: 4,
-        enabled: false,
-    },
 ];
 
 #[derive(Default)]
 struct State {
     children: HashMap<String, CommandChild>,
+    /// Windows: the kill-on-close job every sidecar is put in (made with the first one).
+    #[cfg(windows)]
+    job: Option<winjob::KillOnClose>,
     status: HashMap<String, String>,
     workbench_url: Option<String>,
     /// Per-launch token the shell shares with the backend (feat/v02-anywhere-voice: the ask shortcut's grab).
@@ -93,14 +83,202 @@ impl Supervisor {
         self.state.lock().unwrap().workbench_token.clone()
     }
 
+    /// Stop every sidecar: close its input (it ends by itself and tidies up), wait up to [`STOP_GRACE`], then kill
+    /// whatever is still running.
     pub fn stop_all(&self) {
+        let children: Vec<(String, CommandChild)> = self.state.lock().unwrap().children.drain().collect();
+        let deadline = Instant::now() + STOP_GRACE;
+        for (name, child) in children {
+            let pid = child.pid();
+            log::info!("stopping sidecar {name} ({pid}): closing its input");
+            let waiter = exit_waiter(pid);
+            drop(child); // closes its stdin: `--exit-with-parent` ends it
+            if !waiter.wait_until(deadline) {
+                log::warn!("sidecar {name} did not end within {STOP_GRACE:?}; killing it");
+                kill_pid(pid);
+            }
+        }
         let mut st = self.state.lock().unwrap();
-        for (name, child) in st.children.drain() {
-            log::info!("stopping sidecar {name}");
-            let _ = child.kill();
+        #[cfg(windows)]
+        if let Some(job) = st.job.as_ref() {
+            job.terminate(); // anything a sidecar left running
         }
         for v in st.status.values_mut() {
             *v = "stopped".into();
+        }
+    }
+}
+
+/// How long a sidecar has to end by itself once its input is closed.
+const STOP_GRACE: Duration = Duration::from_secs(5);
+
+/// Waits for one process to end, without owning it.
+struct ExitWaiter {
+    #[cfg(windows)]
+    handle: Option<winjob::ProcessHandle>,
+    #[cfg(not(windows))]
+    pid: u32,
+}
+
+fn exit_waiter(pid: u32) -> ExitWaiter {
+    #[cfg(windows)]
+    {
+        ExitWaiter { handle: winjob::ProcessHandle::open(pid) }
+    }
+    #[cfg(not(windows))]
+    {
+        ExitWaiter { pid }
+    }
+}
+
+impl ExitWaiter {
+    /// True when the process ended before `deadline`.
+    fn wait_until(&self, deadline: Instant) -> bool {
+        #[cfg(windows)]
+        {
+            match &self.handle {
+                Some(h) => h.wait(deadline.saturating_duration_since(Instant::now())),
+                None => true, // it could not be opened: it has ended already
+            }
+        }
+        #[cfg(not(windows))]
+        {
+            loop {
+                // signal 0: is there still a process with this id (the shell plugin's own thread reaps it)
+                if unsafe { libc::kill(self.pid as libc::pid_t, 0) } != 0 {
+                    return true;
+                }
+                if Instant::now() >= deadline {
+                    return false;
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
+        }
+    }
+}
+
+fn kill_pid(pid: u32) {
+    #[cfg(windows)]
+    winjob::terminate_pid(pid);
+    #[cfg(not(windows))]
+    unsafe {
+        libc::kill(pid as libc::pid_t, libc::SIGKILL);
+    }
+}
+
+/// Windows job objects and process handles, through windows-sys (design 0011, section 3).
+#[cfg(windows)]
+mod winjob {
+    use std::time::Duration;
+    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE, WAIT_OBJECT_0};
+    use windows_sys::Win32::System::JobObjects::{
+        AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation, SetInformationJobObject,
+        TerminateJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+    };
+    use windows_sys::Win32::System::Threading::{
+        OpenProcess, TerminateProcess, WaitForSingleObject, PROCESS_SET_QUOTA, PROCESS_SYNCHRONIZE,
+        PROCESS_TERMINATE,
+    };
+
+    /// A job that ends everything in it when its last handle closes. Breakaway is never allowed, so nothing in it can
+    /// leave it. This process holds the only handle.
+    pub struct KillOnClose(HANDLE);
+    // A job handle may be used from any thread.
+    unsafe impl Send for KillOnClose {}
+    unsafe impl Sync for KillOnClose {}
+
+    impl KillOnClose {
+        pub fn new() -> std::io::Result<Self> {
+            unsafe {
+                let h = CreateJobObjectW(std::ptr::null(), std::ptr::null());
+                if h.is_null() {
+                    return Err(std::io::Error::last_os_error());
+                }
+                let mut info: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = std::mem::zeroed();
+                info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+                let ok = SetInformationJobObject(
+                    h,
+                    JobObjectExtendedLimitInformation,
+                    &info as *const _ as *const core::ffi::c_void,
+                    std::mem::size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+                );
+                if ok == 0 {
+                    let e = std::io::Error::last_os_error();
+                    CloseHandle(h);
+                    return Err(e);
+                }
+                Ok(Self(h))
+            }
+        }
+
+        /// Put a running process (and so everything it starts from now on) in the job.
+        pub fn assign(&self, pid: u32) -> std::io::Result<()> {
+            unsafe {
+                let p = OpenProcess(PROCESS_SET_QUOTA | PROCESS_TERMINATE, 0, pid);
+                if p.is_null() {
+                    return Err(std::io::Error::last_os_error());
+                }
+                let ok = AssignProcessToJobObject(self.0, p);
+                let e = std::io::Error::last_os_error();
+                CloseHandle(p);
+                if ok == 0 {
+                    Err(e)
+                } else {
+                    Ok(())
+                }
+            }
+        }
+
+        pub fn terminate(&self) {
+            unsafe {
+                TerminateJobObject(self.0, 1);
+            }
+        }
+    }
+
+    impl Drop for KillOnClose {
+        fn drop(&mut self) {
+            unsafe {
+                CloseHandle(self.0);
+            }
+        }
+    }
+
+    /// A handle to wait on a process that this shell does not own.
+    pub struct ProcessHandle(HANDLE);
+
+    impl ProcessHandle {
+        pub fn open(pid: u32) -> Option<Self> {
+            let h = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, 0, pid) };
+            if h.is_null() {
+                None
+            } else {
+                Some(Self(h))
+            }
+        }
+
+        /// True when the process ended within `timeout`.
+        pub fn wait(&self, timeout: Duration) -> bool {
+            let ms = timeout.as_millis().min(u32::MAX as u128 - 1) as u32;
+            unsafe { WaitForSingleObject(self.0, ms) == WAIT_OBJECT_0 }
+        }
+    }
+
+    impl Drop for ProcessHandle {
+        fn drop(&mut self) {
+            unsafe {
+                CloseHandle(self.0);
+            }
+        }
+    }
+
+    pub fn terminate_pid(pid: u32) {
+        unsafe {
+            let p = OpenProcess(PROCESS_TERMINATE, 0, pid);
+            if !p.is_null() {
+                TerminateProcess(p, 1);
+                CloseHandle(p);
+            }
         }
     }
 }
@@ -238,11 +416,26 @@ async fn boot(app: &AppHandle) -> Result<(), String> {
     let (mut rx, child) = cmd
         .spawn()
         .map_err(|e| format!("cannot run the backend: {e}"))?;
-    sup.state
-        .lock()
-        .unwrap()
-        .children
-        .insert("workbench".into(), child);
+    {
+        let mut st = sup.state.lock().unwrap();
+        // Windows: into the kill-on-close job at once. The one-file sidecar unpacks itself before it starts the
+        // program that does the work, so that program starts inside the job; nothing the sidecar starts can leave it.
+        #[cfg(windows)]
+        {
+            if st.job.is_none() {
+                match winjob::KillOnClose::new() {
+                    Ok(job) => st.job = Some(job),
+                    Err(e) => log::warn!("no job for the sidecars: {e}"),
+                }
+            }
+            if let Some(job) = st.job.as_ref() {
+                if let Err(e) = job.assign(child.pid()) {
+                    log::warn!("the backend could not be put in the app's job: {e}");
+                }
+            }
+        }
+        st.children.insert("workbench".into(), child);
+    }
 
     // Backend output goes to <log dir>/workbench.log (started fresh each launch, previous one kept as .1).
     let log_path = logs.join("workbench.log");
@@ -310,4 +503,19 @@ async fn boot(app: &AppHandle) -> Result<(), String> {
 async fn tokio_sleep(d: Duration) {
     // tauri's async runtime is tokio; spawn_blocking keeps us off a tokio feature flag.
     let _ = tauri::async_runtime::spawn_blocking(move || std::thread::sleep(d)).await;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Settings → Desktop app shows every row, so a row is only listed when its helper really ships in the bundle.
+    #[test]
+    fn every_listed_sidecar_ships() {
+        let conf = include_str!("../tauri.conf.json");
+        for s in SIDECARS {
+            assert!(s.enabled, "{} is listed but not enabled (a placeholder row)", s.name);
+            assert!(conf.contains(&format!("\"binaries/{}\"", s.binary)), "{} is not in bundle.externalBin", s.binary);
+        }
+    }
 }

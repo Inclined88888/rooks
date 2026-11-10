@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { usePresence } from "../shell/presence";
-import { Chip } from "../ui";
+import { Chip, Headline } from "../ui";
 import { greeting, suggestionChips, type Routine, type Suggestion } from "./turns";
 
 export function EmptyChat({ who, line, onSend, disabled }: { who: string; line?: string; onSend: (text: string) => void; disabled?: boolean }) {
@@ -23,7 +23,7 @@ export function EmptyChat({ who, line, onSend, disabled }: { who: string; line?:
   const needs = presence.needs_you;
   return (
     <div className="chat-empty">
-      <p className="chat-empty-title">{greeting(new Date().getHours())}</p>
+      <Headline as="p" className="chat-empty-title" text={greeting(new Date().getHours())} />
       <p className="chat-empty-line" role={line ? "status" : undefined}>{line || `${who} is here. Ask for anything, or start with one of these.`}</p>
       <div className="chat-empty-chips" role="group" aria-label="Things to do">
         {chips.map((c) => (

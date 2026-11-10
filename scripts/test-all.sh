@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# Run every test suite in the repo. Provider keys are hidden from the tests, so nothing calls a real model.
+# Run every local test suite in the repo. Provider keys are hidden from the tests, so nothing calls a real model.
 #
-#   scripts/test-all.sh            backend, Rooks Code, Try Room, browser and computer agents, frontend, scorecard selftest,
-#                                  compose files
-#   scripts/test-all.sh --quick    skip the frontend build and the backend suite's slow sandbox tests
+#   scripts/test-all.sh            backend, cli/ws, Rooks Code, Try Room, browser and computer agents, CLI launcher,
+#                                  frontend, VS Code add-on, phone app, scorecard selftest, compose files
+#   scripts/test-all.sh --quick    skip the frontend build, the VS Code add-on, the phone app and the backend suite's slow
+#                                  sandbox tests
 #   scripts/test-all.sh --live     also run the 11 hard benchmark tasks against a real model (NVIDIA_API_KEY)
 #
-# Needs: uv (https://docs.astral.sh/uv/) for the Python 3.12 venv, npm for the frontend, docker for the compose check.
+# Needs: uv (https://docs.astral.sh/uv/) for the Python 3.12 venv, node and npm for the frontend, the VS Code add-on, the
+# phone app and the CLI launcher, docker for the compose check.
+# Only the online checks (.github/workflows) run: the security scan, the one-command install on three systems, the
+# Docker images, the desktop and native window builds, and the Rooks Desk and Try Room real-screen runs.
 # The venv lives in ~/.venvs/aiw (override with AIW_VENV); it is created on first run.
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -16,7 +20,7 @@ for a in "$@"; do
   case "$a" in
     --quick) QUICK=true ;;
     --live) LIVE=true ;;
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
     *) echo "unknown option $a" >&2; exit 2 ;;
   esac
 done
@@ -50,6 +54,9 @@ EXTRA=(); $QUICK && EXTRA=(-k "not sandbox and not run_python")
 (cd workbench/backend && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore --ignore=bench ${EXTRA[@]+"${EXTRA[@]}"}) \
   && ok "backend" || bad "backend"
 
+step "Terminal chat client (cli/ws)"
+(cd workbench/backend && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore ../../cli/tests) && ok "cli-ws" || bad "cli-ws"
+
 step "Scorecard selftest (every benchmark check judged against gold answers, no model)"
 (cd workbench/backend && "${NOKEYS[@]}" APP_SECRET="$(printf 'a%.0s' {1..40})" TOOLS_API_KEY="$(printf 'k%.0s' {1..30})" \
   DATA_DIR="$(mktemp -d)" "$PY" bench/scorecard.py --selftest 2>&1 | grep -E "selftest|PROBLEM") | tee /dev/stderr | grep -q " 0 problems" \
@@ -82,10 +89,28 @@ fi
 # Real-screen tests stay opt in (ROOKS_DESK_E2E=1 with a display, as in rooks-desk/tests/test_e2e_linux.py)
 (cd rooks-desk && "${NOKEYS[@]}" "$PY" -m pytest -q -p no:cacheprovider -W ignore) && ok "rooks-desk" || bad "rooks-desk"
 
+step "CLI launcher add-on (cli-launcher: server, Codex adapter, setup wiring)"
+if command -v node >/dev/null; then
+  node --test cli-launcher/test/*.test.mjs 2>&1 | tail -8 && ok "cli-launcher" || bad "cli-launcher"
+else
+  bad "cli-launcher (node is not installed)"
+fi
+
+step "Colour contrast (the app's three themes in tokens.css and the terminal palettes, WCAG AA)"
+"$PY" scripts/check-theme-contrast.py && ok "contrast" || bad "contrast"
+
 if ! $QUICK; then
   step "Frontend (workbench/frontend: typecheck, build, tests)"
   (cd workbench/frontend && { [[ -d node_modules ]] || npm ci --silent; } && npm run build --silent >/dev/null && npm test 2>&1 | tail -3) \
     && ok "frontend" || bad "frontend"
+
+  step "VS Code add-on (vscode-extension)"
+  (cd vscode-extension && { [[ -d node_modules ]] || npm ci --silent --no-audit --no-fund; } && npm test 2>&1 | tail -8) \
+    && ok "vscode-extension" || bad "vscode-extension"
+
+  step "Phone app (mobile: typecheck, lint, tests)"
+  (cd mobile && { [[ -d node_modules ]] || npm ci --silent --no-audit --no-fund; } && npm run --silent typecheck && npm run --silent lint >/dev/null \
+    && npm test --silent -- --ci 2>&1 | tail -5) && ok "mobile" || bad "mobile"
 fi
 
 step "Compose files (render without a .env, with and without the prebuilt image)"

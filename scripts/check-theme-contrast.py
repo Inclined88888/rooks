@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Check WCAG AA contrast for every theme on every surface. Exit 1 on any failure.
 
-  Workbench (desktop + web): works out each theme's effective CSS variables from the stylesheets the app loads
-  (the same cascade the browser applies to <html data-theme=... data-accent="theme">), then checks text pairs.
+  App (desktop window + web): reads workbench/frontend/src/tokens.css, the one palette file (design system v4,
+  "industrial"), and works out each theme's colours the way the browser does: the light block (`:root` and
+  html[data-mode="light"]) first, then html[data-mode="dark"] or html[data-mode="contrast"] on top. Then checks text
+  pairs at 4.5:1 and the edges a person needs to see (control borders, the focus ring) at 3:1.
+  The safety orange (#FF4D00) is 2.97:1 on the light paper and 3.33:1 on white: it is used for marks (dots, squares,
+  rules) that always sit beside words, never for small text; the script prints that as a note, not a failure.
   Terminal (Rooks Code, Rooks Browser): every role colour against black, white and the usual off-black/off-white.
   Phone: mobile/src/lib/theme.ts is checked by its own jest test (src/lib/__tests__/theme.test.ts).
 
@@ -14,23 +18,40 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CSS = ["styles.css", "appearance.css", "sunshine.css", "themes.css"]  # main.tsx import order (token files only)
-SRC = ROOT / "workbench" / "frontend" / "src"
-THEMES = {"sunshine": "sunshine", "paper": "paper", "cherry": "cherry", "neon": "neon", "night": "dark", "contrast": "contrast"}
-DARK = {"neon", "night"}
+TOKENS = ROOT / "workbench" / "frontend" / "src" / "tokens.css"
+THEMES = {"light": 'html[data-mode="light"]', "dark": 'html[data-mode="dark"]', "contrast": 'html[data-mode="contrast"]'}
 
 TEXT_PAIRS = [  # (foreground, background) that must reach 4.5:1
-    ("text", "paper"), ("text", "panel"), ("text", "panel-2"), ("text", "panel-3"),
-    ("muted", "paper"), ("muted", "panel"), ("muted", "panel-2"),
-    ("faint", "paper"), ("faint", "panel"),
-    ("accent-text", "paper"), ("accent-text", "panel"), ("accent-text", "accent-soft"),
-    ("on-accent", "accent"), ("on-ink", "ink-btn"),
-    ("danger-text", "paper"), ("ok-text", "paper"), ("warn-text", "paper"),
-    ("danger-text", "danger-soft"), ("ok-text", "ok-soft"), ("warn-text", "warn-soft"),
+    *[(fg, bg) for fg in ("ink", "ink-soft", "ink-muted") for bg in ("bg", "surface", "surface-raised", "surface-muted", "bg-hover", "accent-soft")],
+    ("ink", "bg-active"),
+    ("accent-text", "bg"), ("accent-text", "surface"), ("accent-text", "surface-muted"), ("accent-text", "accent-soft"),
+    ("on-primary", "primary"), ("on-primary-hover", "primary-hover"), ("on-accent", "accent"), ("on-danger", "danger"),
+    ("success-text", "bg"), ("warning-text", "bg"), ("danger-text", "bg"),
+    ("success-text", "success-soft"), ("warning-text", "warning-soft"), ("danger-text", "danger-soft"),
+    ("code-keyword", "code-bg"), ("code-string", "code-bg"), ("code-number", "code-bg"), ("code-title", "code-bg"), ("code-type", "code-bg"),
+    ("on-dark", "dark"), ("on-dark-muted", "dark"),
+    # the primitives (industrial step 2): mono badge words on the sunken fill
+    ("ink", "surface-sunken"), ("ink-muted", "surface-sunken"),
+    # the shell (industrial step 3): grey nav links and menu words on the current row's fill (the phone bar's current
+    # cell, ink on paper, is checked in tests/glass.test.mjs)
+    ("ink-muted", "bg-active"),
 ]
-UI_PAIRS = [("accent-ring", "paper")]  # non-text (focus ring): 3:1. Borders are decorative in Sunshine (soft shadows carry the edges).
-
-
+UI_PAIRS = [  # non-text that a person needs to see: 3:1
+    ("border-strong", "bg"), ("border-strong", "surface"), ("ink-faint", "bg"), ("border-focus", "bg"), ("accent", "surface"),
+    # the primitives (industrial step 2): the square marks on toasts and receipts, the ink edge of what you press
+    ("on-primary", "success"), ("on-primary", "danger"), ("on-primary", "warning"), ("ink", "bg"),
+    # the pages (industrial step 4): chart series (black, grey and orange) on the card they are drawn on; the greys
+    # also on the paper (orange on the paper is the decoration note below: charts sit on white cards)
+    *[(f"chart-{i}", "surface") for i in range(1, 7)], *[(f"chart-{i}", "bg") for i in (1, 3, 4, 5, 6)],
+]
+# the review fixes: series that can be told apart. Every pair of chart series at least 1.25:1 apart in lightness (so
+# it holds without colour vision too), mermaid pie slices the same, and the words mermaid writes on a slice AA on each
+CHART_SERIES = [f"chart-{i}" for i in range(1, 7)]
+PIE_FILLS = [f"pie-{i}" for i in range(1, 6)]
+APART = 1.25
+# orange marks on the paper: always beside words, reported for the record. The current link's orange rule in the top
+# bar is one of them: the link itself also turns ink and bold and carries aria-current (shell/shell.css).
+DECORATIVE = [("accent", "bg")]
 def lum(hex_colour: str) -> float:
     h = hex_colour.lstrip("#")
     if len(h) == 3:
@@ -48,48 +69,66 @@ def ratio(a: str, b: str) -> float:
     return (x + 0.05) / (y + 0.05)
 
 
-def rules():
-    out = []
-    order = 0
-    for name in CSS:
-        text = re.sub(r"/\*.*?\*/", "", (SRC / name).read_text(), flags=re.S)
-        for sel, body in re.findall(r"([^{}]+)\{([^{}]*)\}", text):
-            decls = dict((k.strip(), v.strip()) for k, v in re.findall(r"(--[\w-]+)\s*:\s*([^;]+)", body))
-            if not decls:
-                continue
-            for s in sel.split(","):
-                m = re.fullmatch(r"\s*:root((?:\[[^\]]+\])*)\s*", s)
-                if not m:
-                    continue
-                attrs = dict(re.findall(r'\[([\w-]+)="([^"]*)"\]', m.group(1)))
-                out.append((len(attrs), order, attrs, decls))
-                order += 1
+def _blocks(css: str) -> dict:
+    """Custom properties per selector block, comments stripped (only plain #rrggbb values matter here)."""
+    out: dict = {}
+    for sel, body in re.findall(r"([^{}]+)\{([^{}]*)\}", re.sub(r"/\*.*?\*/", "", css, flags=re.S)):
+        decls = dict((k.strip(), v.strip()) for k, v in re.findall(r"(--[\w-]+)\s*:\s*([^;]+)", body))
+        for s in sel.split(","):
+            out.setdefault(s.strip(), {}).update(decls)
     return out
 
 
-def tokens(theme_attr: str, accent: str, mode: str) -> dict:
-    root = {"data-theme": theme_attr, "data-accent": accent, "data-mode": mode}
+def tokens(theme: str) -> dict:
+    b = _blocks(TOKENS.read_text())
     vals: dict = {}
-    for _, _, attrs, decls in sorted((r for r in rules() if all(root.get(k) == v for k, v in r[2].items())), key=lambda r: (r[0], r[1])):
-        vals.update(decls)
+    vals.update(b.get(":root", {}))
+    vals.update(b.get(THEMES["light"], {}))
+    if theme != "light":
+        vals.update(b.get(THEMES[theme], {}))
+    # a token that names another (--color-chart-1: var(--color-ink)) takes that token's value in this theme
+    for _ in range(4):
+        vals = {k: (vals.get(m.group(1), v) if (m := re.fullmatch(r"var\((--[\w-]+)\)", v)) else v) for k, v in vals.items()}
     return vals
 
 
 def check_workbench(verbose: bool) -> list[str]:
     fails = []
-    for tid, attr in THEMES.items():
-        t = tokens(attr, "theme", "dark" if tid in DARK else "light")
+    for tid in THEMES:
+        t = tokens(tid)
         for pairs, need in ((TEXT_PAIRS, 4.5), (UI_PAIRS, 3.0)):
             for fg, bg in pairs:
-                a, b = t.get(f"--{fg}"), t.get(f"--{bg}")
+                a, b = t.get(f"--color-{fg}"), t.get(f"--color-{bg}")
                 if not (a and b and a.startswith("#") and b.startswith("#")):
-                    fails.append(f"workbench {tid}: missing --{fg} or --{bg}")
+                    fails.append(f"app {tid}: missing --color-{fg} or --color-{bg}")
                     continue
                 r = ratio(a, b)
                 if verbose:
-                    print(f"  workbench {tid:<9} {fg:>12} on {bg:<11} {r:5.2f}")
+                    print(f"  app {tid:<9} {fg:>16} on {bg:<15} {r:5.2f}")
                 if r < need:
-                    fails.append(f"workbench {tid}: --{fg} {a} on --{bg} {b} is {r:.2f}:1 (needs {need})")
+                    fails.append(f"app {tid}: --color-{fg} {a} on --color-{bg} {b} is {r:.2f}:1 (needs {need})")
+        for group in (CHART_SERIES, PIE_FILLS):
+            for i, a in enumerate(group):
+                for b in group[i + 1:]:
+                    x, y = t.get(f"--color-{a}", ""), t.get(f"--color-{b}", "")
+                    if not (x.startswith("#") and y.startswith("#")):
+                        fails.append(f"app {tid}: missing --color-{a} or --color-{b}")
+                    elif ratio(x, y) < APART:
+                        fails.append(f"app {tid}: --color-{a} {x} and --color-{b} {y} are {ratio(x, y):.2f}:1 apart (needs {APART})")
+        for fill in PIE_FILLS:
+            ink, f = t.get("--color-pie-ink", ""), t.get(f"--color-{fill}", "")
+            if ink.startswith("#") and f.startswith("#") and ratio(ink, f) < 4.5:
+                fails.append(f"app {tid}: pie words {ink} on --color-{fill} {f} are {ratio(ink, f):.2f}:1 (needs 4.5)")
+        # the focus ring: orange, on a 1 px ink halo; 3:1 against the page by itself or through the halo
+        ring, halo, page = t.get("--color-focus"), t.get("--color-focus-halo"), t.get("--color-bg")
+        if not (ring and halo and page):
+            fails.append(f"app {tid}: missing --color-focus, --color-focus-halo or --color-bg")
+        elif not (ratio(ring, page) >= 3 or (ratio(halo, page) >= 3 and ratio(ring, halo) >= 3)):
+            fails.append(f"app {tid}: the focus ring {ring} on {page} (halo {halo}) is under 3:1")
+        if verbose:
+            for fg, bg in DECORATIVE:
+                a, b = t.get(f"--color-{fg}"), t.get(f"--color-{bg}")
+                print(f"  app {tid:<9} {fg:>16} on {bg:<15} {ratio(a, b):5.2f}  (decoration beside words)")
     return fails
 
 
@@ -121,4 +160,4 @@ if __name__ == "__main__":
         for f in fails:
             print("  ✗ " + f)
         sys.exit(1)
-    print(f"All themes pass AA: {len(THEMES)} workbench themes x {len(TEXT_PAIRS) + len(UI_PAIRS)} pairs, terminal palettes on dark and light terminals.")
+    print(f"All themes pass AA: {len(THEMES)} app themes x {len(TEXT_PAIRS) + len(UI_PAIRS) + 1} pairs, chart series and pie slices apart, terminal palettes on dark and light terminals.")

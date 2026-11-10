@@ -23,7 +23,10 @@ export type Card = {
   sentence?: string; routine_kind?: string; name?: string; surface?: string; job_id?: string; goal?: string; files?: string[]; note_kind?: string; location?: string;
 };
 export type Watch = { surface: string; job_id: string; goal?: string };
-export type Approval = { id: number; tool: string; args: string; effect: string; reason: string };
+import type { ChangeLine } from "../needs/ChangeLines";
+
+/** A held call; change: a work change in words (every person a share invites), from the app (work_suite.change_lines). */
+export type Approval = { id: number; tool: string; args: string; effect: string; reason: string; change?: ChangeLine[] };
 export type Choices = { question: string; options: string[] };
 export type Offer = { key: string; name: string; request: string; line: string };
 export type Done = { conversationId: number; costCents: number; toolCalls: number; outcome: string };
@@ -98,7 +101,9 @@ function card(raw: Record<string, unknown>): Card {
 }
 
 function approval(raw: Record<string, unknown>): Approval {
-  return { id: num(raw.id), tool: str(raw.tool), args: str(raw.args), effect: str(raw.effect), reason: str(raw.reason) };
+  const a: Approval = { id: num(raw.id), tool: str(raw.tool), args: str(raw.args), effect: str(raw.effect), reason: str(raw.reason) };
+  if (Array.isArray(raw.change)) a.change = raw.change.map((l) => ({ op: str((l as ChangeLine)?.op), text: str((l as ChangeLine)?.text) }));
+  return a;
 }
 
 /** One raw `data:` line as a typed event, or null for anything the chat does not understand. */

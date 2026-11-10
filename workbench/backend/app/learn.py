@@ -1,6 +1,6 @@
 """Self improvement, run in the background after each turn:
 
-* memories: durable facts about the user are mined from new messages (deduplicated against what is known)
+* memories: durable facts about the user are mined from new messages into the one memory store (knowledge/facts.py)
 * skills: after a complex task (several tool calls) the model decides whether to save or improve a reusable procedure
 
 Both use the conversation's model and can be switched off in Settings (learning costs extra model calls).
@@ -24,10 +24,6 @@ NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,48}$")
 
 def enabled() -> bool:
     return db.get_setting("learning_enabled", "1") == "1"
-
-
-def _norm(s: str) -> str:
-    return re.sub(r"[^a-z0-9 ]", "", s.lower()).strip()
 
 
 def _step_diff(previous: str, fresh: str) -> str:
@@ -62,49 +58,6 @@ async def _model_json(conv: dict, prompt: str, payload: str, channel: str):
     res = await llm.chat(conv["model"] or None, [{"role": "system", "content": prompt}, {"role": "user", "content": payload}],
                          trace={"channel": f"learn:{channel}", "agent_id": conv.get("agent_id"), "conversation_id": conv["id"]})
     return llm.parse_json(res["message"].get("content") or "")
-
-
-MEMORY_PROMPT = (
-    "You maintain long term memory about ONE user. From the new messages, extract durable facts worth remembering for "
-    "future conversations: who they are (name, work, location, family), goals and ongoing projects, preferences and "
-    "how they like things done, important people and commitments. Only facts the USER stated or clearly confirmed. "
-    "Skip small talk, one-off requests and anything already known. "
-    'Reply with only a JSON array (possibly empty) of {"content": "...", "kind": "profile|preference|fact"}. '
-    "Use profile for core identity facts. Max 5 items, each one short sentence."
-)
-
-
-async def mine_memories(conv_id: int) -> int:
-    conv = db.one("SELECT * FROM conversations WHERE id = ?", conv_id)
-    if not conv:
-        return 0
-    rows = db.all("SELECT id, role, content FROM messages WHERE conversation_id = ? AND id > ? AND role IN ('user', 'assistant') "
-                  "ORDER BY id", conv_id, conv["memory_cursor"])
-    user_chars = sum(len(r["content"]) for r in rows if r["role"] == "user")
-    if not rows or user_chars < 40:
-        return 0
-    known = db.all("SELECT content FROM memories ORDER BY updated_at DESC LIMIT 60")
-    payload = ("Already known:\n" + "\n".join(f"- {k['content']}" for k in known) + "\n\nNew messages:\n" +
-               "\n".join(f"{r['role'].upper()}: {r['content'][:2000]}" for r in rows))
-    items = await _model_json(conv, MEMORY_PROMPT, payload[:24000], "memory")
-    db.run("UPDATE conversations SET memory_cursor = ? WHERE id = ?", rows[-1]["id"], conv_id)
-    if not isinstance(items, list):
-        return 0
-    known_norm = {_norm(k["content"]) for k in db.all("SELECT content FROM memories")}
-    added = 0
-    for it in items[:5]:
-        if not isinstance(it, dict) or not isinstance(it.get("content"), str):
-            continue
-        content = it["content"].strip()[:500]
-        n = _norm(content)
-        if len(n) < 8 or n in known_norm or any(n in k or k in n for k in known_norm if len(k) > 15):
-            continue
-        kind = it.get("kind") if it.get("kind") in ("profile", "preference", "fact") else "fact"
-        db.run("INSERT INTO memories(content, kind, source, conversation_id, created_at, updated_at) VALUES (?, ?, 'auto', ?, ?, ?)",
-               content, kind, conv_id, db.now(), db.now())
-        known_norm.add(n)
-        added += 1
-    return added
 
 
 SKILL_PROMPT = (
@@ -163,10 +116,7 @@ async def _after(conv_id: int, tool_calls: int, channel: str = "web") -> None:
 
     async with _lock:  # one learning job at a time keeps it light
         try:
-            if adapt_hooks.memory_replaces_legacy():  # encrypted "What I know about you" store, plus job patterns
-                await adapt_hooks.after_turn(conv_id, channel)
-            else:
-                await mine_memories(conv_id)
+            await adapt_hooks.after_turn(conv_id, channel)  # facts into the one memory store, plus job patterns
             if tool_calls >= SKILL_MIN_TOOL_CALLS:
                 await mine_skill(conv_id)
         except Exception as e:  # noqa: BLE001 - learning is best effort and must never break chat

@@ -3,12 +3,13 @@
  * where they sit, and the small mappings the Terminal and Files windows need. No React, no network, so the tests run it.
  *
  * What exists comes from the Room's status only (windowsFor): the Screen window only when the service says the Room has
- * a real screen, the Terminal only when it can open one, Files only when its folder is on this computer. The browser
+ * a real screen, the Terminal and the Browser only when they are switched on and can open here (developer tools, off on
+ * a new install), Files only when its folder is on this computer. The browser
  * remembers just which windows are open (rooks.room.desk), a convenience; a remembered window status does not offer
  * is dropped.
  */
 
-export type WindowId = "screen" | "terminal" | "commands" | "files" | "points";
+export type WindowId = "screen" | "terminal" | "browser" | "commands" | "files" | "points";
 
 /** Why the Room has no terminal (status.can.terminal_off_reason): switched off in Settings, helper mode, or Windows. */
 export type TerminalOffReason = "switched_off" | "helper" | "windows";
@@ -18,48 +19,54 @@ export type DeskStatus = {
   checked?: boolean;
   available?: boolean;
   screen?: boolean;
-  can?: { terminal?: boolean; files?: boolean; terminal_off_reason?: TerminalOffReason | null } | null;
+  can?: {
+    terminal?: boolean; files?: boolean; terminal_off_reason?: TerminalOffReason | null;
+    /** design 0007: the Room's own browser here, and why not ("no_engine", "switched_off", "windows", "helper"). */
+    browser?: boolean; browser_off_reason?: string | null;
+  } | null;
 };
 
 export const DESK_KEY = "rooks.room.desk";
 
 /** Each window's title. */
 export const WINDOW_TITLE: Record<WindowId, string> = {
-  screen: "Screen", terminal: "Terminal", commands: "Commands", files: "Files", points: "Saved points",
+  screen: "Screen", terminal: "Terminal", browser: "Browser", commands: "Commands", files: "Files", points: "Saved points",
 };
 
 /** Each dock item's name. */
 const DOCK_LABEL: Record<WindowId, string> = {
-  screen: "Screen", terminal: "Terminal", commands: "Commands", files: "Files", points: "Points",
+  screen: "Screen", terminal: "Terminal", browser: "Browser", commands: "Commands", files: "Files", points: "Points",
 };
 
 /**
- * The windows the Room offers, primary first (Screen, else Terminal or Commands), then Files and Saved points. Terminals
- * switched off in Settings keep the Terminal window, which says so and links to Settings; Commands is only for helper
- * mode and Windows, where a Room terminal cannot exist (design 3.5).
+ * The windows the Room offers, primary first (Screen, then Terminal), then Browser, Files and Saved points. The Room's
+ * Terminal and Browser are developer tools, off on a new install: each is offered only when status says the Room can
+ * open one here (can.terminal, can.browser true). Switched off, or not possible here, means not shown: no window that
+ * says so, and no Commands window in the Terminal's place (CommandView stays in the code; the assistant's quick
+ * commands still show in the run log).
  */
 export function windowsFor(status: DeskStatus | null | undefined): WindowId[] {
   if (!status || status.checked === false || !status.available) return [];
   const out: WindowId[] = [];
   if (status.screen === true) out.push("screen");
-  const terminal = status.can?.terminal === true || status.can?.terminal_off_reason === "switched_off";
-  out.push(terminal ? "terminal" : "commands");
+  if (status.can?.terminal === true) out.push("terminal");
+  if (status.can?.browser === true) out.push("browser"); // design 0007: after Terminal
   if (status.can?.files === true) out.push("files");
   out.push("points");
   return out;
 }
 
-/** What opens when nothing is remembered: the primary window, Files and Saved points. */
+/** What opens when nothing is remembered: the primary window, Files and Saved points (the browser starts only when asked). */
 export function defaultOpen(status: DeskStatus | null | undefined): WindowId[] {
   const offered = windowsFor(status);
   if (!offered.length) return [];
-  return offered.filter((w, i) => i === 0 || w === "files" || w === "points");
+  return offered.filter((w, i) => (i === 0 && w !== "browser") || w === "files" || w === "points");
 }
 
-/** The dock's items, in its fixed order: Terminal (or Commands), Files, Points, Screen. */
+/** The dock's items, in its fixed order: Terminal (or Commands), Browser, Files, Points, Screen. */
 export function dockItems(status: DeskStatus | null | undefined): { id: WindowId; label: string }[] {
   const offered = windowsFor(status);
-  const order: WindowId[] = ["terminal", "commands", "files", "points", "screen"];
+  const order: WindowId[] = ["terminal", "commands", "browser", "files", "points", "screen"];
   return order.filter((w) => offered.includes(w)).map((id) => ({ id, label: DOCK_LABEL[id] }));
 }
 
@@ -103,13 +110,13 @@ export function toggleWindow(open: WindowId[], id: WindowId): WindowId[] {
 }
 
 /**
- * Where the open windows sit: the primary one (Screen, else Terminal, else Commands) on the left, the rest stacked on
- * the right. With a screen the Terminal moves to the right column above Files. With no primary window open the right
- * column's windows fill the width.
+ * Where the open windows sit: the primary one (Screen, else Browser, else Terminal, else Commands) on the left, the rest
+ * stacked on the right. With a screen or a browser the Terminal moves to the right column above Files. With no primary
+ * window open the right column's windows fill the width.
  */
 export function deskLayout(open: WindowId[]): { primary: WindowId | null; side: WindowId[] } {
-  const primary = (["screen", "terminal", "commands"] as WindowId[]).find((w) => open.includes(w)) ?? null;
-  const side = (["terminal", "commands", "files", "points"] as WindowId[]).filter((w) => w !== primary && open.includes(w));
+  const primary = (["screen", "browser", "terminal", "commands"] as WindowId[]).find((w) => open.includes(w)) ?? null;
+  const side = (["browser", "terminal", "commands", "files", "points"] as WindowId[]).filter((w) => w !== primary && open.includes(w));
   return { primary, side };
 }
 
@@ -232,6 +239,12 @@ export type FileEntry = {
   /** For a link: where it leads, as the service says (outside the Room, or nowhere). */
   why?: "outside" | "broken" | string | null;
 };
+
+/** Hidden entries (a name that starts with a dot: .profile, .config, .local) are for developers: shown only with
+ * Show developer tools on. */
+export function visibleEntries<T extends Pick<FileEntry, "name">>(entries: T[], devTools: boolean): T[] {
+  return devTools ? entries : entries.filter((e) => !e.name.startsWith("."));
+}
 
 /** Folders first, then files and links, A to Z; names that start with a dot last (shown, the seeded profile must be). */
 export function sortEntries<T extends FileEntry>(entries: T[]): T[] {

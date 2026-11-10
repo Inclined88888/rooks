@@ -18,7 +18,7 @@ from . import egress  # noqa: E402
 
 egress.install()  # before anything connects: every outbound request is in the audit log (R8, item 75)
 
-from . import actions, api, appearance, assistant_api, bridge, browser_proxy, cli_agents_api, company, plan_signin, config, connect, db, desk_proxy, health, llm, mobile, scheduler, sites, skills_hub, telegram, work_api  # noqa: E402
+from . import actions, api, appearance, assistant_api, bridge, browser_proxy, cli_agents_api, company, plan_signin, config, connect, db, desk_proxy, health, llm, mobile, scheduler, sites, skills_hub, telegram, work_api, work_suite_api  # noqa: E402
 from . import terminal_pty  # noqa: E402 - #7 app terminal
 from . import compression  # AIW-Phase1: rolling compression of long chats
 from . import starters  # noqa: E402 - feat/coworkers
@@ -29,9 +29,9 @@ from . import restart  # noqa: E402 - B3: a restart reported honestly; goals tha
 from .mcp_server import mcp, mcp_app
 from . import mcp_client_api  # noqa: E402 - feat/mcp-client: Workbench as an MCP client (the user's own servers)
 from .adapt import hooks as adapt_hooks, routes as adapt_routes  # adapt and learn (feat/learn-and-adapt)
-from . import auto_tools, automations, jobs, v02_api  # noqa: E402 - feat/v02-automations
+from . import auto_tools, automations, jobs, automations_api  # noqa: E402 - feat/v02-automations
 from .team import loop as team_loop, routes as team_routes, tools as team_tools  # feat/team-lead
-from . import v02_hooks  # feat/v02-core: projects, action history with undo, checked answers
+from . import projects_hooks  # feat/v02-core: projects, action history with undo, checked answers
 from .packs import mobile_routes as packs_mobile, routes as packs_routes, tools as packs_tools  # feat/v02-packs: Trade, Legal, Study packs
 from .security import check_bearer
 from .tools import tools
@@ -105,12 +105,15 @@ async def lifespan(_: FastAPI):
     restart.start()  # B3: goals that asked to carry on after a restart continue now, in the background
     async with mcp.session_manager.run():
         yield
+    from . import room_browser  # design 0007: the Room's browser closes cleanly and its record says a restart did it
+
+    await asyncio.to_thread(room_browser._at_exit)
     mobile.lan_stop()
     for t in loops:
         t.cancel()
 
 
-app = FastAPI(title="Workbench", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="Rooks", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.middleware("http")
@@ -124,6 +127,9 @@ async def guard(request: Request, call_next):
     if request.url.path.startswith("/api/") and request.method not in ("GET", "HEAD", "OPTIONS"):
         if request.headers.get("x-workbench") != "1":
             return JSONResponse({"detail": "Missing X-Workbench header"}, status_code=403)
+    from . import room_browser  # every request says where this app is reached: the Room's browser refuses it there
+
+    room_browser.learn(request.scope)
     if not companion._published and request.url.hostname in ("127.0.0.1", "localhost"):
         companion.publish(f"{request.url.scheme}://{request.url.hostname}:{request.url.port or 80}")  # notch app + agent hooks
     response = await call_next(request)
@@ -180,6 +186,11 @@ from . import room_terminal  # noqa: E402 - design 0006: the Room's own terminal
 app.include_router(room_terminal.terminal)  # /room open, tail, send, close (the rooks terminal's key too)
 app.include_router(room_terminal.router)    # take a terminal from Rooks, name it: the person's
 app.include_router(room_terminal.sockets)   # the terminal's screen: loopback, same origin, signed in
+from . import room_browser  # noqa: E402 - design 0007: the Room's own browser, a real Chromium over a pipe
+
+app.include_router(room_browser.terminal)  # /room browse, tabs, page (the rooks terminal's key; never a shared bridge key)
+app.include_router(room_browser.router)    # the phone's still and taps, close: the person's
+app.include_router(room_browser.sockets)   # the live page: loopback, same origin, signed in, one window
 from . import needs_you, presence  # noqa: E402 - the Workroom (design 0003): the presence strip and the Needs you inbox
 
 app.include_router(presence.router)
@@ -187,15 +198,16 @@ app.include_router(presence.pulse_router)  # GET /api/pulse: presence, Needs you
 app.include_router(needs_you.router)
 app.include_router(starters.router)  # feat/coworkers: profession setups, coworkers and job cards (design record 0004)
 app.include_router(work_api.router)  # Files (any file, analysis, sandboxed Python) and Sites (any website the user works in)
+app.include_router(work_suite_api.router)  # design 0012: the work account (Microsoft 365), its switches, files, Teams, tasks
 app.include_router(skills_hub.router)  # Skills from GitHub behind the security gate
 app.include_router(mcp_client_api.router)  # feat/mcp-client: connect Workbench to the user's own MCP servers
 app.include_router(cli_agents_api.router)  # hand jobs to the user's own Claude Code / Codex CLI
 app.include_router(plan_signin.router)  # install and sign in to Claude Code / Codex from the app
-app.include_router(adapt_routes.router)  # /api/learn: What I know about you, Show me how, suggestions
+app.include_router(adapt_routes.router)  # /api/learn: learning switches, the work it has seen, Show me how, suggestions
 adapt_hooks.register_tools()
-app.include_router(v02_api.router)  # feat/v02-automations: automations, jobs board, live documents
-app.include_router(v02_api.phone)
-app.include_router(v02_api.terminal)  # /jobs in the terminal reads the board
+app.include_router(automations_api.router)  # feat/v02-automations: automations, jobs board, live documents
+app.include_router(automations_api.phone)
+app.include_router(automations_api.terminal)  # /jobs in the terminal reads the board
 auto_tools.register_tools()
 # feat/v02-anywhere-voice: Ask from anywhere, voice, meeting companion
 from . import anywhere, meetings, voice  # noqa: E402
@@ -208,7 +220,7 @@ app.include_router(meetings.router)
 app.include_router(media.router)  # phase 4: images through connected providers, saved to Files
 app.include_router(companion.router)  # notch / top-edge app, phone, agent hooks
 app.include_router(finetune.router)  # phase 4: datasets from your chats, hosted fine-tuning jobs
-v02_hooks.install(app)  # feat/v02-core: /api/projects, /api/history (undo), /api/checked
+projects_hooks.install(app)  # feat/v02-core: /api/projects, /api/history (undo), /api/checked
 from .knowledge import routes as knowledge_routes  # feat/memory-core: shared memory and data layer
 app.include_router(knowledge_routes.router)  # feat/memory-core
 from .knowledge import mobile as knowledge_mobile  # feat/memory-core: read-only search, People and Projects on the phone

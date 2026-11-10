@@ -36,7 +36,7 @@ is the no-installer fallback. CI tests and installs it on macOS, Windows and Lin
 ```sh
 cd your-project
 rooks                                  # interactive session
-rooks "make the failing test pass"     # one prompt, prints the answer, exits 1 if it did not finish
+rooks "make the failing test pass"     # one prompt, prints the answer, then exits (codes below)
 rooks -P ollama -m qwen2.5:7b    # local and offline (ollama pull qwen2.5:7b first)
 rooks -P anthropic -m claude-sonnet-5-5   # needs ANTHROPIC_API_KEY
 rooks -P openai -m gpt-4.1-mini        # needs OPENAI_API_KEY
@@ -48,17 +48,82 @@ rooks -P codex "fix the build"         # delegate to your own signed-in Codex (y
 ```
 
 `-P claude-code` and `-P codex` run the official CLI you installed and signed in to yourself, in this folder, and print
-what it does. Edits and commands are still asked about first (`--yes` = accept edits, `--dry-run` = plan only); Rooks
-never handles a key or token for them. See [../docs/CLAUDE-CODE.md](../docs/CLAUDE-CODE.md).
+what it does. Edits and commands are still asked about first (`--yes` = accept edits, `--dry-run` = show what would
+change and change nothing); Rooks never handles a key or token for them. See [../docs/CLAUDE-CODE.md](../docs/CLAUDE-CODE.md).
+
+A one-shot run (`rooks "task"`, also with piped input) and a headless run (`rooks -p`, below) end with an exit code a
+script can check:
+
+| Code | Means |
+| --- | --- |
+| `0` | finished |
+| `1` | did not finish: the model could not answer, the step limit or a cap was reached, or a checked change failed |
+| `2` | cannot start: no key for the provider, no task given, or bad arguments |
+| `3` | a change or command was denied: you typed `n`, there was no input to answer with (in a headless run, nobody can answer), a permission rule never allows it, or a project hook stopped it |
+
+### Headless: scripts and CI
+
+```sh
+rooks -p "make the failing test pass"                       # prints the answer; exit code as above
+echo "make the failing test pass" | rooks -p                # the task piped in (read until the pipe closes)
+rooks -p --output-format json "what does calc.py do?"       # one JSON object at the end
+rooks -p --output-format stream-json "fix the build"        # one JSON object per line, per event
+```
+
+`rooks -p` runs one task and never waits for input. A step that would need your OK (an edit, a command, an MCP tool, an
+MCP server's question to you) is denied at once and reported, and the run exits with code `3`. Only what you set up
+beforehand lets a step run: a permission rule (`[permissions] allow` in `rooks.toml`, or a trusted folder's
+`.rooks/settings.json`), a trusted folder, or `--yes` (approves the agent's own steps; an MCP server's question to you
+is still denied). Deny rules refuse in every mode. A headless run never asks whether to trust a folder, and is not
+linked to a chat in the app, so nothing waits in Needs you. With `-p`, a task given on the command line is used and
+standard input is not read; `-` or no task reads it from the pipe.
+
+* `--output-format text` (the default): the answer alone on standard output; each step and each denial, briefly, on
+  standard error.
+* `--output-format json`: one object: `result` (the answer), `session_id` (the receipt in `.rooks/runs`, and
+  `rooks --resume ID` continues it), `turns` (model calls), `tokens` (`input`, `output`, and `cache_read` and
+  `cache_write`, the input read from and written to the prompt cache), `cost_usd` (`null` when the price is unknown),
+  `denied` (each step not done: `tool`, `summary`, `by` = `headless`, `rule` or `hook`), `exit_code`, `error`,
+  `outcome` and `duration_ms`.
+* `--output-format stream-json`: one object per line: `start`, `assistant` (text), `tool_call`, `tool_result` (paired
+  by `id`), `approval_asked`, `approval_denied`, `notice`, and last `end`, which carries the same fields as the json
+  result. A helper's steps (the task tool) have `"helper": true`.
+
+Both are described by a JSON Schema in the package, [rooks_code/schema/headless.schema.json](rooks_code/schema/headless.schema.json)
+(`#/$defs/result` and `#/$defs/event`); the tests validate every line against it. Keys, tokens, emails and phone
+numbers are hidden in headless output, as in the receipts. `json` and `stream-json` imply `-p`.
+
+From Python, the same run in-process, with the same result object:
+
+```python
+from rooks_code import sdk
+
+res = sdk.run("make the failing test pass", cwd="path/to/project", on_event=print)  # also provider=, model=, yes=, ...
+print(res.exit_code, res.result, res.denied, res.to_dict())
+```
+
+`rooks_code.sdk.run` never reads standard input or prints; each event reaches `on_event` as a dict, and a bad setup
+comes back as `exit_code` 2 with `error` in plain words instead of an exception. `rooks -P claude-code` and `-P codex`
+are not headless here: use their own (`claude -p`, `codex exec`).
 
 Inside a session type `/` for the command menu (every command with what it does) and `@` to pick a file:
 
 * `/model` opens a menu: Auto or an AI, then a short list of its newest chat models (older ones behind "More"),
   then, for a Claude, ChatGPT or Copilot plan, how hard it thinks. `/effort low|medium|high|auto` changes only that.
   The choice shows in the status bar and is kept for the next start.
+* Two separate settings, never called by the same name. `/mode chat|plan|build` says what Rooks may do at all (chat
+  talks, plan reads, build can change files); it shows as "build mode" in the line under each answer. Shift+Tab says
+  how changes are approved: asks first, auto-accept or dry run (`/auto` and `/dry-run` switch the same thing); it shows
+  in the status bar. A checklist the agent keeps shows there as "checklist 2/5".
+* `/permissions` shows what runs without asking and what never runs, in plain words, and whether this folder's own
+  rules apply; `/permissions trust` or `untrust` changes that (see Trust controls).
+* `/init` writes AGENTS.md and the session follows it from the next request on, no restart needed.
+* `/doctor` checks the provider at the address this session uses (`--base-url` or the app's), with one real call, and
+  prints the full detail of any error. On the normal screen a model error is said in plain words, with no address.
 * `/new`, `/sessions`, `/resume ID`, `/compact`, `/copy`, `/undo`, `/cost`, `/auto`, `/dry-run`, `/login`, `/provider`,
-  `/doctor`, `/receipt`, `/exit`.
-* `/memory` and `/skills` show what Rooks has learned (below).
+  `/receipt`, `/exit`.
+* `/memory` shows what Rooks remembers; `/skills` lists skills and your own commands, each with where it comes from
+  (below).
 
 ## It learns
 
@@ -72,6 +137,28 @@ Rooks gets better the more you use it, the same way the AI Workspace app does, a
 * Without the app, remembered facts live in `memory.json` next to `rooks.toml` and come back in every session.
 * `learn = false` in `rooks.toml` turns it off. The app's "Learn about me" switch also applies.
 
+## Skills and your own commands (app on or off)
+
+* **Skills** are folders with a `SKILL.md`: front matter with a `name` and a `description`, then the steps. Rooks reads
+  them from this folder's `.rooks/skills/NAME/` and `.claude/skills/NAME/`, and from your own `~/.rooks/skills/NAME/`
+  and `~/.claude/skills/NAME/`, so skills written for Claude Code work as they are. Only each skill's name and
+  description go into the instructions; its steps reach the model only when it calls `load_skill` (the same tool the
+  app's saved skills use), so a long skill costs nothing until a task needs it. With the app connected its skills are
+  listed too; a skill file of the same name is used before the app's. `learn = false` does not turn skill files off.
+* **Your own commands** are Markdown files: `.rooks/commands/NAME.md` or `.claude/commands/NAME.md` in this folder,
+  `~/.rooks/commands/NAME.md` or `~/.claude/commands/NAME.md` for you. `/NAME words` sends the file's text (front
+  matter left out) as the request, with `$ARGUMENTS` replaced by the words and `$1`, `$2` ... by each word; when the
+  text names none, the words are added at the end. `rooks "/NAME words"` and `rooks -p "/NAME words"` work the same.
+  They show in the `/` menu and in `/help`. A built-in command always wins over one of yours with the same name
+  (`/skills` says so). A command file grants nothing: `allowed-tools` and other front matter are not honoured, Claude
+  Code's `!` shell lines are not run, and every step it leads to is asked about as usual.
+* Where names clash: this folder's before yours, `.rooks` before `.claude`. Subfolders of `commands` are not read.
+* **A folder's own skills and commands are used only once you trust the folder**, the same trust that turns on its
+  own permission rules: the one-time question at start (it lists them), or `/permissions trust`. Until then they are
+  listed in `/skills` as not used yet, the session start says so, `load_skill` refuses them, and `/NAME` says why
+  instead of running (a headless run exits 3). Your own (`~/.rooks`, `~/.claude`) are always used. A folder's skill or
+  command file that links to a file outside the folder is never read.
+
 Other commands: `rooks undo`, `rooks receipts [list|show|import --db workbench.db]`, `rooks doctor` (checks the provider,
 key and MCP servers with one real call), `rooks mcp` (lists MCP tools), `rooks init` (writes an example config).
 
@@ -81,20 +168,75 @@ in [docs/demo-session.txt](docs/demo-session.txt), including the model's mistake
 ## Trust controls
 
 * **Approval by default.** Reading and searching run freely. Every edit is shown as a diff and every command in full,
-  then you answer `y`, `n` or `a` (always, for this session). A denied action is reported to the model, which is told not
-  to retry it. With no terminal input the answer is "no".
+  then you answer `y`, `n`, `a` (or `h`, below). `a` approves only that exact command, changes to that one file, or that one tool
+  of one MCP server, for the rest of the session; the question says which ("Approve this exact command for this
+  session"). Any other command, file or tool is still asked about. A denied action is reported to the model, which is
+  told not to retry it, and its reply ends the turn: Rooks never nudges it to carry on after a no. With no terminal
+  input the answer is "no", and a one-shot run exits with code 3.
+* **Only you answer, here or in the app.** Linked to the app, each question also waits in Needs you. An answer typed
+  here is recorded in the app only with your Terminal access token (`rooks login`); the open app's own key never
+  records one, because any program on this computer can read it, a command the agent ran included. Without the token
+  your answer here still stands and the app's card closes. A question from a coding job the app started is answered in
+  the app only.
 * **Trusted folders.** `trusted_folders = ["~/code/my-app"]` in the config lets edits and commands in those folders (and
   below) run without asking. `--yes` does the same for one run.
+* **Permission rules.** Allow or never allow by tool and pattern, in `rooks.toml`:
+
+  ```toml
+  [permissions]
+  allow = ["bash(pytest *)", "bash(npm test)", "edit(src/**)", "mcp(notes/search)"]
+  deny = ["bash(rm *)", "edit(.env)"]
+  ```
+
+  `bash(pytest *)` is `pytest` and anything after it (not `pytesting`), `bash(npm test)` exactly that command,
+  `edit(src/**)` changes to files under `src`, `mcp(notes/search)` one extra tool (`mcp(notes/*)` all of its tools); a
+  bare `bash`, `edit` or `mcp` means every one. Claude Code's `Bash(...)`, `Edit(...)` and `mcp__server__tool` read
+  the same. **Deny wins** over allow and applies in every mode: asks first, auto-accept (`--yes`, `/auto`), trusted
+  folders and dry run; a refused step counts as a denial (exit code 3). Commands are read the way the shell reads them:
+  `pytest; rm -rf x`, `pytest && curl ...`, `$(...)`, backticks, pipes, `VAR=value pytest` and a redirect to a file
+  never match an allow rule unless every part does (only `2>&1` and `> /dev/null` are fine); when in doubt Rooks asks.
+  A deny rule sees through `sudo`, `env`, `busybox`, `unshare`, `fakeroot` and similar, `xargs`, `find -exec`,
+  `bash -c '...'` (also `bash -c -- '...'`), `su -c`, `script -c`, full paths (`/bin/rm`), quotes and backslashes. A
+  command too hard to read is asked about even in auto-accept while any command deny rule exists: the program's name
+  in a variable (also behind `sudo`), `$'...'`, `{rm,-rf,x}`, `eval`, `bash -c "$X"`, or a shell that reads its
+  commands from the input (`... | bash -s`, `| sh -`, `| sudo -s`, `| su`). A rule matches the command line: a script or program that a command
+  starts can still do anything, so deny rules are a guard, not a sandbox (`sandbox = "project"` is the one that keeps
+  writes in the folder). `/permissions` shows the rules in plain words; `/permissions help` how to write one.
+* **A folder's own rules need your trust.** A project can keep rules in `.rooks/settings.json`
+  (`{"permissions": {"allow": [...], "deny": [...]}}`). Its deny rules always apply. Its allow rules apply only after
+  you say you trust the folder: a one-time question when `rooks` starts there, kept by the folder's real path in
+  `rooks-trust.json` next to `rooks.toml`. Until then they are ignored and Rooks says so; `/permissions trust` and
+  `/permissions untrust` change it. A copied repository cannot grant itself anything. Rooks' own rule files are never
+  changed by the agent unasked: the file tools cannot write `.rooks`, and a command naming `.rooks`, `rooks.toml`, the
+  trust file or the config folder is asked about in every mode, however it is spelled (`.rooks/set''tings.json`,
+  `cd .rooks && ...`, `./.rooks//settings.json`, `D=.rooks`, inside `bash -c`). A program that a command starts (a
+  script, `python -c`) can still write them: this is a guard, not a sandbox.
+* **Always allow here.** For a command, the question also offers `h`, "Always allow this command in this folder": it
+  writes one exact allow rule per part of the command (`bash(npm test)`; a `*` in it stays a literal star) to the
+  folder's `.rooks/settings.json`. It is offered when you trust the folder, or nobody was asked yet and the folder has
+  no allow rules, skills or commands of its own (then choosing it also records that you trust it, and says so; a folder
+  with any of those gets the trust question, which lists them); never for a command that cannot be pinned down exactly. The app's Needs you card answers yes or no only.
 * **Dry run.** `--dry-run` (or `/dry-run`) shows everything that would change and applies nothing.
 * **Undo.** Every file written during one prompt is snapshotted first; `/undo` or `rooks undo` restores them all and
   deletes files the agent created. Commands cannot be undone (their receipts list what ran).
 * **Hard budget.** `max_tokens` (default 200,000) and `max_usd` (default $1.00) per session. Before each model call Rooks
   estimates its input and stops rather than cross either cap. Local models cost $0. If a model's price is unknown the
   dollar cap cannot be enforced; Rooks says so at start and the token cap still applies (add the price under `[prices]`).
+* **Prompt caching, charged honestly.** With Anthropic, every request marks the system prompt, the tool list and the
+  conversation so far for caching, so the next step rereads them at the cache price. OpenAI and DeepSeek cache by
+  themselves. Input read from the cache, and (Anthropic) input written to it, are counted apart and charged at the
+  cached price in `/cost`, the receipts (`cache_read_tokens`, `cache_write_tokens` on each model call), the headless
+  result (`tokens.cache_read`, `tokens.cache_write`) and the dollar cap. A cache write costs more than plain input
+  (1.25x on Anthropic), so the cap's estimate for the next call uses that price. Cached prices come from the built-in
+  table; for a model priced under `[prices]`, add them as `[input, output, cache read, cache write]` (a Claude model
+  priced with two numbers gets Anthropic's rule from its input price: a read 0.1x, a write 1.25x). If a call used
+  the cache and its cached price is unknown, its cost is unknown, never guessed: Rooks says so once, and the dollar
+  cap cannot be enforced while the token cap still applies.
 * **Project boundary.** File tools cannot read or write outside the project folder, nor write into `.git` or `.rooks`.
 * **Small-model help.** Tool calls a local model prints as text (`<tool_call>` tags or a JSON block) are recovered with
   Workbench's rule (only well-formed calls to offered tools; receipt column `from_text`), and a reply that announces a
-  step without calling a tool gets up to two nudges (`nudge = false` turns this off).
+  step without calling a tool gets up to two nudges (`nudge = false` turns this off). A reply that declines ("OK, I will
+  not change it.", "I'll leave it as is.") is not a step, and nothing is nudged after you deny a change.
 * **Receipts.** Each session writes `.rooks/runs/<session>.jsonl` (git-ignored automatically): one row per prompt, model
   call, tool call, approval decision and outbound connection, using the columns and outcome words of Workbench's `actions`
   table (`turn`, `model_call`, `tool_call`, `decision`, `egress`; `verified`, `denied`, `budget_paused`, ...). File edits
@@ -129,6 +271,10 @@ trusted = false                  # true: its tools run without asking
 
 A project's `.mcp.json` (`{"mcpServers": {...}}`, the format Claude Code and Cursor use) is picked up too. MCP tool
 calls are asked about like commands. Only stdio servers are supported so far; HTTP/SSE servers are skipped with a notice.
+When a server asks you something itself while a tool runs (MCP elicitation: the Room asks before a file leaves it,
+Rooks Desk before a sensitive step), the question is put to you, never to the model, and is mirrored to Needs you when
+the app is linked. `--yes`, trusted folders and `a` do not answer it; with no keyboard and no answer in the app it is a
+no. Only yes or no questions are answered; a server asking for anything else is declined.
 
 ## Limits (honest)
 
@@ -136,8 +282,9 @@ calls are asked about like commands. Only stdio servers are supported so far; HT
   ran the test and stopped correctly; `qwen2.5:3b` and `qwen2.5-coder:7b` described steps without calling tools, even
   with Rooks' recovery of tool calls printed as text and its "you announced a step, call the tool" nudge. Use a 7B+
   general instruct model, or a hosted model, for real work.
-* In the interactive terminal, answers appear formatted once complete (a "Working" line with a timer shows progress);
-  plain mode (`ROOKS_PLAIN=1`) streams token by token in a terminal; piped output arrives whole.
+* In the interactive terminal, answers stream in as they are written, formatted as they arrive (a "Working" line with
+  a timer shows progress until the first words); plain mode (`ROOKS_PLAIN=1`) streams token by token in a terminal;
+  piped output arrives whole.
 * Commands are kept inside the project folder by default (`sandbox = "project"`): on macOS with the built in
   `sandbox-exec`, on Linux with bubblewrap (`bwrap`, for example `sudo apt install bubblewrap`). They can still read
   the whole computer and use the network; only writes are limited, to the project and the temp folder. On Linux
@@ -145,8 +292,10 @@ calls are asked about like commands. Only stdio servers are supported so far; HT
   Windows has no containment yet: commands run with your user's permissions and the approval line says so.
   `sandbox = "full"` runs them with your user's permissions everywhere; then approval, dry run and trusted folders
   are the controls.
-* MCP over HTTP/SSE and prompt caching are not implemented yet.
-* Skills are learned only through the AI Workspace app; on its own Rooks learns facts, not procedures.
+* MCP over HTTP/SSE is not implemented yet.
+* Skills are learned only through the AI Workspace app; on its own Rooks learns facts, not procedures. Skill files and
+  your own commands (above) work without the app, but the app does not show them yet, and a session that runs on
+  the app's shared loop (linked to an app chat) does not offer skill files to the model.
 
 ## Development
 

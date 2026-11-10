@@ -198,5 +198,5 @@ def export_html(pid: int, theme: str = "sunshine") -> str:
     return ("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
             "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:\">"
             f"<title>{html.escape(p['title'])}</title><style>{css}</style></head><body><main>"
-            f"<h1>{html.escape(p['title'])}</h1><div class=\"meta\">AI Workspace page · updated {html.escape(p['updated_at'][:10])}</div>"
+            f"<h1>{html.escape(p['title'])}</h1><div class=\"meta\">Rooks page · updated {html.escape(p['updated_at'][:10])}</div>"
             f"{md_to_html(p['body'])}</main></body></html>")

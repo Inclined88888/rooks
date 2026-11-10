@@ -20,6 +20,8 @@ export type NeedsItem = {
   effect?: string;
   reason?: string;
   args?: string | null;
+  /** design 0012: what a held work change takes out and puts in (a Docs or Sheets edit, a post's exact text, every person a share invites) */
+  change?: { op: "remove" | "add" | "set" | string; text: string }[];
 };
 
 const KIND_WORD: Record<string, string> = { approval: "Chat", room: "Room", job: "Job", desktop: "Computer", browser: "Browser", schedule: "Coworker" };

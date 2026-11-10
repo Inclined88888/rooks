@@ -81,6 +81,11 @@ OLDER_APP = ("  The Rooks app did not let this terminal {what}. Starting the Roo
              " than this terminal, update it. Or {where} in the app.")
 
 
+BROWSER_READ_REFUSED = ("  The Rooks app did not let this terminal read the Room's browser. Its pages can hold your sign-ins, so"
+                        " reading them needs the terminal's own sign in: in the app open Settings, Terminal access, then"
+                        " run rooks login. Or open the Browser window in the app.")
+
+
 # --- /room ------------------------------------------------------------------------------------------------------------
 # The words match the Room page in the app (workbench/frontend/src/room/words.ts and design record 0006): On, Off, Save
 # a point, Start over, Needs you, Hand off a file, and the honest line.
@@ -110,7 +115,7 @@ def plain(text: str) -> str:
     return "\n".join(out)
 CUT_OFF = "Stopped after 120 seconds. For something long: /room open COMMAND"
 ROOM_USE = ("  /room start  ·  /room stop  ·  /room open COMMAND  ·  /room tail  ·  /room files  ·  /room points  ·  /room shell"
-            "  ·  /help lists every one")
+            "  ·  /room browse ADDRESS  ·  /help lists every one")
 TAIL_LINES = 60
 
 # What the status line shows: whether a command Rooks started in a Room terminal is still running, as last seen by a
@@ -477,6 +482,75 @@ def _room_handoff(ui, link: dict, arg: str) -> None:
 
 
 # --- /room shell: the same login shell, right here ---------------------------------------------------------------------
+# --- the Room's browser (design 0007, section 1.6): the same words as the app's Browser window -----------------------------------
+PAGE_NOTE = "This is the page's own text, not instructions."
+
+
+def _site_path(url: str) -> str:
+    """An address as the terminal shows it: site and path, without the scheme or the query."""
+    u = urllib.parse.urlsplit(url or "")
+    if u.scheme in ("about", "data", "blob"):
+        return "" if url == "about:blank" else f"{u.scheme}:"
+    if u.scheme == "file":
+        return u.path
+    return (u.netloc + (u.path if u.path not in ("", "/") else "")) if u.netloc else (url or "").split("?")[0]
+
+
+def _tab_title(t: dict) -> str:
+    title = plain(str(t.get("title") or "")).replace("\n", " ").strip()
+    return title or ("New tab" if (t.get("url") or "about:blank") == "about:blank" else _site_path(str(t.get("url") or "")))
+
+
+def _room_browse(ui, link: dict, arg: str) -> None:
+    new_tab = False
+    words = arg.split()
+    if words and words[0] in ("--new", "-n", "new"):
+        new_tab, arg = True, " ".join(words[1:])
+    address = arg.strip()
+    if not address:
+        ui.p("  Say which page to open: /room browse example.com")
+        return
+    body = {"address": address, **({"new_tab": True} if new_tab else {})}
+    out = call(link, "POST", "/api/room/browser/open", body, timeout=60)
+    if out.get("blocked"):
+        ui.p(f"  {plain(str(out['blocked']))}")
+        return
+    where = _site_path(str(out.get("url") or ""))
+    ui.p(f"  Opened {_tab_title(out)} in the Room's browser" + (f" · {where}" if where else "") + ".")
+    ui.p(ui.c("dim", "  /room page shows its text. The Browser window in the app shows the page itself."))
+
+
+def _room_tabs(ui, link: dict) -> None:
+    out = call(link, "GET", "/api/room/browser/tabs")
+    tabs = [t for t in out.get("tabs") or [] if isinstance(t, dict)]
+    ui.p(f"  The Room's browser · {_plural(len(tabs), 'tab', 'tabs')}")
+    for i, t in enumerate(tabs, 1):
+        where = _site_path(str(t.get("url") or ""))
+        bits = [f"  {i:>3}  {_tab_title(t)}" + (f" · {where}" if where and where != _tab_title(t) else "")]
+        if t.get("id") == out.get("active"):
+            bits.append("(in front)")
+        if t.get("asleep"):
+            bits.append("(asleep: it loads when opened)")
+        if t.get("blocked"):
+            bits.append(f"({plain(str(t['blocked']))})")
+        ui.p("  ".join(bits))
+
+
+def _room_page(ui, link: dict) -> None:
+    out = call(link, "GET", "/api/room/browser/page", timeout=60)
+    where = _site_path(str(out.get("url") or ""))
+    title = _tab_title(out)
+    ui.p(f"  {title}" + (f" · {where}" if where and where != title else ""))
+    if out.get("blocked"):
+        ui.p(f"  {plain(str(out['blocked']))}")
+    text = plain(str(out.get("text") or "")).strip()
+    if not text:
+        ui.p(ui.c("dim", "  The page has no text."))
+    for line in text.splitlines():
+        ui.p(f"    {line}" if line.strip() else "")
+    ui.p(ui.c("dim", f"  {PAGE_NOTE}"))
+
+
 def _on_this_computer(url: str) -> bool:
     host = (urllib.parse.urlsplit(url).hostname or "").lower()
     return host in ("localhost", "::1") or host.startswith("127.")
@@ -589,6 +663,13 @@ def room_command(agent, ui, rest: str = "") -> None:
             _room_handoff(ui, link, arg)
         elif sub == "shell":
             _room_shell(ui, link)
+        elif sub in ("browse", "go"):
+            _room_browse(ui, link, arg)
+        elif sub in ("tabs", "page"):
+            try:
+                (_room_tabs if sub == "tabs" else _room_page)(ui, link)
+            except Refused:  # the Room's browser holds sign-ins: the app lets only this terminal's own sign in read it
+                ui.p(BROWSER_READ_REFUSED)
         else:
             ui.p(ROOM_USE)
     except Refused:
@@ -615,6 +696,9 @@ def _answered(answer: str, status) -> str:
     return "Approved"
 
 
+CHANGE_WORD = {"remove": "Takes out", "add": "Puts in", "set": "Sets", "share": "Shares with"}  # the app's card's words
+
+
 def needs_command(agent, ui, rest: str = "") -> None:
     parts = rest.strip().split()
     verb = parts[0].lower() if parts else ""
@@ -631,6 +715,10 @@ def needs_command(agent, ui, rest: str = "") -> None:
                 ui.p("  Nothing needs you." if not items else "  Say which one: /needs approve 1 (the number from /needs).")
                 return
             item = items[int(n) - 1]
+            if item.get("in_app_only"):  # a background job's own request: the app answers it only for you, signed in
+                ui.p(f"  {item.get('title') or 'That'} was asked by a background job, so only you can answer it, "
+                     "in the app under Needs you. This terminal does not answer it for you.")
+                return
             answer = "approve" if verb in APPROVE else "deny"
             out = call(link, "POST", f"/api/needs-you/{urllib.parse.quote(str(item['id']), safe=':')}/{answer}")
             ui.p(f"  {_answered(answer, out.get('status'))}: {item.get('title') or 'that'}")
@@ -644,7 +732,12 @@ def needs_command(agent, ui, rest: str = "") -> None:
         ui.p("  " + ui.c("accent", f"Needs you  ·  {len(items)}"))
         for i, it in enumerate(items[:30], 1):
             detail = " ".join(str(it.get("detail") or "").split())[:90]
-            ui.p(f"  {i:>2}  {it.get('title') or 'Needs your OK'}" + (ui.c("dim", f"  {detail}") if detail else ""))
+            where = "  (a background job asked: answer in the app)" if it.get("in_app_only") else ""
+            ui.p(f"  {i:>2}  {it.get('title') or 'Needs your OK'}" + (ui.c("dim", f"  {detail}") if detail else "")
+                 + (ui.c("dim", where) if where else ""))
+            for line in it.get("change") or []:  # a work change, line by line as the app's card shows it: every person, every cell
+                if isinstance(line, dict):
+                    ui.p(f"        {CHANGE_WORD.get(str(line.get('op')), 'Changes')} {' '.join(str(line.get('text') or '').split())}")
         if len(items) > 30:
             ui.p(ui.c("dim", f"  … {len(items) - 30} more in the app"))
         ui.p(ui.c("dim", "  /needs approve N or /needs deny N answers one. The app shows the same list."))
@@ -761,3 +854,229 @@ def _team_proposal(ui, link: dict, line: str) -> None:
         ui.p(ui.c("dim", "  " + out["costs"]))
     ui.p(f"  If that looks right: /team create {line}. Jobs start off and each waits for your OK in Needs you.")
 
+
+
+# --- /work: the work account (design 0012, section 3.4) -----------------------------------------------------------------
+# The switches and their words come from the app (GET /api/work/status), so the terminal and the Work apps page always
+# say the same thing. The app takes only the terminal's own sign in here, never the shared bridge key. A post, share or
+# change is only ever put in Needs you (POST /api/work/hold); nothing is sent from the terminal.
+WORK_USE = ("  /work  ·  /work connect microsoft|google  ·  /work on NAME  ·  /work off NAME  ·  /work files WORDS  ·  /work read N"
+            "  ·  /work save N  ·  /work open N  ·  /work chats  ·  /work chat N  ·  /work post N TEXT  ·  /work tasks"
+            "  ·  /work it NAME")
+WORK_REFUSED = ("  The Rooks app did not let this terminal reach your work account. Your company's files and chats need the"
+                " terminal's own sign in: in the app open Settings, Terminal access, then run rooks login. Or open Work apps"
+                " in the app.")
+SUITES = {"microsoft": "Microsoft 365", "google": "Google Workspace"}
+# what a person types -> the app's switch
+WORK_NAMES = {"mail": "mail", "calendar": "calendar", "files": "files_read", "read": "files_read", "change": "files_change",
+              "changes": "files_change", "files-change": "files_change", "edit": "files_change", "chats": "chats_read",
+              "teams": "chats_read", "post": "chats_post", "posting": "chats_post", "chats-post": "chats_post",
+              "transcripts": "transcripts", "meetings": "transcripts", "tasks": "tasks", "planner": "tasks", "todo": "tasks"}
+ORIGIN_WORDS = {"planner": "Planner", "todo": "To Do", "gtasks": "Google Tasks"}
+_WORK: dict = {"files": [], "chats": []}  # the last numbered lists, so /work read 2 means the second one shown
+
+
+def _switch_id(name: str, status: dict) -> str | None:
+    name = name.strip().lower()
+    ids = {f.get("id") for f in status.get("features") or []}
+    if name in ids:
+        return name
+    by_label = {str(f.get("label", "")).lower(): f.get("id") for f in status.get("features") or []}
+    return WORK_NAMES.get(name) or by_label.get(name)
+
+
+def _open_sign_in(ui, out: dict) -> None:
+    url = out.get("url") or ""
+    if url and not out.get("opened"):
+        import webbrowser
+
+        try:
+            webbrowser.open(url)
+        except Exception:  # noqa: BLE001 - say where it is instead
+            pass
+    ui.p("  Finish signing in, in your browser. Your company's sign-in asks only for what this needs. Then /work shows it.")
+
+
+def _work_status(ui, st: dict) -> None:
+    acct = st.get("account")
+    if not acct:
+        ui.p("  No work account yet. /work connect microsoft (Microsoft 365) or /work connect google (Google Workspace) opens the "
+             "sign-in in your browser.")
+        return
+    suite = SUITES.get(acct.get("provider"), "Work")
+    ui.p("  " + ui.c("accent", f"Work apps  ·  {suite}  ·  {acct.get('email')}"))
+    if acct.get("needs_sign_in"):
+        ui.p(ui.c("warn", f"  Sign in again: /work connect {acct.get('provider') or 'microsoft'}"))
+    asks = (st.get("words") or {}).get("asks_first") or "Rooks always asks you first"
+    for f in st.get("features") or []:
+        state = f.get("state_words") or f.get("state") or ""
+        ui.p(f"  {f.get('label', ''):<20} {state}")
+        line = f.get("says") or ""
+        if f.get("asks_first"):
+            line += f" {asks}."
+        ui.p(ui.c("dim", f"    {line.strip()}"))
+        if f.get("state") == "waiting":
+            word = next((k for k, v in WORK_NAMES.items() if v == f.get("id")), f.get("id"))
+            ui.p(ui.c("dim", f"    {f.get('waiting_words') or ''} /work it {word}: the note for your IT team.".strip()))
+    ui.p(ui.c("dim", "  /work on NAME turns one on (a sign-in opens in your browser)  ·  /work off NAME  ·  /help lists the rest"))
+
+
+def _pick(kind: str, arg: str) -> dict | None:
+    rows = _WORK.get(kind) or []
+    return rows[int(arg) - 1] if arg.isdigit() and 1 <= int(arg) <= len(rows) else None
+
+
+def _work_files(ui, link: dict, words: str) -> None:
+    q = urllib.parse.urlencode({"query": words} if words else {})
+    out = call(link, "GET", "/api/work/files" + (f"?{q}" if q else ""), timeout=90)
+    items = [i for i in out.get("items") or [] if isinstance(i, dict)]
+    _WORK["files"] = items
+    if not items:
+        ui.p("  Nothing found." if words else "  Nothing here.")
+        return
+    for i, it in enumerate(items[:50], 1):
+        kind = "folder" if it.get("folder") else ""
+        ui.p(f"  {i:>2}  {it.get('name', '')}" + ui.c("dim", f"  {it.get('where', '')}" + (f"  {kind}" if kind else "")))
+    ui.p(ui.c("dim", "  /work read N  ·  /work save N copies it into Files  ·  /work open N opens it in the Room's browser"))
+
+
+def _work_file_verb(ui, link: dict, verb: str, arg: str) -> None:
+    it = _pick("files", arg)
+    if not it:
+        ui.p("  Say which one: the number from /work files.")
+        return
+    ref = str(it.get("file") or "")
+    if verb == "read":
+        out = call(link, "GET", "/api/work/files/read?" + urllib.parse.urlencode({"file": ref}), timeout=120)
+        ui.p("  " + ui.c("accent", out.get("name") or it.get("name", "")))
+        for p in out.get("passages") or []:
+            ui.p(f"    {plain(str(p))}")
+        if (out.get("parts") or 1) > 1:
+            ui.p(ui.c("dim", f"  Part {out.get('part')} of {out.get('parts')}. Ask Rooks about it for the rest."))
+    elif verb == "save":
+        out = call(link, "POST", "/api/work/files/save", {"file": ref}, timeout=120)
+        ui.p(f"  Saved to Files: {out.get('name') or it.get('name')}. It keeps where it came from.")
+    else:  # open: the Room's own browser, the same way /room browse does; you sign in there once
+        address = str(it.get("web_url") or "")
+        if not address:
+            address = str(call(link, "GET", "/api/work/files/open?" + urllib.parse.urlencode({"file": ref})).get("address") or "")
+        if not address:
+            ui.p("  There is no address for that file.")
+            return
+        _room_browse(ui, link, address)
+
+
+def _work_chats(ui, link: dict) -> None:
+    out = call(link, "GET", "/api/work/chats?kind=all", timeout=90)
+    rows = [c for c in out.get("chats") or [] if isinstance(c, dict)]
+    _WORK["chats"] = rows
+    if not rows:
+        ui.p("  No chats or channels.")
+        return
+    for i, c in enumerate(rows[:60], 1):
+        kind = c.get("kind") if c.get("kind") in ("channel", "space") else "chat"
+        ui.p(f"  {i:>2}  {c.get('name', '')}" + ui.c("dim", f"  {kind}"))
+    ui.p(ui.c("dim", "  /work chat N reads one  ·  /work post N TEXT waits for your OK in Needs you"))
+
+
+def _work_chat(ui, link: dict, arg: str) -> None:
+    c = _pick("chats", arg)
+    if not c:
+        ui.p("  Say which one: the number from /work chats.")
+        return
+    out = call(link, "GET", "/api/work/chats/read?" + urllib.parse.urlencode({"chat": c["chat"]}), timeout=90)
+    ui.p("  " + ui.c("accent", out.get("name") or c.get("name", "")))
+    for m in out.get("messages") or []:
+        ui.p(f"  {m.get('from', '')}" + ui.c("dim", f"  {str(m.get('when') or '')[:16].replace('T', ' ')}"))
+        for line in plain(str(m.get("text") or "")).splitlines():
+            ui.p(f"    {line}")
+
+
+def _work_post(ui, link: dict, rest: str) -> None:
+    n, _, text = rest.strip().partition(" ")
+    c = _pick("chats", n)
+    if not c:
+        ui.p("  Say which one: the number from /work chats, then the text.")
+        return
+    if not text.strip():
+        ui.p("  Say what to post: /work post N TEXT")
+        return
+    out = call(link, "POST", "/api/work/hold", {"tool": "work_chat_post", "args": {"chat": c["chat"], "text": text.strip()}})
+    again = " (already waiting)" if out.get("already_asked") else ""
+    ui.p(f"  Waiting for your OK in Needs you: {out.get('title') or 'Post in a work chat'}{again}. Nothing was posted yet.")
+    ui.p(ui.c("dim", "  Answer it in the app, or here with /needs then /needs approve N."))
+
+
+def _work_tasks(ui, link: dict) -> None:
+    out = call(link, "POST", "/api/work/tasks/sync", timeout=120)
+    rows = [t for t in call(link, "GET", "/api/tasks") if isinstance(t, dict) and t.get("origin")]
+    counts = ", ".join(f"{out[k]} in {w}" for k, w in ORIGIN_WORDS.items() if k in out) or "nothing new"
+    ui.p("  " + ui.c("accent", f"Work tasks  ·  {counts}"))
+    for t in rows[:60]:
+        due = f"  due {t['due']}" if t.get("due") else ""
+        done = "done  " if t.get("status") == "done" else ""
+        ui.p(f"  {t.get('id'):>4}  {done}{t.get('title', '')}" + ui.c("dim", f"  {ORIGIN_WORDS.get(t.get('origin'), '')}{due}"))
+    ui.p(ui.c("dim", "  Ask Rooks to change one: it waits for your OK in Needs you. The app's Tasks page shows the same."))
+
+
+def work_command(agent, ui, rest: str = "") -> None:
+    parts = rest.strip().split(maxsplit=1)
+    verb = parts[0].lower() if parts else ""
+    arg = parts[1].strip() if len(parts) > 1 else ""
+    link = link_of(agent)
+    if not link:
+        ui.p("  Your work account lives in the Rooks app. Open the app on this computer, then try /work again.")
+        return
+    try:
+        if verb in ("", "status"):
+            _work_status(ui, call(link, "GET", "/api/work/status"))
+        elif verb == "connect":
+            which = (arg or "").lower()
+            if which not in SUITES:
+                ui.p("  /work connect microsoft (Microsoft 365) or /work connect google (Google Workspace)")
+                return
+            _open_sign_in(ui, call(link, "POST", f"/api/work/connect/{which}", {}))
+        elif verb in ("on", "off"):
+            st = call(link, "GET", "/api/work/status")
+            fid = _switch_id(arg, st)
+            if not fid:
+                names = ", ".join(sorted({k for k in WORK_NAMES if k in ("mail", "calendar", "files", "change", "chats", "post",
+                                                                         "transcripts", "tasks")}))
+                ui.p(f"  There is no switch called {arg or 'that'}. Try one of: {names}.")
+                return
+            out = call(link, "POST", f"/api/work/features/{fid}", {"on": verb == "on"})
+            label = next((f.get("label") for f in st.get("features") or [] if f.get("id") == fid), fid)
+            if out.get("url"):
+                _open_sign_in(ui, out)
+            else:
+                ui.p(f"  {label} is {'on' if out.get('state') == 'on' else 'off'}.")
+        elif verb in ("files", "search"):
+            _work_files(ui, link, arg)
+        elif verb in ("read", "save", "open"):
+            _work_file_verb(ui, link, verb, arg)
+        elif verb == "chats":
+            _work_chats(ui, link)
+        elif verb == "chat":
+            _work_chat(ui, link, arg)
+        elif verb == "post":
+            _work_post(ui, link, arg)
+        elif verb == "tasks":
+            _work_tasks(ui, link)
+        elif verb == "it":
+            st = call(link, "GET", "/api/work/status")
+            fid = _switch_id(arg, st)
+            if not fid:
+                ui.p("  Say which switch: /work it chats")
+                return
+            note = call(link, "GET", f"/api/work/features/{fid}/it-note").get("note") or ""
+            ui.p("  Copy this to your IT team:")
+            for line in note.splitlines():
+                ui.p(f"    {line}")
+        else:
+            ui.p(WORK_USE)
+    except Refused:
+        ui.p(WORK_REFUSED)
+    except Unreachable:
+        ui.p(UNREACHABLE)
+    except Said as e:
+        ui.p(f"  {e}")

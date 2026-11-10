@@ -75,7 +75,7 @@ def test_default_claude_model_matches_app_browser_and_desk():
     assert m, "the app's preferred Anthropic model is not where this test looks (workbench/backend/app/llm.py)"
     want = m.group(1)
     assert config.PROVIDERS["anthropic"]["model"] == want
-    for sub in ("rooks-browser/rooks_browser/llm.py", "rooks-desk/rooks_desk/llm.py", "browser-agent/src/browser_agent/llm.py"):
+    for sub in ("rooks-browser/rooks_browser/llm.py", "rooks-desk/rooks_desk/llm.py"):
         if not (repo / sub).exists():
             continue  # a partial checkout
         found = re.search(r'\("anthropic",\s*"Anthropic Claude",\s*\("ANTHROPIC_API_KEY",\),\s*"(claude-[^"]+)"', (repo / sub).read_text())

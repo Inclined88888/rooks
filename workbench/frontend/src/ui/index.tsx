@@ -1,15 +1,17 @@
 /**
- * Rooks UI primitives (docs/design/0003-workroom.md, section 6). Small, typed, tokens only (ui.css), sensible aria.
- * Pages outside the shell keep their old className strings; new shell work uses these.
+ * Rooks UI primitives (docs/design/0003-workroom.md, section 6; restyled "industrial" in design system v4, CHANGELOG).
+ * Small, typed, tokens only (ui.css), sensible aria. Pages outside the shell keep their old className strings; new shell
+ * work uses these.
  */
 import { AlertTriangle, Check, CircleDashed, Hand, Minus, MoreHorizontal, X } from "lucide-react";
 import {
-  forwardRef, useEffect, useId, useRef, useSyncExternalStore,
+  createContext, forwardRef, useContext, useEffect, useId, useRef, useSyncExternalStore,
   useState,
-  type ButtonHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject, type SelectHTMLAttributes,
+  type ButtonHTMLAttributes, type CSSProperties, type InputHTMLAttributes, type TextareaHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject, type SelectHTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
 import { AssistantFace, type Mood } from "../AssistantFace";
+import { splitHeadline } from "./headline";
 import { dismissToast, errorText, getToasts, isPrimaryToastHost, pushToast, registerToastHost, subscribeToasts, type ToastItem } from "./toast";
 
 export type { Mood };
@@ -19,7 +21,8 @@ const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boo
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: "sm" | "md"; icon?: ReactNode; busy?: boolean };
 
-/** Primary is ink on paper (never the accent); secondary an outline; ghost bare; danger for the one destructive act. 36px, sm 28px. */
+/** Primary is a black rectangle that hovers to orange; secondary a 1 px ink outline; ghost bare; danger for the one
+ *  destructive act. Mono uppercase words, square. 36px, sm 28px, 44px on touch screens. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant = "secondary", size = "md", icon, busy, className, children, type = "button", disabled, ...rest }, ref,
 ) {
@@ -45,25 +48,53 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
 
 /* ---------------------------------------------------------------- Page, Section */
 /** Every page: the heading (28), one line of description, the actions, and the content width (880 to read, full for boards). */
-export function Page({ title, description, actions, kicker, wide, children, className }: {
-  title: string; description?: ReactNode; actions?: ReactNode; kicker?: string; wide?: boolean; children: ReactNode; className?: string;
-}) {
+/** Where the page sits in the navigation ([04 // DAY], pages/places.ts). The route provides it (App.tsx); a page
+ *  outside the routes has none and its meta column holds only its kicker. */
+export const PageMark = createContext<{ n: number; name: string } | null>(null);
+
+/** A real headline in two lines, the second offset, each wiped in orange as it arrives. The words are the same as
+ *  `text` (screen readers hear one heading); one word stays one line. `as="p"` keeps a greeting that is not a heading
+ *  (the new chat's) a paragraph. On a wide window each line stays on one row: CSS sizes the headline to fit its column
+ *  from its longest line (--hl-ch, ui.css .hl-fit). */
+export function Headline({ text, as: Tag = "h1", className, id }: { text: string; as?: "h1" | "h2" | "p"; className?: string; id?: string }) {
+  const [a, b] = splitHeadline(text);
   return (
-    <div className={cx("ui-page", wide && "ui-page-wide", className)}>
-      <header className="ui-page-head">
-        <div className="ui-page-titles">
+    <Tag className={cx("hl-fit", className)} id={id} style={{ "--hl-ch": Math.max(a.length, b.length) } as CSSProperties}>
+      <span className="hl-line reveal">{a}</span>
+      {b && <>{" "}<span className="hl-line display-offset reveal">{b}</span></>}
+    </Tag>
+  );
+}
+
+/** A page: the header pattern (a left meta column with the place's number and a mono label, the title, description
+ *  and actions on the right; stacked on phones), then the content. `hero` makes the title the huge two-line headline
+ *  on the blueprint grid (Home). */
+export function Page({ title, description, actions, kicker, wide, hero, children, className }: {
+  title: string; description?: ReactNode; actions?: ReactNode; kicker?: string; wide?: boolean; hero?: boolean; children: ReactNode; className?: string;
+}) {
+  const mark = useContext(PageMark);
+  return (
+    <div className={cx("ui-page", wide && "ui-page-wide", hero && "ui-page-hero", className)}>
+      <header className={cx("ui-page-head", hero && "is-hero")}>
+        <div className="ui-page-meta">
+          {mark && <MicroLabel n={mark.n} name={mark.name} />}
           {kicker && <p className="ui-page-kicker">{kicker}</p>}
-          <h1 className="ui-page-title">{title}</h1>
-          {description && <p className="ui-page-desc">{description}</p>}
         </div>
-        {actions && <div className="ui-page-actions">{actions}</div>}
+        <div className="ui-page-main">
+          <div className="ui-page-titles">
+            {hero ? <Headline as="h1" className="ui-page-title ui-page-hero-title" text={title} /> : <h1 className="ui-page-title">{title}</h1>}
+            {description && <p className="ui-page-desc">{description}</p>}
+          </div>
+          {actions && <div className="ui-page-actions">{actions}</div>}
+        </div>
       </header>
       {children}
     </div>
   );
 }
 
-/** A titled part of a page, separated by a hairline. */
+/** A titled part of a page, separated by a hairline and numbered 01, 02, ... in a mono label. At the top level of a
+ *  wide page the number and title sit in the left meta column and the content in the right one. */
 export function Section({ title, description, actions, children, className }: {
   title?: string; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string;
 }) {
@@ -72,19 +103,58 @@ export function Section({ title, description, actions, children, className }: {
     <section className={cx("ui-section", className)} aria-labelledby={title ? id : undefined}>
       {(title || actions) && (
         <div className="ui-section-head">
+          {/* [01 // NAME]: the number is a CSS counter and the name the title's own words; decoration, so screen readers
+              skip it (they hear the heading) */}
+          {title && <span className="micro ui-section-num" aria-hidden="true" data-name={title} />}
           {title && <h2 id={id} className="ui-section-title">{title}</h2>}
           {actions && <div className="ui-section-actions">{actions}</div>}
         </div>
       )}
-      {description && <p className="ui-section-desc">{description}</p>}
-      {children}
+      <div className="ui-section-body">
+        {description && <p className="ui-section-desc">{description}</p>}
+        {children}
+      </div>
     </section>
   );
 }
 
+/* ---------------------------------------------------------------- MicroLabel */
+/** "[01 // NAME]": the number in two digits; without a number, "[NAME]". */
+export function microText(n: number | undefined, name: string): string {
+  return n == null ? `[${name}]` : `[${String(n).padStart(2, "0")} // ${name}]`;
+}
+
+/** The tiny mono label beside an orange square, [01 // NAME]. It is decoration: hidden from screen readers unless
+ *  `decorative` is false (only when it is the one place a name is written); then a screen reader hears the name alone
+ *  ("Step 1 of 5"), the brackets and the number are drawn, not read. Never put ids or addresses in it. */
+export function MicroLabel({ n, name, decorative = true, className }: { n?: number; name: string; decorative?: boolean; className?: string }) {
+  return (
+    <span className={cx("micro", "ui-micro", className)} aria-hidden={decorative || undefined}>
+      {decorative ? microText(n, name) : (
+        // one inner span, so the label's flex gap (after its orange square) does not space the brackets apart
+        <span><span aria-hidden="true">[</span>{n != null && <span aria-hidden="true">{`${String(n).padStart(2, "0")} // `}</span>}{name}<span aria-hidden="true">]</span></span>
+      )}
+    </span>
+  );
+}
+
 /* ---------------------------------------------------------------- Card */
-export function Card({ children, className, padding = "md", as: Tag = "div", ...rest }: { children: ReactNode; className?: string; padding?: "none" | "sm" | "md"; as?: "div" | "section" | "article" } & Record<string, unknown>) {
-  return <Tag className={cx("ui-card", padding !== "md" && `ui-card-pad-${padding}`, className)} {...rest}>{children}</Tag>;
+/** White, a 1 px line, square. With `label` (and `index`) a micro-label sits on top; with `heading` a bold uppercase
+ *  title; either one draws the thin divider under the head. */
+export function Card({ children, className, padding = "md", as: Tag = "div", label, index, heading, ...rest }: {
+  children: ReactNode; className?: string; padding?: "none" | "sm" | "md"; as?: "div" | "section" | "article"; label?: string; index?: number; heading?: ReactNode;
+} & Record<string, unknown>) {
+  return (
+    <Tag className={cx("ui-card", padding !== "md" && `ui-card-pad-${padding}`, className)} {...rest}>
+      {(label || heading) && (
+        <header className="ui-card-head">
+          {label && <MicroLabel n={index} name={label} decorative={!!heading} />}
+          {heading && <h3 className="ui-card-title">{heading}</h3>}
+        </header>
+      )}
+      {children}
+    </Tag>
+  );
 }
 
 /* ---------------------------------------------------------------- Input, Select */
@@ -384,7 +454,7 @@ export function useToast() {
 }
 
 /* ---------------------------------------------------------------- EmptyState, Stat */
-/** One line, one sentence, one action. */
+/** One line, one sentence, one action, on the blueprint grid: the line big and uppercase, the sentence in mono. */
 export function EmptyState({ title, line, action, icon, className }: { title: string; line?: string; action?: ReactNode; icon?: ReactNode; className?: string }) {
   return (
     <div className={cx("ui-empty", className)}>
@@ -467,8 +537,10 @@ const EFFECT_LINE: Record<string, string> = {
   handoff: "This copies a file out of the Room.",
 };
 
-export function ApprovalCard({ title, detail, effect, command, diff, onApprove, onDeny, busy, className }: {
-  title: string; detail?: string; effect: string; command?: string; diff?: ReactNode; onApprove: () => void; onDeny: () => void; busy?: boolean; className?: string;
+/** whole: the diff is shown in full, never in a scroll box (a work change's lines: every person a share invites must be
+ * seen before a yes, not only the first few). */
+export function ApprovalCard({ title, detail, effect, command, diff, whole, onApprove, onDeny, busy, className }: {
+  title: string; detail?: string; effect: string; command?: string; diff?: ReactNode; whole?: boolean; onApprove: () => void; onDeny: () => void; busy?: boolean; className?: string;
 }) {
   const id = useId();
   return (
@@ -481,7 +553,7 @@ export function ApprovalCard({ title, detail, effect, command, diff, onApprove, 
       {detail && <p className="ui-approval-detail">{detail}</p>}
       <p className="ui-approval-effect">{EFFECT_LINE[effect] ?? "This acts outside the workspace."}</p>
       {command && <pre className="ui-approval-command">{command}</pre>}
-      {diff && <div className="ui-approval-diff">{diff}</div>}
+      {diff && <div className={cx("ui-approval-diff", whole && "is-whole")}>{diff}</div>}
       <div className="ui-approval-actions">
         <Button variant="primary" size="sm" onClick={onApprove} busy={busy}>Approve</Button>
         <Button variant="secondary" size="sm" onClick={onDeny} disabled={busy}>Deny</Button>
@@ -496,7 +568,7 @@ export function capturedLine(captured: boolean, wasCaptured: boolean, place: str
   if (captured) return `Your mouse and keyboard go to ${place}. Press Escape or Hand back to stop.`;
   return wasCaptured ? "Handed back." : "";
 }
-/** 10px frame, controls bar. `captured` means your mouse and keyboard go to the surface: a still 2px accent border shows it. */
+/** Square frame, controls bar. `captured` means your mouse and keyboard go to the surface: a still 2px accent border shows it. */
 export function StageFrame({ title, label, live, captured, controls, children, className }: {
   title: string; label: string; live: boolean; captured: boolean; controls: ReactNode; children: ReactNode; className?: string;
 }) {

@@ -7,9 +7,9 @@ credential directory is mounted and no launcher code reads a credential store.
 Use `codex logout` through the same service to sign out.
 
 API: `http://codex:8110`, bearer `CODEX_API_KEY`, same `/run`, `/auth/status` and
-`/health` contract and limits as [the generic launcher](README.md). Workbench
-receives `CODEX_URL` and `CODEX_API_KEY`; this is an explicit hand-off, with no
-automatic assistant delegation. Disable through setup by omitting `codex`.
+`/health` contract and limits as [the generic launcher](README.md). The app is not
+given its address or key; this is an explicit hand-off, with no automatic
+assistant delegation. Disable through setup by omitting `codex`.
 
 The generic `server.mjs` is unchanged from Item 116. A small adapter translates
 Codex's text status into the JSON boolean expected by that server. It invokes

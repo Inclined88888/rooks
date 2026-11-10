@@ -37,21 +37,27 @@ class FakeModels:
         self.server.shutdown()
 
 
-def openai_reply(text="", calls=(), tokens=(100, 20)):
+def openai_reply(text="", calls=(), tokens=(100, 20), cached=0):
+    """cached: of tokens[0], how many the server read from its prompt cache (usage.prompt_tokens_details.cached_tokens)."""
     msg = {"role": "assistant", "content": text or None}
     if calls:
         msg["tool_calls"] = [{"id": f"call_{i}", "type": "function",
                               "function": {"name": n, "arguments": a if isinstance(a, str) else json.dumps(a)}}
                              for i, (n, a) in enumerate(calls)]
     return {"choices": [{"message": msg, "finish_reason": "tool_calls" if calls else "stop"}],
-            "usage": {"prompt_tokens": tokens[0], "completion_tokens": tokens[1]}}
+            "usage": {"prompt_tokens": tokens[0], "completion_tokens": tokens[1],
+                      **({"prompt_tokens_details": {"cached_tokens": cached}} if cached else {})}}
 
 
-def anthropic_reply(text="", calls=(), tokens=(100, 20)):
+def anthropic_reply(text="", calls=(), tokens=(100, 20), cache_read=0, cache_write=0):
+    """tokens[0] is input_tokens, which Anthropic reports apart from cache_read_input_tokens and
+    cache_creation_input_tokens (the prompt read from and written to its cache)."""
     content = ([{"type": "text", "text": text}] if text else []) + [
         {"type": "tool_use", "id": f"toolu_{i}", "name": n, "input": a} for i, (n, a) in enumerate(calls)]
     return {"content": content, "stop_reason": "tool_use" if calls else "end_turn",
-            "usage": {"input_tokens": tokens[0], "output_tokens": tokens[1]}}
+            "usage": {"input_tokens": tokens[0], "output_tokens": tokens[1],
+                      **({"cache_read_input_tokens": cache_read} if cache_read else {}),
+                      **({"cache_creation_input_tokens": cache_write} if cache_write else {})}}
 
 
 # --- SSE scripts --------------------------------------------------------------------------------------------------
@@ -191,7 +197,7 @@ def openai_chunks(reply):
 
 def anthropic_events(reply):
     u = reply.get("usage") or {}
-    out = [{"type": "message_start", "message": {"usage": {"input_tokens": u.get("input_tokens", 0)}}}]
+    out = [{"type": "message_start", "message": {"usage": {k: v for k, v in u.items() if k != "output_tokens"}}}]
     for i, b in enumerate(reply["content"]):
         if b["type"] == "text":
             out += [{"type": "content_block_start", "index": i, "content_block": {"type": "text", "text": ""}},

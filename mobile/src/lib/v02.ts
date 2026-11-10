@@ -1,6 +1,6 @@
 /**
  * feat/v02-core on the phone: projects, action history with undo, and checked answers.
- * Calls the /api/mobile/* wrappers in workbench/backend/app/v02_mobile.py with the paired device's client.
+ * Calls the /api/mobile/* wrappers in workbench/backend/app/projects_mobile.py with the paired device's client.
  */
 import { ApiError, Client } from './api';
 

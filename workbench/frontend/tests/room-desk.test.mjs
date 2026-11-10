@@ -38,9 +38,10 @@ test("the windows come from status: a window status does not offer does not exis
   assert.ok(desk, "src/room/desk.ts exists");
   assert.deepEqual(desk.windowsFor(SHELL_ON), ["terminal", "files", "points"]);
   assert.deepEqual(desk.windowsFor(NESTED_ON), ["screen", "terminal", "files", "points"]);
-  assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: { terminal: false, files: true } }), ["commands", "files", "points"]);
+  // room-pro: no terminal here means no Terminal window and no Commands window in its place
+  assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: { terminal: false, files: true } }), ["files", "points"]);
   assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: { terminal: true, files: false } }), ["terminal", "points"]);
-  assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: undefined }), ["commands", "points"], "an older service without terminals keeps Commands");
+  assert.deepEqual(desk.windowsFor({ ...SHELL_ON, can: undefined }), ["points"], "an older service that says nothing: Saved points only (room-pro)");
   assert.deepEqual(desk.windowsFor({ ...SHELL_ON, available: false }), []);
   assert.deepEqual(desk.windowsFor({ ...SHELL_ON, checked: false }), []);
   assert.deepEqual(desk.windowsFor({ ...SHELL_ON, running: false }), ["terminal", "files", "points"], "Files and Saved points work while the Room is off");
@@ -176,11 +177,11 @@ test("the terminal list comes from the service on every refresh, never from the 
   assert.equal(s.terminals[1].owner, "rooks");
   assert.equal(s.terminals[1].alive, false);
   assert.equal(s.terminal_max, 4);
-  assert.deepEqual(s.can, { terminal: true, files: true, terminal_off_reason: null });
+  assert.deepEqual(s.can, { terminal: true, files: true, terminal_off_reason: null, browser: false, browser_off_reason: null, run: false, browser_off_words: "", browser_advanced: "", terminal_shells: [] }); // room-pro: can.run
   const old = store.roomFromWire({ available: true, running: true });
   assert.deepEqual(old.terminals, []);
   assert.equal(old.terminal_max, 4);
-  assert.deepEqual(old.can, { terminal: false, files: false, terminal_off_reason: null }, "a service that says nothing can do nothing new");
+  assert.deepEqual(old.can, { terminal: false, files: false, terminal_off_reason: null, browser: false, browser_off_reason: null, run: false, browser_off_words: "", browser_advanced: "", terminal_shells: [] }, "a service that says nothing can do nothing new");
   // the Commands window's lines live in the store, so leaving the page and coming back keeps them for the session
   store.addCommandLines([{ kind: "cmd", text: "ls" }]);
   store.receiveRoomStatus({ available: true, running: true });
@@ -201,7 +202,7 @@ test("the page is a desk under a Room bar with a dock of windows, solid, and the
   assert.match(page, /windowsFor\(/);
   assert.match(page, /dockItems\(/);
   assert.match(page, /One window stays open/);
-  assert.match(page, /commandViewLine\(status\)/, "the honest line sits on the dock");
+  assert.match(page, /dockLine\(status\)/, "the honest line sits on the dock (while terminals are on: room-pro.test.mjs)");
   assert.match(page, /isolationWords\(status\.isolation, !!status\.offline\)/);
   assert.doesNotMatch(page, /\bglass\b/, "nothing on the Room page is glass");
   for (const w of ["Advanced", "Close every terminal", "Save a point", "Start over", "Hand off a file", "Watch beside the chat"]) assert.match(page, new RegExp(w), w);

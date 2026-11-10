@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import threading
 from contextlib import contextmanager
@@ -228,27 +229,6 @@ CREATE TRIGGER IF NOT EXISTS messages_au AFTER UPDATE OF content, role ON messag
   INSERT INTO messages_fts(rowid, content) SELECT new.id, new.content WHERE new.role IN ('user', 'assistant');
 END;
 
-CREATE TABLE IF NOT EXISTS memories (
-  id INTEGER PRIMARY KEY,
-  content TEXT NOT NULL,
-  kind TEXT NOT NULL DEFAULT 'fact',            -- profile (always shown) | fact | preference
-  source TEXT NOT NULL DEFAULT 'auto',          -- auto | user | agent
-  conversation_id INTEGER,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
-);
-CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(content, content='memories', content_rowid='id', tokenize='porter unicode61');
-CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
-  INSERT INTO memories_fts(rowid, content) VALUES (new.id, new.content);
-END;
-CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
-  INSERT INTO memories_fts(memories_fts, rowid, content) VALUES ('delete', old.id, old.content);
-END;
-CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
-  INSERT INTO memories_fts(memories_fts, rowid, content) VALUES ('delete', old.id, old.content);
-  INSERT INTO memories_fts(rowid, content) VALUES (new.id, new.content);
-END;
-
 CREATE TABLE IF NOT EXISTS skills (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
@@ -408,7 +388,7 @@ CREATE INDEX IF NOT EXISTS actions_parent ON actions(parent_action_id);
 -- a held tool call is answered at most once
 CREATE UNIQUE INDEX IF NOT EXISTS actions_one_decision ON actions(parent_action_id) WHERE kind = 'decision';
 
--- MCP client (mcp_client.py): servers the user connected Workbench to. spec_json keeps the non-secret config
+-- MCP client (mcp_client.py): servers the user connected Rooks to. spec_json keeps the non-secret config
 -- (command/args/url/transport, non-secret env and headers); secret env/header values are encrypted in
 -- secret_enc like provider keys (security.py) and never leave the API.
 CREATE TABLE IF NOT EXISTS mcp_servers (
@@ -443,7 +423,7 @@ def conn() -> sqlite3.Connection:
     return c
 
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 6
 LEGACY_LEDGERS = ("usage", "tool_runs", "turn_checks", "pending_actions")
 LEGACY_TABLES = (*LEGACY_LEDGERS, "providers")
 
@@ -458,8 +438,10 @@ def migrate(c: sqlite3.Connection, path) -> None:
     Rollback: stop Workbench, replace workbench.db with the newest workbench.db.pre-v<N>-*.bak, run the previous image.
     """
     version = c.execute("PRAGMA user_version").fetchone()[0]
-    legacy = [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type = 'table'") if r[0] in LEGACY_TABLES]
-    if version < SCHEMA_VERSION and legacy:  # one backup per upgrade, taken before any data changes
+    tables = {r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+    legacy = [t for t in LEGACY_TABLES if t in tables]
+    old_memory = version < 5 and bool(tables & {"memories", "adapt_facts"})
+    if version < SCHEMA_VERSION and (legacy or old_memory):  # one backup per upgrade, taken before any data changes
         backup = Path(f"{path}.pre-v{SCHEMA_VERSION}-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.bak")
         with sqlite3.connect(backup) as dest:
             c.backup(dest)
@@ -470,6 +452,8 @@ def migrate(c: sqlite3.Connection, path) -> None:
         (2, lambda: migrate_v2(c, "providers" in legacy)),
         (3, lambda: migrate_v3(c)),
         (4, lambda: migrate_v4(c)),
+        (5, lambda: migrate_v5(c)),
+        (6, lambda: migrate_v6(c)),
     ]
     # Foreign keys off for the whole upgrade. SQLite ignores this pragma inside a transaction, so it has to be set
     # here, before BEGIN: with keys on, a table rebuild's DROP TABLE is an implicit DELETE that cascades (migrate_v3
@@ -505,6 +489,16 @@ ADDED_COLUMNS = (
     ("calendars", "linked_account_id", "INTEGER REFERENCES linked_accounts(id) ON DELETE CASCADE"),
     ("messages", "attachments", "TEXT NOT NULL DEFAULT ''"),  # feat/attachments
     ("conversations", "archived", "INTEGER NOT NULL DEFAULT 0"),
+    # design 0012: one work account per person (Microsoft 365 or Google Workspace), its company and who signed in, and
+    # which of its switches are on ({"on": [...], "waiting": [...]}); version 6 turns Mail and Calendar on for old rows
+    ("linked_accounts", "work", "INTEGER NOT NULL DEFAULT 0"),
+    ("linked_accounts", "tenant", "TEXT NOT NULL DEFAULT ''"),
+    ("linked_accounts", "subject", "TEXT NOT NULL DEFAULT ''"),
+    ("linked_accounts", "features", "TEXT NOT NULL DEFAULT ''"),
+    # design 0012: a task that lives in Planner, To Do (or Google Tasks): where, its id there, and what a change needs
+    ("tasks", "origin", "TEXT NOT NULL DEFAULT ''"),          # '' (kept only in Rooks) | planner | todo
+    ("tasks", "remote_id", "TEXT NOT NULL DEFAULT ''"),
+    ("tasks", "remote_meta", "TEXT NOT NULL DEFAULT ''"),     # JSON: the list or plan, Planner's version tag
 )
 
 
@@ -611,6 +605,26 @@ def migrate_v4(c: sqlite3.Connection) -> None:
     for stmt in MESSAGES_FTS:  # one by one: executescript would COMMIT the upgrade's open transaction
         c.execute(stmt)
     c.execute("INSERT INTO messages_fts(rowid, content) SELECT id, content FROM messages WHERE role IN ('user', 'assistant')")
+
+
+def migrate_v5(c: sqlite3.Connection) -> None:
+    """One memory store (docs/architecture.md g.2). Every fact in the plaintext `memories` table and the encrypted
+    `adapt_facts` table moves into kn_memories, encrypted with the memory key, de-duplicated, with its source and dates
+    (knowledge/facts.py move_old_stores); the two old tables are then dropped. The knowledge layer indexes the moved
+    facts when it next starts (its migration 4). If the memory key cannot be read now (a locked keychain), nothing is
+    changed and the move happens the first time the memory opens with the key (knowledge.schema.ensure)."""
+    from .knowledge import crypto, facts
+
+    try:
+        facts.move_old_stores(c)
+    except crypto.KeyMissing as e:
+        logging.getLogger("db").warning("older memories left in place until the memory key can be read: %s", e)
+
+
+def migrate_v6(c: sqlite3.Connection) -> None:
+    """Design 0012: accounts connected before the work account keep what they did: Mail and Calendar on, work off.
+    Rollback: the older app ignores the four new columns."""
+    c.execute("UPDATE linked_accounts SET features = ? WHERE features = ''", (json.dumps({"on": ["mail", "calendar"], "waiting": []}),))
 
 
 def migrate_v3(c: sqlite3.Connection) -> None:

@@ -102,8 +102,10 @@ export default function AskBar() {
         if (!r.pasted) await invoke("show_main_window", {}).catch(() => undefined);
         return;
       }
+      // copied here first, while the click still counts: WebKit (the Rooks app) refuses a clipboard write after an await
+      const local = navigator.clipboard?.writeText(answer).then(() => true, () => false) ?? Promise.resolve(false);
       const r = await api<{ copied: boolean; pasted: boolean; detail: string }>("/anywhere/paste", { body: { text: answer, window: ctx.window } });
-      if (!r.copied) await navigator.clipboard.writeText(answer);
+      if (!r.copied && !(await local)) await navigator.clipboard.writeText(answer);
       toast.ok(r.pasted ? "Pasted." : `Copied. Press ${/Mac/.test(navigator.platform) ? "⌘V" : "Ctrl+V"} in your app to paste.`);
       setTimeout(() => close(true), 1400);
     } catch (e) { toast.err(e); }

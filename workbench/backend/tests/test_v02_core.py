@@ -10,7 +10,7 @@ from conftest import SCRIPT, events, tool_call
 @pytest.fixture(autouse=True)
 def quiet_learning(monkeypatch):
     """Background memory mining must not eat the scripted chat replies."""
-    from app.adapt import knowledge
+    from app.knowledge import facts as knowledge
 
     async def nothing(*a, **k):
         return []
@@ -32,9 +32,9 @@ def clean(client):
 
 @pytest.fixture
 def free_plan(monkeypatch):
-    from app import features_v02
+    from app import plan_tiers
 
-    monkeypatch.setattr(features_v02, "_account_allowed", lambda f: False)
+    monkeypatch.setattr(plan_tiers, "_account_allowed", lambda f: False)
 
 
 def chat(client, message, cid=None):
@@ -225,7 +225,7 @@ def test_memory_and_schedule_undo(clean):
     s = _entry(c, "Set up automation “Friday invoices”")
     c.post(f"/api/history/{m['id']}/undo", json={})
     c.post(f"/api/history/{s['id']}/undo", json={})
-    assert not any("Fridays" in f["content"] for f in c.get("/api/learn/facts").json()["facts"])
+    assert not any("Fridays" in m["content"] for m in c.get("/api/knowledge/memories").json())
     from app import db
 
     assert db.one("SELECT 1 FROM schedules WHERE name = 'Friday invoices'") is None
@@ -241,9 +241,9 @@ def test_history_search_held_calls_and_export_gate(clean, monkeypatch):
     assert csv.status_code == 200 and csv.text.lstrip("\ufeff").startswith("When,Who,Kind")
     pdf = c.get("/api/history/export.pdf")
     assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF") and b"%%EOF" in pdf.content
-    from app import features_v02
+    from app import plan_tiers
 
-    monkeypatch.setattr(features_v02, "_account_allowed", lambda f: False)  # Free plan with billing live
+    monkeypatch.setattr(plan_tiers, "_account_allowed", lambda f: False)  # Free plan with billing live
     assert c.get("/api/history/export.csv").status_code == 200  # integration/v0.2: exports are never gated
     assert c.get("/api/history/export.pdf").status_code == 200
     assert c.get("/api/history").json()["export_allowed"] is True
@@ -323,9 +323,9 @@ def test_check_mode_adds_prompt_and_is_pro(clean, checker, monkeypatch):
     chat(c, "how many staff?", cid)
     sys = next(m["content"] for m in CALLS[0]["messages"] if m["role"] == "system")
     assert "Check mode is on" in sys
-    from app import features_v02
+    from app import plan_tiers
 
-    monkeypatch.setattr(features_v02, "_account_allowed", lambda f: False)
+    monkeypatch.setattr(plan_tiers, "_account_allowed", lambda f: False)
     assert c.put("/api/checked/mode", json={"conversation_id": cid, "on": True}).status_code == 402
     assert c.post("/api/checked/check", json={"conversation_id": cid}).status_code == 402
     assert c.get("/api/checked/mode", params={"conversation_id": cid}).json()["allowed"] is False
@@ -352,7 +352,7 @@ def test_history_event_times_read_like_people_say_them(client):
 def test_phone_gets_projects_history_and_check_with_the_same_rules(client, clean, monkeypatch):
     from fastapi.testclient import TestClient
 
-    from app import db, features_v02, history, main
+    from app import db, plan_tiers, history, main
 
     phone = TestClient(main.app, headers={"X-Workbench": "1"})
     start = client.post("/api/mobile/pair/start").json()
@@ -373,6 +373,6 @@ def test_phone_gets_projects_history_and_check_with_the_same_rules(client, clean
     hid2 = history.record("calendar", "Added event", undo_kind="delete_events", undo={"event_ids": []}, confirm="This also cancels it in Google Calendar.")
     assert phone.post(f"/api/mobile/history/h{hid2}/undo", json={}, headers=h).status_code == 409
     # Pro gate for checked answers holds on the phone too
-    monkeypatch.setattr(features_v02, "_account_allowed", lambda f: False)
+    monkeypatch.setattr(plan_tiers, "_account_allowed", lambda f: False)
     assert phone.get("/api/mobile/checked/mode", headers=h).json()["allowed"] is False
     assert phone.put("/api/mobile/checked/mode", json={"conversation_id": None, "on": True, "default": True}, headers=h).status_code == 402

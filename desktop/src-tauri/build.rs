@@ -8,6 +8,7 @@ fn main() {
             "request_approval",
             "open_data_dir",
             "open_logs",
+            "open_external", // links leave for the system browser (WebKit opens no window.open)
             // feat/v02-anywhere-voice
             "get_ask_shortcut",
             "set_ask_shortcut",

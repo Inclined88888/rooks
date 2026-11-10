@@ -36,20 +36,30 @@ export function spokenDecision(text: string): Decision {
   return "approve";
 }
 
+/** The wake phrase a new install listens for. */
+export const WAKE_PHRASE = "hey rooks";
+/** The phrase before the product was Rooks: it still wakes the default phrase for people who learned it. Never shown. */
+const OLD_WAKE_PHRASE = "hey workspace";
+
 /**
- * Wake word: "hey workspace, what's on today" → "what's on today"; "" when only the wake phrase was said; null when it
- * wasn't said at the start. Loose about how engines hear it ("hey work space", "a workspace", "OK workspace").
+ * Wake word: "hey rooks, what's on today" → "what's on today"; "" when only the wake phrase was said; null when it
+ * wasn't said at the start. Loose about how engines hear it ("hey rooks", "a rooks", "OK rooks"). With the default
+ * phrase, "hey workspace" works too; a phrase of the person's own replaces both.
  */
 export function afterWake(transcript: string, phrase: string): string | null {
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9' ]+/g, " ").replace(/\s+/g, " ").trim();
   const loose = (s: string) => s.replace(/\s/g, "").replace(/^(hey|hi|ok|okay|a|hay)(?=.{3})/, "");
-  const target = loose(norm(phrase || "hey workspace"));
-  if (target.length < 3) return null;
+  const chosen = norm(phrase || WAKE_PHRASE);
+  const phrases = loose(chosen) === loose(WAKE_PHRASE) ? [chosen, OLD_WAKE_PHRASE] : [chosen];
   const tw = norm(transcript).split(" ").filter(Boolean);
-  const span = norm(phrase || "hey workspace").split(" ").length + 1;
-  for (let i = 0; i <= Math.min(1, tw.length - 1); i++) {
-    for (let j = i + 1; j <= Math.min(tw.length, i + span); j++) {
-      if (loose(tw.slice(i, j).join(" ")) === target) return tw.slice(j).join(" ");
+  for (const p of phrases) {
+    const target = loose(p);
+    if (target.length < 3) continue;
+    const span = p.split(" ").length + 1;
+    for (let i = 0; i <= Math.min(1, tw.length - 1); i++) {
+      for (let j = i + 1; j <= Math.min(tw.length, i + span); j++) {
+        if (loose(tw.slice(i, j).join(" ")) === target) return tw.slice(j).join(" ");
+      }
     }
   }
   return null;

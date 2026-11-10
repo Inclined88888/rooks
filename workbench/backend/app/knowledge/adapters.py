@@ -1,4 +1,5 @@
 """Backwards-compatible adapters: existing stores stay the source of truth; the graph and index point at them.
+(Facts about the person are not mirrored any more: they live in kn_memories itself, see knowledge/facts.py.)
 
 backfill() runs once as migration 3; sync_*() can be called again at any time (idempotent, keyed by ref).
 """
@@ -58,31 +59,6 @@ def project_entity(project_row_id: int) -> int | None:
     return r["id"] if r else None
 
 
-def sync_adapt_facts() -> int:
-    """'What I know about you' (#29) facts become profile memories, linked back by source_ref adapt_fact:<id>."""
-    if not _has("adapt_facts"):
-        return 0
-    from ..adapt import store
-
-    have = {r["source_ref"] for r in db.all("SELECT source_ref FROM kn_memories WHERE source_ref LIKE 'adapt_fact:%'")}
-    n = 0
-    for f in db.all("SELECT * FROM adapt_facts"):
-        if f"adapt_fact:{f['id']}" in have:
-            continue
-        content = store.open_text(f["content_enc"])
-        if len(content) < 3:
-            continue
-        tier = "procedural" if f["category"] in ("format", "preference") else "profile"
-        try:
-            memory.remember(content, tier, pinned=bool(f["pinned"]), confidence=f["confidence"], source_kind="adapter",
-                            source_ref=f"adapt_fact:{f['id']}", evidence=store.open_text(f["evidence_enc"]),
-                            observed_at=f["created_at"])
-            n += 1
-        except Exception as e:  # noqa: BLE001
-            log.debug("fact %s skipped: %s", f["id"], e)
-    return n
-
-
 def sync_tasks() -> int:
     if not _has("tasks"):
         return 0
@@ -136,7 +112,7 @@ def sync_events() -> int:
 
 def backfill(c: sqlite3.Connection | None = None) -> dict:
     out = {}
-    for name, fn in (("projects", sync_projects), ("facts", sync_adapt_facts), ("tasks", sync_tasks), ("files", sync_files),
+    for name, fn in (("projects", sync_projects), ("tasks", sync_tasks), ("files", sync_files),
                      ("sites", sync_sites), ("notes", sync_notes), ("events", sync_events)):
         out[name] = fn()
     return out

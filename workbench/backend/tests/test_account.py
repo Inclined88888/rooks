@@ -69,6 +69,7 @@ def cloud(client, monkeypatch):
     monkeypatch.setenv("AIW_CLOUD_URL", CLOUD)
     monkeypatch.setenv("AIW_CLOUD_PUBLIC_KEY", PUB)
     monkeypatch.delenv("AIW_ENFORCE_PLANS", raising=False)
+    monkeypatch.setenv("AIW_PLAN_CHECKS", "1")  # plan checks are off unless a build opts in (test_developer_tools.py)
     monkeypatch.setattr(account, "_http", httpx.Client(transport=httpx.MockTransport(fake)))
     yield fake
     for k in ("account_session", "account_token", "account_email", "account_login", "account_billing_live",
@@ -115,11 +116,11 @@ def test_free_is_gated_once_billing_is_live_and_pro_unlocks(client, cloud):
     s = client.post("/api/account/refresh").json()
     assert s["plan"] == "pro" and s["credits"] == 5000 and all(f["unlocked"] for f in s["pro_features"])
     assert client.post("/api/mobile/pair/start").status_code == 200
-    conn = db.one("SELECT * FROM connections WHERE name = 'AI Workspace Cloud'")
+    conn = db.one("SELECT * FROM connections WHERE name = 'Rooks Cloud'")
     assert conn and conn["enabled"] == 1 and conn["base_url"] == f"{CLOUD}/v1"
 
     client.post("/api/account/sign-out")
-    assert db.one("SELECT enabled FROM connections WHERE name = 'AI Workspace Cloud'")["enabled"] == 0  # kept, switched off
+    assert db.one("SELECT enabled FROM connections WHERE name = 'Rooks Cloud'")["enabled"] == 0  # kept, switched off
     assert client.post("/api/mobile/pair/start").status_code == 402
 
 

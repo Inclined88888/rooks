@@ -109,6 +109,69 @@ accounts, the tenant's consent policy decides: Microsoft's default "Microsoft-ma
 "Your organisation needs an administrator to approve AI Workspace for mail and calendar". The admin can approve it at
 `https://login.microsoftonline.com/<their tenant>/adminconsent?client_id=<your client id>`.
 
+### Microsoft: the work account and its switches (Work apps, design 0012)
+
+The **Work apps** page (Settings) connects one work account. Its first sign-in asks only for `openid email profile
+offline_access User.Read`; each switch asks for its own permissions when turned on (incremental consent, the same
+registration). Add these **delegated** Microsoft Graph permissions to the registration in step 5 so the consent page
+can offer them; nobody is asked for one until they turn its switch on. The one table is
+`workbench/backend/app/work_scopes.py`.
+
+| Switch | Delegated permissions | Needs an admin by default |
+| --- | --- | --- |
+| Mail | `Mail.ReadWrite`, `Mail.Send` | no (tenant policy decides) |
+| Calendar | `Calendars.ReadWrite` | no |
+| Files: read | `Files.Read.All`, `Sites.Read.All` | no |
+| Files: change | `Files.ReadWrite.All` | no |
+| Chats: read | `Chat.Read`, `Team.ReadBasic.All`, `Channel.ReadBasic.All`, `ChannelMessage.Read.All` | `ChannelMessage.Read.All` |
+| Chats: post | `ChatMessage.Send`, `ChannelMessage.Send` | no |
+| Meeting transcripts | `OnlineMeetings.Read`, `OnlineMeetingTranscript.Read.All` | `OnlineMeetingTranscript.Read.All` |
+| Tasks | `Tasks.ReadWrite` | no |
+
+"Needs an admin" follows Microsoft Graph's permissions reference as known when this was built; it was not checked
+against a live tenant, and a company can require an admin for every permission. When Microsoft answers `AADSTS65001`
+or `AADSTS90094`, the switch shows "Waiting for your IT team" and **Copy the request for IT** copies a note naming each
+permission and why, with the tenant's admin consent address
+(`https://login.microsoftonline.com/<tenant>/v2.0/adminconsent?client_id=...&scope=...`). A personal account
+(tenant `9188040d-6c67-4c5b-b112-36a304b66dad`) is refused as a work account. Every write (upload, new version, share,
+cell edit, post, task change) waits for the person's yes in Needs you; reads never do. Tested only against the fake
+in `workbench/backend/tests/fake_graph.py`: nothing here has been run against a real tenant yet (BACKLOG.md).
+
+### Google: the work account and its switches (Work apps, design 0012)
+
+The same **Work apps** page connects a Google Workspace account with the Desktop app client from section 1. Its first
+sign-in asks only for `openid email profile`; each switch asks for its own scopes when turned on, with
+`include_granted_scopes=true` so earlier switches stay granted, and `prompt=consent` so Google returns a long-lived
+token each time. Add these scopes to the project's **Data Access** list so the consent page can offer them; nobody is
+asked for one until they turn its switch on. The one table is `workbench/backend/app/work_scopes.py`.
+
+| Switch | Scopes (`https://www.googleapis.com/auth/...`) | Google's class |
+| --- | --- | --- |
+| Mail | `gmail.readonly`, `gmail.compose` | restricted |
+| Calendar | `calendar.events` | sensitive |
+| Files: read | `drive.readonly` | restricted |
+| Files: change | `drive`, `documents`, `spreadsheets` | restricted, sensitive, sensitive |
+| Chats: read | `chat.spaces.readonly`, `chat.messages.readonly` | sensitive |
+| Chats: post | `chat.messages.create` | sensitive |
+| Meeting transcripts | `meetings.space.readonly`, `drive.readonly` | sensitive, restricted |
+| Tasks | `tasks` | sensitive |
+
+Enable these APIs in the Cloud project: Google Drive API, Google Docs API, Google Sheets API, Google Chat API, Google
+Meet REST API, Google Tasks API (Gmail and Calendar from section 1). **The Chat API also needs a Chat app configured**
+(Google Chat API, Configuration: an app name, avatar and description; it does not need to be published or reachable)
+before it answers calls made as the person; until then the Chats switches fail with Google's own refusal.
+
+A personal Gmail is refused as a work account: Google puts the company's domain (`hd`) in the ID token only for a
+Workspace account, and Rooks keeps it as the account's company. When a company's admin has not allowed the app,
+Google answers `admin_policy_enforced`; the switch shows "Waiting for your IT team" and **Copy the request for IT**
+copies a note with the client ID and where to trust it (Admin console: Security, Access and data control, API controls,
+App access control, Manage third-party app access). Restricted scopes (Drive, Gmail) need Google's verification and a
+security assessment before people outside the project's own organisation can use the shipped client; until then a
+company can trust the client in the admin console (trusted apps skip the unverified screen for its people) or use its
+own client (*Use your own app registration*). Every write (upload, new version, share, Docs edit, Sheets edit, post,
+task change) waits for the person's yes in Needs you; reads never do. Tested only against the fake in
+`workbench/backend/tests/fake_google.py`: nothing here has been run against a real Workspace domain yet (BACKLOG.md).
+
 ## 3. Put the IDs into a build
 
 Any of these works; the first that is set wins at run time:

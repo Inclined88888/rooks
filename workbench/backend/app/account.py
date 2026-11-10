@@ -4,8 +4,10 @@
 * Signing in links this install to an account on the cloud service. The cloud hands back a short-lived Ed25519
   signed entitlement token that is verified here, offline, with the cloud's public key. It stays valid for its
   lifetime plus a grace period (7 days by default), so a Pro user who goes offline keeps Pro for a week.
-* Plans are only enforced once billing is live: until the cloud URL is set and that server reports billing is on,
-  every feature stays unlocked ("free while in beta"), so nothing breaks for anyone testing a build today.
+* Paid-plan checks are off by default: no Rooks cloud sells plans today, so a paywall would point at nothing. A build
+  or install opts in with AIW_PLAN_CHECKS=1 (AIW_ENFORCE_PLANS=0 or 1 still forces either way, for tests).
+* Once opted in, plans are only enforced once billing is live: until the cloud URL is set and that server reports
+  billing is on, every feature stays unlocked ("free while in beta"), so nothing breaks for anyone testing a build.
   Once a build has seen billing live it remembers, so blocking the server does not unlock Pro.
 * Pro features are gated by `allowed(feature)` / `require_feature(feature)` and by a small path rule table
   (`GATES`) so features from other modules are gated without editing them. A gated call answers 402 with
@@ -49,18 +51,19 @@ LABELS = {
 }
 PREMIUM_THEMES = {"cherry", "linen", "gallery"}  # the default, Paper, Sunshine, Neon, Dark, High contrast and Auto stay free
 # integration/v0.2: Neon is free (the owner wants neon everywhere); only Cherry & Ink and the hidden themes are premium.
-# integration/v0.2: every Pro id declared by the v0.2 features (features_v02.FEATURE_TIERS) is a Pro feature here too, so
+# integration/v0.2: every Pro id declared by the v0.2 features (plan_tiers.FEATURE_TIERS) is a Pro feature here too, so
 # account.allowed() gates them (only once billing is live) and "Your plan" lists them.
-from . import features_v02  # noqa: E402
+from . import plan_tiers  # noqa: E402
 
-V02_PRO_FEATURES = sorted(features_v02.pro_features())
+V02_PRO_FEATURES = sorted(plan_tiers.pro_features())
 PRO_FEATURES += [f for f in V02_PRO_FEATURES if f not in PRO_FEATURES]
 for _f in V02_PRO_FEATURES:
-    LABELS.setdefault(_f, features_v02.FEATURE_LABELS.get(_f, _f))
+    LABELS.setdefault(_f, plan_tiers.FEATURE_LABELS.get(_f, _f))
 # Paid plans whose signed token predates the v0.2 ids still get them (the token's plan is signed too).
 PAID_PLANS = {"pro", "team", "business"}
 REFRESH_AFTER_S = 12 * 3600
-CLOUD_CONNECTION_NAME = "AI Workspace Cloud"
+CLOUD_CONNECTION_NAME = "Rooks Cloud"
+LEGACY_CLOUD_CONNECTION_NAME = "AI Workspace Cloud"  # the same row before the rename (moved once, below)
 
 # (method, path regex, feature). Only starting new Pro work is gated; stopping, approving, reading, deleting and
 # exporting stay free so a lapsed plan never traps anyone's data or leaves a job running.
@@ -116,7 +119,7 @@ def _cloud(method: str, path: str, body: dict | None = None, auth: bool = True) 
     try:
         r = _client().request(method, f"{base}{path}", json=body, headers=headers)
     except httpx.HTTPError as e:
-        raise HTTPException(503, "Can't reach your AI Workspace account right now. Check your internet and try again.") from e
+        raise HTTPException(503, "Can't reach your Rooks account right now. Check your internet and try again.") from e
     try:
         data = r.json()
     except ValueError:
@@ -168,9 +171,16 @@ def _payload() -> dict | None:
     return verify(tok) if tok else None
 
 
+def plan_checks_on() -> bool:
+    """Paid-plan checks run only when this build or install opts in (the code stays for a future cloud)."""
+    return os.getenv("AIW_PLAN_CHECKS") == "1"
+
+
 def billing_live() -> bool:
     if os.getenv("AIW_ENFORCE_PLANS") in ("0", "1"):
         return os.getenv("AIW_ENFORCE_PLANS") == "1"
+    if not plan_checks_on():
+        return False
     return bool(cloud_url()) and db.get_setting("account_billing_live") == "1"
 
 
@@ -182,7 +192,7 @@ def features() -> set[str]:
     if p.get("plan") in PAID_PLANS:  # integration/v0.2
         feats |= set(V02_PRO_FEATURES)
     if p.get("plan") in ("team", "business"):  # feat/team-lead: team lead features
-        feats |= features_v02.team_features()
+        feats |= plan_tiers.team_features()
     return feats
 
 
@@ -276,8 +286,11 @@ def _sync_cloud_connection(enabled: bool) -> None:
     """The hosted models show up as a normal model connection, keyed by the account session."""
     from . import llm
 
+    # Before the product was Rooks this row was "AI Workspace Cloud": it is renamed once and keeps its id (history,
+    # default model) instead of a second connection appearing beside it.
     base = cloud_url()
-    llm.managed_connection(CLOUD_CONNECTION_NAME, f"{base}/v1", _session(), enabled and bool(base), "auto,fast,smart")
+    llm.managed_connection(CLOUD_CONNECTION_NAME, f"{base}/v1", _session(), enabled and bool(base), "auto,fast,smart",
+                           previous_name=LEGACY_CLOUD_CONNECTION_NAME)
 
 
 # ---------- routes ----------

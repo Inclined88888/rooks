@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "rooks headless output",
+  "description": "What `rooks -p` prints. --output-format json: one object, #/$defs/result. --output-format stream-json: one object per line, each #/$defs/event, the last one of type end. rooks_code.sdk.run returns the same result object (Result.to_dict()) and passes each event to on_event. Text in every field has keys, tokens, emails and phone numbers hidden, as in the receipts.",
+  "oneOf": [{"$ref": "#/$defs/result"}, {"$ref": "#/$defs/event"}],
+  "$defs": {
+    "text": {"type": "string"},
+    "helper": {"type": "boolean", "description": "true when a helper (the task tool's sub-agent) did this, not the main agent"},
+    "denial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "summary", "by"],
+      "properties": {
+        "tool": {"type": "string"},
+        "summary": {"type": "string", "description": "the step in plain words, e.g. 'edit calc.py' or 'run: rm -rf build'"},
+        "by": {"enum": ["headless", "rule", "hook", "answer"],
+               "description": "headless: it needed an OK and nobody can answer a headless run; rule: a permission rule never allows it; hook: a project hook stopped it; answer: someone answered no"}
+      }
+    },
+    "outcome_fields": {
+      "type": "object",
+      "required": ["ok", "result", "outcome", "session_id", "turns", "tokens", "cost_usd", "denied", "exit_code", "error", "duration_ms"],
+      "properties": {
+        "ok": {"type": "boolean", "description": "exit_code is 0"},
+        "result": {"type": "string", "description": "the agent's final answer"},
+        "outcome": {"enum": ["no_claim", "backed", "unbacked", "model_error", "step_limit", "budget_paused", "interrupted",
+                             "loop_detected", "not_started", "error"],
+                    "description": "how the prompt ended, in the receipts' words; not_started when it never reached the model"},
+        "session_id": {"type": ["string", "null"], "description": "the receipt's name in .rooks/runs; rooks --resume ID continues it"},
+        "turns": {"type": "integer", "minimum": 0, "description": "model calls made"},
+        "tokens": {
+          "type": "object", "additionalProperties": false, "required": ["input", "output"],
+          "properties": {"input": {"type": "integer", "minimum": 0}, "output": {"type": "integer", "minimum": 0},
+                         "cache_read": {"type": "integer", "minimum": 0, "description": "of input, read from the provider's prompt cache"},
+                         "cache_write": {"type": "integer", "minimum": 0, "description": "of input, written to the prompt cache"}}
+        },
+        "cost_usd": {"type": ["number", "null"], "minimum": 0, "description": "null when the model's price is unknown"},
+        "denied": {"type": "array", "items": {"$ref": "#/$defs/denial"}},
+        "exit_code": {"enum": [0, 1, 2, 3], "description": "0 done, 1 error or not finished, 2 bad usage or cannot start, 3 something was denied"},
+        "error": {"type": "string", "description": "empty, or what went wrong in plain words"},
+        "duration_ms": {"type": "integer", "minimum": 0}
+      }
+    },
+    "result": {
+      "allOf": [{"$ref": "#/$defs/outcome_fields"}],
+      "required": ["type"],
+      "properties": {"type": {"const": "result"}},
+      "unevaluatedProperties": false
+    },
+    "event": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {"$ref": "#/$defs/start"}, {"$ref": "#/$defs/assistant"}, {"$ref": "#/$defs/tool_call"},
+        {"$ref": "#/$defs/tool_result"}, {"$ref": "#/$defs/approval_asked"}, {"$ref": "#/$defs/approval_denied"},
+        {"$ref": "#/$defs/notice"}, {"$ref": "#/$defs/end"}
+      ]
+    },
+    "start": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "session_id", "version", "provider", "model", "cwd", "approvals"],
+      "properties": {
+        "type": {"const": "start"},
+        "session_id": {"type": "string"},
+        "version": {"type": "string"},
+        "provider": {"type": "string"},
+        "model": {"type": "string"},
+        "cwd": {"type": "string"},
+        "approvals": {"enum": ["refuse", "yes", "dry-run"],
+                      "description": "refuse: a step that needs an OK is denied (rules, a trusted folder and the session's approvals still allow); yes: --yes approves the agent's steps; dry-run: nothing is changed"}
+      }
+    },
+    "assistant": {
+      "type": "object", "additionalProperties": false, "required": ["type", "text", "final"],
+      "properties": {"type": {"const": "assistant"}, "text": {"type": "string"}, "final": {"type": "boolean"},
+                     "helper": {"$ref": "#/$defs/helper"}}
+    },
+    "tool_call": {
+      "type": "object", "additionalProperties": false, "required": ["type", "id", "tool", "args"],
+      "properties": {"type": {"const": "tool_call"}, "id": {"type": "string"}, "tool": {"type": "string"},
+                     "args": {"type": "object"}, "helper": {"$ref": "#/$defs/helper"}}
+    },
+    "tool_result": {
+      "type": "object", "additionalProperties": false, "required": ["type", "id", "tool", "outcome", "result"],
+      "properties": {
+        "type": {"const": "tool_result"}, "id": {"type": "string"}, "tool": {"type": "string"},
+        "outcome": {"enum": ["verified", "ok", "check_failed", "bad_args", "unknown_tool", "tool_error", "denied", "dry_run",
+                             "loop_detected"]},
+        "result": {"type": "string", "description": "what the model was told, at most 4000 characters"},
+        "helper": {"$ref": "#/$defs/helper"}
+      }
+    },
+    "approval_asked": {
+      "type": "object", "additionalProperties": false, "required": ["type", "tool", "effect", "summary"],
+      "properties": {
+        "type": {"const": "approval_asked"}, "tool": {"type": "string"},
+        "effect": {"enum": ["write", "command", "external"]},
+        "summary": {"type": "string"},
+        "preview": {"type": "string", "description": "the diff or command, at most 4000 characters"},
+        "helper": {"$ref": "#/$defs/helper"}
+      }
+    },
+    "approval_denied": {
+      "type": "object", "additionalProperties": false, "required": ["type", "tool", "summary", "by"],
+      "properties": {
+        "type": {"const": "approval_denied"}, "tool": {"type": "string"}, "summary": {"type": "string"},
+        "by": {"enum": ["headless", "rule", "hook", "answer"]},
+        "helper": {"$ref": "#/$defs/helper"}
+      }
+    },
+    "notice": {
+      "type": "object", "additionalProperties": false, "required": ["type", "level", "text"],
+      "properties": {"type": {"const": "notice"}, "level": {"enum": ["info", "warn", "error"]}, "text": {"type": "string"},
+                     "helper": {"$ref": "#/$defs/helper"}}
+    },
+    "end": {
+      "allOf": [{"$ref": "#/$defs/outcome_fields"}],
+      "required": ["type"],
+      "properties": {"type": {"const": "end"}},
+      "unevaluatedProperties": false
+    }
+  }
+}

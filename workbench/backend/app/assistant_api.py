@@ -234,9 +234,8 @@ def rename(cid: int, data: ConvPatch):
 @router.delete("/conversations/{cid}")
 def delete_conversation(cid: int):
     # Detach dependents: actions is an audit log, so null conversation_id and keep rows.
-    # memories and agent_tasks also reference conversations but have no FK constraint.
+    # agent_tasks also references conversations but has no FK constraint.
     db.run("UPDATE actions SET conversation_id = NULL WHERE conversation_id = ?", cid)
-    db.run("UPDATE memories SET conversation_id = NULL WHERE conversation_id = ?", cid)
     db.run("UPDATE agent_tasks SET conversation_id = NULL WHERE conversation_id = ?", cid)
     # messages has ON DELETE CASCADE, so it will be deleted automatically
     db.run("DELETE FROM conversations WHERE id = ?", cid)
@@ -306,8 +305,8 @@ def resume_goal(goal_id: int):
 # Approvals: actions held by assistant.needs_approval
 @router.get("/approvals")
 def approvals(conversation_id: int | None = None):
-    """Actions waiting for the user's decision."""
-    return actions.pending(conversation_id)
+    """Actions waiting for the user's decision; a work change with its lines (every person a share invites)."""
+    return [{**a, **assistant._change_of(a["tool"], a["args"])} for a in actions.pending(conversation_id)]
 
 
 class DecisionIn(BaseModel):
@@ -352,51 +351,18 @@ def run_trace(aid: int):
     return actions.trace(aid)
 
 
-# Memory
-class MemoryIn(BaseModel):
-    content: str = Field(..., min_length=3, max_length=1000)
-    kind: str = Field("fact", pattern="^(profile|fact|preference)$")
-
-
-def _legacy_shape(f: dict) -> dict:
-    kind = "profile" if f["category"] == "about" else ("preference" if f["category"] in ("preference", "format") else "fact")
-    return {"id": f["id"], "content": f["content"], "kind": kind, "source": f["source"], "created_at": f["created_at"],
-            "updated_at": f["updated_at"]}
-
-
-# The Memory tab now reads and writes the encrypted learn store (the same facts as "What I know about you").
+# Memory lives at /api/knowledge/memories (knowledge/routes.py): one store for chat, the Memory page and the terminal.
+# This read-only list is for the `ws` terminal chat client (`ws login` checks its token with it, `ws memory` prints
+# it), which signs in with the Terminal access token that /api/knowledge refuses. Sensitive memories stay on the
+# Memory page.
 @router.get("/memories")
 def memories(q: str = ""):
-    from .adapt import knowledge
+    from .knowledge import facts
 
-    knowledge.migrate_legacy()
-    if q:
-        return assistant.search_memories(q, 50)
-    return [_legacy_shape(f) for f in knowledge.all_facts()][:500]
-
-
-@router.post("/memories")
-def add_memory(data: MemoryIn):
-    from .adapt import knowledge
-
-    knowledge.migrate_legacy()
-    f = knowledge.add(data.content.strip(), data.kind, "user", confidence=1.0, pinned=data.kind == "profile", dedupe=False)
-    return _legacy_shape(f)
-
-
-@router.put("/memories/{mid}")
-def edit_memory(mid: int, data: MemoryIn):
-    from .adapt import knowledge
-
-    return _legacy_shape(knowledge.update(mid, data.content.strip(), data.kind))
-
-
-@router.delete("/memories/{mid}")
-def delete_memory(mid: int):
-    from .adapt import knowledge
-
-    knowledge.delete(mid)
-    return {"ok": True}
+    found = facts.search(q, 50) if q.strip() else facts.all_facts(500)
+    kind = {"about": "profile", "preference": "preference"}
+    return [{"id": f["id"], "content": f["content"], "kind": kind.get(f["category"], "fact"), "source": f["source"],
+             "created_at": f["created_at"], "updated_at": f["updated_at"]} for f in found]
 
 
 # Skills

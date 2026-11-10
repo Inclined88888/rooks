@@ -111,20 +111,25 @@ test("the package's stylesheets stay on the type scale, the weights, the radii a
     const css = strip(read(f));
     for (const m of css.matchAll(/font-size\s*:\s*([^;}]+)/g)) {
       const v = m[1].trim();
-      if (/^var\(--text-(xs|sm|md|lg|xl|2xl|mono|thread)\)$/.test(v) || v === "inherit") continue;
+      // the industrial redesign (step 4) changes what this guards: micro-labels and display titles are on the scale too
+      if (/^var\(--text-(micro|micro-sm|xs|sm|md|lg|xl|2xl|mono|thread)\)$/.test(v) || /^var\(--display-(sm|md|lg|xl)\)$/.test(v) || v === "inherit") continue;
       const px = v.match(/^(\d+(?:\.\d+)?)px$/);
       assert.ok(px && [12, 13, 14, 16, 20, 28].includes(Number(px[1])), `${f}: font-size ${v} is off the scale`);
     }
     for (const m of css.matchAll(/font-weight\s*:\s*([^;}]+)/g)) {
       const v = m[1].trim();
-      assert.ok(/^(400|500|600|var\(--weight-(regular|medium|heading)\))$/.test(v), `${f}: font-weight ${v}`);
+      // industrial (step 4): titles are bold or the display weight
+      assert.ok(/^(400|500|600|var\(--weight-(regular|medium|heading|bold|display)\))$/.test(v), `${f}: font-weight ${v}`);
     }
     for (const m of css.matchAll(/border-radius\s*:\s*([^;}]+)/g)) {
       for (const part of m[1].trim().split(/\s+/)) assert.ok(/^(0|50%|var\(--radius-(sm|md|full)\))$/.test(part), `${f}: border-radius ${m[1].trim()}`);
     }
     assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, `${f}: no hex`);
     assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/i, `${f}: no literal colours`);
-    assert.doesNotMatch(css, /text-transform\s*:\s*uppercase/, `${f}: no shouting labels`);
+    // industrial (step 4): uppercase only in the mono micro-labels and the condensed display titles, never body words
+    for (const r of css.matchAll(/([^{};]+)\{([^{}]*)\}/g)) {
+      if (/text-transform\s*:\s*uppercase/.test(r[2])) assert.match(r[2], /font-family:\s*var\(--font-(mono|display)\)/, `${f} ${r[1].trim()}: no shouting body words`);
+    }
     assert.doesNotMatch(css, /box-shadow\s*:[^;]*\d+px\s+\d+px/, `${f}: no card shadows`);
     assert.doesNotMatch(css, /@keyframes|animation\s*:\s*(?!ui-fade|none)/, `${f}: no motion but the one fade`);
     assert.doesNotMatch(css, /var\(--(panel|panel-2|text|muted|faint|rule|ok|warn|blue-soft|ink-btn|on-ink|accent-ring)\)/, `${f}: old v2 token names`);

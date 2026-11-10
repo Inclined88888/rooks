@@ -9,14 +9,14 @@ import zipfile
 import pytest
 from conftest import SCRIPT, tool_call
 
-automations = db = features_v02 = jobs = livedocs = None  # imported once the app's settings exist (see quiet_loops)
+automations = db = plan_tiers = jobs = livedocs = None  # imported once the app's settings exist (see quiet_loops)
 
 
 @pytest.fixture(autouse=True)
 def quiet_loops(client, monkeypatch):
     """The app's background loops keep running during tests; keep them from racing ours."""
-    global automations, db, features_v02, jobs, livedocs
-    from app import automations, db, features_v02, jobs, livedocs  # noqa: F811
+    global automations, db, plan_tiers, jobs, livedocs
+    from app import automations, db, plan_tiers, jobs, livedocs  # noqa: F811
     real_tick = jobs.tick
     monkeypatch.setattr(jobs, "tick", lambda: [])
     monkeypatch.setattr(automations, "check_all", _no_check)
@@ -76,14 +76,14 @@ def test_api_parse_create_list_patch_delete(client):
 
 
 def test_free_plan_gets_three(client, monkeypatch):
-    monkeypatch.setattr(features_v02, "allowed", lambda f: f != "automations_unlimited")
+    monkeypatch.setattr(plan_tiers, "allowed", lambda f: f != "automations_unlimited")
     body = {"trigger_kind": "schedule", "trigger": {"cron": "0 9 * * 1"}, "action_kind": "task", "action": {"prompt": "Plan my week"}}
     for _ in range(3):
         assert client.post("/api/automations", json=body).status_code == 200
     r = client.post("/api/automations", json=body)
     assert r.status_code == 402 and "Pro" in r.text
     assert client.get("/api/automations").json()["limit"] == 3
-    monkeypatch.setattr(features_v02, "allowed", lambda f: True)
+    monkeypatch.setattr(plan_tiers, "allowed", lambda f: True)
     assert client.post("/api/automations", json=body).status_code == 200
     assert client.get("/api/automations").json()["limit"] is None
 
@@ -229,7 +229,7 @@ def test_stop_denies_pending_approvals(client):
 
 def test_pause_resume_and_computer_jobs_queue(quiet_loops, monkeypatch):
     tick = quiet_loops
-    monkeypatch.setattr(features_v02, "allowed", lambda f: True)
+    monkeypatch.setattr(plan_tiers, "allowed", lambda f: True)
     gate = {}
 
     async def slow(jid):
@@ -265,7 +265,7 @@ def test_pause_resume_and_computer_jobs_queue(quiet_loops, monkeypatch):
 
 def test_free_runs_one_job_at_a_time(quiet_loops, monkeypatch):
     tick = quiet_loops
-    monkeypatch.setattr(features_v02, "allowed", lambda f: f not in ("jobs_board", "automations_unlimited"))
+    monkeypatch.setattr(plan_tiers, "allowed", lambda f: f not in ("jobs_board", "automations_unlimited"))
 
     async def slow(jid):
         await asyncio.sleep(10)

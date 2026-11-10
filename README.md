@@ -27,7 +27,7 @@ Everything heavier is an **optional add-on, off by default**:
 | `search` | SearXNG | Free private web search (otherwise use a Brave or Tavily key, or none) | small |
 | `codex` | Official Codex CLI 0.163.0 | Explicit CLI task hand-off ([setup](cli-launcher/CODEX.md)) | image size unmeasured |
 | `claude-code` | Official Claude Code 2.1.308 | Explicit CLI task hand-off using the user's own official login ([setup and API](cli-launcher/README.md)) | image size unmeasured |
-| `browser` | browser-use + Chromium | Browser agent page and a `browse_web` tool (or use the lighter [Rooks Browser](rooks-browser/README.md), no image) | ≈ 2.5 GB image |
+| `browser` | [Rooks Browser](rooks-browser/README.md) + Chromium | Browser page and a `browse_web` tool, with approvals (on your own computer the app starts Rooks Browser itself) | image size unmeasured |
 | `local-models` | Ollama in Docker | Local models (on a Mac, native Ollama is faster and is detected by setup) | ≈ 8.5 GB image + models |
 | `openwebui` | Open WebUI | A second chat app with RAG knowledge bases and multi user accounts | ≈ 6.5 GB image |
 | `paperclip` | Paperclip | Upstream company of agents running coding CLIs (Claude Code, Codex, OpenCode) | ≈ 13 GB image |
@@ -77,10 +77,10 @@ Drag the old AI Workspace app to the Trash before opening the new disk image. If
 
 Preview builds are **not code-signed yet**. On macOS, right-click the app → **Open** the first time; on Windows, click
 **More info → Run anyway**. Signing, notarisation and auto-updates switch on once the keys exist
-([docs/desktop-release.md](docs/desktop-release.md)). The add-ons below (browser agent, Paperclip, Hermes, Open WebUI)
-are still Docker-only; the server install below is unchanged.
+([docs/desktop-release.md](docs/desktop-release.md)). On your own computer the app starts Rooks Browser and Rooks Desk
+itself; Paperclip, Hermes and Open WebUI are add-ons of the server install below, which is unchanged.
 
-## Why AI Workspace
+## Why Rooks
 
 1. **Light.** Core image is 248 MB (CI, unpacked layers), not multi-GB, and idles at ~100 MB of RAM (measured outside Docker).
 2. **Cheap to run.** Comfortable on a €4 VPS; no GPU required for the core.
@@ -89,11 +89,11 @@ are still Docker-only; the server install below is unchanged.
 5. **One image, anywhere.** The same image runs on a Mac and a small Linux server.
 6. **Safe upgrades.** Upgrades keep your `.env` and data, and re-running the installer is idempotent.
 
-The full list of [100 reasons people pick AI Workspace](docs/README.md) — including what is roadmap, clearly marked — lives in the docs.
+The full list of [100 reasons people pick Rooks](docs/README.md) — including what is roadmap, clearly marked — lives in the docs.
 
 ## Run it on a server (Docker, optional)
 
-Only for running AI Workspace on a home server or VPS for several devices. On your own computer use the one command
+Only for running Rooks on a home server or VPS for several devices. On your own computer use the one command
 install above: it needs no Docker.
 
 Requirements: Docker with Compose v2 (Docker Desktop or OrbStack on a Mac), 1 GB RAM free, about 2 GB of disk for the build. At least one model provider key, or Ollama.
@@ -143,7 +143,7 @@ Native Ollama uses the Mac GPU; the `local-models` add-on would run on CPU insid
 
 **Assistant** is the main page: one chat that can use every part of the workspace.
 
-* **Tools.** Notes (search, read, create, append), tasks, calendar (agenda, create event), mail (search, read, save draft; send only after you approve each email), web search and page reading, the browser agent when that add-on is on, memory, skills and schedules. Each tool step shows live in the chat.
+* **Tools.** Notes (search, read, create, append), tasks, calendar (agenda, create event), mail (search, read, save draft, and send: each email is sent only after your yes in the chat or in Needs you), web search and page reading, Rooks Browser (started by the app on your computer; on a server, the `browser` add-on), memory, skills and schedules. Each tool step shows live in the chat.
 * **Memory.** After a conversation it quietly extracts durable facts about you (profile, preferences, facts), at most 5 per conversation, skipping duplicates. Relevant ones are injected into every new conversation. You can also say "remember that…" or "forget…". Review and edit everything under **Memory & skills**. Turn learning off in Assistant settings.
 * **Skills.** When a task took 3 or more tool calls, it can save the procedure as a named skill and improve it on later use. Skills are listed to the model and loaded on demand, so they cost almost nothing until used.
 * **Approvals.** Web pages and email can contain instructions written by someone else (prompt injection). Once a conversation has read either, actions that leave the workspace or change the assistant's future behaviour (remember, forget, save a skill, schedule a task, create a calendar event, browse, delegate) are held until you approve them in the chat, with `ws approve <id>`, or refused outright in unattended runs (schedules, company agents). Sending an email and sending calendar invitations are always held for approval, even in a clean conversation. Web and email content is labelled as untrusted for the model, and skills are never learned from such turns. This narrows the damage an injection can do; it does not make the model immune to it. Everything waiting on you, from chat, jobs, the Room and the browser and computer agents, is in one inbox, **Needs you**, at the top of the app; answering there runs it once.
@@ -180,7 +180,7 @@ Native Ollama uses the Mac GPU; the `local-models` add-on would run on CPU insid
 - **CalDAV** (read and create): Nextcloud, Fastmail, iCloud (`https://caldav.icloud.com` with an app specific password), Radicale, Baïkal. Use *Find calendars* to pick one.
 - **Local** calendar stored in Workbench.
 
-**Mail.** Gmail and Outlook.com / Microsoft 365 through Connect Google / Connect Microsoft (Gmail API and Microsoft Graph), or IMAP/SMTP with app passwords: Fastmail, iCloud, Yahoo, Gmail (needs 2 step verification and an app password), and most self hosted servers. Read, search, reply, compose, and "Draft with AI" with your intent. AI drafts use `[placeholders]` instead of inventing facts; every send asks for confirmation.
+**Mail.** Gmail and Outlook.com / Microsoft 365 through Connect Google / Connect Microsoft (Gmail API and Microsoft Graph), or IMAP/SMTP with app passwords: Fastmail, iCloud, Yahoo, Gmail (needs 2 step verification and an app password), and most self hosted servers. Read, search, reply, compose, and "Draft with AI" with your intent. AI drafts use `[placeholders]` instead of inventing facts. Mail is sent, not only drafted: the assistant sends an email only after your yes (in the chat or in Needs you), and the Mail page asks before each send.
 
 ## Terminal coding agent (Rooks Code)
 
@@ -206,7 +206,8 @@ Install on macOS, Windows and Linux, configuration, MCP servers and limits: [roo
 ### Your Claude plan, through Claude Code
 
 Have a Claude Pro or Max plan? Install Anthropic's Claude Code (`npm i -g @anthropic-ai/claude-code`), run `claude` once to
-sign in, and hand it coding jobs from the app's **Coding agent** page or with `rooks -P claude-code "..."`. You approve
+sign in, and hand it coding jobs from the app's **Code** page (shown once Settings, Advanced, **Show developer tools** is
+on) or with `rooks -P claude-code "..."`. This works today, with no add-on. You approve
 each edit and command, and see the diff. The app never sees your sign-in. Codex with a ChatGPT plan works the same way.
 Details and Anthropic's terms: [docs/CLAUDE-CODE.md](docs/CLAUDE-CODE.md).
 
@@ -228,14 +229,14 @@ Hiring an agent (Agents → New agent) means choosing an adapter, which is the p
 | Gemini CLI | Google models | `GEMINI_API_KEY` |
 | OpenClaw | An [OpenClaw](https://github.com/openclaw/openclaw) gateway you run separately, joined with "Invite an external agent" | the gateway's token |
 
-Paperclip's image ships the Claude Code, Codex, OpenCode and Gemini CLIs. OpenCode reads `paperclip/opencode.json` (mounted read only), which `scripts/sync-opencode-config.sh` writes: one entry per downloaded Ollama model plus the browser agent as an MCP server. **Run that script again after pulling new Ollama models**, then `docker compose restart paperclip`.
+Paperclip's image ships the Claude Code, Codex, OpenCode and Gemini CLIs. OpenCode reads `paperclip/opencode.json` (mounted read only), which `scripts/sync-opencode-config.sh` writes: one entry per downloaded Ollama model plus Workbench's tools as an MCP server. **Run that script again after pulling new Ollama models**, then `docker compose restart paperclip`.
 
 Things to know:
 
 * **Model picker.** The new agent form defaults to Paperclip's "AI connection" catalog (OpenRouter models). To use local or Zen models, type the id with "Enter custom model…", e.g. `ollama/qwen3:8b` or `opencode/big-pickle`.
 * **OpenCode free tier is rate limited.** In testing, an unauthenticated request reached Zen and was refused with "Free usage limit reached". Create a free account at opencode.ai and set `OPENCODE_API_KEY` for a dependable allowance. Some free models may use your prompts for training; check each model's terms on [opencode.ai/docs/zen](https://opencode.ai/docs/zen).
 * **Free and local models cost $0**, so Paperclip budgets only bite on paid providers. They still burn CPU or GPU time; small local models are weak at multi step agent work.
-* **Telemetry.** The Paperclip add-on explicitly sets `PAPERCLIP_TELEMETRY_DISABLED=1` and `DO_NOT_TRACK=1`, which override upstream file preferences, plus `OTEL_SDK_DISABLED=true`. Recreate it after upgrading (`docker compose up -d --force-recreate paperclip`). See [Phase 0 checks](docs/PHASE0-GATE.md) for scope and verification.
+* **Telemetry.** The Paperclip add-on explicitly sets `PAPERCLIP_TELEMETRY_DISABLED=1` and `DO_NOT_TRACK=1`, which override upstream file preferences, plus `OTEL_SDK_DISABLED=true`. Recreate it after upgrading (`docker compose up -d --force-recreate paperclip`). See [Phase 0 checks](docs/history/PHASE0-GATE.md) for scope and verification.
 * **Data** lives in the `ai-workspace_paperclip` volume (embedded Postgres with hourly backups, agent workspaces, uploads, secrets key).
 
 ### Hermes Agent (`hermes` add-on)
@@ -263,7 +264,7 @@ Day to day, use the `./hermes` command from the repository root (same as in [`as
 How it is wired here:
 
 * **Chat:** pick the model `hermes-agent` (new installs; see the note below for existing ones).
-* **Tools:** Workbench (13 tools: notes, tasks, calendar, mail search and drafts) and the browser agent are attached as MCP servers. Hermes cannot send mail, only draft it.
+* **Tools:** Workbench (13 tools: notes, tasks, calendar, mail search and drafts) is attached as an MCP server. Hermes cannot send mail, only draft it, and it has no browser (see the browser add-on below).
 * **Dashboard** at port 3300 (user `admin`, password printed by `setup.sh`, stored as `HERMES_DASHBOARD_PASSWORD` in `.env`): memory, skills, scheduled jobs, sessions, model and messaging setup.
 * **Model:** `scripts/hermes-config.sh` picks Anthropic if `ANTHROPIC_API_KEY` is set, else OpenRouter, else your local `DEFAULT_MODEL`. It runs once; afterwards switch with `./hermes use ...` or the dashboard. `--force` reapplies the defaults.
 
@@ -273,27 +274,41 @@ Requirements and limits, verified in testing:
 * **Small local models can chat but not drive tools.** In testing, a 0.6B model answered a plain question (70 s on CPU) but called tools with malformed arguments until Hermes' loop guard stopped it. Use a cloud model or at least `qwen3:4b` on a GPU for agent work.
 * **Existing installs:** Open WebUI stores connections in its database after first start, so on an install that predates Hermes, add it in Chat → Admin Settings → Connections: URL `http://hermes:8642/v1`, key `HERMES_API_KEY` from `.env`.
 * **Hiring Hermes in Paperclip** (adapter "Hermes Gateway", API URL `http://hermes:8642`, key `HERMES_API_KEY`, Paperclip API URL `http://paperclip:3100`) is **not preconfigured**. Paperclip refuses plain HTTP to any host other than localhost. Your two options: put TLS in front of Hermes, or tick Paperclip's `dangerouslyAllowInsecureRemoteHttp` for that agent, accepting that the traffic is unencrypted on the Docker network between the two containers (it never leaves the machine). That is your call; this setup does not set it for you.
-* Hermes' own browser tools are disabled in this image (no browser installed); it uses the browser agent over MCP instead.
+* Hermes' own browser tools are disabled in this image (no browser installed), and the browser add-on is not shared with it.
 
-### Browser agent (`browser` add-on)
+### Rooks Browser on a server (`browser` add-on)
 
-Give a goal in plain English, for example "Go to weworkremotely.com and find three remote software engineer roles" or "On PCPartPicker find a compatible CPU, motherboard and RAM for an AM5 build". The agent opens a headless Chromium, decides each step with your chosen model, and reports back with the pages it visited.
+The `browser` add-on is [Rooks Browser](rooks-browser/README.md) in a container: the same agent the desktop app starts,
+with the same approvals. (It replaced the older `browser-agent` image, which had different safety rules.) Give a goal
+in plain English, for example "Go to weworkremotely.com and find three remote software engineer roles". The agent opens
+a headless Chromium, decides each step with your chosen model, and reports back with the pages it visited.
 
-* **Workbench → Browser agent:** pick the provider and model, a step limit, and optionally lock it to specific sites. Watch the steps and a live screenshot.
-* **Chat:** the `Browser` tool (`browse_web`, `read_page`) is preconfigured; enable it per chat like the Workbench tool.
-* **Paperclip employees** (OpenCode) and **Hermes** have it as the `browser` MCP server automatically.
-* **Standalone:** `browser-agent/` is a normal Python package with a CLI (`browser-agent run`, `open`, `click`, `type`, `screenshot`, `text`, `links`) and an `examples/` folder. See [browser-agent/README.md](browser-agent/README.md).
+* **Workbench → Browser:** pick the model and a step limit, watch the steps and a live screenshot.
+* **Chat:** Workbench's `browse_web` tool sends the job to the add-on and answers its approvals through Needs you.
+* **What it asks first.** A step that submits a form, buys, sends a message or downloads waits for your yes on the
+  Browser page or in Needs you. No answer in ten minutes is a no.
+* **Not given to Paperclip, Hermes or Open WebUI.** The browser key also answers approvals, and those add-ons run
+  agents on their own, so they do not get it. Browse from Workbench's chat, where a person says yes. (Existing Hermes
+  setups may still list a `browser` tool server; it no longer answers, and can be removed in the Hermes dashboard.)
 
-Model choice: the browser agent uses the models you connected in Workbench. It calls them through Workbench's OpenAI-shaped `/v1` endpoint, so the browser container holds no provider keys, and every browser model call (including browser-use's own self-check call per run) appears in Workbench's usage and run log. From the Browser agent page you pick any connected model; from chat it uses the conversation's model; Paperclip and Hermes runs use Workbench's default model. Claude and Gemini are far more reliable at browsing than small local models; in testing a 0.6B local model invented an answer and claimed success, which is why the UI labels results as the agent's own claim.
+Model choice: jobs from Workbench use the models you connected in Workbench, through its OpenAI-shaped `/v1` endpoint,
+so the browser container holds no provider keys, and every browser model call appears in Workbench's usage and run log.
+Claude and Gemini are far more reliable at browsing than small local models; the UI labels results as the agent's own
+claim.
 
-**Cost control.** Browser model calls are counted in Workbench's usage like any other call (channel `browser`), including runs started by Paperclip employees, which are therefore **outside Paperclip's budgets**. Three limits apply to every caller: `max_steps` per run, `BROWSER_MAX_STEPS_LIMIT` (default 50) as the ceiling for any run, and `BROWSER_MONTHLY_STEP_LIMIT` (default 2000 steps per UTC month, 0 = unlimited). For guaranteed $0, pick a local model.
+**Cost control.** Each job stops after its `max_steps`, and never after more than 50. Model calls are counted in
+Workbench's usage like any other call. For guaranteed $0, pick a local model.
 
-**Safety.** The service refuses IP address URLs and the stack's own hostnames, and its one-off page reads refuse any host that resolves to a private address. That keeps it off your containers and LAN. A public hostname that resolves to a private address could still be reached during an agent run; don't rely on this as your only network boundary on a sensitive LAN. The agent can fill forms and click buttons on public sites, so be specific about what it must not do (buy, post, delete).
+**Safety.** The container runs `rooks-browser serve` in service mode: every request needs `BROWSER_API_KEY`, and it
+refuses localhost, LAN and private addresses and single-word hostnames, which keeps it off the stack's own containers
+(`workbench`, `ollama`, `paperclip`, ...). A public hostname that resolves to a private address could still be reached;
+don't rely on this as your only network boundary on a sensitive LAN.
 
-### Rooks Browser (no add-on needed)
+### Rooks Browser on your computer (no add-on needed)
 
-[Rooks Browser](rooks-browser/README.md) is a lighter, local-first browser agent. It drives your own Chrome or Edge
-through Playwright (≈ 150 MB instead of a 2.5 GB image) and works with OpenAI, Anthropic, OpenRouter, Ollama or your
+[Rooks Browser](rooks-browser/README.md) is the browser agent. On your own computer the app starts it by itself; the
+`browser` add-on above is the same program in a container for the server install. It drives your own Chrome or Edge
+through Playwright (≈ 150 MB) and works with OpenAI, Anthropic, OpenRouter, Ollama or your
 Workbench models. Vision models get screenshots, and text-only models work from the page's element list.
 
 * **What it asks first.** It shows every action, and asks before it submits a form, buys, sends a message or logs in.
@@ -301,8 +316,8 @@ Workbench models. Vision models get screenshots, and text-only models work from 
   It never stores or types passwords.
 * **How you reach it:**
   * a CLI: `rooks-browser "task"`
-  * a local HTTP API with the same job API as the `browser` add-on: point `BROWSER_URL` at it and Workbench's Browser
-    page uses it
+  * a local HTTP API, the one the `browser` add-on runs: point `BROWSER_URL` at it and Workbench's Browser page uses
+    it
   * an MCP server for Rooks Code, Claude Code and Codex: `rooks-browser mcp`
 
 ```
@@ -367,7 +382,7 @@ Details: [rooks-try/README.md](rooks-try/README.md).
 
 **Cloud.** Settings → Model providers. Each connection is a credential type plus the wire protocol the provider speaks: OpenAI uses the Responses API, Anthropic its native Messages API, and everything else (OpenRouter, Gemini, Groq, Together, Mistral, LM Studio, vLLM, LiteLLM, llama.cpp server) Chat Completions. Enter the base URL and key; for local OpenAI compatible servers the key is optional. If a provider does not expose a model list, type model ids in the Models field.
 
-**Claude.** Use a Claude API key (console.anthropic.com) with the Anthropic preset. A Claude Pro or Max subscription cannot be connected: Anthropic's terms say "Anthropic does not permit third-party developers to offer Claude.ai login into their own applications, or to route requests through Free, Pro, or Max plan credentials on behalf of their users … developers may not collect, store, or intermediate Claude.ai credentials or session tokens" ([source](https://code.claude.com/docs/en/legal-and-compliance)). The same page allows a user to sign in to the unmodified Claude Code program with their own subscription; a planned add-on will start your own installed Claude Code for agent tasks, with you signing in through Anthropic, and Workbench never touching the token. It is not built yet.
+**Claude.** Use a Claude API key (console.anthropic.com) with the Anthropic preset. A Claude Pro or Max subscription cannot be connected: Anthropic's terms say "Anthropic does not permit third-party developers to offer Claude.ai login into their own applications, or to route requests through Free, Pro, or Max plan credentials on behalf of their users … developers may not collect, store, or intermediate Claude.ai credentials or session tokens" ([source](https://code.claude.com/docs/en/legal-and-compliance)). The same page allows a user to sign in to the unmodified Claude Code program with their own subscription, and that is how Rooks uses a Claude plan today: it starts the Claude Code you installed and signed in to yourself, for coding jobs, and never touches the token (see "Your Claude plan, through Claude Code" above and [docs/CLAUDE-CODE.md](docs/CLAUDE-CODE.md)). Codex with a ChatGPT plan and GitHub Copilot work the same way.
 
 **ChatGPT plans.** Sign in with ChatGPT on the welcome screen or under Models: OpenAI's official open-source flow lets your ChatGPT plan pay for the app's requests, with no API key. Claude, SuperGrok and Google AI subscriptions can't be connected (their terms don't allow it or there's no public sign-in yet); the screen says why and offers a key instead. Details and sources: `docs/models-and-router.md`.
 
@@ -381,8 +396,8 @@ New Anthropic connections use Anthropic's native Messages API. Connections creat
 - For a public domain put Caddy, Traefik or nginx with HTTPS in front, set `WEBUI_PUBLIC_URL` and `PAPERCLIP_PUBLIC_URL` to the https URLs and `COOKIE_SECURE=true`, then `docker compose up -d`. Paperclip only answers on hostnames in `PAPERCLIP_PUBLIC_URL` and `PAPERCLIP_ALLOWED_HOSTNAMES`.
 - Remote access from your phone: a VPN such as Tailscale is the simplest safe option. Add the Tailscale hostname to `PAPERCLIP_ALLOWED_HOSTNAMES`.
 - Workbench is a single owner app. Passwords are hashed with scrypt; mail, CalDAV and provider credentials are encrypted at rest with a key derived from `APP_SECRET`. **Back up `.env`**: if you lose `APP_SECRET`, stored credentials cannot be decrypted and must be re-entered.
-- Ollama, SearXNG, the browser agent and Hermes' API are not published to the host. The Hermes dashboard is (port 3300, basic auth, bound to `BIND_ADDRESS`); it stores API keys, so keep it on localhost or behind a VPN.
-- Hermes can run terminal commands inside its own container. Its tool approvals and loop guards apply, but treat it as having full access to its volume and whatever its tools reach. The browser agent requires `BROWSER_API_KEY` on every request, including MCP.
+- Ollama, SearXNG, the browser add-on and Hermes' API are not published to the host. The Hermes dashboard is (port 3300, basic auth, bound to `BIND_ADDRESS`); it stores API keys, so keep it on localhost or behind a VPN.
+- Hermes can run terminal commands inside its own container. Its tool approvals and loop guards apply, but treat it as having full access to its volume and whatever its tools reach. The browser add-on requires `BROWSER_API_KEY` on every request, and only Workbench holds it.
 - The tool server requires `TOOLS_API_KEY` as a bearer token. Its OpenAPI description is readable without the key (it contains no data).
 
 ## Operations
@@ -403,7 +418,7 @@ docker run --rm -v ai-workspace_open-webui:/data -v "$PWD":/backup alpine tar cz
 docker compose stop paperclip && docker run --rm -v ai-workspace_paperclip:/data -v "$PWD":/backup alpine tar czf /backup/paperclip.tgz -C /data . && docker compose start paperclip
 ```
 
-Pin image versions for predictable upgrades with `HERMES_TAG`, `PAPERCLIP_TAG`, `OPEN_WEBUI_TAG`, `OLLAMA_TAG` and `SEARXNG_TAG` in `.env`. The browser agent pins browser-use to one minor series in `browser-agent/pyproject.toml`; raise it and run `pytest` to upgrade.
+Pin image versions for predictable upgrades with `HERMES_TAG`, `PAPERCLIP_TAG`, `OPEN_WEBUI_TAG`, `OLLAMA_TAG` and `SEARXNG_TAG` in `.env`.
 
 ## Development
 
@@ -428,7 +443,7 @@ Desktop app: Tauri v2 shell in `desktop/` that runs the backend as a frozen side
 - Computer use (Rooks Desk) is tested end to end on Linux/X11; on real macOS and Windows CI machines it typed into TextEdit/Notepad and read it back. Wayland isn't supported.
 - Web search needs the `search` add-on or a Brave or Tavily key. Research quality depends on the model and the search results. Verify claims against the sources.
 - The Paperclip add-on runs in its own login. Workbench links to it but does not share a sign in.
-- Browser agent results are the agent's own report. Small local models are unreliable at browsing.
+- Rooks Browser's results are the agent's own report. Small local models are unreliable at browsing.
 
 
 API clients: [authenticated OpenAPI discovery](docs/API.md). Releases: [signature verification](docs/RELEASES.md).

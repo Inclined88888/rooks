@@ -16,8 +16,8 @@ export default function Privacy() {
       <Section title="What leaves">
         <p className="st-p">When you ask the assistant, that question goes to the model you picked. When you sign in to mail or a plan, that company's own window handles the sign-in. Rooks does not sell your work, and it does not send it anywhere except the model or account you chose.</p>
       </Section>
-      <Section title="Remembering" actions={<ButtonLink size="sm" to="/about-you">About you</ButtonLink>}>
-        <p className="st-p">Learning about you can be switched off on About you. What it has learned stays on this computer.</p>
+      <Section title="Remembering" actions={<ButtonLink size="sm" to="/knowledge?tab=learning">Memory</ButtonLink>}>
+        <p className="st-p">Learning about you can be switched off on the Memory page, under Learning. What it has learned stays on this computer, encrypted.</p>
       </Section>
       <Section title="A phone">
         <p className="st-p">A phone you pair can reach this computer. The work still lives here. Unpair it from Settings whenever you want.</p>

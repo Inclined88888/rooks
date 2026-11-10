@@ -95,7 +95,7 @@ async def read_email(account_id: int, uid: str) -> dict:
     return await _acall(tools.read_email, account_id, uid)
 
 
-@mcp.tool(description="Save an email draft for the user to review and send in Workbench. This never sends email.")
+@mcp.tool(description="Save an email draft for the user to review and send in Rooks. This never sends email.")
 def save_email_draft(to: str, subject: str, body: str, in_reply_to: str = "", account_id: int | None = None) -> dict:
     return _call(tools.save_draft, tools.DraftIn(to=to, subject=subject, body=body, in_reply_to=in_reply_to, account_id=account_id))
 

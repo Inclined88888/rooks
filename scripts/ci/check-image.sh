@@ -44,7 +44,7 @@ curl -fsS "http://127.0.0.1:${PORT}/healthz" >/dev/null || { docker logs "$NAME"
 base="http://127.0.0.1:${PORT}"
 curl -s -o /dev/null "$base/api/status?api_key=${SECRET_KEY}&email=${SECRET_MAIL}"
 curl -s -o /dev/null "$base/api/no-such-route"
-curl -s -o /dev/null "$base/api/memories"
+curl -s -o /dev/null "$base/api/memories"  # 401 without a session or the Terminal access token (test_cli_token_auth)
 curl -s -o /dev/null -X POST "$base/api/tasks" -H 'Content-Type: application/json' -d '{"title":"x"}'
 curl -s -o /dev/null -X POST "$base/api/login" -H 'Content-Type: application/json' -H 'X-Workbench: 1' -d "{\"password\":\"${SECRET_KEY}\"}"
 expected_lines=6  # the five above plus at least one healthz

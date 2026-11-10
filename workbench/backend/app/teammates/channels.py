@@ -36,9 +36,9 @@ DISCORD_PERMISSIONS = 2048 | 1024 | 65536  # Send Messages, View Channels, Read 
 _discord = {"running": False, "bot": "", "bot_id": "", "app_id": "", "error": ""}
 
 SLACK_MANIFEST = {
-    "display_information": {"name": "AI Workspace", "description": "Your AI Workspace teammates, in Slack",
+    "display_information": {"name": "Rooks", "description": "Your Rooks teammates, in Slack",
                             "background_color": "#1d1a14"},
-    "features": {"bot_user": {"display_name": "AI Workspace", "always_online": True},
+    "features": {"bot_user": {"display_name": "Rooks", "always_online": True},
                  "app_home": {"messages_tab_enabled": True, "messages_tab_read_only_enabled": False}},
     "oauth_config": {"scopes": {"bot": ["chat:write", "im:history", "im:read", "im:write", "app_mentions:read", "users:read"]}},
     "settings": {"event_subscriptions": {"bot_events": ["message.im", "app_mention"]}, "socket_mode_enabled": True,
@@ -52,7 +52,7 @@ SLACK_STEPS = [
     "Paste both tokens here, add your Slack member ID (in Slack: your profile, ⋯, Copy member ID), and pick who answers.",
 ]
 DISCORD_STEPS = [
-    "Open discord.com/developers/applications and choose New Application. Name it (for example AI Workspace).",
+    "Open discord.com/developers/applications and choose New Application. Name it (for example Rooks).",
     "Open Bot, choose Reset Token, and copy the bot token.",
     "Paste the token here and save. An invite link appears: open it to add the bot to your server (DMs work without a server).",
     "Add your Discord user ID (Settings, Advanced, Developer Mode on; then right-click your name, Copy User ID), and pick who answers.",
@@ -265,10 +265,10 @@ def _with_notes(reply: str, events: list[dict], conversation_id: int) -> str:
 
     held = [e for e in events if e["type"] == "approval_required"]
     if held:
-        reply += "\n\n" + "\n".join(f"Waiting for your OK in AI Workspace: {e['tool'].replace('_', ' ')} (#{e['id']})." for e in held)
+        reply += "\n\n" + "\n".join(f"Waiting for your OK in Rooks: {e['tool'].replace('_', ' ')} (#{e['id']})." for e in held)
     drafts = outbox.listing("draft", conversation_id)
     if drafts:
-        reply += f"\n\n{len(drafts)} draft(s) are waiting in AI Workspace. Nothing is sent until you press Send there."
+        reply += f"\n\n{len(drafts)} draft(s) are waiting in Rooks. Nothing is sent until you press Send there."
     return reply
 
 

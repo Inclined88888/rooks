@@ -3,7 +3,7 @@
 An edit is compared with what the assistant wrote. Clear patterns (shorter, a different greeting or sign-off, bullet
 points, a word always swapped) become a lesson without a model; otherwise the model is asked for the one lesson the
 edit teaches. Lessons about a playbook go into its notes (used on the next run); everything else becomes a preference
-in "What I know about you". The caller shows the lesson as "Learned from your change".
+in the one memory store (the Memory page). The caller shows the lesson as "Learned from your change".
 """
 
 from __future__ import annotations
@@ -14,7 +14,8 @@ import re
 from fastapi import HTTPException
 
 from .. import db
-from . import knowledge, playbooks, store
+from ..knowledge import facts
+from . import playbooks, store
 
 TARGETS = ("message", "run", "playbook", "note", "draft", "other")
 
@@ -81,7 +82,7 @@ async def record(target_kind: str, target_id: str = "", rating: int = 0, origina
     about = "format"
     if not lessons and edited.strip() and original.strip() and edited.strip() != original.strip():
         try:
-            out = await knowledge.model_json(LESSON_PROMPT, f"ASSISTANT VERSION:\n{original[:6000]}\n\nPERSON'S VERSION:\n{edited[:6000]}", model, "feedback")
+            out = await facts.model_json(LESSON_PROMPT, f"ASSISTANT VERSION:\n{original[:6000]}\n\nPERSON'S VERSION:\n{edited[:6000]}", model, "feedback")
             if isinstance(out, dict) and isinstance(out.get("lesson"), str) and out["lesson"].strip():
                 lessons.append(out["lesson"].strip()[:300])
                 about = out.get("about") if out.get("about") in ("preference", "format", "work") else "preference"
@@ -101,7 +102,7 @@ async def record(target_kind: str, target_id: str = "", rating: int = 0, origina
             playbooks.add_note(playbook_id, lesson)
             where = f"playbook:{playbook_id}"
         else:
-            f = knowledge.add(lesson, about, "feedback", evidence=(edited or comment)[:200], confidence=0.9) if knowledge.learning_on() else None
+            f = facts.add(lesson, about, "feedback", evidence=(edited or comment)[:200], confidence=0.9) if facts.learning_on() else None
             where = f"fact:{f['id']}" if f else ""
         db.run("INSERT INTO adapt_lessons(target_kind, target_id, rating, lesson_enc, applied_to, created_at) VALUES (?, ?, ?, ?, ?, ?)",
                target_kind, str(target_id), rating, store.seal(lesson), where, db.now())

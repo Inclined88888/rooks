@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { api } from "../api";
 import { Badge, Button, ErrorState, Input, Loading, Section, Select } from "../ui";
 import { useToast } from "../util";
+import { useDevTools } from "../lib/devTools";
 import ConnectMailCalendar from "./ConnectMailCalendar";
 import { ButtonLink, SettingRow, SettingsGroup } from "./settings/index";
 
@@ -220,6 +221,7 @@ export default function ConnectSection({ onChange }: { onChange?: () => void }) 
   };
   useEffect(() => { reload(); }, []);
   const on = new Set(servers.map((s) => s.name));
+  const devTools = useDevTools(); // Extra tools is a developer page (Settings, Advanced)
 
   return (
     <div className="st-stack" id="connect">
@@ -233,7 +235,7 @@ export default function ConnectSection({ onChange }: { onChange?: () => void }) 
             <SettingsGroup label="Tools">
               {catalogue.map((entry) => <ToolRow key={entry.name} entry={entry} added={on.has(entry.name)} onAdded={reload} />)}
               <SettingRow label="Something else" help="From GitHub, nothing is installed until you approve it.">
-                <ButtonLink size="sm" to="/extra-tools">Add your own</ButtonLink>
+                {devTools && <ButtonLink size="sm" to="/extra-tools">Add your own</ButtonLink>}
                 <ButtonLink size="sm" to="/skills?tab=add">From GitHub</ButtonLink>
               </SettingRow>
             </SettingsGroup>

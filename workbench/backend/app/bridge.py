@@ -1,6 +1,6 @@
 """OpenAI-shaped endpoints over the adapter layer (core of item 103): /v1/chat/completions and /v1/models.
 
-Tools that only speak the OpenAI API (the browser agent's browser-use library) reach every Workbench connection through
+Tools that only speak the OpenAI API (Rooks Browser, Rooks Desk, coding jobs) reach every Workbench connection through
 here, so their model calls use the one adapter layer (R1), never hold provider keys, and land in the run log (R2,
 channel "browser"). Model ids are Workbench model refs ("3/claude-…") or "default".
 

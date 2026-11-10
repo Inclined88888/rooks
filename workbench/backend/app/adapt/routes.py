@@ -1,4 +1,4 @@
-"""/api/learn: What I know about you, Show me how, suggestions and feedback."""
+"""/api/learn: the learning switches, Show me how, suggestions and feedback. Facts are /api/knowledge/memories."""
 
 from __future__ import annotations
 
@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from .. import db
+from ..knowledge import facts
 from ..security import require_user
-from . import feedback, jobs, knowledge, playbooks, recorder, store
+from . import feedback, jobs, playbooks, recorder, store
 
 router = APIRouter(prefix="/api/learn", dependencies=[Depends(require_user), Depends(lambda: store.ensure())])
 
@@ -36,51 +37,10 @@ def put_settings(data: SettingsIn):
     return get_settings()
 
 
-# What I know about you ------------------------------------------------------------------------------------------------
-class FactIn(BaseModel):
-    content: str = Field(min_length=4, max_length=500)
-    category: str = "fact"
-    pinned: bool = False
-
-
-class FactEdit(BaseModel):
-    content: str | None = Field(default=None, max_length=500)
-    category: str | None = None
-    pinned: bool | None = None
-
-
-@router.get("/facts")
-def facts(q: str = ""):
-    items = knowledge.search(q, 50) if q.strip() else knowledge.all_facts()
-    legacy = db.all("SELECT id, content, kind, source, updated_at FROM memories ORDER BY updated_at DESC LIMIT 200")
-    return {"facts": items, "categories": knowledge.CATEGORIES, "legacy": legacy, "work": jobs.profile()}
-
-
-@router.post("/facts")
-def add_fact(data: FactIn):
-    f = knowledge.add(data.content, data.category, "user", confidence=1.0, pinned=data.pinned, dedupe=False)
-    return f
-
-
-@router.put("/facts/{fid}")
-def edit_fact(fid: int, data: FactEdit):
-    return knowledge.update(fid, data.content, data.category, data.pinned)
-
-
-@router.delete("/facts/{fid}")
-def delete_fact(fid: int):
-    return knowledge.delete(fid)
-
-
-@router.post("/facts/forget-all")
-def forget_all():
-    return knowledge.forget_everything()
-
-
-@router.delete("/legacy-memories/{mid}")
-def delete_legacy(mid: int):
-    db.run("DELETE FROM memories WHERE id = ?", mid)
-    return {"deleted": mid}
+# The work I've seen (the Memory page shows it beside "Learning"). Facts themselves are /api/knowledge/memories.
+@router.get("/work")
+def work():
+    return jobs.profile()
 
 
 class ObserveIn(BaseModel):
@@ -94,7 +54,7 @@ class ObserveIn(BaseModel):
 async def observe(data: ObserveIn):
     """Another feature (a file just read, a site checked, a task done) tells the assistant about the person's work."""
     jobs.observe(None, data.source, (data.name + ": " if data.name else "") + data.text[:300], data.name)
-    added = await knowledge.learn_from(data.text, data.source, data.name) if data.learn_facts else []
+    added = await facts.learn_from(data.text, data.source, data.name) if data.learn_facts else []
     jobs.refresh_suggestions()
     return {"learned": added}
 
@@ -202,9 +162,9 @@ async def stop_recording(rid: int, data: StopIn):
     db.run("UPDATE adapt_recordings SET status = 'stopped', events_enc = ?, narration_enc = ?, playbook_id = ?, updated_at = ? WHERE id = ?",
            store.seal(events), store.seal(data.narration), saved["id"], db.now(), rid)
     jobs.observe(saved.get("job_kind"), "playbook", f"Showed me {saved['name']}", f"playbook:{saved['id']}")
-    if data.narration.strip() and knowledge.learning_on():
+    if data.narration.strip() and facts.learning_on():
         try:
-            await knowledge.learn_from(data.narration, "teach", saved["name"])
+            await facts.learn_from(data.narration, "teach", saved["name"])
         except Exception:  # noqa: BLE001
             pass
     return saved

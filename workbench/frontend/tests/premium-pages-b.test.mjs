@@ -9,7 +9,7 @@ const read = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), "utf8"
 const strip = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
 
 // Pages people open from the rail, the More sheet or the palette: each is a <Page>.
-const PAGES = ["Settings", "Models", "VoiceSettings", "Customize", "McpServers", "Plan", "Privacy", "About", "AboutYou", "Status",
+const PAGES = ["Settings", "Models", "VoiceSettings", "McpServers", "Plan", "Privacy", "About", "Status",
   "Insights", "Runs", "Compare", "FineTune"];
 // First impressions: one quiet card with one clear choice.
 const COVERS = ["Auth", "Welcome"];
@@ -22,10 +22,8 @@ const STATES = {
   Settings: ["Loading", "ErrorState"],
   Models: ["Loading", "ErrorState", "EmptyState"],
   VoiceSettings: ["Loading", "ErrorState"],
-  Customize: ["EmptyState"],
   McpServers: ["Loading", "ErrorState", "EmptyState"],
   Plan: ["Loading", "ErrorState"],
-  AboutYou: ["Loading", "ErrorState", "EmptyState"],
   Status: ["Loading", "ErrorState"],
   Insights: ["Loading", "ErrorState", "EmptyState"],
   Runs: ["Loading", "ErrorState", "EmptyState"],
@@ -108,19 +106,23 @@ test("the stylesheet is on the scale: sizes 12-28 tokens, weights 400/500/600, n
   const css = strip(read("pages/settings/settings.css"));
   for (const m of css.matchAll(/font-size:\s*([^;}]+)/g)) {
     const v = m[1].trim();
-    const ok = /^var\(--text-(xs|sm|md|lg|xl|2xl)\)$/.test(v) || /^(12|13|14|16|20|28)px$/.test(v) || v === "inherit";
+    // the industrial redesign (step 3): the hero's headline takes the display scale and its labels the micro size
+    const ok = /^var\(--text-(micro|xs|sm|md|lg|xl|2xl)\)$/.test(v) || /^(12|13|14|16|20|28)px$/.test(v) || v === "inherit"
+      || /^var\(--display-(xl|lg|md)\)$/.test(v) || /^calc\(var\(--display-lg\) \* 0\.\d+\)$/.test(v); // xl: the footer's giant wordmark
     assert.ok(ok, `font-size ${v} is off the scale`);
   }
   for (const m of css.matchAll(/font-weight:\s*([^;}]+)/g)) {
-    assert.match(m[1].trim(), /^(400|500|600|var\(--weight-(regular|medium|heading)\)|inherit)$/, `font-weight ${m[1]}`);
+    // the industrial redesign (step 3): the hero's headline is extra bold (--weight-display) and the brand bold
+    assert.match(m[1].trim(), /^(400|500|600|var\(--weight-(regular|medium|heading|bold|display)\)|inherit)$/, `font-weight ${m[1]}`);
   }
   assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, "colours are tokens");
-  for (const m of css.matchAll(/box-shadow:\s*([^;}]+)/g)) assert.match(m[1].trim(), /^(none|var\(--shadow-float\))$/, "no shadows on cards and panels; only the floating one");
+  // the industrial redesign (step 2): the one other box-shadow is the focus ring's 1 px ink halo (tokens.css --focus-ring)
+  for (const m of css.matchAll(/box-shadow:\s*([^;}]+)/g)) assert.match(m[1].trim(), /^(none|var\(--shadow-float\)|var\(--focus-ring\))$/, "no shadows on cards and panels; only the floating one and the focus ring");
   for (const m of css.matchAll(/animation(?:-name)?\s*:\s*([^;}]+)/g)) assert.match(m[1], /ui-fade|none/);
   for (const m of css.matchAll(/border-radius:\s*([^;}]+)/g)) {
     assert.match(m[1].trim(), /^(var\(--radius-(sm|md|full)\)|6px|10px|50%|0)$/, `radius ${m[1]}`);
   }
-  for (const m of css.matchAll(/@media[^{]*?\((?:min|max)-width:\s*([\d.]+)px\)/g)) assert.ok(["900", "1280"].includes(m[1]), `breakpoint ${m[1]}`);
+  for (const m of css.matchAll(/@media[^{]*?\((?:min|max)-width:\s*([\d.]+)px\)/g)) assert.ok(["900", "901", "1280", "1281"].includes(m[1]), `breakpoint ${m[1]}`); // the two from the brief, as in workroom-sweep
 });
 
 test("the old off-scale rules these pages used are gone from the shared stylesheets", () => {

@@ -6,7 +6,7 @@ from conftest import CALLS, events
 
 @pytest.fixture(autouse=True)
 def quiet_learning(monkeypatch):
-    from app.adapt import knowledge
+    from app.knowledge import facts as knowledge
 
     async def nothing(*a, **k):
         return []
@@ -72,13 +72,11 @@ def test_sync_indexes_and_autofiles_then_change(kn, client):
     assert client.get("/api/knowledge/search", params={"q": "order cable"}).json()
 
 
-def test_forgotten_adapt_fact_is_forgotten_in_knowledge(kn, client):
-    from app.adapt import knowledge as adapt
-    from app.knowledge import live
+def test_a_fact_is_in_the_memory_at_once_and_forgetting_it_removes_it(kn, client):
+    """One store: no copy to wait for and no copy left behind (the old live sync mirrored adapt_facts once a minute)."""
+    from app.knowledge import facts
 
-    f = adapt.add("The user is a structural engineer", "about", "user")
-    live.sync_once()
+    f = facts.add("The user is a structural engineer", "about", "user")
     assert any("structural engineer" in m["content"] for m in kn.list_memories())
-    adapt.delete(f["id"])
-    live.sync_once()
-    assert not any("structural engineer" in m["content"] for m in kn.list_memories())
+    facts.delete(f["id"])
+    assert not any("structural engineer" in m["content"] for m in kn.list_memories(status=""))

@@ -1,4 +1,6 @@
-# Team lead (feat/team-lead)
+# Team lead
+
+In the app on `main` (built on branch `feat/team-lead`).
 
 Assign work to your staff, track it, and let the assistant chase it. Works for any team: a tradie crew, an office, a
 law firm, a lab, a studio.
@@ -26,7 +28,7 @@ law firm, a lab, a studio.
 - **Plans**: `team_tasks` is Team/Business; your own "My tasks" list is free. Nothing is locked until billing is live.
 - **Privacy**: members only see their own tasks. No tracking of anyone's devices, screens, apps or location.
 - **Data model**: `app/team/store.py` is the only file that touches storage; `person_entity` / `task_entity` map members
-  and tasks onto the Person/Task entities of feat/memory-core so storage can move there.
+  and tasks onto the Person/Task entities of the knowledge graph (`app/knowledge/`) so storage can move there.
 
 ## Replies read for you (slice 2)
 - **Your inbox**: switch on "Read my team's replies" (`read_inbox`). Every 10 minutes (or "Check now",
@@ -59,12 +61,12 @@ date and status; later syncs update them, nothing is deleted on either side, and
 Not yet: writing status back to the tracker, automatic sync on a timer, OAuth sign-in (tokens only). Tested against
 recorded-style fake responses only, not live accounts.
 
-## Shared memory (feat/memory-core, PR #40)
+## Shared memory (the knowledge graph, `app/knowledge/`)
 Follows the adoption notes in docs/data-model.md §8: each member is a `person` entity (`ref=("team_members", id)`), each
 task a `task` entity (`ref=("team_tasks", id)`) linked `assigned_to` its person and `part_of` its project; status updates
 become `episodic` memories about the person in scope `team:<cloud team id>` (or `team:local`). The team tables stay the
 working store and the graph points back to them, as memory-core asks. Builds without memory-core skip this quietly.
-Tested with memory-core's knowledge package dropped in (13/13 team tests); in this branch alone that one test is skipped.
+The knowledge package is part of the app now, so that test runs with the rest of the team tests.
 
 ## Not done yet
 - Desktop pages (Team board, workload chart, timeline/Gantt, person page, plan screen) and the phone screens: API only.

@@ -151,7 +151,7 @@ def cmd_doctor(argv) -> int:
     except Exception:  # noqa: BLE001
         print("  ✗ clipboard: install xclip or xsel")
     ready = llm.ready()
-    print(f"  models ready: {', '.join(ready) or 'none (open AI Workspace, or set GEMINI_API_KEY / GROQ_API_KEY)'}")
+    print(f"  models ready: {', '.join(ready) or 'none (open the Rooks app, or set GEMINI_API_KEY / GROQ_API_KEY)'}")
     pol = runner.load_policy()
     print(f"  allowed folders: {', '.join(pol.folders)}")
     print(f"  denied apps: {', '.join(pol.deny_apps)}")

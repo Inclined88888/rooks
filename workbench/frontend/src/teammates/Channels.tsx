@@ -1,6 +1,6 @@
 // Talk to your teammates from Slack, Discord, Telegram, Matrix, Signal, WhatsApp or email, plus the phone link settings.
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { Badge, Button, Card, EmptyState, ErrorState, Input, Loading, Page, Select, Textarea } from "../ui";
 import { plainError } from "../pages/agents/kit";
@@ -104,6 +104,20 @@ export default function Channels() {
           ...(slack.bot_token ? { bot_token: slack.bot_token } : {}), ...(slack.app_token ? { app_token: slack.app_token } : {}), allowed_users: slack.allowed_users })}>Save</button>
           <button className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => save("/channels/slack/test", {}, "POST")}>Test connection</button></div>
       </Wizard>
+    </Card>
+    <Card as="section" className="tm-card wide">
+      <div className="tm-card-head"><b>Microsoft Teams</b><Badge>Not available yet</Badge></div>
+      <p className="tm-muted">Rooks can already read your Teams chats and channels and post in them after your yes: turn that on in Work apps.
+        Talking to Rooks as its own chat inside Teams, and answering Needs you from Teams, needs your company to add a Teams app and a bot it
+        runs in its own Microsoft account, with a way for Teams to reach this computer. That is not built yet.</p>
+      <div className="tm-row"><RouterLink className="ui-btn ui-btn-secondary ui-btn-sm" to="/work">Work apps</RouterLink></div>
+    </Card>
+    <Card as="section" className="tm-card wide">
+      <div className="tm-card-head"><b>Google Chat</b><Badge>Not available yet</Badge></div>
+      <p className="tm-muted">With a Google Workspace work account, Rooks can already read your Google Chat spaces and post in them after your yes:
+        turn that on in Work apps. Talking to Rooks as its own chat inside Google Chat needs your company's Google admin to allow a Chat app
+        that your company runs in its own Google Cloud account. That is not built yet.</p>
+      <div className="tm-row"><RouterLink className="ui-btn ui-btn-secondary ui-btn-sm" to="/work">Work apps</RouterLink></div>
     </Card>
     <Card as="section" className="tm-card wide">
       <div className="tm-card-head"><b>Discord</b><Badge>{st.discord.running ? `Connected${st.discord.bot ? ` as ${st.discord.bot}` : ""}` : st.discord.configured ? "Set up" : "Not set up"}</Badge></div>

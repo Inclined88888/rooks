@@ -226,8 +226,8 @@ def test_claude_style_tool_lines_and_modes(tmp_path, capsys):
     assert tui.mode_of(s) == "asks first"
     tui.set_mode(s, "auto-accept")
     assert tui.mode_of(s) == "auto-accept"
-    tui.set_mode(s, "plan only")
-    assert s.dry_run and tui.mode_of(s) == "plan only"
+    tui.set_mode(s, "dry run")
+    assert s.dry_run and tui.mode_of(s) == "dry run"
     # arguments named the way other agents name them still land
     assert ToolCall("1", "read_file", {"file_path": "a.py"}).arguments == {"path": "a.py"}
 
@@ -261,3 +261,25 @@ def test_rooks_toml_hook_can_stop_a_command(tmp_path):
     a = Agent(settings(tmp_path, auto_approve=True, hook_before_tool=loaded.hook_before_tool), ui, model=model)
     assert a.run("run it") == "Stopped."
     assert "project hook" in model.calls[-1]["messages"][-1]["content"]
+
+
+def test_a_change_the_app_marks_as_after_outside_content_is_asked_even_with_yes(tmp_path):
+    """The app's shared loop says when the conversation holds text other people wrote (a Teams chat, a work file, a web
+    page). A command or a file change it then hands to the terminal is asked about even with --yes, a trusted folder or
+    an earlier "always"; a no runs nothing."""
+    asked = []
+
+    class Asking(UI):
+        def ask(self, plan):
+            asked.append(plan.summary)
+            return "n"
+
+    a = Agent(settings(tmp_path, auto_approve=True), Asking(), model=FakeModel([]))
+    marker = tmp_path / "ran.txt"
+    cmd = f'{sys.executable} -c "open(r\'{marker}\', \'w\').write(\'x\')"'
+    result, outcome = a.run_delegated(ToolCall("d1", "run_command", {"command": cmd}), 0, outside_content=True)
+    assert asked and outcome == "denied" and not marker.exists()
+    # the same call from a clean conversation keeps the terminal's own rules: --yes runs it
+    asked.clear()
+    result, outcome = a.run_delegated(ToolCall("d2", "run_command", {"command": cmd}), 0, outside_content=False)
+    assert not asked and marker.exists()

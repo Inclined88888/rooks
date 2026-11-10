@@ -23,7 +23,7 @@ def wait_for(fn, timeout=5):
 @pytest.fixture
 def model(monkeypatch):
     """Scripted JSON answers for adapt's own model calls, keyed by a phrase in the prompt."""
-    from app.adapt import knowledge
+    from app.knowledge import facts as knowledge
 
     answers: dict[str, object] = {}
     seen: list[str] = []
@@ -42,19 +42,25 @@ def model(monkeypatch):
     return fake
 
 
-# What I know about you ---------------------------------------------------------------------------------------------
+# What I know about you (the Memory page) ------------------------------------------------------------------------------
+def _add(client, content, tier="profile", pinned=False):
+    r = client.post("/api/knowledge/memories", json={"content": content, "tier": tier, "pinned": pinned})
+    assert r.status_code == 200, r.text
+    return r.json()["memory"]
+
+
 def test_facts_are_encrypted_searchable_editable_and_used_in_chat(client):
     from app import db
 
-    a = client.post("/api/learn/facts", json={"content": "Runs a plumbing business on the Gold Coast called Drip Fix", "category": "work"}).json()
-    b = client.post("/api/learn/facts", json={"content": "Prefers invoices as PDF with ABN in the footer", "category": "format"}).json()
-    client.post("/api/learn/facts", json={"content": "Biggest client is Acme Builders, project Harbour Towers", "category": "people"})
-    raw = json.dumps(db.all("SELECT * FROM adapt_facts"))
+    a = _add(client, "Runs a plumbing business on the Gold Coast called Drip Fix", pinned=True)
+    b = _add(client, "Prefers invoices as PDF with ABN in the footer", "procedural")
+    _add(client, "Biggest client is Acme Builders, project Harbour Towers", pinned=True)
+    raw = json.dumps(db.all("SELECT * FROM kn_memories"))
     assert "plumbing" not in raw and "Acme" not in raw  # encrypted at rest
-    hits = client.get("/api/learn/facts", params={"q": "send the invoice"}).json()["facts"]
+    hits = client.get("/api/knowledge/recall", params={"q": "send the invoice"}).json()
     assert hits[0]["id"] == b["id"]  # BM25: invoice ~ invoices
-    e = client.put(f"/api/learn/facts/{a['id']}", json={"content": "Runs a plumbing and gas business on the Gold Coast"}).json()
-    assert e["content"].startswith("Runs a plumbing and gas") and e["source"] == "user"
+    e = client.patch(f"/api/knowledge/memories/{a['id']}", json={"content": "Runs a plumbing and gas business on the Gold Coast"}).json()
+    assert e["content"].startswith("Runs a plumbing and gas") and e["source_kind"] == "user"
 
     CALLS.clear()
     SCRIPT[:] = [{"role": "assistant", "content": "sure"}]
@@ -69,12 +75,12 @@ def test_facts_are_encrypted_searchable_editable_and_used_in_chat(client):
     assert "Prefers invoices as PDF" not in next(c for c in CALLS if c.get("tools"))["messages"][0]["content"]
     client.put("/api/learn/settings", json={"memory_in_chat": True})
 
-    assert client.delete(f"/api/learn/facts/{b['id']}").json() == {"deleted": b["id"]}
-    assert all(f["id"] != b["id"] for f in client.get("/api/learn/facts").json()["facts"])
+    assert client.delete(f"/api/knowledge/memories/{b['id']}").json() == {"forgotten": b["id"]}
+    assert all(m["id"] != b["id"] for m in client.get("/api/knowledge/memories").json())
 
 
 def test_learning_switch_off_learns_nothing(client, model):
-    from app.adapt import knowledge
+    from app.knowledge import facts as knowledge
     import asyncio
 
     model.answers["long term memory"] = [{"content": "Studies law at QUT", "kind": "about"}]
@@ -95,7 +101,7 @@ def test_files_and_tasks_teach_facts_through_observe(client, model):
     r = client.post("/api/learn/observe", json={"source": "file", "name": "Riverside schedule.xlsx",
                                                  "text": "Programme: Riverside Clinic fit-out. Client: Hames Group. Week 12 ceilings, week 13 joinery."}).json()
     assert r["learned"][0]["source"] == "file"
-    assert any("Riverside" in f["content"] for f in client.get("/api/learn/facts").json()["facts"])
+    assert any("Riverside" in m["content"] for m in client.get("/api/knowledge/memories").json())
 
 
 # Show me how ---------------------------------------------------------------------------------------------------------
@@ -254,7 +260,7 @@ def test_recurring_work_becomes_a_one_click_routine_that_cannot_act_outside(clie
     assert not hooks.guard("external", "schedule", other)
     t = assistant.TOOL_MAP["create_event"]
     assert assistant.needs_approval(t, assistant.Ctx(channel="schedule", conversation_id=conv))
-    work = client.get("/api/learn/facts").json()["work"]
+    work = client.get("/api/learn/work").json()
     assert any(w["kind"] == "weekly_report" and w["times"] >= 3 and w["label"] == "weekly report" for w in work)
 
 
@@ -287,8 +293,8 @@ def test_edits_and_thumbs_become_lessons(client, fakes, model):
     lessons = [x["lesson"] for x in r["learned"]]
     assert any("shorter" in l for l in lessons) and any("\u201cHi\u201d" in l for l in lessons) and any("Mick" in l for l in lessons)
     assert r["note"].startswith("Learned from your change:")
-    facts = client.get("/api/learn/facts").json()["facts"]
-    assert any(f["source"] == "feedback" and "shorter" in f["content"] for f in facts)
+    facts = client.get("/api/knowledge/memories").json()
+    assert any(f["source_kind"] == "feedback" and "shorter" in f["content"] for f in facts)
 
     # an edit with no obvious pattern asks the model for the lesson
     model.answers["corrected their assistant"] = {"lesson": "Quote prices including GST", "about": "format"}
@@ -329,32 +335,24 @@ def test_run_playbook_tool_is_offered(client):
 
 
 def test_forget_everything(client):
-    client.post("/api/learn/facts", json={"content": "Temporary fact to forget"})
-    n = client.post("/api/learn/facts/forget-all").json()["deleted"]
-    assert n >= 1 and client.get("/api/learn/facts").json()["facts"] == []
+    _add(client, "Temporary fact to forget")
+    n = client.post("/api/knowledge/memories/forget-all").json()["deleted"]
+    assert n >= 1 and client.get("/api/knowledge/memories").json() == []
 
 
-def test_old_memories_move_into_the_encrypted_store_and_remember_forget_use_it(client):
+def test_remember_and_forget_tools_use_the_one_store(client):
     from app import assistant, db
-    from app.adapt import knowledge
-
-    db.run("INSERT INTO memories(content, kind, source, created_at, updated_at) VALUES (?, 'profile', 'user', ?, ?)",
-           "Is a quantity surveyor in Brisbane", db.now(), db.now())
-    db.run("INSERT INTO memories(content, kind, source, created_at, updated_at) VALUES (?, 'fact', 'auto', ?, ?)",
-           "My password is hunter2", db.now(), db.now())
-    knowledge.migrate_legacy()
-    assert not db.all("SELECT * FROM memories")  # nothing left in plaintext
-    moved = [f for f in knowledge.all_facts() if "quantity surveyor" in f["content"]]
-    assert moved and moved[0]["pinned"] and moved[0]["category"] == "about"
-    assert not [f for f in knowledge.all_facts() if "hunter2" in f["content"]]
-    raw = db.one("SELECT content_enc FROM adapt_facts WHERE id = ?", moved[0]["id"])["content_enc"]
-    assert "surveyor" not in raw  # sealed at rest
+    from app.knowledge import facts
 
     saved = assistant._remember("Prefers invoices as PDF", "preference")
-    assert saved["saved"] and knowledge.get(saved["saved"])["content"] == "Prefers invoices as PDF"
-    assert any(m["id"] == saved["saved"] for m in client.get("/api/memories").json())  # the Memory tab shows the same facts
+    assert saved["saved"] and facts.get(saved["saved"])["content"] == "Prefers invoices as PDF"
+    raw = db.one("SELECT content_enc FROM kn_memories WHERE id = ?", saved["saved"])["content_enc"]
+    assert "invoices" not in raw  # sealed at rest
+    assert any(m["id"] == saved["saved"] for m in client.get("/api/knowledge/memories").json())  # the Memory page shows it
+    with pytest.raises(Exception):
+        assistant._remember("My password is hunter2")  # a secret is never saved from chat
     assistant._forget(saved["saved"])
-    assert not [f for f in knowledge.all_facts() if f["id"] == saved["saved"]]
+    assert not [f for f in facts.all_facts() if f["id"] == saved["saved"]]
 
 
 def test_files_and_sites_report_their_work_to_learn(client):

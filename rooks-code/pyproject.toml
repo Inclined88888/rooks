@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rooks-code"
-version = "0.1.0"
+version = "1.0.6"
 description = "ai-workspace's terminal coding agent: any model (OpenAI, Anthropic, OpenRouter, Ollama, LM Studio), approvals, undo, budgets and receipts"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,13 +12,16 @@ dependencies = ["prompt_toolkit>=3.0.43", "rich>=13.7"]  # the interactive termi
 classifiers = ["Environment :: Console", "Operating System :: OS Independent", "Topic :: Software Development"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "jsonschema>=4.18"]  # jsonschema: tests/test_headless.py checks output against the schema
 
 [project.scripts]
 rooks = "rooks_code.cli:main"
 
 [tool.setuptools]
 packages = ["rooks_code"]
+
+[tool.setuptools.package-data]
+rooks_code = ["schema/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

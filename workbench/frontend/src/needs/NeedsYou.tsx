@@ -12,6 +12,7 @@ import { api, ApiError } from "../api";
 import { refreshPresence } from "../shell/presence";
 import { ApprovalCard, Badge, EmptyState, Sheet, useToast } from "../ui";
 import { relTime } from "../util";
+import { ChangeLines } from "./ChangeLines";
 import { chatLinkFor, commandFor, decidedWords, effectFor, kindWord, linkFor, type NeedsItem } from "./items";
 import { closeNeedsYou, useNeedsYouOpen } from "./store";
 import "./needs.css";
@@ -117,7 +118,8 @@ function NeedsItemCard({ item, busy, onDecide }: { item: NeedsItem; busy: boolea
         {chat && <Link className="needs-link" to={chat.to} onClick={closeNeedsYou}>{chat.label}</Link>}
       </div>
       <ApprovalCard className="needs-card" title={item.title} detail={item.reason || item.detail || undefined} effect={effectFor(item)}
-        command={commandFor(item) || undefined} busy={busy} onApprove={() => onDecide(true)} onDeny={() => onDecide(false)} />
+        command={item.change?.length ? undefined : commandFor(item) || undefined} busy={busy} onApprove={() => onDecide(true)} onDeny={() => onDecide(false)}
+        diff={item.change?.length ? <ChangeLines lines={item.change} /> : undefined} whole={!!item.change?.length} />
     </div>
   );
 }

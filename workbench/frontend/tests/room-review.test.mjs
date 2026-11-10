@@ -34,15 +34,16 @@ const ON = { checked: true, reachable: true, available: true, running: true, scr
 const src = (p) => (exists(p) ? read(p) : "");
 
 // ---------------------------------------------------------------------------------------------- switched off (9, 10, 31)
-test("terminals switched off in Settings come from status: the Terminal window stays, with its Settings line", () => {
+test("terminals switched off in Settings come from status: switched off, the Terminal window is not shown", () => {
   const s = stores.roomFromWire({ available: true, running: true, can: { terminal: false, files: true, terminal_off_reason: "switched_off" } });
   assert.equal(s.can.terminal_off_reason, "switched_off", "the status store keeps why there is no terminal");
   assert.equal(stores.roomFromWire({ available: true, can: { terminal: false, terminal_off_reason: "sideways" } }).can.terminal_off_reason, null, "an unknown reason is no reason");
   assert.equal(stores.roomFromWire({ available: true }).can.terminal_off_reason, null, "an older service says nothing");
-  // the Terminal window shows the switched-off state; Commands is only for helper mode and Windows (design 3.5)
-  assert.deepEqual(desk.windowsFor({ ...ON, can: { terminal: false, files: true, terminal_off_reason: "switched_off" } }), ["terminal", "files", "points"]);
-  assert.deepEqual(desk.windowsFor({ ...ON, can: { terminal: false, files: false, terminal_off_reason: "helper" } }), ["commands", "points"]);
-  assert.deepEqual(desk.windowsFor({ ...ON, can: { terminal: false, files: true, terminal_off_reason: "windows" } }), ["commands", "files", "points"]);
+  // room-pro: terminals are a developer tool; switched off (or helper mode, or Windows) means not shown: no Terminal
+  // window with a Settings line, no Commands window in its place
+  assert.deepEqual(desk.windowsFor({ ...ON, can: { terminal: false, files: true, terminal_off_reason: "switched_off" } }), ["files", "points"]);
+  assert.deepEqual(desk.windowsFor({ ...ON, can: { terminal: false, files: false, terminal_off_reason: "helper" } }), ["points"]);
+  assert.deepEqual(desk.windowsFor({ ...ON, can: { terminal: false, files: true, terminal_off_reason: "windows" } }), ["files", "points"]);
   assert.equal(desk.terminalsSwitchedOff({ can: { terminal: false, terminal_off_reason: "switched_off" } }, false), true, "status says so before any socket");
   assert.equal(desk.terminalsSwitchedOff({ can: { terminal: true, terminal_off_reason: null } }, true), false, "status says they are on: the old refusal no longer counts");
   assert.equal(desk.terminalsSwitchedOff({ can: { terminal: false } }, true), true, "an older service: the socket's refusal stands");
@@ -55,7 +56,7 @@ test("terminals switched off in Settings come from status: the Terminal window s
   const win = src("../src/room/TerminalWindow.tsx");
   assert.match(win, /terminalsSwitchedOff\(status, ui\.switchedOff\)/, "the window and the panes read the switched-off state from status");
   assert.doesNotMatch(win, /if \(ui\.remote \|\| ui\.switchedOff/, "the panes do not stay hidden on the old refusal alone");
-  assert.match(win, /to="\/settings">Open Settings</, "the switched-off state links to Settings");
+  assert.match(win, /to="\/settings\?section=tools">Open Settings</, "the switched-off state links to Settings, where its switch is");
 });
 
 test("the switched-off refusal is forgotten as soon as status says terminals are on", () => {

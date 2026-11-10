@@ -1,8 +1,10 @@
 """Model adapters. Internally every conversation uses OpenAI Chat Completions message shapes; the Anthropic adapter
 converts on the way out and back. Standard library only (urllib), so nothing to install and nothing phones home.
 
-Each adapter returns Reply(text, tool_calls, tokens_in, tokens_out). Every HTTP request is reported to the `on_egress`
-callback (method, url, outcome, ms, error) so the run receipt carries an outbound audit like Workbench's.
+Each adapter returns Reply(text, tool_calls, tokens_in, tokens_out, cache_read, cache_write): tokens_in is the whole
+input, cache_read and cache_write the part of it read from and written to the provider's prompt cache. Every HTTP
+request is reported to the `on_egress` callback (method, url, outcome, ms, error) so the run receipt carries an
+outbound audit like Workbench's.
 """
 
 from __future__ import annotations
@@ -29,6 +31,18 @@ PRICES: dict[str, tuple[float, float]] = {
     "claude-haiku-4-5": (1.0, 5.0), "claude-3-5-haiku": (0.8, 4.0),
     "deepseek-chat": (0.27, 1.1), "deepseek-reasoner": (0.55, 2.19),
 }
+
+# USD per million cached input tokens [read from the cache, written to it]. OpenAI and DeepSeek list a cached input
+# price and charge nothing extra to write (their servers cache by themselves and report only reads). Anthropic prices
+# its cache as multiples of the input price (a read 0.1x, a five-minute write 1.25x), so a Claude model in PRICES gets
+# its cached prices from that rule (cache_price). Any other model's cached price is unknown, never guessed: set it as
+# [input, output, cache read, cache write] under [prices] in the config.
+CACHE_PRICES: dict[str, tuple[float, float]] = {
+    "gpt-4.1": (0.5, 2.0), "gpt-4.1-mini": (0.1, 0.4), "gpt-4.1-nano": (0.025, 0.1), "gpt-4o": (1.25, 2.5),
+    "gpt-4o-mini": (0.075, 0.15), "o4-mini": (0.275, 1.1), "gpt-5": (0.125, 1.25), "gpt-5-mini": (0.025, 0.25),
+    "deepseek-chat": (0.07, 0.27), "deepseek-reasoner": (0.14, 0.55),
+}
+ANTHROPIC_CACHE = (0.1, 1.25)  # read, write: multiples of the model's input price
 
 # Models whose price rises once one request's input passes a size: name -> (input tokens, [input, output] above it)
 PRICE_TIERS: dict[str, tuple[int, tuple[float, float]]] = {
@@ -61,6 +75,8 @@ class Reply:
     tool_calls: list[ToolCall] = field(default_factory=list)
     tokens_in: int = 0
     tokens_out: int = 0
+    cache_read: int = 0  # of tokens_in, read from the prompt cache (charged at the cache read price)
+    cache_write: int = 0  # of tokens_in, written to the prompt cache (Anthropic charges more than for plain input)
 
 
 class ProviderError(Exception):
@@ -167,16 +183,21 @@ def parse_text_tool_calls(content: str, tool_names: set[str]) -> tuple[list[Tool
     return calls, (rest.strip() if calls else content)
 
 
+def _known(name: str, table: dict):
+    bare = name.split("/")[-1]  # openrouter "openai/gpt-4.1-mini"
+    for key in sorted(table, key=len, reverse=True):  # dated variants: claude-sonnet-4-5-20250929
+        if bare == key or bare.startswith(key + "-"):
+            return table[key]
+    return None
+
+
 def price(model: str, overrides: dict, local: bool) -> tuple[float, float] | None:
+    """USD per million [input, output] tokens, or None when unknown."""
     if local:
         return (0.0, 0.0)
     if model in overrides:
-        return tuple(overrides[model])  # type: ignore[return-value]
-    bare = model.split("/")[-1]  # openrouter "openai/gpt-4.1-mini"
-    for name in sorted(PRICES, key=len, reverse=True):  # dated variants: claude-sonnet-4-5-20250929
-        if bare == name or bare.startswith(name + "-"):
-            return PRICES[name]
-    return None
+        return tuple(overrides[model][:2])  # type: ignore[return-value]
+    return _known(model, PRICES)
 
 
 def _tier(model: str, tokens_in: int) -> tuple[float, float] | None:
@@ -188,12 +209,48 @@ def _tier(model: str, tokens_in: int) -> tuple[float, float] | None:
     return None
 
 
-def cost(model: str, tokens_in: int, tokens_out: int, overrides: dict, local: bool) -> float | None:
-    """Cost of one request. tokens_in is that request's input, so a long prompt tier applies per request."""
+def _input_price(model: str, tokens_in: int, overrides: dict, local: bool) -> tuple[float, float] | None:
+    """[input, output] for one request of tokens_in input tokens: a long prompt tier applies per request."""
     p = price(model, overrides, local)
     if p is not None and not local and model not in overrides:
         p = _tier(model, tokens_in) or p
-    return None if p is None else round((tokens_in * p[0] + tokens_out * p[1]) / 1_000_000, 6)
+    return p
+
+
+def cache_price(model: str, overrides: dict, local: bool, tokens_in: int = 0) -> tuple[float | None, float | None]:
+    """USD per million cached input tokens [read, written], each None when unknown. Never guessed: a model with a
+    price but no cached price (a [prices] entry with two numbers, a model outside the tables) has None here, except a
+    Claude model, whose cached prices follow Anthropic's published rule from its input price (ANTHROPIC_CACHE), its
+    [prices] entry's included."""
+    if local:
+        return (0.0, 0.0)
+    bare = model.split("/")[-1]
+    p = _input_price(model, tokens_in, overrides, local)
+    rule = ((round(p[0] * ANTHROPIC_CACHE[0], 6), round(p[0] * ANTHROPIC_CACHE[1], 6))
+            if bare.startswith("claude-") and p is not None else (None, None))
+    if model in overrides:
+        o = list(overrides[model])
+        return (float(o[2]) if len(o) > 2 else rule[0], float(o[3]) if len(o) > 3 else rule[1])
+    listed = _known(model, CACHE_PRICES)
+    if listed is not None:
+        return listed
+    return rule  # Anthropic's published rule for a Claude model, from this request's input price; else unknown
+
+
+def cost(model: str, tokens_in: int, tokens_out: int, overrides: dict, local: bool,
+         cache_read: int = 0, cache_write: int = 0) -> float | None:
+    """Cost of one request, or None when a price it needs is unknown. tokens_in is that request's whole input, of which
+    cache_read tokens were read from the prompt cache and cache_write written to it; those are charged at the cached
+    prices, and a cached price that is not known makes the cost unknown rather than a guess."""
+    p = _input_price(model, tokens_in, overrides, local)
+    if p is None:
+        return None
+    read_p, write_p = cache_price(model, overrides, local, tokens_in) if cache_read or cache_write else (0.0, 0.0)
+    if (cache_read and read_p is None) or (cache_write and write_p is None):
+        return None
+    plain = max(0, tokens_in - cache_read - cache_write)
+    usd = plain * p[0] + cache_read * (read_p or 0.0) + cache_write * (write_p or 0.0) + tokens_out * p[1]
+    return round(usd / 1_000_000, 6)
 
 
 Egress = Callable[[str, str, str, int, str], None]
@@ -332,9 +389,16 @@ class OpenAIChat:
             except ValueError:
                 args, bad = {}, str(raw)
             calls.append(ToolCall(c.get("id") or f"call_{i}", fn.get("name", ""), args if isinstance(args, dict) else {}, bad))
-        usage = data.get("usage") or {}
-        return Reply(msg.get("content") or "", calls, int(usage.get("prompt_tokens") or 0),
-                     int(usage.get("completion_tokens") or 0))
+        return Reply(msg.get("content") or "", calls, *self._usage(data.get("usage") or {}))
+
+    @staticmethod
+    def _usage(u: dict) -> tuple[int, int, int, int]:
+        """(input, output, read from the cache, written to it). OpenAI caches long prompts by itself and reports the
+        part it read in prompt_tokens_details.cached_tokens (DeepSeek: prompt_cache_hit_tokens); it reports no writes."""
+        details = u.get("prompt_tokens_details") or {}
+        cached = details.get("cached_tokens") if isinstance(details, dict) else 0
+        cached = cached or u.get("prompt_cache_hit_tokens") or 0
+        return int(u.get("prompt_tokens") or 0), int(u.get("completion_tokens") or 0), int(cached), 0
 
     def _stream(self, body: dict, on_text: OnText) -> Reply:
         """Text as it is written; tool calls arrive in pieces by index and are joined before they are used."""
@@ -359,7 +423,7 @@ class OpenAIChat:
         for i in sorted(parts):
             args, bad = _parse_args(parts[i]["args"] or "{}")
             calls.append(ToolCall(parts[i]["id"] or f"call_{i}", parts[i]["name"], args, bad))
-        return Reply("".join(text), calls, int(usage.get("prompt_tokens") or 0), int(usage.get("completion_tokens") or 0))
+        return Reply("".join(text), calls, *self._usage(usage))
 
 
 class Anthropic:
@@ -421,6 +485,11 @@ class Anthropic:
         return body
 
     @staticmethod
+    def _cached(u: dict) -> tuple[int, int]:
+        """(read from the cache, written to it): Anthropic reports both apart from input_tokens."""
+        return int(u.get("cache_read_input_tokens") or 0), int(u.get("cache_creation_input_tokens") or 0)
+
+    @staticmethod
     def _tokens_in(u: dict) -> int:
         return int(u.get("input_tokens") or 0) + int(u.get("cache_creation_input_tokens") or 0) + int(u.get("cache_read_input_tokens") or 0)
 
@@ -434,14 +503,15 @@ class Anthropic:
         text = "".join(b.get("text", "") for b in data["content"] if b.get("type") == "text")
         calls = [ToolCall(b["id"], b["name"], b.get("input") or {}) for b in data["content"] if b.get("type") == "tool_use"]
         usage = data.get("usage") or {}
-        return Reply(text, calls, self._tokens_in(usage), int(usage.get("output_tokens") or 0))
+        return Reply(text, calls, self._tokens_in(usage), int(usage.get("output_tokens") or 0), *self._cached(usage))
 
     def _stream(self, body: dict, on_text: OnText) -> Reply:
-        text, blocks, tin, tout = [], {}, 0, 0
+        text, blocks, tin, tout, cached = [], {}, 0, 0, (0, 0)
         for ev in _sse(self.base_url + "/messages", {**body, "stream": True}, self._headers(), self.on_egress, self.timeout):
             t = ev.get("type")
             if t == "message_start":
-                tin = self._tokens_in((ev.get("message") or {}).get("usage") or {})
+                u = (ev.get("message") or {}).get("usage") or {}
+                tin, cached = self._tokens_in(u), self._cached(u)
             elif t == "content_block_start":
                 b = ev.get("content_block") or {}
                 if b.get("type") == "tool_use":
@@ -461,7 +531,7 @@ class Anthropic:
         for i in sorted(blocks):
             args, bad = _parse_args(blocks[i]["json"] or "{}")
             calls.append(ToolCall(blocks[i]["id"], blocks[i]["name"], args, bad))
-        return Reply("".join(text), calls, tin, tout)
+        return Reply("".join(text), calls, tin, tout, *cached)
 
 
 def make(settings, on_egress: Egress | None = None):

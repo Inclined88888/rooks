@@ -17,6 +17,181 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Scheduled later
 
+### Industrial redesign: the desktop icon files keep the gold door (branch feat/industrial-ui)
+
+* The app (`workbench/frontend/src/ui/RooksMark.tsx`) and the browser tab (`workbench/frontend/public/favicon.svg`) draw
+  the Rooks tower with its door in the one accent, safety orange #FF4D00. The desktop icon files were not regenerated
+  in this branch: `desktop/app-icon.svg`, the PNG and ICNS/ICO files made from it, and the loading page
+  `desktop/ui/index.html` still have the gold door #E3A82B, and `desktop/scripts/test_icons.py` still checks the desktop
+  source for gold (it checks the favicon for the orange door).
+  Regenerate them from the new colour, update that test, and the brand has one accent everywhere.
+
+### Industrial redesign: words and behaviour for the owner to approve (branch feat/industrial-ui)
+
+* The review kept three changes that are more than a restyle; each needs the owner's yes, or a revert:
+  Insights' chart note says "Orange: calls that failed" (it said "Red", and the failed bars are orange now);
+  Settings > Usage this month shows its cost and tokens as a stat strip labelled "Cost" and "Tokens" (they were in a
+  badge beside the title); a new, empty chat does not scroll to its end (`pages/Assistant.tsx`, two lines), because
+  the taller greeting would lose its first line on a phone.
+
+### Industrial redesign: the calendar colours (branch feat/industrial-ui)
+
+* A calendar's colour is the person's own data (`workbench/frontend/src/pages/day/colors.ts`), so step 4 left the
+  choices as they were; the first one offered, and the default for a new calendar, is still blue (#0ea5e9), and Purple
+  is among them. The owner may want the default to be ink or the orange and the list to lead with neutrals; changing it
+  changes what new calendars are saved with, so it waits for that decision.
+
+### Workplace cleanup: what the delete step left (branch cleanup/workplace)
+
+* **For the room-browser branch** (out of scope here because that branch is changing these files): nothing in
+  `desktop/src-tauri/tauri.conf.json`, `desktop/launcher/*`, `install.sh`, the logo and icons,
+  `workbench/frontend/src/room/*`, `rooks-try/rooks_try/browser.py` or `workbench/backend/app/room_browser.py` refers
+  to anything removed here (checked with git grep). They still need the rename to Rooks (section g.4): the desktop app's
+  product name "AI Workspace" in `tauri.conf.json`, and the merge of `browser_proxy.py`, `local_agents.py` and
+  `handoff.py` into the Room browser (g.2).
+* **Settings, Desktop app shows the helper's raw name and a technical line** ("workbench", "Workbench backend: chat,
+  run log, approvals, budgets, MCP server", from `desktop/src-tauri/src/sidecars.rs`). Plain words with the Rooks
+  rename step.
+* **A browser for Paperclip, Hermes and Open WebUI.** They lost the old agent's `/mcp` and `/tools` endpoints, because
+  the browser key also answers approvals. Giving them one again needs an HTTP MCP endpoint on `rooks-browser serve`
+  with its own key that can start jobs but never answer approvals, and approvals answered by a person in Workbench.
+* **No monthly cap on browser steps.** The old agent had `BROWSER_MONTHLY_STEP_LIMIT`; Rooks Browser caps each job at
+  50 steps, and `/v1` has no budget of its own. Add a cap in Workbench (it sees every browser model call) if wanted.
+* **The browser add-on image is not measured.** It was not built in this session (no Docker daemon); the `browser-image`
+  CI job builds it and checks the health check and token. Put its size in the README table after the first run.
+* **"What I improved" has no screen.** `memory/Improved.tsx` was deleted unused; `/api/knowledge/improvements` still
+  runs. Decide whether Home (to be "Today") shows it, or hide the routes.
+* **The trade setting cannot be set any more.** `/api/trade` had no caller; Home and the status answer still read a
+  saved trade. Settle it with the Trade, Legal and Study packs (g.3).
+* **The sidecar unit test does not run in CI.** `cargo test --offline sidecars` in `desktop/src-tauri` needs a
+  placeholder `binaries/workbench-server-<target>` file; no workflow runs `cargo test` for the desktop app.
+* **Undecided by the owner:** `cli-launcher/`. `pages/Code.tsx` is now hidden behind Settings, Advanced, Show
+  developer tools, not deleted.
+* **Developer tools switch: what it does not cover yet.**
+  * Chat settings (`/assistant-settings`) still shows the "Terminal access" card, which names the `ws` command and
+    `cli/ws`. Hide it with the switch, or move it, once the owner decides `cli/ws` (g.2 merges it into rooks-code).
+  * The Stage's terminal card links to `/terminal` when the `rooks` terminal is working; the page opens by address,
+    so the link works, but it is the one way into a hidden page from a normal screen.
+  * The `rooks` terminal and the phone still show the Trade, Legal and Study packs. The terminal is a developer tool,
+    so its packs stay; the phone's Packs screen should read the same `dev_tools` setting.
+  * The goals routes (`/api/goals`) had no screen to hide. Nothing calls them but tests; remove them or keep them for
+    a future screen (owner's call).
+  * Your plan still lists Pro features as "free while in beta". With plan checks off, decide whether the page should
+    exist at all for workplace teams (section h, rank 16).
+* **For the room-browser branch** (not touched here): if the desktop app's tray, menus or launcher ever link to
+  `/terminal`, `/code`, `/runs` or the packs, those pages are now hidden behind the switch but still open by address.
+  Nothing in `desktop/` links to them today (checked with grep).
+* **`test_room_terminal.py::test_tail_says_busy_and_the_exit_code_honestly` failed once** in a full backend run on this
+  branch (912 passed, 1 failed) and then passed three runs of its file in a row. The branch does not touch the Room's
+  terminal code; it looks timing sensitive under load. The failure's own output was not kept, so the cause is unknown.
+* **Old reports keep their old paths inside.** Files in `docs/history/` mention `docs/evidence/` and `scripts/audit/`
+  as they were; `docs/history/README.md` maps them.
+
+### Documents and contradictions: what the documents step left (branch cleanup/workplace)
+
+* **Contradictions still open** (docs/architecture.md, section i): 13, the second terminal client `cli/ws` beside
+  `rooks` (g.2, the owner's call); 14, tables created on first use in about 30 modules (the g.2 schema merge); 17, the
+  Plan page still lists a Business tier with company sign-in (plan checks are off, but the page shows it); 22, "teams"
+  in `team/connect.py` means the unbuilt cloud team sync, not Microsoft Teams (rename it before a workplace pitch).
+  3 is open only for the parts listed under "Rooks names" below.
+* **For the room-browser branch:** decision record 0001's new note says the one-command install skips the desktop app
+  until that branch merges (`--native no`). When it changes the default, change that sentence, the README's
+  "Download" and install sections and QUICKSTART's line that the command and download files still carry the old name.
+  Link design record 0007 from `docs/README.md` once it is on the same branch (it is not here, so the index does not
+  link it).
+* **"100 reasons" (docs/README.md) was corrected where an item was clearly false, not re-verified line by line.** Not
+  checked against the code: 35 and 36 (skills run without a chat turn, delegated agents loading a skill), 47 (one
+  worker), 49 and 50 (Company mission control and templates), 68 (data export documented), 96 to 98 (add-on
+  manifest). Check them, or drop the list for workplace copy (section h, rank 16).
+* **The CLI launcher example was not run here.** `cli-launcher/README.md` passes the key from `.env` into
+  `docker exec -e CLAUDE_CODE_API_KEY` for one command; this session had no Docker daemon. Run it once on a server
+  install with the `claude-code` add-on.
+* **The VS Code add-on is still called "AI Workspace"** (commands, settings, output panel) and is not on the
+  Marketplace. Rename it with the desktop app. Its address lookup reads `~/.config/ai-workspace/app.json`, which
+  section g.5 keeps.
+* **What only the online checks run** (AGENTS.md): the security scan, the one-command install on three systems, the
+  Docker images, the desktop and native window builds and the real-screen runs. `cargo test` for `desktop/src-tauri`
+  runs nowhere (entry above).
+
+### Rooks names: what the rename step left (branch cleanup/workplace)
+
+* **The owner must rename the sign-in apps in the Google and Microsoft consoles.** The Google Cloud OAuth client and
+  the Microsoft Entra app registration used by `connect.py` (and `oauth_clients.py`) are still called "AI Workspace",
+  so the consent screen and an IT admin's list show that name. Until then the admin approval message in `connect.py`
+  (`ADMIN_NEEDED`) also gives the old name. After the rename, drop "(the sign-in page may still show its old name,
+  AI Workspace)" and its entry in `ALLOWED` in `workbench/backend/tests/test_rooks_name.py`.
+* **For the room-browser branch:** the desktop app's product name, window title and release titles
+  (`tauri.conf.json`, `.github/workflows/desktop.yml`, `desktop/launcher/*`, `install.sh`) are that branch's. The
+  Computer page and `mac_mail.py` now tell Mac users to switch on "Rooks" in Privacy & Security; that matches what
+  macOS lists only once the app itself is called Rooks, so ship the two together. Renaming the app makes macOS treat it
+  as a new app (screen recording, automation and keychain permissions are asked again); say so in that release's notes.
+  `api.py`'s used-sign-in-link page and launcher message were changed here to that branch's exact words; merging it
+  will still conflict in `desktop_handoff` (it also adds `shell`): take that branch's version.
+* **Other surfaces still say "AI Workspace" or "Workbench"** (not scanned by `test_rooks_name.py`, which covers the
+  server and the built screens): the `rooks`, Rooks Browser and Rooks Desk help texts (`--db` "Workbench database";
+  their model choice and messages now say "the Rooks app"; Rooks Desk's macOS permission steps still say AI Workspace,
+  which is what macOS lists until the desktop app is renamed on the room-browser branch), the phone app (pairing screen title and steps, the default name), the VS Code add-on,
+  `cli/ws`, `companion/macos`, `setup.sh`'s other lines and `install-server.sh`, `install.ps1`, QUICKSTART's and the
+  README's install steps (their titles say Rooks now; the command and files keep the old name until the room-browser
+  branch), most other docs, and many code comments and docstrings. Extend the scan to each when it is renamed.
+* **Slack and Discord bots made before the rename keep their name.** The manifest for a new Slack app says Rooks;
+  an existing one is renamed in Slack's app settings by its owner.
+* **Split `api.py`** into auth_api, providers_api, day_api, mail_api and research_api (section g.4), keeping every
+  path. Left for later: the room-browser branch is changing `api.py` (desktop shell choice), so splitting now would
+  turn its merge into a rewrite.
+
+### One memory: what the merge step left (branch cleanup/workplace)
+
+* **A teammate's own notes are still their own store** (`tm_notes`, `teammates/memory.py`, encrypted with the
+  workspace key). The task named three stores; this is a fourth, per teammate. It could become `kn_memories` rows
+  with `scope = assistant:<id>` (the swap point the module's docstring describes), with its own move.
+* **The terminal's offline memory** (`memory.json` in `rooks-code/rooks_code/learning.py`, used only when the app is
+  not connected) is not moved into the app when the terminal is later connected. Offer to copy it on `rooks login`.
+* **The predicates are loose.** "role" matches any "is a ..." sentence, so "My dog is a labrador" would replace "The
+  user is a nurse in Sydney" in the prompt (kept as history, shown by "why"). Before this branch the same match made
+  both facts wait as a conflict, so it was already wrong, only quieter. Since the review, a pinned fact (chat's
+  remember pins what you say about yourself) or your own word is never replaced by an unpinned guess: that waits
+  under "Needs your call". Still open: a fact chat saved for you as "fact" or "preference" is not pinned, so a
+  later guess with the same loose predicate replaces it (shown by "why", and forgetting the guess brings it back).
+  Chat's remember tool and the background learner both save with source "chat"; telling them apart would let the
+  rule protect everything you asked to keep. Tighten `PREDICATES` in `knowledge/memory.py` with tests from real
+  sentences before relying on it for more than where you live and work.
+* **Sensitive memories are shown only on the Memory page.** The terminal's `/memory` (`/v1/rooks/memory`, the bridge
+  key) and `ws memory` (`/api/memories`) leave them out, like every list that can reach a model in the cloud. If the
+  terminal should show them to the person, it needs a list that is printed and never put into a prompt, behind the
+  person's own sign-in rather than a shared key.
+* **`cli/ws` keeps a read-only `/api/memories`.** The terminal chat client signs in with the Terminal access token,
+  which `/api/knowledge` refuses, so the list it prints stays on the assistant routes. When `cli/ws` is merged into
+  `rooks` (section g.2), remove the route and point the CI image check's 401 sample (`scripts/ci/check-image.sh`)
+  at another signed-in route.
+* **The move does not apply "newer replaces older" to facts it moves.** Two old facts with the same predicate (lives
+  in Brisbane, moved to Sydney) both stay in use after the upgrade, as they were before; the next statement about the
+  same thing replaces both. Doing it at upgrade would hide facts the person saw yesterday.
+* **The old categories are folded into tiers.** About you, Your work, People and Other things become "About you and
+  your work" (`profile`); Formats and tone and How you like things done become "How you like things done"
+  (`procedural`). The Memory page groups by tier. If people miss the finer grouping, add a category column.
+* **Facts sealed with an older app secret stay in `adapt_facts`.** They could not be read before either. Nothing
+  shows them; a Data safety line could say how many there are and that the old secret would bring them back.
+* **The job classifier called "Please remember that I live in Sydney" a legal review** (seen in the real run, on the
+  Memory page's "The work I've seen"). `adapt/jobs.classify` matches too eagerly; not changed here.
+* **`test_knowledge.py::test_api` fails when it runs right after some other files** (seen with test_adapt,
+  test_assistant, test_auth_boundaries, test_coworker_guards, test_rooks_link and test_v02_core in one run):
+  `PRAGMA integrity_check` reports "malformed inverted index for FTS5 table main.messages_fts". The same order fails
+  on the tree before this branch, so it is not from the memory change; the full suite's order passes. Find which test
+  leaves the chat search index broken.
+
+### The Room for workplace teams: what is left (branch feat/room-pro)
+
+- The Room's browser returns as a browser extension, a separate project. Until then the Room's own browser (design
+  0007, `room_browser.py`, `room_browser_tool.py`, `BrowserWindow.tsx`) stays in the code, off on a new install and
+  reachable only with Show developer tools on and its switch on.
+- The Room's terminals are a developer tool: off on a new install, switched on in Settings, Tools, The Room (shown with
+  Show developer tools on). The Commands window (`CommandView`) is no longer offered on the desk; it stays in the code.
+- Settings, Tools still says "This computer and the browser, the Room, and opening Rooks elsewhere" in its one-line
+  summary (`pages/settings/sections`); reword when the browser extension lands.
+
+### Other scheduled items
+
 * **Rooks Browser app: what the preview still lacks** (`rooks-browser/app`, landed from `feat/browser-app` after review, CHANGELOG
   2026-11-07). It starts with `npm start` only: no packaging or installer entry, no code signing, so it is not in `install.sh`,
   the desktop app or the Room yet. No tracker blocking. "Ask about this page" is a job through the task helper (the page's text
@@ -28,6 +203,13 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   `dovecot-imapd` in the backend job, or add a variant on the suite's mail fake.
 * **Windows: no containment for terminal commands.** The default mode runs them with the user's permissions and the approval line
   says so. A Windows sandbox (AppContainer or a restricted token) is the real fix.
+* **The Room on Windows is kept together, not walled** (design 0011, section 3, built on `feat/windows`). Every Room
+  program is in a job inside one Room job (they stop together; terminals and quick commands have the UI limits), and
+  the words say it is not a wall. Left: a real wall (AppContainer, or a restricted, low-integrity token, or a Hyper-V or
+  QEMU guest); programs that ask Windows for known folders still find the person's own; rooks-code's `_run_windows`
+  still ends a timed-out tree with `taskkill /T` rather than a job; the desktop shell assigns the one-file sidecar's
+  unpacking step to its job a moment after it starts (the shell plugin has no suspended start), so only what that step
+  starts is in the job from its first instruction.
 * **The Companion token in `~/.rooks/companion.json`** is read by the notch app and by agent hooks and answers Companion requests,
   so it sits inside the same operating-system-user boundary as the other 0600 files (docs/security/agent-credentials.md).
 * **Glass navigation is a design decision for the owner to confirm** (CHANGELOG 2026-11-07, integration entry).
@@ -45,6 +227,136 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 
 ## Found during work, not yet scheduled
 
+### Work suites (design 0012): what is left (branch feat/windows)
+
+* **A real Google Workspace domain**: Google was tested against `tests/fake_google.py` only. Check against a Workspace
+  test domain: incremental consent per switch with `include_granted_scopes`, what the admin console's App access
+  control block really looks like (Google may show its own page and never send the person back; the switch then stays
+  "Finish signing in" until it is tried again, and a timeout could turn that into "Waiting for your IT team"), the
+  `hd` claim for every Workspace account, shared drive listings with `corpora=drive`, Docs `writeControl` on a real
+  document, resumable uploads (whether Google wants the token on the upload address; Rooks sends none), exports over
+  10 MB (Google refuses them; Rooks should fall back to the file's export links), Meet transcripts and how soon they
+  appear, and real throttling. Then Google's verification of the restricted Drive scopes for the shipped client.
+* **The Chat API needs a Chat app configured in the Cloud project** even for calls made as the person: a maintainer
+  step for the shipped client, not yet in `docs/connect-google-microsoft.md` as a tested step.
+* **Names in Google Chat**: messages read with the person's own access name the sender only by an id, so Rooks says
+  "You" or "Someone". The People API (`directory.readonly`) could name colleagues; it would be one more permission
+  under Chats: read, so it waits for a decision.
+* **Google Chat search** reads the latest 50 messages of up to 20 spaces; older messages are not searched.
+* **A Google Task deleted at Google** stays in Rooks' list after the next sync, as with Planner and To Do.
+* **Google Slides edits, Drive comments and suggestions**: not built; Docs edits are written directly (with the version
+  check), not as suggestions.
+* **Rooks as its own chat inside Google Chat** (0012 section 2.3): a Chat app the company runs in its own Google
+  Cloud project, with Pub/Sub the computer pulls from. Same gate as the Teams bot: only with the owner's yes and a test
+  company. The Channels page says so.
+* **Rooks as a chat inside Teams, and Needs you answered from a Teams card** (0012 section 2.2, last phase): needs an
+  Entra app and Azure Bot in the company's subscription, a Teams app package the admin allows, and a relay the company
+  owns (Azure Relay) or the Rooks cloud. Only with the owner's yes and a test company. The Channels page says so.
+* **A real tenant**: everything was tested against `tests/fake_graph.py` only. Check against a Microsoft 365 developer
+  tenant: incremental consent per switch, which permissions need an admin (the `ADMIN` set in `work_scopes.py`
+  follows Microsoft's permissions reference), the admin consent address in the IT note, a consumer account refused,
+  SharePoint search across sites, transcripts (`OnlineMeetingTranscript.Read.All` and the organiser rule), Planner's
+  version tags, and throttling. Then publisher verification of the shipped registration.
+* **`rooks-browser` opening a work file's address** (0012 section 3.4): the app's Room browser and the terminal's
+  `/work open` do; the separate browser agent does not yet.
+* **SharePoint lists** (`listItem` in search) and site pages: only document libraries are read.
+* **`cloud_mail.py` tests** (architecture section h, rank 3): the work account reuses it for Mail and Calendar, but it
+  still has no suite of its own against a fake Gmail and Graph beyond `test_connect_mail_calendar.py`.
+* **A Planner or To Do task deleted at Microsoft** stays in Rooks' list after the next sync (sync adds and updates,
+  never removes). Removing one needs a yes like every other change and is not built.
+* **Turning a switch off does not remove the permission at Microsoft**: the page says where to remove it (My Apps).
+  Graph has no call for an app to give back one delegated permission.
+
+### Rooks as its own program (design 0007 part 2): not done here
+* **Not run in a real WebKit window.** Playwright's WebKit is not installed on the build machine, and no Mac was at
+  hand. Not verified, each needs a run in the built app: `<a download>` and blob downloads reaching `on_download` in
+  WKWebView and WebKitGTK; `on_new_window` catching `target="_blank"`; the microphone grant in WKWebView with
+  `Info.plist`'s text; `ClipboardItem` with a promise in WebKitGTK (older than 2.40 lacks it, the copy then falls back
+  to `writeText` and can be refused); live dictation (`SpeechRecognition`) is offered only where present.
+* **A Playwright WebKit smoke run of the built UI** (sign in, chat, Room page, a download, an external link), as 0007
+  section 3 asks: needs `npx playwright install webkit` on CI.
+* **The owner's release steps** (code cannot do them): push a tag `vX.Y.Z` matching `VERSION` so `desktop.yml`
+  attaches installers; mark the 1.0.5 release as old; Apple Developer ID notarisation and a Windows signing
+  certificate for Gatekeeper and SmartScreen.
+* **The new mark** is applied (CHANGELOG, 0007 section 7). Left: the macOS Dock and Windows taskbar pictures are
+  checked as files only (`desktop/scripts/test_icons.py`), not seen in a built app; a phone build (`eas build`) has not
+  been run with the new layers; the terminal banner keeps the word "Rooks" (no glyph reads well in every terminal font).
+* **Windows**: the NSIS install folder follows the product name (`%LOCALAPPDATA%\Rooks`); the installer quietly runs
+  the old folder's uninstaller. The setup is installed, started and uninstalled in CI on windows-2022 (design 0011,
+  section 4, `desktop/scripts/check_windows_install.ps1`), silently only. Not run on a real Windows 10 or 11 PC; its
+  pages (the unticked desktop box, "Also remove my chats, keys and the Room") are not clicked through by any test; the
+  MSI is built but never installed in CI; a PC without WebView2 or without internet, and SmartScreen on the unsigned
+  setup, are untested.
+* **macOS in-place update** from 1.0.5 keeps the bundle's old name ("AI Workspace.app") until the installer runs again.
+
+### The Room's browser (design 0007), engine and API lane: not done here
+
+* **The packaged app's browser is proved only in CI with the runner's Chrome** (`smoke_sidecar.py --room-browser`,
+  macOS and Linux). Not covered there: a Mac with only Edge or Chromium, a Linux runner where bwrap's wall is on (the
+  Ubuntu runner may run it without the wall, which the window says). On Windows `smoke_sidecar.py --room-browser` now
+  starts it through the frozen sidecar too, with the runner's Chrome.
+* **The Room's browser on Windows: what is left** (built on `feat/windows`, design 0011 section 2). Not walled: it runs
+  as the person (the window says "Not locked off"), with the person's own `USERPROFILE` (Chromium needs it), in a job
+  with no UI limits: under any one of them Chromium's sandbox could not start its GPU process, so the job does not hold
+  the person's clipboard back (pages still get no clipboard permission). Its job is nested in the Room job (section 3)
+  and the frozen sidecar's smoke test starts it. Left: Edge and Chrome under a real organisation's policies and with a
+  work account's sign-in; Windows on Arm; a real Windows 10 and 11 PC.
+* **Telling a wall failure apart** reads what bwrap printed (`bwrap: …`). A wall that fails without printing that is
+  reported as "the browser refused to start"; the Advanced detail still shows what was printed.
+
+* **The Room's own engine download.** `install_engine` checks a downloaded archive against a SHA-256 and refuses one
+  that reaches outside its folder, but no Chrome for Testing build is pinned yet (URL, version and its real SHA-256 per
+  platform), and there is no "Get one?" route or button. Until then the engine is Playwright's Chromium, the system's,
+  Chrome or Edge, or `no_engine`.
+* **The Chromium policy file** (`/etc/chromium/policies/managed/`) the record names is not bound: bwrap cannot create
+  that mount point under a read-only `/` when the folder does not exist. The request rule (the DevTools `Fetch` domain
+  at the browser level, every target) refuses files outside the Room's home and the app's address instead, with or
+  without bwrap.
+* **macOS.** The engine search, flags (`--use-mock-keychain`) and memory reading (`ps`) have macOS paths, but nothing
+  was run on a Mac; the record's Seatbelt check before release is still to do.
+* **File uploads** (a page's file picker) are not wired: headless Chromium cancels the chooser. Choosing from the
+  Room's files is the way.
+* **Copy** returns the page's selection (`{"type": "copy"}` on the socket); the window writes it with a
+  `ClipboardItem` (done in the window lane).
+* **The phone's taps** are not in the run log (only the window's coarse "You used the browser" row is).
+* **A window that opens before the Room is on** gets the socket closed with "The Room is off. Start it first." and
+  must open again after Start.
+* **Uvicorn ends on SIGTERM by raising the signal again**, so `atexit` does not run at a normal stop; the browser is
+  closed from the app's shutdown instead. The Room's terminals still rely on `atexit` (their restart record is right
+  either way, since a record without an end counts as ended by the restart).
+
+### The Room's browser (design 0007), window, assistant and terminal lane: not done here
+
+* **"Get one?" for the Room's own engine** is not there: with no engine the window says "The Room has no browser yet."
+  and offers Check again (the engine download is the engine lane's open item above).
+* **Switching the Room's browser or terminals on and off from the rooks terminal**: the switches are in Settings,
+  Tools (done after review); the terminal has no `/room browser on|off` yet.
+* **Enter in a field outside a form** (a chat box made of a textarea or an editable area that sends on Enter) is not
+  checked as sending a message; Enter or Space on a focused button or link, and Enter in a form field, are.
+* **A held key step is matched by the key, not the element**: a second Enter on another element while one waits is told
+  the first is already waiting (after a yes the step runs only if the same element still has the focus).
+* **WebSockets to the app's own address** are not refused by the request rule (Chromium's `Fetch` does not see them);
+  the app's sockets refuse them anyway (sign-in cookie, same origin, loopback page), and the Room's browser has no
+  sign-in cookie of the app.
+* **The app's address on the local network** (the computer's Wi-Fi address and the app's port) is refused only when the
+  computer's own name resolves to it.
+* **The Room browser's real Chromium tests on CI** now fail instead of skip (`ROOM_BROWSER_TESTS_REQUIRED=1`, bubblewrap
+  installed); not yet seen green on a CI runner from this branch.
+* **Typing with an input method** (Chinese, Japanese, dead keys): the live page takes key presses and paste; composed
+  text from an IME is not sent yet. The phone's Type field works for any text.
+* **The assistant's every acting step asks first** (the Room's rule), so a purchase asks twice: the Room's own yes, then
+  the purchase's. A per-chat "use the Room's browser" yes would cut that to one; it is a decision for the owner.
+* **The assistant sees no picture:** `shot` gives what is in view and where (boxes), not an image; the picture is on the
+  window for the person.
+* **What is not checked** before a click (said under Advanced): a page's own scripts sending data on an ordinary click
+  or as you type, button words the English patterns miss, and the person's own input. A purchase button labelled only
+  with an icon is not seen as one.
+* **The browser's start thread.** On Linux the browser is started from the app loop's worker thread and bwrap's
+  `--die-with-parent` ends it when that thread ends. The app's default executor keeps its threads for the app's life, so
+  this holds today; a dedicated long-lived starter thread would make it independent of that.
+* **Asked sites the person typed** are kept for this run of the app only; after a restart the assistant's form sends on
+  them wait for a yes again until the person types the address or names the site in the chat.
+
 ### The Room as a small computer (design 0006): follow-ups, each its own record or line
 
 * **"Since you were here" and an Activity window.** New programs in the Room's bin folders, files changed and points
@@ -53,8 +365,12 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Terminals through the helper.** `rooks-try serve` (`TRY_URL`) hosts no terminals and no Files; its status says
   `can: {terminal: false, files: false}` and the page keeps the Commands window ("A terminal needs the Room on this
   computer."). Hosting the registry in the helper and proxying the WebSocket through the app would close it.
-* **Windows terminals.** `terminal_pty` and the Room's terminals are POSIX only; a pseudo terminal through ConPTY is
-  the way. Windows keeps the Commands window with a login Git bash (or Command Prompt, which says so).
+* **Windows terminals: what is left** (built on `feat/windows`, design 0011 section 1). The Room's terminals and the app's
+  own terminal run on ConPTY with PowerShell or Git Bash. Left: ship Microsoft's `conpty.dll` and `OpenConsole.exe` in
+  the sidecar (newer ConPTY than an old Windows 10 has) and open a ConPTY terminal from `smoke_sidecar.py` on Windows
+  (it runs a quick command there, not a terminal); a real Windows 10 and 11 PC,
+  Windows on Arm, constrained language mode and AppLocker/WDAC are untested. On Windows a line sent through the send
+  route is logged by its length only, always, because the console's echo mode cannot be read from outside.
 * **A shell inside a QEMU guest** (serial or ssh console). Until then a separate computer has no Terminal window and no
   Files (`terminal_argv` is None), and Advanced says "Files live inside the separate computer. Use its screen."
 * **Shells that survive an app restart** (`tmux` around the login shell). Today a restart ends every Room terminal; it
@@ -95,11 +411,27 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Redaction copy drift (pre existing).** `rooks-browser` keeps a copy of the backend's `redact.py`; the backend gained
   PEM and AWS patterns, so `rooks-browser/tests/test_units.py::test_redaction_is_a_verbatim_copy_of_workbench` fails at
   the branch's base commit and at its tip.
-* **Terminal approvals with the bridge key (pre existing, not widened).** `/v1/rooks/approvals/{id}` lets a bridge key
-  record an answer to a terminal held row (`terminal:` request ids only). It runs nothing on the server, but a coding
-  job could record an answer to its own terminal prompt. Owner decision.
-* **Stored Terminal access token.** A coding job with shell access runs as the person and could read the token
-  `rooks login` stores; the read only bridge key closes the app's own routes, not a hostile local process.
+* **Fixed in phase 1a: terminal approvals with the bridge key.** `POST /v1/rooks/approvals/{id}` now refuses every
+  bridge key (app.json, desk, coding job) with 403; only the Terminal access token records an answer, and only for a
+  prompt the person's own terminal raised. A prompt raised with the coding job key (request id `terminal:job:`) is
+  answered in the signed in app only, the token included, here and in `POST /api/needs-you/a:{id}/...` (which refuses
+  it unless signed in; the list marks it `in_app_only` and the terminal's /needs sends no answer for it). The terminal
+  that asked may withdraw its prompt (`/withdraw`, outcome `withdrawn`): the card closes and it can never become an
+  approval; a coding job withdraws only its own prompts and no other key withdraws a job's. Tests:
+  `test_auth_boundaries.py::test_a_shared_key_never_answers_a_terminal_prompt`,
+  `::test_a_prompt_raised_by_a_coding_job_is_answered_only_in_the_app`,
+  `::test_needs_you_never_answers_a_coding_jobs_prompt_with_the_terminal_token`,
+  `::test_only_the_side_that_asked_withdraws_a_terminal_prompt`, and over real processes
+  `rooks-code/tests/test_shared_loop_e2e.py::test_a_program_holding_the_apps_key_cannot_answer_the_terminals_prompt`.
+* **What remains of it: the stored Terminal access token.** Anything running as the person can read the token
+  `rooks login` keeps in `rooks-keys.json` and answer a prompt the person's own interactive terminal raised (the token
+  is accepted for those by design: `test_the_terminal_token_answers_the_persons_own_terminal_prompt` shows a row raised
+  with the app key answered by the token). So a program the agent started earlier in the same session (a background
+  command the person approved) could still answer a later prompt while the person is away from the keyboard. Not
+  proven closed: binding an answer to the terminal process that asked (a per prompt secret held only in its memory)
+  or keeping the token in the OS keychain would narrow it. Coding jobs the app starts are covered (their prompts refuse
+  the token). Without `rooks login` the person's answer typed in the terminal is no longer recorded in the app; the
+  card is withdrawn instead and the terminal says to run `rooks login`.
 * **Not tested with a real model.** Every chat, Room and approval flow on this branch was tested with the scripted
   harness model only; no provider key was available.
 * **Versions.** The terminal reports 0.1.0 (`rooks-code` package) while AGENTS.md calls the install 1.0.0.
@@ -136,10 +468,16 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
   them out and say so on the page.
 * **Done in B3: a repeated hand-off request no longer makes a second held item.** `room.request_handoff` joins a
   pending request for the same file and place (`already_asked`), and the chat turn stops asking.
-* **The terminal's Room MCP server lets the calling agent set `approve: true` on handoff.** In the app, the copy out
-  of the Room waits for a person in Needs you. In the terminal, `rooks-try mcp` takes the agent's own flag; rooks-code
-  treats the server as untrusted, so its usual approval prompt is the only gate. Replace the flag with an MCP
-  elicitation question, as Rooks Desk does, so a person answers in the terminal too.
+* **Fixed in phase 1a: the Room MCP server took the calling agent's `approve: true` on handoff.** `rooks-try mcp`
+  drops the flag (an `approve` the agent sends is ignored) and asks the person with MCP elicitation, as Rooks Desk
+  does; a client that cannot ask gets `waiting_for: "a person"` and nothing is copied. rooks-code's MCP client now
+  declares elicitation and puts the question to the person (also with `--yes`, mirrored to Needs you when linked); a
+  question that is not a single yes or no is declined. Tests: `rooks-try/tests/test_mcp_handoff.py` (the real
+  `rooks-try mcp` over stdio) and `rooks-code/tests/test_e2e.py::test_an_mcp_servers_question_*`. What remains: an
+  MCP client that answers elicitation by itself (some clients auto-accept) is outside our control; the Room's HTTP
+  helper (`rooks-try serve`, `POST /api/handoff` with `approve`) still trusts its caller: it needs the helper's key
+  (`ROOKS_TRY_API_KEY` or `TOOLS_API_KEY`, which `security.scrub_env` keeps from child processes) and the app calls it
+  only after a yes in Needs you. Not re-checked in phase 1a.
 * **The Room has no real screen on macOS and Windows yet.** Only the private folder and shell (and the drawn terminal
   by name) work there; a virtual machine driver (Apple Virtualization or QEMU with a guest agent and an in-process
   screen viewer) is the next driver behind the same interface. Design 0003 records this as out of scope for the branch.
@@ -193,7 +531,6 @@ Out of scope for the current branch, dropped, or blocked. Nothing is dropped sil
 * **Deleted conversation ids are reused, and the run log follows the id.** `conversations.id` is a plain `INTEGER PRIMARY KEY`, so deleting the newest conversation lets SQLite give its id to the next one. `actions` rows are kept on delete (the ledger, R2) and still carry the old `conversation_id`. The new conversation's trace then shows the deleted one's turns and tool calls. Found by a test in feat/rea-p0-harness. Fix: `AUTOINCREMENT` on conversations (needs a table rebuild in a migration), or null `actions.conversation_id` on delete.
 * **Bridge tokens for other local tools (item 103, Phase 1).** `/v1` accepts only `BROWSER_API_KEY` today. Other OpenAI-only tools (editors, scripts) need user-created, revocable bridge tokens and streaming (`stream: true` is refused with 400 for now).
 * **Browser runs are not linked to the chat turn that started them.** Their `model_call` rows carry channel `browser` but no `parent_action_id`. Passing the turn id through the job would put them in the turn's trace (item 21 UI).
-* **Standalone browser-agent CLI keeps its own providers.** Outside the stack (no `BROWSER_REQUIRE_WORKBENCH`), `browser-agent run` can call Anthropic, Gemini, Ollama and the like directly. That is a separate distribution, not core, but it is a second provider layer. Retire it if the CLI gains a `--workbench` default.
 
 * **Live-key check of the new protocols.** The `responses` and `anthropic_messages` adapters pass contract tests against their documented and SDK-typed wire formats, but have not been run against the live APIs (no keys in this environment or CI). Manual check: one tool-using turn and one stream with a real OpenAI key and a real Anthropic key; record the result in docs/design/0002.
 * **Native Anthropic for migrated connections.** Connections from before schema 2 keep Chat Completions through Anthropic's compatibility layer, which Anthropic says is for testing. Consider prompting the user to switch once the live-key check above passes.

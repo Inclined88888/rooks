@@ -25,3 +25,5 @@ c655cb9d4efe90978e072f43fda38afcc744d0ad:workbench/backend/tests/test_redact.py:
 17784a13148e54e9ea2fa23a2ac533fedff021ca:workbench/backend/tests/test_models.py:generic-api-key:306
 # Reviewed 2026-11-07: a made-up key in the auth boundary tests on integration/auth-native-workroom (CI scans every branch).
 84ddfc34eae1db6ea011a08391d422f5e12c79f0:workbench/backend/tests/test_auth_boundaries.py:generic-api-key:147
+# Reviewed 2026-11-08: a made-up key in a test that checks keys are never remembered (no real key existed in that environment).
+0c35bd3aba29ddb039971e38a9e0a40228130edb:workbench/backend/tests/test_one_memory.py:generic-api-key:94

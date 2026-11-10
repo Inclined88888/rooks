@@ -18,6 +18,12 @@ def no_local_servers(monkeypatch, tmp_path):
         if name.endswith(("_API_KEY", "_TOKEN")):
             monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("WORKBENCH_PORT", "9")
+    # the person's own skills and commands (~/.rooks, ~/.claude) must not leak into a test run in this process; a test
+    # that starts rooks as a process and cares sets HOME to this same folder (test_local_skills.py)
+    from rooks_code import skills
+
+    home = tmp_path / "isolated-home"  # not made here: a test that lists tmp_path must not see it
+    monkeypatch.setattr(skills, "user_home", lambda: home)
     monkeypatch.setenv("ROOKS_CONFIG", str(tmp_path / "isolated-rooks.toml"))
 
 

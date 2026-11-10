@@ -1,10 +1,18 @@
 """Start a frozen workbench-server, check it answers like the desktop shell expects, stop it.
 
-Usage: python desktop/scripts/smoke_sidecar.py <path to workbench-server[.exe]>
+Usage: python desktop/scripts/smoke_sidecar.py [--room-browser] <path to workbench-server[.exe]>
 Exit code 0 means: /healthz is ok, the launch token opens a session that lands on /welcome,
 a wrong token is refused, and the built frontend is served.
+
+With --room-browser it also proves the Room's browser starts from the packaged program (macOS, Linux and Windows): the
+Room is started in a throwaway folder, a quick command runs in it, the browser opens a test page served on loopback by a separate process, the page's text
+is read back and a frame (a JPEG of the page) arrives. When it does not start, the plain reason and the Advanced detail
+the app keeps are printed. A path ending in .py runs that script with this Python (for trying it out of a checkout).
 """
 
+import http.cookiejar
+import json
+import os
 import socket
 import subprocess
 import sys
@@ -12,6 +20,10 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
+
+PAGE = ("<!doctype html><title>Room smoke page</title>"
+        "<body style='background:#2a6;color:#fff;font:40px sans-serif'><h1 id='m'>room-browser-smoke-42</h1></body>")
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -28,16 +40,159 @@ def get(url: str, follow: bool = True):
         return e.code, dict(e.headers), e.read()
 
 
-def main(binary: str) -> int:
+def free_port() -> int:
     s = socket.socket()
     s.bind(("127.0.0.1", 0))
     port = s.getsockname()[1]
     s.close()
+    return port
+
+
+class Signed:
+    """Calls to the app as the signed-in desktop window: the launch token's session cookie and the X-Workbench header."""
+
+    def __init__(self, base: str, token: str) -> None:
+        self.base = base
+        self.jar = http.cookiejar.CookieJar()
+        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar), NoRedirect)
+        try:
+            self.opener.open(f"{base}/api/desktop/session?token={token}", timeout=10)
+        except urllib.error.HTTPError as e:
+            if e.code != 303:
+                raise
+        assert any(c.name == "wb_session" for c in self.jar), "no session cookie"
+
+    def call(self, method: str, path: str, body: dict | None = None, timeout: float = 90):
+        data = None if body is None else json.dumps(body).encode()
+        req = urllib.request.Request(f"{self.base}{path}", data=data, method=method,
+                                     headers={"X-Workbench": "1", "Content-Type": "application/json"})
+        try:
+            r = self.opener.open(req, timeout=timeout)
+            return r.status, r.headers.get("content-type", ""), r.read()
+        except urllib.error.HTTPError as e:
+            return e.code, e.headers.get("content-type", ""), e.read()
+
+
+# The test page's server. Not `python -m http.server`: its HTTPServer looks up this computer's full name before it
+# listens, which on the macOS runners took longer than the wait (the connection timed out, the page never came).
+_SERVE = ("import functools,http.server,socketserver,sys\n"
+          "h=functools.partial(http.server.SimpleHTTPRequestHandler,directory=sys.argv[2])\n"
+          "class S(socketserver.ThreadingTCPServer):\n allow_reuse_address=True\n daemon_threads=True\n"
+          "S(('127.0.0.1',int(sys.argv[1])),h).serve_forever()")
+
+
+def serve_page(folder: Path):
+    """The test page on loopback, from a process of its own (the browser refuses the app's own ports)."""
+    (folder / "page.html").write_text(PAGE)
+    port = free_port()
+    log = open(folder.parent / "page-server.log", "wb")
+    proc = subprocess.Popen([sys.executable, "-I", "-c", _SERVE, str(port), str(folder)], cwd=str(folder),
+                            stdout=log, stderr=subprocess.STDOUT)
+    deadline = time.time() + 60
+    while True:
+        try:
+            socket.create_connection(("127.0.0.1", port), timeout=2).close()
+            return port, proc
+        except OSError as e:
+            if time.time() > deadline or proc.poll() is not None:
+                proc.kill()
+                log.close()
+                said = (folder.parent / "page-server.log").read_text(errors="replace")[-800:]
+                raise AssertionError(f"the test page server did not start ({e!r}): {said}")
+            time.sleep(0.2)
+
+
+def why_not(app: Signed) -> str:
+    """What the app says about the browser's last start: the plain words and the Advanced detail."""
+    _, _, body = app.call("GET", "/api/room/browser")
+    try:
+        failed = json.loads(body).get("failed") or {}
+    except ValueError:
+        return body.decode(errors="replace")[:800]
+    return f"{failed.get('words')}\n  reason: {failed.get('reason')}\n  advanced:\n{failed.get('advanced')}"
+
+
+def room_browser(app: Signed, scratch: Path) -> int:
+    site = scratch / "site"
+    site.mkdir()
+    port, server = serve_page(site)
+    try:
+        status, _, body = app.call("POST", "/api/room/up")
+        assert status == 200 and json.loads(body).get("running") is True, f"the Room did not start: {status} {body[:400]!r}"
+        print("ok   the Room started")
+        # a quick command through the packaged program (on Windows: in a job of its own inside the Room's, no window)
+        status, _, body = app.call("POST", "/api/room/run", {"command": "echo room-run-smoke-7"})
+        out = json.loads(body) if status == 200 else {}
+        if not (out.get("ok") and "room-run-smoke-7" in (out.get("stdout") or "")):
+            print(f"FAIL a quick command in the Room did not run ({status}): {body[:400]!r}")
+            return 1
+        print(f"ok   a quick command ran in the Room ({out.get('shell')})")
+        # The Room's browser is a developer tool (feat/room-pro): off on a new install, so the packaged program must say
+        # so first; then it is switched on in Settings, as a person with developer tools on would.
+        _, _, body = app.call("GET", "/api/room/status")
+        can = json.loads(body).get("can") or {}
+        if can.get("browser") is not False or can.get("browser_off_reason") != "switched_off":
+            print(f"FAIL a new install's Room browser is not off: {can.get('browser')} {can.get('browser_off_reason')}")
+            return 1
+        print("ok   a new install's Room browser is off")
+        status, _, body = app.call("PUT", "/api/settings", {"room_browser": True})
+        if status != 200 or json.loads(body).get("room_browser") is not True:
+            print(f"FAIL the Room's browser did not switch on in Settings ({status}): {body[:300]!r}")
+            return 1
+        _, _, body = app.call("GET", "/api/room/status")
+        can = json.loads(body).get("can") or {}
+        if can.get("browser") is not True:
+            print(f"FAIL the Room has no browser here: {can.get('browser_off_reason')}")
+            return 1
+        print("ok   status says the Room has a browser here")
+        status, _, body = app.call("POST", "/api/room/browser/open", {"address": f"127.0.0.1:{port}/page.html"})
+        if status != 200:
+            print(f"FAIL the Room's browser did not open the page ({status}): {body[:300]!r}\n  {why_not(app)}")
+            return 1
+        print("ok   the Room's browser opened the test page")
+        deadline = time.time() + 30
+        while True:
+            status, _, body = app.call("GET", "/api/room/browser/page")
+            text = json.loads(body).get("text", "") if status == 200 else ""
+            if "room-browser-smoke-42" in text:
+                break
+            if time.time() > deadline:
+                print(f"FAIL the page's text never arrived ({status}): {body[:300]!r}")
+                return 1
+            time.sleep(0.5)
+        print("ok   the page's text came back through the browser's pipe")
+        status, kind, frame = app.call("GET", "/api/room/browser/frame")
+        if status != 200 or kind != "image/jpeg" or frame[:3] != b"\xff\xd8\xff" or len(frame) < 1000:
+            print(f"FAIL no frame arrived: {status} {kind} {len(frame)} bytes")
+            return 1
+        print(f"ok   a frame arrived: a {len(frame)} byte JPEG of the page")
+        status, _, _ = app.call("POST", "/api/room/browser/close")
+        assert status == 200, f"close gave {status}"
+        print("ok   the browser closed")
+        return 0
+    finally:
+        app.call("POST", "/api/room/down")
+        server.terminate()
+        try:
+            server.wait(5)
+        except subprocess.TimeoutExpired:
+            server.kill()
+
+
+def main(binary: str, with_browser: bool = False) -> int:
+    port = free_port()
     token = "smoke-" + "x" * 40
     base = f"http://127.0.0.1:{port}"
-    with tempfile.TemporaryDirectory() as data:
-        proc = subprocess.Popen([binary, "--port", str(port), "--data-dir", data, "--exit-with-parent"],
-                                stdin=subprocess.PIPE, env={**__import__("os").environ, "WORKBENCH_DESKTOP_TOKEN": token})
+    argv = [sys.executable, binary] if binary.endswith(".py") else [binary]
+    with tempfile.TemporaryDirectory() as scratch:
+        data = Path(scratch) / "data"
+        data.mkdir()
+        env = {**os.environ, "WORKBENCH_DESKTOP_TOKEN": token}
+        if with_browser:  # a throwaway Room: a folder and shell of its own, never this computer's real one
+            env.update(ROOKS_TRY_HOME=str(Path(scratch) / "room"), ROOKS_TRY_DRIVER="shell")
+            env.pop("ROOKS_TRY_OFFLINE", None)
+        proc = subprocess.Popen([*argv, "--port", str(port), "--data-dir", str(data), "--exit-with-parent"],
+                                stdin=subprocess.PIPE, env=env)
         started = time.time()
         try:
             while True:
@@ -65,6 +220,8 @@ def main(binary: str) -> int:
             status, _, body = get(f"{base}/welcome")
             assert status == 200 and b'<div id="root">' in body, "frontend not served"
             print("ok   frontend served")
+            if with_browser:
+                return room_browser(Signed(base, token), Path(scratch))
             return 0
         finally:
             proc.stdin.close()  # --exit-with-parent: closing stdin is how the shell's exit looks to the sidecar
@@ -77,4 +234,8 @@ def main(binary: str) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1]))
+    sys.stdout.reconfigure(line_buffering=True)  # each line when it happens, so the CI log's times are right
+    args = sys.argv[1:]
+    browser = "--room-browser" in args
+    args = [a for a in args if a != "--room-browser"]
+    sys.exit(main(args[0], with_browser=browser))

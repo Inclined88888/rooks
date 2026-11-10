@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS work_files (
     kind TEXT NOT NULL DEFAULT '',
     size INTEGER NOT NULL DEFAULT 0,
     sha256 TEXT NOT NULL DEFAULT '',
-    source TEXT NOT NULL DEFAULT 'upload',   -- upload | site:<id> | output | path
+    source TEXT NOT NULL DEFAULT 'upload',   -- upload | site:<id> | output | path | onedrive | sharepoint
     summary TEXT NOT NULL DEFAULT '',
     notes TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL
@@ -38,6 +38,9 @@ def ensure() -> None:
     key = str(config.DB_PATH)
     if key not in _ready:
         db.conn().executescript(SCHEMA)
+        have = {r[1] for r in db.conn().execute("PRAGMA table_info(work_files)")}
+        if "remote" not in have:  # design 0012: a file saved from OneDrive or SharePoint keeps where it came from
+            db.conn().execute("ALTER TABLE work_files ADD COLUMN remote TEXT NOT NULL DEFAULT ''")
         _ready.add(key)
 
 
@@ -58,7 +61,7 @@ def _safe_name(name: str) -> str:
     return re.sub(r"[^\w.\- ()]+", "_", name)[:180]
 
 
-def add(name: str, data: bytes | None = None, src: Path | None = None, source: str = "upload") -> dict:
+def add(name: str, data: bytes | None = None, src: Path | None = None, source: str = "upload", remote: str = "") -> dict:
     """Store a copy of the file in the library, read it once and cache the extract."""
     ensure()
     folder = root() / uuid.uuid4().hex[:12]
@@ -74,8 +77,9 @@ def add(name: str, data: bytes | None = None, src: Path | None = None, source: s
     sha = hashlib.sha256(dest.read_bytes()).hexdigest() if dest.is_file() else ""
     d = files.extract(dest, name)
     (folder / "extract.json").write_text(json.dumps(d, default=str))
-    fid = db.run("INSERT INTO work_files(name, path, kind, size, sha256, source, summary, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                 name[:300], str(dest), d["kind"], d["size"], sha, source, files.summary(d), json.dumps(d["notes"]), db.now())
+    fid = db.run("INSERT INTO work_files(name, path, kind, size, sha256, source, summary, notes, created_at, remote) "
+                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                 name[:300], str(dest), d["kind"], d["size"], sha, source, files.summary(d), json.dumps(d["notes"]), db.now(), remote)
     if source != "output":
         from . import learn_hook
 
@@ -137,6 +141,11 @@ def read(ref, part: int = 1, query: str = "") -> dict:
     """The extract, paged: about 24k characters per part, every passage with its location."""
     path, name = resolve(ref)
     d = extract_of(int(str(ref).lstrip("#"))) if str(ref).lstrip("#").isdigit() else files.extract(path, name)
+    return read_extract(d, part, query)
+
+
+def read_extract(d: dict, part: int = 1, query: str = "") -> dict:
+    """An extract (files.extract) paged as read() pages it: also used for a work file read in place (work_graph)."""
     chunks = [{**c, "file": x["name"]} for x in files.walk(d) for c in x["chunks"]]
     if query:
         chunks = _rank(chunks, query)[:30] or chunks

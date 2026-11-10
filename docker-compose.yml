@@ -3,7 +3,7 @@
 #
 #   Workspace (assistant, memory, skills, automations, company, notes, tasks, calendar, mail, research)
 #             http://localhost:${WORKBENCH_PORT:-3100}
-#   Add-ons: search (SearXNG), browser (Chromium agent), local-models (Ollama in Docker; on a Mac prefer the
+#   Add-ons: search (SearXNG), browser (Rooks Browser), local-models (Ollama in Docker; on a Mac prefer the
 #            native Ollama app), openwebui :3000, paperclip :3200, hermes :3300
 
 name: ai-workspace
@@ -52,7 +52,7 @@ services:
     volumes:
       - open-webui:/app/backend/data
     environment:
-      WEBUI_NAME: ${WORKSPACE_NAME:-AI Workspace}
+      WEBUI_NAME: ${WORKSPACE_NAME:-Rooks}
       WEBUI_URL: ${WEBUI_PUBLIC_URL:-http://localhost:3000}
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-}
       # First account created becomes admin. Later sign ups wait for approval.
@@ -73,13 +73,12 @@ services:
       # Memory and notes
       ENABLE_MEMORIES: "true"
       ENABLE_NOTES: "true"
-      # Workbench tools (notes, tasks, calendar, mail drafts) callable from chat
-      # The browser tool server is listed only when the browser add-on is on: setup.sh writes WEBUI_BROWSER_TOOL (a
-      # leading comma and the JSON entry) when it is, and leaves it empty otherwise.
+      # Workbench tools (notes, tasks, calendar, mail drafts) callable from chat. Browsing goes through Workbench's
+      # own chat, where its approvals are answered.
       TOOL_SERVER_CONNECTIONS: >-
         [{"type":"openapi","url":"http://workbench:8000/tools","spec_type":"url","spec":"","path":"openapi.json",
         "auth_type":"bearer","key":"${TOOLS_API_KEY}","config":{"enable":true},
-        "info":{"id":"workbench","name":"Workbench","description":"Notes, documents, tasks, calendar and email drafts"}}${WEBUI_BROWSER_TOOL:-}]
+        "info":{"id":"workbench","name":"Rooks","description":"Notes, documents, tasks, calendar and email drafts"}}]
 
   workbench:
     build: ./workbench
@@ -100,7 +99,7 @@ services:
       SETUP_CODE: ${SETUP_CODE:-}
       # Set to your reverse proxy's address if it should be trusted for X-Forwarded-For.
       FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
-      WORKSPACE_NAME: ${WORKSPACE_NAME:-AI Workspace}
+      WORKSPACE_NAME: ${WORKSPACE_NAME:-Rooks}
       WORKSPACE_TIMEZONE: ${WORKSPACE_TIMEZONE:-UTC}
       DEFAULT_MODEL: ${DEFAULT_MODEL:-qwen3:4b}
       # Context window requested from Ollama (tokens). More needs more RAM: about 2.4 GB of cache per 16K on a 4B model
@@ -122,10 +121,6 @@ services:
       CEREBRAS_API_KEY: ${CEREBRAS_API_KEY:-}
       TOGETHER_API_KEY: ${TOGETHER_API_KEY:-}
       FIREWORKS_API_KEY: ${FIREWORKS_API_KEY:-}
-      CODEX_URL: ${CODEX_URL:-}
-      CODEX_API_KEY: ${CODEX_API_KEY:-}
-      CLAUDE_CODE_URL: ${CLAUDE_CODE_URL:-}
-      CLAUDE_CODE_API_KEY: ${CLAUDE_CODE_API_KEY:-}
       BROWSER_URL: ${BROWSER_URL:-}
       BROWSER_API_KEY: ${BROWSER_API_KEY:-}
       PAPERCLIP_URL: ${PAPERCLIP_URL:-}
@@ -194,11 +189,13 @@ services:
       timeout: 5s
       retries: 3
 
-  # Browser agent (browser-use + Playwright). Internal only: reached by Workbench, Chat and Paperclip.
+  # Rooks Browser (rooks-browser/), the same browser agent the desktop app starts. Internal only: reached by Workbench.
+  # A sensitive step (send, buy, submit, download) waits for a yes on Workbench's Browser page or in Needs you.
   browser:
     profiles: ["browser"]
-    build: ./browser-agent
-    image: ai-workspace/browser-agent:local
+    build:
+      context: ./rooks-browser
+    image: ai-workspace/rooks-browser:local
     depends_on:
       - workbench
     restart: unless-stopped
@@ -206,18 +203,14 @@ services:
     volumes:
       - browser:/data
     environment:
+      # Workbench calls it with this token; it is also how jobs reach Workbench's /v1 for models
+      ROOKS_BROWSER_TOKEN: ${BROWSER_API_KEY:-}
       BROWSER_API_KEY: ${BROWSER_API_KEY:-}
-      BROWSER_MAX_CONCURRENT: ${BROWSER_MAX_CONCURRENT:-2}
-      BROWSER_MAX_STEPS_LIMIT: ${BROWSER_MAX_STEPS_LIMIT:-50}
-      # Spend guard for every caller (Workbench, Chat, Paperclip employees): steps per UTC month, 0 = unlimited
-      BROWSER_MONTHLY_STEP_LIMIT: ${BROWSER_MONTHLY_STEP_LIMIT:-2000}
-      # Keep the agent off IP addresses and the stack's own hostnames
-      BROWSER_BLOCK_IP_ADDRESSES: "true"
-      BROWSER_PROHIBITED_DOMAINS: localhost,ollama,searxng,open-webui,workbench,paperclip,browser
-      # Models: every call goes through Workbench's /v1 endpoint and its adapter layer (R1). No provider keys here:
-      # they stay in Workbench, and browser spend lands in Workbench's run log.
+      # Keep the agent off localhost, the LAN and the stack's own hostnames (workbench, ollama, paperclip, ...)
+      ROOKS_BROWSER_BLOCK_PRIVATE: "1"
+      # Models: jobs from Workbench use provider "workbench", so every call goes through Workbench's /v1 bridge and its
+      # run log. No provider keys here.
       WORKBENCH_URL: http://workbench:8000
-      BROWSER_REQUIRE_WORKBENCH: "true"
 
   # Paperclip: run a company of AI agents (org chart, goals, tasks, per agent monthly budgets).
   # Upstream image, unmodified: upgrade with `docker compose pull paperclip && docker compose up -d paperclip`.
@@ -246,10 +239,10 @@ services:
       BETTER_AUTH_SECRET: ${PAPERCLIP_AUTH_SECRET:-}
       PAPERCLIP_TOOL_ACTION_SIGNING_SECRET: ${PAPERCLIP_TOOL_ACTION_SECRET:-}
       PAPERCLIP_AGENT_JWT_SECRET: ${PAPERCLIP_AGENT_JWT_SECRET:-}
-      # OpenCode employees: local Ollama models + browser MCP from this config; Zen free models with OPENCODE_API_KEY
+      # OpenCode employees: local Ollama models and Workbench's tools from this config; Zen free models with
+      # OPENCODE_API_KEY. No browser key: that key answers approvals, and unattended agents must not hold it.
       OPENCODE_CONFIG: /etc/ai-workspace/opencode.json
       OPENCODE_API_KEY: ${OPENCODE_API_KEY:-}
-      BROWSER_API_KEY: ${BROWSER_API_KEY}
       TOOLS_API_KEY: ${TOOLS_API_KEY}
       # Claude Code, Codex and Gemini CLI employees use the standard provider keys
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
@@ -286,9 +279,9 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENCODE_ZEN_API_KEY: ${OPENCODE_API_KEY:-}
-      # Read by the MCP server entries in config.yaml (scripts/hermes-config.sh)
+      # Read by the Workbench MCP server entry in config.yaml (scripts/hermes-config.sh). No browser key: that key
+      # answers approvals, and unattended agents must not hold it.
       TOOLS_API_KEY: ${TOOLS_API_KEY}
-      BROWSER_API_KEY: ${BROWSER_API_KEY}
 
 volumes:
   codex-auth:

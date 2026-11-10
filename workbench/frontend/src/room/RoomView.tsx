@@ -22,8 +22,8 @@ import { errorText } from "../ui/toast";
 import { addCommandLines, frameEvery, refreshRoomStatus, roomBusy, useRoomStatus, type CommandLine, type RoomState } from "./status";
 import { setActiveTerminal } from "./terms";
 import {
-  commandViewLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, offStartLine, pointLine, resetLine, roomScreenLive, RUN_TIMEOUT_S, STOPPED_LINE,
-  TIMEOUT_NOTE, toScreenPoint, wheelSteps, type Checkpoint, type Point, type Size,
+  dockLine, isolationWords, keyFor, NOT_HERE_LINE, offLine, offStartLine, pointLine, resetLine, roomScreenLive, RUN_TIMEOUT_S, STOPPED_LINE,
+  TIMEOUT_NOTE, toScreenPoint, wheelSteps, type Checkpoint, type Point, type Size, type TerminalShell,
 } from "./words";
 import "./room.css";
 
@@ -87,8 +87,9 @@ export function useRoomActions() {
     return r;
   });
   // ---- the Room's terminals (0006, section 6): the list comes back from status after each of these
-  const newTerminal = () => run("terminal", async () => {
-    const r = await api<Opened>("/room/terminals", { body: {} });
+  /** A new terminal; on Windows `shell` picks PowerShell or Git Bash (none: the service's default, PowerShell). */
+  const newTerminal = (shell?: TerminalShell) => run("terminal", async () => {
+    const r = await api<Opened>("/room/terminals", { body: shell ? { shell } : {} });
     if (r?.id) setActiveTerminal(r.id);
     return r;
   });
@@ -496,11 +497,15 @@ export function CommandView({ status }: { status: RoomState }) {
   );
 }
 
-/** The honest line with how separate the Room is (the Stage, the phone). Never hidden, never under Advanced. */
+/**
+ * The honest line with how separate the Room is (the Stage, the phone), never under Advanced. How separate it is always
+ * shows; the words that commands run as you show while terminals are on (dockLine).
+ */
 export function HonestLine({ status, className = "room-honest" }: { status: RoomState; className?: string }) {
+  const line = dockLine(status);
   return (
     <p className={className}>
-      <span>{commandViewLine(status)}</span>
+      {line && <span>{line}</span>}
       <Badge tone="neutral" title="How separate the Room is">{isolationWords(status.isolation, !!status.offline)}</Badge>
       {status.offline && <Badge tone="neutral">No network</Badge>}
     </p>

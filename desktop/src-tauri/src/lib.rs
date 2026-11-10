@@ -1,11 +1,11 @@
-//! AI Workspace desktop shell.
+//! The Rooks app: its desktop shell.
 //!
 //! The window first shows `ui/index.html` (a splash), while [`sidecars::start_workbench`] starts the frozen
 //! Workbench backend on a free 127.0.0.1 port with a per-user data directory. Once `/healthz` answers, the window
 //! navigates to `/api/desktop/session?token=…`, which signs the window in and lands on the welcome flow or chat.
 //!
 //! Extension points for later phases:
-//! - [`sidecars::SIDECARS`]: the terminal coding agent, AI browser agent and computer-use / MCP layer register here.
+//! - [`sidecars::SIDECARS`]: helper processes the app freezes into its bundle register here (today only Workbench).
 //! - [`approvals::request_approval`]: native approve / deny prompt any part of the app can raise.
 //! - [`updater`]: in-app updates, compiled in only with `--features updater` once signing keys exist.
 
@@ -15,6 +15,7 @@ mod commands;
 mod native; // notifications, tray (close to tray), aiworkspace:// links
 mod sidecars;
 mod updater;
+mod webkit; // what the system webview does not do on its own: links, downloads, the microphone
 
 use tauri::{Manager, RunEvent};
 use tauri_plugin_deep_link::DeepLinkExt;
@@ -42,6 +43,7 @@ pub fn run() {
             commands::app_info,
             commands::open_data_dir,
             commands::open_logs,
+            commands::open_external,
             sidecars::list_sidecars,
             approvals::request_approval,
             // feat/v02-anywhere-voice
@@ -53,6 +55,9 @@ pub fn run() {
             native::desktop_ready,
         ])
         .setup(|app| {
+            // the main window (tauri.conf.json, create: false) with WebviewWindowBuilder::from_config and the
+            // on_new_window, on_download and on_permission_request handlers: see webkit.rs
+            webkit::build_main(app.handle())?;
             sidecars::start_workbench(app.handle().clone());
             updater::check_on_start(app.handle().clone());
             anywhere::register_saved(app.handle()); // feat/v02-anywhere-voice
@@ -67,7 +72,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while building the AI Workspace app")
+        .expect("error while building the Rooks app")
         .run(|app, event| match event {
             RunEvent::Exit => app.state::<sidecars::Supervisor>().stop_all(),
             // macOS: clicking the Dock icon after closing to tray brings the window back

@@ -60,7 +60,7 @@ test("one page registry drives routes, rail, flyouts, the More sheet and the pal
   assert.doesNotMatch(app, /const RAIL:/, "no hand written rail list in App.tsx");
   assert.match(app, /from "\.\/pages\/registry"/);
   const registry = read("../src/pages/registry.ts");
-  for (const path of ["/assistant", "/room", "/jobs", "/mail", "/calendar", "/tasks", "/knowledge", "/skills", "/files", "/notes", "/documents", "/sites", "/projects", "/settings", "/history", "/runs", "/appearance", "/terminal", "/teach", "/customize"]) {
+  for (const path of ["/assistant", "/room", "/jobs", "/mail", "/calendar", "/tasks", "/knowledge", "/skills", "/files", "/notes", "/documents", "/sites", "/projects", "/settings", "/history", "/runs", "/appearance", "/terminal", "/teach"]) {
     assert.ok(registry.includes(`path: "${path}"`), `${path} registered`);
   }
   for (const redirect of ['from: "/connect"', 'from: "/assistant-skills"', 'from: "/packs/*"', 'from: "/mcp"', 'from: "/welcome"']) assert.ok(registry.includes(redirect), redirect);
@@ -70,7 +70,7 @@ test("one page registry drives routes, rail, flyouts, the More sheet and the pal
 test("the product is Rooks everywhere people see a name", () => {
   assert.match(read("../src/product.ts"), /PRODUCT = "Rooks"/);
   assert.match(read("../index.html"), /<title>Rooks<\/title>/);
-  assert.match(read("../public/favicon.svg"), />R</);
+  assert.match(read("../public/favicon.svg"), /#FF4D00/i, "the tab shows the Rooks tower with its door in the accent (tests/brand-mark.test.mjs)");
   assert.doesNotMatch(read("../src/Palette.tsx"), />Rooks</, "the palette footer reads the product name, not a literal");
 });
 
