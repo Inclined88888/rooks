@@ -70,7 +70,9 @@ The switch shows what Timon actually applies. When your licence does not let uns
 The install sheet of an unsigned package, or of a bundle that brings one, follows the mode:
 
 - **Developer mode off**: the sheet says the plugin can be installed but will not load, and offers **Turn on developer mode** right there (when your licence allows it) or **Open developer mode settings**.
-- **Developer mode on**: clicking **Install** first asks you to confirm. The package is not signed, its publisher is not verified, and its code will run inside the Timon daemon. **Install anyway** goes on; **Cancel** installs nothing.
+- **Developer mode on**: the sheet shows **Unsigned — loads in developer mode**.
+
+Either way, clicking **Install** first asks you to confirm: the package is not signed, its publisher is not verified, and its code will run inside the Timon daemon, at once or as soon as developer mode is on. **Install anyway** goes on; **Cancel** installs nothing.
 
 ## Plugins found in the plugins folder
 
