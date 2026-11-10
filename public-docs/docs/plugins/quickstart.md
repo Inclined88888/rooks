@@ -17,7 +17,7 @@ The client imports React from the platform and returns the disposer from `ctx.sl
 
 ## Install and inspect
 
-Activate your developer installation's licence first. Configure developer mode as explained in [Testing](testing.md), then run:
+Turn on developer mode first, as explained in [Testing](testing.md): your plugin is unsigned, and an unsigned plugin loads only in developer mode, on Free as on a paid licence. Then run:
 
 ```bash
 timon plugin add ./my-plugin

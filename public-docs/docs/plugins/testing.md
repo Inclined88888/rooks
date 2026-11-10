@@ -7,14 +7,16 @@ Test on a dedicated Timon instance and data directory. Set `TIMON_HOME` for ever
 
 ## Developer admission
 
-Unsigned plugins require a **valid Timon licence**. On a licensed installation, `developer.unsignedPlugins: true` allows unsigned packages; when the setting is absent or `false`, they are installed but not loaded. A development machine therefore sets it explicitly:
+An unsigned plugin, which includes any plugin you write yourself, loads only in **developer mode**. Turn it on in `timon.config.json`:
 
 ```json
 {"developer": {"unsignedPlugins": true}}
 ```
 
-:::warning Licence gate
-Setting this flag does not activate an unlicensed instance and does not bypass the licence requirement for developer mode. A plugin with `license.required: true` must also be permitted by the licence.
+This works the same on Free and on a paid licence. When the setting is absent or `false`, unsigned packages are installed but not loaded.
+
+:::warning What developer mode does not open
+A licence with a fixed plugin composition refuses unsigned plugins even with this setting. An altered package, whose `SIGNATURE` no longer matches its files, is always refused. A plugin with `license.required: true` must also be permitted by the licence.
 :::
 
 ## Installation loop
