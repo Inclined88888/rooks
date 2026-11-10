@@ -3,8 +3,9 @@
  * routes and a real loader: only a superadmin signed in to the app may read or
  * flip it; the write lands in `timon.config.json` AND in the live config, so an
  * unsigned plugin already installed mounts and unmounts without a restart; the
- * answer separates the wish from what the licence lets through; a fixed
- * composition refuses to turn it on with its own code.
+ * answer separates the wish from what the licence lets through; Free admits it
+ * like a paid licence; a fixed composition, the locked beta state included,
+ * refuses to turn it on with its own code, which is the only refusal there is.
  */
 import { createTestAccount } from '../../../tests/helpers/accounts.js';
 import '../../test-home.js';
@@ -31,7 +32,11 @@ const { daemonHost } = await import('../../plugins/context.js');
 const { attachPluginLoader } = await import('../../plugins/runtime.js');
 const { unsignedPluginsAllowed } = await import('../../plugins/pubkey.js');
 const { CONFIG_FILE, config } = await import('../../config/load.js');
-const { setLicenseState } = await import('../../license/runtime.js');
+const { mutationLicenseState, setLicenseState } = await import('../../license/runtime.js');
+const { unlicensed } = await import('../../license/license.js');
+const { fixedComposition } = await import('../../license/capabilities.js');
+const { overrideBuildInfo } = await import('../../build-info.js');
+const { overrideSetupPolicyForTests } = await import('../../users/setup-policy.js');
 
 const DAEMON = 'daemon-developer-token';
 function user(name: string, superadmin: boolean) {
@@ -138,16 +143,44 @@ test('turning it on mounts an installed unsigned plugin at once, turning it off 
   assert.equal(fixtureState(), 'skipped');
 });
 
-test('without a valid licence the wish is kept but never reported as on', async () => {
-  setLicenseState({ ...paidTestLicense(), status: 'invalid', reason: 'missing' });
+test('on Free the switch is available and mounts an installed unsigned plugin', async () => {
+  overrideBuildInfo({ channel: 'stable' });
+  // The state the daemon holds with no licence file: `setLicenseState` turns
+  // any state without a valid paid licence into the local Free tier.
+  setLicenseState(unlicensed('missing'));
   try {
-    const res = await call('PUT', { enabled: true });
-    assert.equal(res.status, 200);
-    assert.deepEqual(res.json, { requested: true, effective: false, available: false, blockedBy: 'license' });
+    assert.equal(mutationLicenseState().localFree, true);
+    assert.deepEqual((await call('GET')).json, { requested: false, effective: false, available: true, blockedBy: null });
+    const on = await call('PUT', { enabled: true });
+    assert.equal(on.status, 200);
+    assert.deepEqual(on.json, { requested: true, effective: true, available: true, blockedBy: null });
+    assert.equal(fixtureState(), 'active');
+    const off = await call('PUT', { enabled: false });
+    assert.deepEqual(off.json, { requested: false, effective: false, available: true, blockedBy: null });
     assert.equal(fixtureState(), 'skipped');
   } finally {
+    overrideBuildInfo(undefined);
     setLicenseState(paidTestLicense());
-    await call('PUT', { enabled: false });
+  }
+});
+
+test('a locked beta build refuses to turn it on as a fixed composition', async () => {
+  overrideSetupPolicyForTests('beta');
+  overrideBuildInfo({ channel: 'beta' });
+  // A beta build without a valid licence: the build policy locks it.
+  setLicenseState(unlicensed('missing'));
+  try {
+    assert.equal(mutationLicenseState().localFree, false);
+    const on = await call('PUT', { enabled: true });
+    assert.equal(on.status, 403);
+    assert.equal(on.json.error, 'plugin_composition_fixed');
+    assert.equal(onDisk(), false);
+    assert.deepEqual((await call('GET')).json, { requested: false, effective: false, available: false, blockedBy: 'plugin_composition_fixed' });
+    assert.equal(fixtureState(), 'skipped');
+  } finally {
+    overrideBuildInfo(undefined);
+    overrideSetupPolicyForTests(undefined);
+    setLicenseState(paidTestLicense());
   }
 });
 
@@ -163,6 +196,44 @@ test('a fixed composition refuses to turn it on with its own code, and still let
     assert.equal(state.json.blockedBy, 'plugin_composition_fixed');
     assert.equal((await call('PUT', { enabled: false })).status, 200);
   } finally {
+    setLicenseState(paidTestLicense());
+  }
+});
+
+test('every refusal the daemon can produce is a fixed composition', () => {
+  // Why `blockedBy` has no other reason: whatever reaches the single setter,
+  // on a stable or a beta build, a state that refuses unsigned code carries a
+  // fixed composition. A new producer that breaks this needs its own reason.
+  const keys = [{ keyId: 'timon-plugins-test', publicKey: 'irrelevant-here' }] as const;
+  const reasons = ['missing', 'invalid:format', 'invalid:key', 'invalid:signature', 'invalid:clock', 'invalid:clock:rollback',
+    'invalid:machine', 'invalid:fingerprint', 'expired', 'revoked', 'deactivated', 'build_expired', 'beta_ended'] as const;
+  const past = new Date(Date.now() - 3_600_000).toISOString();
+  const future = new Date(Date.now() + 3_600_000).toISOString();
+  const fixed = { version: 1, plugins: 'fixed', accounts: 'standard' } as const;
+  const inputs = [
+    paidTestLicense(),
+    { ...paidTestLicense(), planId: 'free' },
+    { ...paidTestLicense(), capabilities: fixed, expiresAt: future },
+    { ...paidTestLicense(), capabilities: fixed, expiresAt: past },
+    { ...paidTestLicense(), capabilities: fixed },
+    ...reasons.map((reason) => ({ ...paidTestLicense(), status: 'unlicensed' as const, reason })),
+    ...reasons.map((reason) => unlicensed(reason)),
+  ];
+  try {
+    for (const channel of ['stable', 'beta'] as const) {
+      overrideSetupPolicyForTests('beta');
+      overrideBuildInfo({ channel });
+      for (const input of inputs) {
+        setLicenseState(input);
+        const state = mutationLicenseState();
+        if (!unsignedPluginsAllowed(true, { keys, state })) {
+          assert.ok(fixedComposition(state), `${channel} ${input.status}/${input.reason ?? '-'}: refused without a fixed composition`);
+        }
+      }
+    }
+  } finally {
+    overrideBuildInfo(undefined);
+    overrideSetupPolicyForTests(undefined);
     setLicenseState(paidTestLicense());
   }
 });

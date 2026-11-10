@@ -927,17 +927,24 @@ export function setPluginEnabled(
 
 /**
  * Developer mode as the Settings switch shows it. `requested` is the wish the
- * config holds, `effective` what the loader applies right now: the licence can
- * refuse a wish, and the switch must not show "on" for code that will not load.
- * `available` says whether turning it on would take effect, so the switch is
- * greyed out before a click rather than after. Both go through
- * `unsignedPluginsAllowed`, never a copy of its licence rule.
+ * config holds, `effective` what the loader applies right now: a fixed
+ * composition can refuse a wish, and the switch must not show "on" for code
+ * that will not load. `available` says whether turning it on would take
+ * effect, so the switch is greyed out before a click rather than after. Both
+ * go through `unsignedPluginsAllowed`, never a copy of its licence rule.
+ *
+ * `blockedBy` has a single reason because the rule has a single refusal in
+ * practice: every state without rights in force that the daemon produces is
+ * either the local Free tier (admitted) or the locked beta state (a fixed
+ * composition), and a valid licence is refused only when its composition is
+ * fixed. `developer-routes.test.ts` pins that invariant on the real producers;
+ * a new state that breaks it must add its own reason here and in the switch.
  */
 export type DeveloperModeState = {
   requested: boolean;
   effective: boolean;
   available: boolean;
-  blockedBy: 'plugin_composition_fixed' | 'license' | null;
+  blockedBy: 'plugin_composition_fixed' | null;
 };
 
 export function developerModeState(): DeveloperModeState {
@@ -949,7 +956,7 @@ export function developerModeState(): DeveloperModeState {
     available,
     // Named after the rule's answer, never ahead of it: should the rule one day
     // admit a fixed composition, the switch opens with it.
-    blockedBy: available ? null : fixedComposition(mutationLicenseState()) ? 'plugin_composition_fixed' : 'license',
+    blockedBy: !available && fixedComposition(mutationLicenseState()) ? 'plugin_composition_fixed' : null,
   };
 }
 
@@ -961,8 +968,9 @@ export function developerModeState(): DeveloperModeState {
  *
  * Turning it off only narrows what loads, so it is allowed under any licence.
  * Turning it on is refused with `plugin_composition_fixed` when the admission
- * rule shuts a fixed composition out; any other licence refusal keeps the
- * wish, which `developerModeState` then reports as not effective.
+ * rule shuts a fixed composition out, the only refusal it has today; should
+ * another appear, the wish is kept and `developerModeState` reports it as not
+ * effective.
  * `false` is written, not deleted: an explicit refusal, whatever default the
  * key registry would resolve.
  */
