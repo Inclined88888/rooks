@@ -16,9 +16,10 @@
  * (TODO #673), and the secrets and hosts it names, with boxes of its own (TODO #660).
  *
  * Unsigned code (the package, or a child the bundle installs) is said twice:
- * with developer mode off, why it will not load and how to turn the mode on;
- * with it on, a confirmation before anything installs. Developer mode is read
- * live, not from the preview, whose verdict was judged at staging.
+ * with developer mode off, the sheet says why it will not load and how to turn
+ * the mode on; and Install always asks first, mode on or off, since a package
+ * installed while the mode is off starts the moment the mode goes on. Developer
+ * mode is read live, not from the preview, whose verdict was judged at staging.
  */
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -145,9 +146,9 @@ export function PluginInstallDialog({
   const confirmInstall = async (): Promise<void> => {
     // Nothing installs without an explicit yes: Escape, a click outside or no
     // confirmation host on the page all answer no.
-    if (unsignedWillLoad && !(await confirmAction({
+    if (unsignedCode && !(await confirmAction({
       title: t('pluginsPage.install.unsignedConfirm.title', { name: title }),
-      description: t('pluginsPage.install.unsignedConfirm.body'),
+      description: t(unsignedWillLoad ? 'pluginsPage.install.unsignedConfirm.body' : 'pluginsPage.install.unsignedConfirm.bodyOff'),
       confirmLabel: t('pluginsPage.install.unsignedConfirm.confirm'),
       cancelLabel: t('pluginsPage.install.cancel'),
       destructive: true,

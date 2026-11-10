@@ -296,6 +296,7 @@
       "unsignedConfirm": {
         "title": "Install {name} without a signature?",
         "body": "This package is not signed and its publisher is not verified. Once installed, its code runs inside the Timon daemon with the rights of your system account.",
+        "bodyOff": "This package is not signed and its publisher is not verified. It will not load while developer mode is off; once the mode is on, its code runs inside the Timon daemon with the rights of your system account.",
         "confirm": "Install anyway"
       },
       "permissions": "Asks for",

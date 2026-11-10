@@ -7,10 +7,12 @@ import { AsyncLocalStorage } from 'node:async_hooks';
  * daemon applies it NOW (not the preview's frozen verdict):
  *  - mode off: the sheet says why it will not load, turns the mode on in place
  *    when the licence allows it, and says why not otherwise;
- *  - mode on: Install asks first, and nothing installs without an explicit yes;
+ *  - Install always asks first, mode on or off (a package installed with the
+ *    mode off starts the moment it goes on), and nothing installs without an
+ *    explicit yes; the question says whether it will load;
  *  - a signed package asks nothing; an unsigned child of a bundle counts.
  */
-test('unsigned sheet: developer mode off, on in place, then a confirmation before installing', async () => {
+test('unsigned sheet: developer mode off, on in place, and a confirmation before every unsigned install', async () => {
   const { JSDOM } = await import('jsdom');
   const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost/plugins' });
   const saved = new Map<string, PropertyDescriptor | undefined>();
@@ -56,8 +58,9 @@ test('unsigned sheet: developer mode off, on in place, then a confirmation befor
   });
   const installs: string[] = [];
   const asked: string[] = [];
+  const bodies: string[] = [];
   let answer = false;
-  answerConfirmsForTests((request) => { asked.push(request.title); return answer; });
+  answerConfirmsForTests((request) => { asked.push(request.title); bodies.push(request.description ?? ''); return answer; });
   const root = createRoot(document.getElementById('root')!);
   const render = async (p: Preview) => React.act(async () => root.render(React.createElement(PluginInstallDialog, {
     preview: p, open: true, busy: false, onOpenChange: () => {}, onInstall: (target: Preview) => { installs.push(target.pkg); },
@@ -72,11 +75,19 @@ test('unsigned sheet: developer mode off, on in place, then a confirmation befor
     assert.match(notice()?.textContent ?? '', /Developer mode is off.*will not load until developer mode is turned on/);
     assert.match(dialog().textContent ?? '', /Unsigned — will not load/);
 
-    // Mode off: installing asks nothing (the package will not run) and installs as before.
+    // Mode off: Install still asks, says it will not load yet, and a no installs nothing.
     await React.act(async () => button('Install')!.click());
     await settle();
-    assert.deepEqual(asked, []);
+    assert.deepEqual(asked, ['Install My plugin without a signature?']);
+    assert.match(bodies[0] ?? '', /will not load while developer mode is off/);
+    assert.deepEqual(installs, []);
+    answer = true;
+    await React.act(async () => button('Install')!.click());
+    await settle();
     assert.deepEqual(installs, ['@me/mine']);
+    answer = false;
+    asked.length = 0;
+    bodies.length = 0;
 
     // On, in place: the verdict follows the daemon's answer, not the preview.
     await React.act(async () => button('Turn on developer mode')!.click());
@@ -89,6 +100,7 @@ test('unsigned sheet: developer mode off, on in place, then a confirmation befor
     await React.act(async () => button('Install')!.click());
     await settle();
     assert.deepEqual(asked, ['Install My plugin without a signature?']);
+    assert.match(bodies[0] ?? '', /Once installed, its code runs inside the Timon daemon/);
     assert.deepEqual(installs, ['@me/mine'], 'no confirmation, no install');
     answer = true;
     await React.act(async () => button('Install')!.click());

@@ -292,6 +292,7 @@
       "unsignedConfirm": {
         "title": "Installer {name} sans signature ?",
         "body": "Ce paquet n’est pas signé et son éditeur n’est pas vérifié. Une fois installé, son code tourne dans le daemon Timon avec les droits de votre compte système.",
+        "bodyOff": "Ce paquet n’est pas signé et son éditeur n’est pas vérifié. Il ne se chargera pas tant que le mode développeur est désactivé ; une fois le mode activé, son code tourne dans le daemon Timon avec les droits de votre compte système.",
         "confirm": "Installer quand même"
       },
       "permissions": "Demande",
