@@ -116,14 +116,17 @@ function requestsRoot(plugin: PublicPlugin): boolean {
 }
 
 /**
- * May this half occupy `root`? Only a layout, and a third-party one only
- * under a licence that includes White Label (`whitelabel` in the
- * capabilities). The daemon already refuses it otherwise; this is the second
- * barrier, for a daemon that would not (an older remote machine).
+ * May this half occupy `root`? Only a layout, and any layout other than the
+ * product's only under a licence that includes White Label (`whitelabel` in
+ * the capabilities). The daemon already refuses it otherwise; this is the
+ * second barrier, for a daemon that would not (an older remote machine).
+ * `builtin` grants nothing here: the daemon sets it for any package found in
+ * a built-in location, even one the release manifest does not vouch for, so
+ * a layout dropped there would otherwise take `root` without the right.
  */
 export function rootAllowed(plugin: PublicPlugin, whitelabel: boolean): boolean {
   if (!kindsOf(plugin).includes('layout')) return false;
-  return plugin.builtin === true || plugin.id === PRODUCT_LAYOUT_PLUGIN || whitelabel;
+  return plugin.id === PRODUCT_LAYOUT_PLUGIN || whitelabel;
 }
 
 /**
@@ -286,7 +289,7 @@ async function syncClientPluginPass(epoch: number): Promise<void> {
   // Read fresh, and only when a half asks for the whole interface: when the
   // right comes back, the `plugins_changed` that brought this pass also left
   // the cached capabilities behind, and the layout would wait for their TTL.
-  const whitelabel = plugins.some((p) => requestsRoot(p) && p.builtin !== true && p.id !== PRODUCT_LAYOUT_PLUGIN)
+  const whitelabel = plugins.some((p) => requestsRoot(p) && p.id !== PRODUCT_LAYOUT_PLUGIN)
     ? (await fetchCapabilities(true))?.whitelabel === true
     : false;
   if (epoch !== syncEpoch) return;

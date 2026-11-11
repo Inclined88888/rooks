@@ -46,9 +46,8 @@ test('a half naming `root` without being a layout is never wanted, right or not'
   assert.equal(rootAllowed(sneaky, true), false);
 });
 
-test('the product layout and a built-in need no right; themes, pages and widgets are untouched', () => {
+test('only the product layout needs no right; themes, pages and widgets are untouched', () => {
   assert.equal(rootAllowed(half(PRODUCT_LAYOUT_PLUGIN, ['layout'], ['root']), false), true);
-  assert.equal(rootAllowed({ ...blankLayout(), builtin: true }, false), true);
   for (const plugin of [half('page', ['page'], ['page', 'nav.item']), half('w', ['widget'], ['cockpit.widget']), half('o', ['overlay'], ['overlay'])]) {
     assert.equal(isClientPluginWanted(plugin, DEFAULT_CHROME_PREFS), true, plugin.id);
   }
@@ -66,8 +65,30 @@ test('register refuses `root` to a context that may not occupy it', () => {
   denied.dispose(); granted.dispose();
 });
 
+// The daemon sets `builtin` for any package in a built-in location, even one
+// the release manifest does not vouch for: it must not stand in for the right.
+test('a layout flagged `builtin` still needs the right', () => {
+  const dropped: PublicPlugin = { ...blankLayout(), builtin: true };
+  assert.equal(rootAllowed(dropped, false), false);
+  assert.equal(isClientPluginWanted(dropped, CHOSEN), false, 'whitelabel absent reads as false');
+  assert.equal(isClientPluginWanted(dropped, CHOSEN, false), false);
+  assert.equal(isClientPluginWanted(dropped, CHOSEN, true), true);
+  resetSlotsForTests();
+  const context = clientContext(dropped.id, ['root'], undefined, [], rootAllowed(dropped, false));
+  assert.throws(() => context.slots.register({ slot: 'root' }, Empty), /not allowed in slot root: .*White Label/);
+  assert.equal(slotEntries('root').length, 0);
+  context.dispose();
+});
+
+type DaemonState = {
+  plugins: PublicPlugin[];
+  whitelabel: boolean | undefined;
+  /** `false`: the capabilities route fails, as when they cannot be loaded. */
+  capabilities?: boolean;
+};
+
 /** One sync pass against a fake daemon whose answers the test changes. */
-function fakeDaemon(state: { plugins: PublicPlugin[]; whitelabel: boolean | undefined }) {
+function fakeDaemon(state: DaemonState) {
   const writes: string[] = [];
   const original = globalThis.fetch;
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -76,6 +97,7 @@ function fakeDaemon(state: { plugins: PublicPlugin[]; whitelabel: boolean | unde
     if (url.includes('/api/ui/plugins')) return new Response(JSON.stringify({ plugins: state.plugins }));
     if (url.includes('/api/ui/auth/me')) return new Response(JSON.stringify({ prefs: { ...CHOSEN, scheme: 'dark' } }));
     if (url.includes('/api/ui/capabilities')) {
+      if (state.capabilities === false) return new Response('unavailable', { status: 503 });
       const caps: Record<string, unknown> = { edition: 'expert', profile: 'x', capabilities: [], modules: [], ui: { hidden: [], home: '/' }, kernel: true, developer: { unsignedPlugins: false } };
       if (state.whitelabel !== undefined) caps.whitelabel = state.whitelabel;
       return new Response(JSON.stringify(caps));
@@ -89,7 +111,7 @@ function fakeDaemon(state: { plugins: PublicPlugin[]; whitelabel: boolean | unde
   return { writes, restore: () => { globalThis.fetch = original; setLoadClientModuleForTests(null); } };
 }
 
-async function rootAfterSync(state: { plugins: PublicPlugin[]; whitelabel: boolean | undefined }): Promise<{ root: string | undefined; writes: string[] }> {
+async function rootAfterSync(state: DaemonState): Promise<{ root: string | undefined; writes: string[] }> {
   resetSlotsForTests();
   resetClientPluginsForTests();
   resetCapabilitiesCacheForTests();
@@ -122,7 +144,7 @@ test('losing the right falls back to `AppFrame` without a reload, and the choice
   resetClientPluginsForTests();
   resetCapabilitiesCacheForTests();
   registerProductLayout(null);
-  const state: { plugins: PublicPlugin[]; whitelabel: boolean | undefined } = { plugins: [blankLayout()], whitelabel: true };
+  const state: DaemonState = { plugins: [blankLayout()], whitelabel: true };
   const daemon = fakeDaemon(state);
   try {
     await syncClientPlugins();
@@ -150,4 +172,25 @@ test('a daemon that still lists the layout active is overruled when it denies th
   assert.equal(root, PRODUCT_LAYOUT_PLUGIN);
   const sneaky = await rootAfterSync({ plugins: [half('sneaky', ['behavior'], ['root'])], whitelabel: true });
   assert.equal(sneaky.root, PRODUCT_LAYOUT_PLUGIN);
+});
+
+test('a layout listed `active` and `builtin` by the daemon does not take `root` without the right', async () => {
+  const dropped: PublicPlugin = { ...blankLayout(), builtin: true };
+  for (const state of [
+    { whitelabel: false },
+    { whitelabel: undefined },
+    { whitelabel: undefined, capabilities: false },
+  ] as const) {
+    const { root, writes } = await rootAfterSync({ plugins: [dropped], ...state });
+    assert.equal(root, PRODUCT_LAYOUT_PLUGIN, JSON.stringify(state));
+    assert.deepEqual(writes, []);
+  }
+});
+
+test('the product layout keeps `root` when the capabilities are missing or say nothing', async () => {
+  const product = half(PRODUCT_LAYOUT_PLUGIN, ['layout', 'widget'], ['root', 'cockpit.widget']);
+  for (const state of [{ whitelabel: undefined }, { whitelabel: undefined, capabilities: false }] as const) {
+    const { root } = await rootAfterSync({ plugins: [product], ...state });
+    assert.equal(root, PRODUCT_LAYOUT_PLUGIN, JSON.stringify(state));
+  }
 });
