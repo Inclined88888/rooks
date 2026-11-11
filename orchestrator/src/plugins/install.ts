@@ -12,7 +12,7 @@
  * `npm` and not `pnpm`: npm is there as soon as Node is, and a plugin is an
  * ordinary npm package (§10.3). No dependency added.
  */
-import { assertCompositionMutable, withCompositionWrite } from '../license/capabilities.js';
+import { LicenseCapabilityError, assertCompositionMutable, fixedComposition, withCompositionWrite } from '../license/capabilities.js';
 import { mutationLicenseState } from '../license/runtime.js';
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -22,7 +22,7 @@ import { getHost } from '../host/index.js';
 import { PLUGINS_DIR } from '../paths.js';
 import { discoverPlugins, engineRefusal, hasHostHalf, installedPackages } from './loader.js';
 import { readManifest, type PluginManifest, type PluginPermission } from './manifest.js';
-import { PLUGIN_PUBLIC_KEYS, type PluginPublicKey } from './pubkey.js';
+import { PLUGIN_PUBLIC_KEYS, unsignedPluginsAllowed, type PluginPublicKey } from './pubkey.js';
 import { verifyPluginDirectory } from './signature.js';
 import { currentNodeRuntime, nodeEngineProblem, type NodeRuntimeFacts } from './node-engine.js';
 import { resolveBuiltins, type ResolvedBuiltin } from './builtin.js';
@@ -923,6 +923,72 @@ export function setPluginEnabled(
   }
   cfg.plugins = plugins;
   writeJson(file, cfg);
+}
+
+/**
+ * Developer mode as the Settings switch shows it. `requested` is the wish the
+ * config holds, `effective` what the loader applies right now: a fixed
+ * composition can refuse a wish, and the switch must not show "on" for code
+ * that will not load. `available` says whether turning it on would take
+ * effect, so the switch is greyed out before a click rather than after. Both
+ * go through `unsignedPluginsAllowed`, never a copy of its licence rule.
+ *
+ * `blockedBy` has a single reason because the rule has a single refusal in
+ * practice: every state without rights in force that the daemon produces is
+ * either the local Free tier (admitted) or the locked beta state (a fixed
+ * composition), and a valid licence is refused only when its composition is
+ * fixed. `developer-routes.test.ts` pins that invariant on the real producers;
+ * a new state that breaks it must add its own reason here and in the switch.
+ */
+export type DeveloperModeState = {
+  requested: boolean;
+  effective: boolean;
+  available: boolean;
+  blockedBy: 'plugin_composition_fixed' | null;
+};
+
+export function developerModeState(): DeveloperModeState {
+  const setting = config().developer.unsignedPlugins;
+  const available = unsignedPluginsAllowed(true);
+  return {
+    requested: setting === true,
+    effective: unsignedPluginsAllowed(setting),
+    available,
+    // Named after the rule's answer, never ahead of it: should the rule one day
+    // admit a fixed composition, the switch opens with it.
+    blockedBy: !available && fixedComposition(mutationLicenseState()) ? 'plugin_composition_fixed' : null,
+  };
+}
+
+/**
+ * Writes `developer.unsignedPlugins` and makes the live config follow (narrow
+ * merge, like `forgetPluginHttpHosts`): `config()` is memoized for the process,
+ * and the loader's `allowUnsigned` reads it on every pass. Without the merge the
+ * next `loader.update()` would still judge with the boot's value.
+ *
+ * Turning it off only narrows what loads, so it is allowed under any licence.
+ * Turning it on is refused with `plugin_composition_fixed` when the admission
+ * rule shuts a fixed composition out, the only refusal it has today; should
+ * another appear, the wish is kept and `developerModeState` reports it as not
+ * effective.
+ * `false` is written, not deleted: an explicit refusal, whatever default the
+ * key registry would resolve.
+ */
+export function setUnsignedPluginsSetting(enabled: boolean, file: string = CONFIG_FILE): void {
+  if (enabled && !unsignedPluginsAllowed(true) && fixedComposition(mutationLicenseState())) {
+    throw new LicenseCapabilityError('plugin_composition_fixed',
+      'This licence includes a fixed plugin composition: developer mode cannot be turned on.');
+  }
+  const cfg = readJson(file);
+  const developer = (typeof cfg.developer === 'object' && cfg.developer !== null && !Array.isArray(cfg.developer))
+    ? (cfg.developer as Json)
+    : {};
+  cfg.developer = { ...developer, unsignedPlugins: enabled };
+  writeJson(file, cfg);
+  if (file === CONFIG_FILE) {
+    const live = config();
+    setConfig({ ...live, developer: { ...live.developer, unsignedPlugins: enabled } });
+  }
 }
 
 /** Offline inventory: what is installed, and what the config says about it. */
