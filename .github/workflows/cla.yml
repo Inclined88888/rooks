@@ -15,6 +15,13 @@ permissions:
   pull-requests: write
   statuses: write
 
+# Every run commits to signatures/cla.json on the same branch: two runs at
+# once race, and one of the two signatures is lost. Runs queue instead of
+# being cancelled; a run dropped from the queue is redone by `recheck`.
+concurrency:
+  group: cla-signatures
+  cancel-in-progress: false
+
 jobs:
   cla:
     runs-on: ubuntu-latest
