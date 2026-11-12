@@ -22,7 +22,7 @@ appId: com.rooks.desktop
 productName: Rooks
 # Share the PWA artwork; electron-builder converts it for each platform.
 icon: ../app/public/icon-512.png
-copyright: Timon
+copyright: Rooks
 directories:
   output: release
   buildResources: build
