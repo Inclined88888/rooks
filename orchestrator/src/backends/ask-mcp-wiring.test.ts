@@ -5,7 +5,7 @@ const { rooks: ROOKS_MCP_PATH, forms: PERMISSION_MCP_PATH } = mcpScriptPaths(res
  * The forms MCP server under its new name, dialect by dialect.
  *
  * A tool's full name is `<server>` + `<tool>` in a shape each CLI chooses
- * (`mcp__nova_ask__question` for claude and codex, `nova_ask_question` for
+ * (`mcp__rooks_ask__question` for claude and codex, `rooks_ask_question` for
  * opencode), so the server's name is part of what a model reads. Renaming it
  * in four dialects out of five would leave one backend on the word that sent
  * agents to the wrong form — and one list of pre-allowed tools on a name that
@@ -60,19 +60,19 @@ test('claude: the forms are pre-allowed under their current AND their former nam
   const { args } = await claudeSpawn();
   const allowed = argAfter(args, '--allowedTools')!.split(',');
   for (const tool of [
-    'mcp__nova_ask__question', 'mcp__nova_ask__kanban_plan',
-    'mcp__nova_permission__ask_user', 'mcp__nova_permission__ask_series_plan',
+    'mcp__rooks_ask__question', 'mcp__rooks_ask__kanban_plan',
+    'mcp__rooks_permission__ask_user', 'mcp__rooks_permission__ask_series_plan',
   ]) {
     assert.ok(allowed.includes(tool), `${tool} must be pre-allowed`);
   }
-  assert.deepEqual([...claudeAskToolNames()].sort(), allowed.filter((t) => /^mcp__nova_(ask|permission)__/.test(t)).sort());
+  assert.deepEqual([...claudeAskToolNames()].sort(), allowed.filter((t) => /^mcp__rooks_(ask|permission)__/.test(t)).sort());
 });
 
 test('claude: one forms server, under the new name, and the permission prompt points at it', async () => {
   const { args, mcp } = await claudeSpawn();
   assert.deepEqual(mcp.mcpServers[ASK_MCP_SERVER]?.args, [PERMISSION_MCP_PATH]);
   assert.equal(mcp.mcpServers[LEGACY_ASK_MCP_SERVER], undefined, 'the same tools twice would be a duplicate the model sees');
-  assert.equal(argAfter(args, '--permission-prompt-tool'), 'mcp__nova_ask__request');
+  assert.equal(argAfter(args, '--permission-prompt-tool'), 'mcp__rooks_ask__request');
   // The CLI is pointed at `request`: the server must not be told to hide it.
   assert.equal(mcp.mcpServers[ASK_MCP_SERVER]?.env?.[ASK_MCP_FORMS_ONLY_ENV], undefined);
 });
@@ -92,7 +92,7 @@ for (const backend of ['codex', 'grok'] as const) {
     const home = spec.env?.[backend === 'codex' ? 'CODEX_HOME' : 'GROK_HOME'];
     assert.ok(home);
     const config = readFileSync(join(home, 'config.toml'), 'utf8');
-    assert.equal(config.match(/^\[mcp_servers\.nova_ask\]$/gm)?.length, 1);
+    assert.equal(config.match(/^\[mcp_servers\.rooks_ask\]$/gm)?.length, 1);
     assert.ok(!config.includes(LEGACY_ASK_MCP_SERVER));
     // No harness calls `request` here: the server is told to keep it unlisted.
     const env = config.split(/^\[/m).find((chunk) => chunk.startsWith(`mcp_servers.${ASK_MCP_SERVER}.env]`))!;
@@ -127,7 +127,7 @@ test('acp (opencode, Hermes): the session receives the server under the new name
 });
 
 test('the former server name is still recognised where a name is matched', () => {
-  // A session resumed from before the rename reports `nova_permission`: it
+  // A session resumed from before the rename reports `rooks_permission`: it
   // must stay hidden from the MCP list and out of the exclusion globs.
   assert.ok(isAskMcpServer(ASK_MCP_SERVER));
   assert.ok(isAskMcpServer(LEGACY_ASK_MCP_SERVER));
@@ -136,7 +136,7 @@ test('the former server name is still recognised where a name is matched', () =>
 
 test('neither name of the forms server becomes an MCP entry the user sees', () => {
   refreshToolsCacheFromInit({
-    tools: ['mcp__nova_ask__question', 'mcp__acme_crm__search'],
+    tools: ['mcp__rooks_ask__question', 'mcp__acme_crm__search'],
     mcp_servers: [
       { name: ASK_MCP_SERVER, status: 'connected' },
       { name: LEGACY_ASK_MCP_SERVER, status: 'connected' },
@@ -145,5 +145,5 @@ test('neither name of the forms server becomes an MCP entry the user sees', () =
   });
   const ids = listMcp().map((m) => m.id);
   assert.ok(ids.includes('ext-acme_crm'), 'an account connector is still discovered');
-  assert.ok(!ids.some((id) => id.includes('nova_ask') || id.includes('nova_permission')));
+  assert.ok(!ids.some((id) => id.includes('rooks_ask') || id.includes('rooks_permission')));
 });

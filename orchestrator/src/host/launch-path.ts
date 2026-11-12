@@ -10,7 +10,7 @@ import { posix, win32 } from 'node:path';
  * Windows), and Rooks's own MCP servers are started as `node <script>` by the
  * CLI: neither runs if `node` is not on that PATH (macOS tester report,
  * 0.1.6-rc.1, 26/10/2026 — `env: node: No such file or directory`, then
- * `mcp__nova_ask__request ... not found`).
+ * `mcp__rooks_ask__request ... not found`).
  */
 export type LaunchPathOptions = {
   platform: NodeJS.Platform;

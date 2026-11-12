@@ -198,19 +198,19 @@
     DetailPrint "Verifying removal of the Rooks logon task..."
   ${EndIf}
   ; Independent commands: /End may fail for an already stopped task.
-  nsExec::ExecToLog /TIMEOUT=10000 '"$SYSDIR\schtasks.exe" /End /TN NovaOrchestrator'
+  nsExec::ExecToLog /TIMEOUT=10000 '"$SYSDIR\schtasks.exe" /End /TN RooksOrchestrator'
   Pop $0
-  nsExec::ExecToLog /TIMEOUT=10000 '"$SYSDIR\schtasks.exe" /Delete /TN NovaOrchestrator /F'
+  nsExec::ExecToLog /TIMEOUT=10000 '"$SYSDIR\schtasks.exe" /Delete /TN RooksOrchestrator /F'
   Pop $0
   ${If} $0 != 0
-    nsExec::ExecToLog /TIMEOUT=10000 '"$SYSDIR\schtasks.exe" /Query /TN NovaOrchestrator'
+    nsExec::ExecToLog /TIMEOUT=10000 '"$SYSDIR\schtasks.exe" /Query /TN RooksOrchestrator'
     Pop $1
     ${If} $1 == 0
       ; Per-user uninstallers need elevation to remove an elevated logon task.
       ; Unattended uninstall must be launched elevated; never prompt under /S.
       ${IfNot} ${Silent}
         DetailPrint "Windows permission is required to remove the Rooks logon task."
-        ${StdUtils.ExecShellWaitEx} $1 $2 "$SYSDIR\cmd.exe" "runas" '/d /s /c ""$SYSDIR\schtasks.exe" /End /TN NovaOrchestrator & "$SYSDIR\schtasks.exe" /Delete /TN NovaOrchestrator /F"'
+        ${StdUtils.ExecShellWaitEx} $1 $2 "$SYSDIR\cmd.exe" "runas" '/d /s /c ""$SYSDIR\schtasks.exe" /End /TN RooksOrchestrator & "$SYSDIR\schtasks.exe" /Delete /TN RooksOrchestrator /F"'
         ${If} $1 == "ok"
           ${StdUtils.WaitForProcEx} $0 $2
         ${Else}
@@ -218,11 +218,11 @@
         ${EndIf}
       ${EndIf}
       ${If} $0 != 0
-        DetailPrint "Warning: NovaOrchestrator could not be removed. Remove it from Task Scheduler with administrator rights."
+        DetailPrint "Warning: RooksOrchestrator could not be removed. Remove it from Task Scheduler with administrator rights."
       ${EndIf}
     ${Else}
       ; An absent task is harmless. Do not equate every query error with absence.
-      DetailPrint "NovaOrchestrator is absent or cannot be queried (result: $1)."
+      DetailPrint "RooksOrchestrator is absent or cannot be queried (result: $1)."
     ${EndIf}
   ${EndIf}
   ; The task is gone: its launcher files go with it, as `rooks service uninstall`

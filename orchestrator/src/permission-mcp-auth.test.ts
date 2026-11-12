@@ -107,7 +107,7 @@ function askOnce(orchUrl: string, token: string | undefined): Promise<{ reply: R
           jsonrpc: '2.0', id: 2, method: 'tools/call',
           params: {
             name: 'request',
-            arguments: { tool_name: 'mcp__nova__agent_send_message', input: { to: 'company.marketing' }, tool_use_id: 'tu-1' },
+            arguments: { tool_name: 'mcp__rooks__agent_send_message', input: { to: 'company.marketing' }, tool_use_id: 'tu-1' },
           },
         }) + '\n');
         return;

@@ -24,11 +24,11 @@ const TAIL = {
   events: [
     ev(1, 'user', { type: 'user', message: { content: 'compare the two options' } }),
     ev(2, 'assistant', { type: 'assistant', message: { content: [
-      { type: 'tool_use', id: 'tu-1', name: 'mcp__nova__chat_post_message', input: { text: 'Step one is done, the comparison follows.' } },
+      { type: 'tool_use', id: 'tu-1', name: 'mcp__rooks__chat_post_message', input: { text: 'Step one is done, the comparison follows.' } },
     ] } }),
     ev(3, 'assistant', { type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: 'Step one is done, the comparison follows.' }] }, nova_posted: 'chat_post_message' }),
     ev(4, 'assistant', { type: 'assistant', message: { content: [
-      { type: 'tool_use', id: 'tu-2', name: 'mcp__nova_ask__question', input: { message: REPORT, ...QUESTIONS } },
+      { type: 'tool_use', id: 'tu-2', name: 'mcp__rooks_ask__question', input: { message: REPORT, ...QUESTIONS } },
     ] } }),
     ev(5, 'assistant', { type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: REPORT }] }, nova_posted: 'question' }),
     ev(6, 'permission_request', { id: 'p-ask', tool_name: 'ask_user', input: QUESTIONS, tool_use_id: 'ask_user_1' }),
@@ -120,12 +120,12 @@ const position = (text: string, needle: string): number => {
 const count = (text: string, needle: string): number => text.split(needle).length - 1;
 
 test('the chip of a posting call leaves its text to the thread', () => {
-  assert.deepEqual(chipInput('mcp__nova__chat_post_message', { text: REPORT }), {});
-  assert.deepEqual(chipInput('mcp__nova_ask__question', { message: REPORT, ...QUESTIONS }), QUESTIONS);
-  assert.deepEqual(chipInput('mcp__nova_ask__kanban_plan', { message: REPORT, chantier: 'X' }), { chantier: 'X' });
-  assert.deepEqual(chipInput('mcp__nova_permission__ask_user', { message: REPORT, ...QUESTIONS }), QUESTIONS);
+  assert.deepEqual(chipInput('mcp__rooks__chat_post_message', { text: REPORT }), {});
+  assert.deepEqual(chipInput('mcp__rooks_ask__question', { message: REPORT, ...QUESTIONS }), QUESTIONS);
+  assert.deepEqual(chipInput('mcp__rooks_ask__kanban_plan', { message: REPORT, chantier: 'X' }), { chantier: 'X' });
+  assert.deepEqual(chipInput('mcp__rooks_permission__ask_user', { message: REPORT, ...QUESTIONS }), QUESTIONS);
   // Another tool's own `message` / `text` is what it is about: kept.
-  assert.deepEqual(chipInput('mcp__nova__agent_send_message', { message: 'hi' }), { message: 'hi' });
+  assert.deepEqual(chipInput('mcp__rooks__agent_send_message', { message: 'hi' }), { message: 'hi' });
   assert.deepEqual(chipInput('mcp__other__chat_post_message', { text: 'hi' }), { text: 'hi' });
 });
 

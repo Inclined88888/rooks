@@ -1,7 +1,7 @@
 /**
  * `capabilities.novaMcp: false` is honoured, not just shown: the runner tells
  * the dialect (`BuildSpawnOpts.novaMcp`) and no dialect declares `rooks` or
- * `nova_ask` to the agent. Without them, claude must not be pointed at a
+ * `rooks_ask` to the agent. Without them, claude must not be pointed at a
  * permission prompt tool that does not exist.
  */
 import '../test-home.js';
@@ -62,7 +62,7 @@ for (const backend of ['codex', 'grok'] as const) {
     assert.ok(!/^\[mcp_servers\.rooks(_ask)?(\.env)?\]$/m.test(off), off);
     const on = await read(opts());
     assert.match(on, /^\[mcp_servers\.rooks\]$/m);
-    assert.match(on, /^\[mcp_servers\.nova_ask\]$/m);
+    assert.match(on, /^\[mcp_servers\.rooks_ask\]$/m);
   });
 }
 

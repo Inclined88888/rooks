@@ -193,7 +193,7 @@ test('a vault reference does not launder a forbidden name', () => {
 });
 
 test('the refusal does not depend on the case written in the file', () => {
-  for (const written of ['node_options', 'Node_Options', 'nova_home', 'Codex_Home']) {
+  for (const written of ['node_options', 'Node_Options', 'rooks_home', 'Codex_Home']) {
     assert.notEqual(forbiddenEnvReason(written), null, written);
     assert.equal(parseLocalBackend({ ...valid, env: { ...valid.env, [written]: 'x' } }).ok, false, written);
   }

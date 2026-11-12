@@ -222,7 +222,7 @@ nvm-windows, Homebrew, `~/.local/bin`, the PATH). When none is found,
 `rooks doctor` and the diagnostic report name the CLI: install Node.js.
 
 The same Node.js runs Rooks's own tools inside a Claude session: without it,
-Claude reports that `mcp__nova_ask__request` was not found.
+Claude reports that `mcp__rooks_ask__request` was not found.
 
 ## Codex on Windows: commands "blocked by policy" (TIM-0062)
 

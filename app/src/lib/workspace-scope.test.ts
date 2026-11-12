@@ -68,7 +68,7 @@ test('a missing owner-wide nav row takes the current view leftover as its initia
  *  the daemon reads and writes these rows for `widgets_get` and presets. */
 test('the scope hash matches the daemon\'s copy, vector for vector', async () => {
   const { workspaceScope: scope, sharedPresetsScope: shared } = await import('./workspace-scope');
-  assert.equal(await scope('user-1', '/chat', 'rooks'), 'v2.8291cf877624b87afd146a96827a920d843da0cd');
+  assert.equal(await scope('user-1', '/chat', 'rooks'), 'v2.088cd4e04a6d0bd0e6995802a4f5107fef908554');
   assert.equal(await scope('user-1', '/', null), 'v2.487f3eb51e8412ef2ba2c1c58bb149023be5c862');
   assert.equal(await shared('user-1', '/'), 'v2.487f3eb51e8412ef2ba2c1c58bb149023be5c862.shared-presets');
 });

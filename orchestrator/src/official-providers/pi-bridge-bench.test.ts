@@ -120,7 +120,7 @@ test('a real Pi: Rooks\'s tools through the bridge, the token where it belongs a
     assert.equal(info.capabilities.mcp, true, 'the bridge took its servers');
 
     const toolText = (): string => JSON.stringify(events.filter((e) => e.type === 'user').map((e) => e.payload));
-    await driver.prompt('TOOL:mcp__nova__whoami {}');
+    await driver.prompt('TOOL:mcp__rooks__whoami {}');
     assert.ok(toolText().includes(`rooks sees ${digest}`), 'the model called Rooks\'s tool, whose server holds the token');
     await driver.prompt('TOOL:mcp__user__whoami {}');
     assert.ok(toolText().includes('user sees no token'), 'a user\'s server does not inherit it');
@@ -143,7 +143,7 @@ test('a real Pi: Rooks\'s tools through the bridge, the token where it belongs a
     for (const l of lines) if (typeof (l as { pid?: number }).pid === 'number') assert.equal(alive((l as { pid: number }).pid), false);
 
     const model = readFileSync(requests, 'utf8');
-    assert.ok(model.includes('mcp__nova__whoami'), 'the tool was declared to the model');
+    assert.ok(model.includes('mcp__rooks__whoami'), 'the tool was declared to the model');
     assert.ok(!model.includes('rooks-bridge') && !model.includes(marker) && !model.includes(userSecret), 'the configuration never reached the model');
     const sessions = join(BENCH, 'home', '.pi', 'agent', 'sessions');
     const files = readdirSync(sessions, { recursive: true, encoding: 'utf8' }).filter((f) => f.includes(sessionId));
@@ -222,7 +222,7 @@ test('a real Pi: the card decides, a refusal blocks the call, a Stop during a ca
     assert.ok(!existsSync(denied), 'refused on the card: it did NOT run');
     assert.ok(results().includes('did not allow'), 'the model read why');
 
-    await driver.prompt('TOOL:mcp__nova__whoami {}');
+    await driver.prompt('TOOL:mcp__rooks__whoami {}');
     assert.equal(cards.length, 3, 'a Rooks tool its server does not declare read-only asks too');
     assert.ok(!results().includes('rooks sees'), 'refused: the server was never called');
 

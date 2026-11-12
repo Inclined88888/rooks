@@ -163,7 +163,7 @@ test('Rooks\'s MCP servers are declared with the mission\'s identity, and no tok
   const sp = await provider.launch(o, PROFILE);
   const toml = readFileSync(join(sp.env!.GROK_HOME!, 'config.toml'), 'utf8');
   assert.match(toml, /\[mcp_servers\.rooks\]/);
-  assert.match(toml, /\[mcp_servers\.nova_ask\]/);
+  assert.match(toml, /\[mcp_servers\.rooks_ask\]/);
   // Without these two keys `ask_user` POSTs an empty mission_id (400) and created tasks belong to no mission.
   assert.ok(toml.includes(`ROOKS_MISSION_ID = ${JSON.stringify(o.missionId)}`));
   assert.ok(toml.includes(`ROOKS_AGENT = ${JSON.stringify(o.agentName)}`));
@@ -178,7 +178,7 @@ test('without Rooks\'s servers (novaMcp: false) the config declares none of them
   const sp = await provider.launch(opts({ novaMcp: false }), PROFILE);
   const toml = readFileSync(join(sp.env!.GROK_HOME!, 'config.toml'), 'utf8');
   assert.doesNotMatch(toml, /\[mcp_servers\.rooks\]/);
-  assert.doesNotMatch(toml, /\[mcp_servers\.nova_ask\]/);
+  assert.doesNotMatch(toml, /\[mcp_servers\.rooks_ask\]/);
   assert.match(toml, /\[compat\.claude\]/);
 });
 

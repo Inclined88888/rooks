@@ -55,7 +55,7 @@ const expectation = {
   args: ['acp'],
   says: "Le fichier src/index.ts exporte le point d'entrée du daemon.",
   stopReason: 'end_turn',
-  mcpServers: ['rooks', 'nova_ask'],
+  mcpServers: ['rooks', 'rooks_ask'],
   permission: { requestId: 'perm-1', tool: 'Edit src/index.ts', allowOptionId: 'allow-once', denyOptionId: 'reject-once' },
   signIn: {
     script: loadAcpScript(fixture('session-signed-out.jsonl')),

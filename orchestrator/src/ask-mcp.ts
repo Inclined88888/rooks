@@ -2,10 +2,10 @@
  * Names of the forms MCP server — `bin/permission-mcp.mjs` — and of its tools.
  *
  * The server carries every tool that opens a form in the UI and blocks until
- * the human answers. It was called `nova_permission`, with the tools
+ * the human answers. It was called `rooks_permission`, with the tools
  * `ask_user` and `ask_series_plan`: an agent asked to "open a Kanban
  * permission request" was drawn to `ask_user` by the word "permission", and
- * "series" is not a word a user says. Hence `nova_ask`, `question` and
+ * "series" is not a word a user says. Hence `rooks_ask`, `question` and
  * `kanban_plan`.
  *
  * TWO THINGS DID NOT MOVE, on purpose:
@@ -24,12 +24,12 @@
  */
 
 /** The MCP server's name, as every dialect registers it. */
-export const ASK_MCP_SERVER = 'nova_ask';
+export const ASK_MCP_SERVER = 'rooks_ask';
 
 /** Its name before the rename. Still recognised wherever a server name is
  *  matched, never registered: the same tools twice would be a duplicate the
  *  model sees. */
-export const LEGACY_ASK_MCP_SERVER = 'nova_permission';
+export const LEGACY_ASK_MCP_SERVER = 'rooks_permission';
 
 /** A one-off decision: questions with buttons. */
 export const ASK_TOOL_QUESTION = 'question';
@@ -71,9 +71,13 @@ export function isFormCardTool(toolName: string): boolean {
  */
 export const ASK_MCP_FORMS_ONLY_ENV = 'ROOKS_ASK_FORMS_ONLY';
 
-/** Whether `name` is the forms server, under its current or its former name. */
+/** Archive-era server names (Nova body). Still matched, never registered. */
+export const ARCHIVE_ASK_MCP_SERVERS = Object.freeze(['nova_ask', 'nova_permission'] as const);
+
+/** Whether `name` is the forms server, under its current, legacy, or archive name. */
 export function isAskMcpServer(name: string): boolean {
-  return name === ASK_MCP_SERVER || name === LEGACY_ASK_MCP_SERVER;
+  return name === ASK_MCP_SERVER || name === LEGACY_ASK_MCP_SERVER
+    || (ARCHIVE_ASK_MCP_SERVERS as readonly string[]).includes(name);
 }
 
 /** `mcp__<server>__<tool>`, the form claude gives an MCP tool's name. */

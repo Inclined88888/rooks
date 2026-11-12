@@ -134,7 +134,7 @@
     "mcpServers": "MCP サーバー",
     "noMcpServers": "MCP サーバーが設定されていません",
     "extraAllowedTools": "追加で許可するツール (カンマ区切り)",
-    "allowedToolsPlaceholder": "Bash(git:*), mcp__nova__kanban_add",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__rooks__kanban_add",
     "schedule": {
       "label": "開始を予約 (任意)"
     },

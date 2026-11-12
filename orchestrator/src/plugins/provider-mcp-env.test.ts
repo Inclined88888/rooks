@@ -356,8 +356,8 @@ test('the forms server lists `request` only for a CLI that routes permission pro
   assert.equal(forms(formsOnly).env.ROOKS_ASK_FORMS_ONLY, '1');
   assert.equal(forms(prompting).env.ROOKS_ASK_FORMS_ONLY, undefined);
   assert.equal(formsOnly.permissionTool, null);
-  assert.equal(prompting.permissionTool, 'mcp__nova_ask__request');
-  assert.ok(prompting.preApprovedTools.includes('mcp__nova__kanban_add'));
+  assert.equal(prompting.permissionTool, 'mcp__rooks_ask__request');
+  assert.ok(prompting.preApprovedTools.includes('mcp__rooks__kanban_add'));
   assert.ok(prompting.commandPolicy.denyPrograms.includes('sudo'));
 });
 

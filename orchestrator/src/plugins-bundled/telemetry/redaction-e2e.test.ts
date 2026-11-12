@@ -114,7 +114,7 @@ test('nothing a person wrote reaches the analytics endpoint', async () => {
     { type: 'text', text: `Working on ${MARKER}` },
     { type: 'tool_use', id: 't1', name: 'Bash', input: { command: `cat ${secretPath}/${MARKER}.env` } },
     { type: 'tool_use', id: 't2', name: `mcp__${MARKER}-mcp__${MARKER}_tool`, input: { q: MARKER } },
-    { type: 'tool_use', id: 't3', name: 'mcp__nova__kanban_add', input: { title: MARKER } },
+    { type: 'tool_use', id: 't3', name: 'mcp__rooks__kanban_add', input: { title: MARKER } },
   ] } } });
   bus.publish({ kind: 'event', missionId, type: 'user', timestamp: Date.now(), payload: { message: { content: [
     { type: 'tool_result', tool_use_id: 't1', content: `SECRET=${MARKER}`, is_error: true },
@@ -161,7 +161,7 @@ test('nothing a person wrote reaches the analytics endpoint', async () => {
   // What did go out, for the record: closed values only.
   const bodies = captured.map((c) => JSON.parse(c.body) as { payload: { name: string; profileId: string; properties: Record<string, unknown> } });
   const tools = bodies.filter((b) => b.payload.name === 'tool_used').map((b) => b.payload.properties.tool).sort();
-  assert.deepEqual(tools, ['Bash', 'mcp__nova__kanban_add', 'other']);
+  assert.deepEqual(tools, ['Bash', 'mcp__rooks__kanban_add', 'other']);
   const spawned = bodies.find((b) => b.payload.name === 'mission_spawned')!.payload.properties;
   assert.equal(spawned.model, 'other');
   assert.equal(spawned.origin, 'user');

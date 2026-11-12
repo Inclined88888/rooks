@@ -52,7 +52,7 @@ test('macOS: a LaunchDaemon is verified by its ROOKS_HOME, then removed under on
   const f = fixture('darwin', (cmd, args) => {
     calls.push(`${cmd}:${args[0]}:${args[1] ?? ''}`);
     if (cmd.endsWith('plutil')) return ok(f.opts.novaHome);
-    if (cmd === 'osascript') return ok('ROOKS-STEP bootout=0\nNOVA-STEP wait=0\nNOVA-STEP remove=0\n');
+    if (cmd === 'osascript') return ok('ROOKS-STEP bootout=0\nROOKS-STEP wait=0\nROOKS-STEP remove=0\n');
     if (args[0] === 'print') return ok(`\tROOKS_HOME => ${f.opts.novaHome}\n`);
     if (args[0] === 'bootout') return absent();
     return ok();

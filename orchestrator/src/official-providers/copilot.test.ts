@@ -35,7 +35,7 @@ plugin.apply(ctx);
 const provider = ctx.registered.providers.get('copilot') as NativeProviderDefinition & { launch(spawn: BuildSpawnOpts, profile: ProfileRuntime): Promise<{ cmd: string; args: string[]; cwd?: string; env?: Record<string, string>; initialStdin: string | null }> };
 const dialect = ctx.registered.dialect('copilot') as import('../backends/types.js').Dialect;
 const mapCopilotEvent = createEventMapper(providerRuntime.events);
-const copilot = copilotRules(COMMAND_POLICY, 'nova_ask');
+const copilot = copilotRules(COMMAND_POLICY, 'rooks_ask');
 process.on('exit', () => ctx.cleanup());
 
 const PROFILE: ProfileRuntime = { id: 'copilot', cmd: 'copilot', env: {} };
@@ -95,7 +95,7 @@ test('Rooks MCP servers carry the mission identity and every tool', async () => 
   const config = JSON.parse(readFileSync(ref!.slice(1), 'utf8')) as {
     mcpServers: Record<string, { type?: string; tools?: string[]; env?: Record<string, string> }>;
   };
-  for (const name of ['rooks', 'nova_ask']) {
+  for (const name of ['rooks', 'rooks_ask']) {
     const server = config.mcpServers[name];
     assert.ok(server, `${name} missing`);
     assert.equal(server.type, 'local');
@@ -149,7 +149,7 @@ function shellAllowed(args: string[], commandLine: string): boolean {
  *  type plus the `rooks-task` and `rooks-worktree` skills'. */
 const CODE_TASK_GRANTS = [
   'Read', 'Edit', 'Write', 'Glob', 'Grep', 'Bash(git:*)', 'Bash(npx tsc:*)', 'Bash(npm run:*)',
-  'Bash(rooks:*)', 'mcp__nova__kanban_mark_as_done',
+  'Bash(rooks:*)', 'mcp__rooks__kanban_mark_as_done',
 ];
 
 const SANDBOXED_MODES = ['auto', 'default', 'acceptEdits', undefined] as const;
@@ -166,7 +166,7 @@ test('sandboxed modes hand out an allowlist, never a blanket permission', async 
     assert.ok(!sp.args.includes('--allow-tool=shell'), `${label}: generic shell`);
     assert.ok(!sp.args.some((a) => a.startsWith('--allow-tool=url')), `${label}: url rule`);
     assert.ok(!sp.args.includes('--allow-tool=shell(git:*)'), `${label}: git:* opens git -c`);
-    for (const allowed of ['read', 'write', 'rooks', 'nova_ask']) {
+    for (const allowed of ['read', 'write', 'rooks', 'rooks_ask']) {
       assert.ok(sp.args.includes(`--allow-tool=${allowed}`), `${label}: ${allowed}`);
     }
     assert.ok(sp.args.includes('--deny-tool=shell(sudo:*)'), label);
@@ -223,7 +223,7 @@ test('claude-format grants translate, generic shells do not', () => {
   const grants = copilot.shellGrantsFromAllowedTools([
     'Bash(npm run:*)', 'Bash(npx tsc:*)', 'Bash(git diff:*)', 'Bash(make test)',
     'Bash', 'Bash(*)', 'Bash(bash:*)', 'Bash(env:*)', 'Bash(node *)', 'Bash(npx:*)', 'Bash(npm *)',
-    'Bash(git -c:*)', 'Bash(ls; sh:*)', 'Read', 'Edit', 'mcp__nova__kanban_add',
+    'Bash(git -c:*)', 'Bash(ls; sh:*)', 'Read', 'Edit', 'mcp__rooks__kanban_add',
   ]);
   assert.deepEqual(grants, [
     'shell(npm run:*)', 'shell(npx tsc:*)', 'shell(git diff:*)', 'shell(make test)',
@@ -250,8 +250,8 @@ test('a rooks grant opens the named Rooks commands, never the CLI as a whole', (
 });
 
 test('workspace allows the mission MCP servers, plan only the Rooks bridge', async () => {
-  assert.ok(copilot.permissionArgs('auto', ['rooks', 'nova_ask', 'my-db']).includes('--allow-tool=my-db'));
-  assert.ok(!copilot.permissionArgs('plan', ['rooks', 'nova_ask', 'my-db']).includes('--allow-tool=my-db'));
+  assert.ok(copilot.permissionArgs('auto', ['rooks', 'rooks_ask', 'my-db']).includes('--allow-tool=my-db'));
+  assert.ok(!copilot.permissionArgs('plan', ['rooks', 'rooks_ask', 'my-db']).includes('--allow-tool=my-db'));
 });
 
 test('bypassPermissions is the one unsandboxed mode, the deny rules still hold', async () => {

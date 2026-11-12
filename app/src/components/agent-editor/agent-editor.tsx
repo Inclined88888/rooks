@@ -1634,7 +1634,7 @@ export function AgentEditor({ agent, isNew, onClose, onDirtyChange, initialTab }
  *  this row the tab read as if `rooks` could not be granted (TIM-0102). */
 const BUILTIN_MCP_SERVERS: ReadonlyArray<{ key: string; hintKey: string }> = [
   { key: 'rooks', hintKey: 'editPage.mcpBuiltinNova' },
-  { key: 'nova_ask', hintKey: 'editPage.mcpBuiltinAsk' },
+  { key: 'rooks_ask', hintKey: 'editPage.mcpBuiltinAsk' },
   { key: 'rooks-browser', hintKey: 'editPage.mcpBuiltinBrowser' },
   { key: 'grepai', hintKey: 'editPage.mcpBuiltinGrepai' },
 ];

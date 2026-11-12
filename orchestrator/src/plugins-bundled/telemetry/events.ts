@@ -50,7 +50,7 @@ export const NATIVE_TOOLS = [
 ] as const;
 const NATIVE_TOOL_SET = new Set<string>(NATIVE_TOOLS);
 /** MCP servers the product itself injects into a mission. */
-const ROOKS_MCP_SERVERS = new Set(['rooks', 'nova_ask', 'rooks-browser']);
+const ROOKS_MCP_SERVERS = new Set(['rooks', 'rooks_ask', 'rooks-browser']);
 const MCP_TOOL = /^mcp__([a-z_-]{1,32})__([a-z][a-z0-9_]{1,48})$/;
 
 export const TASK_TYPES = ['code', 'review', 'merge', 'research', 'doc', 'chore', 'other'] as const;

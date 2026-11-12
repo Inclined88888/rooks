@@ -9,9 +9,9 @@
  * would show a second time there, cut at 200 characters, right above itself.
  */
 
-const POST_TOOL = /^mcp__nova__chat_post_message$/;
+const POST_TOOL = /^mcp__rooks__chat_post_message$/;
 /** The forms server, under its current and its former name. */
-const FORM_TOOL = /^mcp__(?:nova_ask|nova_permission)__(?:question|kanban_plan|ask_user|ask_series_plan)$/;
+const FORM_TOOL = /^mcp__(?:rooks_ask|rooks_permission)__(?:question|kanban_plan|ask_user|ask_series_plan)$/;
 
 /** The input a tool chip describes: without the text the thread already shows. */
 export function chipInput(name: string, input: Record<string, unknown>): Record<string, unknown> {

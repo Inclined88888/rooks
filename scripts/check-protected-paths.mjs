@@ -87,7 +87,9 @@ export function packageFieldChanges(base, head, status) {
  * parsed contents. Returns the violations, empty when the author may change them.
  */
 export function evaluate({ files, author, patterns, allowed }) {
-  if (allowed.includes(String(author).toLowerCase())) return [];
+  const who = String(author).toLowerCase();
+  // Maintainers and their automation accounts (`AI-<name>`).
+  if (allowed.includes(who) || allowed.some((name) => who === `ai-${name}` || who === `ai-${name}[bot]`)) return [];
   const violations = [];
   for (const file of files) {
     for (const path of [file.filename, file.previous_filename].filter(Boolean)) {

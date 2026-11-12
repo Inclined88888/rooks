@@ -319,7 +319,7 @@ export function createCodexProvider(services, log) {
     /**
      * Builds (or refreshes) the per-mission CODEX_HOME and returns its folder. Idempotent —
      * re-callable on follow-up turns of the same mission. The base Rooks config (network + the
-     * rooks/nova_ask MCP servers, the project's index and browser, the agent's own servers) is
+     * rooks/rooks_ask MCP servers, the project's index and browser, the agent's own servers) is
      * always written, and the profile's provider block (if there is one) is added without touching it.
      */
     async function ensureCodexHome(opts, profile, { useAuthFile, accountAuth }) {
@@ -501,7 +501,7 @@ export function createCodexProvider(services, log) {
         },
         // `codex exec` is one-way: no approval round trip during the turn. Rights are
         // frozen at spawn time by `--sandbox` (see sandboxLevelForPermissionMode) — no
-        // Allow/Deny card, no classifier. The `nova_ask` MCP server is still
+        // Allow/Deny card, no classifier. The `rooks_ask` MCP server is still
         // injected, but only for its forms (a question, the Kanban planner), not to
         // arbitrate a tool use.
         permission: { model: 'sandbox' },
@@ -581,12 +581,12 @@ export function createCodexProvider(services, log) {
              * reads its configuration, MCP servers included.
              */
             localEnv: { names: [], prefixes: ['OPENAI_', 'BACKEND_'], renameUnder: 'BACKEND_' },
-            // codex nests MCP tools under `exec`, renamed `mcp__nova_browser__*`,
+            // codex nests MCP tools under `exec`, renamed `mcp__rooks-browser__*`,
             // while its own web search sits at the top level: told only "the
             // `rooks-browser` MCP tools", GPT opened pages with web search instead of
             // Rooks's browser in most runs measured on codex-cli 0.159 (TODO #241).
-            browserToolsHint: "- **Browser** = Rooks's browser, NOT web search. Its tools are `mcp__nova_browser__*`; "
-                + 'from `exec` call them as `tools.mcp__nova_browser__navigate_page({ url })`, then `take_snapshot`, '
+            browserToolsHint: "- **Browser** = Rooks's browser, NOT web search. Its tools are `mcp__rooks-browser__*`; "
+                + 'from `exec` call them as `tools.mcp__rooks-browser__navigate_page({ url })`, then `take_snapshot`, '
                 + '`click`, `fill`, `take_screenshot`. To go to, open, read, check or search a site, use them; your built-in '
                 + 'web search (`web.run`, `open_page`) is not that browser and only finds pages. A browser error is reported '
                 + 'as is, never worked around with web search.',

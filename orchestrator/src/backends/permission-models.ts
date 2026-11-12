@@ -4,7 +4,7 @@
  *
  *   mcp-bridge — the CLI asks an injected MCP tool before every tool use that is
  *                not pre-approved: the dialect passes that tool's name
- *                (`CLAUDE_PERMISSION_PROMPT_TOOL`) and declares `nova_ask`.
+ *                (`CLAUDE_PERMISSION_PROMPT_TOOL`) and declares `rooks_ask`.
  *                The answer is an Allow/Deny card and a classifier.
  *   sandbox    — nothing can be asked mid-turn; privileges are frozen at spawn.
  *                The dialect turns `permission_mode` into the CLI's own level
@@ -41,7 +41,7 @@ export function sandboxLevelForPermissionMode(permissionMode: string | undefined
 /** What a dialect declaring `model` must be able to do — as sentences, for the
  *  registration check and the docs. `none` owes nothing: it is an admission. */
 export const PERMISSION_MODEL_OBLIGATIONS: Readonly<Record<'mcp-bridge' | 'sandbox' | 'protocol' | 'none', string>> = {
-  'mcp-bridge': 'pass the permission tool to the CLI at spawn and declare the `nova_ask` MCP server',
+  'mcp-bridge': 'pass the permission tool to the CLI at spawn and declare the `rooks_ask` MCP server',
   sandbox: 'freeze the privileges at spawn from `permission_mode`; there is no card and no classifier',
   protocol: 'supply `openSession`: its driver forwards the agent\'s permission requests to `host.requestPermission`',
   none: 'nothing — the CLI runs everything unguarded, which the UI says plainly',

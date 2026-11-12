@@ -59,7 +59,7 @@ async function renderMission(setup: boolean, asked = true): Promise<Rendered> {
         type: 'assistant',
         timestamp: 2,
         payload: { type: 'assistant', message: { content: [
-          { type: 'tool_use', id: 't1', name: 'mcp__nova__docs_search', input: { query: 'setup' } },
+          { type: 'tool_use', id: 't1', name: 'mcp__rooks__docs_search', input: { query: 'setup' } },
         ] } },
       },
       { type: 'user', timestamp: 3, payload: { type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: 't1', content: 'ok' }] } } },
@@ -68,7 +68,7 @@ async function renderMission(setup: boolean, asked = true): Promise<Rendered> {
         timestamp: 4,
         payload: { type: 'assistant', message: { content: [
           { type: 'text', text: 'Hello, I am your new agent.' },
-          { type: 'tool_use', id: 't2', name: 'mcp__nova_ask__question', input: {} },
+          { type: 'tool_use', id: 't2', name: 'mcp__rooks_ask__question', input: {} },
         ] } },
       },
       ...(asked ? [{ type: 'permission_request', timestamp: 5, payload: { type: 'permission_request', ...question } }] : []),

@@ -165,7 +165,7 @@ test('REFUSAL: no mission token, no vault slice, no daemon env reaches the Curso
       .map((line) => JSON.parse(line) as { method?: string; params?: { mcpServers?: Array<{ name: string; env: Array<{ name: string; value: string }> }> } })
       .find((message) => message.method === 'session/new');
     assert.ok(request, 'the session was opened');
-    for (const name of ['rooks', 'nova_ask']) {
+    for (const name of ['rooks', 'rooks_ask']) {
       const token = request.params?.mcpServers?.find((server) => server.name === name)?.env.find((e) => e.name === 'ROOKS_API_TOKEN')?.value;
       assert.ok(token && !token.startsWith('rooks-seal-'), `${name}: the daemon swapped the reference for the mission's own token on the pipe`);
       assert.notEqual(token, DAEMON_TOKEN, 'never the daemon\'s token');

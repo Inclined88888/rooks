@@ -28,7 +28,7 @@ param(
   [switch]$Resume
 )
 $ErrorActionPreference = 'SilentlyContinue'
-$task = 'NovaOrchestrator'
+$task = 'RooksOrchestrator'
 
 if ($Resume) {
   Wait-Process -Id $InstallerPid

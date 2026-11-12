@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ROOKS forms MCP server — registered as `nova_ask`.
+ * ROOKS forms MCP server — registered as `rooks_ask`.
  *
  * Every tool here opens something in the ROOKS UI and blocks until the human
  * answers:
@@ -10,7 +10,7 @@
  *                    mission, as Kanban tasks) and with which models;
  *   - `request`      the Allow/Deny card. Called by the harness, never by the
  *                    model: Claude Code reaches it through
- *                    `--permission-prompt-tool mcp__nova_ask__request` and
+ *                    `--permission-prompt-tool mcp__rooks_ask__request` and
  *                    expects the decision in this shape:
  *
  *                      { behavior: "allow", updatedInput: <input> }
@@ -21,7 +21,7 @@
  * bridge between the agent's tool-use loop and the orchestrator's SSE bus /
  * chat UI.
  *
- * NAMES. The server used to be `nova_permission`, with `ask_user` and
+ * NAMES. The server used to be `rooks_permission`, with `ask_user` and
  * `ask_series_plan`. "Permission" drew agents to the wrong form and "series"
  * is not a word a user says. The former tool names are still ANSWERED here
  * (a prompt, a memory or a resumed session may name them) but no longer

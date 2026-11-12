@@ -35,7 +35,7 @@ export type ProviderMcpOptions = {
  * CLI with `runtime.mcp.serialize*`.
  */
 export type ProviderMcpPlan = {
-  /** `rooks`, `nova_ask`, the project's `grepai` and browser, then the agent's own servers. */
+  /** `rooks`, `rooks_ask`, the project's `grepai` and browser, then the agent's own servers. */
   readonly servers: readonly ProviderMcpServer[];
   /**
    * The environment that identifies the mission to the servers above: the daemon's

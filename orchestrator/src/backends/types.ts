@@ -6,7 +6,7 @@
  *
  *   - Claude CLI: long-lived process, stream-json on stdin (multi-turn) and
  *     on stdout. Permission requests are bridged via a ROOKS-injected MCP
- *     (mcp__nova_ask__request).
+ *     (mcp__rooks_ask__request).
  *
  *   - Codex CLI: one-shot per turn (`codex exec --json`), prompt passed as
  *     argv, JSONL events on stdout. Multi-turn = re-spawn with
@@ -126,7 +126,7 @@ export type BuildSpawnOpts = {
    *  memory_scope is NONE or not set. */
   memoryDir?: string;
   /** `false` when the backend declares `capabilities.novaMcp: false`: the
-   *  dialect declares none of Rooks's own MCP servers (`rooks`, `nova_ask`)
+   *  dialect declares none of Rooks's own MCP servers (`rooks`, `rooks_ask`)
    *  to the agent. Absent = declare them, as always. */
   novaMcp?: boolean;
   /** This mission must run no shell command and read or write no file (the
@@ -173,7 +173,7 @@ export type SpawnResult = {
  *
  *   - `mcp-bridge`: the CLI can delegate every non-pre-allowed tool use to an
  *     external tool (`--permission-prompt-tool`). ROOKS hooks its
- *     `nova_ask` MCP onto it → Allow/Deny card in the UI + auto
+ *     `rooks_ask` MCP onto it → Allow/Deny card in the UI + auto
  *     classifier.
  *   - `sandbox`: no round-trip possible during the turn; privileges are
  *     frozen at spawn by a sandbox level. `permission_mode` is then

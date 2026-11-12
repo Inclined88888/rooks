@@ -91,7 +91,7 @@ test('MDX becomes plain Markdown: imports, tabs, admonitions, cards, comments', 
 test('code blocks are copied verbatim, placeholders and imports included', () => {
   const body = ['```bash', "import x from 'y';", 'rooks secret set <NAME>', '    <div>kept</div>', '```', 'After [link](first-run.md).'].join('\n');
   const md = toMarkdown(page(body), routes);
-  assert.ok(md.includes("```bash\nimport x from 'y';\nnova secret set <NAME>\n    <div>kept</div>\n```"));
+  assert.ok(md.includes("```bash\nimport x from 'y';\nrooks secret set <NAME>\n    <div>kept</div>\n```"));
   assert.ok(md.includes('After [link](/installation/first-run.md).'));
 });
 

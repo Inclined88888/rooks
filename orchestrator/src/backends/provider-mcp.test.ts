@@ -1,5 +1,5 @@
 /**
- * TODO #486 — Rooks's own MCP servers (`rooks`, `nova_ask`) run on the Node the
+ * TODO #486 — Rooks's own MCP servers (`rooks`, `rooks_ask`) run on the Node the
  * daemon hands them: Electron's binary as Node in the package, where the machine may
  * have no `node` at all (claude installed by its native installer), `node` from sources.
  */
@@ -27,10 +27,10 @@ function own(servers: Awaited<ReturnType<typeof providerMcpPlan>>['servers']) {
   });
 }
 
-test('packaged: rooks and nova_ask run on the daemon binary, as Node, never on a `node` the machine may lack', async () => {
+test('packaged: rooks and rooks_ask run on the daemon binary, as Node, never on a `node` the machine may lack', async () => {
   const plan = await providerMcpPlan({ spawn, seal: undefined, node: packaged });
   const servers = own(plan.servers);
-  assert.deepEqual(servers.map((s) => s.name), ['rooks', 'nova_ask']);
+  assert.deepEqual(servers.map((s) => s.name), ['rooks', 'rooks_ask']);
   for (const s of servers) {
     assert.equal(s.command, '/Applications/Rooks.app/Contents/MacOS/Rooks', s.name); // portability: simulated path
     assert.equal(s.env.ELECTRON_RUN_AS_NODE, '1', `${s.name}: the flag is explicit, never inherited`);
@@ -50,9 +50,9 @@ test('packaged: the runtime reaches what claude and codex are handed', async () 
   const plan = await providerMcpPlan({ spawn, seal: undefined, node: packaged, options: { permissionPrompt: true } });
   const servers = own(plan.servers);
   const json = JSON.parse(serializeMcpJson(servers) ?? '{}') as { mcpServers: Record<string, { command: string; env: Record<string, string> }> };
-  assert.equal(json.mcpServers.nova_ask?.command, '/Applications/Rooks.app/Contents/MacOS/Rooks'); // portability: simulated path
-  assert.equal(json.mcpServers.nova_ask?.env.ELECTRON_RUN_AS_NODE, '1');
-  assert.equal(json.mcpServers.nova_ask?.env.ROOKS_ASK_FORMS_ONLY, undefined, 'claude routes its permission prompts to `request`');
+  assert.equal(json.mcpServers.rooks_ask?.command, '/Applications/Rooks.app/Contents/MacOS/Rooks'); // portability: simulated path
+  assert.equal(json.mcpServers.rooks_ask?.env.ELECTRON_RUN_AS_NODE, '1');
+  assert.equal(json.mcpServers.rooks_ask?.env.ROOKS_ASK_FORMS_ONLY, undefined, 'claude routes its permission prompts to `request`');
   const toml = serializeCodexMcpToml(servers) ?? '';
   assert.match(toml, /\[mcp_servers\.rooks\]\ncommand = "\/Applications\/Rooks\.app\/Contents\/MacOS\/Rooks"/);
   assert.match(toml, /\[mcp_servers\.rooks\.env\][^[]*ELECTRON_RUN_AS_NODE = "1"/);

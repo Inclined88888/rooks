@@ -85,8 +85,8 @@ test('registered, it launches the agent in ACP mode and speaks the protocol thro
     await driver.prompt('mcp');
     const said = events.filter((e) => e.type === 'assistant_delta').map((e) => (e.payload as { text: string }).text).join('');
     const reported = JSON.parse(said.slice(said.indexOf('['))) as Array<{ name: string; env: Array<{ name: string; value: string }> }>;
-    assert.deepEqual(reported.map((s) => s.name), ['rooks', 'nova_ask'], "Rooks's servers came from the S1 plan");
-    assert.equal(reported.find((s) => s.name === 'nova_ask')!.env.some((e) => e.name === 'ROOKS_ASK_FORMS_ONLY'), true);
+    assert.deepEqual(reported.map((s) => s.name), ['rooks', 'rooks_ask'], "Rooks's servers came from the S1 plan");
+    assert.equal(reported.find((s) => s.name === 'rooks_ask')!.env.some((e) => e.name === 'ROOKS_ASK_FORMS_ONLY'), true);
     assert.equal(JSON.stringify(reported).includes('real-token-value'), false, 'the token the runner holds is not what the agent was told');
   } finally {
     driver.close();

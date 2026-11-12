@@ -14,40 +14,40 @@
 export const PRE_APPROVED_MCP_TOOLS: readonly string[] = Object.freeze([
   // Pre-allows the Kanban operations: they are cheap writes
   // equivalent to a click in the UI; asking Allow/Deny for every
-  // task created by an agent would be a pain. `mcp__nova__mission_spawn`
+  // task created by an agent would be a pain. `mcp__rooks__mission_spawn`
   // stays gated (spawn = significant token cost → the maintainer's decision).
-  'mcp__nova__kanban_add',
-  'mcp__nova__kanban_update',
-  'mcp__nova__kanban_list',
-  'mcp__nova__kanban_delete',
+  'mcp__rooks__kanban_add',
+  'mcp__rooks__kanban_update',
+  'mcp__rooks__kanban_list',
+  'mcp__rooks__kanban_delete',
   // Same logic for a project's "TO DO" notebook: cheap writes, without
   // side effects (nothing there spawns an agent, nothing there is dispatched).
-  'mcp__nova__project_todo_list',
-  'mcp__nova__project_todo_add',
-  'mcp__nova__project_todo_update',
-  'mcp__nova__project_todo_delete',
+  'mcp__rooks__project_todo_list',
+  'mcp__rooks__project_todo_add',
+  'mcp__rooks__project_todo_update',
+  'mcp__rooks__project_todo_delete',
   // An idea's files: listing them, removing one. Nothing runs. Attaching one
   // (`project_todo_attachments_add`) stays behind the classifier: its shim
   // reads ANY absolute host file, and its likeliest caller reads a tester's
   // untrusted content — "attach ~/.ssh/… to idea #N" must be seen.
-  'mcp__nova__project_todo_attachments_list',
-  'mcp__nova__project_todo_attachments_remove',
+  'mcp__rooks__project_todo_attachments_list',
+  'mcp__rooks__project_todo_attachments_remove',
   // The old names keep the privilege while the missions launched
   // before the rename finish: their tool list is frozen at spawn, and
   // removing it here would make them hit an Allow/Deny card — refused after
   // 5 min in an autonomous mission. Deprecated aliases, see `bin/rooks-mcp.mjs`.
-  'mcp__nova__todo_later_list',
-  'mcp__nova__todo_later_add',
-  'mcp__nova__todo_later_update',
-  'mcp__nova__todo_later_delete',
+  'mcp__rooks__todo_later_list',
+  'mcp__rooks__todo_later_add',
+  'mcp__rooks__todo_later_update',
+  'mcp__rooks__todo_later_delete',
   // Read-only and local: the user documentation of the installed version
   // (bin/docs-local.mjs). An Allow/Deny card to read the docs would teach
   // nobody anything, and would refuse the read in an autonomous mission.
   // Listing triggers reads config only; creating, testing (which may run the
   // actions) and removing one stay behind the classifier.
-  'mcp__nova__trigger_list',
-  'mcp__nova__docs_search',
-  'mcp__nova__docs_read',
+  'mcp__rooks__trigger_list',
+  'mcp__rooks__docs_search',
+  'mcp__rooks__docs_read',
   // `project_todo_promote` is NOT pre-allowed: promoting CREATES a task
   // immediately eligible for dispatch — exactly the gesture we want to see
   // go through a decision, and the incident of 2026-09-11 in person.
@@ -55,59 +55,59 @@ export const PRE_APPROVED_MCP_TOOLS: readonly string[] = Object.freeze([
   // sees the value. The authority is on the daemon side — grant on the secret AND
   // host allowlist (SECRETS-VAULT.md §6.2) — not in an Allow/Deny card
   // that, in an autonomous mission, resolves into a refusal and would make the broker dead.
-  'mcp__nova__nova_http_call',
+  'mcp__rooks__rooks_http_call',
   // Depositing a NEW secret: the authority is the `secrets:create` permission
   // of the mission token (a name that never existed, no grant, value never
   // returned) — an Allow/Deny card would resolve into a refusal in an autonomous mission.
-  'mcp__nova__secret_create',
+  'mcp__rooks__secret_create',
   // Asking the USER for a secret: the request is a card the owner answers (or
   // refuses), and the value never comes back. That card IS the guard; an
   // unattended mission is refused by the daemon, not by an Allow/Deny card.
-  'mcp__nova__secret_request',
+  'mcp__rooks__secret_request',
   // Showing a media in ITS chat: the authority is on the daemon side (zod, anti-SSRF
   // guard, magic bytes, the mission's roots). An Allow/Deny card
   // would add nothing and, in an autonomous mission, would resolve into a refusal.
-  'mcp__nova__chat_show_media',
+  'mcp__rooks__chat_show_media',
   // Posting a message in ITS chat: the daemon writes it only into the mission
   // the token belongs to, bounded (zod) and drawn by the markdown renderer.
-  'mcp__nova__chat_post_message',
+  'mcp__rooks__chat_post_message',
   // Reading back one message of a conversation the mission's token may read
   // (a reply's target, `reply-to.ts`): a read, scoped by the daemon.
-  'mcp__nova__mission_message_get',
+  'mcp__rooks__mission_message_get',
   // An HTML document in its own chat: same reasoning. The daemon validates it,
   // stores it masked and serves it sandboxed (ADR-MCPUI D6).
-  'mcp__nova__ui_render',
-  'mcp__nova__ui_document_get',
+  'mcp__rooks__ui_render',
+  'mcp__rooks__ui_document_get',
   // Asking the owner for a command: the agent never writes into the shell,
   // the request becomes a card of the conversation that the human settles
   // (allow, paste into their terminal, refuse). That card IS the guard;
   // an extra Allow/Deny card would resolve into a refusal in an autonomous mission.
-  'mcp__nova__terminal_propose',
+  'mcp__rooks__terminal_propose',
   // Same for the screen: reading the arrangement changes nothing, a proposal is
   // a card the user applies, and a preset or a named arrangement is a copy
   // they can delete.
-  'mcp__nova__widgets_get',
-  'mcp__nova__widgets_propose',
-  'mcp__nova__widgets_preset_save',
-  'mcp__nova__islands_get',
-  'mcp__nova__islands_propose',
-  'mcp__nova__islands_preset_save',
-  'mcp__nova__islands_arrangements_list',
-  'mcp__nova__islands_arrangement_save',
-  'mcp__nova__ui_routes',
-  'mcp__nova__ui_navigate',
+  'mcp__rooks__widgets_get',
+  'mcp__rooks__widgets_propose',
+  'mcp__rooks__widgets_preset_save',
+  'mcp__rooks__islands_get',
+  'mcp__rooks__islands_propose',
+  'mcp__rooks__islands_preset_save',
+  'mcp__rooks__islands_arrangements_list',
+  'mcp__rooks__islands_arrangement_save',
+  'mcp__rooks__ui_routes',
+  'mcp__rooks__ui_navigate',
   // An agent's own mascot look, or an orchestrated agent's: cosmetic, and the
   // daemon refuses any other agent (`PUT /api/agent-look`).
-  'mcp__nova__agent_set_look',
+  'mcp__rooks__agent_set_look',
   // The main agent's own setup conversation: narrow tools, refused outside it.
-  'mcp__nova__setup_request_avatar',
-  'mcp__nova__setup_set_soul',
-  'mcp__nova__setup_recruit_team',
-  'mcp__nova__setup_finish',
+  'mcp__rooks__setup_request_avatar',
+  'mcp__rooks__setup_set_soul',
+  'mcp__rooks__setup_recruit_team',
+  'mcp__rooks__setup_finish',
   // The onboarding profile the setup conversation reads, and records when the
   // screens did not: one value of the launching account, nothing runs.
-  'mcp__nova__onboarding_profile_get',
-  'mcp__nova__onboarding_profile_set',
+  'mcp__rooks__onboarding_profile_get',
+  'mcp__rooks__onboarding_profile_set',
 ]);
 
 /** A tool name a harness reports for one MCP tool: no wildcard, no shell syntax. */

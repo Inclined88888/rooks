@@ -220,8 +220,8 @@ test('the catalogue is closed: unknown events, extra properties and free text ar
 
 test('names that a person chose map to other', () => {
   assert.equal(toolValue('Bash'), 'Bash');
-  assert.equal(toolValue('mcp__nova__kanban_add'), 'mcp__nova__kanban_add');
-  assert.equal(toolValue('mcp__nova-browser__click'), 'mcp__nova-browser__click');
+  assert.equal(toolValue('mcp__rooks__kanban_add'), 'mcp__rooks__kanban_add');
+  assert.equal(toolValue('mcp__rooks-browser__click'), 'mcp__rooks-browser__click');
   assert.equal(toolValue('mcp__acme-crm__export_customers'), 'other');
   assert.equal(toolValue('MyPrivateTool'), 'other');
   assert.equal(backendValue('claude'), 'claude');

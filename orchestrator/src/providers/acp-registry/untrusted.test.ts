@@ -199,7 +199,7 @@ test('the session of a registry agent declares Rooks\'s MCP servers with the mis
       .find((message) => message.method === 'session/new');
     assert.ok(request, 'the session was opened');
     const servers = request.params?.mcpServers ?? [];
-    for (const name of ['rooks', 'nova_ask']) {
+    for (const name of ['rooks', 'rooks_ask']) {
       const token = servers.find((server) => server.name === name)?.env.find((entry) => entry.name === 'ROOKS_API_TOKEN')?.value;
       assert.ok(token && !token.startsWith('rooks-seal-'), `${name} carries a real token, not a reference`);
       assert.notEqual(token, DAEMON_TOKEN, 'the mission\'s own token, never the daemon\'s');

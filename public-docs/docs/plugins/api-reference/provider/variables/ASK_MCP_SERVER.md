@@ -3,4 +3,4 @@
 
 # Variable: ASK\_MCP\_SERVER
 
-> `const` **ASK\_MCP\_SERVER**: `"nova_ask"` = `'nova_ask'`
+> `const` **ASK\_MCP\_SERVER**: `"rooks_ask"` = `'rooks_ask'`

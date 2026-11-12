@@ -92,7 +92,7 @@ test('inferType lit le dossier nommé, pas le bucket date', () => {
   assert.equal(inferType({ type: 'person' }, 'x.md', [], '', () => false), 'person');
   assert.equal(inferType({}, 'journal/2026-08-26.md', ['daily-note'], '', () => false), 'daily');
   assert.equal(
-    inferType({}, 'wiki/projects/rooks/_index.md', [], '', () => false),
-    'rooks',
+    inferType({}, 'wiki/projects/acme/_index.md', [], '', () => false),
+    'acme',
   );
 });

@@ -27,7 +27,7 @@ import {
 
 /** Same vectors as `app/src/lib/workspace-scope.test.ts`: a drift on either side reads another account's rows. */
 test('the scope hash matches the app, vector for vector', () => {
-  assert.equal(workspaceKey('user-1', '/chat', 'rooks'), 'v2.8291cf877624b87afd146a96827a920d843da0cd');
+  assert.equal(workspaceKey('user-1', '/chat', 'rooks'), 'v2.088cd4e04a6d0bd0e6995802a4f5107fef908554');
   assert.equal(workspaceKey('user-1', '/', null), 'v2.487f3eb51e8412ef2ba2c1c58bb149023be5c862');
   assert.equal(sharedPresetsKey('user-1', '/'), 'v2.487f3eb51e8412ef2ba2c1c58bb149023be5c862.shared-presets');
 });

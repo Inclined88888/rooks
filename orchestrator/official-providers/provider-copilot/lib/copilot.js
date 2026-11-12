@@ -285,7 +285,7 @@ export function copilotRules(policy, formsServer) {
  * and names a local server `local`. The agent's own servers come first, then Rooks's, the project's
  * index and the browser — the order the CLI's allow rules were always written in.
  *
- * `ROOKS_API_TOKEN` is the mission's own token, and `nova_ask` has no fallback without it. The plan
+ * `ROOKS_API_TOKEN` is the mission's own token, and `rooks_ask` has no fallback without it. The plan
  * carries it as a reference; it is written as `${ROOKS_API_TOKEN}`, which the CLI expands from its
  * own environment when it starts the server (documented for the `env` field): the file on disk names
  * the variable, never the value.
@@ -543,7 +543,7 @@ export function createCopilotProvider(services) {
             const plan = await services.mcp(opts);
             const mcpConfig = mcpConfigFrom(plan);
             const mcpFile = scratch.writeFile('mcp-config.json', JSON.stringify(mcpConfig));
-            const formsServer = plan.servers.find((server) => server.role === 'forms')?.name ?? 'nova_ask';
+            const formsServer = plan.servers.find((server) => server.role === 'forms')?.name ?? 'rooks_ask';
             const rules = copilotRules(plan.commandPolicy, formsServer);
 
             const args = [

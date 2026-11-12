@@ -95,7 +95,7 @@ function askOnce(orchUrl: string, token: string | undefined, toolUseId: string):
           params: {
             name: 'request',
             arguments: {
-              tool_name: 'mcp__nova__agent_send_message',
+              tool_name: 'mcp__rooks__agent_send_message',
               input: { to_agent: 'company.marketing', payload: 'ping' },
               tool_use_id: toolUseId,
             },

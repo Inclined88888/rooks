@@ -40,7 +40,7 @@ test('plugin hooks: the relay forwards the exact bytes and the Standard Webhooks
 });
 
 test('plugin hooks: a bad id or name is refused like an unknown webhook, before the daemon is asked', async () => {
-  for (const [plugin, name] of [['..', 'issues'], ['-ab', 'issues'], ['Acme', 'issues'], ['%40nova%2Fx', 'issues'], ['@rooks', 'issues'], ['acme', '../x'], ['acme', 'UP'], ['acme', '']]) {
+  for (const [plugin, name] of [['..', 'issues'], ['-ab', 'issues'], ['Acme', 'issues'], ['%40evil%2Fx', 'issues'], ['@rooks', 'issues'], ['acme', '../x'], ['acme', 'UP'], ['acme', '']]) {
     const { res, seen } = await relay(plugin!, name!, '{}');
     assert.equal(res.status, 401, `${plugin}/${name}`);
     assert.deepEqual(await res.json(), { error: 'authentication failed' });

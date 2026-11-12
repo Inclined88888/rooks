@@ -3,7 +3,7 @@
  * stubbed daemon), because the bug it fixes lives exactly in the URL it builds.
  *
  * Proven with curl, unauthenticated, against the running instance:
- *   /api/ui/plugins/%40nova%2Fkanban/enabled → 400, empty body
+ *   /api/ui/plugins/%40rooks%2Fkanban/enabled → 400, empty body
  *   /api/ui/plugins/kanban/enabled            → 401, JSON
  * The ingress rejects `%2F` in a path segment before Next and before auth, so
  * every bundled module — all of them scoped `@rooks/…` — had a switch that did
@@ -59,7 +59,7 @@ test('a scoped id reaches the daemon re-encoded, with the session cookie and not
     const response = await post({ id: '@rooks/kanban', enabled: false }, 'session-one');
     assert.equal(response.status, 200);
     assert.equal(calls.length, 1, 'exactly one hop to the daemon');
-    assert.ok(calls[0]!.url.endsWith('/api/plugins/%40nova%2Fkanban/enabled'), calls[0]!.url);
+    assert.ok(calls[0]!.url.endsWith('/api/plugins/%40rooks%2Fkanban/enabled'), calls[0]!.url);
     assert.deepEqual(JSON.parse(String(calls[0]!.init?.body)), { enabled: false }, 'the id does not leak into the daemon body');
     const headers = new Headers(calls[0]!.init?.headers);
     assert.equal(headers.get('cookie'), 'rooks_session=session-one');
@@ -107,7 +107,7 @@ test('an unusable payload is refused before any hop to the daemon', async () => 
 test('an id with surrounding spaces is trimmed, not passed through', async () => {
   await withRoute(async (post, calls) => {
     await post({ id: '  @rooks/kanban  ', enabled: true }, 'session-one');
-    assert.ok(calls[0]!.url.endsWith('/api/plugins/%40nova%2Fkanban/enabled'), calls[0]!.url);
+    assert.ok(calls[0]!.url.endsWith('/api/plugins/%40rooks%2Fkanban/enabled'), calls[0]!.url);
   });
 });
 

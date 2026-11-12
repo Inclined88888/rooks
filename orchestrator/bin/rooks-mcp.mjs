@@ -2,7 +2,7 @@
 /**
  * ROOKS MCP server (official).
  *
- * Spawned by Claude Code as a stdio MCP server, alongside `nova_ask`.
+ * Spawned by Claude Code as a stdio MCP server, alongside `rooks_ask`.
  * Exposes a small set of ROOKS-specific tools (Kanban + missions) with
  * explicit names to avoid any confusion with Claude Code harness's internal
  * tools (notably `TaskCreate`, which is the agent's local todo-list, NOT the

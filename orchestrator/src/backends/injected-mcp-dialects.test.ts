@@ -22,11 +22,11 @@ mkdirSync(process.env.CODEX_AUTH_DIR, { recursive: true });
 writeFileSync(join(process.env.CODEX_AUTH_DIR, 'auth.json'), JSON.stringify({ tokens: { access_token: 'test-only' } }));
 
 /** Stubs as an earlier version left them, plus one real connector. */
-const STALE = ['ext-rooks', 'ext-rooks-browser', 'ext-grepai', 'ext-nova_ask'];
+const STALE = ['ext-rooks', 'ext-rooks-browser', 'ext-grepai', 'ext-rooks_ask'];
 mkdirSync(MCP_DIR, { recursive: true });
 for (const [id, key] of [
   ['ext-rooks', 'rooks'], ['ext-rooks-browser', 'rooks-browser'], ['ext-grepai', 'grepai'],
-  ['ext-nova_ask', ASK_MCP_SERVER], ['ext-acme', 'acme'],
+  ['ext-rooks_ask', ASK_MCP_SERVER], ['ext-acme', 'acme'],
 ] as const) {
   writeFileSync(join(MCP_DIR, `${id}.json`), JSON.stringify({
     id, name: key, transport: { type: 'external', claude_key: key }, source: 'claude_ai',
@@ -52,7 +52,7 @@ test('claude: excluding the stubs of the injected servers does not ban their too
   const disallowed = argAfter(spec.args, '--disallowedTools')!.split(',');
   // Positive control: an exclusion is still honoured for a real connector.
   assert.ok(disallowed.includes('mcp__acme__*'));
-  for (const key of ['rooks', 'rooks-browser', 'grepai', 'nova_ask']) {
+  for (const key of ['rooks', 'rooks-browser', 'grepai', 'rooks_ask']) {
     assert.ok(!disallowed.includes(`mcp__${key}__*`), `mcp__${key}__* must stay allowed`);
   }
   const mcp = JSON.parse(argAfter(spec.args, '--mcp-config')!) as { mcpServers: Record<string, unknown> };

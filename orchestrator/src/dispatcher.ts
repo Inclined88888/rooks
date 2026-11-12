@@ -87,8 +87,8 @@ const TYPE_ALLOWED_TOOLS: Partial<Record<TaskType, string[]>> = {
  *  a human card at night is a task that never closes and a pilot that never
  *  gets its return — the exact failure these tools exist to remove. */
 const CLOSURE_ALLOWED_TOOLS = [
-  'mcp__nova__kanban_mark_as_done',
-  'mcp__nova__kanban_mark_as_failed',
+  'mcp__rooks__kanban_mark_as_done',
+  'mcp__rooks__kanban_mark_as_failed',
 ];
 
 /** Maps a task type to the role its executing agent must hold. */

@@ -91,8 +91,8 @@ test('#464: Windows reads the home from the registered task', () => {
   const xml = renderTaskXml({ userName: 't', novaHome: dead, installDir: 'C:\\Rooks' });
   const exists = (path: string) => path !== dead;
   const found = orphanServices({ platform: 'win32', homeDir: 'C:\\Users\\t', readWindowsTask: () => xml, exists });
-  assert.deepEqual(found.map((orphan) => [orphan.name, orphan.home]), [['NovaOrchestrator', dead]]);
-  assert.match(found[0]!.removal, /schtasks \/Delete \/TN NovaOrchestrator \/F/);
+  assert.deepEqual(found.map((orphan) => [orphan.name, orphan.home]), [['RooksOrchestrator', dead]]);
+  assert.match(found[0]!.removal, /schtasks \/Delete \/TN RooksOrchestrator \/F/);
   assert.deepEqual(orphanServices({ platform: 'win32', homeDir: 'C:\\Users\\t', readWindowsTask: () => xml, exists: () => true }), []);
   assert.deepEqual(orphanServices({ platform: 'win32', homeDir: 'C:\\Users\\t', readWindowsTask: () => null }), []);
   assert.deepEqual(orphanServices({ platform: 'win32', homeDir: 'C:\\Users\\t', readWindowsTask: () => { throw new Error('no powershell'); } }), []);

@@ -336,7 +336,7 @@ test('windows: la tâche planifiée est créée depuis un XML, au boot, en S4U',
   // daemon qu'une réinstallation remplace : IgnoreNew ignorerait `/Run`.
   // Onboarding: the embedded daemon on the port serves the wizard, never ended.
   assert.doesNotMatch(batch, /Get-NetTCPConnection/);
-  const order = ['schtasks /Create /TN NovaOrchestrator /XML', 'taskkill.exe /F /T', 'schtasks /Run /TN NovaOrchestrator']
+  const order = ['schtasks /Create /TN RooksOrchestrator /XML', 'taskkill.exe /F /T', 'schtasks /Run /TN RooksOrchestrator']
     .map((needle) => batch.indexOf(needle));
   assert.ok(order.every((at) => at >= 0), batch);
   assert.deepEqual([...order].sort((x, y) => x - y), order);
@@ -476,7 +476,7 @@ test('windows: après /Run, le batch élevé vérifie que la tâche a tourné, e
   const opts = fixture('win32', () => ({ code: 0, stdout: '', stderr: '' }));
   installService({ ...opts, readFile: () => transcript({ create: 0, stop: 0, run: 0, verify: 0 }) });
   const batch = readFileSync(elevatedScriptPath(), 'utf8');
-  const run = batch.indexOf('schtasks /Run /TN NovaOrchestrator');
+  const run = batch.indexOf('schtasks /Run /TN RooksOrchestrator');
   const verify = batch.indexOf('Get-ScheduledTaskInfo');
   assert.ok(run >= 0 && verify > run, batch);
   // `/Run` refusé : rien à vérifier, la tâche n'a pas été lancée par nous.
@@ -487,7 +487,7 @@ test('windows: après /Run, le batch élevé vérifie que la tâche a tourné, e
   assert.match(step, /LastRunTime\.Year -ge 2000/);
   assert.match(step, /if \(-not \$i\) \{ exit 0 \}/);
   assert.ok(step.includes(`AddSeconds(${TASK_VERIFY_SECONDS})`));
-  assert.match(step, /schtasks\.exe \/Delete \/TN 'NovaOrchestrator' \/F/);
+  assert.match(step, /schtasks\.exe \/Delete \/TN 'RooksOrchestrator' \/F/);
   // Ni `"` ni `%` : la commande traverse cmd entre guillemets.
   assert.doesNotMatch(step, /["%]/);
 });
@@ -586,7 +586,7 @@ test('windows: install ends the daemon of this installation that holds the port'
   const opts = fixture('win32', () => ({ code: 0, stdout: '', stderr: '' }));
   installService({ ...opts, replacePortOwner: true, readFile: () => transcript({ create: 0, stop: 0, 'stop-port': 0, run: 0, verify: 0 }) });
   const batch = readFileSync(elevatedScriptPath(), 'utf8');
-  const order = ['taskkill.exe /F /T /PID $_.ProcessId', 'Get-NetTCPConnection', 'schtasks /Run /TN NovaOrchestrator'].map((n) => batch.indexOf(n));
+  const order = ['taskkill.exe /F /T /PID $_.ProcessId', 'Get-NetTCPConnection', 'schtasks /Run /TN RooksOrchestrator'].map((n) => batch.indexOf(n));
   assert.ok(order.every((at) => at >= 0), batch);
   assert.deepEqual([...order].sort((x, y) => x - y), order);
 });
@@ -607,7 +607,7 @@ test('windows: restart ends the launcher tree then runs the task, under one elev
   assert.equal(calls[0]![0], 'powershell');
   assert.match(calls[0]!.join(' '), /-Verb RunAs/);
   const batch = readFileSync(elevatedScriptPath(), 'utf8');
-  assert.ok(batch.indexOf('taskkill.exe /F /T') < batch.indexOf('schtasks /Run /TN NovaOrchestrator'));
+  assert.ok(batch.indexOf('taskkill.exe /F /T') < batch.indexOf('schtasks /Run /TN RooksOrchestrator'));
   assert.doesNotMatch(batch, /\/Create|\/Delete|\/End/, 'the task itself is left as it is');
 });
 
@@ -641,8 +641,8 @@ test('windows: uninstall supprime la tâche, arrête son daemon, et laisse ROOKS
   // relancer entre les deux. Et `/End` ne garde rien : une tâche à l'arrêt
   // fait échouer `/End` et doit partir quand même.
   const batch = readFileSync(elevatedScriptPath(), 'utf8');
-  assert.ok(batch.indexOf('/Delete /TN NovaOrchestrator /F') < batch.indexOf('taskkill.exe'));
-  assert.match(batch, /schtasks \/End \/TN NovaOrchestrator/);
+  assert.ok(batch.indexOf('/Delete /TN RooksOrchestrator /F') < batch.indexOf('taskkill.exe'));
+  assert.match(batch, /schtasks \/End \/TN RooksOrchestrator/);
   assert.doesNotMatch(batch, /goto :done/);
   // Les fichiers de la tâche partent avec elle, le constat de refus aussi
   // (TODO #342 : sinon le setup n'offrirait plus que le mode portable) ; les données restent.
@@ -698,7 +698,7 @@ test('windows: une tâche qui n\'a pas pu être supprimée garde son lanceur', (
 
 test('windows: status lit la tâche, et une tâche absente n\'est pas « running »', () => {
   const running = statusService(fixture('win32', () => ({
-    code: 0, stdout: 'TaskName: \\NovaOrchestrator\nStatus: Running\n', stderr: '',
+    code: 0, stdout: 'TaskName: \\RooksOrchestrator\nStatus: Running\n', stderr: '',
   })));
   assert.equal(running.ok, true);
   assert.equal(running.code, 0);
@@ -1016,7 +1016,7 @@ test('a failed upgrade puts the previous definition back and restarts it', () =>
     return { code: 0, stdout: '<?xml version="1.0"?><Task>é</Task>', stderr: '' };
   });
   assert.equal(readServiceDefinition(win), '<?xml version="1.0"?><Task>é</Task>');
-  assert.match(winCalls[0]!.at(-1)!, /OutputEncoding = \[Text\.Encoding\]::UTF8; Export-ScheduledTask -TaskName 'NovaOrchestrator'/);
+  assert.match(winCalls[0]!.at(-1)!, /OutputEncoding = \[Text\.Encoding\]::UTF8; Export-ScheduledTask -TaskName 'RooksOrchestrator'/);
   assert.equal(readServiceDefinition(fixture('win32', () => ({ code: 1, stdout: '', stderr: 'not found' }))), null);
 
   const files = windowsServiceFiles(win.novaHome, join);
@@ -1239,7 +1239,7 @@ test('windows: stop disables the task, ends the daemon and the orphans under one
   assert.equal(res.ok, true, res.lines.join('\n'));
   assert.equal(calls.filter((c) => c[0] === 'powershell').length, 1, 'a single elevated process');
   const batch = readFileSync(elevatedScriptPath(), 'utf8');
-  const order = ['/Change /TN NovaOrchestrator /DISABLE', '/End /TN NovaOrchestrator', 'taskkill.exe /F /T /PID $_.ProcessId', 'browser-mcp']
+  const order = ['/Change /TN RooksOrchestrator /DISABLE', '/End /TN RooksOrchestrator', 'taskkill.exe /F /T /PID $_.ProcessId', 'browser-mcp']
     .map((needle) => batch.indexOf(needle));
   assert.ok(order.every((at) => at >= 0), batch);
   assert.deepEqual([...order].sort((x, y) => x - y), order, 'disabled first, the daemon next, the sweep last');

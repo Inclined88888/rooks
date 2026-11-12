@@ -66,7 +66,7 @@ function run(ctx, args) {
 }
 
 test('install.ps1 pins the manifest and the key the daemon trusts', () => {
-  assert.match(TEXT, /\$manifestUrl = 'https:\/\/rooks-ai\.com\/\.well-known\/rooks-releases\.json'/);
+  assert.match(TEXT, /\$manifestUrl = 'https:\/\/rooks.local\/\.well-known\/rooks-releases\.json'/);
   const keyring = readFileSync(join(dirname(SCRIPT), '..', 'orchestrator', 'src', 'plugins-bundled', 'updates', 'keyring.ts'), 'utf8');
   const keyId = /keyId: '([^']+)'/.exec(keyring)[1];
   assert.ok(TEXT.includes(`$releaseKeyId = '${keyId}'`), 'install.ps1 pins the keyId of keyring.ts');

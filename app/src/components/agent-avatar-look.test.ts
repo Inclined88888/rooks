@@ -32,7 +32,7 @@ test('no picture but a look: the mascot; a picture: the picture; neither: the in
   assert.match(picture, /<img[^>]+rooks\.png/);
   const initial = renderToStaticMarkup(createElement(AgentAvatar, { identity: agentIdentity({ name: 'rooks' }, null) }));
   assert.doesNotMatch(initial, /data-agent-mascot/);
-  assert.match(initial, /<span>n<\/span>/);
+  assert.match(initial, /<span>r<\/span>/);
 });
 
 test('a picked head wins over the order; a pick without its setting, an unknown pick or none keeps the order', () => {

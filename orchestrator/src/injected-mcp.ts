@@ -4,7 +4,7 @@
  * The harness reports them in its `init` like any other server, so they must
  * never be mistaken for an account connector: a stub `ext-rooks` listed next to
  * the real server read as a second `rooks` with other rights, and excluding it
- * turned into `--disallowedTools mcp__nova__*`, which cut an agent off from its
+ * turned into `--disallowedTools mcp__rooks__*`, which cut an agent off from its
  * own Kanban tools.
  *
  * Leaf module on purpose: `mcp.ts`, `agent.ts` and every dialect import it, so
@@ -35,7 +35,12 @@ function normalise(key: string): string {
   return key.toLowerCase().replace(/[^a-z0-9]+/g, '_');
 }
 
-const INJECTED = new Set(INJECTED_MCP_SERVERS.map(normalise));
+const INJECTED = new Set([
+  ...INJECTED_MCP_SERVERS.map(normalise),
+  // Archive-era browser key (Nova body / codex underscore form).
+  normalise('nova-browser'),
+  normalise('nova_browser'),
+]);
 
 /** Whether `key` (a server name as a harness reports it) is one Rooks injects. */
 export function isInjectedMcpServer(key: string): boolean {

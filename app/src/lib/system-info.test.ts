@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { diagnosticFileName, listenLabel, serviceState, versionGap, type ServiceReport } from './system-info';
 
 const SERVICE: ServiceReport = {
-  supervisor: 'windows', name: 'NovaOrchestrator', installed: true, running: true, reason: null,
+  supervisor: 'windows', name: 'RooksOrchestrator', installed: true, running: true, reason: null,
   windows: null, stale: false, action: null, actionHere: false, command: 'rooks service install',
 };
 

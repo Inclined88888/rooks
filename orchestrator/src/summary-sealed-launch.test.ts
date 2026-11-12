@@ -126,7 +126,7 @@ test('Claude: a one-shot that asks for a tool keeps it, in plan mode, still with
     assert.match(args[args.indexOf('--allowedTools') + 1]!, /(^|,)WebSearch(,|$)/);
     assert.equal(args[args.indexOf('--permission-mode') + 1], 'plan');
     const mcp = JSON.parse(args[args.indexOf('--mcp-config') + 1]!) as { mcpServers: Record<string, unknown> };
-    assert.equal('rooks' in mcp.mcpServers || 'nova_ask' in mcp.mcpServers, false);
+    assert.equal('rooks' in mcp.mcpServers || 'rooks_ask' in mcp.mcpServers, false);
     assert.equal(existsSync(claudeScratch(args)), false);
   });
 });

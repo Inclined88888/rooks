@@ -3,7 +3,7 @@
  *
  * The harness reports `rooks`, `rooks-browser`… in its `init`; each used to get
  * an `ext-*` stub that the agent-creation default then excluded, which banned
- * `mcp__nova__*` for every agent created through the API.
+ * `mcp__rooks__*` for every agent created through the API.
  */
 import './test-home.js';
 import { test } from 'node:test';
@@ -36,7 +36,7 @@ test('the list covers what every dialect registers, and the browser key is the r
   assert.ok(isInjectedMcpServer(LEGACY_ASK_MCP_SERVER));
   assert.ok(isInjectedMcpServer('grepai'));
   // codex surfaces the browser with its dash turned into an underscore.
-  assert.ok(isInjectedMcpServer('nova_browser'));
+  assert.ok(isInjectedMcpServer('rooks_browser'));
 });
 
 test('a server that is not Rooks\'s own is not in the list', () => {
@@ -47,7 +47,7 @@ test('a server that is not Rooks\'s own is not in the list', () => {
 });
 
 test('a stub id is recognised from its id alone', () => {
-  for (const id of ['ext-rooks', 'ext-rooks-browser', 'ext-nova_browser', 'ext-nova_ask', 'ext-nova_permission', 'ext-grepai']) {
+  for (const id of ['ext-rooks', 'ext-rooks-browser', 'ext-rooks-browser', 'ext-rooks_ask', 'ext-rooks_permission', 'ext-grepai']) {
     assert.ok(isInjectedMcpStubId(id), id);
   }
   for (const id of ['ext-acme', 'ext-chrome-devtools', 'rooks', 'grepai', 'ext-claude.ai-notes']) {
@@ -58,8 +58,8 @@ test('a stub id is recognised from its id alone', () => {
 test('init: the servers Rooks injects get no stub, an account connector still does', () => {
   refreshToolsCacheFromInit({
     tools: [
-      'mcp__nova__kanban_add', 'mcp__nova-browser__take_snapshot', 'mcp__grepai__grepai_search',
-      'mcp__nova_ask__question', 'mcp__acme_crm__search',
+      'mcp__rooks__kanban_add', 'mcp__rooks-browser__take_snapshot', 'mcp__grepai__grepai_search',
+      'mcp__rooks_ask__question', 'mcp__acme_crm__search',
     ],
     mcp_servers: [
       { name: 'rooks', status: 'connected' },
@@ -73,7 +73,7 @@ test('init: the servers Rooks injects get no stub, an account connector still do
   const ids = listMcp().map((m) => m.id);
   // Positive control: discovery still works, so the absence below means something.
   assert.ok(ids.includes('ext-acme_crm'));
-  for (const id of ['ext-rooks', 'ext-rooks-browser', 'ext-grepai', 'ext-nova_ask', 'ext-nova_permission']) {
+  for (const id of ['ext-rooks', 'ext-rooks-browser', 'ext-grepai', 'ext-rooks_ask', 'ext-rooks_permission']) {
     assert.ok(!ids.includes(id), `${id} must not be created`);
     assert.ok(!existsSync(join(MCP_DIR, `${id}.json`)), `${id} must not be on disk`);
   }
@@ -83,7 +83,7 @@ test('a stub left by an earlier version is hidden, and a later init does not ref
   const id = writeStub('rooks');
   assert.ok(!listMcp().some((m) => m.id === id));
   refreshToolsCacheFromInit({
-    tools: ['mcp__nova__kanban_add'],
+    tools: ['mcp__rooks__kanban_add'],
     mcp_servers: [{ name: 'rooks', status: 'connected' }],
   });
   const raw = JSON.parse(readFileSync(join(MCP_DIR, `${id}.json`), 'utf8')) as { tools_cache?: string[] };

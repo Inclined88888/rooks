@@ -109,7 +109,7 @@ for (const { backend, args } of AGENTS) {
         .find((message) => message.method === 'session/new');
       assert.ok(request, 'the session was opened');
       const servers = request.params?.mcpServers ?? [];
-      for (const name of ['rooks', 'nova_ask']) {
+      for (const name of ['rooks', 'rooks_ask']) {
         const server = servers.find((candidate) => candidate.name === name);
         assert.ok(server, `${name} is declared to the agent`);
         assert.equal(server.env.find((entry) => entry.name === 'ROOKS_API_TOKEN')?.value, token, `${name} carries the mission's token`);

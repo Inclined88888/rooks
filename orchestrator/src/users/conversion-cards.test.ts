@@ -91,7 +91,7 @@ test('the card of an MCP server that is not Rooks\'s is denied at once, the note
 test('a card for one of Rooks\'s own tools opens for a person instead of being auto-allowed', async () => {
   const { token, missionId } = conversion();
   const waiting = new AbortController();
-  const asked = card(token, missionId, 'mcp__nova__skill_put', waiting.signal).catch(() => null);
+  const asked = card(token, missionId, 'mcp__rooks__skill_put', waiting.signal).catch(() => null);
   try {
     for (let i = 0; i < 100 && !listPending(missionId).length; i++) await new Promise((r) => setTimeout(r, 20));
     assert.equal(listPending(missionId).length, 1, 'the card waits for a person');
@@ -111,12 +111,12 @@ test('an ordinary mission of the same developer keeps its auto-allow', async () 
 });
 
 test('the card rule is closed by default: forms and Rooks\'s own MCP tools only', () => {
-  for (const tool of ['ask_user', 'mcp__nova__skill_put', 'mcp__nova-browser__take_snapshot', 'mcp__nova_browser__navigate_page',
-    'mcp__nova_ask__question', 'mcp__nova_permission__ask_user']) {
+  for (const tool of ['ask_user', 'mcp__rooks__skill_put', 'mcp__rooks-browser__take_snapshot', 'mcp__rooks-browser__navigate_page',
+    'mcp__rooks_ask__question', 'mcp__rooks_permission__ask_user']) {
     assert.equal(conversionToolCardRefusal(tool), null, tool);
   }
   for (const tool of ['Bash', 'BashOutput', 'KillShell', 'Write', 'Edit', 'WebSearch', 'Task', 'read', 'mcp_nova',
-    'Read', 'Glob', 'Grep', 'LS', ...FOREIGN_MCP, 'mcp__nova', 'mcp__nova__', 'mcp__novax__skill_put', 'mcp__evil__mcp__nova__skill_put',
+    'Read', 'Glob', 'Grep', 'LS', ...FOREIGN_MCP, 'mcp__rooks', 'mcp__rooks__', 'mcp__novax__skill_put', 'mcp__evil__mcp__rooks__skill_put',
     'mcp__chrome-devtools__navigate_page']) {
     assert.ok(conversionToolCardRefusal(tool), tool);
   }

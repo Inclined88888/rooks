@@ -212,16 +212,16 @@ function said(events: NormalizedEvent[]): string {
   return events.filter((e) => e.type === 'assistant_delta').map((e) => (e.payload as { text: string }).text).join('');
 }
 
-test('MCP servers: rooks and nova_ask carry the mission identity, the token the daemon issued, and the forms-only flag', async () => {
+test('MCP servers: rooks and rooks_ask carry the mission identity, the token the daemon issued, and the forms-only flag', async () => {
   const s = open('hermes', {}, 'tok-from-runner');
   try {
     await s.driver.start();
     s.events.length = 0;
     await s.driver.prompt('mcp');
     const servers = JSON.parse(said(s.events)) as Array<{ name: string; command: string; args: string[]; env: Array<{ name: string; value: string }> }>;
-    assert.deepEqual(servers.map((x) => x.name), ['rooks', 'nova_ask']);
+    assert.deepEqual(servers.map((x) => x.name), ['rooks', 'rooks_ask']);
     const rooks = servers.find((x) => x.name === 'rooks')!;
-    const perm = servers.find((x) => x.name === 'nova_ask')!;
+    const perm = servers.find((x) => x.name === 'rooks_ask')!;
     assert.equal(rooks.command, 'node');
     assert.deepEqual(rooks.args, [ROOKS_MCP_PATH]);
     assert.deepEqual(perm.args, [PERMISSION_MCP_PATH]);
@@ -369,7 +369,7 @@ for (const c of SESSION_CASES) {
     args: c.args,
     says: 'README updated.',
     stopReason: 'end_turn',
-    mcpServers: ['rooks', 'nova_ask'],
+    mcpServers: ['rooks', 'rooks_ask'],
     permission: { requestId: 'perm-1', tool: 'Edit README.md', allowOptionId: 'allow-once', denyOptionId: 'reject-once' },
     signIn: { script: signedOut, message: c.signIn },
   }, { cwd: tmpdir() }), `[${c.id} session]`);

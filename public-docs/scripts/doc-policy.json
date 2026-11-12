@@ -46,7 +46,7 @@
     {"pattern": "signature keys?", "why": "Signing material."},
     {"pattern": "signing keys?", "why": "Signing material."},
     {"pattern": "\\bseats\\b", "why": "Licence seat accounting."},
-    {"pattern": "\\bnova-site\\b", "why": "Private site administration commands are not customer documentation."},
+    {"pattern": "\\brooks-site\\b", "why": "Private site administration commands are not customer documentation."},
     {"pattern": "/api/v1/admin\\b", "why": "Private licence administration routes are not customer interfaces."},
     {"pattern": "\\bADMIN_(?:KEY|UI_PATH|PASSWORD(?:_HASH)?|TOTP_SECRET|ALLOWED_IPS)\\b", "why": "Private site administration configuration."},
     {"pattern": "\\bpkos\\b", "why": "Legacy internal identifier; never published."}

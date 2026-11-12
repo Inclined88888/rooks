@@ -132,7 +132,7 @@ test('each supervisor has a command a human can paste, and portable mode has non
   assert.equal(restartCommand('systemd-user'), 'systemctl --user restart rooks-orchestrator');
   assert.match(restartCommand('launchd', false)!, /^launchctl kickstart -k gui\/\$\(id -u\)\/com\.rooks\.daemon$/);
   assert.equal(restartCommand('launchd', true), 'sudo launchctl kickstart -k system/com.rooks.daemon');
-  assert.match(restartCommand('windows')!, /^schtasks \/End \/TN NovaOrchestrator && schtasks \/Run \/TN NovaOrchestrator$/);
+  assert.match(restartCommand('windows')!, /^schtasks \/End \/TN RooksOrchestrator && schtasks \/Run \/TN RooksOrchestrator$/);
   // No supervisor: nothing will restart on its own, and the step says so rather
   // than offering a command that does not exist.
   assert.equal(restartCommand(null), null);

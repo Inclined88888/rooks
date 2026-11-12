@@ -2,8 +2,8 @@
  * The forms MCP server (`bin/permission-mcp.mjs`), as a model sees it and as
  * the daemon receives it.
  *
- * The server and two of its tools were renamed (`nova_permission` →
- * `nova_ask`, `ask_user` → `question`, `ask_series_plan` → `kanban_plan`) so
+ * The server and two of its tools were renamed (`rooks_permission` →
+ * `rooks_ask`, `ask_user` → `question`, `ask_series_plan` → `kanban_plan`) so
  * that an agent asked to plan Kanban work picks the planner. Two promises come
  * with a rename, and both are made by the shim, a standalone script no unit
  * test of an exported function would reach — so this runs the real script

@@ -77,7 +77,7 @@ backend has them masked.
 
 - **The fixtures are reconstructed from the documentation.** Green tests mean the provider speaks ACP as documented, not that
   `cursor-agent` behaves as documented. To replace them with a real session, see "Recording a real session".
-- **Rooks's tools may be missing in a Cursor mission.** The plugin declares `rooks` and `nova_ask` in `session/new.mcpServers`.
+- **Rooks's tools may be missing in a Cursor mission.** The plugin declares `rooks` and `rooks_ask` in `session/new.mcpServers`.
   Cursor's ACP page only documents MCP servers from `.cursor/mcp.json`, and its sample client sends none. If Cursor ignores
   the session's list, the agent runs without Rooks's tools (no task closing, no questions, no forms). The plugin never writes a
   `.cursor/mcp.json` in your repository. Unverified.

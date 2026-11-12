@@ -30,7 +30,7 @@ test('a row of the active list → its state', () => {
   assert.equal(liveMascotState(row('a', 'thinking'), null), 'thinking', 'it writes');
   assert.equal(liveMascotState(row('a', 'thinking'), 'Edit'), 'working');
   assert.equal(liveMascotState(row('a', 'thinking'), 'Grep'), 'searching');
-  assert.equal(liveMascotState(row('a', 'thinking'), 'mcp__nova__kanban_list'), 'searching');
+  assert.equal(liveMascotState(row('a', 'thinking'), 'mcp__rooks__kanban_list'), 'searching');
   assert.equal(liveMascotState(row('a', 'idle'), null), 'idle', 'conversation open, no turn');
   assert.equal(liveMascotState(row('a', 'idle', { liveness: 'ended' }), null), 'sleeping');
   assert.equal(liveMascotState(row('a', 'idle', { liveness: 'interrupted' }), null), 'sleeping');

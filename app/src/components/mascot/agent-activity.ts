@@ -20,7 +20,7 @@ export const IDLE_ACTIVITY: AgentActivity = Object.freeze({ busy: false, tool: n
 /** Tools that look things up rather than change them: the mascot scans instead of working. */
 const SEARCHING = /(search|grep|glob|fetch|find|_list$|_get$|read)/i;
 
-/** The short name of an MCP tool (`mcp__nova__setup_set_soul` → `setup_set_soul`). */
+/** The short name of an MCP tool (`mcp__rooks__setup_set_soul` → `setup_set_soul`). */
 export function toolShortName(tool: string): string {
   const parts = tool.split('__');
   return parts[parts.length - 1] ?? tool;

@@ -294,7 +294,7 @@ test('path format: /api/plugins/hooks/<slug>/<name>, never `@` nor `%`, scoped i
     assert.ok(PLUGIN_HOOK_PATH.test(path), path);
   }
   for (const id of ['@Acme/X', '@acme/x y', '@acme/é', '']) assert.equal(pluginHookSlug(id), null, id);
-  assert.equal(PLUGIN_HOOK_PATH.test('/api/plugins/hooks/%40nova%2Ftodo/todo'), false);
+  assert.equal(PLUGIN_HOOK_PATH.test('/api/plugins/hooks/%40rooks%2Ftodo/todo'), false);
 });
 
 test('a scoped plugin is reached through its slug; another id giving the same slug is refused', async () => {

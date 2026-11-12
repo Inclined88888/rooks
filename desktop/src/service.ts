@@ -90,7 +90,7 @@ function macService(home: string, mac: MacServiceSeams): { kind: 'daemon' | 'age
 /** Copies of `WINDOWS_TASK`, `WINDOWS_SERVICE_REVISION` and the file names of
  *  `windowsServiceFiles` (orchestrator `host/service-install.ts`): the two
  *  packages build separately, `packaging.test.ts` holds them together. */
-export const WINDOWS_TASK = 'NovaOrchestrator';
+export const WINDOWS_TASK = 'RooksOrchestrator';
 export const WINDOWS_SERVICE_REVISION = '5';
 export function windowsServiceRevisionFile(home: string): string { return join(home, 'run', 'service-revision'); }
 export function windowsLegacyLauncher(home: string): string { return join(home, 'run', 'rooks-service.vbs'); }

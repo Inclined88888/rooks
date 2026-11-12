@@ -701,7 +701,7 @@ type PreambleContext = {
   /** The agent can hand work to others (orchestrator role or flag, or a delegation list). */
   pilot: boolean;
   /** The backend is handed Rooks's MCP servers (`capabilities.novaMcp`). When
-   *  false, the tools the preamble names (`rooks`, `nova_ask`) do not exist for
+   *  false, the tools the preamble names (`rooks`, `rooks_ask`) do not exist for
    *  this agent: promising them would make it call tools it does not have. */
   novaMcp: boolean;
 };
@@ -738,7 +738,7 @@ not a reason to switch to a daemon token or another transport.
 /** Browser bullet when Rooks's MCP servers are handed to the agent. */
 function novaBrowserBullet(): string {
   return `- **Browser**: each mission has an isolated browser profile (Rooks's built-in browser), driven by
-  the \`rooks-browser\` MCP tools (\`mcp__nova-browser__navigate_page\`, \`take_snapshot\`, \`click\`,
+  the \`rooks-browser\` MCP tools (\`mcp__rooks-browser__navigate_page\`, \`take_snapshot\`, \`click\`,
   \`fill\`, \`take_screenshot\`… — the same tools as chrome-devtools-mcp) — NOT by the \`rooks\` MCP,
   which has no browser tool. If they are not in your tool list, load them (ToolSearch
   "rooks-browser") before concluding there are none. A \`chrome-devtools\` server you may also see
@@ -754,7 +754,7 @@ function novaBrowserBullet(): string {
  *  declared to it, but `browser_status` / `start` / `stop` are tools of `rooks`. */
 function novaBrowserBulletBare(): string {
   return `- **Browser**: each mission has an isolated browser profile (Rooks's built-in browser), driven by
-  the \`rooks-browser\` MCP tools (\`mcp__nova-browser__navigate_page\`, \`take_snapshot\`, \`click\`,
+  the \`rooks-browser\` MCP tools (\`mcp__rooks-browser__navigate_page\`, \`take_snapshot\`, \`click\`,
   \`fill\`, \`take_screenshot\`…), when they are in your tool list. "No browser" or a forbidden profile
   is a refusal: never switch to another profile, a local Chrome, or a browser you launch yourself
   (Playwright, Puppeteer, Docker).
@@ -806,16 +806,16 @@ function novaOfficialTools(): string {
 center. Send a \`report\` after a completed task whose result deserves to be seen, an
 \`alert --urgent\` when you are blocked and \`question\` does not fit. One short report beats three.
 
-## Official Rooks tools (MCP \`rooks\` and \`nova_ask\`)
+## Official Rooks tools (MCP \`rooks\` and \`rooks_ask\`)
 
-The full tool name depends on your CLI (\`mcp__nova__kanban_add\` / \`mcp__nova_ask__question\`, or
-\`nova_kanban_add\` / \`nova_ask_question\`): look for the short name in your tool list. **Do not
+The full tool name depends on your CLI (\`mcp__rooks__kanban_add\` / \`mcp__rooks_ask__question\`, or
+\`rooks_kanban_add\` / \`rooks_ask_question\`): look for the short name in your tool list. **Do not
 confuse them** with your CLI's own todo tools (\`TaskCreate\`, \`TaskList\`…), which change nothing in Rooks.
 
 | You want to…                          | Tool to call                                  |
 |---------------------------------------|-----------------------------------------------|
-| **Create Kanban tasks, start a job**  | \`kanban_plan\` (MCP \`nova_ask\`) **first**     |
-| Have the user decide (one-off)        | \`question\` (MCP \`nova_ask\`)                  |
+| **Create Kanban tasks, start a job**  | \`kanban_plan\` (MCP \`rooks_ask\`) **first**     |
+| Have the user decide (one-off)        | \`question\` (MCP \`rooks_ask\`)                  |
 | Create / change / list / delete a task | \`kanban_add\` / \`kanban_update\` / \`kanban_list\` / \`kanban_delete\` |
 | **Close your task (success / blocked)** | \`kanban_mark_as_done\` / \`kanban_mark_as_failed\` |
 | **Park an idea** (nothing is sent)    | \`project_todo_add\`, then \`project_todo_promote\` |
@@ -892,7 +892,7 @@ function pilotSection(): string {
 
 When the user asks for a big or multi-part job (several independent files or concerns, or above
 ~30 min of sequential work), or talks about tasks ("create Kanban tasks", "dispatch it", "do it in
-parallel", "put such model on the review"), call \`kanban_plan\` of the \`nova_ask\` MCP **first**,
+parallel", "put such model on the review"), call \`kanban_plan\` of the \`rooks_ask\` MCP **first**,
 before any \`kanban_add\` or \`rooks task create\`: \`{ "chantier": "<title>", "volets": [ { "title",
 "description", "group"? } … ] }\`, one part per independent unit of work. It is NOT a \`question\`. Never list
 backends or models yourself: the user picks the mode, models and fallbacks on one screen. When the
@@ -973,18 +973,18 @@ computed without it can already be past, so the task fires at once.
 `;
 }
 
-/** `question` and the referent messages are tools of the `nova_ask` / `rooks` MCPs. */
+/** `question` and the referent messages are tools of the `rooks_ask` / `rooks` MCPs. */
 function novaAskingTheUser(): string {
   return `## Asking the user — hard rule
 
 You run in a web UI, **not** a TTY. For any decision, arbitration, choice between options, or
-permission to run a tool, call the \`question\` tool of the \`nova_ask\` MCP (\`mcp__nova_ask__question\`
-or \`nova_ask_question\` depending on your CLI; 1–4 questions, 2–4 options each, or no options for a free-text answer): it is the only
+permission to run a tool, call the \`question\` tool of the \`rooks_ask\` MCP (\`mcp__rooks_ask__question\`
+or \`rooks_ask_question\` depending on your CLI; 1–4 questions, 2–4 options each, or no options for a free-text answer): it is the only
 channel that shows buttons. **Never** ask "may I do X?" as free text: the user has no button to
 answer and you stay blocked. When an option is an action, set its \`actor\` (\`agent\`: you do it;
 \`user\`: the user does) and word its label in the infinitive ("Switch the repository to main"): the
 form shows who acts as a badge. Big jobs and "create the Kanban tasks" go through \`kanban_plan\`, not
-\`question\`. **Old names**: \`mcp__nova_permission__ask_user\` and \`mcp__nova_permission__ask_series_plan\`
+\`question\`. **Old names**: \`mcp__rooks_permission__ask_user\` and \`mcp__rooks_permission__ask_series_plan\`
 are \`question\` and \`kanban_plan\`. Call the new names.
 
 **Explain in the call, not before it.** The text you write in your turn right before a tool call may
@@ -5559,9 +5559,9 @@ you, or your series' pilot) through \`agent_send_message\`.
 
 The builtin \`AskUserQuestion\` tool is disabled in ROOKS — it needs an
 interactive TTY we don't have. To ask the user a clarifying question
-with predefined options, call the \`question\` tool of the \`nova_ask\` MCP
-server instead (\`mcp__nova_ask__question\`; older prompts call it
-\`mcp__nova_permission__ask_user\`, it is the same tool):
+with predefined options, call the \`question\` tool of the \`rooks_ask\` MCP
+server instead (\`mcp__rooks_ask__question\`; older prompts call it
+\`mcp__rooks_permission__ask_user\`, it is the same tool):
 same schema (1–4 questions, each with 2–4 options, optional
 \`multiSelect\`), and ROOKS renders a proper radio/checkbox form in the
 chat. For an open question (a name, a phrase), omit \`options\`: the
@@ -5851,7 +5851,7 @@ function finalizeBouncedTask(agent: RunningAgent): void {
 
 /**
  * Tool uses an ACP agent asks about become an Allow/Deny card, like the ones
- * claude's `nova_ask` MCP raises: same requests, same auto-refusal on a
+ * claude's `rooks_ask` MCP raises: same requests, same auto-refusal on a
  * mission nobody watches. A developer-owned mission is allowed straight away,
  * as `POST /api/permissions/request` does for the same account and is traced
  * the same way; the rule (`developerAutoAllows`) is shared, so a form card

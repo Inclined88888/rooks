@@ -62,7 +62,7 @@ test('the stand-in ctx answers S1 and S2 with references and no privilege', asyn
   assert.deepEqual(plan.servers.map((s) => s.role), ['rooks', 'forms']);
   assert.equal(plan.identityEnv.ROOKS_API_TOKEN, testing.FAKE_TOKEN_REFERENCE);
   assert.equal(plan.servers[1]!.env.ROOKS_ASK_FORMS_ONLY, '1');
-  assert.equal((await ctx.provider.mcp(spawn, { permissionPrompt: true })).permissionTool, 'mcp__nova_ask__request');
+  assert.equal((await ctx.provider.mcp(spawn, { permissionPrompt: true })).permissionTool, 'mcp__rooks_ask__request');
   const base = await ctx.provider.env(spawn);
   assert.equal(base.env.PATH, '/bin');
   assert.equal(base.env.ROOKS_MISSION_ID, 'm1');

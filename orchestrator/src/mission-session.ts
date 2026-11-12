@@ -187,7 +187,7 @@ export type PermissionGate = (input: {
 /**
  * `SessionHost.requestPermission` for one mission.
  *
- * The same round trip the `nova_ask` MCP makes for claude: a card in
+ * The same round trip the `rooks_ask` MCP makes for claude: a card in
  * the UI, and — on a mission nobody watches — the delay after which it refuses
  * with an instruction to look for a safe alternative or to block the task.
  * A card that cannot even be raised is a denial, never an allowance.

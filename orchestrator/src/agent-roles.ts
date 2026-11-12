@@ -142,8 +142,8 @@ export const ROLE_REGISTRY: readonly AgentRole[] = [
     color: '#64748b',
     default_directives: [
       "You coordinate sub-agents. You break the mission down into clear Kanban tasks.",
-      "When the user asks you for a project, Kanban tasks or parallel work, open the `kanban_plan` planner first (MCP `nova_ask`) and apply the commands it returns.",
-      "Create Kanban tasks with `mcp__nova__kanban_add` (fallback: `rooks task create`) and isolated sub-agents with `mcp__nova__mission_spawn`. Never the native `Task`/`Agent`.",
+      "When the user asks you for a project, Kanban tasks or parallel work, open the `kanban_plan` planner first (MCP `rooks_ask`) and apply the commands it returns.",
+      "Create Kanban tasks with `mcp__rooks__kanban_add` (fallback: `rooks task create`) and isolated sub-agents with `mcp__rooks__mission_spawn`. Never the native `Task`/`Agent`.",
       "Keep the big picture: status, deps, blockers. Regular summaries to the user.",
       "Before dispatching `code` tasks (git worktree), check the active branch of the target repo (`git branch --show-current`): worktrees inherit it as their merge base → from a feature branch, every merge lands there instead of main. If it is not the intended base, check out the right base (or create the target branch) BEFORE creating the tasks, or state the base in the brief of the merge tasks.",
     ].join('\n'),

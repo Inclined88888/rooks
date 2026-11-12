@@ -134,7 +134,7 @@
     "mcpServers": "Serwery MCP",
     "noMcpServers": "brak skonfigurowanych serwerów MCP",
     "extraAllowedTools": "Dodatkowe dozwolone narzędzia (oddzielone przecinkami)",
-    "allowedToolsPlaceholder": "Bash(git:*), mcp__nova__kanban_add",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__rooks__kanban_add",
     "schedule": {
       "label": "Zaplanuj start (opcjonalnie)"
     },

@@ -92,7 +92,7 @@ const CASES: Array<[string, Record<string, unknown>, string, Record<string, unkn
   ['browser_annotations_resolve', { id: 'ba-1', status: 'resolved', summary: 'done' }, 'POST /api/native-browser/annotations/ba-1/resolve', { status: 'resolved', summary: 'done' }],
   ['browser_annotations_resolve', { id: 'ba-1', status: 'dismissed', reason: 'no' }, 'POST /api/native-browser/annotations/ba-1/resolve', { status: 'dismissed', reason: 'no' }],
   ['plugin_list', {}, 'GET /api/plugins'],
-  ['plugin_set_enabled', { id: '@rooks/x', enabled: false }, 'POST /api/plugins/%40nova%2Fx/enabled', { enabled: false }],
+  ['plugin_set_enabled', { id: '@rooks/x', enabled: false }, 'POST /api/plugins/%40rooks%2Fx/enabled', { enabled: false }],
   ['doctor', {}, 'GET /api/doctor'],
   ['health', {}, 'GET /api/health/resources'],
   ['backup_status', {}, 'GET /api/backup/status'],

@@ -7276,7 +7276,7 @@ function PermissionCard({
   // `answers` (keyed by question text).
   //
   // Two tool_name values land here:
-  //   - 'ask_user'         — the card our `nova_ask` MCP opens for its tools
+  //   - 'ask_user'         — the card our `rooks_ask` MCP opens for its tools
   //                          `question` and `kanban_plan`. The card kept the
   //                          name it is persisted under when the tools were
   //                          renamed: past missions replay with it.

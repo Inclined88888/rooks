@@ -249,7 +249,7 @@ test('the mission token reaches the MCP servers through the session request only
     .map((b) => b.text ?? '')
     .join('');
   const servers = JSON.parse(text.slice(text.indexOf('['))) as Array<{ name: string; env: Array<{ name: string; value: string }> }>;
-  for (const name of ['rooks', 'nova_ask']) {
+  for (const name of ['rooks', 'rooks_ask']) {
     const server = servers.find((s) => s.name === name)!;
     assert.equal(server.env.find((e) => e.name === 'ROOKS_API_TOKEN')?.value, token, `${name} carries the token`);
   }

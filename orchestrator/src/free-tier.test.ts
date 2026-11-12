@@ -133,7 +133,7 @@ test('Free signed policy and all local admission boundaries', async (t) => {
     assert.throws(() => setPluginEnabled('external', true), LicenseCapabilityError);
     assert.throws(() => setModuleEnabled('@rooks/vault', false), LicenseCapabilityError);
     assert.equal(unsignedPluginsAllowed(true, { keys: [] }), false);
-    const r = await call('/api/plugins/%40nova%2Fvault/enabled', { enabled: false });
+    const r = await call('/api/plugins/%40rooks%2Fvault/enabled', { enabled: false });
     assert.equal(r.status, 403); assert.equal(r.body.error, 'plugin_composition_fixed');
   });
   await t.test('a built-in stays switchable under the fixed composition', async () => {
@@ -156,7 +156,7 @@ test('Free signed policy and all local admission boundaries', async (t) => {
     assert.doesNotThrow(() => setModuleEnabled('@rooks/vault', true));
     assert.doesNotThrow(() => setPluginEnabled('external', true));
     assert.equal(unsignedPluginsAllowed(true, { keys: [] }), true);
-    const r = await call('/api/plugins/%40nova%2Fvault/enabled', { enabled: false });
+    const r = await call('/api/plugins/%40rooks%2Fvault/enabled', { enabled: false });
     assert.notEqual(r.body.error, 'plugin_composition_fixed');
     fixedPaid();
   });

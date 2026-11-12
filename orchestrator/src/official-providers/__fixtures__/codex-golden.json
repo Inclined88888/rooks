@@ -34,13 +34,13 @@
         "ROOKS_MISSION_ID = \"parity-2040999904\"",
         "ROOKS_ORCH_URL = \"http://localhost:3010\""
       ],
-      "mcp_servers.nova_ask": [
+      "mcp_servers.rooks_ask": [
         "args = [\"<FORMS_MCP>\"]",
         "command = \"node\"",
         "default_tools_approval_mode = \"approve\"",
         "env_vars = [\"ROOKS_API_TOKEN\"]"
       ],
-      "mcp_servers.nova_ask.env": [
+      "mcp_servers.rooks_ask.env": [
         "ROOKS_AGENT = \"parity.agent\"",
         "ROOKS_ASK_FORMS_ONLY = \"1\"",
         "ROOKS_MISSION_ID = \"parity-2040999904\"",
@@ -106,13 +106,13 @@
         "ROOKS_MISSION_ID = \"parity-1915765651\"",
         "ROOKS_ORCH_URL = \"http://localhost:3010\""
       ],
-      "mcp_servers.nova_ask": [
+      "mcp_servers.rooks_ask": [
         "args = [\"<FORMS_MCP>\"]",
         "command = \"node\"",
         "default_tools_approval_mode = \"approve\"",
         "env_vars = [\"ROOKS_API_TOKEN\"]"
       ],
-      "mcp_servers.nova_ask.env": [
+      "mcp_servers.rooks_ask.env": [
         "ROOKS_AGENT = \"parity.agent\"",
         "ROOKS_ASK_FORMS_ONLY = \"1\"",
         "ROOKS_MISSION_ID = \"parity-1915765651\"",
@@ -194,13 +194,13 @@
         "ROOKS_MISSION_ID = \"parity-881165601\"",
         "ROOKS_ORCH_URL = \"http://localhost:3010\""
       ],
-      "mcp_servers.nova_ask": [
+      "mcp_servers.rooks_ask": [
         "args = [\"<FORMS_MCP>\"]",
         "command = \"node\"",
         "default_tools_approval_mode = \"approve\"",
         "env_vars = [\"ROOKS_API_TOKEN\"]"
       ],
-      "mcp_servers.nova_ask.env": [
+      "mcp_servers.rooks_ask.env": [
         "ROOKS_AGENT = \"parity.keyed\"",
         "ROOKS_ASK_FORMS_ONLY = \"1\"",
         "ROOKS_MISSION_ID = \"parity-881165601\"",
@@ -253,13 +253,13 @@
         "ROOKS_MISSION_ID = \"parity-2110941018\"",
         "ROOKS_ORCH_URL = \"http://localhost:3010\""
       ],
-      "mcp_servers.nova_ask": [
+      "mcp_servers.rooks_ask": [
         "args = [\"<FORMS_MCP>\"]",
         "command = \"node\"",
         "default_tools_approval_mode = \"approve\"",
         "env_vars = [\"ROOKS_API_TOKEN\"]"
       ],
-      "mcp_servers.nova_ask.env": [
+      "mcp_servers.rooks_ask.env": [
         "ROOKS_AGENT = \"parity.agent\"",
         "ROOKS_ASK_FORMS_ONLY = \"1\"",
         "ROOKS_MISSION_ID = \"parity-2110941018\"",

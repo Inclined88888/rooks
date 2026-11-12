@@ -82,9 +82,9 @@ const NONCE = '0123456789abcdef0123456789abcdef';
 /** The policy of a mission in `default` mode, with the product's rules as the provider writes them. */
 const POLICY: Policy = {
   mode: 'ask',
-  allowTools: ['mcp__nova__kanban_add'],
+  allowTools: ['mcp__rooks__kanban_add'],
   allowCommands: ['rooks task done:*'],
-  hintServers: ['rooks', 'nova_ask'],
+  hintServers: ['rooks', 'rooks_ask'],
   grantTools: [],
   grantCommands: ['git:*'],
   denyTools: [],
@@ -257,8 +257,8 @@ test('through the sealed pipe, the token and a user\'s secret reach the bridge i
 /* ── Names, schemas, results ──────────────────────────────────────────── */
 
 test('tools are named `mcp__<server>__<tool>` as Rooks\'s prompts say, within a provider\'s 64 characters', () => {
-  assert.equal(bridge.mcpToolName('rooks', 'kanban_add'), 'mcp__nova__kanban_add');
-  assert.equal(bridge.mcpToolName('rooks-browser', 'navigate_page'), 'mcp__nova-browser__navigate_page', 'hyphens are kept');
+  assert.equal(bridge.mcpToolName('rooks', 'kanban_add'), 'mcp__rooks__kanban_add');
+  assert.equal(bridge.mcpToolName('rooks-browser', 'navigate_page'), 'mcp__rooks-browser__navigate_page', 'hyphens are kept');
   assert.equal(bridge.mcpToolName('my server', 'do.it'), 'mcp__my_server__do_it');
   const long = bridge.mcpToolName('server', 'x'.repeat(80));
   assert.equal(long.length, 64);
@@ -448,20 +448,20 @@ test('the extension: one command, every tool of every server declared, calls rea
   assert.deepEqual([...pi.commands.keys()], [bridge.BRIDGE_COMMAND]);
   assert.equal(pi.tools.size, 0, 'nothing is declared, nothing is started, before the configuration arrives');
   const one = fakeServer('rooks', { ROOKS_API_TOKEN: 'tok-1' });
-  const two = fakeServer('nova_ask');
+  const two = fakeServer('rooks_ask');
   const ghost: StdioServer = { type: 'stdio', name: 'ghost', command: join(WORK, 'nope'), args: [], env: {} };
   const report = await runCommand(pi, argsOf(bridge.encodeBridgeConfig([one.server, ghost, two.server], LAUNCH)));
   assert.equal(report.nonce, NONCE, 'the report carries the nonce: the driver reads no other');
   const servers = report.servers as Array<{ server: string; tools: number; error?: string }>;
-  assert.deepEqual(servers.map((s) => [s.server, s.tools]), [['rooks', 6], ['ghost', 0], ['nova_ask', 6]]);
+  assert.deepEqual(servers.map((s) => [s.server, s.tools]), [['rooks', 6], ['ghost', 0], ['rooks_ask', 6]]);
   assert.match(servers[1]!.error ?? '', /could not start/);
-  assert.ok(pi.tools.has('mcp__nova__whoami') && pi.tools.has('mcp__nova_ask__echo'));
-  const whoami = pi.tools.get('mcp__nova__whoami')!;
+  assert.ok(pi.tools.has('mcp__rooks__whoami') && pi.tools.has('mcp__rooks_ask__echo'));
+  const whoami = pi.tools.get('mcp__rooks__whoami')!;
   assert.deepEqual(whoami.annotations, { readOnlyHint: true });
   assert.deepEqual(whoami.parameters, { type: 'object', properties: {} });
   assert.deepEqual((await whoami.execute('c1', {})).content, [{ type: 'text', text: 'token=tok-1' }]);
-  assert.deepEqual((await pi.tools.get('mcp__nova_ask__picture')!.execute('c2', {})).content, [{ type: 'image', data: 'AAAA', mimeType: 'image/png' }]);
-  await assert.rejects(pi.tools.get('mcp__nova_ask__fail')!.execute('c3', {}), /it failed/);
+  assert.deepEqual((await pi.tools.get('mcp__rooks_ask__picture')!.execute('c2', {})).content, [{ type: 'image', data: 'AAAA', mimeType: 'image/png' }]);
+  await assert.rejects(pi.tools.get('mcp__rooks_ask__fail')!.execute('c3', {}), /it failed/);
 
   const again = await runCommand(pi, argsOf(bridge.encodeBridgeConfig([fakeServer('evil').server], LAUNCH)));
   assert.equal(again.error, 'already configured', 'a later `/rooks-bridge` (a message that starts with it) configures nothing');
@@ -646,7 +646,7 @@ test('the provider declares Rooks\'s servers, and launches Pi with the bridge as
     : null;
   const handed = (driver as unknown as { opts: { bridge: { file: string; servers: Array<{ name: string; env?: Record<string, string> }> } } }).opts.bridge;
   assert.equal(handed.file, file);
-  assert.deepEqual(handed.servers.map((s) => s.name), ['rooks', 'nova_ask']);
+  assert.deepEqual(handed.servers.map((s) => s.name), ['rooks', 'rooks_ask']);
   assert.equal(handed.servers[0]!.env?.ROOKS_API_TOKEN, kit.FAKE_TOKEN_REFERENCE, 'the plan\'s reference, swapped on the pipe');
   driver!.close();
 });
@@ -706,7 +706,7 @@ test('the policy follows the permission mode, as every backend does', () => {
   // Reads pass in every mode; so do the product's pre-approved tools and `rooks` commands.
   for (const mode of ['read-only', 'ask', 'edits', 'bypass'] as const) {
     for (const tool of ['read', 'grep', 'find', 'ls']) assert.equal(verdict(policy({ mode }), tool), 'allow', `${mode}: ${tool}`);
-    assert.equal(verdict(policy({ mode }), 'mcp__nova__kanban_add'), 'allow');
+    assert.equal(verdict(policy({ mode }), 'mcp__rooks__kanban_add'), 'allow');
     assert.equal(verdict(policy({ mode }), 'bash', { command: 'rooks task done 42 --comment "ok; done"' }), 'allow', `${mode}: a Rooks command`);
   }
   // Plan: anything else is refused, without a card.
@@ -811,9 +811,9 @@ test('a server tool the server declares read-only passes; its other tools ask', 
   const { pi, gate } = await gated(POLICY, [server.server]);
   let asked = 0;
   const ctx: GateCtx = { ui: { notify: () => undefined, confirm: async () => { asked += 1; return false; } }, hasUI: true, cwd: WHERE.cwd };
-  assert.equal(await gate({ type: 'tool_call', toolName: 'mcp__nova__whoami', toolCallId: 'a', input: {} }, ctx), undefined);
+  assert.equal(await gate({ type: 'tool_call', toolName: 'mcp__rooks__whoami', toolCallId: 'a', input: {} }, ctx), undefined);
   assert.equal(asked, 0);
-  assert.equal((await gate({ type: 'tool_call', toolName: 'mcp__nova__echo', toolCallId: 'b', input: { text: 'x' } }, ctx))?.block, true);
+  assert.equal((await gate({ type: 'tool_call', toolName: 'mcp__rooks__echo', toolCallId: 'b', input: { text: 'x' } }, ctx))?.block, true);
   assert.equal(asked, 1);
   shutdown(pi);
   await until(() => server.log().some((l) => l.eof !== undefined), 'the server to stop');
@@ -826,7 +826,7 @@ test('a server the user added is not believed when it calls a tool read-only: it
     const { pi, gate } = await gated(policy({ mode }), [rooks.server, user.server]);
     let asked = 0;
     const ctx: GateCtx = { ui: { notify: () => undefined, confirm: async () => { asked += 1; return false; } }, hasUI: true, cwd: WHERE.cwd };
-    assert.equal(await gate({ type: 'tool_call', toolName: 'mcp__nova__whoami', toolCallId: 'a', input: {} }, ctx), undefined, `${mode}: Rooks's own hint`);
+    assert.equal(await gate({ type: 'tool_call', toolName: 'mcp__rooks__whoami', toolCallId: 'a', input: {} }, ctx), undefined, `${mode}: Rooks's own hint`);
     const verdict = await gate({ type: 'tool_call', toolName: 'mcp__userdb__whoami', toolCallId: 'b', input: {} }, ctx);
     assert.equal(verdict?.block, true, `${mode}: the user's server says readOnlyHint, the gate does not take its word`);
     assert.equal(asked, mode === 'ask' ? 1 : 0, mode === 'ask' ? 'the card decides' : 'plan mode refuses without a card');
@@ -1034,8 +1034,8 @@ test('Rooks\'s permission modes map onto the bridge\'s four', () => {
 });
 
 test('the agent\'s grants and refusals, in Claude Code\'s syntax, become Pi\'s; what has no faithful translation is left out', () => {
-  assert.deepEqual(permissions.piGrants(['Read', 'Glob', 'Grep', 'Edit', 'Write', 'MultiEdit', 'Bash(git:*)', 'Bash(npm run *)', 'Bash(npx tsc --noEmit)', 'mcp__github', 'mcp__nova__mission_spawn', 'Edit(src/**)', 'Bash(rm *x*)', 'WebFetch']), {
-    tools: ['edit', 'write', 'mcp__github__*', 'mcp__nova__mission_spawn'],
+  assert.deepEqual(permissions.piGrants(['Read', 'Glob', 'Grep', 'Edit', 'Write', 'MultiEdit', 'Bash(git:*)', 'Bash(npm run *)', 'Bash(npx tsc --noEmit)', 'mcp__github', 'mcp__rooks__mission_spawn', 'Edit(src/**)', 'Bash(rm *x*)', 'WebFetch']), {
+    tools: ['edit', 'write', 'mcp__github__*', 'mcp__rooks__mission_spawn'],
     commands: ['git:*', 'npm run:*', 'npx tsc --noEmit'],
   });
   assert.deepEqual(permissions.piGrants(['Bash']).tools, ['bash', 'powershell']);
@@ -1061,10 +1061,10 @@ test('the launch hands the bridge the mission\'s policy: its mode, the product\'
   assert.equal(coder.mode, 'edits');
   assert.deepEqual(coder.grantTools, ['edit']);
   assert.deepEqual(coder.grantCommands, ['git:*']);
-  assert.ok(coder.allowTools.includes('mcp__nova__kanban_add'), 'the product\'s pre-approved tools');
-  assert.ok(!coder.allowTools.includes('mcp__nova__mission_spawn'), 'a spawn still asks');
+  assert.ok(coder.allowTools.includes('mcp__rooks__kanban_add'), 'the product\'s pre-approved tools');
+  assert.ok(!coder.allowTools.includes('mcp__rooks__mission_spawn'), 'a spawn still asks');
   assert.ok(coder.allowCommands.includes('rooks task done:*'));
-  assert.deepEqual(coder.hintServers, ['rooks', 'nova_ask'], 'Rooks\'s servers: the only ones whose read-only hint is believed');
+  assert.deepEqual(coder.hintServers, ['rooks', 'rooks_ask'], 'Rooks\'s servers: the only ones whose read-only hint is believed');
   assert.ok(coder.denyPrograms.includes('sudo'));
   assert.ok(coder.denyCommands.includes('rooks service') && coder.denyCommands.includes('rm -rf /*') && coder.denyCommands.includes('git push'));
   assert.equal(bridge.permissionVerdict(coder, { toolName: 'bash', input: { command: 'git push origin main' } }, WHERE).verdict, 'deny', 'a refusal beats a grant');

@@ -76,7 +76,7 @@ export function noteBrowserSessionSpawned(
  *  imposes nothing. If the built-in browser breaks after an update,
  *  the user therefore keeps a working `chrome-devtools` alongside. The
  *  tools are the same (`navigate_page`, `take_snapshot`…), under the prefix
- *  `mcp__nova-browser__*` (codex: `mcp__nova_browser__*`). */
+ *  `mcp__rooks-browser__*` (codex: `mcp__rooks-browser__*`). */
 export const CHROME_DEVTOOLS_MCP_KEY = 'rooks-browser';
 
 /** npm package of the server. Overridable to pin a version the day

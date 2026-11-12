@@ -113,7 +113,7 @@ test('chaque serveur MCP du config.toml codex porte le mode d\'approbation', asy
   const tables = serverTables(toml);
 
   // Les trois MCP injectés d'office par ROOKS + les deux opt-in de l'agent.
-  for (const name of ['rooks', 'nova_ask', 'grepai', 'probe_stdio', 'probe_http']) {
+  for (const name of ['rooks', 'rooks_ask', 'grepai', 'probe_stdio', 'probe_http']) {
     assert.ok(tables.has(name), `serveur ${name} absent du config.toml :\n${toml}`);
   }
   for (const [name, keys] of tables) {
@@ -147,7 +147,7 @@ test('les MCP internes reçoivent l\'identité de la mission dans leur env', asy
   // seuls PATH et les clés déclarées passent). Si ces variables manquent,
   // `ask_user` POSTe un mission_id vide → 400, et le MCP `rooks` perd les
   // en-têtes qui rattachent une task à sa mission d'origine.
-  for (const server of ['rooks', 'nova_ask']) {
+  for (const server of ['rooks', 'rooks_ask']) {
     const chunk = toml.split(/^\[/m)
       .find((c) => c.startsWith(`mcp_servers.${server}.env]`));
     assert.ok(chunk, `sous-table [mcp_servers.${server}.env] absente :\n${toml}`);
@@ -164,7 +164,7 @@ test('les MCP internes reçoivent le jeton de mission par env_vars, jamais sa va
   // vide et `ask_user` POSTe anonymement → 401 sur toute instance à comptes,
   // aucun formulaire ne s'affiche. Le navigateur avait déjà la ligne, pas eux.
   const tables = serverTables(toml);
-  for (const server of ['rooks', 'nova_ask']) {
+  for (const server of ['rooks', 'rooks_ask']) {
     assert.ok(
       tables.get(server)?.includes('env_vars = ["ROOKS_API_TOKEN"]'),
       `[mcp_servers.${server}] sans env_vars = ["ROOKS_API_TOKEN"] :\n${toml}`,

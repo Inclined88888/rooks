@@ -3,7 +3,7 @@
  * the BODY.
  *
  * Every bundled module is `@rooks/<name>`, so the natural URL puts an encoded
- * slash in a path segment (`/api/ui/plugins/%40nova%2Fkanban/enabled`). The
+ * slash in a path segment (`/api/ui/plugins/%40rooks%2Fkanban/enabled`). The
  * ingress in front of the app refuses `%2F` outright: HTTP 400, empty body,
  * before Next and before any auth. That is why the switches of the product's
  * own modules did nothing — the request never reached the daemon, while an

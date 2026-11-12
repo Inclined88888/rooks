@@ -19,6 +19,6 @@ test('long captions are cut, initials never exceed two letters', () => {
   assert.equal(truncate('rooks.workflow-architect'), 'rooks.workflow-ar…');
   assert.equal(truncate('rooks.workflow-architect').length, 18);
   assert.equal(initials('_main.perso'), 'MP');
-  assert.equal(initials('rooks'), 'TI');
+  assert.equal(initials('rooks'), 'RO');
   assert.equal(initials('...'), '?');
 });

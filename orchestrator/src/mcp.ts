@@ -274,7 +274,7 @@ export function listMcp(): McpSummary[] {
  * What a freshly created agent starts without: every discovered account
  * connector, since each loads its whole tool catalogue into every turn. A
  * server Rooks injects itself is never one of them, even if a stale entry for
- * it is still around — excluding it bans its tools (`mcp__nova__*`).
+ * it is still around — excluding it bans its tools (`mcp__rooks__*`).
  */
 export function defaultExcludedMcpIds(): string[] {
   return listMcp()
@@ -959,7 +959,7 @@ export function refreshToolsCacheFromInit(initPayload: unknown): void {
  * agent of an unindexed project (10 projects out of 14 today).
  *
  * Injected by the claude and codex dialects, just like `rooks` and
- * `nova_ask` — that is what makes it backend-agnostic.
+ * `rooks_ask` — that is what makes it backend-agnostic.
  */
 export function grepaiMcpEntry(cwd?: string | null): { command: string; args: string[] } | null {
   if (!cwd) return null;

@@ -243,7 +243,7 @@ test('outside the test hooks, only the pinned manifest and key are read', { skip
   const pem = createPublicKey({ key: { kty: 'OKP', crv: 'Ed25519', x }, format: 'jwk' }).export({ type: 'spki', format: 'pem' }).toString().trim();
   assert.ok(text.includes(`RELEASE_KEY_ID='${keyId}'`), 'install.sh pins the keyId of keyring.ts');
   assert.ok(text.includes(`RELEASE_PUBLIC_KEY='${pem}'`), 'install.sh pins the public key of keyring.ts');
-  assert.match(text, /MANIFEST_URL='https:\/\/rooks-ai\.com\/\.well-known\/rooks-releases\.json'/);
+  assert.match(text, /MANIFEST_URL='https:\/\/rooks.local\/\.well-known\/rooks-releases\.json'/);
   assert.match(text, /if \[ "\$\{ROOKS_INSTALL_TESTING:-\}" = 1 \]; then/);
   // The script must end by calling main: a truncated download then runs nothing.
   assert.equal(text.trimEnd().split('\n').pop(), 'main "$@"');

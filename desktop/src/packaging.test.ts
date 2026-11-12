@@ -269,7 +269,7 @@ test('the NSIS installer removes the daemon task, and never registers it', () =>
   assert.doesNotMatch(nsh, /ELECTRON_RUN_AS_NODE/);
   assert.doesNotMatch(nsh, /schtasks[^\n]*\/Create/i);
   assert.doesNotMatch(nsh, /\/XML/i);
-  assert.match(nsh, /\/Delete \/TN NovaOrchestrator \/F/);
+  assert.match(nsh, /\/Delete \/TN RooksOrchestrator \/F/);
   const service = readFileSync(join(root, '..', 'orchestrator', 'src', 'host', 'service-install.ts'), 'utf8');
   const taskName = service.match(/export const WINDOWS_TASK = '([^']+)'/u)?.[1];
   assert.ok(taskName, 'the host adapter declares the task name');

@@ -92,7 +92,7 @@ function host(platform: Platform): Host {
 }
 
 /** What the elevated Windows batch reports, step by step, once it is run. */
-const WINDOWS_STEPS = 'ROOKS-STEP create=0\r\nNOVA-STEP stop=0\r\nNOVA-STEP run=0\r\nNOVA-STEP verify=0\r\n';
+const WINDOWS_STEPS = 'ROOKS-STEP create=0\r\nROOKS-STEP stop=0\r\nROOKS-STEP run=0\r\nROOKS-STEP verify=0\r\n';
 
 function installable(h: Host): ServiceOpts {
   if (h.o.platform !== 'win32') return h.o;

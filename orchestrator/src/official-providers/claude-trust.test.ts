@@ -117,8 +117,8 @@ for (const backend of ['claude', 'kimi']) test(`${backend}: official launch keep
     }
     const json = run.args[run.args.indexOf('--mcp-config') + 1]!;
     const servers = JSON.parse(json).mcpServers;
-    assert.ok(servers.rooks && servers.nova_ask);
-    assert.equal(run.args[run.args.indexOf('--permission-prompt-tool') + 1], 'mcp__nova_ask__request');
+    assert.ok(servers.rooks && servers.rooks_ask);
+    assert.equal(run.args[run.args.indexOf('--permission-prompt-tool') + 1], 'mcp__rooks_ask__request');
     assert.ok(!json.includes(run.env.ROOKS_API_TOKEN!));
     assert.ok(!json.includes('rooks-seal-'));
     assert.ok(!run.args.join(' ').includes(LONG_TOKEN));

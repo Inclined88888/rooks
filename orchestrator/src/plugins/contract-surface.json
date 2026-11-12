@@ -2570,7 +2570,7 @@
     },
     "provider.ASK_MCP_SERVER": {
       "type": "string",
-      "value": "nova_ask",
+      "value": "rooks_ask",
       "since": 11
     },
     "provider.ASK_TOOL_KANBAN_PLAN": {
@@ -2605,7 +2605,7 @@
     },
     "provider.CLAUDE_PERMISSION_PROMPT_TOOL": {
       "type": "string",
-      "value": "mcp__nova_ask__request",
+      "value": "mcp__rooks_ask__request",
       "since": 11
     },
     "provider.DEFAULT_BACKEND_CAPABILITIES": {
@@ -2650,7 +2650,7 @@
     "provider.PERMISSION_MODEL_OBLIGATIONS": {
       "type": "object",
       "value": {
-        "mcp-bridge": "pass the permission tool to the CLI at spawn and declare the `nova_ask` MCP server",
+        "mcp-bridge": "pass the permission tool to the CLI at spawn and declare the `rooks_ask` MCP server",
         "sandbox": "freeze the privileges at spawn from `permission_mode`; there is no card and no classifier",
         "protocol": "supply `openSession`: its driver forwards the agent's permission requests to `host.requestPermission`",
         "none": "nothing — the CLI runs everything unguarded, which the UI says plainly"

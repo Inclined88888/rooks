@@ -134,7 +134,7 @@
     "mcpServers": "MCP 서버",
     "noMcpServers": "설정된 MCP 서버 없음",
     "extraAllowedTools": "추가 허용 도구 (쉼표로 구분)",
-    "allowedToolsPlaceholder": "Bash(git:*), mcp__nova__kanban_add",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__rooks__kanban_add",
     "schedule": {
       "label": "시작 예약 (선택 사항)"
     },

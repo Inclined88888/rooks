@@ -8,7 +8,7 @@ Whatever backend an agent runs on, Rooks hands it its built-in MCP servers. You 
 | Server | What it is for |
 | --- | --- |
 | `rooks` | Acting on Rooks: the Kanban, missions, other agents, memory, this documentation. |
-| `nova_ask` | Asking **you**: forms that open in the chat and wait for your answer. |
+| `rooks_ask` | Asking **you**: forms that open in the chat and wait for your answer. |
 | `rooks-browser` | Driving the project's built-in browser, while it is running. |
 | `grepai` | Searching the project's semantic index, when the project has one. |
 
@@ -20,8 +20,8 @@ An agent sees each tool under its server's name, in a shape chosen by its CLI:
 
 | Backend | The Kanban tool `kanban_add` | The form tool `question` |
 | --- | --- | --- |
-| Claude Code, Codex | `mcp__nova__kanban_add` | `mcp__nova_ask__question` |
-| opencode | `nova_kanban_add` | `nova_ask_question` |
+| Claude Code, Codex | `mcp__rooks__kanban_add` | `mcp__rooks_ask__question` |
+| opencode | `nova_kanban_add` | `rooks_ask_question` |
 
 It is the same tool either way. When you write a prompt or a skill, the short name (`kanban_plan`, `question`) is enough: the agent finds it in its own list.
 
@@ -319,7 +319,7 @@ The routines and triggers the agent offers during that conversation are made wit
 
 The CLI counterparts are `rooks setup soul`, `rooks setup team --coder NAME --reviewer NAME`, `rooks setup finish [--no-tour]` and `rooks setup avatar`. See [First run](../installation/first-run.md) for the conversation from your side.
 
-## The `nova_ask` server: two forms
+## The `rooks_ask` server: two forms
 
 Both tools open a form in the chat and **block the agent until you answer**. They are not interchangeable.
 
@@ -379,7 +379,7 @@ The commands the agent gets back carry it all: `rooks series role set --group <n
 Ask in the words of what you want: "plan this on the Kanban", "create the tasks for this", "run these in parallel", "which models for this job" lead to `kanban_plan`; "ask me before you…" leads to `question`.
 
 :::note Renamed tools
-These tools were called `ask_user` and `ask_series_plan`, on a server named `nova_permission`. Agents had trouble telling them apart, so they are now `question` and `kanban_plan` on `nova_ask`. If one of your own agent prompts or skills names the former ones, replace them with the new names; until you do, Rooks tells every agent what they have become.
+These tools were called `ask_user` and `ask_series_plan`, on a server named `rooks_permission`. Agents had trouble telling them apart, so they are now `question` and `kanban_plan` on `rooks_ask`. If one of your own agent prompts or skills names the former ones, replace them with the new names; until you do, Rooks tells every agent what they have become.
 :::
 
 ## Permission cards are not a tool

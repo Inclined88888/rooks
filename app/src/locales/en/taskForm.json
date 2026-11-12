@@ -69,7 +69,7 @@
     "mcpServers": "MCP servers",
     "noMcpServers": "no MCP servers configured",
     "extraAllowedTools": "Extra allowed tools (comma-separated)",
-    "allowedToolsPlaceholder": "Bash(git:*), mcp__nova__kanban_add",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__rooks__kanban_add",
     "schedule": { "label": "Schedule the start (optional)" },
     "summary": { "label": "Summary", "model": "Model", "type": "Type", "priority": "Priority", "deps": "Dependencies", "depsNone": "None", "depsCount": "{count} to finish first", "start": "Start", "startAsap": "As soon as possible", "status": "Status", "attachments": "Files", "agentNone": "No agent chosen" },
     "cancel": "Cancel",

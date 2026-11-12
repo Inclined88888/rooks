@@ -98,13 +98,13 @@ test('the preamble sends Kanban planning to `kanban_plan`, a one-off decision to
   const blocks = Object.fromEntries(buildInjections('inj-forms').blocks.map((b) => [b.id, b.content]));
   const preamble = blocks.preamble!;
   // The line an agent asked to "create Kanban tasks" must find: planner first.
-  assert.match(preamble, /Create Kanban tasks, start a job\*\*\s+\| `kanban_plan` \(MCP `nova_ask`\) \*\*first\*\*/);
-  assert.match(preamble, /`question` \(MCP `nova_ask`\)/);
-  assert.match(preamble, /`mcp__nova_ask__question`/);
+  assert.match(preamble, /Create Kanban tasks, start a job\*\*\s+\| `kanban_plan` \(MCP `rooks_ask`\) \*\*first\*\*/);
+  assert.match(preamble, /`question` \(MCP `rooks_ask`\)/);
+  assert.match(preamble, /`mcp__rooks_ask__question`/);
   // The former names appear once, to say what they have become — never as the
   // tool to call.
-  assert.equal(preamble.match(/mcp__nova_permission__/g)?.length, 2);
-  assert.match(preamble, /\*\*Old names\*\*: `mcp__nova_permission__ask_user`[^]*are\s+`question` and `kanban_plan`/);
+  assert.equal(preamble.match(/mcp__rooks_permission__/g)?.length, 2);
+  assert.match(preamble, /\*\*Old names\*\*: `mcp__rooks_permission__ask_user`[^]*are\s+`question` and `kanban_plan`/);
   assert.doesNotMatch(preamble.replace(/\*\*Old names\*\*:[^]*?Call the new names\./, ''), /ask_user|ask_series_plan|nova_permission/);
 });
 
@@ -254,7 +254,7 @@ test('only an agent that can hand work to others reads the parallel-split sectio
   assert.match(of('inj-boss'), /volets differ in difficulty, give each a short `group` name/);
   assert.match(of('inj-boss'), /still no model names from you/);
   // What every agent needs to reach the planner stays in the table they all read.
-  assert.match(of('inj-coder'), /`kanban_plan` \(MCP `nova_ask`\) \*\*first\*\*/);
+  assert.match(of('inj-coder'), /`kanban_plan` \(MCP `rooks_ask`\) \*\*first\*\*/);
   assert.ok(of('inj-coder').length < 15_000, 'the standard preamble stays short');
 });
 
@@ -293,7 +293,7 @@ test('the backend block follows the mission overrides, not only the agent config
   assert.notEqual(over, own);
 });
 
-// TODO #241. codex nests MCP tools under `exec` as `mcp__nova_browser__*`
+// TODO #241. codex nests MCP tools under `exec` as `mcp__rooks-browser__*`
 // (underscores) while its own web search sits at the top level: told only
 // "the `rooks-browser` MCP tools", GPT opened pages with web search instead
 // of Rooks's browser in half the runs measured on codex-cli 0.159.
@@ -302,10 +302,10 @@ test('a codex agent is told how to reach Rooks\'s browser and that web search is
   const block = (backend: string): string => buildInjections('inj-browser', '', { backend_override: backend, model_override: 'm' })
     .blocks.find((b) => b.id === 'backend')!.content;
   const codex = block('codex');
-  assert.match(codex, /tools\.mcp__nova_browser__navigate_page/);
+  assert.match(codex, /tools\.mcp__rooks-browser__navigate_page/);
   assert.match(codex, /web search/i);
   // claude names its tools after the server key, the preamble already matches.
-  assert.doesNotMatch(block('claude'), /mcp__nova_browser__/);
+  assert.doesNotMatch(block('claude'), /mcp__rooks-browser__/);
 });
 
 test('the skills block shows the skills the mission adds, as the spawn merges them', () => {

@@ -441,7 +441,7 @@ test('a test never inherits the live daemon address, token or mission identity',
       import { test } from 'node:test';
       import { spawnSync } from 'node:child_process';
       import { writeFileSync } from 'node:fs';
-      const leaked = (env) => Object.keys(env).filter((k) => /^nova_/i.test(k)).sort();
+      const leaked = (env) => Object.keys(env).filter((k) => /^rooks_/i.test(k)).sort();
       test('probe', async () => {
         const call = async (env) => {
           const url = env.ROOKS_API ?? env.ROOKS_ORCH_URL;
@@ -485,7 +485,7 @@ test('a test never inherits the live daemon address, token or mission identity',
 
 test('the daemon variables go whatever their casing, the rest stays', () => {
   const env = withoutDaemonEnv({
-    ROOKS_API: 'x', nova_api_token: 'x', Nova_Mission_Id: 'x', ROOKS_HOME: '/h', ROOKS_TEST_TIMEOUT_MS: '1', PATH: '/bin',
+    ROOKS_API: 'x', rooks_api_token: 'x', Rooks_Mission_Id: 'x', ROOKS_HOME: '/h', ROOKS_TEST_TIMEOUT_MS: '1', PATH: '/bin',
   });
   assert.deepEqual(env, { ROOKS_HOME: '/h', ROOKS_TEST_TIMEOUT_MS: '1', PATH: '/bin' });
 });

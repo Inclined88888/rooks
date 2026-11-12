@@ -1,7 +1,7 @@
 /**
  * The preamble describes the tools the agent really has. A backend that
  * declares `capabilities.novaMcp: false` is handed neither `rooks` nor
- * `nova_ask`, so no section may promise them (the agent would call tools that
+ * `rooks_ask`, so no section may promise them (the agent would call tools that
  * do not exist); a backend that declares nothing keeps the whole preamble.
  */
 import './test-home.js';
@@ -43,10 +43,10 @@ registerProfile(OWNER, {
   defaultModel: null, models: [],
 });
 
-/** Names of tools of the `rooks` / `nova_ask` MCPs, and the gestures that need them. */
+/** Names of tools of the `rooks` / `rooks_ask` MCPs, and the gestures that need them. */
 const ROOKS_TOOLS = [
   'kanban_add', 'kanban_plan', 'kanban_mark_as_done', 'mission_spawn', 'agent_list', 'agent_send_message',
-  'terminal_propose', 'chat_show_media', 'chat_post_message', 'nova_ask', 'memory_rule_add', 'docs_search', 'project_todo_add',
+  'terminal_propose', 'chat_show_media', 'chat_post_message', 'rooks_ask', 'memory_rule_add', 'docs_search', 'project_todo_add',
   'browser_status', 'rooks notify', 'rooks memory rule',
 ];
 
@@ -77,7 +77,7 @@ test('a backend without Rooks MCP servers is not promised their tools', () => {
 
 test('a backend that declares nothing keeps the whole preamble', () => {
   const text = preambleFor('claude');
-  for (const tool of ['kanban_add', 'kanban_plan', 'mission_spawn', 'agent_list', 'terminal_propose', 'chat_show_media', 'chat_post_message', 'nova_ask']) {
+  for (const tool of ['kanban_add', 'kanban_plan', 'mission_spawn', 'agent_list', 'terminal_propose', 'chat_show_media', 'chat_post_message', 'rooks_ask']) {
     assert.ok(text.includes(tool), `${tool} stays in the preamble of a backend that has it`);
   }
   assert.doesNotMatch(text, /no question tool/);

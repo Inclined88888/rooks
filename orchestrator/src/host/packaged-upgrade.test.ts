@@ -171,7 +171,7 @@ test('windows rewrites the task only, without staging, marking or pruning a rele
  * (le batch l'a déjà retirée) : le daemon intégré prend le relais.
  */
 test('windows: a task Windows never started is not restored, the embedded daemon takes over', async () => {
-  const reason = 'Windows registered the NovaOrchestrator task but never started it for this account.';
+  const reason = 'Windows registered the RooksOrchestrator task but never started it for this account.';
   const { deps, steps } = harness({
     platform: 'win32',
     install: () => { steps.push('install'); return { ok: false, code: 1, lines: [], refused: true, reason }; },

@@ -243,7 +243,7 @@ export function decodeBridgeConfig(args) {
 
 /**
  * `mcp__<server>__<tool>`, the name Rooks's prompts use for every backend. Characters a provider
- * refuses become `_` (hyphens are kept: `mcp__nova-browser__…`); a name past 64 characters, or one
+ * refuses become `_` (hyphens are kept: `mcp__rooks-browser__…`); a name past 64 characters, or one
  * already taken, is shortened with a hash of the pair.
  * @param {string} server @param {string} tool @param {(name: string) => boolean} [isTaken]
  */

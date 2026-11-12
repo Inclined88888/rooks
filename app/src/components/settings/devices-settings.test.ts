@@ -304,7 +304,7 @@ test('a Machines module the licence leaves out is explained, with its card in Pl
       assert.match(help.textContent ?? '', /not included in your licence/);
       assert.match(help.textContent ?? '', /Settings → Plugins → Machines → Add a machine/);
       const link = Array.from(help.querySelectorAll('a')).find((a) => a.textContent === 'Open Machines in Plugins');
-      assert.equal(link?.getAttribute('href'), '/plugins?q=%40nova%2Fmachines');
+      assert.equal(link?.getAttribute('href'), '/plugins?q=%40rooks%2Fmachines');
     });
   } finally {
     Object.defineProperty(globalThis, 'fetch', { value: realFetch, configurable: true, writable: true });

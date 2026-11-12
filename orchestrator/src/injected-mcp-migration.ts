@@ -4,7 +4,7 @@
  * Earlier versions auto-discovered `rooks`, `rooks-browser`… from the harness's
  * `init` as if they were account connectors. An agent created through the API
  * then started with those stubs in `excluded_mcp_servers`, which claude turned
- * into `--disallowedTools mcp__nova__*`: no Kanban tools, no way to close a
+ * into `--disallowedTools mcp__rooks__*`: no Kanban tools, no way to close a
  * task. The stubs are removed from the MCP directory and their ids from every
  * agent's exclusions, so an install already touched is repaired without a
  * gesture.
