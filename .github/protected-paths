@@ -7,6 +7,10 @@
 # One pattern per line. `**` crosses folders, `*` stays within one name, and a
 # pattern without a slash matches a file name in any folder. Lines starting
 # with `@` name the accounts allowed to change these paths.
+#
+# scripts/check-protected-paths.mjs also guards fields of every package.json:
+# identity, install-time scripts and dependencies. Changing a dependency, even
+# its version, or a lockfile needs a maintainer's approval.
 
 @ai-timon-admin
 
@@ -42,3 +46,10 @@ scripts/check-protected-paths.mjs
 # The brand
 orchestrator/src/brand.ts
 app/src/lib/brand.ts
+
+# Dependencies: lockfiles and npm settings decide which code gets installed
+package-lock.json
+npm-shrinkwrap.json
+yarn.lock
+pnpm-lock.yaml
+.npmrc

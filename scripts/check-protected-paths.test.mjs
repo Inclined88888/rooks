@@ -16,10 +16,15 @@ test('the list names the maintainers account and protects itself and its check',
   assert.ok(protectedBy('scripts/check-protected-paths.mjs', list.patterns));
 });
 
+// Lockfiles and npm settings of formats the repository does not use yet: they
+// are listed so a pull request cannot slip one in, hence match no tracked file.
+const NOT_YET_TRACKED = ['npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml', '.npmrc'];
+
 test('every pattern without a wildcard matches a tracked file, so a typo cannot leave a file unguarded', () => {
   const tracked = spawnSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' }).stdout.split('\n').filter(Boolean);
   assert.ok(tracked.length > 100, 'git ls-files lists the repository');
-  for (const pattern of list.patterns.filter((p) => !/[*?]/.test(p))) {
+  for (const name of NOT_YET_TRACKED) assert.ok(list.patterns.includes(name), `${name} is exempted but not listed`);
+  for (const pattern of list.patterns.filter((p) => !/[*?]/.test(p) && !NOT_YET_TRACKED.includes(p))) {
     const re = patternToRegExp(pattern);
     assert.ok(tracked.some((path) => re.test(path)), `${pattern} is listed but matches no tracked file`);
   }
@@ -107,13 +112,24 @@ test('package.json: a new one passes only if it pulls nothing in', () => {
   );
 });
 
-test('a maintainer may change dependencies', () => {
+test('lockfiles and npm configuration are protected in any folder', () => {
+  for (const path of ['package-lock.json', 'app/package-lock.json', 'plugins/x/npm-shrinkwrap.json', 'yarn.lock', 'desktop/pnpm-lock.yaml', '.npmrc', 'app/.npmrc']) {
+    assert.ok(protectedBy(path, list.patterns), `${path} should be protected`);
+  }
+  assert.deepEqual(
+    evaluate({ files: [{ filename: 'orchestrator/package-lock.json', status: 'modified' }], ...contributor }),
+    [{ path: 'orchestrator/package-lock.json', reason: 'protected path (package-lock.json)' }],
+  );
+});
+
+test('a maintainer may change dependencies and lockfiles', () => {
   const base = { name: 'timon-app', dependencies: { a: '1' } };
   const files = [
     { filename: 'app/package.json', status: 'modified', base, head: { ...base, dependencies: { a: '2' } } },
     { filename: 'plugins/new/package.json', status: 'added', base: null, head: { name: 'n', dependencies: { b: '1' } } },
+    { filename: 'app/package-lock.json', status: 'modified' },
   ];
-  assert.equal(evaluate({ files, ...contributor }).length, 2);
+  assert.equal(evaluate({ files, ...contributor }).length, 3);
   assert.deepEqual(evaluate({ files, ...list, author: 'ai-timon-admin' }), []);
 });
 
