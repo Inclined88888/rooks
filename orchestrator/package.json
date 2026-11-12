@@ -1,0 +1,54 @@
+{
+  "name": "rooks-orchestrator",
+  "version": "0.1.7",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "start:host": "node dist/index.js",
+    "dev:host": "tsx watch src/index.ts",
+    "test": "node ../scripts/run-tests.mjs",
+    "install:cli": "node scripts/install-host-cli.mjs",
+    "test:interruption": "node ../scripts/run-tests.mjs tests/interruption.test.ts"
+  },
+  "rooksTests": {
+    "imports": [
+      "tsx",
+      "../scripts/test-tmp-preload.mjs"
+    ],
+    "files": [
+      "../scripts/*.test.mjs",
+      "../public-docs/scripts/*.test.mjs",
+      "../docs/internal/scripts/*.test.mjs",
+      "../docs/internal/orchestrator/**/*.test.ts",
+      "tests/**/*.test.ts",
+      "src/**/*.test.ts"
+    ]
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/cordis-plugin-loader": "^1.0.2",
+    "@deepseek-ai/cordis-plugin-timer": "^1.1.3",
+    "better-sqlite3": "^11.3.0",
+    "cron-parser": "^5.5.0",
+    "express": "^4.21.0",
+    "js-yaml": "^5.4.1",
+    "node-pty": "^1.0.0",
+    "web-push": "^3.6.7",
+    "ws": "^8.22.0",
+    "zod": "^4.5.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis-plugin-hmr": "^1.0.16",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.7.4",
+    "@types/web-push": "^3.6.4",
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}

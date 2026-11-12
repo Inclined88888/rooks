@@ -1,0 +1,68 @@
+{
+  "slug": "monday",
+  "name": "monday.com",
+  "publisher": "monday.com",
+  "category": "productivity",
+  "tagline": {
+    "en": "Boards, items and updates",
+    "fr": "Tableaux, éléments et mises à jour"
+  },
+  "description": {
+    "en": "Lets your agents read your monday.com boards, create and update items, and post updates for your team.",
+    "fr": "Vos agents lisent vos tableaux monday.com, créent et mettent à jour des éléments, et publient des mises à jour pour votre équipe."
+  },
+  "examples": {
+    "en": [
+      "What items of the launch board are late?",
+      "Create an item for each task of this list",
+      "Post an update on the status of this item"
+    ],
+    "fr": [
+      "Quels éléments du tableau de lancement sont en retard ?",
+      "Crée un élément pour chaque tâche de cette liste",
+      "Publie une mise à jour sur l’état de cet élément"
+    ]
+  },
+  "mcp": {
+    "url": "https://mcp.monday.com/mcp",
+    "transport": "streamable-http"
+  },
+  "auth": {
+    "type": "oauth"
+  },
+  "links": {
+    "website": "https://monday.com",
+    "privacy": "https://monday.com/l/privacy/privacy-policy/",
+    "terms": "https://monday.com/l/legal/tos/"
+  },
+  "registry": {
+    "name": "com.monday/monday.com",
+    "proof": "domain"
+  },
+  "icon": {
+    "monogram": "Mo",
+    "color": "#FFFFFF",
+    "logo": {
+      "viewBox": "14 15 94 94",
+      "paths": [
+        {
+          "d": "M26.1249 89.4621C21.8937 89.4583 17.9979 87.255 15.9501 83.7076C13.9023 80.1603 14.0251 75.8276 16.2707 72.3919L37.2233 40.3436C39.3754 36.854 43.3343 34.7579 47.5633 34.869C51.7924 34.9801 55.6255 37.2808 57.5748 40.8782C59.5241 44.4755 59.2826 48.803 56.9441 52.1807L36.0039 84.229C33.8741 87.4897 30.1398 89.4678 26.1249 89.4621Z",
+          "fill": "#FB275D"
+        },
+        {
+          "d": "M61.8246 89.462C57.6004 89.4582 53.711 87.2602 51.6665 83.7213C49.6221 80.1823 49.7446 75.86 51.9865 72.4324L72.8986 40.4602C75.017 36.9197 78.9898 34.7734 83.2506 34.8677C87.5114 34.962 91.3764 37.2816 93.3217 40.912C95.2669 44.5424 94.9803 48.901 92.5748 52.2692L71.6627 84.2414C69.541 87.4872 65.8241 89.4596 61.8246 89.462V89.462Z",
+          "fill": "#FFCC00"
+        },
+        {
+          "d": "M96.6298 89.5272C103.029 89.5272 108.217 84.3486 108.217 77.9605C108.217 71.5723 103.029 66.3937 96.6298 66.3937C90.2306 66.3937 85.043 71.5723 85.043 77.9605C85.043 84.3486 90.2306 89.5272 96.6298 89.5272Z",
+          "fill": "#00CA72"
+        }
+      ],
+      "source": "https://monday.com"
+    }
+  },
+  "reviewed": {
+    "on": "2026-11-04",
+    "probe": "oauth: 401 then metadata and dynamic client registration accepted"
+  }
+}

@@ -1,0 +1,4 @@
+/* French text of the macOS permission prompts. The English text, shown on
+   every other language, is the extendInfo of electron-builder.yml. */
+"NSCameraUsageDescription" = "Rooks peut partager la caméra de cet ordinateur avec un site, après votre autorisation.";
+"NSMicrophoneUsageDescription" = "Rooks utilise le microphone pour la dictée vocale, transcrite sur cet ordinateur, et peut le partager avec un site, après votre autorisation.";

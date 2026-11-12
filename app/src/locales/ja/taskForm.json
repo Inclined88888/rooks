@@ -1,0 +1,276 @@
+{
+  "taskForm": {
+    "detachWorktree": {
+      "title": "ワークツリー",
+      "hint": "切り離すと、このタスクの作業フォルダーが削除され、ブランチ ({branch}) とそのコミットは保持されます。再実行時には、そのブランチ上の新しいフォルダーが用意されます。フォルダーに未コミットの変更がある場合は拒否されます。",
+      "action": "ワークツリーを切り離す",
+      "detaching": "切り離し中…",
+      "confirm": "このタスクの作業フォルダーを削除しますか？ブランチとコミットは保持されます。",
+      "done": "ワークツリーを切り離しました。ブランチは保持されています",
+      "failed": "ワークツリーを切り離せませんでした: {error}"
+    },
+    "markMerged": {
+      "title": "Rooks の外でマージしましたか？",
+      "hint": "このタスクのブランチがすでにマージされている場合 (GitHub でマージしたプルリクエスト、手動のマージ)、マージコミットを指定してください: タスクは完了としてクローズされ、依存するタスクが開始されます。",
+      "shaLabel": "マージコミット",
+      "shaPlaceholder": "コミットの sha (例: bcd02520)",
+      "action": "マージ済みにする",
+      "marking": "マーク中…",
+      "done": "タスクをマージ済みにしました",
+      "doneUnverified": "タスクをマージ済みにしました。このコミットはまだリポジトリのローカルコピーにないため、確認できませんでした。",
+      "notInBase": "このコミットはリポジトリのベースブランチにありません。マージの sha を確認してください。",
+      "failed": "タスクをマージ済みにできませんでした: {error}",
+      "unreachable": "Rooks が応答しませんでした",
+      "hintDone": "このタスクは完了していますが、そのブランチは Rooks でマージされていません。別の場所でマージした場合 (GitHub でマージしたプルリクエスト、手動のマージ)、マージコミットを指定してください: 記録され、依存するタスクが開始されます。",
+      "cardAction": "マージ済み？"
+    },
+    "editTitle": "タスクを編集",
+    "newTitle": "新しいタスク",
+    "close": "閉じる",
+    "delete": "削除",
+    "report": "レポート",
+    "title": "タイトル",
+    "titlePlaceholder": "エージェントに何をさせますか？",
+    "titleRequired": "タスクにタイトルを付けてください。",
+    "tabs": {
+      "label": "タスクのセクション",
+      "general": "一般",
+      "dependencies": "依存関係",
+      "capabilities": "機能"
+    },
+    "type": "種類",
+    "priority": {
+      "label": "優先度",
+      "urgent": "緊急",
+      "high": "高",
+      "normal": "通常",
+      "low": "低",
+      "someday": "いつか"
+    },
+    "description": "説明",
+    "descriptionPlaceholder": "背景、制約、完了の基準…",
+    "write": "書く",
+    "preview": "プレビュー",
+    "previewEmpty": "プレビューするものはまだありません。",
+    "todo": {
+      "label": "TO DO のアイデア",
+      "placeholder": "番号 (例: 209)",
+      "hint": "このタスクのチェーンが完了すると、アイデアは自動でクローズされます。",
+      "invalid": "TO DO のアイデアは整数です (例: 209)。"
+    },
+    "attachments": {
+      "label": "添付ファイル",
+      "drop": "ここにファイルをドロップするか、",
+      "browse": "ファイルを選択",
+      "dropActive": "ドロップして添付",
+      "uploading": "送信中…",
+      "queued": "タスク作成時に送信",
+      "inherited": "以前の反復から",
+      "remove": "{name} を削除",
+      "open": "{name} を開く",
+      "enlarge": "{name} を拡大",
+      "enlarged": "{name} (拡大表示)",
+      "closePreview": "プレビューを閉じる",
+      "tooLarge": "{name}: 大きすぎます (最大 15 MB)。",
+      "typeRefused": "{name}: この種類のファイルは受け付けられません。",
+      "quota": "{name}: タスクに追加できるファイルの上限に達しています (20 ファイル、100 MB)。",
+      "failed": "{name}: 送信できませんでした ({error})。",
+      "removeFailed": "{name} を削除できませんでした: {error}",
+      "loadFailed": "添付ファイルを読み取れませんでした。",
+      "dismiss": "閉じる",
+      "partial": "タスクは保存されましたが、一部のファイルを送信できませんでした: {names}"
+    },
+    "agent": "エージェント",
+    "agentRequired": "タスクを実行するエージェントを選んでください。",
+    "agentFilter": "エージェントを絞り込む…",
+    "noAgentMatch": "一致するエージェントはありません。",
+    "loadingAgents": "エージェントを読み込み中…",
+    "model": "モデル",
+    "modelInherit": "プロジェクトのロール",
+    "modelInheritHint": "このタスク種類に対するプロジェクトのロールが決め、なければエージェントが決めます",
+    "modelInherited": "{model} (継承)",
+    "modelHelp": "「プロジェクトのロール」では、この種類に対するプロジェクトのロール、なければエージェントが決めた設定でタスクを実行します。",
+    "worktreeBlocked": "このバックエンドは Rooks のフォルダー外で作業します: これに割り当てた code または merge タスクはブロックされます。",
+    "fallback": {
+      "short": "フォールバック",
+      "label": "クォータ切れ時のフォールバック",
+      "inherit": "シリーズまたはグローバルの設定",
+      "inheritHint": "シリーズの計画が決め、なければ Rooks の設定",
+      "never": "自動で切り替えない"
+    },
+    "permission": "権限",
+    "permissionModes": {
+      "default": "エージェントから継承",
+      "acceptEdits": "acceptEdits",
+      "plan": "plan",
+      "bypassPermissions": "bypassPermissions"
+    },
+    "pipeline": {
+      "label": "パイプライン",
+      "full": "フル: code → review → merge",
+      "code-self": "code のみ、コーダーが自分のブランチをマージ",
+      "code-group": "code のみ、グループで 1 回マージ",
+      "fixed": "タスクの作成時に設定されています。"
+    },
+    "deps": {
+      "filter": "タスクを絞り込む…",
+      "count": "{selected} 件選択 · 候補 {count} 件",
+      "none": "対象となるタスクはありません。",
+      "noMatch": "一致するタスクはありません。"
+    },
+    "status": {
+      "PENDING": "待機中",
+      "IN_PROGRESS": "進行中",
+      "DONE": "完了",
+      "BLOCKED": "ブロック",
+      "new": "新規"
+    },
+    "skills": "スキル",
+    "skillsFilter": "スキルを絞り込む…",
+    "selectedCount": "{count} 件選択",
+    "noneSelected": "選択なし",
+    "noSkills": "スキルがインストールされていません",
+    "noSkillMatch": "一致するスキルはありません。",
+    "mcpServers": "MCP サーバー",
+    "noMcpServers": "MCP サーバーが設定されていません",
+    "extraAllowedTools": "追加で許可するツール (カンマ区切り)",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__nova__kanban_add",
+    "schedule": {
+      "label": "開始を予約 (任意)"
+    },
+    "summary": {
+      "label": "概要",
+      "model": "モデル",
+      "type": "種類",
+      "priority": "優先度",
+      "deps": "依存関係",
+      "depsNone": "なし",
+      "depsCount": "先に完了が必要: {count}",
+      "start": "開始",
+      "startAsap": "できるだけ早く",
+      "status": "状態",
+      "attachments": "ファイル",
+      "agentNone": "エージェント未選択"
+    },
+    "cancel": "キャンセル",
+    "saving": "保存中…",
+    "creating": "作成中…",
+    "save": "保存",
+    "create": "タスクを作成",
+    "toast": {
+      "updated": "タスクを更新しました",
+      "created": "タスクを作成しました",
+      "saveFailed": "タスクを保存できませんでした: {error}"
+    },
+    "seriesPlan": {
+      "presets": {
+        "saveError": "モデルのプリセットを保存できませんでした。",
+        "label": "プリセット",
+        "columnIn": {
+          "main": "メイン",
+          "fallback": "フォールバック"
+        },
+        "columnMain": "メイン",
+        "columnFallback": "フォールバック",
+        "empty": "プリセットはまだありません",
+        "applyTitle": "「{name}」を適用 — {roles}",
+        "applyTo": "「{name}」の適用先",
+        "menu": "プリセット「{name}」",
+        "saveTitle": "{column} 列をプリセットとして保存",
+        "saveNothing": "先に {column} 列でモデルを選んでください",
+        "namePlaceholder": "プリセット名",
+        "confirmSave": "保存",
+        "confirmRename": "名前を変更",
+        "cancel": "キャンセル",
+        "overwriteConfirm": "「{name}」はすでに存在します。置き換えますか？",
+        "replace": "置き換え",
+        "saveRefused": "保存されませんでした: プリセットがまだ読み込まれていないか、一覧がいっぱいです。",
+        "renameTaken": "この名前のプリセットはすでにあります。",
+        "rename": "名前を変更",
+        "delete": "削除",
+        "deleteConfirm": "「{name}」を削除しますか？",
+        "notice": {
+          "applied": "「{name}」を {column} 列に適用しました。",
+          "none": "「{name}」は、ここに表示されているロールをどれも設定しません。",
+          "saved": "「{name}」として保存しました。"
+        },
+        "skipped": "利用できなくなったためスキップ: {roles}",
+        "orphan": {
+          "account": "アカウントが接続されていません",
+          "model": "このアカウントではこのモデルが提供されなくなりました"
+        }
+      },
+      "heading": "シリーズの計画 — この作業をどう実行しますか？",
+      "role": "ロール",
+      "model": "モデル",
+      "fallback": "フォールバック",
+      "current": "{value} (現在)",
+      "inheritRole": "プロジェクトのロールを継承",
+      "runningMission": "実行中のミッション",
+      "mainModel": "メインのモデル",
+      "runningModel": "実行中のミッションのモデル — ここでは変更できません",
+      "noFallback": "フォールバックなし",
+      "fallbackTitle": "メインのモデルのクォータが尽きたときのフォールバック",
+      "notePlaceholder": "自由記述のメモ (上の選択を補足したり、覆したりできます)",
+      "launch": "開始",
+      "answered": "回答済み",
+      "groups": {
+        "general": "全般の設定 — 何も設定していないすべてのグループに適用",
+        "other": "その他の作業",
+        "inherits": "全般の設定を継承",
+        "countOne": "作業 {count} 件",
+        "countMany": "作業 {count} 件",
+        "inheritGeneral": "{value} (全般の設定)",
+        "fallbackSummary": "フォールバック {value}",
+        "noRolesInMode": "このモードではタスクを作成しません: グループごとに選ぶモデルはありません。",
+        "modeLabel": "このグループのモデル",
+        "sync": "全般のモデルを使う",
+        "override": "モデルを上書き",
+        "statusSync": "全般のモデル",
+        "statusCustom": "独自のモデル",
+        "customEmpty": "独自のモデル — 下で選んでください。選ばなければ全般のものが適用されます"
+      },
+      "roles": {
+        "orchestrator": "オーケストレーター",
+        "mission": "新しいミッション",
+        "code": "コーダー",
+        "review": "レビュアー",
+        "merge": "マージ担当",
+        "doc": "ドキュメント"
+      },
+      "modes": {
+        "sequential": {
+          "head": "順次"
+        },
+        "sequentialHere": {
+          "sub": "このミッションで",
+          "title": "順次 — このミッションで",
+          "detail": "エージェントがこの会話の中で作業を順に処理します。Kanban タスクやワークツリーは作成されません。"
+        },
+        "sequentialNewMission": {
+          "sub": "新しいミッション",
+          "title": "順次 — 新しいミッション",
+          "detail": "同じ連続実行を新しいミッションのコンテキストに渡し、この会話は要約を待ちます。"
+        },
+        "full": {
+          "head": "フルパイプライン",
+          "sub": "code → review → merge",
+          "title": "Kanban — code → review → merge",
+          "detail": "作業ごとに並列のワークツリーで code タスクを 1 つずつ作成し、それぞれをレビューしてマージします。夜間の作業に最も安全な選択肢です。"
+        },
+        "codeSelf": {
+          "head": "code のみ",
+          "sub": "各ブランチが自らマージ",
+          "title": "Kanban — code のみ、随時マージ",
+          "detail": "作業ごとにレビューなしの code タスクを 1 つずつ作成し、各コーダーが完了時にブランチをマージします。"
+        },
+        "codeGroup": {
+          "head": "code のみ",
+          "sub": "最後に 1 回マージ",
+          "title": "Kanban — code のみ、まとめてマージ",
+          "detail": "作業ごとにレビューなしの code タスクを 1 つずつ作成し、最後の merge タスクがブランチを統合します。"
+        }
+      }
+    }
+  }
+}

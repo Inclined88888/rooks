@@ -1,0 +1,88 @@
+{
+  "name": "@rooks/provider-copilot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "rooks": {
+    "id": "provider-copilot",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "GitHub Copilot",
+    "description": "Runs missions on the GitHub Copilot CLI with the user's own Copilot subscription, personal or corporate.",
+    "author": "Rooks",
+    "permissions": ["backends:register"],
+    "provider": {
+      "binaries": [
+        {
+          "name": "copilot"
+        }
+      ],
+      "credentialDirs": [
+        ".copilot"
+      ],
+      "backends": [
+        {
+          "id": "copilot",
+          "rank": 40,
+          "binary": {
+            "names": [
+              "copilot"
+            ],
+            "install": {
+              "any": {
+                "kind": "npm",
+                "package": "@github/copilot"
+              }
+            },
+            "searchDirs": {
+              "win32": [
+                "${LOCALAPPDATA}/Microsoft/WinGet/Links",
+                "${ProgramFiles}/WinGet/Links"
+              ]
+            },
+            "desktopBuilds": [
+              {
+                "platform": "win32",
+                "root": "${LOCALAPPDATA}/Microsoft/WinGet/Packages",
+                "executable": [
+                  "copilot.exe"
+                ],
+                "order": "newest",
+                "folderPattern": "^github\\.copilot(\\.prerelease)?_"
+              }
+            ],
+            "standaloneInstaller": {
+              "label": "Copilot CLI",
+              "posix": "case `uname` in D*)d=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin;;*)d=/usr/local/bin:/home/linuxbrew/.linuxbrew/bin;;esac;h=$HOME;n=${NVM_DIR:-$h/.nvm}/versions/node;PATH=$PATH:$h/.local/bin:$d:$h/.volta/bin:$h/.npm-global/bin;for v in `ls \"$n\" 2>/dev/null|sed -nE 's/^v?(((0|[1-9][0-9]*)\\.){2}(0|[1-9][0-9]*))$/\\1 &/p'|sort -t. -rn -k1,1 -k2,2 -k3|cut -d\\  -f2`;do PATH=$PATH:$n/$v/bin;done;if command -v copilot>/dev/null;then copilot update;else curl -fsSL https://gh.io/copilot-install|bash;fi",
+              "windows": "[Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine'), 'Process'); if (Get-Command copilot -ErrorAction SilentlyContinue) { copilot update; exit (Get-Variable LASTEXITCODE -ValueOnly) } else { winget install -e --source winget --accept-source-agreements --accept-package-agreements --id GitHub.Copilot }"
+            }
+          },
+          "credentialDirs": [
+            ".copilot"
+          ],
+          "signInCommand": "copilot login",
+          "installDocs": "https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli",
+          "updateCheck": {
+            "latest": {
+              "npm": "@github/copilot"
+            }
+          },
+          "setupCard": {
+            "label": "Copilot",
+            "order": 4
+          },
+          "modelBrands": [
+            {
+              "match": "gemini",
+              "brand": "gemini"
+            }
+          ],
+          "seedsMainAgent": true,
+          "readOnlyTools": true
+        }
+      ]
+    },
+    "license": { "required": false }
+  }
+}

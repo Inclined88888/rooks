@@ -1,0 +1,123 @@
+{
+  "machines": {
+    "title": "Rechner",
+    "thisComputer": "Dieser Computer",
+    "backToLocal": "Zurück zu diesem Computer",
+    "status": {
+      "online": "Online",
+      "unreachable": "Nicht erreichbar",
+      "unauthorized": "Zugriff widerrufen",
+      "tls_error": "Zertifikat abgelehnt",
+      "error": "Fehler",
+      "unknown": "Noch nicht geprüft"
+    },
+    "switcher": {
+      "trigger": "Rechner: {name}. Rechner wechseln",
+      "menuTitle": "Rechner",
+      "actingAs": "als {account}",
+      "add": "Rechner hinzufügen…",
+      "manage": "Verbindungen verwalten",
+      "active": "Aktiv",
+      "switching": "Wechsel zu {name}…",
+      "loadError": "Die Rechner konnten nicht geladen werden."
+    },
+    "settings": {
+      "description": "Andere Rooks-Rechner, die dieser Computer steuern kann. Ein Wechsel ersetzt die ganze Oberfläche im selben Fenster durch die des gewählten Rechners: Jeder Rechner behält seine eigenen Agenten, Projekte und Einstellungen.",
+      "local": "Der Rechner, von dem diese Oberfläche ausgeliefert wird.",
+      "add": "Rechner hinzufügen",
+      "addTitle": "Rechner hinzufügen",
+      "addHint": "Öffne auf dem anderen Rechner {settingsPath} und autorisiere ein neues Gerät: Es zeigt einen Einmalcode, 5 Minuten gültig. Der Rechner muss über HTTPS erreichbar sein (tailscale serve, ein Reverse Proxy…).",
+      "urlLabel": "Adresse des Rechners",
+      "urlPlaceholder": "https://mein-server.example.net",
+      "codeLabel": "Kopplungscode",
+      "nameLabel": "Name (optional)",
+      "pair": "Koppeln",
+      "pairing": "Wird gekoppelt…",
+      "paired": "{name} hinzugefügt.",
+      "repaired": "{name} erneut gekoppelt.",
+      "listTitle": "Gekoppelte Rechner",
+      "empty": "Noch kein anderer Rechner.",
+      "loadError": "Die Rechnerliste konnte nicht geladen werden.",
+      "active": "Aktiv",
+      "switchTo": "Dorthin wechseln",
+      "check": "Jetzt prüfen",
+      "checking": "Wird geprüft…",
+      "online": "{name} antwortet.",
+      "rename": "Umbenennen",
+      "renameLabel": "Name des Rechners",
+      "renamed": "Rechner umbenannt.",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "remove": "Entfernen",
+      "removeConfirm": "{name} von diesem Computer entfernen? Sein Zugriff wird auf diesem Rechner widerrufen, und was dieser Browser dafür gespeichert hat, wird gelöscht.",
+      "removeAction": "Rechner entfernen",
+      "removed": "Rechner entfernt.",
+      "removedNotRevoked": "Rechner entfernt. Er war nicht erreichbar: Widerrufe diesen Computer in seinen Geräteeinstellungen.",
+      "version": "Version {version}",
+      "versionUnknown": "Version unbekannt",
+      "apiNewer": "Neuer als diese Oberfläche",
+      "apiUnknown": "Oberflächenstufe unbekannt",
+      "apiTooOld": "Zu alt für diese Oberfläche",
+      "lastSeen": "Zuletzt erreicht {date}",
+      "neverSeen": "Nie erreicht",
+      "actingAs": "Handelt als {account}",
+      "actingAsAdmin": "Handelt als {account}, Administrator"
+    },
+    "errors": {
+      "invalidCode": "Der Rechner hat diesen Code abgelehnt: falsch, abgelaufen oder bereits verwendet. Fordere einen neuen an.",
+      "invalidUrl": "Diese Adresse ist nicht verwendbar: Gib nur die Adresse des Rechners an, ohne Login, Query oder Fragment.",
+      "httpsRequired": "Der Rechner muss über HTTPS erreicht werden. Reines HTTP wird nur auf diesem Computer selbst akzeptiert.",
+      "blockedAddress": "Diese Adresse zeigt nie auf einen Rooks-Rechner.",
+      "notNova": "Unter dieser Adresse antwortet kein Rooks-Rechner.",
+      "requiresTls": "Der Rechner sieht diese Verbindung nicht als HTTPS: Prüfe die HTTPS-Einstellungen seines Reverse Proxys.",
+      "unreachable": "Der Rechner ist gerade nicht erreichbar.",
+      "unauthorized": "Der Rechner akzeptiert diesen Computer nicht mehr: Sein Zugriff wurde widerrufen oder ist abgelaufen. Kopple ihn erneut.",
+      "tlsError": "Das Zertifikat des Rechners wurde abgelehnt.",
+      "redirect": "Der Rechner hat mit einer Weiterleitung geantwortet: Gib seine endgültige Adresse an.",
+      "badResponse": "Der Rechner hat etwas Unerwartetes geantwortet.",
+      "throttled": "Zu viele Versuche. Warte ein paar Minuten, bevor du es erneut versuchst.",
+      "tooMany": "Ein Verbund umfasst höchstens 50 Rechner.",
+      "vault": "Der Geheimnistresor ist nicht verfügbar: Der Rechnerzugriff kann nicht gespeichert werden.",
+      "incompatible": "Auf diesem Rechner läuft eine zu alte Rooks-Version für diese Oberfläche. Aktualisiere ihn zuerst.",
+      "notFound": "Dieser Rechner ist nicht mehr in deinem Verbund.",
+      "notHere": "Rechner werden aus einem Browser verwaltet, der an diesem Computer angemeldet ist.",
+      "sessionRequired": "Melde dich zuerst an diesem Computer an.",
+      "invalidName": "Dieser Name ist nicht verwendbar.",
+      "generic": "Etwas ist schiefgelaufen. Versuche es erneut."
+    },
+    "banner": {
+      "unreachable": "{name} ist gerade nicht erreichbar.",
+      "apiUnknown": "{name} sagt nicht, welche Oberfläche er erwartet: Manche Bildschirme funktionieren eventuell nicht.",
+      "apiNewer": "Auf {name} läuft ein neueres Rooks als diese Oberfläche: Aktualisiere diese App, um ihn voll zu nutzen.",
+      "retry": "Wiederholen",
+      "dismiss": "Ausblenden"
+    },
+    "blocked": {
+      "unnamed": "Dieser Rechner",
+      "retry": "Wiederholen",
+      "title": {
+        "unreachable": "{name} ist nicht erreichbar",
+        "unauthorized": "{name} akzeptiert diesen Computer nicht mehr",
+        "incompatible": "{name} ist zu alt für diese Oberfläche",
+        "unknown": "Dieser Rechner ist nicht in deinem Verbund",
+        "session_required": "Melde dich an diesem Computer an",
+        "unavailable": "{name} kann von hier aus nicht geöffnet werden"
+      },
+      "body": {
+        "unreachable": "Der Rechner antwortet nicht: Er ist vielleicht aus oder sein Netzwerk nicht verfügbar. Deine Arbeit darauf ist unberührt.",
+        "unauthorized": "Der Zugriff dieses Computers wurde auf diesem Rechner widerrufen oder ist abgelaufen. Kopple ihn erneut über {settingsPath}.",
+        "incompatible": "Er spricht Oberflächenstufe {level}, und diese Oberfläche braucht mindestens {min}. Aktualisiere Rooks auf diesem Rechner und wechsle dann erneut dorthin.",
+        "unknown": "Der Rechner, den dieses Fenster gesteuert hat, wurde aus deinem Verbund entfernt oder gehört einem anderen Konto.",
+        "session_required": "Deine Sitzung auf diesem Computer ist beendet. Geh dorthin zurück, um dich erneut anzumelden.",
+        "unavailable": "Dieser Computer kann seinen Zugriff auf den Rechner gerade nicht öffnen (Geheimnistresor, Daemon). Versuche es gleich erneut."
+      }
+    },
+    "lock": {
+      "remote": "Diese Lizenz ist die von {name}, dem Rechner, den dieses Fenster steuert. Dieser Computer ist nicht betroffen.",
+      "unnamed": "ein anderer Rechner"
+    },
+    "localOnly": {
+      "remoteSessions": "Dies sind die Fern-API-Tokens dieses Computers, nicht des Rechners, zu dem diese Oberfläche gewechselt ist."
+    }
+  }
+}

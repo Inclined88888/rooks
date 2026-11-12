@@ -1,0 +1,19 @@
+{
+  "name": "@rooks/plugin-agent-sync",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "agent-sync-example",
+    "apiVersion": 7,
+    "kind": "behavior",
+    "label": "Agent sync example",
+    "description": "One Rooks agent per profile of an external system, created or refreshed in one call, through ctx.agents.",
+    "author": "Rooks",
+    "permissions": ["agents:manage"],
+    "license": { "required": false }
+  }
+}

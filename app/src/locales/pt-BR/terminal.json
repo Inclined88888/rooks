@@ -1,0 +1,78 @@
+{
+  "terminal": {
+    "title": "Terminal",
+    "tabs": "Sessões de terminal",
+    "state": {
+      "connecting": "Conectando…",
+      "retrying": "Conexão perdida, reconectando…",
+      "unauthorized": "Sessão expirada: entre novamente.",
+      "ended": "Sessão encerrada.",
+      "exited": "O shell foi encerrado (código {code})."
+    },
+    "actions": {
+      "new": "Novo terminal",
+      "kill": "Fechar {name} (encerra o shell dele)",
+      "reconnect": "Reconectar agora",
+      "popOut": "Abrir em uma janela flutuante"
+    },
+    "keys": {
+      "toolbar": "Teclas extras",
+      "up": "Cima",
+      "down": "Baixo",
+      "left": "Esquerda",
+      "right": "Direita",
+      "copy": "Copiar"
+    },
+    "clipboard": {
+      "menu": "Área de transferência do terminal",
+      "copy": "Copiar",
+      "paste": "Colar",
+      "copied": "Copiado para a área de transferência.",
+      "copyFailed": "Não foi possível copiar: o navegador recusou o acesso à área de transferência.",
+      "pasteFailed": "Não foi possível ler a área de transferência: permita o acesso a ela ou cole com Ctrl+Shift+V (Cmd+V em um Mac)."
+    },
+    "errors": {
+      "create": "Não foi possível iniciar um terminal: {error}",
+      "kill": "Não foi possível fechar o terminal: {error}",
+      "load": "Não foi possível alcançar o serviço de terminal: {error}"
+    },
+    "unavailable": {
+      "disabled": "O terminal integrado está desativado. Um administrador pode ativá-lo em {settingsPath}.",
+      "forbidden": "Sua conta não tem permissão para abrir um terminal (permissão \"terminal:open\").",
+      "session_required": "Entre pelo navegador para abrir um terminal.",
+      "unauthorized": "Entre para abrir um terminal.",
+      "pty_unavailable": "Este computador não consegue iniciar um terminal: o componente de pseudo-terminal falhou ao carregar. Confira o log do daemon."
+    },
+    "titleScoped": "Terminal — {scope}",
+    "scopes": {
+      "none": "Nenhum projeto",
+      "label": "Projetos"
+    },
+    "request": {
+      "title": "{agent} pede que você execute um comando",
+      "titleFrom": "{agent} · {project} pede que você execute um comando",
+      "badge": "comando",
+      "allow": "Permitir",
+      "paste": "Colar em um terminal",
+      "deny": "Dispensar",
+      "copy": "Copiar o comando",
+      "copied": "Comando copiado para a área de transferência.",
+      "hint": "Colado sem Enter: leia-o e depois pressione Enter você mesmo.",
+      "state": {
+        "allow": "Permitido: o agente o executa",
+        "paste": "Colado em um terminal",
+        "deny": "Dispensado"
+      },
+      "errors": {
+        "forbidden": "Sua conta não pode abrir um terminal: nada foi colado.",
+        "not_found": "Este pedido não existe mais.",
+        "already_decided": "Este pedido já foi decidido.",
+        "not_offered": "Esta opção não é mais oferecida: o agente não pode executar o comando agora.",
+        "failed": "Não foi possível registrar sua decisão. Tente novamente."
+      },
+      "windowRefused": "Decisão registrada, mas o terminal de {scope} não está na tela. Abra uma conversa de {scope} para colá-lo lá; o comando está na sua área de transferência.",
+      "windowRefusedNoClipboard": "Decisão registrada, mas o terminal de {scope} não está na tela. Abra uma conversa de {scope} e copie o comando do cartão.",
+      "pendingBadge": "{count} comando(s) aguardando sua decisão"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "cockpit": {
+    "common": {
+      "loading": "Carregando…"
+    },
+    "dreams": {
+      "pending": "{count} pendentes",
+      "empty": "Nenhum sonho pendente"
+    },
+    "accountUsage": {
+      "disconnected": "Sem sessão iniciada",
+      "connectCliThen": "Entre no {name} pela CLI: execute {command} e depois {then}.",
+      "connectCli": "Entre no {name} pela CLI: execute {command}.",
+      "connect": "Entre pela CLI deste provedor.",
+      "connectAccount": "Entre novamente com esta conta em {settingsPath}.",
+      "error": "Uso indisponível"
+    },
+    "board": {
+      "move": "Mover {title}",
+      "resize": "Redimensionar {title}",
+      "centerZone": "Centro do Cockpit",
+      "leftRail": "Faixa esquerda do Cockpit",
+      "rightRail": "Faixa direita do Cockpit"
+    }
+  }
+}

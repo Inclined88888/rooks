@@ -1,0 +1,61 @@
+{
+  "chatMarkdown": {
+    "copyUrl": "URL kopieren",
+    "tableScroll": "Tabelle — horizontal scrollen, um alle Spalten zu sehen"
+  },
+  "chatMedia": {
+    "image": "Bild",
+    "video": "Video",
+    "generated": "Generiertes Bild",
+    "fromHost": "Von {host}",
+    "enlarge": "Vergrößern",
+    "download": "Herunterladen",
+    "loadFailed": "Dieses Medium konnte nicht geladen werden.",
+    "markdownImage": "Bild nicht angezeigt",
+    "markdownImageAlt": "Bild nicht angezeigt: {alt}"
+  },
+  "filePreview": {
+    "close": "Schließen",
+    "previousImage": "Vorheriges Bild",
+    "nextImage": "Nächstes Bild",
+    "imagePosition": "Bild {index} von {total}",
+    "download": "Herunterladen",
+    "checking": "Wird geladen…",
+    "openFailed": "Diese Datei konnte nicht geöffnet werden.",
+    "noPreview": "Für diese Datei gibt es keine Vorschau.",
+    "tooLarge": "Diese Datei ist für eine Vorschau zu groß.",
+    "damaged": "Dieses Dokument ist beschädigt oder in einem Format, das der Viewer nicht liest.",
+    "officeNote": "Textvorschau — Bilder, Diagramme und Seitenlayout werden nicht angezeigt.",
+    "emptyDoc": "Dieses Dokument enthält keinen Text.",
+    "longDoc": "Langes Dokument: Nur der Anfang wird angezeigt.",
+    "sheetRows": "Nur die ersten {count} Zeilen werden angezeigt.",
+    "sheetColumns": "Nur die ersten {count} Spalten werden angezeigt.",
+    "emptySheet": "Dieses Blatt ist leer.",
+    "slide": "Folie {n}",
+    "untitledSlide": "(ohne Titel)",
+    "moreSlides": "Nur die ersten {count} Folien werden angezeigt.",
+    "sheets": "Blätter",
+    "image": "Bild",
+    "video": "Video"
+  },
+  "fileEditor": {
+    "view": "Ansicht",
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "saving": "Wird gespeichert…",
+    "closeTab": "{name} schließen",
+    "modified": "Geändert",
+    "tabs": "Geöffnete Dateien",
+    "discard": "Ungespeicherte Änderungen an {name} verwerfen?",
+    "discardAll": "Ungespeicherte Änderungen verwerfen?"
+  },
+  "fileLink": {
+    "openFailed": "{path} konnte nicht geöffnet werden.",
+    "forbidden": "Dein Konto darf keine Dateien außerhalb des Agentenordners öffnen.",
+    "warningTitle": "Datei außerhalb des Agentenordners öffnen?",
+    "warningBody": "Achtung: Diese Datei liegt nicht im Ordner des Agenten und gehört daher nicht zu seinem Projekt. Öffne sie nur, wenn du dem Link vertraust. Du kannst sie lesen und bearbeiten.",
+    "yes": "Ja",
+    "no": "Nein",
+    "noWorkspace": "Öffne eine Seite mit Arbeitsbereich, um diese Datei anzuzeigen."
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "machines": {
+    "title": "Machines",
+    "thisComputer": "Deze computer",
+    "backToLocal": "Terug naar deze computer",
+    "status": {
+      "online": "Online",
+      "unreachable": "Onbereikbaar",
+      "unauthorized": "Toegang ingetrokken",
+      "tls_error": "Certificaat geweigerd",
+      "error": "Fout",
+      "unknown": "Nog niet gecontroleerd"
+    },
+    "switcher": {
+      "trigger": "Machine: {name}. Van machine wisselen",
+      "menuTitle": "Machines",
+      "actingAs": "als {account}",
+      "add": "Machine toevoegen…",
+      "manage": "Verbindingen beheren",
+      "active": "Actief",
+      "switching": "Wisselen naar {name}…",
+      "loadError": "De machines konden niet worden geladen."
+    },
+    "settings": {
+      "description": "Andere Rooks-machines die deze computer kan besturen. Wisselen vervangt de hele interface door die van de gekozen machine, in hetzelfde venster: elke machine houdt haar eigen agents, projecten en instellingen.",
+      "local": "De machine waarvandaan deze interface wordt geserveerd.",
+      "add": "Machine toevoegen",
+      "addTitle": "Machine toevoegen",
+      "addHint": "Open op de andere machine {settingsPath} en autoriseer een nieuw apparaat: het toont een eenmalige code, 5 minuten geldig. De machine moet via HTTPS bereikbaar zijn (tailscale serve, een reverse proxy…).",
+      "urlLabel": "Adres van de machine",
+      "urlPlaceholder": "https://mijn-server.example.net",
+      "codeLabel": "Koppelcode",
+      "nameLabel": "Naam (optioneel)",
+      "pair": "Koppelen",
+      "pairing": "Koppelen…",
+      "paired": "{name} toegevoegd.",
+      "repaired": "{name} opnieuw gekoppeld.",
+      "listTitle": "Gekoppelde machines",
+      "empty": "Nog geen andere machine.",
+      "loadError": "De lijst met machines kon niet worden geladen.",
+      "active": "Actief",
+      "switchTo": "Ernaar wisselen",
+      "check": "Nu controleren",
+      "checking": "Controleren…",
+      "online": "{name} antwoordt.",
+      "rename": "Hernoemen",
+      "renameLabel": "Naam van de machine",
+      "renamed": "Machine hernoemd.",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "remove": "Verwijderen",
+      "removeConfirm": "{name} van deze computer verwijderen? De toegang wordt op die machine ingetrokken, en wat deze browser ervoor bewaarde, wordt gewist.",
+      "removeAction": "Machine verwijderen",
+      "removed": "Machine verwijderd.",
+      "removedNotRevoked": "Machine verwijderd. Ze was niet bereikbaar: trek deze computer in via haar instellingen voor Apparaten.",
+      "version": "Versie {version}",
+      "versionUnknown": "Versie onbekend",
+      "apiNewer": "Nieuwer dan deze interface",
+      "apiUnknown": "Interfaceniveau onbekend",
+      "apiTooOld": "Te oud voor deze interface",
+      "lastSeen": "Laatst bereikt {date}",
+      "neverSeen": "Nooit bereikt",
+      "actingAs": "Handelt als {account}",
+      "actingAsAdmin": "Handelt als {account}, beheerder"
+    },
+    "errors": {
+      "invalidCode": "De machine weigerde deze code: onjuist, verlopen of al gebruikt. Vraag een nieuwe.",
+      "invalidUrl": "Dit adres kan niet worden gebruikt: geef alleen het adres van de machine, zonder login, query of fragment.",
+      "httpsRequired": "De machine moet via HTTPS worden bereikt. Gewone HTTP wordt alleen op deze computer zelf geaccepteerd.",
+      "blockedAddress": "Dit adres wijst nooit naar een Rooks-machine.",
+      "notNova": "Er antwoordt geen Rooks-machine op dit adres.",
+      "requiresTls": "De machine ziet deze verbinding niet als HTTPS: controleer de HTTPS-instellingen van haar reverse proxy.",
+      "unreachable": "De machine is nu niet bereikbaar.",
+      "unauthorized": "De machine accepteert deze computer niet meer: de toegang is ingetrokken of verlopen. Koppel haar opnieuw.",
+      "tlsError": "Het certificaat van de machine is geweigerd.",
+      "redirect": "De machine antwoordde met een omleiding: geef haar uiteindelijke adres.",
+      "badResponse": "De machine antwoordde iets onverwachts.",
+      "throttled": "Te veel pogingen. Wacht een paar minuten voordat je het opnieuw probeert.",
+      "tooMany": "Een vloot telt hooguit 50 machines.",
+      "vault": "De geheimenkluis is niet beschikbaar: machinetoegang kan niet worden bewaard.",
+      "incompatible": "Deze machine draait een Rooks-versie die te oud is voor deze interface. Werk haar eerst bij.",
+      "notFound": "Deze machine zit niet meer in je vloot.",
+      "notHere": "Machines worden beheerd vanuit een browser die op deze computer is aangemeld.",
+      "sessionRequired": "Meld je eerst aan op deze computer.",
+      "invalidName": "Deze naam kan niet worden gebruikt.",
+      "generic": "Er ging iets mis. Probeer het opnieuw."
+    },
+    "banner": {
+      "unreachable": "{name} is nu niet bereikbaar.",
+      "apiUnknown": "{name} zegt niet welke interface hij verwacht: sommige schermen werken misschien niet.",
+      "apiNewer": "{name} draait een nieuwere Rooks dan deze interface: werk deze app bij om hem volledig te gebruiken.",
+      "retry": "Opnieuw proberen",
+      "dismiss": "Sluiten"
+    },
+    "blocked": {
+      "unnamed": "Deze machine",
+      "retry": "Opnieuw proberen",
+      "title": {
+        "unreachable": "{name} is niet bereikbaar",
+        "unauthorized": "{name} accepteert deze computer niet meer",
+        "incompatible": "{name} is te oud voor deze interface",
+        "unknown": "Deze machine zit niet in je vloot",
+        "session_required": "Meld je aan op deze computer",
+        "unavailable": "{name} kan niet vanaf hier worden geopend"
+      },
+      "body": {
+        "unreachable": "De machine antwoordt niet: ze staat misschien uit, of haar netwerk is niet beschikbaar. Je werk erop is onaangeroerd.",
+        "unauthorized": "De toegang van deze computer is op die machine ingetrokken of verlopen. Koppel haar opnieuw via {settingsPath}.",
+        "incompatible": "Ze spreekt interfaceniveau {level}, en deze interface heeft minstens {min} nodig. Werk Rooks op die machine bij en wissel er dan opnieuw naartoe.",
+        "unknown": "De machine die dit venster bestuurde, is uit je vloot verwijderd, of hoort bij een ander account.",
+        "session_required": "Je sessie op deze computer is beëindigd. Ga ernaar terug om je opnieuw aan te melden.",
+        "unavailable": "Deze computer kan de toegang tot de machine nu niet openen (geheimenkluis, daemon). Probeer het zo opnieuw."
+      }
+    },
+    "lock": {
+      "remote": "Deze licentie is die van {name}, de machine die dit venster bestuurt. Deze computer wordt niet geraakt.",
+      "unnamed": "een andere machine"
+    },
+    "localOnly": {
+      "remoteSessions": "Dit zijn de externe API-tokens van deze computer, niet van de machine waarnaar deze interface is gewisseld."
+    }
+  }
+}

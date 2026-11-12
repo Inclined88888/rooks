@@ -1,0 +1,497 @@
+{
+  "pluginsPage": {
+    "kind": {
+      "widget": "Widget",
+      "page": "Seite",
+      "island": "Insel",
+      "overlay": "Overlay",
+      "theme": "Design",
+      "composer": "Eingabe",
+      "layout": "Layout",
+      "behavior": "Backend",
+      "provider": "Anbieter",
+      "dictation": "Diktat",
+      "bundle": "Paket"
+    },
+    "tier": {
+      "core": "Kern",
+      "std": "Standard",
+      "dev": "Entwickler",
+      "opt": "Optional"
+    },
+    "by": "von {name}",
+    "openDetails": "Details zu {name} öffnen",
+    "noPreview": "Noch keine Vorschau",
+    "backendHint": "Backend-Modul — es hat keinen eigenen Bildschirm.",
+    "declares": "Öffnet",
+    "settings": "Einstellungen",
+    "authorUnknown": "Unbekannter Autor",
+    "backTo": "Zurück zu {name}",
+    "containedMissing": "Auf diesem Rechner nicht installiert",
+    "searchPlaceholder": "Plugins suchen…",
+    "typesLabel": "Typ",
+    "typesAll": "Alle",
+    "gallery": "Screenshots",
+    "prevSlide": "Vorheriges Bild",
+    "nextSlide": "Nächstes Bild",
+    "noMatch": "Nichts passt zu diesen Filtern.",
+    "provenance": {
+      "all": "Alle",
+      "rooks": "@rooks",
+      "marketplace": "Marktplatz"
+    },
+    "verified": "Verifiziert",
+    "unverified": "Nicht verifiziert",
+    "builtin": "Eingebaut",
+    "builtinHint": "Wird mit Rooks geliefert: Es lässt sich ausschalten, nicht deinstallieren.",
+    "awaitingApproval": "Auf diesem Computer freizugeben",
+    "awaitingApprovalHint": "Dieser Rechner führt es aus, aber sein Oberflächencode lädt hier erst, wenn dieselbe Version mit derselben Signatur auf diesem Computer installiert und aktiviert ist.",
+    "awaitingApprovalBuiltinHint": "Dieser Rechner führt es aus, aber sein Oberflächencode lädt hier erst, wenn dieser Computer dieselbe Version dieses Plugins mit demselben Oberflächencode mitbringt und aktiviert hat. Zwei Rooks-Releases können unter einer Plugin-Version unterschiedlichen Code liefern: Aktualisiere den älteren Rechner.",
+    "modules": {
+      "@rooks/db": {
+        "label": "Datenbank",
+        "description": "SQLite-Speicher und sein Kaltarchiv. Alle anderen injizieren ihn, damit das Schema vor dem ersten Lesen aktuell ist."
+      },
+      "@rooks/settings": {
+        "label": "Einstellungen",
+        "description": "Einstellungsseite des Produkts und die Tabelle, aus der andere Module lesen."
+      },
+      "@rooks/http": {
+        "label": "HTTP & Statistik",
+        "description": "Gemeinsame Express-App, Authentifizierung des UI-Proxys und das Statistik-Dashboard."
+      },
+      "@rooks/users": {
+        "label": "Konto",
+        "description": "Dein Konto, seine Sitzungen und der Anmeldebildschirm."
+      },
+      "@rooks/plugins": {
+        "label": "Plugin-Galerie",
+        "description": "Listet mitgelieferte Module und Pakete Dritter auf und schreibt ihren An/Aus-Zustand."
+      },
+      "@rooks/secrets-vault": {
+        "label": "Geheimnisse",
+        "description": "Versiegelter Geheimnistresor. Werte verlassen den Daemon nie im Klartext."
+      },
+      "@rooks/ui-layout": {
+        "label": "Layout",
+        "description": "Der Rahmen der App: Navigation, obere Leiste, Cockpit-Leisten, Overlay-Ebene. Ersetzbar — er belegt den Slot root."
+      },
+      "@rooks/ui-theme": {
+        "label": "Design",
+        "description": "Farbtokens des Produkts. Belegt den Slot theme; ausgeschaltet bleibt der Rahmen ungefärbt."
+      },
+      "@rooks/backends": {
+        "label": "LLM-Anbieter",
+        "description": "Katalog der Sprachmodell-Anbieter und ihrer Zugangsdaten."
+      },
+      "@rooks/agents": {
+        "label": "Agenten",
+        "description": "Agentenliste, Skills und MCP-Server. Seiten: /agents, /skills, /mcp."
+      },
+      "@rooks/missions": {
+        "label": "Missionen",
+        "description": "Startet, verfolgt und zeichnet Missionen auf. Seiten: /missions, /multichat, /messages."
+      },
+      "@rooks/projects": {
+        "label": "Projekte",
+        "description": "Projektregister: cwd, Rollen und die Zuordnung eines Ordners zu einem Agenten."
+      },
+      "@rooks/notifications": {
+        "label": "Benachrichtigungen",
+        "description": "Benachrichtigungscenter in der App. Der Kanal, über den Agenten dich warnen."
+      },
+      "@rooks/web-push": {
+        "label": "Web-Push",
+        "description": "Systembenachrichtigungen auf deinem Telefon, über Web Push. Braucht das Benachrichtigungscenter und VAPID-Schlüssel."
+      },
+      "@rooks/memory": {
+        "label": "Gedächtnis",
+        "description": "Langzeit-Gedächtnisregeln und die Prüfung dessen, was in Missionen injiziert wird."
+      },
+      "@rooks/kanban": {
+        "label": "Kanban",
+        "description": "Aufgabenboard: Code, Review, Merge und der Rest der Pipeline. Seine Spalte « TO DO » hält die Ideen, die du parkst — der Orchestrator holt dort nie Arbeit ab."
+      },
+      "@rooks/kanban-code": {
+        "label": "Code-Pipeline",
+        "description": "Gibt jeder Code-Aufgabe ihren eigenen Git-Worktree und Branch, prüft und mergt sie dann. Braucht das Plugin Git."
+      },
+      "@rooks/git": {
+        "label": "Git",
+        "description": "Branches, Checkout und GitHub-Remote deines Projekts in den Git-Karten des Chats. Funktioniert mit oder ohne Kanban; braucht git auf diesem Rechner."
+      },
+      "@rooks/todo-outcomes": {
+        "label": "TODO-Ergebnisse",
+        "description": "Gibt einer TO-DO-Idee ein Ergebnis und eine öffentliche Notiz für ihren Autor, gemeldet über das Ereignis todo_resolved an den Kanal, aus dem die Idee kam. Schalte Ideen-Ergebnisse in den Einstellungen ein, um es zu nutzen."
+      },
+      "@rooks/routines": {
+        "label": "Routinen",
+        "description": "Geplante Jobs: Cron-artige Routinen, die selbstständig Missionen starten."
+      },
+      "@rooks/triggers": {
+        "label": "Trigger",
+        "description": "Native Trigger: Ein Zeitplan, ein Webhook oder ein internes Ereignis löst eine TO-DO-Idee, eine Agentenaufgabe oder eine Benachrichtigung aus."
+      },
+      "@rooks/workflows": {
+        "label": "Workflows",
+        "description": "Visuelle Automatisierungsabläufe, Läufe und ihr vollständiger Ausführungs-Trace."
+      },
+      "@rooks/dreams": {
+        "label": "Träume",
+        "description": "Der nächtliche Durchgang: Verbesserungsansätze und Chancen, die der Orchestrator vorschlägt, und die Projektbewertung, die sie ordnet."
+      },
+      "@rooks/agent-chat": {
+        "label": "Agenten-Chat",
+        "description": "Eine Karte, der Verlauf eines Agenten. Jede Instanz wählt ihren Agenten und die unter dem Avatar gelisteten Sub-Agenten."
+      },
+      "@rooks/resources-guard": {
+        "label": "Ressourcenwächter",
+        "description": "Verhindert, dass sich Missions-cgroups stapeln. Braucht systemd; ohne es beenden sich zwei Daemons auf demselben Rechner gegenseitig."
+      },
+      "@rooks/vault": {
+        "label": "Vault",
+        "description": "Obsidian-Vault: die Graph-Kachel im Cockpit und die Scheibe /brain."
+      },
+      "@rooks/grepai": {
+        "label": "Grepai",
+        "description": "Semantischer Index eines Projekts. Braucht das grepai-Binary und systemd, um den Watcher am Leben zu halten."
+      },
+      "@rooks/docker-supervision": {
+        "label": "Docker",
+        "description": "Containerstatus pro Projekt und Start/Stopp. Braucht eine Container-Engine."
+      },
+      "@rooks/browser-embedded": {
+        "label": "Eingebetteter Browser",
+        "description": "Chromium pro Projekt mit dauerhaftem Profil, über Traefik veröffentlicht."
+      },
+      "@rooks/browser-recording": {
+        "label": "Browser-Aufnahme",
+        "description": "Einen Ablauf im eingebauten Browser aufnehmen, prüfen und von einem Agenten in einen Skill verwandeln lassen."
+      },
+      "@rooks/browser-annotations": {
+        "label": "Browser-Annotationen",
+        "description": "Auf ein Element des eingebauten Browsers zeigen, sagen, was sich ändern soll, und es an einen Agenten senden."
+      },
+      "@rooks/terminal-native": {
+        "label": "Host-Terminal",
+        "description": "Öffnet das Terminal oder den Dateimanager des Rechners in einem Desktop-Fenster. Braucht eine grafische Sitzung."
+      },
+      "@rooks/terminal-web": {
+        "label": "Eingebautes Terminal",
+        "description": "Ein Terminal in Rooks — Desktop, Browser oder Telefon —, das eine Shell auf diesem Rechner ausführt. Konten vorbehalten, die eines öffnen dürfen."
+      },
+      "@rooks/ui-documents": {
+        "label": "Dokumente im Chat",
+        "description": "Interaktive HTML-Dokumente, die ein Agent, du oder ein Plugin in einer Unterhaltung zeigt, von Rooks isoliert in einem Sandbox-Rahmen."
+      },
+      "@rooks/orchestrator-self": {
+        "label": "Daemon",
+        "description": "Den Orchestrator aus der Oberfläche neu starten und neu bauen. Braucht systemd."
+      },
+      "@rooks/web-app": {
+        "label": "Web-App",
+        "description": "Startet die Next.js-Oberfläche als Kindprozess des Daemons statt über Compose."
+      },
+      "@rooks/telegram": {
+        "label": "Telegram",
+        "description": "Eingehender Telegram-Kanal: Sprich aus einem Chat mit einem Agenten."
+      },
+      "@rooks/tts": {
+        "label": "Sprachausgabe",
+        "description": "Text-to-Speech für die Ausgabe von Missionen."
+      },
+      "@rooks/gpt-live": {
+        "label": "GPT-Live-Stimme",
+        "description": "Live-Sprachunterhaltung mit einer Mission, angetrieben von OpenAI GPT-Live."
+      },
+      "@rooks/video-factory": {
+        "label": "Videofabrik",
+        "description": "Rendert Videos aus einem Standbild und einem Prompt."
+      },
+      "@rooks/telemetry": {
+        "label": "Nutzungsstatistik",
+        "description": "Sendet anonyme Nutzungsstatistiken an das Rooks-Team: welche Funktionen genutzt werden, wie Turns verlaufen, wo die Einrichtung stockt. Nie deine Inhalte, Namen oder Pfade. Lässt sich in den Datenschutzeinstellungen ausschalten."
+      },
+      "@rooks/machines": {
+        "label": "Rechner",
+        "description": "Andere Rooks-Rechner mit diesem koppeln und ihren Zugriff im Tresor aufbewahren, um die Oberfläche von einem Rechner zum anderen zu wechseln. Aus, bis du es einschaltest."
+      },
+      "@rooks/company": {
+        "label": "Company",
+        "description": "Ordne deine Agenten in einem bearbeitbaren Organigramm."
+      },
+      "@rooks/agents-projects": {
+        "label": "Agenten · Projekte",
+        "description": "Agenten nach Projekt gruppiert. Unabhängig von der Arbeitsfläche deaktivierbar."
+      },
+      "@rooks/bots": {
+        "label": "TIMs",
+        "description": "Deine projektlosen TIMs, nach Team gruppiert, mit dem Chat des gewählten."
+      },
+      "@rooks/files-widget": {
+        "label": "Dateien",
+        "description": "Die Karte Dateien des Chats: Dateien im Arbeitsordner des Agenten durchsuchen und bearbeiten."
+      },
+      "@rooks/skills-widget": {
+        "label": "Skills",
+        "description": "Die Karte Skills des Chats: Skills des Agenten ein- und ausschalten."
+      },
+      "@rooks/mcp-widget": {
+        "label": "MCP",
+        "description": "Die Karte MCP des Chats: MCP-Server des Agenten ein- und ausschalten."
+      },
+      "@rooks/mcp-apps": {
+        "label": "Offizielle Konnektoren",
+        "description": "Die offiziellen Konnektoren des MCP-Tabs: die entfernten MCP-Server von GitHub, Linear, Notion und anderen Anbietern mit einem Klick verbinden."
+      }
+    },
+    "install": {
+      "sectionLabel": "Plugin installieren",
+      "button": "Plugin installieren",
+      "reading": "Wird gelesen…",
+      "pickFolder": "Plugin-Ordner wählen…",
+      "pickArchive": "Plugin-Archiv wählen (.tgz oder .zip)…",
+      "hintDesktop": "Ein Plugin-Ordner oder sein .tgz- oder .zip-Archiv. Du siehst seine Details, bevor etwas installiert wird.",
+      "available": "Im Plugin-Ordner gefunden, nicht installiert ({count})",
+      "previewFailed": "Dieses Plugin konnte nicht gelesen werden",
+      "pickerFailed": "Die Dateiauswahl konnte nicht geöffnet werden.",
+      "done": "„{name}“ ist installiert",
+      "doneRefused": "„{name}“ wurde installiert, wird aber nicht geladen: {reason}",
+      "failed": "Das Plugin wurde nicht installiert",
+      "signed": "Signatur verifiziert",
+      "tampered": "Verändertes Paket",
+      "unsignedLoads": "Unsigniert — lädt im Entwicklermodus",
+      "unsignedBlocked": "Unsigniert — lädt nicht",
+      "manifestRefused": "Rooks kann dieses Plugin nicht nutzen: {reason}",
+      "nodeEngineRefused": "Dieses Plugin läuft nicht auf dem Node, das dieses Rooks nutzt: {reason}",
+      "tamperedHint": "Die Dateien passen nicht mehr zu ihrer Signatur: Dieses Paket wurde nach dem Signieren verändert. Es kann nicht installiert werden.",
+      "permissions": "Fordert an",
+      "permissionsNone": "keine Berechtigung",
+      "webhooks": "Webhooks",
+      "source": "Von",
+      "origin": {
+        "upload": "einem aus diesem Browser gesendeten Archiv",
+        "path": "einer Datei auf diesem Computer",
+        "detected": "dem Plugin-Ordner"
+      },
+      "alreadyInstalled": "Version {version} ist bereits installiert. Die Installation ersetzt sie.",
+      "replacesPackage": "Diese ID gehörte zu {pkg}, einem anderen, nicht mehr installierten Paket. Die Installation dieses Pakets entzieht, was {pkg} gewährt wurde: Tresor-Geheimnisse, geöffnete Hosts, Freigaben. Seine Einstellungen und gespeicherten Daten werden gelöscht (geheime Einstellungen müssen neu eingegeben werden), und sein Datenordner kommt in den Papierkorb. Benutzerverbindungen gehen zurück in die Freigabe, und ihre Schlüssel werden gelöscht.",
+      "updatesUnsigned": "Update von einer unsignierten Kopie dieses Pakets: Daten, Einstellungen und Gewährungen bleiben erhalten.",
+      "childReplacesPackage": "{id}, das dieses Paketbündel mitbringt, übernimmt eine ID, die zu {pkg} gehörte, einem anderen, nicht mehr installierten Paket. Die Installation entzieht, was {pkg} gewährt wurde: Tresor-Geheimnisse, geöffnete Hosts, Freigaben. Seine Einstellungen und gespeicherten Daten werden gelöscht (geheime Einstellungen müssen neu eingegeben werden), und sein Datenordner kommt in den Papierkorb. Benutzerverbindungen gehen zurück in die Freigabe, und ihre Schlüssel werden gelöscht.",
+      "childrenAccess": {
+        "title": "Die Plugins, die dieses Bündel mitbringt",
+        "permissions": "Fordert an: {list}",
+        "state": {
+          "kept": "Bereits installiert: Dieses Bündel lässt es, wie es ist, daher wird hier nichts dafür angefragt.",
+          "unreadable": "Kann erst nach der Installation gelesen werden: Es wird installiert, ohne dass ihm etwas gewährt wird. Gewähre seine Geheimnisse auf der Seite Geheimnisse; ist es ein Anbieter, bleibt es inaktiv, bis du es unter {settingsPath} autorisierst.",
+          "unresolved": "Keine der Abhängigkeiten dieses Bündels liefert es: Es wird nicht installiert, daher wird nichts dafür angefragt.",
+          "tampered": "Seine Dateien passen nicht mehr zu ihrer Signatur: Es wird nicht geladen, daher wird nichts dafür angefragt.",
+          "nodeEngine": "Es läuft nicht auf dem Node, das dieses Rooks nutzt: Es wird nicht geladen, daher wird nichts dafür angefragt. {reason}"
+        },
+        "refused": {
+          "not-installed": "„{name}“ wurde nicht installiert, daher wurden seine Programme nicht autorisiert.",
+          "changed": "„{name}“ ist nicht, was das Blatt gezeigt hat, daher wurden seine Programme nicht autorisiert. Prüfe sie unter {settingsPath}.",
+          "grant-failed": "Die Programme von „{name}“ konnten nicht autorisiert werden. Versuche es erneut unter {settingsPath}."
+        },
+        "vaultRefused": {
+          "not-installed": "„{name}“ wurde nicht installiert, daher wurden keine seiner Geheimnisse und Hosts gewährt.",
+          "changed": "„{name}“ ist nicht, was das Blatt gezeigt hat, daher wurden keine seiner Geheimnisse und Hosts gewährt. Gewähre seine Geheimnisse auf der Seite Geheimnisse.",
+          "grant-failed": "Die Geheimnisse und Hosts von „{name}“ konnten nicht gewährt werden. Gewähre seine Geheimnisse auf der Seite Geheimnisse."
+        }
+      },
+      "licenseRequired": "Dieses Plugin lädt nur mit einer Lizenz, die es abdeckt.",
+      "vault": {
+        "title": "Geheimnisse und Netzwerk",
+        "read": "Liest Tresor-Geheimnisse nach Namen, ohne sie auf diesem Blatt zu nennen: Du gibst jedes davon diesem Plugin unter Geheimnisse oder über die Karte, die es zeigt, wenn es danach fragt.",
+        "broker": "Ruft APIs unter Tresor-Identitäten auf, ohne ihre Schlüssel zu sehen, nur jene, die ihm namentlich gewährt wurden.",
+        "brokerNoHttp": "Es deklariert http:outbound nicht, daher werden seine API-Aufrufe über den Broker abgelehnt.",
+        "network": "Sein Netzwerkzugriff ist auf die in rooks.config.json geöffneten Hosts begrenzt, für alle Plugins (pluginPolicy.http.allow) oder nur für dieses (pluginPolicy.http.byPlugin), sowie auf die Adressen freigegebener Verbindungen.",
+        "secretsLead": "Geheimnisse, die es nennt. Ein angekreuztes Geheimnis wird nur diesem Plugin gewährt; das Abwählen widerruft nie eine Gewährung (das geschieht unter Geheimnisse).",
+        "hostsLead": "Hosts, die es erreicht. Ein angekreuzter Host wird nur für dieses Plugin geöffnet.",
+        "hostOwn": "Für dieses Plugin bereits geöffnet. Abwählen schließt ihn: Seine Hosts werden durch die hier angekreuzten ersetzt.",
+        "hostGlobal": "Für alle Plugins bereits geöffnet (pluginPolicy.http.allow).",
+        "mode": {
+          "read": "vom Plugin gelesen",
+          "broker": "über den Broker genutzt, vom Plugin nie gesehen"
+        },
+        "state": {
+          "granted": "Diesem Plugin bereits gewährt.",
+          "missing": "Noch nicht im Tresor.",
+          "otherMode": "Der Tresor enthält ein Geheimnis dieses Namens für die andere Nutzung, das diesem Plugin nicht dienen würde.",
+          "ambiguous": "Mehrere Geheimnisse tragen diesen Namen: Welches gewährt wird, wählst du auf der Seite Geheimnisse.",
+          "vault-off": "Der Tresor ist deaktiviert: Dieses Plugin kann kein Geheimnis lesen."
+        },
+        "create": "Auf der Seite Geheimnisse erstellen",
+        "choose": "Auf der Seite Geheimnisse wählen"
+      },
+      "disclaimerTitle": "Plugin eines Drittanbieters",
+      "disclaimer": "Dieses Plugin wird von Rooks weder erstellt noch geprüft oder garantiert, und Rooks ist nicht für sein Handeln verantwortlich. Nach der Installation läuft es in Rooks mit den Rechten deines Kontos. Installiere nur Plugins von Autoren, denen du vertraust.",
+      "cancel": "Abbrechen",
+      "installing": "Wird installiert…",
+      "reinstall": "Diese Version installieren",
+      "confirm": "Installieren",
+      "refreshed": "{reason} Das Blatt unten ist aktuell: Prüfe es und installiere erneut.",
+      "errors": {
+        "unauthenticated": "Deine Sitzung ist abgelaufen — melde dich erneut an.",
+        "forbidden": "Nur ein bei Rooks angemeldeter Superadmin kann ein Plugin installieren.",
+        "too-large": "Dieses Plugin ist zu groß (höchstens 25 MB Archiv, 200 MB Dateien).",
+        "too-many-entries": "Dieses Plugin enthält zu viele Dateien.",
+        "not-gzip": "Das ist kein Plugin-Archiv: .tgz oder .zip erwartet.",
+        "unsafe-path": "Dieses Archiv versucht, außerhalb seines Ordners zu schreiben. Es wurde abgelehnt.",
+        "link": "Dieses Plugin enthält Links oder Spezialdateien, die ein Plugin nicht enthalten darf.",
+        "layout": "Dieses Archiv hat nicht den Aufbau eines Plugin-Pakets: eine package.json im Stamm oder ein oberster Ordner, der sie enthält.",
+        "corrupt": "Dieses Archiv ist beschädigt.",
+        "not-archive": "Das ist kein Plugin-Archiv: .tgz oder .zip erwartet.",
+        "not-zip": "Das ist kein gültiges .zip-Archiv.",
+        "zip64": "Dieses .zip nutzt das Format zip64, das Rooks nicht liest. Packe das Plugin mit einem Standardwerkzeug neu oder nutze ein .tgz.",
+        "encrypted": "Dieses .zip ist passwortgeschützt. Packe das Plugin ohne Passwort neu.",
+        "multi-volume": "Dieses .zip ist in mehrere Teile gesplittet. Erstelle ein einzelnes .zip.",
+        "compression": "Dieses .zip nutzt eine Kompressionsmethode, die Rooks nicht lesen kann. Packe das Plugin mit Standardkompression neu.",
+        "not-a-plugin": "Das ist kein Rooks-Plugin: keine package.json mit einem `rooks`-Manifest.",
+        "invalid-path": "Dieser Pfad ist nicht verwendbar.",
+        "forbidden-path": "Aus diesem Ordner können keine Plugins installiert werden.",
+        "not-found": "Dort wurde nichts mehr gefunden.",
+        "expired": "Diese Vorschau ist abgelaufen. Wähle das Plugin erneut.",
+        "tampered": "Das Paket wurde nach dem Signieren verändert. Es kann nicht installiert werden.",
+        "manifest": "Das Manifest des Plugins ist ungültig. Es kann nicht installiert werden.",
+        "npm-missing": "npm ist auf dem Rechner, auf dem Rooks läuft, nicht verfügbar. Installiere Node.js und versuche es erneut.",
+        "install-failed": "Die Installation ist fehlgeschlagen. Das Rooks-Log enthält die Details.",
+        "name-taken": "Ein anderes Paket nutzt diesen Namen bereits im Plugin-Ordner.",
+        "generic": "Der Daemon hat abgelehnt (HTTP {status}).",
+        "unreadable": "Rooks darf diesen Ort nicht lesen. Unter macOS erlaube es in Systemeinstellungen › Datenschutz & Sicherheit oder verschiebe das Plugin woanders hin.",
+        "mismatch": "Was dieses Plugin anfordert (ein Programm, ein Geheimnis oder ein Host), hat sich seit der Anzeige geändert.",
+        "refused": "Dieses Programm darf nie von einem Plugin ausgeführt werden.",
+        "not-provider": "Dieses Plugin ist kein Anbieter.",
+        "not-grantable": "Ein angekreuztes Geheimnis kann über dieses Blatt nicht gewährt werden.",
+        "conflict": "Der Tresor hat die Gewährung abgelehnt: Ein Geheimnis dieses Namens ist dort bereits gewährt. Kläre das auf der Seite Geheimnisse."
+      },
+      "pickFolderRemote": "Plugin-Ordner auf dem verbundenen Rechner wählen…",
+      "pickArchiveRemote": "Plugin-Archiv auf dem verbundenen Rechner wählen…",
+      "uploadArchive": "Archiv von diesem Computer senden…",
+      "hintRemote": "Ein Plugin-Ordner oder sein .tgz- oder .zip-Archiv auf dem Rechner, mit dem dieses Fenster verbunden ist, oder ein von diesem Computer gesendetes Archiv. Du siehst seine Details, bevor etwas installiert wird."
+    }
+  },
+  "providersSettings": {
+    "title": "Anbieter",
+    "description": "Anbieter-Plugins bringen einen KI-Dienst zu Rooks. Jedes Programm, das ein Anbieter startet, wird hier über seinen aufgelösten Pfad autorisiert, bevor es laufen kann.",
+    "cancel": "Abbrechen",
+    "consent": {
+      "prompts": "Erhält jede Anweisung und jede Antwort der Missionen, die er bedient.",
+      "credentials": "Erhält die Zugangsdaten seines eigenen Profils.",
+      "binary": "Startet das Programm {path}.",
+      "credentialDir": "Liest den Anmeldeordner „~/{dir}“ seines Kommandozeilenwerkzeugs und stellt Dateien daraus nur seinen eigenen Missionen bereit.",
+      "osCredential": "Liest den Eintrag „{service}“ deines System-Anmeldespeichers (macOS-Schlüsselbund). Nur lesend.",
+      "osCredentialAccount": "Liest den Eintrag „{service}“ ({account}) deines System-Anmeldespeichers (macOS-Schlüsselbund). Nur lesend."
+    },
+    "install": {
+      "allow": "Rooks erlauben, die oben aufgeführten Programme auszuführen.",
+      "allowHint": "Ohne dies ist der Anbieter installiert, bleibt aber inaktiv, bis du ihn unter {settingsPath} autorisierst."
+    },
+    "plugins": {
+      "title": "Anbieter-Plugins",
+      "none": "Kein Anbieter-Plugin ist installiert.",
+      "backends": "Backends: {list}",
+      "notFound": "auf diesem Rechner nicht installiert",
+      "authorize": "Prüfen und autorisieren",
+      "authorizeTitle": "{name} autorisieren",
+      "authorizeBody": "Rooks hat diese Programme auf diesem Rechner aufgelöst. Erlaube nur die Pfade, die du erkennst.",
+      "authorizeConfirm": "Diese Programme erlauben",
+      "authorized": "{name} ist autorisiert.",
+      "state": {
+        "active": "Aktiv",
+        "failed": "Braucht Aufmerksamkeit",
+        "disabled": "Aus",
+        "skipped": "Abgelehnt"
+      },
+      "binary": {
+        "authorize": "zu autorisieren",
+        "ready": "autorisiert",
+        "install": "zuerst installieren",
+        "refused": "nie erlaubt"
+      }
+    },
+    "acp": {
+      "title": "ACP-Registry",
+      "description": "Agenten aus der offiziellen Registry des Agent Client Protocol. Rooks lädt das Programm herunter, prüft es und führt es als Backend aus.",
+      "browse": "Registry durchsuchen",
+      "refresh": "Aktualisieren",
+      "stale": "Die Registry war nicht erreichbar; dies ist die letzte Liste, die Rooks gelesen hat.",
+      "verified": "sha256 verifiziert",
+      "noHash": "Kein veröffentlichter Hash",
+      "unsupported": "Hier nicht verfügbar: {reason}",
+      "install": "Installieren",
+      "update": "Aktualisieren",
+      "repair": "Neu installieren",
+      "installing": "Wird installiert…",
+      "remove": "Entfernen",
+      "installed": "{name} ist installiert.",
+      "updated": "{name} ist aktuell.",
+      "removed": "{name} wurde entfernt.",
+      "state": {
+        "ok": "Installiert {version}",
+        "tampered": "Dateien geändert — nicht verwendet",
+        "missing": "Dateien fehlen",
+        "pending": "{version} wird geprüft…"
+      },
+      "confirmTitle": "{name} ohne veröffentlichten Hash installieren?",
+      "confirmBody": "Die Registry gibt für dieses Programm keine Prüfsumme an. Seine Integrität beruht allein auf dem https-Download. Installiere es nur, wenn du seinem Herausgeber vertraust.",
+      "confirmAction": "Trotzdem installieren"
+    },
+    "errors": {
+      "forbidden": "Nur ein bei Rooks angemeldeter Superadmin kann Anbieter verwalten.",
+      "generic": "Der Daemon hat abgelehnt (HTTP {status}).",
+      "mismatch": "Das Programm hat sich seit der Anzeige geändert. Prüfe es erneut.",
+      "refused": "Dieses Programm darf nie von einem Plugin ausgeführt werden.",
+      "unverified": "Dieser Agent veröffentlicht keinen Hash: Bestätige, um ihn trotzdem zu installieren.",
+      "already-installed": "Diese Version ist bereits installiert und intakt.",
+      "not-installed": "Dieser Agent ist nicht installiert.",
+      "unknown-agent": "Die Registry führt diesen Agenten nicht.",
+      "unsupported": "Dieser Agent kann auf diesem Rechner nicht installiert werden.",
+      "registry-unavailable": "Die ACP-Registry war nicht erreichbar.",
+      "download-failed": "Der Download ist fehlgeschlagen.",
+      "checksum": "Die heruntergeladene Datei passt nicht zur veröffentlichten Prüfsumme. Sie wurde gelöscht.",
+      "archive": "Das Archiv wurde als unsicher abgelehnt.",
+      "command-missing": "Das von der Registry genannte Programm ist nicht im Archiv.",
+      "definition-refused": "Rooks hat diesen Agenten abgelehnt: Seine Beschreibung widerspricht sich.",
+      "authorize-failed": "Das Programm konnte nicht autorisiert werden. Das Rooks-Log enthält die Details.",
+      "failed": "Der Vorgang ist fehlgeschlagen. Das Rooks-Log enthält die Details."
+    }
+  },
+  "binariesSettings": {
+    "title": "CLI-Programme",
+    "description": "Wo Rooks das Kommandozeilenwerkzeug jedes KI-Anbieters auf diesem Rechner gefunden hat. Fehlt eines oder liegt es an einem ungewöhnlichen Ort, hefte seinen vollständigen Pfad an: Er gilt ab der nächsten Mission, ohne Rooks neu zu starten.",
+    "recheck": "Erneut prüfen",
+    "rechecked": "Programme erneut geprüft.",
+    "none": "Kein lokaler Anbieter nutzt ein Kommandozeilenwerkzeug.",
+    "backends": "Genutzt von: {list}",
+    "resolved": "Führt {path} aus",
+    "brokenPin": "Der angeheftete Pfad lässt sich nicht ausführen: {path}",
+    "notFound": "Auf diesem Rechner nicht gefunden. Installiere es oder hefte unten seinen Pfad an.",
+    "pathLabel": "Pfad zum Programm {name}",
+    "placeholder": "Vollständiger Pfad, zum Beispiel /usr/local/bin/claude oder C:\\Users\\du\\AppData\\Roaming\\npm\\claude.cmd",
+    "browse": "Durchsuchen…",
+    "save": "Pfad speichern",
+    "clear": "Anheftung entfernen",
+    "saved": "{name}: Pfad gespeichert. Neue Missionen nutzen ihn.",
+    "cleared": "{name}: Anheftung entfernt. Rooks sucht es wieder selbst.",
+    "state": {
+      "found": "Gefunden",
+      "pinned": "Angeheftet",
+      "brokenPin": "Angehefteter Pfad defekt",
+      "missing": "Nicht gefunden"
+    },
+    "errors": {
+      "forbidden": "Nur ein in der App angemeldeter Superadmin kann diese Pfade ändern.",
+      "unknown_binary": "Das ist nicht das Kommandozeilenwerkzeug eines lokalen Anbieters.",
+      "path_not_absolute": "Gib den vollständigen Pfad ab dem Stamm des Laufwerks an.",
+      "path_missing": "Unter diesem Pfad existiert nichts.",
+      "path_not_file": "Das ist ein Ordner. Wähle die Programmdatei selbst.",
+      "path_not_executable": "Diese Datei kann nicht ausgeführt werden: Sie ist nicht ausführbar.",
+      "no_config": "Schließe zuerst die Einrichtung ab.",
+      "config_unreadable": "rooks.config.json kann nicht gelesen werden. Repariere oder stelle sie wieder her und prüfe dann erneut.",
+      "invalid_body": "Dieser Pfad kann nicht gespeichert werden.",
+      "browse": "Die Dateiauswahl konnte nicht geöffnet werden.",
+      "generic": "Die Änderung ist fehlgeschlagen (Fehler {status})."
+    }
+  }
+}

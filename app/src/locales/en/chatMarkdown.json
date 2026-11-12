@@ -1,0 +1,61 @@
+{
+  "chatMarkdown": {
+    "copyUrl": "Copy URL",
+    "tableScroll": "Table — scroll horizontally to see all columns"
+  },
+  "chatMedia": {
+    "image": "Image",
+    "video": "Video",
+    "generated": "Generated image",
+    "fromHost": "From {host}",
+    "enlarge": "Enlarge",
+    "download": "Download",
+    "loadFailed": "This media could not be loaded.",
+    "markdownImage": "Image not shown",
+    "markdownImageAlt": "Image not shown: {alt}"
+  },
+  "filePreview": {
+    "close": "Close",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "imagePosition": "Image {index} of {total}",
+    "download": "Download",
+    "checking": "Loading…",
+    "openFailed": "This file could not be opened.",
+    "noPreview": "This file has no preview.",
+    "tooLarge": "This file is too large to preview.",
+    "damaged": "This document is damaged or in a format the viewer does not read.",
+    "officeNote": "Text preview — pictures, charts and page layout are not shown.",
+    "emptyDoc": "This document has no text.",
+    "longDoc": "Long document: only the beginning is shown.",
+    "sheetRows": "Only the first {count} rows are shown.",
+    "sheetColumns": "Only the first {count} columns are shown.",
+    "emptySheet": "This sheet is empty.",
+    "slide": "Slide {n}",
+    "untitledSlide": "(untitled)",
+    "moreSlides": "Only the first {count} slides are shown.",
+    "sheets": "Sheets",
+    "image": "Image",
+    "video": "Video"
+  },
+  "fileEditor": {
+    "view": "View",
+    "edit": "Edit",
+    "save": "Save",
+    "saving": "Saving…",
+    "closeTab": "Close {name}",
+    "modified": "Modified",
+    "tabs": "Open files",
+    "discard": "Discard unsaved changes to {name}?",
+    "discardAll": "Discard unsaved changes?"
+  },
+  "fileLink": {
+    "openFailed": "Could not open {path}.",
+    "forbidden": "Your account is not allowed to open files outside the agent's folder.",
+    "warningTitle": "Open a file outside the agent's folder?",
+    "warningBody": "Warning: this file is not in the agent's folder, so it is not part of its project. Only open it if you trust the link. You will be able to read and edit it.",
+    "yes": "Yes",
+    "no": "No",
+    "noWorkspace": "Open a page that has a workspace to show this file."
+  }
+}

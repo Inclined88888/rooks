@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-todo-form",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-todo-form",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Plain idea form",
+    "description": "Replaces the form of a TO DO idea with a plain one laid out on the product's DetailShell: title, description, project, type and progress.",
+    "permissions": [],
+    "client": {
+      "slots": ["todo.form"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

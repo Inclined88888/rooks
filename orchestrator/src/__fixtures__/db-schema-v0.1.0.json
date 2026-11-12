@@ -1,0 +1,603 @@
+{
+ "_comment": "Tables and columns created by db.ts in v0.1.0 (the tag). Taken from the schema at 0eb83539 minus series_roles, the only schema change to db.ts since the tag (git diff v0.1.0 -- orchestrator/src shows no other CREATE/ALTER/DROP). Never edit: it is what an installed 0.1.0 expects to find.",
+ "tables": {
+  "agent_messages": [
+   "id",
+   "from_mission",
+   "from_agent",
+   "to_agent",
+   "to_mission",
+   "kind",
+   "payload",
+   "in_reply_to",
+   "created_at",
+   "picked_at",
+   "status",
+   "owner_user_id",
+   "trace_id"
+  ],
+  "agent_request_deliveries": [
+   "request_id",
+   "mission_id",
+   "event_id",
+   "settled_at"
+  ],
+  "api_tokens": [
+   "token_hash",
+   "user_id",
+   "label",
+   "scope",
+   "created_at",
+   "last_used_at",
+   "expires_at",
+   "mission_id"
+  ],
+  "audit_log": [
+   "id",
+   "user_id",
+   "action",
+   "target",
+   "at",
+   "ip",
+   "actor"
+  ],
+  "backend_cooldowns": [
+   "backend",
+   "until",
+   "quota_window",
+   "noted_at",
+   "exact",
+   "kind"
+  ],
+  "browser_profiles": [
+   "id",
+   "owner_user_id",
+   "name",
+   "scope_kind",
+   "scope_ref",
+   "grants",
+   "created_at",
+   "updated_at"
+  ],
+  "browser_sessions": [
+   "project",
+   "container_name",
+   "cdp_port",
+   "novnc_port",
+   "status",
+   "started_at",
+   "stopped_at",
+   "last_used_at",
+   "open_tabs",
+   "owner_user_id"
+  ],
+  "dream_proposals": [
+   "id",
+   "kind",
+   "project",
+   "title",
+   "body",
+   "rationale",
+   "effort",
+   "conviction",
+   "sources",
+   "status",
+   "run_id",
+   "created_at",
+   "decided_at",
+   "snooze_until",
+   "owner_user_id"
+  ],
+  "email_changes": [
+   "token_hash",
+   "user_id",
+   "new_email",
+   "created_at",
+   "expires_at",
+   "confirmed_at"
+  ],
+  "events": [
+   "id",
+   "mission_id",
+   "type",
+   "timestamp",
+   "payload"
+  ],
+  "group_roles": [
+   "group_id",
+   "role_id"
+  ],
+  "groups": [
+   "id",
+   "name",
+   "description",
+   "created_at"
+  ],
+  "invitations": [
+   "token_hash",
+   "email",
+   "role_ids",
+   "invited_by",
+   "expires_at",
+   "accepted_at",
+   "group_ids"
+  ],
+  "learnings": [
+   "id",
+   "mission_id",
+   "agent",
+   "project",
+   "role",
+   "kind",
+   "text",
+   "hash",
+   "ts",
+   "status"
+  ],
+  "memory_audit": [
+   "id",
+   "ts",
+   "run_id",
+   "scope",
+   "project",
+   "agent",
+   "action",
+   "rule_id",
+   "target_rule_id",
+   "candidate_text",
+   "rationale",
+   "reverted"
+  ],
+  "memory_proposals": [
+   "id",
+   "scope",
+   "project",
+   "agent",
+   "kind",
+   "text",
+   "rationale",
+   "cluster_size",
+   "source",
+   "status",
+   "created_at",
+   "decided_at",
+   "owner_user_id"
+  ],
+  "memory_rules": [
+   "id",
+   "scope",
+   "project",
+   "agent",
+   "kind",
+   "text",
+   "source",
+   "created_at",
+   "status",
+   "tier",
+   "supersedes",
+   "support",
+   "role"
+  ],
+  "memory_rules_fts": [
+   "text"
+  ],
+  "memory_rules_fts_config": [
+   "k",
+   "v"
+  ],
+  "memory_rules_fts_data": [
+   "id",
+   "block"
+  ],
+  "memory_rules_fts_docsize": [
+   "id",
+   "sz"
+  ],
+  "memory_rules_fts_idx": [
+   "segid",
+   "term",
+   "pgno"
+  ],
+  "mission_search": [
+   "id",
+   "mission_id",
+   "event_id",
+   "seq",
+   "role",
+   "ts",
+   "text"
+  ],
+  "mission_search_fts": [
+   "text"
+  ],
+  "mission_search_fts_config": [
+   "k",
+   "v"
+  ],
+  "mission_search_fts_data": [
+   "id",
+   "block"
+  ],
+  "mission_search_fts_docsize": [
+   "id",
+   "sz"
+  ],
+  "mission_search_fts_idx": [
+   "segid",
+   "term",
+   "pgno"
+  ],
+  "mission_search_state": [
+   "k",
+   "v"
+  ],
+  "missions": [
+   "id",
+   "agent_name",
+   "mission",
+   "status",
+   "started_at",
+   "ended_at",
+   "exit_code",
+   "source_channel",
+   "source_meta",
+   "total_cost_usd",
+   "tokens_in",
+   "tokens_out",
+   "session_id",
+   "summary",
+   "summary_at",
+   "summary_event_id",
+   "forked_from",
+   "backend_override",
+   "model_override",
+   "extra_skills",
+   "extra_mcp_servers",
+   "extra_allowed_tools",
+   "cwd_override",
+   "permission_mode_override",
+   "parent_mission_id",
+   "parent_agent",
+   "task_id",
+   "routine_id",
+   "documented_at",
+   "mcp_servers_override",
+   "interrupted_reason",
+   "reasoning_effort",
+   "return_notified",
+   "owner_user_id",
+   "trace_id",
+   "workflow_run_id",
+   "workflow_node_id",
+   "browser_profile_id",
+   "browser_profile_resolved"
+  ],
+  "notifications": [
+   "id",
+   "type",
+   "urgent",
+   "title",
+   "body",
+   "task_id",
+   "mission_id",
+   "anchor",
+   "created_at",
+   "read_at",
+   "dismissed_at",
+   "source",
+   "owner_user_id"
+  ],
+  "pipeline_run_steps": [
+   "run_id",
+   "step_id",
+   "task_id"
+  ],
+  "pipeline_runs": [
+   "id",
+   "pipeline_id",
+   "input_payload",
+   "started_at"
+  ],
+  "pipelines": [
+   "id",
+   "name",
+   "description",
+   "definition",
+   "created_at",
+   "updated_at"
+  ],
+  "plugin_kv": [
+   "plugin_id",
+   "key",
+   "value",
+   "updated_at"
+  ],
+  "project_todo": [
+   "id",
+   "text",
+   "project",
+   "status",
+   "notes",
+   "created_at",
+   "updated_at",
+   "done_at",
+   "promoted_task_id",
+   "owner_user_id",
+   "author"
+  ],
+  "projects": [
+   "slug",
+   "name",
+   "color",
+   "icon",
+   "workspace",
+   "cwd",
+   "speech",
+   "kind",
+   "status",
+   "last_activity",
+   "created_at",
+   "updated_at",
+   "revenue_potential",
+   "revenue_locked",
+   "progress",
+   "score_rationale",
+   "score_updated_at",
+   "grepai_watch"
+  ],
+  "push_deliveries": [
+   "notification_id",
+   "subscription_id",
+   "status",
+   "sent_at",
+   "error"
+  ],
+  "push_subscriptions": [
+   "id",
+   "endpoint",
+   "p256dh",
+   "auth",
+   "device_label",
+   "created_at",
+   "last_seen_at",
+   "last_error"
+  ],
+  "role_permissions": [
+   "role_id",
+   "permission"
+  ],
+  "roles": [
+   "id",
+   "name",
+   "description",
+   "created_at"
+  ],
+  "routines": [
+   "id",
+   "name",
+   "agent_name",
+   "prompt",
+   "task_type",
+   "cron_expr",
+   "enabled",
+   "project",
+   "last_run_at",
+   "next_run_at",
+   "created_at",
+   "updated_at"
+  ],
+  "secret_access": [
+   "id",
+   "secret_id",
+   "name",
+   "mission_id",
+   "agent",
+   "at",
+   "kind",
+   "outcome",
+   "detail"
+  ],
+  "secret_grants": [
+   "secret_id",
+   "scope_kind",
+   "scope_ref"
+  ],
+  "secrets": [
+   "id",
+   "name",
+   "value_enc",
+   "mode",
+   "broker_spec",
+   "note",
+   "created_at",
+   "updated_at"
+  ],
+  "series_fallbacks": [
+   "series_id",
+   "scope",
+   "backend",
+   "model",
+   "updated_at"
+  ],
+  "sessions": [
+   "token_hash",
+   "user_id",
+   "created_at",
+   "expires_at",
+   "last_seen",
+   "user_agent"
+  ],
+  "settings": [
+   "key",
+   "value",
+   "updated_at"
+  ],
+  "tasks": [
+   "id",
+   "title",
+   "description",
+   "agent_name",
+   "status",
+   "priority",
+   "deps",
+   "mission_id",
+   "created_at",
+   "updated_at",
+   "scheduled_at",
+   "blocked_reason",
+   "done_comment",
+   "extra_skills",
+   "extra_mcp_servers",
+   "extra_allowed_tools",
+   "type",
+   "worktree_path",
+   "branch_name",
+   "base_branch",
+   "merged_commit_sha",
+   "pipeline",
+   "backend_override",
+   "model_override",
+   "permission_mode_override",
+   "fallback_backend_override",
+   "fallback_model_override",
+   "routine_id",
+   "iteration",
+   "verification_root_id",
+   "group_id",
+   "group_notified",
+   "return_notified",
+   "chain_ran",
+   "chain_started_at",
+   "chain_attempts",
+   "creator_mission_id",
+   "series_id",
+   "interrupted_reason",
+   "requeue_count",
+   "project",
+   "owner_user_id",
+   "trace_id"
+  ],
+  "teams": [
+   "id",
+   "owner_user_id",
+   "name",
+   "color",
+   "created_at"
+  ],
+  "trace_spans": [
+   "id",
+   "trace_id",
+   "mission_id",
+   "parent_span_id",
+   "workflow_run_id",
+   "workflow_node_id",
+   "seq",
+   "kind",
+   "name",
+   "status",
+   "started_at",
+   "ended_at",
+   "duration_ms",
+   "input",
+   "output",
+   "error",
+   "tokens_in",
+   "tokens_out",
+   "cost_usd",
+   "event_id_start",
+   "event_id_end"
+  ],
+  "ui_layout": [
+   "owner",
+   "scope",
+   "value",
+   "updated_at"
+  ],
+  "user_groups": [
+   "user_id",
+   "group_id"
+  ],
+  "user_prefs": [
+   "user_id",
+   "theme",
+   "layout",
+   "scheme",
+   "updated_at"
+  ],
+  "user_roles": [
+   "user_id",
+   "role_id"
+  ],
+  "users": [
+   "id",
+   "email",
+   "name",
+   "password_hash",
+   "status",
+   "is_superadmin",
+   "created_at",
+   "last_login_at",
+   "role_id",
+   "avatar_url"
+  ],
+  "workflow_run_nodes": [
+   "run_id",
+   "node_id",
+   "attempt",
+   "status",
+   "mission_id",
+   "input",
+   "output",
+   "error",
+   "taken_port",
+   "started_at",
+   "ended_at",
+   "tokens_in",
+   "tokens_out"
+  ],
+  "workflow_runs": [
+   "id",
+   "workflow_id",
+   "version",
+   "status",
+   "trigger",
+   "input",
+   "context",
+   "error",
+   "started_at",
+   "ended_at",
+   "owner_user_id",
+   "tokens_in",
+   "tokens_out",
+   "cost_usd"
+  ],
+  "workflow_triggers": [
+   "workflow_id",
+   "node_id",
+   "kind",
+   "token",
+   "next_run_at",
+   "last_run_at"
+  ],
+  "workflow_versions": [
+   "workflow_id",
+   "version",
+   "definition",
+   "published_at",
+   "published_by"
+  ],
+  "workflows": [
+   "id",
+   "slug",
+   "name",
+   "description",
+   "project",
+   "owner_user_id",
+   "draft",
+   "published_version",
+   "enabled",
+   "created_at",
+   "updated_at"
+  ]
+ }
+}

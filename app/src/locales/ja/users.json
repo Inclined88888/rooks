@@ -1,0 +1,13 @@
+{
+  "invitePage": {
+    "title": "招待を受け入れる",
+    "description": "{email} のパスワードを選んでください。",
+    "invalid": "この招待は無効か、期限切れです。",
+    "name": "名前",
+    "password": "パスワード",
+    "submit": "アカウントを作成",
+    "working": "処理中…",
+    "failed": "招待が拒否されました",
+    "goHome": "続ける"
+  }
+}

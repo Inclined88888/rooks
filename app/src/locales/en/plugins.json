@@ -1,0 +1,530 @@
+{
+  "developerMode": {
+    "label": "Developer mode — load unsigned plugins",
+    "description": "Lets plugins without a Rooks signature load, such as one you are writing yourself. Signed plugins load either way.",
+    "warning": "A plugin runs inside the Rooks daemon, with the rights of the system account that runs it. Turn this on only for code you wrote or have read.",
+    "turnedOn": "Developer mode is on: unsigned plugins now load.",
+    "turnedOff": "Developer mode is off: unsigned plugins no longer load.",
+    "blocked": {
+      "fixed": "Your licence includes a fixed plugin composition, so developer mode cannot be turned on."
+    },
+    "forbidden": "Only the superadmin can change developer mode.",
+    "loadError": "Developer mode could not be read. Try again.",
+    "errors": {
+      "unauthenticated": "Your session has expired. Sign in again.",
+      "forbidden": "Only the superadmin, signed in to the app, can change developer mode.",
+      "generic": "Developer mode could not be changed (HTTP {status})."
+    }
+  },
+  "pluginsPage": {
+    "kind": {
+      "widget": "Widget",
+      "page": "Page",
+      "island": "Island",
+      "overlay": "Overlay",
+      "theme": "Theme",
+      "composer": "Composer",
+      "layout": "Layout",
+      "behavior": "Backend",
+      "provider": "Provider",
+      "dictation": "Dictation",
+      "bundle": "Bundle"
+    },
+    "tier": {
+      "core": "Core",
+      "std": "Standard",
+      "dev": "Developer",
+      "opt": "Optional"
+    },
+    "by": "by {name}",
+    "openDetails": "Open {name} details",
+    "noPreview": "No preview yet",
+    "backendHint": "Backend module — it has no screen of its own.",
+    "declares": "Opens",
+    "settings": "Settings",
+    "authorUnknown": "Unknown author",
+    "backTo": "Back to {name}",
+    "containedMissing": "Not installed on this machine",
+    "searchPlaceholder": "Search plugins…",
+    "typesLabel": "Type",
+    "typesAll": "All",
+    "gallery": "Screenshots",
+    "prevSlide": "Previous image",
+    "nextSlide": "Next image",
+    "noMatch": "Nothing matches these filters.",
+    "provenance": {
+      "all": "All",
+      "rooks": "@rooks",
+      "marketplace": "Marketplace"
+    },
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "builtin": "Built-in",
+    "builtinHint": "Ships with Rooks: it can be turned off, not uninstalled.",
+    "awaitingApproval": "To approve on this computer",
+    "awaitingApprovalHint": "This machine runs it, but its interface code only loads here once the same version, with the same signature, is installed and enabled on this computer.",
+    "awaitingApprovalBuiltinHint": "This machine runs it, but its interface code only loads here once this computer ships the same version of this plugin, with the same interface code, and has it enabled. Two Rooks releases can ship different code under one plugin version: update the older machine.",
+    "modules": {
+      "@rooks/db": {
+        "label": "Database",
+        "description": "SQLite store and its cold archive. Everything else injects it so the schema is up to date before the first read."
+      },
+      "@rooks/settings": {
+        "label": "Settings",
+        "description": "Product settings page and the table other modules read from."
+      },
+      "@rooks/http": {
+        "label": "HTTP & stats",
+        "description": "Shared Express app, authentication of the UI proxy, and the stats dashboard."
+      },
+      "@rooks/users": {
+        "label": "Account",
+        "description": "Your account, its sessions and the login screen."
+      },
+      "@rooks/plugins": {
+        "label": "Plugin gallery",
+        "description": "Lists bundled modules and third-party packages, and writes their on/off state."
+      },
+      "@rooks/secrets-vault": {
+        "label": "Secrets",
+        "description": "Sealed secrets vault. Values never leave the daemon in the clear."
+      },
+      "@rooks/ui-layout": {
+        "label": "Layout",
+        "description": "The chrome of the app: nav, top bar, cockpit rails, overlay layer. Replaceable — it occupies the root slot."
+      },
+      "@rooks/ui-theme": {
+        "label": "Theme",
+        "description": "Product colour tokens. Occupies the theme slot; switching it off leaves the chrome unpainted."
+      },
+      "@rooks/backends": {
+        "label": "LLM providers",
+        "description": "Catalogue of language-model providers and their credentials."
+      },
+      "@rooks/agents": {
+        "label": "Agents",
+        "description": "Agent roster, skills and MCP servers. Pages: /agents, /skills, /mcp."
+      },
+      "@rooks/missions": {
+        "label": "Missions",
+        "description": "Spawns, follows and records missions. Pages: /missions, /multichat, /messages."
+      },
+      "@rooks/projects": {
+        "label": "Projects",
+        "description": "Project registry: cwd, roles, and the mapping from a folder to an agent."
+      },
+      "@rooks/notifications": {
+        "label": "Notifications",
+        "description": "In-app notification centre. The channel agents use to alert you."
+      },
+      "@rooks/web-push": {
+        "label": "Web push",
+        "description": "System notifications on your phone, over Web Push. Needs the notification centre and VAPID keys."
+      },
+      "@rooks/memory": {
+        "label": "Memory",
+        "description": "Long-term memory rules and the audit of what gets injected into missions."
+      },
+      "@rooks/kanban": {
+        "label": "Kanban",
+        "description": "Task board: code, review, merge, and the rest of the pipeline. Its « TO DO » column holds the ideas you park — the orchestrator never picks work up there."
+      },
+      "@rooks/kanban-code": {
+        "label": "Code pipeline",
+        "description": "Gives each code task its own git worktree and branch, then reviews and merges it. Needs the Git plugin."
+      },
+      "@rooks/git": {
+        "label": "Git",
+        "description": "Your project's branches, checkout and GitHub remote, in the Git cards of the chat. Works with or without the Kanban; needs git on this machine."
+      },
+      "@rooks/todo-outcomes": {
+        "label": "TODO outcomes",
+        "description": "Gives a TO DO idea an outcome and a public note for its author, announced through the todo_resolved event to the channel the idea came from. Turn on Idea outcomes in Settings to use it."
+      },
+      "@rooks/routines": {
+        "label": "Routines",
+        "description": "Scheduled jobs: cron-like routines that spawn missions on their own."
+      },
+      "@rooks/triggers": {
+        "label": "Triggers",
+        "description": "Native triggers: a schedule, a webhook or an internal event runs a TO DO idea, an agent task or a notification."
+      },
+      "@rooks/workflows": {
+        "label": "Workflows",
+        "description": "Visual automation flows, runs and their full execution trace."
+      },
+      "@rooks/dreams": {
+        "label": "Dreams",
+        "description": "The overnight pass: improvement leads and opportunities the orchestrator proposes, and the project scoring that ranks them."
+      },
+      "@rooks/agent-chat": {
+        "label": "Agent chat",
+        "description": "One card, one agent's thread. Each instance picks its agent and the sub-agents listed under the avatar."
+      },
+      "@rooks/resources-guard": {
+        "label": "Resource guard",
+        "description": "Keeps mission cgroups from stacking. Requires systemd; without it, two daemons on the same machine kill each other."
+      },
+      "@rooks/vault": {
+        "label": "Vault",
+        "description": "Obsidian vault: the graph tile on the cockpit and the /brain disc."
+      },
+      "@rooks/grepai": {
+        "label": "Grepai",
+        "description": "Semantic index of a project. Needs the grepai binary and systemd to keep the watcher alive."
+      },
+      "@rooks/docker-supervision": {
+        "label": "Docker",
+        "description": "Per-project container status and start/stop. Needs a container engine."
+      },
+      "@rooks/browser-embedded": {
+        "label": "Embedded browser",
+        "description": "Per-project Chromium with a persistent profile, published through Traefik."
+      },
+      "@rooks/browser-recording": {
+        "label": "Browser recording",
+        "description": "Record a flow in the built-in browser, review it, and let an agent turn it into a skill."
+      },
+      "@rooks/browser-annotations": {
+        "label": "Browser annotations",
+        "description": "Point at an element of the built-in browser, say what to change, and send it to an agent."
+      },
+      "@rooks/terminal-native": {
+        "label": "Host terminal",
+        "description": "Opens the machine's terminal or file manager in a desktop window. Needs a graphical session."
+      },
+      "@rooks/terminal-web": {
+        "label": "Built-in terminal",
+        "description": "A terminal inside Rooks — desktop, browser or phone — running a shell on this machine. Reserved to accounts allowed to open one."
+      },
+      "@rooks/ui-documents": {
+        "label": "Documents in the chat",
+        "description": "Interactive HTML documents an agent, you or a plugin shows in a conversation, isolated from Rooks in a sandboxed frame."
+      },
+      "@rooks/orchestrator-self": {
+        "label": "Daemon",
+        "description": "Restart and rebuild the orchestrator from the UI. Needs systemd."
+      },
+      "@rooks/web-app": {
+        "label": "Web app",
+        "description": "Spawns the Next.js UI as a child of the daemon, instead of Compose."
+      },
+      "@rooks/telegram": {
+        "label": "Telegram",
+        "description": "Inbound Telegram channel: talk to an agent from a chat."
+      },
+      "@rooks/tts": {
+        "label": "Speech",
+        "description": "Text-to-speech for mission output."
+      },
+      "@rooks/gpt-live": {
+        "label": "GPT-Live voice",
+        "description": "Live voice conversation with a mission, powered by OpenAI GPT-Live."
+      },
+      "@rooks/video-factory": {
+        "label": "Video factory",
+        "description": "Renders videos from a still and a prompt."
+      },
+      "@rooks/updates": {
+        "label": "Rooks updates",
+        "description": "Shows a banner when a newer Rooks is published for your channel, with its notes and the installer for your system. It reads a signed list on rooks.local and sends nothing about you; it can be turned off in the settings."
+      },
+      "@rooks/telemetry": {
+        "label": "Usage statistics",
+        "description": "Sends anonymous usage statistics to the Rooks team: which features are used, how turns go, where setup stops. Never your content, names or paths. It can be turned off in the Privacy settings."
+      },
+      "@rooks/machines": {
+        "label": "Machines",
+        "description": "Pair other Rooks machines with this one and keep their access in the vault, to switch the interface from one machine to another. Off until you turn it on."
+      },
+      "@rooks/company": {
+        "label": "Company",
+        "description": "Organize your agents in an editable organization chart."
+      },
+      "@rooks/agents-projects": {
+        "label": "Agents · Projects",
+        "description": "Agents grouped by project. Can be disabled independently of the canvas."
+      },
+      "@rooks/bots": {
+        "label": "TIMs",
+        "description": "Your project-less TIMs, grouped by team, with the chat of the one you pick."
+      },
+      "@rooks/files-widget": {
+        "label": "Files",
+        "description": "The chat's Files card: browse and edit the files of the agent's working folder."
+      },
+      "@rooks/skills-widget": {
+        "label": "Skills",
+        "description": "The chat's Skills card: switch the agent's skills on and off."
+      },
+      "@rooks/mcp-widget": {
+        "label": "MCP",
+        "description": "The chat's MCP card: switch the agent's MCP servers on and off."
+      },
+      "@rooks/mcp-apps": {
+        "label": "Official connectors",
+        "description": "The official connectors of the MCP tab: connect the remote MCP servers of GitHub, Linear, Notion and other publishers in one click."
+      }
+    },
+    "install": {
+      "sectionLabel": "Install a plugin",
+      "button": "Install a plugin",
+      "reading": "Reading…",
+      "pickFolder": "Choose a plugin folder…",
+      "pickArchive": "Choose a plugin archive (.tgz or .zip)…",
+      "hintDesktop": "A plugin folder, or its .tgz or .zip archive. You will see its details before anything is installed.",
+      "available": "Found in the plugins folder, not installed ({count})",
+      "previewFailed": "Could not read this plugin",
+      "pickerFailed": "The file picker could not open.",
+      "done": "“{name}” is installed",
+      "doneRefused": "“{name}” was installed but will not load: {reason}",
+      "failed": "The plugin was not installed",
+      "signed": "Verified signature",
+      "tampered": "Altered package",
+      "unsignedLoads": "Unsigned — loads in developer mode",
+      "unsignedBlocked": "Unsigned — will not load",
+      "manifestRefused": "Rooks cannot use this plugin: {reason}",
+      "nodeEngineRefused": "This plugin does not run on the Node this Rooks uses: {reason}",
+      "tamperedHint": "The files no longer match their signature: this package was modified after it was signed. It cannot be installed.",
+      "developerMode": {
+        "title": "Developer mode is off",
+        "body": "This package has no Rooks signature. It can be installed, but it will not load until developer mode is turned on.",
+        "enable": "Turn on developer mode",
+        "openSettings": "Open developer mode settings"
+      },
+      "unsignedConfirm": {
+        "title": "Install {name} without a signature?",
+        "body": "This package is not signed and its publisher is not verified. Once installed, its code runs inside the Rooks daemon with the rights of your system account.",
+        "bodyOff": "This package is not signed and its publisher is not verified. It will not load while developer mode is off; once the mode is on, its code runs inside the Rooks daemon with the rights of your system account.",
+        "confirm": "Install anyway"
+      },
+      "permissions": "Asks for",
+      "permissionsNone": "no permission",
+      "webhooks": "Webhooks",
+      "source": "From",
+      "origin": {
+        "upload": "an archive sent from this browser",
+        "path": "a file on this computer",
+        "detected": "the plugins folder"
+      },
+      "alreadyInstalled": "Version {version} is already installed. Installing replaces it.",
+      "replacesPackage": "This id belonged to {pkg}, a different package that is no longer installed. Installing this one withdraws what {pkg} was granted: vault secrets, opened hosts, approvals. Its settings and stored data are deleted (secret settings must be typed again) and its data folder is moved to the trash. User connections go back to approval and their keys are deleted.",
+      "updatesUnsigned": "Update from an unsigned copy of this package: its data, settings and grants are kept.",
+      "childReplacesPackage": "{id}, brought by this bundle, takes an id that belonged to {pkg}, a different package that is no longer installed. Installing it withdraws what {pkg} was granted: vault secrets, opened hosts, approvals. Its settings and stored data are deleted (secret settings must be typed again) and its data folder is moved to the trash. User connections go back to approval and their keys are deleted.",
+      "childrenAccess": {
+        "title": "The plugins this bundle brings",
+        "permissions": "Asks for: {list}",
+        "state": {
+          "kept": "Already installed: this bundle leaves it as it is, so nothing is asked for it here.",
+          "unreadable": "Can only be read once installed: it will be installed without being granted anything. Grant its secrets from the Secrets page; if it is a provider, it stays inactive until you authorize it in {settingsPath}.",
+          "unresolved": "None of this bundle's dependencies provides it: it will not be installed, so nothing is asked for it.",
+          "tampered": "Its files no longer match their signature: it will not load, so nothing is asked for it.",
+          "nodeEngine": "It does not run on the Node this Rooks uses: it will not load, so nothing is asked for it. {reason}"
+        },
+        "refused": {
+          "not-installed": "“{name}” was not installed, so its programs were not authorized.",
+          "changed": "“{name}” is not what the sheet showed, so its programs were not authorized. Review them in {settingsPath}.",
+          "grant-failed": "The programs of “{name}” could not be authorized. Try again in {settingsPath}."
+        },
+        "vaultRefused": {
+          "not-installed": "“{name}” was not installed, so none of its secrets and hosts were granted.",
+          "changed": "“{name}” is not what the sheet showed, so none of its secrets and hosts were granted. Grant its secrets from the Secrets page.",
+          "grant-failed": "The secrets and hosts of “{name}” could not be granted. Grant its secrets from the Secrets page."
+        }
+      },
+      "licenseRequired": "This plugin only loads with a licence that covers it.",
+      "vault": {
+        "title": "Secrets and network",
+        "read": "Reads vault secrets by name, without naming them on this sheet: you give each one to this plugin from Secrets, or from the card it raises when it asks for one.",
+        "broker": "Calls APIs under vault identities without seeing their keys, only those granted to it by name.",
+        "brokerNoHttp": "It does not declare http:outbound, so its brokered API calls will be refused.",
+        "network": "Its network access is limited to the hosts opened in rooks.config.json, to every plugin (pluginPolicy.http.allow) or to this one alone (pluginPolicy.http.byPlugin), and to the addresses of approved connections.",
+        "secretsLead": "Secrets it names. A ticked secret is granted to this plugin alone; unticking never revokes a grant (that is done from Secrets).",
+        "hostsLead": "Hosts it reaches. A ticked host is opened to this plugin alone.",
+        "hostOwn": "Already open to this plugin. Untick to close it: its hosts are replaced by the ones ticked here.",
+        "hostGlobal": "Already open to every plugin (pluginPolicy.http.allow).",
+        "mode": {
+          "read": "read by the plugin",
+          "broker": "used through the broker, never seen by the plugin"
+        },
+        "state": {
+          "granted": "Already granted to this plugin.",
+          "missing": "Not in the vault yet.",
+          "otherMode": "The vault holds a secret of this name for the other use, which would not serve this plugin.",
+          "ambiguous": "Several secrets bear this name: which one to grant is chosen on the Secrets page.",
+          "vault-off": "The vault is disabled: this plugin cannot read any secret."
+        },
+        "create": "Create it on the Secrets page",
+        "choose": "Choose on the Secrets page"
+      },
+      "disclaimerTitle": "Third-party plugin",
+      "disclaimer": "This plugin is not made, reviewed or guaranteed by Rooks, and Rooks is not responsible for what it does. Once installed it runs inside Rooks with the rights of your account. Only install plugins from authors you trust.",
+      "cancel": "Cancel",
+      "installing": "Installing…",
+      "reinstall": "Install this version",
+      "confirm": "Install",
+      "refreshed": "{reason} The sheet below is up to date: review it, then install again.",
+      "errors": {
+        "unauthenticated": "Your session has expired — sign in again.",
+        "forbidden": "Only a superadmin signed in to Rooks can install a plugin.",
+        "too-large": "This plugin is too large (25 MB archive, 200 MB of files at most).",
+        "too-many-entries": "This plugin holds too many files.",
+        "not-gzip": "This is not a plugin archive: expected a .tgz or a .zip.",
+        "unsafe-path": "This archive tries to write outside its folder. It was refused.",
+        "link": "This plugin contains links or special files, which a plugin may not hold.",
+        "layout": "This archive does not have the layout of a plugin package: a package.json at its root, or one top folder holding it.",
+        "corrupt": "This archive is damaged.",
+        "not-archive": "This is not a plugin archive: expected a .tgz or a .zip.",
+        "not-zip": "This is not a valid .zip archive.",
+        "zip64": "This .zip uses the zip64 format, which Rooks does not read. Zip the plugin again with a standard tool, or use a .tgz.",
+        "encrypted": "This .zip is password-protected. Zip the plugin again without a password.",
+        "multi-volume": "This .zip is split into several parts. Make a single .zip.",
+        "compression": "This .zip uses a compression method Rooks cannot read. Zip the plugin again with standard compression.",
+        "not-a-plugin": "This is not a Rooks plugin: no package.json with a `rooks` manifest.",
+        "invalid-path": "This path cannot be used.",
+        "forbidden-path": "Plugins cannot be installed from this folder.",
+        "not-found": "Nothing was found there anymore.",
+        "expired": "This preview has expired. Choose the plugin again.",
+        "tampered": "The package was altered after signing. It cannot be installed.",
+        "manifest": "The plugin's manifest is invalid. It cannot be installed.",
+        "npm-missing": "npm is not available on the machine running Rooks. Install Node.js, then try again.",
+        "install-failed": "The installation failed. The Rooks log has the details.",
+        "name-taken": "Another package already uses this name in the plugins folder.",
+        "generic": "The daemon refused (HTTP {status}).",
+        "unreadable": "Rooks is not allowed to read this location. On macOS, allow it in System Settings › Privacy & Security, or move the plugin elsewhere.",
+        "mismatch": "What this plugin asks for (a program, a secret or a host) changed since it was shown.",
+        "refused": "This program can never be run by a plugin.",
+        "not-provider": "This plugin is not a provider.",
+        "not-grantable": "A ticked secret cannot be granted from this sheet.",
+        "conflict": "The vault refused the grant: a secret of this name is already granted there. Resolve it on the Secrets page."
+      },
+      "pickFolderRemote": "Choose a plugin folder on the connected machine…",
+      "pickArchiveRemote": "Choose a plugin archive on the connected machine…",
+      "uploadArchive": "Send an archive from this computer…",
+      "hintRemote": "A plugin folder or its .tgz or .zip archive on the machine this window is connected to, or an archive sent from this computer. You will see its details before anything is installed."
+    }
+  },
+  "providersSettings": {
+    "title": "Providers",
+    "description": "Provider plugins bring an AI service to Rooks. Each program a provider launches is authorized here, by its resolved path, before it can run.",
+    "cancel": "Cancel",
+    "consent": {
+      "prompts": "Receives every instruction and every answer of the missions it serves.",
+      "credentials": "Receives the credentials of its own profile.",
+      "binary": "Launches the program {path}.",
+      "credentialDir": "Reads the sign-in folder \"~/{dir}\" of its command-line tool, and exposes files from it to its own missions only.",
+      "osCredential": "Reads the entry \"{service}\" of your system credential store (macOS keychain). Read-only.",
+      "osCredentialAccount": "Reads the entry \"{service}\" ({account}) of your system credential store (macOS keychain). Read-only."
+    },
+    "install": {
+      "allow": "Allow Rooks to run the program(s) listed above.",
+      "allowHint": "Without this, the provider is installed but stays inactive until you authorize it in {settingsPath}."
+    },
+    "plugins": {
+      "title": "Provider plugins",
+      "none": "No provider plugin is installed.",
+      "backends": "Backends: {list}",
+      "notFound": "not installed on this machine",
+      "authorize": "Review and authorize",
+      "authorizeTitle": "Authorize {name}",
+      "authorizeBody": "Rooks resolved these programs on this machine. Allow only the paths you recognize.",
+      "authorizeConfirm": "Allow these programs",
+      "authorized": "{name} is authorized.",
+      "state": {
+        "active": "Active",
+        "failed": "Needs attention",
+        "disabled": "Off",
+        "skipped": "Refused"
+      },
+      "binary": {
+        "authorize": "to authorize",
+        "ready": "authorized",
+        "install": "install it first",
+        "refused": "never allowed"
+      }
+    },
+    "acp": {
+      "title": "ACP registry",
+      "description": "Agents published in the official Agent Client Protocol registry. Rooks downloads the program, checks it, and runs it as a backend.",
+      "browse": "Browse the registry",
+      "refresh": "Refresh",
+      "stale": "The registry could not be reached; this is the last list Rooks read.",
+      "verified": "Verified sha256",
+      "noHash": "No published hash",
+      "unsupported": "Not available here: {reason}",
+      "install": "Install",
+      "update": "Update",
+      "repair": "Reinstall",
+      "installing": "Installing…",
+      "remove": "Remove",
+      "installed": "{name} is installed.",
+      "updated": "{name} is up to date.",
+      "removed": "{name} was removed.",
+      "state": {
+        "ok": "Installed {version}",
+        "tampered": "Files changed — not used",
+        "missing": "Files missing",
+        "pending": "Checking {version}…"
+      },
+      "confirmTitle": "Install {name} without a published hash?",
+      "confirmBody": "The registry gives no checksum for this program. Its integrity rests on the https download alone. Install only if you trust its publisher.",
+      "confirmAction": "Install anyway"
+    },
+    "errors": {
+      "forbidden": "Only a superadmin signed in to Rooks can manage providers.",
+      "generic": "The daemon refused (HTTP {status}).",
+      "mismatch": "The program changed since it was shown. Review it again.",
+      "refused": "This program can never be run by a plugin.",
+      "unverified": "This agent publishes no hash: confirm to install it anyway.",
+      "already-installed": "This version is already installed and intact.",
+      "not-installed": "This agent is not installed.",
+      "unknown-agent": "The registry does not list this agent.",
+      "unsupported": "This agent cannot be installed on this machine.",
+      "registry-unavailable": "The ACP registry could not be reached.",
+      "download-failed": "The download failed.",
+      "checksum": "The downloaded file does not match the published checksum. It was deleted.",
+      "archive": "The archive was refused as unsafe.",
+      "command-missing": "The program named by the registry is not in the archive.",
+      "definition-refused": "Rooks refused this agent: its description contradicts itself.",
+      "authorize-failed": "The program could not be authorized. The Rooks log has the details.",
+      "failed": "The operation failed. The Rooks log has the details."
+    }
+  },
+  "binariesSettings": {
+    "title": "CLI binaries",
+    "description": "Where Rooks found the command-line tool of each AI provider on this machine. If one is missing or in an unusual place, pin its full path: it applies to the next mission, without restarting Rooks.",
+    "recheck": "Check again",
+    "rechecked": "Binaries checked again.",
+    "none": "No local provider uses a command-line tool.",
+    "backends": "Used by: {list}",
+    "resolved": "Runs {path}",
+    "brokenPin": "The pinned path cannot be run: {path}",
+    "notFound": "Not found on this machine. Install it, or pin its path below.",
+    "pathLabel": "Path to the {name} binary",
+    "placeholder": "Full path, for example /usr/local/bin/claude or C:\\Users\\you\\AppData\\Roaming\\npm\\claude.cmd",
+    "browse": "Browse…",
+    "save": "Save path",
+    "clear": "Remove pin",
+    "saved": "{name}: path saved. New missions use it.",
+    "cleared": "{name}: pin removed. Rooks looks for it on its own again.",
+    "state": {
+      "found": "Found",
+      "pinned": "Pinned",
+      "brokenPin": "Pinned path broken",
+      "missing": "Not found"
+    },
+    "errors": {
+      "forbidden": "Only a superadmin signed in to the app can change these paths.",
+      "unknown_binary": "This is not the command-line tool of a local provider.",
+      "path_not_absolute": "Give the full path, starting from the root of the drive.",
+      "path_missing": "Nothing exists at this path.",
+      "path_not_file": "This is a folder. Pick the program file itself.",
+      "path_not_executable": "This file cannot be run: it is not executable.",
+      "no_config": "Finish the setup first.",
+      "config_unreadable": "rooks.config.json cannot be read. Fix or restore it, then check again.",
+      "invalid_body": "This path cannot be saved.",
+      "browse": "The file picker could not open.",
+      "generic": "The change failed (error {status})."
+    }
+  }
+}

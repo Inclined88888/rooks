@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "Network",
+      "titleOf": "Network · {mission}"
+    },
+    "widgetZone": {
+      "title": "Widgets"
+    },
+    "widgetCard": {
+      "title": "Widget",
+      "missing": "The widget {widget} is not available here."
+    },
+    "page": "Page",
+    "arrangementPage": {
+      "loading": "Loading the arrangement…",
+      "missing": "This arrangement no longer exists. Its menu entry goes away with it.",
+      "hint": "This page opens with the arrangement. What you change here stays on this page; the saved arrangement is untouched.",
+      "restore": "Restore the arrangement",
+      "restoreFailed": "The arrangement could not be restored."
+    },
+    "tabs": "Island tabs",
+    "close": "Close",
+    "closeTab": "Close {title}",
+    "detach": "Open in a window",
+    "resize": "Resize",
+    "unavailable": "Content unavailable — {plugin}",
+    "refused": {
+      "maxIslands": "8 islands at most",
+      "maxDepth": "3 levels of splits at most",
+      "maxTabsPerIsland": "12 tabs at most in an island",
+      "maxTabs": "32 tabs at most",
+      "routeTab": "The page of this view cannot be closed",
+      "self": "Already here",
+      "unknownType": "This content cannot open in the workspace",
+      "maxFloats": "4 popups at most",
+      "floatEdge": "A popup takes tabs by its centre only"
+    },
+    "announce": {
+      "right": "{title} opened to the right of {target}",
+      "left": "{title} opened to the left of {target}",
+      "top": "{title} opened above {target}",
+      "bottom": "{title} opened below {target}",
+      "tab": "{title} added as a tab to {target}",
+      "root": "{title} opened along the edge of the workspace",
+      "closed": "{title} closed",
+      "float": "{title} opened as a popup",
+      "minimized": "{title} minimized"
+    },
+    "openIn": {
+      "menu": "Open in a split",
+      "right": "To the right",
+      "left": "To the left",
+      "bottom": "Below",
+      "top": "Above",
+      "center": "In a tab",
+      "narrow": "Open in the workspace",
+      "split": {
+        "right": "Open to the right",
+        "left": "Open to the left",
+        "bottom": "Open below",
+        "top": "Open above",
+        "center": "Open in a tab",
+        "float": "Open as a popup"
+      },
+      "float": "As a popup"
+    },
+    "drop": {
+      "right": "Open to the right of {target}",
+      "left": "Open to the left of {target}",
+      "top": "Stack above {target}",
+      "bottom": "Stack below {target}",
+      "center": "Add a tab to {target}",
+      "root": {
+        "left": "New column on the left",
+        "right": "New column on the right",
+        "top": "New row at the top",
+        "bottom": "New row at the bottom"
+      },
+      "float": "Open as a popup (Alt)"
+    },
+    "drag": {
+      "island": "Drag to move this island"
+    },
+    "chat": {
+      "title": "Chat",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title} opens in a new island on the right",
+        "left": "{title} opens in a new island on the left",
+        "top": "{title} opens in a new island above",
+        "bottom": "{title} opens in a new island below"
+      },
+      "openTab": "{title} opens as a tab",
+      "cannotApply": "This layout no longer fits the workspace: the island it targets was closed, or a limit is reached.",
+      "dropped": "Left out, their content refused its settings: {titles}",
+      "unreadable": "your current arrangement could not be read, try again in a moment",
+      "noFit": "the island it targets was closed, or a limit is reached",
+      "refusedParams": "{titles} refused the settings it was given",
+      "closes": "Applying closes: {titles}",
+      "closesIn": "Applying in {project} closes: {titles}",
+      "tabKept": "a tab it would close stayed open, nothing was changed"
+    },
+    "arrangementProposal": {
+      "title": "{agent} proposes one of your island arrangements",
+      "titleFrom": "{agent} proposes one of your island arrangements ({project})",
+      "name": "Arrangement: {name}",
+      "gone": "the arrangement \"{name}\" was deleted, nothing was changed",
+      "stale": "This arrangement was deleted since the proposal: nothing was changed."
+    },
+    "menu": "Island actions",
+    "move": {
+      "keys": "M: move this tab · Shift+M: move the island",
+      "start": "Moving {title}. Arrow keys choose the island, Tab the place, Enter drops it, Escape cancels.",
+      "hint": "Arrows: island · Tab: place · Enter: drop · Esc: cancel",
+      "cancelled": "Move cancelled"
+    },
+    "file": {
+      "title": "File"
+    },
+    "popup": {
+      "open": "Open {title} as a popup",
+      "dock": "Dock to the workspace",
+      "pin": "Keep on every page",
+      "unpin": "Keep on this page only",
+      "close": "Close this popup",
+      "minimize": "Minimize",
+      "restore": "Show {title} again",
+      "minimized": "Minimized popups"
+    },
+    "glass": {
+      "menu": "Glass",
+      "follow": "Follow the Appearance setting",
+      "island": "Whole island",
+      "widgets": "Widgets",
+      "both": "Both"
+    },
+    "newTab": "New tab",
+    "skill": {
+      "title": "Skill"
+    },
+    "paramsRefused": "This change could not be applied to the tab.",
+    "closeGuardFailed": "{title} could not confirm it may close: it stays open.",
+    "unsaved": {
+      "title": "Save changes to {name}?",
+      "description": "Your changes will be lost if you close without saving.",
+      "save": "Save",
+      "saving": "Saving…",
+      "discard": "Don't save",
+      "cancel": "Cancel"
+    },
+    "stack": {
+      "earlier": "Move {title} left",
+      "later": "Move {title} right",
+      "moved": "{title} moved"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "Open in the workspace",
+      "openedThere": "This session is open in the workspace.",
+      "show": "Show it"
+    }
+  }
+}

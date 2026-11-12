@@ -1,0 +1,16 @@
+{
+  "name": "@fixtures/plugin-dictation-pack",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "rooks": {
+    "id": "fixture-dictation",
+    "apiVersion": 14,
+    "kind": ["dictation"],
+    "label": "Fixture dictation pack",
+    "permissions": ["dictation:engine"],
+    "client": { "slots": ["dictation.engine"] },
+    "dictation": { "models": "packs/dictation-models.json" }
+  }
+}

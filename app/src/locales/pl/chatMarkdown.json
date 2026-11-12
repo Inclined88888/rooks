@@ -1,0 +1,61 @@
+{
+  "chatMarkdown": {
+    "copyUrl": "Kopiuj URL",
+    "tableScroll": "Tabela — przewiń w poziomie, aby zobaczyć wszystkie kolumny"
+  },
+  "chatMedia": {
+    "image": "Obraz",
+    "video": "Wideo",
+    "generated": "Wygenerowany obraz",
+    "fromHost": "Z {host}",
+    "enlarge": "Powiększ",
+    "download": "Pobierz",
+    "loadFailed": "Nie udało się wczytać tego pliku multimedialnego.",
+    "markdownImage": "Obraz niewyświetlony",
+    "markdownImageAlt": "Obraz niewyświetlony: {alt}"
+  },
+  "filePreview": {
+    "close": "Zamknij",
+    "previousImage": "Poprzedni obraz",
+    "nextImage": "Następny obraz",
+    "imagePosition": "Obraz {index} z {total}",
+    "download": "Pobierz",
+    "checking": "Wczytywanie…",
+    "openFailed": "Nie udało się otworzyć tego pliku.",
+    "noPreview": "Ten plik nie ma podglądu.",
+    "tooLarge": "Ten plik jest za duży na podgląd.",
+    "damaged": "Ten dokument jest uszkodzony lub ma format, którego przeglądarka nie odczytuje.",
+    "officeNote": "Podgląd tekstu — obrazy, wykresy i układ stron nie są pokazywane.",
+    "emptyDoc": "Ten dokument nie zawiera tekstu.",
+    "longDoc": "Długi dokument: pokazano tylko początek.",
+    "sheetRows": "Pokazano tylko pierwsze wiersze: {count}.",
+    "sheetColumns": "Pokazano tylko pierwsze kolumny: {count}.",
+    "emptySheet": "Ten arkusz jest pusty.",
+    "slide": "Slajd {n}",
+    "untitledSlide": "(bez tytułu)",
+    "moreSlides": "Pokazano tylko pierwsze slajdy: {count}.",
+    "sheets": "Arkusze",
+    "image": "Obraz",
+    "video": "Wideo"
+  },
+  "fileEditor": {
+    "view": "Podgląd",
+    "edit": "Edytuj",
+    "save": "Zapisz",
+    "saving": "Zapisywanie…",
+    "closeTab": "Zamknij {name}",
+    "modified": "Zmodyfikowano",
+    "tabs": "Otwarte pliki",
+    "discard": "Odrzucić niezapisane zmiany w {name}?",
+    "discardAll": "Odrzucić niezapisane zmiany?"
+  },
+  "fileLink": {
+    "openFailed": "Nie udało się otworzyć {path}.",
+    "forbidden": "Twoje konto nie może otwierać plików spoza folderu agenta.",
+    "warningTitle": "Otworzyć plik spoza folderu agenta?",
+    "warningBody": "Uwaga: ten plik nie znajduje się w folderze agenta, więc nie należy do jego projektu. Otwórz go tylko, jeśli ufasz temu linkowi. Będziesz mógł go czytać i edytować.",
+    "yes": "Tak",
+    "no": "Nie",
+    "noWorkspace": "Otwórz stronę z obszarem roboczym, aby pokazać ten plik."
+  }
+}

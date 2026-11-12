@@ -1,0 +1,35 @@
+{
+  "name": "@rooks/provider-ollama-cloud",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "rooks": {
+    "id": "provider-ollama-cloud",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Ollama Cloud",
+    "description": "Runs missions on the models Ollama Cloud serves, through the Codex CLI, with the user's own Ollama API key.",
+    "author": "Rooks",
+    "permissions": [
+      "backends:register"
+    ],
+    "provider": {
+      "credentialDirs": [
+        ".ollama"
+      ],
+      "backends": [
+        {
+          "id": "ollama-cloud",
+          "rank": 90,
+          "credentialDirs": [
+            ".ollama"
+          ]
+        }
+      ]
+    },
+    "license": {
+      "required": false
+    }
+  }
+}

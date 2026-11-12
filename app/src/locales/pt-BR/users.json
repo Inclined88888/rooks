@@ -1,0 +1,13 @@
+{
+  "invitePage": {
+    "title": "Aceitar convite",
+    "description": "Escolha uma senha para {email}.",
+    "invalid": "Este convite é inválido ou expirou.",
+    "name": "Nome",
+    "password": "Senha",
+    "submit": "Criar conta",
+    "working": "Processando…",
+    "failed": "O convite foi recusado",
+    "goHome": "Continuar"
+  }
+}

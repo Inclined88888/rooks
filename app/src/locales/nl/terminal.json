@@ -1,0 +1,78 @@
+{
+  "terminal": {
+    "title": "Terminal",
+    "tabs": "Terminalsessies",
+    "state": {
+      "connecting": "Verbinden…",
+      "retrying": "Verbinding verloren, opnieuw verbinden…",
+      "unauthorized": "Sessie verlopen: meld je opnieuw aan.",
+      "ended": "Sessie beëindigd.",
+      "exited": "Shell afgesloten (code {code})."
+    },
+    "actions": {
+      "new": "Nieuwe terminal",
+      "kill": "{name} sluiten (stopt zijn shell)",
+      "reconnect": "Nu opnieuw verbinden",
+      "popOut": "In een zwevend venster openen"
+    },
+    "keys": {
+      "toolbar": "Extra toetsen",
+      "up": "Omhoog",
+      "down": "Omlaag",
+      "left": "Links",
+      "right": "Rechts",
+      "copy": "Kopiëren"
+    },
+    "clipboard": {
+      "menu": "Klembord van de terminal",
+      "copy": "Kopiëren",
+      "paste": "Plakken",
+      "copied": "Naar het klembord gekopieerd.",
+      "copyFailed": "Kopiëren mislukt: de browser weigerde toegang tot het klembord.",
+      "pasteFailed": "Kan het klembord niet lezen: sta toegang toe, of plak met Ctrl+Shift+V (Cmd+V op een Mac)."
+    },
+    "errors": {
+      "create": "Kan geen terminal starten: {error}",
+      "kill": "Kan de terminal niet sluiten: {error}",
+      "load": "De terminaldienst is niet bereikbaar: {error}"
+    },
+    "unavailable": {
+      "disabled": "De ingebouwde terminal staat uit. Een beheerder kan hem inschakelen in {settingsPath}.",
+      "forbidden": "Je account mag geen terminal openen (toestemming \"terminal:open\").",
+      "session_required": "Meld je aan in de browser om een terminal te openen.",
+      "unauthorized": "Meld je aan om een terminal te openen.",
+      "pty_unavailable": "Deze machine kan geen terminal starten: het pseudoterminalonderdeel kon niet worden geladen. Bekijk het daemonlog."
+    },
+    "titleScoped": "Terminal — {scope}",
+    "scopes": {
+      "none": "Geen project",
+      "label": "Projecten"
+    },
+    "request": {
+      "title": "{agent} vraagt je een opdracht uit te voeren",
+      "titleFrom": "{agent} · {project} vraagt je een opdracht uit te voeren",
+      "badge": "opdracht",
+      "allow": "Toestaan",
+      "paste": "In een terminal plakken",
+      "deny": "Negeren",
+      "copy": "Opdracht kopiëren",
+      "copied": "Opdracht naar het klembord gekopieerd.",
+      "hint": "Geplakt zonder Enter: lees haar en druk dan zelf op Enter.",
+      "state": {
+        "allow": "Toegestaan: de agent voert haar uit",
+        "paste": "In een terminal geplakt",
+        "deny": "Genegeerd"
+      },
+      "errors": {
+        "forbidden": "Je account kan geen terminal openen: er is niets geplakt.",
+        "not_found": "Dit verzoek bestaat niet meer.",
+        "already_decided": "Over dit verzoek is al beslist.",
+        "not_offered": "Deze keuze wordt niet meer aangeboden: de agent kan de opdracht nu niet uitvoeren.",
+        "failed": "Je beslissing kon niet worden vastgelegd. Probeer het opnieuw."
+      },
+      "windowRefused": "Beslissing vastgelegd, maar de terminal van {scope} staat niet op het scherm. Open een gesprek van {scope} om haar daar te plakken; de opdracht staat op je klembord.",
+      "windowRefusedNoClipboard": "Beslissing vastgelegd, maar de terminal van {scope} staat niet op het scherm. Open een gesprek van {scope} en kopieer dan de opdracht van de kaart.",
+      "pendingBadge": "{count} opdracht(en) wachten op je beslissing"
+    }
+  }
+}

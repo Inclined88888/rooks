@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-update-banner",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-update-banner",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Compact update banner",
+    "description": "Replaces Rooks's \"new version\" banner with a single compact line: the version, one download link and Later.",
+    "permissions": [],
+    "client": {
+      "slots": ["updates.banner"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

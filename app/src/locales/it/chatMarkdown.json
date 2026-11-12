@@ -1,0 +1,61 @@
+{
+  "chatMarkdown": {
+    "copyUrl": "Copia l’URL",
+    "tableScroll": "Tabella — scorri in orizzontale per vedere tutte le colonne"
+  },
+  "chatMedia": {
+    "image": "Immagine",
+    "video": "Video",
+    "generated": "Immagine generata",
+    "fromHost": "Da {host}",
+    "enlarge": "Ingrandisci",
+    "download": "Scarica",
+    "loadFailed": "Impossibile caricare questo contenuto multimediale.",
+    "markdownImage": "Immagine non mostrata",
+    "markdownImageAlt": "Immagine non mostrata: {alt}"
+  },
+  "filePreview": {
+    "close": "Chiudi",
+    "previousImage": "Immagine precedente",
+    "nextImage": "Immagine successiva",
+    "imagePosition": "Immagine {index} di {total}",
+    "download": "Scarica",
+    "checking": "Caricamento…",
+    "openFailed": "Impossibile aprire questo file.",
+    "noPreview": "Questo file non ha un’anteprima.",
+    "tooLarge": "Questo file è troppo grande per l’anteprima.",
+    "damaged": "Questo documento è danneggiato o in un formato che il visualizzatore non legge.",
+    "officeNote": "Anteprima del testo — immagini, grafici e impaginazione non vengono mostrati.",
+    "emptyDoc": "Questo documento non contiene testo.",
+    "longDoc": "Documento lungo: viene mostrato solo l’inizio.",
+    "sheetRows": "Vengono mostrate solo le prime {count} righe.",
+    "sheetColumns": "Vengono mostrate solo le prime {count} colonne.",
+    "emptySheet": "Questo foglio è vuoto.",
+    "slide": "Diapositiva {n}",
+    "untitledSlide": "(senza titolo)",
+    "moreSlides": "Vengono mostrate solo le prime {count} diapositive.",
+    "sheets": "Fogli",
+    "image": "Immagine",
+    "video": "Video"
+  },
+  "fileEditor": {
+    "view": "Visualizza",
+    "edit": "Modifica",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "closeTab": "Chiudi {name}",
+    "modified": "Modificato",
+    "tabs": "File aperti",
+    "discard": "Scartare le modifiche non salvate a {name}?",
+    "discardAll": "Scartare le modifiche non salvate?"
+  },
+  "fileLink": {
+    "openFailed": "Impossibile aprire {path}.",
+    "forbidden": "Il tuo account non può aprire file fuori dalla cartella dell’agente.",
+    "warningTitle": "Aprire un file fuori dalla cartella dell’agente?",
+    "warningBody": "Attenzione: questo file non è nella cartella dell’agente, quindi non fa parte del suo progetto. Aprilo solo se ti fidi del link. Potrai leggerlo e modificarlo.",
+    "yes": "Sì",
+    "no": "No",
+    "noWorkspace": "Apri una pagina che ha un’area di lavoro per mostrare questo file."
+  }
+}

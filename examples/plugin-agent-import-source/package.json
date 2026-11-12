@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-agent-import-source",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-agent-import-source",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Acme Bots import source",
+    "description": "Adds \"Acme Bots\" to the agent import assistant: an acme-bots.json export becomes Rooks agents, previewed before anything is written.",
+    "permissions": [],
+    "client": {
+      "slots": ["agentimport.source"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

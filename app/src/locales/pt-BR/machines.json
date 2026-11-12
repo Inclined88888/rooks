@@ -1,0 +1,123 @@
+{
+  "machines": {
+    "title": "Máquinas",
+    "thisComputer": "Este computador",
+    "backToLocal": "Voltar a este computador",
+    "status": {
+      "online": "Online",
+      "unreachable": "Inacessível",
+      "unauthorized": "Acesso revogado",
+      "tls_error": "Certificado recusado",
+      "error": "Erro",
+      "unknown": "Ainda não verificada"
+    },
+    "switcher": {
+      "trigger": "Máquina: {name}. Trocar de máquina",
+      "menuTitle": "Máquinas",
+      "actingAs": "como {account}",
+      "add": "Adicionar uma máquina…",
+      "manage": "Gerenciar conexões",
+      "active": "Ativa",
+      "switching": "Mudando para {name}…",
+      "loadError": "Não foi possível carregar as máquinas."
+    },
+    "settings": {
+      "description": "Outras máquinas Rooks que este computador pode controlar. Trocar substitui toda a interface pela da máquina escolhida, nesta mesma janela: cada máquina mantém seus próprios agentes, projetos e configurações.",
+      "local": "A máquina que serve esta interface.",
+      "add": "Adicionar uma máquina",
+      "addTitle": "Adicionar uma máquina",
+      "addHint": "Na outra máquina, abra {settingsPath} e autorize um novo dispositivo: ele mostra um código de uso único, válido por 5 minutos. A máquina deve estar acessível por HTTPS (tailscale serve, um proxy reverso…).",
+      "urlLabel": "Endereço da máquina",
+      "urlPlaceholder": "https://my-server.example.net",
+      "codeLabel": "Código de pareamento",
+      "nameLabel": "Nome (opcional)",
+      "pair": "Parear",
+      "pairing": "Pareando…",
+      "paired": "{name} adicionada.",
+      "repaired": "{name} pareada novamente.",
+      "listTitle": "Máquinas pareadas",
+      "empty": "Nenhuma outra máquina ainda.",
+      "loadError": "Não foi possível carregar a lista de máquinas.",
+      "active": "Ativa",
+      "switchTo": "Mudar para ela",
+      "check": "Verificar agora",
+      "checking": "Verificando…",
+      "online": "{name} responde.",
+      "rename": "Renomear",
+      "renameLabel": "Nome da máquina",
+      "renamed": "Máquina renomeada.",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "remove": "Remover",
+      "removeConfirm": "Remover {name} deste computador? O acesso dela é revogado nessa máquina e o que este navegador guardou sobre ela é apagado.",
+      "removeAction": "Remover a máquina",
+      "removed": "Máquina removida.",
+      "removedNotRevoked": "Máquina removida. Não foi possível alcançá-la: revogue este computador nas configurações de Dispositivos dela.",
+      "version": "Versão {version}",
+      "versionUnknown": "Versão desconhecida",
+      "apiNewer": "Mais recente que esta interface",
+      "apiUnknown": "Nível de interface desconhecido",
+      "apiTooOld": "Antiga demais para esta interface",
+      "lastSeen": "Último contato {date}",
+      "neverSeen": "Nunca alcançada",
+      "actingAs": "Atua como {account}",
+      "actingAsAdmin": "Atua como {account}, administrador"
+    },
+    "errors": {
+      "invalidCode": "A máquina recusou este código: incorreto, expirado ou já usado. Peça um novo a ela.",
+      "invalidUrl": "Este endereço não pode ser usado: informe apenas o endereço da máquina, sem login, query ou fragmento.",
+      "httpsRequired": "A máquina deve ser acessada por HTTPS. HTTP simples só é aceito neste próprio computador.",
+      "blockedAddress": "Este endereço nunca aponta para uma máquina Rooks.",
+      "notNova": "Nenhuma máquina Rooks responde neste endereço.",
+      "requiresTls": "A máquina não enxerga esta conexão como HTTPS: verifique as configurações de HTTPS do proxy reverso dela.",
+      "unreachable": "Não foi possível alcançar a máquina agora.",
+      "unauthorized": "A máquina não aceita mais este computador: o acesso foi revogado ou expirou. Pareie-a novamente.",
+      "tlsError": "O certificado da máquina foi recusado.",
+      "redirect": "A máquina respondeu com um redirecionamento: informe o endereço final dela.",
+      "badResponse": "A máquina respondeu algo inesperado.",
+      "throttled": "Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.",
+      "tooMany": "Uma frota comporta no máximo 50 máquinas.",
+      "vault": "O cofre de segredos está indisponível: não é possível manter o acesso às máquinas.",
+      "incompatible": "Esta máquina executa uma versão do Rooks antiga demais para esta interface. Atualize-a primeiro.",
+      "notFound": "Esta máquina não está mais na sua frota.",
+      "notHere": "As máquinas são gerenciadas a partir de um navegador com sessão iniciada neste computador.",
+      "sessionRequired": "Entre primeiro neste computador.",
+      "invalidName": "Este nome não pode ser usado.",
+      "generic": "Algo deu errado. Tente novamente."
+    },
+    "banner": {
+      "unreachable": "Não foi possível alcançar {name} agora.",
+      "apiUnknown": "{name} não informa qual interface espera: algumas telas podem não funcionar.",
+      "apiNewer": "{name} executa um Rooks mais recente que esta interface: atualize este aplicativo para usá-la plenamente.",
+      "retry": "Tentar novamente",
+      "dismiss": "Dispensar"
+    },
+    "blocked": {
+      "unnamed": "Esta máquina",
+      "retry": "Tentar novamente",
+      "title": {
+        "unreachable": "Não foi possível alcançar {name}",
+        "unauthorized": "{name} não aceita mais este computador",
+        "incompatible": "{name} é antiga demais para esta interface",
+        "unknown": "Esta máquina não está na sua frota",
+        "session_required": "Entre neste computador",
+        "unavailable": "{name} não pode ser aberta daqui"
+      },
+      "body": {
+        "unreachable": "A máquina não responde: ela pode estar desligada ou com a rede indisponível. Seu trabalho nela não foi afetado.",
+        "unauthorized": "O acesso deste computador foi revogado ou expirou nessa máquina. Pareie-o novamente em {settingsPath}.",
+        "incompatible": "Ela fala o nível de interface {level}, e esta interface exige no mínimo {min}. Atualize o Rooks nessa máquina e depois mude para ela novamente.",
+        "unknown": "A máquina que esta janela controlava foi removida da sua frota ou pertence a outra conta.",
+        "session_required": "Sua sessão neste computador terminou. Volte a ele para entrar novamente.",
+        "unavailable": "Este computador não consegue abrir o acesso à máquina agora (cofre de segredos, daemon). Tente novamente em instantes."
+      }
+    },
+    "lock": {
+      "remote": "Esta licença é a de {name}, a máquina que esta janela controla. Este computador não é afetado.",
+      "unnamed": "outra máquina"
+    },
+    "localOnly": {
+      "remoteSessions": "Estes são os tokens de API remotos deste computador, não os da máquina para a qual esta interface está alternada."
+    }
+  }
+}

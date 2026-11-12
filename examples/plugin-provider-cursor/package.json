@@ -1,0 +1,27 @@
+{
+  "name": "@rooks/plugin-provider-cursor",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "provider-cursor",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Cursor",
+    "description": "Runs missions on Cursor's agent over the Agent Client Protocol (cursor-agent acp), with your Cursor sign-in. A third-party provider written on the SDK alone.",
+    "author": "Rooks",
+    "permissions": ["backends:register"],
+    "provider": {
+      "binaries": [{
+        "name": "cursor-agent",
+        "aliases": ["agent"],
+        "identity": { "args": ["--version"], "pattern": "\\b20\\d{2}\\.\\d{1,2}\\.\\d{1,2}\\b", "expected": "Cursor's agent CLI, a dated version such as 2026.10.16" }
+      }],
+      "credentialDirs": [".cursor", ".config/cursor"]
+    },
+    "license": { "required": false }
+  }
+}

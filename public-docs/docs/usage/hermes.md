@@ -1,0 +1,44 @@
+---
+title: Hermes
+sidebar_position: 12
+---
+
+Rooks can run agents on **Hermes**, the agent from Nous Research. It drives the `hermes-acp` command over the Agent Client Protocol; Hermes keeps its own sign-in, and Rooks never sees or stores it.
+
+If your Hermes runs as a gateway, possibly on another machine, see [Hermes Gateway](./hermes-gateway.md) instead.
+
+## Set it up
+
+1. Install Hermes Agent by following Hermes' own documentation. What Rooks needs is the `hermes-acp` command, reachable by the OS account that runs Rooks.
+2. Sign in, in a terminal, under that same account:
+
+   ```bash
+   hermes --setup
+   ```
+
+   (or sign in to Nous, if that is how you use Hermes).
+
+3. Restart Rooks. **Hermes** then appears among the LLM backends.
+
+Rooks looks for `hermes-acp` on the service's PATH, in `~/.local/bin` on Linux and macOS, and in `%LOCALAPPDATA%\hermes\bin` on Windows, which is where Hermes' installer puts it.
+
+If Hermes does not appear, run `rooks doctor`: it tells you whether the `hermes-acp` binary was found. A CLI installed anywhere else may be missing from the service's PATH; set `host.binaries.hermes-acp` to its absolute path in that case. If a mission stops with "sign in first", run `hermes --setup` in a terminal on the machine that runs Rooks, then retry.
+
+## Models
+
+Rooks does not pick a model for Hermes: the default is Hermes' own. The model picker lists what your Hermes account offers — dozens of models on some accounts — and you can search it. The list is asked from Hermes and refreshed at most every 12 hours; opening it starts Hermes briefly, which leaves one empty session in Hermes' own history. A model change applies from the next session.
+
+## What agents can do
+
+Hermes **asks before it uses a tool**. The request appears as an **Allow / Deny** card, like on the other backends: **Allow** lets that one action through, **Deny** refuses it and Hermes carries on without it. When Hermes offers it, **Allow for this session** or **Always allow** lets Hermes remember the approval on its side; nothing is allowed wider unless you click one of them. On an autonomous mission with nobody to answer, a card left open ends in a refusal after the usual delay.
+
+Replies stream into the chat, tool calls appear with their results, and Hermes' reasoning — which can be long — shows as a single collapsed **Reasoning** block. **Stop** in a chat ends the current turn and keeps the conversation. After a restart, the mission reopens its Hermes session without replaying the old messages. Rooks's own tools (Kanban, questions, missions, memory) and the stdio MCP servers configured for the agent reach Hermes.
+
+**Compacting a conversation** and its summary when you switch it to another model run on the agent's own model, as does Dreaming for a Hermes agent: Rooks starts Hermes for a short session with none of Rooks's tools, then stops it. Each run leaves one session in Hermes' own history. Tool requests Hermes makes during it are refused. Conversation titles are not generated with Hermes: Rooks uses another of your backends, or keeps the first message as the title.
+
+## Limitations
+
+- **Not yet tried on a tester's own account.** Rooks was checked against the Hermes agent and a scripted stand-in, not a full session on your Nous account, so a first mission may still fail. Report what you see.
+- **HTTP MCP servers are not passed on.** MCP servers you added over HTTP do not reach Hermes agents.
+- **No live model switch.** A model change applies from the next session.
+- **No quota gauge.** Rooks does not display your remaining usage.

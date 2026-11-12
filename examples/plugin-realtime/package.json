@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-realtime",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-realtime",
+    "apiVersion": 4,
+    "kind": "widget",
+    "label": "Realtime counter",
+    "description": "An owner-only counter shared by your open tabs.",
+    "permissions": ["realtime:publish"],
+    "client": {
+      "slots": ["cockpit.widget"],
+      "external": ["react"],
+      "mode": "esm"
+    },
+    "license": { "required": false }
+  }
+}

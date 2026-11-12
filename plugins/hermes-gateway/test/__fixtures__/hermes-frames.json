@@ -1,0 +1,73 @@
+{
+  "_source": "Hermes gateway probe of 10/10/2026 (HEAD b406d25f): event payloads as measured on GET /v1/runs/{id}/events, minus event/run_id/timestamp/seq. No secret.",
+  "events": {
+    "delta_hello": { "event": "message.delta", "delta": "Hello " },
+    "delta_rest": { "event": "message.delta", "delta": "from the fake model." },
+    "reasoning": { "event": "reasoning.available", "text": "Hello from the fake model." },
+    "completed_hello": {
+      "event": "run.completed",
+      "output": "Hello from the fake model.",
+      "usage": { "input_tokens": 12, "output_tokens": 6, "total_tokens": 18, "cache_read_tokens": 0, "cache_write_tokens": 0 },
+      "runtime": { "provider": "custom", "model": "fake-model", "route_source": "global" },
+      "completed": true, "partial": false, "interrupted": false
+    },
+    "delta_check": { "event": "message.delta", "delta": "Let me check that first." },
+    "interim": { "event": "message.interim", "text": "Let me check that first.", "already_streamed": true },
+    "tool_started": { "event": "tool.started", "tool": "terminal", "preview": "echo hi" },
+    "tool_completed": { "event": "tool.completed", "tool": "terminal", "duration": 0.09, "error": false, "preview": "{\"output\":\"hi\",\"exit_code\":0,\"error\":null}" },
+    "delta_done": { "event": "message.delta", "delta": "Done: hi" },
+    "completed_done": {
+      "event": "run.completed", "output": "Done: hi",
+      "usage": { "input_tokens": 0, "output_tokens": 0, "total_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0 },
+      "completed": true, "partial": false, "interrupted": false
+    },
+    "risky_started": { "event": "tool.started", "tool": "terminal", "preview": "mkdir -p /tmp/probe + 1 command" },
+    "approval_request": {
+      "event": "approval.request",
+      "command": "mkdir -p /tmp/probe && rm -rf /tmp/probe",
+      "pattern_key": "delete in root path",
+      "pattern_keys": ["delete in root path"],
+      "description": "delete in root path",
+      "allow_permanent": true,
+      "allow_session": true,
+      "request_id": "58f6f13b",
+      "choices": ["once", "session", "always", "deny"]
+    },
+    "risky_completed": { "event": "tool.completed", "tool": "terminal", "duration": 0.12, "error": false, "preview": "{\"output\":\"\",\"exit_code\":0,\"error\":null}" },
+    "risky_blocked": { "event": "tool.completed", "tool": "terminal", "duration": 0.01, "error": true, "preview": "{\"output\":\"\",\"error\":\"BLOCKED: Command denied by user\",\"status\":\"blocked\"}" },
+    "delta_cleaned": { "event": "message.delta", "delta": "Cleaned up." },
+    "completed_cleaned": { "event": "run.completed", "output": "Cleaned up.", "completed": true, "partial": false, "interrupted": false },
+    "subagent_start": {
+      "event": "subagent.start", "preview": "Say hello…", "goal": "Say hello to the user", "task_count": 1, "task_index": 0,
+      "subagent_id": "sa-0-0ab72014", "child_session_id": "child-1", "delegation_id": "deleg_5fafc26f", "depth": 0, "model": "fake-model", "tool_count": 0
+    },
+    "subagent_complete": {
+      "event": "subagent.complete", "preview": "Say hello…", "goal": "Say hello to the user", "task_count": 1, "task_index": 0,
+      "subagent_id": "sa-0-0ab72014", "child_session_id": "child-1", "delegation_id": "deleg_5fafc26f", "depth": 0, "model": "fake-model",
+      "status": "completed", "summary": "Said hello.", "duration_seconds": 0.35, "input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0,
+      "api_calls": 1, "cost_usd": 0.0, "files_read": [], "files_written": [], "output_tail": []
+    },
+    "steered": { "event": "run.steered", "accepted": true },
+    "cancelled": { "event": "run.cancelled", "completed": false, "partial": false, "interrupted": true, "turn_exit_reason": "interrupted_during_api_call" }
+  },
+  "statuses": {
+    "interrupted": { "status": "interrupted", "error": "Gateway shutdown interrupted the run.", "last_event": "run.interrupted" }
+  },
+  "errors": {
+    "auth": { "error": { "type": "gateway_auth_error", "code": "gateway_auth_failed", "message": "Invalid API key" } },
+    "rate_limit": { "error": { "type": "rate_limit_error", "code": "rate_limit_exceeded", "message": "Too many concurrent runs (max 10)" } },
+    "run_not_found": { "error": { "code": "run_not_found", "message": "Run not found" } },
+    "idempotency_conflict": { "error": { "code": "idempotency_key_conflict", "message": "Idempotency-Key reused with a different body" } },
+    "approval_not_pending": { "error": { "code": "approval_not_pending", "message": "No pending approval" } },
+    "approval_not_active": { "error": { "code": "approval_not_active", "message": "Run is not active" } },
+    "invalid_approval_choice": { "error": { "code": "invalid_approval_choice", "message": "Invalid choice" } }
+  },
+  "features": {
+    "chat_completions": true, "chat_completions_streaming": true, "responses_api": true, "responses_streaming": true, "run_submission": true,
+    "runs_idempotency": { "supported": true, "durable": true, "retention_seconds": 86400 },
+    "run_status": true, "run_events_sse": true, "run_stop": true, "run_steer": true,
+    "run_approval_response": true, "tool_progress_events": true, "approval_events": true,
+    "session_resources": true, "model_options": true, "session_chat": true, "session_chat_streaming": true,
+    "reasoning_streaming": true, "session_continuity_header": "X-Hermes-Session-Id", "session_key_header": "X-Hermes-Session-Key"
+  }
+}

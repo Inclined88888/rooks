@@ -1,0 +1,37 @@
+{
+  "name": "@rooks/plugin-theme-rooks",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": "./lib/client.js"
+  },
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "rooks": {
+    "id": "theme-rooks",
+    "apiVersion": 1,
+    "kind": "theme",
+    "label": "Rooks",
+    "description": "The Rooks brand palette, dark and light: the website's violet-tinted night, beige-leaning whites, peach and copper accents.",
+    "author": "Rooks",
+    "permissions": [],
+    "client": {
+      "slots": [
+        "theme"
+      ],
+      "external": [
+        "react",
+        "@rooks/ui"
+      ],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": {
+      "required": false
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@fixtures/plugin-usage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { "./client": "./lib/client.js" },
+  "rooks": {
+    "id": "fixture-usage",
+    "apiVersion": 2,
+    "kind": ["widget"],
+    "label": "Fixture usage",
+    "permissions": ["usage:read"],
+    "client": { "slots": ["cockpit.widget"] }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "invitePage": {
+    "title": "Accept invitation",
+    "description": "Choose a password for {email}.",
+    "invalid": "This invitation is invalid or has expired.",
+    "name": "Name",
+    "password": "Password",
+    "submit": "Create account",
+    "working": "Working…",
+    "failed": "Invitation was refused",
+    "goHome": "Continue"
+  }
+}

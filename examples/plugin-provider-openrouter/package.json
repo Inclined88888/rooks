@@ -1,0 +1,55 @@
+{
+  "name": "@rooks/plugin-provider-openrouter",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "files": ["README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "provider-openrouter-example",
+    "apiVersion": 2,
+    "kind": "provider",
+    "label": "OpenRouter",
+    "description": "OpenRouter through its OpenAI Responses endpoint, with its live model list.",
+    "author": "Rooks",
+    "permissions": [
+      "backends:register"
+    ],
+    "settings": [
+      {
+        "key": "apiKey",
+        "type": "secret",
+        "label": "OpenRouter API key"
+      }
+    ],
+    "backends": [
+      {
+        "id": "openrouter-pack",
+        "dialect": "codex",
+        "label": "OpenRouter",
+        "vendor": "OpenRouter",
+        "env": {
+          "BACKEND_OPENROUTER_API_KEY": {
+            "setting": "apiKey"
+          }
+        },
+        "providerConfig": {
+          "id": "openrouter-pack",
+          "name": "OpenRouter",
+          "baseUrl": "https://openrouter.ai/api/v1",
+          "envKey": "BACKEND_OPENROUTER_API_KEY",
+          "wireApi": "responses"
+        },
+        "defaultModel": null,
+        "models": [],
+        "modelsEndpoint": {
+          "url": "https://openrouter.ai/api/v1/models",
+          "format": "openai"
+        }
+      }
+    ],
+    "license": {
+      "required": false
+    }
+  }
+}

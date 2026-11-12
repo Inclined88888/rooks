@@ -1,0 +1,4046 @@
+{
+  "apiVersion": 15,
+  "members": {
+    "accountProvider": {
+      "type": "object",
+      "since": 15
+    },
+    "accountProvider.audit": {
+      "type": "function",
+      "arity": 2,
+      "since": 15
+    },
+    "accountProvider.auditLog": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "accountProvider.findByEmail": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "accountProvider.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "accountProvider.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 15
+    },
+    "accountProvider.onAccountChanged": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "accountProvider.openSession": {
+      "type": "function",
+      "arity": 3,
+      "since": 15
+    },
+    "accountProvider.provision": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "accountProvider.readLegacy": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "accountProvider.update": {
+      "type": "function",
+      "arity": 2,
+      "since": 15
+    },
+    "agents": {
+      "type": "object",
+      "since": 7
+    },
+    "agents.create": {
+      "type": "function",
+      "arity": 1,
+      "since": 7
+    },
+    "agents.delete": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "agents.docs": {
+      "type": "object",
+      "since": 10
+    },
+    "agents.docs.get": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "agents.docs.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "agents.docs.put": {
+      "type": "function",
+      "arity": 3,
+      "since": 10
+    },
+    "agents.docs.rm": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "agents.export": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "agents.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 7
+    },
+    "agents.rename": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "agents.setAvatar": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "agents.teams": {
+      "type": "object",
+      "since": 15
+    },
+    "agents.teams.create": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "agents.teams.delete": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "agents.teams.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 15
+    },
+    "agents.update": {
+      "type": "function",
+      "arity": 2,
+      "since": 7
+    },
+    "assert": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "assertPermission": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "backendAccounts": {
+      "type": "object",
+      "since": 10
+    },
+    "backendAccounts.grant": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "backendAccounts.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "backendAccounts.revoke": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "backends": {
+      "type": "object",
+      "since": 2
+    },
+    "backends.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "backends.registerDialect": {
+      "type": "function",
+      "arity": 2,
+      "since": 2
+    },
+    "backends.registerProfile": {
+      "type": "function",
+      "arity": 1,
+      "since": 2
+    },
+    "backup": {
+      "type": "object",
+      "since": 10
+    },
+    "backup.enable": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "backup.status": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "browser": {
+      "type": "object",
+      "since": 10
+    },
+    "browser.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "browser.start": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "browser.status": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "browser.stop": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "browserAnnotations": {
+      "type": "object",
+      "since": 13
+    },
+    "browserAnnotations.delete": {
+      "type": "function",
+      "arity": 1,
+      "since": 13
+    },
+    "browserAnnotations.findByRef": {
+      "type": "function",
+      "arity": 2,
+      "since": 13
+    },
+    "browserAnnotations.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 13
+    },
+    "browserAnnotations.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 13
+    },
+    "browserAnnotations.resolve": {
+      "type": "function",
+      "arity": 2,
+      "since": 13
+    },
+    "browserAnnotations.setRef": {
+      "type": "function",
+      "arity": 2,
+      "since": 13
+    },
+    "browserRecordings": {
+      "type": "object",
+      "since": 13
+    },
+    "browserRecordings.delete": {
+      "type": "function",
+      "arity": 1,
+      "since": 13
+    },
+    "browserRecordings.findByRef": {
+      "type": "function",
+      "arity": 2,
+      "since": 13
+    },
+    "browserRecordings.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 13
+    },
+    "browserRecordings.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 13
+    },
+    "browserRecordings.patch": {
+      "type": "function",
+      "arity": 2,
+      "since": 13
+    },
+    "browserRecordings.setRef": {
+      "type": "function",
+      "arity": 2,
+      "since": 13
+    },
+    "businessEvents": {
+      "type": "object",
+      "since": 3
+    },
+    "businessEvents.publish": {
+      "type": "function",
+      "arity": 2,
+      "since": 3
+    },
+    "businessEvents.register": {
+      "type": "function",
+      "arity": 1,
+      "since": 3
+    },
+    "can": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "chat": {
+      "type": "object",
+      "since": 10
+    },
+    "chat.commandRequests": {
+      "type": "object",
+      "since": 10
+    },
+    "chat.commandRequests.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "chat.proposeCommand": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "chat.showMedia": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "config": {
+      "type": "object",
+      "since": 1
+    },
+    "connections": {
+      "type": "object",
+      "since": 3
+    },
+    "connections.create": {
+      "type": "function",
+      "arity": 1,
+      "since": 3
+    },
+    "connections.forUser": {
+      "type": "function",
+      "arity": 1,
+      "since": 7
+    },
+    "connections.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 3
+    },
+    "connections.inboundPath": {
+      "type": "function",
+      "arity": 1,
+      "since": 3
+    },
+    "connections.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 3
+    },
+    "connections.receipts": {
+      "type": "function",
+      "arity": 2,
+      "since": 14
+    },
+    "connections.registerType": {
+      "type": "function",
+      "arity": 1,
+      "since": 7
+    },
+    "connections.update": {
+      "type": "function",
+      "arity": 2,
+      "since": 3
+    },
+    "connections.userSecret": {
+      "type": "function",
+      "arity": 3,
+      "since": 7
+    },
+    "docs": {
+      "type": "object",
+      "since": 10
+    },
+    "docs.read": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "docs.search": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "effect": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "events": {
+      "type": "object",
+      "since": 1
+    },
+    "events.on": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "fetch": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "host": {
+      "type": "object",
+      "since": 1
+    },
+    "host.exec": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "id": {
+      "type": "string",
+      "since": 1
+    },
+    "kanban": {
+      "type": "object",
+      "since": 1
+    },
+    "kanban.add": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "kanban.block": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "kanban.delete": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "kanban.done": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "kanban.ensure": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "kanban.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "kanban.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "kanban.refs": {
+      "type": "object",
+      "since": 10
+    },
+    "kanban.refs.findByRef": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "kanban.refs.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "kanban.refs.remove": {
+      "type": "function",
+      "arity": 3,
+      "since": 10
+    },
+    "kanban.refs.set": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "kanban.todos": {
+      "type": "object",
+      "since": 6
+    },
+    "kanban.todos.attachments": {
+      "type": "object",
+      "since": 15
+    },
+    "kanban.todos.attachments.add": {
+      "type": "function",
+      "arity": 2,
+      "since": 15
+    },
+    "kanban.todos.attachments.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "kanban.todos.attachments.read": {
+      "type": "function",
+      "arity": 2,
+      "since": 15
+    },
+    "kanban.todos.attachments.remove": {
+      "type": "function",
+      "arity": 2,
+      "since": 15
+    },
+    "kanban.todos.close": {
+      "type": "function",
+      "arity": 1,
+      "since": 6
+    },
+    "kanban.todos.create": {
+      "type": "function",
+      "arity": 1,
+      "since": 6
+    },
+    "kanban.todos.delete": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "kanban.todos.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 6
+    },
+    "kanban.todos.links": {
+      "type": "object",
+      "since": 6
+    },
+    "kanban.todos.links.findByRef": {
+      "type": "function",
+      "arity": 2,
+      "since": 6
+    },
+    "kanban.todos.links.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 6
+    },
+    "kanban.todos.links.remove": {
+      "type": "function",
+      "arity": 3,
+      "since": 6
+    },
+    "kanban.todos.links.set": {
+      "type": "function",
+      "arity": 2,
+      "since": 6
+    },
+    "kanban.todos.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "kanban.todos.promote": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "kanban.todos.update": {
+      "type": "function",
+      "arity": 2,
+      "since": 6
+    },
+    "kanban.update": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "layout": {
+      "type": "object",
+      "since": 10
+    },
+    "layout.islands": {
+      "type": "object",
+      "since": 10
+    },
+    "layout.islands.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "layout.islands.presetSave": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "layout.islands.propose": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "layout.nav": {
+      "type": "object",
+      "since": 10
+    },
+    "layout.nav.get": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "layout.nav.propose": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "layout.proposals": {
+      "type": "object",
+      "since": 10
+    },
+    "layout.proposals.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "layout.proposals.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "layout.widgets": {
+      "type": "object",
+      "since": 10
+    },
+    "layout.widgets.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "layout.widgets.presetSave": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "layout.widgets.propose": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "license": {
+      "type": "object",
+      "since": 10
+    },
+    "license.edition": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "log": {
+      "type": "object",
+      "since": 1
+    },
+    "log.error": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "log.info": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "log.warn": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "mcp": {
+      "type": "object",
+      "since": 7
+    },
+    "mcp.issueToken": {
+      "type": "function",
+      "arity": 1,
+      "since": 7
+    },
+    "mcp.revokeToken": {
+      "type": "function",
+      "arity": 1,
+      "since": 7
+    },
+    "mcpServers": {
+      "type": "object",
+      "since": 10
+    },
+    "mcpServers.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "mcpServers.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "mcpServers.put": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "mcpServers.rm": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "memory": {
+      "type": "object",
+      "since": 10
+    },
+    "memory.overview": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "memory.rules": {
+      "type": "object",
+      "since": 10
+    },
+    "memory.rules.add": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "memory.rules.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "memory.rules.rm": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "memory.search": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "memory.show": {
+      "type": "function",
+      "arity": 3,
+      "since": 10
+    },
+    "messages": {
+      "type": "object",
+      "since": 10
+    },
+    "messages.pick": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "messages.recv": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "messages.reply": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "messages.send": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "missions": {
+      "type": "object",
+      "since": 1
+    },
+    "missions.fork": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "missions.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "missions.kill": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "missions.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "missions.rename": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "missions.search": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "missions.send": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "missions.spawn": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "missions.stopScope": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "missions.summarize": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "modules": {
+      "type": "object",
+      "since": 10
+    },
+    "modules.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "notifications": {
+      "type": "object",
+      "since": 10
+    },
+    "notifications.dismiss": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "notifications.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "notify": {
+      "type": "object",
+      "since": 1
+    },
+    "notify.alert": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "notify.report": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "onboarding": {
+      "type": "object",
+      "since": 10
+    },
+    "onboarding.profile": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "outbox": {
+      "type": "object",
+      "since": 6
+    },
+    "outbox.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 6
+    },
+    "outbox.post": {
+      "type": "function",
+      "arity": 2,
+      "since": 6
+    },
+    "permissions": {
+      "type": "array",
+      "since": 1
+    },
+    "permissionSource": {
+      "type": "object",
+      "since": 15
+    },
+    "permissionSource.catalog": {
+      "type": "function",
+      "arity": 0,
+      "since": 15
+    },
+    "permissionSource.register": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "pipelines": {
+      "type": "object",
+      "since": 10
+    },
+    "pipelines.create": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "pipelines.delete": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "pipelines.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "pipelines.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "pipelines.run": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "pipelines.runStatus": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "plugins": {
+      "type": "object",
+      "since": 10
+    },
+    "plugins.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "plugins.setEnabled": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "projects": {
+      "type": "object",
+      "since": 10
+    },
+    "projects.create": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "projects.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "projects.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "projects.roles": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "projects.setRole": {
+      "type": "function",
+      "arity": 3,
+      "since": 10
+    },
+    "projects.update": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "projects.workspaces": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "provider": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.account": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.account.of": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.binary": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.binary.converse": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "provider.binary.probe": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "provider.binary.resolve": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.binary.serve": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "provider.binary.version": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.credentialStore": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.env": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.git": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.git.writableRoots": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.mcp": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.media": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.media.adopt": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "provider.media.adoptSync": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "provider.media.allowShow": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.modelReasoning": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.osCredentials": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.osCredentials.invalidate": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.osCredentials.read": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.redact": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.redact.deep": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.redact.text": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.registerProductProfile": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.registerProvider": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.replaceProvider": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.acp": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.acp.AcpEventMapper": {
+      "type": "function",
+      "arity": 0,
+      "since": 12
+    },
+    "provider.runtime.acp.acpInitEvent": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.acp.AcpRpcError": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "provider.runtime.acp.AcpSessionDriver": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.acp.AcpTransport": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.acp.AcpTransportError": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.acp.defineProvider": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.acp.discoverModels": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.acp.extractAcpSessionId": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.acp.forgetModels": {
+      "type": "function",
+      "arity": 0,
+      "since": 12
+    },
+    "provider.runtime.acp.RPC_AUTH_REQUIRED": {
+      "type": "number",
+      "since": 12
+    },
+    "provider.runtime.acp.signInAdvice": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.acp.transportOver": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.check": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.check.declarationProblems": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.check.definitionProblems": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.check.dialectProblems": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.declarations": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.declarations.expandDirectory": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.engine": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.engine.createLineSplitter": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.engine.dialectFromDefinition": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.engine.fromLegacy": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.engine.LineSessionDriver": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.engine.openProcessSession": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.engine.openRemoteSession": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.events": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.events.assistantDeltaEvent": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.events.assistantTextEvent": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.events.assistantThinkingEvent": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.events.extractInitSessionId": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.events.providerRetryEvent": {
+      "type": "function",
+      "arity": 1,
+      "since": 13
+    },
+    "provider.runtime.events.providerRetryKind": {
+      "type": "function",
+      "arity": 2,
+      "since": 13
+    },
+    "provider.runtime.events.resultErrorEvent": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.events.resultSuccessEvent": {
+      "type": "function",
+      "arity": 0,
+      "since": 12
+    },
+    "provider.runtime.events.systemInitEvent": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.events.toolResultEvent": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.events.toolUseEvent": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.jsonLines": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.jsonLines.encodeJsonLine": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.jsonLines.parseJsonLine": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.jsonLines.parseJsonObjectLine": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.limits": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.limits.bestRateLimit": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.limits.isExhaustedText": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.limits.isOverloadedEvent": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.limits.isOverloadedText": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.limits.isRateLimitText": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.limits.rateLimitFromEvent": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.mcp": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.mcp.claudeAskToolNames": {
+      "type": "function",
+      "arity": 0,
+      "since": 12
+    },
+    "provider.runtime.mcp.CODEX_MCP_APPROVAL_TOML": {
+      "type": "string",
+      "since": 12
+    },
+    "provider.runtime.mcp.mcpEnvPairs": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.mcp.scriptPaths": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.mcp.serializeAcpMcpServers": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.mcp.serializeCodexMcpToml": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.mcp.serializeGrokMcpToml": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.mcp.serializeMcpJson": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.models": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.models.modelIdsFromList": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.models.modelIdsFromSessionNew": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.models.normalizeDiscoveredModels": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.oauth": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.oauth.exchangeRefreshToken": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.oauth.EXPIRY_MARGIN_MS": {
+      "type": "number",
+      "since": 12
+    },
+    "provider.runtime.oauth.expiryMs": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.oauth.hhmm": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.oauth.isExpired": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.oauth.serializeRefresh": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.oauth.writeStoreAtomically": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "provider.runtime.permissions": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.permissions.sandboxLevelForPermissionMode": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.resume": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.resume.credentialValues": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.resume.parseResumeState": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.resume.serializeResumeState": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.rpc": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.rpc.decodeRpcLine": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.rpc.encodeRpcError": {
+      "type": "function",
+      "arity": 4,
+      "since": 12
+    },
+    "provider.runtime.rpc.encodeRpcNotification": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.rpc.encodeRpcRequest": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "provider.runtime.rpc.encodeRpcResult": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.spans": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.spans.streamJsonSpans": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "provider.runtime.streamJson": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.streamJson.partialTextDelta": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.streamJson.streamJsonUser": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.usage": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.runtime.usage.accountUsage": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.usage.accountUsageProblems": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.usage.isUsageNotSignedInError": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.usage.percentOf": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.runtime.usage.USAGE_NOT_SIGNED_IN": {
+      "type": "string",
+      "since": 12
+    },
+    "provider.runtime.usage.UsageNotSignedInError": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.runtime.usage.usageWindow": {
+      "type": "function",
+      "arity": 2,
+      "since": 12
+    },
+    "provider.scratch": {
+      "type": "object",
+      "since": 12
+    },
+    "provider.scratch.mission": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "questions": {
+      "type": "object",
+      "since": 10
+    },
+    "questions.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "questions.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "questions.resolve": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "realtime": {
+      "type": "object",
+      "since": 4
+    },
+    "realtime.publish": {
+      "type": "function",
+      "arity": 3,
+      "since": 4
+    },
+    "router": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "routines": {
+      "type": "object",
+      "since": 10
+    },
+    "routines.create": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "routines.delete": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "routines.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "routines.update": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "secrets": {
+      "type": "object",
+      "since": 1
+    },
+    "secrets.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "secrets.grant": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "secrets.httpCall": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "secrets.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "secrets.revoke": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "secrets.set": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "series": {
+      "type": "object",
+      "since": 10
+    },
+    "series.fallback": {
+      "type": "object",
+      "since": 10
+    },
+    "series.fallback.clear": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "series.fallback.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "series.fallback.set": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "series.role": {
+      "type": "object",
+      "since": 10
+    },
+    "series.role.clear": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "series.role.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "series.role.set": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "settings": {
+      "type": "object",
+      "since": 1
+    },
+    "settings.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "skills": {
+      "type": "object",
+      "since": 10
+    },
+    "skills.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "skills.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "skills.put": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "skills.rm": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "sql": {
+      "type": "object",
+      "since": 15
+    },
+    "sql.prepare": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "sql.transaction": {
+      "type": "function",
+      "arity": 1,
+      "since": 15
+    },
+    "storage": {
+      "type": "object",
+      "since": 1
+    },
+    "storage.dir": {
+      "type": "string",
+      "since": 1
+    },
+    "storage.kv": {
+      "type": "object",
+      "since": 1
+    },
+    "storage.kv.del": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "storage.kv.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "storage.kv.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "storage.kv.set": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "system": {
+      "type": "object",
+      "since": 10
+    },
+    "system.doctor": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "system.health": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "system.logs": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "traces": {
+      "type": "object",
+      "since": 10
+    },
+    "traces.get": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "transports": {
+      "type": "object",
+      "since": 3
+    },
+    "transports.register": {
+      "type": "function",
+      "arity": 1,
+      "since": 3
+    },
+    "triggers": {
+      "type": "object",
+      "since": 6
+    },
+    "triggers.create": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "triggers.disable": {
+      "type": "function",
+      "arity": 1,
+      "since": 6
+    },
+    "triggers.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "triggers.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 6
+    },
+    "triggers.remove": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "triggers.test": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "ui": {
+      "type": "object",
+      "since": 1
+    },
+    "ui.documents": {
+      "type": "object",
+      "since": 9
+    },
+    "ui.documents.create": {
+      "type": "function",
+      "arity": 1,
+      "since": 9
+    },
+    "ui.documents.dismiss": {
+      "type": "function",
+      "arity": 1,
+      "since": 9
+    },
+    "ui.documents.findByRef": {
+      "type": "function",
+      "arity": 2,
+      "since": 9
+    },
+    "ui.documents.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 9
+    },
+    "ui.documents.list": {
+      "type": "function",
+      "arity": 1,
+      "since": 9
+    },
+    "ui.navigate": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "ui.token": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "usage": {
+      "type": "object",
+      "since": 2
+    },
+    "usage.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 2
+    },
+    "usage.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 2
+    },
+    "usage.registerCollector": {
+      "type": "function",
+      "arity": 2,
+      "since": 2
+    },
+    "user": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "users": {
+      "type": "object",
+      "since": 10
+    },
+    "users.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "users.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "users.setStatus": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "version": {
+      "type": "string",
+      "since": 1
+    },
+    "webhooks": {
+      "type": "object",
+      "since": 6
+    },
+    "webhooks.asOwner": {
+      "type": "function",
+      "arity": 2,
+      "since": 15
+    },
+    "webhooks.on": {
+      "type": "function",
+      "arity": 2,
+      "since": 6
+    },
+    "workflows": {
+      "type": "object",
+      "since": 3
+    },
+    "workflows.cancel": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "workflows.get": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "workflows.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 10
+    },
+    "workflows.registerExecutor": {
+      "type": "function",
+      "arity": 1,
+      "since": 3
+    },
+    "workflows.registerTrigger": {
+      "type": "function",
+      "arity": 1,
+      "since": 3
+    },
+    "workflows.run": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "workflows.status": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    },
+    "worktrees": {
+      "type": "object",
+      "since": 10
+    },
+    "worktrees.create": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "worktrees.dispose": {
+      "type": "function",
+      "arity": 2,
+      "since": 10
+    },
+    "worktrees.info": {
+      "type": "function",
+      "arity": 1,
+      "since": 10
+    }
+  },
+  "providerTypes": {
+    "BackendProfile": {
+      "since": 4,
+      "signature": "BackendProfile",
+      "members": {
+        "disabled?": "boolean | undefined",
+        "rank?": "number | undefined",
+        "fallbackRank?": "number | undefined",
+        "id": "string",
+        "dialect": "string",
+        "label": "string",
+        "vendor?": "string | undefined",
+        "brand?": "string | undefined",
+        "icon?": "string | undefined",
+        "cmd?": "string | undefined",
+        "credentialDirs?": "readonly string[] | undefined",
+        "envFrom?": "Record<string, string> | undefined",
+        "env?": "Record<string, EnvValue> | undefined",
+        "requiredEnv?": "string[] | undefined",
+        "requiredBinary?": "string | undefined",
+        "providerConfig?": "ProviderConfig | undefined",
+        "capabilities?": "Partial<BackendCapabilities> | undefined",
+        "minCliVersion?": "string | undefined",
+        "models": "CatalogModel[]",
+        "modelsEndpoint?": "{ url: string; format: \"openai\"; authFrom?: Record<string, string>; } | undefined",
+        "defaultModel": "string | null",
+        "slugPrefixes?": "string[] | undefined",
+        "custom?": "boolean | undefined",
+        "subscription?": "{ note: string; planMaxToggle?: boolean; } | undefined"
+      }
+    },
+    "RegisteredProfile": {
+      "since": 4,
+      "signature": "RegisteredProfile",
+      "members": {
+        "disabled?": "boolean | undefined",
+        "rank?": "number | undefined",
+        "fallbackRank?": "number | undefined",
+        "id": "string",
+        "dialect": "string",
+        "label": "string",
+        "vendor?": "string | undefined",
+        "brand?": "string | undefined",
+        "icon?": "string | undefined",
+        "cmd?": "string | undefined",
+        "credentialDirs?": "readonly string[] | undefined",
+        "requiredBinary?": "string | undefined",
+        "providerConfig?": "ProviderConfig | undefined",
+        "capabilities?": "Partial<BackendCapabilities> | undefined",
+        "minCliVersion?": "string | undefined",
+        "models": "CatalogModel[]",
+        "modelsEndpoint?": "{ url: string; format: \"openai\"; authFrom?: Record<string, string>; } | undefined",
+        "defaultModel": "string | null",
+        "slugPrefixes?": "string[] | undefined",
+        "custom?": "boolean | undefined",
+        "subscription?": "{ note: string; planMaxToggle?: boolean; } | undefined",
+        "env?": "Record<string, string> | EnvResolver | undefined"
+      }
+    },
+    "Dialect": {
+      "since": 4,
+      "signature": "Dialect",
+      "members": {
+        "id": "string",
+        "localEnv?": "LocalEnvPolicy | undefined",
+        "persistentProcess": "boolean",
+        "finishMissionOnExit": "boolean",
+        "sessionResumable": "boolean",
+        "sessionStore": "\"global\" | \"per-mission\"",
+        "defaultCmd": "string",
+        "permissionModel": "\"mcp-bridge\" | \"sandbox\" | \"protocol\" | \"none\"",
+        "rateLimitReporting": "\"none\" | \"structured\" | \"textual\"",
+        "hostedConnectors": "boolean",
+        "browserToolsHint?": "string | undefined",
+        "permissionsHint?": "string | undefined",
+        "capabilities?": "Partial<BackendCapabilities> | undefined",
+        "accountUsage?": "((profile: ProfileRuntime, options?: UsageProbeOptions) => Promise<AccountUsage | null>) | undefined",
+        "discoverModels?": "((profile: ProfileRuntime) => Promise<Array<string | DiscoveredModel>>) | undefined",
+        "permissionsByAgent?": "((profileId: string) => boolean) | undefined",
+        "appliesPermissionMode?": "boolean | undefined",
+        "thinkingControls?": "readonly (\"levels\" | \"budget\" | \"toggle\")[] | undefined",
+        "nativeCompact?": "{ readonly command: string; } | undefined",
+        "buildSpawn": "(opts: BuildSpawnOpts, profile: ProfileRuntime) => Promise<SpawnResult>",
+        "writeUserInput": "(proc: ChildProcessWithoutNullStreams, text: string, images?: ImageAttachment[]) => void",
+        "parseLine": "(line: string) => NormalizedEvent[]",
+        "extractSessionId": "(ev: NormalizedEvent) => string | null",
+        "spans?": "((ev: NormalizedEvent, state: SpanState, eventId: number) => SpanOp[]) | undefined",
+        "openSession?": "((args: SessionOpenArgs) => SessionDriver) | undefined",
+        "isSessionNotFoundError?": "((stderr: string) => boolean) | undefined",
+        "setModel?": "((proc: ChildProcessWithoutNullStreams, model: string) => Promise<boolean>) | undefined",
+        "maxPromptBytes?": "number | undefined",
+        "dispose?": "((missionId: string) => void) | undefined",
+        "enrichEvent?": "((ev: NormalizedEvent, missionId: string) => NormalizedEvent) | undefined"
+      }
+    },
+    "EnvResolver": {
+      "since": 4,
+      "signature": "(launch?: BackendLaunchContext): Record<string, string> | Promise<Record<string, string>>",
+      "members": {}
+    },
+    "SecretRef": {
+      "since": 4,
+      "signature": "SecretRef",
+      "members": {
+        "secret": "string"
+      }
+    },
+    "SettingRef": {
+      "since": 4,
+      "signature": "{ setting: string; }",
+      "members": {
+        "setting": "string"
+      }
+    },
+    "BuildSpawnOpts": {
+      "since": 4,
+      "signature": "BuildSpawnOpts",
+      "members": {
+        "agentName": "string",
+        "systemPrompt": "string",
+        "message": "string",
+        "images?": "ImageAttachment[] | undefined",
+        "resumeSession": "string | null",
+        "cfg": "ProviderAgentConfig",
+        "missionId": "string",
+        "memoryDir?": "string | undefined",
+        "novaMcp?": "boolean | undefined",
+        "readOnlyTools?": "boolean | undefined",
+        "agentCommand?": "boolean | undefined",
+        "oneShot?": "boolean | undefined"
+      }
+    },
+    "SpawnResult": {
+      "since": 4,
+      "signature": "SpawnResult",
+      "members": {
+        "cmd": "string",
+        "args": "string[]",
+        "env?": "Record<string, string> | undefined",
+        "cwd?": "string | undefined",
+        "initialStdin": "string | null"
+      }
+    },
+    "ProfileRuntime": {
+      "since": 4,
+      "signature": "ProfileRuntime",
+      "members": {
+        "minCliVersion?": "string | undefined",
+        "id": "string",
+        "cmd": "string",
+        "env": "Record<string, string>",
+        "providerConfig?": "ProviderConfig | undefined",
+        "knownModels?": "readonly string[] | undefined"
+      }
+    },
+    "ProviderConfig": {
+      "since": 4,
+      "signature": "ProviderConfig",
+      "members": {
+        "id": "string",
+        "name": "string",
+        "baseUrl": "string",
+        "envKey": "string",
+        "wireApi": "string"
+      }
+    },
+    "NormalizedEvent": {
+      "since": 4,
+      "signature": "NormalizedEvent",
+      "members": {
+        "type": "string",
+        "payload": "unknown"
+      }
+    },
+    "PermissionModel": {
+      "since": 4,
+      "signature": "\"mcp-bridge\" | \"sandbox\" | \"protocol\" | \"none\"",
+      "members": {}
+    },
+    "RateLimitReporting": {
+      "since": 4,
+      "signature": "\"none\" | \"structured\" | \"textual\"",
+      "members": {}
+    },
+    "SessionStore": {
+      "since": 4,
+      "signature": "\"global\" | \"per-mission\"",
+      "members": {}
+    },
+    "ImageAttachment": {
+      "since": 4,
+      "signature": "ImageAttachment",
+      "members": {
+        "media_type": "string",
+        "data": "string"
+      }
+    },
+    "CatalogModel": {
+      "since": 4,
+      "signature": "CatalogModel",
+      "members": {
+        "slug": "string",
+        "tier?": "\"flagship\" | \"mid\" | \"small\" | undefined",
+        "addedAt?": "number | undefined",
+        "hidden?": "boolean | undefined",
+        "label": "string",
+        "contextWindow?": "number | undefined",
+        "contextWindowDeclared?": "boolean | undefined",
+        "presetLabel?": "string | undefined",
+        "presetRank?": "number | undefined",
+        "supportedReasoningLevels?": "string[] | undefined",
+        "reportedReasoningLevels?": "string[] | undefined",
+        "reasoningControl?": "DeclaredReasoningControl | undefined",
+        "reasoning?": "ModelReasoning | undefined",
+        "brand?": "string | undefined",
+        "icon?": "string | undefined"
+      }
+    },
+    "LocalBackendFile": {
+      "since": 4,
+      "signature": "{ id: string; dialect: string; label: string; defaultModel: string | null; models: { slug: string; label: string; brand?: string | undefined; icon?: string | undefined; addedAt?: number | undefined; hidden?: boolean | undefined; contextWindow?: number | undefined; presetLabel?: string | undefined; presetRank?: number | undefined; supportedReasoningLevels?: string[] | undefined; reportedReasoningLevels?: string[] | undefined; reasoningControl?: { type: \"budget\"; min?: number | undefined; max?: number | undefined; } | { type: \"toggle\"; } | { type: \"none\"; } | undefined; }[]; $schema?: string | undefined; disabled?: boolean | undefined; rank?: number | undefined; vendor?: string | undefined; brand?: string | undefined; icon?: string | undefined; env?: Record<string, string | { setting: string; } | { secret: string; }> | undefined; providerConfig?: { id: string; name: string; baseUrl: string; envKey: string; wireApi: string; } | undefined; modelsEndpoint?: { url: string; format: \"openai\"; } | undefined; }",
+      "members": {
+        "id": "string",
+        "dialect": "string",
+        "label": "string",
+        "defaultModel": "string | null",
+        "models": "{ slug: string; label: string; brand?: string | undefined; icon?: string | undefined; addedAt?: number | undefined; hidden?: boolean | undefined; contextWindow?: number | undefined; presetLabel?: string | undefined; presetRank?: number | undefined; supportedReasoningLevels?: string[] | undefined; reportedReasoningLevels?: string[] | undefined; reasoningControl?: { type: \"budget\"; min?: number | undefined; max?: number | undefined; } | { type: \"toggle\"; } | { type: \"none\"; } | undefined; }[]",
+        "$schema?": "string | undefined",
+        "disabled?": "boolean | undefined",
+        "rank?": "number | undefined",
+        "vendor?": "string | undefined",
+        "brand?": "string | undefined",
+        "icon?": "string | undefined",
+        "env?": "Record<string, string | { setting: string; } | { secret: string; }> | undefined",
+        "providerConfig?": "{ id: string; name: string; baseUrl: string; envKey: string; wireApi: string; } | undefined",
+        "modelsEndpoint?": "{ url: string; format: \"openai\"; } | undefined"
+      }
+    },
+    "LocalEnvPolicy": {
+      "since": 4,
+      "signature": "LocalEnvPolicy",
+      "members": {
+        "names": "readonly string[]",
+        "prefixes": "readonly string[]",
+        "renameUnder?": "string | undefined"
+      }
+    },
+    "DiscoveredModel": {
+      "since": 6,
+      "signature": "DiscoveredModel",
+      "members": {
+        "slug": "string",
+        "supportedReasoningLevels?": "string[] | undefined"
+      }
+    },
+    "ModelReasoning": {
+      "since": 6,
+      "signature": "ModelReasoning",
+      "members": {
+        "source": "\"declared\" | \"agent\" | \"catalog\"",
+        "thinks": "boolean",
+        "controls": "ReasoningControl[]",
+        "catalogEntry?": "string | undefined"
+      }
+    },
+    "ReasoningControl": {
+      "since": 6,
+      "signature": "ReasoningControl",
+      "members": {
+        "|0": "{ type: \"budget\"; min?: number; max?: number; }",
+        "|1": "{ type: \"levels\"; values: string[]; }",
+        "|2": "{ type: \"toggle\"; }"
+      }
+    },
+    "DeclaredReasoningControl": {
+      "since": 6,
+      "signature": "DeclaredReasoningControl",
+      "members": {
+        "|0": "{ type: \"budget\"; min?: number; max?: number; }",
+        "|1": "{ type: \"none\"; }",
+        "|2": "{ type: \"toggle\"; }"
+      }
+    },
+    "RemoteDialect": {
+      "since": 7,
+      "signature": "RemoteDialect",
+      "members": {
+        "id": "string",
+        "capabilities?": "Partial<BackendCapabilities> | undefined",
+        "localEnv?": "LocalEnvPolicy | undefined",
+        "sessionResumable": "boolean",
+        "sessionStore": "\"global\" | \"per-mission\"",
+        "permissionModel": "\"mcp-bridge\" | \"sandbox\" | \"protocol\" | \"none\"",
+        "rateLimitReporting": "\"none\" | \"structured\" | \"textual\"",
+        "hostedConnectors": "boolean",
+        "browserToolsHint?": "string | undefined",
+        "permissionsHint?": "string | undefined",
+        "accountUsage?": "((profile: ProfileRuntime, options?: UsageProbeOptions) => Promise<AccountUsage | null>) | undefined",
+        "discoverModels?": "((profile: ProfileRuntime) => Promise<Array<string | DiscoveredModel>>) | undefined",
+        "permissionsByAgent?": "((profileId: string) => boolean) | undefined",
+        "appliesPermissionMode?": "boolean | undefined",
+        "thinkingControls?": "readonly (\"levels\" | \"budget\" | \"toggle\")[] | undefined",
+        "nativeCompact?": "{ readonly command: string; } | undefined",
+        "extractSessionId": "(ev: NormalizedEvent) => string | null",
+        "spans?": "((ev: NormalizedEvent, state: SpanState, eventId: number) => SpanOp[]) | undefined",
+        "dispose?": "((missionId: string) => void) | undefined",
+        "enrichEvent?": "((ev: NormalizedEvent, missionId: string) => NormalizedEvent) | undefined",
+        "transport": "\"remote\"",
+        "openSession": "(args: RemoteSessionOpenArgs) => SessionDriver"
+      }
+    },
+    "RemoteSessionOpenArgs": {
+      "since": 7,
+      "signature": "RemoteSessionOpenArgs",
+      "members": {
+        "spawn": "BuildSpawnOpts",
+        "profileId": "string",
+        "launch?": "BackendLaunchContext | undefined",
+        "host": "RemoteSessionHost",
+        "env": "Readonly<Record<string, string>>",
+        "resume?": "RemoteSessionResume | undefined"
+      }
+    },
+    "RemoteSessionHost": {
+      "since": 7,
+      "signature": "RemoteSessionHost",
+      "members": {
+        "emit": "(ev: NormalizedEvent) => void",
+        "requestPermission": "(req: PermissionRequest, wait?: PermissionWait) => Promise<PermissionDecision>",
+        "ask?": "((req: SessionAskRequest, wait?: PermissionWait) => Promise<SessionAskOutcome>) | undefined",
+        "end": "(outcome: SessionEnd) => void",
+        "saveResume": "(state: RemoteResumeState | null) => void"
+      }
+    },
+    "SessionEnd": {
+      "since": 7,
+      "signature": "SessionEnd",
+      "members": {
+        "|0": "{ readonly reason: \"cancelled\"; }",
+        "|1": "{ readonly reason: \"completed\"; }",
+        "|2": "{ readonly reason: \"failed\"; readonly message: string; }"
+      }
+    },
+    "SessionDriver": {
+      "since": 7,
+      "signature": "SessionDriver",
+      "members": {
+        "info": "SessionInfo | null",
+        "start": "() => Promise<SessionInfo>",
+        "prompt": "(text: string, images?: ImageAttachment[]) => Promise<TurnOutcome>",
+        "cancel": "() => Promise<void>",
+        "steer?": "((text: string) => Promise<boolean>) | undefined",
+        "setModel?": "((model: string) => Promise<boolean>) | undefined",
+        "close": "() => void"
+      }
+    },
+    "SessionHost": {
+      "since": 7,
+      "signature": "SessionHost",
+      "members": {
+        "emit": "(ev: NormalizedEvent) => void",
+        "requestPermission": "(req: PermissionRequest, wait?: PermissionWait) => Promise<PermissionDecision>",
+        "ask?": "((req: SessionAskRequest, wait?: PermissionWait) => Promise<SessionAskOutcome>) | undefined"
+      }
+    },
+    "SessionInfo": {
+      "since": 7,
+      "signature": "SessionInfo",
+      "members": {
+        "sessionId": "string",
+        "capabilities": "SessionCapabilities",
+        "resumed": "boolean"
+      }
+    },
+    "SessionCapabilities": {
+      "since": 7,
+      "signature": "SessionCapabilities",
+      "members": {
+        "loadSession": "boolean",
+        "resume": "boolean",
+        "mcp": "boolean",
+        "image": "boolean",
+        "permissionsByAgent?": "boolean | undefined"
+      }
+    },
+    "TurnOutcome": {
+      "since": 7,
+      "signature": "TurnOutcome",
+      "members": {
+        "stopReason": "string"
+      }
+    },
+    "PermissionRequest": {
+      "since": 7,
+      "signature": "PermissionRequest",
+      "members": {
+        "toolCallId": "string | null",
+        "tool": "string",
+        "title": "string | null",
+        "input": "unknown",
+        "scopes?": "readonly (\"session\" | \"always\")[] | undefined"
+      }
+    },
+    "ApprovalScope": {
+      "since": 7,
+      "signature": "\"session\" | \"always\"",
+      "members": {}
+    },
+    "PermissionDecision": {
+      "since": 7,
+      "signature": "PermissionDecision",
+      "members": {
+        "allow": "boolean",
+        "scope?": "\"session\" | \"always\" | undefined"
+      }
+    },
+    "BackendCapabilities": {
+      "since": 7,
+      "signature": "BackendCapabilities",
+      "members": {
+        "worktree": "boolean",
+        "novaMcp": "boolean",
+        "attachments": "boolean",
+        "novaPreamble": "boolean"
+      }
+    },
+    "BackendLaunchContext": {
+      "since": 7,
+      "signature": "BackendLaunchContext",
+      "members": {
+        "|0": "{ readonly kind: \"mission\"; readonly missionId: string; readonly ownerUserId: string | null; readonly agentName: string; readonly project: string | null; }",
+        "|1": "{ readonly kind: \"probe\"; readonly missionId: null; readonly ownerUserId: null; readonly agentName: null; readonly project: null; }"
+      }
+    },
+    "RemoteResumeState": {
+      "since": 7,
+      "signature": "RemoteResumeState",
+      "members": {}
+    },
+    "RemoteSessionResume": {
+      "since": 7,
+      "signature": "RemoteSessionResume",
+      "members": {
+        "state": "RemoteResumeState",
+        "turnActive": "boolean"
+      }
+    },
+    "PermissionWait": {
+      "since": 14,
+      "signature": "PermissionWait",
+      "members": {
+        "signal?": "AbortSignal | undefined"
+      }
+    },
+    "SessionAskRequest": {
+      "since": 14,
+      "signature": "SessionAskRequest",
+      "members": {
+        "id": "string | null",
+        "questions": "readonly SessionQuestion[]"
+      }
+    },
+    "SessionAskOutcome": {
+      "since": 14,
+      "signature": "SessionAskOutcome",
+      "members": {
+        "|0": "{ readonly answered: false; readonly reason: string; }",
+        "|1": "{ readonly answered: true; readonly answers: Readonly<Record<string, SessionAnswer>>; }"
+      }
+    },
+    "SessionAnswer": {
+      "since": 14,
+      "signature": "SessionAnswer",
+      "members": {
+        "picked": "readonly string[]",
+        "text": "string | null"
+      }
+    },
+    "SessionQuestion": {
+      "since": 14,
+      "signature": "SessionQuestion",
+      "members": {
+        "question": "string",
+        "header?": "string | undefined",
+        "options?": "readonly SessionQuestionOption[] | undefined",
+        "multiSelect?": "boolean | undefined",
+        "placeholder?": "string | undefined"
+      }
+    },
+    "SessionQuestionOption": {
+      "since": 14,
+      "signature": "SessionQuestionOption",
+      "members": {
+        "label": "string",
+        "description?": "string | undefined"
+      }
+    }
+  },
+  "kitExports": {
+    "provider.APPROVAL_SCOPES": {
+      "type": "array",
+      "value": [
+        "session",
+        "always"
+      ],
+      "since": 11
+    },
+    "provider.ASK_MCP_FORMS_ONLY_ENV": {
+      "type": "string",
+      "value": "ROOKS_ASK_FORMS_ONLY",
+      "since": 11
+    },
+    "provider.ASK_MCP_SERVER": {
+      "type": "string",
+      "value": "nova_ask",
+      "since": 11
+    },
+    "provider.ASK_TOOL_KANBAN_PLAN": {
+      "type": "string",
+      "value": "kanban_plan",
+      "since": 11
+    },
+    "provider.ASK_TOOL_QUESTION": {
+      "type": "string",
+      "value": "question",
+      "since": 11
+    },
+    "provider.ASK_TOOL_REQUEST": {
+      "type": "string",
+      "value": "request",
+      "since": 11
+    },
+    "provider.ASSISTANT_DELTA": {
+      "type": "string",
+      "value": "assistant_delta",
+      "since": 11
+    },
+    "provider.BACKEND_CAPABILITIES": {
+      "type": "array",
+      "value": [
+        "worktree",
+        "novaMcp",
+        "attachments",
+        "novaPreamble"
+      ],
+      "since": 11
+    },
+    "provider.CLAUDE_PERMISSION_PROMPT_TOOL": {
+      "type": "string",
+      "value": "mcp__nova_ask__request",
+      "since": 11
+    },
+    "provider.DEFAULT_BACKEND_CAPABILITIES": {
+      "type": "object",
+      "value": {
+        "worktree": true,
+        "novaMcp": true,
+        "attachments": true,
+        "novaPreamble": true
+      },
+      "since": 11
+    },
+    "provider.DEFAULT_MAX_LINE_CHARS": {
+      "type": "number",
+      "value": 16777216,
+      "since": 11
+    },
+    "provider.LINE_SESSION_DRIVER": {
+      "type": "symbol",
+      "since": 11
+    },
+    "provider.NO_SESSION_CAPABILITIES": {
+      "type": "object",
+      "value": {
+        "loadSession": false,
+        "resume": false,
+        "mcp": false,
+        "image": false
+      },
+      "since": 11
+    },
+    "provider.PERMISSION_MODELS": {
+      "type": "array",
+      "value": [
+        "mcp-bridge",
+        "sandbox",
+        "protocol",
+        "none"
+      ],
+      "since": 11
+    },
+    "provider.PERMISSION_MODEL_OBLIGATIONS": {
+      "type": "object",
+      "value": {
+        "mcp-bridge": "pass the permission tool to the CLI at spawn and declare the `nova_ask` MCP server",
+        "sandbox": "freeze the privileges at spawn from `permission_mode`; there is no card and no classifier",
+        "protocol": "supply `openSession`: its driver forwards the agent's permission requests to `host.requestPermission`",
+        "none": "nothing — the CLI runs everything unguarded, which the UI says plainly"
+      },
+      "since": 11
+    },
+    "provider.PROVIDER_TRANSPORTS": {
+      "type": "array",
+      "value": [
+        "stdio-persistent",
+        "process-per-turn",
+        "remote"
+      ],
+      "since": 11
+    },
+    "provider.RATE_LIMIT_REPORTINGS": {
+      "type": "array",
+      "value": [
+        "structured",
+        "textual",
+        "none"
+      ],
+      "since": 11
+    },
+    "provider.REMOTE_RESUME_MAX_BYTES": {
+      "type": "number",
+      "value": 4096,
+      "since": 11
+    },
+    "provider.RPC_INTERNAL_ERROR": {
+      "type": "number",
+      "value": -32603,
+      "since": 11
+    },
+    "provider.RPC_INVALID_PARAMS": {
+      "type": "number",
+      "value": -32602,
+      "since": 11
+    },
+    "provider.RPC_METHOD_NOT_FOUND": {
+      "type": "number",
+      "value": -32601,
+      "since": 11
+    },
+    "provider.SESSION_STORES": {
+      "type": "array",
+      "value": [
+        "global",
+        "per-mission"
+      ],
+      "since": 11
+    },
+    "provider.SPAN_KINDS": {
+      "type": "array",
+      "value": [
+        "turn",
+        "tool",
+        "thinking",
+        "permission",
+        "spawn",
+        "message",
+        "switch",
+        "interrupt",
+        "node",
+        "workflow"
+      ],
+      "since": 11
+    },
+    "provider.SPAN_STATUSES": {
+      "type": "array",
+      "value": [
+        "running",
+        "ok",
+        "error",
+        "denied",
+        "timeout",
+        "interrupted"
+      ],
+      "since": 11
+    },
+    "provider.USAGE_NOT_SIGNED_IN": {
+      "type": "string",
+      "value": "not_signed_in",
+      "since": 11
+    },
+    "provider.isLineSessionDriver": {
+      "type": "function",
+      "arity": 1,
+      "since": 11
+    },
+    "provider.isRemoteDefinition": {
+      "type": "function",
+      "arity": 1,
+      "since": 11
+    },
+    "provider.isRemoteDialect": {
+      "type": "function",
+      "arity": 1,
+      "since": 11
+    },
+    "provider.probeLaunchContext": {
+      "type": "function",
+      "arity": 0,
+      "since": 11
+    },
+    "testing.CHUNKINGS": {
+      "type": "array",
+      "since": 11
+    },
+    "testing.DEFAULT_MESSAGE": {
+      "type": "string",
+      "since": 11
+    },
+    "testing.DEFAULT_MISSION_ID": {
+      "type": "string",
+      "since": 11
+    },
+    "testing.DEFAULT_RESUME_ID": {
+      "type": "string",
+      "since": 11
+    },
+    "testing.DEFAULT_SYSTEM_PROMPT": {
+      "type": "string",
+      "since": 11
+    },
+    "testing.HOSTILE_EVENTS": {
+      "type": "array",
+      "since": 11
+    },
+    "testing.MALFORMED_JSON_LINES": {
+      "type": "array",
+      "since": 11
+    },
+    "testing.MAX_ARG_STRLEN": {
+      "type": "number",
+      "since": 11
+    },
+    "testing.NOT_JSON_LINES": {
+      "type": "array",
+      "since": 11
+    },
+    "testing.bindDialect": {
+      "type": "function",
+      "arity": 2,
+      "since": 11
+    },
+    "testing.createFakeCli": {
+      "type": "function",
+      "arity": 1,
+      "since": 11
+    },
+    "testing.defineConformanceTests": {
+      "type": "function",
+      "arity": 2,
+      "since": 11
+    },
+    "testing.dialectConformance": {
+      "type": "function",
+      "arity": 4,
+      "since": 11
+    },
+    "testing.dialectDeclarationChecks": {
+      "type": "function",
+      "arity": 1,
+      "since": 11
+    },
+    "testing.fakeRemoteHost": {
+      "type": "function",
+      "arity": 0,
+      "since": 11
+    },
+    "testing.filesUnder": {
+      "type": "function",
+      "arity": 1,
+      "since": 11
+    },
+    "testing.hugeLine": {
+      "type": "function",
+      "arity": 0,
+      "since": 11
+    },
+    "testing.lineProviderChecks": {
+      "type": "function",
+      "arity": 3,
+      "since": 11
+    },
+    "testing.loadTranscript": {
+      "type": "function",
+      "arity": 1,
+      "since": 11
+    },
+    "testing.remoteProviderChecks": {
+      "type": "function",
+      "arity": 2,
+      "since": 11
+    },
+    "testing.replayTranscript": {
+      "type": "function",
+      "arity": 3,
+      "since": 11
+    },
+    "testing.spawnOptions": {
+      "type": "function",
+      "arity": 3,
+      "since": 11
+    },
+    "testing.transcriptLines": {
+      "type": "function",
+      "arity": 1,
+      "since": 11
+    },
+    "testing.createProviderContext": {
+      "type": "function",
+      "arity": 0,
+      "since": 12
+    },
+    "testing.providerRuntime": {
+      "type": "object",
+      "since": 12
+    },
+    "testing.FAKE_TOKEN_REFERENCE": {
+      "type": "string",
+      "since": 12
+    },
+    "provider.INSTALL_PLATFORMS": {
+      "type": "array",
+      "value": [
+        "linux",
+        "darwin",
+        "win32"
+      ],
+      "since": 12
+    },
+    "provider.MAX_BRAND_SVG_BYTES": {
+      "type": "number",
+      "value": 16384,
+      "since": 12
+    },
+    "provider.MODEL_TIERS": {
+      "type": "array",
+      "value": [
+        "flagship",
+        "mid",
+        "small"
+      ],
+      "since": 12
+    },
+    "provider.PACKAGE_MANAGERS": {
+      "type": "array",
+      "value": [
+        "apt",
+        "dnf",
+        "pacman",
+        "zypper",
+        "apk",
+        "brew",
+        "winget"
+      ],
+      "since": 12
+    },
+    "provider.SERVICE_NEEDS": {
+      "type": "array",
+      "value": [
+        "longLivedToken",
+        "graphicalSession"
+      ],
+      "since": 12
+    },
+    "testing.acpSessionChecks": {
+      "type": "function",
+      "arity": 3,
+      "since": 12
+    },
+    "testing.createAcpReplayPeer": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "testing.loadAcpScript": {
+      "type": "function",
+      "arity": 1,
+      "since": 12
+    },
+    "provider.PROVIDER_RETRY": {
+      "type": "string",
+      "value": "provider_retry",
+      "since": 13
+    },
+    "provider.PROVIDER_RETRY_KINDS": {
+      "type": "array",
+      "value": [
+        "transport",
+        "rate_limit",
+        "overloaded",
+        "server"
+      ],
+      "since": 13
+    },
+    "testing.DICTATION_ERROR_CODES": {
+      "type": "array",
+      "since": 14
+    },
+    "testing.DICTATION_SAMPLE_RATE": {
+      "type": "number",
+      "since": 14
+    },
+    "testing.DICTATION_TEXT_MAX": {
+      "type": "number",
+      "since": 14
+    },
+    "testing.chunkPcm": {
+      "type": "function",
+      "arity": 1,
+      "since": 14
+    },
+    "testing.concatPcm": {
+      "type": "function",
+      "arity": 0,
+      "since": 14
+    },
+    "testing.createFakeDictationEngine": {
+      "type": "function",
+      "arity": 0,
+      "since": 14
+    },
+    "testing.dictationEngineChecks": {
+      "type": "function",
+      "arity": 1,
+      "since": 14
+    },
+    "testing.dictationEngineProblem": {
+      "type": "function",
+      "arity": 1,
+      "since": 14
+    },
+    "testing.dictationEventProblem": {
+      "type": "function",
+      "arity": 1,
+      "since": 14
+    },
+    "testing.fakeUtterance": {
+      "type": "function",
+      "arity": 0,
+      "since": 14
+    },
+    "testing.pcmToWav": {
+      "type": "function",
+      "arity": 1,
+      "since": 14
+    },
+    "testing.readWavPcm": {
+      "type": "function",
+      "arity": 1,
+      "since": 14
+    },
+    "testing.runDictation": {
+      "type": "function",
+      "arity": 2,
+      "since": 14
+    },
+    "testing.silencePcm": {
+      "type": "function",
+      "arity": 1,
+      "since": 14
+    },
+    "testing.speechLikePcm": {
+      "type": "function",
+      "arity": 1,
+      "since": 14
+    },
+    "provider.BINARY_IDENTITY_MAX_PATTERN": {
+      "type": "number",
+      "value": 200,
+      "since": 14
+    },
+    "provider.UNVERIFIED_NOTE_MAX_CHARS": {
+      "type": "number",
+      "value": 200,
+      "since": 14
+    },
+    "provider.UNVERIFIED_SUBJECTS": {
+      "type": "array",
+      "value": [
+        "session",
+        "mcp",
+        "permissions",
+        "sign-in",
+        "models",
+        "extension-requests",
+        "credential-dirs",
+        "binary-identity"
+      ],
+      "since": 14
+    }
+  },
+  "kitTypes": {
+    "Backend": {
+      "since": 11,
+      "signature": "Backend",
+      "members": {
+        "name": "string",
+        "persistentProcess": "boolean",
+        "finishMissionOnExit": "boolean",
+        "sessionResumable": "boolean",
+        "sessionStore": "\"global\" | \"per-mission\"",
+        "permissionModel": "\"mcp-bridge\" | \"sandbox\" | \"protocol\" | \"none\"",
+        "rateLimitReporting": "\"none\" | \"structured\" | \"textual\"",
+        "hostedConnectors": "boolean",
+        "browserToolsHint?": "string | undefined",
+        "permissionsHint?": "string | undefined",
+        "accountUsage?": "((options?: UsageProbeOptions) => Promise<AccountUsage | null>) | undefined",
+        "buildSpawn": "(opts: BuildSpawnOpts) => Promise<SpawnResult>",
+        "writeUserInput": "(proc: ChildProcessWithoutNullStreams, text: string, images?: ImageAttachment[]) => void",
+        "parseLine": "(line: string) => NormalizedEvent[]",
+        "extractSessionId": "(ev: NormalizedEvent) => string | null",
+        "spans?": "((ev: NormalizedEvent, state: SpanState, eventId: number) => SpanOp[]) | undefined",
+        "openSession?": "((args: Omit<SessionOpenArgs, \"profileId\" | \"launch\">) => SessionDriver) | undefined",
+        "openRemoteSession?": "((args: Omit<RemoteSessionOpenArgs, \"profileId\" | \"env\" | \"launch\">) => SessionDriver) | undefined",
+        "isSessionNotFoundError?": "((stderr: string) => boolean) | undefined",
+        "setModel?": "((proc: ChildProcessWithoutNullStreams, model: string) => Promise<boolean>) | undefined",
+        "maxPromptBytes?": "number | undefined",
+        "nativeCompact?": "{ readonly command: string; } | undefined",
+        "dispose?": "((missionId: string) => void) | undefined",
+        "enrichEvent?": "((ev: NormalizedEvent, missionId: string) => NormalizedEvent) | undefined"
+      }
+    },
+    "ProviderAgentConfig": {
+      "since": 11,
+      "signature": "ProviderAgentConfig",
+      "members": {
+        "cwd?": "string | undefined",
+        "model?": "string | undefined",
+        "reasoningEffort?": "string | null | undefined",
+        "permission_mode?": "string | undefined",
+        "allowed_tools?": "string[] | undefined",
+        "disallowed_tools?": "string[] | undefined",
+        "mcp_servers?": "string[] | undefined",
+        "excluded_mcp_servers?": "string[] | undefined",
+        "project?": "string | undefined",
+        "browser_profile_id?": "string | null | undefined"
+      }
+    },
+    "ProviderDefinition": {
+      "since": 11,
+      "signature": "ProviderDefinition",
+      "members": {}
+    },
+    "LinesCodec": {
+      "since": 11,
+      "signature": "LinesCodec",
+      "members": {
+        "kind": "\"lines\"",
+        "parseLine": "(line: string) => NormalizedEvent[]",
+        "extractSessionId": "(ev: NormalizedEvent) => string | null",
+        "writeUserInput": "(io: SessionStdio, text: string, images?: ImageAttachment[]) => void"
+      }
+    },
+    "ProcessDriverCodec": {
+      "since": 11,
+      "signature": "ProcessDriverCodec",
+      "members": {
+        "kind": "\"driver\"",
+        "openSession": "(args: Omit<SessionOpenArgs, \"profileId\" | \"launch\"> & Partial<Pick<SessionOpenArgs, \"profileId\" | \"launch\">>) => SessionDriver",
+        "extractSessionId?": "((ev: NormalizedEvent) => string | null) | undefined"
+      }
+    },
+    "RemoteDriverCodec": {
+      "since": 11,
+      "signature": "RemoteDriverCodec",
+      "members": {
+        "kind": "\"driver\"",
+        "openSession": "(args: Omit<RemoteSessionOpenArgs, \"profileId\" | \"env\" | \"launch\"> & Partial<Pick<RemoteSessionOpenArgs, \"profileId\" | \"env\" | \"launch\">>) => SessionDriver",
+        "extractSessionId?": "((ev: NormalizedEvent) => string | null) | undefined"
+      }
+    },
+    "SessionStrategy": {
+      "since": 11,
+      "signature": "SessionStrategy",
+      "members": {
+        "store": "\"global\" | \"per-mission\"",
+        "resumable": "boolean",
+        "notFound?": "((stderr: string) => boolean) | undefined",
+        "maxPromptBytes?": "number | undefined",
+        "setModel?": "((io: SessionStdio, model: string) => Promise<boolean>) | undefined",
+        "compact?": "{ readonly command: string; } | undefined"
+      }
+    },
+    "PermissionStrategy": {
+      "since": 11,
+      "signature": "PermissionStrategy",
+      "members": {
+        "model": "\"mcp-bridge\" | \"sandbox\" | \"protocol\" | \"none\"",
+        "byAgent?": "boolean | ((profileId: string) => boolean) | undefined",
+        "appliesMode?": "boolean | undefined"
+      }
+    },
+    "LimitsStrategy": {
+      "since": 11,
+      "signature": "LimitsStrategy",
+      "members": {
+        "reporting": "\"none\" | \"structured\" | \"textual\""
+      }
+    },
+    "McpStrategy": {
+      "since": 11,
+      "signature": "McpStrategy",
+      "members": {
+        "rooks": "boolean"
+      }
+    },
+    "UsageStrategy": {
+      "since": 11,
+      "signature": "UsageStrategy",
+      "members": {
+        "probe": "(profile?: ProfileRuntime, options?: UsageProbeOptions) => Promise<AccountUsage | null>"
+      }
+    },
+    "LifecycleStrategy": {
+      "since": 11,
+      "signature": "LifecycleStrategy",
+      "members": {
+        "dispose?": "((missionId: string) => void) | undefined",
+        "enrich?": "((ev: NormalizedEvent, missionId: string) => NormalizedEvent) | undefined"
+      }
+    },
+    "ProviderTransportKind": {
+      "since": 11,
+      "signature": "\"stdio-persistent\" | \"process-per-turn\" | \"remote\"",
+      "members": {}
+    },
+    "McpLaunchServer": {
+      "since": 11,
+      "signature": "McpLaunchServer",
+      "members": {
+        "|0": "{ readonly type: \"http\"; readonly name: string; readonly url: string; readonly headers: Readonly<Record<string, string>>; }",
+        "|1": "{ readonly type: \"stdio\"; readonly name: string; readonly command: string; readonly args: readonly string[]; readonly env: Readonly<Record<string, string>>; }"
+      }
+    },
+    "McpLaunchStdio": {
+      "since": 11,
+      "signature": "McpLaunchStdio",
+      "members": {
+        "type": "\"stdio\"",
+        "name": "string",
+        "command": "string",
+        "args": "readonly string[]",
+        "env": "Readonly<Record<string, string>>"
+      }
+    },
+    "McpLaunchHttp": {
+      "since": 11,
+      "signature": "McpLaunchHttp",
+      "members": {
+        "type": "\"http\"",
+        "name": "string",
+        "url": "string",
+        "headers": "Readonly<Record<string, string>>"
+      }
+    },
+    "RpcMessage": {
+      "since": 11,
+      "signature": "RpcMessage",
+      "members": {
+        "|0": "{ kind: \"error\"; id: RpcId; code: number; message: string; data?: unknown; }",
+        "|1": "{ kind: \"notification\"; method: string; params: unknown; }",
+        "|2": "{ kind: \"request\"; id: RpcId; method: string; params: unknown; }",
+        "|3": "{ kind: \"result\"; id: RpcId; result: unknown; }"
+      }
+    },
+    "RpcId": {
+      "since": 11,
+      "signature": "RpcId",
+      "members": {}
+    },
+    "RateLimitHit": {
+      "since": 11,
+      "signature": "RateLimitHit",
+      "members": {
+        "kind": "\"rate_limit\" | \"exhausted\"",
+        "window": "string | null",
+        "resetsAt": "number | null",
+        "source": "\"event\" | \"status\" | \"text\"",
+        "pending": "boolean"
+      }
+    },
+    "TokenUsage": {
+      "since": 11,
+      "signature": "TokenUsage",
+      "members": {
+        "inputTokens?": "number | undefined",
+        "outputTokens?": "number | undefined",
+        "cacheReadInputTokens?": "number | undefined"
+      }
+    },
+    "SessionOpenArgs": {
+      "since": 11,
+      "signature": "SessionOpenArgs",
+      "members": {
+        "io": "SessionStdio",
+        "spawn": "BuildSpawnOpts",
+        "host": "SessionHost",
+        "profileId": "string",
+        "mcpEnv?": "Readonly<Record<string, string>> | undefined",
+        "launch?": "BackendLaunchContext | undefined"
+      }
+    },
+    "SessionStdio": {
+      "since": 11,
+      "signature": "SessionStdio",
+      "members": {
+        "stdin": "Stream.Writable",
+        "stdout": "Stream.Readable"
+      }
+    },
+    "AccountUsage": {
+      "since": 11,
+      "signature": "AccountUsage",
+      "members": {
+        "windows": "Record<string, UsageWindow | null>",
+        "extra": "{ is_enabled: boolean; utilization: number; used_credits: number; monthly_limit: number; currency?: string; disabled_reason?: string | null; } | null"
+      }
+    },
+    "UsageWindow": {
+      "since": 11,
+      "signature": "UsageWindow",
+      "members": {
+        "utilization": "number",
+        "resets_at": "string"
+      }
+    },
+    "SpanOp": {
+      "since": 11,
+      "signature": "SpanOp",
+      "members": {
+        "|0": "{ op: \"close\"; id: string; status: Exclude<SpanStatus, \"running\">; ended_at?: number; output?: string | null; error?: string | null; tokens_in?: number | null; tokens_out?: number | null; cost_usd?: number | null; event_id_end?: number | null; }",
+        "|1": "{ op: \"open\"; id: string; trace_id: string; mission_id: string; seq: number; kind: SpanKind; name: string; started_at: number; parent_span_id?: string | null; workflow_run_id?: string | null; workflow_node_id?: string | null; status?: SpanStatus; ended_at?: number | null; input?: string | null; output?: string | null; error?: string | null; tokens_in?: number | null; tokens_out?: number | null; cost_usd?: number | null; event_id_start?: number | null; event_id_end?: number | null; }"
+      }
+    },
+    "SpanState": {
+      "since": 11,
+      "signature": "SpanState",
+      "members": {
+        "missionId": "string",
+        "traceId": "string",
+        "turn": "OpenSpan | null",
+        "tools": "Map<string, OpenSpan>",
+        "maxBytes": "number"
+      }
+    },
+    "OpenSpan": {
+      "since": 11,
+      "signature": "OpenSpan",
+      "members": {
+        "id": "string",
+        "name": "string",
+        "seq": "number",
+        "startedAt": "number"
+      }
+    },
+    "AcpMcpServer": {
+      "since": 11,
+      "signature": "AcpMcpServer",
+      "members": {
+        "name": "string",
+        "command": "string",
+        "args": "string[]",
+        "env": "{ name: string; value: string; }[]"
+      }
+    },
+    "AcpRecord": {
+      "since": 11,
+      "signature": "AcpRecord",
+      "members": {}
+    },
+    "AcpUsage": {
+      "since": 11,
+      "signature": "AcpUsage",
+      "members": {
+        "inputTokens": "number",
+        "outputTokens": "number",
+        "thoughtTokens": "number",
+        "cachedReadTokens": "number"
+      }
+    },
+    "RefreshedToken": {
+      "since": 11,
+      "signature": "RefreshedToken",
+      "members": {
+        "accessToken": "string",
+        "refreshToken?": "string | undefined",
+        "expiresAt": "number",
+        "refreshTokenExpiresAt?": "number | undefined"
+      }
+    },
+    "ProcessSessionArgs": {
+      "since": 11,
+      "signature": "ProcessSessionArgs",
+      "members": {
+        "io": "SessionStdio",
+        "spawn": "BuildSpawnOpts",
+        "host": "SessionHost",
+        "mcpEnv?": "Readonly<Record<string, string>> | undefined",
+        "initialStdin?": "string | null | undefined",
+        "onActivity?": "(() => void) | undefined",
+        "onOverflow?": "(() => void) | undefined",
+        "onCodecError?": "((error: unknown, line: string) => void) | undefined"
+      }
+    },
+    "LegacyLaunch": {
+      "since": 11,
+      "signature": "LegacyLaunch",
+      "members": {
+        "proc?": "ChildProcessWithoutNullStreams | undefined",
+        "novaMcp?": "boolean | undefined"
+      }
+    },
+    "ConformanceCheck": {
+      "since": 11,
+      "signature": "ConformanceCheck",
+      "members": {
+        "name": "string",
+        "run": "() => void | Promise<void>"
+      }
+    },
+    "ConformanceContext": {
+      "since": 11,
+      "signature": "ConformanceContext",
+      "members": {
+        "cwd": "string",
+        "scratchDirs?": "readonly string[] | undefined",
+        "systemPrompt?": "string | undefined",
+        "message?": "string | undefined",
+        "missionId?": "string | undefined",
+        "resumeId?": "string | undefined",
+        "checkUsage?": "boolean | undefined"
+      }
+    },
+    "LineExpectation": {
+      "since": 11,
+      "signature": "LineExpectation",
+      "members": {
+        "transcript": "string | readonly string[]",
+        "sessionId": "string",
+        "cmd": "string",
+        "envKeys?": "readonly string[] | undefined",
+        "model": "string",
+        "initAt?": "\"head\" | \"result\" | undefined"
+      }
+    },
+    "RemoteExpectation": {
+      "since": 11,
+      "signature": "RemoteExpectation",
+      "members": {
+        "model": "string",
+        "scenarios": "{ readonly normal: Backend; readonly slow?: Backend; readonly failing?: Backend; }"
+      }
+    },
+    "TestFn": {
+      "since": 11,
+      "signature": "(name: string, fn: () => void | Promise<void>): unknown",
+      "members": {}
+    },
+    "BoundProfile": {
+      "since": 11,
+      "signature": "BoundProfile",
+      "members": {
+        "id": "string",
+        "cmd?": "string | undefined",
+        "env?": "Readonly<Record<string, string>> | undefined",
+        "providerConfig?": "ProviderConfig | undefined",
+        "knownModels?": "readonly string[] | undefined",
+        "minCliVersion?": "string | undefined"
+      }
+    },
+    "FakeCli": {
+      "since": 11,
+      "signature": "FakeCli",
+      "members": {
+        "cmd": "string",
+        "spawn": "(args?: readonly string[], env?: NodeJS.ProcessEnv) => ChildProcessWithoutNullStreams"
+      }
+    },
+    "FakeCliOptions": {
+      "since": 11,
+      "signature": "FakeCliOptions",
+      "members": {
+        "dir": "string",
+        "name?": "string | undefined",
+        "lines": "readonly string[]",
+        "stderr?": "string | undefined",
+        "exitCode?": "number | undefined",
+        "delayMs?": "number | undefined",
+        "stayUntilStdinCloses?": "boolean | undefined"
+      }
+    },
+    "ReplayResult": {
+      "since": 11,
+      "signature": "ReplayResult",
+      "members": {
+        "events": "NormalizedEvent[]",
+        "sessionId": "string",
+        "driver": "SessionDriver"
+      }
+    },
+    "Chunking": {
+      "since": 11,
+      "signature": "\"lines\" | \"whole\" | \"bytes\" | \"crlf\"",
+      "members": {}
+    },
+    "ProviderPluginContext": {
+      "since": 11,
+      "signature": "ProviderPluginContext",
+      "members": {
+        "backends": "{ registerProfile(profile: RegisteredProfile): () => void; registerDialect(id: string, dialect: Dialect | RemoteDialect): () => void; }",
+        "provider": "ProviderServices",
+        "settings": "{ get(key: string): ProviderSettingValue; }",
+        "log": "{ info(...args: unknown[]): void; warn(...args: unknown[]): void; error(...args: unknown[]): void; }"
+      }
+    },
+    "ProviderContextOptions": {
+      "since": 12,
+      "signature": "ProviderContextOptions",
+      "members": {
+        "settings?": "Readonly<Record<string, ProviderSettingValue>> | undefined",
+        "apiVersion?": "number | undefined",
+        "userMcpServers?": "readonly ProviderMcpServer[] | undefined",
+        "binaries?": "Readonly<Record<string, { readonly path?: string; readonly version?: string; readonly probe?: (args: readonly string[]) => Partial<ProviderProbeResult>; readonly converse?: (args: readonly string[]) => ProviderConversation; }>> | undefined",
+        "osCredentials?": "Readonly<Record<string, string>> | undefined",
+        "generatedMedia?": "readonly ProviderGeneratedMedia[] | undefined",
+        "secrets?": "readonly string[] | undefined",
+        "credentialDirs?": "readonly string[] | undefined",
+        "gitRoots?": "Readonly<Record<string, readonly string[]>> | undefined",
+        "baseEnv?": "Readonly<Record<string, string>> | undefined"
+      }
+    },
+    "LoggedLine": {
+      "since": 12,
+      "signature": "LoggedLine",
+      "members": {
+        "level": "\"info\" | \"warn\" | \"error\"",
+        "message": "string"
+      }
+    },
+    "ProviderMcpPlan": {
+      "since": 12,
+      "signature": "ProviderMcpPlan",
+      "members": {
+        "servers": "readonly ProviderMcpServer[]",
+        "identityEnv": "Readonly<Record<string, string>>",
+        "daemonUrl": "string",
+        "scripts": "{ readonly rooks: string; readonly forms: string; }",
+        "permissionTool": "string | null",
+        "preApprovedTools": "readonly string[]",
+        "excludedServers?": "readonly string[] | undefined",
+        "commandPolicy": "Readonly<{ denyPrograms: readonly string[]; denyCommands: readonly string[]; denyNovaCommands: readonly string[]; novaCliCommands: readonly string[]; }>"
+      }
+    },
+    "ProviderMcpServer": {
+      "since": 12,
+      "signature": "ProviderMcpServer",
+      "members": {}
+    },
+    "ProviderMcpOptions": {
+      "since": 12,
+      "signature": "ProviderMcpOptions",
+      "members": {
+        "permissionPrompt?": "boolean | undefined"
+      }
+    },
+    "ProviderEnvPlan": {
+      "since": 12,
+      "signature": "ProviderEnvPlan",
+      "members": {
+        "env": "Readonly<Record<string, string>>",
+        "project": "string | null"
+      }
+    },
+    "NativeProviderDefinition": {
+      "since": 12,
+      "signature": "NativeProviderDefinition",
+      "members": {}
+    },
+    "ProviderDeclarations": {
+      "since": 12,
+      "signature": "ProviderDeclarations",
+      "members": {
+        "binary?": "ProviderBinaryDeclaration | undefined",
+        "credentialDirs?": "readonly string[] | undefined",
+        "credentialDirEnv?": "readonly string[] | undefined",
+        "passthroughEnv?": "readonly string[] | undefined",
+        "oneShot?": "{ readonly model: string; } | undefined",
+        "spans?": "\"stream-json\" | ((ev: NormalizedEvent, state: SpanState, eventId: number) => SpanOp[]) | undefined",
+        "accounts?": "ProviderAccountsDeclaration | undefined",
+        "modelCache?": "ProviderModelCache | undefined",
+        "protocols?": "readonly (\"anthropic\" | \"openai-responses\")[] | undefined",
+        "authStatus?": "((env: Readonly<Record<string, string>>) => ProviderAuthStatus | Promise<ProviderAuthStatus>) | undefined",
+        "brand?": "ProviderBrand | undefined",
+        "capabilities?": "Partial<BackendCapabilities> | undefined",
+        "localEnv?": "LocalEnvPolicy | undefined",
+        "hostedConnectors?": "boolean | undefined",
+        "browserToolsHint?": "string | undefined",
+        "permissionsHint?": "string | undefined",
+        "unverified?": "readonly ProviderUnverified[] | undefined"
+      }
+    },
+    "ProviderBinaryDeclaration": {
+      "since": 12,
+      "signature": "ProviderBinaryDeclaration",
+      "members": {
+        "names": "readonly string[]",
+        "install?": "Readonly<Partial<Record<\"linux\" | \"darwin\" | \"win32\" | \"any\", ProviderInstallPlan>>> | undefined",
+        "searchDirs?": "Readonly<Partial<Record<\"linux\" | \"darwin\" | \"win32\" | \"any\", readonly string[]>>> | undefined",
+        "desktopBuilds?": "readonly ProviderDesktopBuild[] | undefined",
+        "serviceNeeds?": "readonly (\"longLivedToken\" | \"graphicalSession\")[] | undefined",
+        "identity?": "ProviderBinaryIdentity | undefined"
+      }
+    },
+    "LaunchStrategy": {
+      "since": 12,
+      "signature": "LaunchStrategy",
+      "members": {
+        "launch": "(spawn: BuildSpawnOpts, profile: ProfileRuntime) => Promise<SpawnResult>"
+      }
+    },
+    "ModelsStrategy": {
+      "since": 12,
+      "signature": "ModelsStrategy",
+      "members": {
+        "discover": "(profile: ProfileRuntime) => Promise<Array<string | DiscoveredModel>>"
+      }
+    },
+    "ReasoningStrategy": {
+      "since": 12,
+      "signature": "ReasoningStrategy",
+      "members": {
+        "controls": "readonly (\"levels\" | \"budget\" | \"toggle\")[]"
+      }
+    },
+    "ProviderScratchDir": {
+      "since": 12,
+      "signature": "ProviderScratchDir",
+      "members": {
+        "path": "string",
+        "resolve": "(name: string) => string",
+        "writeFile": "(name: string, content: string | Uint8Array, options?: ScratchWriteOptions) => string",
+        "link": "(source: string, name: string) => ScratchLinkMethod",
+        "has": "(name: string) => boolean",
+        "remove": "(name: string) => void"
+      }
+    },
+    "ProviderScratch": {
+      "since": 12,
+      "signature": "ProviderScratch",
+      "members": {
+        "mission": "(spawn: BuildSpawnOpts) => Promise<ProviderScratchDir>"
+      }
+    },
+    "ProviderRedact": {
+      "since": 12,
+      "signature": "ProviderRedact",
+      "members": {
+        "text": "(text: string) => string",
+        "deep": "<T>(value: T) => T"
+      }
+    },
+    "ProviderBinary": {
+      "since": 12,
+      "signature": "ProviderBinary",
+      "members": {
+        "resolve": "(name: string) => Promise<string | null>",
+        "version": "(name: string) => Promise<string | null>",
+        "probe": "(name: string, args: readonly string[], options?: ProviderProbeOptions) => Promise<ProviderProbeResult>",
+        "serve": "(name: string, args: readonly string[], options?: ProviderServeOptions) => Promise<ProviderServer>",
+        "converse": "(name: string, args: readonly string[], options?: ProviderConverseOptions) => Promise<ProviderConversation>"
+      }
+    },
+    "ProviderMedia": {
+      "since": 12,
+      "signature": "ProviderMedia",
+      "members": {
+        "adopt": "(missionId: string, directory: string, sinceMs: number) => Promise<readonly ProviderGeneratedMedia[]>",
+        "adoptSync": "(missionId: string, directory: string, sinceMs: number) => readonly ProviderGeneratedMedia[]",
+        "allowShow": "(missionId: string, directory: string) => void"
+      }
+    },
+    "ProviderOsCredentials": {
+      "since": 12,
+      "signature": "ProviderOsCredentials",
+      "members": {
+        "invalidate": "(service: string, account?: string) => void",
+        "read": "(service: string, account?: string) => Promise<string | null>"
+      }
+    },
+    "ProviderProbeOptions": {
+      "since": 12,
+      "signature": "ProviderProbeOptions",
+      "members": {
+        "timeoutMs?": "number | undefined",
+        "cwd?": "string | undefined",
+        "env?": "Readonly<Record<string, string>> | undefined"
+      }
+    },
+    "ProviderProbeResult": {
+      "since": 12,
+      "signature": "ProviderProbeResult",
+      "members": {
+        "code": "number",
+        "stdout": "string",
+        "stderr": "string",
+        "timedOut": "boolean"
+      }
+    },
+    "ProviderServeOptions": {
+      "since": 12,
+      "signature": "ProviderServeOptions",
+      "members": {
+        "cwd?": "string | undefined",
+        "env?": "Readonly<Record<string, string>> | undefined",
+        "ready?": "string | undefined",
+        "readyTimeoutMs?": "number | undefined"
+      }
+    },
+    "ProviderServer": {
+      "since": 12,
+      "signature": "ProviderServer",
+      "members": {
+        "pid": "number | null",
+        "match": "string | null",
+        "output": "() => string",
+        "exited": "Promise<{ code: number | null; signal: NodeJS.Signals | null; }>",
+        "stop": "() => Promise<void>"
+      }
+    },
+    "ProviderGeneratedMedia": {
+      "since": 12,
+      "signature": "ProviderGeneratedMedia",
+      "members": {
+        "file": "string",
+        "kind": "\"image\" | \"video\"",
+        "mime": "string",
+        "name": "string"
+      }
+    },
+    "ProviderAccount": {
+      "since": 12,
+      "signature": "ProviderAccount",
+      "members": {
+        "of": "(profile: ProfileRuntime) => ProviderAccountContext | undefined"
+      }
+    },
+    "ProviderAccountContext": {
+      "since": 12,
+      "signature": "ProviderAccountContext",
+      "members": {
+        "id": "string",
+        "name": "string",
+        "configDir": "string"
+      }
+    },
+    "ProviderAccountsDeclaration": {
+      "since": 12,
+      "signature": "ProviderAccountsDeclaration",
+      "members": {
+        "login": "ProviderLoginDriver"
+      }
+    },
+    "ProviderLoginDriver": {
+      "since": 12,
+      "signature": "ProviderLoginDriver",
+      "members": {
+        "promptKind": "\"paste-code\" | \"device-code\"",
+        "inPlace?": "((platform: NodeJS.Platform) => boolean) | undefined",
+        "args": "(expectedLabel: string | null) => string[]",
+        "env": "(dir: string, base: Readonly<Record<string, string>>) => Record<string, string>",
+        "parse": "(output: string) => ProviderLoginPrompt | null",
+        "identity": "(dir: string, run: ProviderLoginRun) => Promise<ProviderLoginIdentity | null>",
+        "install": "(staging: string, dest: string) => void",
+        "signOut": "(dir: string, run: ProviderLoginRun) => Promise<void>",
+        "ttlMs?": "number | undefined"
+      }
+    },
+    "AcpAgentSpec": {
+      "since": 12,
+      "signature": "AcpAgentSpec",
+      "members": {
+        "id": "string",
+        "args": "readonly string[]",
+        "binary": "ProviderBinaryDeclaration",
+        "permissionsByAgent?": "boolean | undefined",
+        "signIn?": "AcpSignIn | undefined",
+        "authenticateWith?": "string | undefined",
+        "declares?": "Omit<ProviderDeclarations, \"spans\" | \"binary\"> | undefined",
+        "models?": "ModelsStrategy | undefined",
+        "modelProbe?": "\"session-new\" | undefined",
+        "env?": "((spawn: BuildSpawnOpts) => Record<string, string>) | undefined",
+        "oneShotEnv?": "Readonly<Record<string, string>> | undefined",
+        "extensionRequests?": "Readonly<Record<string, AcpExtensionHandler>> | undefined"
+      }
+    },
+    "AcpSignIn": {
+      "since": 12,
+      "signature": "AcpSignIn",
+      "members": {
+        "byMethod?": "Readonly<Record<string, string>> | undefined",
+        "fallback": "string"
+      }
+    },
+    "DictationExpectation": {
+      "since": 14,
+      "signature": "DictationExpectation",
+      "members": {
+        "speech?": "Float32Array<ArrayBufferLike> | undefined",
+        "language?": "string | null | undefined",
+        "transcript?": "string | RegExp | undefined",
+        "silence?": "boolean | undefined",
+        "manifest?": "unknown",
+        "run?": "Omit<DictationRunOptions, \"language\" | \"end\" | \"endAfterMs\"> | undefined"
+      }
+    },
+    "DictationRunOptions": {
+      "since": 14,
+      "signature": "DictationRunOptions",
+      "members": {
+        "language?": "string | null | undefined",
+        "chunkMs?": "number | undefined",
+        "paceMs?": "number | undefined",
+        "end?": "\"stop\" | \"cancel\" | \"abort\" | undefined",
+        "endAfterMs?": "number | undefined",
+        "settleMs?": "number | undefined",
+        "timeoutMs?": "number | undefined"
+      }
+    },
+    "DictationRun": {
+      "since": 14,
+      "signature": "DictationRun",
+      "members": {
+        "events": "readonly unknown[]",
+        "problems": "readonly string[]",
+        "partials": "readonly string[]",
+        "finals": "readonly string[]",
+        "errors": "readonly { type: \"error\"; code: DictationErrorCode; message: string; fatal: boolean; }[]",
+        "text": "string",
+        "stopped": "boolean"
+      }
+    },
+    "DictationErrorEvent": {
+      "since": 14,
+      "signature": "{ type: \"error\"; code: DictationErrorCode; message: string; fatal: boolean; }",
+      "members": {
+        "type": "\"error\"",
+        "code": "DictationErrorCode",
+        "message": "string",
+        "fatal": "boolean"
+      }
+    },
+    "FakeDictationEngine": {
+      "since": 14,
+      "signature": "FakeDictationEngine",
+      "members": {
+        "id": "string",
+        "label": "string",
+        "languages": "DictationLanguages",
+        "interim": "DictationInterim",
+        "availability": "() => Promise<DictationAvailability>",
+        "start": "(options: DictationStartOptions) => Promise<DictationSession>",
+        "sessions": "readonly FakeDictationSessionRecord[]"
+      }
+    },
+    "FakeDictationEngineOptions": {
+      "since": 14,
+      "signature": "FakeDictationEngineOptions",
+      "members": {
+        "id?": "string | undefined",
+        "label?": "string | undefined",
+        "languages?": "DictationLanguages | undefined",
+        "interim?": "DictationInterim | undefined",
+        "availability?": "DictationAvailability | undefined",
+        "transcribe?": "((heard: FakeHearing) => string) | undefined",
+        "fail?": "{ on: \"start\"; message?: string; } | { on: \"feed\"; afterMs?: number; code?: DictationErrorCode; message?: string; fatal?: boolean; } | undefined"
+      }
+    },
+    "FakeDictationSessionRecord": {
+      "since": 14,
+      "signature": "FakeDictationSessionRecord",
+      "members": {
+        "language": "string | null",
+        "samples": "number",
+        "feeds": "number",
+        "voicedMs": "number",
+        "ended": "\"error\" | \"stop\" | \"cancel\" | \"abort\" | null"
+      }
+    },
+    "FakeHearing": {
+      "since": 14,
+      "signature": "FakeHearing",
+      "members": {
+        "language": "string | null",
+        "samples": "number",
+        "voicedMs": "number"
+      }
+    },
+    "AcpExtensionHandler": {
+      "since": 14,
+      "signature": "(params: unknown, cards: AcpExtensionCards): Promise<unknown>",
+      "members": {}
+    },
+    "AcpExtensionCards": {
+      "since": 14,
+      "signature": "AcpExtensionCards",
+      "members": {
+        "signal": "AbortSignal",
+        "ask": "(questions: readonly AcpCardQuestion[], options?: { readonly id?: string | null; }) => Promise<AcpCardOutcome<Readonly<Record<string, AcpCardAnswer>>>>",
+        "approvePlan": "(plan: AcpPlanApproval, options?: { readonly id?: string | null; }) => Promise<AcpCardOutcome<AcpPlanVerdict>>"
+      }
+    },
+    "AcpCardQuestion": {
+      "since": 14,
+      "signature": "AcpCardQuestion",
+      "members": {
+        "id": "string",
+        "question": "string",
+        "header?": "string | undefined",
+        "options?": "readonly AcpCardOption[] | undefined",
+        "multiSelect?": "boolean | undefined",
+        "placeholder?": "string | undefined"
+      }
+    },
+    "AcpCardOption": {
+      "since": 14,
+      "signature": "AcpCardOption",
+      "members": {
+        "id": "string",
+        "label": "string",
+        "description?": "string | undefined"
+      }
+    },
+    "AcpCardAnswer": {
+      "since": 14,
+      "signature": "AcpCardAnswer",
+      "members": {
+        "selected": "readonly string[]",
+        "text": "string | null"
+      }
+    },
+    "AcpCardOutcome": {
+      "since": 14,
+      "signature": "AcpCardOutcome<T>",
+      "members": {
+        "|0": "{ readonly outcome: \"answered\"; readonly value: T; }",
+        "|1": "{ readonly outcome: \"cancelled\"; }",
+        "|2": "{ readonly outcome: \"unanswered\"; readonly reason: string; }"
+      }
+    },
+    "AcpPlanApproval": {
+      "since": 14,
+      "signature": "AcpPlanApproval",
+      "members": {
+        "title": "string",
+        "plan": "string",
+        "steps?": "readonly string[] | undefined"
+      }
+    },
+    "AcpPlanVerdict": {
+      "since": 14,
+      "signature": "AcpPlanVerdict",
+      "members": {
+        "approved": "boolean",
+        "note": "string | null"
+      }
+    },
+    "ProviderBinaryIdentity": {
+      "since": 14,
+      "signature": "ProviderBinaryIdentity",
+      "members": {
+        "args?": "readonly string[] | undefined",
+        "pattern": "string",
+        "expected?": "string | undefined"
+      }
+    },
+    "ProviderUnverified": {
+      "since": 14,
+      "signature": "ProviderUnverified",
+      "members": {
+        "subject": "\"models\" | \"session\" | \"mcp\" | \"permissions\" | \"sign-in\" | \"extension-requests\" | \"credential-dirs\" | \"binary-identity\"",
+        "note": "string"
+      }
+    },
+    "UsageProbeOptions": {
+      "since": 14,
+      "signature": "UsageProbeOptions",
+      "members": {
+        "force?": "boolean | undefined"
+      }
+    }
+  },
+  "dictationTypes": {
+    "DictationEngine": {
+      "since": 14,
+      "signature": "DictationEngine",
+      "members": {
+        "id": "string",
+        "label": "string",
+        "languages": "DictationLanguages",
+        "interim": "DictationInterim",
+        "availability": "() => Promise<DictationAvailability>",
+        "start": "(options: DictationStartOptions) => Promise<DictationSession>"
+      }
+    },
+    "DictationSession": {
+      "since": 14,
+      "signature": "DictationSession",
+      "members": {
+        "feed": "(pcm: Float32Array) => void",
+        "stop": "() => Promise<void>",
+        "cancel": "() => void"
+      }
+    },
+    "DictationEvent": {
+      "since": 14,
+      "signature": "DictationEvent",
+      "members": {
+        "|0": "{ type: \"error\"; code: DictationErrorCode; message: string; fatal: boolean; }",
+        "|1": "{ type: \"final\"; text: string; }",
+        "|2": "{ type: \"partial\"; text: string; }",
+        "|3": "{ type: \"stopped\"; }"
+      }
+    },
+    "DictationAvailability": {
+      "since": 14,
+      "signature": "DictationAvailability",
+      "members": {
+        "state": "\"unavailable\" | \"needs-setup\" | \"ready\"",
+        "reason?": "string | undefined"
+      }
+    },
+    "DictationStartOptions": {
+      "since": 14,
+      "signature": "DictationStartOptions",
+      "members": {
+        "language": "string | null",
+        "signal": "AbortSignal",
+        "onEvent": "(event: DictationEvent) => void"
+      }
+    },
+    "DictationLanguages": {
+      "since": 14,
+      "signature": "DictationLanguages",
+      "members": {
+        "codes": "readonly string[]",
+        "mode": "\"auto\" | \"forced\" | \"required\""
+      }
+    },
+    "PluginDictationDecl": {
+      "since": 14,
+      "signature": "{ engines: { id: string; runtime: \"page\" | \"daemon\"; egress: \"daemon\" | \"none\" | string[]; }[]; models?: string | undefined; }",
+      "members": {
+        "engines": "{ id: string; runtime: \"page\" | \"daemon\"; egress: \"daemon\" | \"none\" | string[]; }[]",
+        "models?": "string | undefined"
+      }
+    },
+    "PluginDictationEngineDecl": {
+      "since": 14,
+      "signature": "{ id: string; runtime: \"page\" | \"daemon\"; egress: \"daemon\" | \"none\" | string[]; }",
+      "members": {
+        "id": "string",
+        "runtime": "\"page\" | \"daemon\"",
+        "egress": "\"daemon\" | \"none\" | string[]"
+      }
+    },
+    "DictationErrorCode": {
+      "since": 14,
+      "signature": "DictationErrorCode",
+      "members": {
+        "|0": "\"busy\"",
+        "|1": "\"crashed\"",
+        "|2": "\"decode-failed\"",
+        "|3": "\"denied\"",
+        "|4": "\"needs-setup\"",
+        "|5": "\"network\"",
+        "|6": "\"unavailable\""
+      }
+    },
+    "DictationInterim": {
+      "since": 14,
+      "signature": "DictationInterim",
+      "members": {
+        "|0": "\"delayed\"",
+        "|1": "\"final-only\"",
+        "|2": "\"live\""
+      }
+    }
+  }
+}

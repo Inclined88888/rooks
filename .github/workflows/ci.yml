@@ -1,10 +1,14 @@
-# Item 111. Runs on every pull request and every push to main. A failing job blocks "green".
+# Checks every pull request on Linux, the system that gates the merge, and every
+# push to main on the three systems Rooks ships to; a manual run (Actions tab,
+# "Run workflow") tests a branch on the three. No secret is used: the jobs build
+# and test only.
 name: CI
 
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,362 +18,105 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  backend:
-    name: Backend tests
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: workbench/backend
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.12"  # the image's Python (workbench/Dockerfile)
-          cache: pip
-          cache-dependency-path: |
-            workbench/backend/requirements.txt
-            workbench/backend/requirements-dev.txt
-            workbench/backend/requirements-files.txt
-            rooks-try/pyproject.toml
-      - run: pip install -r requirements.txt -r requirements-dev.txt -r requirements-files.txt -e ../../rooks-try  # the Room, as the desktop install has it
-      - name: Legacy database migration (schema v0 fixture from main 1a725f9)
-        run: python -m pytest -q tests/test_actions.py -k migration
-      - name: Full test suite
-        run: python -m pytest -q
-      - name: Terminal CLI contract
-        run: python -m pytest -q ../../cli/tests
-      - name: Desktop release scripts (updater manifest)
-        run: python -m pytest -q ../../desktop/scripts
-
-  rooks-code:
-    name: Terminal coding agent (${{ matrix.os }})
+  test:
+    name: ${{ matrix.os }} · ${{ matrix.part.suite }}${{ matrix.part.shard && format(' {0}', matrix.part.shard) || '' }}
+    runs-on: ${{ matrix.os }}
+    # Linux gates the merge. macOS and Windows report without blocking until
+    # their suites have been green for a while: they never ran in CI before.
+    continue-on-error: ${{ matrix.os != 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-15, windows-2022]
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: rooks-code
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.11"  # the minimum supported version (tomllib)
-      - run: python -m pip install -e ".[dev]"  # pytest, plus prompt_toolkit and rich so the terminal UI tests run
-      - name: Bubblewrap, which keeps project-mode commands inside the folder on Linux
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update -q && sudo apt-get install -y -q bubblewrap
-          # Ubuntu 24.04 switches off unprivileged user namespaces, which bwrap needs; print why, then allow them
-          bwrap --ro-bind / / /bin/true || sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          bwrap --ro-bind / / /bin/true
-      - name: Tests, including the fake-model end-to-end run and the interactive terminal
-        run: python -m pytest -q
-      - name: Installs as a command and runs
-        run: |
-          python -m pip install .
-          rooks --version
-          rooks --help
-      - name: Single-file build
-        run: |
-          python scripts/build_pyz.py
-          python dist/rooks.pyz --version
-
-  frontend:
-    name: Frontend type check and build
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: workbench/frontend
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
-        with:
-          node-version: "22"  # the image's Node (workbench/Dockerfile)
-          cache: npm
-          cache-dependency-path: workbench/frontend/package-lock.json
-      - run: npm ci --no-audit --no-fund
-      - run: npx tsc --noEmit -p .
-      - run: npm run build
-      - run: npm test
-      - name: The committed web UI is the one the source builds (the one-command install ships it as is)
-        run: |
-          if [ -n "$(git status --porcelain dist)" ]; then
-            echo "workbench/frontend/dist is out of date. Run 'npm run build' in workbench/frontend and commit the dist folder."
-            git status --porcelain dist | head -20
-            exit 1
-          fi
-
-  vscode-extension:
-    name: VS Code extension tests
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: vscode-extension
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: vscode-extension/package-lock.json
-      - run: npm ci --no-audit --no-fund
-      - run: npm test
-
-  browser-agent:
-    name: Browser agent tests
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: browser-agent
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.12"  # the browser image's Python (browser-agent/Dockerfile)
-          cache: pip
-          cache-dependency-path: browser-agent/pyproject.toml
-      - run: pip install -e ".[server,dev]"
-      - name: Chromium for the pinned Playwright
-        run: python -m playwright install --with-deps chromium
-      - run: python -m pytest -q
-
-  image:
-    name: Image size, idle RAM and access log
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - name: Build, start, measure and check logs
-        run: scripts/ci/check-image.sh
-
-  cli-launcher:
-    name: Official CLI launcher tests
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
-        with:
-          node-version: "22"
-      - run: node --test cli-launcher/test/*.test.mjs
-      - run: bash -n setup.sh
-      - name: Validate optional Compose profiles
-        env:
-          APP_SECRET: ci-placeholder-secret-at-least-32-characters
-          TOOLS_API_KEY: ci-placeholder-key-at-least-24-characters
-        run: docker compose --profile claude-code config --quiet
-      - name: Build the pinned official CLI add-on
-        run: docker build -f cli-launcher/Dockerfile.claude cli-launcher
-      - name: Build the pinned Codex CLI add-on
-        run: docker build -f cli-launcher/Dockerfile.codex cli-launcher
-
-  rooks-browser:
-    name: Rooks Browser (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, macos-15, windows-2022]
-    defaults:
-      run:
-        working-directory: rooks-browser
+        # A pull request waits on Linux only: macOS and Windows do not block a
+        # merge, and they held the slowest runners on every pull request.
+        os: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || '["ubuntu-latest", "macos-latest", "windows-latest"]') }}
+        # The daemon suite alone takes about 25 minutes on a hosted runner, close
+        # to the 30 minutes run-tests.mjs allows a whole suite: it runs in two
+        # halves (`node --test --test-shard`), beside the web app suite, each
+        # job with its own time limit.
+        part:
+          - { suite: daemon, shard: 1/2 }
+          - { suite: daemon, shard: 2/2 }
+          - { suite: app, shard: '' }
     env:
-      ROOKS_BROWSER_TEST_ENGINE: chromium  # the bundled Chromium, so the job does not depend on the runner's Chrome
-      PYTHONUTF8: "1"
+      NODE_ENV: test
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.11"  # the oldest supported version
-          cache: pip
-          cache-dependency-path: rooks-browser/pyproject.toml
-      - run: python -m pip install -e ".[dev]"
-      - name: Install Chromium (Linux, with system libraries)
-        if: runner.os == 'Linux'
-        run: python -m playwright install --with-deps chromium
-      - name: Install Chromium
-        if: runner.os != 'Linux'
-        run: python -m playwright install chromium
-      - run: python -m rooks_browser doctor
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
-        if: runner.os == 'Linux'
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: rooks-browser/app/package-lock.json
-      - name: The Rooks Browser app, a preview (Linux only, tested under a virtual display)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xvfb
-          # Chromium's sandbox needs unprivileged user namespaces, which Ubuntu 24.04 switches off (the app then dies with
-          # "The SUID sandbox helper binary was found, but is not configured correctly"); allow them, as the terminal job does
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          cd app && npm ci --no-audit --no-fund && node node_modules/electron/install.js
-          xvfb-run -a node --test test/*.test.mjs
-      - name: Tests (under a virtual display, so the app's own tests in test_electron_app.py run too)
-        if: runner.os == 'Linux'
-        run: xvfb-run -a python -m pytest -q
-      - name: Tests
-        if: runner.os != 'Linux'
-        run: python -m pytest -q
+      - uses: actions/checkout@v4
 
-  rooks-desk:
-    name: Rooks Desk (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, macos-15, windows-2022]
-    defaults:
-      run:
-        working-directory: rooks-desk
-    env:
-      PYTHONUTF8: "1"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.11"  # the oldest supported version
-          cache: pip
-          cache-dependency-path: rooks-desk/pyproject.toml
-      - run: python -m pip install -e ".[dev]"
-      - name: Unit tests (fake desktop) and this platform's backend
-        run: python -m pytest -q -rs
-      - name: Installs as a command
-        env:
-          ROOKS_DESK_BACKEND: fake  # CI runners have no screen permissions; the real backend is imported by the tests
-        run: |
-          rooks-desk version
-          rooks-desk doctor
-      - name: Real desktop smoke test (Windows Notepad; macOS permissions and TextEdit)
-        if: runner.os != 'Linux'
-        env:
-          ROOKS_DESK_E2E_NATIVE: "1"
-          ROOKS_DESK_E2E_SHOTS: ${{ runner.temp }}
-        run: python -m pytest -q -rs tests/test_e2e_native.py
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
-        if: always() && runner.os == 'Windows'
-        with:
-          name: rooks-desk-windows-screenshot
-          path: ${{ runner.temp }}/windows-notepad.png
-          if-no-files-found: ignore
-
-  rooks-try:
-    name: Try Room (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, macos-15, windows-2022]
-    defaults:
-      run:
-        working-directory: rooks-try
-    env:
-      PYTHONUTF8: "1"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: rooks-try/pyproject.toml
-      - run: python -m pip install -e ".[dev]"
-      - run: python -m pytest -q -rs
-      - name: Installs as a command
-        run: |
-          rooks-try --version
-          rooks-try drivers
-
-  rooks-desk-e2e:
-    name: Rooks Desk on a real X11 desktop (Xvfb)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - name: Desktop, apps and accessibility
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xvfb xfwm4 mousepad xfce4-terminal xdotool dbus-x11 \
-            at-spi2-core python3-pyatspi python3-tk python3-venv python3-pip
-      - name: Install (system Python, for pyatspi and tkinter)
-        run: |
-          python3 -m venv --system-site-packages /tmp/desk
-          /tmp/desk/bin/pip install -e "rooks-desk[dev]"
-      - name: Editor, save dialog, terminal and kill switch
-        run: PATH=/tmp/desk/bin:$PATH scripts/ci/desk_e2e.sh
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
-        if: always()
-        with:
-          name: rooks-desk-screenshots
-          path: /tmp/desk-shots
-
-  mobile:
-    name: Mobile app (Expo)
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: mobile
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
-        with:
-          node-version: "22"
-      - run: npm ci --no-audit --no-fund
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test -- --ci
-
-  security:
-    name: Security gate (secrets, skills, dependencies)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          fetch-depth: 0  # gitleaks scans the whole history
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.12"
-      - name: Install pinned scanners (checksums from the official releases)
-        run: |
-          set -euo pipefail
-          curl -fsSLo gl.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
-          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gl.tgz" | sha256sum -c -
-          curl -fsSLo osv-scanner https://github.com/google/osv-scanner/releases/download/v2.7.0/osv-scanner_linux_amd64
-          echo "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b  osv-scanner" | sha256sum -c -
-          mkdir -p "$HOME/.local/bin" && tar -xzf gl.tgz -C "$HOME/.local/bin" gitleaks && install -m 755 osv-scanner "$HOME/.local/bin/"
-          rm gl.tgz osv-scanner
-          pip install t2i-skillguard==0.1.0
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-      - run: scripts/security-scan.sh full
-
-  installer:
-    name: One-command install (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, macos-15, windows-2022]
-    env:
-      PYTHONUTF8: "1"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
-        with:
-          node-version: "22"
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.12"
-      - name: Build the web UI (the release zip ships it prebuilt)
+      # The runner context is not available in a job's env: the temporary home is set from a step.
+      - name: Temporary Rooks home
         shell: bash
-        run: cd workbench/frontend && npm ci --no-audit --no-fund && npm run build
-      - name: Install (macOS, Linux)
-        if: runner.os != 'Windows'
-        run: bash install.sh --no-start
-      - name: Install (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          AI_WORKSPACE_NO_START: "1"
-        run: ./install.ps1
-      - name: Start, answer, stop
-        run: python scripts/ci/install_smoke.py
+        run: echo "ROOKS_HOME=${RUNNER_TEMP}/rooks-home" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            orchestrator/package-lock.json
+            app/package-lock.json
+            desktop/package-lock.json
+
+      - name: Install the daemon
+        working-directory: orchestrator
+        run: npm ci --include=dev
+
+      - name: Install the web app
+        working-directory: app
+        run: npm ci --include=dev
+
+      # Daemon tests import desktop/src and the agent-import plugin, which carry their own dependencies.
+      - name: Install the desktop app
+        if: matrix.part.suite == 'daemon'
+        working-directory: desktop
+        run: npm ci --include=dev --ignore-scripts
+
+      - name: Install the agent-import plugin
+        if: matrix.part.suite == 'daemon'
+        working-directory: plugins/agent-import
+        run: npm install --no-audit --no-fund --ignore-scripts
+
+      - name: Typecheck the daemon
+        # Checked once, by the first half.
+        if: matrix.part.suite == 'daemon' && matrix.part.shard == '1/2'
+        working-directory: orchestrator
+        run: npx tsc --noEmit
+
+      - name: Portability
+        # Checked once, by the first half.
+        if: matrix.part.suite == 'daemon' && matrix.part.shard == '1/2'
+        run: node scripts/check-portability.mjs
+
+      - name: Test the daemon
+        if: matrix.part.suite == 'daemon'
+        working-directory: orchestrator
+        run: npm test -- --test-shard=${{ matrix.part.shard }}
+
+      - name: Typecheck the web app
+        if: matrix.part.suite == 'app'
+        working-directory: app
+        run: npm run typecheck
+
+      - name: Test the web app
+        if: matrix.part.suite == 'app'
+        working-directory: app
+        run: npm test
+
+  docs:
+    name: public docs policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: public-docs/package-lock.json
+      - name: Install
+        working-directory: public-docs
+        run: npm ci --include=dev
+      - name: Publication policy
+        working-directory: public-docs
+        run: npm run check:policy

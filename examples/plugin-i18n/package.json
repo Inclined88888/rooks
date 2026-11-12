@@ -1,0 +1,30 @@
+{
+  "name": "@rooks/plugin-i18n",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "scripts": {
+    "build": "esbuild src/client.js --bundle --format=esm --external:react --external:@rooks/ui --outfile=lib/client.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "rooks": {
+    "id": "example-i18n",
+    "apiVersion": 15,
+    "kind": "widget",
+    "label": "Multilingual widget",
+    "description": "A widget that speaks the reader's language: its text comes from locales/<tag>.json, ICU plurals included.",
+    "permissions": [],
+    "client": {
+      "slots": ["cockpit.widget"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "onboarding": {
+    "preparation": {
+      "title": "Préparation de Rooks",
+      "ready": "Rooks est prêt",
+      "needsYou": "Rooks a besoin de vous",
+      "items": {
+        "service": "Service en arrière-plan",
+        "servicePortable": "Mode portable : Rooks tourne tant que l’application est ouverte",
+        "serviceAccount": "Service en arrière-plan, après votre compte",
+        "database": "Base de données locale",
+        "browser": "Navigateur intégré",
+        "browserAbsent": "Navigateur intégré : absent de cette installation",
+        "providers": "Recherche de vos IA"
+      },
+      "doctorFailed": "Rooks n’a pas pu lire cette machine. Réessayez dans un instant.",
+      "retry": "Réessayer",
+      "retrying": "Nouvel essai…",
+      "repair": "Ouvrir l’écran de réparation",
+      "gate": {
+        "waitTitle": "Rooks termine son installation",
+        "waitBody": "Votre agent tourne sur le service en arrière-plan, pour continuer à travailler quand cette fenêtre est fermée. Cette étape s’ouvre dès que le service répond.",
+        "waitAccount": "Le service en arrière-plan démarre une fois votre compte connecté.",
+        "blockedTitle": "Le service en arrière-plan n’a pas pu être installé",
+        "blockedBody": "Votre agent en a besoin pour continuer à travailler quand cette fenêtre est fermée. Corrigez le problème ci-dessous, puis réessayez.",
+        "configuring": "Enregistrement de votre configuration…",
+        "configureFailed": "Votre configuration n’a pas pu être enregistrée"
+      }
+    }
+  }
+}

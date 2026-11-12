@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-app-card",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-app-card",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Compact app cards",
+    "description": "Replaces the cards of the official connectors with one compact row per connector: its logo, its name, its state and its one action.",
+    "permissions": [],
+    "client": {
+      "slots": ["apps.card"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "@rooks/sdk",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "description": "TypeScript contracts for Rooks plugins, and the kit for provider authors (runtime code + conformance suite)",
+  "type": "module",
+  "types": "./dist/packages/sdk/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/packages/sdk/src/index.d.ts",
+      "default": "./dist/packages/sdk/src/index.js"
+    },
+    "./provider": {
+      "types": "./dist/packages/sdk/src/provider.d.ts",
+      "default": "./dist/packages/sdk/src/provider.js"
+    },
+    "./testing": {
+      "types": "./dist/packages/sdk/src/testing.d.ts",
+      "default": "./dist/packages/sdk/src/testing.js"
+    },
+    "./ui": {
+      "types": "./dist/ui.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@types/express": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@types/node": ">=20"
+  },
+  "peerDependenciesMeta": {
+    "@types/node": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "typecheck": "node ../../orchestrator/node_modules/typescript/bin/tsc --noEmit",
+    "build": "node scripts/build.mjs",
+    "verify-consumer": "node scripts/verify-consumer.mjs"
+  }
+}

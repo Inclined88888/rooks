@@ -1,0 +1,60 @@
+{
+  "slug": "supabase",
+  "name": "Supabase",
+  "publisher": "Supabase",
+  "category": "data",
+  "tagline": {
+    "en": "Postgres projects, tables and functions",
+    "fr": "Projets Postgres, tables et fonctions"
+  },
+  "description": {
+    "en": "Lets your agents work on your Supabase projects: browse tables, run SQL, apply migrations, read logs and manage edge functions.",
+    "fr": "Vos agents travaillent sur vos projets Supabase : parcourir les tables, lancer du SQL, appliquer des migrations, lire les logs et gérer les edge functions."
+  },
+  "examples": {
+    "en": [
+      "Which tables of my project have no row-level security?",
+      "Write and apply a migration that adds a created_at column",
+      "Show the errors of the API logs in the last hour"
+    ],
+    "fr": [
+      "Quelles tables de mon projet n’ont pas de row-level security ?",
+      "Écris et applique une migration qui ajoute une colonne created_at",
+      "Montre les erreurs des logs de l’API de la dernière heure"
+    ]
+  },
+  "mcp": {
+    "url": "https://mcp.supabase.com/mcp",
+    "transport": "streamable-http"
+  },
+  "auth": {
+    "type": "oauth"
+  },
+  "links": {
+    "website": "https://supabase.com",
+    "privacy": "https://supabase.com/privacy",
+    "terms": "https://supabase.com/terms"
+  },
+  "registry": {
+    "name": "com.supabase/mcp",
+    "proof": "domain"
+  },
+  "icon": {
+    "monogram": "Sb",
+    "color": "#1C1C1C",
+    "logo": {
+      "viewBox": "0 0 24 24",
+      "paths": [
+        {
+          "d": "M11.9 1.036c-.015-.986-1.26-1.41-1.874-.637L.764 12.05C-.33 13.427.65 15.455 2.409 15.455h9.579l.113 7.51c.014.985 1.259 1.408 1.873.636l9.262-11.653c1.093-1.375.113-3.403-1.645-3.403h-9.642z",
+          "fill": "#3ECF8E"
+        }
+      ],
+      "source": "https://simpleicons.org/?q=supabase"
+    }
+  },
+  "reviewed": {
+    "on": "2026-11-04",
+    "probe": "oauth: 401 then metadata and dynamic client registration accepted"
+  }
+}

@@ -1,0 +1,44 @@
+/* The product's salmon accent, darkened for links on white. System fonts
+   keep long reading sessions comfortable without external font requests. */
+:root {
+  --ifm-color-primary: #9b402c;
+  --ifm-color-primary-dark: #8b3928;
+  --ifm-color-primary-darker: #803525;
+  --ifm-color-primary-darkest: #682b1e;
+  --ifm-color-primary-light: #ab4631;
+  --ifm-color-primary-lighter: #b34a33;
+  --ifm-color-primary-lightest: #c65239;
+  --ifm-font-family-base: system-ui, sans-serif;
+  --ifm-line-height-base: 1.7;
+  --ifm-heading-font-weight: 650;
+}
+[data-theme='dark'] {
+  --ifm-color-primary: #e89a84;
+  --ifm-color-primary-dark: #e38970;
+  --ifm-color-primary-darker: #e07a5f;
+  --ifm-color-primary-darkest: #d86343;
+  --ifm-color-primary-light: #ecab99;
+  --ifm-color-primary-lighter: #efb9aa;
+  --ifm-color-primary-lightest: #f4cdc2;
+}
+.markdown > p, .markdown > ul, .markdown > ol { max-width: 75ch; }
+h1, h2, h3 { text-wrap: balance; }
+:focus-visible { outline: 2px solid var(--ifm-color-primary); outline-offset: 4px; }
+.docs-paths { display: flex; flex-wrap: wrap; gap: 1rem; margin: 2.5rem 0; }
+.docs-path {
+  flex: 1 1 15rem;
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  color: var(--ifm-font-color-base);
+  transition: border-color 160ms ease-out, background-color 160ms ease-out;
+}
+.docs-path h2 { font-size: 1.2rem; margin-top: 0; }
+.docs-path p { font-size: 1rem; }
+.docs-path > span { color: var(--ifm-color-primary); font-weight: 600; }
+.docs-path:hover { text-decoration: none; color: inherit; border-color: var(--ifm-color-primary); background: var(--ifm-color-emphasis-100); }
+/* Preserve Docusaurus callout semantics without a heavy coloured side stripe. */
+.alert { border: 1px solid var(--ifm-alert-border-color); }
+@media (max-width: 480px) { .docs-path { flex-basis: 100%; padding: 1.25rem; } }
+@media (prefers-reduced-motion: reduce) { .docs-path { transition: none; } }

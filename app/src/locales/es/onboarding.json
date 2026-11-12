@@ -1,0 +1,108 @@
+{
+  "onboarding": {
+    "back": "Atrás",
+    "continue": "Continuar",
+    "language": {
+      "title": "Elige tu idioma"
+    },
+    "splash": {
+      "title": "Tu equipo de IA,\nen casa.",
+      "subtitle": "Agentes que trabajan en tu máquina, con las suscripciones de IA que ya pagas.",
+      "hint": "Psst, puedes atraparlos."
+    },
+    "account": {
+      "title": "Crea tu cuenta local",
+      "subtitle": "Con ella inicias sesión en Rooks. Eres su administrador.",
+      "privacy": "Solo recopilamos tu correo por si quieres restablecer tu contraseña. La cuenta que creas se queda en local."
+    },
+    "llm": {
+      "title": "Elige\ntu LLM.",
+      "subtitle": "Rooks funciona con las suscripciones de IA que ya tienes. Nunca una factura por token."
+    },
+    "profile": {
+      "title": "¿Qué te trae por aquí?",
+      "subtitle": "Rooks ajusta sus valores por defecto y su recorrido a tu respuesta."
+    },
+    "agent": {
+      "templates": {
+        "title": "Elige su perfil",
+        "subtitle": "Un punto de partida listo para usar. Podrás cambiarlo todo después."
+      },
+      "interview": {
+        "title": "Configuremos tu automatización",
+        "subtitle": "Cinco preguntas, y tu agente sabe qué hacer, con qué y cuándo."
+      },
+      "sheet": {
+        "title": "Configura tu agente",
+        "subtitle": "Cada ajuste sigue siendo editable en su perfil."
+      }
+    },
+    "signin": {
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Rooks estrena aspecto. Inicia sesión con tu cuenta de Rooks para continuar."
+    },
+    "mascot": {
+      "title": "Conoce la mascota de {name}",
+      "subtitle": "Novedad de esta versión: cada agente tiene una mascota que muestra lo que está haciendo — pensar, trabajar, esperarte. Viste a {name} como quieras."
+    },
+    "scheme": {
+      "label": "Modo claro u oscuro",
+      "light": "Claro",
+      "dark": "Oscuro"
+    },
+    "discover": {
+      "label": "Descubre Rooks",
+      "slide": "Diapositiva {current} de {total}",
+      "next": "Siguiente",
+      "skip": "Saltar todo",
+      "finish": "Ir con {name}",
+      "finishNoName": "Empecemos",
+      "autonomous": {
+        "title": "Tus TIMs trabajan por su cuenta",
+        "body": "Dale a un TIM una misión, una hora o un disparador: elige sus habilidades y herramientas, recuerda lo que aprende y te informa cuando termina.",
+        "nodes": {
+          "skills": "Habilidades",
+          "tools": "Herramientas",
+          "memory": "Memoria",
+          "schedule": "Horario"
+        },
+        "done": "Informe enviado"
+      },
+      "teams": {
+        "title": "Forma equipos de TIMs",
+        "body": "Uno planifica, otro programa, otro revisa: las tareas pasan de TIM en TIM en el Kanban, y el Multichat te deja hablar con todos a la vez.",
+        "columns": {
+          "todo": "Por hacer",
+          "doing": "En curso",
+          "done": "Hecho"
+        },
+        "card": "Página de inicio"
+      },
+      "projects": {
+        "title": "Proyectos con sus propios TIMs",
+        "body": "Un asistente generalista sabe un poco de todo. Los TIMs de un proyecto solo trabajan en ese proyecto, con sus propias reglas y su propia memoria, y nunca salen de él.",
+        "general": "Tus TIMs van a todas partes",
+        "alpha": "Sitio web",
+        "beta": "Contabilidad",
+        "rules": "Sus reglas",
+        "memory": "Su memoria"
+      },
+      "connected": {
+        "title": "Conecta todo lo demás",
+        "body": "Los conectores traen tu correo, tu agenda y tus herramientas; los workflows encadenan los pasos; los plugins añaden lo que falta, hasta la interfaz."
+      },
+      "views": {
+        "label": "Dónde encontrarlo",
+        "canvas": "Lienzo del agente",
+        "chat": "Chat",
+        "kanban": "Kanban",
+        "multichat": "Multichat",
+        "projectChat": "Chat del proyecto",
+        "widgets": "Widgets",
+        "connectors": "Conectores",
+        "workflows": "Workflows",
+        "plugins": "Plugins"
+      }
+    }
+  }
+}

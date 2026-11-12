@@ -1,0 +1,60 @@
+{
+  "slug": "gitlab",
+  "name": "GitLab",
+  "publisher": "GitLab",
+  "category": "code",
+  "tagline": {
+    "en": "Projects, merge requests and pipelines",
+    "fr": "Projets, merge requests et pipelines"
+  },
+  "description": {
+    "en": "Gives your agents access to your GitLab projects: issues, merge requests, pipelines and their jobs, with the rights of the account you sign in with.",
+    "fr": "Vos agents accèdent à vos projets GitLab : issues, merge requests, pipelines et leurs jobs, avec les droits du compte avec lequel vous vous connectez."
+  },
+  "examples": {
+    "en": [
+      "Which merge requests are assigned to me?",
+      "Show the failed jobs of the last pipeline",
+      "Open an issue for the bug we just found"
+    ],
+    "fr": [
+      "Quelles merge requests me sont assignées ?",
+      "Montre les jobs en échec du dernier pipeline",
+      "Ouvre une issue pour le bug qu’on vient de trouver"
+    ]
+  },
+  "mcp": {
+    "url": "https://gitlab.com/api/v4/mcp",
+    "transport": "streamable-http"
+  },
+  "auth": {
+    "type": "oauth"
+  },
+  "links": {
+    "website": "https://about.gitlab.com",
+    "privacy": "https://about.gitlab.com/privacy/",
+    "terms": "https://handbook.gitlab.com/handbook/legal/subscription-agreement/"
+  },
+  "registry": {
+    "name": "com.gitlab/mcp",
+    "proof": "domain"
+  },
+  "icon": {
+    "monogram": "GL",
+    "color": "#FFFFFF",
+    "logo": {
+      "viewBox": "0 0 24 24",
+      "paths": [
+        {
+          "d": "m23.6004 9.5927-.0337-.0862L20.3.9814a.851.851 0 0 0-.3362-.405.8748.8748 0 0 0-.9997.0539.8748.8748 0 0 0-.29.4399l-2.2055 6.748H7.5375l-2.2057-6.748a.8573.8573 0 0 0-.29-.4412.8748.8748 0 0 0-.9997-.0537.8585.8585 0 0 0-.3362.4049L.4332 9.5015l-.0325.0862a6.0657 6.0657 0 0 0 2.0119 7.0105l.0113.0087.03.0213 4.976 3.7264 2.462 1.8633 1.4995 1.1321a1.0085 1.0085 0 0 0 1.2197 0l1.4995-1.1321 2.4619-1.8633 5.006-3.7489.0125-.01a6.0682 6.0682 0 0 0 2.0094-7.003z",
+          "fill": "#FC6D26"
+        }
+      ],
+      "source": "https://simpleicons.org/?q=gitlab"
+    }
+  },
+  "reviewed": {
+    "on": "2026-11-04",
+    "probe": "oauth: 401 then metadata and dynamic client registration accepted"
+  }
+}

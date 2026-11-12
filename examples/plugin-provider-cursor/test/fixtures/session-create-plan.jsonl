@@ -1,0 +1,6 @@
+// RECONSTRUCTED FROM CURSOR'S DOCUMENTATION, NOT RECORDED.
+// Source: https://cursor.com/docs/cli/acp, "Cursor extension methods" (read 30/10/2026): the two blocking requests, with the
+// documentation's own examples. No `cursor-agent` was run. Replace with a recorded session before trusting it.
+{"on": "initialize", "reply": {"protocolVersion": 1, "agentCapabilities": {"loadSession": true}, "agentInfo": {"name": "cursor-agent", "version": "reconstructed"}, "authMethods": [{"id": "cursor_login", "name": "Cursor Login"}]}}
+{"on": "session/new", "reply": {"sessionId": "cursor-session-0002"}}
+{"on": "session/prompt", "send": [{"id": "plan-1", "method": "cursor/create_plan", "params": {"toolCallId": "call_124", "name": "Refactor tabs layout", "overview": "Tighten layout behavior and preserve existing UX.", "plan": "1. Inspect current tab sizing logic.\n2. Update layout calculations.\n3. Verify editor behavior.", "todos": [{"id": "todo-1", "content": "Inspect current tab sizing logic", "status": "completed"}, {"id": "todo-2", "content": "Update layout calculations", "status": "in_progress"}, {"id": "todo-3", "content": "Verify editor behavior", "status": "pending"}], "isProject": false}}], "reply": {"stopReason": "end_turn"}}

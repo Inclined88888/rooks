@@ -1,0 +1,29 @@
+{
+  "modules": {
+    "@rooks/kanban-code": false,
+    "@rooks/grepai": false,
+    "@rooks/docker-supervision": false,
+    "@rooks/browser-embedded": false,
+    "@rooks/browser-recording": false,
+    "@rooks/browser-annotations": false,
+    "@rooks/orchestrator-self": false,
+    "@rooks/video-factory": false,
+    "@rooks/terminal-native": false,
+    "@rooks/todo-outcomes": false
+  },
+  "ui": {
+    "hidden": [
+      "nav.multichat",
+      "nav.git",
+      "nav.pipelines",
+      "nav.mcp",
+      "nav.skills",
+      "settings.advanced",
+      "chat.panel.grepai",
+      "chat.panel.docker",
+      "chat.panel.git-remote",
+      "chat.panel.orchestrator-self",
+      "chat.panel.video-factory"
+    ]
+  }
+}

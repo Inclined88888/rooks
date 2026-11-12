@@ -1,0 +1,59 @@
+{
+  "slug": "vercel",
+  "name": "Vercel",
+  "publisher": "Vercel",
+  "category": "code",
+  "tagline": {
+    "en": "Projects, deployments and logs",
+    "fr": "Projets, déploiements et logs"
+  },
+  "description": {
+    "en": "Lets your agents look at your Vercel teams and projects, follow deployments, read build logs and search the Vercel documentation.",
+    "fr": "Vos agents consultent vos équipes et projets Vercel, suivent les déploiements, lisent les logs de build et cherchent dans la documentation Vercel."
+  },
+  "examples": {
+    "en": [
+      "Why did the last deployment of this project fail?",
+      "List my projects and their production domains",
+      "Show the build logs of the latest preview"
+    ],
+    "fr": [
+      "Pourquoi le dernier déploiement de ce projet a-t-il échoué ?",
+      "Liste mes projets et leurs domaines de production",
+      "Montre les logs de build de la dernière preview"
+    ]
+  },
+  "mcp": {
+    "url": "https://mcp.vercel.com",
+    "transport": "streamable-http"
+  },
+  "auth": {
+    "type": "oauth"
+  },
+  "links": {
+    "website": "https://vercel.com",
+    "privacy": "https://vercel.com/legal/privacy-policy",
+    "terms": "https://vercel.com/legal/terms"
+  },
+  "registry": {
+    "name": "com.vercel/vercel-mcp",
+    "proof": "domain"
+  },
+  "icon": {
+    "monogram": "V",
+    "color": "#000000",
+    "logo": {
+      "viewBox": "0 0 24 24",
+      "paths": [
+        {
+          "d": "m12 1.608 12 20.784H0Z"
+        }
+      ],
+      "source": "https://simpleicons.org/?q=vercel"
+    }
+  },
+  "reviewed": {
+    "on": "2026-11-04",
+    "probe": "oauth: 401 then metadata and dynamic client registration accepted"
+  }
+}

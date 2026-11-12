@@ -1,0 +1,14 @@
+#!/bin/sh
+# The pkg target installs Rooks.app in /Applications.
+set -eu
+launcher='/Applications/Rooks.app/Contents/cli/rooks'
+if [ ! -f "$launcher" ]; then
+    echo 'Rooks CLI launcher is missing from the installed application.' >&2
+    exit 1
+fi
+mkdir -p /usr/local/bin
+if [ ! -e /usr/local/bin/rooks ] && [ ! -L /usr/local/bin/rooks ]; then
+    ln -s "$launcher" /usr/local/bin/rooks
+elif [ "$(readlink /usr/local/bin/rooks)" != "$launcher" ]; then
+    echo 'Rooks CLI was not installed: /usr/local/bin/rooks already belongs to another installation.' >&2
+fi

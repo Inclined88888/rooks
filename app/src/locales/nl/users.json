@@ -1,0 +1,13 @@
+{
+  "invitePage": {
+    "title": "Uitnodiging accepteren",
+    "description": "Kies een wachtwoord voor {email}.",
+    "invalid": "Deze uitnodiging is ongeldig of verlopen.",
+    "name": "Naam",
+    "password": "Wachtwoord",
+    "submit": "Account aanmaken",
+    "working": "Bezig…",
+    "failed": "Uitnodiging geweigerd",
+    "goHome": "Doorgaan"
+  }
+}

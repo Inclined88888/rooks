@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-directory-picker",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-directory-picker",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Breadcrumb folder picker",
+    "description": "Replaces the folder browser of Settings, projects and agents, and the archive and CLI file pickers, with a breadcrumb list of the active machine's folders and files.",
+    "permissions": [],
+    "client": {
+      "slots": ["directory.picker"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

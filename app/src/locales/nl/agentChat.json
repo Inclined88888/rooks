@@ -1,0 +1,65 @@
+{
+  "agentChat": {
+    "title": "Agentchat",
+    "newCard": "Nieuwe agentchat",
+    "newCardHint": "Kies de agent die deze kaart toont. Voeg na het aanmaken meer kaarten toe via het widgetpalet.",
+    "newConversation": "Nieuw gesprek",
+    "shortcuts": "Agentsnelkoppelingen",
+    "shortcut": "Naar {name} wisselen",
+    "addAgent": "Agent aan deze kaart toevoegen",
+    "picker": {
+      "label": "Agent zoeken",
+      "placeholder": "Agent toevoegen…",
+      "empty": "Geen agent gevonden",
+      "onCard": "Op de kaart"
+    },
+    "config": {
+      "agent": "Agent",
+      "agentPlaceholder": "bijv. alice.main",
+      "title": "Kaarttitel",
+      "titlePlaceholder": "Naam van de agent",
+      "subAgents": "Andere agents op de kaart",
+      "subAgentsHint": "Nog geen. Zoek er hieronder een of gebruik de + aan het eind van de avatarrij.",
+      "removeSubAgent": "{name} van de kaart verwijderen",
+      "moveUp": "{name} omhoog",
+      "moveDown": "{name} omlaag",
+      "save": "Opslaan",
+      "create": "Kaart aanmaken",
+      "cancel": "Annuleren",
+      "delete": "Deze kaart verwijderen"
+    },
+    "menu": {
+      "customize": "Agent aanpassen",
+      "edit": "Agent bewerken",
+      "remove": "Verwijderen",
+      "stop": "Alles stoppen",
+      "makeMain": "Als hoofdorchestrator instellen",
+      "makeMainDone": "{name} is nu de hoofdorchestrator: wekoverzichten en meldingen gaan naar deze agent",
+      "makeMainFailed": "Kan {name} niet als hoofdorchestrator instellen: {error}",
+      "stopConfirm": "{name} echt stoppen? Lopende missies worden beëindigd, de inbox geleegd, openstaande taken geblokkeerd en de triggers en workflows die de agent zouden wekken uitgeschakeld.",
+      "stopped": "{name} gestopt: {missions} missie(s), {messages} bericht(en), {tasks} taak/taken, {triggers} trigger(s), {runs} workflowrun(s), {workflows} workflow(s) geneutraliseerd",
+      "stopFailed": "Kan {name} niet stoppen: {error}",
+      "duplicate": "Agent dupliceren"
+    },
+    "customize": {
+      "title": "Agent aanpassen",
+      "description": "Een bijnaam en een foto voor {name}, alleen op deze kaart. De agent zelf verandert niet.",
+      "nickname": "Bijnaam",
+      "photo": "Foto",
+      "save": "Opslaan",
+      "reset": "Herstellen"
+    },
+    "duplicate": {
+      "title": "{name} dupliceren",
+      "description": "De kopie krijgt dezelfde configuratie en prompt onder een nieuwe naam. Het geheugen begint leeg, en de kopie is geen hoofdorchestrator en neemt de vastgezette rol van een project niet over.",
+      "nameLabel": "Naam van de kopie",
+      "taken": "Er bestaat al een agent met deze naam.",
+      "invalid": "Gebruik alleen letters, cijfers, '.', '_' en '-'.",
+      "failed": "Dupliceren mislukt: {error}",
+      "done": "{name} aangemaakt als kopie van {source}",
+      "skillsNotCopied": "{name} aangemaakt, maar deze skills zijn niet ingesteld zoals bij {source}: {skills}",
+      "cancel": "Annuleren",
+      "confirm": "Dupliceren"
+    }
+  }
+}

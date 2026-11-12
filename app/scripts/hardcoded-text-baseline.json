@@ -1,0 +1,213 @@
+{
+  "app/src/app/(main)/dashboard/dashboard-client.tsx": {
+    "jsxText": 4,
+    "jsxAttr": 8
+  },
+  "app/src/app/(main)/license/license-client.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/app/(main)/mcp/mcp-client.tsx": {
+    "jsxText": 38,
+    "jsxAttr": 9
+  },
+  "app/src/app/(main)/mcp/page.tsx": {
+    "jsxText": 2
+  },
+  "app/src/app/(main)/messages/messages-client.tsx": {
+    "jsxText": 1
+  },
+  "app/src/app/(main)/missions/missions-client.tsx": {
+    "jsxText": 34,
+    "jsxAttr": 12
+  },
+  "app/src/app/(main)/pipelines/pipelines-client.tsx": {
+    "jsxText": 15,
+    "jsxAttr": 1
+  },
+  "app/src/app/(main)/skills/skills-client.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/app/agents/agents-client.tsx": {
+    "jsxText": 8
+  },
+  "app/src/app/chat/chat-client.tsx": {
+    "jsxText": 2,
+    "jsxAttr": 1,
+    "french": 1
+  },
+  "app/src/app/events/page.tsx": {
+    "jsxText": 3
+  },
+  "app/src/app/multichat/mission-picker.tsx": {
+    "jsxText": 4
+  },
+  "app/src/app/remote/sessions/page.tsx": {
+    "jsxText": 12
+  },
+  "app/src/components/agent-editor/agent-editor.tsx": {
+    "jsxText": 21,
+    "jsxAttr": 14
+  },
+  "app/src/components/beta-lock-screen.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/components/browser-credentials.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/components/chat/composer.tsx": {
+    "jsxText": 3
+  },
+  "app/src/components/chat/file-browser.tsx": {
+    "jsxText": 2,
+    "jsxAttr": 4
+  },
+  "app/src/components/chat/file-editor-overlay.tsx": {
+    "jsxText": 4
+  },
+  "app/src/components/chat/mcp-card.tsx": {
+    "jsxText": 2
+  },
+  "app/src/components/chat/mission-card.tsx": {
+    "jsxText": 11
+  },
+  "app/src/components/chat/skills-card.tsx": {
+    "jsxText": 2
+  },
+  "app/src/components/chat/tool-call.tsx": {
+    "jsxText": 3
+  },
+  "app/src/components/cockpit/hud-clock.tsx": {
+    "french": 3
+  },
+  "app/src/components/cockpit/voice-sphere.tsx": {
+    "french": 2
+  },
+  "app/src/components/mobile-agent-list.tsx": {
+    "jsxText": 1
+  },
+  "app/src/components/native-browser-panel.tsx": {
+    "jsxText": 1,
+    "jsxAttr": 2
+  },
+  "app/src/components/orchestrator-self-panel.tsx": {
+    "jsxText": 1
+  },
+  "app/src/components/plugin-media-carousel.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/components/project-edit-dialog.tsx": {
+    "jsxAttr": 6
+  },
+  "app/src/components/role-manager.tsx": {
+    "jsxText": 1,
+    "jsxAttr": 2
+  },
+  "app/src/components/settings/integration-receipts.tsx": {
+    "jsxAttr": 3
+  },
+  "app/src/components/settings/plugin-connections.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/components/terminal/terminal-key-bar.tsx": {
+    "jsxText": 1
+  },
+  "app/src/components/ui/dialog.tsx": {
+    "jsxText": 1
+  },
+  "app/src/components/ui/sheet.tsx": {
+    "jsxText": 1
+  },
+  "app/src/components/video-factory-panel.tsx": {
+    "jsxText": 2
+  },
+  "app/src/lib/emoji-data.ts": {
+    "french": 6
+  },
+  "app/src/lib/humanize-tool.ts": {
+    "french": 22
+  },
+  "app/src/lib/module-off-reason.ts": {
+    "french": 1
+  },
+  "app/src/lib/plugin-host/plugin-boundary.tsx": {
+    "jsxText": 2
+  },
+  "app/src/lib/plugin-host/slot-root.tsx": {
+    "jsxText": 1
+  },
+  "app/src/lib/plugin-host/slots.ts": {
+    "french": 5
+  },
+  "app/src/plugins-client/backends/backends-settings.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/plugins-client/backends/claude-token.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/plugins-client/company/client.tsx": {
+    "jsxText": 1,
+    "jsxAttr": 1,
+    "french": 13
+  },
+  "app/src/plugins-client/dreams/cockpit-dreams-tile.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/plugins-client/dreams/dreams-page.tsx": {
+    "jsxText": 1
+  },
+  "app/src/plugins-client/git/git-panel.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/plugins-client/kanban/task-params-badge.tsx": {
+    "jsxText": 6
+  },
+  "app/src/plugins-client/local-dictation/model-import.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/plugins-client/memory/memory-page.tsx": {
+    "jsxText": 1
+  },
+  "app/src/plugins-client/notifications/notification-icon.tsx": {
+    "french": 11
+  },
+  "app/src/plugins-client/routines/routines-page.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/plugins-client/secrets-vault/secrets-page.tsx": {
+    "jsxAttr": 4
+  },
+  "app/src/plugins-client/todo-outcomes/outcome-block.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/plugins-client/triggers/test-and-journal.tsx": {
+    "jsxAttr": 2
+  },
+  "app/src/plugins-client/triggers/trigger-editor.tsx": {
+    "jsxAttr": 15
+  },
+  "app/src/plugins-client/ui-theme-glass-tuning.tsx": {
+    "jsxText": 1
+  },
+  "app/src/plugins-client/ui-theme-tokens.ts": {
+    "french": 1
+  },
+  "app/src/plugins-client/ui-theme-variants.ts": {
+    "french": 1
+  },
+  "app/src/plugins-client/vault/cockpit-vault-graph-tile.tsx": {
+    "jsxText": 2
+  },
+  "app/src/plugins-client/workflows/builder.tsx": {
+    "jsxText": 6,
+    "jsxAttr": 3
+  },
+  "app/src/plugins-client/workflows/node-settings.tsx": {
+    "jsxAttr": 1
+  },
+  "app/src/plugins-client/workflows/run-page.tsx": {
+    "jsxText": 1
+  },
+  "app/src/plugins-client/workflows/workflow-canvas.tsx": {
+    "jsxText": 1
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": false,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["src/**/*"],
+  // Tests and their fixtures run through tsx (`npm test`); they do not belong in dist/.
+  "exclude": ["src/**/*.test.ts", "src/**/*.fixture.ts"]
+}

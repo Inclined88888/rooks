@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-settings",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-settings",
+    "apiVersion": 1,
+    "kind": "behavior",
+    "label": "Example settings",
+    "description": "Adds a row to Missions and fills a category of its own.",
+    "permissions": [],
+    "client": {
+      "slots": ["settings.missions", "settings.section"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

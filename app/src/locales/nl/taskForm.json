@@ -1,0 +1,276 @@
+{
+  "taskForm": {
+    "detachWorktree": {
+      "title": "Worktree",
+      "hint": "Losmaken verwijdert de werkmap van deze taak en houdt haar branch ({branch}) met de commits; de taak krijgt een nieuwe map op die branch als ze opnieuw draait. Geweigerd als de map niet-gecommitte wijzigingen heeft.",
+      "action": "Worktree losmaken",
+      "detaching": "Losmaken…",
+      "confirm": "De werkmap van deze taak verwijderen? Haar branch en commits blijven behouden.",
+      "done": "Worktree losgemaakt, branch behouden",
+      "failed": "Kan de worktree niet losmaken: {error}"
+    },
+    "markMerged": {
+      "title": "Buiten Rooks gemerged?",
+      "hint": "Als de branch van deze taak al is gemerged (een op GitHub gemergde pull request, een handmatige merge), geef dan de mergecommit: de taak wordt als klaar gesloten en de taken die ervan afhangen starten.",
+      "shaLabel": "Mergecommit",
+      "shaPlaceholder": "Commit-sha, bijv. bcd02520",
+      "action": "Als gemerged markeren",
+      "marking": "Markeren…",
+      "done": "Taak als gemerged gemarkeerd",
+      "doneUnverified": "Taak als gemerged gemarkeerd. Deze commit staat nog niet in de lokale kopie van de repository, dus hij kon niet worden gecontroleerd.",
+      "notInBase": "Deze commit staat niet in de basisbranch van de repository. Controleer de sha van de merge.",
+      "failed": "Kan de taak niet als gemerged markeren: {error}",
+      "unreachable": "Rooks antwoordde niet",
+      "hintDone": "Deze taak is klaar, maar haar branch is in Rooks nooit door een merge gegaan. Als hij elders is gemerged (een op GitHub gemergde pull request, een handmatige merge), geef dan de mergecommit: die wordt vastgelegd en de taken die ervan afhangen starten.",
+      "cardAction": "gemerged?"
+    },
+    "editTitle": "Taak bewerken",
+    "newTitle": "Nieuwe taak",
+    "close": "Sluiten",
+    "delete": "Verwijderen",
+    "report": "Rapport",
+    "title": "Titel",
+    "titlePlaceholder": "Wat moet de agent doen?",
+    "titleRequired": "Geef de taak een titel.",
+    "tabs": {
+      "label": "Onderdelen van de taak",
+      "general": "Algemeen",
+      "dependencies": "Afhankelijkheden",
+      "capabilities": "Mogelijkheden"
+    },
+    "type": "Type",
+    "priority": {
+      "label": "Prioriteit",
+      "urgent": "Dringend",
+      "high": "Hoog",
+      "normal": "Normaal",
+      "low": "Laag",
+      "someday": "Ooit"
+    },
+    "description": "Beschrijving",
+    "descriptionPlaceholder": "Context, beperkingen, hoe het resultaat eruitziet…",
+    "write": "Schrijven",
+    "preview": "Voorbeeld",
+    "previewEmpty": "Nog niets om te tonen.",
+    "todo": {
+      "label": "TO DO-idee",
+      "placeholder": "Nummer, bijv. 209",
+      "hint": "Het idee sluit vanzelf als de keten van deze taak landt.",
+      "invalid": "Een TO DO-idee is een geheel getal, bijv. 209."
+    },
+    "attachments": {
+      "label": "Bijlagen",
+      "drop": "Zet hier bestanden neer, of",
+      "browse": "kies bestanden",
+      "dropActive": "Neerzetten om bij te voegen",
+      "uploading": "Versturen…",
+      "queued": "Verstuurd als de taak wordt aangemaakt",
+      "inherited": "Uit een eerdere ronde",
+      "remove": "{name} verwijderen",
+      "open": "{name} openen",
+      "enlarge": "{name} vergroten",
+      "enlarged": "{name}, vergroot",
+      "closePreview": "Voorbeeld sluiten",
+      "tooLarge": "{name}: te groot (hooguit 15 MB).",
+      "typeRefused": "{name}: dit bestandstype wordt niet geaccepteerd.",
+      "quota": "{name}: de taak bevat al zoveel bestanden als mogelijk (20 bestanden, 100 MB).",
+      "failed": "{name}: kon niet worden verstuurd ({error}).",
+      "removeFailed": "Kan {name} niet verwijderen: {error}",
+      "loadFailed": "De bijgevoegde bestanden konden niet worden gelezen.",
+      "dismiss": "Sluiten",
+      "partial": "Taak opgeslagen, maar sommige bestanden konden niet worden verstuurd: {names}"
+    },
+    "agent": "Agent",
+    "agentRequired": "Kies de agent die de taak uitvoert.",
+    "agentFilter": "Agents filteren…",
+    "noAgentMatch": "Geen agent gevonden.",
+    "loadingAgents": "Agents laden…",
+    "model": "Model",
+    "modelInherit": "Projectrol",
+    "modelInheritHint": "De rol van het project voor dit taaktype beslist, anders de agent",
+    "modelInherited": "{model} (overgenomen)",
+    "modelHelp": "« Projectrol » voert de taak uit met wat de rol van het project voor dit type, anders de agent, bepaalt.",
+    "worktreeBlocked": "Deze backend werkt buiten de map van Rooks: een code- of mergetaak die eraan is toegewezen, wordt geblokkeerd.",
+    "fallback": {
+      "short": "Reserve",
+      "label": "Reserve als het quotum op is",
+      "inherit": "Instelling van de serie of globaal",
+      "inheritHint": "Het serieplan beslist, anders de instelling van Rooks",
+      "never": "Nooit vanzelf wisselen"
+    },
+    "permission": "Toestemming",
+    "permissionModes": {
+      "default": "Overgenomen van de agent",
+      "acceptEdits": "acceptEdits",
+      "plan": "plan",
+      "bypassPermissions": "bypassPermissions"
+    },
+    "pipeline": {
+      "label": "Pipeline",
+      "full": "Volledig: code → review → merge",
+      "code-self": "Alleen code, de coder merget zijn branch",
+      "code-group": "Alleen code, één merge voor de groep",
+      "fixed": "Vastgelegd bij het aanmaken van de taak."
+    },
+    "deps": {
+      "filter": "Taken filteren…",
+      "count": "{selected} geselecteerd · {count} kandidaten",
+      "none": "Geen geschikte taak.",
+      "noMatch": "Geen taak gevonden."
+    },
+    "status": {
+      "PENDING": "In wachtrij",
+      "IN_PROGRESS": "Bezig",
+      "DONE": "Klaar",
+      "BLOCKED": "Geblokkeerd",
+      "new": "Nieuw"
+    },
+    "skills": "Skills",
+    "skillsFilter": "Skills filteren…",
+    "selectedCount": "{count} geselecteerd",
+    "noneSelected": "niets geselecteerd",
+    "noSkills": "geen skills geïnstalleerd",
+    "noSkillMatch": "Geen skill gevonden.",
+    "mcpServers": "MCP-servers",
+    "noMcpServers": "geen MCP-servers ingesteld",
+    "extraAllowedTools": "Extra toegestane tools (gescheiden door komma's)",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__nova__kanban_add",
+    "schedule": {
+      "label": "De start plannen (optioneel)"
+    },
+    "summary": {
+      "label": "Overzicht",
+      "model": "Model",
+      "type": "Type",
+      "priority": "Prioriteit",
+      "deps": "Afhankelijkheden",
+      "depsNone": "Geen",
+      "depsCount": "{count} eerst af te ronden",
+      "start": "Start",
+      "startAsap": "Zo snel mogelijk",
+      "status": "Status",
+      "attachments": "Bestanden",
+      "agentNone": "Geen agent gekozen"
+    },
+    "cancel": "Annuleren",
+    "saving": "Opslaan…",
+    "creating": "Aanmaken…",
+    "save": "Opslaan",
+    "create": "Taak aanmaken",
+    "toast": {
+      "updated": "Taak bijgewerkt",
+      "created": "Taak aangemaakt",
+      "saveFailed": "Kan de taak niet opslaan: {error}"
+    },
+    "seriesPlan": {
+      "presets": {
+        "saveError": "De modelvoorinstelling kon niet worden opgeslagen.",
+        "label": "Voorinstellingen",
+        "columnIn": {
+          "main": "primair",
+          "fallback": "reserve"
+        },
+        "columnMain": "Primair",
+        "columnFallback": "Reserve",
+        "empty": "Nog geen voorinstelling",
+        "applyTitle": "‘{name}’ toepassen — {roles}",
+        "applyTo": "‘{name}’ toepassen op",
+        "menu": "Voorinstelling ‘{name}’",
+        "saveTitle": "De kolom {column} als voorinstelling opslaan",
+        "saveNothing": "Kies eerst een model in de kolom {column}",
+        "namePlaceholder": "Naam van de voorinstelling",
+        "confirmSave": "Opslaan",
+        "confirmRename": "Hernoemen",
+        "cancel": "Annuleren",
+        "overwriteConfirm": "‘{name}’ bestaat al. Vervangen?",
+        "replace": "Vervangen",
+        "saveRefused": "Niet opgeslagen: de voorinstellingen zijn nog niet geladen, of de lijst is vol.",
+        "renameTaken": "Een andere voorinstelling heeft al deze naam.",
+        "rename": "Hernoemen",
+        "delete": "Verwijderen",
+        "deleteConfirm": "‘{name}’ verwijderen?",
+        "notice": {
+          "applied": "‘{name}’ toegepast op de kolom {column}.",
+          "none": "‘{name}’ stelt geen van de hier getoonde rollen in.",
+          "saved": "Opgeslagen als ‘{name}’."
+        },
+        "skipped": "Overgeslagen, niet meer beschikbaar: {roles}",
+        "orphan": {
+          "account": "account niet meer gekoppeld",
+          "model": "model niet meer aangeboden door dit account"
+        }
+      },
+      "heading": "Serieplan — hoe moet dit werk worden uitgevoerd?",
+      "role": "rol",
+      "model": "model",
+      "fallback": "reserve",
+      "current": "{value} (huidig)",
+      "inheritRole": "projectrol overnemen",
+      "runningMission": "lopende missie",
+      "mainModel": "Primair model",
+      "runningModel": "Model van de lopende missie — kan hier niet worden gewijzigd",
+      "noFallback": "geen reserve",
+      "fallbackTitle": "Reserve als het primaire model geen quotum meer heeft",
+      "notePlaceholder": "Vrije notitie (kan de keuzes hierboven nuanceren of tegenspreken)",
+      "launch": "Starten",
+      "answered": "beantwoord",
+      "groups": {
+        "general": "Algemene instellingen — gelden voor elke groep die niets instelt",
+        "other": "Andere werkstromen",
+        "inherits": "neemt de algemene instellingen over",
+        "countOne": "{count} werkstroom",
+        "countMany": "{count} werkstromen",
+        "inheritGeneral": "{value} (algemene instelling)",
+        "fallbackSummary": "reserve {value}",
+        "noRolesInMode": "Deze modus maakt geen taak aan: geen model per groep te kiezen.",
+        "modeLabel": "Modellen van deze groep",
+        "sync": "Algemene modellen gebruiken",
+        "override": "Modellen overschrijven",
+        "statusSync": "Algemene modellen",
+        "statusCustom": "Eigen modellen",
+        "customEmpty": "eigen modellen — kies hieronder, anders gelden de algemene"
+      },
+      "roles": {
+        "orchestrator": "Orchestrator",
+        "mission": "Nieuwe missie",
+        "code": "Coder",
+        "review": "Reviewer",
+        "merge": "Merger",
+        "doc": "Documentatie"
+      },
+      "modes": {
+        "sequential": {
+          "head": "Sequentieel"
+        },
+        "sequentialHere": {
+          "sub": "in deze missie",
+          "title": "Sequentieel — in deze missie",
+          "detail": "De agent handelt de werkstromen hier in dit gesprek af. Er wordt geen Kanban-taak of worktree aangemaakt."
+        },
+        "sequentialNewMission": {
+          "sub": "nieuwe missie",
+          "title": "Sequentieel — nieuwe missie",
+          "detail": "Dezelfde geketende uitvoering gaat naar een nieuwe missiecontext terwijl dit gesprek op de samenvatting wacht."
+        },
+        "full": {
+          "head": "Volledige pipeline",
+          "sub": "code → review → merge",
+          "title": "Kanban — code → review → merge",
+          "detail": "Eén codetaak per werkstroom in parallelle worktrees, elk gereviewd en gemerged. De veiligste optie voor werk 's nachts."
+        },
+        "codeSelf": {
+          "head": "Alleen code",
+          "sub": "elke branch merget zichzelf",
+          "title": "Kanban — alleen code, mergen onderweg",
+          "detail": "Eén codetaak per werkstroom zonder review; elke coder merget zijn branch als hij klaar is."
+        },
+        "codeGroup": {
+          "head": "Alleen code",
+          "sub": "één merge aan het einde",
+          "title": "Kanban — alleen code, gezamenlijke merge",
+          "detail": "Eén codetaak per werkstroom zonder review; een laatste mergetaak voegt de branches samen."
+        }
+      }
+    }
+  }
+}

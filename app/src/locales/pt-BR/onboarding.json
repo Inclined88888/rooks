@@ -1,0 +1,108 @@
+{
+  "onboarding": {
+    "back": "Voltar",
+    "continue": "Continuar",
+    "language": {
+      "title": "Escolha seu idioma"
+    },
+    "splash": {
+      "title": "Sua equipe de IA,\nem casa.",
+      "subtitle": "Agentes que trabalham na sua máquina, com as assinaturas de IA que você já paga.",
+      "hint": "Psiu, você pode pegá-los."
+    },
+    "account": {
+      "title": "Crie sua conta local",
+      "subtitle": "É com ela que você entra no Rooks. Você é o administrador.",
+      "privacy": "Só coletamos seu e-mail caso você queira redefinir sua senha. A conta que você cria fica local."
+    },
+    "llm": {
+      "title": "Escolha\nseu LLM.",
+      "subtitle": "O Rooks funciona com as assinaturas de IA que você já tem. Nunca uma cobrança por token."
+    },
+    "profile": {
+      "title": "O que traz você aqui?",
+      "subtitle": "O Rooks ajusta as configurações padrão e o tour guiado à sua resposta."
+    },
+    "agent": {
+      "templates": {
+        "title": "Escolha o perfil dele",
+        "subtitle": "Um ponto de partida pronto. Você pode mudar tudo depois."
+      },
+      "interview": {
+        "title": "Vamos configurar sua automação",
+        "subtitle": "Cinco perguntas, e seu agente sabe o que fazer, com o quê e quando."
+      },
+      "sheet": {
+        "title": "Configure seu agente",
+        "subtitle": "Toda configuração continua editável no perfil dele."
+      }
+    },
+    "signin": {
+      "title": "Bem-vindo de volta",
+      "subtitle": "O Rooks está de visual novo. Entre com sua conta Rooks para continuar."
+    },
+    "mascot": {
+      "title": "Conheça o mascote de {name}",
+      "subtitle": "Novidade desta versão: cada agente tem um mascote que mostra o que está fazendo — pensando, trabalhando, esperando por você. Vista {name} como quiser."
+    },
+    "scheme": {
+      "label": "Modo claro ou escuro",
+      "light": "Claro",
+      "dark": "Escuro"
+    },
+    "discover": {
+      "label": "Conheça o Rooks",
+      "slide": "Slide {current} de {total}",
+      "next": "Próximo",
+      "skip": "Pular tudo",
+      "finish": "Ir para {name}",
+      "finishNoName": "Vamos lá",
+      "autonomous": {
+        "title": "Seus TIMs trabalham sozinhos",
+        "body": "Dê a um TIM uma missão, um horário ou um gatilho: ele escolhe as habilidades e ferramentas, lembra do que aprende e presta contas quando termina.",
+        "nodes": {
+          "skills": "Habilidades",
+          "tools": "Ferramentas",
+          "memory": "Memória",
+          "schedule": "Agenda"
+        },
+        "done": "Relatório enviado"
+      },
+      "teams": {
+        "title": "Monte equipes de TIMs",
+        "body": "Um planeja, outro programa, outro revisa: as tarefas passam de TIM em TIM no Kanban, e o Multichat permite falar com todos de uma vez.",
+        "columns": {
+          "todo": "A fazer",
+          "doing": "Em andamento",
+          "done": "Feito"
+        },
+        "card": "Página inicial"
+      },
+      "projects": {
+        "title": "Projetos com TIMs próprios",
+        "body": "Um assistente generalista sabe um pouco de tudo. Os TIMs de um projeto trabalham só nesse projeto, com regras e memória próprias, e nunca saem dele.",
+        "general": "Seus TIMs vão a todo lugar",
+        "alpha": "Site",
+        "beta": "Contabilidade",
+        "rules": "Regras próprias",
+        "memory": "Memória própria"
+      },
+      "connected": {
+        "title": "Conecte todo o resto",
+        "body": "Os conectores trazem seu e-mail, sua agenda e suas ferramentas; os workflows encadeiam as etapas; os plugins adicionam o que falta, até na interface."
+      },
+      "views": {
+        "label": "Onde encontrar",
+        "canvas": "Canvas do agente",
+        "chat": "Chat",
+        "kanban": "Kanban",
+        "multichat": "Multichat",
+        "projectChat": "Chat do projeto",
+        "widgets": "Widgets",
+        "connectors": "Conectores",
+        "workflows": "Workflows",
+        "plugins": "Plugins"
+      }
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "terminal": {
+    "title": "Terminal",
+    "tabs": "Sessions du terminal",
+    "state": {
+      "connecting": "Connexion…",
+      "retrying": "Connexion perdue, reconnexion…",
+      "unauthorized": "Session expirée : reconnectez-vous.",
+      "ended": "Session terminée.",
+      "exited": "Le shell s'est arrêté (code {code})."
+    },
+    "actions": {
+      "new": "Nouveau terminal",
+      "kill": "Fermer {name} (arrête son shell)",
+      "reconnect": "Se reconnecter",
+      "popOut": "Ouvrir dans une fenêtre flottante"
+    },
+    "keys": {
+      "toolbar": "Touches supplémentaires",
+      "up": "Haut",
+      "down": "Bas",
+      "left": "Gauche",
+      "right": "Droite",
+      "copy": "Copier"
+    },
+    "clipboard": {
+      "menu": "Presse-papiers du terminal",
+      "copy": "Copier",
+      "paste": "Coller",
+      "copied": "Copié dans le presse-papiers.",
+      "copyFailed": "Impossible de copier : le navigateur a refusé l'accès au presse-papiers.",
+      "pasteFailed": "Impossible de lire le presse-papiers : autorisez-en l'accès, ou collez avec Ctrl+Maj+V (Cmd+V sur Mac)."
+    },
+    "errors": {
+      "create": "Impossible de démarrer un terminal : {error}",
+      "kill": "Impossible de fermer le terminal : {error}",
+      "load": "Service du terminal injoignable : {error}"
+    },
+    "unavailable": {
+      "disabled": "Le terminal intégré est désactivé. Un administrateur peut l'activer dans {settingsPath}.",
+      "forbidden": "Votre compte n'est pas autorisé à ouvrir un terminal (permission « terminal:open »).",
+      "session_required": "Connectez-vous depuis le navigateur pour ouvrir un terminal.",
+      "unauthorized": "Connectez-vous pour ouvrir un terminal.",
+      "pty_unavailable": "Cette machine ne peut pas démarrer de terminal : le composant pseudo-terminal n'a pas pu être chargé. Consultez le journal du daemon."
+    },
+    "titleScoped": "Terminal — {scope}",
+    "scopes": {
+      "none": "Sans projet",
+      "label": "Projets"
+    },
+    "request": {
+      "title": "{agent} te demande de lancer une commande",
+      "titleFrom": "{agent} · {project} te demande de lancer une commande",
+      "badge": "commande",
+      "allow": "Autoriser",
+      "paste": "Coller dans un terminal",
+      "deny": "Ignorer",
+      "copy": "Copier la commande",
+      "copied": "Commande copiée dans le presse-papiers.",
+      "hint": "Collée sans Entrée : relis-la, puis valide toi-même avec Entrée.",
+      "state": {
+        "allow": "Autorisée : l'agent la lance",
+        "paste": "Collée dans un terminal",
+        "deny": "Ignorée"
+      },
+      "errors": {
+        "forbidden": "Ton compte ne peut pas ouvrir de terminal : rien n'a été collé.",
+        "not_found": "Cette demande n'existe plus.",
+        "already_decided": "Cette demande a déjà été tranchée.",
+        "not_offered": "Ce choix n'est plus proposé : l'agent ne peut plus lancer la commande.",
+        "failed": "Ta décision n'a pas pu être enregistrée. Réessaie."
+      },
+      "windowRefused": "Décision enregistrée, mais le terminal de {scope} n'est pas à l'écran. Ouvre une conversation de {scope} pour l'y coller ; la commande est dans ton presse-papiers.",
+      "windowRefusedNoClipboard": "Décision enregistrée, mais le terminal de {scope} n'est pas à l'écran. Ouvre une conversation de {scope}, puis copie la commande depuis la carte.",
+      "pendingBadge": "{count} commande(s) en attente de ta décision"
+    }
+  }
+}

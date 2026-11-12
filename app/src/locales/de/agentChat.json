@@ -1,0 +1,65 @@
+{
+  "agentChat": {
+    "title": "Agenten-Chat",
+    "newCard": "Neuer Agenten-Chat",
+    "newCardHint": "Wähle den Agenten, den diese Karte zeigt. Weitere Karten fügst du nach dem Erstellen über die Widget-Palette hinzu.",
+    "newConversation": "Neue Unterhaltung",
+    "shortcuts": "Agenten-Kürzel",
+    "shortcut": "Zu {name} wechseln",
+    "addAgent": "Agenten zu dieser Karte hinzufügen",
+    "picker": {
+      "label": "Agenten suchen",
+      "placeholder": "Agenten hinzufügen…",
+      "empty": "Kein passender Agent",
+      "onCard": "Auf der Karte"
+    },
+    "config": {
+      "agent": "Agent",
+      "agentPlaceholder": "z. B. alice.main",
+      "title": "Kartentitel",
+      "titlePlaceholder": "Name des Agenten",
+      "subAgents": "Weitere Agenten auf der Karte",
+      "subAgentsHint": "Noch keine. Suche unten nach einem oder nutze das + am Ende der Avatarreihe.",
+      "removeSubAgent": "{name} von der Karte entfernen",
+      "moveUp": "{name} nach oben",
+      "moveDown": "{name} nach unten",
+      "save": "Speichern",
+      "create": "Karte erstellen",
+      "cancel": "Abbrechen",
+      "delete": "Diese Karte entfernen"
+    },
+    "menu": {
+      "customize": "Agenten anpassen",
+      "edit": "Agenten bearbeiten",
+      "remove": "Entfernen",
+      "stop": "Alles stoppen",
+      "makeMain": "Als Hauptorchestrator festlegen",
+      "makeMainDone": "{name} ist jetzt der Hauptorchestrator: Weck-Zusammenfassungen und Benachrichtigungen gehen an ihn",
+      "makeMainFailed": "{name} konnte nicht als Hauptorchestrator festgelegt werden: {error}",
+      "stopConfirm": "{name} wirklich stoppen? Laufende Missionen werden beendet, der Posteingang geleert, offene Aufgaben blockiert, Trigger und die Workflows, die ihn wecken würden, abgeschaltet.",
+      "stopped": "{name} gestoppt: {missions} Mission(en), {messages} Nachricht(en), {tasks} Aufgabe(n), {triggers} Trigger, {runs} Workflow-Läufe, {workflows} Workflow(s) neutralisiert",
+      "stopFailed": "{name} konnte nicht gestoppt werden: {error}",
+      "duplicate": "Agenten duplizieren"
+    },
+    "customize": {
+      "title": "Agenten anpassen",
+      "description": "Ein Spitzname und ein Foto für {name}, nur auf dieser Karte. Der Agent selbst bleibt unverändert.",
+      "nickname": "Spitzname",
+      "photo": "Foto",
+      "save": "Speichern",
+      "reset": "Zurücksetzen"
+    },
+    "duplicate": {
+      "title": "{name} duplizieren",
+      "description": "Die Kopie erhält dieselbe Konfiguration und denselben Prompt unter einem neuen Namen. Ihr Gedächtnis startet leer; sie ist weder Hauptorchestrator noch übernimmt sie die angeheftete Rolle eines Projekts.",
+      "nameLabel": "Name der Kopie",
+      "taken": "Ein Agent mit diesem Namen existiert bereits.",
+      "invalid": "Nur Buchstaben, Ziffern, '.', '_' und '-' verwenden.",
+      "failed": "Duplizieren fehlgeschlagen: {error}",
+      "done": "{name} als Kopie von {source} erstellt",
+      "skillsNotCopied": "{name} erstellt, aber diese Skills sind nicht wie bei {source} gesetzt: {skills}",
+      "cancel": "Abbrechen",
+      "confirm": "Duplizieren"
+    }
+  }
+}

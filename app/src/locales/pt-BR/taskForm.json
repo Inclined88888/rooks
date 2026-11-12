@@ -1,0 +1,276 @@
+{
+  "taskForm": {
+    "detachWorktree": {
+      "title": "Worktree",
+      "hint": "Desanexar remove a pasta de trabalho desta tarefa e mantém o branch ({branch}) com seus commits; a tarefa recebe uma rooks pasta nesse branch quando for executada de novo. Recusado se a pasta tiver alterações não commitadas.",
+      "action": "Desanexar o worktree",
+      "detaching": "Desanexando…",
+      "confirm": "Remover a pasta de trabalho desta tarefa? O branch e os commits são mantidos.",
+      "done": "Worktree desanexado, branch mantido",
+      "failed": "Não foi possível desanexar o worktree: {error}"
+    },
+    "markMerged": {
+      "title": "Merge feito fora do Rooks?",
+      "hint": "Se o branch desta tarefa já foi mesclado (um pull request aceito no GitHub, um merge manual), informe o commit do merge: a tarefa é encerrada como concluída e as tarefas que dependem dela começam.",
+      "shaLabel": "Commit do merge",
+      "shaPlaceholder": "Sha do commit, ex.: bcd02520",
+      "action": "Marcar como mesclada",
+      "marking": "Marcando…",
+      "done": "Tarefa marcada como mesclada",
+      "doneUnverified": "Tarefa marcada como mesclada. Este commit ainda não está na cópia local do repositório, então não pôde ser verificado.",
+      "notInBase": "Este commit não está no branch base do repositório. Verifique o sha do merge.",
+      "failed": "Não foi possível marcar a tarefa como mesclada: {error}",
+      "unreachable": "O Rooks não respondeu",
+      "hintDone": "Esta tarefa está concluída, mas o branch dela nunca passou por um merge no Rooks. Se foi mesclado em outro lugar (um pull request aceito no GitHub, um merge manual), informe o commit do merge: ele é registrado e as tarefas que dependem dela começam.",
+      "cardAction": "mesclada?"
+    },
+    "editTitle": "Editar tarefa",
+    "newTitle": "Rooks tarefa",
+    "close": "Fechar",
+    "delete": "Excluir",
+    "report": "Relatório",
+    "title": "Título",
+    "titlePlaceholder": "O que o agente deve fazer?",
+    "titleRequired": "Dê um título à tarefa.",
+    "tabs": {
+      "label": "Seções da tarefa",
+      "general": "Geral",
+      "dependencies": "Dependências",
+      "capabilities": "Recursos"
+    },
+    "type": "Tipo",
+    "priority": {
+      "label": "Prioridade",
+      "urgent": "Urgente",
+      "high": "Alta",
+      "normal": "Normal",
+      "low": "Baixa",
+      "someday": "Algum dia"
+    },
+    "description": "Descrição",
+    "descriptionPlaceholder": "Contexto, restrições, como fica quando estiver pronto…",
+    "write": "Escrever",
+    "preview": "Pré-visualizar",
+    "previewEmpty": "Nada para pré-visualizar ainda.",
+    "todo": {
+      "label": "Ideia do TO DO",
+      "placeholder": "Número, ex.: 209",
+      "hint": "A ideia é encerrada sozinha quando a cadeia desta tarefa chega ao fim.",
+      "invalid": "Uma ideia do TO DO é um número inteiro, ex.: 209."
+    },
+    "attachments": {
+      "label": "Anexos",
+      "drop": "Solte arquivos aqui ou",
+      "browse": "escolha arquivos",
+      "dropActive": "Solte para anexar",
+      "uploading": "Enviando…",
+      "queued": "Enviado quando a tarefa for criada",
+      "inherited": "De uma iteração anterior",
+      "remove": "Remover {name}",
+      "open": "Abrir {name}",
+      "enlarge": "Ampliar {name}",
+      "enlarged": "{name}, ampliado",
+      "closePreview": "Fechar a pré-visualização",
+      "tooLarge": "{name}: grande demais (15 MB no máximo).",
+      "typeRefused": "{name}: este tipo de arquivo não é aceito.",
+      "quota": "{name}: a tarefa já tem o máximo de arquivos permitido (20 arquivos, 100 MB).",
+      "failed": "{name}: não foi possível enviar ({error}).",
+      "removeFailed": "Não foi possível remover {name}: {error}",
+      "loadFailed": "Não foi possível ler os arquivos anexados.",
+      "dismiss": "Dispensar",
+      "partial": "Tarefa salva, mas alguns arquivos não puderam ser enviados: {names}"
+    },
+    "agent": "Agente",
+    "agentRequired": "Escolha o agente que executa a tarefa.",
+    "agentFilter": "Filtrar agentes…",
+    "noAgentMatch": "Nenhum agente corresponde.",
+    "loadingAgents": "Carregando agentes…",
+    "model": "Modelo",
+    "modelInherit": "Função do projeto",
+    "modelInheritHint": "Quem decide é a função do projeto para este tipo de tarefa; na falta dela, o agente",
+    "modelInherited": "{model} (herdado)",
+    "modelHelp": "« Função do projeto » executa a tarefa com o que a função do projeto para este tipo decidir; na falta dela, o agente.",
+    "worktreeBlocked": "Este backend trabalha fora da pasta do Rooks: uma tarefa de código ou de merge atribuída a ele será bloqueada.",
+    "fallback": {
+      "short": "Alternativo",
+      "label": "Alternativo se a cota acabar",
+      "inherit": "Série ou configuração global",
+      "inheritHint": "Quem decide é o plano da série; na falta dele, a configuração do Rooks",
+      "never": "Nunca trocar sozinho"
+    },
+    "permission": "Permissão",
+    "permissionModes": {
+      "default": "Herdada do agente",
+      "acceptEdits": "acceptEdits",
+      "plan": "plan",
+      "bypassPermissions": "bypassPermissions"
+    },
+    "pipeline": {
+      "label": "Pipeline",
+      "full": "Completo: código → revisão → merge",
+      "code-self": "Só código, o programador faz o merge do próprio branch",
+      "code-group": "Só código, um merge para o grupo",
+      "fixed": "Definido quando a tarefa foi criada."
+    },
+    "deps": {
+      "filter": "Filtrar tarefas…",
+      "count": "{selected} selecionada(s) · {count} candidata(s)",
+      "none": "Nenhuma tarefa elegível.",
+      "noMatch": "Nenhuma tarefa corresponde."
+    },
+    "status": {
+      "PENDING": "Pendente",
+      "IN_PROGRESS": "Em andamento",
+      "DONE": "Concluída",
+      "BLOCKED": "Bloqueada",
+      "new": "Rooks"
+    },
+    "skills": "Skills",
+    "skillsFilter": "Filtrar skills…",
+    "selectedCount": "{count} selecionada(s)",
+    "noneSelected": "nenhuma selecionada",
+    "noSkills": "nenhuma skill instalada",
+    "noSkillMatch": "Nenhuma skill corresponde.",
+    "mcpServers": "Servidores MCP",
+    "noMcpServers": "nenhum servidor MCP configurado",
+    "extraAllowedTools": "Ferramentas extras permitidas (separadas por vírgula)",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__nova__kanban_add",
+    "schedule": {
+      "label": "Agendar o início (opcional)"
+    },
+    "summary": {
+      "label": "Resumo",
+      "model": "Modelo",
+      "type": "Tipo",
+      "priority": "Prioridade",
+      "deps": "Dependências",
+      "depsNone": "Nenhuma",
+      "depsCount": "{count} a concluir antes",
+      "start": "Início",
+      "startAsap": "Assim que possível",
+      "status": "Status",
+      "attachments": "Arquivos",
+      "agentNone": "Nenhum agente escolhido"
+    },
+    "cancel": "Cancelar",
+    "saving": "Salvando…",
+    "creating": "Criando…",
+    "save": "Salvar",
+    "create": "Criar tarefa",
+    "toast": {
+      "updated": "Tarefa atualizada",
+      "created": "Tarefa criada",
+      "saveFailed": "Não foi possível salvar a tarefa: {error}"
+    },
+    "seriesPlan": {
+      "presets": {
+        "saveError": "Não foi possível salvar o preset de modelos.",
+        "label": "Presets",
+        "columnIn": {
+          "main": "principal",
+          "fallback": "alternativo"
+        },
+        "columnMain": "Principal",
+        "columnFallback": "Alternativo",
+        "empty": "Nenhum preset ainda",
+        "applyTitle": "Aplicar “{name}” — {roles}",
+        "applyTo": "Aplicar “{name}” a",
+        "menu": "Preset “{name}”",
+        "saveTitle": "Salvar a coluna {column} como preset",
+        "saveNothing": "Escolha primeiro um modelo na coluna {column}",
+        "namePlaceholder": "Nome do preset",
+        "confirmSave": "Salvar",
+        "confirmRename": "Renomear",
+        "cancel": "Cancelar",
+        "overwriteConfirm": "“{name}” já existe. Substituir?",
+        "replace": "Substituir",
+        "saveRefused": "Não salvo: os presets ainda não foram carregados ou a lista está cheia.",
+        "renameTaken": "Outro preset já tem este nome.",
+        "rename": "Renomear",
+        "delete": "Excluir",
+        "deleteConfirm": "Excluir “{name}”?",
+        "notice": {
+          "applied": "“{name}” aplicado à coluna {column}.",
+          "none": "“{name}” não define nenhuma das funções exibidas aqui.",
+          "saved": "Salvo como “{name}”."
+        },
+        "skipped": "Ignorado, não está mais disponível: {roles}",
+        "orphan": {
+          "account": "conta não está mais conectada",
+          "model": "modelo não é mais oferecido por esta conta"
+        }
+      },
+      "heading": "Plano da série — como este trabalho deve ser executado?",
+      "role": "função",
+      "model": "modelo",
+      "fallback": "alternativo",
+      "current": "{value} (atual)",
+      "inheritRole": "herdar a função do projeto",
+      "runningMission": "missão em execução",
+      "mainModel": "Modelo principal",
+      "runningModel": "Modelo da missão em execução — não pode ser alterado aqui",
+      "noFallback": "sem alternativo",
+      "fallbackTitle": "Alternativo se o modelo principal ficar sem cota",
+      "notePlaceholder": "Nota livre (pode qualificar ou contradizer as escolhas acima)",
+      "launch": "Iniciar",
+      "answered": "respondido",
+      "groups": {
+        "general": "Configurações gerais — valem para todo grupo que não define nada",
+        "other": "Outras frentes de trabalho",
+        "inherits": "herda as configurações gerais",
+        "countOne": "{count} frente de trabalho",
+        "countMany": "{count} frentes de trabalho",
+        "inheritGeneral": "{value} (configuração geral)",
+        "fallbackSummary": "alternativo {value}",
+        "noRolesInMode": "Este modo não cria tarefas: nenhum modelo por grupo a escolher.",
+        "modeLabel": "Modelos deste grupo",
+        "sync": "Usar os modelos gerais",
+        "override": "Substituir os modelos",
+        "statusSync": "Modelos gerais",
+        "statusCustom": "Modelos próprios",
+        "customEmpty": "modelos próprios — escolha abaixo; caso contrário, valem os gerais"
+      },
+      "roles": {
+        "orchestrator": "Orquestrador",
+        "mission": "Rooks missão",
+        "code": "Programador",
+        "review": "Revisor",
+        "merge": "Integrador",
+        "doc": "Docs"
+      },
+      "modes": {
+        "sequential": {
+          "head": "Sequencial"
+        },
+        "sequentialHere": {
+          "sub": "nesta missão",
+          "title": "Sequencial — nesta missão",
+          "detail": "O agente cuida das frentes de trabalho aqui, nesta conversa. Nenhuma tarefa Kanban ou worktree é criada."
+        },
+        "sequentialNewMission": {
+          "sub": "rooks missão",
+          "title": "Sequencial — rooks missão",
+          "detail": "A mesma execução encadeada é entregue a um novo contexto de missão enquanto esta conversa aguarda o resumo."
+        },
+        "full": {
+          "head": "Pipeline completo",
+          "sub": "código → revisão → merge",
+          "title": "Kanban — código → revisão → merge",
+          "detail": "Uma tarefa de código por frente de trabalho, em worktrees paralelos, cada uma revisada e mesclada. A opção mais segura para trabalho noturno."
+        },
+        "codeSelf": {
+          "head": "Só código",
+          "sub": "cada branch faz o próprio merge",
+          "title": "Kanban — só código, merge a cada entrega",
+          "detail": "Uma tarefa de código por frente de trabalho, sem revisão; cada programador faz o merge do próprio branch ao terminar."
+        },
+        "codeGroup": {
+          "head": "Só código",
+          "sub": "um merge no final",
+          "title": "Kanban — só código, merge agrupado",
+          "detail": "Uma tarefa de código por frente de trabalho, sem revisão; uma tarefa final de merge consolida os branches."
+        }
+      }
+    }
+  }
+}

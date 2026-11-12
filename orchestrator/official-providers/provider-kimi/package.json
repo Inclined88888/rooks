@@ -1,0 +1,42 @@
+{
+  "name": "@rooks/provider-kimi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "rooks": {
+    "id": "provider-kimi",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Kimi (Moonshot)",
+    "description": "Official Kimi profile on the Claude CLI protocol.",
+    "author": "Rooks",
+    "permissions": [
+      "backends:register"
+    ],
+    "provider": {
+      "binaries": [],
+      "credentialDirs": [
+        ".kimi"
+      ],
+      "backends": [
+        {
+          "id": "kimi",
+          "rank": 80,
+          "credentialDirs": [
+            ".kimi"
+          ],
+          "modelBrands": [
+            {
+              "match": "kimi",
+              "brand": "moonshot"
+            }
+          ]
+        }
+      ]
+    },
+    "license": {
+      "required": false
+    }
+  }
+}

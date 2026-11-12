@@ -1,0 +1,73 @@
+{
+  "name": "@rooks/plugin-provider-pack",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "files": ["README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "provider-pack-example",
+    "apiVersion": 2,
+    "kind": "provider",
+    "label": "Example provider pack",
+    "description": "Two declarative providers using existing CLI dialects.",
+    "author": "Rooks",
+    "permissions": [
+      "backends:register"
+    ],
+    "settings": [
+      {
+        "key": "apiKey",
+        "type": "secret",
+        "label": "Provider API key"
+      }
+    ],
+    "backends": [
+      {
+        "id": "pack-anthropic",
+        "dialect": "claude",
+        "label": "Example Anthropic endpoint",
+        "env": {
+          "ANTHROPIC_BASE_URL": "https://anthropic.example.test",
+          "ANTHROPIC_AUTH_TOKEN": {
+            "setting": "apiKey"
+          }
+        },
+        "defaultModel": "example-model",
+        "models": [
+          {
+            "slug": "example-model",
+            "label": "Example model"
+          }
+        ]
+      },
+      {
+        "id": "pack-responses",
+        "dialect": "codex",
+        "label": "Example Responses endpoint",
+        "env": {
+          "EXAMPLE_API_KEY": {
+            "setting": "apiKey"
+          }
+        },
+        "providerConfig": {
+          "id": "example",
+          "name": "Example Responses",
+          "baseUrl": "https://responses.example.test/v1",
+          "envKey": "EXAMPLE_API_KEY",
+          "wireApi": "responses"
+        },
+        "defaultModel": "example-model",
+        "models": [
+          {
+            "slug": "example-model",
+            "label": "Example model"
+          }
+        ]
+      }
+    ],
+    "license": {
+      "required": false
+    }
+  }
+}

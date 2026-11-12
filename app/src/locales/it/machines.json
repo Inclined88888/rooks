@@ -1,0 +1,123 @@
+{
+  "machines": {
+    "title": "Macchine",
+    "thisComputer": "Questo computer",
+    "backToLocal": "Torna a questo computer",
+    "status": {
+      "online": "Online",
+      "unreachable": "Irraggiungibile",
+      "unauthorized": "Accesso revocato",
+      "tls_error": "Certificato rifiutato",
+      "error": "Errore",
+      "unknown": "Non ancora verificata"
+    },
+    "switcher": {
+      "trigger": "Macchina: {name}. Cambia macchina",
+      "menuTitle": "Macchine",
+      "actingAs": "come {account}",
+      "add": "Aggiungi una macchina…",
+      "manage": "Gestisci le connessioni",
+      "active": "Attiva",
+      "switching": "Passaggio a {name}…",
+      "loadError": "Impossibile caricare le macchine."
+    },
+    "settings": {
+      "description": "Altre macchine Rooks che questo computer può pilotare. Il cambio sostituisce l’intera interfaccia con quella della macchina scelta, in questa stessa finestra: ogni macchina mantiene i propri agenti, progetti e impostazioni.",
+      "local": "La macchina da cui viene servita questa interfaccia.",
+      "add": "Aggiungi una macchina",
+      "addTitle": "Aggiungi una macchina",
+      "addHint": "Sull’altra macchina, apri {settingsPath} e autorizza un nuovo dispositivo: mostra un codice monouso, valido 5 minuti. La macchina deve essere raggiungibile via HTTPS (tailscale serve, un reverse proxy…).",
+      "urlLabel": "Indirizzo della macchina",
+      "urlPlaceholder": "https://my-server.example.net",
+      "codeLabel": "Codice di abbinamento",
+      "nameLabel": "Nome (facoltativo)",
+      "pair": "Abbina",
+      "pairing": "Abbinamento…",
+      "paired": "{name} aggiunta.",
+      "repaired": "{name} abbinata di nuovo.",
+      "listTitle": "Macchine abbinate",
+      "empty": "Nessun’altra macchina per ora.",
+      "loadError": "Impossibile caricare l’elenco delle macchine.",
+      "active": "Attiva",
+      "switchTo": "Passa a questa",
+      "check": "Controlla ora",
+      "checking": "Controllo…",
+      "online": "{name} risponde.",
+      "rename": "Rinomina",
+      "renameLabel": "Nome della macchina",
+      "renamed": "Macchina rinominata.",
+      "save": "Salva",
+      "cancel": "Annulla",
+      "remove": "Rimuovi",
+      "removeConfirm": "Rimuovere {name} da questo computer? Il suo accesso viene revocato su quella macchina e ciò che questo browser conservava per essa viene cancellato.",
+      "removeAction": "Rimuovi la macchina",
+      "removed": "Macchina rimossa.",
+      "removedNotRevoked": "Macchina rimossa. Non è stato possibile raggiungerla: revoca questo computer nelle sue impostazioni Dispositivi.",
+      "version": "Versione {version}",
+      "versionUnknown": "Versione sconosciuta",
+      "apiNewer": "Più recente di questa interfaccia",
+      "apiUnknown": "Livello dell’interfaccia sconosciuto",
+      "apiTooOld": "Troppo vecchia per questa interfaccia",
+      "lastSeen": "Ultimo contatto {date}",
+      "neverSeen": "Mai raggiunta",
+      "actingAs": "Agisce come {account}",
+      "actingAsAdmin": "Agisce come {account}, amministratore"
+    },
+    "errors": {
+      "invalidCode": "La macchina ha rifiutato questo codice: errato, scaduto o già usato. Chiedigliene uno nuovo.",
+      "invalidUrl": "Questo indirizzo non può essere usato: indica solo l’indirizzo della macchina, senza login, query o frammento.",
+      "httpsRequired": "La macchina deve essere raggiunta via HTTPS. L’HTTP semplice è accettato solo su questo stesso computer.",
+      "blockedAddress": "Questo indirizzo non punta mai a una macchina Rooks.",
+      "notNova": "Nessuna macchina Rooks risponde a questo indirizzo.",
+      "requiresTls": "La macchina non vede questa connessione come HTTPS: controlla le impostazioni HTTPS del suo reverse proxy.",
+      "unreachable": "La macchina non è raggiungibile in questo momento.",
+      "unauthorized": "La macchina non accetta più questo computer: il suo accesso è stato revocato o è scaduto. Abbinala di nuovo.",
+      "tlsError": "Il certificato della macchina è stato rifiutato.",
+      "redirect": "La macchina ha risposto con un reindirizzamento: indica il suo indirizzo finale.",
+      "badResponse": "La macchina ha risposto qualcosa di inatteso.",
+      "throttled": "Troppi tentativi. Attendi qualche minuto prima di riprovare.",
+      "tooMany": "Una flotta contiene al massimo 50 macchine.",
+      "vault": "L’archivio dei segreti non è disponibile: non è possibile conservare l’accesso alla macchina.",
+      "incompatible": "Questa macchina esegue una versione di Rooks troppo vecchia per questa interfaccia. Aggiornala prima.",
+      "notFound": "Questa macchina non è più nella tua flotta.",
+      "notHere": "Le macchine si gestiscono da un browser con accesso effettuato su questo computer.",
+      "sessionRequired": "Accedi prima su questo computer.",
+      "invalidName": "Questo nome non può essere usato.",
+      "generic": "Qualcosa è andato storto. Riprova."
+    },
+    "banner": {
+      "unreachable": "{name} non è raggiungibile in questo momento.",
+      "apiUnknown": "{name} non dice quale interfaccia si aspetta: alcune schermate potrebbero non funzionare.",
+      "apiNewer": "{name} esegue un Rooks più recente di questa interfaccia: aggiorna questa app per usarla appieno.",
+      "retry": "Riprova",
+      "dismiss": "Ignora"
+    },
+    "blocked": {
+      "unnamed": "Questa macchina",
+      "retry": "Riprova",
+      "title": {
+        "unreachable": "{name} non è raggiungibile",
+        "unauthorized": "{name} non accetta più questo computer",
+        "incompatible": "{name} è troppo vecchia per questa interfaccia",
+        "unknown": "Questa macchina non è nella tua flotta",
+        "session_required": "Accedi su questo computer",
+        "unavailable": "{name} non può essere aperta da qui"
+      },
+      "body": {
+        "unreachable": "La macchina non risponde: potrebbe essere spenta o la sua rete non disponibile. Il tuo lavoro su di essa è intatto.",
+        "unauthorized": "L’accesso di questo computer è stato revocato o è scaduto su quella macchina. Abbinala di nuovo da {settingsPath}.",
+        "incompatible": "Parla il livello di interfaccia {level}, e questa interfaccia richiede almeno {min}. Aggiorna Rooks su quella macchina, poi passa di nuovo a essa.",
+        "unknown": "La macchina che questa finestra stava pilotando è stata rimossa dalla tua flotta, o appartiene a un altro account.",
+        "session_required": "La tua sessione su questo computer è terminata. Torna lì per accedere di nuovo.",
+        "unavailable": "Questo computer non può aprire il suo accesso alla macchina in questo momento (archivio dei segreti, daemon). Riprova tra un momento."
+      }
+    },
+    "lock": {
+      "remote": "Questa licenza è quella di {name}, la macchina pilotata da questa finestra. Questo computer non è interessato.",
+      "unnamed": "un’altra macchina"
+    },
+    "localOnly": {
+      "remoteSessions": "Questi sono i token API remoti di questo computer, non quelli della macchina su cui è passata questa interfaccia."
+    }
+  }
+}
