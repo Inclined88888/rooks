@@ -1,6 +1,6 @@
 /**
- * The onboarding's light/dark switch, rendered under the real ThemeProvider:
- * the OS decides until someone picks, the pick paints at once, outlives a
+ * The onboarding's light/dark/system switch, rendered under the real ThemeProvider:
+ * System is the default (moodboard A-spec); a pick paints at once, outlives a
  * navigation, and is what the account step sends as the account's scheme.
  */
 import '@/lib/i18n-test-locales';
@@ -59,12 +59,12 @@ async function render(osLight: boolean, stored: string | null, run: (host: HTMLE
 
 const pressed = (host: HTMLElement): string | null => host.querySelector('[aria-pressed="true"]')?.getAttribute('data-scheme') ?? null;
 
-test('the switch shows dark until someone picks, even on a light OS, then paints the pick at once', async () => {
+test('the switch defaults to System, follows the OS until someone picks, then paints the pick at once', async () => {
   await render(true, null, async (host, dom, React) => {
     const { firstRunScheme } = await import('@/lib/first-run-gate');
-    assert.equal(pressed(host), 'dark', 'a light OS: still dark, for everyone');
-    assert.equal(firstRunScheme(), 'dark', 'no pick: the account would be dark');
-    assert.ok(dom.window.document.documentElement.classList.contains('dark'));
+    assert.equal(pressed(host), 'system', 'no pick yet: System is the default');
+    // Until someone picks, first-run scheme falls back to the product dark default.
+    assert.equal(firstRunScheme(), 'dark', 'no pick: the account would still be dark');
     await React.act(async () => { (host.querySelector('[data-scheme="light"]') as HTMLElement).click(); });
     assert.equal(pressed(host), 'light');
     assert.ok(dom.window.document.documentElement.classList.contains('light'), 'applied straight away');
@@ -75,10 +75,11 @@ test('the switch shows dark until someone picks, even on a light OS, then paints
 
 test('a pick made earlier in the flow survives a full navigation', async () => {
   await render(false, 'light', async (host) => {
-    assert.equal(pressed(host), 'light', 'the stored pick wins over the default dark');
+    assert.equal(pressed(host), 'light', 'the stored pick wins over the System default');
   });
   await render(true, 'auto', async (host) => {
-    assert.equal(pressed(host), 'dark', 'anything else in storage is ignored: the default dark');
+    // Junk in sessionStorage is ignored; the switch stays on System.
+    assert.equal(pressed(host), 'system', 'anything else in storage is ignored: System default');
   });
 });
 

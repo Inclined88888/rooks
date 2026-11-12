@@ -9,7 +9,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-const TEAL_DARK = 'hsl(173 51% 58%)';
+/** Tower amber from the default native variant (`ui-theme-variants` amber). */
+const AMBER_DARK = 'hsl(31 79% 57%)';
+const AMBER_LIGHT = 'hsl(29 82% 34%)';
 const CLAIMED = 'hsl(200 80% 50%)';
 
 // Before any DOM exists: the helper must be inert on the server, where the
@@ -52,7 +54,7 @@ test('the meta follows --primary when a theme claims the slot and when it leaves
       React.createElement(ThemeColorSync, null, React.createElement(SlotSingle, { name: 'theme' })),
     );
   });
-  assert.equal(themeColor(), TEAL_DARK, 'the bundled theme paints the meta on mount');
+  assert.equal(themeColor(), AMBER_DARK, 'the bundled theme paints the meta on mount');
 
   // A theme that only does what the contract asks — paint `--primary`.
   // Nothing about `theme-color`: that stays the host's job.
@@ -68,14 +70,14 @@ test('the meta follows --primary when a theme claims the slot and when it leaves
   await act(async () => {
     dispose();
   });
-  assert.equal(themeColor(), TEAL_DARK, 'disposing the claimant returns teal');
+  assert.equal(themeColor(), AMBER_DARK, 'disposing the claimant returns tower amber');
 
   // The light palette lives behind `.light` on <html>: the scheme swap is
   // an attribute change, not a style insertion.
   await act(async () => {
     document.documentElement.classList.add('light');
   });
-  assert.equal(themeColor(), 'hsl(174 72% 27%)', 'the light palette repaints the meta');
+  assert.equal(themeColor(), AMBER_LIGHT, 'the light palette repaints the meta');
 
   await act(async () => {
     root.unmount();
@@ -84,7 +86,7 @@ test('the meta follows --primary when a theme claims the slot and when it leaves
   orphan.textContent = ':root { --primary: 0 100% 50%; }';
   document.body.appendChild(orphan);
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.equal(themeColor(), 'hsl(174 72% 27%)', 'unmounting disconnects the observers');
+  assert.equal(themeColor(), AMBER_LIGHT, 'unmounting disconnects the observers');
 });
 
 function themeColor(): string | null {

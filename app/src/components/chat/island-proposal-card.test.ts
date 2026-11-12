@@ -211,7 +211,7 @@ test('the card names the view, the chat included, even without its nav entry', a
   const { routeTitle } = await import('./island-proposal-kind');
   assert.equal(routeTitle('/chat'), 'Chat');
   assert.equal(routeTitle('/chat/rooks.coder'), 'Chat');
-  assert.equal(routeTitle('/'), 'Cockpit');
+  assert.equal(routeTitle('/'), 'Desk');
   assert.equal(routeTitle('/kanban'), 'Kanban');
   assert.equal(routeTitle('/terminal'), 'Terminal');
   assert.equal(routeTitle('/somewhere'), 'Page');
