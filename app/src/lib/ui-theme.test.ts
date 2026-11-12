@@ -22,7 +22,7 @@ import {
 import { THEME_FLOOR_STYLE_ID, ThemeFloor } from './plugin-host/theme-floor';
 import type { Capabilities } from './capabilities';
 
-const SALMON_DARK = '13 67% 63%';
+const SALMON_DARK = '24 95% 53%';
 
 test('theme is a boot slot, independent of ui-layout', () => {
   resetSlotsForTests();

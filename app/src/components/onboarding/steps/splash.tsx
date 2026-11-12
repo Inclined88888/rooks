@@ -58,7 +58,7 @@ export function SplashStep(): ReactElement {
           {t('onboarding.splash.subtitle')}
         </p>
         <div ref={roller} className="rooks-onboarding-rise relative mt-8 flex w-full flex-col items-center" style={{ animationDelay: '200ms' }}>
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{t('onboarding.language.title')}</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">{t('onboarding.language.title')}</p>
           <LanguageRoller
             languages={languages}
             value={language}

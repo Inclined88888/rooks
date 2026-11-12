@@ -105,7 +105,7 @@ test('rooks docs search|read answers from an export, with no daemon', () => {
   assert.match(run('search', 'permission').stdout, /^\/usage\/agents — Agents/);
   assert.match(run('read').stdout, /- \/usage\/agents — Agents/);
   const section = run('read', '/usage/agents', '--heading', 'modes');
-  assert.match(section.stdout, /^Source: https:\/\/docs\.rooks-ai\.com\/usage\/agents\n\n## Modes/);
+  assert.match(section.stdout, /^Source: https:\/\/docs\.rooks\.local\/usage\/agents\n\n## Modes/);
   assert.doesNotMatch(section.stdout, /Unrelated/);
 
   const missing = run('read', '/nope');

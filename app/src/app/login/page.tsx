@@ -29,12 +29,11 @@ function LoginShell({ children }: { children: React.ReactNode }) {
           <p className="max-w-[28ch] text-pretty text-[15px] leading-relaxed text-muted-foreground">
             {t('loginPage.tagline')}
           </p>
-          <div className="hidden h-px w-16 bg-border md:block" aria-hidden />
           <p className="hidden max-w-[36ch] text-[12px] leading-relaxed text-muted-foreground/80 md:block">
             {t('loginPage.local')}
           </p>
         </div>
-        <div className="flex flex-col justify-center border-t border-border pt-8 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+        <div className="flex flex-col justify-center pt-2 md:pl-2 md:pt-0">
           {children}
         </div>
       </div>

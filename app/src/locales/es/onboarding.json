@@ -46,9 +46,10 @@
       "subtitle": "Novedad de esta versión: cada agente tiene una mascota que muestra lo que está haciendo — pensar, trabajar, esperarte. Viste a {name} como quieras."
     },
     "scheme": {
-      "label": "Modo claro u oscuro",
+      "label": "Modo de color",
       "light": "Claro",
-      "dark": "Oscuro"
+      "dark": "Oscuro",
+      "system": "Sistema"
     },
     "discover": {
       "label": "Descubre Rooks",

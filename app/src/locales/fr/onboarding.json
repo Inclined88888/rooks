@@ -4,9 +4,10 @@
     "continue": "Continuer",
     "progress": "Étape {current} sur {total}",
     "scheme": {
-      "label": "Mode clair ou sombre",
+      "label": "Mode couleur",
       "light": "Clair",
-      "dark": "Sombre"
+      "dark": "Sombre",
+      "system": "Système"
     },
     "splash": {
       "title": "Votre équipe d’IA,\nchez vous.",

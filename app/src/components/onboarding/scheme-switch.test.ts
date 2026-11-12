@@ -85,12 +85,12 @@ test('a pick made earlier in the flow survives a full navigation', async () => {
 test('the switch speaks the active language', async () => {
   const { loadLocale } = await import('@/lib/i18n');
   await render(false, null, async (host) => {
-    assert.equal(host.querySelector('[role="group"]')?.getAttribute('aria-label'), 'Light or dark mode');
+    assert.equal(host.querySelector('[role="group"]')?.getAttribute('aria-label'), 'Colour mode');
   });
   await loadLocale('fr');
   try {
     await render(false, null, async (host) => {
-      assert.equal(host.querySelector('[role="group"]')?.getAttribute('aria-label'), 'Mode clair ou sombre');
+      assert.equal(host.querySelector('[role="group"]')?.getAttribute('aria-label'), 'Mode couleur');
       assert.equal(host.querySelector('[data-scheme="light"]')?.getAttribute('aria-label'), 'Clair');
     });
   } finally {

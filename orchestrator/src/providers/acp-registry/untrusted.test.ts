@@ -227,7 +227,7 @@ test('contrast: a product backend launched the same way DOES get the token and t
   } finally {
     product.dispose();
   }
-  const untrusted = missionEnv({ missionId: 'm', agentName: 'a', cwd: tmpdir(), untrusted: true, specEnv: { nova_api_token: 'planted' } });
+  const untrusted = missionEnv({ missionId: 'm', agentName: 'a', cwd: tmpdir(), untrusted: true, specEnv: { rooks_api_token: 'planted' } });
   assert.equal(JSON.stringify(untrusted).includes('planted'), false);
   assert.equal(Object.keys(untrusted).some((k) => k.toUpperCase() === 'ROOKS_API_TOKEN'), false);
 });

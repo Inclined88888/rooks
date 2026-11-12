@@ -16,10 +16,10 @@
 export const THEME_TOKENS_CSS = `
 :root {
     /* Product fonts live on the theme so a third-party occupant can
-     * replace them. System stack: no next/font, no hosted files.
-     * code-font: the face of code blocks, editors and terminals. */
+     * replace them. System stack: no next/font, no hosted files. */
     --font-sans: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
     --font-display: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
+    /* code-font: the face of code blocks, editors and terminals. */
     --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
     /* Opaque neutral surfaces: canvas, panels, fields, menus, controls. */

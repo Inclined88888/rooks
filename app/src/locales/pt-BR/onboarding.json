@@ -46,9 +46,10 @@
       "subtitle": "Novidade desta versão: cada agente tem um mascote que mostra o que está fazendo — pensando, trabalhando, esperando por você. Vista {name} como quiser."
     },
     "scheme": {
-      "label": "Modo claro ou escuro",
+      "label": "Modo de cor",
       "light": "Claro",
-      "dark": "Escuro"
+      "dark": "Escuro",
+      "system": "Sistema"
     },
     "discover": {
       "label": "Conheça o Rooks",

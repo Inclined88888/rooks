@@ -7,8 +7,9 @@ export const ROOKS_THEME_PLUGIN = 'theme-rooks';
 export const ROOKS_THEME_TOKENS_CSS = `
 :root {
     --font-sans: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
-    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     --font-display: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
+    /* code-font: product mono stack for code blocks, editors and terminals. */
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
     --surface-0: 220 10% 7%;
     --surface-1: 220 9% 9.5%;

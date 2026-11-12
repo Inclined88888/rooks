@@ -28,6 +28,7 @@ const DEVICE_STATE: Record<string, string> = {
   'lib/agent-editor-diagnostic.ts': 'a local debug switch',
   'lib/dev-logo.ts': 'the development copy\'s product-logo switch, kept per browser for screenshots',
   'lib/first-run-gate.ts': 'the light/dark picked on the onboarding\'s switch, before any account exists to hold it',
+  'lib/scheme-mode.ts': 'colour mode of this browser (Customize system/auto), kept per device like the theme cache',
   'app/layout.tsx': 'the pre-paint script reads that onboarding pick before any module can run',
 };
 

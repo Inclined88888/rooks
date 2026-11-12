@@ -80,7 +80,7 @@ function SchemeModeSection(): ReactElement {
             <Icon className="size-3.5" aria-hidden />
             {label}
             {mode === 'system' && schemeMode === 'system' && (
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{applied}</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{applied}</span>
             )}
           </button>
         ))}

@@ -74,8 +74,10 @@ export function ThemeProvider({
   const [os, setOs] = useState<ColorScheme>('dark');
 
   useEffect(() => {
-    setChosen(chosenFirstRunScheme());
-    setSchemeModeState(readSchemeMode());
+    const first = chosenFirstRunScheme();
+    setChosen(first);
+    // Onboarding pick wins over a stale local schemeMode until an account exists.
+    setSchemeModeState(first === 'light' || first === 'dark' ? first : readSchemeMode());
     setOs(osScheme());
     const mq = window.matchMedia('(prefers-color-scheme: light)');
     const onChange = () => setOs(mq.matches ? 'light' : 'dark');

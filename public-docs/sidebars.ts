@@ -64,7 +64,8 @@ const sidebars: SidebarsConfig = {
         "usage/pi",
         "usage/licence-api",
         "usage/multi-user",
-        "usage/cli-reference"
+        "usage/cli-reference",
+        "changelog"
       ]
     },
     {

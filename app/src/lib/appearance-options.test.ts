@@ -102,8 +102,8 @@ test('French gallery labels land on the same ids', () => {
 
 test('the topbar toggle writes scheme outside Settings; Appearance writes theme/layout', () => {
   const toggle = readFileSync(new URL('../components/theme-toggle.tsx', import.meta.url), 'utf8');
-  assert.match(toggle, /JSON\.stringify\(\{ scheme: next \}\)/);
-  assert.match(toggle, /t\('nav\.(dark|light)Theme'\)/);
+  assert.match(toggle, /JSON\.stringify\(\{ scheme: mode \}\)/);
+  assert.match(toggle, /appearance\.scheme(Light|Dark|System)/);
   const pane = readFileSync(new URL('../plugins-client/ui-theme-appearance.tsx', import.meta.url), 'utf8');
   assert.match(pane, /choose\(\{ theme: id \}\)/);
   assert.match(pane, /choose\(\{ layout: id \}\)/);

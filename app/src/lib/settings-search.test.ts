@@ -65,7 +65,7 @@ test('an empty or blank query finds nothing', () => {
 test('matches label, description and key, ignoring case and accents', () => {
   assert.deepEqual(rowKeys('LIVE'), ['ROOKS_MAX_LIVE_MISSIONS']);
   assert.deepEqual(rowKeys('at once'), ['ROOKS_MAX_LIVE_MISSIONS']);
-  assert.deepEqual(rowKeys('nova_breaker'), ['ROOKS_BREAKER_THRESHOLD']);
+  assert.deepEqual(rowKeys('rooks_breaker'), ['ROOKS_BREAKER_THRESHOLD']);
   assert.equal(normalizeSearchText('Thème'), 'theme');
   assert.ok(tabIds('theme').includes('interface/appearance'));
 });

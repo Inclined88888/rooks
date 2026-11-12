@@ -46,9 +46,10 @@
       "subtitle": "Nowość w tej wersji: każdy agent ma maskotkę, która pokazuje, co robi — myśli, pracuje, czeka na ciebie. Ubierz agenta {name}, jak chcesz."
     },
     "scheme": {
-      "label": "Tryb jasny lub ciemny",
+      "label": "Tryb kolorów",
       "light": "Jasny",
-      "dark": "Ciemny"
+      "dark": "Ciemny",
+      "system": "System"
     },
     "discover": {
       "label": "Poznaj Novaa",

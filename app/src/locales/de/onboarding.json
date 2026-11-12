@@ -46,9 +46,10 @@
       "subtitle": "Neu in dieser Version: Jeder Agent hat ein Maskottchen, das zeigt, was er gerade tut — nachdenken, arbeiten, auf dich warten. Kleide {name} ein, wie du möchtest."
     },
     "scheme": {
-      "label": "Heller oder dunkler Modus",
+      "label": "Farbmodus",
       "light": "Hell",
-      "dark": "Dunkel"
+      "dark": "Dunkel",
+      "system": "System"
     },
     "discover": {
       "label": "Rooks entdecken",

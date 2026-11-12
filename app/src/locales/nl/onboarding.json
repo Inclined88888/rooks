@@ -46,9 +46,10 @@
       "subtitle": "Nieuw in deze versie: elke agent heeft een mascotte die laat zien wat hij doet — nadenken, werken, op je wachten. Kleed {name} aan zoals je wilt."
     },
     "scheme": {
-      "label": "Lichte of donkere modus",
+      "label": "Kleurmodus",
       "light": "Licht",
-      "dark": "Donker"
+      "dark": "Donker",
+      "system": "Systeem"
     },
     "discover": {
       "label": "Ontdek Rooks",

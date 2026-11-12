@@ -231,7 +231,7 @@ test('the Rooks MCP servers still authenticate: the real pipe carries the missio
 test('missionEnv untrusted: the spec cannot name the credential, whatever its case', () => {
   const env = missionEnv({
     missionId: 'm', agentName: 'a', cwd: tmpdir(), untrusted: true,
-    specEnv: { nova_api_token: PLANTED, OWN_SETTING: 'kept' },
+    specEnv: { rooks_api_token: PLANTED, OWN_SETTING: 'kept' },
   });
   assert.equal(JSON.stringify(env).includes(PLANTED), false);
   assert.equal(env.OWN_SETTING, 'kept', 'the provider\'s own settings pass');

@@ -78,7 +78,7 @@ test('the closing protocol is there: done with a comment, block, verdict, full s
 
 /** Every `rooks …` command line, with its `\`-continued lines joined. */
 function commandLines(content: string): string[] {
-  return content.replace(/\\\n\s*/g, ' ').split('\n').filter((l) => /\bnova [a-z]/.test(l));
+  return content.replace(/\\\n\s*/g, ' ').split('\n').filter((l) => /\brooks [a-z]/.test(l));
 }
 
 test('every CLI command and flag the skills name exists in the shipped CLI', () => {
@@ -86,7 +86,7 @@ test('every CLI command and flag the skills name exists in the shipped CLI', () 
   let checked = 0;
   for (const id of IDS) {
     for (const line of commandLines(getSkill(id)!.content)) {
-      for (const m of line.matchAll(/\bnova ([a-z-]+)(?: ([a-z-]+))?/g)) {
+      for (const m of line.matchAll(/\brooks ([a-z-]+)(?: ([a-z-]+))?/g)) {
         const words = m[2] ? `rooks ${m[1]} ${m[2]}` : `rooks ${m[1]}`;
         // A one-word command (`rooks spawn <agent>`) or a sub-command (`rooks task done`).
         assert.ok(CLI.includes(words) || CLI.includes(`rooks ${m[1]} `), `${id}: unknown command "${words}"`);
