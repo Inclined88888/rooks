@@ -40,6 +40,10 @@ jobs:
             eb_args: '--win nsis --publish never'
             artifact: 'Rooks-*-win*'
     timeout-minutes: 180
+    # Bash on every OS: Windows pwsh rejects `if [ -f … ]` and heredocs in later steps.
+    defaults:
+      run:
+        shell: bash
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       NODE_ENV: production
@@ -163,7 +167,9 @@ jobs:
             echo "No installer artefacts to attach — packaging may have failed on every OS."
             exit 0
           fi
-          tag="rooks-test-${GITHUB_SHA::8}"
+          # On pull_request, GITHUB_SHA is the merge commit; prefer the PR head tip.
+          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          tag="rooks-test-${HEAD_SHA::8}"
           title="TEST ONLY — Rooks desktop ${tag}"
           notes=$'TEST ONLY build from branch '"${GITHUB_REF_NAME}"$'.\n\n- Not a desktop-v* release.\n- OS code signing may be missing (unsigned / Gatekeeper / SmartScreen warnings expected).\n- Daemon integrity uses repo secrets when set; otherwise an ephemeral TEST-ONLY Ed25519 pair minted in CI.\n- Packaged app auto-starts the embedded daemon / background service path on launch.\n- AGPL-3.0-only.\n'
           if gh release view "$tag" >/dev/null 2>&1; then
