@@ -279,8 +279,8 @@ test('a replay the restart lost ends the turn on its failure, once', async () =>
   dbApi.insertEvent(missionId, 'user', { message: { content: 'and now?' } });
   dbApi.insertEvent(missionId, 'result', {
     type: 'result', subtype: 'error', is_error: true, error: 'stream disconnected',
-    transient_failure: { cause: 'stream disconnected', provider_retries: 1, provider_max: 5, nova_retries: 0, nova_max: 3 },
-    nova_retry: { attempt: 1, max: 3, delay_ms: 30_000 },
+    transient_failure: { cause: 'stream disconnected', provider_retries: 1, provider_max: 5, rooks_retries: 0, rooks_max: 3 },
+    rooks_retry: { attempt: 1, max: 3, delay_ms: 30_000 },
   });
   assert.equal(dbApi.lastTurnAwaitsReplay(missionId), true);
 

@@ -1,7 +1,5 @@
-# Nova-body Rooks takeover
+# Rooks product body
 
-This branch replaces the proprietary Workbench-centred tree with the Nova (AGPL-3.0) product body, rebranded to Rooks, and ports Rooks’ stronger surfaces from `main` + PR #31.
+This branch ships the Rooks product body: daemon, desktop shell, plugin system, and UI, plus terminal / browser / desk / Room agents and workplace suites from the Inclined88888/rooks line (including PR #31).
 
-**Blocking:** merging or releasing implies AGPL-3.0 distribution for the combined product. Owner decision required.
-
-See the comparison report (draft PR / project docs) for area winners, open questions, screenshots, and honest test results.
+**Licence:** proprietary Inclined88888 / Rooks (all rights reserved). Draft PR only — do not merge until the owner confirms.

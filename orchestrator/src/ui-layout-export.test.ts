@@ -18,7 +18,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const { db, dbApi } = await import('./db.js');
-const { exportNova, importNova } = await import('./export.js');
+const { exportRooks, importRooks } = await import('./export.js');
 
 test('un export emporte le placement des widgets, et un import le restaure', () => {
   const home = process.env.ROOKS_HOME!;
@@ -26,7 +26,7 @@ test('un export emporte le placement des widgets, et un import le restaure', () 
   dbApi.uiLayoutSet('', 'cockpit', JSON.stringify(layout));
 
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-layout-archive-')), 'export.tar.gz');
-  exportNova({
+  exportRooks({
     out,
     home,
     // Exactement ce que fait la route /api/admin/export : la base ouverte du
@@ -35,7 +35,7 @@ test('un export emporte le placement des widgets, et un import le restaure', () 
   });
 
   const to = mkdtempSync(join(tmpdir(), 'rooks-layout-import-'));
-  importNova({ file: out, to });
+  importRooks({ file: out, to });
 
   const require = createRequire(import.meta.url);
   const Database = require('better-sqlite3');

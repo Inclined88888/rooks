@@ -40,7 +40,7 @@ const { seal } = await import('../secrets/box.js');
 const { resolveMasterKey } = await import('../secrets/key.js');
 const { backendTrust, isProductBackend, registeredBackendOwners } = await import('../backends/registry.js');
 const { resolveIsolation } = await import('../host/isolation.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 
 type FakeChild = ChildProcessWithoutNullStreams & { killed: boolean };
 
@@ -127,7 +127,7 @@ test('a mission on ollama-cloud starts the CLI with the default policy, its key 
 });
 
 test('the sign-in folder of ollama-cloud is its own: `.ollama` is kept for its missions and masked from the others, `.codex` the other way round', () => {
-  const cfg = NovaConfigSchema.parse({});
+  const cfg = RooksConfigSchema.parse({});
   const home = join(tmpdir(), 'ollama-home');
   const denied = (backend: string): string[] => resolveIsolation(cfg, { home, backend }).deny;
   assert.ok(!denied('ollama-cloud').includes(join(home, '.ollama')), 'ollama-cloud keeps its own');

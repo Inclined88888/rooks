@@ -1,4 +1,4 @@
-import type { NovaConfig } from '../config/schema.js';
+import type { RooksConfig } from '../config/schema.js';
 import { isBundledNode } from './bundled-node.js';
 
 export type NodeRuntime = { command: string; env: Record<string, string> };
@@ -20,7 +20,7 @@ export type NodeRuntime = { command: string; env: Record<string, string> };
  * settles it (`docs/PLAN-MODULAIRE-CROSS-PLATFORM.md` §2, host adapter).
  */
 export function nodeRuntime(
-  cfg: NovaConfig,
+  cfg: RooksConfig,
   runtime: { execPath: string; electron?: string | undefined; platform?: NodeJS.Platform } = {
     execPath: process.execPath,
     electron: process.versions.electron,

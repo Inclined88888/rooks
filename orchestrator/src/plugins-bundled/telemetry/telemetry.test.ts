@@ -21,7 +21,7 @@ const {
 } = await import('./events.js');
 const { TelemetryCollector } = await import('./collector.js');
 const { startTelemetry } = await import('./runtime.js');
-const { NovaConfigSchema } = await import('../../config/schema.js');
+const { RooksConfigSchema } = await import('../../config/schema.js');
 const { loadConfig } = await import('../../config/load.js');
 
 const CAPTURE = 'http://127.0.0.1:9';
@@ -77,7 +77,7 @@ test('resolution order: environment, then config, then the settings row, then th
 test('telemetry.enabled in the real configuration schema: a value of any shape is accepted, and read as off', () => {
   const dir = mkdtempSync(join(tmpdir(), 'rooks-telemetry-config-'));
   for (const value of [null, [], [true], {}, { on: true }, 'maybe', 2]) {
-    const parsed = NovaConfigSchema.safeParse({ telemetry: { enabled: value } });
+    const parsed = RooksConfigSchema.safeParse({ telemetry: { enabled: value } });
     assert.equal(parsed.success, true, `${JSON.stringify(value)} must not invalidate the whole configuration`);
     // Through the loader too: the file is read, the rest of it applies.
     const file = join(dir, 'rooks.config.json');
@@ -87,9 +87,9 @@ test('telemetry.enabled in the real configuration schema: a value of any shape i
     assert.deepEqual(resolvePreference({ env: {}, configValue: () => cfg.telemetry.enabled, stored: () => '1' }),
       { enabled: false, source: 'config', malformed: true }, JSON.stringify(value));
   }
-  const yes = NovaConfigSchema.parse({ telemetry: { enabled: true } });
+  const yes = RooksConfigSchema.parse({ telemetry: { enabled: true } });
   assert.equal(resolvePreference({ env: {}, configValue: () => yes.telemetry.enabled, stored: () => '0' }).enabled, true);
-  const unset = NovaConfigSchema.parse({});
+  const unset = RooksConfigSchema.parse({});
   assert.equal(unset.telemetry.enabled, undefined);
   assert.equal(resolvePreference({ env: {}, configValue: () => unset.telemetry.enabled, stored: () => null }).enabled, true);
 });

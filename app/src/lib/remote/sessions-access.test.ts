@@ -35,7 +35,7 @@ async function allowed(cookies: Record<string, string>, me: Me | 'down'): Promis
 }
 
 test('a superadmin of this computer reads it, asked of the local daemon even when switched away', async () => {
-  const { ok, urls } = await allowed({ rooks_session: 'root', nova_machine: 'vps' }, { status: 200, body: { user: { id: 'u1', is_superadmin: true } } });
+  const { ok, urls } = await allowed({ rooks_session: 'root', rooks_machine: 'vps' }, { status: 200, body: { user: { id: 'u1', is_superadmin: true } } });
   assert.equal(ok, true);
   assert.deepEqual(urls, [`${LOCAL}/api/auth/me rooks_session=root`]);
 });

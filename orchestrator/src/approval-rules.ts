@@ -4,7 +4,7 @@
  * An agent that understands a wider Allow lists it on its request (Hermes,
  * `PermissionRequest.scopes`) and keeps it on its side. The claude CLI does
  * not: its permission tool only answers allow or deny, once. On its cards
- * (`RequestInput.novaScopes`, set by the shim's route) the card offers
+ * (`RequestInput.rooksScopes`, set by the shim's route) the card offers
  * `session` and `always` anyway, and Rooks keeps the answer: the next request
  * with the same motif is allowed without a card. Not on ACP cards: their tool
  * names come from a kind or a title, and a shell call named otherwise would be

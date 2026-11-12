@@ -204,7 +204,7 @@ const MUTATIONS: Array<{ name: string; edit: () => Overrides; expect: string }> 
   },
   {
     name: 'the daemon renames a capability the app reads',
-    edit: () => withEdit(DAEMON_BACKEND_TYPES, "'worktree', 'novaMcp',", "'worktree', 'novaTools',"),
+    edit: () => withEdit(DAEMON_BACKEND_TYPES, "'worktree', 'rooksMcp',", "'worktree', 'rooksTools',"),
     expect: '_BackendCapabilityView',
   },
 ];

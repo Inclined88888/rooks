@@ -1,5 +1,5 @@
 /**
- * The desktop's local dictation bridge, `window.novaDesktop.speech`
+ * The desktop's local dictation bridge, `window.rooksDesktop.speech`
  * (desktop/src/preload.cts, docs/DICTATION.md), seen from the app.
  *
  * The app and the desktop are separate packages: these types mirror
@@ -432,7 +432,7 @@ let cached: { raw: unknown; bridge: SpeechBridge | null } | null = null;
  */
 export function speechBridge(): SpeechBridge | null {
   if (typeof window === 'undefined') return null;
-  const raw: unknown = window.novaDesktop?.speech;
+  const raw: unknown = window.rooksDesktop?.speech;
   if (cached && cached.raw === raw) return cached.bridge;
   const bridge = isRawBridge(raw) ? wrapSpeechBridge(raw) : null;
   cached = { raw, bridge };

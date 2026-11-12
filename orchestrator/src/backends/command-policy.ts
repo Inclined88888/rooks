@@ -37,14 +37,14 @@ export const COMMAND_POLICY = Object.freeze({
     'systemctl --user start pkos-orchestrator*',
   ]),
   /** `rooks <command>` refused: the service, an approved update and the web app all restart under the mission. */
-  denyNovaCommands: Object.freeze(['service', 'update', 'daemon', 'app restart']),
+  denyRooksCommands: Object.freeze(['service', 'update', 'daemon', 'app restart']),
   /**
    * The Rooks CLI commands a mission needs, as `<command> <subcommand>` after `rooks`.
    * Named one by one because `rooks:*` also covers the CLI's host operations
    * (`service install|uninstall`, `update approve`, `plugin add`, `auth`, `secret`,
    * `user`, `backup`, `import`…), which a mission never runs and some of which kill it.
    */
-  novaCliCommands: Object.freeze([
+  rooksCliCommands: Object.freeze([
     'task list', 'task get', 'task create', 'task update', 'task done', 'task block',
     'task mark-as-done', 'task mark-as-failed',
     'notify report', 'notify alert',

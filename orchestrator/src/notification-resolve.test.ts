@@ -12,7 +12,7 @@ const { dbApi } = await import('./db.js');
 const { bus } = await import('./bus.js');
 const { createNotification, registerPushSink, resolveAnchor, resolveAnchorPrefix, resolveGoneAnchor } = await import('./notifications.js');
 const { dismissOrphanedPermissionNotifications } = await import('./permissions.js');
-const { NovaConfigSchema } = await import('./config/schema.js');
+const { RooksConfigSchema } = await import('./config/schema.js');
 const { setConfig, resetConfig } = await import('./config/load.js');
 const { assertSpawnAllowed, resetPluginPolicyState, PluginPolicyError, spawnCardsSettled } = await import('./plugins/policy.js');
 
@@ -47,7 +47,7 @@ test('a permission card orphaned by a restart is closed at boot, other cards sta
 
 test('a plugin spawning after its approval closes the approval card', async () => {
   resetPluginPolicyState();
-  const policy = (approved: string[]) => setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn: { approved } } }));
+  const policy = (approved: string[]) => setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn: { approved } } }));
   try {
     policy([]);
     assert.throws(() => assertSpawnAllowed('acme'), PluginPolicyError);
@@ -68,7 +68,7 @@ test('a plugin spawning after its approval closes the approval card', async () =
 
 test('a spawn approved right after its refusal closes the card, in the order they happened', async () => {
   resetPluginPolicyState();
-  const policy = (approved: string[]) => setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn: { approved } } }));
+  const policy = (approved: string[]) => setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn: { approved } } }));
   try {
     policy([]);
     assert.throws(() => assertSpawnAllowed('swift'), PluginPolicyError);

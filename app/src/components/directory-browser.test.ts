@@ -58,7 +58,7 @@ async function withDom(machine: string, run: (env: Env) => Promise<void>): Promi
     return new Response(JSON.stringify(level ?? { error: 'not_found' }), { status: level ? 200 : 404 });
   });
   const nativeCalls: Array<string | undefined> = [];
-  (dom.window as unknown as { novaDesktop: unknown }).novaDesktop = {
+  (dom.window as unknown as { rooksDesktop: unknown }).rooksDesktop = {
     restartAfterSetup: async () => {},
     selectDirectory: async (defaultPath?: string) => { nativeCalls.push(defaultPath); return '/home/local/Vault'; },
   };

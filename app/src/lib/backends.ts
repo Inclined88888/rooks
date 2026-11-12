@@ -81,11 +81,11 @@ export type PermissionModel = 'mcp-bridge' | 'sandbox' | 'protocol' | 'none';
 
 /** What a backend declared it can do. Mirror of `BackendCapabilities` on the
  *  orchestrator side (`backends/types.ts`): `worktree` = it works in Rooks's
- *  folder, `novaMcp` = Rooks's tools can be handed to it, `attachments` =
+ *  folder, `rooksMcp` = Rooks's tools can be handed to it, `attachments` =
  *  files other than images can be joined to a turn. The daemon also declares
- *  `novaPreamble` (what its system prompt starts with): not a limit a user
+ *  `rooksPreamble` (what its system prompt starts with): not a limit a user
  *  can act on, so it is not mirrored. */
-export type BackendCapabilities = { worktree: boolean; novaMcp: boolean; attachments: boolean };
+export type BackendCapabilities = { worktree: boolean; rooksMcp: boolean; attachments: boolean };
 /** Subjects a provider may mark as not checked on the real program (daemon: `UNVERIFIED_SUBJECTS`). */
 export type UnverifiedSubject =
   | 'session' | 'mcp' | 'permissions' | 'sign-in' | 'models' | 'extension-requests' | 'credential-dirs' | 'binary-identity';
@@ -94,7 +94,7 @@ export type BackendCapability = keyof BackendCapabilities;
 
 /** The behaviour of every backend that declares nothing. */
 export const DEFAULT_BACKEND_CAPABILITIES: BackendCapabilities = Object.freeze({
-  worktree: true, novaMcp: true, attachments: true,
+  worktree: true, rooksMcp: true, attachments: true,
 });
 
 export type CatalogBackend = {
@@ -563,8 +563,8 @@ export function permissionHintKey(cat: BackendCatalog, backend: BackendName): st
 /** Can an agent of this backend read a skill's body when it wants to? Mirror of
  *  the daemon's function of the same name (`backends/capabilities.ts`): with
  *  neither Rooks's tools nor Rooks's disk, the spawn pastes the body. */
-export function canReadSkillOnDemand(caps: Pick<BackendCapabilities, 'novaMcp' | 'attachments'>): boolean {
-  return caps.novaMcp || caps.attachments;
+export function canReadSkillOnDemand(caps: Pick<BackendCapabilities, 'rooksMcp' | 'attachments'>): boolean {
+  return caps.rooksMcp || caps.attachments;
 }
 
 /** What `backend` can do. All true while the catalogue loads or when the
@@ -577,7 +577,7 @@ export function capabilitiesFor(cat: BackendCatalog, backend: BackendName): Back
  *  lists. Empty for a backend that can do everything. */
 export function backendLimits(cat: BackendCatalog, backend: BackendName): BackendCapability[] {
   const caps = capabilitiesFor(cat, backend);
-  return (['worktree', 'novaMcp', 'attachments'] as const).filter((key) => !caps[key]);
+  return (['worktree', 'rooksMcp', 'attachments'] as const).filter((key) => !caps[key]);
 }
 
 /** Can the backend report the account's usage? False while the catalogue is

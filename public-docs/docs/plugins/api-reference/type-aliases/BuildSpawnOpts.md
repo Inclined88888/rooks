@@ -73,6 +73,6 @@
 
 ***
 
-### novaMcp?
+### rooksMcp?
 
-> `optional` **novaMcp?**: `boolean`
+> `optional` **rooksMcp?**: `boolean`

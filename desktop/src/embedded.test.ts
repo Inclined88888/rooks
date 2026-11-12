@@ -293,9 +293,9 @@ test('embedded runtime drops NODE_OPTIONS even from explicit overrides', () => {
 
 test('DEV identity and injection overrides are both stripped with Windows casing', () => {
   const env = embeddedEnv({ home: '/tmp/h', heapMb: 512, installDir: '/res/orchestrator',
-    overrides: { ROOKS_INSTANCE: 'dev', nova_instance: 'dev', Node_Options: '--inspect' } });
+    overrides: { ROOKS_INSTANCE: 'dev', rooks_instance: 'dev', Node_Options: '--inspect' } });
   assert.equal(env.ROOKS_INSTANCE, undefined);
-  assert.equal(env.nova_instance, undefined);
+  assert.equal(env.rooks_instance, undefined);
   assert.equal(env.Node_Options, undefined);
 });
 

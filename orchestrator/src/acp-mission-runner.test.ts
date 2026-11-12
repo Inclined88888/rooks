@@ -164,7 +164,7 @@ test('the system prompt is carried by the session and never by argv', async () =
   const missionId = await spawnChat('echo');
   await until(() => results(missionId).length === 1, 'the echo result');
   // First turn of a new session: the system prompt block, then the message.
-  assert.match(assistantText(missionId), /<nova_instructions>[\s\S]*You are a witness\.[\s\S]*echo/);
+  assert.match(assistantText(missionId), /<rooks_instructions>[\s\S]*You are a witness\.[\s\S]*echo/);
   const launch = launches[launches.length - 1]!;
   assert.ok(!launch.args.some((a) => a.includes('You are a witness.') || a.includes('echo')));
   killAgent(missionId, { source: 'test' });
@@ -229,7 +229,7 @@ test('follow-up turns go through driver.prompt on the same process, in order', a
     .filter((e) => e.type === 'assistant')
     .map((e) => JSON.stringify(e.payload))
     .find((p) => p.includes('echo') && !p.includes('Hello'));
-  assert.ok(echoed && !echoed.includes('nova_instructions'));
+  assert.ok(echoed && !echoed.includes('rooks_instructions'));
   killAgent(missionId, { source: 'test' });
 });
 
@@ -411,7 +411,7 @@ test('a dead process is resumed by session id: the agent reopens the stored sess
   const text = assistantText(missionId);
   assert.ok(!text.includes('replayed'));
   // The system prompt is not sent again to a session that already has it.
-  assert.equal((text.match(/nova_instructions/g) ?? []).length, 0);
+  assert.equal((text.match(/rooks_instructions/g) ?? []).length, 0);
   killAgent(missionId, { source: 'test' });
 });
 

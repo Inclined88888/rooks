@@ -29,11 +29,11 @@ export function resultModelSql(payload: string): string {
     END`;
 }
 
-/** SQL: a `result` closing a turn a steer stopped (`nova_steered`, agent.ts).
+/** SQL: a `result` closing a turn a steer stopped (`rooks_steered`, agent.ts).
  *  The conversation goes on with the steer's instruction, so it does not end
  *  the turn for whoever reads "has the agent answered?" (TODO #662). `json_valid`
  *  first: this runs inside the `mission_stats` trigger, and a payload that does
  *  not parse must not fail the insert of its event. */
 export function steeredResultSql(payload: string): string {
-  return `CASE WHEN json_valid(${payload}) THEN json_type(${payload}, '$.nova_steered') IS 'true' ELSE 0 END`;
+  return `CASE WHEN json_valid(${payload}) THEN json_type(${payload}, '$.rooks_steered') IS 'true' ELSE 0 END`;
 }

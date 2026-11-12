@@ -205,7 +205,7 @@ test('nothing stored, or junk stored, is Automatic', async () => {
 test('the route every surface reads follows the choice', async () => {
   await isolated(() => {
     Object.defineProperty(globalThis, 'navigator', { value: { userAgent: 'Electron/33' }, configurable: true, writable: true });
-    (g.window as Record<string, unknown>).novaDesktop = {};
+    (g.window as Record<string, unknown>).rooksDesktop = {};
     const engine = (id: string, label: string): DictationEngine => ({
       id, label, languages: { codes: [], mode: 'auto' }, interim: 'live',
       availability: async () => ({ state: 'ready' }),

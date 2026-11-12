@@ -65,7 +65,7 @@ export function packagedServiceOptions(
   appPort: number,
   version?: string,
 ): ServiceOpts {
-  const root = runtimeReleaseDir(base.novaHome, version);
+  const root = runtimeReleaseDir(base.rooksHome, version);
   const mac = base.platform === 'darwin';
   // The Node the package ships (`resources/node/node`), or Electron run as
   // Node for a package built before it travelled.
@@ -100,7 +100,7 @@ export function packagedServiceOptions(
     // Only Electron needs it: the shipped Node would pass it on to every child.
     ...(bundled ? {} : { ELECTRON_RUN_AS_NODE: '1' }),
     NODE_ENV: 'production',
-    ROOKS_HOME: base.novaHome, ROOKS_INSTALL_DIR: installDir,
+    ROOKS_HOME: base.rooksHome, ROOKS_INSTALL_DIR: installDir,
     ROOKS_DESKTOP_SERVICE: '1', ROOKS_DESKTOP_EMBEDDED: '0',
     ROOKS_RESOURCE_GUARD_ENABLED: '0', PORT: String(base.port),
     ROOKS_APP_ENABLED: '1', ROOKS_APP_PORT: String(appPort),
@@ -115,11 +115,11 @@ export function packagedServiceOptions(
     + `\nExecStart=${execQuote(nodePath)} --max-old-space-size=${base.heapMb} ${execQuote(join(installDir, 'dist', 'host', 'packaged-runner.js'))}\nRestart=on-failure\nRestartSec=2\n${backoff}KillMode=control-group\nTimeoutStopSec=30\n\n[Install]\nWantedBy=default.target\n`;
   const unitContent = render(workingDirectory, PACKAGED_RESTART_BACKOFF);
   return { ...base, installDir, nodePath, environment: env,
-    unitName: packagedUnit(base.novaHome), unitContent,
+    unitName: packagedUnit(base.rooksHome), unitContent,
     // The malformed template predates the backoff: rendering it with the new
     // lines would never match a unit that release actually wrote.
     legacyUnitContent: render(`WorkingDirectory=${quote(installDir)}`, ''),
-    releasesRoot: join(runtimeDir(base.novaHome), 'releases'),
+    releasesRoot: join(runtimeDir(base.rooksHome), 'releases'),
     // An upgrade runner is no embedded daemon: nothing to hand over, and the
     // previous release still holds the port until it is restarted.
     pendingHandover: process.env.ROOKS_DESKTOP_EMBEDDED === '1' && !desktopUpgrade(),

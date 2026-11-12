@@ -42,7 +42,7 @@ import { listAlwaysApprovals, revokeApproval } from '../../approval-rules.js';
 import { settingStr } from '../../settings.js';
 import {
   defaultImportId, deleteEntryFile, findImportableSkill, importSkill, IMPORTABLE_SOURCES, isImportableId, isManagedPath, listAllSkills,
-  planSkillImport, readEntryContent, resolveSkill, SkillImportError, novaSkillPath, writeEntryFile,
+  planSkillImport, readEntryContent, resolveSkill, SkillImportError, rooksSkillPath, writeEntryFile,
 } from '../../skill-registry.js';
 import { isSystemSkillId, SkillExistsError, upsertSkill } from '../../skills.js';
 import { REDACTION_PLACEHOLDER, redactDeep, redactText } from '../../secrets/redact.js';
@@ -1605,7 +1605,7 @@ export function registerRoutes(app: express.IRouter): void {
         res.status(400).json({ error: `invalid skill id: ${req.params.id}` });
         return;
       }
-      const path = queryPath ?? novaSkillPath(req.params.id);
+      const path = queryPath ?? rooksSkillPath(req.params.id);
       const refusal = skillWriteRefusal(req, { path });
       if (refusal) {
         rejectOverride(req, res, 'skill.delete_denied', `skill:${req.params.id}`, refusal);

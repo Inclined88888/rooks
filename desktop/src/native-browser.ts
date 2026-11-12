@@ -1664,8 +1664,8 @@ export class NativeBrowserEngine {
         source: `(() => {
           const fallback = window.prompt;
           window.prompt = function(message = '', defaultValue = '') {
-            if (typeof globalThis.__novaNativePrompt !== 'function') return fallback.call(window, message, defaultValue);
-            return globalThis.__novaNativePrompt(String(message), String(defaultValue));
+            if (typeof globalThis.__rooksNativePrompt !== 'function') return fallback.call(window, message, defaultValue);
+            return globalThis.__rooksNativePrompt(String(message), String(defaultValue));
           };
         })()`, runImmediately: true,
       });

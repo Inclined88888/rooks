@@ -34,8 +34,8 @@ export function removeDesktopService(opts: ServiceOpts): void {
       if (macLoaded) throw new Error('The running launchd service has no verifiable installation file.');
       return;
     }
-    sameHome(checked('/usr/bin/plutil', ['-extract', 'EnvironmentVariables.ROOKS_HOME', 'raw', '-o', '-', file]).stdout.trim(), opts.novaHome);
-    if (macLoaded) sameHome(status.stdout.match(/^\s*ROOKS_HOME => (.+)$/m)?.[1]?.trim() ?? '', opts.novaHome);
+    sameHome(checked('/usr/bin/plutil', ['-extract', 'EnvironmentVariables.ROOKS_HOME', 'raw', '-o', '-', file]).stdout.trim(), opts.rooksHome);
+    if (macLoaded) sameHome(status.stdout.match(/^\s*ROOKS_HOME => (.+)$/m)?.[1]?.trim() ?? '', opts.rooksHome);
   } else if (opts.platform === 'linux') {
     const name = opts.unitName ?? 'rooks-orchestrator';
     const file = unitPath(opts.homeDir, name);
@@ -47,7 +47,7 @@ export function removeDesktopService(opts: ServiceOpts): void {
       throw new Error('Cannot verify the installed systemd unit.');
     }
     const content = readFileSync(file, 'utf8');
-    const quotedHome = opts.novaHome.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('%', '%%');
+    const quotedHome = opts.rooksHome.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('%', '%%');
     // Both CLI and packaged templates explicitly bind ROOKS_HOME.
     if (!content.split('\n').includes(`Environment="ROOKS_HOME=${quotedHome}"`)) {
       throw new Error('The systemd service belongs to another data directory.');
@@ -56,7 +56,7 @@ export function removeDesktopService(opts: ServiceOpts): void {
     const match = environment.match(/(?:^|\s)(?:"ROOKS_HOME=((?:\\.|[^"\\])*)"|ROOKS_HOME=([^\s"\\]*))(?=\s|$)/);
     const liveHome = (match?.[1] ?? match?.[2] ?? '').replace(/\\(x[0-9a-fA-F]{2}|[\\"])/g,
       (_, escape: string) => escape.startsWith('x') ? String.fromCharCode(parseInt(escape.slice(1), 16)) : escape);
-    sameHome(liveHome, opts.novaHome);
+    sameHome(liveHome, opts.rooksHome);
     if (!/^NeedDaemonReload=no$/m.test(status.stdout)) throw new Error('The systemd unit has pending changes. Reload it before uninstalling.');
     checked('systemctl', ['--user', 'disable', '--now', name]);
     const state = checked('systemctl', ['--user', 'show', name, '--property=ActiveState,MainPID']);
@@ -74,7 +74,7 @@ export function removeDesktopService(opts: ServiceOpts): void {
     if (!task) return;
     const actions = JSON.parse(task) as { Arguments?: string } | { Arguments?: string }[];
     const action = Array.isArray(actions) ? actions.length === 1 ? actions[0] : undefined : actions;
-    if (!action?.Arguments?.includes(`set ROOKS_HOME=${opts.novaHome}&&`)) {
+    if (!action?.Arguments?.includes(`set ROOKS_HOME=${opts.rooksHome}&&`)) {
       throw new Error('The Windows task belongs to another data directory.');
     }
     checked('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `$ErrorActionPreference='Stop'; Stop-ScheduledTask -TaskName '${WINDOWS_TASK}' -TaskPath '\\'; Unregister-ScheduledTask -TaskName '${WINDOWS_TASK}' -TaskPath '\\' -Confirm:$false; if (@(Get-ScheduledTask | Where-Object { $_.TaskName -eq '${WINDOWS_TASK}' -and $_.TaskPath -eq '\\' }).Count) { throw 'Task still registered' }`]);

@@ -24,7 +24,7 @@ const HOME = mkdtempSync(join(tmpdir(), 'rooks-app-control-test-'));
 process.env.ROOKS_HOME = HOME;
 
 const { appStatus, restartApp, readAppPid, APP_PID_FILE } = await import('./control.js');
-const { NovaConfigSchema } = await import('../../config/schema.js');
+const { RooksConfigSchema } = await import('../../config/schema.js');
 
 /** Dossier d'installation factice : `<installDir>/../app` est ce que le
  *  statut inspecte, on le fabrique buildé ou non selon le test. */
@@ -39,7 +39,7 @@ function installDir(built: boolean): string {
 }
 
 function cfg(over: Record<string, unknown> = {}) {
-  return NovaConfigSchema.parse({ daemon: { installDir: installDir(true) }, ...over });
+  return RooksConfigSchema.parse({ daemon: { installDir: installDir(true) }, ...over });
 }
 
 let n = 0;
@@ -71,7 +71,7 @@ test('module @rooks/web-app désactivé → disabled, même avec app.enabled = t
 
 test('app non buildée → message actionnable, pas une exception', () => {
   const st = appStatus(
-    NovaConfigSchema.parse({ app: { enabled: true }, daemon: { installDir: installDir(false) } }),
+    RooksConfigSchema.parse({ app: { enabled: true }, daemon: { installDir: installDir(false) } }),
     join(HOME, 'absent.pid'),
   );
   assert.equal(st.state, 'not-built');
@@ -82,7 +82,7 @@ test('.next sans prerender-manifest → not-built (build incomplet)', () => {
   const root = mkdtempSync(join(tmpdir(), 'rooks-app-incomplete-'));
   mkdirSync(join(root, 'app', '.next'), { recursive: true });
   const st = appStatus(
-    NovaConfigSchema.parse({
+    RooksConfigSchema.parse({
       app: { enabled: true },
       daemon: { installDir: join(root, 'orchestrator') },
     }),

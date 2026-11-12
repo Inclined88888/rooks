@@ -3,7 +3,7 @@
  *
  * Every window of the shell loads the same local app origin; the app relays to
  * the machine a request names (`machineIdFromRequest`, app side): the
- * `X-Rooks-Machine` header first, else the `nova_machine` cookie. A window
+ * `X-Rooks-Machine` header first, else the `rooks_machine` cookie. A window
  * pinned to a machine gets that header on every request of ITS webContents,
  * written here, in the main process — the page cannot forge it for another
  * window, and a window with no machine (`null`) leaves the cookie in charge,

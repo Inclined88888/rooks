@@ -14,7 +14,7 @@ import {
 
 /**
  * Local dictation over IPC (TODO #443): the channels exposed to the Rooks
- * window through `window.novaDesktop.speech` (preload.cts), their input
+ * window through `window.rooksDesktop.speech` (preload.cts), their input
  * schemas, and the controller that ties the model manager to the engine.
  *
  * Every handler checks the sender (the Rooks window, main frame, its origin)

@@ -6,7 +6,7 @@ import { handOverToService } from './desktop';
 async function withBridge<T>(bridge: Record<string, unknown> | null, run: () => Promise<T>): Promise<T> {
   const saved = Object.getOwnPropertyDescriptor(globalThis, 'window');
   Object.defineProperty(globalThis, 'window', {
-    value: bridge ? { novaDesktop: { restartAfterSetup: async () => {}, ...bridge } } : {},
+    value: bridge ? { rooksDesktop: { restartAfterSetup: async () => {}, ...bridge } } : {},
     configurable: true, writable: true,
   });
   try { return await run(); } finally {

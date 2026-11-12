@@ -23,7 +23,7 @@ const { dbApi } = await import('../db.js');
 const { hashPassword } = await import('../users/password.js');
 const { hashApiToken, issueApiTokenSecret, issueMissionApiToken, issueMissionEgressToken } = await import('../users/api-tokens.js');
 const { ensureDaemonToken } = await import('../plugins-bundled/http/auth.js');
-const { EgressSchema, NovaConfigSchema } = await import('../config/schema.js');
+const { EgressSchema, RooksConfigSchema } = await import('../config/schema.js');
 const { authenticateMissionToken, egressProxyAddress, formatEgressRecord, startEgressProxy } = await import('./service.js');
 const { listMissionEgress } = await import('./journal.js');
 
@@ -67,7 +67,7 @@ test("a finished mission's token, or a re-issued one's predecessor, no longer pa
 });
 
 test('the config binds the loopback only, defaults to off on an OS-chosen port', () => {
-  assert.deepEqual(NovaConfigSchema.parse({}).host.isolation.egress, { mode: 'off', host: '127.0.0.1', port: 0 });
+  assert.deepEqual(RooksConfigSchema.parse({}).host.isolation.egress, { mode: 'off', host: '127.0.0.1', port: 0 });
   for (const host of ['127.0.0.1', '127.0.0.2', '::1', '[::1]', '0:0:0:0:0:0:0:1']) {
     assert.equal(EgressSchema.safeParse({ host }).success, true, host);
   }

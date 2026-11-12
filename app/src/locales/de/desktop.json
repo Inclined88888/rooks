@@ -103,7 +103,7 @@
       "handoverKept": "Der Rooks-Hintergrunddienst hat nicht geantwortet.",
       "handoverKeptDetail": "Die Einrichtung geht mit Rooks weiter, wie es in diesem Fenster läuft. Beende Rooks und öffne es erneut, wenn die Einrichtung abgeschlossen ist: Es versucht den Dienst dann erneut. Deine Daten bleiben in {home}.",
       "refused": "Windows startet den Rooks-Hintergrunddienst für dieses Konto nicht.",
-      "refusedDetail": "Die geplante Aufgabe NovaOrchestrator ist registriert, aber Windows hat sie nie ausgeführt. Das passiert bei Arbeits- oder Schulkonten auf einem PC, der Microsoft Entra ID beigetreten ist. Rooks nutzt stattdessen seinen eingebauten Daemon: Er startet mit der App und stoppt, wenn du sie schließt oder dich abmeldest. Um die ungenutzte Aufgabe zu entfernen: rooks service uninstall (Windows fragt nach einer Berechtigung).",
+      "refusedDetail": "Die geplante Aufgabe RooksOrchestrator ist registriert, aber Windows hat sie nie ausgeführt. Das passiert bei Arbeits- oder Schulkonten auf einem PC, der Microsoft Entra ID beigetreten ist. Rooks nutzt stattdessen seinen eingebauten Daemon: Er startet mit der App und stoppt, wenn du sie schließt oder dich abmeldest. Um die ungenutzte Aufgabe zu entfernen: rooks service uninstall (Windows fragt nach einer Berechtigung).",
       "repair": "Der Rooks-Hintergrunddienst ist nicht mehr installiert.",
       "repairDetail": "Ohne ihn startet Rooks nicht mit Windows und stoppt, wenn du die App schließt oder dich abmeldest. Die Neuinstallation fragt einmal nach einer Windows-Berechtigung.",
       "repairConfirm": "Dienst neu installieren",

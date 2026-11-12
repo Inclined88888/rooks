@@ -28,7 +28,7 @@ const USERS = [
   { id: 'u-bob', email: 'bob@example.com' },
 ];
 
-function runNova(args: string[], url: string): Promise<{ code: number | null; stdout: string; stderr: string }> {
+function runRooks(args: string[], url: string): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [ROOKS, ...args], {
       env: { ...process.env, ROOKS_API: url, ROOKS_HOME: mkdtempSync(join(tmpdir(), 'rooks-backend-account-home-')) },
@@ -86,7 +86,7 @@ const puts = (seen: Seen[]) => seen.filter((s) => s.method === 'PUT').map((s) =>
 test('grant adds the users to the current list, by email or id, never the owner', async () => {
   const mock = await startMock(account(['u-bob']));
   try {
-    const r = await runNova(['backend-account', 'grant', 'claude@k3f9a2b1c0', '--user', 'ada@example.com,u-owner'], mock.url);
+    const r = await runRooks(['backend-account', 'grant', 'claude@k3f9a2b1c0', '--user', 'ada@example.com,u-owner'], mock.url);
     assert.equal(r.code, 0, r.stderr);
     assert.deepEqual(puts(mock.seen), [{ userIds: ['u-bob', 'u-ada'] }]);
   } finally { await mock.close(); }
@@ -95,7 +95,7 @@ test('grant adds the users to the current list, by email or id, never the owner'
 test('revoke removes only the users it names', async () => {
   const mock = await startMock(account(['u-bob', 'u-ada']));
   try {
-    const r = await runNova(['backend-account', 'revoke', 'k3f9a2b1c0', '--user', 'u-ada'], mock.url);
+    const r = await runRooks(['backend-account', 'revoke', 'k3f9a2b1c0', '--user', 'u-ada'], mock.url);
     assert.equal(r.code, 0, r.stderr);
     assert.deepEqual(puts(mock.seen), [{ userIds: ['u-bob'] }]);
   } finally { await mock.close(); }
@@ -106,7 +106,7 @@ test('a caller who cannot read the grants changes nothing', async () => {
   // list built without it would wipe the real one.
   const mock = await startMock(account());
   try {
-    const r = await runNova(['backend-account', 'grant', 'k3f9a2b1c0', '--user', 'ada@example.com'], mock.url);
+    const r = await runRooks(['backend-account', 'grant', 'k3f9a2b1c0', '--user', 'ada@example.com'], mock.url);
     assert.equal(r.code, 1);
     assert.match(r.stderr, /only the superadmin/);
     assert.equal(puts(mock.seen).length, 0);
@@ -116,9 +116,9 @@ test('a caller who cannot read the grants changes nothing', async () => {
 test('unknown account or user, or a missing --user, are refused before any change', async () => {
   const mock = await startMock(account([]));
   try {
-    assert.equal((await runNova(['backend-account', 'grant', 'nope', '--user', 'u-ada'], mock.url)).code, 2);
-    assert.equal((await runNova(['backend-account', 'grant', 'k3f9a2b1c0', '--user', 'nobody@example.com'], mock.url)).code, 2);
-    assert.equal((await runNova(['backend-account', 'grant', 'k3f9a2b1c0'], mock.url)).code, 64);
+    assert.equal((await runRooks(['backend-account', 'grant', 'nope', '--user', 'u-ada'], mock.url)).code, 2);
+    assert.equal((await runRooks(['backend-account', 'grant', 'k3f9a2b1c0', '--user', 'nobody@example.com'], mock.url)).code, 2);
+    assert.equal((await runRooks(['backend-account', 'grant', 'k3f9a2b1c0'], mock.url)).code, 64);
     assert.equal(puts(mock.seen).length, 0);
   } finally { await mock.close(); }
 });
@@ -126,7 +126,7 @@ test('unknown account or user, or a missing --user, are refused before any chang
 test('list names the owner and the users an account is assigned to', async () => {
   const mock = await startMock(account(['u-ada']));
   try {
-    const r = await runNova(['backend-account', 'list'], mock.url);
+    const r = await runRooks(['backend-account', 'list'], mock.url);
     assert.equal(r.code, 0, r.stderr);
     assert.match(r.stdout, /claude@k3f9a2b1c0 +Perso +\[active\] +owner: owner@example\.com/);
     assert.match(r.stdout, /assigned to: ada@example\.com/);

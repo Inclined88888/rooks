@@ -146,7 +146,7 @@ test('a result a steer stopped does not move last_result_id: the list reads the 
   dbApi.createMission(id, 'new.main', 'brief');
   const ended = dbApi.insertEvent(id, 'result', { model: 'first' });
   const input = dbApi.insertEvent(id, 'user', { text: 'go on' });
-  dbApi.insertEvent(id, 'result', { model: 'stopped', nova_steered: true });
+  dbApi.insertEvent(id, 'result', { model: 'stopped', rooks_steered: true });
   const stopped = statsOf(id);
   assert.equal(stopped?.last_result_id, ended.id);
   assert.equal(stopped?.last_user_id, input.id);
@@ -155,7 +155,7 @@ test('a result a steer stopped does not move last_result_id: the list reads the 
   assert.equal(stopped?.last_result_model, 'stopped');
   assert.equal(dbApi.getLastResultModel(id), 'stopped');
 
-  const plain = dbApi.insertEvent(id, 'result', { model: 'second', nova_steered: false });
+  const plain = dbApi.insertEvent(id, 'result', { model: 'second', rooks_steered: false });
   assert.equal(statsOf(id)?.last_result_id, plain.id, 'only the mark set to true skips');
   // The trigger runs inside every insert: a payload it cannot parse must not fail it.
   const raw = db.prepare(`INSERT INTO events (mission_id, type, timestamp, payload) VALUES (?, 'result', 1, 'not json')`).run(id);

@@ -1,6 +1,6 @@
 /**
  * Switching the active machine (TODO #329, P3d): the one place the
- * `nova_machine` cookie is written.
+ * `rooks_machine` cookie is written.
  *
  * The cookie only names an id; what it opens is decided again on every
  * request by `resolveTarget` (the local daemon hands out the device token of

@@ -79,8 +79,8 @@ type Api = ClientContext['api'];
 /** The source the assistant offers itself: the engine's own format, an export from another Rooks. */
 const ROOKS_SOURCE: AgentImportSource = {
   id: 'rooks',
-  label: t('novaSource.label'),
-  description: t('novaSource.description'),
+  label: t('rooksSource.label'),
+  description: t('rooksSource.description'),
   accepts: ['zip'],
 };
 

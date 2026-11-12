@@ -5,7 +5,7 @@
  * Writing `Authorization: Bearer <access_token>` into the MCP configuration of a
  * CLI (`--mcp-config`, a `config.toml`) put the token in a file of the mission's
  * scratch folder, readable by the shell the model drives. So, like the vault's
- * broker (`nova_http_call`), the daemon holds the credential and the agent only
+ * broker (`rooks_http_call`), the daemon holds the credential and the agent only
  * asks: its CLI talks to `http://127.0.0.1:<daemon port>/mcp-relay/<route>/<agent>`
  * with a relay token, and the relay (`mcp-relay-server.ts`) adds the current
  * OAuth bearer on its way out.

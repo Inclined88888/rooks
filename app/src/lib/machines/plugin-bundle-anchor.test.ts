@@ -40,10 +40,10 @@ test.after(() => {
 
 function onRemote<T>(fn: () => Promise<T>): Promise<T> {
   urls.length = 0;
-  const cookies: Record<string, string> = { rooks_session: SESSION, nova_machine: 'vps' };
+  const cookies: Record<string, string> = { rooks_session: SESSION, rooks_machine: 'vps' };
   return storage.run(
     {
-      headers: new Headers({ cookie: `rooks_session=${SESSION}; nova_machine=vps`, 'sec-fetch-site': 'same-origin' }),
+      headers: new Headers({ cookie: `rooks_session=${SESSION}; rooks_machine=vps`, 'sec-fetch-site': 'same-origin' }),
       cookies: { get: (name: string) => (name in cookies ? { name, value: cookies[name] } : undefined) },
     },
     fn,

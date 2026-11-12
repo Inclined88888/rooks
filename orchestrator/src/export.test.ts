@@ -14,9 +14,9 @@ import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';
 import { promisify } from 'node:util';
 
-const { exportNova, importNova, removeOrMoveAside } = await import('./export.js');
+const { exportRooks, importRooks, removeOrMoveAside } = await import('./export.js');
 const { ZONES } = await import('./paths.js');
-const { novaVersion, updateNeedsApproval } = await import('./data-version.js');
+const { rooksVersion, updateNeedsApproval } = await import('./data-version.js');
 
 test('plugins et plugins-data sont déclarés dans ZONES.config', () => {
   assert.ok((ZONES.config as readonly string[]).includes('plugins'));
@@ -37,7 +37,7 @@ test('un export emporte les plugins installés et leurs données, et un import l
   );
 
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-plugins-archive-')), 'export.tar.gz');
-  exportNova({ out, home, vacuumInto: () => {} });
+  exportRooks({ out, home, vacuumInto: () => {} });
 
   const listing = execFileSync('tar', ['-tzf', out], { encoding: 'utf8' });
   assert.ok(
@@ -50,7 +50,7 @@ test('un export emporte les plugins installés et leurs données, et un import l
   );
 
   const to = mkdtempSync(join(tmpdir(), 'rooks-import-plugins-'));
-  importNova({ file: out, to });
+  importRooks({ file: out, to });
 
   const pkg = readFileSync(join(to, 'plugins', 'rooks-example-plugin', 'package.json'), 'utf8');
   assert.equal(pkg, '{"name":"rooks-example-plugin"}\n');
@@ -64,9 +64,9 @@ test('TIM-0039 : les avatars (uploads/avatars) font l\'aller-retour export → i
   const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0xfe, 0x00]);
   writeFileSync(join(home, 'uploads', 'avatars', 'a.png'), png);
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-avatar-out-')), 'export.tar.gz');
-  exportNova({ out, home, vacuumInto: () => {} });
+  exportRooks({ out, home, vacuumInto: () => {} });
   const to = mkdtempSync(join(tmpdir(), 'rooks-import-avatar-'));
-  importNova({ file: out, to });
+  importRooks({ file: out, to });
   assert.deepEqual(readFileSync(join(to, 'uploads', 'avatars', 'a.png')), png);
 });
 
@@ -75,12 +75,12 @@ test('TIM-0040 : un import remplace agents/ au lieu de le fusionner (le _main ne
   mkdirSync(join(home, 'agents', 'Alice'), { recursive: true });
   writeFileSync(join(home, 'agents', 'Alice', 'config.json'), '{"role":"orchestrator"}\n');
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-main-out-')), 'export.tar.gz');
-  exportNova({ out, home, vacuumInto: () => {} });
+  exportRooks({ out, home, vacuumInto: () => {} });
 
   const to = mkdtempSync(join(tmpdir(), 'rooks-import-main-'));
   mkdirSync(join(to, 'agents', '_main'), { recursive: true });
   writeFileSync(join(to, 'agents', '_main', 'config.json'), '{"role":"orchestrator"}\n');
-  importNova({ file: out, to, force: true });
+  importRooks({ file: out, to, force: true });
 
   assert.ok(existsSync(join(to, 'agents', 'Alice', 'config.json')));
   assert.equal(existsSync(join(to, 'agents', '_main')), false);
@@ -90,13 +90,13 @@ test('TIM-0041 : un import --force remplace rooks.db et purge son -wal/-shm pér
   const home = mkdtempSync(join(tmpdir(), 'rooks-export-db-'));
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-db-out-')), 'export.tar.gz');
   writeFileSync(join(home, 'rooks.db'), 'new');
-  exportNova({ out, home, vacuumInto: (dest) => writeFileSync(dest, 'new') });
+  exportRooks({ out, home, vacuumInto: (dest) => writeFileSync(dest, 'new') });
 
   const to = mkdtempSync(join(tmpdir(), 'rooks-import-db-'));
   writeFileSync(join(to, 'rooks.db'), 'old');
   writeFileSync(join(to, 'rooks.db-wal'), 'stale');
   writeFileSync(join(to, 'rooks.db-shm'), 'stale');
-  importNova({ file: out, to, force: true });
+  importRooks({ file: out, to, force: true });
 
   assert.equal(readFileSync(join(to, 'rooks.db'), 'utf8'), 'new');
   assert.equal(existsSync(join(to, 'rooks.db-wal')), false);
@@ -116,12 +116,12 @@ test('TODO #547 : integrations.db (connexions, reçus) fait l\'aller-retour, mê
   live.prepare('INSERT INTO receipts VALUES (?)').run('r-1');
   try {
     const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-integrations-out-')), 'export.tar.gz');
-    exportNova({ out, home, vacuumInto: () => {} });
+    exportRooks({ out, home, vacuumInto: () => {} });
 
     const to = mkdtempSync(join(tmpdir(), 'rooks-import-integrations-'));
     writeFileSync(join(to, 'integrations.db-wal'), 'stale');
     writeFileSync(join(to, 'integrations.db-shm'), 'stale');
-    importNova({ file: out, to, force: true });
+    importRooks({ file: out, to, force: true });
 
     assert.equal(existsSync(join(to, 'integrations.db-wal')), false);
     assert.equal(existsSync(join(to, 'integrations.db-shm')), false);
@@ -223,7 +223,7 @@ function projectArchive(): string {
   writeFileSync(join(home, 'rooks.db'), '');
   const here = mkdtempSync(join(tmpdir(), 'rooks-export-proj-cwd-'));
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-proj-out-')), 'export.tar.gz');
-  exportNova({
+  exportRooks({
     out,
     home,
     vacuumInto: (dest) => {
@@ -239,7 +239,7 @@ function projectArchive(): string {
 
 test('TIM-0056 : un import rapporte les projets dont le dossier est introuvable', () => {
   const to = mkdtempSync(join(tmpdir(), 'rooks-import-proj-'));
-  const result = importNova({ file: projectArchive(), to });
+  const result = importRooks({ file: projectArchive(), to });
   assert.deepEqual(result.missingProjects.map((p) => p.slug), ['alpha']);
   assert.equal(result.skippedProjects, 0);
   assert.ok(existsSync(join(to, 'projects', 'alpha', 'roles.json')));
@@ -248,7 +248,7 @@ test('TIM-0056 : un import rapporte les projets dont le dossier est introuvable'
 test('TIM-0056 : skipProjects ne restaure ni projects/ ni la table projets', () => {
   const to = mkdtempSync(join(tmpdir(), 'rooks-import-noproj-'));
   mkdirSync(join(to, 'projects', 'old'), { recursive: true });
-  const result = importNova({ file: projectArchive(), to, force: true, skipProjects: true });
+  const result = importRooks({ file: projectArchive(), to, force: true, skipProjects: true });
   assert.equal(result.skippedProjects, 2);
   assert.deepEqual(result.missingProjects, []);
   assert.equal(existsSync(join(to, 'projects')), false);
@@ -270,14 +270,14 @@ test('SUG-0063 : un plugin installé depuis un dossier (lien) voyage dans l\'exp
   writeFileSync(join(home, 'agents', 'a', 'memory', 'learnings.jsonl'), '{}\n');
 
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-link-archive-')), 'export.tar.gz');
-  exportNova({ out, home, vacuumInto: () => {} });
+  exportRooks({ out, home, vacuumInto: () => {} });
   const listing = execFileSync('tar', ['-tzf', out], { encoding: 'utf8' });
   assert.ok(listing.includes('plugins/node_modules/@acme/local'), 'le lien est dans l\'archive');
   assert.ok(!listing.includes('memory/log.jsonl'));
   assert.ok(listing.includes('memory/learnings.jsonl'));
 
   const to = mkdtempSync(join(tmpdir(), 'rooks-import-link-'));
-  importNova({ file: out, to });
+  importRooks({ file: out, to });
   assert.ok(lstatSync(join(to, 'plugins', 'node_modules', '@acme', 'local')).isSymbolicLink());
 });
 
@@ -290,7 +290,7 @@ async function inFreshCli(home: string, body: string, opts: { packaged?: boolean
   const witness = join(mkdtempSync(join(tmpdir(), 'rooks-export-witness-')), 'witness.mjs');
   writeFileSync(witness, `
     ${opts.packaged ? "Object.defineProperty(process.versions, 'electron', { value: '38.0.0' });" : ''}
-    const { exportNova, importNova } = await import(${JSON.stringify(new URL('./export.ts', import.meta.url).href)});
+    const { exportRooks, importRooks } = await import(${JSON.stringify(new URL('./export.ts', import.meta.url).href)});
     const { readdirSync, readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
     ${body}
@@ -329,7 +329,7 @@ test('TIM-0133: a CLI import --force holds no handle on the database it replaces
   const source = mkdtempSync(join(tmpdir(), 'rooks-export-source-'));
   seedWalDatabase(join(source, 'rooks.db'), 'from-archive');
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-out-')), 'export.tar.gz');
-  exportNova({ out, home: source });
+  exportRooks({ out, home: source });
 
   const home = mkdtempSync(join(tmpdir(), 'rooks-export-home-'));
   seedWalDatabase(join(home, 'rooks.db'), 'old');
@@ -339,7 +339,7 @@ test('TIM-0133: a CLI import --force holds no handle on the database it replaces
       entries: readdirSync(process.env.ROOKS_HOME),
       db: readFileSync(join(process.env.ROOKS_HOME, 'rooks.db')).toString('base64'),
     };
-    importNova({ file: ${JSON.stringify(out)}, force: true });
+    importRooks({ file: ${JSON.stringify(out)}, force: true });
     console.log(JSON.stringify(before));
   `);
 
@@ -360,11 +360,11 @@ test('TIM-0133: a CLI export without a daemon does not migrate the database it c
   const seeded = readFileSync(dbFile).toString('base64');
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-plain-out-')), 'export.tar.gz');
 
-  await inFreshCli(home, `exportNova({ out: ${JSON.stringify(out)} });`);
+  await inFreshCli(home, `exportRooks({ out: ${JSON.stringify(out)} });`);
 
   assert.equal(readFileSync(dbFile).toString('base64'), seeded);
   const restored = mkdtempSync(join(tmpdir(), 'rooks-export-plain-to-'));
-  importNova({ file: out, to: restored, force: true });
+  importRooks({ file: out, to: restored, force: true });
   assert.equal(readNote(join(restored, 'rooks.db')), 'kept');
 });
 
@@ -372,14 +372,14 @@ test('TIM-0133: a packaged CLI import on a new install is not taken for a legacy
   const source = mkdtempSync(join(tmpdir(), 'rooks-export-stamp-'));
   seedWalDatabase(join(source, 'rooks.db'), 'from-archive');
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-stamp-out-')), 'export.tar.gz');
-  exportNova({ out, home: source });
-  const body = `importNova({ file: ${JSON.stringify(out)}, force: true });`;
+  exportRooks({ out, home: source });
+  const body = `importRooks({ file: ${JSON.stringify(out)}, force: true });`;
 
   const packaged = mkdtempSync(join(tmpdir(), 'rooks-export-stamp-packaged-'));
   await inFreshCli(packaged, body, { packaged: true });
   const files = { home: packaged, dbPath: join(packaged, 'rooks.db'), configPath: join(packaged, 'rooks.config.json') };
-  assert.equal(readFileSync(join(packaged, 'data-version'), 'utf8').trim(), novaVersion());
-  assert.equal(updateNeedsApproval(files, novaVersion()), false);
+  assert.equal(readFileSync(join(packaged, 'data-version'), 'utf8').trim(), rooksVersion());
+  assert.equal(updateNeedsApproval(files, rooksVersion()), false);
 
   // A source checkout never moves the data version.
   const checkout = mkdtempSync(join(tmpdir(), 'rooks-export-stamp-checkout-'));
@@ -393,7 +393,7 @@ test('TIM-0133: a database another process holds stops the import before anythin
   writeFileSync(join(source, 'agents', 'imported', 'config.json'), '{}');
   writeFileSync(join(source, 'rooks.db'), 'new');
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-locked-out-')), 'export.tar.gz');
-  exportNova({ out, home: source, vacuumInto: (dest) => writeFileSync(dest, 'new') });
+  exportRooks({ out, home: source, vacuumInto: (dest) => writeFileSync(dest, 'new') });
 
   const to = mkdtempSync(join(tmpdir(), 'rooks-import-locked-'));
   mkdirSync(join(to, 'agents', 'mine'), { recursive: true });
@@ -404,7 +404,7 @@ test('TIM-0133: a database another process holds stops the import before anythin
   };
 
   assert.throws(
-    () => importNova({
+    () => importRooks({
       file: out,
       to,
       force: true,
@@ -424,12 +424,12 @@ test('an import without --force is refused on a home in use and changes nothing'
   const source = mkdtempSync(join(tmpdir(), 'rooks-export-refused-'));
   writeFileSync(join(source, 'rooks.db'), 'new');
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-export-refused-out-')), 'export.tar.gz');
-  exportNova({ out, home: source, vacuumInto: (dest) => writeFileSync(dest, 'new') });
+  exportRooks({ out, home: source, vacuumInto: (dest) => writeFileSync(dest, 'new') });
 
   const to = mkdtempSync(join(tmpdir(), 'rooks-import-refused-'));
   writeFileSync(join(to, 'rooks.db'), 'old');
 
-  assert.throws(() => importNova({ file: out, to }), /--force/);
+  assert.throws(() => importRooks({ file: out, to }), /--force/);
   assert.equal(readFileSync(join(to, 'rooks.db'), 'utf8'), 'old');
   assert.deepEqual(readdirSync(to), ['rooks.db']);
 });

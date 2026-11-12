@@ -195,8 +195,8 @@
       "project": "プロジェクト",
       "plugin": "プラグイン"
     },
-    "sectionNova": "{brand} スキル",
-    "sectionNovaHint": "~/.rooks/skills — エージェントに割り当て可能 (カタログ内、または全体をインポート)",
+    "sectionRooks": "{brand} スキル",
+    "sectionRooksHint": "~/.rooks/skills — エージェントに割り当て可能 (カタログ内、または全体をインポート)",
     "sectionUser": "グローバルな Claude スキル",
     "sectionUserHint": "~/.claude/skills と ~/.claude/commands — ミッションでは読み込まれません。割り当てるには {brand} にインポートしてください",
     "sectionProject": "プロジェクトのスキル",
@@ -2034,9 +2034,9 @@
     "providerRecovered": "{count} 回の再試行後に再接続しました",
     "providerRecoveredOne": "1 回の再試行後に再接続しました",
     "providerExhausted": "{count} 回再試行しましたが {provider} のサーバーに接続できません",
-    "providerExhaustedWithNova": "プロバイダーで {count} 回、Rooks で {rooks} 回再試行しましたが {provider} のサーバーに接続できません",
-    "novaRetryIn": "Rooks の再試行 {attempt}/{max}、{seconds} 秒後…",
-    "novaRetryRunning": "Rooks の再試行 {attempt}/{max}…",
+    "providerExhaustedWithRooks": "プロバイダーで {count} 回、Rooks で {rooks} 回再試行しましたが {provider} のサーバーに接続できません",
+    "rooksRetryIn": "Rooks の再試行 {attempt}/{max}、{seconds} 秒後…",
+    "rooksRetryRunning": "Rooks の再試行 {attempt}/{max}…",
     "retryTurn": "再試行",
     "retryTurnUnavailable": "再試行するものはありません: 最後のメッセージはもうこの会話にありません。",
     "quotaExhaustedTitle": "クォータ切れ",
@@ -2293,7 +2293,7 @@
       "other": "独自のドキュメント"
     }
   },
-  "novaPreamble": {
+  "rooksPreamble": {
     "title": "Rooks のプリアンブル",
     "description": "起動のたびにその場で生成され、すべてのエージェントに最初に送られます。読み取り専用: あなたのファイルではなく Rooks が提供します。メインエージェント向けに生成された内容を表示しています。",
     "empty": "このエージェントにはプリアンブルがありません。",
@@ -2454,8 +2454,8 @@
     "llmLabel": "LLM",
     "llmHint": "このエージェントを実行するプロバイダーの CLI とモデル。アカウントはそれぞれ個別にサインインします。",
     "subscription": "サブスクリプション",
-    "skillSectionNovaLabel": "ROOKS スキル",
-    "skillSectionNovaHint": "割り当て可能 — カタログ内、またはプロンプトにインポート",
+    "skillSectionRooksLabel": "ROOKS スキル",
+    "skillSectionRooksHint": "割り当て可能 — カタログ内、またはプロンプトにインポート",
     "skillSectionProjectLabel": "プロジェクトのスキル",
     "skillSectionProjectHint": "<cwd>/.claude — Claude Code だけがネイティブに読み込みます",
     "skillSectionUserLabel": "グローバルなスキル",
@@ -2498,7 +2498,7 @@
     "mcpEmpty": "MCP サーバーはまだ追加されていません — 追加はこちら:",
     "mcpBuiltinTitle": "Rooks に組み込み — 常にオン、付与するものはありません",
     "mcpBuiltinHint": "下で何を選んでも、すべてのバックエンドのすべてのエージェントがこれらを受け取り、Kanban タスクの MCP 上書きでも削除されません。一部の rooks ツール (エージェントやプロジェクトの作成、MCP サーバーの宣言) には、「ユーザー」ページでのアカウントの権限も必要ですが、このリストでは変更されません。",
-    "mcpBuiltinNova": "Kanban、ミッション、エージェント、メモリ、このドキュメント",
+    "mcpBuiltinRooks": "Kanban、ミッション、エージェント、メモリ、このドキュメント",
     "mcpBuiltinAsk": "チャットであなたに確認するフォーム",
     "mcpBuiltinBrowser": "プロジェクトの組み込みブラウザー (実行中のみ)",
     "mcpBuiltinGrepai": "プロジェクトのセマンティックインデックス (ある場合)",
@@ -2624,7 +2624,7 @@
       "title": "Docker コンテナ",
       "description": "プロジェクトのスタックが実行中か、どのローカル URL か、どのサービスが停止しているか。起動、再起動、停止ができます。"
     },
-    "novaDaemon": {
+    "rooksDaemon": {
       "title": "Rooks デーモン",
       "description": "rooks プロジェクト用の、Rooks 自体の状態。"
     },

@@ -62,7 +62,7 @@
     "newAgent": "Novo agente",
     "askAgent": "Perguntar a {name}",
     "notifications": "Notificações",
-    "novaAgentsAccess": "Acesso aos agentes do {brand}",
+    "rooksAgentsAccess": "Acesso aos agentes do {brand}",
     "openOrchestrator": "Abrir o orquestrador {name}",
     "openHealthAgent": "Abrir o agente de saúde",
     "mainAgentFallback": "o agente principal"

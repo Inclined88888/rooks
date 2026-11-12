@@ -212,8 +212,8 @@ test('fromLegacy: a persistent line backend is stdio-persistent with a lines cod
   assert.deepEqual(writes, [{ proc, text: 'hi' }], 'the legacy writer receives the real process, not the pipes');
 });
 
-test('fromLegacy: a non-persistent backend is process-per-turn; novaMcp comes from the launch', () => {
-  const def = fromLegacy(legacyBackend({ persistentProcess: false, finishMissionOnExit: false }), { proc: fakeProc(), novaMcp: false });
+test('fromLegacy: a non-persistent backend is process-per-turn; rooksMcp comes from the launch', () => {
+  const def = fromLegacy(legacyBackend({ persistentProcess: false, finishMissionOnExit: false }), { proc: fakeProc(), rooksMcp: false });
   assert.equal(def.transport.kind, 'process-per-turn');
   assert.equal(def.mcp.rooks, false);
 });

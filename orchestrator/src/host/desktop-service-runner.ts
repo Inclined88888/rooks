@@ -21,7 +21,7 @@ if (action !== 'stop' && action !== 'start') {
   const opts = serviceOptsFromEnvironment(cfg, () => host);
   const result = actOnOwnService(opts, action === 'stop' ? stopService : startService);
   if (result.ok && action === 'stop') {
-    const ended = await endMissionsOfStoppedDaemon(opts.novaHome, host);
+    const ended = await endMissionsOfStoppedDaemon(opts.rooksHome, host);
     if (ended) result.lines.push(ended);
   }
   if (!result.ok) {

@@ -89,7 +89,7 @@ test('a card of a remote machine is answered there, with its device token only',
 });
 
 test('a card of this computer is answered here even while switched to a remote machine', async () => {
-  const res = await resolve({ 'x-rooks-machine': 'local' }, { rooks_session: SESSION, nova_machine: 'vps' });
+  const res = await resolve({ 'x-rooks-machine': 'local' }, { rooks_session: SESSION, rooks_machine: 'vps' });
   assert.equal(res.status, 200);
   assert.deepEqual(relayed().map((c) => c.url), [`${LOCAL}/api/permissions/perm-1/resolve`]);
   // No credential was even looked up for the active machine.
@@ -97,7 +97,7 @@ test('a card of this computer is answered here even while switched to a remote m
 });
 
 test('without the header, the active machine answers, as the interface cards do', async () => {
-  await resolve({}, { rooks_session: SESSION, nova_machine: 'vps' });
+  await resolve({}, { rooks_session: SESSION, rooks_machine: 'vps' });
   assert.deepEqual(relayed().map((c) => c.url), [`${REMOTE}/api/permissions/perm-1/resolve`]);
 });
 

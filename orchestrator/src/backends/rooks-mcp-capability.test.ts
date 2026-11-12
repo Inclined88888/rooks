@@ -1,6 +1,6 @@
 /**
- * `capabilities.novaMcp: false` is honoured, not just shown: the runner tells
- * the dialect (`BuildSpawnOpts.novaMcp`) and no dialect declares `rooks` or
+ * `capabilities.rooksMcp: false` is honoured, not just shown: the runner tells
+ * the dialect (`BuildSpawnOpts.rooksMcp`) and no dialect declares `rooks` or
  * `rooks_ask` to the agent. Without them, claude must not be pointed at a
  * permission prompt tool that does not exist.
  */
@@ -25,10 +25,10 @@ process.env.ROOKS_RESOURCE_GUARD_ENABLED = '0';
 await stubCliBinaries('grok', 'copilot', 'opencode');
 await mountOfficialProviders();
 
-function opts(novaMcp?: boolean): BuildSpawnOpts {
+function opts(rooksMcp?: boolean): BuildSpawnOpts {
   return {
     agentName: 'acme.main', systemPrompt: 'Test', message: 'Test', resumeSession: null, missionId: randomUUID(),
-    cfg: { cwd: ROOKS_HOME }, ...(novaMcp === undefined ? {} : { novaMcp }),
+    cfg: { cwd: ROOKS_HOME }, ...(rooksMcp === undefined ? {} : { rooksMcp }),
   };
 }
 
@@ -37,7 +37,7 @@ function argAfter(args: string[], flag: string): string | undefined {
   return i >= 0 ? args[i + 1] : undefined;
 }
 
-test('claude: no Rooks servers and no permission prompt tool when novaMcp is false', async () => {
+test('claude: no Rooks servers and no permission prompt tool when rooksMcp is false', async () => {
   const off = await buildUnderSeal('claude', opts(false));
   const servers = (JSON.parse(argAfter(off.args, '--mcp-config')!) as { mcpServers: Record<string, unknown> }).mcpServers;
   assert.equal(servers.rooks, undefined);
@@ -51,7 +51,7 @@ test('claude: no Rooks servers and no permission prompt tool when novaMcp is fal
 });
 
 for (const backend of ['codex', 'grok'] as const) {
-  test(`${backend}: config.toml declares no Rooks server when novaMcp is false`, async () => {
+  test(`${backend}: config.toml declares no Rooks server when rooksMcp is false`, async () => {
     const read = async (o: BuildSpawnOpts): Promise<string> => {
       const spec = backend === 'grok'
         ? await buildUnderSeal('grok', o)
@@ -66,7 +66,7 @@ for (const backend of ['codex', 'grok'] as const) {
   });
 }
 
-test('copilot: no Rooks server in the additional MCP config when novaMcp is false', async () => {
+test('copilot: no Rooks server in the additional MCP config when rooksMcp is false', async () => {
   const read = async (o: BuildSpawnOpts): Promise<Record<string, unknown>> => {
     const spec = await buildUnderSeal('copilot', o);
     return (JSON.parse(readFileSync(argAfter(spec.args, '--additional-mcp-config')!.slice(1), 'utf8')) as { mcpServers: Record<string, unknown> }).mcpServers;
@@ -78,7 +78,7 @@ test('copilot: no Rooks server in the additional MCP config when novaMcp is fals
   assert.ok(on.rooks && on[ASK_MCP_SERVER]);
 });
 
-test('acp: the session gets no Rooks server when novaMcp is false', async () => {
+test('acp: the session gets no Rooks server when rooksMcp is false', async () => {
   const off = (await acpSessionServers('opencode', opts(false))).map((s) => s.name);
   assert.ok(!off.includes('rooks') && !off.includes(ASK_MCP_SERVER));
   const on = (await acpSessionServers('opencode', opts())).map((s) => s.name);
@@ -100,7 +100,7 @@ test('the runner reads the declared capability and passes it to the dialect', as
   })];
   offs.push(registerProfile(OWNER, {
     id: 'rooks-mcp-without', dialect: 'rooks-mcp-remote', label: 'without', defaultModel: null, models: [], env: {},
-    capabilities: { novaMcp: false },
+    capabilities: { rooksMcp: false },
   }));
   offs.push(registerProfile(OWNER, {
     id: 'rooks-mcp-with', dialect: 'rooks-mcp-remote', label: 'with', defaultModel: null, models: [], env: {},
@@ -113,8 +113,8 @@ test('the runner reads the declared capability and passes it to the dialect', as
       for (let i = 0; i < 100 && !seen.has(backend); i++) await new Promise((r) => setTimeout(r, 10));
       killAgent(missionId, { source: 'test' });
     }
-    assert.equal(seen.get('rooks-mcp-without')?.novaMcp, false);
-    assert.equal(seen.get('rooks-mcp-with')?.novaMcp, undefined);
+    assert.equal(seen.get('rooks-mcp-without')?.rooksMcp, false);
+    assert.equal(seen.get('rooks-mcp-with')?.rooksMcp, undefined);
   } finally {
     for (const off of offs) off();
   }

@@ -76,8 +76,8 @@ export async function providerMcpPlan(input: {
   };
 
   const servers: ProviderMcpServer[] = [];
-  // Rooks's own servers, unless the backend declares `novaMcp: false`.
-  if (spawn.novaMcp !== false) {
+  // Rooks's own servers, unless the backend declares `rooksMcp: false`.
+  if (spawn.rooksMcp !== false) {
     // The Node the daemon itself runs on when packaged (Electron's binary as Node): a CLI
     // installed without Node — claude's native installer — cannot start `node <script>`,
     // and the permission tool is then reported missing (TODO #486). `node` from sources.
@@ -126,7 +126,7 @@ export async function providerMcpPlan(input: {
     identityEnv: Object.freeze(identityEnv),
     daemonUrl,
     scripts: Object.freeze({ rooks: ROOKS_MCP_PATH, forms: PERMISSION_MCP_PATH }),
-    permissionTool: permissionPrompt && spawn.novaMcp !== false ? CLAUDE_PERMISSION_PROMPT_TOOL : null,
+    permissionTool: permissionPrompt && spawn.rooksMcp !== false ? CLAUDE_PERMISSION_PROMPT_TOOL : null,
     preApprovedTools: Object.freeze([...claudeAskToolNames(), ...PRE_APPROVED_MCP_TOOLS, ...configuredPreApprovedMcpTools(settingStr('ROOKS_PREAPPROVED_MCP_TOOLS'))]),
     excludedServers: Object.freeze(seal ? listMcp().flatMap((summary) => {
       if (!isDiscoveredMcp(summary) || !cfg.excluded_mcp_servers?.includes(summary.id)) return [];

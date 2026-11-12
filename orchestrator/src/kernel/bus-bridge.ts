@@ -22,7 +22,7 @@ import { bus, type BusEvent } from '../bus.js';
 import { guardCallback, type RejectionOwner } from './rejection-guard.js';
 
 /** Cordis event name matching a `BusEvent`. */
-export type NovaEventName = `rooks/${BusEvent['kind']}`;
+export type RooksEventName = `rooks/${BusEvent['kind']}`;
 
 declare module '@deepseek-ai/cordis' {
   interface Events {
@@ -81,7 +81,7 @@ function listenerOwner(owner: Context): RejectionOwner {
  * `internal/dispatch` notice first. The list is copied before the loop, as
  * Cordis does, so a listener that unsubscribes does not shift the next one.
  */
-function emitIsolated(ctx: Context, name: NovaEventName, ev: BusEvent): void {
+function emitIsolated(ctx: Context, name: RooksEventName, ev: BusEvent): void {
   const hooks = [...(ctx.events._hooks[name] ?? [])];
   guardCallback({ kind: 'core' }, `event ${name} dispatch notice`, () => ctx.emit('internal/dispatch', 'emit', name, [ev], null))();
   for (const hook of hooks) {
@@ -92,7 +92,7 @@ function emitIsolated(ctx: Context, name: NovaEventName, ev: BusEvent): void {
 export function apply(ctx: Context): void {
   ctx.effect(() => {
     const forward = (ev: BusEvent) => {
-      emitIsolated(ctx, `rooks/${ev.kind}` as NovaEventName, ev);
+      emitIsolated(ctx, `rooks/${ev.kind}` as RooksEventName, ev);
     };
     bus.on('event', forward);
     return () => void bus.off('event', forward);

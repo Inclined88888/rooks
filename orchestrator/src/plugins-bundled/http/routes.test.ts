@@ -35,8 +35,8 @@ test('/api/health names the service that answers', async () => {
     const desktopModule = new URL('../../../../desktop/src/health.ts', import.meta.url).href;
     const desktop = await import(desktopModule);
     const health = await desktop.probeHealth(`http://127.0.0.1:${addr.port}`);
-    assert.equal(desktop.isNova(health, HOME), true);
-    assert.equal(desktop.isNova(health, join(HOME, 'another-home')), false);
+    assert.equal(desktop.isRooks(health, HOME), true);
+    assert.equal(desktop.isRooks(health, join(HOME, 'another-home')), false);
     // TODO #477: a daemon run from the sources says so, and the desktop reads it.
     assert.equal(health.packaged, false);
   } finally {

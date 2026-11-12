@@ -36,10 +36,10 @@ const base: Dialect = {
   extractSessionId() { return null; },
 };
 for (const [id, capabilities] of [
-  ['skills-remote', { worktree: false, novaMcp: false, attachments: false, novaPreamble: false }],
-  ['skills-remote-preamble', { worktree: false, novaMcp: false, attachments: false }],
+  ['skills-remote', { worktree: false, rooksMcp: false, attachments: false, rooksPreamble: false }],
+  ['skills-remote-preamble', { worktree: false, rooksMcp: false, attachments: false }],
   ['skills-tool-only', { attachments: false }],
-  ['skills-file-only', { novaMcp: false }],
+  ['skills-file-only', { rooksMcp: false }],
 ] as const) {
   registerDialect(OWNER, id, { ...base, capabilities });
   registerProfile(OWNER, { id, dialect: id, label: id, custom: true, defaultModel: null, models: [] });

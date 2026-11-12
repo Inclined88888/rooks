@@ -21,7 +21,7 @@ An agent sees each tool under its server's name, in a shape chosen by its CLI:
 | Backend | The Kanban tool `kanban_add` | The form tool `question` |
 | --- | --- | --- |
 | Claude Code, Codex | `mcp__rooks__kanban_add` | `mcp__rooks_ask__question` |
-| opencode | `nova_kanban_add` | `rooks_ask_question` |
+| opencode | `rooks_kanban_add` | `rooks_ask_question` |
 
 It is the same tool either way. When you write a prompt or a skill, the short name (`kanban_plan`, `question`) is enough: the agent finds it in its own list.
 
@@ -69,7 +69,7 @@ Whatever the `rooks` command does in a terminal, a tool of the same name does fo
 | Take you to a page of the app, or of a plugin you can open | `ui_routes`, `ui_navigate` |
 | Hide, reorder or separate the pages of the side menu | `nav_get`, `nav_propose` |
 | Store a new secret (a database password, an API key it generated) in the vault | `secret_create` |
-| Call an HTTP service under a secret's identity, without ever seeing the secret | `nova_http_call` |
+| Call an HTTP service under a secret's identity, without ever seeing the secret | `rooks_http_call` |
 | Ask you for a password, a code or an API key it must never see | `secret_request` |
 | Set up itself during the setup conversation: write its character, recruit its two teammates, finish (and ask for a picture) | `setup_set_soul`, `setup_recruit_team`, `setup_finish`, `setup_request_avatar` |
 
@@ -302,7 +302,7 @@ A list left out keeps what your menu has; a page neither list names shows at the
 
 ### Calling a service under a secret's identity
 
-`nova_http_call` lets an agent call an HTTP service without ever holding the credential. The agent names the **identity** (the name of a secret you stored in broker mode, such as `GITHUB_TOKEN`), the `method` (GET by default), an absolute `path` starting with `/`, and optionally a `host`, extra `headers` and a `body` (an object is sent as JSON). Rooks checks that the agent has been granted that secret, that the host is on the secret's list of allowed hosts, adds the credential itself and returns `{ status, body, host }`.
+`rooks_http_call` lets an agent call an HTTP service without ever holding the credential. The agent names the **identity** (the name of a secret you stored in broker mode, such as `GITHUB_TOKEN`), the `method` (GET by default), an absolute `path` starting with `/`, and optionally a `host`, extra `headers` and a `body` (an object is sent as JSON). Rooks checks that the agent has been granted that secret, that the host is on the secret's list of allowed hosts, adds the credential itself and returns `{ status, body, host }`.
 
 The secret never reaches the agent's environment, its command lines or the response. Only the hosts declared on the secret can be reached, the credential header cannot be overridden, redirects are not followed, and every call is journalled. Grant a secret to a project or an agent on the **Secrets** page; without a grant the call is refused. `git` can use the same vault through `git config credential.helper "rooks git-credential"`.
 
@@ -443,7 +443,7 @@ Type or paste the value in the masked field (the eye button shows it), then **Pr
 
 How the agent then uses it matters:
 
-- **With addresses** (the card lists them): the agent calls the service through `nova_http_call`, and Rooks adds the secret to the request itself. The agent never holds the value, and Rooks only sends it to the addresses shown on the card. This is the only way a value stays truly hidden.
+- **With addresses** (the card lists them): the agent calls the service through `rooks_http_call`, and Rooks adds the secret to the request itself. The agent never holds the value, and Rooks only sends it to the addresses shown on the card. This is the only way a value stays truly hidden.
 - **For a website** (the card shows its address): the agent fills it into that site's sign-in or code form in the built-in browser, and only on that exact site. It fills the password or the one-time code, never submits the form for you. Once filled, the value is in the page like anything you type yourself.
 - **Otherwise**: the value enters the agent's environment the next time its program starts, as a variable of that name. Anything the agent runs can read it, so it can also print it (an `echo` is enough); Rooks masks a value it recognises in the conversation, but that is a safety net, not a guarantee. Prefer the first way for an API key.
 

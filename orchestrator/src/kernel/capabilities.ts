@@ -17,7 +17,7 @@ import { restartOnboardingPending } from '../onboarding-restart.js';
  *    keeps the front identical in both modes for the duration of the parity.
  */
 import { config, loadConfig } from '../config/load.js';
-import type { NovaConfig } from '../config/schema.js';
+import type { RooksConfig } from '../config/schema.js';
 import { getHost } from '../host/index.js';
 import { unsignedPluginsAllowed } from '../plugins/pubkey.js';
 import { CATALOG } from './catalog.js';
@@ -30,7 +30,7 @@ import { applyBuildPolicy } from '../license/build-policy.js';
 import { whiteLabelAllowed } from '../license/capabilities.js';
 import { licenseState } from '../license/runtime.js';
 import { isFirstRun } from '../setup.js';
-import { novaVersion } from '../data-version.js';
+import { rooksVersion } from '../data-version.js';
 
 let live: { decisions: EntryDecision[]; capabilities: string[]; edition: 'lite' | 'expert' } | null = null;
 
@@ -97,7 +97,7 @@ export type CapabilitiesPayload = CapabilitiesReport & {
  * licence whitelist and show a licensed module as running on the very screen
  * where capabilities says it is not.
  */
-function resolveDecisions(): { decisions: EntryDecision[]; capabilities: string[]; effectiveConfig: NovaConfig } {
+function resolveDecisions(): { decisions: EntryDecision[]; capabilities: string[]; effectiveConfig: RooksConfig } {
   const cfg = config();
   // Same read as the boot, offline tolerance included (`refresh.ts`).
   // The build's channel has its word too: a beta build is never Free here either.
@@ -163,7 +163,7 @@ export function capabilitiesPayload(): CapabilitiesPayload {
 
   return {
     ...capabilitiesReport(decisions, { config: effectiveConfig, capabilities }),
-    version: novaVersion(),
+    version: rooksVersion(),
     apiLevel: API_LEVEL,
     ui: { hidden: [...cfg.ui.hidden], home: cfg.ui.home },
     kernel: live !== null,

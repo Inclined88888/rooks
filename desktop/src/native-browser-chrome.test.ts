@@ -91,10 +91,10 @@ test('a __Host- cookie that is well-formed passes', () => {
 test('the browser does not inherit Electron\'s environment or the AppImage libraries', () => {
   const env = chromeEnvironment({
     PATH: '/usr/bin', HOME: '/home/sam', CHROME_DESKTOP: 'rooks.desktop', ELECTRON_RUN_AS_NODE: '1', NODE_OPTIONS: '--inspect',
-    APPDIR: '/tmp/.mount_Nova1', LD_LIBRARY_PATH: '/tmp/.mount_Nova1/usr/lib:/opt/other/lib',
+    APPDIR: '/tmp/.mount_Rooks1', LD_LIBRARY_PATH: '/tmp/.mount_Rooks1/usr/lib:/opt/other/lib',
   }, 'linux');
-  assert.deepEqual(env, { PATH: '/usr/bin', HOME: '/home/sam', APPDIR: '/tmp/.mount_Nova1', LD_LIBRARY_PATH: '/opt/other/lib' });
-  const onlyImage = chromeEnvironment({ APPDIR: '/tmp/.mount_Nova1', LD_LIBRARY_PATH: '/tmp/.mount_Nova1/usr/lib' }, 'linux');
+  assert.deepEqual(env, { PATH: '/usr/bin', HOME: '/home/sam', APPDIR: '/tmp/.mount_Rooks1', LD_LIBRARY_PATH: '/opt/other/lib' });
+  const onlyImage = chromeEnvironment({ APPDIR: '/tmp/.mount_Rooks1', LD_LIBRARY_PATH: '/tmp/.mount_Rooks1/usr/lib' }, 'linux');
   assert.equal('LD_LIBRARY_PATH' in onlyImage, false);
   assert.equal(chromeEnvironment({ APPDIR: '/x', LD_LIBRARY_PATH: '/x/lib' }, 'darwin').LD_LIBRARY_PATH, '/x/lib');
 });

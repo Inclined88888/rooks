@@ -55,7 +55,7 @@ export type ServiceOpts = {
   /** User home — the tests point it at a temporary directory. */
   homeDir: string;
   /** `ROOKS_HOME`, only ever READ (log paths, env of the child). */
-  novaHome: string;
+  rooksHome: string;
   /** Directory holding `dist/` — `config.daemon.installDir`. */
   installDir: string;
   userName: string;
@@ -155,8 +155,8 @@ export function unitPath(homeDir: string, name = LINUX_UNIT): string {
 /** Written by the daemon while a long-lived claude token is stored
  *  (the official Claude provider plugin). The supervisor code runs without the
  *  database, so this file is how it learns the token exists. No value inside. */
-export function claudeTokenMarkerPath(novaHome: string): string {
-  return join(novaHome, 'run', 'claude-token-configured');
+export function claudeTokenMarkerPath(rooksHome: string): string {
+  return join(rooksHome, 'run', 'claude-token-configured');
 }
 
 /** Where the launchd agent is written (without a claude token, see `installDarwin`). */
@@ -176,9 +176,9 @@ function templatePath(installDir: string): string {
 /** Renders the shipped systemd template. Never invents a unit of its own:
  *  the template is the reference, and `install-linux.sh` renders the same one. */
 export function renderUnit(
-  opts: Pick<ServiceOpts, 'installDir' | 'userName' | 'port' | 'heapMb' | 'novaHome'>,
+  opts: Pick<ServiceOpts, 'installDir' | 'userName' | 'port' | 'heapMb' | 'rooksHome'>,
 ): string {
-  if (/[\r\n\0]/.test(opts.novaHome)) throw new Error('Invalid daemon data directory');
+  if (/[\r\n\0]/.test(opts.rooksHome)) throw new Error('Invalid daemon data directory');
   const template = templatePath(opts.installDir);
   if (!existsSync(template)) {
     throw new Error(`systemd template not found — ${template}`);
@@ -195,7 +195,7 @@ export function renderUnit(
     // The section header itself: the shipped template also names it in a comment,
     // above the section. Placed there, the line landed in `[Unit]`, which systemd
     // ignores, and the daemon ran on the default home.
-    .replace(/^\[Service\]$/m, () => `[Service]\nEnvironment="ROOKS_HOME=${opts.novaHome.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('%', '%%')}"`);
+    .replace(/^\[Service\]$/m, () => `[Service]\nEnvironment="ROOKS_HOME=${opts.rooksHome.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('%', '%%')}"`);
 }
 
 function escapeXml(s: string): string {
@@ -210,16 +210,16 @@ function escapeXml(s: string): string {
  * spawn `claude` from there — exactly the trap the systemd unit documents.
  */
 export function renderPlist(
-  opts: Pick<ServiceOpts, 'homeDir' | 'novaHome' | 'installDir' | 'heapMb' | 'port' | 'nodePath' | 'environment'>,
+  opts: Pick<ServiceOpts, 'homeDir' | 'rooksHome' | 'installDir' | 'heapMb' | 'port' | 'nodePath' | 'environment'>,
 ): string {
-  const logDir = join(opts.novaHome, 'tmp');
+  const logDir = join(opts.rooksHome, 'tmp');
   const args = [opts.nodePath, `--max-old-space-size=${opts.heapMb}`, join(opts.installDir, 'dist', 'boot.js')];
   const path = `${join(opts.homeDir, '.local', 'bin')}:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin`;
   const environment = {
     PATH: path,
     NODE_ENV: 'production',
     PORT: String(opts.port),
-    ROOKS_HOME: opts.novaHome,
+    ROOKS_HOME: opts.rooksHome,
     ...opts.environment,
   };
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -390,8 +390,8 @@ const SESSION_WITNESS_TEXT = 'rooks-session-witness';
  * writes — the tests run on Linux, where `win32.join` would name a literal
  * file in the working directory.
  */
-export function windowsServiceFiles(novaHome: string, joinPath: (...parts: string[]) => string = winPath.join) {
-  const run = joinPath(novaHome, 'run');
+export function windowsServiceFiles(rooksHome: string, joinPath: (...parts: string[]) => string = winPath.join) {
+  const run = joinPath(rooksHome, 'run');
   return {
     launcher: joinPath(run, 'rooks-service.cmd'),
     /** Launcher of revision 1, kept so a restored revision-1 task still starts. */
@@ -404,13 +404,13 @@ export function windowsServiceFiles(novaHome: string, joinPath: (...parts: strin
      *  account (`verifyTaskStartedStep`); removed by an install whose task runs
      *  and by an uninstall. */
     refused: joinPath(run, 'service-refused'),
-    log: joinPath(novaHome, 'tmp', 'daemon.log'),
+    log: joinPath(rooksHome, 'tmp', 'daemon.log'),
   };
 }
 
 /** Where the launcher the task runs lives. */
-export function windowsLauncherPath(novaHome: string): string {
-  return windowsServiceFiles(novaHome).launcher;
+export function windowsLauncherPath(rooksHome: string): string {
+  return windowsServiceFiles(rooksHome).launcher;
 }
 
 /** A value written literally into a batch file: cmd expands `%` everywhere,
@@ -485,9 +485,9 @@ const SESSION_WITNESS_CHECK = [
  * accented user name intact; everything before it is ASCII.
  */
 export function renderWindowsLauncher(
-  opts: Pick<ServiceOpts, 'novaHome' | 'installDir' | 'heapMb' | 'port' | 'nodePath' | 'environment'>,
+  opts: Pick<ServiceOpts, 'rooksHome' | 'installDir' | 'heapMb' | 'port' | 'nodePath' | 'environment'>,
 ): string {
-  const files = windowsServiceFiles(opts.novaHome);
+  const files = windowsServiceFiles(opts.rooksHome);
   const boot = winPath.join(opts.installDir, 'dist', 'boot.js');
   const environment: Record<string, string> = {
     ...(opts.environment ?? {}),
@@ -496,7 +496,7 @@ export function renderWindowsLauncher(
     // Set on the PROCESS only: on the user, it would make every Electron
     // application of the machine behave as Node.
     ...(isBundledNode(opts.nodePath, 'win32') ? {} : { ELECTRON_RUN_AS_NODE: '1' }),
-    ROOKS_HOME: opts.novaHome,
+    ROOKS_HOME: opts.rooksHome,
     PORT: String(opts.port),
     ROOKS_SERVICE_LOG: files.log,
     ROOKS_SESSION_WITNESS: files.sessionWitness,
@@ -538,11 +538,11 @@ export function renderWindowsLauncher(
  * outer pair and keeps the path quoted, whatever characters it holds — without
  * `/s`, a `&` or `(` in the path makes cmd strip the quotes themselves.
  */
-export function windowsTaskCommand(opts: Pick<ServiceOpts, 'novaHome'>): string {
+export function windowsTaskCommand(opts: Pick<ServiceOpts, 'rooksHome'>): string {
   // `win32.join`, not `join`: this string is only ever read by a Windows shell,
   // and building it on any other platform — which is where it gets TESTED —
   // would slip forward slashes into a path `cmd` then splits on its own rules.
-  return `/d /s /c ""${windowsLauncherPath(opts.novaHome)}""`;
+  return `/d /s /c ""${windowsLauncherPath(opts.rooksHome)}""`;
 }
 
 /**
@@ -580,7 +580,7 @@ export function windowsTaskUserId(opts: Pick<ServiceOpts, 'userName' | 'userDoma
  * - `RestartOnFailure` only covers a launch that fails (W5); kept for that.
  */
 export function renderTaskXml(
-  opts: Pick<ServiceOpts, 'userName' | 'novaHome' | 'installDir'> & { userId?: string },
+  opts: Pick<ServiceOpts, 'userName' | 'rooksHome' | 'installDir'> & { userId?: string },
 ): string {
   return `<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -659,7 +659,7 @@ export function readSessionWitnessCommand(file: string): string[] {
 export function repairSessionWitness(opts: ServiceOpts): ServiceResult {
   const lines: string[] = [];
   if (opts.platform !== 'win32') return { ok: true, code: 0, lines: [`nothing to repair on ${opts.platform}: only the Windows task keeps a session witness`] };
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   if (!opts.dryRun && !existsSync(files.launcher)) {
     return { ok: false, code: 1, lines: ['no Rooks service is installed here: run `rooks service install`'] };
   }
@@ -686,8 +686,8 @@ export function repairSessionWitness(opts: ServiceOpts): ServiceResult {
  * stopping a systemd unit does. A daemon not started by a launcher (revision
  * 1, or the desktop's embedded one) is not matched.
  */
-export function stopLauncherStep(novaHome: string): ElevatedStep {
-  const needle = windowsLauncherPath(novaHome).toLowerCase();
+export function stopLauncherStep(rooksHome: string): ElevatedStep {
+  const needle = windowsLauncherPath(rooksHome).toLowerCase();
   return {
     label: 'stop',
     program: 'powershell',
@@ -811,12 +811,12 @@ export const WINDOWS_TASK_REFUSED_REASON = `Windows registered the ${WINDOWS_TAS
   + 'without an open session. Rooks runs its built-in daemon instead: it starts with the app and stops when you close it.';
 
 function writeRevision(opts: ServiceOpts, lines: string[]): void {
-  const file = windowsServiceFiles(opts.novaHome, join).revision;
+  const file = windowsServiceFiles(opts.rooksHome, join).revision;
   write(file, `${WINDOWS_SERVICE_REVISION}\n`, opts.dryRun ?? false, lines);
 }
 
 function clearRevision(opts: ServiceOpts): void {
-  if (!opts.dryRun) rmSync(windowsServiceFiles(opts.novaHome, join).revision, { force: true });
+  if (!opts.dryRun) rmSync(windowsServiceFiles(opts.rooksHome, join).revision, { force: true });
 }
 
 /**
@@ -825,14 +825,14 @@ function clearRevision(opts: ServiceOpts): void {
  */
 function replacedLauncherSteps(opts: ServiceOpts): ElevatedStep[] {
   const home = opts.replacing?.home;
-  if (!home || windowsLauncherPath(home).toLowerCase() === windowsLauncherPath(opts.novaHome).toLowerCase()) return [];
+  if (!home || windowsLauncherPath(home).toLowerCase() === windowsLauncherPath(opts.rooksHome).toLowerCase()) return [];
   return [{ ...stopLauncherStep(home), label: 'stop-replaced' }];
 }
 
 function installWindows(opts: ServiceOpts, lines: string[]): ServiceResult {
   // Filesystem writes use the host's separators, including in cross-platform
   // tests. Only what Windows itself reads requires Windows separators.
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   let launcher: string;
   try {
     launcher = renderWindowsLauncher(opts);
@@ -855,7 +855,7 @@ function installWindows(opts: ServiceOpts, lines: string[]): ServiceResult {
     { label: 'create', args: ['/Create', '/TN', WINDOWS_TASK, '/XML', file, '/F'], stopOnFailure: true },
     // A reinstall replaces a daemon this launcher already holds: `/Run` alone
     // would be dropped by IgnoreNew and leave the old one serving.
-    stopLauncherStep(opts.novaHome),
+    stopLauncherStep(opts.rooksHome),
     ...replacedLauncherSteps(opts),
     // Never during onboarding: it ended the embedded daemon answering the
     // wizard, whose request then failed ("Failed to fetch", 0.1.2-rc.5).
@@ -920,7 +920,7 @@ function uninstallWindows(opts: ServiceOpts, lines: string[]): ServiceResult | n
   const { codes, output, cancelled } = runElevated(opts, lines, [
     { label: 'end', args: ['/End', '/TN', WINDOWS_TASK] },
     { label: 'delete', args: ['/Delete', '/TN', WINDOWS_TASK, '/F'] },
-    stopLauncherStep(opts.novaHome),
+    stopLauncherStep(opts.rooksHome),
     ...replacedLauncherSteps(opts),
     stopInstallationProcessesStep(opts),
   ]);
@@ -936,7 +936,7 @@ function uninstallWindows(opts: ServiceOpts, lines: string[]): ServiceResult | n
     lines.push(`scheduled task ${WINDOWS_TASK} was not deleted (not registered, or Windows refused): ${output.trim() || 'no detail'}`);
     return null;
   }
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   // `repairDeclined` goes too: kept, it would silence the offer to bring the
   // task back after a reinstall of the very version that was declined. So does
   // `refused`: kept, doctor would report no supervisor and the setup would
@@ -986,18 +986,18 @@ function restoreWindowsDefinition(opts: ServiceOpts, previous: string, lines: st
   writeTaskXml(file, previous, opts.dryRun ?? false, lines);
   const { codes, output, cancelled } = runElevated(opts, lines, [
     { label: 'create', args: ['/Create', '/TN', WINDOWS_TASK, '/XML', file, '/F'], stopOnFailure: true },
-    stopLauncherStep(opts.novaHome),
+    stopLauncherStep(opts.rooksHome),
     { label: 'run', args: ['/Run', '/TN', WINDOWS_TASK] },
   ]);
   if (cancelled) return { ok: false, code: 1, lines, reason: 'elevation refused' };
   if (codes.get('create') !== 0) return { ok: false, code: 1, lines, reason: output.trim() || 'schtasks refused the previous task' };
   // A task that does not run this launcher is an older revision: the desktop
   // must try the migration again at its next launch.
-  if (!previous.toLowerCase().includes(windowsLauncherPath(opts.novaHome).toLowerCase())) clearRevision(opts);
+  if (!previous.toLowerCase().includes(windowsLauncherPath(opts.rooksHome).toLowerCase())) clearRevision(opts);
   // Same launcher: the revision `installWindows` just recorded describes the
   // definition that was taken away, and the migration would never run again.
   // Not cleared: to the desktop, no revision file means no task at all.
-  else write(windowsServiceFiles(opts.novaHome, join).revision, `${WINDOWS_REVISION_RESTORED}\n`, opts.dryRun ?? false, lines);
+  else write(windowsServiceFiles(opts.rooksHome, join).revision, `${WINDOWS_REVISION_RESTORED}\n`, opts.dryRun ?? false, lines);
   const ok = codes.get('run') === 0;
   return { ok, code: ok ? 0 : 1, lines, ...(ok ? {} : { reason: output.trim() || 'the previous task could not be started' }) };
 }
@@ -1006,7 +1006,7 @@ function removeWindowsDefinition(opts: ServiceOpts, lines: string[]): ServiceRes
   const { codes, output, cancelled } = runElevated(opts, lines, [
     { label: 'end', args: ['/End', '/TN', WINDOWS_TASK] },
     { label: 'delete', args: ['/Delete', '/TN', WINDOWS_TASK, '/F'] },
-    stopLauncherStep(opts.novaHome),
+    stopLauncherStep(opts.rooksHome),
   ]);
   const ok = !cancelled && codes.get('delete') === 0;
   if (ok) clearRevision(opts);
@@ -1020,14 +1020,14 @@ function removeWindowsDefinition(opts: ServiceOpts, lines: string[]): ServiceRes
  * `IgnoreNew` while the old daemon still lives. The task is not deleted or
  * rewritten, so nothing here depends on the revision.
  */
-export function windowsRestartSteps(novaHome: string): ElevatedStep[] {
-  return [stopLauncherStep(novaHome), { label: 'run', args: ['/Run', '/TN', WINDOWS_TASK] }];
+export function windowsRestartSteps(rooksHome: string): ElevatedStep[] {
+  return [stopLauncherStep(rooksHome), { label: 'run', args: ['/Run', '/TN', WINDOWS_TASK] }];
 }
 
 export function restartWindowsService(opts: ServiceOpts): ServiceResult {
   const lines: string[] = [];
   if (opts.platform !== 'win32') return { ok: false, code: 1, lines, reason: `no Windows task to restart on ${opts.platform}` };
-  const { codes, output, cancelled } = runElevated(opts, lines, windowsRestartSteps(opts.novaHome));
+  const { codes, output, cancelled } = runElevated(opts, lines, windowsRestartSteps(opts.rooksHome));
   if (cancelled) return { ok: false, code: 1, lines, reason: 'elevation refused' };
   const started = codes.get('run');
   if (started !== 0) {
@@ -1043,16 +1043,16 @@ export function restartWindowsService(opts: ServiceOpts): ServiceResult {
  * again before waiting on the daemon — a stopped Windows task is disabled, so
  * nothing else would. Under `run/`, with the task's own files; not a secret.
  */
-export function serviceStoppedMarker(novaHome: string): string {
-  return join(novaHome, 'run', 'service-stopped');
+export function serviceStoppedMarker(rooksHome: string): string {
+  return join(rooksHome, 'run', 'service-stopped');
 }
 
 function writeStoppedMarker(opts: ServiceOpts, lines: string[]): void {
-  write(serviceStoppedMarker(opts.novaHome), `${new Date().toISOString()}\n`, opts.dryRun ?? false, lines);
+  write(serviceStoppedMarker(opts.rooksHome), `${new Date().toISOString()}\n`, opts.dryRun ?? false, lines);
 }
 
 function clearStoppedMarker(opts: ServiceOpts): void {
-  if (!opts.dryRun) rmSync(serviceStoppedMarker(opts.novaHome), { force: true });
+  if (!opts.dryRun) rmSync(serviceStoppedMarker(opts.rooksHome), { force: true });
 }
 
 /**
@@ -1062,11 +1062,11 @@ function clearStoppedMarker(opts: ServiceOpts): void {
  * trigger to start the daemon again within five minutes (the Known issue of
  * 0.1.5), and `start` only has to enable it again. The task's files stay.
  */
-export function windowsStopSteps(opts: Pick<ServiceOpts, 'novaHome' | 'installDir' | 'nodePath'>): ElevatedStep[] {
+export function windowsStopSteps(opts: Pick<ServiceOpts, 'rooksHome' | 'installDir' | 'nodePath'>): ElevatedStep[] {
   return [
     { label: 'disable', args: ['/Change', '/TN', WINDOWS_TASK, '/DISABLE'], stopOnFailure: true },
     { label: 'end', args: ['/End', '/TN', WINDOWS_TASK] },
-    stopLauncherStep(opts.novaHome),
+    stopLauncherStep(opts.rooksHome),
     stopInstallationProcessesStep(opts),
   ];
 }
@@ -1200,7 +1200,7 @@ function linuxService(opts: ServiceOpts): ServiceResult {
   if (unit.kind === 'unverified') return refusal(unit.reason);
   const { fields, home, directory } = unit;
   if (home === null || directory === null
-    || home !== resolve(opts.novaHome)
+    || home !== resolve(opts.rooksHome)
     || (directory !== resolve(opts.installDir) && !ownRelease(opts, directory))) {
     return refusal('The rooks-orchestrator service belongs to another installation or data directory. It will not be replaced or stopped.');
   }
@@ -1309,12 +1309,12 @@ function daemonPlistOf(opts: Pick<ServiceOpts, 'launchDaemonsDir'>): string {
 }
 
 /** The launcher the LaunchDaemon runs. */
-export function macosLauncherPath(novaHome: string): string {
-  return join(novaHome, 'run', 'rooks-service.sh');
+export function macosLauncherPath(rooksHome: string): string {
+  return join(rooksHome, 'run', 'rooks-service.sh');
 }
 
 function wantsLaunchDaemon(opts: ServiceOpts): boolean {
-  return opts.offSession ?? existsSync(claudeTokenMarkerPath(opts.novaHome));
+  return opts.offSession ?? existsSync(claudeTokenMarkerPath(opts.rooksHome));
 }
 
 const SYSTEM_TARGET = `system/${MACOS_LABEL}`;
@@ -1337,14 +1337,14 @@ function daemonPath(homeDir: string): string {
  * inside the user's home; the launcher redirects its own output instead.
  */
 export function renderLaunchDaemonPlist(
-  opts: Pick<ServiceOpts, 'homeDir' | 'novaHome' | 'userName'>,
+  opts: Pick<ServiceOpts, 'homeDir' | 'rooksHome' | 'userName'>,
 ): string {
   const environment = {
     HOME: opts.homeDir,
     USER: opts.userName,
     LOGNAME: opts.userName,
     PATH: daemonPath(opts.homeDir),
-    ROOKS_HOME: opts.novaHome,
+    ROOKS_HOME: opts.rooksHome,
     ROOKS_SERVICE_KIND: LAUNCHD_SYSTEM_KIND,
   };
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -1356,7 +1356,7 @@ export function renderLaunchDaemonPlist(
   <key>ProgramArguments</key>
   <array>
     <string>/bin/sh</string>
-    <string>${escapeXml(macosLauncherPath(opts.novaHome))}</string>
+    <string>${escapeXml(macosLauncherPath(opts.rooksHome))}</string>
   </array>
   <key>WorkingDirectory</key><string>${escapeXml(opts.homeDir)}</string>
   <key>RunAtLoad</key><true/>
@@ -1375,15 +1375,15 @@ ${Object.entries(environment).map(([key, value]) => `    <key>${escapeXml(key)}<
  * supervises the daemon itself. Rewritten at every install and update.
  */
 export function renderMacLauncher(
-  opts: Pick<ServiceOpts, 'homeDir' | 'novaHome' | 'installDir' | 'heapMb' | 'port' | 'nodePath' | 'environment'>,
+  opts: Pick<ServiceOpts, 'homeDir' | 'rooksHome' | 'installDir' | 'heapMb' | 'port' | 'nodePath' | 'environment'>,
 ): string {
-  const log = join(opts.novaHome, 'tmp', 'daemon.log');
+  const log = join(opts.rooksHome, 'tmp', 'daemon.log');
   const environment: Record<string, string> = {
     PATH: daemonPath(opts.homeDir),
     NODE_ENV: 'production',
     PORT: String(opts.port),
     ...(opts.environment ?? {}),
-    ROOKS_HOME: opts.novaHome,
+    ROOKS_HOME: opts.rooksHome,
     ROOKS_SERVICE_KIND: LAUNCHD_SYSTEM_KIND,
   };
   for (const key of Object.keys(environment)) {
@@ -1611,7 +1611,7 @@ function restartLaunchDaemon(opts: ServiceOpts, lines: string[]): boolean {
 }
 
 function writeLauncher(opts: ServiceOpts, content: string, lines: string[]): void {
-  const file = macosLauncherPath(opts.novaHome);
+  const file = macosLauncherPath(opts.rooksHome);
   write(file, content, opts.dryRun ?? false, lines);
   // Holds the user's environment; nobody else needs to read it.
   if (!opts.dryRun) chmodSync(file, 0o700);
@@ -1627,7 +1627,7 @@ function readIfExists(file: string): string | null {
  * only rewrites the launcher and restarts the daemon.
  */
 function applyLaunchDaemon(opts: ServiceOpts, lines: string[], plist: string, launcher: string): ServiceResult {
-  const launcherFile = macosLauncherPath(opts.novaHome);
+  const launcherFile = macosLauncherPath(opts.rooksHome);
   const previousLauncher = readIfExists(launcherFile);
   const agentFile = plistPath(opts.homeDir);
   const previousAgent = readIfExists(agentFile);
@@ -1716,7 +1716,7 @@ function removeLaunchDaemon(opts: ServiceOpts, lines: string[]): ServiceResult {
     const reason = `the LaunchDaemon could not be removed: ${output.trim() || 'unknown error'}`;
     return { ok: false, code: 1, lines: [...lines, reason], reason };
   }
-  if (!opts.dryRun) rmSync(macosLauncherPath(opts.novaHome), { force: true });
+  if (!opts.dryRun) rmSync(macosLauncherPath(opts.rooksHome), { force: true });
   lines.push(`${opts.dryRun ? '(dry-run) would remove' : 'removed'} ${daemonPlistOf(opts)}`);
   return { ok: true, code: 0, lines };
 }
@@ -1762,7 +1762,7 @@ function uninstallDarwin(opts: ServiceOpts, lines: string[]): ServiceResult {
 function statusDarwin(opts: ServiceOpts): ServiceResult {
   const daemon = existsSync(daemonPlistOf(opts));
   const agent = existsSync(plistPath(opts.homeDir));
-  const token = existsSync(claudeTokenMarkerPath(opts.novaHome));
+  const token = existsSync(claudeTokenMarkerPath(opts.rooksHome));
   const res = opts.exec('launchctl', ['print', daemon ? SYSTEM_TARGET : guiTarget(opts.uid)]);
   const running = res.code === 0;
   const lines = [
@@ -1781,7 +1781,7 @@ type DarwinDefinition = { launchd: 'daemon'; plist: string; launcher: string | n
 function readDarwinDefinition(opts: ServiceOpts): string | null {
   const plist = readIfExists(daemonPlistOf(opts));
   if (plist !== null) {
-    const definition: DarwinDefinition = { launchd: 'daemon', plist, launcher: readIfExists(macosLauncherPath(opts.novaHome)) };
+    const definition: DarwinDefinition = { launchd: 'daemon', plist, launcher: readIfExists(macosLauncherPath(opts.rooksHome)) };
     return JSON.stringify(definition);
   }
   return readIfExists(plistPath(opts.homeDir));
@@ -1901,7 +1901,7 @@ function takeDownReplacedUnits(opts: ServiceOpts, lines: string[]): ServiceResul
     }
     rmSync(file, { force: true });
     lines.push(`removed ${file}`);
-    const marker = join(runtimeDir(opts.novaHome), 'installed');
+    const marker = join(runtimeDir(opts.rooksHome), 'installed');
     if (readIfPresent(marker)?.trim() === unit) rmSync(marker, { force: true });
   }
   return null;
@@ -1981,13 +1981,13 @@ export function uninstallService(opts: ServiceOpts): ServiceResult {
     run(opts, lines, 'systemctl', ['--user', 'daemon-reload']);
   }
   // Said out loud on purpose: the user must know their data survived.
-  lines.push(`${opts.novaHome} left untouched — missions, agents and database are still there.`);
+  lines.push(`${opts.rooksHome} left untouched — missions, agents and database are still there.`);
   return { ok: true, code: 0, lines };
 }
 
 export function statusService(opts: ServiceOpts): ServiceResult {
   const res = opts.platform === 'win32' ? statusWindows(opts) : opts.platform === 'darwin' ? statusDarwin(opts) : linuxService(opts);
-  if (existsSync(serviceStoppedMarker(opts.novaHome))) {
+  if (existsSync(serviceStoppedMarker(opts.rooksHome))) {
     res.lines.push('stopped   : by the user (rooks service stop); it starts again when the app opens, or with rooks service start');
   }
   return res;
@@ -2107,13 +2107,13 @@ function readIfPresent(path: string): string | null {
 /** The definition files of the installed service, as the supervisor will run them. */
 function serviceDefinitionMarked(opts: ServiceOpts): boolean | null {
   if (opts.platform === 'win32') {
-    const launcher = readIfPresent(windowsServiceFiles(opts.novaHome, join).launcher);
+    const launcher = readIfPresent(windowsServiceFiles(opts.rooksHome, join).launcher);
     return launcher === null ? null : /^set "ROOKS_DESKTOP_SERVICE=1"\r?$/m.test(launcher);
   }
   if (opts.platform === 'darwin') {
     // The LaunchDaemon's environment lives in its launcher, the agent's in its plist.
     if (existsSync(daemonPlistOf(opts))) {
-      const launcher = readIfPresent(macosLauncherPath(opts.novaHome));
+      const launcher = readIfPresent(macosLauncherPath(opts.rooksHome));
       return launcher === null ? null : /^export ROOKS_DESKTOP_SERVICE='?1'?$/m.test(launcher);
     }
     const plist = readIfPresent(plistPath(opts.homeDir));
@@ -2145,7 +2145,7 @@ export function windowsServiceNotes(opts: ServiceOpts): string[] {
   if (opts.platform !== 'win32') return [];
   const lines: string[] = [];
   try {
-    const files = windowsServiceFiles(opts.novaHome, join);
+    const files = windowsServiceFiles(opts.rooksHome, join);
     const witness = opts.exec('powershell', readSessionWitnessCommand(files.sessionWitness));
     lines.push(witness.code === 0 ? 'session witness: opens'
       : witness.code === 2 ? 'session witness: missing - run `rooks service install`'

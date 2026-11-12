@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { isBundledNode, packagedRuntime } from './bundled-node.js';
 import { nodeRuntime } from './node-runtime.js';
 import { isBundledNode as launcherCopy } from '../../bin/cli-runtime.mjs';
-import type { NovaConfig } from '../config/schema.js';
+import type { RooksConfig } from '../config/schema.js';
 
 const node = { ...process.versions, electron: undefined } as unknown as NodeJS.ProcessVersions;
 const electron = { ...process.versions, electron: '33.4.11' } as NodeJS.ProcessVersions;
@@ -46,7 +46,7 @@ test('a package is its Electron runtime or its shipped Node, never a source chec
 
 test('a child of the shipped Node runs on it, without the Electron flag', () => {
   // nodeRuntime reads only the pinned binary; none pinned here.
-  const cfg = { host: { binaries: {} } } as unknown as NovaConfig;
+  const cfg = { host: { binaries: {} } } as unknown as RooksConfig;
   const execPath = '/opt/Rooks/resources/node/node';
   assert.deepEqual(nodeRuntime(cfg, { execPath, platform: 'linux' }), { command: execPath, env: {} });
   assert.deepEqual(nodeRuntime(cfg, { execPath: '/opt/Rooks/rooks', electron: '33.4.11', platform: 'linux' }),
@@ -56,7 +56,7 @@ test('a child of the shipped Node runs on it, without the Electron flag', () => 
 
 test('a service of the shipped Node runs it, staged inside the release, without the Electron flag', async () => {
   const { packagedServiceOptions } = await import('./packaged-service.js');
-  const base = { platform: 'linux', homeDir: '/home/sam', novaHome: '/home/sam/.rooks', installDir: '/opt/Rooks/resources/orchestrator',
+  const base = { platform: 'linux', homeDir: '/home/sam', rooksHome: '/home/sam/.rooks', installDir: '/opt/Rooks/resources/orchestrator',
     userName: 'sam', uid: 1000, heapMb: 512, port: 3010, nodePath: '/opt/Rooks/resources/node/node' } as unknown as import('./service-install.js').ServiceOpts;
   const linux = packagedServiceOptions(base, '/opt/Rooks/resources/node/node', 3110, '0.1.7');
   assert.match(linux.nodePath, /desktop-runtime[\\/]releases[\\/][^\\/]+[\\/]resources[\\/]node[\\/]node$/);
@@ -72,7 +72,7 @@ test('a service of the shipped Node runs it, staged inside the release, without 
 
 test('the Windows launcher and the update runner set the Electron flag only for Electron', async () => {
   const { renderWindowsLauncher } = await import('./service-install.js');
-  const opts = { novaHome: 'C:\\Users\\Sam\\.rooks', installDir: 'C:\\Programs\\Rooks\\resources\\orchestrator', heapMb: 512, port: 3010 };
+  const opts = { rooksHome: 'C:\\Users\\Sam\\.rooks', installDir: 'C:\\Programs\\Rooks\\resources\\orchestrator', heapMb: 512, port: 3010 };
   assert.doesNotMatch(renderWindowsLauncher({ ...opts, nodePath: 'C:\\Programs\\Rooks\\resources\\node\\node.exe' }), /ELECTRON_RUN_AS_NODE/);
   assert.match(renderWindowsLauncher({ ...opts, nodePath: 'C:\\Programs\\Rooks\\Rooks.exe' }), /set "ELECTRON_RUN_AS_NODE=1"/);
   const { runnerEnvironment } = await import('./packaged-apply.js');

@@ -132,7 +132,7 @@ test('the system prompt rides in front of the first message only', async () => {
   events.length = 0;
   await driver.prompt('echo');
   const first = said(events);
-  assert.match(first, /^<nova_instructions>\nYou are a Rooks agent\.\n<\/nova_instructions>\|echo$/);
+  assert.match(first, /^<rooks_instructions>\nYou are a Rooks agent\.\n<\/rooks_instructions>\|echo$/);
   events.length = 0;
   await driver.prompt('echo');
   assert.equal(said(events), 'echo');
@@ -343,7 +343,7 @@ test('resume: a session the agent no longer has starts a fresh one, and says so'
   assert.equal(info.sessionId, 'sess-1');
   events.length = 0;
   await driver.prompt('echo');
-  assert.match(said(events), /^<nova_instructions>/, 'a fresh session gets the system prompt');
+  assert.match(said(events), /^<rooks_instructions>/, 'a fresh session gets the system prompt');
 });
 
 /* ── Session set-up ─────────────────────────────────────────────────────── */

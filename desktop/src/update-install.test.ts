@@ -104,8 +104,8 @@ test('the new version removes the previous AppImage once it runs', async () => {
 });
 
 test('the .deb command quotes its path for a POSIX shell', () => {
-  assert.equal(debInstallCommand('/home/a b/.rooks/updates/0.1.8/nova_0.1.8_amd64.deb'),
-    "sudo apt install '/home/a b/.rooks/updates/0.1.8/nova_0.1.8_amd64.deb'");
+  assert.equal(debInstallCommand('/home/a b/.rooks/updates/0.1.8/rooks_0.1.8_amd64.deb'),
+    "sudo apt install '/home/a b/.rooks/updates/0.1.8/rooks_0.1.8_amd64.deb'");
   assert.equal(debInstallCommand("/home/o'neil/x.deb"), "sudo apt install '/home/o'\\''neil/x.deb'");
 });
 

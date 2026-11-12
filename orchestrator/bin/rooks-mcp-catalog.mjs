@@ -1256,7 +1256,7 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   },
   {
-    name: 'nova_http_call',
+    name: 'rooks_http_call',
     title: 'Call an API with a stored secret',
     description:
       'Performs an HTTP call under a BROKERED secret identity, without ever ' +
@@ -1320,7 +1320,7 @@ const TOOLS = [
       'from the user straight to the vault and NEVER reaches you, this response or the transcript. Returns ' +
       '{ id, status: pending, message } at once; the answer comes back later as a message ' +
       '`[secret request] {"name": …, "status": "provided" | "refused"}` — do not ask again meanwhile. ' +
-      'Give `hosts` to use it through `nova_http_call` (identity = the name): only the broker hides a value ' +
+      'Give `hosts` to use it through `rooks_http_call` (identity = the name): only the broker hides a value ' +
       'for real. Give `origin` (e.g. https://app.example.com) for a login or 2FA page in the built-in browser: ' +
       '`fill_credential` with the id `sr-…` from the answer (or `list_credentials`) fills that page\'s password or ' +
       'one-time-code field. With neither, it enters your environment at your NEXT launch as $NAME, where anything you ' +
@@ -1691,7 +1691,7 @@ async function runTool(rawName, args, ctx) {
       }
       return await call('POST', '/api/secrets/requests', body);
     }
-    case 'nova_http_call': {
+    case 'rooks_http_call': {
       // The daemon resolves WHO is asking from the mission row, not from what
       // we send here: identity and grant are not ours to claim.
       const body = { identity: args.identity, path: args.path };
@@ -1780,7 +1780,7 @@ async function runTool(rawName, args, ctx) {
 /** Same bound as the daemon (`attachments.ts`): refused here before a 15 MB read. */
 const TODO_ATTACHMENT_MAX_BYTES = 15 * 1024 * 1024;
 
-function novaHome() {
+function rooksHome() {
   return process.env.ROOKS_HOME || join(homedir(), '.rooks');
 }
 
@@ -1792,7 +1792,7 @@ function novaHome() {
  */
 function withTodoAttachmentPath(file) {
   if (!file || typeof file.id !== 'string' || typeof file.name !== 'string' || !Number.isSafeInteger(file.todo_id)) return file;
-  const path = join(novaHome(), 'uploads', 'todos', String(file.todo_id), file.id, file.name);
+  const path = join(rooksHome(), 'uploads', 'todos', String(file.todo_id), file.id, file.name);
   return fs.existsSync(path) ? { ...file, path } : file;
 }
 

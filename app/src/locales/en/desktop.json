@@ -95,7 +95,7 @@
       "handoverKept": "The Rooks background service did not answer.",
       "handoverKeptDetail": "Setup continues with Rooks as it runs in this window. Quit and reopen Rooks once setup is finished: it tries the service again. Your data remains in {home}.",
       "refused": "Windows does not start the Rooks background service for this account.",
-      "refusedDetail": "The NovaOrchestrator scheduled task is registered, but Windows has never run it. This happens with work or school accounts on a PC joined to Microsoft Entra ID. Rooks runs its built-in daemon instead: it starts with the app and stops when you close it or sign out. To remove the unused task: rooks service uninstall (Windows asks for permission).",
+      "refusedDetail": "The RooksOrchestrator scheduled task is registered, but Windows has never run it. This happens with work or school accounts on a PC joined to Microsoft Entra ID. Rooks runs its built-in daemon instead: it starts with the app and stops when you close it or sign out. To remove the unused task: rooks service uninstall (Windows asks for permission).",
       "repair": "The Rooks background service is no longer installed.",
       "repairDetail": "Without it, Rooks does not start with Windows and stops when you close the app or sign out. Reinstalling it asks for Windows permission once.",
       "repairConfirm": "Reinstall the service",

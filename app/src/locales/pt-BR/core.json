@@ -195,8 +195,8 @@
       "project": "projeto",
       "plugin": "plugin"
     },
-    "sectionNova": "Skills do {brand}",
-    "sectionNovaHint": "~/.rooks/skills — vinculáveis a um agente, no catálogo dele ou importadas por inteiro",
+    "sectionRooks": "Skills do {brand}",
+    "sectionRooksHint": "~/.rooks/skills — vinculáveis a um agente, no catálogo dele ou importadas por inteiro",
     "sectionUser": "Skills globais do Claude",
     "sectionUserHint": "~/.claude/skills e ~/.claude/commands — não carregadas pelas missões; importe uma para o {brand} para vinculá-la",
     "sectionProject": "Skills do projeto",
@@ -427,7 +427,7 @@
     "filter": "Filtrar…",
     "memory": "Memória",
     "timeoutMs": "Tempo limite (ms)",
-    "retries": "Novas tentativas",
+    "retries": "Rookss tentativas",
     "completion": "Conclusão",
     "routes": "Rotas de saída",
     "execution": "Execução",
@@ -665,7 +665,7 @@
       "completion": "Conclusão",
       "routes": "Rotas de saída",
       "timeoutMs": "Tempo limite (ms)",
-      "retries": "Novas tentativas",
+      "retries": "Rookss tentativas",
       "skillId": "Skill",
       "expr": "Expressão",
       "on": "Caminho do valor",
@@ -1468,7 +1468,7 @@
       "reply": "Enviando a resposta"
     },
     "attempts": "{count} tentativas com falha · recebida em {date}",
-    "gaveUp": "Novas tentativas interrompidas em {date}",
+    "gaveUp": "Rookss tentativas interrompidas em {date}",
     "countFailed": "{count} com falha",
     "countRetrying": "{count} em rooks tentativa",
     "countQueued": "{count} aguardando",
@@ -2034,9 +2034,9 @@
     "providerRecovered": "Reconectado após {count} tentativas",
     "providerRecoveredOne": "Reconectado após 1 tentativa",
     "providerExhausted": "Servidores de {provider} inacessíveis após {count} tentativas",
-    "providerExhaustedWithNova": "Servidores de {provider} inacessíveis após {count} tentativas do provedor e {rooks} tentativas do Rooks",
-    "novaRetryIn": "Rooks tentativa do Rooks {attempt}/{max} em {seconds}s…",
-    "novaRetryRunning": "Rooks tentativa do Rooks {attempt}/{max}…",
+    "providerExhaustedWithRooks": "Servidores de {provider} inacessíveis após {count} tentativas do provedor e {rooks} tentativas do Rooks",
+    "rooksRetryIn": "Rooks tentativa do Rooks {attempt}/{max} em {seconds}s…",
+    "rooksRetryRunning": "Rooks tentativa do Rooks {attempt}/{max}…",
     "retryTurn": "Tentar novamente",
     "retryTurnUnavailable": "Nada para tentar novamente: a última mensagem não está mais nesta conversa.",
     "quotaExhaustedTitle": "Cota esgotada",
@@ -2293,7 +2293,7 @@
       "other": "Seu próprio documento"
     }
   },
-  "novaPreamble": {
+  "rooksPreamble": {
     "title": "Preâmbulo do Rooks",
     "description": "Montado na hora a cada inicialização e enviado primeiro a todos os agentes. Somente leitura: vem do Rooks, não de um arquivo seu. Exibido como montado para o agente principal.",
     "empty": "Nenhum preâmbulo para este agente.",
@@ -2454,8 +2454,8 @@
     "llmLabel": "LLM",
     "llmHint": "Qual CLI de provedor executa este agente e em qual modelo. Cada conta entra por conta própria.",
     "subscription": "Assinatura",
-    "skillSectionNovaLabel": "Skills do ROOKS",
-    "skillSectionNovaHint": "anexáveis — no catálogo ou importadas para o prompt",
+    "skillSectionRooksLabel": "Skills do ROOKS",
+    "skillSectionRooksHint": "anexáveis — no catálogo ou importadas para o prompt",
     "skillSectionProjectLabel": "Skills do projeto",
     "skillSectionProjectHint": "<cwd>/.claude — carregadas nativamente apenas pelo Claude Code",
     "skillSectionUserLabel": "Skills globais",
@@ -2498,7 +2498,7 @@
     "mcpEmpty": "Nenhum servidor MCP adicionado ainda — adicione em",
     "mcpBuiltinTitle": "Integrado ao Rooks — sempre ativo, nada a conceder",
     "mcpBuiltinHint": "Todo agente recebe estes em qualquer backend, seja qual for a seleção abaixo, e a substituição de MCP de uma tarefa do Kanban nunca os remove. Algumas ferramentas do rooks (criar agentes ou projetos, declarar servidores MCP) também exigem as permissões da sua conta na página Usuários, que esta lista não altera.",
-    "mcpBuiltinNova": "Kanban, missões, agentes, memória, esta documentação",
+    "mcpBuiltinRooks": "Kanban, missões, agentes, memória, esta documentação",
     "mcpBuiltinAsk": "Formulários que perguntam a você no chat",
     "mcpBuiltinBrowser": "O navegador integrado do projeto, enquanto está em execução",
     "mcpBuiltinGrepai": "O índice semântico do projeto, quando o projeto tem um",
@@ -2624,7 +2624,7 @@
       "title": "Contêineres Docker",
       "description": "Se a stack do projeto está em execução, em qual URL local e qual serviço está fora do ar; inicie, reinicie ou pare."
     },
-    "novaDaemon": {
+    "rooksDaemon": {
       "title": "Daemon do Rooks",
       "description": "O estado do próprio Rooks, para o projeto rooks."
     },
@@ -3605,7 +3605,7 @@
     "reorderHint": "Arraste as alças para mudar a ordem nos seletores de modelo. Com o teclado, pressione Espaço em uma alça, use as setas e depois Espaço para soltar.",
     "toggle": "Ativar ou desativar {name}",
     "disableTitle": "Desativar {name}?",
-    "disableHint": "Ele desaparecerá dos seletores. Novas execuções que o usem explicitamente serão recusadas, sem fallback automático. As escolhas existentes abaixo serão mantidas.",
+    "disableHint": "Ele desaparecerá dos seletores. Rookss execuções que o usem explicitamente serão recusadas, sem fallback automático. As escolhas existentes abaixo serão mantidas.",
     "disable": "Desativar provedor",
     "managedHint": "Você pode renomear, adicionar, excluir e ocultar modelos, e alterar nomes, imagens e o modelo padrão. As configurações de conexão são gerenciadas pelo Rooks ou pelo plugin do provedor.",
     "origins": {

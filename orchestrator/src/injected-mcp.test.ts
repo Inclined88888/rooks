@@ -41,7 +41,7 @@ test('the list covers what every dialect registers, and the browser key is the r
 
 test('a server that is not Rooks\'s own is not in the list', () => {
   // `chrome-devtools` is the user's Chrome; the librarian excludes it on purpose.
-  for (const key of ['chrome-devtools', 'acme_crm', 'claude.ai Gmail', 'rooks-docs', 'novax']) {
+  for (const key of ['chrome-devtools', 'acme_crm', 'claude.ai Gmail', 'rooks-docs', 'fakex']) {
     assert.ok(!isInjectedMcpServer(key), key);
   }
 });

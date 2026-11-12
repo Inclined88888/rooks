@@ -1,6 +1,6 @@
 // A browser page can request a prompt; it receives no IPC object or other host capability.
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron');
-contextBridge.exposeInMainWorld('__novaNativePrompt', (message: string, defaultPrompt: string): string | null =>
+contextBridge.exposeInMainWorld('__rooksNativePrompt', (message: string, defaultPrompt: string): string | null =>
   ipcRenderer.sendSync('rooks:native-browser-prompt', message, defaultPrompt));
 
 // Recorder (TODO #461), then annotator (TODO #468). They live in this isolated world, so the page

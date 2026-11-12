@@ -243,7 +243,7 @@ test('the offer is the daemon status: a newer version and this machine\'s instal
   const win = artifact();
   const mac = artifact({ key: 'mac-universal-pkg', os: 'mac', arch: 'universal', format: 'pkg', name: 'Rooks-0.1.8.pkg' });
   const dmg = artifact({ key: 'mac-arm64-dmg', os: 'mac', arch: 'arm64', format: 'dmg', name: 'Rooks-0.1.8.dmg' });
-  const deb = artifact({ key: 'linux-x64-deb', os: 'linux', format: 'deb', name: 'nova_0.1.8_amd64.deb' });
+  const deb = artifact({ key: 'linux-x64-deb', os: 'linux', format: 'deb', name: 'rooks_0.1.8_amd64.deb' });
   const appimage = artifact({ key: 'linux-x64-appimage', os: 'linux', format: 'appimage', name: 'Rooks-0.1.8.AppImage' });
   const all = [win, mac, dmg, deb, appimage];
   const windows = { platform: 'win32' as const, arch: 'x64', appImage: false };

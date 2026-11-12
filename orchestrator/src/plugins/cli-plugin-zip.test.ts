@@ -24,7 +24,7 @@ const IMPORTS = [
   pathToFileURL(join(ORCH, 'tests', 'helpers', 'paid-license.ts')).href,
 ];
 
-function runNova(args: string[], home: string, extra: NodeJS.ProcessEnv = {}): Promise<{ code: number | null; stdout: string; stderr: string }> {
+function runRooks(args: string[], home: string, extra: NodeJS.ProcessEnv = {}): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     // A closed port by default: `add` asks the daemon for its Node, and a test never reaches the live one.
     const env: NodeJS.ProcessEnv = { ...process.env, ROOKS_HOME: home, ROOKS_RESOURCE_GUARD_ENABLED: '0', ROOKS_API: 'http://127.0.0.1:9', ROOKS_API_TOKEN: '', ...extra };
@@ -82,7 +82,7 @@ test('a "no" at the [y/N] uninstalls the package and removes the folder extracte
   const work = mkdtempSync(join(tmpdir(), 'rooks-cli-zip-src-'));
   try {
     const zip = pluginZip(work, 1);
-    const r = await runNova(['plugin', 'add', zip], home);
+    const r = await runRooks(['plugin', 'add', zip], home);
     assert.equal(r.code, 0, r.stderr);
     assert.match(r.stderr, /acme-zip-demo-1@1\.0\.0/, 'the confirmation names the plugin');
     assert.match(r.stderr, /requests: usage:read/);
@@ -104,7 +104,7 @@ test('a zip that is not a plugin is refused before anything is installed', async
   try {
     const bad = join(work, 'bad.zip');
     writeFileSync(bad, buildZip([{ path: 'p/index.js', data: 'x' }]));
-    const r = await runNova(['plugin', 'add', bad], home);
+    const r = await runRooks(['plugin', 'add', bad], home);
     assert.equal(r.code, 1);
     assert.match(r.stderr, /cannot install .*bad\.zip: /);
     assert.deepEqual(installed(home), {});
@@ -122,7 +122,7 @@ test('no daemon to ask: a zip whose engines.node excludes the CLI\'s Node instal
     mkdirSync(join(home, 'plugins'), { recursive: true });
     const zip = pluginZip(work, 3, { engines: { node: '>=999' } });
     // The closed port answers nothing: the CLI's Node is an estimate, it warns and leaves the daemon to decide.
-    const r = await runNova(['plugin', 'add', zip, '--yes'], home);
+    const r = await runRooks(['plugin', 'add', zip, '--yes'], home);
     assert.equal(r.code, 0, r.stderr);
     assert.match(r.stderr, /warning: plugin `acme-zip-demo-3` requires Node >=999.*daemon could not be reached/);
     assert.match(r.stderr, /The daemon checks it again when it loads the plugin/);
@@ -139,7 +139,7 @@ test('with --yes the zip is installed from the plugins folder, and its code neve
   try {
     mkdirSync(join(home, 'plugins'), { recursive: true });
     const zip = pluginZip(work, 2);
-    const r = await runNova(['plugin', 'add', zip, '--yes'], home);
+    const r = await runRooks(['plugin', 'add', zip, '--yes'], home);
     assert.equal(r.code, 0, r.stderr);
     assert.match(r.stdout, /acme-zip-demo-2@1\.0\.0 installed \(@acme\/zip-demo-2\)/);
     assert.match(r.stdout, /permissions: usage:read/);

@@ -195,8 +195,8 @@
       "project": "proyecto",
       "plugin": "plugin"
     },
-    "sectionNova": "Skills de {brand}",
-    "sectionNovaHint": "~/.rooks/skills: asignables a un agente, en su catálogo o importadas completas",
+    "sectionRooks": "Skills de {brand}",
+    "sectionRooksHint": "~/.rooks/skills: asignables a un agente, en su catálogo o importadas completas",
     "sectionUser": "Skills globales de Claude",
     "sectionUserHint": "~/.claude/skills y ~/.claude/commands: las misiones no las cargan; importa una en {brand} para asignarla",
     "sectionProject": "Skills del proyecto",
@@ -2034,9 +2034,9 @@
     "providerRecovered": "Reconectado tras {count} reintentos",
     "providerRecoveredOne": "Reconectado tras 1 reintento",
     "providerExhausted": "Servidores de {provider} inaccesibles tras {count} reintentos",
-    "providerExhaustedWithNova": "Servidores de {provider} inaccesibles tras {count} reintentos del proveedor y {rooks} reintentos de Rooks",
-    "novaRetryIn": "Reintento de Rooks {attempt}/{max} en {seconds} s…",
-    "novaRetryRunning": "Reintento de Rooks {attempt}/{max}…",
+    "providerExhaustedWithRooks": "Servidores de {provider} inaccesibles tras {count} reintentos del proveedor y {rooks} reintentos de Rooks",
+    "rooksRetryIn": "Reintento de Rooks {attempt}/{max} en {seconds} s…",
+    "rooksRetryRunning": "Reintento de Rooks {attempt}/{max}…",
     "retryTurn": "Reintentar",
     "retryTurnUnavailable": "Nada que reintentar: el último mensaje ya no está en esta conversación.",
     "quotaExhaustedTitle": "Cuota agotada",
@@ -2293,7 +2293,7 @@
       "other": "Tu propio documento"
     }
   },
-  "novaPreamble": {
+  "rooksPreamble": {
     "title": "Preámbulo de Rooks",
     "description": "Se construye al vuelo en cada arranque y se envía primero a todos los agentes. Solo lectura: viene de Rooks, no de un archivo tuyo. Se muestra tal como se construye para el agente principal.",
     "empty": "No hay preámbulo para este agente.",
@@ -2454,8 +2454,8 @@
     "llmLabel": "LLM",
     "llmHint": "Qué CLI de proveedor ejecuta este agente y con qué modelo. Cada cuenta inicia sesión por separado.",
     "subscription": "Suscripción",
-    "skillSectionNovaLabel": "Skills de ROOKS",
-    "skillSectionNovaHint": "adjuntables — en el catálogo o importadas al prompt",
+    "skillSectionRooksLabel": "Skills de ROOKS",
+    "skillSectionRooksHint": "adjuntables — en el catálogo o importadas al prompt",
     "skillSectionProjectLabel": "Skills del proyecto",
     "skillSectionProjectHint": "<cwd>/.claude — las carga de forma nativa solo Claude Code",
     "skillSectionUserLabel": "Skills globales",
@@ -2498,7 +2498,7 @@
     "mcpEmpty": "Todavía no has añadido servidores MCP — añade algunos en",
     "mcpBuiltinTitle": "Integrados en Rooks — siempre activos, nada que conceder",
     "mcpBuiltinHint": "Todos los agentes los reciben en todos los backends, sea cual sea la selección de abajo, y el ajuste MCP de una tarea de Kanban nunca los quita. Algunas herramientas de rooks (crear agentes o proyectos, declarar servidores MCP) necesitan además los permisos de tu cuenta en la página Usuarios, que esta lista no cambia.",
-    "mcpBuiltinNova": "Kanban, misiones, agentes, memoria, esta documentación",
+    "mcpBuiltinRooks": "Kanban, misiones, agentes, memoria, esta documentación",
     "mcpBuiltinAsk": "Formularios que te preguntan en el chat",
     "mcpBuiltinBrowser": "El navegador integrado del proyecto, mientras se está ejecutando",
     "mcpBuiltinGrepai": "El índice semántico del proyecto, cuando el proyecto tiene uno",
@@ -2624,7 +2624,7 @@
       "title": "Contenedores de Docker",
       "description": "Si el stack del proyecto está en marcha, en qué URL local y qué servicio está caído; inícialo, reinícialo o deténlo."
     },
-    "novaDaemon": {
+    "rooksDaemon": {
       "title": "Daemon de Rooks",
       "description": "El estado de Rooks en sí, para el proyecto rooks."
     },

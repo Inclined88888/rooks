@@ -715,13 +715,13 @@
    words rise one after the other; a step change is a View Transition, styled
    only while the onboarding runs one (`data-rooks-vt`), so no other screen
    inherits it. */
-.rooks-onboarding-rise { opacity: 0; animation: rooks-onboarding-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-@keyframes rooks-onboarding-rise { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
-.rooks-onboarding-fade { opacity: 0; animation: rooks-onboarding-fade 1s forwards; }
+.rooks-onboarding-rise { opacity: 0; animation: rooks-onboarding-rise 0.14s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+@keyframes rooks-onboarding-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.rooks-onboarding-fade { opacity: 0; animation: rooks-onboarding-fade 0.16s forwards; }
 @keyframes rooks-onboarding-fade { to { opacity: 1; } }
-.rooks-onboarding-drop { animation: rooks-onboarding-drop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-@keyframes rooks-onboarding-drop { from { opacity: 0; transform: translateY(-70px) scale(0.6); } }
-.rooks-onboarding-dot { transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.45s; }
+.rooks-onboarding-drop { animation: rooks-onboarding-drop 0.16s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+@keyframes rooks-onboarding-drop { from { opacity: 0; transform: translateY(-28px) scale(0.86); } }
+.rooks-onboarding-dot { transition: width 0.14s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.14s; }
 .rooks-onboarding-roller { perspective: 700px; touch-action: none; -webkit-mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
 .rooks-onboarding-roller-item { will-change: transform, opacity; backface-visibility: hidden; }
 html[data-rooks-vt='onboarding']::view-transition-old(root) { animation: rooks-onboarding-vt-out 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }

@@ -16,7 +16,7 @@ import { Context } from '@deepseek-ai/cordis';
 const { createHttpPlugin } = await import('../kernel/http-service.js');
 const { PluginLoader } = await import('./loader.js');
 const { daemonHost } = await import('./context.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { resetPluginPolicyState } = await import('./policy.js');
 const { getBackend, isBackendName } = await import('../backends/index.js');
@@ -64,7 +64,7 @@ async function tagOf(): Promise<string> {
 }
 
 test('a new version of a provider takes over live, with no moment where its backend is missing', async () => {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { exec: { allow: ['echo'] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { exec: { allow: ['echo'] } } }));
   resetPluginPolicyState();
   const app = express();
   const ctx = new Context();
@@ -112,7 +112,7 @@ test('a new version of a provider takes over live, with no moment where its back
 });
 
 async function mounted(options: { inFlight?: () => ReadonlySet<string>; enabled?: () => boolean } = {}) {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { exec: { allow: ['echo'] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { exec: { allow: ['echo'] } } }));
   resetPluginPolicyState();
   const app = express();
   const ctx = new Context();

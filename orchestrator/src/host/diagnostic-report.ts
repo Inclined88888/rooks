@@ -15,8 +15,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { arch, release, userInfo, version as osVersion } from 'node:os';
 import { join } from 'node:path';
 import { loadConfig } from '../config/load.js';
-import type { NovaConfig } from '../config/schema.js';
-import { compareVersions, readDataVersion, readSnapshotFailure, novaVersion } from '../data-version.js';
+import type { RooksConfig } from '../config/schema.js';
+import { compareVersions, readDataVersion, readSnapshotFailure, rooksVersion } from '../data-version.js';
 import { localTimestamp, logDir, parseDatedLog, readRecentLines, supervisorLogFile, tailLines } from '../log-file.js';
 import { redactText } from '../secrets/redact.js';
 import { createGenericHost } from './generic.js';
@@ -247,7 +247,7 @@ function healthLine(health: Health): string {
 }
 
 /** Where a local client reaches the daemon: a wildcard bind is reached on the loopback. */
-export function daemonOrigin(cfg: Pick<NovaConfig, 'daemon'>): string {
+export function daemonOrigin(cfg: Pick<RooksConfig, 'daemon'>): string {
   const host = cfg.daemon.listen.host === '0.0.0.0' || cfg.daemon.listen.host === '::' ? '127.0.0.1' : cfg.daemon.listen.host;
   return `http://${host.includes(':') ? `[${host}]` : host}:${cfg.daemon.listen.port}`;
 }
@@ -255,7 +255,7 @@ export function daemonOrigin(cfg: Pick<NovaConfig, 'daemon'>): string {
 export type CollectOptions = {
   source: DiagnosticSource;
   home: string;
-  cfg: NovaConfig;
+  cfg: RooksConfig;
   host: Pick<Host, 'platform' | 'execAsync'>;
   /** Built by `serviceOptsFromEnvironment`: the service as the CLI would install it. */
   serviceOpts: ServiceOpts;
@@ -381,7 +381,7 @@ export async function buildDiagnosticReport(opts: CollectOptions): Promise<{ tex
 }
 
 /** Resolution as the host adapter does it: the pin of `host.binaries`, then the search. */
-function nodelessHere(cfg: NovaConfig): NodelessBackend[] {
+function nodelessHere(cfg: RooksConfig): NodelessBackend[] {
   const pins = cfg.host.binaries;
   try {
     return nodelessBackends(builtinBinaries().map((binary) => binary.names[0]!), {
@@ -423,7 +423,7 @@ export function doctorSummary(report: {
 }
 
 /** The daemon's own doctor, asked over the loopback with the daemon token; never the database. */
-export async function daemonDoctor(cfg: Pick<NovaConfig, 'daemon'>, home: string): Promise<string[]> {
+export async function daemonDoctor(cfg: Pick<RooksConfig, 'daemon'>, home: string): Promise<string[]> {
   let token = '';
   try { token = readFileSync(join(home, 'daemon-token'), 'utf8').trim(); } catch { return ['daemon token absent: doctor skipped']; }
   try {
@@ -450,7 +450,7 @@ export async function reportFromEnvironment(opts: {
   error?: string;
 }): Promise<{ text: string; findings: Finding[] }> {
   let configError: string | null = null;
-  let cfg: NovaConfig;
+  let cfg: RooksConfig;
   try {
     cfg = loadConfig(undefined, { readonly: true });
   } catch (e) {
@@ -465,7 +465,7 @@ export async function reportFromEnvironment(opts: {
     host,
     serviceOpts: serviceOptsFromEnvironment(cfg, () => host),
     appVersion: opts.appVersion,
-    daemonVersion: novaVersion(),
+    daemonVersion: rooksVersion(),
     error: opts.error,
     sections: configError ? [{ title: 'Configuration', lines: [`rooks.config.json is invalid: ${configError}`] }] : [],
     doctor: () => daemonDoctor(cfg, opts.home),

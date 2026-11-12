@@ -2182,7 +2182,7 @@
         "cfg": "ProviderAgentConfig",
         "missionId": "string",
         "memoryDir?": "string | undefined",
-        "novaMcp?": "boolean | undefined",
+        "rooksMcp?": "boolean | undefined",
         "readOnlyTools?": "boolean | undefined",
         "agentCommand?": "boolean | undefined",
         "oneShot?": "boolean | undefined"
@@ -2477,9 +2477,9 @@
       "signature": "BackendCapabilities",
       "members": {
         "worktree": "boolean",
-        "novaMcp": "boolean",
+        "rooksMcp": "boolean",
         "attachments": "boolean",
-        "novaPreamble": "boolean"
+        "rooksPreamble": "boolean"
       }
     },
     "BackendLaunchContext": {
@@ -2597,9 +2597,9 @@
       "type": "array",
       "value": [
         "worktree",
-        "novaMcp",
+        "rooksMcp",
         "attachments",
-        "novaPreamble"
+        "rooksPreamble"
       ],
       "since": 11
     },
@@ -2612,9 +2612,9 @@
       "type": "object",
       "value": {
         "worktree": true,
-        "novaMcp": true,
+        "rooksMcp": true,
         "attachments": true,
-        "novaPreamble": true
+        "rooksPreamble": true
       },
       "since": 11
     },
@@ -3364,7 +3364,7 @@
       "signature": "LegacyLaunch",
       "members": {
         "proc?": "ChildProcessWithoutNullStreams | undefined",
-        "novaMcp?": "boolean | undefined"
+        "rooksMcp?": "boolean | undefined"
       }
     },
     "ConformanceCheck": {
@@ -3505,7 +3505,7 @@
         "permissionTool": "string | null",
         "preApprovedTools": "readonly string[]",
         "excludedServers?": "readonly string[] | undefined",
-        "commandPolicy": "Readonly<{ denyPrograms: readonly string[]; denyCommands: readonly string[]; denyNovaCommands: readonly string[]; novaCliCommands: readonly string[]; }>"
+        "commandPolicy": "Readonly<{ denyPrograms: readonly string[]; denyCommands: readonly string[]; denyRooksCommands: readonly string[]; rooksCliCommands: readonly string[]; }>"
       }
     },
     "ProviderMcpServer": {

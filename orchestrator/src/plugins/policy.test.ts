@@ -13,7 +13,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { config, setConfig, resetConfig } = await import('../config/load.js');
 const {
   assertExecAllowed, assertFetchAllowed, assertSpawnAllowed, assertSpawnApproved, hostCovers, narrowLivePluginGrants,
@@ -29,7 +29,7 @@ type PolicyInput = {
 /** Installs a `pluginPolicy` through the REAL schema: a test must not be able
  *  to configure something `rooks.config.json` would refuse. */
 function withPolicy(pluginPolicy: PolicyInput): void {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy }));
   resetPluginPolicyState();
 }
 
@@ -139,7 +139,7 @@ test('http:outbound: an anonymous or prototype-named caller gets no byPlugin ent
     assert.throws(() => assertFetchAllowed(id, 'https://api.a.example/'), PluginPolicyError, id);
   }
   // The schema refuses an empty id outright: nobody can write an entry for "no one".
-  assert.throws(() => NovaConfigSchema.parse({ pluginPolicy: { http: { byPlugin: { '': ['api.a.example'] } } } }));
+  assert.throws(() => RooksConfigSchema.parse({ pluginPolicy: { http: { byPlugin: { '': ['api.a.example'] } } } }));
 });
 
 test('http:outbound: with nothing allowed anywhere, the refusal says so', () => {
@@ -264,7 +264,7 @@ test('the live grants follow what the operator\'s file withdrew, and only that',
   };
   const liveOf = () => config().pluginPolicy;
   try {
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: live }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: live }));
     writeFileSync(file, JSON.stringify({
       pluginPolicy: {
         spawn: { approved: ['stays', 'added-by-hand'], max: 1 },
@@ -296,7 +296,7 @@ test('the live policy takes in a refusal written to the file, never a loosening'
   const file = join(dir, 'rooks.config.json');
   const previous = config();
   try {
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn: { denied: ['kept'] } } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn: { denied: ['kept'] } } }));
     writeFileSync(file, JSON.stringify({ pluginPolicy: { spawn: { denied: ['acme'], autoApproveSigned: false } } }));
     narrowLivePluginGrants(file);
     assert.deepEqual(config().pluginPolicy.spawn.denied, ['kept', 'acme'], 'a denial lifted on disk waits for a restart');
@@ -316,7 +316,7 @@ test('a file that says nothing readable withdraws nothing', () => {
   const file = join(dir, 'rooks.config.json');
   const previous = config();
   try {
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn: { approved: ['acme'] } } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn: { approved: ['acme'] } } }));
     narrowLivePluginGrants(file);
     assert.deepEqual(config().pluginPolicy.spawn.approved, ['acme'], 'no file');
     writeFileSync(file, '{ half a file');

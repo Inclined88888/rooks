@@ -112,9 +112,9 @@ test('secrets.env est en zone secrets et ne part dans aucune archive d\'export',
   mkdirSync(join(home, 'agents', 'temoin'), { recursive: true });
   writeFileSync(join(home, 'agents', 'temoin', 'config.json'), '{"name":"temoin"}\n');
 
-  const { exportNova } = await import('./export.js');
+  const { exportRooks } = await import('./export.js');
   const out = join(mkdtempSync(join(tmpdir(), 'rooks-secrets-archive-')), 'export.tar.gz');
-  exportNova({ out, home, vacuumInto: () => {} });
+  exportRooks({ out, home, vacuumInto: () => {} });
   assert.ok(statSync(out).size > 0);
 
   const listing = execFileSync('tar', ['-tzf', out], { encoding: 'utf8' });

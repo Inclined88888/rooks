@@ -195,7 +195,7 @@ export function diagnose(): DoctorReport {
     configured,
     enforced: configured !== 'off' && launcher !== null && sandboxSupported(launcher),
     launcher,
-    maskedPaths: configured === 'off' ? 0 : resolveIsolation(cfg, { novaHome: ROOKS_HOME }).deny.length,
+    maskedPaths: configured === 'off' ? 0 : resolveIsolation(cfg, { rooksHome: ROOKS_HOME }).deny.length,
   };
 
   const free = freeBytes(ROOKS_HOME);
@@ -221,7 +221,7 @@ export function diagnose(): DoctorReport {
     home: homedir(),
     profile: cfg.profile,
     edition: cfg.edition,
-    novaHome: ROOKS_HOME,
+    rooksHome: ROOKS_HOME,
     configFile: { path: CONFIG_FILE, present: existsSync(CONFIG_FILE) },
     binaries,
     auth,
@@ -285,7 +285,7 @@ export function formatDoctor(r: DoctorReport): string {
   const width = Math.max(...r.binaries.map((b) => b.name.length));
   const lines = [
     `Rooks doctor — ${r.platform}, profile ${r.profile}, edition ${r.edition}`,
-    `ROOKS_HOME        ${r.novaHome}`,
+    `ROOKS_HOME        ${r.rooksHome}`,
     `rooks.config.json ${r.configFile.present ? r.configFile.path : `absent (${r.configFile.path}) — defaults applied`}`,
     '',
     'binary'.padEnd(width) + '  ok  path',

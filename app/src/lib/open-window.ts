@@ -23,7 +23,7 @@ type OpenWindowBridge = (request: { route: string; machineId?: string }) => Prom
 
 function openWindowBridge(): OpenWindowBridge | null {
   if (typeof window === 'undefined') return null;
-  const bridge = window.novaDesktop?.openWindow;
+  const bridge = window.rooksDesktop?.openWindow;
   return typeof bridge === 'function' ? bridge : null;
 }
 

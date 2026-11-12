@@ -3,7 +3,7 @@
  *
  * A folder path a setting, a project or an agent stores is read by the
  * daemon of the ACTIVE machine. The OS dialog of the desktop client
- * (`window.novaDesktop.selectDirectory`) browses this computer: it is the
+ * (`window.rooksDesktop.selectDirectory`) browses this computer: it is the
  * right picker only when that daemon runs here. Driving another machine (the
  * machine switcher, TIM-0136), or in a plain browser that has no dialog
  * handing back an absolute path, the folders come from the daemon itself

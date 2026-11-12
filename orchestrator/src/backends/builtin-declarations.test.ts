@@ -16,14 +16,14 @@ await stubCliBinaries('grok');
 await mountOfficialProviders();
 const { declarationProblems } = await import('./provider-declarations.js');
 const { installedProfiles } = await import('./registry.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { DEFAULT_DENY_HOME_DIRS, resolveIsolation } = await import('../host/isolation.js');
 const { declaredBinary, setDeclaredBinariesSource } = await import('../host/declared-binaries.js');
 const { INSTALLABLE_BACKENDS } = await import('../host/machine.js');
 const { BINARIES, BINARY_NAMES } = await import('../doctor.js');
 
 const HOME = '/home/tester';
-const cfg = () => NovaConfigSchema.parse({});
+const cfg = () => RooksConfigSchema.parse({});
 
 test('every declaration of the product is one a plugin could write', () => {
   for (const [id, declared] of Object.entries(BUILTIN_DECLARATIONS)) {

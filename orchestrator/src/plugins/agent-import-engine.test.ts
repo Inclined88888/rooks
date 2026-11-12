@@ -24,7 +24,7 @@ const { renameAgentKeepingSeat } = await import('../main-agent.js');
 const { dbApi } = await import('../db.js');
 const { listAgentTrash } = await import('../agent-trash.js');
 const inTrash = (name: string): boolean => listAgentTrash().some((e) => e.name === name);
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 
 setMcpHostLookupForTest(async () => [{ address: '93.184.215.14', family: 4 }]);
@@ -463,7 +463,7 @@ test('a routine on at the source is imported off, unless the user keeps it activ
     assert.ok(!kept!.warnings.some((w) => w.includes('imported switched off')));
 
     // The operator lets the plugin start tasks: an enabled trigger is accepted.
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn: { approved: ['agent-import'] } } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn: { approved: ['agent-import'] } } }));
     try {
       await as(ada, () => engine.apply(m, options));
     } finally { resetConfig(); }

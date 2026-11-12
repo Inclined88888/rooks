@@ -137,7 +137,7 @@ function publish(missionId: string, type: string, payload: object): void {
 /** How the agent uses what it was given: by reference, never by value. */
 function usageHint(row: SecretRequestRow): string {
   if (row.broker_spec) {
-    return `Use it by reference: \`nova_http_call\` with identity \`${row.name}\` — the daemon injects it, you never see it.`;
+    return `Use it by reference: \`rooks_http_call\` with identity \`${row.name}\` — the daemon injects it, you never see it.`;
   }
   if (row.browser_origin) {
     return `Use it in the built-in browser: open the login or code form on ${row.browser_origin}, then \`fill_credential\` `
@@ -145,7 +145,7 @@ function usageHint(row: SecretRequestRow): string {
       + 'fill the username yourself, and submit the form yourself. Never read the field back: the page holds the value from then on.';
   }
   return `It enters the environment of your next launch as \`$${row.name}\` (not of the process running now). `
-    + 'Never print it: anything you run can read it, and only `nova_http_call` really hides a value.';
+    + 'Never print it: anything you run can read it, and only `rooks_http_call` really hides a value.';
 }
 
 /** What the agent reads once the request is settled: the name and the outcome, never the value. */

@@ -2,7 +2,7 @@
  * Ratchet of the `local-dictation` occupant (TODO #484 §3.5): its code
  * imports nothing of the app but the dictation contract's types and
  * `@rooks/ui` — what a third-party engine gets. The desktop bridge
- * (`window.novaDesktop.speech`) is the one thing it has that a third party
+ * (`window.rooksDesktop.speech`) is the one thing it has that a third party
  * has not, and it reads it from `window`, not from an import.
  *
  * A failure here means the occupant leaned on a product internal: expose what

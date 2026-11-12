@@ -1,7 +1,7 @@
 /**
  * Brand — the source of truth for everything named PUBLICLY.
  *
- * Rooks takeover (Nov 2026): Nova body rebranded to Rooks. Home `~/.rooks`,
+ * Rooks takeover (Nov 2026): upstream body rebranded to Rooks. Home `~/.rooks`,
  * `ROOKS_*` keys, `rooks` binary. npm scope `@rooks`.
  *
  * ## What may use what

@@ -26,7 +26,7 @@ const VALUE = 'value-that-must-only-travel-on-stdin';
 
 type Seen = { method: string; url: string; body: string };
 
-function runNova(args: string[], env: NodeJS.ProcessEnv, stdin?: string): Promise<{
+function runRooks(args: string[], env: NodeJS.ProcessEnv, stdin?: string): Promise<{
   code: number | null; stdout: string; stderr: string;
 }> {
   return new Promise((resolve, reject) => {
@@ -94,7 +94,7 @@ function env(url: string): NodeJS.ProcessEnv {
 test('set refuses a value passed as an argument, and says why', async () => {
   const mock = await startMock();
   try {
-    const r = await runNova(['secret', 'set', 'GITHUB_TOKEN', VALUE, '--scope', 'global'], env(mock.url), '');
+    const r = await runRooks(['secret', 'set', 'GITHUB_TOKEN', VALUE, '--scope', 'global'], env(mock.url), '');
     assert.notEqual(r.code, 0, 'a value on the command line was accepted');
     assert.match(r.stderr, /never passed as an argument/);
     assert.match(r.stderr, /cmdline/, 'the refusal must explain the reason, not just refuse');
@@ -108,7 +108,7 @@ test('set refuses to read a pipe it was not told about', async () => {
     // The value IS on stdin, and stdin is not a TTY — the shape a cron job or a
     // here-doc takes. Without the explicit flag it must still be refused: the
     // command must never pick a value up by accident.
-    const r = await runNova(['secret', 'set', 'NO_FLAG', '--scope', 'global'], env(mock.url), VALUE);
+    const r = await runRooks(['secret', 'set', 'NO_FLAG', '--scope', 'global'], env(mock.url), VALUE);
     assert.notEqual(r.code, 0, 'the value was read without --stdin');
     assert.match(r.stderr, /--stdin/);
     assert.equal(mock.seen.some((s) => s.body.includes(VALUE)), false, 'the value reached the daemon anyway');
@@ -118,7 +118,7 @@ test('set refuses to read a pipe it was not told about', async () => {
 test('set accepts the value on stdin and creates the secret', async () => {
   const mock = await startMock();
   try {
-    const r = await runNova(['secret', 'set', 'NEW_TOKEN', '--scope', 'project:initech', '--stdin'], env(mock.url), `${VALUE}\n`);
+    const r = await runRooks(['secret', 'set', 'NEW_TOKEN', '--scope', 'project:initech', '--stdin'], env(mock.url), `${VALUE}\n`);
     assert.equal(r.code, 0, r.stderr);
     const post = mock.seen.find((s) => s.method === 'POST' && s.url === '/api/secrets');
     assert.ok(post, 'no creation was sent');
@@ -133,7 +133,7 @@ test('set accepts the value on stdin and creates the secret', async () => {
 test('set without --scope creates a daemon-only secret', async () => {
   const mock = await startMock();
   try {
-    const r = await runNova(['secret', 'set', 'DAEMON_ONLY', '--stdin'], env(mock.url), VALUE);
+    const r = await runRooks(['secret', 'set', 'DAEMON_ONLY', '--stdin'], env(mock.url), VALUE);
     assert.equal(r.code, 0, r.stderr);
     const post = mock.seen.find((s) => s.method === 'POST' && s.url === '/api/secrets')!;
     assert.deepEqual((JSON.parse(post.body) as { grants: string[] }).grants, []);
@@ -143,7 +143,7 @@ test('set without --scope creates a daemon-only secret', async () => {
 test('list prints scopes and never a value', async () => {
   const mock = await startMock();
   try {
-    const r = await runNova(['secret', 'list'], env(mock.url));
+    const r = await runRooks(['secret', 'list'], env(mock.url));
     assert.equal(r.code, 0, r.stderr);
     assert.match(r.stdout, /GITHUB_TOKEN\s+inject\s+set\s+global/);
     assert.match(r.stdout, /VAPID_PRIVATE_KEY.*daemon only/);
@@ -154,11 +154,11 @@ test('list prints scopes and never a value', async () => {
 test('grant and revoke act on the named secret', async () => {
   const mock = await startMock();
   try {
-    const granted = await runNova(['secret', 'grant', 'GITHUB_TOKEN', '--scope', 'agent:a.coder'], env(mock.url));
+    const granted = await runRooks(['secret', 'grant', 'GITHUB_TOKEN', '--scope', 'agent:a.coder'], env(mock.url));
     assert.equal(granted.code, 0, granted.stderr);
     assert.ok(mock.seen.some((s) => s.method === 'POST' && s.url === '/api/secrets/id-global/grants'));
 
-    const revoked = await runNova(['secret', 'revoke', 'GITHUB_TOKEN', '--scope', 'agent:a.coder'], env(mock.url));
+    const revoked = await runRooks(['secret', 'revoke', 'GITHUB_TOKEN', '--scope', 'agent:a.coder'], env(mock.url));
     assert.equal(revoked.code, 0, revoked.stderr);
     assert.ok(mock.seen.some((s) => s.method === 'DELETE' && s.url.startsWith('/api/secrets/id-global/grants?scope=')));
   } finally { await mock.close(); }
@@ -167,7 +167,7 @@ test('grant and revoke act on the named secret', async () => {
 test('import-env says the file is kept unless --delete-source', async () => {
   const mock = await startMock();
   try {
-    const r = await runNova(['secret', 'import-env'], env(mock.url));
+    const r = await runRooks(['secret', 'import-env'], env(mock.url));
     assert.equal(r.code, 0, r.stderr);
     assert.match(r.stdout, /NO grant \(daemon only\)/);
     assert.match(r.stdout, /secrets\.env kept/);
@@ -179,7 +179,7 @@ test('import-env says the file is kept unless --delete-source', async () => {
 test('rekey reports the rotation', async () => {
   const mock = await startMock();
   try {
-    const r = await runNova(['secret', 'rekey'], env(mock.url));
+    const r = await runRooks(['secret', 'rekey'], env(mock.url));
     assert.equal(r.code, 0, r.stderr);
     assert.match(r.stdout, /rekeyed 2 secret\(s\)/);
   } finally { await mock.close(); }

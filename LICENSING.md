@@ -1,4 +1,6 @@
 # Licensing
 
-Rooks is licensed under the GNU Affero General Public License v3.0 only
-(AGPL-3.0-only). See `LICENSE` and `NOTICE.md`.
+Rooks is proprietary software owned by Inclined88888. All rights reserved.
+See `LICENSE` and `NOTICE.md`.
+
+Third-party dependency attributions live in `THIRD_PARTY_NOTICES.md`.

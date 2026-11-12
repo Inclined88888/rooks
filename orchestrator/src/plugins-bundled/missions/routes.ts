@@ -1643,7 +1643,7 @@ export function registerRoutes(
         input: body.input ?? {},
         tool_use_id: body.tool_use_id,
         // The claude CLI answers allow or deny, once: Rooks keeps the wider ones.
-        novaScopes: true,
+        rooksScopes: true,
         signal: waiting.signal,
       });
       if (waiting.signal.aborted) return;

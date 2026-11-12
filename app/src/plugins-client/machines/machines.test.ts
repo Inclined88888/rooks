@@ -446,7 +446,7 @@ test('the menu lists this computer first, then the fleet; a choice goes to the a
 /** A desktop window that keeps pages (V4): the shell shows the machine chosen and hides this page alive. */
 function installKeepingShell(): string[] {
   const asked: string[] = [];
-  (window as unknown as { novaDesktop?: unknown }).novaDesktop = {
+  (window as unknown as { rooksDesktop?: unknown }).rooksDesktop = {
     windowMachine: { set: async (id: string) => { asked.push(id); return { id, shown: true }; } },
   };
   return asked;

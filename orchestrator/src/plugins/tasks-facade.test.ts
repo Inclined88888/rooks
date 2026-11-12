@@ -23,7 +23,7 @@ const { runPluginRequest } = await import('./als.js');
 const { dbApi } = await import('../db.js');
 const { hashPassword } = await import('../users/password.js');
 const { PluginTaskError } = await import('./tasks-facade.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { agentDir } = await import('../paths.js');
 const { assertSpawnAllowed, resetPluginPolicyState, spawnCardsSettled } = await import('./policy.js');
@@ -320,18 +320,18 @@ test('a job writes only its own tasks and reads a granted project, never writes 
   const inProject = (await asAda(() => plugin.kanban.add({ title: 'in secret-proj', agent: 'proj-worker' }))).id;
   const elsewhere = (await asAda(() => plugin.kanban.add({ title: 'elsewhere', agent: 'worker' }))).id;
   // A job's task that runs is a spawn: the operator approved this plugin.
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn: { approved: [PLUGIN_ID] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn: { approved: [PLUGIN_ID] } } }));
   resetPluginPolicyState();
   const jobTask = await plugin.kanban.add({ title: 'job task', agent: 'worker' });
   assert.equal(jobTask.owner_user_id, `plugin:${PLUGIN_ID}`);
 
   // No grant: a job sees only what it created.
-  setConfig(NovaConfigSchema.parse({}));
+  setConfig(RooksConfigSchema.parse({}));
   assert.deepEqual((await plugin.kanban.list()).map((t) => t.title), ['job task']);
   assert.equal(await plugin.kanban.get(inProject), undefined);
 
   // The operator grants the project (and the manifest asked for `kanban:read:project`).
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { kanban: { projects: { [PLUGIN_ID]: ['secret-proj'] } } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { kanban: { projects: { [PLUGIN_ID]: ['secret-proj'] } } } }));
   const seen = (await plugin.kanban.list()).map((t) => t.id);
   assert.ok(seen.includes(inProject) && seen.includes(jobTask.id));
   assert.ok(!seen.includes(elsewhere), 'a project nobody granted stays out');
@@ -400,7 +400,7 @@ test('a running task is not re-queued, and a new agent must be able to hold the 
 test('a task that runs, opened with nobody in front, takes the spawn approval and the quota shared with missions.spawn (TODO #562)', async () => {
   const { plugin, dispose } = await pluginWith([...ALL, 'todos:read', 'todos:write']);
   const policy = (spawn: { approved: string[]; max?: number; windowMs?: number }) => {
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn } }));
     resetPluginPolicyState();
   };
   const refusal = async (fn: () => Promise<unknown>) => {

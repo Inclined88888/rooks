@@ -23,7 +23,7 @@ const { readManifest, PLUGIN_API_VERSION } = await import('./manifest.js');
 const { createPluginContext, daemonHost, PluginPermissionError } = await import('./context.js');
 const { PluginLayoutError } = await import('./layout-facade.js');
 const { PluginPolicyError, resetPluginPolicyState } = await import('./policy.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { runPluginRequest } = await import('./als.js');
 const { setGallerySource } = await import('./runtime.js');
@@ -387,11 +387,11 @@ test('an https media source is `ctx.fetch` by another name: it needs http:outbou
     // Declared nothing: refused before the daemon fetches anything.
     await assert.rejects(asAda(() => onlyMedia.plugin.chat.showMedia({ missionId: 'm-ada', src })), PluginPermissionError);
     // Declared, but the operator allowed no host (the default).
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: {} }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: {} }));
     resetPluginPolicyState();
     await assert.rejects(asAda(() => withHttp.plugin.chat.showMedia({ missionId: 'm-ada', src })), PluginPolicyError);
     // Allowed for another host only.
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { allow: ['api.example.com'] } } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { allow: ['api.example.com'] } } }));
     resetPluginPolicyState();
     await assert.rejects(asAda(() => withHttp.plugin.chat.showMedia({ missionId: 'm-ada', src })), PluginPolicyError);
     // A local file and a data: image never needed the network: the permission is not asked for them.

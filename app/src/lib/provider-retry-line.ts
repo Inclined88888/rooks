@@ -6,7 +6,7 @@
  * Fed by three persisted events (orchestrator/src/backends/types.ts,
  * orchestrator/src/turn-retry.ts):
  *  - `provider_retry`: the provider retries on its own, the turn goes on;
- *  - a `result` carrying `transient_failure` (and `nova_retry` when Rooks
+ *  - a `result` carrying `transient_failure` (and `rooks_retry` when Rooks
  *    replays the turn of an unattended mission);
  *  - `turn_retry_abandoned`: the replay never ran.
  */
@@ -27,7 +27,7 @@ export type RetryLine = {
   /** Rooks's replay under way or scheduled (unattended missions only). */
   rooks?: { attempt: number; max: number; delayMs: number | null };
   /** Rooks replays already spent when the series ended. */
-  novaRetries?: number;
+  rooksRetries?: number;
 };
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -71,7 +71,7 @@ export function lineOnResult(prev: RetryLine | null, payload: unknown, provider:
   if (!p) return null;
   const failure = record(p.transient_failure);
   if (failure) {
-    const replay = record(p.nova_retry);
+    const replay = record(p.rooks_retry);
     const base: RetryLine = {
       state: replay ? 'replaying' : 'exhausted',
       provider: retryLineOpen(prev) ? prev.provider : provider,
@@ -79,7 +79,7 @@ export function lineOnResult(prev: RetryLine | null, payload: unknown, provider:
       max: count(failure.provider_max) ?? (retryLineOpen(prev) ? prev.max : null),
       cause: text(failure.cause) || (retryLineOpen(prev) ? prev.cause : ''),
       providerRetries: count(failure.provider_retries) ?? (retryLineOpen(prev) ? prev.providerRetries : 0),
-      novaRetries: count(failure.nova_retries) ?? 0,
+      rooksRetries: count(failure.rooks_retries) ?? 0,
     };
     if (replay) {
       return {
@@ -125,7 +125,7 @@ export function lineOnAbandoned(prev: RetryLine | null, payload: unknown, provid
     max: open?.max ?? null,
     cause: open?.cause || reason,
     providerRetries: open?.providerRetries ?? 0,
-    novaRetries: open?.rooks ? open.rooks.attempt - 1 : 0,
+    rooksRetries: open?.rooks ? open.rooks.attempt - 1 : 0,
   };
 }
 
@@ -145,8 +145,8 @@ export function retryLineText(line: RetryLine): { title: string; detail: string 
       const rooks = line.rooks ?? { attempt: 1, max: 1, delayMs: null };
       return {
         title: rooks.delayMs !== null
-          ? i18n('chatPage.novaRetryIn', { attempt: rooks.attempt, max: rooks.max, seconds: Math.max(1, Math.round(rooks.delayMs / 1000)) })
-          : i18n('chatPage.novaRetryRunning', { attempt: rooks.attempt, max: rooks.max }),
+          ? i18n('chatPage.rooksRetryIn', { attempt: rooks.attempt, max: rooks.max, seconds: Math.max(1, Math.round(rooks.delayMs / 1000)) })
+          : i18n('chatPage.rooksRetryRunning', { attempt: rooks.attempt, max: rooks.max }),
         detail,
       };
     }
@@ -155,10 +155,10 @@ export function retryLineText(line: RetryLine): { title: string; detail: string 
       return { title: n === 1 ? i18n('chatPage.providerRecoveredOne') : i18n('chatPage.providerRecovered', { count: n }), detail: '' };
     }
     case 'exhausted': {
-      const rooks = line.novaRetries ?? 0;
+      const rooks = line.rooksRetries ?? 0;
       return {
         title: rooks > 0
-          ? i18n('chatPage.providerExhaustedWithNova', { provider, count: line.providerRetries, rooks })
+          ? i18n('chatPage.providerExhaustedWithRooks', { provider, count: line.providerRetries, rooks })
           : i18n('chatPage.providerExhausted', { provider, count: line.max ?? line.providerRetries }),
         detail,
       };

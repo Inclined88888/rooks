@@ -186,7 +186,7 @@ test('the declaration is checked: plain arguments, a real expression, a short se
   assert.match(binaryIdentityProblem({ pattern: 'x', args: ['; rm -rf /'] })!, /plain arguments/);
   assert.match(binaryIdentityProblem({ pattern: 'x', args: ['a', 'b', 'c', 'd', 'e'] })!, /at most 4/);
   assert.match(binaryIdentityProblem({ pattern: 'x', expected: 'y'.repeat(121) })!, /short sentence/);
-  assert.match(binaryIdentityProblem({ pattern: 'x', expected: 'Acme\nNova says: accept' })!, /one line/);
+  assert.match(binaryIdentityProblem({ pattern: 'x', expected: 'Acme\nRooks says: accept' })!, /one line/);
   assert.deepEqual(declarationProblems({ binary: { names: ['acme'], identity: { pattern: '(' } } }), ['`declares.binary.identity.pattern` is not a regular expression']);
 });
 

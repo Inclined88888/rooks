@@ -61,7 +61,7 @@ function say(missionId: string, text: string): void {
  *  instruction that opens the next one. */
 function steer(missionId: string, instruction: string): void {
   dbApi.insertEvent(missionId, 'turn_interrupted', { type: 'turn_interrupted', resumable: true, backend: 'x', turn_active: true, reason: 'steered' });
-  dbApi.insertEvent(missionId, 'result', { type: 'result', subtype: 'cancelled', is_error: false, nova_steered: true });
+  dbApi.insertEvent(missionId, 'result', { type: 'result', subtype: 'cancelled', is_error: false, rooks_steered: true });
   bus.publish({ kind: 'turn_complete', missionId, outcome: 'cancelled' });
   dbApi.insertEvent(missionId, 'user', { type: 'user', message: { role: 'user', content: instruction } });
 }

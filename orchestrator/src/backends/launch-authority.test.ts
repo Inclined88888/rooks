@@ -28,7 +28,7 @@ process.env.ROOKS_RESOURCE_GUARD_ENABLED = '0';
 const { getHost } = await import('../host/index.js');
 const { spawnAgent, upsertAgent } = await import('../agent.js');
 const { config, setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { backendTrust } = await import('./registry.js');
 const { getBackend } = await import('./index.js');
 const { assertSpawnPinned, buildSealedSpawn } = await import('./sealed-spawn.js');
@@ -77,7 +77,7 @@ process.env.PATH = `${bin}${delimiter}${process.env.PATH ?? ''}`;
 
 function allowExec(...entries: string[]): void {
   const previous = config();
-  setConfig(NovaConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: entries } } }));
+  setConfig(RooksConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: entries } } }));
 }
 
 function pluginContext(pluginId: string, binary: string, builtin: boolean) {

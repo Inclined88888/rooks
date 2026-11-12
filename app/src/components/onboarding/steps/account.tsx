@@ -1,14 +1,11 @@
 'use client';
 
 /**
- * "Create your local account" (mockup screen `account`, docs/EMAIL-CODE-UI.md):
- * one column — first name, email, password twice — then the code the email
- * received, and the account exists only once that code is accepted. The
- * password never leaves this machine; the email goes to the Rooks server, which
- * mails the code (docs/EMAIL-CODES.md).
- *
- * Laid out to fit 1366×768 without scrolling: the inputs are 40 px, the hints
- * one line, the privacy note under the button.
+ * Optional local account. Email and password are never required to reach the
+ * desk — Skip continues. When the person does fill them in, the account is
+ * created on this machine. Email codes are used only when the daemon says
+ * `setupRequiresEmailCode`; otherwise setup is local and never needs a mail
+ * relay (no false “internet required” gate).
  */
 import { useCallback, useEffect, useId, useState, type FormEvent, type ReactElement, type ReactNode } from 'react';
 import { ArrowRight, Loader2, Lock } from 'lucide-react';
@@ -28,19 +25,18 @@ import { firstRunScheme } from '@/lib/first-run-gate';
 import { t } from '@/lib/i18n';
 import { useOnboarding, useOnboardingBack } from '../onboarding-context';
 
-/** The mockup's blue round head: the reader's own, before any agent exists. */
-const LOOK = { shape: 'round', color: '#3fa9ff', eyes: 'big' } as const;
+const LOOK = { shape: 'round', color: '#E8943A', eyes: 'big' } as const;
 
 export type AccountDraft = { name: string; email: string; password: string; confirm: string; setupToken: string };
 
 const EMPTY: AccountDraft = { name: '', email: '', password: '', confirm: '', setupToken: '' };
 
-function Field({ id, label, required = false, hint, children }: { id: string; label: string; required?: boolean; hint?: string; children: ReactNode }): ReactElement {
+function Field({ id, label, hint, children }: { id: string; label: string; hint?: string; children: ReactNode }): ReactElement {
   return (
     <div>
       <Label htmlFor={id} className="mb-1.5 ml-0.5 block text-[12.5px] font-semibold text-muted-foreground">
         {label}
-        {required && <span aria-hidden className="ml-1 text-destructive">*</span>}
+        <span className="ml-1.5 font-normal text-muted-foreground/80">({t('onboarding.account.optional')})</span>
       </Label>
       {children}
       {hint && <p id={`${id}-hint`} className="ml-0.5 mt-1 text-xs text-muted-foreground">{hint}</p>}
@@ -55,25 +51,26 @@ export function AccountStep(): ReactElement {
   const [draft, setDraft] = useState<AccountDraft>(EMPTY);
   const [shown, setShown] = useState(false);
   const [needsToken, setNeedsToken] = useState(false);
+  const [needsEmailCode, setNeedsEmailCode] = useState(false);
   const [challenge, setChallenge] = useState<CodeChallenge | null>(null);
   const [view, setView] = useState<'form' | 'code'>('form');
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<CodeFailure | null>(null);
 
-  // An account already made (a reload after creating it) moves on; an install
-  // that has one but no session signs in from the onboarding.
   useEffect(() => {
     let alive = true;
     void fetchMe().then((me) => {
       if (!alive) return;
       if (me.user) next();
       else if (!me.needsSetup) goTo('signin');
-      else setNeedsToken(me.setupRequiresToken === true);
+      else {
+        setNeedsToken(me.setupRequiresToken === true);
+        setNeedsEmailCode(me.setupRequiresEmailCode === true);
+      }
     });
     return () => { alive = false; };
   }, [next, goTo]);
 
-  // "Back" on the code returns to the form, filled as it was left.
   useOnboardingBack(() => {
     if (view !== 'code') return false;
     setView('form');
@@ -88,7 +85,8 @@ export function AccountStep(): ReactElement {
   const email = draft.email.trim();
   const problem = passwordProblem(draft.password, draft.confirm);
   const waiting = failureText(failure, now);
-  const ready = looksLikeEmail(email) && passwordPairReady(draft.password, draft.confirm) && (!needsToken || draft.setupToken.trim() !== '');
+  const hasCredentials = looksLikeEmail(email) && passwordPairReady(draft.password, draft.confirm);
+  const ready = hasCredentials && (!needsToken || draft.setupToken.trim() !== '');
   const blocked = failure?.retryUntil != null && waiting !== null;
 
   const ask = useCallback(async (): Promise<CodeChallenge | CodeFailure> => {
@@ -96,24 +94,49 @@ export function AccountStep(): ReactElement {
     return answer.ok ? answer.value : answer.failure;
   }, [email, draft.setupToken, needsToken]);
 
+  const createLocal = useCallback(async (): Promise<CodeFailure | null> => {
+    const scheme = firstRunScheme();
+    const answer = await createAccount({
+      email,
+      name: accountName(draft.name, email),
+      password: draft.password,
+      ...(scheme ? { scheme } : {}),
+      ...(needsToken ? { setupToken: draft.setupToken.trim() } : {}),
+    });
+    return answer.ok ? null : answer.failure;
+  }, [email, draft.name, draft.password, draft.setupToken, needsToken]);
+
   const submit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     if (!ready || sending || blocked) return;
     setSending(true);
     setFailure(null);
-    const answer = await ask();
-    setSending(false);
-    if ('challengeId' in answer) {
-      setChallenge(answer);
-      setView('code');
-    } else {
-      setFailure(answer);
+    if (needsEmailCode) {
+      const answer = await ask();
+      setSending(false);
+      if ('challengeId' in answer) {
+        setChallenge(answer);
+        setView('code');
+      } else if (answer.code === 'email_connection_required' || answer.code === 'email_service_unavailable' || answer.code === 'network') {
+        // Local-first fallback: mail relay unreachable must not block first use.
+        setSending(true);
+        const local = await createLocal();
+        setSending(false);
+        if (!local) next();
+        else setFailure(local);
+      } else {
+        setFailure(answer);
+      }
+      return;
     }
+    const local = await createLocal();
+    setSending(false);
+    if (!local) next();
+    else setFailure(local);
   };
 
   const verify = useCallback(async (code: string): Promise<EmailCodeVerdict> => {
     if (!challenge) return { ok: false, failure: expiredChallenge() };
-    // The switch's choice, else the OS: the account keeps the mode the onboarding showed.
     const scheme = firstRunScheme();
     const answer = await createAccount({
       email,
@@ -131,7 +154,6 @@ export function AccountStep(): ReactElement {
     if (!challenge) return { ok: false, failure: expiredChallenge() };
     const answer = await resendSetupCode(challenge.challengeId);
     if (answer.ok) return { ok: true, resendAt: answer.value.resendAt };
-    // A challenge that can no longer send gives way to a new one.
     if (answer.failure.code && RESTART_CODES.has(answer.failure.code)) {
       const fresh = await ask();
       if (!('challengeId' in fresh)) return { ok: false, failure: fresh };
@@ -161,11 +183,17 @@ export function AccountStep(): ReactElement {
   const toggle = () => setShown((s) => !s);
 
   return (
-    <div className="flex w-full max-w-[440px] flex-col items-center text-center">
-      <AgentMascotHost look={LOOK} size={56} />
-      <h1 className="mt-2 text-[28px] font-bold leading-tight tracking-[-0.02em]">{t('onboarding.account.title')}</h1>
-      <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{t('onboarding.account.subtitle')}</p>
-      <form noValidate aria-busy={sending} className="mt-[18px] flex w-full flex-col gap-2.5 text-left" onSubmit={(e) => { void submit(e); }}>
+    <div className="relative flex w-full max-w-[440px] flex-col items-center text-center">
+      <div className="rooks-onboarding-rise">
+        <AgentMascotHost look={LOOK} size={56} />
+      </div>
+      <h1 className="rooks-onboarding-rise mt-3 font-[family-name:var(--font-display)] text-[28px] font-semibold leading-tight tracking-[-0.03em]" style={{ animationDelay: '60ms' }}>
+        {t('onboarding.account.title')}
+      </h1>
+      <p className="rooks-onboarding-rise mt-1.5 text-sm leading-snug text-muted-foreground" style={{ animationDelay: '100ms' }}>
+        {t('onboarding.account.subtitle')}
+      </p>
+      <form noValidate aria-busy={sending} className="rooks-onboarding-rise mt-[18px] flex w-full flex-col gap-2.5 text-left" style={{ animationDelay: '140ms' }} onSubmit={(e) => { void submit(e); }}>
         <Field id={`${ids}-name`} label={t('onboarding.account.name')} hint={t('onboarding.account.nameHint')}>
           <Input
             id={`${ids}-name`}
@@ -177,11 +205,10 @@ export function AccountStep(): ReactElement {
             className="h-10"
           />
         </Field>
-        <Field id={`${ids}-email`} label={t('onboarding.account.email')} required hint={t('onboarding.account.emailHint')}>
+        <Field id={`${ids}-email`} label={t('onboarding.account.email')} hint={t('onboarding.account.emailHint')}>
           <Input
             id={`${ids}-email`}
             type="email"
-            required
             autoComplete="username"
             placeholder={t('onboarding.account.emailPlaceholder')}
             value={draft.email}
@@ -190,10 +217,9 @@ export function AccountStep(): ReactElement {
             className="h-10"
           />
         </Field>
-        <Field id={`${ids}-password`} label={t('onboarding.account.password')} required>
+        <Field id={`${ids}-password`} label={t('onboarding.account.password')}>
           <PasswordInput
             id={`${ids}-password`}
-            required
             autoComplete="new-password"
             value={draft.password}
             onChange={set('password')}
@@ -202,10 +228,9 @@ export function AccountStep(): ReactElement {
             className="h-10"
           />
         </Field>
-        <Field id={`${ids}-confirm`} label={t('onboarding.account.confirm')} required>
+        <Field id={`${ids}-confirm`} label={t('onboarding.account.confirm')}>
           <PasswordInput
             id={`${ids}-confirm`}
-            required
             autoComplete="new-password"
             value={draft.confirm}
             onChange={set('confirm')}
@@ -216,11 +241,10 @@ export function AccountStep(): ReactElement {
           />
         </Field>
         {needsToken && (
-          <Field id={`${ids}-token`} label={t('loginPage.setupToken')} required>
+          <Field id={`${ids}-token`} label={t('loginPage.setupToken')}>
             <Input
               id={`${ids}-token`}
               type="password"
-              required
               autoComplete="off"
               autoCapitalize="none"
               spellCheck={false}
@@ -230,7 +254,6 @@ export function AccountStep(): ReactElement {
             />
             <p className="ml-0.5 mt-1 text-xs text-muted-foreground">
               {t('loginPage.setupTokenHint')}{' '}
-              {/* code-font: a command to type in a terminal */}
               <code className="rounded bg-muted px-1 py-0.5 text-[11.5px] text-foreground">rooks setup-token</code>
             </p>
           </Field>
@@ -238,12 +261,21 @@ export function AccountStep(): ReactElement {
         <p role="status" aria-live="polite" data-account-status="" className="ml-0.5 min-h-4 text-[12.5px] leading-4 tabular-nums text-destructive">
           {line}
         </p>
-        <Button type="submit" size="lg" className="h-11 w-full gap-2 rounded-full" disabled={!ready || sending || blocked}>
+        <Button type="submit" size="lg" className="h-11 w-full gap-2" disabled={!ready || sending || blocked}>
           {sending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
           {t('onboarding.account.create')}
           {!sending && <ArrowRight className="h-4 w-4" aria-hidden />}
         </Button>
       </form>
+      <button
+        type="button"
+        data-account-skip
+        className="rooks-onboarding-fade mt-3 text-[13px] text-muted-foreground underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
+        style={{ animationDelay: '220ms' }}
+        onClick={next}
+      >
+        {t('onboarding.account.skip')}
+      </button>
       <p className="mt-4 flex items-start gap-2 text-left text-[12.5px] leading-[1.45] text-muted-foreground">
         <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <span>{t('onboarding.account.privacy')}</span>

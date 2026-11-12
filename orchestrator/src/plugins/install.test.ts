@@ -330,7 +330,7 @@ test('remove with no byPlugin entry leaves the configuration file byte for byte'
 /** On the operator's own file, this process stops honouring the entry at once (no restart). */
 test('remove on the live configuration file closes the host in this process too', async () => {
   const { CONFIG_FILE, config, setConfig, resetConfig } = await import('../config/load.js');
-  const { NovaConfigSchema } = await import('../config/schema.js');
+  const { RooksConfigSchema } = await import('../config/schema.js');
   const { assertFetchAllowed, PluginPolicyError } = await import('./policy.js');
   const f = fixture();
   const saved = existsSync(CONFIG_FILE) ? readFileSync(CONFIG_FILE, 'utf8') : null;
@@ -340,7 +340,7 @@ test('remove on the live configuration file closes the host in this process too'
     const onDisk = existsSync(CONFIG_FILE) ? readJson(CONFIG_FILE) : {};
     const policy = { http: { byPlugin: { 'example-widget': ['api.widget.example'], other: ['api.other.example'] } } };
     writeFileSync(CONFIG_FILE, JSON.stringify({ ...onDisk, pluginPolicy: policy }, null, 2));
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: policy }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: policy }));
     assertFetchAllowed('example-widget', 'https://api.widget.example/');
 
     await removePlugin('example-widget', f.root, { npm: f.npm, config: CONFIG_FILE });
@@ -581,7 +581,7 @@ test('remove of a plugin the policy does not name leaves the configuration file 
  */
 test('the same id installed again is refused missions and Kanban until someone approves it', async () => {
   const { CONFIG_FILE, setConfig, resetConfig } = await import('../config/load.js');
-  const { NovaConfigSchema } = await import('../config/schema.js');
+  const { RooksConfigSchema } = await import('../config/schema.js');
   const { assertSpawnAllowed, grantedKanbanProjects, PluginPolicyError, resetPluginPolicyState, spawnCardsSettled } = await import('./policy.js');
   const { dbApi } = await import('../db.js');
   const f = fixture();
@@ -593,7 +593,7 @@ test('the same id installed again is refused missions and Kanban until someone a
     const onDisk = existsSync(CONFIG_FILE) ? readJson(CONFIG_FILE) : {};
     const policy = { spawn: { approved: ['example-widget', 'other'] }, kanban: { projects: { 'example-widget': ['alpha'], other: ['beta'] } } };
     writeFileSync(CONFIG_FILE, JSON.stringify({ ...onDisk, pluginPolicy: policy }, null, 2));
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: policy }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: policy }));
     assertSpawnAllowed('example-widget');
     assert.deepEqual(grantedKanbanProjects('example-widget'), ['alpha']);
 
@@ -622,7 +622,7 @@ test('remove closes the spawn and launch cards of the plugin and the children it
   const { assertSpawnApproved, resetPluginPolicyState, spawnCardsSettled, PluginPolicyError } = await import('./policy.js');
   const { launchCardAnchor, launchCardsSettled, raiseLaunchCard, resetLaunchCards } = await import('../backends/launch-card.js');
   const { setConfig, config, resetConfig } = await import('../config/load.js');
-  const { NovaConfigSchema } = await import('../config/schema.js');
+  const { RooksConfigSchema } = await import('../config/schema.js');
   const { dbApi } = await import('../db.js');
   const active = () => dbApi.listActiveNotifications('action_required').map((n) => n.anchor);
   const f = fixture();
@@ -630,7 +630,7 @@ test('remove closes the spawn and launch cards of the plugin and the children it
   resetPluginPolicyState();
   resetLaunchCards();
   try {
-    setConfig(NovaConfigSchema.parse({}));
+    setConfig(RooksConfigSchema.parse({}));
     await addPlugin(WIDGET, f.root, { npm: f.npm, config: f.config });
     await addPlugin(BUNDLE, f.root, { npm: f.npm, config: f.config });
     for (const id of ['example-bundle', 'example-page', 'example-widget', 'example-page-2']) {
@@ -676,7 +676,7 @@ test('remove closes the spawn and launch cards of the plugin and the children it
  */
 test('a daemon in another process follows the file: the pass that sees the removal withdraws the grants', async () => {
   const { CONFIG_FILE, setConfig, resetConfig } = await import('../config/load.js');
-  const { NovaConfigSchema } = await import('../config/schema.js');
+  const { RooksConfigSchema } = await import('../config/schema.js');
   const { assertFetchAllowed, assertSpawnApproved, grantedKanbanProjects, narrowLivePluginGrants, PluginPolicyError, resetPluginPolicyState } = await import('./policy.js');
   const f = fixture();
   const saved = existsSync(CONFIG_FILE) ? readFileSync(CONFIG_FILE, 'utf8') : null;
@@ -695,7 +695,7 @@ test('a daemon in another process follows the file: the pass that sees the remov
     // its live config stands for the daemon's.
     writeFileSync(f.config, readFileSync(CONFIG_FILE, 'utf8'));
     await removePlugin('example-widget', f.root, { npm: f.npm, config: f.config });
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: policy }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: policy }));
     assert.doesNotThrow(() => assertSpawnApproved('example-widget'), 'the daemon still holds its boot copy');
 
     writeFileSync(CONFIG_FILE, readFileSync(f.config, 'utf8'));

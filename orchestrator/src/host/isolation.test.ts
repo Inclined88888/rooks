@@ -23,7 +23,7 @@ import { test } from 'node:test';
 const HOME = mkdtempSync(join(tmpdir(), 'rooks-isolation-test-'));
 process.env.ROOKS_HOME = HOME;
 
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const {
   isolationArgsFor, isolationProperties, resolveIsolation, sandboxSupported,
   setDeclaredCredentialDirsSource, PROTECTED_HOME_DIRS,
@@ -32,7 +32,7 @@ const {
 
 const FAKE_HOME = '/home/tester';
 const cfg = (isolation: Record<string, unknown> = {}) =>
-  NovaConfigSchema.parse({ host: { isolation } });
+  RooksConfigSchema.parse({ host: { isolation } });
 
 test('the rendered directives mask the credential paths, in the long property form', () => {
   const args = isolationArgsFor('service', cfg(), { home: FAKE_HOME, backend: 'claude' });
@@ -78,7 +78,7 @@ test('a mission cwd living under a masked path is never masked away', () => {
 test('ROOKS_HOME and its ancestors are never masked', () => {
   const { deny } = resolveIsolation(cfg({ deny: ['~/state'] }), {
     home: FAKE_HOME,
-    novaHome: `${FAKE_HOME}/state/rooks`,
+    rooksHome: `${FAKE_HOME}/state/rooks`,
   });
   assert.deepEqual(deny.filter((p) => p.startsWith(`${FAKE_HOME}/state`)), []);
 });

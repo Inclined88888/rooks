@@ -44,7 +44,7 @@ import { join } from 'node:path';
 import { DB_PATH, ROOKS_HOME } from './paths.js';
 import { recordHomeLockPort } from './home-lock.js';
 import { createDataUpdate, ensureUpdateToken, mountDataUpdateRoutes } from './data-update.js';
-import { packagedDaemon, novaVersion } from './data-version.js';
+import { packagedDaemon, rooksVersion } from './data-version.js';
 import { createBodyParser } from './kernel/body-parser.js';
 import { createRequestObserver } from './kernel/request-observer.js';
 import { Context } from '@deepseek-ai/cordis';
@@ -166,7 +166,7 @@ export async function boot(opts: { listen?: boolean; catalog?: readonly ModuleDe
   // guard: without it, this POST could snapshot a database open for writes.
   if (packagedDaemon()) mountDataUpdateRoutes(app, createDataUpdate({
     home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json'),
-  }, novaVersion(), { migrate: async () => {} }), ensureUpdateToken(ROOKS_HOME));
+  }, rooksVersion(), { migrate: async () => {} }), ensureUpdateToken(ROOKS_HOME));
   // Token first, middleware next, body parser last: an unauthenticated 25 MB
   // POST has no reason to be parsed. `GET /api/health` stays public (see
   // `createDaemonAuthMiddleware`).

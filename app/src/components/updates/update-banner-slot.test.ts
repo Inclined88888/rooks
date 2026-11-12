@@ -33,7 +33,7 @@ const OFFER_STATUS: UpdateStatus = {
   buildExpiresAt: new Date(NOW + 5 * 86_400_000).toISOString(),
 };
 
-/** The desktop shell's `window.novaDesktop.updates`, recorded. */
+/** The desktop shell's `window.rooksDesktop.updates`, recorded. */
 function fakeShell(initial: unknown = { phase: 'idle' }, { refuse = false, installs = [] as unknown[] } = {}) {
   const calls: unknown[][] = [];
   const installQueue = [...installs];
@@ -76,7 +76,7 @@ async function mount(status: UpdateStatus | null, { withLicenseBanner = false, l
   install('IS_REACT_ACT_ENVIRONMENT', true);
   // What a previous page of this machine remembered.
   if (later) dom.window.localStorage.setItem('rooks-update-later', later);
-  if (shell) Object.assign(dom.window, { novaDesktop: { restartAfterSetup: async () => undefined, updates: shell.bridge } });
+  if (shell) Object.assign(dom.window, { rooksDesktop: { restartAfterSetup: async () => undefined, updates: shell.bridge } });
   const requests: string[] = [];
   install('fetch', async (input: string) => {
     const url = String(input);

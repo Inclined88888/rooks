@@ -125,10 +125,10 @@ export type BuildSpawnOpts = {
   /** Resolved memory directory to inject via --add-dir, or undefined if
    *  memory_scope is NONE or not set. */
   memoryDir?: string;
-  /** `false` when the backend declares `capabilities.novaMcp: false`: the
+  /** `false` when the backend declares `capabilities.rooksMcp: false`: the
    *  dialect declares none of Rooks's own MCP servers (`rooks`, `rooks_ask`)
    *  to the agent. Absent = declare them, as always. */
-  novaMcp?: boolean;
+  rooksMcp?: boolean;
   /** This mission must run no shell command and read or write no file (the
    *  conversion mission of a browser recording, TODO #469, #471): the dialect
    *  removes or disables every tool of its CLI that runs a command, reads or
@@ -624,13 +624,13 @@ export type SessionCapabilities = {
  *   - `worktree`: the agent works in Rooks's own folder (the agent's cwd, a
  *     task's git worktree). False for an agent that runs elsewhere — a remote
  *     gateway works in its own space, so a `code` task is refused for it.
- *   - `novaMcp`: Rooks's MCP servers (kanban, messages, memory, ask) can be
+ *   - `rooksMcp`: Rooks's MCP servers (kanban, messages, memory, ask) can be
  *     handed to the agent.
  *   - `attachments`: files other than images can be joined to a turn (they are
  *     announced by their path on Rooks's disk, which only a local agent reads).
  *     The same reach decides whether a skill's file can be opened: without it
- *     and without `novaMcp`, a catalogue skill is pasted whole.
- *   - `novaPreamble`: Rooks's runtime preamble (and its "your backend" block)
+ *     and without `rooksMcp`, a catalogue skill is pasted whole.
+ *   - `rooksPreamble`: Rooks's runtime preamble (and its "your backend" block)
  *     may head the agent's system prompt. False for an agent that already has
  *     its own identity and runs elsewhere: it is sent the agent's own prompt
  *     (soul, role, system prompt, memory), nothing about Rooks's folders.
@@ -642,17 +642,17 @@ export type SessionCapabilities = {
  *
  * Not to be confused with `SessionCapabilities`, which the handshake settles
  * for ONE session: the declared value is the ceiling, the session confirms or
- * narrows it (`novaMcp: true` and `mcp: false` = this agent turned the servers
+ * narrows it (`rooksMcp: true` and `mcp: false` = this agent turned the servers
  * down). Images are the session's business (`SessionCapabilities.image`), not
  * `attachments`.
  */
-export const BACKEND_CAPABILITIES = ['worktree', 'novaMcp', 'attachments', 'novaPreamble'] as const;
+export const BACKEND_CAPABILITIES = ['worktree', 'rooksMcp', 'attachments', 'rooksPreamble'] as const;
 export type BackendCapability = (typeof BACKEND_CAPABILITIES)[number];
 export type BackendCapabilities = { readonly [K in BackendCapability]: boolean };
 
 /** Every backend that declares nothing: the behaviour before capabilities. */
 export const DEFAULT_BACKEND_CAPABILITIES: BackendCapabilities = Object.freeze({
-  worktree: true, novaMcp: true, attachments: true, novaPreamble: true,
+  worktree: true, rooksMcp: true, attachments: true, rooksPreamble: true,
 });
 
 /** What a caller assumes when there is no driver to ask: nothing. */

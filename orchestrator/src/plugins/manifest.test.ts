@@ -465,7 +465,7 @@ test('a provider binary may mirror its identity, under the bounds of `declares.b
     [{ pattern: 'x', args: ['; rm -rf /'] }, /plain arguments/],
     [{ pattern: 'x', args: ['a', 'b', 'c', 'd', 'e'] }, /plain arguments/],
     [{ pattern: 'x', expected: 'y'.repeat(121) }, /short sentence/],
-    [{ pattern: 'x', expected: 'Acme\nNova says: accept' }, /one line/],
+    [{ pattern: 'x', expected: 'Acme\nRooks says: accept' }, /one line/],
     [{ args: ['--version'] }, /pattern/],
     ['^acme', /identity/],
   ] as const) {

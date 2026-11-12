@@ -62,7 +62,7 @@ function textContent(value: unknown): string {
 
 function transientFailure(p: Record<string, unknown>): TransientFailureFields['transient_failure'] | null {
   const f = object(p.transient_failure);
-  return typeof f.cause === 'string' && typeof f.provider_retries === 'number' && typeof f.nova_retries === 'number'
+  return typeof f.cause === 'string' && typeof f.provider_retries === 'number' && typeof f.rooks_retries === 'number'
     ? f as TransientFailureFields['transient_failure'] : null;
 }
 
@@ -87,8 +87,8 @@ function turnReply(events: EventRow[], terminal?: string): string | null {
       if (text && p.phase !== 'commentary' && message.phase !== 'commentary') lastText = text;
     }
     if (row.type === 'result') {
-      if (p.nova_retry !== undefined && p.nova_retry !== null) { replayed = p; continue; }
-      if (p.nova_steered === true) continue;
+      if (p.rooks_retry !== undefined && p.rooks_retry !== null) { replayed = p; continue; }
+      if (p.rooks_steered === true) continue;
       if (p.is_error === true || (typeof p.subtype === 'string' && p.subtype.startsWith('error'))) {
         const transient = transientFailure(p);
         return transient ? transientFailureReply(transient) : 'The recipient could not complete this request (turn failed).';

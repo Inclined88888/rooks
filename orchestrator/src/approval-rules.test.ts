@@ -86,7 +86,7 @@ function ask(missionId: string, agent: string, toolName: string, input: unknown,
   const toolUseId = `tu-approval-${++toolSeq}`;
   // As the claude shim's route asks.
   const decision = requestPermission({
-    mission_id: missionId, agent, tool_name: toolName, input, tool_use_id: toolUseId, novaScopes: true,
+    mission_id: missionId, agent, tool_name: toolName, input, tool_use_id: toolUseId, rooksScopes: true,
     ...(scopes ? { scopes } : {}),
   });
   const card = listPending(missionId).find((p) => p.tool_use_id === toolUseId);

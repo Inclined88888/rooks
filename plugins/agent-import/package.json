@@ -1,7 +1,7 @@
 {
   "name": "@rooks/plugin-agent-import",
   "version": "0.1.0",
-  "license": "AGPL-3.0-only",
+  "license": "UNLICENSED",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
@@ -30,7 +30,9 @@
   "rooks": {
     "id": "agent-import",
     "apiVersion": 15,
-    "kind": ["behavior"],
+    "kind": [
+      "behavior"
+    ],
     "label": "Agent import",
     "description": "Bring your agents from Hermes, Grok Bot, another agent tool or another Rooks: preview what will be created, then import.",
     "author": "Rooks",
@@ -56,13 +58,25 @@
       "events:publish"
     ],
     "client": {
-      "slots": ["settings.section", "agents.toolbar", "onboarding.agent", "agentimport.source", "bots.rail.action", "agent.menu.item"],
-      "external": ["react", "@rooks/ui"],
+      "slots": [
+        "settings.section",
+        "agents.toolbar",
+        "onboarding.agent",
+        "agentimport.source",
+        "bots.rail.action",
+        "agent.menu.item"
+      ],
+      "external": [
+        "react",
+        "@rooks/ui"
+      ],
       "mode": "esm"
     },
     "declares": {
       "agentimport.source": "list"
     },
-    "license": { "required": false }
+    "license": {
+      "required": false
+    }
   }
 }

@@ -9,13 +9,13 @@
 import { createHash } from 'node:crypto';
 import { ROOKS_HOME } from '../paths.js';
 
-export function resolveNovaHome(home?: string): string {
+export function resolveRooksHome(home?: string): string {
   return home ?? ROOKS_HOME;
 }
 
 /** 8 hex of the sha256 of `ROOKS_HOME` — instance identifier in the unit names. */
 export function instanceId(home?: string): string {
-  return createHash('sha256').update(resolveNovaHome(home)).digest('hex').slice(0, 8);
+  return createHash('sha256').update(resolveRooksHome(home)).digest('hex').slice(0, 8);
 }
 
 export function instancePrefix(home?: string): string {

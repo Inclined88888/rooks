@@ -8,7 +8,7 @@ const g = globalThis as unknown as Globals;
 
 function page(machine: string | undefined, bridge?: (request: unknown) => Promise<unknown>) {
   g.document = { documentElement: { getAttribute: (name: string) => (name === MACHINE_ATTRIBUTE ? machine ?? null : null) } };
-  g.window = bridge ? { novaDesktop: { windowScheme: bridge } } : {};
+  g.window = bridge ? { rooksDesktop: { windowScheme: bridge } } : {};
 }
 
 test.afterEach(() => {

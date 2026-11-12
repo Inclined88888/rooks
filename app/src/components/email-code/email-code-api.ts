@@ -86,14 +86,20 @@ export type NewAccount = {
   password: string;
   scheme?: 'light' | 'dark';
   setupToken?: string;
-  challengeId: string;
-  code: string;
+  challengeId?: string;
+  code?: string;
 };
 
-/** Creates the first account, the code proving the address; the daemon answers with the session cookie. */
+/** Creates the first account; when email verification is on, `challengeId` + `code` prove the address. */
 export async function createAccount(input: NewAccount, fetchImpl: Fetch = fetch): Promise<CodeResult<null>> {
-  const { setupToken, scheme, ...rest } = input;
-  const body = { ...rest, ...(scheme ? { scheme } : {}), ...(setupToken ? { setupToken } : {}) };
+  const { setupToken, scheme, challengeId, code, ...rest } = input;
+  const body = {
+    ...rest,
+    ...(scheme ? { scheme } : {}),
+    ...(setupToken ? { setupToken } : {}),
+    ...(challengeId ? { challengeId } : {}),
+    ...(code ? { code } : {}),
+  };
   const answer = await post('/api/ui/auth/setup', body, fetchImpl);
   if (!answer) return { ok: false, failure: networkFailure() };
   if (answer.status === 201) return { ok: true, value: null };

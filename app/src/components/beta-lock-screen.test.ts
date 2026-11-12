@@ -234,7 +234,7 @@ test('in the desktop app the locked build downloads the newer version through th
       return Response.json(LOCKED_OFFER);
     });
     const shellCalls: unknown[][] = [];
-    Object.assign(window, { novaDesktop: { restartAfterSetup: async () => undefined, updates: {
+    Object.assign(window, { rooksDesktop: { restartAfterSetup: async () => undefined, updates: {
       state: async () => { shellCalls.push(['state']); return { phase: 'idle' }; },
       start: async (...args: unknown[]) => { shellCalls.push(['start', ...args]); return { phase: 'verifying', version: '0.1.8', name: 'Rooks.AppImage', format: 'appimage', total: 1 }; },
       cancel: async () => ({ phase: 'idle' }),

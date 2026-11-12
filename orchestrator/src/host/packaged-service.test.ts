@@ -58,7 +58,7 @@ test('real installer isolates dev, stages a durable runtime, and hands over only
     const calls: string[][] = [];
     let loaded = false;
     let opts: ServiceOpts;
-    const base: ServiceOpts = { platform: 'linux', homeDir: f.root, novaHome: f.home,
+    const base: ServiceOpts = { platform: 'linux', homeDir: f.root, rooksHome: f.home,
       installDir: f.installDir, userName: 'test', uid: 1000, heapMb: 512, port: 3010,
       nodePath: f.executable, exec: (name, args) => {
         calls.push([name, ...args]);
@@ -159,7 +159,7 @@ test('the handover wait stops on a gone or reused PID, and only there', async ()
 });
 
 test('the packaged unit backs off its restarts; the legacy template it repairs keeps the old directives', () => {
-  const opts = packagedServiceOptions({ platform: 'linux', homeDir: '/home/u', novaHome: '/home/u/.rooks',
+  const opts = packagedServiceOptions({ platform: 'linux', homeDir: '/home/u', rooksHome: '/home/u/.rooks',
     installDir: '/pkg/resources/orchestrator', userName: 'u', uid: 1000, heapMb: 512, port: 3010,
     nodePath: '/pkg/rooks', exec: () => { throw new Error('No service operations in render test'); },
   }, '/pkg/rooks', 3110);
@@ -192,7 +192,7 @@ test('the generated unit passes the real systemd parser, including paths with sp
   try {
     const home = join(f.root, 'data with spaces %');
     await stagePackagedRuntime(home, f.executable, f.installDir);
-    const opts = packagedServiceOptions({ platform: 'linux', homeDir: f.root, novaHome: home,
+    const opts = packagedServiceOptions({ platform: 'linux', homeDir: f.root, rooksHome: home,
       installDir: f.installDir, userName: 'test', uid: 1000, heapMb: 512, port: 3010,
       nodePath: f.executable, exec: () => { throw new Error('No service operations in parser test'); },
     }, f.executable, 3110);
@@ -289,7 +289,7 @@ test('macOS stages Contents outside Rooks.app and points launchd at that copy', 
     await writeFile(join(contents, 'Frameworks', 'framework'), 'needed by Electron');
     await stagePackagedRuntime(home, executable, installDir, '0.2.0');
 
-    const base: ServiceOpts = { platform: 'darwin', homeDir: home, novaHome: home,
+    const base: ServiceOpts = { platform: 'darwin', homeDir: home, rooksHome: home,
       installDir, userName: 'test', uid: 501, heapMb: 512, port: 3010,
       nodePath: executable, exec: () => ({ code: 0, stdout: '', stderr: '' }) };
     const opts = packagedServiceOptions(base, executable, 3110, '0.2.0');
@@ -333,7 +333,7 @@ test('pruning keeps the release that was active before, so going back reuses its
 test('an upgrade runner hands nothing over and restarts the previous release', () => {
   const saved = { embedded: process.env.ROOKS_DESKTOP_EMBEDDED, upgrade: process.env.ROOKS_DESKTOP_UPGRADE };
   const base = {
-    platform: 'linux', homeDir: '/home/sam', novaHome: '/home/sam/.rooks', installDir: '/mount/resources/orchestrator',
+    platform: 'linux', homeDir: '/home/sam', rooksHome: '/home/sam/.rooks', installDir: '/mount/resources/orchestrator',
     userName: 'sam', uid: 1000, heapMb: 4096, port: 3010, nodePath: '/mount/rooks',
     exec: () => ({ code: 0, stdout: '', stderr: '' }),
   } satisfies ServiceOpts;
@@ -343,7 +343,7 @@ test('an upgrade runner hands nothing over and restarts the previous release', (
     const firstRun = packagedServiceOptions(base, '/mount/rooks', 3110, '0.2.0');
     assert.equal(firstRun.pendingHandover, true);
     assert.equal(firstRun.restart, false);
-    assert.equal(firstRun.releasesRoot, join(runtimeDir(base.novaHome), 'releases'));
+    assert.equal(firstRun.releasesRoot, join(runtimeDir(base.rooksHome), 'releases'));
 
     process.env.ROOKS_DESKTOP_UPGRADE = '1';
     const upgrade = packagedServiceOptions(base, '/mount/rooks', 3110, '0.2.0');

@@ -8,7 +8,7 @@
  *
  * Shown to a superadmin only — the daemon refuses everyone else anyway, this
  * just avoids a button that can only fail. The native pickers exist in the
- * desktop client (`window.novaDesktop.selectPluginSource`), on this
+ * desktop client (`window.rooksDesktop.selectPluginSource`), on this
  * computer's own daemon only. Elsewhere (another machine, a web browser) the
  * folder or the archive is picked on the daemon's disk through its browser
  * (`directory.picker`, file mode for the archive — TODO #791), or an archive
@@ -59,7 +59,7 @@ function nativePicker(): NativePicker | null {
   // On another machine the daemon would read a path of THIS disk (TIM-0136):
   // the upload sends the archive itself, whatever machine is driven.
   if (!nativePickerReachesDaemon(activeMachineId())) return null;
-  const pick = window.novaDesktop?.selectPluginSource;
+  const pick = window.rooksDesktop?.selectPluginSource;
   return typeof pick === 'function' ? pick : null;
 }
 

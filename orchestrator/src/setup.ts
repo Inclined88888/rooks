@@ -20,7 +20,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { usableProviders } from './backends/usable.js';
 import { config, configSource, CONFIG_FILE } from './config/load.js';
-import { EditionSchema, ProfileSchema, NovaConfigSchema } from './config/schema.js';
+import { EditionSchema, ProfileSchema, RooksConfigSchema } from './config/schema.js';
 
 /**
  * Values the environment decided for THIS run, which the file must inherit
@@ -145,7 +145,7 @@ export function buildSetupConfig(input: SetupInput): Record<string, unknown> {
   mergeEnvDecisions(cfg, input.envDecisions ?? readEnvDecisions());
 
   // The wizard must never write a file the daemon would then refuse to boot on.
-  const parsed = NovaConfigSchema.safeParse(cfg);
+  const parsed = RooksConfigSchema.safeParse(cfg);
   if (!parsed.success) {
     const details = parsed.error.issues
       .map((i) => `${i.path.length ? i.path.join('.') : '<root>'}: ${i.message}`)

@@ -62,7 +62,7 @@
     "newAgent": "새 에이전트",
     "askAgent": "{name}에게 묻기",
     "notifications": "알림",
-    "novaAgentsAccess": "{brand} 에이전트 액세스",
+    "rooksAgentsAccess": "{brand} 에이전트 액세스",
     "openOrchestrator": "{name} 오케스트레이터 열기",
     "openHealthAgent": "상태 점검 에이전트 열기",
     "mainAgentFallback": "메인 에이전트"

@@ -24,7 +24,7 @@ import { BRAND } from '@/lib/brand';
 
 /** Sections displayed in order: the key of their label and of its hint. */
 const SECTIONS: { source: SkillSource; key: string }[] = [
-  { source: 'rooks', key: 'sectionNova' },
+  { source: 'rooks', key: 'sectionRooks' },
   { source: 'claude-user', key: 'sectionUser' },
   { source: 'project', key: 'sectionProject' },
   { source: 'plugin', key: 'sectionPlugin' },

@@ -56,8 +56,8 @@ test('nothing ticked and some text: the text alone is the answer', () => {
 });
 
 test('a pick that is not one of the options never reaches the agent', () => {
-  assert.deepEqual(buildAskAnswers([choice], { [choice.question]: '__nova_other__' }, {}), { [choice.question]: '' });
-  assert.equal(askQuestionAnswered(choice, { [choice.question]: '__nova_other__' }, {}), false);
+  assert.deepEqual(buildAskAnswers([choice], { [choice.question]: '__rooks_other__' }, {}), { [choice.question]: '' });
+  assert.equal(askQuestionAnswered(choice, { [choice.question]: '__rooks_other__' }, {}), false);
 });
 
 test('a question is answered by a ticked option or by its text, never by nothing', () => {

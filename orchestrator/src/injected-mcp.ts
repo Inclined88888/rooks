@@ -37,9 +37,9 @@ function normalise(key: string): string {
 
 const INJECTED = new Set([
   ...INJECTED_MCP_SERVERS.map(normalise),
-  // Archive-era browser key (Nova body / codex underscore form).
-  normalise('nova-browser'),
-  normalise('nova_browser'),
+  // Archive-era browser key (upstream body / codex underscore form).
+  normalise('rooks-browser'),
+  normalise('rooks_browser'),
 ]);
 
 /** Whether `key` (a server name as a harness reports it) is one Rooks injects. */

@@ -133,7 +133,7 @@ type WindowMachineBridge = { set: (id: string, request?: { route?: string }) => 
 /** The desktop shell's hold on this window's machine; absent on the web, the PWA and an older desktop. */
 function windowMachineBridge(): WindowMachineBridge | null {
   if (typeof window === 'undefined') return null;
-  const bridge = window.novaDesktop?.windowMachine;
+  const bridge = window.rooksDesktop?.windowMachine;
   return typeof bridge?.set === 'function' ? bridge : null;
 }
 
@@ -199,7 +199,7 @@ export function switchToLocal(): Promise<MachineSwitched | FleetFailure> {
 }
 
 export type FleetErrorKind =
-  | 'invalidCode' | 'invalidUrl' | 'httpsRequired' | 'blockedAddress' | 'notNova' | 'requiresTls'
+  | 'invalidCode' | 'invalidUrl' | 'httpsRequired' | 'blockedAddress' | 'notRooks' | 'requiresTls'
   | 'unreachable' | 'unauthorized' | 'tlsError' | 'redirect' | 'badResponse' | 'throttled'
   | 'tooMany' | 'vault' | 'incompatible' | 'notFound' | 'notHere' | 'sessionRequired' | 'invalidName' | 'generic';
 
@@ -212,7 +212,7 @@ export function fleetErrorKind(failure: Pick<FleetFailure, 'status' | 'error' | 
     case 'query_in_url': return 'invalidUrl';
     case 'https_required': return 'httpsRequired';
     case 'blocked_address': return 'blockedAddress';
-    case 'not_a_nova_machine': return 'notNova';
+    case 'not_a_rooks_machine': return 'notRooks';
     case 'machine_requires_tls': return 'requiresTls';
     case 'machine_tls_error': return 'tlsError';
     case 'machine_redirect': return 'redirect';

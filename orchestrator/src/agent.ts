@@ -302,7 +302,7 @@ export type RunningAgent = {
   /** The open turn is one Rooks started (every prompt goes through `onTurnStart`),
    *  so its `result` moves `budgetSince`. Cleared by that `result`: a turn the CLI
    *  opens finds it false. Two clock reads cannot tell who opened a turn (TODO #718). */
-  turnOpenedByNova: boolean;
+  turnOpenedByRooks: boolean;
   /** Wall clock of the last sign of life from the backend: any stdout line,
    *  parsed or not, or any event a session driver emitted. Stream lines the
    *  dialect drops (thinking deltas) and deltas never persisted still prove the
@@ -667,7 +667,7 @@ export function canResumeForeignSessionOn(backend: string | null | undefined): b
  *  sandbox), the home can be moved with `ROOKS_HOME`, and a `~` means nothing to
  *  `cmd.exe`: naming the resolved path is the only wording that is right
  *  everywhere. */
-function novaPath(...segments: string[]): string {
+function rooksPath(...segments: string[]): string {
   return join(ROOKS_HOME, ...segments);
 }
 
@@ -700,14 +700,14 @@ type PreambleContext = {
   grepai: boolean;
   /** The agent can hand work to others (orchestrator role or flag, or a delegation list). */
   pilot: boolean;
-  /** The backend is handed Rooks's MCP servers (`capabilities.novaMcp`). When
+  /** The backend is handed Rooks's MCP servers (`capabilities.rooksMcp`). When
    *  false, the tools the preamble names (`rooks`, `rooks_ask`) do not exist for
    *  this agent: promising them would make it call tools it does not have. */
-  novaMcp: boolean;
+  rooksMcp: boolean;
 };
 
 /** How an agent talks to the others and starts work: MCP tools of `rooks`. */
-function novaCommsContract(): string {
+function rooksCommsContract(): string {
   return `# Agent communication — current runtime contract
 
 Use MCP tools for inter-agent communication, including when an older agent
@@ -736,7 +736,7 @@ not a reason to switch to a daemon token or another transport.
 }
 
 /** Browser bullet when Rooks's MCP servers are handed to the agent. */
-function novaBrowserBullet(): string {
+function rooksBrowserBullet(): string {
   return `- **Browser**: each mission has an isolated browser profile (Rooks's built-in browser), driven by
   the \`rooks-browser\` MCP tools (\`mcp__rooks-browser__navigate_page\`, \`take_snapshot\`, \`click\`,
   \`fill\`, \`take_screenshot\`… — the same tools as chrome-devtools-mcp) — NOT by the \`rooks\` MCP,
@@ -752,7 +752,7 @@ function novaBrowserBullet(): string {
 
 /** Same, for an agent without Rooks's MCP servers: the browser server is still
  *  declared to it, but `browser_status` / `start` / `stop` are tools of `rooks`. */
-function novaBrowserBulletBare(): string {
+function rooksBrowserBulletBare(): string {
   return `- **Browser**: each mission has an isolated browser profile (Rooks's built-in browser), driven by
   the \`rooks-browser\` MCP tools (\`mcp__rooks-browser__navigate_page\`, \`take_snapshot\`, \`click\`,
   \`fill\`, \`take_screenshot\`…), when they are in your tool list. "No browser" or a forbidden profile
@@ -765,8 +765,8 @@ function novaBrowserBulletBare(): string {
  *  disabled, and an agent told to use it would draw its tables there for nothing. */
 const UI_DOCUMENTS_MODULE_ID = '@rooks/ui-documents';
 
-/** Tools of the `rooks` MCP: absent for a backend that declares `novaMcp: false`. */
-function novaMediaBullets(): string {
+/** Tools of the `rooks` MCP: absent for a backend that declares `rooksMcp: false`. */
+function rooksMediaBullets(): string {
   return `- **Show an image or video** with the \`chat_show_media\` tool (\`src\`, \`caption\`); a markdown
   image is not displayed. \`src\`: a local file under your working directory, a public
   \`https://\` URL (Rooks downloads it), or a \`data:image/…;base64,\` URI (10 MB). A refusal
@@ -799,7 +799,7 @@ function commandsBullet(): string {
 }
 
 /** Notifications and the table of Rooks's MCP tools. */
-function novaOfficialTools(): string {
+function rooksOfficialTools(): string {
   return `## Notifying the user
 
 \`rooks notify report|alert "<text>" [--urgent] [--task-id <id>]\` posts to the notification
@@ -856,8 +856,8 @@ confuse them** with your CLI's own todo tools (\`TaskCreate\`, \`TaskList\`…),
  *  global instructions, the agent's identity docs, its memory rules and the
  *  project's AGENTS.md. It is read at every spawn by every agent, so each line
  *  has to earn its tokens. */
-function novaPreambleHead(ctx: PreambleContext): string {
-  return `${ctx.novaMcp ? novaCommsContract() : ''}# Runtime context — Rooks
+function rooksPreambleHead(ctx: PreambleContext): string {
+  return `${ctx.rooksMcp ? rooksCommsContract() : ''}# Runtime context — Rooks
 
 You are spawned by **Rooks**, a local-first multi-agent platform running on the user's
 machine. This describes Rooks only: the user's own conventions come from the global
@@ -869,20 +869,20 @@ ${hostOsBullet()}
 - **Your code**: your working directory (\`cwd\`) is set. Rooks runs on the host, not in a
   container: an agent you create needs an absolute host \`cwd\` that exists. Never invent
   \`/workspace/...\` or another container path (ENOENT at every spawn); check it exists first.
-- **Rooks data** (\`${novaPath()}\`): database \`${novaPath('rooks.db')}\` (never edit),
-  agents \`${novaPath('agents', '<name>')}\` (config.json, system-prompt.md, SOUL.md and other
-  identity docs), skills \`${novaPath('skills', '<id>', 'SKILL.md')}\`.
+- **Rooks data** (\`${rooksPath()}\`): database \`${rooksPath('rooks.db')}\` (never edit),
+  agents \`${rooksPath('agents', '<name>')}\` (config.json, system-prompt.md, SOUL.md and other
+  identity docs), skills \`${rooksPath('skills', '<id>', 'SKILL.md')}\`.
 - Read the instruction file at the root of your \`cwd\` (\`AGENTS.md\` or \`CLAUDE.md\`) before
   exploring; do not grep/glob/find the whole filesystem to get your bearings.
 ${ctx.vault ? vaultSection(ctx.vault) : ''}${ctx.grepai ? grepaiSection() : ''}
 ## Browser, media, long commands
 
-${ctx.novaMcp ? novaBrowserBullet() : novaBrowserBulletBare()}${ctx.novaMcp ? novaMediaBullets() : ''}- **NEVER start a process that does not end** from a shell tool (dev server, watcher,
+${ctx.rooksMcp ? rooksBrowserBullet() : rooksBrowserBulletBare()}${ctx.rooksMcp ? rooksMediaBullets() : ''}- **NEVER start a process that does not end** from a shell tool (dev server, watcher,
   \`docker compose up\` without \`-d\`, \`tail -f\`, daemon), even "in the background": the turn stays
   attached to its output and freezes. That is ops: give the user the command, check whether it
   runs (process listing), bound a one-off with a timeout, use one-shot requests to check a service.
-${ctx.pilot && ctx.novaMcp ? pilotSection() : ''}
-${ctx.novaMcp ? novaOfficialTools() : ''}`;
+${ctx.pilot && ctx.rooksMcp ? pilotSection() : ''}
+${ctx.rooksMcp ? rooksOfficialTools() : ''}`;
 }
 
 /** Only for an agent that can hand work to others. */
@@ -954,17 +954,17 @@ sentence>"\` (or the \`memory_rule_add\` tool) — live at once, no rebuild. It 
 (\`--scope agent --kind pitfall\`); widen with \`--scope project [--project SLUG]\`, \`--scope role --role
 coder\` or \`--scope global\`; \`--tier core\` injects it every time on its scope. Read or remove:
 \`rooks memory rule list\` / \`rm <id>\`. Raw facts go to
-\`${novaPath('agents', '<your-name>', 'memory', 'learnings.jsonl')}\` (one JSON line
+\`${rooksPath('agents', '<your-name>', 'memory', 'learnings.jsonl')}\` (one JSON line
 \`{"kind":"decision|pitfall|preference","text":"…"}\`). **Memory \`.md\` files inject NOTHING** (\`pieges.md\`
 is dead; a project's \`memory/instructions.md\` / \`decisions.md\` are references to \`Read\`): a rule that
 must reach an agent has to exist in the database. Your agent name is in the header of this preamble;
-otherwise list \`${novaPath('agents')}\`.
+otherwise list \`${rooksPath('agents')}\`.
 
 `;
 }
 
-function novaPreambleTail(ctx: PreambleContext): string {
-  return (ctx.novaMcp ? novaAskingTheUser() : novaAskingInText()) + `## Scheduling
+function rooksPreambleTail(ctx: PreambleContext): string {
+  return (ctx.rooksMcp ? rooksAskingTheUser() : rooksAskingInText()) + `## Scheduling
 
 Before any \`scheduled_at\`, \`CronCreate\`, \`ScheduleWakeup\` or time wording ("in 2h", "at 11pm"), run
 \`date\` (or your OS's equivalent): the runtime context gives the date, never the time, and a timestamp
@@ -974,7 +974,7 @@ computed without it can already be past, so the task fires at once.
 }
 
 /** `question` and the referent messages are tools of the `rooks_ask` / `rooks` MCPs. */
-function novaAskingTheUser(): string {
+function rooksAskingTheUser(): string {
   return `## Asking the user — hard rule
 
 You run in a web UI, **not** a TTY. For any decision, arbitration, choice between options, or
@@ -1005,7 +1005,7 @@ Kanban task your scope is its brief: edit the files it lists, run the checks, co
 
 /** A backend without Rooks's MCP servers has no `question` tool: its only
  *  channel is the reply itself. */
-function novaAskingInText(): string {
+function rooksAskingInText(): string {
   return `## Asking the user — hard rule
 
 You run in a web UI, **not** a TTY, and you have no question tool: when you need a decision, ask it
@@ -1021,12 +1021,12 @@ state your assumption in your report.
  * module and since some parts depend on the user's setup: what the agent reads
  * must describe the Rooks that actually runs, not the whole catalog.
  */
-function novaPreamble(memoryOn: boolean, ctx: PreambleContext): string {
+function rooksPreamble(memoryOn: boolean, ctx: PreambleContext): string {
   // Memory rules are written with `memory_rule_add` / the `rooks` CLI: an agent
   // without Rooks's MCP servers has no gesture to follow.
-  return novaPreambleHead(ctx)
-    + (memoryOn && ctx.novaMcp ? preambleMemory() : '')
-    + novaPreambleTail(ctx);
+  return rooksPreambleHead(ctx)
+    + (memoryOn && ctx.rooksMcp ? preambleMemory() : '')
+    + rooksPreambleTail(ctx);
 }
 
 /** Build the full prompt sent to `--append-system-prompt`: ROOKS preamble
@@ -1260,9 +1260,9 @@ export function skillFilesNote(
   if (caps.attachments) {
     const files = skillFilesOnDisk(id);
     return files.length === 0 ? ''
-      : `\n\nFiles next to this skill, in \`${novaPath('skills', id)}\`: ${fileList(files.map((f) => f.path))}.`;
+      : `\n\nFiles next to this skill, in \`${rooksPath('skills', id)}\`: ${fileList(files.map((f) => f.path))}.`;
   }
-  if (caps.novaMcp) {
+  if (caps.rooksMcp) {
     const files = listSkillFiles(id);
     return files.length === 0 ? ''
       : `\n\nFiles next to this skill: ${fileList(files.map((f) => f.path))}. Read one with the \`skill_get\` tool (id \`${id}\`, file = its path).`;
@@ -1296,9 +1296,9 @@ export function skillPastedContent(
  */
 export function skillsBlockHeadings(caps: BackendCapabilities = DEFAULT_BACKEND_CAPABILITIES): Record<SkillMode, string> {
   const tool = 'with the `skill_get` tool (id)';
-  const file = `\`${novaPath('skills', '<id>', 'SKILL.md')}\``;
-  const read = caps.novaMcp && caps.attachments ? `read it ${tool} — or open ${file} — and`
-    : caps.novaMcp ? `read it ${tool} and`
+  const file = `\`${rooksPath('skills', '<id>', 'SKILL.md')}\``;
+  const read = caps.rooksMcp && caps.attachments ? `read it ${tool} — or open ${file} — and`
+    : caps.rooksMcp ? `read it ${tool} and`
       : `read ${file} and`;
   return {
     import: '\n\n# Skills you MUST apply',
@@ -1422,15 +1422,15 @@ export function buildPromptSegments(
     segments.push({ id, text: glue + body, body, ...extra });
     glue = '';
   };
-  // A backend that brings its own identity (`novaPreamble: false`) is sent the
+  // A backend that brings its own identity (`rooksPreamble: false`) is sent the
   // agent's own prompt only: Rooks's folders and tools mean nothing to it.
-  if (backendCapabilities(backend.name).novaPreamble) {
-    push('preamble', novaPreamble(memoryOn, {
+  if (backendCapabilities(backend.name).rooksPreamble) {
+    push('preamble', rooksPreamble(memoryOn, {
       vault: configuredVaultRoot(),
       grepai: !!cfg.cwd && existsSync(join(cfg.cwd, '.grepai')),
       pilot: cfg.orchestrator === true || cfg.role === 'orchestrator'
         || (Array.isArray(cfg.orchestrates) ? cfg.orchestrates.length > 0 : cfg.orchestrates === '*'),
-      novaMcp: backendCapabilities(backend.name).novaMcp,
+      rooksMcp: backendCapabilities(backend.name).rooksMcp,
     }));
     push('backend', backendContextBlock(backend, model));
   }
@@ -1886,7 +1886,7 @@ async function spawnMissionProcess(
   const launch = wrapMissionLaunch(backendBin, spec.args, missionId, {
     cwd: cwd ?? undefined,
     backend: backend.name,
-    novaHome: ROOKS_HOME,
+    rooksHome: ROOKS_HOME,
   });
   // Vault slice computed HERE so the inject journal (§8 / §12.8) records the
   // identities without `missionEnv` writing to the database — that function
@@ -2174,7 +2174,7 @@ async function spawnTurn(args: {
     missionId,
     memoryDir,
     // A backend that cannot use Rooks's MCP servers is not handed them.
-    ...(backendCapabilities(backend.name).novaMcp ? {} : { novaMcp: false }),
+    ...(backendCapabilities(backend.name).rooksMcp ? {} : { rooksMcp: false }),
     ...(readOnlyTools ? { readOnlyTools: true } : {}),
     ...(args.agentCommand ? { agentCommand: true } : {}),
   };
@@ -2197,7 +2197,7 @@ async function spawnTurn(args: {
     turnActive: reattach ? reattach.turnActive : true,
     turnSince: Date.now(),
     budgetSince: Date.now(),
-    turnOpenedByNova: reattach ? reattach.turnActive : true,
+    turnOpenedByRooks: reattach ? reattach.turnActive : true,
     rateLimited: false,
     interruptedBy: null,
     authFailed: false,
@@ -2259,7 +2259,7 @@ async function spawnTurn(args: {
   // would each lose half the stream.
   const definition = fromLegacy(backend, {
     ...(launched ? { proc: launched.proc } : {}),
-    novaMcp: backendCapabilities(backend.name).novaMcp,
+    rooksMcp: backendCapabilities(backend.name).rooksMcp,
   });
   if (remote) {
     agent.session = openMissionSession(
@@ -5964,7 +5964,7 @@ function openMissionSession(
       launch?.started();
       started = true;
       for (const event of pendingEvents.splice(0)) emit(event);
-      agent.turnOpenedByNova = true;
+      agent.turnOpenedByRooks = true;
     },
     onFailed: (message, cause) => {
       // A refused reattachment says nothing about the remote run, which may
@@ -6128,7 +6128,7 @@ function processEvent(agent: RunningAgent, ev: NormalizedEvent): void {
       const fields = judged.fields;
       echo = judged.echo;
       stored = { ...(payload as Record<string, unknown>), ...fields };
-      replaying = !!fields.nova_retry;
+      replaying = !!fields.rooks_retry;
       // An unattended turn the provider dropped AND Rooks's replays could not
       // cure counts toward the breaker: a backend that keeps doing it is
       // sidelined for the series' fallback instead of being replayed into the
@@ -6148,7 +6148,7 @@ function processEvent(agent: RunningAgent, ev: NormalizedEvent): void {
     }
     // Persisted with its mark: a request reply read from the transcript later
     // skips it, as it skips a replayed failure (`agent-request-replies.ts`).
-    if (steered) stored = { ...(payload as Record<string, unknown>), nova_steered: true };
+    if (steered) stored = { ...(payload as Record<string, unknown>), rooks_steered: true };
     agent.providerRetries = undefined;
   }
   const row = dbApi.insertEvent(agent.missionId, type, stored);
@@ -6174,8 +6174,8 @@ function processEvent(agent: RunningAgent, ev: NormalizedEvent): void {
     // stop showing "thinking" until the user speaks again.
     agent.turnActive = false;
     agent.turnSince = Date.now();
-    if (agent.turnOpenedByNova) agent.budgetSince = agent.turnSince;
-    agent.turnOpenedByNova = false;
+    if (agent.turnOpenedByRooks) agent.budgetSince = agent.turnSince;
+    agent.turnOpenedByRooks = false;
     agent.authFailed = false;
     // A successful turn proves the quota is back, regardless of the announced
     // reopening time: observation takes precedence over prediction. A STERILE
@@ -6273,8 +6273,8 @@ function judgeTransientTurn(
     cause: resultFailureText(payload) || tally?.lastCause || 'provider unreachable',
     provider_retries: tally?.count ?? 0,
     provider_max: tally?.max ?? null,
-    nova_retries: spent,
-    nova_max: max,
+    rooks_retries: spent,
+    rooks_max: max,
   };
   const m = dbApi.getMission(missionId);
   if (spent >= max || agent.interruptedBy === 'backend_unavailable' || backendSwitches.has(missionId)
@@ -6287,7 +6287,7 @@ function judgeTransientTurn(
   const delayMs = turnRetryDelayMs(attempt, settingNum('ROOKS_TURN_RETRY_BASE_MS'), tally?.lastDelayMs);
   const fields: TransientFailureFields = {
     transient_failure: failure,
-    nova_retry: { attempt, max, delay_ms: delayMs },
+    rooks_retry: { attempt, max, delay_ms: delayMs },
   };
   const timer = setTimeout(() => { void runTurnRetry(missionId, attempt, max, failure.cause); }, delayMs);
   timer.unref?.();

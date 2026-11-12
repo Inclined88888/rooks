@@ -6,10 +6,10 @@ import { test } from 'node:test';
 
 process.env.ROOKS_HOME = mkdtempSync(join(tmpdir(), 'rooks-host-test-'));
 
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { createGenericHost } = await import('./generic.js');
 
-const host = createGenericHost(NovaConfigSchema.parse({}));
+const host = createGenericHost(RooksConfigSchema.parse({}));
 
 test('generic confine conserve la commande et ses arguments', () => {
   assert.deepEqual(host.confine('/bin/echo', ['ok'], 'unit'), { cmd: '/bin/echo', args: ['ok'] });
@@ -83,10 +83,10 @@ test('generic bin (win32) : un pin vers un build Codex desktop remplacé retombe
     installedBinariesFile: join(local, 'absent.json'),
   };
   const hostWith = (pin: string, options: typeof win | { platform: 'linux'; path: string; homeDir: string; env: { LOCALAPPDATA: string } }) =>
-    createGenericHost(NovaConfigSchema.parse({ host: { binaries: { codex: pin } } }), options);
+    createGenericHost(RooksConfigSchema.parse({ host: { binaries: { codex: pin } } }), options);
 
   // Sans pin : la détection trouve le build de l'app desktop.
-  assert.equal(createGenericHost(NovaConfigSchema.parse({}), win).bin('codex'), current);
+  assert.equal(createGenericHost(RooksConfigSchema.parse({}), win).bin('codex'), current);
   // Pin périmé vers un ancien build : repli sur la détection.
   assert.equal(hostWith(join(bin, 'aaaa1111', 'codex.exe'), win).bin('codex'), current);
 
@@ -116,8 +116,8 @@ test('generic bin and spawn reach an ACP agent in its installer directory', asyn
     platform: 'win32' as const, path: '', homeDir: home, env: { LOCALAPPDATA: local },
     installedBinariesFile: join(home, 'absent.json'),
   };
-  assert.equal(createGenericHost(NovaConfigSchema.parse({}), win).bin('hermes-acp'), hermes);
-  assert.throws(() => createGenericHost(NovaConfigSchema.parse({}), { ...win, env: {} }).bin('hermes-acp'), /hermes-acp/);
+  assert.equal(createGenericHost(RooksConfigSchema.parse({}), win).bin('hermes-acp'), hermes);
+  assert.throws(() => createGenericHost(RooksConfigSchema.parse({}), { ...win, env: {} }).bin('hermes-acp'), /hermes-acp/);
 
   if (process.platform === 'win32') { t.skip('the stub below is a shell script'); return; }
   const opencode = join(home, '.opencode', 'bin', 'opencode');
@@ -125,7 +125,7 @@ test('generic bin and spawn reach an ACP agent in its installer directory', asyn
   writeFileSync(opencode, '#!/bin/sh\necho "stub:$0"\n');
   chmodSync(opencode, 0o755);
   // A service PATH that does not list the installer directory.
-  const service = createGenericHost(NovaConfigSchema.parse({}), { path: '/usr/bin:/bin', homeDir: home, env: {} });
+  const service = createGenericHost(RooksConfigSchema.parse({}), { path: '/usr/bin:/bin', homeDir: home, env: {} });
   assert.equal(service.bin('opencode'), opencode);
   const child = service.spawn('opencode', [], { stdio: ['ignore', 'pipe', 'ignore'] });
   const out = await new Promise<string>((resolve, reject) => {
@@ -153,7 +153,7 @@ test('generic (win32): an npm shim starts its script as a direct child, argument
     '  SET PATHEXT=%PATHEXT:;.JS;=;%', ')', '',
     'endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "%dp0%\\node_modules\\acme\\cli.js" %*', '',
   ].join('\r\n'));
-  const win = createGenericHost(NovaConfigSchema.parse({}), {
+  const win = createGenericHost(RooksConfigSchema.parse({}), {
     platform: 'win32', homeDir: '', env: {},
     path: `${dir};${dirname(process.execPath)}`,
     installedBinariesFile: join(dir, 'absent.json'),

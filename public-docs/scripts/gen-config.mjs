@@ -25,7 +25,7 @@ try {
     if (!allowed.has(name)) throw new Error(`Unexpected schema dependency: ${name}`);
     return require(name);
   }}, {timeout: 5000});
-  const schema = exports.NovaConfigSchema;
+  const schema = exports.RooksConfigSchema;
   const json = schema.toJSONSchema({io: 'input'});
   const defaults = JSON.parse(JSON.stringify(schema.parse({})));
   const loader = readFileSync(resolve(site, '../orchestrator/src/config/load.ts'), 'utf8');

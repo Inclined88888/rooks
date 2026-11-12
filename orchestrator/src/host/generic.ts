@@ -6,7 +6,7 @@ import {
 } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { NovaConfig } from '../config/schema.js';
+import type { RooksConfig } from '../config/schema.js';
 import { ROOKS_HOME } from '../paths.js';
 import type { Capability, ExecOpts, ExecResult, Host, SpawnOpts } from './types.js';
 import { findExecutableBinary, resolvePinnedBinary, type BinarySearchOptions } from './binary-path.js';
@@ -46,7 +46,7 @@ function resultOf(r: ReturnType<typeof spawnSync>): ExecResult {
  * spawn without a restart (TODO #413).
  */
 export function createGenericHost(
-  config: NovaConfig,
+  config: RooksConfig,
   binaryOptions: BinarySearchOptions = {},
   pins: BinaryPins = () => config.host.binaries,
 ): Host {

@@ -52,11 +52,11 @@ const { registerTodoExtension } = await import('../project-todo-extensions.js');
 const { outcomeExtension } = await import('../plugins-bundled/todo-outcomes/outcome.js');
 const { ensureOutcomeTable } = await import('../plugins-bundled/todo-outcomes/store.js');
 const { setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { resetPluginPolicyState, spawnCardsSettled } = await import('./policy.js');
 // The investigation a ticket opens is a mission: the operator approved the connector (TODO #562).
 const POLICY = { http: { allow: ['cdn.discordapp.com', 'media.discordapp.net'] }, spawn: { approved: ['todo-connector-discord'], max: 1000 } };
-setConfig(NovaConfigSchema.parse({ pluginPolicy: POLICY }));
+setConfig(RooksConfigSchema.parse({ pluginPolicy: POLICY }));
 const { apply } = await import(join(EXAMPLE, 'lib/index.js')) as { apply(ctx: unknown): void };
 const { DEFAULT_PROMPT } = await import(join(EXAMPLE, 'lib/core.js')) as { DEFAULT_PROMPT: string };
 dbApi.upsertProject('rooks', {});
@@ -495,7 +495,7 @@ test('when the investigation cannot be created, the retry creates it and the ide
 });
 
 test('an unapproved connector asks for approval instead of failing silently, and the approved retry starts the investigation (TODO #562)', async () => {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { ...POLICY, spawn: { approved: [] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { ...POLICY, spawn: { approved: [] } } }));
   resetPluginPolicyState();
   const investigations = () => dbApi.listTasks().filter((t) => t.title.startsWith('Investigation TIM-0562'));
   try {
@@ -513,14 +513,14 @@ test('an unapproved connector asks for approval instead of failing silently, and
     const waiting = await api('GET', `/api/plugins/${PLUGIN_ID}/status`);
     assert.deepEqual((waiting.json!.awaitingApproval as { ref: string }).ref, 'TIM-0562');
 
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: POLICY }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: POLICY }));
     assert.equal((await deliver(body, id)).status, 200);
     assert.equal(investigations().length, 1);
     assert.equal(investigations()[0]!.owner_user_id, adminId, 'it acts for the account that opened the webhook');
     assert.equal((await api('GET', `/api/plugins/${PLUGIN_ID}/status`)).json!.awaitingApproval, null);
     assert.equal(dbApi.listProjectTodo({}).filter((t) => t.text.startsWith('TIM-0562')).length, 1);
   } finally {
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: POLICY }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: POLICY }));
     resetPluginPolicyState();
   }
 });

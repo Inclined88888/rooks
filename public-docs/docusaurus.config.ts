@@ -34,7 +34,7 @@ const config: Config = {
       ],
     },
     colorMode: {respectPrefersColorScheme: true},
-    footer: {copyright: `Copyright © ${new Date().getFullYear()} Timon`},
+    footer: {copyright: `Copyright © ${new Date().getFullYear()} Rooks`},
   } satisfies ThemeConfig,
 };
 export default config;

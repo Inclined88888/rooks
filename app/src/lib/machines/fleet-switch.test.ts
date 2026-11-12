@@ -45,7 +45,7 @@ function scene(machine: string | undefined, path: string, local: MemoryStorage, 
     addEventListener: (type: string, listener: (event: { persisted: boolean }) => void) => {
       listeners.set(type, [...(listeners.get(type) ?? []), listener]);
     },
-    ...(desktop ? { novaDesktop: { windowMachine: desktop } } : {}),
+    ...(desktop ? { rooksDesktop: { windowMachine: desktop } } : {}),
   };
   g.fetch = (async (input: string, init?: RequestInit) => {
     calls.push(`${init?.method ?? 'GET'} ${input}${typeof init?.body === 'string' ? ` ${init.body}` : ''}`);

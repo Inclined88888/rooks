@@ -217,7 +217,7 @@ button:disabled{opacity:.45;cursor:default}
   const script = `(() => {
 const copy = ${scriptJson(copy)};
 const pinStyle = ${scriptJson(pinStyle)};
-const api = window.novaBubble;
+const api = window.rooksBubble;
 const $ = (id) => document.getElementById(id);
 const note = $('note'), add = $('add'), send = $('send'), remove = $('remove'), error = $('error');
 note.placeholder = copy.placeholder; $('hint').textContent = copy.hint; remove.textContent = copy.remove;

@@ -195,8 +195,8 @@
       "project": "Projekt",
       "plugin": "Plugin"
     },
-    "sectionNova": "{brand}-Skills",
-    "sectionNovaHint": "~/.rooks/skills — einem Agenten zuordenbar, im Katalog oder vollständig importiert",
+    "sectionRooks": "{brand}-Skills",
+    "sectionRooksHint": "~/.rooks/skills — einem Agenten zuordenbar, im Katalog oder vollständig importiert",
     "sectionUser": "Globale Claude-Skills",
     "sectionUserHint": "~/.claude/skills & ~/.claude/commands — von Missionen nicht geladen; importiere einen in {brand}, um ihn zuzuordnen",
     "sectionProject": "Projekt-Skills",
@@ -2034,9 +2034,9 @@
     "providerRecovered": "Nach {count} Versuchen wieder verbunden",
     "providerRecoveredOne": "Nach 1 Versuch wieder verbunden",
     "providerExhausted": "Server von {provider} nach {count} Versuchen nicht erreichbar",
-    "providerExhaustedWithNova": "Server von {provider} nach {count} Versuchen des Anbieters und {rooks} Versuchen von Rooks nicht erreichbar",
-    "novaRetryIn": "Rooks-Versuch {attempt}/{max} in {seconds} s…",
-    "novaRetryRunning": "Rooks-Versuch {attempt}/{max}…",
+    "providerExhaustedWithRooks": "Server von {provider} nach {count} Versuchen des Anbieters und {rooks} Versuchen von Rooks nicht erreichbar",
+    "rooksRetryIn": "Rooks-Versuch {attempt}/{max} in {seconds} s…",
+    "rooksRetryRunning": "Rooks-Versuch {attempt}/{max}…",
     "retryTurn": "Wiederholen",
     "retryTurnUnavailable": "Nichts zu wiederholen: Die letzte Nachricht ist nicht mehr in dieser Unterhaltung.",
     "quotaExhaustedTitle": "Kontingent erschöpft",
@@ -2293,7 +2293,7 @@
       "other": "Dein eigenes Dokument"
     }
   },
-  "novaPreamble": {
+  "rooksPreamble": {
     "title": "Rooks-Präambel",
     "description": "Bei jedem Start erzeugt und als Erstes an jeden Agenten gesendet. Schreibgeschützt: Sie stammt von Rooks, nicht aus einer Datei, die dir gehört. Angezeigt, wie sie für den Hauptagenten erzeugt wird.",
     "empty": "Keine Präambel für diesen Agenten.",
@@ -2454,8 +2454,8 @@
     "llmLabel": "LLM",
     "llmHint": "Welche Anbieter-CLI diesen Agenten ausführt und mit welchem Modell. Jedes Konto meldet sich selbst an.",
     "subscription": "Abo",
-    "skillSectionNovaLabel": "ROOKS-Skills",
-    "skillSectionNovaHint": "zuordenbar — im Katalog oder in den Prompt importiert",
+    "skillSectionRooksLabel": "ROOKS-Skills",
+    "skillSectionRooksHint": "zuordenbar — im Katalog oder in den Prompt importiert",
     "skillSectionProjectLabel": "Projekt-Skills",
     "skillSectionProjectHint": "<cwd>/.claude — nur von Claude Code nativ geladen",
     "skillSectionUserLabel": "Globale Skills",
@@ -2498,7 +2498,7 @@
     "mcpEmpty": "Noch keine MCP-Server hinzugefügt — füge welche hinzu unter",
     "mcpBuiltinTitle": "In Rooks eingebaut — immer an, nichts zu gewähren",
     "mcpBuiltinHint": "Jeder Agent erhält diese auf jedem Backend, egal was unten gewählt ist, und die MCP-Überschreibung einer Kanban-Aufgabe entfernt sie nie. Manche rooks-Tools (Agenten oder Projekte erstellen, MCP-Server deklarieren) brauchen zusätzlich die Berechtigungen deines Kontos auf der Seite Benutzer, die diese Liste nicht ändert.",
-    "mcpBuiltinNova": "Kanban, Missionen, Agenten, Gedächtnis, diese Dokumentation",
+    "mcpBuiltinRooks": "Kanban, Missionen, Agenten, Gedächtnis, diese Dokumentation",
     "mcpBuiltinAsk": "Formulare, die dich im Chat fragen",
     "mcpBuiltinBrowser": "Der eingebaute Browser des Projekts, solange er läuft",
     "mcpBuiltinGrepai": "Der semantische Index des Projekts, wenn das Projekt einen hat",
@@ -2624,7 +2624,7 @@
       "title": "Docker-Container",
       "description": "Ob der Stack des Projekts läuft, unter welcher lokalen URL und welcher Dienst ausgefallen ist; starten, neu starten oder stoppen."
     },
-    "novaDaemon": {
+    "rooksDaemon": {
       "title": "Rooks-Daemon",
       "description": "Der Zustand von Rooks selbst, für das Projekt rooks."
     },

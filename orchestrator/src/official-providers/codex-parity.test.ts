@@ -94,7 +94,7 @@ const SCENARIOS: Scenario[] = [
     resumeSession: 'thread-0001', cfg: { cwd, model: 'gpt-5.6-sol', permission_mode: 'plan' },
     images: [{ media_type: 'image/png', data: PNG }, { media_type: 'image/jpeg', data: PNG }],
   }) },
-  { name: 'without the Rooks servers', backend: 'codex', opts: (cwd) => ({ novaMcp: false, cfg: { cwd, permission_mode: 'bypassPermissions' } }) },
+  { name: 'without the Rooks servers', backend: 'codex', opts: (cwd) => ({ rooksMcp: false, cfg: { cwd, permission_mode: 'bypassPermissions' } }) },
   { name: 'an API key stands for the sign-in', backend: 'codex', agent: 'parity.keyed', opts: (cwd) => ({ cfg: { cwd, permission_mode: 'default' } }) },
   { name: 'Ollama Cloud: a provider block and a key, no sign-in', backend: 'ollama-cloud', opts: (cwd) => ({ cfg: { cwd, model: 'gpt-oss:120b', permission_mode: 'acceptEdits', mcp_servers: MCP } }) },
 ];

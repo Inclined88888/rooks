@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { applyEnvOverrides } from '../config/load.js';
-import { NovaConfigSchema } from '../config/schema.js';
+import { RooksConfigSchema } from '../config/schema.js';
 import { installWithRuntime, uninstallWithRuntime } from './packaged-install.js';
 import { markPackagedCli, serviceOptsForPlatform } from './service-environment.js';
 import { renderMacLauncher, renderWindowsLauncher, type ServiceOpts } from './service-install.js';
@@ -50,7 +50,7 @@ function base(platform: NodeJS.Platform): ServiceOpts {
   return {
     platform,
     homeDir: win ? 'C:\\Users\\sam' : '/Users/sam',
-    novaHome: win ? 'C:\\Users\\sam\\.rooks' : '/Users/sam/.rooks',
+    rooksHome: win ? 'C:\\Users\\sam\\.rooks' : '/Users/sam/.rooks',
     installDir: win ? 'C:\\Program Files\\Rooks\\resources\\orchestrator' : '/Applications/Rooks.app/Contents/Resources/orchestrator',
     userName: 'sam',
     uid: 501,
@@ -103,8 +103,8 @@ test('markPackagedCli: before the first config, the service gets the desktop\'s 
   const fresh = mkdtempSync(join(tmpdir(), 'rooks-cli-'));
   const env: NodeJS.ProcessEnv = {};
   markPackagedCli(env, electron, '0.1.3', fresh);
-  const cli = applyEnvOverrides(NovaConfigSchema.parse({}), env);
-  const button = applyEnvOverrides(NovaConfigSchema.parse({}), desktop);
+  const cli = applyEnvOverrides(RooksConfigSchema.parse({}), env);
+  const button = applyEnvOverrides(RooksConfigSchema.parse({}), desktop);
   assert.equal(cli.daemon.listen.port, button.daemon.listen.port);
   assert.equal(cli.app.listen.port, button.app.listen.port);
   assert.equal(cli.app.enabled, true);
@@ -162,7 +162,7 @@ test('uninstallWithRuntime: removing the packaged unit removes the marker the Li
   const home = mkdtempSync(join(tmpdir(), 'rooks-cli-'));
   const marker = join(home, 'desktop-runtime', 'installed');
   mkdirSync(join(home, 'desktop-runtime'));
-  const opts = { ...base('linux'), novaHome: home, unitName: 'rooks-desktop-abc' };
+  const opts = { ...base('linux'), rooksHome: home, unitName: 'rooks-desktop-abc' };
   writeFileSync(marker, opts.unitName);
   await uninstallWithRuntime(opts, () => ({ ok: false, code: 1, lines: ['systemctl refused'] }));
   assert.equal(existsSync(marker), true);

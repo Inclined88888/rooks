@@ -68,7 +68,7 @@
       "invalidUrl": "Questo indirizzo non può essere usato: indica solo l’indirizzo della macchina, senza login, query o frammento.",
       "httpsRequired": "La macchina deve essere raggiunta via HTTPS. L’HTTP semplice è accettato solo su questo stesso computer.",
       "blockedAddress": "Questo indirizzo non punta mai a una macchina Rooks.",
-      "notNova": "Nessuna macchina Rooks risponde a questo indirizzo.",
+      "notRooks": "Nessuna macchina Rooks risponde a questo indirizzo.",
       "requiresTls": "La macchina non vede questa connessione come HTTPS: controlla le impostazioni HTTPS del suo reverse proxy.",
       "unreachable": "La macchina non è raggiungibile in questo momento.",
       "unauthorized": "La macchina non accetta più questo computer: il suo accesso è stato revocato o è scaduto. Abbinala di nuovo.",

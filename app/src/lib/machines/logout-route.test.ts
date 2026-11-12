@@ -1,6 +1,6 @@
 /**
  * Signing out forgets the active machine (relecture de V9). With the
- * `nova_machine` cookie left behind, the next page load named a remote
+ * `rooks_machine` cookie left behind, the next page load named a remote
  * machine nobody had a session for, and the "machine blocked" screen took the
  * place of the login page.
  */
@@ -42,13 +42,13 @@ function setCookies(response: Response): string[] {
 }
 
 test('logout clears the machine cookie next to the session one', async () => {
-  const { response, calls } = await logout({ rooks_session: 'alice', nova_machine: 'vps' });
+  const { response, calls } = await logout({ rooks_session: 'alice', rooks_machine: 'vps' });
   assert.equal(response.status, 200);
   const cookies = setCookies(response);
   assert.ok(cookies.some((line) => line.startsWith('rooks_session=;')), 'the daemon’s own Set-Cookie is kept');
-  const machine = cookies.find((line) => line.startsWith('nova_machine='));
-  assert.ok(machine, 'nova_machine is cleared');
-  assert.match(machine, /^nova_machine=; Max-Age=0; Path=\/; SameSite=Lax; HttpOnly$/);
+  const machine = cookies.find((line) => line.startsWith('rooks_machine='));
+  assert.ok(machine, 'rooks_machine is cleared');
+  assert.match(machine, /^rooks_machine=; Max-Age=0; Path=\/; SameSite=Lax; HttpOnly$/);
   // Anchored on the local daemon, whatever the cookie named: one call, no
   // credential lookup for the remote machine.
   assert.equal(calls.length, 1);
@@ -56,8 +56,8 @@ test('logout clears the machine cookie next to the session one', async () => {
 });
 
 test('the cleared cookie is Secure when the browser came over HTTPS', async () => {
-  const { response } = await logout({ rooks_session: 'alice', nova_machine: 'vps' }, 'http://localhost/api/ui/auth/logout', { 'x-forwarded-proto': 'https' });
-  const machine = setCookies(response).find((line) => line.startsWith('nova_machine='));
+  const { response } = await logout({ rooks_session: 'alice', rooks_machine: 'vps' }, 'http://localhost/api/ui/auth/logout', { 'x-forwarded-proto': 'https' });
+  const machine = setCookies(response).find((line) => line.startsWith('rooks_machine='));
   assert.ok(machine?.endsWith('; Secure'));
 });
 
@@ -74,7 +74,7 @@ test('a failed logout still forgets the machine', async () => {
       () => POST(new Request('http://localhost/api/ui/auth/logout', { method: 'POST' })),
     );
     assert.equal(response.status, 401);
-    assert.ok(setCookies(response).some((line) => line.startsWith('nova_machine=; Max-Age=0')));
+    assert.ok(setCookies(response).some((line) => line.startsWith('rooks_machine=; Max-Age=0')));
   } finally {
     globalThis.fetch = previousFetch;
     if (oldAsync) Object.defineProperty(globalThis, 'AsyncLocalStorage', oldAsync);

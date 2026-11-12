@@ -253,7 +253,7 @@ export function registerMachineRoutes(app: Router, opts: MachineRoutesOptions = 
       } else if (answer.status === 403 && remoteError === 'device_requires_tls') {
         res.status(502).json({ error: 'machine_requires_tls', message: 'the machine does not see this connection as HTTPS (check its reverse proxy)' });
       } else if (answer.status === 404) {
-        res.status(502).json({ error: 'not_a_nova_machine', message: 'no Rooks pairing endpoint at this address' });
+        res.status(502).json({ error: 'not_a_rooks_machine', message: 'no Rooks pairing endpoint at this address' });
       } else {
         res.status(502).json({ error: 'machine_bad_response', message: 'the machine answered something unexpected' });
       }

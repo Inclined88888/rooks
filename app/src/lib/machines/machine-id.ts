@@ -16,7 +16,7 @@ export function isMachineId(value: string): boolean {
 
 /**
  * Header naming the machine a request answers for, ahead of the
- * `nova_machine` cookie (`machineIdFromRequest` in `target.ts`): a desktop
+ * `rooks_machine` cookie (`machineIdFromRequest` in `target.ts`): a desktop
  * window pinned to one machine, a permission resolved from a push
  * notification (`public/sw.js`, which spells it out: a static worker imports
  * nothing). An id, never a URL; it grants nothing — the machine must still be

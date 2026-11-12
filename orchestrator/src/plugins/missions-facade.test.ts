@@ -25,7 +25,7 @@ const { runPluginRequest } = await import('./als.js');
 const { dbApi } = await import('../db.js');
 const { bus } = await import('../bus.js');
 const { agentDir } = await import('../paths.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { PluginPolicyError, resetPluginPolicyState } = await import('./policy.js');
 const { mountOfficialProviders } = await import('../../tests/helpers/official-providers.js');
@@ -37,7 +37,7 @@ const A = 'plugin-a';
 const B = 'plugin-b';
 
 function withPolicy(pluginPolicy: Record<string, unknown>): void {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy }));
   resetPluginPolicyState();
 }
 test.after(() => { resetConfig(); resetPluginPolicyState(); });

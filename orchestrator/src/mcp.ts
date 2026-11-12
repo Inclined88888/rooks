@@ -871,7 +871,7 @@ export function refreshToolsCacheFromInit(initPayload: unknown): void {
 
   // Index ROOKS-managed entries by the claude key they'd surface as.
   type Indexed = { id: string; raw: McpServer; claudeKey: string };
-  const novaByKey = new Map<string, Indexed>();
+  const rooksByKey = new Map<string, Indexed>();
   if (existsSync(MCP_DIR)) {
     for (const f of readdirSync(MCP_DIR)) {
       if (!f.endsWith('.json')) continue;
@@ -885,7 +885,7 @@ export function refreshToolsCacheFromInit(initPayload: unknown): void {
           : raw.name && /^[A-Za-z0-9_-]+$/.test(raw.name)
           ? raw.name
           : raw.id;
-      novaByKey.set(claudeKey, { id, raw, claudeKey });
+      rooksByKey.set(claudeKey, { id, raw, claudeKey });
     }
   }
 
@@ -901,7 +901,7 @@ export function refreshToolsCacheFromInit(initPayload: unknown): void {
     // Listed as one, the entry reads as a second `rooks` and excluding it
     // bans the real server's tools.
     if (isInjectedMcpServer(key)) continue;
-    if (novaByKey.has(key)) continue;
+    if (rooksByKey.has(key)) continue;
     const id = ('ext-' + key).toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
     if (!ID_RE.test(id)) continue;
     const source = discoveredSource(key);
@@ -915,12 +915,12 @@ export function refreshToolsCacheFromInit(initPayload: unknown): void {
       last_seen_at: Date.now(),
     };
     writeRaw(stub);
-    novaByKey.set(key, { id, raw: stub, claudeKey: key });
+    rooksByKey.set(key, { id, raw: stub, claudeKey: key });
   }
 
   // 2) For every server we now know about (managed + external), gather tools
   //    and update status from this init payload.
-  for (const { raw, claudeKey } of novaByKey.values()) {
+  for (const { raw, claudeKey } of rooksByKey.values()) {
     const prefix = 'mcp__' + claudeKey.replace(/[^A-Za-z0-9]+/g, '_') + '__';
     const myTools: string[] = [];
     for (const t of tools) {

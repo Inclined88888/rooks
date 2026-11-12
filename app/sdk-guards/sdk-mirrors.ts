@@ -112,7 +112,7 @@ type _RegisterAcceptsSdkOptions = Assert<Accepts<AppRegisterOptions, SdkRegister
 // The backend catalogue the app reads from the daemon (`backends.ts`,
 // `approval-scopes.ts`). Full copies are identical; `CatalogModel` and the
 // capabilities are partial VIEWS (the app reads some fields, and leaves
-// `novaPreamble` out on purpose): the daemon's value must satisfy the view,
+// `rooksPreamble` out on purpose): the daemon's value must satisfy the view,
 // and the view may name no field the daemon does not have.
 type _ApprovalScope = Assert<Equals<ApprovalScope, Sdk.ApprovalScope>>;
 type _PermissionModel = Assert<Equals<Backends.PermissionModel, Sdk.PermissionModel>>;

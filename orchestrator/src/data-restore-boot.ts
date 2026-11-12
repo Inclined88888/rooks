@@ -9,13 +9,13 @@ import {
   RESTORE_EXIT_CODE,
   applyPendingRestore,
   packagedDaemon,
-  novaVersion,
+  rooksVersion,
   watchRestoreRequest,
 } from './data-version.js';
 import { DB_PATH, ROOKS_HOME } from './paths.js';
 
 if (packagedDaemon()) {
-  const version = novaVersion();
+  const version = rooksVersion();
   const files = { home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') };
   // Throws when an interrupted restore cannot be undone: db.ts must not open that.
   const result = applyPendingRestore(files, version);

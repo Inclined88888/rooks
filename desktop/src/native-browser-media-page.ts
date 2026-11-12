@@ -31,7 +31,7 @@ export const mediaPage = `<!doctype html><meta charset="utf-8">
     stream?.getTracks().forEach(track => track.stop());
     queue = []; queued = 0;
   };
-  window.novaMedia = {
+  window.rooksMedia = {
     async start(audio, offer, supportedMimeTypes, width, height) {
       stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: { max: 30 }, width: { max: width }, height: { max: height } }, audio

@@ -194,7 +194,7 @@ for (const previous of [null, OLD]) {
           calls.push(command);
           throw new Error(`${command} not found`);
         } })),
-        platform: 'darwin', homeDir: home, novaHome: home, installDir: home,
+        platform: 'darwin', homeDir: home, rooksHome: home, installDir: home,
         unitContent: undefined, unitName: undefined,
       };
       if (previous !== null) {

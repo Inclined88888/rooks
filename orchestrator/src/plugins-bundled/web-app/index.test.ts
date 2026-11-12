@@ -28,7 +28,7 @@ process.env.ROOKS_RESOURCE_GUARD_ENABLED = '0';
 const { loadConfig, setConfig } = await import('../../config/load.js');
 const { createHostPlugin } = await import('../../kernel/host-service.js');
 const webApp = await import('./index.js');
-const { NovaConfigSchema } = await import('../../config/schema.js');
+const { RooksConfigSchema } = await import('../../config/schema.js');
 
 type FakeChild = EventEmitter & { pid?: number; kill: () => boolean; killed: boolean };
 
@@ -66,7 +66,7 @@ function fakeHost(child: FakeChild) {
  *  dérive `<installDir>/../app`. */
 function configFor(root: string, app: Record<string, unknown>) {
   mkdirSync(join(root, 'orchestrator'), { recursive: true });
-  const cfg = NovaConfigSchema.parse({ daemon: { installDir: join(root, 'orchestrator') }, app });
+  const cfg = RooksConfigSchema.parse({ daemon: { installDir: join(root, 'orchestrator') }, app });
   setConfig(cfg);
   return cfg;
 }
@@ -360,7 +360,7 @@ test("le PORT du daemon ne contamine pas l'app Next", () => {
  * up. The binary it is already running on is the one to hand down.
  */
 test('sans node sur la machine, le daemon empaqueté prête le sien', () => {
-  const cfg = NovaConfigSchema.parse({});
+  const cfg = RooksConfigSchema.parse({});
   const packaged = webApp.nodeRuntime(cfg, { execPath: '/opt/Rooks/rooks', electron: '33.4.11' });
   assert.equal(packaged.command, '/opt/Rooks/rooks');
   assert.equal(packaged.env['ELECTRON_RUN_AS_NODE'], '1');
@@ -374,7 +374,7 @@ test('sans node sur la machine, le daemon empaqueté prête le sien', () => {
 test('host.binaries.node tranche, y compris dans un paquet', () => {
   // A GUI process inherits a minimal PATH; naming the binary is the operator's
   // way out, and it must win over the runtime we guessed.
-  const cfg = NovaConfigSchema.parse({ host: { binaries: { node: '/usr/local/bin/node' } } });
+  const cfg = RooksConfigSchema.parse({ host: { binaries: { node: '/usr/local/bin/node' } } });
   const rt = webApp.nodeRuntime(cfg, { execPath: '/opt/Rooks/rooks', electron: '33.4.11' });
   assert.equal(rt.command, '/usr/local/bin/node');
   assert.deepEqual(rt.env, {});

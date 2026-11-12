@@ -9,7 +9,7 @@ process.env.ROOKS_HOME = mkdtempSync(join(tmpdir(), 'rooks-reveal-test-'));
 const { chooseRevealLane, opensAsFolder, revealCommand, revealInFileManager } = await import('./reveal.js');
 const { detectDesktopSession } = await import('./desktop-session.js');
 const { createGenericHost } = await import('./generic.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { terminalStatus } = await import('../terminal.js');
 const { getHost } = await import('./index.js');
 
@@ -114,7 +114,7 @@ test('open: non-zero exit is an error carrying stderr', async () => {
 });
 
 test('generic host exposes a reveal-only gui on win32/darwin, none elsewhere or when disabled', () => {
-  const cfg = NovaConfigSchema.parse({});
+  const cfg = RooksConfigSchema.parse({});
   for (const platform of ['win32', 'darwin'] as const) {
     const host = createGenericHost(cfg, { platform });
     assert.ok(host.gui, platform);
@@ -125,7 +125,7 @@ test('generic host exposes a reveal-only gui on win32/darwin, none elsewhere or 
   assert.equal(linux.gui, undefined);
   assert.equal(linux.capabilities().includes('gui'), false);
 
-  const off = createGenericHost(NovaConfigSchema.parse({ host: { gui: 'disabled' } }), { platform: 'win32' });
+  const off = createGenericHost(RooksConfigSchema.parse({ host: { gui: 'disabled' } }), { platform: 'win32' });
   assert.equal(off.gui, undefined);
   assert.equal(off.capabilities().includes('gui'), false);
 });
@@ -191,7 +191,7 @@ test('session probe: a failing probe or another OS is unknown, never graphical',
 });
 
 test('generic host answers the session itself, once', () => {
-  const host = createGenericHost(NovaConfigSchema.parse({}), { platform: 'win32' });
+  const host = createGenericHost(RooksConfigSchema.parse({}), { platform: 'win32' });
   assert.equal(typeof host.gui?.desktopSession, 'function');
   assert.equal(host.gui.desktopSession(), host.gui.desktopSession(), 'one probe per daemon lifetime');
 });

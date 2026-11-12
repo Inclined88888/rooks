@@ -85,6 +85,8 @@ async function renderShell(
       { id: 'splash', Component: plain('splash') },
       { id: 'account', Component: WithSubView },
       { id: 'llm', Component: plain('llm') },
+      { id: 'channels', Component: plain('channels') },
+      { id: 'mail', Component: plain('mail') },
       { id: 'profile', Component: legacyStep(null) },
       { id: 'agent', Component: plain('agent') },
       { id: 'discover', Component: plain('discover') },
@@ -118,12 +120,14 @@ test('« Continue » walks the steps; the dots and the address follow; a skipped
     assert.equal(backButton(host), undefined, 'nothing to go back to');
     await click(host.querySelector('[data-next]'));
     assert.equal(shown(host), 'account');
-    assert.deepEqual(dots(host), ['current', 'todo', 'todo', 'todo']);
+    assert.deepEqual(dots(host), ['current', 'todo', 'todo', 'todo', 'todo', 'todo']);
     assert.equal(dom.window.location.search, '?step=account');
-    await click(host.querySelector('[data-next]'));
-    await click(host.querySelector('[data-next]'));
+    await click(host.querySelector('[data-next]')); // llm
+    await click(host.querySelector('[data-next]')); // channels
+    await click(host.querySelector('[data-next]')); // mail
+    await click(host.querySelector('[data-next]')); // profile skipped → agent
     assert.equal(shown(host), 'agent', 'the profile stand-in has no screen: skipped');
-    assert.deepEqual(dots(host), ['done', 'done', 'done', 'current']);
+    assert.deepEqual(dots(host), ['done', 'done', 'done', 'done', 'done', 'current']);
     finished = 0;
     await click(host.querySelector('[data-next]'));
     assert.equal(shown(host), 'discover', 'the agent made, « Discover Rooks » follows');
@@ -148,7 +152,11 @@ test('« Back » walks back: past a skipped step, and through a sub-view before 
   await renderShell('http://localhost/onboarding?step=agent', async (host, click) => {
     assert.equal(shown(host), 'agent', 'a reload reopens the step of the address');
     await click(backButton(host));
-    assert.equal(shown(host), 'llm', 'the skipped profile is skipped going back too');
+    assert.equal(shown(host), 'mail', 'the skipped profile is skipped going back');
+    await click(backButton(host));
+    assert.equal(shown(host), 'channels');
+    await click(backButton(host));
+    assert.equal(shown(host), 'llm');
     await click(backButton(host));
     assert.equal(shown(host), 'account');
     await click(host.querySelector('[data-open-sub]'));
@@ -162,14 +170,14 @@ test('« Back » walks back: past a skipped step, and through a sub-view before 
 });
 
 test('the guard keeps the agent step closed while the service is not ready; the other steps pass', async () => {
-  await renderShell('http://localhost/onboarding?step=llm', async (host, click) => {
-    assert.equal(shown(host), 'llm', 'the AI step needs no service');
-    await click(host.querySelector('[data-next]'));
+  await renderShell('http://localhost/onboarding?step=mail', async (host, click) => {
+    assert.equal(shown(host), 'mail', 'mail needs no service');
+    await click(host.querySelector('[data-next]')); // profile skipped → agent held
     assert.equal(shown(host), null, 'the agent step is not mounted');
     assert.equal(host.querySelector('[data-gate]')?.getAttribute('data-gate'), 'agent');
-    assert.deepEqual(dots(host), ['done', 'done', 'done', 'current'], 'the frame stays: dots and « Back »');
+    assert.deepEqual(dots(host), ['done', 'done', 'done', 'done', 'done', 'current'], 'the frame stays: dots and « Back »');
     await click(backButton(host));
-    assert.equal(shown(host), 'llm', '« Back » still leaves a closed step');
+    assert.equal(shown(host), 'mail', '« Back » still leaves a closed step');
   }, 'closed');
 });
 

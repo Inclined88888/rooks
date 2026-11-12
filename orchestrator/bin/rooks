@@ -62,16 +62,16 @@ let API_TOKEN;
 
 const DAEMON_NAME_RE = /^[A-Za-z0-9._@+-]+$/;
 
-function novaHome() {
+function rooksHome() {
   return process.env.ROOKS_HOME || join(homedir(), '.rooks');
 }
 
 function daemonTokenPath() {
-  return join(novaHome(), 'daemon-token');
+  return join(rooksHome(), 'daemon-token');
 }
 
 function cliDaemonsPath() {
-  return join(novaHome(), 'cli-daemons.json');
+  return join(rooksHome(), 'cli-daemons.json');
 }
 
 /**
@@ -95,7 +95,7 @@ function readDaemonTokenFile() {
 function resolveApiToken(apiUrl) {
   const env = process.env.ROOKS_API_TOKEN;
   if (typeof env === 'string' && env.trim().length > 0) return env.trim();
-  return isLocalDaemonUrl(novaHome(), apiUrl, { packaged: packagedCli() }) ? readDaemonTokenFile() : undefined;
+  return isLocalDaemonUrl(rooksHome(), apiUrl, { packaged: packagedCli() }) ? readDaemonTokenFile() : undefined;
 }
 
 /** The CLI runs on the package's runtime (its launcher, or Electron as Node). */
@@ -105,7 +105,7 @@ function packagedCli() {
 
 /** `rooks service install` and the onboarding leave this marker once a service is registered. */
 function serviceInstalledMarker() {
-  return fs.existsSync(join(novaHome(), 'desktop-runtime', 'installed'));
+  return fs.existsSync(join(rooksHome(), 'desktop-runtime', 'installed'));
 }
 
 /**
@@ -114,11 +114,11 @@ function serviceInstalledMarker() {
  * missing daemon is a state to describe, not an error.
  */
 async function cmdOverview(remote) {
-  const local = !remote && isLocalDaemonUrl(novaHome(), API, { packaged: packagedCli() });
+  const local = !remote && isLocalDaemonUrl(rooksHome(), API, { packaged: packagedCli() });
   const state = { api: API, local, reachable: false, serviceInstalled: local && serviceInstalledMarker(), version: null };
   try {
-    const { novaVersion } = await loadDist('data-version');
-    state.version = novaVersion();
+    const { rooksVersion } = await loadDist('data-version');
+    state.version = rooksVersion();
   } catch { /* A CLI without its compiled sources still prints the rest. */ }
   state.reachable = await daemonAnswers();
   if (state.reachable) {
@@ -153,7 +153,7 @@ async function localWebInterface(version) {
 
 async function daemonAnswers(timeoutMs = 2500) {
   try {
-    const r = await fetch(`${API}/api/health`, { headers: novaHeaders(), signal: AbortSignal.timeout(timeoutMs) });
+    const r = await fetch(`${API}/api/health`, { headers: rooksHeaders(), signal: AbortSignal.timeout(timeoutMs) });
     const body = await r.json().catch(() => null);
     return r.ok && body?.ok === true;
   } catch {
@@ -195,7 +195,7 @@ async function cmdInit(argv, remote) {
   const unknown = argv.filter((a) => !['--password-stdin', '--yes', '-y'].includes(a));
   if (unknown.length) { process.stderr.write(`rooks init: unknown argument ${unknown[0]}\n${usage}`); process.exit(64); }
   const interactive = Boolean(process.stdin.isTTY) && !passwordStdin;
-  if (remote || !isLocalDaemonUrl(novaHome(), API, { packaged: packagedCli() })) {
+  if (remote || !isLocalDaemonUrl(rooksHome(), API, { packaged: packagedCli() })) {
     process.stderr.write('rooks init: run it on the machine where Rooks is installed, without --daemon.\n');
     process.exit(64);
   }
@@ -297,7 +297,7 @@ async function cmdInit(argv, remote) {
   const body = { email, name, password, ...(licenseKey ? { licenseMode: 'key', licenseKey } : {}) };
   const r = await fetch(`${API}/api/auth/setup`, {
     method: 'POST',
-    headers: { ...novaHeaders(), 'content-type': 'application/json' },
+    headers: { ...rooksHeaders(), 'content-type': 'application/json' },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(30_000),
   });
@@ -409,7 +409,7 @@ function applyDaemonTarget(spec) {
 /** Propagates agent identity from the env injected by agent.ts when
  *  spawning the Claude child. Required for /api/messages (message origin).
  *  The Bearer (4.2b) is required as soon as the daemon no longer listens on loopback. */
-function novaHeaders() {
+function rooksHeaders() {
   const h = {};
   if (process.env.ROOKS_MISSION_ID) h['X-ROOKS-Mission'] = process.env.ROOKS_MISSION_ID;
   if (process.env.ROOKS_AGENT) h['X-ROOKS-Agent'] = process.env.ROOKS_AGENT;
@@ -438,7 +438,7 @@ function refusalText(text) {
 }
 
 async function http(method, path, body) {
-  const init = { method, headers: { ...novaHeaders() } };
+  const init = { method, headers: { ...rooksHeaders() } };
   if (body !== undefined) {
     init.headers['content-type'] = 'application/json';
     init.body = JSON.stringify(body);
@@ -464,7 +464,7 @@ async function http(method, path, body) {
 /** Variant that doesn't exit on non-2xx — used to probe existence
  *  (404 expected for `agent create`, required for `agent update`). */
 async function httpRaw(method, path, body, timeoutMs) {
-  const init = { method, headers: { ...novaHeaders() } };
+  const init = { method, headers: { ...rooksHeaders() } };
   if (timeoutMs) init.signal = AbortSignal.timeout(timeoutMs);
   if (body !== undefined) {
     init.headers['content-type'] = 'application/json';
@@ -495,7 +495,7 @@ async function assertBackend(cmd, backend) {
   if (!backend) return;
   let ids = null;
   try {
-    const r = await fetch(API + '/api/backends/catalog', { headers: novaHeaders() });
+    const r = await fetch(API + '/api/backends/catalog', { headers: rooksHeaders() });
     if (r.ok) {
       const j = await r.json();
       if (Array.isArray(j?.backends)) ids = j.backends.map((b) => b.id).filter(Boolean);
@@ -1726,7 +1726,7 @@ async function cmdAgentDoc(argv) {
 function agentTransferIo() {
   return {
     api: () => API,
-    headers: novaHeaders,
+    headers: rooksHeaders,
     takeFlag,
     cwd: () => process.cwd(),
     readFile: (path) => fs.readFileSync(path),
@@ -2120,7 +2120,7 @@ async function readClosingComment(argv) {
 
 /**
  * Typed closing gesture: the task is resolved from the CURRENT MISSION
- * server-side (X-ROOKS-Mission, sent on every call by `novaHeaders`), so there
+ * server-side (X-ROOKS-Mission, sent on every call by `rooksHeaders`), so there
  * is no id to copy from the brief — that was the first cause of a task never
  * being closed. The comment is mandatory: the daemon refuses a mute closure.
  * `rooks task done` stays valid, it is just the variant that requires an id.
@@ -3566,9 +3566,9 @@ async function cmdExport(argv) {
   if (viaDaemon && viaDaemon.ok && viaDaemon.body && viaDaemon.body.ok) {
     result = viaDaemon.body;
   } else {
-    const { exportNova } = await loadDist('export');
+    const { exportRooks } = await loadDist('export');
     const dest = out || `rooks-export-${new Date().toISOString().slice(0, 10)}.tar.gz`;
-    result = exportNova({ out: dest, withArchive });
+    result = exportRooks({ out: dest, withArchive });
   }
 
   if (json) {
@@ -3597,8 +3597,8 @@ async function cmdImport(argv) {
     process.stderr.write('usage: rooks import <archive.tar.gz> [--to DIR] [--force] [--no-projects]\n');
     process.exit(64);
   }
-  const { importNova } = await loadDist('export');
-  const result = importNova({ file, to, force, skipProjects });
+  const { importRooks } = await loadDist('export');
+  const result = importRooks({ file, to, force, skipProjects });
   if (json) {
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
     return;
@@ -4071,13 +4071,13 @@ async function cmdService(argv) {
   const { config } = await loadDist('config/load');
   const { createHost } = await loadDist('host/index');
   const { markPackagedCli, serviceOptsFromEnvironment } = await loadDist('host/service-environment');
-  const { novaVersion } = await loadDist('data-version');
+  const { rooksVersion } = await loadDist('data-version');
   const { ROOKS_HOME } = await loadDist('paths');
 
   // The options of the onboarding button: run from the packaged app, the
   // service needs its Electron environment, its first-launch ports and its
   // staged runtime. Before `config()`, which reads those ports.
-  markPackagedCli(process.env, process.versions, novaVersion(), ROOKS_HOME);
+  markPackagedCli(process.env, process.versions, rooksVersion(), ROOKS_HOME);
   const cfg = config();
   const host = createHost(cfg);
   const opts = {
@@ -4107,7 +4107,7 @@ async function cmdService(argv) {
       // outlive the test and restart forever once the folder is emptied (#464).
       const { ALLOW_TEMPORARY_HOME_FLAG, temporaryHomeNotice } = await loadDist('host/temporary-home');
       // A dry run writes nothing: it only gets the warning.
-      const temporary = temporaryHomeNotice(opts.novaHome, dryRun || argv.includes(ALLOW_TEMPORARY_HOME_FLAG));
+      const temporary = temporaryHomeNotice(opts.rooksHome, dryRun || argv.includes(ALLOW_TEMPORARY_HOME_FLAG));
       if (temporary?.refuse) {
         res = { ok: false, code: 1, lines: temporary.lines, reason: 'temporary home' };
         break;
@@ -4118,7 +4118,7 @@ async function cmdService(argv) {
       if (res) break;
       if (dryRun) {
         res = mod.installService(opts);
-      } else if (!guard.replacing && await replacesRunningRelease(opts, novaVersion(), ROOKS_HOME)) {
+      } else if (!guard.replacing && await replacesRunningRelease(opts, rooksVersion(), ROOKS_HOME)) {
         // A plain install would mark this release active while the previous
         // daemon keeps running: the desktop then never moves it either.
         const applied = await applyPackagedUpdate({ allowOlder: true });
@@ -4142,7 +4142,7 @@ async function cmdService(argv) {
       res = mod.stopService(opts);
       if (res.ok && !dryRun) {
         const { endMissionsOfStoppedDaemon } = await loadDist('host/mission-processes');
-        const ended = await endMissionsOfStoppedDaemon(opts.novaHome, host);
+        const ended = await endMissionsOfStoppedDaemon(opts.rooksHome, host);
         if (ended) res = { ...res, lines: [...res.lines, ended] };
       }
       break;
@@ -4958,7 +4958,7 @@ async function cmdSecret(argv) {
 
 async function cmdLicense(argv) {
   if (argv[0] === 'deactivate') {
-    const response = await fetch(`${API}/api/license/deactivate`, { method: 'POST', headers: novaHeaders() });
+    const response = await fetch(`${API}/api/license/deactivate`, { method: 'POST', headers: rooksHeaders() });
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || result.error || `HTTP ${response.status}`);
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
@@ -4970,7 +4970,7 @@ async function cmdLicense(argv) {
   }
   const [sub, file] = argv;
   if (sub === 'status' || sub === undefined) {
-    const response = await fetch(`${API}/api/license`, { headers: novaHeaders() });
+    const response = await fetch(`${API}/api/license`, { headers: rooksHeaders() });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
     process.stdout.write(`${body.status} — edition ${body.edition}${body.expiresAt ? ` — expires ${body.expiresAt}` : ''}\n`);
@@ -4981,7 +4981,7 @@ async function cmdLicense(argv) {
     const token = fs.readFileSync(file, 'utf8').trim();
     const response = await fetch(`${API}/api/license`, {
       method: 'PUT',
-      headers: { ...novaHeaders(), 'content-type': 'application/json' },
+      headers: { ...rooksHeaders(), 'content-type': 'application/json' },
       body: JSON.stringify({ token }),
     });
     const body = await response.json();
@@ -5002,7 +5002,7 @@ async function cmdLicense(argv) {
     if (!key) { process.stderr.write('usage: rooks license activate <key>\n'); process.exit(64); }
     const response = await fetch(`${API}/api/license/activate`, {
       method: 'POST',
-      headers: { ...novaHeaders(), 'content-type': 'application/json' },
+      headers: { ...rooksHeaders(), 'content-type': 'application/json' },
       body: JSON.stringify({ key }),
     });
     const body = await response.json();
@@ -5042,10 +5042,10 @@ async function confirm(question) {
  * ROOKS_API URL.
  */
 async function updateRequest(action, body, timeoutMs = 180_000) {
-  const target = new URL(resolveApiUrl(novaHome()));
+  const target = new URL(resolveApiUrl(rooksHome()));
   const port = Number(process.env.PORT);
   if (Number.isInteger(port) && port > 0 && port < 65536) target.port = String(port);
-  const token = fs.readFileSync(join(novaHome(), 'update-token'), 'utf8').trim();
+  const token = fs.readFileSync(join(rooksHome(), 'update-token'), 'utf8').trim();
   return fetch(new URL(`/api/update/${action}`, target), {
     method: body ? 'POST' : 'GET', redirect: 'error',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -5071,10 +5071,10 @@ async function serviceLagFor(daemonVersion) {
   // Only a package has a version of its own to compare; a source CLI loads nothing more.
   if (!PACKAGED_RUNTIME) return null;
   const { serviceLag } = await loadDist('host/packaged-apply');
-  const { novaVersion } = await loadDist('data-version');
+  const { rooksVersion } = await loadDist('data-version');
   return serviceLag({
     platform: process.platform, packaged: PACKAGED_RUNTIME,
-    cliVersion: novaVersion(), daemonVersion,
+    cliVersion: rooksVersion(), daemonVersion,
   });
 }
 
@@ -5149,9 +5149,9 @@ async function applyPackagedUpdate({ allowOlder = false } = {}) {
   const { serviceOfAnotherHome } = await loadDist('host/service-ownership');
   const { readActiveRelease } = await loadDist('host/packaged-service');
   const { applyServiceUpdate } = await loadDist('host/packaged-apply');
-  const { novaVersion } = await loadDist('data-version');
+  const { rooksVersion } = await loadDist('data-version');
   const { ROOKS_HOME } = await loadDist('paths');
-  const cliVersion = novaVersion();
+  const cliVersion = rooksVersion();
   // Before `config()`: the first-launch ports and the packaged unit name go through it.
   markPackagedCli(process.env, process.versions, cliVersion, ROOKS_HOME);
   const cfg = config();
@@ -5201,7 +5201,7 @@ async function cmdDoctor(argv) {
   const backendProfiles = await backendProfilesReport({
     // A section read through the route, not `diagnose()`: a CLI process loads
     // no provider, so only the daemon can tell which profiles really run.
-    local: isLocalDaemonUrl(novaHome(), API, { packaged: packagedCli() }),
+    local: isLocalDaemonUrl(rooksHome(), API, { packaged: packagedCli() }),
     fetchListing: () => httpRaw('GET', '/api/backends/custom', undefined, 5000),
     loadLocalProfiles: () => loadDist('backends/local-profiles'),
   });
@@ -5231,10 +5231,10 @@ async function cmdDoctor(argv) {
 async function diagnosticReport() {
   const { reportFromEnvironment } = await loadDist('host/diagnostic-report');
   const { markPackagedCli } = await loadDist('host/service-environment');
-  const { novaVersion } = await loadDist('data-version');
+  const { rooksVersion } = await loadDist('data-version');
   const { ROOKS_HOME } = await loadDist('paths');
   // Same service lookup as `rooks service status` from the app's terminal.
-  markPackagedCli(process.env, process.versions, novaVersion(), ROOKS_HOME);
+  markPackagedCli(process.env, process.versions, rooksVersion(), ROOKS_HOME);
   return reportFromEnvironment({ source: 'cli', home: ROOKS_HOME, appVersion: null });
 }
 
@@ -5424,7 +5424,7 @@ async function main() {
   } else {
     // The token follows the resolved target: ROOKS_API pointing elsewhere must
     // not carry this home's daemon-token with it.
-    API = resolveApiUrl(novaHome(), process.env.ROOKS_API, undefined, { packaged: packagedCli() });
+    API = resolveApiUrl(rooksHome(), process.env.ROOKS_API, undefined, { packaged: packagedCli() });
     API_TOKEN = resolveApiToken(API);
   }
   const [cmd, ...rest] = argv;
@@ -5639,7 +5639,7 @@ async function main() {
     // 128 + SIGINT, what a shell reports for Ctrl-C. The person asked for it: nothing to explain.
     if (e?.code === PROMPT_CANCELLED) process.exit(130);
     if (isDaemonUnreachable(e)) {
-      const local = daemonSpec === undefined && isLocalDaemonUrl(novaHome(), API, { packaged: packagedCli() });
+      const local = daemonSpec === undefined && isLocalDaemonUrl(rooksHome(), API, { packaged: packagedCli() });
       const lines = unreachableLines({ api: API, local, serviceInstalled: local && serviceInstalledMarker() });
       process.stderr.write(lines.join('\n') + '\n');
       process.exit(1);

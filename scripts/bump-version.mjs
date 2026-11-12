@@ -3,7 +3,7 @@
  * fragments of `changes/` into the new version's section of CHANGELOG.md.
  *
  * Why a script rather than three `npm version` calls: the daemon reports its
- * own version to the licence server as `appVersion` (`novaVersion()` in
+ * own version to the licence server as `appVersion` (`rooksVersion()` in
  * `orchestrator/src/license/client.ts`, which reads `orchestrator/package.json`),
  * while `desktop/package.json` carries the version of the installer a tester
  * actually downloaded. Bump one without the other and the two halves of the

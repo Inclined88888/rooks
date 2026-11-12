@@ -13,7 +13,7 @@ import { voiceSettings, type VoiceSettings } from './voice-settings';
  * (`DictationEngine`, client API 14, TODO #484 §3.5). Nothing here is
  * privileged: the product hands this engine the same calls, the same PCM and
  * the same checks as a third-party one. What only it has is the desktop
- * bridge, `window.novaDesktop.speech` — an internal API of the product, not
+ * bridge, `window.rooksDesktop.speech` — an internal API of the product, not
  * a public surface (a third party brings model packs, or its own engine).
  *
  * The bridge speaks in sessions it numbers itself; this adapter keeps that

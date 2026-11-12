@@ -78,7 +78,7 @@ const COPILOT_DENY_RULES = [
  * policy (`ctx.provider.mcp().commandPolicy`: the Rooks CLI commands a mission needs) and on the
  * name of the forms server, both handed over by the daemon at each launch.
  *
- * @param {{ novaCliCommands: readonly string[] }} policy
+ * @param {{ rooksCliCommands: readonly string[] }} policy
  * @param {string} formsServer
  */
 export function copilotRules(policy, formsServer) {
@@ -96,12 +96,12 @@ export function copilotRules(policy, formsServer) {
      * `service install|uninstall`, `update approve`, `plugin add`, `auth`,
      * `secret`, `user`, `backup`, `import`… — which a mission never runs and some
      * of which kill it. What is not listed here is refused, even when the agent
-     * holds a `Bash(rooks:*)` grant (see `novaGrantRules`).
+     * holds a `Bash(rooks:*)` grant (see `rooksGrantRules`).
      */
-    const ROOKS_CLI_COMMANDS = policy.novaCliCommands;
+    const ROOKS_CLI_COMMANDS = policy.rooksCliCommands;
     /** A Rooks command both bare and followed by arguments: `:*` alone requires
      *  the space after the stem, and some of these run without any argument. */
-    function novaCommandRules(command) {
+    function rooksCommandRules(command) {
         return [`shell(rooks ${command})`, `shell(rooks ${command}:*)`];
     }
     /**
@@ -119,7 +119,7 @@ export function copilotRules(policy, formsServer) {
      * rules, so `git status && bash -c …` is refused on `bash`.
      */
     const WORKSPACE_SHELL_ALLOW = [
-        ...ROOKS_CLI_COMMANDS.flatMap(novaCommandRules),
+        ...ROOKS_CLI_COMMANDS.flatMap(rooksCommandRules),
         ...['status', 'diff', 'log', 'show', 'add', 'commit', 'branch', 'rev-parse',
             'merge-base', 'ls-files', 'blame', 'restore']
             .map((sub) => `shell(git ${sub})`),
@@ -157,7 +157,7 @@ export function copilotRules(policy, formsServer) {
      * narrower one inside a listed command (`Bash(rooks workflow node done *)`)
      * carries over as is; anything else (`Bash(rooks service:*)`) opens nothing.
      */
-    function novaGrantRules(words, prefix) {
+    function rooksGrantRules(words, prefix) {
         const grant = words.join(' ');
         const covers = (outer, inner) => inner === outer || inner.startsWith(`${outer} `);
         if (ROOKS_CLI_COMMANDS.some((command) => covers(command, grant))) {
@@ -167,7 +167,7 @@ export function copilotRules(policy, formsServer) {
             return [];
         return ROOKS_CLI_COMMANDS
             .filter((command) => !grant || covers(grant, command))
-            .flatMap(novaCommandRules);
+            .flatMap(rooksCommandRules);
     }
     /**
      * The agent's own shell grants — `allowed_tools` in claude's format, fed by the
@@ -208,7 +208,7 @@ export function copilotRules(policy, formsServer) {
             if (words.length === 1 && prefix && BARE_RUNNER_STEMS.has(stem))
                 continue;
             if (stem === 'rooks') {
-                out.push(...novaGrantRules(words.slice(1), prefix));
+                out.push(...rooksGrantRules(words.slice(1), prefix));
                 continue;
             }
             if (words.length === 1 && prefix && stem === 'git') {

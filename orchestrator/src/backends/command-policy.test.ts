@@ -46,13 +46,13 @@ test('every plain deny rule of copilot is a decision of the neutral policy', () 
     assert.ok(covered, `${rule} is in copilot but not in the neutral policy`);
   }
   // The `rooks …` rules are generated from the neutral list itself.
-  assert.deepEqual(COMMAND_POLICY.denyNovaCommands, ['service', 'update', 'daemon', 'app restart']);
+  assert.deepEqual(COMMAND_POLICY.denyRooksCommands, ['service', 'update', 'daemon', 'app restart']);
 });
 
 test('copilot reads its Rooks CLI commands from the neutral policy', () => {
-  assert.match(copilot, /const ROOKS_CLI_COMMANDS = policy\.novaCliCommands;/);
-  assert.ok(COMMAND_POLICY.novaCliCommands.includes('task done'));
-  assert.equal(COMMAND_POLICY.novaCliCommands.includes('service install'), false, 'the host operations stay out');
+  assert.match(copilot, /const ROOKS_CLI_COMMANDS = policy\.rooksCliCommands;/);
+  assert.ok(COMMAND_POLICY.rooksCliCommands.includes('task done'));
+  assert.equal(COMMAND_POLICY.rooksCliCommands.includes('service install'), false, 'the host operations stay out');
 });
 
 test('the policy is frozen', () => {

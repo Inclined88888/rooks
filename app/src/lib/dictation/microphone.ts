@@ -11,7 +11,7 @@ const STATUSES: readonly string[] = ['granted', 'denied', 'restricted', 'not-det
 
 export async function systemMicrophone(request: boolean): Promise<MicrophoneStatus> {
   if (typeof window === 'undefined') return 'unknown';
-  const speech: unknown = window.novaDesktop?.speech;
+  const speech: unknown = window.rooksDesktop?.speech;
   const ask = speech !== null && typeof speech === 'object' ? (speech as { microphone?: unknown }).microphone : undefined;
   if (typeof ask !== 'function') return 'unknown';
   try {

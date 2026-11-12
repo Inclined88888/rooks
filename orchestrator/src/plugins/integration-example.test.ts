@@ -29,7 +29,7 @@ import { issueSessionToken, hashSessionToken, SESSION_COOKIE } from '../users/se
 import { dbApi } from '../db.js';
 import { createSecret } from '../secrets/store.js';
 import { findChannelMission } from '../channel-receipts.js';
-import { NovaConfigSchema } from '../config/schema.js';
+import { RooksConfigSchema } from '../config/schema.js';
 import { setConfig, resetConfig } from '../config/load.js';
 import { parseWorkflowDefinition } from '../workflows/schema.js';
 import { armWorkflowTriggers, disarmWorkflowTriggers } from '../workflows/triggers.js';
@@ -82,7 +82,7 @@ function account() {
   return { user, cookie: `${SESSION_COOKIE}=${token}` };
 }
 async function fixture() {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { allow: ['127.0.0.1'] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { allow: ['127.0.0.1'] } } }));
   const alice = account(); const bob = account();
   const accepted = new Map<string, { room: string; text: string; fragment: number; total: number }>();
   const attempts: string[] = [];

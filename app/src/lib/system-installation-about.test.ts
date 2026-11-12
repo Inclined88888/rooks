@@ -49,12 +49,12 @@ test('installation settings: the About button exists only in a desktop that can 
     assert.ok(document.querySelector('section'), 'the pane rendered');
     assert.equal(aboutButton(), undefined, 'a browser has no desktop window to open');
 
-    window.novaDesktop = { restartAfterSetup: async () => {}, appInfo: async () => ({ version: '0.2.0' }) };
+    window.rooksDesktop = { restartAfterSetup: async () => {}, appInfo: async () => ({ version: '0.2.0' }) };
     await remount();
     assert.equal(aboutButton(), undefined, 'an older desktop without the channel shows no dead button');
 
     let opened = 0;
-    window.novaDesktop = { ...window.novaDesktop, openAbout: async () => { opened += 1; } };
+    window.rooksDesktop = { ...window.rooksDesktop, openAbout: async () => { opened += 1; } };
     await remount();
     const button = aboutButton();
     assert.ok(button);

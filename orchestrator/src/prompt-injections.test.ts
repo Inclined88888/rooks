@@ -105,7 +105,7 @@ test('the preamble sends Kanban planning to `kanban_plan`, a one-off decision to
   // tool to call.
   assert.equal(preamble.match(/mcp__rooks_permission__/g)?.length, 2);
   assert.match(preamble, /\*\*Old names\*\*: `mcp__rooks_permission__ask_user`[^]*are\s+`question` and `kanban_plan`/);
-  assert.doesNotMatch(preamble.replace(/\*\*Old names\*\*:[^]*?Call the new names\./, ''), /ask_user|ask_series_plan|nova_permission/);
+  assert.doesNotMatch(preamble.replace(/\*\*Old names\*\*:[^]*?Call the new names\./, ''), /ask_user|ask_series_plan|rooks_permission/);
 });
 
 test('ROOKS_LOG_SYSTEM_PROMPT writes the prompt masked, and the model still gets it as written', () => {

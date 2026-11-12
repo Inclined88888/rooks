@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { saveBackgroundImage, readBackgroundImage, deleteBackgroundImage } from '../../uploads.js';
 import { config } from '../../config/load.js';
 import { db, dbApi } from '../../db.js';
-import { exportNova } from '../../export.js';
+import { exportRooks } from '../../export.js';
 import { isBetaBuild } from '../../license/build-policy.js';
 import { licenseState } from '../../license/runtime.js';
 import { ROOKS_HOME } from '../../paths.js';
@@ -97,7 +97,7 @@ function layoutOwner(req: Request): string {
  * An agent never rewrites its owner's screen directly: every change goes
  * through a proposal the owner applies from its card (`widgets_propose`,
  * `layout-proposals.ts`). Its mission token reads the layout, it does not
- * write it — without this, `nova_http_call` would turn the card into a
+ * write it — without this, `rooks_http_call` would turn the card into a
  * formality.
  */
 function refuseMissionWrite(req: Request, res: Response): boolean {
@@ -204,7 +204,7 @@ export function registerRoutes(app: Router): void {
       return;
     }
     try {
-      const result = exportNova({
+      const result = exportRooks({
         out,
         withArchive,
         profile: config().profile,

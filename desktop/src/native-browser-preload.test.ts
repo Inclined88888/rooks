@@ -164,8 +164,8 @@ function load(initialState: unknown = false, annotateState: unknown = false) {
 
 test('browser preload exposes only the synchronous prompt capability to the page', () => {
   const { capabilities, syncCalls, listeners } = load();
-  assert.deepEqual([...capabilities.keys()], ['__novaNativePrompt']);
-  assert.equal(capabilities.get('__novaNativePrompt')!('Question', 'Default'), 'answer');
+  assert.deepEqual([...capabilities.keys()], ['__rooksNativePrompt']);
+  assert.equal(capabilities.get('__rooksNativePrompt')!('Question', 'Default'), 'answer');
   assert.deepEqual(syncCalls, [[BROWSER_RECORD_STATE_CHANNEL], [BROWSER_ANNOTATE_STATE_CHANNEL], [BROWSER_PROMPT_CHANNEL, 'Question', 'Default']]);
   assert.deepEqual([...listeners.keys()].sort(), ['auxclick', 'change', 'click', 'contextmenu', 'dblclick', 'input', 'keydown', 'keyup',
     'mousedown', 'mouseup', 'pointerdown', 'pointermove', 'pointerup', 'resize', 'scroll', 'touchcancel', 'touchend', 'touchmove', 'touchstart']);

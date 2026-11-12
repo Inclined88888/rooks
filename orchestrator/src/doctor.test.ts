@@ -12,7 +12,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 const { whichBin, diagnose, formatDoctor, BINARIES } = await import('./doctor.js');
-const { NovaConfigSchema } = await import('./config/schema.js');
+const { RooksConfigSchema } = await import('./config/schema.js');
 const { setConfig, resetConfig } = await import('./config/load.js');
 
 test('a pinned binary short-circuits PATH, and a dead pin is not caught', () => {
@@ -61,7 +61,7 @@ test('the diagnostic names what blocks and the text render shows it', () => {
   assert.match(txt, /Rooks doctor/);
   assert.match(txt, /capabilities/);
   // TIM-0109: the free space where the data lives is part of every report.
-  assert.equal(r.storage.path, r.novaHome);
+  assert.equal(r.storage.path, r.rooksHome);
   assert.match(txt, /free disk space/);
 });
 
@@ -82,7 +82,7 @@ test('the diagnostic says whether mission FS masking is actually enforced', () =
     assert.match(txt, auto.enforced ? /mission FS masking enforced/ : /mission FS masking INERT/);
     if (!auto.enforced) assert.match(txt, /NONE masked today/);
 
-    setConfig(NovaConfigSchema.parse({ host: { isolation: { filesystem: 'off' } } }));
+    setConfig(RooksConfigSchema.parse({ host: { isolation: { filesystem: 'off' } } }));
     const off = diagnose().missionIsolation;
     assert.deepEqual(
       { configured: off.configured, enforced: off.enforced, maskedPaths: off.maskedPaths },
@@ -99,7 +99,7 @@ test('doctor explains an invalid backend pin even when another backend works', a
   const { ROOKS_HOME } = await import('./paths.js');
   const missing = join(ROOKS_HOME, 'missing', 'codex.cmd');
   try {
-    setConfig(NovaConfigSchema.parse({ host: { binaries: { codex: missing } } }));
+    setConfig(RooksConfigSchema.parse({ host: { binaries: { codex: missing } } }));
     const report = diagnose();
     const binary = report.binaries.find((b) => b.name === 'codex')!;
     assert.equal(binary.ok, false);

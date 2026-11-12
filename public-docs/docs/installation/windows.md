@@ -17,7 +17,7 @@ It downloads the Rooks installer, checks it, and opens it: the installer then ru
 
 Run the supplied Rooks NSIS installer, choose its installation directory and open Rooks. If Node.js or Git is missing, the installer installs Node.js (LTS) and Git for Windows with `winget`, after one Windows permission prompt; this can take a few minutes. If that fails or you decline, the setup screen offers them again.
 
-At first run it registers the daemon as the **`NovaOrchestrator` scheduled task**, which asks for the Windows permission prompt once. The task starts at boot and keeps Rooks running after you sign out, using your own account without storing its password. It runs with your standard privileges, not as administrator. This is not a Windows NT service and does not require an administrator service wrapper. Rooks uses a scheduled task rather than a service on purpose: a service runs under a system account, or needs your password stored to run as you, and would not find the sign-ins of your AI tools (`claude`, `codex`…) kept in your user folder; the task runs as you, with your folder and your sign-ins, without storing a password.
+At first run it registers the daemon as the **`RooksOrchestrator` scheduled task**, which asks for the Windows permission prompt once. The task starts at boot and keeps Rooks running after you sign out, using your own account without storing its password. It runs with your standard privileges, not as administrator. This is not a Windows NT service and does not require an administrator service wrapper. Rooks uses a scheduled task rather than a service on purpose: a service runs under a system account, or needs your password stored to run as you, and would not find the sign-ins of your AI tools (`claude`, `codex`…) kept in your user folder; the task runs as you, with your folder and your sign-ins, without storing a password.
 
 If the task is missing at launch, for example after Rooks was uninstalled and reinstalled, or after you deleted it from Task Scheduler or PowerShell, Rooks offers to reinstall it, with one Windows permission prompt. Until you accept, Rooks runs only while its window is open. If you choose **Not now**, Rooks asks again after the next update.
 
@@ -35,7 +35,7 @@ Setup detects npm-installed backends without restarting Rooks, including install
 
 ## Quitting and stopping
 
-**Quit** in the notification-area icon menu closes the app only. The daemon run by the `NovaOrchestrator` task keeps working (your missions continue), and the task starts it again within five minutes if it stops, so ending the task from Task Scheduler is not a stop.
+**Quit** in the notification-area icon menu closes the app only. The daemon run by the `RooksOrchestrator` task keeps working (your missions continue), and the task starts it again within five minutes if it stops, so ending the task from Task Scheduler is not a stop.
 
 **Quit and stop the background service**, in the same menu, ends the daemon and every program it started (web server, mission programs, built-in terminal), disables the task and quits. Windows asks for permission once. The next time you open Rooks, it asks once more and starts the service again. From a terminal, `rooks service stop` and `rooks service start` do the same; `rooks service status` says when the service was stopped this way.
 
@@ -45,9 +45,9 @@ To remove the service for good, run `rooks service uninstall` and allow the Wind
 
 ## Uninstalling
 
-Uninstall Rooks from Windows Settings or Control Panel. Allow the Windows permission prompt to remove the `NovaOrchestrator` scheduled task. Your Rooks data directory, including missions, agents and the database, is kept.
+Uninstall Rooks from Windows Settings or Control Panel. Allow the Windows permission prompt to remove the `RooksOrchestrator` scheduled task. Your Rooks data directory, including missions, agents and the database, is kept.
 
-For unattended removal, run the installed uninstaller with `/S` from an administrator terminal. Silent removal does not ask for elevation. If permission is denied, removal of the application continues; remove any remaining `NovaOrchestrator` task from Task Scheduler with administrator rights.
+For unattended removal, run the installed uninstaller with `/S` from an administrator terminal. Silent removal does not ask for elevation. If permission is denied, removal of the application continues; remove any remaining `RooksOrchestrator` task from Task Scheduler with administrator rights.
 
 ## Source installation
 

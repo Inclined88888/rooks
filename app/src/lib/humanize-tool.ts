@@ -111,8 +111,8 @@ function decrireBash(commande: string): string {
   if (/\bcurl\b|\bwget\b/.test(c)) return t('humanizeTool.queryUrl');
 
   // ── ROOKS ─────────────────────────────────────────────────────────────────
-  if (/\bnova\s+task\b/.test(c)) return t('humanizeTool.kanbanTask');
-  if (/\bnova\b/.test(c)) return t('humanizeTool.brandCommand', { brand: BRAND.displayName });
+  if (/\brooks\s+task\b/.test(c)) return t('humanizeTool.kanbanTask');
+  if (/\brooks\b/.test(c)) return t('humanizeTool.brandCommand', { brand: BRAND.displayName });
 
   // Clean degradation: the binary, without inventing an intent.
   const binaire = /^([\w./-]+)/.exec(c)?.[1];

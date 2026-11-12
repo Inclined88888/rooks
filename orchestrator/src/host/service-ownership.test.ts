@@ -50,7 +50,7 @@ function host(platform: Platform): Host {
   const o: ServiceOpts = {
     platform,
     homeDir,
-    novaHome: join(homeDir, 'scratch-home'),
+    rooksHome: join(homeDir, 'scratch-home'),
     installDir,
     userName: 'tester',
     uid: 501,
@@ -100,7 +100,7 @@ function installable(h: Host): ServiceOpts {
 }
 
 /** Registers the service `owner` would have installed on this machine. */
-function register(h: Host, owner: { novaHome: string; installDir: string; nodePath?: string }): void {
+function register(h: Host, owner: { rooksHome: string; installDir: string; nodePath?: string }): void {
   const o = { ...h.o, nodePath: '/opt/other/node', ...owner };
   if (h.o.platform === 'linux') {
     mkdirSync(join(o.installDir, 'scripts'), { recursive: true });
@@ -129,7 +129,7 @@ for (const platform of ['linux', 'darwin', 'win32'] as const) {
     const h = host(platform);
     const realHome = join(h.o.homeDir, 'real-home');
     const realInstall = join(h.o.homeDir, 'packaged', 'orchestrator');
-    register(h, { novaHome: realHome, installDir: realInstall });
+    register(h, { rooksHome: realHome, installDir: realInstall });
     const before = definitionOf(h);
 
     const { refusal, replacing } = guardServiceGesture(h.o, 'install');
@@ -152,14 +152,14 @@ for (const platform of ['linux', 'darwin', 'win32'] as const) {
 
   test(`${platform}: the same install on another home is refused`, () => {
     const h = host(platform);
-    register(h, { novaHome: join(h.o.homeDir, 'real-home'), installDir: h.o.installDir });
+    register(h, { rooksHome: join(h.o.homeDir, 'real-home'), installDir: h.o.installDir });
     assert.equal(foreignService(h.o)?.why, 'home');
     assert.match(guardServiceGesture(h.o, 'install').refusal!.lines[0]!, /belongs to another data directory/);
   });
 
   test(`${platform}: the same home on another install is refused too`, () => {
     const h = host(platform);
-    register(h, { novaHome: h.o.novaHome, installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
+    register(h, { rooksHome: h.o.rooksHome, installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
     const foreign = foreignService(h.o);
     assert.equal(foreign?.why, 'install');
     assert.match(guardServiceGesture(h.o, 'install').refusal!.lines[0]!, /runs from another installation/);
@@ -167,7 +167,7 @@ for (const platform of ['linux', 'darwin', 'win32'] as const) {
 
   test(`${platform}: reinstalling over one's own service needs no flag`, () => {
     const h = host(platform);
-    register(h, { novaHome: h.o.novaHome, installDir: h.o.installDir });
+    register(h, { rooksHome: h.o.rooksHome, installDir: h.o.installDir });
     const guard = guardServiceGesture(h.o, 'install');
     assert.deepEqual(guard, { refusal: null, replacing: null, notice: null });
     const res = installService(installable(h));
@@ -184,7 +184,7 @@ for (const platform of ['linux', 'darwin', 'win32'] as const) {
   test(`${platform}: another home with --force is replaced, and says so`, () => {
     const h = host(platform);
     const realHome = join(h.o.homeDir, 'real-home');
-    register(h, { novaHome: realHome, installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
+    register(h, { rooksHome: realHome, installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
     const guard = guardServiceGesture(h.o, 'install', { force: true });
     assert.equal(guard.refusal, null);
     assert.ok(guard.replacing);
@@ -192,25 +192,25 @@ for (const platform of ['linux', 'darwin', 'win32'] as const) {
     const res = installService({ ...installable(h), replacing: guard.replacing });
     assert.equal(res.ok, true, res.lines.join('\n'));
     if (platform === 'linux') {
-      assert.ok(readFileSync(unitPath(h.o.homeDir), 'utf8').includes(`Environment="ROOKS_HOME=${h.o.novaHome}"`));
+      assert.ok(readFileSync(unitPath(h.o.homeDir), 'utf8').includes(`Environment="ROOKS_HOME=${h.o.rooksHome}"`));
       // `enable --now` would leave the other daemon running.
       assert.ok(h.calls.some((c) => c.join(' ') === `systemctl --user restart ${LINUX_UNIT}`), JSON.stringify(h.calls));
     }
     if (platform === 'darwin') {
-      assert.ok(readFileSync(plistPath(h.o.homeDir), 'utf8').includes(h.o.novaHome));
+      assert.ok(readFileSync(plistPath(h.o.homeDir), 'utf8').includes(h.o.rooksHome));
       assert.ok(h.calls.some((c) => c.join(' ') === `launchctl bootout gui/501/${MACOS_LABEL}`));
     }
     if (platform === 'win32') {
       // Without this step, `IgnoreNew` drops the `/Run` while the other daemon lives.
       const batch = readFileSync(elevatedScriptPath(), 'utf8');
       assert.ok(batch.includes(windowsLauncherPath(realHome).toLowerCase()), batch);
-      assert.ok(batch.includes(windowsLauncherPath(h.o.novaHome).toLowerCase()), batch);
+      assert.ok(batch.includes(windowsLauncherPath(h.o.rooksHome).toLowerCase()), batch);
     }
   });
 
   test(`${platform}: a dry run reports the refusal, and never claims an install`, () => {
     const h = host(platform);
-    register(h, { novaHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
+    register(h, { rooksHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
     const dry = { ...h.o, dryRun: true };
     const { refusal } = guardServiceGesture(dry, 'install');
     assert.ok(refusal);
@@ -229,7 +229,7 @@ for (const platform of ['linux', 'darwin', 'win32'] as const) {
 
   test(`${platform}: uninstall, stop and start refuse another home; only uninstall takes --force`, () => {
     const h = host(platform);
-    register(h, { novaHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
+    register(h, { rooksHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
     const uninstall = guardServiceGesture(h.o, 'uninstall');
     assert.match(uninstall.refusal!.lines.join('\n'), /rooks service uninstall --force/);
     assert.ok(guardServiceGesture(h.o, 'uninstall', { force: true }).replacing);
@@ -247,7 +247,7 @@ test('linux: the real template and the live hand-written form both read back', (
   const shipped = resolve('src/host/../../');
   const file = unitPath(h.o.homeDir);
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, renderUnit({ ...h.o, installDir: shipped, novaHome: '/srv/rooks data' }));
+  writeFileSync(file, renderUnit({ ...h.o, installDir: shipped, rooksHome: '/srv/rooks data' }));
   const rendered = readInstalledService(h.o)!;
   assert.equal(rendered.home, '/srv/rooks data');
   assert.equal(rendered.installDir, join(dirname(shipped), 'orchestrator'));
@@ -270,7 +270,7 @@ test('linux: the real template and the live hand-written form both read back', (
 
 test('linux: --force gets past the identity check an installed unit would otherwise answer', () => {
   const h = host('linux');
-  register(h, { novaHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
+  register(h, { rooksHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
   const refused = installService(h.o);
   assert.equal(refused.ok, false);
   assert.match(refused.reason!, /belongs to another installation/);
@@ -290,10 +290,10 @@ test('darwin: the LaunchDaemon is identified through the launcher of the home it
   const realInstall = join(h.o.homeDir, "pack'aged", 'orchestrator');
   const file = launchDaemonPath(h.o.launchDaemonsDir);
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, renderLaunchDaemonPlist({ ...h.o, novaHome: realHome }));
+  writeFileSync(file, renderLaunchDaemonPlist({ ...h.o, rooksHome: realHome }));
   const launcher = macosLauncherPath(realHome);
   mkdirSync(dirname(launcher), { recursive: true });
-  writeFileSync(launcher, renderMacLauncher({ ...h.o, novaHome: realHome, installDir: realInstall, nodePath: '/opt/rooks/node' }));
+  writeFileSync(launcher, renderMacLauncher({ ...h.o, rooksHome: realHome, installDir: realInstall, nodePath: '/opt/rooks/node' }));
 
   const service = readInstalledService(h.o)!;
   assert.equal(service.definition, file);
@@ -307,7 +307,7 @@ test('darwin: the LaunchDaemon is identified through the launcher of the home it
   const mineFile = launchDaemonPath(mine.o.launchDaemonsDir);
   mkdirSync(dirname(mineFile), { recursive: true });
   writeFileSync(mineFile, renderLaunchDaemonPlist(mine.o));
-  const mineLauncher = macosLauncherPath(mine.o.novaHome);
+  const mineLauncher = macosLauncherPath(mine.o.rooksHome);
   mkdirSync(dirname(mineLauncher), { recursive: true });
   writeFileSync(mineLauncher, renderMacLauncher(mine.o));
   assert.equal(foreignService(mine.o), null);
@@ -334,7 +334,7 @@ test('darwin, linux: a packaged CLI owns every release of its home, a source che
 test('darwin: a service an old CLI wrote around the package itself stays its own', () => {
   const h = host('darwin');
   const app = join(h.o.homeDir, 'Rooks.app', 'Contents', 'Resources', 'orchestrator');
-  register(h, { novaHome: h.o.novaHome, installDir: app });
+  register(h, { rooksHome: h.o.rooksHome, installDir: app });
   const packaged = packagedServiceOptions(h.o, join(h.o.homeDir, 'Rooks'), 3110, '0.2.0');
   assert.equal(foreignService(packaged)?.why, 'install', 'without the running package to compare with');
   assert.equal(foreignService(packaged, app), null);
@@ -343,10 +343,10 @@ test('darwin: a service an old CLI wrote around the package itself stays its own
 
 test('win32: compared without case and with the separators of a real task', () => {
   const h = host('win32');
-  const o: ServiceOpts = { ...h.o, novaHome: 'C:\\Users\\Robin\\.rooks', installDir: 'C:\\Users\\Robin\\AppData\\Local\\Programs\\Rooks\\resources\\orchestrator' };
-  h.task.xml = renderTaskXml({ ...o, novaHome: 'c:\\users\\robin\\.ROOKS', installDir: o.installDir.toUpperCase() });
+  const o: ServiceOpts = { ...h.o, rooksHome: 'C:\\Users\\Robin\\.rooks', installDir: 'C:\\Users\\Robin\\AppData\\Local\\Programs\\Rooks\\resources\\orchestrator' };
+  h.task.xml = renderTaskXml({ ...o, rooksHome: 'c:\\users\\robin\\.ROOKS', installDir: o.installDir.toUpperCase() });
   assert.equal(foreignService(o), null);
-  h.task.xml = renderTaskXml({ ...o, novaHome: 'C:\\Users\\Robin\\AppData\\Local\\Temp\\rc-test' });
+  h.task.xml = renderTaskXml({ ...o, rooksHome: 'C:\\Users\\Robin\\AppData\\Local\\Temp\\rc-test' });
   const foreign = foreignService(o);
   assert.equal(foreign?.why, 'home');
   assert.equal(foreign?.home, 'C:\\Users\\Robin\\AppData\\Local\\Temp\\rc-test');
@@ -356,8 +356,8 @@ test('win32: the daemon it runs comes from the launcher of that home', () => {
   const h = host('win32');
   const realHome = 'C:\\Users\\Robin\\.rooks';
   const realInstall = 'C:\\Program Files\\Rooks\\resources\\orchestrator';
-  h.task.xml = renderTaskXml({ ...h.o, novaHome: realHome, installDir: realInstall });
-  const launcher = renderWindowsLauncher({ ...h.o, novaHome: realHome, installDir: realInstall, nodePath: 'C:\\Program Files\\Rooks\\Rooks.exe' });
+  h.task.xml = renderTaskXml({ ...h.o, rooksHome: realHome, installDir: realInstall });
+  const launcher = renderWindowsLauncher({ ...h.o, rooksHome: realHome, installDir: realInstall, nodePath: 'C:\\Program Files\\Rooks\\Rooks.exe' });
   const service = readInstalledService({ ...h.o, readFile: (f) => {
     assert.equal(f, windowsLauncherPath(realHome));
     return launcher;
@@ -374,7 +374,7 @@ test('win32: the logon task of the first releases still names its home', () => {
 
 test('win32: that task, as those releases wrote it, still says which installation it runs from', () => {
   const h = host('win32');
-  const o: ServiceOpts = { ...h.o, novaHome: 'C:\\Users\\Robin\\.rooks', installDir: 'C:\\Users\\Robin\\src\\rooks\\orchestrator' };
+  const o: ServiceOpts = { ...h.o, rooksHome: 'C:\\Users\\Robin\\.rooks', installDir: 'C:\\Users\\Robin\\src\\rooks\\orchestrator' };
   const task = (directory: string) => `<Task><Actions><Exec><Command>cmd.exe</Command><Arguments>/c set ROOKS_HOME=C:\\Users\\Robin\\.rooks&amp;&amp; node boot.js</Arguments><WorkingDirectory>${directory}</WorkingDirectory></Exec></Actions></Task>`;
   h.task.xml = task(o.installDir);
   assert.equal(foreignService(o), null);
@@ -390,7 +390,7 @@ const UNPROVEN: Record<Platform, (h: Host) => void> = {
   linux: (h) => {
     const file = unitPath(h.o.homeDir);
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, `[Service]\nEnvironment="ROOKS_HOME=${h.o.novaHome}"\nExecStart=/opt/other/node /opt/other/dist/index.js\n`);
+    writeFileSync(file, `[Service]\nEnvironment="ROOKS_HOME=${h.o.rooksHome}"\nExecStart=/opt/other/node /opt/other/dist/index.js\n`);
   },
   darwin: (h) => {
     const file = plistPath(h.o.homeDir);
@@ -398,7 +398,7 @@ const UNPROVEN: Record<Platform, (h: Host) => void> = {
     writeFileSync(file, renderPlist(h.o).replace(/<key>WorkingDirectory<\/key><string>[^<]*<\/string>\n?/, ''));
   },
   win32: (h) => {
-    h.task.xml = `<Task><Actions><Exec><Command>cmd.exe</Command><Arguments>/c set ROOKS_HOME=${h.o.novaHome}&amp;&amp; node boot.js</Arguments></Exec></Actions></Task>`;
+    h.task.xml = `<Task><Actions><Exec><Command>cmd.exe</Command><Arguments>/c set ROOKS_HOME=${h.o.rooksHome}&amp;&amp; node boot.js</Arguments></Exec></Actions></Task>`;
   },
 };
 
@@ -432,7 +432,7 @@ for (const platform of ['linux', 'darwin', 'win32'] as const) {
 
     const forced = guardServiceGesture(h.o, 'install', { force: true });
     assert.equal(forced.refusal, null);
-    assert.equal(forced.replacing?.home, h.o.novaHome);
+    assert.equal(forced.replacing?.home, h.o.rooksHome);
     const res = installService({ ...installable(h), replacing: forced.replacing });
     assert.equal(res.ok, true, res.lines.join('\n'));
   });
@@ -444,7 +444,7 @@ test('darwin: a LaunchDaemon on its own home whose launcher is missing or unknow
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, renderLaunchDaemonPlist(h.o));
   assert.equal(foreignService(h.o)?.why, 'unproven', 'no launcher');
-  const launcher = macosLauncherPath(h.o.novaHome);
+  const launcher = macosLauncherPath(h.o.rooksHome);
   mkdirSync(dirname(launcher), { recursive: true });
   writeFileSync(launcher, '#!/bin/sh\nexec /opt/other/node /opt/other/dist/index.js\n');
   assert.equal(foreignService(h.o)?.why, 'unproven', 'a launcher that names no directory');
@@ -490,7 +490,7 @@ test('win32: a task registered but unreadable is refused, a missing one is not',
 
 test('the same installation reached through a link is the same installation', () => {
   const h = host('linux');
-  register(h, { novaHome: h.o.novaHome, installDir: h.o.installDir });
+  register(h, { rooksHome: h.o.rooksHome, installDir: h.o.installDir });
   const repo = dirname(h.o.installDir);
   const link = join(h.o.homeDir, 'linked-repo');
   // A junction: the one directory link Windows grants without a privilege.
@@ -512,9 +512,9 @@ function revision3Task(): { h: Host; o: ServiceOpts; revision: string; sid: stri
     ...installable(h),
     exec: (name, args) => (name === 'whoami' ? { code: 0, stdout: `"pc\\tester","${sid}"\r\n`, stderr: '' } : h.o.exec(name, args)),
   };
-  register(h, { novaHome: o.novaHome, installDir: o.installDir });
+  register(h, { rooksHome: o.rooksHome, installDir: o.installDir });
   assert.match(h.task.xml!, /<UserId>tester<\/UserId>/);
-  const revision = windowsServiceFiles(o.novaHome, join).revision;
+  const revision = windowsServiceFiles(o.rooksHome, join).revision;
   mkdirSync(dirname(revision), { recursive: true });
   writeFileSync(revision, '3\n');
   return { h, o, revision, sid };
@@ -580,7 +580,7 @@ test('win32: a rewrite that does not answer puts the task back and stays due', a
 
 test('win32: a task of another home is not rewritten by the update, whatever its revision', async () => {
   const { h, o, revision } = revision3Task();
-  register(h, { novaHome: join(o.homeDir, 'real-home'), installDir: o.installDir });
+  register(h, { rooksHome: join(o.homeDir, 'real-home'), installDir: o.installDir });
   const refused = await upgradeDesktopService(upgradeDeps(o, true));
   assert.equal(refused.ok, false);
   assert.equal(refused.fallback, true);
@@ -590,7 +590,7 @@ test('win32: a task of another home is not rewritten by the update, whatever its
 
 test('the desktop upgrade and `update apply` leave another home alone, their own release moves', async () => {
   const h = host('darwin');
-  register(h, { novaHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
+  register(h, { rooksHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
   assert.match(serviceOfAnotherHome(h.o)!, /left in place/);
 
   const steps: string[] = [];
@@ -617,7 +617,7 @@ test('the desktop upgrade and `update apply` leave another home alone, their own
 
   // Another install or release on its own home is what an upgrade is for.
   const own = host('darwin');
-  register(own, { novaHome: own.o.novaHome, installDir: join(own.o.homeDir, 'older', 'orchestrator') });
+  register(own, { rooksHome: own.o.rooksHome, installDir: join(own.o.homeDir, 'older', 'orchestrator') });
   assert.equal(foreignService(own.o)?.why, 'install');
   assert.equal(serviceOfAnotherHome(own.o), null);
   const moved = await upgradeDesktopService({ ...deps, options: () => own.o });
@@ -647,8 +647,8 @@ test('the CLI checks ownership before the temporary-home check, the preflight an
  * `rooks-desktop-<hash of the home>` for a package. Each gesture only reads its
  * own, so neither saw the other on the same data (TODO #736).
  */
-function registerPackaged(h: Host, novaHome = h.o.novaHome, version = '0.2.0'): ServiceOpts {
-  const packaged = packagedServiceOptions({ ...h.o, novaHome }, join(h.o.homeDir, 'Rooks'), 3110, version);
+function registerPackaged(h: Host, rooksHome = h.o.rooksHome, version = '0.2.0'): ServiceOpts {
+  const packaged = packagedServiceOptions({ ...h.o, rooksHome }, join(h.o.homeDir, 'Rooks'), 3110, version);
   const file = unitPath(h.o.homeDir, packaged.unitName);
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, packaged.unitContent!);
@@ -668,9 +668,9 @@ test('linux: a clone on the home of a packaged service is refused, and nothing i
   assert.equal(replacing, null);
   const text = refusal.lines.join('\n');
   assert.match(refusal.lines[0]!, new RegExp(`^refused: the service ${packaged.unitName} already runs on this data directory`));
-  assert.ok(text.includes(`data:       ${h.o.novaHome}`), text);
+  assert.ok(text.includes(`data:       ${h.o.rooksHome}`), text);
   assert.ok(text.includes(packaged.installDir), text);
-  assert.ok(text.includes(`this command: data ${h.o.novaHome}, install ${h.o.installDir}`), text);
+  assert.ok(text.includes(`this command: data ${h.o.rooksHome}, install ${h.o.installDir}`), text);
   assert.match(text, /Nothing was changed\. To replace it anyway: rooks service install --force/);
   assert.equal(existsSync(unitPath(h.o.homeDir)), false, 'no second unit');
   assert.equal(readFileSync(unitPath(h.o.homeDir, packaged.unitName), 'utf8'), before);
@@ -683,7 +683,7 @@ test('linux: a clone on the home of a packaged service is refused, and nothing i
 
 test('linux: a package on the home of a clone service is refused the same way', () => {
   const h = host('linux');
-  register(h, { novaHome: h.o.novaHome, installDir: h.o.installDir });
+  register(h, { rooksHome: h.o.rooksHome, installDir: h.o.installDir });
   const packaged = packagedServiceOptions(h.o, join(h.o.homeDir, 'Rooks'), 3110, '0.2.0');
 
   const { refusal } = guardServiceGesture(packaged, 'install');
@@ -696,11 +696,11 @@ test('linux: a package on the home of a clone service is refused the same way', 
 
 test('linux: the same data reached through a link is the same data', () => {
   const h = host('linux');
-  mkdirSync(h.o.novaHome, { recursive: true });
+  mkdirSync(h.o.rooksHome, { recursive: true });
   const link = join(h.o.homeDir, 'linked-home');
-  symlinkSync(h.o.novaHome, link, 'junction');
+  symlinkSync(h.o.rooksHome, link, 'junction');
   registerPackaged(h);
-  assert.ok(guardServiceGesture({ ...h.o, novaHome: link }, 'install').refusal, 'another hash, the same database');
+  assert.ok(guardServiceGesture({ ...h.o, rooksHome: link }, 'install').refusal, 'another hash, the same database');
 });
 
 test('linux: units on another home are none of this gesture\'s business', () => {
@@ -711,14 +711,14 @@ test('linux: units on another home are none of this gesture\'s business', () => 
 
   // A release candidate on a throwaway home, beside the clone service of the real one.
   const beside = host('linux');
-  register(beside, { novaHome: join(beside.o.homeDir, 'real-home'), installDir: beside.o.installDir });
+  register(beside, { rooksHome: join(beside.o.homeDir, 'real-home'), installDir: beside.o.installDir });
   const rc = packagedServiceOptions(beside.o, join(beside.o.homeDir, 'Rooks'), 3110, '0.2.0');
   assert.deepEqual(guardServiceGesture(rc, 'install'), { refusal: null, replacing: null, notice: null });
 });
 
 test('linux: a package updating over its own unit, with no other on the home, needs no flag', () => {
   const h = host('linux');
-  registerPackaged(h, h.o.novaHome, '0.1.9');
+  registerPackaged(h, h.o.rooksHome, '0.1.9');
   const update = packagedServiceOptions(h.o, join(h.o.homeDir, 'Rooks'), 3110, '0.2.0');
   assert.deepEqual(guardServiceGesture(update, 'install'), { refusal: null, replacing: null, notice: null });
   assert.deepEqual(guardServiceGesture(update, 'uninstall'), { refusal: null, replacing: null, notice: null });
@@ -732,12 +732,12 @@ test('linux: only a unit proven to run on this home counts', () => {
   writeFileSync(join(dir, 'rooks-helper.service'), '[Service]\nExecStart=/usr/bin/true\n');
   // Systemd answers with its specifiers resolved: this one is simply another home.
   writeFileSync(join(dir, 'rooks-odd.service'), '[Service]\nEnvironment=ROOKS_HOME=%t/rooks\nWorkingDirectory=/srv/x\n');
-  writeFileSync(join(dir, 'rooks-gone.service.bak'), `[Service]\nEnvironment="ROOKS_HOME=${h.o.novaHome}"\n`);
+  writeFileSync(join(dir, 'rooks-gone.service.bak'), `[Service]\nEnvironment="ROOKS_HOME=${h.o.rooksHome}"\n`);
   mkdirSync(join(dir, 'rooks-drop.service.d'));
   assert.deepEqual(servicesSharingHome(h.o), []);
   assert.deepEqual(guardServiceGesture(h.o, 'install'), { refusal: null, replacing: null, notice: null });
   // The default home is where a unit naming none would be read as running.
-  assert.deepEqual(servicesSharingHome({ ...h.o, novaHome: join(h.o.homeDir, '.rooks') }), []);
+  assert.deepEqual(servicesSharingHome({ ...h.o, rooksHome: join(h.o.homeDir, '.rooks') }), []);
 });
 
 test('linux: a no-ROOKS_HOME clone unit runs on the default home, so it shares that one', () => {
@@ -746,7 +746,7 @@ test('linux: a no-ROOKS_HOME clone unit runs on the default home, so it shares t
   const file = unitPath(h.o.homeDir);
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, '[Service]\nWorkingDirectory=/srv/x\nExecStart=/usr/bin/env node dist/index.js\n');
-  const packaged = packagedServiceOptions({ ...h.o, novaHome: defaultHome }, join(h.o.homeDir, 'Rooks'), 3110, '0.2.0');
+  const packaged = packagedServiceOptions({ ...h.o, rooksHome: defaultHome }, join(h.o.homeDir, 'Rooks'), 3110, '0.2.0');
   assert.ok(guardServiceGesture(packaged, 'install').refusal);
   assert.equal(guardServiceGesture(packaged, 'install').refusal!.lines.some((l) => l.includes(LINUX_UNIT)), true);
 });
@@ -761,13 +761,13 @@ function dropIn(h: Host, unit: string, content: string): void {
 test('linux: a drop-in that brings another unit onto this home is refused, and --force takes it down', () => {
   const h = host('linux');
   const packaged = registerPackaged(h, join(h.o.homeDir, 'other-home'));
-  dropIn(h, packaged.unitName, `[Service]\nEnvironment="ROOKS_HOME=${h.o.novaHome}"\n`);
+  dropIn(h, packaged.unitName, `[Service]\nEnvironment="ROOKS_HOME=${h.o.rooksHome}"\n`);
 
   for (const gesture of ['install', 'start'] as const) {
     const { refusal } = guardServiceGesture(h.o, gesture);
     assert.ok(refusal, gesture);
     assert.match(refusal.lines[0]!, new RegExp(`the service ${packaged.unitName} already runs on this data directory`));
-    assert.ok(refusal.lines.join('\n').includes(`data:       ${h.o.novaHome}`), refusal.lines.join('\n'));
+    assert.ok(refusal.lines.join('\n').includes(`data:       ${h.o.rooksHome}`), refusal.lines.join('\n'));
   }
   assert.deepEqual(guardServiceGesture(h.o, 'install', { force: true }).replacing?.units, [packaged.unitName]);
 });
@@ -802,7 +802,7 @@ test('linux: the home is read out of the whole environment, as systemctl seriali
   h.systemd.set(packaged.unitName, () => ({
     code: 0,
     stderr: '',
-    stdout: `LoadState=loaded\nNeedDaemonReload=no\nWorkingDirectory=/srv/x\nEnvironment=PATH=/usr/bin "ROOKS_HOME=${h.o.novaHome}" PORT=3010\n`,
+    stdout: `LoadState=loaded\nNeedDaemonReload=no\nWorkingDirectory=/srv/x\nEnvironment=PATH=/usr/bin "ROOKS_HOME=${h.o.rooksHome}" PORT=3010\n`,
   }));
   assert.equal(servicesSharingHome(h.o)[0]?.why, 'shared');
 });
@@ -869,7 +869,7 @@ test('linux: one unit proven and one that cannot be checked: --force touches nei
 
 test('linux: a foreign service in place and an unchecked unit: the reason is the one --force cannot answer', () => {
   const h = host('linux');
-  register(h, { novaHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
+  register(h, { rooksHome: join(h.o.homeDir, 'real-home'), installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
   const packaged = registerPackaged(h);
   h.systemd.set(packaged.unitName, UNVERIFIED['systemd does not answer']!);
 
@@ -889,7 +889,7 @@ test('linux: no other unit means no call to systemd at all', () => {
 
 test('linux: start refuses to bring up a second daemon, stop and uninstall still clear the double', () => {
   const h = host('linux');
-  register(h, { novaHome: h.o.novaHome, installDir: h.o.installDir });
+  register(h, { rooksHome: h.o.rooksHome, installDir: h.o.installDir });
   const packaged = registerPackaged(h);
 
   const start = guardServiceGesture(h.o, 'start', { force: true }).refusal;
@@ -909,7 +909,7 @@ test('linux: start refuses to bring up a second daemon, stop and uninstall still
 test('linux: --force takes the other unit down before starting its own', () => {
   const h = host('linux');
   const packaged = registerPackaged(h);
-  const marker = join(h.o.novaHome, 'desktop-runtime', 'installed');
+  const marker = join(h.o.rooksHome, 'desktop-runtime', 'installed');
   mkdirSync(dirname(marker), { recursive: true });
   writeFileSync(marker, packaged.unitName);
 
@@ -923,7 +923,7 @@ test('linux: --force takes the other unit down before starting its own', () => {
 
   assert.equal(res.ok, true, res.lines.join('\n'));
   assert.equal(existsSync(unitPath(h.o.homeDir, packaged.unitName)), false);
-  assert.ok(readFileSync(unitPath(h.o.homeDir), 'utf8').includes(`Environment="ROOKS_HOME=${h.o.novaHome}"`));
+  assert.ok(readFileSync(unitPath(h.o.homeDir), 'utf8').includes(`Environment="ROOKS_HOME=${h.o.rooksHome}"`));
   const steps = h.calls.map((c) => c.join(' '));
   const down = steps.indexOf(`systemctl --user disable --now ${packaged.unitName}`);
   assert.ok(down >= 0, JSON.stringify(steps));
@@ -935,9 +935,9 @@ test('linux: --force takes the other unit down before starting its own', () => {
 
 test('linux: --force over a clone unit leaves the marker of another unit alone', () => {
   const h = host('linux');
-  register(h, { novaHome: h.o.novaHome, installDir: h.o.installDir });
+  register(h, { rooksHome: h.o.rooksHome, installDir: h.o.installDir });
   const packaged = packagedServiceOptions(h.o, join(h.o.homeDir, 'Rooks'), 3110, '0.2.0');
-  const marker = join(h.o.novaHome, 'desktop-runtime', 'installed');
+  const marker = join(h.o.rooksHome, 'desktop-runtime', 'installed');
   mkdirSync(dirname(marker), { recursive: true });
   writeFileSync(marker, packaged.unitName);
 
@@ -987,8 +987,8 @@ test('linux: a dry run with --force says what it would take down, and does it no
 
 test('linux: an update of the package is not judged on a clone unit beside it', async () => {
   const h = host('linux');
-  register(h, { novaHome: h.o.novaHome, installDir: h.o.installDir });
-  registerPackaged(h, h.o.novaHome, '0.1.9');
+  register(h, { rooksHome: h.o.rooksHome, installDir: h.o.installDir });
+  registerPackaged(h, h.o.rooksHome, '0.1.9');
   const update = packagedServiceOptions(h.o, join(h.o.homeDir, 'Rooks'), 3110, '0.2.0');
   assert.equal(serviceOfAnotherHome(update), null);
   const steps: string[] = [];
@@ -1014,7 +1014,7 @@ test('macOS and Windows have one service name per account: nothing else to read'
     const h = host(platform);
     const dir = dirname(unitPath(h.o.homeDir));
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'rooks-desktop-x.service'), `[Service]\nEnvironment="ROOKS_HOME=${h.o.novaHome}"\n`);
+    writeFileSync(join(dir, 'rooks-desktop-x.service'), `[Service]\nEnvironment="ROOKS_HOME=${h.o.rooksHome}"\n`);
     assert.deepEqual(servicesSharingHome(h.o), [], platform);
   }
 });
@@ -1027,7 +1027,7 @@ for (const platform of ['darwin', 'win32'] as const) {
     for (const gesture of gestures) {
       const h = host(platform);
       const realHome = join(h.o.homeDir, 'real-home');
-      register(h, { novaHome: realHome, installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
+      register(h, { rooksHome: realHome, installDir: join(h.o.homeDir, 'packaged', 'orchestrator') });
 
       const refused = actOnOwnService(h.o, gesture);
 
@@ -1035,7 +1035,7 @@ for (const platform of ['darwin', 'win32'] as const) {
       assert.equal(refused.code, 1);
       assert.match(refused.reason!, /left in place/);
       assert.deepEqual(h.calls.filter((call) => !READ_ONLY(call)), [], gesture.name);
-      assert.equal(existsSync(serviceStoppedMarker(h.o.novaHome)), false, 'and no marker says it was stopped');
+      assert.equal(existsSync(serviceStoppedMarker(h.o.rooksHome)), false, 'and no marker says it was stopped');
     }
   });
 
@@ -1043,7 +1043,7 @@ for (const platform of ['darwin', 'win32'] as const) {
     for (const gesture of gestures) {
       const h = host(platform);
       // Another release of this home: an update moves it, the gesture still applies.
-      register(h, { novaHome: h.o.novaHome, installDir: join(h.o.homeDir, 'older', 'orchestrator') });
+      register(h, { rooksHome: h.o.rooksHome, installDir: join(h.o.homeDir, 'older', 'orchestrator') });
       actOnOwnService(h.o, gesture);
       assert.ok(h.calls.some((call) => !READ_ONLY(call)), gesture.name);
     }
@@ -1055,7 +1055,7 @@ test('darwin: a LaunchDaemon of another home is not booted out by the desktop', 
   const realHome = join(h.o.homeDir, 'real-home');
   const file = launchDaemonPath(h.o.launchDaemonsDir);
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, renderLaunchDaemonPlist({ ...h.o, novaHome: realHome }));
+  writeFileSync(file, renderLaunchDaemonPlist({ ...h.o, rooksHome: realHome }));
 
   assert.match(actOnOwnService(h.o, stopService).reason!, /left in place/);
   assert.deepEqual(h.calls.filter((call) => !READ_ONLY(call)), []);

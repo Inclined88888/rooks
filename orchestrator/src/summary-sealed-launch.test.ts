@@ -196,7 +196,7 @@ test('plugin: scratch.mission and mcp answer inside a one-shot; the folder and t
     assert.equal(spawned[0]!.stdin, 'Name this.');
   });
   const { opts, roles } = lastLaunch();
-  assert.equal(opts.novaMcp, false);
+  assert.equal(opts.rooksMcp, false);
   assert.equal(opts.cfg.permission_mode, 'plan');
   assert.equal(opts.readOnlyTools, undefined, 'a third-party dialect is not trusted to honour it');
   assert.equal(roles.includes('rooks') || roles.includes('forms'), false);

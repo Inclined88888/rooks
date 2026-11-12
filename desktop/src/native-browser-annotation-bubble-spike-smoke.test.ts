@@ -61,7 +61,7 @@ const SPIKE_ANCHOR = String.raw`
 /** The bubble's own preload: three verbs and one listener, nothing else of Electron. */
 const BUBBLE_PRELOAD = String.raw`
 const { contextBridge, ipcRenderer } = require('electron');
-contextBridge.exposeInMainWorld('novaBubble', {
+contextBridge.exposeInMainWorld('rooksBubble', {
   submit: (text) => ipcRenderer.send('rooks:spike-bubble', { type: 'submit', text: String(text) }),
   cancel: () => ipcRenderer.send('rooks:spike-bubble', { type: 'cancel' }),
   ready: (state) => ipcRenderer.send('rooks:spike-bubble', { type: 'ready', state }),
@@ -84,13 +84,13 @@ const BUBBLE_HTML = '<!doctype html><meta charset="utf-8">'
   + 'window.channel = []; try { new BroadcastChannel("rooks").onmessage = (event) => channel.push(String(event.data)); }'
   + ' catch (error) { channel.push("refused:" + error.name); }'
   + 'note.addEventListener("keydown", (event) => {'
-  + ' if (event.key === "Enter" && !event.shiftKey && !event.isComposing) { event.preventDefault(); novaBubble.submit(note.value); }'
-  + ' else if (event.key === "Escape") { event.preventDefault(); novaBubble.cancel(); } });'
-  + 'document.getElementById("send").addEventListener("click", () => novaBubble.submit(note.value));'
+  + ' if (event.key === "Enter" && !event.shiftKey && !event.isComposing) { event.preventDefault(); rooksBubble.submit(note.value); }'
+  + ' else if (event.key === "Escape") { event.preventDefault(); rooksBubble.cancel(); } });'
+  + 'document.getElementById("send").addEventListener("click", () => rooksBubble.submit(note.value));'
   + 'const show = (data) => { document.getElementById("label").textContent = data.label; note.value = ""; note.focus();'
-  + ' setTimeout(() => novaBubble.ready({ dpr: devicePixelRatio, visibility: document.visibilityState,'
+  + ' setTimeout(() => rooksBubble.ready({ dpr: devicePixelRatio, visibility: document.visibilityState,'
   + '  inner: { width: innerWidth, height: innerHeight }, focused: document.activeElement === note, hasFocus: document.hasFocus() })); };'
-  + 'novaBubble.onShow(show);'
+  + 'rooksBubble.onShow(show);'
   + '</script>';
 
 const fixture = String.raw`
@@ -354,12 +354,12 @@ const UI = '<!doctype html><meta charset="utf-8"><title>Rooks</title><body style
     await js(page, 'channel.postMessage("from-page"); true');
     await delay(200);
     report.checks.reach = {
-      pageGlobals: await js(page, '({ bridge: typeof window.novaBubble, require: typeof window.require, frames: window.length,'
+      pageGlobals: await js(page, '({ bridge: typeof window.rooksBubble, require: typeof window.require, frames: window.length,'
         + ' top: window.top === window, opener: window.opener === null })'),
       bubbleChannel: await js(bubble.view.webContents, 'channel.splice(0)'),
       bubbleOrigin: await js(bubble.view.webContents, 'location.origin'),
       bubbleGlobals: await js(bubble.view.webContents, '({ require: typeof window.require, process: typeof window.process,'
-        + ' bridge: Object.keys(window.novaBubble) })'),
+        + ' bridge: Object.keys(window.rooksBubble) })'),
       sessions: { pageIsBubble: page.session === bubbleSession, persistent: bubbleSession.isPersistent() },
     };
     // Nor can the bubble's document go anywhere: will-navigate is refused.

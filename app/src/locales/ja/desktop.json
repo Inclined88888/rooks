@@ -103,7 +103,7 @@
       "handoverKept": "Rooks のバックグラウンドサービスが応答しませんでした。",
       "handoverKeptDetail": "セットアップは、このウィンドウで実行中の Rooks で続行します。セットアップが終わったら Rooks を終了して再度開いてください: サービスを再度試します。データは {home} に残っています。",
       "refused": "Windows はこのアカウントで Rooks のバックグラウンドサービスを起動しません。",
-      "refusedDetail": "スケジュールされたタスク NovaOrchestrator は登録されていますが、Windows が一度も実行していません。これは Microsoft Entra ID に参加した PC の職場または学校のアカウントで起こります。Rooks は代わりに組み込みのデーモンで実行します: アプリとともに起動し、アプリを閉じるかサインアウトすると停止します。使われていないタスクを削除するには: rooks service uninstall (Windows が許可を求めます)。",
+      "refusedDetail": "スケジュールされたタスク RooksOrchestrator は登録されていますが、Windows が一度も実行していません。これは Microsoft Entra ID に参加した PC の職場または学校のアカウントで起こります。Rooks は代わりに組み込みのデーモンで実行します: アプリとともに起動し、アプリを閉じるかサインアウトすると停止します。使われていないタスクを削除するには: rooks service uninstall (Windows が許可を求めます)。",
       "repair": "Rooks のバックグラウンドサービスはインストールされていません。",
       "repairDetail": "これがないと、Rooks は Windows とともに起動せず、アプリを閉じるかサインアウトすると停止します。再インストールすると、Windows の許可を一度だけ求めます。",
       "repairConfirm": "サービスを再インストール",

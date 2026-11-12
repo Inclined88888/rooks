@@ -143,7 +143,7 @@ type Skill = {
 
 // Keys, not strings: translated at render, once the interface language is set.
 const EDIT_SKILL_SECTIONS: { source: SkillSource; label: string; hint: string }[] = [
-  { source: 'rooks', label: 'editPage.skillSectionNovaLabel', hint: 'editPage.skillSectionNovaHint' },
+  { source: 'rooks', label: 'editPage.skillSectionRooksLabel', hint: 'editPage.skillSectionRooksHint' },
   { source: 'project', label: 'editPage.skillSectionProjectLabel', hint: 'editPage.skillSectionProjectHint' },
   { source: 'claude-user', label: 'editPage.skillSectionUserLabel', hint: 'editPage.skillSectionUserHint' },
   { source: 'plugin', label: 'editPage.skillSectionPluginLabel', hint: 'editPage.skillSectionPluginHint' },
@@ -997,7 +997,7 @@ export function AgentEditor({ agent, isNew, onClose, onDirtyChange, initialTab }
 
   // Only Rooks skills reach the prompt from here: project ones load natively
   // in a Claude Code agent only, the others never reach a mission.
-  const checkedNovaSkills = draft.skills.filter((id) => skills.some((s) => s.id === id && s.source === 'rooks'));
+  const checkedRooksSkills = draft.skills.filter((id) => skills.some((s) => s.id === id && s.source === 'rooks'));
 
   return (
     <div ref={editorRoot} className="flex h-full min-h-0 flex-col">
@@ -1497,7 +1497,7 @@ export function AgentEditor({ agent, isNew, onClose, onDirtyChange, initialTab }
                     );
                   })}
                   <SkillModeList
-                    checked={checkedNovaSkills}
+                    checked={checkedRooksSkills}
                     modes={skillModes}
                     weights={shownWeights}
                     readsOnDemand={readsOnDemand}
@@ -1633,7 +1633,7 @@ export function AgentEditor({ agent, isNew, onClose, onDirtyChange, initialTab }
  *  orchestrator/src/injected-mcp.ts). `/api/ui/mcp` hides them, so without
  *  this row the tab read as if `rooks` could not be granted (TIM-0102). */
 const BUILTIN_MCP_SERVERS: ReadonlyArray<{ key: string; hintKey: string }> = [
-  { key: 'rooks', hintKey: 'editPage.mcpBuiltinNova' },
+  { key: 'rooks', hintKey: 'editPage.mcpBuiltinRooks' },
   { key: 'rooks_ask', hintKey: 'editPage.mcpBuiltinAsk' },
   { key: 'rooks-browser', hintKey: 'editPage.mcpBuiltinBrowser' },
   { key: 'grepai', hintKey: 'editPage.mcpBuiltinGrepai' },

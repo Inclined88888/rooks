@@ -180,7 +180,7 @@ test('what a remote answers is mapped, never relayed', async () => {
   assert.equal(res.json.error, 'invalid_code');
   fakeAnswer = { status: 404, body: '{"error":"Cannot POST"}' };
   res = await pairFake();
-  assert.equal(res.json.error, 'not_a_nova_machine');
+  assert.equal(res.json.error, 'not_a_rooks_machine');
   resetThrottle();
   fakeAnswer = { status: 302, headers: { location: 'http://169.254.169.254/' } };
   res = await pairFake();

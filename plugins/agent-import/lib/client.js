@@ -181,8 +181,8 @@ var messages_default = {
     "closeConfirm.yes": "Close",
     sources: "Where are your agents?",
     noSource: "No source is available yet.",
-    "novaSource.label": "Rooks agent archive (.zip)",
-    "novaSource.description": "Agents exported from another Rooks: Export on its Agents page, or rooks agent export.",
+    "rooksSource.label": "Rooks agent archive (.zip)",
+    "rooksSource.description": "Agents exported from another Rooks: Export on its Agents page, or rooks agent export.",
     pickZip: "Choose a .zip file",
     staging: "Sending the archive\u2026",
     previewing: "Reading the archive\u2026",
@@ -300,8 +300,8 @@ var messages_default = {
     "closeConfirm.yes": "Fermer",
     sources: "O\xF9 sont vos agents ?",
     noSource: "Aucune source n'est encore disponible.",
-    "novaSource.label": "Archive d'agents Rooks (.zip)",
-    "novaSource.description": "Des agents export\xE9s d'un autre Rooks : Exporter sur sa page Agents, ou rooks agent export.",
+    "rooksSource.label": "Archive d'agents Rooks (.zip)",
+    "rooksSource.description": "Des agents export\xE9s d'un autre Rooks : Exporter sur sa page Agents, ou rooks agent export.",
     pickZip: "Choisir un fichier .zip",
     staging: "Envoi de l'archive\u2026",
     previewing: "Lecture de l'archive\u2026",
@@ -680,8 +680,8 @@ var DialogTitle4 = ui3.DialogTitle;
 var DialogDescription4 = ui3.DialogDescription;
 var ROOKS_SOURCE = {
   id: "rooks",
-  label: t3("novaSource.label"),
-  description: t3("novaSource.description"),
+  label: t3("rooksSource.label"),
+  description: t3("rooksSource.description"),
   accepts: ["zip"]
 };
 var INITIAL = {

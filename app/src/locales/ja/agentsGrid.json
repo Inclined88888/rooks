@@ -62,7 +62,7 @@
     "newAgent": "新しいエージェント",
     "askAgent": "{name} に質問",
     "notifications": "通知",
-    "novaAgentsAccess": "{brand} エージェントへのアクセス",
+    "rooksAgentsAccess": "{brand} エージェントへのアクセス",
     "openOrchestrator": "{name} オーケストレーターを開く",
     "openHealthAgent": "ヘルスエージェントを開く",
     "mainAgentFallback": "メインエージェント"

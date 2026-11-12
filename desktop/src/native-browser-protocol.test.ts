@@ -6,7 +6,7 @@ import {
 } from './native-browser-protocol.js';
 
 test('profile IDs cannot escape or alias another persistent profile directory', () => {
-  for (const valid of ['project-a', '__nova_general__', 'agent_0192']) assert.equal(profileIdOf(valid), valid);
+  for (const valid of ['project-a', '__rooks_general__', 'agent_0192']) assert.equal(profileIdOf(valid), valid);
   for (const invalid of ['Project-a', '../personal', '..', '.', '/tmp/profile', 'project/a', 'a\\b', '', {}, 'a'.repeat(129)]) {
     assert.throws(() => profileIdOf(invalid), /Invalid browser profile/);
   }

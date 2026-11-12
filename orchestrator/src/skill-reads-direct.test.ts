@@ -80,7 +80,7 @@ out({ type: 'result', payload: { subtype: 'success', is_error: false, result: 'o
 const dialect: Dialect = {
   defaultCmd: WITNESS_CLI, persistentProcess: false, finishMissionOnExit: true,
   sessionResumable: false, sessionStore: 'global', permissionModel: 'none', rateLimitReporting: 'none', hostedConnectors: false,
-  capabilities: { novaMcp: false },
+  capabilities: { rooksMcp: false },
   async buildSpawn(opts) { return { cmd: WITNESS_CLI, args: ['-e', SCRIPT], cwd: opts.cfg.cwd, initialStdin: null }; },
   writeUserInput() { /* one-shot */ },
   parseLine(line) { return [JSON.parse(line) as NormalizedEvent]; },

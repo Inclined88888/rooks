@@ -854,7 +854,7 @@ export async function bridgeServers(pi, servers, clients, hints = new Map()) {
 }
 
 /** @param {PiApi} pi */
-export default function novaBridge(pi) {
+export default function rooksBridge(pi) {
   /** @type {(McpStdioClient | McpHttpClient)[]} */
   const clients = [];
   /** @type {Map<string, { server: string, annotations: Json }>} */

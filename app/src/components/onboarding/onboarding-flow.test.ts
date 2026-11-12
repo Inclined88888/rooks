@@ -17,8 +17,8 @@ import {
 } from './onboarding-flow';
 import { signedInTarget } from './welcome-landing';
 
-test('the steps follow the mockup: welcome, account, LLM, profile, agent, « Discover Rooks » — no chat step any more', () => {
-  assert.deepEqual([...ONBOARDING_STEP_IDS], ['splash', 'account', 'llm', 'profile', 'agent', 'discover']);
+test('the steps follow the mockup: welcome, account, LLM, channels, mail, profile, agent, « Discover Rooks » — no chat step any more', () => {
+  assert.deepEqual([...ONBOARDING_STEP_IDS], ['splash', 'account', 'llm', 'channels', 'mail', 'profile', 'agent', 'discover']);
   assert.equal(nextStep('splash'), 'account');
   assert.equal(nextStep('agent'), 'discover', 'the slides follow the agent\'s creation');
   assert.equal(nextStep('discover'), null, 'the last step: the welcome follows on the TIMs page');
@@ -44,16 +44,16 @@ test('the background install starts on the account step, which lives in the onbo
   const { preparationStarts } = await import('@/lib/setup-plan');
   const starts = ONBOARDING_STEPS.filter((entry) => preparationStarts(entry.id, entry.leavesPage !== true)).map((entry) => entry.id);
   assert.equal(starts[0], 'account', 'the first step past the welcome, as in the mockup');
-  assert.deepEqual(starts, ['account', 'llm', 'profile', 'agent'], 'every step past the welcome stays in the onboarding; the upgrade welcome and the slides after the agent prepare nothing');
+  assert.deepEqual(starts, ['account', 'llm', 'channels', 'mail', 'profile', 'agent'], 'every step past the welcome stays in the onboarding; the upgrade welcome and the slides after the agent prepare nothing');
   assert.ok(ONBOARDING_STEPS.every((entry) => entry.leavesPage !== true), 'no stand-in left');
 });
 
 test('the dots cover the account up to the agent; « Back » shows on those steps only', () => {
-  assert.deepEqual([...DOTTED_STEPS], ['account', 'llm', 'profile', 'agent']);
+  assert.deepEqual([...DOTTED_STEPS], ['account', 'llm', 'channels', 'mail', 'profile', 'agent']);
   assert.equal(progressDots('splash'), null);
-  assert.deepEqual(progressDots('account'), ['current', 'todo', 'todo', 'todo']);
-  assert.deepEqual(progressDots('profile'), ['done', 'done', 'current', 'todo']);
-  assert.deepEqual(ONBOARDING_STEP_IDS.filter(canGoBack), ['account', 'llm', 'profile', 'agent']);
+  assert.deepEqual(progressDots('account'), ['current', 'todo', 'todo', 'todo', 'todo', 'todo']);
+  assert.deepEqual(progressDots('profile'), ['done', 'done', 'done', 'done', 'current', 'todo']);
+  assert.deepEqual(ONBOARDING_STEP_IDS.filter(canGoBack), ['account', 'llm', 'channels', 'mail', 'profile', 'agent']);
   assert.equal(progressDots('discover'), null, 'the slides have their own progress bars');
   assert.equal(canGoBack('discover'), false, 'the agent is made: no way back to its creation');
 });

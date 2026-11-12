@@ -15,7 +15,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { config } from '../../config/load.js';
-import type { NovaConfig } from '../../config/schema.js';
+import type { RooksConfig } from '../../config/schema.js';
 import { childPidFile } from '../../paths.js';
 
 /** Label of the child, as the supervisor names it in its logs and its pidfile.
@@ -57,7 +57,7 @@ export type AppStatus = {
  * Lives here rather than in `index.ts` (from which it is re-exported, for `telegram`)
  * because the CLI needs it without loading Cordis.
  */
-export function appDirOf(cfg: NovaConfig): string {
+export function appDirOf(cfg: RooksConfig): string {
   return resolve(cfg.daemon.installDir, '..', 'app');
 }
 
@@ -94,7 +94,7 @@ export function readAppPid(file: string = APP_PID_FILE): number | null {
  * errors. The order of the cases is that of the diagnosis — no point talking about build
  * when the module will not run anyway.
  */
-export function appStatus(cfg: NovaConfig = config(), file: string = APP_PID_FILE): AppStatus {
+export function appStatus(cfg: RooksConfig = config(), file: string = APP_PID_FILE): AppStatus {
   const appDir = appDirOf(cfg);
   const listen = { host: cfg.app.listen.host, port: cfg.app.listen.port };
   const base = { pid: null, appDir, listen };
@@ -144,7 +144,7 @@ export type RestartResult = { ok: boolean; pid: number | null; message: string }
  * for it to free up, without limit. In real use a `next build` takes much more
  * than a minute — but it is better known than discovered.
  */
-export function restartApp(cfg: NovaConfig = config(), file: string = APP_PID_FILE): RestartResult {
+export function restartApp(cfg: RooksConfig = config(), file: string = APP_PID_FILE): RestartResult {
   const status = appStatus(cfg, file);
   if (status.state !== 'running' || status.pid === null) {
     return { ok: false, pid: null, message: status.message };

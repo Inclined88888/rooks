@@ -47,7 +47,7 @@
 ; nothing. So no detection any more: whenever Rooks is already installed or a
 ; service launcher exists, the installer asks for elevation as it opens, and
 ; rooks-service-pause.ps1 pauses the service until the installer exits.
-!macro novaPauseService
+!macro rooksPauseService
   Push $0
   Push $1
   Push $2
@@ -82,14 +82,14 @@
 !macroend
 
 !macro customInit
-  !insertmacro novaPauseService
+  !insertmacro rooksPauseService
 !macroend
 
 !macro customUnInit
-  !insertmacro novaPauseService
+  !insertmacro rooksPauseService
 !macroend
 
-!macro novaCliPath action
+!macro rooksCliPath action
   InitPluginsDir
   ; Compile the helper into both installers: INSTDIR may already be deleted.
   File /oname=$PLUGINSDIR\rooks-cli-path.ps1 "${PROJECT_DIR}\..\orchestrator\src\host\windows-cli-path.ps1"
@@ -106,7 +106,7 @@
 ; cannot reach the user for permission, and the Node.js MSI is machine-wide;
 ; the installer runs in the user's session and asks once (27/09/2026). Nothing
 ; under /S, and a failure only leaves the onboarding to offer them again.
-!macro novaPrerequisites
+!macro rooksPrerequisites
   Push $0
   Push $1
   Push $2
@@ -155,9 +155,9 @@
 
 !macro customInstall
   Push $0
-  !insertmacro novaCliPath install
+  !insertmacro rooksCliPath install
   Pop $0
-  !insertmacro novaPrerequisites
+  !insertmacro rooksPrerequisites
 !macroend
 
 !macro customUnInstall
@@ -167,9 +167,9 @@
   ; Updates run this uninstaller with /S --updated and do not register the
   ; Windows task again, so preserve it for the next logon.
   ${If} ${isUpdated}
-    Goto nova_task_done
+    Goto rooks_task_done
   ${EndIf}
-  !insertmacro novaCliPath remove
+  !insertmacro rooksCliPath remove
   ${IfNot} ${Silent}
     SetDetailsPrint both
   ${EndIf}
@@ -178,20 +178,20 @@
   SetOutPath $TEMP
   StrCpy $0 "missing or skipped"
   ${If} ${Silent}
-    Goto nova_task_fallback
+    Goto rooks_task_fallback
   ${EndIf}
-  IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 nova_task_fallback
-  IfFileExists "$INSTDIR\resources\orchestrator\bin\rooks" 0 nova_task_fallback
+  IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 rooks_task_fallback
+  IfFileExists "$INSTDIR\resources\orchestrator\bin\rooks" 0 rooks_task_fallback
   ; The CLI runs on the Node the package ships, and on nothing else: the app's
   ; executable no longer runs as Node, so a missing node.exe goes straight to
   ; the direct cleanup instead of opening a window from the uninstaller.
-  IfFileExists "$INSTDIR\resources\node\node.exe" 0 nova_task_fallback
+  IfFileExists "$INSTDIR\resources\node\node.exe" 0 rooks_task_fallback
   nsExec::ExecToLog /TIMEOUT=30000 '"$INSTDIR\resources\node\node.exe" "$INSTDIR\resources\orchestrator\bin\rooks" service uninstall'
   Pop $0
   ; The CLI can return zero even when its elevated deletion failed, so the
   ; direct, idempotent cleanup also verifies that apparent success.
 
-  nova_task_fallback:
+  rooks_task_fallback:
   ${If} $0 != 0
     DetailPrint "Removing the Rooks logon task directly (CLI result: $0)..."
   ${Else}
@@ -238,7 +238,7 @@
   DetailPrint "Rooks data has been kept."
   ; Cleanup is best effort, including cancellation of UAC and an absent task.
   ClearErrors
-  nova_task_done:
+  rooks_task_done:
   Pop $2
   Pop $1
   Pop $0

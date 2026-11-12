@@ -85,7 +85,7 @@ export type DoctorReport = {
   home: string;
   profile: string;
   edition: string;
-  novaHome: string;
+  rooksHome: string;
   configFile: { path: string; present: boolean };
   binaries: BinaryReport[];
   /** Whether the user is signed in, for the providers that can tell (C4). */
@@ -124,7 +124,7 @@ export type DoctorReport = {
     maskedPaths: number;
   };
   /**
-   * Free space on the filesystem of `novaHome` (TIM-0109): a full or failing
+   * Free space on the filesystem of `rooksHome` (TIM-0109): a full or failing
    * disk stops the database, and the daemon with it. `null` when the OS
    * cannot tell. A warning, never a blocker.
    */

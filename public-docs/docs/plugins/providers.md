@@ -840,16 +840,16 @@ Requires `"apiVersion": 7`; an older Rooks ignores the key.
 ```js
 ctx.provider.registerProvider({
   // …
-  declares: { capabilities: { worktree: false, novaMcp: false, attachments: false, novaPreamble: false } },
+  declares: { capabilities: { worktree: false, rooksMcp: false, attachments: false, rooksPreamble: false } },
 })
 ```
 
 | Capability | `false` means | What Rooks does |
 | --- | --- | --- |
 | `worktree` | The agent does not work in Rooks's folder. | A `code` or `merge` task assigned to it is blocked with a readable reason; the LLM pickers show it as **Remote**. |
-| `novaMcp` | Rooks's tools (Kanban, messages, memory) do not reach the agent. | Rooks's MCP servers are not declared to the agent (`BuildSpawnOpts.novaMcp` is `false`, which your own launch can read). Listed among the backend's limits in the pickers and on the agent sheet. The skills catalogue does not mention `skill_get`. |
-| `attachments` | No attached files other than images: the agent cannot open a path on Rooks's disk. | The chat's attach button is disabled with an explanation, and a turn carrying files is refused before anything is saved. The skills catalogue does not mention a skill's file. With `novaMcp` also `false`, the agent has no way to read a skill on demand, so catalogue skills are pasted whole into its prompt, followed by the text files next to their `SKILL.md` (64 KB per skill); with `novaMcp`, those files are read with `skill_get` and its `file` argument. |
-| `novaPreamble` | The agent brings its own identity and runs elsewhere: Rooks's folders and tools mean nothing to it. | The system prompt Rooks sends starts at the agent's own prompt (soul, role, system prompt, memory); the Rooks runtime preamble and its "your backend" block are left out. Not shown as a limit. |
+| `rooksMcp` | Rooks's tools (Kanban, messages, memory) do not reach the agent. | Rooks's MCP servers are not declared to the agent (`BuildSpawnOpts.rooksMcp` is `false`, which your own launch can read). Listed among the backend's limits in the pickers and on the agent sheet. The skills catalogue does not mention `skill_get`. |
+| `attachments` | No attached files other than images: the agent cannot open a path on Rooks's disk. | The chat's attach button is disabled with an explanation, and a turn carrying files is refused before anything is saved. The skills catalogue does not mention a skill's file. With `rooksMcp` also `false`, the agent has no way to read a skill on demand, so catalogue skills are pasted whole into its prompt, followed by the text files next to their `SKILL.md` (64 KB per skill); with `rooksMcp`, those files are read with `skill_get` and its `file` argument. |
+| `rooksPreamble` | The agent brings its own identity and runs elsewhere: Rooks's folders and tools mean nothing to it. | The system prompt Rooks sends starts at the agent's own prompt (soul, role, system prompt, memory); the Rooks runtime preamble and its "your backend" block are left out. Not shown as a limit. |
 
 A key you leave out counts as `true`, so a backend that declares nothing keeps
 working as before. A profile can only narrow its provider, never give back what

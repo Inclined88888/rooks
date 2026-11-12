@@ -21,15 +21,15 @@ Object.defineProperty(globalThis, 'React', { value: React, configurable: true, w
 
 const claude: CatalogBackend = {
   id: 'claude', label: 'Claude', models: [], defaultModel: null,
-  capabilities: { worktree: true, novaMcp: true, attachments: true },
+  capabilities: { worktree: true, rooksMcp: true, attachments: true },
 };
 const gateway: CatalogBackend = {
   id: 'gateway', label: 'Gateway', models: [], defaultModel: null,
-  capabilities: { worktree: false, novaMcp: false, attachments: false },
+  capabilities: { worktree: false, rooksMcp: false, attachments: false },
 };
 const noFiles: CatalogBackend = {
   id: 'no-files', label: 'No files', models: [], defaultModel: null,
-  capabilities: { worktree: true, novaMcp: true, attachments: false },
+  capabilities: { worktree: true, rooksMcp: true, attachments: false },
 };
 const older: CatalogBackend = { id: 'older', label: 'Older daemon', models: [], defaultModel: null };
 const catalog: BackendCatalog = { backends: [claude, gateway, noFiles, older], defaultBackend: 'claude' };
@@ -42,7 +42,7 @@ test('an unknown backend, an empty catalogue or an older daemon read as all true
 
 test('the limits list what a backend declared it cannot do, in a stable order', () => {
   assert.deepEqual(backendLimits(catalog, 'claude'), []);
-  assert.deepEqual(backendLimits(catalog, 'gateway'), ['worktree', 'novaMcp', 'attachments']);
+  assert.deepEqual(backendLimits(catalog, 'gateway'), ['worktree', 'rooksMcp', 'attachments']);
   assert.deepEqual(backendLimits(catalog, 'no-files'), ['attachments']);
 });
 

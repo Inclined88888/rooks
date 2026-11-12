@@ -329,7 +329,7 @@ export const TelemetrySchema = z.object({
   }),
 });
 
-export const NovaConfigSchema = z.object({
+export const RooksConfigSchema = z.object({
   version: z.literal(CONFIG_VERSION).default(CONFIG_VERSION).describe("Configuration schema version."),
   profile: ProfileSchema.default('linux-desktop').describe("Host platform profile."),
   edition: EditionSchema.default('expert').describe("Requested edition; the effective edition remains constrained by the licence."),
@@ -362,6 +362,6 @@ export const NovaConfigSchema = z.object({
   settings: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).default({}).describe("Registry overrides keyed by setting name; environment overrides still take precedence."),
 });
 
-export type NovaConfig = z.infer<typeof NovaConfigSchema>;
+export type RooksConfig = z.infer<typeof RooksConfigSchema>;
 export type Profile = z.infer<typeof ProfileSchema>;
 export type Edition = z.infer<typeof EditionSchema>;

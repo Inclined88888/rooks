@@ -32,7 +32,7 @@ import { basename, resolve } from 'node:path';
 import type { Context } from '@deepseek-ai/cordis';
 import type { Host } from '../../host/index.js';
 import type { ModuleManifest } from '../../kernel/registry.js';
-import type { NovaConfig } from '../../config/schema.js';
+import type { RooksConfig } from '../../config/schema.js';
 import { config } from '../../config/load.js';
 import { settingStr } from '../../settings.js';
 
@@ -74,7 +74,7 @@ export function resolveTts(hasContainers: boolean, hasComposeStack: boolean): Tt
 
 /** Repo root, where Compose is read from (`<installDir>/..`), like
  *  `appDirOf` for the app. */
-export function repoRootOf(cfg: NovaConfig): string {
+export function repoRootOf(cfg: RooksConfig): string {
   return resolve(cfg.daemon.installDir, '..');
 }
 
@@ -91,7 +91,7 @@ export function composeFileOf(repoRoot: string): string {
  * development checkout answers yes; a packaged client answers no, and nothing
  * is broken by that — it simply has no container to offer.
  */
-export function composeStackAvailable(cfg: NovaConfig): boolean {
+export function composeStackAvailable(cfg: RooksConfig): boolean {
   return existsSync(composeFileOf(repoRootOf(cfg)));
 }
 
@@ -134,7 +134,7 @@ export function composeArgs(repoRoot: string): string[] {
  * through `host.spawn`, like the other three phase-3 modules, and read the
  * result in the exit listener.
  */
-export function startContainer(host: Host, cfg: NovaConfig): () => void {
+export function startContainer(host: Host, cfg: RooksConfig): () => void {
   const args = composeArgs(repoRootOf(cfg));
   const child = host.spawn('docker', args, { stdio: 'inherit' });
   // No throw, no restart: a missing voice doesn't take the daemon down,

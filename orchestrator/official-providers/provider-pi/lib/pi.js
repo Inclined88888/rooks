@@ -214,7 +214,7 @@ export function createPiProvider(services, log, timings = {}) {
         args.push('-e', file);
         bridges.set(spawn.missionId, {
           file,
-          servers: spawn.novaMcp !== false ? plan.servers : [],
+          servers: spawn.rooksMcp !== false ? plan.servers : [],
           policy: piPermissionPolicy(spawn.cfg, plan),
         });
       }

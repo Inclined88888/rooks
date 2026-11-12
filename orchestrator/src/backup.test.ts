@@ -54,7 +54,7 @@ function baseEnv(home: string): NodeJS.ProcessEnv {
   return env;
 }
 
-function runNova(args: string[], env: NodeJS.ProcessEnv): Promise<{
+function runRooks(args: string[], env: NodeJS.ProcessEnv): Promise<{
   code: number | null;
   stdout: string;
   stderr: string;
@@ -223,7 +223,7 @@ test('rooks backup enable : POST /api/backup/enable sur le témoin, pas le :3000
   try {
     const env = baseEnv(home);
     env.ROOKS_API_TOKEN = 'tok';
-    const r = await runNova(['--daemon', mock.url, 'backup', 'enable'], env);
+    const r = await runRooks(['--daemon', mock.url, 'backup', 'enable'], env);
     assert.equal(r.code, 0, r.stderr);
     assert.equal(mock.seen.length, 1);
     assert.equal(mock.seen[0]?.method, 'POST');
@@ -248,7 +248,7 @@ test('rooks backup status : GET /api/backup/status', async () => {
   try {
     const env = baseEnv(home);
     env.ROOKS_API_TOKEN = 'tok';
-    const r = await runNova(['--daemon', mock.url, 'backup', 'status', '--json'], env);
+    const r = await runRooks(['--daemon', mock.url, 'backup', 'status', '--json'], env);
     assert.equal(r.code, 0, r.stderr);
     assert.equal(mock.seen[0]?.method, 'GET');
     assert.equal(mock.seen[0]?.url, '/api/backup/status');
@@ -260,7 +260,7 @@ test('rooks backup status : GET /api/backup/status', async () => {
 });
 
 test('rooks backup sans sous-commande : exit 64', async () => {
-  const r = await runNova(['backup'], baseEnv(freshHome()));
+  const r = await runRooks(['backup'], baseEnv(freshHome()));
   assert.equal(r.code, 64);
   assert.match(r.stderr, /rooks backup <enable\|status>/);
 });

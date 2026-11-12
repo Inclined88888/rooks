@@ -29,7 +29,7 @@ test('deferred restart stays accessible after navigation, retries errors and dis
     assert.ok(!document.querySelector('button'), 'web has no restart capability');
     let pending = false;
     let attempts = 0;
-    window.novaDesktop = {
+    window.rooksDesktop = {
       setupRestartPending: async () => pending,
       restartAfterSetup: async () => {
         attempts++;

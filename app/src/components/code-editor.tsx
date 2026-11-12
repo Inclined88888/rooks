@@ -25,7 +25,7 @@ import { hljsLanguageFor } from '@/lib/file-icons';
 const MONO =
   /* code-font: the code editor font */ "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 
-const novaTheme = EditorView.theme({
+const rooksTheme = EditorView.theme({
   '&': {
     backgroundColor: 'var(--hl-bg)',
     color: 'var(--hl-fg)',
@@ -70,7 +70,7 @@ const novaTheme = EditorView.theme({
 
 // The same colour roles as the highlight.js mapping in globals.css, so a file
 // does not change palette between `view` and `edit`.
-const novaHighlight = HighlightStyle.define([
+const rooksHighlight = HighlightStyle.define([
   { tag: [t.comment, t.lineComment, t.blockComment, t.docComment], color: 'var(--hl-comment)', fontStyle: 'italic' },
   { tag: [t.keyword, t.controlKeyword, t.moduleKeyword, t.modifier, t.self, t.null], color: 'var(--hl-keyword)' },
   { tag: [t.string, t.special(t.string), t.regexp, t.attributeValue], color: 'var(--hl-string)' },
@@ -122,7 +122,7 @@ export default function CodeEditor({
   }, [filename]);
 
   const extensions = useMemo(
-    () => [syntaxHighlighting(novaHighlight), EditorView.lineWrapping, ...langExt],
+    () => [syntaxHighlighting(rooksHighlight), EditorView.lineWrapping, ...langExt],
     [langExt],
   );
 
@@ -130,7 +130,7 @@ export default function CodeEditor({
     <CodeMirror
       value={value}
       onChange={onChange}
-      theme={novaTheme}
+      theme={rooksTheme}
       extensions={extensions}
       height="100%"
       className="min-h-0 flex-1 overflow-hidden"

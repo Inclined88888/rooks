@@ -25,7 +25,7 @@ dialog.showMessageBoxSync = (...args) => { reportSmokeFailure('Unexpected native
 process.on('uncaughtException', reportSmokeFailure);
 process.on('unhandledRejection', reportSmokeFailure);
 `;
-const quietElectronBootstrap = `const {app,dialog}=require('electron');\n${quietElectronErrors}\nglobalThis.__novaSmokeFailure=reportSmokeFailure;\ntry { require('./smoke.cjs'); } catch(error) { reportSmokeFailure(error); }`;
+const quietElectronBootstrap = `const {app,dialog}=require('electron');\n${quietElectronErrors}\nglobalThis.__rooksSmokeFailure=reportSmokeFailure;\ntry { require('./smoke.cjs'); } catch(error) { reportSmokeFailure(error); }`;
 
 test('the separate smoke bootstrap catches fixture parse errors before Electron sees them', () => {
   new Script(quietElectronBootstrap);
@@ -89,7 +89,7 @@ test('real hidden Chromium isolates profiles, captures and accepts input after n
     }).outputText);
     await writeFile(join(root, 'smoke.cjs'), `
 const { app, BrowserWindow, nativeImage, dialog, ipcMain } = require('electron');
-const reportSmokeFailure = globalThis.__novaSmokeFailure;
+const reportSmokeFailure = globalThis.__rooksSmokeFailure;
 const assert = require('node:assert/strict');
 const { createServer } = require('node:http');
 const { join } = require('node:path');

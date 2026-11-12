@@ -10,7 +10,7 @@
 export const name = 'fixture-ok'
 export const inject = ['storage']
 
-const trace = (globalThis.__novaFixtureTrace ??= [])
+const trace = (globalThis.__rooksFixtureTrace ??= [])
 
 export function apply(ctx, config) {
   trace.push(`apply:${ctx.id}:${config.marker ?? ''}`)

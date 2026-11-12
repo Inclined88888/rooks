@@ -95,7 +95,7 @@
       "handoverKept": "Le service d’arrière-plan de Rooks n’a pas répondu.",
       "handoverKeptDetail": "La configuration continue avec Rooks tel qu’il tourne dans cette fenêtre. Quittez puis rouvrez Rooks une fois la configuration terminée : il essaiera de nouveau le service. Vos données restent dans {home}.",
       "refused": "Windows ne lance pas le service d’arrière-plan de Rooks pour ce compte.",
-      "refusedDetail": "La tâche planifiée NovaOrchestrator est enregistrée, mais Windows ne l’a jamais exécutée. C’est le cas des comptes professionnels ou scolaires sur un PC joint à Microsoft Entra ID. Rooks utilise son daemon intégré : il démarre avec l’application et s’arrête quand vous la fermez ou fermez la session. Pour retirer la tâche inutile : rooks service uninstall (Windows demande une autorisation).",
+      "refusedDetail": "La tâche planifiée RooksOrchestrator est enregistrée, mais Windows ne l’a jamais exécutée. C’est le cas des comptes professionnels ou scolaires sur un PC joint à Microsoft Entra ID. Rooks utilise son daemon intégré : il démarre avec l’application et s’arrête quand vous la fermez ou fermez la session. Pour retirer la tâche inutile : rooks service uninstall (Windows demande une autorisation).",
       "repair": "Le service d’arrière-plan de Rooks n’est plus installé.",
       "repairDetail": "Sans lui, Rooks ne démarre pas avec Windows et s’arrête quand vous fermez l’application ou la session. Le réinstaller demande une autorisation Windows.",
       "repairConfirm": "Réinstaller le service",

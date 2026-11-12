@@ -40,14 +40,14 @@ export type ChatPostVia = 'chat_post_message' | 'question' | 'kanban_plan';
 export type ChatPostPayload = {
   type: 'assistant';
   message: { role: 'assistant'; content: Array<{ type: 'text'; text: string }> };
-  nova_posted: ChatPostVia;
+  rooks_posted: ChatPostVia;
 };
 
 export function chatPostPayload(text: string, via: ChatPostVia): ChatPostPayload {
   return {
     type: 'assistant',
     message: { role: 'assistant', content: [{ type: 'text', text }] },
-    nova_posted: via,
+    rooks_posted: via,
   };
 }
 

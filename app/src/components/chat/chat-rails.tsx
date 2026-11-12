@@ -396,7 +396,7 @@ const INSCRIPTIONS: Inscription[] = [
     zone: CHAT_RIGHT_ZONE,
     pluginId: '@rooks/orchestrator-self',
     key: 'orchestrator',
-    widget: carte('novaDaemon', { height: 240, minHeight: 130 }),
+    widget: carte('rooksDaemon', { height: 240, minHeight: 130 }),
     Composant: OrchestratorSelfWidget,
     zoneUi: 'chat.panel.orchestrator-self',
   },

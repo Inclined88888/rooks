@@ -59,7 +59,7 @@ The download needs room for the installer plus a small margin; when the disk is 
 **Install** first counts the missions running on this computer. When some are, the banner says how many: **Wait** leaves everything as it is (install later, once they are done), **Install anyway** goes on and they stop when the service moves to the new version. Then, depending on the package:
 
 - **AppImage**: the AppImage you launched is replaced by the verified one, in the same folder and under the same name, and Rooks restarts on it. The previous file stays next to it, hidden, as `.<name>.previous`, until the new version has started; if the replacement or the restart fails, your current AppImage is left as it was. When the AppImage's folder is not writable, nothing is replaced: the new AppImage stays in the `updates` folder for you to move;
-- **`.deb`**: installing a package needs administrator rights, which Rooks never asks for itself. The package opens in your software manager, and the banner shows the command that installs it (`sudo apt install '…/nova_<version>_amd64.deb'`) with a **Copy** button;
+- **`.deb`**: installing a package needs administrator rights, which Rooks never asks for itself. The package opens in your software manager, and the banner shows the command that installs it (`sudo apt install '…/rooks_<version>_amd64.deb'`) with a **Copy** button;
 - **macOS**: the `.pkg` opens in Installer, which asks for your password. Once it is done, quit Rooks and open it again;
 - **Windows**: the setup program opens, visibly, and Rooks closes so it can be replaced. The installer pauses the background service, and the missions it ran stop.
 

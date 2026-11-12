@@ -67,6 +67,6 @@ test('from sources: the servers keep running on `node`, with no Electron flag', 
 });
 
 test('a backend that declares no Rooks MCP gets none, runtime or not', async () => {
-  const plan = await providerMcpPlan({ spawn: { ...spawn, novaMcp: false }, seal: undefined, node: packaged });
+  const plan = await providerMcpPlan({ spawn: { ...spawn, rooksMcp: false }, seal: undefined, node: packaged });
   assert.deepEqual(own(plan.servers), []);
 });

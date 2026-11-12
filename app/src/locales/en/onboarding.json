@@ -21,25 +21,46 @@
     },
     "account": {
       "title": "Create your local account",
-      "subtitle": "You sign in to Rooks with it. You are its administrator.",
+      "subtitle": "Optional. Skip and start using Rooks — you can add an account later.",
+      "optional": "optional",
       "name": "First name",
       "nameHint": "So your agents call you by your first name.",
       "email": "Email",
-      "emailHint": "Used to sign in. We send it a code to confirm it.",
+      "emailHint": "Used only on this computer to sign in. Never required to start.",
       "emailPlaceholder": "you@example.com",
       "password": "Password",
       "confirm": "Confirm the password",
       "mismatch": "The two passwords don't match.",
       "tooShort": "At least {min} characters.",
       "create": "Create my account",
-      "privacy": "We only collect your email in case you want to reset your password. The account you create stays local."
+      "skip": "Skip for now",
+      "privacy": "Your account stays on this computer. Email is optional and never leaves this machine unless you choose to confirm it."
+    },
+    "channels": {
+      "title": "Communication channels",
+      "subtitle": "Optional. Connect a channel so agents can reach you — or skip.",
+      "skip": "Skip for now",
+      "connectHint": "Finish connecting in {settingsPath} when you are ready.",
+      "telegram": { "title": "Telegram", "detail": "Chat with agents from Telegram" },
+      "slack": { "title": "Slack", "detail": "Bring agents into your workspace" },
+      "discord": { "title": "Discord", "detail": "Talk to agents in a server" }
+    },
+    "mail": {
+      "title": "Connect your mail",
+      "subtitle": "Optional. Agents can read and draft mail when you connect — or skip.",
+      "skip": "Skip for now",
+      "connectHint": "Finish connecting in {settingsPath} when you are ready.",
+      "gmail": { "title": "Gmail", "detail": "Google Workspace or personal Gmail" },
+      "microsoft": { "title": "Microsoft 365", "detail": "Outlook and work mail" },
+      "imap": { "title": "Other mail", "detail": "IMAP / SMTP later in settings" }
     },
     "legacy": {
       "opening": "Opening the next screen…"
     },
     "llm": {
       "title": "Choose\nyour LLM.",
-      "subtitle": "Rooks runs on the AI subscriptions you already have. Never a bill per token.",
+      "subtitle": "Optional. Rooks runs on the AI subscriptions you already have — or skip and set models later.",
+      "skip": "Skip for now",
       "plan": {
         "title": "Use my AI subscription",
         "detailAny": "The AI tools you already pay for",
@@ -61,7 +82,8 @@
     },
     "profile": {
       "title": "What brings you here?",
-      "subtitle": "Rooks tunes its defaults and its tour to your answer.",
+      "subtitle": "Optional. Rooks tunes its defaults to your answer — or skip.",
+      "skip": "Skip for now",
       "developer": {
         "title": "I write code",
         "description": "Agents that code, review and merge in my repositories."

@@ -207,8 +207,8 @@
       "project": "project",
       "plugin": "plugin"
     },
-    "sectionNova": "{brand} skills",
-    "sectionNovaHint": "~/.rooks/skills — attachable to an agent, in its catalogue or imported whole",
+    "sectionRooks": "{brand} skills",
+    "sectionRooksHint": "~/.rooks/skills — attachable to an agent, in its catalogue or imported whole",
     "sectionUser": "Global Claude skills",
     "sectionUserHint": "~/.claude/skills & ~/.claude/commands — not loaded by missions, import one into {brand} to attach it",
     "sectionProject": "Project skills",
@@ -2075,9 +2075,9 @@
     "providerRecovered": "Reconnected after {count} retries",
     "providerRecoveredOne": "Reconnected after 1 retry",
     "providerExhausted": "{provider} servers unreachable after {count} retries",
-    "providerExhaustedWithNova": "{provider} servers unreachable after {count} provider retries and {rooks} Rooks retries",
-    "novaRetryIn": "Rooks retry {attempt}/{max} in {seconds}s…",
-    "novaRetryRunning": "Rooks retry {attempt}/{max}…",
+    "providerExhaustedWithRooks": "{provider} servers unreachable after {count} provider retries and {rooks} Rooks retries",
+    "rooksRetryIn": "Rooks retry {attempt}/{max} in {seconds}s…",
+    "rooksRetryRunning": "Rooks retry {attempt}/{max}…",
     "retryTurn": "Retry",
     "retryTurnUnavailable": "Nothing to retry: the last message is no longer in this conversation.",
     "quotaExhaustedTitle": "Quota exhausted",
@@ -2334,7 +2334,7 @@
       "other": "Your own doc"
     }
   },
-  "novaPreamble": {
+  "rooksPreamble": {
     "title": "Rooks preamble",
     "description": "Built on the fly at each spawn and sent first to every agent. Read-only: it comes from Rooks, not from a file you own. Shown as built for the main agent.",
     "empty": "No preamble for this agent.",
@@ -2527,8 +2527,8 @@
     "llmLabel": "LLM",
     "llmHint": "Which provider CLI runs this agent, and on which model. Each account signs in on its own.",
     "subscription": "Subscription",
-    "skillSectionNovaLabel": "ROOKS skills",
-    "skillSectionNovaHint": "attachable — in the catalogue or imported into the prompt",
+    "skillSectionRooksLabel": "ROOKS skills",
+    "skillSectionRooksHint": "attachable — in the catalogue or imported into the prompt",
     "skillSectionProjectLabel": "Project skills",
     "skillSectionProjectHint": "<cwd>/.claude — loaded natively by Claude Code only",
     "skillSectionUserLabel": "Global skills",
@@ -2571,7 +2571,7 @@
     "mcpEmpty": "No MCP servers added yet — add some on",
     "mcpBuiltinTitle": "Built into Rooks — always on, nothing to grant",
     "mcpBuiltinHint": "Every agent gets these on every backend, whatever is selected below, and a Kanban task's MCP override never removes them. Some rooks tools (creating agents or projects, declaring MCP servers) also need your account's permissions on the Users page, which this list does not change.",
-    "mcpBuiltinNova": "Kanban, missions, agents, memory, this documentation",
+    "mcpBuiltinRooks": "Kanban, missions, agents, memory, this documentation",
     "mcpBuiltinAsk": "Forms that ask you in the chat",
     "mcpBuiltinBrowser": "The project's built-in browser, while it is running",
     "mcpBuiltinGrepai": "The project's semantic index, when the project has one",
@@ -2697,7 +2697,7 @@
       "title": "Docker containers",
       "description": "Whether the project's stack is running, on which local URL, and which service is down; start, restart or stop it."
     },
-    "novaDaemon": {
+    "rooksDaemon": {
       "title": "Rooks daemon",
       "description": "The state of Rooks itself, for the rooks project."
     },

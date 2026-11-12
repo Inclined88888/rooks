@@ -103,7 +103,7 @@
       "handoverKept": "El servicio en segundo plano de Rooks no respondió.",
       "handoverKeptDetail": "La configuración continúa con Rooks tal como se ejecuta en esta ventana. Cierra Rooks y vuelve a abrirlo cuando termine la configuración: volverá a probar el servicio. Tus datos siguen en {home}.",
       "refused": "Windows no inicia el servicio en segundo plano de Rooks para esta cuenta.",
-      "refusedDetail": "La tarea programada NovaOrchestrator está registrada, pero Windows nunca la ha ejecutado. Ocurre con cuentas de trabajo o escuela en un PC unido a Microsoft Entra ID. Rooks ejecuta en su lugar su daemon integrado: se inicia con la aplicación y se detiene al cerrarla o al cerrar sesión. Para quitar la tarea sin usar: rooks service uninstall (Windows pedirá permiso).",
+      "refusedDetail": "La tarea programada RooksOrchestrator está registrada, pero Windows nunca la ha ejecutado. Ocurre con cuentas de trabajo o escuela en un PC unido a Microsoft Entra ID. Rooks ejecuta en su lugar su daemon integrado: se inicia con la aplicación y se detiene al cerrarla o al cerrar sesión. Para quitar la tarea sin usar: rooks service uninstall (Windows pedirá permiso).",
       "repair": "El servicio en segundo plano de Rooks ya no está instalado.",
       "repairDetail": "Sin él, Rooks no se inicia con Windows y se detiene al cerrar la aplicación o la sesión. Reinstalarlo pide permiso a Windows una sola vez.",
       "repairConfirm": "Reinstalar el servicio",

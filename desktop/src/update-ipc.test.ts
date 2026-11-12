@@ -231,7 +231,7 @@ test('install: a replacement that failed, or a folder that cannot be written, ne
 });
 
 test('install: a .deb is handed to the system with the command to type; nothing is elevated', async () => {
-  const deb = { key: 'linux-x64-deb', os: 'linux', arch: 'x64', format: 'deb', name: 'nova_0.1.8_amd64.deb', url: URL_OK, size: BODY.length, sha256: SHA };
+  const deb = { key: 'linux-x64-deb', os: 'linux', arch: 'x64', format: 'deb', name: 'rooks_0.1.8_amd64.deb', url: URL_OK, size: BODY.length, sha256: SHA };
   const s = installSetup({ platform: 'linux', arch: 'x64', appImage: false }, {
     readStatus: async () => ({ ...STATUS, available: { ...STATUS.available, artifacts: [deb] } }),
   });
@@ -239,7 +239,7 @@ test('install: a .deb is handed to the system with the command to type; nothing 
   const outcome = await s.call(UPDATE_CHANNELS.install, { confirmed: true }) as { status: string; command: string; opened: boolean };
   assert.equal(outcome.status, 'guided');
   assert.equal(outcome.opened, true);
-  assert.match(outcome.command, /^sudo apt install '.*nova_0\.1\.8_amd64\.deb'$/);
+  assert.match(outcome.command, /^sudo apt install '.*rooks_0\.1\.8_amd64\.deb'$/);
   assert.deepEqual(s.events, []);
 });
 

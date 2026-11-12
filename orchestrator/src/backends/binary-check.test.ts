@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { join } from 'node:path';
 
 const { checkBackendBinaries, backendBinaryNotice } = await import('./binary-check.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 
 const { mountOfficialProviders } = await import('../../tests/helpers/official-providers.js');
@@ -32,7 +32,7 @@ test('no CLI installed: every backend is reported, once per binary', () => {
 });
 
 test('a pinned binary resolves, and the verdict says so', () => {
-  const cfg = NovaConfigSchema.parse({});
+  const cfg = RooksConfigSchema.parse({});
   const target = checkBackendBinaries(EMPTY_MACHINE)[0];
   // `process.execPath` rather than a real CLI: the verdict must not depend on
   // what happens to be installed on the machine running the test.
@@ -48,7 +48,7 @@ test('a pinned binary resolves, and the verdict says so', () => {
 });
 
 test('broken pin: the notice sends you to fix the path, not to reinstall', () => {
-  const cfg = NovaConfigSchema.parse({});
+  const cfg = RooksConfigSchema.parse({});
   const target = checkBackendBinaries(EMPTY_MACHINE)[0];
   setConfig({ ...cfg, host: { ...cfg.host, binaries: { [target.cmd]: join('/', 'nowhere', target.cmd) } } });
   try {

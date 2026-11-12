@@ -131,7 +131,7 @@ test('la vue légère passe par le même contrôle d\'accès : mission inconnue 
 function stopTurn(id: string, halfWritten: string): void {
   dbApi.insertEvent(id, 'assistant', { message: { content: [{ type: 'text', text: halfWritten }] } });
   dbApi.insertEvent(id, 'turn_interrupted', { type: 'turn_interrupted', resumable: true, backend: 'x', turn_active: true, reason: 'steered' });
-  dbApi.insertEvent(id, 'result', { type: 'result', subtype: 'cancelled', is_error: false, nova_steered: true });
+  dbApi.insertEvent(id, 'result', { type: 'result', subtype: 'cancelled', is_error: false, rooks_steered: true });
 }
 
 function finishTurn(id: string, instruction: string, answer: string): void {
@@ -174,7 +174,7 @@ test('a result a steer stopped does not end the turn, whichever side of the inst
   // A cancel acknowledged after the 5 s wait: the instruction is logged first.
   const late = mission();
   dbApi.insertEvent(late, 'user', { message: { role: 'user', content: 'other road' } });
-  dbApi.insertEvent(late, 'result', { type: 'result', subtype: 'cancelled', nova_steered: true });
+  dbApi.insertEvent(late, 'result', { type: 'result', subtype: 'cancelled', rooks_steered: true });
   assert.equal(dbApi.missionTurnEnded(late), false);
   dbApi.insertEvent(late, 'result', { type: 'result', subtype: 'success' });
   assert.equal(dbApi.missionTurnEnded(late), true);
@@ -183,7 +183,7 @@ test('a result a steer stopped does not end the turn, whichever side of the inst
 test('a daemon death during a steered turn whose stop landed late still reads as a cut turn', () => {
   const id = mission();
   dbApi.insertEvent(id, 'user', { message: { role: 'user', content: 'other road' } });
-  dbApi.insertEvent(id, 'result', { type: 'result', subtype: 'cancelled', nova_steered: true });
+  dbApi.insertEvent(id, 'result', { type: 'result', subtype: 'cancelled', rooks_steered: true });
   assert.equal(dbApi.missionTurnOpen(id), true, 'the steered turn is running, nothing closed it');
   dbApi.insertEvent(id, 'result', { type: 'result', subtype: 'success' });
   assert.equal(dbApi.missionTurnOpen(id), false);

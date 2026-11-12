@@ -411,7 +411,7 @@ for (const platform of ['win32', 'darwin', 'linux']) {
         serviceStoppedByUser: () => false, forgetServiceStopped: () => {},
         shellDaemonRuntime: () => ({ execPath: 'node', env: {} }), upgradePackagedService: async () => { calls.push('service'); },
         originOf: () => 'http://127.0.0.1', probeHealth: async () => ({ ok: true }),
-        isNova: () => true, daemonUp: false, tray: {},
+        isRooks: () => true, daemonUp: false, tray: {},
         buildTray: () => { calls.push('tray'); },
         completeApprovedUpdate: async () => { if (pending) calls.push('ready'); context.updateWindow = null; },
         showWindow: () => { calls.push('window'); }, rearmAppIfDown: () => { calls.push('rearm'); }, noteDesktopOpened: () => {}, snapshotFailure: () => null, unshownSnapshotWarning: () => null,

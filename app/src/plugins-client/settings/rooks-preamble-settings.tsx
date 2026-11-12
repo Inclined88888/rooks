@@ -23,7 +23,7 @@ async function readPreamble(): Promise<Loaded | null> {
 }
 
 /** The Rooks preamble as the daemon builds it at spawn: read-only. */
-export function NovaPreambleSettings() {
+export function RooksPreambleSettings() {
   const [loaded, setLoaded] = useState<Loaded | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,12 +37,12 @@ export function NovaPreambleSettings() {
   }, []);
 
   return (
-    <section className="flex flex-col gap-3 py-4" aria-label={t('novaPreamble.title')}>
-      <h3 className="text-[13px] font-medium">{t('novaPreamble.title')}</h3>
-      <p className="max-w-2xl text-xs text-muted-foreground">{t('novaPreamble.description')}</p>
-      {error && <p role="alert" className="text-xs text-destructive">{t('novaPreamble.error', { message: error })}</p>}
-      {loaded === undefined && !error && <p className="text-xs text-muted-foreground">{t('novaPreamble.loading')}</p>}
-      {loaded === null && <p className="text-xs text-muted-foreground">{t('novaPreamble.empty')}</p>}
+    <section className="flex flex-col gap-3 py-4" aria-label={t('rooksPreamble.title')}>
+      <h3 className="text-[13px] font-medium">{t('rooksPreamble.title')}</h3>
+      <p className="max-w-2xl text-xs text-muted-foreground">{t('rooksPreamble.description')}</p>
+      {error && <p role="alert" className="text-xs text-destructive">{t('rooksPreamble.error', { message: error })}</p>}
+      {loaded === undefined && !error && <p className="text-xs text-muted-foreground">{t('rooksPreamble.loading')}</p>}
+      {loaded === null && <p className="text-xs text-muted-foreground">{t('rooksPreamble.empty')}</p>}
       {loaded && (
         <div className="flex max-w-3xl flex-col gap-2">
           <p className="text-[11px] tabular-nums text-muted-foreground">{t('agentInjections.tokens', { n: formatTokens(loaded.tokens) })}</p>

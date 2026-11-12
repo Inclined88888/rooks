@@ -13,6 +13,6 @@
 
 ***
 
-### novaMcp?
+### rooksMcp?
 
-> `readonly` `optional` **novaMcp?**: `boolean`
+> `readonly` `optional` **rooksMcp?**: `boolean`

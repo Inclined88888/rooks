@@ -17,7 +17,7 @@ import { SystemInstallationSettings } from '@/components/settings/system-install
 import { FallbackSettings } from '@/components/fallback-settings';
 import { BackendAccountsSettings } from '@/components/settings/backend-accounts-settings';
 import { GlobalInstructionsSettings } from '@/plugins-client/settings/global-instructions-settings';
-import { NovaPreambleSettings } from '@/plugins-client/settings/rooks-preamble-settings';
+import { RooksPreambleSettings } from '@/plugins-client/settings/rooks-preamble-settings';
 import { PluginSettingsPane } from '@/components/plugin-settings-sections';
 import { PluginWebhooksPane } from '@/components/plugin-webhooks-pane';
 import { PluginConnectionsSettings } from '@/components/settings/plugin-connections';
@@ -523,7 +523,7 @@ function TabContent({
       case 'instructions':
         return <GlobalInstructionsSettings />;
       case 'preamble':
-        return <NovaPreambleSettings />;
+        return <RooksPreambleSettings />;
       case 'fallback':
         return <><FallbackSettings />{grafts}</>;
       case 'accounts':

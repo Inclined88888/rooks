@@ -11,7 +11,7 @@ import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { backupsDir, packagedCli, readDataVersion, readSnapshotMeta, snapshotName, novaVersion, updateApprovalFile, writeDataVersion } from './data-version.js';
+import { backupsDir, packagedCli, readDataVersion, readSnapshotMeta, snapshotName, rooksVersion, updateApprovalFile, writeDataVersion } from './data-version.js';
 
 const electron = { ...process.versions, electron: '38.0.0' } as NodeJS.ProcessVersions;
 
@@ -64,7 +64,7 @@ test('a packaged CLI refuses data an unapproved update would migrate, then keeps
   seed.close();
   writeDataVersion(home, '0.1.0');
   const before = readFileSync(dbPath);
-  const version = novaVersion();
+  const version = rooksVersion();
 
   const refused = await openAsPackagedCli(home);
   assert.equal(refused.code, 3, refused.output);
@@ -160,7 +160,7 @@ test('rooks doctor from a packaged CLI says the update is pending, still lists i
   writeDataVersion(home, '0.1.0');
   const before = readFileSync(dbPath);
   const entries = readdirSync(home).sort();
-  const version = novaVersion().replace(/\./g, '\\.');
+  const version = rooksVersion().replace(/\./g, '\\.');
 
   const text = await runPackagedCli(home, ['doctor']);
   assert.equal(text.code, 1, text.stdout + text.stderr);
@@ -195,13 +195,13 @@ function startCopyingProcess(home: string): { held: Promise<void>; go: () => voi
   writeFileSync(script, `
     const { default: Database } = await import(${JSON.stringify(pathToFileURL(createRequire(import.meta.url).resolve('better-sqlite3')).href)});
     const { holdDataOpenLock, releaseDataOpenLock } = await import(${module('./data-open-lock.ts')});
-    const { protectDataBeforeOpen, novaVersion } = await import(${module('./data-version.ts')});
+    const { protectDataBeforeOpen, rooksVersion } = await import(${module('./data-version.ts')});
     const home = process.env.ROOKS_HOME;
     holdDataOpenLock(home);
     console.log('held');
     await new Promise((resolve) => process.stdin.once('data', resolve));
     const files = { home, dbPath: ${JSON.stringify(join(home, 'rooks.db'))}, configPath: ${JSON.stringify(join(home, 'rooks.config.json'))} };
-    const outcome = protectDataBeforeOpen(files, novaVersion(), { now: () => 4242, warn: () => {} });
+    const outcome = protectDataBeforeOpen(files, rooksVersion(), { now: () => 4242, warn: () => {} });
     const db = new Database(files.dbPath);
     db.exec('CREATE TABLE migrated_by_daemon (x)');
     db.close();
@@ -230,7 +230,7 @@ test('a packaged CLI approved while the daemon copies and migrates waits for it,
   seed.exec("CREATE TABLE notes (value TEXT); INSERT INTO notes VALUES ('kept')");
   seed.close();
   writeDataVersion(home, '0.1.0');
-  const version = novaVersion();
+  const version = rooksVersion();
   writeFileSync(updateApprovalFile(home), `${JSON.stringify({ version, approvedAt: Date.now() })}\n`);
 
   const daemon = startCopyingProcess(home);

@@ -16,7 +16,7 @@
 import { fixedComposition, licenseCurrentlyValid } from '../license/capabilities.js';
 import { licenseState } from '../license/runtime.js';
 import type { LicenseState } from '../license/license.js';
-import type { ModuleSetting, NovaConfig } from '../config/schema.js';
+import type { ModuleSetting, RooksConfig } from '../config/schema.js';
 import { degradation } from './degradation.js';
 
 export type ModuleTier = 'core' | 'std' | 'dev' | 'opt';
@@ -120,7 +120,7 @@ function settingOf(v: ModuleSetting | undefined): { wanted: boolean | 'auto'; co
  */
 export function planEntries(
   catalog: readonly ModuleDescriptor[],
-  opts: { config: NovaConfig; capabilities: readonly string[]; licensed?: readonly string[]; license?: LicenseState },
+  opts: { config: RooksConfig; capabilities: readonly string[]; licensed?: readonly string[]; license?: LicenseState },
 ): EntryDecision[] {
   const state = opts.license ?? licenseState();
   const fixed = fixedComposition(state);
@@ -242,7 +242,7 @@ export type CapabilitiesReport = {
  *  to hide what does not exist, rather than show dead buttons. */
 export function capabilitiesReport(
   decisions: readonly EntryDecision[],
-  opts: { config: NovaConfig; capabilities: readonly string[] },
+  opts: { config: RooksConfig; capabilities: readonly string[] },
 ): CapabilitiesReport {
   return {
     edition: opts.config.edition,

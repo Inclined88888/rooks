@@ -26,11 +26,11 @@ const TAIL = {
     ev(2, 'assistant', { type: 'assistant', message: { content: [
       { type: 'tool_use', id: 'tu-1', name: 'mcp__rooks__chat_post_message', input: { text: 'Step one is done, the comparison follows.' } },
     ] } }),
-    ev(3, 'assistant', { type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: 'Step one is done, the comparison follows.' }] }, nova_posted: 'chat_post_message' }),
+    ev(3, 'assistant', { type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: 'Step one is done, the comparison follows.' }] }, rooks_posted: 'chat_post_message' }),
     ev(4, 'assistant', { type: 'assistant', message: { content: [
       { type: 'tool_use', id: 'tu-2', name: 'mcp__rooks_ask__question', input: { message: REPORT, ...QUESTIONS } },
     ] } }),
-    ev(5, 'assistant', { type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: REPORT }] }, nova_posted: 'question' }),
+    ev(5, 'assistant', { type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: REPORT }] }, rooks_posted: 'question' }),
     ev(6, 'permission_request', { id: 'p-ask', tool_name: 'ask_user', input: QUESTIONS, tool_use_id: 'ask_user_1' }),
   ],
   prelude: {

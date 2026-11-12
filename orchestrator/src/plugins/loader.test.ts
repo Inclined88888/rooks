@@ -47,7 +47,7 @@ const PKG = {
 } as const;
 
 function trace(): string[] {
-  return ((globalThis as Record<string, unknown>).__novaFixtureTrace ??= []) as string[];
+  return ((globalThis as Record<string, unknown>).__rooksFixtureTrace ??= []) as string[];
 }
 
 /**

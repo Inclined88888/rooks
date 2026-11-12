@@ -5,7 +5,7 @@ import { networkInterfaces } from 'node:os';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import { closeAll, listenAddresses, listenAll, listenHostsFor } from './listen-hosts.js';
-import { NovaConfigSchema } from './config/schema.js';
+import { RooksConfigSchema } from './config/schema.js';
 
 /** Resolves with the connection error code, or `connected`. */
 function probe(host: string, port: number): Promise<string> {
@@ -84,13 +84,13 @@ test('the primary bind failing rejects, so the daemon can say who holds the port
 
 test('daemon.listen.extraHosts refuses wildcards and hostnames — no way back to every interface', () => {
   for (const extra of ['0.0.0.0', '::', '[::]', '0:0:0:0:0:0:0:0', 'localhost', 'docker0', '']) {
-    const parsed = NovaConfigSchema.safeParse({ daemon: { listen: { extraHosts: [extra] } } });
+    const parsed = RooksConfigSchema.safeParse({ daemon: { listen: { extraHosts: [extra] } } });
     assert.equal(parsed.success, false, `${JSON.stringify(extra)} must be refused`);
   }
-  const ok = NovaConfigSchema.parse({ daemon: { listen: { extraHosts: ['172.17.0.1'] } } });
+  const ok = RooksConfigSchema.parse({ daemon: { listen: { extraHosts: ['172.17.0.1'] } } });
   assert.deepEqual(ok.daemon.listen.extraHosts, ['172.17.0.1']);
   assert.equal(ok.daemon.listen.host, '127.0.0.1', 'extras never change the host the auth guards decide on');
-  assert.deepEqual(NovaConfigSchema.parse({}).daemon.listen.extraHosts, []);
+  assert.deepEqual(RooksConfigSchema.parse({}).daemon.listen.extraHosts, []);
 });
 
 test('extra hosts are bound after the loopbacks, deduplicated', () => {

@@ -46,7 +46,7 @@
  */
 import { homedir } from 'node:os';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
-import type { NovaConfig } from '../config/schema.js';
+import type { RooksConfig } from '../config/schema.js';
 import { PROTECTED_HOME_DIRS } from '../backends/credential-home-dirs.js';
 import { BACKEND_HOME_DIRS } from '../backends/builtin-declarations.js';
 
@@ -104,7 +104,7 @@ export type IsolationTarget = {
   /** Backend the mission actually runs on; its credential dir is spared. */
   backend?: string | undefined;
   /** Rooks's own home. Never masked: missions read and write their state there. */
-  novaHome?: string | undefined;
+  rooksHome?: string | undefined;
   /** Overridable for tests; defaults to the daemon user's home. */
   home?: string | undefined;
 };
@@ -145,14 +145,14 @@ function contains(parent: string, child: string): boolean {
  *  3. never mask `ROOKS_HOME` nor any ancestor of it.
  * `host.isolation.allow` is applied last and wins over everything.
  */
-export function resolveIsolation(config: NovaConfig, target: IsolationTarget = {}): IsolationPolicy {
+export function resolveIsolation(config: RooksConfig, target: IsolationTarget = {}): IsolationPolicy {
   const iso = config.host.isolation;
   if (iso.filesystem === 'off') return EMPTY;
 
   const home = target.home ?? homedir();
   const spared: string[] = [];
   if (target.cwd) spared.push(resolve(target.cwd));
-  if (target.novaHome) spared.push(resolve(target.novaHome));
+  if (target.rooksHome) spared.push(resolve(target.rooksHome));
   const declared = declaredDirsSource();
   const ownBuiltIn = BACKEND_HOME_DIRS[target.backend ?? ''] ?? [];
   for (const dir of ownBuiltIn) spared.push(expand(`~/${dir}`, home));
@@ -219,7 +219,7 @@ export function isolationProperties(policy: IsolationPolicy): string[] {
  */
 export function isolationArgsFor(
   kind: LauncherKind,
-  config: NovaConfig,
+  config: RooksConfig,
   target: IsolationTarget = {},
 ): string[] {
   if (!sandboxSupported(kind)) return [];

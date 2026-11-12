@@ -1318,7 +1318,7 @@ const REPLY_AS_REPORT_MAX = 4000;
 
 /**
  * What an automatic close carries. An agent on a backend without Rooks's MCP
- * servers (`capabilities.novaMcp: false`) has no `kanban_mark_as_done`: its
+ * servers (`capabilities.rooksMcp: false`) has no `kanban_mark_as_done`: its
  * last reply IS its report, and dropping it for the generic sentence would hand
  * the pilot a task closed with nothing to read.
  *
@@ -1331,7 +1331,7 @@ function autoCloseComment(task: { type?: string | null; agent_name: string }, mi
   try {
     const mission = dbApi.getMission(missionId);
     const backend = mission?.backend_override ?? loadConfig(task.agent_name).backend;
-    if (backendCapabilities(backend).novaMcp) return AUTO_CLOSED_COMMENT;
+    if (backendCapabilities(backend).rooksMcp) return AUTO_CLOSED_COMMENT;
   } catch {
     return AUTO_CLOSED_COMMENT;
   }

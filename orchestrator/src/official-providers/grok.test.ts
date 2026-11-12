@@ -174,8 +174,8 @@ test('Rooks\'s MCP servers are declared with the mission\'s identity, and no tok
   assert.equal(toml.includes(kit.FAKE_TOKEN_REFERENCE), false);
 });
 
-test('without Rooks\'s servers (novaMcp: false) the config declares none of them', async () => {
-  const sp = await provider.launch(opts({ novaMcp: false }), PROFILE);
+test('without Rooks\'s servers (rooksMcp: false) the config declares none of them', async () => {
+  const sp = await provider.launch(opts({ rooksMcp: false }), PROFILE);
   const toml = readFileSync(join(sp.env!.GROK_HOME!, 'config.toml'), 'utf8');
   assert.doesNotMatch(toml, /\[mcp_servers\.rooks\]/);
   assert.doesNotMatch(toml, /\[mcp_servers\.rooks_ask\]/);

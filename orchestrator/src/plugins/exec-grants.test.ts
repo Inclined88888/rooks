@@ -10,7 +10,7 @@ import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, 
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { assertExecAllowed, PluginPolicyError, resetPluginPolicyState } = await import('./policy.js');
 const { providerBinaryRequests, grantProviderBinaries, removeAllowEntries, ExecGrantError } = await import('./exec-grants.js');
@@ -38,7 +38,7 @@ const manifest = (name: string, aliases: string[] = []) => ({
 function freshConfig(): string {
   const file = join(dir, `config-${Math.random().toString(16).slice(2)}.json`);
   writeFileSync(file, `${JSON.stringify({ version: 1, settings: { ROOKS_FALLBACK_ENABLED: false } }, null, 2)}\n`);
-  setConfig(NovaConfigSchema.parse({}));
+  setConfig(RooksConfigSchema.parse({}));
   resetPluginPolicyState();
   return file;
 }
@@ -64,7 +64,7 @@ test('accepting the shown path allows the bare name, and launches the pinned pat
   assert.deepEqual(granted.granted, [agent]);
   assert.deepEqual(allowOf(file), [agent]);
   // setConfig is only called for the real config file: refresh by hand here.
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { exec: { allow: allowOf(file) } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { exec: { allow: allowOf(file) } } }));
   assert.equal(assertExecAllowed('acme-provider', 'acme-agent'), agent, 'the policy hands back the path to launch');
   assert.equal(providerBinaryRequests(manifest('acme-agent'))[0]!.allowed, true);
   // The same name resolving elsewhere would NOT be authorized.
@@ -134,7 +134,7 @@ test('a link is authorized by its target: retargeting it needs a new authorizati
     assert.equal(shown!.resolved, join(versions, 'v1', 'linked-agent'), 'the file the link leads to is what is shown');
     await grantProviderBinaries(manifest('linked-agent'), [shown!.resolved!], file);
     assert.deepEqual(allowOf(file), [join(versions, 'v1', 'linked-agent')]);
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { exec: { allow: allowOf(file) } } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { exec: { allow: allowOf(file) } } }));
     assert.equal(assertExecAllowed('acme-provider', 'linked-agent'), link, 'the link still launches, through the file it was authorized for');
     assert.equal(assertExecAllowed('acme-provider', link), link);
     rmSync(link);

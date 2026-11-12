@@ -38,20 +38,20 @@ test('the agent speaking again recovers the series before the turn ends', () => 
 test('a Rooks replay shows its countdown, then its run; exhaustion names both layers', () => {
   setLocale('en');
   const line = lineOnProviderRetry(null, retry(5, 5), 'Codex');
-  const failure = { cause: 'stream disconnected', provider_retries: 5, provider_max: 5, nova_retries: 0, nova_max: 3 };
-  const replay = lineOnResult(line, { is_error: true, transient_failure: failure, nova_retry: { attempt: 1, max: 3, delay_ms: 30000 } }, 'Codex')!;
+  const failure = { cause: 'stream disconnected', provider_retries: 5, provider_max: 5, rooks_retries: 0, rooks_max: 3 };
+  const replay = lineOnResult(line, { is_error: true, transient_failure: failure, rooks_retry: { attempt: 1, max: 3, delay_ms: 30000 } }, 'Codex')!;
   assert.equal(replay.state, 'replaying');
   assert.equal(retryLineText(replay).title, 'Rooks retry 1/3 in 30s…');
   const running = lineOnReplayStarted(replay, 1, 'Codex');
   assert.equal(retryLineText(running).title, 'Rooks retry 1/3…');
-  const exhausted = lineOnResult(running, { is_error: true, transient_failure: { ...failure, nova_retries: 3 } }, 'Codex')!;
+  const exhausted = lineOnResult(running, { is_error: true, transient_failure: { ...failure, rooks_retries: 3 } }, 'Codex')!;
   assert.equal(exhausted.state, 'exhausted');
   assert.equal(retryLineText(exhausted).title, 'Codex servers unreachable after 5 provider retries and 3 Rooks retries');
 });
 
 test('a human chat ends on the provider exhaustion line', () => {
   setLocale('en');
-  const failure = { cause: 'API Error: Connection error.', provider_retries: 10, provider_max: 10, nova_retries: 0, nova_max: 0 };
+  const failure = { cause: 'API Error: Connection error.', provider_retries: 10, provider_max: 10, rooks_retries: 0, rooks_max: 0 };
   const line = lineOnResult(null, { is_error: true, transient_failure: failure }, 'Claude')!;
   assert.equal(retryLineText(line).title, 'Claude servers unreachable after 10 retries');
   assert.equal(retryLineText(line).detail, 'API Error: Connection error.');
@@ -63,7 +63,7 @@ test('a plain failure is not a retry line, and an abandoned replay ends the seri
   const replay = lineOnReplayStarted(null, 2, 'codex');
   const ended = lineOnAbandoned(replay, { reason: 'stopped by the user' }, 'codex');
   assert.equal(ended.state, 'exhausted');
-  assert.equal(ended.novaRetries, 1);
+  assert.equal(ended.rooksRetries, 1);
 });
 
 test('the lines follow the locale', () => {

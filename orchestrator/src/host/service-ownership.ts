@@ -21,7 +21,7 @@
  */
 import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve, win32 as winPath } from 'node:path';
-import { homeOfPlist, homeOfTask, homeOfUnit, linuxNovaUnits, unescapeXml } from './orphan-services.js';
+import { homeOfPlist, homeOfTask, homeOfUnit, linuxRooksUnits, unescapeXml } from './orphan-services.js';
 import {
   LINUX_UNIT, MACOS_LABEL, WINDOWS_TASK, launchDaemonPath, macosLauncherPath, plistPath, readEffectiveUnit, readServiceDefinition, unitPath, windowsLauncherPath,
   type ServiceOpts, type ServiceResult,
@@ -177,7 +177,7 @@ export function foreignService(opts: ServiceOpts, sourceInstallDir?: string): Fo
   const service = readInstalledService(opts);
   if (!service) return null;
   if (service.home === null) return { ...service, why: 'unreadable' };
-  if (!samePath(service.home, opts.novaHome, opts.platform)) return { ...service, why: 'home' };
+  if (!samePath(service.home, opts.rooksHome, opts.platform)) return { ...service, why: 'home' };
   if (service.installDir === null) return { ...service, why: 'unproven' };
   const own = [opts.installDir, ...(sourceInstallDir ? [sourceInstallDir] : [])]
     .some((dir) => samePath(service.installDir!, dir, opts.platform))
@@ -206,7 +206,7 @@ export function foreignService(opts: ServiceOpts, sourceInstallDir?: string): Fo
 export function servicesSharingHome(opts: ServiceOpts): ForeignService[] {
   if (opts.platform !== 'linux') return [];
   const own = opts.unitName ?? LINUX_UNIT;
-  return linuxNovaUnits(opts.homeDir).filter((unit) => unit !== own).flatMap((unit): ForeignService[] => {
+  return linuxRooksUnits(opts.homeDir).filter((unit) => unit !== own).flatMap((unit): ForeignService[] => {
     const effective = readEffectiveUnit(opts, unit);
     if (effective.kind === 'absent') return [];
     const service = {
@@ -217,7 +217,7 @@ export function servicesSharingHome(opts: ServiceOpts): ForeignService[] {
     if (effective.kind === 'unverified' || effective.home === null) {
       return [{ ...service, home: null, installDir: null, why: 'unverified' }];
     }
-    if (!samePath(effective.home, opts.novaHome, opts.platform)) return [];
+    if (!samePath(effective.home, opts.rooksHome, opts.platform)) return [];
     if (unit !== LINUX_UNIT && !effective.namesHome) return [];
     return [{ ...service, home: effective.home, installDir: effective.directory, why: 'shared' }];
   });
@@ -231,8 +231,8 @@ export function servicesSharingHome(opts: ServiceOpts): ForeignService[] {
  */
 export function serviceOfAnotherHome(opts: ServiceOpts): string | null {
   const service = readInstalledService(opts);
-  if (!service || service.home === null || samePath(service.home, opts.novaHome, opts.platform)) return null;
-  return `The service ${service.name} runs for ${service.home}, not for ${opts.novaHome}: it was left in place.`;
+  if (!service || service.home === null || samePath(service.home, opts.rooksHome, opts.platform)) return null;
+  return `The service ${service.name} runs for ${service.home}, not for ${opts.rooksHome}: it was left in place.`;
 }
 
 /**
@@ -308,7 +308,7 @@ export function guardServiceGesture(
   const lines = [
     `${opts.dryRun ? '(dry-run) would refuse' : 'refused'}: ${reason}`,
     ...found.flatMap(ownerLines),
-    `  this command: data ${opts.novaHome}, install ${opts.installDir}`,
+    `  this command: data ${opts.rooksHome}, install ${opts.installDir}`,
     `Nothing was changed. ${way}`,
   ];
   return {

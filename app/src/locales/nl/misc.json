@@ -60,7 +60,7 @@
     "limited": "Beperkt",
     "limitsHint": "Deze backend kan niet:",
     "limitWorktree": "werken in de map van Rooks (geen code- of mergetaken)",
-    "limitNovaMcp": "de tools van Rooks gebruiken (Kanban, berichten, geheugen)",
+    "limitRooksMcp": "de tools van Rooks gebruiken (Kanban, berichten, geheugen)",
     "limitAttachments": "bijgevoegde bestanden ontvangen (alleen afbeeldingen)",
     "unverified": "Niet geverifieerd",
     "unverifiedHint": "Geschreven op basis van de documentatie van de leverancier: niet gecontroleerd tegen het echte programma.",

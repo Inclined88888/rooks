@@ -29,7 +29,7 @@ const {
 } = await import('./context.js');
 const { dbApi } = await import('../db.js');
 const { bus } = await import('../bus.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { PluginPolicyError, resetPluginPolicyState } = await import('./policy.js');
 
@@ -39,7 +39,7 @@ const { PluginPolicyError, resetPluginPolicyState } = await import('./policy.js'
  * states the policy it runs under, exactly as an operator would.
  */
 function withPolicy(pluginPolicy: Record<string, unknown>): void {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy }));
   resetPluginPolicyState();
 }
 

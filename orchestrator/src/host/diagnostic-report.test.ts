@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { NovaConfigSchema } from '../config/schema.js';
+import { RooksConfigSchema } from '../config/schema.js';
 import {
   buildDiagnosticReport, diagnosticFindings, doctorSummary, knownSecretValues, probeFailureReason, redactReport, type DiagnosticFacts,
 } from './diagnostic-report.js';
@@ -161,13 +161,13 @@ test('a full report: findings, newest log lines first, secrets masked, no databa
     writeFileSync(join(home, 'tmp', 'daemon-2026-10-12.log'), 'old line\n');
     writeFileSync(join(home, 'tmp', 'daemon-2026-10-13.log'), 'first\nlatest uses secret-daemon-token-value\n');
     writeFileSync(join(home, 'tmp', 'desktop-2026-10-13.log'), '[desktop] window shown\n');
-    const cfg = NovaConfigSchema.parse({ daemon: { listen: { host: '127.0.0.1', port: address.port } } });
+    const cfg = RooksConfigSchema.parse({ daemon: { listen: { host: '127.0.0.1', port: address.port } } });
     const exec = (name: string, args: string[]) => {
       if (name === 'systemctl' && args.includes('show')) return { code: 0, stdout: 'LoadState=not-found\nActiveState=inactive\n', stderr: '' };
       return { code: 1, stdout: '', stderr: '' };
     };
     const serviceOpts: ServiceOpts = {
-      platform: 'linux', homeDir: home, novaHome: home, installDir: join(home, 'install'), userName: 't', uid: 1000,
+      platform: 'linux', homeDir: home, rooksHome: home, installDir: join(home, 'install'), userName: 't', uid: 1000,
       heapMb: 1024, port: address.port, nodePath: process.execPath, exec,
     };
     const { text, findings } = await buildDiagnosticReport({
@@ -202,10 +202,10 @@ test('a Windows report reads the refused marker the host left (#342)', { timeout
   try {
     mkdirSync(join(home, 'run'), { recursive: true });
     writeFileSync(join(home, 'run', 'service-refused'), '2026-10-13T22:00:00.000Z\n');
-    const cfg = NovaConfigSchema.parse({ daemon: { listen: { host: '127.0.0.1', port: address.port } } });
+    const cfg = RooksConfigSchema.parse({ daemon: { listen: { host: '127.0.0.1', port: address.port } } });
     const exec = () => ({ code: 1, stdout: '', stderr: '' });
     const serviceOpts: ServiceOpts = {
-      platform: 'win32', homeDir: home, novaHome: home, installDir: join(home, 'install'), userName: 't', uid: 0,
+      platform: 'win32', homeDir: home, rooksHome: home, installDir: join(home, 'install'), userName: 't', uid: 0,
       heapMb: 1024, port: address.port, nodePath: process.execPath, exec,
     };
     const { text, findings } = await buildDiagnosticReport({
@@ -224,18 +224,18 @@ test('the service marker is read from the definition each supervisor runs', () =
   const root = mkdtempSync(join(tmpdir(), 'rooks-diag-marker-'));
   try {
     const home = join(root, 'home');
-    const novaHome = join(home, '.rooks');
-    mkdirSync(join(novaHome, 'run'), { recursive: true });
+    const rooksHome = join(home, '.rooks');
+    mkdirSync(join(rooksHome, 'run'), { recursive: true });
     const base = {
-      homeDir: home, novaHome, installDir: root, userName: 't', uid: 501, heapMb: 1024, port: 3010,
+      homeDir: home, rooksHome, installDir: root, userName: 't', uid: 501, heapMb: 1024, port: 3010,
       nodePath: process.execPath, launchDaemonsDir: join(root, 'LaunchDaemons'),
       exec: () => ({ code: 0, stdout: 'LastTaskResult=267011\nLastRunTime=1999-11-30T00:00:00\n', stderr: '' }),
     };
     const win = { ...base, platform: 'win32' as const };
     assert.equal(serviceDiagnostics(win).marked, null);
-    writeFileSync(join(novaHome, 'run', 'rooks-service.cmd'), '@echo off\r\nset "ROOKS_HOME=x"\r\n');
+    writeFileSync(join(rooksHome, 'run', 'rooks-service.cmd'), '@echo off\r\nset "ROOKS_HOME=x"\r\n');
     assert.equal(serviceDiagnostics(win).marked, false);
-    writeFileSync(join(novaHome, 'run', 'rooks-service.cmd'), '@echo off\r\nset "ROOKS_DESKTOP_SERVICE=1"\r\n');
+    writeFileSync(join(rooksHome, 'run', 'rooks-service.cmd'), '@echo off\r\nset "ROOKS_DESKTOP_SERVICE=1"\r\n');
     const windows = serviceDiagnostics(win);
     assert.equal(windows.marked, true);
     assert.equal(windows.lastTaskResult, 0x41303);
@@ -247,7 +247,7 @@ test('the service marker is read from the definition each supervisor runs', () =
     assert.equal(serviceDiagnostics(mac).marked, true);
     mkdirSync(base.launchDaemonsDir, { recursive: true });
     writeFileSync(join(base.launchDaemonsDir, 'com.rooks.daemon.plist'), '<plist/>');
-    writeFileSync(join(novaHome, 'run', 'rooks-service.sh'), "#!/bin/sh\nexport ROOKS_HOME='/x'\n");
+    writeFileSync(join(rooksHome, 'run', 'rooks-service.sh'), "#!/bin/sh\nexport ROOKS_HOME='/x'\n");
     assert.equal(serviceDiagnostics(mac).marked, false, 'the LaunchDaemon is read through its launcher');
 
     const linux = { ...base, platform: 'linux' as const, unitName: 'rooks-desktop-abc' };

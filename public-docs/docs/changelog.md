@@ -11,4 +11,4 @@ Published Rooks releases. Preview changes are shown in the app when you install 
 
 ### Added
 
-- First public Rooks release notes on the Nova-body line.
+- First public Rooks release notes on the upstream-body line.

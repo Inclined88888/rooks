@@ -48,7 +48,7 @@ export function relayLocale(raw: unknown): string {
   return typeof raw === 'string' && LOCALE_PATTERN.test(raw) ? raw : 'en';
 }
 
-function novaVersion(): string {
+function rooksVersion(): string {
   try {
     const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as { version?: unknown };
     return typeof pkg.version === 'string' ? pkg.version : '0.0.0';
@@ -83,7 +83,7 @@ async function post(path: string, body: Record<string, string>, opts: MailRelayO
       // A redirect would replay the code to wherever it points.
       redirect: 'manual',
       signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
-      headers: { 'content-type': 'application/json', 'user-agent': `rooks-daemon/${novaVersion()} (${process.platform})` },
+      headers: { 'content-type': 'application/json', 'user-agent': `rooks-daemon/${rooksVersion()} (${process.platform})` },
       body: JSON.stringify(body),
     });
   } catch {

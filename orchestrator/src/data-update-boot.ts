@@ -8,12 +8,12 @@ import { DB_PATH, ROOKS_HOME } from './paths.js';
 import { instanceId } from './host/packaged-service.js';
 import { catchAsyncHandlers } from './kernel/async-routes.js';
 import { createDataUpdate, ensureUpdateToken, mountDataUpdateRoutes } from './data-update.js';
-import { DataSnapshotError, packagedDaemon, protectDataBeforeOpen, novaVersion, updateNeedsApproval } from './data-version.js';
+import { DataSnapshotError, packagedDaemon, protectDataBeforeOpen, rooksVersion, updateNeedsApproval } from './data-version.js';
 import { holdDataOpenLock, releaseDataOpenLock } from './data-open-lock.js';
 
 export async function waitForDataUpdate(): Promise<void> {
   if (!packagedDaemon()) return;
-  const version = novaVersion();
+  const version = rooksVersion();
   const files = { home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') };
   let snapshotError: DataSnapshotError | undefined;
   if (!updateNeedsApproval(files, version)) {

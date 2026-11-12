@@ -151,6 +151,8 @@ async function mountStep(server: Server, run: (ui: {
           { id: 'splash', Component: plain('splash') },
           { id: 'account', Component: plain('account') },
           { id: 'llm', Component: LlmStep },
+          { id: 'channels', Component: plain('channels') },
+          { id: 'mail', Component: plain('mail') },
           { id: 'profile', Component: plain('profile') },
           { id: 'agent', Component: plain('agent') },
         ],
@@ -237,7 +239,7 @@ test('the subscription: rows, « Continue anyway » until an AI is ready, then �
     assert.equal((ui.$('[data-continue]') as HTMLButtonElement | null)?.disabled, false);
 
     await ui.click(ui.$('[data-continue]'));
-    await ui.until(() => ui.$('[data-step="profile"]') !== null, 'the next step');
+    await ui.until(() => ui.$('[data-step="channels"]') !== null, 'the next step');
   });
 });
 
@@ -260,7 +262,7 @@ test('the local block moves on without any subscription', async () => {
   await mountStep(server, async (ui) => {
     await ui.click(ui.$('[data-choice="local"]'));
     await ui.click(ui.$('[data-continue]'));
-    await ui.until(() => ui.$('[data-step="profile"]') !== null, 'the next step');
+    await ui.until(() => ui.$('[data-step="channels"]') !== null, 'the next step');
     assert.ok(server.requests <= 1, 'read once at most, for the names on the choice: the local block does not wait for it');
   });
 });

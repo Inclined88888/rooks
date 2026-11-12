@@ -103,7 +103,7 @@
       "handoverKept": "Usługa w tle Rooks nie odpowiedziała.",
       "handoverKeptDetail": "Konfiguracja jest kontynuowana z Rooks działającym w tym oknie. Po zakończeniu konfiguracji zamknij i ponownie otwórz Rooks: spróbuje ponownie użyć usługi. Twoje dane pozostają w {home}.",
       "refused": "Windows nie uruchamia usługi w tle Rooks dla tego konta.",
-      "refusedDetail": "Zaplanowane zadanie NovaOrchestrator jest zarejestrowane, ale Windows nigdy go nie uruchomił. Dzieje się tak w przypadku kont służbowych lub szkolnych na komputerze dołączonym do Microsoft Entra ID. Rooks uruchamia zamiast tego swój wbudowany demon: startuje z aplikacją i zatrzymuje się, gdy ją zamkniesz lub się wylogujesz. Aby usunąć nieużywane zadanie: rooks service uninstall (Windows poprosi o zgodę).",
+      "refusedDetail": "Zaplanowane zadanie RooksOrchestrator jest zarejestrowane, ale Windows nigdy go nie uruchomił. Dzieje się tak w przypadku kont służbowych lub szkolnych na komputerze dołączonym do Microsoft Entra ID. Rooks uruchamia zamiast tego swój wbudowany demon: startuje z aplikacją i zatrzymuje się, gdy ją zamkniesz lub się wylogujesz. Aby usunąć nieużywane zadanie: rooks service uninstall (Windows poprosi o zgodę).",
       "repair": "Usługa w tle Rooks nie jest już zainstalowana.",
       "repairDetail": "Bez niej Rooks nie startuje razem z Windows i zatrzymuje się, gdy zamkniesz aplikację lub się wylogujesz. Ponowna instalacja poprosi raz o zgodę Windows.",
       "repairConfirm": "Zainstaluj ponownie usługę",

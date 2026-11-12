@@ -2,7 +2,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir, userInfo } from 'node:os';
 import { join } from 'node:path';
-import type { NovaConfig } from '../config/schema.js';
+import type { RooksConfig } from '../config/schema.js';
 import { ROOKS_HOME } from '../paths.js';
 import { packagedRuntime } from './bundled-node.js';
 import { packagedServiceOptions } from './packaged-service.js';
@@ -27,13 +27,13 @@ function safeExecSync(command: string, args: string[], host: () => Pick<Host, 'e
  * unapproved update — exactly what the packaged upgrade runner runs before.
  */
 export function serviceOptsFromEnvironment(
-  cfg: NovaConfig,
+  cfg: RooksConfig,
   host: () => Pick<Host, 'exec'>,
 ): ServiceOpts {
   const base: ServiceOpts = {
     platform: process.platform,
     homeDir: homedir(),
-    novaHome: ROOKS_HOME,
+    rooksHome: ROOKS_HOME,
     installDir: cfg.daemon.installDir,
     userName: userInfo().username,
     ...(process.platform === 'win32' && process.env.USERDOMAIN ? { userDomain: process.env.USERDOMAIN } : {}),

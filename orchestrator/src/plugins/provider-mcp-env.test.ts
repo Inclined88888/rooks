@@ -361,8 +361,8 @@ test('the forms server lists `request` only for a CLI that routes permission pro
   assert.ok(prompting.commandPolicy.denyPrograms.includes('sudo'));
 });
 
-test('a backend that declares novaMcp: false is not handed Rooks\'s own servers', async () => {
-  const spawn = { agentName: 'a', systemPrompt: '', message: '', resumeSession: null, missionId: 'm', novaMcp: false,
+test('a backend that declares rooksMcp: false is not handed Rooks\'s own servers', async () => {
+  const spawn = { agentName: 'a', systemPrompt: '', message: '', resumeSession: null, missionId: 'm', rooksMcp: false,
     cfg: { cwd: tmpdir() } } as unknown as BuildSpawnOpts;
   assert.deepEqual((await ctx.provider.mcp(spawn)).servers, []);
 });

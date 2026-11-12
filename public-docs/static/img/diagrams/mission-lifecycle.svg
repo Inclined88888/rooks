@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 612" width="760" height="612" role="img" aria-labelledby="title desc">
   <title id="title">The life of a mission</title>
-  <desc id="desc">1. A mission starts from a chat message, rooks spawn, a Kanban task, a trigger or another agent. 2. Rooks prepares the agent: instructions, identity docs, skills, memory rules, backend and model. 3. The agent's CLI starts in its working folder with the rooks and nova_ask MCP servers. 4. The agent works through a turn; its activity shows live and its questions wait for you. 5. The turn ends and the agent waits; a follow-up message starts a new turn. 6. The mission closes: a task's result returns to the orchestrator, an idle process is stopped, the history stays.</desc>
+  <desc id="desc">1. A mission starts from a chat message, rooks spawn, a Kanban task, a trigger or another agent. 2. Rooks prepares the agent: instructions, identity docs, skills, memory rules, backend and model. 3. The agent's CLI starts in its working folder with the rooks and rooks_ask MCP servers. 4. The agent works through a turn; its activity shows live and its questions wait for you. 5. The turn ends and the agent waits; a follow-up message starts a new turn. 6. The mission closes: a task's result returns to the orchestrator, an idle process is stopped, the history stays.</desc>
   <style>
     text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #1f1b18; }
     .t { font-size: 14px; font-weight: 650; }
@@ -37,7 +37,7 @@
   <text class="n" x="72" y="262" text-anchor="middle">3</text>
   <text class="t" x="100" y="248">The agent’s CLI starts</text>
   <text class="s" x="100" y="268">in the agent’s working folder, or a worktree for a code task,</text>
-  <text class="s" x="100" y="284">with the rooks and nova_ask MCP servers</text>
+  <text class="s" x="100" y="284">with the rooks and rooks_ask MCP servers</text>
   <path class="ar" d="M300 296V316" marker-end="url(#arrow)"/>
   <rect class="live" x="40" y="318" width="520" height="74" rx="9"/>
   <circle cx="72" cy="355" r="15" fill="#9b402c"/>

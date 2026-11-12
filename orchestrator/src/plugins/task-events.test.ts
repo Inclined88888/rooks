@@ -22,7 +22,7 @@ const { createPluginContext, daemonHost, PluginPermissionError } = await import(
 const { runPluginRequest, currentPluginUser } = await import('./als.js');
 const { dbApi } = await import('../db.js');
 const { hashPassword } = await import('../users/password.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { withTaskOrigin } = await import('../task-origin.js');
 const { agentDir } = await import('../paths.js');
@@ -183,7 +183,7 @@ test('an account that may use the plugin gets its tasks inside its own identity'
 });
 
 test('a granted project reaches the job, only with the manifest permission and the operator\'s grant', async () => {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { kanban: { projects: { [PLUGIN_ID]: ['granted-proj'] } } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { kanban: { projects: { [PLUGIN_ID]: ['granted-proj'] } } } }));
   const asking = await pluginWith(['kanban:read', 'kanban:read:project', 'events:subscribe']);
   const quiet = await pluginWith(['kanban:read', 'events:subscribe']);
   const seenAsking = listen(asking.plugin);
@@ -206,7 +206,7 @@ test('a handler that throws does not stop the next event, and unloading stops de
   let calls = 0;
   plugin.events.on('task_created', () => { calls += 1; throw new Error('boom'); });
   // Tasks opened by a job run: the operator approved the plugin (TODO #562).
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn: { approved: [PLUGIN_ID] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn: { approved: [PLUGIN_ID] } } }));
   const quietLog = console.error; console.error = () => undefined;
   try {
     await plugin.kanban.add({ title: 'one', agent: 'worker' });
@@ -223,7 +223,7 @@ test('a handler that throws does not stop the next event, and unloading stops de
 test('a handler runs with nobody in front: an unapproved plugin opens no task that runs from it (TODO #562)', async () => {
   const { plugin, dispose } = await pluginWith(['kanban:read', 'kanban:write', 'events:subscribe', 'todos:read', 'todos:write']);
   const policy = (approved: string[]) => {
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn: { approved } } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn: { approved } } }));
     resetPluginPolicyState();
   };
   type Outcome = { who: string; created?: { id: string; owner_user_id: string | null }; code?: string; reason?: string };

@@ -289,7 +289,7 @@ test('a real service identity refusal reaches onboarding without a CLI workaroun
   const homeDir = mkdtempSync(join(tmpdir(), 'rooks-onboarding-conflict-'));
   const calls: string[][] = [];
   const result = runInstallService({
-    platform: 'linux', homeDir, novaHome: join(homeDir, 'app-data'),
+    platform: 'linux', homeDir, rooksHome: join(homeDir, 'app-data'),
     installDir: join(homeDir, 'app/orchestrator'), userName: 'tester', uid: 1000,
     heapMb: 2048, port: 3010, nodePath: '/usr/bin/node',
     exec: (name, args) => {
@@ -369,7 +369,7 @@ test('windows packagé : le service lance le dossier d\'installation, jamais une
   const base = {
     platform: 'win32' as NodeJS.Platform,
     homeDir: 'C:\\Users\\sam',
-    novaHome: 'C:\\Users\\sam\\.rooks',
+    rooksHome: 'C:\\Users\\sam\\.rooks',
     installDir,
     userName: 'sam',
     uid: 0,
@@ -396,7 +396,7 @@ test('windows packagé : le service lance le dossier d\'installation, jamais une
   // The same packaged environment does stage a copy on macOS and Linux.
   for (const platform of ['linux', 'darwin'] as NodeJS.Platform[]) {
     assert.equal(stagesPackagedRuntime(platform, { ROOKS_DESKTOP_SERVICE: '1' }), true);
-    const opts = serviceOptsForPlatform({ ...base, platform, homeDir: '/home/sam', novaHome: '/home/sam/.rooks' }, { ROOKS_DESKTOP_SERVICE: '1' }, '/opt/Rooks/rooks', 3101);
+    const opts = serviceOptsForPlatform({ ...base, platform, homeDir: '/home/sam', rooksHome: '/home/sam/.rooks' }, { ROOKS_DESKTOP_SERVICE: '1' }, '/opt/Rooks/rooks', 3101);
     assert.match(opts.installDir, /desktop-runtime/);
   }
 });
@@ -414,14 +414,14 @@ test('the install button refuses the service of another installation, and its ow
   const installDir = join(homeDir, 'app', 'orchestrator');
   const exec = () => ({ code: 0, stdout: '', stderr: '' });
   const opts = {
-    platform: 'darwin', homeDir, novaHome: join(homeDir, 'test-home'), installDir, userName: 'tester', uid: 501, heapMb: 4096, port: 3010,
+    platform: 'darwin', homeDir, rooksHome: join(homeDir, 'test-home'), installDir, userName: 'tester', uid: 501, heapMb: 4096, port: 3010,
     nodePath: '/usr/bin/node', launchDaemonsDir: join(homeDir, 'LaunchDaemons'), exec,
   };
   assert.equal(foreignServiceRefusal(opts, installDir), null, 'no service yet');
 
   const file = plistPath(homeDir);
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, renderPlist({ ...opts, novaHome: join(homeDir, 'real-home') }));
+  writeFileSync(file, renderPlist({ ...opts, rooksHome: join(homeDir, 'real-home') }));
   const refused = foreignServiceRefusal(opts, installDir);
   assert.equal(refused?.ok, false);
   assert.equal(refused?.installed, false);
@@ -440,7 +440,7 @@ test('the install button refuses the service of another installation, and its ow
 test('the install button of a package refuses a clone unit on its home, and only there (TODO #736)', () => {
   const homeDir = mkdtempSync(join(tmpdir(), 'rooks-onboarding-shared-'));
   const installDir = join(homeDir, 'app', 'orchestrator');
-  const novaHome = join(homeDir, 'test-home');
+  const rooksHome = join(homeDir, 'test-home');
   // What systemd answers for the unit on disk: the guard reads the effective one.
   const exec = () => {
     const text = readFileSync(unitPath(homeDir), 'utf8');
@@ -448,7 +448,7 @@ test('the install button of a package refuses a clone unit on its home, and only
     return { code: 0, stdout: `LoadState=loaded\nNeedDaemonReload=no\nWorkingDirectory=${line('WorkingDirectory')}\nEnvironment=${line('Environment')}\n`, stderr: '' };
   };
   const opts = packagedServiceOptions({
-    platform: 'linux', homeDir, novaHome, installDir, userName: 'tester', uid: 501, heapMb: 4096, port: 3010,
+    platform: 'linux', homeDir, rooksHome, installDir, userName: 'tester', uid: 501, heapMb: 4096, port: 3010,
     nodePath: '/usr/bin/node', exec,
   }, join(homeDir, 'Rooks'), 3110, '0.2.0');
   const clone = unitPath(homeDir);
@@ -457,7 +457,7 @@ test('the install button of a package refuses a clone unit on its home, and only
   writeFileSync(clone, `[Service]\nWorkingDirectory=/srv/clone/orchestrator\nEnvironment="ROOKS_HOME=${join(homeDir, 'real-home')}"\n`);
   assert.equal(foreignServiceRefusal(opts, installDir), null, 'first launch beside a clone on another home');
 
-  writeFileSync(clone, `[Service]\nWorkingDirectory=/srv/clone/orchestrator\nEnvironment="ROOKS_HOME=${novaHome}"\n`);
+  writeFileSync(clone, `[Service]\nWorkingDirectory=/srv/clone/orchestrator\nEnvironment="ROOKS_HOME=${rooksHome}"\n`);
   const refused = foreignServiceRefusal(opts, installDir);
   assert.equal(refused?.ok, false);
   assert.equal(refused?.command, null);

@@ -11,12 +11,12 @@ const ok = (stdout = ''): Result => ({ code: 0, stdout, stderr: '' });
 const absent = (): Result => ({ code: 113, stdout: '', stderr: 'not found' });
 function fixture(platform: NodeJS.Platform, execute: ServiceOpts['exec']) {
   const root = mkdtempSync(join(tmpdir(), 'rooks-remove-service-test-'));
-  const opts: ServiceOpts = { platform, homeDir: root, novaHome: join(root, '.rooks'), installDir: join(root, 'app'),
+  const opts: ServiceOpts = { platform, homeDir: root, rooksHome: join(root, '.rooks'), installDir: join(root, 'app'),
     nodePath: process.execPath, uid: 502, userName: 'test', port: 3010, heapMb: 2048, exec: execute, pause: () => {},
     launchDaemonsDir: join(root, 'LaunchDaemons'), elevation: 'osascript' };
   const file = platform === 'darwin' ? plistPath(root) : unitPath(root);
   mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, 'test');
-  mkdirSync(opts.novaHome); writeFileSync(join(opts.novaHome, 'valuable'), 'data');
+  mkdirSync(opts.rooksHome); writeFileSync(join(opts.rooksHome, 'valuable'), 'data');
   return { opts, file, clean: () => rmSync(root, { recursive: true, force: true }) };
 }
 
@@ -24,22 +24,22 @@ test('macOS waits for launchd exit before removing its plist and preserves data'
   let prints = 0; const calls: string[] = [];
   const f = fixture('darwin', (cmd, args) => {
     calls.push(`${cmd}:${args[0]}`);
-    if (cmd.endsWith('plutil')) return ok(f.opts.novaHome);
-    if (args[0] === 'print') return ++prints <= 3 ? ok(`\tROOKS_HOME => ${f.opts.novaHome}\n`) : absent();
+    if (cmd.endsWith('plutil')) return ok(f.opts.rooksHome);
+    if (args[0] === 'print') return ++prints <= 3 ? ok(`\tROOKS_HOME => ${f.opts.rooksHome}\n`) : absent();
     assert.equal(existsSync(f.file), true); return ok();
   });
   try {
     removeDesktopService(f.opts);
     assert.equal(prints, 4); assert.equal(existsSync(f.file), false);
-    assert.equal(existsSync(join(f.opts.novaHome, 'valuable')), true);
+    assert.equal(existsSync(join(f.opts.rooksHome, 'valuable')), true);
     assert.equal(calls.includes('launchctl:bootout'), true);
   } finally { f.clean(); }
 });
 
 for (const failure of ['foreign', 'bootout', 'timeout', 'query']) test(`macOS ${failure} prevents plist deletion`, () => {
   const f = fixture('darwin', (cmd, args) => {
-    if (cmd.endsWith('plutil')) return ok(failure === 'foreign' ? '/another/home' : f.opts.novaHome);
-    if (args[0] === 'print') return failure === 'query' ? { code: 5, stdout: '', stderr: 'denied' } : ok(`ROOKS_HOME => ${f.opts.novaHome}\n`);
+    if (cmd.endsWith('plutil')) return ok(failure === 'foreign' ? '/another/home' : f.opts.rooksHome);
+    if (args[0] === 'print') return failure === 'query' ? { code: 5, stdout: '', stderr: 'denied' } : ok(`ROOKS_HOME => ${f.opts.rooksHome}\n`);
     if (args[0] === 'bootout' && failure === 'bootout') return { code: 5, stdout: '', stderr: 'denied' };
     return ok();
   });
@@ -51,9 +51,9 @@ test('macOS: a LaunchDaemon is verified by its ROOKS_HOME, then removed under on
   const calls: string[] = [];
   const f = fixture('darwin', (cmd, args) => {
     calls.push(`${cmd}:${args[0]}:${args[1] ?? ''}`);
-    if (cmd.endsWith('plutil')) return ok(f.opts.novaHome);
+    if (cmd.endsWith('plutil')) return ok(f.opts.rooksHome);
     if (cmd === 'osascript') return ok('ROOKS-STEP bootout=0\nROOKS-STEP wait=0\nROOKS-STEP remove=0\n');
-    if (args[0] === 'print') return ok(`\tROOKS_HOME => ${f.opts.novaHome}\n`);
+    if (args[0] === 'print') return ok(`\tROOKS_HOME => ${f.opts.rooksHome}\n`);
     if (args[0] === 'bootout') return absent();
     return ok();
   });
@@ -64,7 +64,7 @@ test('macOS: a LaunchDaemon is verified by its ROOKS_HOME, then removed under on
     removeDesktopService(f.opts);
     assert.ok(calls.includes('launchctl:print:system/com.rooks.daemon'));
     assert.equal(calls.filter((c) => c.startsWith('osascript')).length, 1);
-    assert.equal(existsSync(join(f.opts.novaHome, 'valuable')), true);
+    assert.equal(existsSync(join(f.opts.rooksHome, 'valuable')), true);
   } finally { f.clean(); }
 });
 
@@ -79,17 +79,17 @@ for (const failure of [null, 'foreign', 'stop', 'still-running', 'reload']) test
   const f = fixture('linux', (_cmd, args) => {
     calls.push(args.join(' '));
     if (args.includes('--property=LoadState,FragmentPath,Environment,NeedDaemonReload')) return ok(
-      `LoadState=loaded\nFragmentPath=${f.file}\nEnvironment=ROOKS_HOME=${failure === 'foreign' ? '/another/home' : f.opts.novaHome}\nNeedDaemonReload=no\n`);
+      `LoadState=loaded\nFragmentPath=${f.file}\nEnvironment=ROOKS_HOME=${failure === 'foreign' ? '/another/home' : f.opts.rooksHome}\nNeedDaemonReload=no\n`);
     if (args.includes('disable') && failure === 'stop') return { code: 1, stdout: '', stderr: 'denied' };
     if (args.includes('--property=ActiveState,MainPID')) return ok(failure === 'still-running' ? 'ActiveState=active\nMainPID=123\n' : 'ActiveState=inactive\nMainPID=0\n');
     if (args.includes('daemon-reload') && failure === 'reload') return { code: 1, stdout: '', stderr: 'denied' };
     return ok();
   });
-  writeFileSync(f.file, `Environment="ROOKS_HOME=${f.opts.novaHome}"\n`);
+  writeFileSync(f.file, `Environment="ROOKS_HOME=${f.opts.rooksHome}"\n`);
   try {
     if (failure) assert.throws(() => removeDesktopService(f.opts)); else removeDesktopService(f.opts);
     assert.equal(existsSync(f.file), Boolean(failure && failure !== 'reload'));
-    assert.equal(existsSync(join(f.opts.novaHome, 'valuable')), true);
+    assert.equal(existsSync(join(f.opts.rooksHome, 'valuable')), true);
     if (failure === 'foreign') assert.equal(calls.some(c => c.includes('disable')), false);
   } finally { f.clean(); }
 });
@@ -99,14 +99,14 @@ for (const failure of [null, 'foreign', 'query', 'stop']) test(`Windows ${failur
   const f = fixture('win32', (_cmd, _args) => {
     if (++queries === 1) {
       if (failure === 'query') return { code: 1, stdout: '', stderr: 'access denied' };
-      return ok(JSON.stringify({ Arguments: `/c set ROOKS_HOME=${failure === 'foreign' ? 'C:\\elsewhere' : f.opts.novaHome}&& run` }));
+      return ok(JSON.stringify({ Arguments: `/c set ROOKS_HOME=${failure === 'foreign' ? 'C:\\elsewhere' : f.opts.rooksHome}&& run` }));
     }
     return failure === 'stop' ? { code: 1, stdout: '', stderr: 'access denied' } : ok();
   });
   try {
     if (failure) assert.throws(() => removeDesktopService(f.opts)); else removeDesktopService(f.opts);
     if (failure === 'foreign' || failure === 'query') assert.equal(queries, 1);
-    assert.equal(existsSync(join(f.opts.novaHome, 'valuable')), true);
+    assert.equal(existsSync(join(f.opts.rooksHome, 'valuable')), true);
   } finally { f.clean(); }
 });
 
@@ -122,7 +122,7 @@ test('TIM-0115: Windows desktop removal also sweeps the daemon of this installat
   const f = fixture('win32', (_cmd, args) => {
     const script = args.at(-1) ?? '';
     calls.push(script);
-    if (calls.length === 1) return ok(JSON.stringify({ Arguments: `/c set ROOKS_HOME=${f.opts.novaHome}&& run` }));
+    if (calls.length === 1) return ok(JSON.stringify({ Arguments: `/c set ROOKS_HOME=${f.opts.rooksHome}&& run` }));
     // The sweep is best effort: a daemon out of reach is reported by the exit code, never thrown.
     return script.includes('terminal-host') ? { code: 5, stdout: '', stderr: '' } : ok();
   });

@@ -25,8 +25,8 @@ export type LegacyLaunch = {
    *  line-oriented backend, absent for a remote one. */
   readonly proc?: ChildProcessWithoutNullStreams;
   /** Whether Rooks's MCP servers can be handed to the backend
-   *  (`backendCapabilities(name).novaMcp`). Default: yes, as before. */
-  readonly novaMcp?: boolean;
+   *  (`backendCapabilities(name).rooksMcp`). Default: yes, as before. */
+  readonly rooksMcp?: boolean;
 };
 
 export function fromLegacy(backend: Backend, launch: LegacyLaunch = {}): ProviderDefinition {
@@ -41,7 +41,7 @@ export function fromLegacy(backend: Backend, launch: LegacyLaunch = {}): Provide
     },
     permission: { model: backend.permissionModel },
     limits: { reporting: backend.rateLimitReporting },
-    mcp: { rooks: launch.novaMcp ?? true },
+    mcp: { rooks: launch.rooksMcp ?? true },
     // A backend is already bound to its profile: only the options travel.
     ...(backend.accountUsage
       ? { usage: { probe: (_profile?: ProfileRuntime, options?: UsageProbeOptions) => backend.accountUsage!(options) } }

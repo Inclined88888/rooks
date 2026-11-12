@@ -12,7 +12,7 @@
     },
     "account": {
       "title": "Utwórz konto lokalne",
-      "subtitle": "Za jego pomocą logujesz się do Novaa. Jesteś jego administratorem.",
+      "subtitle": "Za jego pomocą logujesz się do Rooks. Jesteś jego administratorem.",
       "privacy": "Zbieramy tylko twój adres e-mail na wypadek, gdybyś chciał zresetować hasło. Utworzone konto pozostaje lokalne."
     },
     "llm": {
@@ -52,7 +52,7 @@
       "system": "System"
     },
     "discover": {
-      "label": "Poznaj Novaa",
+      "label": "Poznaj Rooks",
       "slide": "Slajd {current} z {total}",
       "next": "Dalej",
       "skip": "Pomiń wszystko",

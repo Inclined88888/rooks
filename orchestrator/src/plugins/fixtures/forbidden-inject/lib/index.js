@@ -7,5 +7,5 @@ export const name = 'fixture-forbidden'
 export const inject = ['db']
 
 export function apply() {
-  ;(globalThis.__novaFixtureTrace ??= []).push('forbidden:apply')
+  ;(globalThis.__rooksFixtureTrace ??= []).push('forbidden:apply')
 }

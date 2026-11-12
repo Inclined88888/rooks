@@ -23,7 +23,7 @@ const { readManifest } = await import('./manifest.js');
 const { createPluginContext, daemonHost } = await import('./context.js');
 const { PluginPolicyError } = await import('./policy.js');
 const { config, setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const registry = await import('../backends/registry.js');
 const { providerRuntime } = await import('../backends/provider-runtime.js');
 const accounts = await import('../backends/accounts.js');
@@ -111,7 +111,7 @@ function pluginContext(pluginId: string) {
 }
 
 const previous = config();
-setConfig(NovaConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: ['acme-acct'] } } }));
+setConfig(RooksConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: ['acme-acct'] } } }));
 test.after(() => { resetAccountLogins(); setConfig(previous); });
 
 const ctx = pluginContext('acme-accounts');

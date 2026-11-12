@@ -11,7 +11,7 @@ import { activeMachineId } from '@/lib/machines/machine-storage';
 
 export function reportWindowScheme(scheme: ColorScheme): void {
   if (typeof window === 'undefined') return;
-  const bridge = window.novaDesktop?.windowScheme;
+  const bridge = window.rooksDesktop?.windowScheme;
   if (typeof bridge !== 'function') return;
   try {
     void bridge({ scheme, machineId: activeMachineId() }).catch(() => {});

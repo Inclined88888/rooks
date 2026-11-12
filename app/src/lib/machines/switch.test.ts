@@ -1,5 +1,5 @@
 /**
- * The switch writes `nova_machine` only for a machine the local daemon vouches
+ * The switch writes `rooks_machine` only for a machine the local daemon vouches
  * for, reachable and speaking a contract this app drives — and never for
  * another site's page.
  */
@@ -72,7 +72,7 @@ test('a machine of this person, reachable and compatible: the cookie names it', 
   const out = await run(post({ id: 'vps' }));
   assert.equal(out.status, 200);
   assert.deepEqual(out.body, { id: 'vps', warning: null });
-  assert.match(out.cookie ?? '', /^nova_machine=vps; Max-Age=\d+; Path=\/; SameSite=Lax; HttpOnly$/);
+  assert.match(out.cookie ?? '', /^rooks_machine=vps; Max-Age=\d+; Path=\/; SameSite=Lax; HttpOnly$/);
   // Asked to the local daemon, with the local session and nothing else.
   assert.equal(seen.length, 1);
   assert.equal(seen[0]!.url, '/api/machines/vps/status');
@@ -83,7 +83,7 @@ test('a machine of this person, reachable and compatible: the cookie names it', 
 test('back to this computer: the cookie is cleared, nothing is asked', async () => {
   const out = await run(post({ id: 'local' }, { cookie: '' }));
   assert.equal(out.status, 200);
-  assert.match(out.cookie ?? '', /^nova_machine=; Max-Age=0;/);
+  assert.match(out.cookie ?? '', /^rooks_machine=; Max-Age=0;/);
   assert.equal(seen.length, 0);
 });
 

@@ -13,7 +13,7 @@ process.env.ROOKS_HOME = mkdtempSync(join(tmpdir(), 'rooks-outbox-policy-'));
 
 const { createPluginOutbox, PluginOutboxError } = await import('./outbox.js');
 const { assertFetchAllowed } = await import('./policy.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 
 const URL_A = 'https://hooks.a.example/in';
@@ -33,7 +33,7 @@ function outboxUnderPolicy() {
 test.after(() => resetConfig());
 
 test('a byPlugin host takes the calls of its plugin, and refuses another plugin at the post', async () => {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { byPlugin: { 'outbox-a': ['hooks.a.example'] } } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { byPlugin: { 'outbox-a': ['hooks.a.example'] } } } }));
   const { outbox, sent } = outboxUnderPolicy();
   assert.throws(() => outbox.enqueue('outbox-b', URL_A, { n: 1 }, {}),
     (err: unknown) => err instanceof PluginOutboxError && err.code === 'not_allowed');
@@ -49,11 +49,11 @@ test('a byPlugin host takes the calls of its plugin, and refuses another plugin 
 });
 
 test('a call queued while the host was opened fails, unsent, once the entry is gone', async () => {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { byPlugin: { 'outbox-c': ['hooks.a.example'] } } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { byPlugin: { 'outbox-c': ['hooks.a.example'] } } } }));
   const { outbox, sent } = outboxUnderPolicy();
   const id = outbox.enqueue('outbox-c', URL_A, { n: 1 }, {});
   // The plugin was removed (or the operator closed the host) before delivery.
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { byPlugin: {} } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { byPlugin: {} } } }));
   const detach = outbox.attach('outbox-c');
   try {
     assert.equal(await outbox.deliverDue(), 0);

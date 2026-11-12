@@ -687,7 +687,7 @@ export function createHermesDialect(deps: DriverDeps): RemoteDialect {
     hostedConnectors: false,
     // The agent works on the gateway's machine (no Rooks folder), takes its
     // MCP servers from its own config.yaml, and /v1/runs drops files silently.
-    capabilities: { worktree: false, novaMcp: false, attachments: false, novaPreamble: false },
+    capabilities: { worktree: false, rooksMcp: false, attachments: false, rooksPreamble: false },
     openSession: (args) => new HermesDriver(args, deps),
     extractSessionId,
   };

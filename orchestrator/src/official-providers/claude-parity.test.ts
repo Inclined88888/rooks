@@ -13,7 +13,7 @@ const cases = [
   { name: 'auto', cfg: { model: 'sonnet', permission_mode: 'auto', reasoningEffort: 'high', allowed_tools: ['Read'] } },
   { name: 'resume', cfg: { model: 'opus', permission_mode: 'plan' }, resumeSession: 'session-old', memoryDir: join(cwd, 'memory') },
   { name: 'bypass', cfg: { permission_mode: 'bypassPermissions' } },
-  { name: 'no-rooks', cfg: {}, novaMcp: false },
+  { name: 'no-rooks', cfg: {}, rooksMcp: false },
 ] as const;
 // Captured from the compiled-in dialect before extraction; never refresh to absorb a regression.
 test('Claude launch preserves arguments, stdin and the system prompt of the old dialect', async () => {

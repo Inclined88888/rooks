@@ -16,7 +16,7 @@ sidebar_position: 10
 | Feature or model missing | Host capabilities, enabled plugins and backend catalogue | Inspect `rooks doctor`, `rooks module list` and `rooks backends` |
 | Scheduled task did not run overnight | Whether the computer slept, and `rooks service status` | Turn off automatic sleep; see [Running in the background](background.md) |
 | Rooks takes a minute to open on a work PC, or shows "Checking the installation…" | Antivirus scanning every file Rooks reads | Exclude the Rooks folders from real-time scanning; see [Slow start behind an antivirus](#slow-start-behind-an-antivirus) |
-| Windows installer says Rooks cannot be closed | Whether you allowed the permission prompt when the installer opened | Choose **Quit and stop the background service** in the tray icon menu before installing; or, in an administrator PowerShell, run `schtasks /End /TN NovaOrchestrator; Stop-Process -Name Rooks -Force`, then choose Retry |
+| Windows installer says Rooks cannot be closed | Whether you allowed the permission prompt when the installer opened | Choose **Quit and stop the background service** in the tray icon menu before installing; or, in an administrator PowerShell, run `schtasks /End /TN RooksOrchestrator; Stop-Process -Name Rooks -Force`, then choose Retry |
 | Quota state unavailable | Whether the backend has a working usage probe | Treat unknown as unknown, not as zero usage |
 | Anything else, or you need help | The diagnostic report | **Copy diagnostic** and paste it in your support request; see below |
 
@@ -312,7 +312,7 @@ With Microsoft Defender: **Windows Security › Virus & threat protection › Ma
 
 ## Windows: updating while the background service runs
 
-The installer pauses the `NovaOrchestrator` task and ends its daemon before replacing the files, with the Windows permission prompt when it is granted and without it otherwise. If an older installer left Rooks failing at launch (for example "ffmpeg.dll was not found"), close every `Rooks.exe` from Task Manager, run the installer again, then start the task from Task Scheduler or reopen Rooks.
+The installer pauses the `RooksOrchestrator` task and ends its daemon before replacing the files, with the Windows permission prompt when it is granted and without it otherwise. If an older installer left Rooks failing at launch (for example "ffmpeg.dll was not found"), close every `Rooks.exe` from Task Manager, run the installer again, then start the task from Task Scheduler or reopen Rooks.
 
 ## The LLM quotas widget says Codex is not signed in
 

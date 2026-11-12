@@ -15,7 +15,7 @@ process.env.ROOKS_HOME = mkdtempSync(join(tmpdir(), 'rooks-user-cli-'));
 
 const ROOKS = fileURLToPath(new URL('../bin/rooks', import.meta.url));
 
-function runNova(args: string[], env: NodeJS.ProcessEnv): Promise<{
+function runRooks(args: string[], env: NodeJS.ProcessEnv): Promise<{
   code: number | null; stdout: string; stderr: string;
 }> {
   return new Promise((resolve, reject) => {
@@ -72,7 +72,7 @@ test('rooks user reset-password looks up by email and prints the password once',
       ROOKS_API_TOKEN: 'cli-token',
       ROOKS_HOME: process.env.ROOKS_HOME,
     };
-    const result = await runNova(['user', 'reset-password', 'ada@example.com'], env);
+    const result = await runRooks(['user', 'reset-password', 'ada@example.com'], env);
     assert.equal(result.code, 0, result.stderr);
     assert.match(result.stdout, /temp-password-once/);
     assert.match(result.stdout, /out of band/);
@@ -93,7 +93,7 @@ test('the account administration commands left with the routes', async () => {
       ROOKS_HOME: process.env.ROOKS_HOME,
     };
     for (const argv of [['user', 'disable', 'ada@example.com'], ['user', 'invite', '--email', 'eve@example.com', '--name', 'Eve'], ['role', 'list'], ['group', 'list']]) {
-      const result = await runNova(argv, env);
+      const result = await runRooks(argv, env);
       assert.notEqual(result.code, 0, argv.join(' '));
     }
     assert.ok(!mock.seen.some((s) => s.method === 'PATCH' || s.url === '/api/invitations' || s.url === '/api/roles' || s.url === '/api/groups'));

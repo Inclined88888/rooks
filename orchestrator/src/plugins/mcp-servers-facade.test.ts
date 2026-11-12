@@ -10,7 +10,7 @@ import type { PluginMcpServer } from './contract/mcp-servers.js';
 
 const { PluginPermissionError, PluginCallerError } = await import('./context.js');
 const { upsertMcp, getMcp } = await import('../mcp.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { resetPluginPolicyState } = await import('./policy.js');
 const { setMcpHostLookupForTest } = await import('../mcp-url-guard.js');
@@ -25,7 +25,7 @@ test.after(() => { setMcpHostLookupForTest(null); });
 
 /** Installs a `pluginPolicy` through the real schema. */
 function withPolicy(pluginPolicy: { exec?: { allow?: string[] } }): void {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy }));
   resetPluginPolicyState();
 }
 

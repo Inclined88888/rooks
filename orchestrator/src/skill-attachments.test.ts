@@ -23,7 +23,7 @@ const { registerDialect, registerProfile } = await import('./backends/registry.j
 registerDialect('att-test', 'att-no-mcp', {
   defaultCmd: 'echo', persistentProcess: false, finishMissionOnExit: false, sessionResumable: false,
   sessionStore: 'global', permissionModel: 'none', rateLimitReporting: 'none', hostedConnectors: false,
-  capabilities: { novaMcp: false },
+  capabilities: { rooksMcp: false },
   async buildSpawn(_opts, profile) { return { cmd: profile.cmd, args: [], initialStdin: null }; },
   writeUserInput() { /* one-shot */ },
   parseLine() { return []; },

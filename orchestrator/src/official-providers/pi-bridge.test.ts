@@ -652,7 +652,7 @@ test('the provider declares Rooks\'s servers, and launches Pi with the bridge as
 });
 
 test('a launch with Rooks\'s servers turned off still loads the bridge, with no server: it gates Pi\'s tools', async () => {
-  const spawn = spawnOpts({ novaMcp: false });
+  const spawn = spawnOpts({ rooksMcp: false });
   const sp = await provider.launch(spawn, PROFILE);
   assert.ok(sp.args.includes('-e'));
   const p = peer(null);

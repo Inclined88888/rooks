@@ -15,7 +15,7 @@
  * page (`WELCOME_PATH`, the maintainer's decision of 05/11/2026), and the shell leaves
  * the onboarding there once the slides are over or skipped (`afterLastStep`).
  */
-export const ONBOARDING_STEP_IDS = ['splash', 'account', 'llm', 'profile', 'agent', 'discover'] as const;
+export const ONBOARDING_STEP_IDS = ['splash', 'account', 'llm', 'channels', 'mail', 'profile', 'agent', 'discover'] as const;
 
 /**
  * The former last step, `?step=chat`: an address a tab opened before the
@@ -43,7 +43,7 @@ export type OnboardingStepId = typeof ONBOARDING_STEP_IDS[number] | typeof RETUR
  * not a step to count, and "Discover Rooks" has its own progress bars.
  * Without a dot it has no "Back" either: the agent is made, behind it.
  */
-export const DOTTED_STEPS: readonly OnboardingStepId[] = ['account', 'llm', 'profile', 'agent'];
+export const DOTTED_STEPS: readonly OnboardingStepId[] = ['account', 'llm', 'channels', 'mail', 'profile', 'agent'];
 
 export const ONBOARDING_PATH = '/onboarding';
 

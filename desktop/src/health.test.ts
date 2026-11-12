@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import { createServer as createTcpServer, type AddressInfo } from 'node:net';
-import { isNova, probeFailureReason, probeHealth, waitForHealth, SERVICE_ID } from './health.js';
+import { isRooks, probeFailureReason, probeHealth, waitForHealth, SERVICE_ID } from './health.js';
 
 /** What the daemon actually answers — see `plugins-bundled/http/routes.ts`. */
 const ROOKS_BODY = JSON.stringify({ ok: true, service: SERVICE_ID });
@@ -28,7 +28,7 @@ test('a daemon that answers 200 is up', async () => {
   try {
     const res = await probeHealth(origin);
     assert.deepEqual(res, { ok: true, status: 200, identity: 'rooks' });
-    assert.equal(isNova(res), true);
+    assert.equal(isRooks(res), true);
   } finally {
     server.close();
   }
@@ -40,7 +40,7 @@ test('an unauthorized response is not proof of daemon identity', async () => {
     const res = await probeHealth(origin);
     assert.equal(res.ok, true);
     assert.equal(res.status, 401);
-    assert.equal(isNova(res), false);
+    assert.equal(isRooks(res), false);
   } finally {
     server.close();
   }
@@ -115,7 +115,7 @@ test('another service on the port is not our daemon', async () => {
   try {
     const res = await probeHealth(origin);
     assert.equal(res.ok, true, 'something does answer');
-    assert.equal(isNova(res), false, 'but it is not Rooks');
+    assert.equal(isRooks(res), false, 'but it is not Rooks');
   } finally {
     server.close();
   }
@@ -124,7 +124,7 @@ test('another service on the port is not our daemon', async () => {
 test('a body that is not JSON at all is foreign too', async () => {
   const { origin, server } = await listen(() => 200, '<html>hello</html>');
   try {
-    assert.equal(isNova(await probeHealth(origin)), false);
+    assert.equal(isRooks(await probeHealth(origin)), false);
   } finally {
     server.close();
   }
@@ -135,7 +135,7 @@ test('waiting does not turn a foreign server into ours', async () => {
   try {
     const res = await waitForHealth(origin, 1000, 100);
     assert.equal(res.ok, true);
-    assert.equal(isNova(res), false);
+    assert.equal(isRooks(res), false);
   } finally {
     server.close();
   }
@@ -147,8 +147,8 @@ test('a responding Rooks from a different home cannot reuse its account', async 
   const { origin, server } = await listen(() => 200, JSON.stringify({ service: SERVICE_ID, instance: instanceId(home) }));
   try {
     const result = await probeHealth(origin);
-    assert.equal(isNova(result, home), true);
-    assert.equal(isNova(result, '/tmp/fresh-installation'), false);
+    assert.equal(isRooks(result, home), true);
+    assert.equal(isRooks(result, '/tmp/fresh-installation'), false);
   } finally { server.close(); }
 });
 

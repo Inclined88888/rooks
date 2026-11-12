@@ -90,7 +90,7 @@ export function parseInstallOutcome(value: unknown): UpdateInstallOutcome {
 
 export function updatesBridge(): UpdatesBridge | null {
   if (typeof window === 'undefined') return null;
-  const bridge: Partial<UpdatesBridge> | undefined = window.novaDesktop?.updates;
+  const bridge: Partial<UpdatesBridge> | undefined = window.rooksDesktop?.updates;
   if (!bridge || typeof bridge.state !== 'function' || typeof bridge.start !== 'function' || typeof bridge.cancel !== 'function'
     || typeof bridge.open !== 'function' || typeof bridge.onState !== 'function') return null;
   return bridge as UpdatesBridge;

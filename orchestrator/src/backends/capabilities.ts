@@ -53,8 +53,8 @@ export function nativeCompactCommand(id: string | null | undefined): string | nu
  * (a path on that disk is only read by a local agent). With neither, a catalogue
  * line has no follow-up, so the spawn pastes the body instead.
  */
-export function canReadSkillOnDemand(caps: Pick<BackendCapabilities, 'novaMcp' | 'attachments'>): boolean {
-  return caps.novaMcp || caps.attachments;
+export function canReadSkillOnDemand(caps: Pick<BackendCapabilities, 'rooksMcp' | 'attachments'>): boolean {
+  return caps.rooksMcp || caps.attachments;
 }
 
 /** Stable `code` of the 400 a route answers when the backend takes no files. */

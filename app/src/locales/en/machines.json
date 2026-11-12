@@ -68,7 +68,7 @@
       "invalidUrl": "This address cannot be used: give the machine's address alone, with no login, query or fragment.",
       "httpsRequired": "The machine must be reached over HTTPS. Plain HTTP is only accepted on this computer itself.",
       "blockedAddress": "This address never points to a Rooks machine.",
-      "notNova": "No Rooks machine answers at this address.",
+      "notRooks": "No Rooks machine answers at this address.",
       "requiresTls": "The machine does not see this connection as HTTPS: check the HTTPS settings of its reverse proxy.",
       "unreachable": "The machine cannot be reached right now.",
       "unauthorized": "The machine no longer accepts this computer: its access was revoked or expired. Pair it again.",

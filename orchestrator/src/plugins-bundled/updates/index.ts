@@ -14,7 +14,7 @@ import type { ModuleManifest } from '../../kernel/registry.js';
 import { liveMissionCount, workingMissionCount } from '../../agent.js';
 import { buildInfo } from '../../build-info.js';
 import { bus } from '../../bus.js';
-import { novaVersion } from '../../data-version.js';
+import { rooksVersion } from '../../data-version.js';
 import { createNotification } from '../../notifications.js';
 import { ROOKS_HOME } from '../../paths.js';
 import { settingBool } from '../../settings.js';
@@ -48,7 +48,7 @@ export function createChecker(): UpdateChecker {
     enabled: () => settingBool(UPDATES_SETTING),
     channel: () => buildInfo().channel,
     buildExpiresAt: () => buildInfo().expiresAt,
-    installed: novaVersion,
+    installed: rooksVersion,
     keyring: activeReleaseKeyring,
     stateFile: stateFileIn(ROOKS_HOME),
     onOffer: (offer, channel) => announce(created, offer, channel),
@@ -63,7 +63,7 @@ export function announce(target: UpdateChecker, offer: UpdateOffer, channel: 'be
   createNotification({
     type: 'report',
     title: `Rooks ${offer.version} is available`,
-    body: `You run ${novaVersion()}. Open Rooks to see what changed and download the installer.`,
+    body: `You run ${rooksVersion()}. Open Rooks to see what changed and download the installer.`,
     anchor: `rooks-update:${offer.version}`,
   });
 }

@@ -68,7 +68,7 @@
       "invalidUrl": "Dit adres kan niet worden gebruikt: geef alleen het adres van de machine, zonder login, query of fragment.",
       "httpsRequired": "De machine moet via HTTPS worden bereikt. Gewone HTTP wordt alleen op deze computer zelf geaccepteerd.",
       "blockedAddress": "Dit adres wijst nooit naar een Rooks-machine.",
-      "notNova": "Er antwoordt geen Rooks-machine op dit adres.",
+      "notRooks": "Er antwoordt geen Rooks-machine op dit adres.",
       "requiresTls": "De machine ziet deze verbinding niet als HTTPS: controleer de HTTPS-instellingen van haar reverse proxy.",
       "unreachable": "De machine is nu niet bereikbaar.",
       "unauthorized": "De machine accepteert deze computer niet meer: de toegang is ingetrokken of verlopen. Koppel haar opnieuw.",

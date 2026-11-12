@@ -1,7 +1,7 @@
 // Sandboxed preloads must be CommonJS and expose capabilities, never raw IPC.
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron');
 
-contextBridge.exposeInMainWorld('novaDesktop', {
+contextBridge.exposeInMainWorld('rooksDesktop', {
   selectDirectory: (defaultPath?: string): Promise<string | null> => ipcRenderer.invoke('rooks:select-directory', defaultPath),
   selectPluginSource: (kind: 'folder' | 'archive'): Promise<string | null> => ipcRenderer.invoke('rooks:select-plugin-source', kind),
   selectExecutable: (defaultPath?: string): Promise<string | null> => ipcRenderer.invoke('rooks:select-executable', defaultPath),

@@ -68,7 +68,7 @@ function startMock(turnsAfter: number, events: unknown[] = EVENTS): Promise<{
   });
 }
 
-function runNova(args: string[], api: string): Promise<{ code: number | null; stdout: string }> {
+function runRooks(args: string[], api: string): Promise<{ code: number | null; stdout: string }> {
   return new Promise((resolve, reject) => {
     const env = { ...process.env, ROOKS_API: api, ROOKS_RESOURCE_GUARD_ENABLED: '0' };
     delete env.ROOKS_API_TOKEN;
@@ -83,7 +83,7 @@ function runNova(args: string[], api: string): Promise<{ code: number | null; st
 test('rend la main sur la fin du tour, sans attendre la mort du process', async () => {
   const mock = await startMock(1);
   try {
-    const r = await runNova(['wait', MISSION, '--timeout=20'], mock.url);
+    const r = await runRooks(['wait', MISSION, '--timeout=20'], mock.url);
     assert.equal(r.code, 0);
     // Le tour courant seulement : un pilote qui attend deux fois la même
     // mission ne doit pas se voir resservir tout l'historique.
@@ -96,7 +96,7 @@ test('rend la main sur la fin du tour, sans attendre la mort du process', async 
 test('la boucle interroge la vue légère, le transcript une seule fois', async () => {
   const mock = await startMock(2);
   try {
-    await runNova(['wait', MISSION, '--timeout=20'], mock.url);
+    await runRooks(['wait', MISSION, '--timeout=20'], mock.url);
     const light = mock.urls.filter((u) => u.includes('view=status'));
     const full = mock.urls.filter((u) => !u.includes('view=status'));
     assert.equal(light.length, 3);
@@ -109,7 +109,7 @@ test('la boucle interroge la vue légère, le transcript une seule fois', async 
 test('--json rend toujours la mission complète', async () => {
   const mock = await startMock(0);
   try {
-    const r = await runNova(['wait', MISSION, '--timeout=20', '--json'], mock.url);
+    const r = await runRooks(['wait', MISSION, '--timeout=20', '--json'], mock.url);
     const body = JSON.parse(r.stdout) as { id: string; events: unknown[] };
     assert.equal(body.id, MISSION);
     assert.equal(body.events.length, EVENTS.length);
@@ -122,7 +122,7 @@ test('un tour qui finit sur un outil rend l\'historique plutôt que rien', async
   const mute = EVENTS.slice(0, 4); // pas de texte après le dernier tool_result
   const mock = await startMock(1, [...mute, { type: 'result', payload: { subtype: 'success' } }]);
   try {
-    const r = await runNova(['wait', MISSION, '--timeout=20'], mock.url);
+    const r = await runRooks(['wait', MISSION, '--timeout=20'], mock.url);
     assert.match(r.stdout, /premier tour/);
   } finally {
     await mock.close();

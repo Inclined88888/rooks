@@ -25,14 +25,14 @@ const { agentDir } = await import('../paths.js');
 const { hashPassword } = await import('../users/password.js');
 const { createRoutine, enableBackupRoutine, BACKUP_ROUTINE_ID, tickRoutines } = await import('../routines.js');
 const { MAX_PLUGIN_ROUTINES } = await import('./routines-facade.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig } = await import('../config/load.js');
 const { assertSpawnAllowed, resetPluginPolicyState, spawnCardsSettled } = await import('./policy.js');
 
 // A plugin's routine ticks as the plugin: the operator approved these (TODO #591).
 const APPROVED = ['acme-cron', 'acme-own', 'acme-mut', 'acme-mut-other', 'acme-job-r', 'acme-flood-r'];
 const policy = (spawn: { approved: string[]; max?: number; windowMs?: number } = { approved: APPROVED }) => {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn } }));
   resetPluginPolicyState();
 };
 policy();

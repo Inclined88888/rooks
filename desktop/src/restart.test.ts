@@ -148,7 +148,7 @@ test('the sandbox preload exposes narrow restart, directory and browser presenta
       assert.equal(name, 'electron');
       return {
         contextBridge: { exposeInMainWorld: (key: string, api: typeof bridge) => {
-          assert.equal(key, 'novaDesktop'); bridge = api;
+          assert.equal(key, 'rooksDesktop'); bridge = api;
         } },
         ipcRenderer: {
           invoke: async (...args: unknown[]) => { calls.push(args); },

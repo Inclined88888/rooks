@@ -15,7 +15,7 @@ const { readManifest } = await import('./manifest.js');
 const { createPluginContext, daemonHost } = await import('./context.js');
 const { PluginPolicyError } = await import('./policy.js');
 const { config, setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { resolveIsolation } = await import('../host/isolation.js');
 const { credentialDirProblem } = await import('../backends/provider-declarations.js');
 const { otherBackendHomeDirProblem } = await import('../backends/credential-home-dirs.js');
@@ -23,7 +23,7 @@ const { ownerCredentialDirs } = await import('../backends/registry.js');
 
 function allowExec(...names: string[]): () => void {
   const previous = config();
-  setConfig(NovaConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: names } } }));
+  setConfig(RooksConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: names } } }));
   return () => setConfig(previous);
 }
 
@@ -105,7 +105,7 @@ test('a profile on a dialect of another plugin spares ITS folder, not the dialec
   const base = pluginContext('acme-base-plugin', 'acme-base-bin', ['.acme-base']);
   const sub = pluginContext('acme-sub-plugin', 'acme-base-bin', ['.acme-sub']);
   const home = '/home/tester';
-  const cfg = NovaConfigSchema.parse({});
+  const cfg = RooksConfigSchema.parse({});
   try {
     const releaseDialect = base.provider.registerProvider(dialect('acme-base', 'acme-base-bin', ['.acme-base']));
     const releaseBase = base.backends.registerProfile(profileOf('acme-base-profile', 'acme-base'));
@@ -142,7 +142,7 @@ test('REFUSAL: a third party cannot take a product backend\'s folder by register
       assert.throws(() => squatter.provider.registerProvider(dialect(id, 'acme-squat-bin', [dir])), /credential folder of the `.+` backend/, `${id} must not be claimable`);
       assert.throws(() => squatter.backends.registerProfile(profileOf(`${id}-profile`, 'codex', [dir])), /credential folder of the `.+` backend/);
       assert.equal(ownerCredentialDirs(`acme-squat-${id}`).length, 0, 'nothing for scratch.link to read');
-      const isolation = resolveIsolation(NovaConfigSchema.parse({}), { home: '/home/tester', backend: `${id}-profile` });
+      const isolation = resolveIsolation(RooksConfigSchema.parse({}), { home: '/home/tester', backend: `${id}-profile` });
       assert.ok(isolation.deny.includes(`/home/tester/${dir}`), `${dir} stays masked for everyone but its owner`);
     }
     // The same declaration from a provider shipped in the release is accepted.

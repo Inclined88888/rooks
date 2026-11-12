@@ -38,7 +38,7 @@ import {
   type LegacyAccountTable,
 } from './users/legacy-account-tables.js';
 import { prepareOwnerOnlyFile, tightenToOwner } from './host/owner-only.js';
-import { assertDataUpdateApproved, assertPackagedCliMayOpen, packagedCli, packagedDaemon, protectDataBeforeOpen, novaVersion, unpackagedDataNotice } from './data-version.js';
+import { assertDataUpdateApproved, assertPackagedCliMayOpen, packagedCli, packagedDaemon, protectDataBeforeOpen, rooksVersion, unpackagedDataNotice } from './data-version.js';
 import { holdDataOpenLock, releaseDataOpenLock } from './data-open-lock.js';
 import { bus, type TaskDeletedSnapshot } from './bus.js';
 import {
@@ -83,18 +83,18 @@ mkdirSync(dirname(DB_PATH), { recursive: true });
 // Held from the copy to the last migration of this module: the daemon and a packaged CLI
 // approved at the same moment must not both copy, nor both migrate (TODO #592).
 if (packagedDaemon()) {
-  assertDataUpdateApproved({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, novaVersion());
+  assertDataUpdateApproved({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, rooksVersion());
   holdDataOpenLock(ROOKS_HOME);
-  try { protectDataBeforeOpen({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, novaVersion()); }
+  try { protectDataBeforeOpen({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, rooksVersion()); }
   catch (error) { releaseDataOpenLock(ROOKS_HOME); throw error; }
 } else if (packagedCli()) {
   // Once approved, the CLI may be first to open the data: it keeps the same copy the daemon would.
-  assertPackagedCliMayOpen({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, novaVersion());
+  assertPackagedCliMayOpen({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, rooksVersion());
   holdDataOpenLock(ROOKS_HOME);
-  try { protectDataBeforeOpen({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, novaVersion()); }
+  try { protectDataBeforeOpen({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, rooksVersion()); }
   catch (error) { releaseDataOpenLock(ROOKS_HOME); throw error; }
 } else {
-  const notice = unpackagedDataNotice({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, novaVersion());
+  const notice = unpackagedDataNotice({ home: ROOKS_HOME, dbPath: DB_PATH, configPath: join(ROOKS_HOME, 'rooks.config.json') }, rooksVersion());
   if (notice) console.warn(notice);
 }
 
@@ -6011,14 +6011,14 @@ export const dbApi = {
     return row ? resultModelOf(row.payload) : null;
   },
   /** True when the mission's last turn ended on a failure Rooks had scheduled
-   *  for a replay (`nova_retry`, agent.ts) and nothing came after: no replay
+   *  for a replay (`rooks_retry`, agent.ts) and nothing came after: no replay
    *  input, no new input, no `turn_retry_abandoned`. The replay timer lives in
    *  memory, so after a daemon restart this is a turn nobody will ever finish. */
   lastTurnAwaitsReplay(missionId: string): boolean {
     const row = latestTurnEdgeStmt.get(missionId) as { type: string; payload: string } | undefined;
     if (row?.type !== 'result') return false;
     try {
-      const retry = (JSON.parse(row.payload) as { nova_retry?: unknown } | null)?.nova_retry;
+      const retry = (JSON.parse(row.payload) as { rooks_retry?: unknown } | null)?.rooks_retry;
       return retry !== undefined && retry !== null;
     } catch {
       return false;

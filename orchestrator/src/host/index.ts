@@ -1,4 +1,4 @@
-import type { NovaConfig } from '../config/schema.js';
+import type { RooksConfig } from '../config/schema.js';
 import { config } from '../config/load.js';
 import { createGenericHost } from './generic.js';
 import { createLinuxHost } from './linux.js';
@@ -15,7 +15,7 @@ export { hasSystemd, systemctlCallCount } from './systemd.js';
 
 let current: Host | undefined;
 
-export function createHost(cfg: NovaConfig): Host {
+export function createHost(cfg: RooksConfig): Host {
   // Pins are read from the live config, not from `cfg`: the adapter lives as
   // long as the daemon, and `host.binaries` can change under it (TODO #413).
   const pins = () => config().host.binaries;

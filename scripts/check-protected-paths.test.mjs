@@ -67,7 +67,7 @@ test('a contributor touching a protected path, even by renaming it away, is refu
 });
 
 test('package.json: identity fields and install-time scripts are guarded, dependencies are not', () => {
-  const base = { name: 'rooks-app', license: 'AGPL-3.0-only', scripts: { test: 'x' }, dependencies: { a: '1' } };
+  const base = { name: 'rooks-app', license: 'proprietary', scripts: { test: 'x' }, dependencies: { a: '1' } };
   assert.deepEqual(packageFieldChanges(base, { ...base, dependencies: { a: '2', b: '1' } }, 'modified'), []);
   assert.deepEqual(packageFieldChanges(base, { ...base, license: 'MIT', author: 'Mallory' }, 'modified'), ['author', 'license']);
   assert.deepEqual(packageFieldChanges(base, { ...base, scripts: { ...base.scripts, postinstall: 'curl x | sh' } }, 'modified'), ['scripts.postinstall']);

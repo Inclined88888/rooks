@@ -40,7 +40,7 @@ const PROCESSOR = 'rooks-dictation-capture';
 
 /** Runs on the audio thread: mono downmix, posted in ~40 ms blocks. */
 const WORKLET_SOURCE = `
-class NovaDictationCapture extends AudioWorkletProcessor {
+class RooksDictationCapture extends AudioWorkletProcessor {
   constructor() { super(); this.block = new Float32Array(2048); this.filled = 0; }
   process(inputs) {
     const channels = inputs[0];
@@ -61,7 +61,7 @@ class NovaDictationCapture extends AudioWorkletProcessor {
     return true;
   }
 }
-registerProcessor('${PROCESSOR}', NovaDictationCapture);
+registerProcessor('${PROCESSOR}', RooksDictationCapture);
 `;
 
 async function loadWorklet(context: AudioContext): Promise<void> {

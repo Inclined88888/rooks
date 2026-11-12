@@ -7,7 +7,7 @@ import {
   daemonEnvOverrides,
   loadDesktopConfig,
   originOf,
-  resolveNovaHome,
+  resolveRooksHome,
   expandTilde,
   PACKAGED_DEFAULTS,
 } from './config.js';
@@ -67,9 +67,9 @@ test('installDir expands a leading tilde', () => {
 });
 
 test('ROOKS_HOME wins over the real home', () => {
-  assert.equal(resolveNovaHome({ ROOKS_HOME: '/tmp/elsewhere' }), '/tmp/elsewhere');
-  assert.ok(resolveNovaHome({}).endsWith('/.rooks'));
-  assert.ok(resolveNovaHome({ ROOKS_HOME: '' }).endsWith('/.rooks'));
+  assert.equal(resolveRooksHome({ ROOKS_HOME: '/tmp/elsewhere' }), '/tmp/elsewhere');
+  assert.ok(resolveRooksHome({}).endsWith('/.rooks'));
+  assert.ok(resolveRooksHome({ ROOKS_HOME: '' }).endsWith('/.rooks'));
 });
 
 test('a wildcard listen address is dialled back to the loopback', () => {

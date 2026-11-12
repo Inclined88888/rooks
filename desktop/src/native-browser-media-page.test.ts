@@ -35,7 +35,7 @@ async function start(encodable: string[], viewer: string[] | null, audio = true)
     window, MediaRecorder: FakeRecorder, MediaStream: FakeStream, setTimeout, clearTimeout,
     navigator: { mediaDevices: { getDisplayMedia: async () => new FakeStream() } },
   });
-  const media = window.novaMedia as { start(audio: boolean, offer: null, viewer: string[] | null, width: number, height: number): Promise<Started> };
+  const media = window.rooksMedia as { start(audio: boolean, offer: null, viewer: string[] | null, width: number, height: number): Promise<Started> };
   const result = await media.start(audio, null, viewer, 640, 480);
   return { result, recorded: recorders[0]!.stream };
 }

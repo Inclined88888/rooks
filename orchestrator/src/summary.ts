@@ -320,7 +320,7 @@ async function runOneShot(
     // A one-shot is no mission: it holds no token of its own, and the `rooks`
     // server falls back to the daemon-token without one. None of its prompts
     // needs Rooks's tools, so its CLI is handed none.
-    novaMcp: false,
+    rooksMcp: false,
     // The transcript it summarises may carry a prompt injection: an agent that decides its tool
     // uses alone is confined by its provider (`AcpAgentSpec.oneShotEnv`), never asked.
     oneShot: true,

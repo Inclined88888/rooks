@@ -24,7 +24,7 @@ const { dbApi } = await import('../db.js');
 const { hashPassword } = await import('../users/password.js');
 const { insertTrigger, getTriggerRow, parseTrigger, listTriggerRows } = await import('../triggers/store.js');
 const { runActions } = await import('../triggers/actions.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { agentDir } = await import('../paths.js');
 const { assertSpawnAllowed, resetPluginPolicyState } = await import('./policy.js');
@@ -173,20 +173,20 @@ test('a webhook action stays inside pluginPolicy.http, at creation and at every 
     source: 'schedule' as const, name: `out ${url}`, config: { cron: '0 * * * *' },
     actions: [{ type: 'webhook' as const, url }],
   });
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { allow: [] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { allow: [] } } }));
   await assert.rejects(plugin.triggers.create(input('https://worker.example.test/in')), code('forbidden'));
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { allow: ['worker.example.test'] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { allow: ['worker.example.test'] } } }));
   const created = await plugin.triggers.create(input('https://worker.example.test/in'));
   assert.match(created.outboundSecret ?? '', /^whsec_/);
   await assert.rejects(plugin.triggers.create(input('https://evil.example.org/in')), code('forbidden'));
   // An operator allow-list naming a private or metadata address does not open it (TODO #687).
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { allow: ['169.254.169.254', '10.0.0.5', 'localhost'] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { allow: ['169.254.169.254', '10.0.0.5', 'localhost'] } } }));
   for (const url of ['https://169.254.169.254/latest/meta-data/', 'https://10.0.0.5/in', 'https://localhost/in']) {
     await assert.rejects(plugin.triggers.create(input(url)), (e: unknown) => code('invalid')(e) && /cannot target/.test((e as Error).message), url);
   }
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { allow: ['worker.example.test'] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { allow: ['worker.example.test'] } } }));
   // The operator tightens the policy later: the stored trigger stops sending.
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { allow: [] } } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { allow: [] } } }));
   const stored = parseTrigger(getTriggerRow(created.trigger.id)!)!;
   const outcomes = runActions(stored, { body: {}, headers: {} }, { dryRun: true });
   assert.equal(outcomes[0]?.ok, false);
@@ -304,7 +304,7 @@ test('a task action of a plugin\'s trigger is a spawn: approval at creation, app
   const fire = (t: NonNullable<ReturnType<typeof stored>>, dryRun = false) => runActions(t, { body: {}, headers: {} }, { dryRun })[0]!;
   const opened = (name: string) => dbApi.listTasks().filter((t) => t.description?.includes(`run ${name}`)).length;
   const policy = (spawn: { approved: string[]; max?: number; windowMs?: number }) => {
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn } }));
     resetPluginPolicyState();
   };
   try {

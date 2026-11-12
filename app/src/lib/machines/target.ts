@@ -11,7 +11,7 @@
  *   - `resolveTarget(req?)`  the machine the request names (`machineIdFromRequest`):
  *                            the `X-Rooks-Machine` header when present — a
  *                            desktop window pinned to one machine — else the
- *                            non-secret `nova_machine` cookie, the machine the
+ *                            non-secret `rooks_machine` cookie, the machine the
  *                            browser has switched to. Both carry an id, never a
  *                            URL. Without `req`, the headers of the current
  *                            Next request scope; outside a request, local.
@@ -104,7 +104,7 @@ export interface UnavailableTarget {
 export type Target = LocalTarget | RemoteTarget | UnavailableTarget;
 
 /** Non-secret cookie naming the active machine. Holds an id, never a URL. */
-export const MACHINE_COOKIE = 'nova_machine';
+export const MACHINE_COOKIE = 'rooks_machine';
 export { LOCAL_MACHINE_ID, MACHINE_HEADER };
 
 const LOCAL_TIMEOUT_MS = 2_000;
@@ -158,7 +158,7 @@ export const MALFORMED_MACHINE_ID = '!malformed';
 
 /**
  * The one reading of which machine a request names: `X-Rooks-Machine` first,
- * then the `nova_machine` cookie. Absent or blank header: the cookie, as
+ * then the `rooks_machine` cookie. Absent or blank header: the cookie, as
  * before the header existed.
  *
  * A malformed cookie is ignored (local), as it always was: the cookie is the
@@ -230,7 +230,7 @@ function cookieValue(header: string | null | undefined, name: string): string | 
   return null;
 }
 
-/** The `nova_machine` id of a raw `Cookie` header, or `null` when absent or
+/** The `rooks_machine` id of a raw `Cookie` header, or `null` when absent or
  *  malformed (a malformed id is ignored, not trusted). */
 export function machineIdFromCookieHeader(header: string | null | undefined): string | null {
   return validMachineId(cookieValue(header, MACHINE_COOKIE) ?? undefined);

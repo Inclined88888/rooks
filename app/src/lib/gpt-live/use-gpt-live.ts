@@ -158,7 +158,7 @@ export function useGptLive(opts: {
     const dc = channel.current;
     if (!dc || dc.readyState !== 'open') return;
     eventSeq.current += 1;
-    dc.send(JSON.stringify({ event_id: `nova_${eventSeq.current}`, ...event }));
+    dc.send(JSON.stringify({ event_id: `rooks_${eventSeq.current}`, ...event }));
   }, []);
 
   const reply = useCallback((delegationId: string, text: string, written: boolean) => {

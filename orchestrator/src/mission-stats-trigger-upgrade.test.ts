@@ -71,7 +71,7 @@ test('the old trigger is replaced at boot, and the row it fed keeps being counte
   const stats = () => db.prepare(`SELECT event_count, last_result_id FROM mission_stats WHERE mission_id = ?`)
     .get(legacy) as { event_count: number; last_result_id: number | null };
   const ended = dbApi.insertEvent(legacy, 'result', { model: 'm' });
-  dbApi.insertEvent(legacy, 'result', { model: 'm', nova_steered: true });
+  dbApi.insertEvent(legacy, 'result', { model: 'm', rooks_steered: true });
   assert.deepEqual({ ...stats() }, { event_count: 2, last_result_id: ended.id });
 });
 

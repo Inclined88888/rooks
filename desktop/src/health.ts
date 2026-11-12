@@ -58,7 +58,7 @@ export async function probeHealth(origin: string, timeoutMs = 1500): Promise<Hea
 }
 
 /** Answered, and answered as Rooks. */
-export function isNova(result: HealthResult, home?: string): boolean {
+export function isRooks(result: HealthResult, home?: string): boolean {
   return result.ok && result.identity === 'rooks' && (home === undefined || result.instance === instanceId(home));
 }
 

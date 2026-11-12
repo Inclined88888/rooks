@@ -12,16 +12,16 @@
     },
     "account": {
       "title": "ローカルアカウントを作成",
-      "subtitle": "このアカウントでNovaにサインインします。あなたが管理者です。",
+      "subtitle": "このアカウントでRooksにサインインします。あなたが管理者です。",
       "privacy": "メールアドレスは、パスワードを再設定したいときのためだけに収集します。作成したアカウントはローカルに保存されます。"
     },
     "llm": {
       "title": "LLMを\n選んでください。",
-      "subtitle": "Novaはすでにお持ちのAIサブスクリプションで動きます。トークン単位の請求は一切ありません。"
+      "subtitle": "Rooksはすでにお持ちのAIサブスクリプションで動きます。トークン単位の請求は一切ありません。"
     },
     "profile": {
-      "title": "Novaで何をしたいですか？",
-      "subtitle": "回答に合わせて、Novaが初期設定とガイドツアーを調整します。"
+      "title": "Rooksで何をしたいですか？",
+      "subtitle": "回答に合わせて、Rooksが初期設定とガイドツアーを調整します。"
     },
     "agent": {
       "templates": {
@@ -39,7 +39,7 @@
     },
     "signin": {
       "title": "おかえりなさい",
-      "subtitle": "Novaが新しくなりました。続けるにはNovaアカウントでサインインしてください。"
+      "subtitle": "Rooksが新しくなりました。続けるにはRooksアカウントでサインインしてください。"
     },
     "mascot": {
       "title": "{name}のマスコットです",
@@ -52,7 +52,7 @@
       "system": "システム"
     },
     "discover": {
-      "label": "Novaを知る",
+      "label": "Rooksを知る",
       "slide": "スライド {current} / {total}",
       "next": "次へ",
       "skip": "すべてスキップ",

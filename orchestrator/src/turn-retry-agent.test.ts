@@ -78,7 +78,7 @@ test('a dropped turn is replayed in its session on an unattended mission, never 
     assert.equal(completed.includes(routine.id), false, 'a replayed turn is not over');
     const first = results(routine.id).at(-1)!;
     // The provider announced a 500 ms wait: the replay does not undercut it.
-    assert.deepEqual(first.nova_retry, { attempt: 1, max: 3, delay_ms: 500 });
+    assert.deepEqual(first.rooks_retry, { attempt: 1, max: 3, delay_ms: 500 });
     assert.equal((first.transient_failure as { provider_retries: number }).provider_retries, 1);
     await waitUntil(() => routine.input.some((line) => line.includes('automatic retry 1/3')), 'the first replay');
     assert.equal(children.length, 1, 'the replay goes to the same live session');
@@ -93,15 +93,15 @@ test('a dropped turn is replayed in its session on an unattended mission, never 
     emit(routine.child, DROPPED);
     assert.equal(turnRetryPending(routine.id), false);
     const last = results(routine.id).at(-1)!;
-    assert.equal(last.nova_retry, undefined);
-    assert.equal((last.transient_failure as { nova_retries: number }).nova_retries, 3);
+    assert.equal(last.rooks_retry, undefined);
+    assert.equal((last.transient_failure as { rooks_retries: number }).rooks_retries, 3);
     assert.ok(completed.includes(routine.id), 'the exhausted turn ends');
 
     // A success after a replay ends the series: the next drop starts from 1.
     completed.length = 0;
     await sendToAgent(routine.id, 'And tomorrow?');
     emit(routine.child, DROPPED);
-    assert.deepEqual(results(routine.id).at(-1)!.nova_retry, { attempt: 1, max: 3, delay_ms: 20 });
+    assert.deepEqual(results(routine.id).at(-1)!.rooks_retry, { attempt: 1, max: 3, delay_ms: 20 });
     await waitUntil(() => routine.input.filter((line) => line.includes('automatic retry 1/3')).length === 2, 'a fresh series');
     emit(routine.child, DONE);
     assert.ok(completed.includes(routine.id));
@@ -126,8 +126,8 @@ test('a dropped turn is replayed in its session on an unattended mission, never 
     emit(chat.child, DROPPED);
     assert.equal(turnRetryPending(chat.id), false);
     const chatResult = results(chat.id).at(-1)!;
-    assert.equal(chatResult.nova_retry, undefined);
-    assert.equal((chatResult.transient_failure as { nova_max: number }).nova_max, 0);
+    assert.equal(chatResult.rooks_retry, undefined);
+    assert.equal((chatResult.transient_failure as { rooks_max: number }).rooks_max, 0);
     assert.ok(completed.includes(chat.id));
     const written = chat.input.length;
     await new Promise((resolve) => setTimeout(resolve, 80));
@@ -173,7 +173,7 @@ test('a one-shot CLI that dropped its turn is respawned on its session, not fina
     emit(first.child, { type: 'turn.failed', error: { message: 'stream disconnected before completion: websocket closed' } });
     const results = dbApi.listEvents(id).filter((e) => e.type === 'result').map((e) => JSON.parse(e.payload));
     assert.equal(results.length, 2);
-    assert.deepEqual(results[1].nova_retry, results[0].nova_retry, 'the second failure of the same turn reuses the decision');
+    assert.deepEqual(results[1].rooks_retry, results[0].rooks_retry, 'the second failure of the same turn reuses the decision');
     exit(first.child, 1);
     await new Promise((resolve) => setImmediate(resolve));
     assert.equal(dbApi.getMission(id)!.status, 'running', 'the exit of the dropped turn does not finish the mission');
@@ -235,7 +235,7 @@ test('a codex turn that keeps dropping stops after 3 replays, its second failure
     }
     assert.equal(turnRetryPending(id), false, 'no fresh series after the third replay');
     const retries = dbApi.listEvents(id).filter((e) => e.type === 'result')
-      .map((e) => (JSON.parse(e.payload) as { nova_retry?: { attempt: number } }).nova_retry?.attempt ?? null);
+      .map((e) => (JSON.parse(e.payload) as { rooks_retry?: { attempt: number } }).rooks_retry?.attempt ?? null);
     assert.deepEqual(retries, [1, 1, 2, 2, 3, 3, null, null]);
     assert.equal(completed.filter((m) => m === id).length, 1, 'the exhausted turn ends once');
     // Longer than the whole backoff (20 + 40 + 80 ms): nothing else is spawned.

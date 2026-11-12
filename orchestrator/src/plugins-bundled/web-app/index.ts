@@ -19,7 +19,7 @@ import { join } from 'node:path';
 import type { Context } from '@deepseek-ai/cordis';
 import type { Host } from '../../host/index.js';
 import type { ModuleManifest } from '../../kernel/registry.js';
-import type { NovaConfig } from '../../config/schema.js';
+import type { RooksConfig } from '../../config/schema.js';
 import { config } from '../../config/load.js';
 import { ROOKS_HOME } from '../../paths.js';
 import { settingBool } from '../../settings.js';
@@ -95,7 +95,7 @@ export function appEntryRunnable(appDir: string, entry: AppEntry): boolean {
   return existsSync(args[0]!);
 }
 
-export function envOf(cfg: NovaConfig, ttsUrl: string | null = null): Record<string, string> {
+export function envOf(cfg: RooksConfig, ttsUrl: string | null = null): Record<string, string> {
   return {
     NODE_ENV: 'production',
     PORT: String(cfg.app.listen.port),
@@ -125,7 +125,7 @@ export function envOf(cfg: NovaConfig, ttsUrl: string | null = null): Record<str
  * live in `kernel/child-supervisor.ts` since step 3.2: `telegram` needs the
  * exact same thing.
  */
-export function superviseApp(host: Host, cfg: NovaConfig, appDir: string): () => void {
+export function superviseApp(host: Host, cfg: RooksConfig, appDir: string): () => void {
   console.log(`[web-app] Supervising Next app on ${cfg.app.listen.host}:${cfg.app.listen.port} (cwd ${appDir})`);
   const node = nodeRuntime(cfg);
   // The port may stay held for hours (an orphaned Next): the check runs every

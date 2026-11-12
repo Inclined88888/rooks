@@ -30,8 +30,8 @@
  *   commandPolicy: {
  *     denyPrograms: readonly string[],
  *     denyCommands: readonly string[],
- *     denyNovaCommands: readonly string[],
- *     novaCliCommands: readonly string[],
+ *     denyRooksCommands: readonly string[],
+ *     rooksCliCommands: readonly string[],
  *   },
  * }} PolicyPlan
  */
@@ -174,14 +174,14 @@ export function piPermissionPolicy(cfg, plan) {
     allowTools: [...plan.preApprovedTools],
     // Every server of the plan but the agent's own (`role: 'user'`): Rooks's, the forms, grepai, the browser.
     hintServers: plan.servers.filter((server) => server.role !== 'user').map((server) => server.name),
-    allowCommands: commandPolicy.novaCliCommands.map((command) => `rooks ${command}:*`),
+    allowCommands: commandPolicy.rooksCliCommands.map((command) => `rooks ${command}:*`),
     grantTools: grants.tools,
     grantCommands: grants.commands,
     denyTools: refusals.tools,
     denyPrograms: [...commandPolicy.denyPrograms],
     denyCommands: [
       ...commandPolicy.denyCommands,
-      ...commandPolicy.denyNovaCommands.map((command) => `rooks ${command}`),
+      ...commandPolicy.denyRooksCommands.map((command) => `rooks ${command}`),
       ...refusals.commands,
     ],
   };

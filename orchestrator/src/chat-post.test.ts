@@ -92,7 +92,7 @@ test('question: the message is an ordinary agent message, written right before t
   const message = rows[posted]!.payload;
   assert.equal(message.type, 'assistant');
   assert.equal(textOf(message), REPORT);
-  assert.equal(message.nova_posted, 'question');
+  assert.equal(message.rooks_posted, 'question');
   assert.equal(message.parent_tool_use_id, undefined, 'a sub-agent mark would hide it from the chat');
   // The card carries the questions only: the report lives in the thread.
   const input = rows[card]!.payload.input as Record<string, unknown>;
@@ -112,7 +112,7 @@ test('kanban_plan: the same message, marked as the planner\'s, above the planner
   const rows = events(id);
   const posted = rows.findIndex((e) => e.type === 'assistant');
   assert.equal(rows[posted + 1]?.type, 'permission_request');
-  assert.equal(rows[posted]!.payload.nova_posted, 'kanban_plan');
+  assert.equal(rows[posted]!.payload.rooks_posted, 'kanban_plan');
   const input = rows[posted + 1]!.payload.input as Record<string, unknown>;
   assert.equal(input.message, undefined);
   assert.equal((input.form as Record<string, unknown>).kind, 'series_plan');
@@ -189,7 +189,7 @@ test('the mission\'s own token posts an ordinary agent message', async () => {
   assert.equal(rows[0]!.id, r.json.event_id);
   assert.equal(rows[0]!.type, 'assistant');
   assert.equal(textOf(rows[0]!.payload), REPORT);
-  assert.equal(rows[0]!.payload.nova_posted, 'chat_post_message');
+  assert.equal(rows[0]!.payload.rooks_posted, 'chat_post_message');
 });
 
 test('nobody else puts words in the agent\'s mouth', async () => {

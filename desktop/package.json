@@ -1,7 +1,7 @@
 {
   "name": "rooks-desktop",
   "version": "0.1.7",
-  "license": "AGPL-3.0-only",
+  "license": "UNLICENSED",
   "private": true,
   "type": "module",
   "description": "Rooks desktop client (Electron shell around the local daemon).",

@@ -24,7 +24,7 @@ export const LIVE_VIEWS_PER_WINDOW = 3;
 export interface PooledView<V> {
   /** The id of the page's webContents: the key every request and IPC call carries. */
   readonly contentsId: number;
-  /** The machine the page drives; `null` leaves the `nova_machine` cookie in charge. */
+  /** The machine the page drives; `null` leaves the `rooks_machine` cookie in charge. */
   readonly machineId: string | null;
   readonly view: V;
 }

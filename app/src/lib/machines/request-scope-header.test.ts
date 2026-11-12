@@ -78,7 +78,7 @@ function inScope<T>(headers: Record<string, string>, cookies: Record<string, str
 const agents = (): Call[] => calls.filter((c) => c.url.endsWith('/api/agents'));
 
 test('the header names the machine the proxy relays to, ahead of the cookie', async () => {
-  const res = await inScope({ 'x-rooks-machine': 'vps' }, { rooks_session: SESSION, nova_machine: 'local' }, () => proxy.proxyJson('GET', '/api/agents'));
+  const res = await inScope({ 'x-rooks-machine': 'vps' }, { rooks_session: SESSION, rooks_machine: 'local' }, () => proxy.proxyJson('GET', '/api/agents'));
   assert.equal(res.status, 200);
   assert.deepEqual(agents().map((c) => c.url), [`${REMOTE}/api/agents`]);
   assert.equal(agents()[0]?.headers.get('authorization'), `Bearer ${DEVICE_TOKEN}`);
@@ -86,12 +86,12 @@ test('the header names the machine the proxy relays to, ahead of the cookie', as
 });
 
 test('X-Rooks-Machine: local is served here while the cookie names a remote machine', async () => {
-  await inScope({ 'x-rooks-machine': 'local' }, { rooks_session: SESSION, nova_machine: 'vps' }, () => proxy.proxyJson('GET', '/api/agents'));
+  await inScope({ 'x-rooks-machine': 'local' }, { rooks_session: SESSION, rooks_machine: 'vps' }, () => proxy.proxyJson('GET', '/api/agents'));
   assert.deepEqual(calls.map((c) => c.url), [`${LOCAL}/api/agents`]);
 });
 
 test('without the header, the cookie decides, as before', async () => {
-  await inScope({}, { rooks_session: SESSION, nova_machine: 'vps' }, () => proxy.proxyJson('GET', '/api/agents'));
+  await inScope({}, { rooks_session: SESSION, rooks_machine: 'vps' }, () => proxy.proxyJson('GET', '/api/agents'));
   assert.deepEqual(agents().map((c) => c.url), [`${REMOTE}/api/agents`]);
   calls.length = 0;
   await inScope({ 'x-rooks-machine': '' }, { rooks_session: SESSION }, () => proxy.proxyJson('GET', '/api/agents'));
@@ -99,12 +99,12 @@ test('without the header, the cookie decides, as before', async () => {
 });
 
 test('a scope without headers: the cookie alone decides', async () => {
-  const t = await inScope({}, { rooks_session: SESSION, nova_machine: 'vps' }, () => target.resolveTarget(), false);
+  const t = await inScope({}, { rooks_session: SESSION, rooks_machine: 'vps' }, () => target.resolveTarget(), false);
   assert.equal(t.kind, 'remote');
 });
 
 test('another account\'s machine named by the header: refused, nothing relayed', async () => {
-  const res = await inScope({ 'x-rooks-machine': 'bobs-machine' }, { rooks_session: SESSION, nova_machine: 'vps' }, () => proxy.proxyJson('DELETE', '/api/agents'));
+  const res = await inScope({ 'x-rooks-machine': 'bobs-machine' }, { rooks_session: SESSION, rooks_machine: 'vps' }, () => proxy.proxyJson('DELETE', '/api/agents'));
   assert.equal(res.status, 404);
   assert.equal(agents().length, 0);
 });
@@ -116,7 +116,7 @@ test('anonymous: the header names a machine, nothing is asked nor relayed', asyn
 });
 
 test('a malformed header is refused, never served by the cookie\'s machine nor locally', async () => {
-  const res = await inScope({ 'x-rooks-machine': '../vps' }, { rooks_session: SESSION, nova_machine: 'vps' }, () => proxy.proxyJson('POST', '/api/agents', {}));
+  const res = await inScope({ 'x-rooks-machine': '../vps' }, { rooks_session: SESSION, rooks_machine: 'vps' }, () => proxy.proxyJson('POST', '/api/agents', {}));
   assert.equal(res.status, 404);
   assert.equal(calls.length, 0);
   const t = await inScope({ 'x-rooks-machine': 'https://evil.example' }, { rooks_session: SESSION }, () => target.resolveTarget());

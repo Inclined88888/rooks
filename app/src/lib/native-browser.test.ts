@@ -109,7 +109,7 @@ for (const mode of ['web', 'native', 'refused', 'declined', 'remote'] as const) 
   let resumeResize: () => void = () => {};
   let detachments = 0;
   let attachmentAttempts = 0;
-  if (desktop) window.novaDesktop = { restartAfterSetup: async () => {}, browser: {
+  if (desktop) window.rooksDesktop = { restartAfterSetup: async () => {}, browser: {
     attach: async (input) => {
       attachmentAttempts++;
       if (mode === 'remote') throw new Error('A remote page must never attach a local tab');

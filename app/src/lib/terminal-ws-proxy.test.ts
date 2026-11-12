@@ -150,7 +150,7 @@ test('the upstream handshake carries the credential it is given, never the jar',
   assert.equal(local.authorization, undefined);
 });
 
-const MACHINE_HANDSHAKE = ['Host: rooks.example:3101', 'Origin: https://rooks.example:3101', 'Cookie: nova_machine=vps; rooks_session=tok'];
+const MACHINE_HANDSHAKE = ['Host: rooks.example:3101', 'Origin: https://rooks.example:3101', 'Cookie: rooks_machine=vps; rooks_session=tok'];
 
 async function withDaemonTokenFile<T>(content: string, run: () => Promise<T>): Promise<T> {
   const file = join(home, 'daemon-token');
@@ -191,7 +191,7 @@ test('a proof the daemon does not recognise is refused, never served by the loca
 test('a machine cookie without a local session is refused before anything is asked', async () => {
   const before = seen.length;
   const asked = lookups.length;
-  const status = await handshake(['Host: rooks.example:3101', 'Origin: https://rooks.example:3101', 'Cookie: nova_machine=vps']);
+  const status = await handshake(['Host: rooks.example:3101', 'Origin: https://rooks.example:3101', 'Cookie: rooks_machine=vps']);
   assert.match(status, /^HTTP\/1\.1 401/);
   assert.equal(lookups.length, asked);
   assert.equal(seen.length, before);
@@ -202,7 +202,7 @@ test('a machine cookie without a local session is refused before anything is ask
 test('X-Rooks-Machine wins over the cookie: its id is the one looked up, and refused when it is not this person\'s', async () => {
   const before = seen.length;
   const asked = lookups.length;
-  const status = await handshake(['Host: rooks.example:3101', 'Origin: https://rooks.example:3101', 'X-Rooks-Machine: bobs-machine', 'Cookie: nova_machine=local; rooks_session=tok']);
+  const status = await handshake(['Host: rooks.example:3101', 'Origin: https://rooks.example:3101', 'X-Rooks-Machine: bobs-machine', 'Cookie: rooks_machine=local; rooks_session=tok']);
   assert.match(status, /^HTTP\/1\.1 404/);
   assert.deepEqual(lookups.slice(asked), ['bobs-machine']);
   assert.equal(seen.length, before);
@@ -228,7 +228,7 @@ test('a malformed X-Rooks-Machine is refused, never served from the cookie or lo
 
 test('X-Rooks-Machine: local overrides a remote cookie, and the header never travels upstream', async () => {
   const asked = lookups.length;
-  await handshake(['Host: rooks.example:3101', 'Origin: https://rooks.example:3101', 'X-Rooks-Machine: local', 'Cookie: nova_machine=vps; rooks_session=tok']);
+  await handshake(['Host: rooks.example:3101', 'Origin: https://rooks.example:3101', 'X-Rooks-Machine: local', 'Cookie: rooks_machine=vps; rooks_session=tok']);
   assert.equal(lookups.length, asked);
   const headers = seen.at(-1)!;
   assert.equal(headers.cookie, 'rooks_session=tok');

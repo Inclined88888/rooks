@@ -87,7 +87,7 @@ test('on Windows, names AND prefixes are matched without case', () => {
     // `NODE_*` family necessarily covers it. Nothing can distinguish them.
     node_secret: 'crosses on win32',
     TELEGRAM_BOT_TOKEN: 'leak',
-    Nova_Vapid_Private_Key: 'leak',
+    Rooks_Vapid_Private_Key: 'leak',
   }, { platform: 'win32' });
 
   assert.equal(win.Path, 'C:\\Windows');
@@ -97,7 +97,7 @@ test('on Windows, names AND prefixes are matched without case', () => {
   assert.equal(win.Xdg_Config_Home, 'C:\\config');
   assert.equal(win.node_secret, 'crosses on win32', 'assumed consequence of Windows case rules');
   assert.equal(win.TELEGRAM_BOT_TOKEN, undefined);
-  assert.equal(win.Nova_Vapid_Private_Key, undefined, 'ROOKS_* is not a family, whatever the case');
+  assert.equal(win.Rooks_Vapid_Private_Key, undefined, 'ROOKS_* is not a family, whatever the case');
 
   // Same source under POSIX rules: the lowercase spellings are other variables.
   const posix = systemEnv({ Path: 'x', node_options: 'y', node_secret: 'z', PATH: '/usr/bin' },

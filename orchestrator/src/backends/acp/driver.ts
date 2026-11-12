@@ -422,7 +422,7 @@ export class AcpSessionDriver implements SessionDriver {
     if (!this.systemSent) {
       this.systemSent = true;
       if (this.opts.systemPrompt.trim()) {
-        blocks.push({ type: 'text', text: `<nova_instructions>\n${this.opts.systemPrompt}\n</nova_instructions>` });
+        blocks.push({ type: 'text', text: `<rooks_instructions>\n${this.opts.systemPrompt}\n</rooks_instructions>` });
       }
     }
     const sendImages = Boolean(images?.length) && this.sessionInfo?.capabilities.image === true;

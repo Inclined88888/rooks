@@ -78,7 +78,7 @@ export class NativeBrowserMedia {
         if (pending.cancelled) throw new Error('Browser capture was cancelled.');
         await window.loadFile(file);
         const result = await this.bounded(window.webContents.executeJavaScript(
-          `window.novaMedia.start(${body.audio === true},${JSON.stringify(offer ?? null)},${JSON.stringify(body.supportedMimeTypes ?? null)},${source.width},${source.height}).catch(error => { throw new Error([error?.name, error?.message].filter(Boolean).join(': ') || String(error)); })`, true), 15_000);
+          `window.rooksMedia.start(${body.audio === true},${JSON.stringify(offer ?? null)},${JSON.stringify(body.supportedMimeTypes ?? null)},${source.width},${source.height}).catch(error => { throw new Error([error?.name, error?.message].filter(Boolean).join(': ') || String(error)); })`, true), 15_000);
         if (pending.cancelled || source.webContents.isDestroyed()) throw new Error('Browser capture was cancelled.');
         const onSourceDestroyed = () => this.stop(mediaId);
         this.sessions.set(mediaId, { id: mediaId, profileId, actor, tabId: source.webContents.id, window, expiresAt: Date.now() + 60_000, reading: false,
@@ -100,7 +100,7 @@ export class NativeBrowserMedia {
     if (body.action !== 'mediaRead') throw new BrowserCommandError('Unknown browser stream command.');
     if (media.reading) throw new BrowserCommandError('A browser stream read is already pending.', 409);
     media.reading = true;
-    try { return await this.bounded(media.window.webContents.executeJavaScript('window.novaMedia.read()'), 2000); }
+    try { return await this.bounded(media.window.webContents.executeJavaScript('window.rooksMedia.read()'), 2000); }
     catch (error) { this.stop(media.id); throw new BrowserCommandError((error as Error).message, 503); }
     finally { media.reading = false; }
   }

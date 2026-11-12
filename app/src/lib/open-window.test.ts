@@ -14,7 +14,7 @@ function scene(machine: string | undefined, path: string, answer: (request: unkn
   g.document = { documentElement: { getAttribute: (name: string) => (name === MACHINE_ATTRIBUTE ? machine ?? null : null) } };
   g.window = {
     location: { pathname: url.pathname, search: url.search, hash: url.hash },
-    ...(desktop ? { novaDesktop: { openWindow: (request: unknown) => { asked.push(request); return answer(request); } } } : {}),
+    ...(desktop ? { rooksDesktop: { openWindow: (request: unknown) => { asked.push(request); return answer(request); } } } : {}),
   };
   return asked;
 }

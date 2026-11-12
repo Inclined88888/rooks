@@ -19,7 +19,7 @@ import { taskProjectSlug } from '../../task-project.js';
 import type { BrokerCaller } from '../../secrets/broker.js';
 
 export function callerFromRequest(req: Request): BrokerCaller {
-  // A mission-bound api-token (the broker is reached through `nova_http_call`
+  // A mission-bound api-token (the broker is reached through `rooks_http_call`
   // under a delegate token) carries its mission id in the token itself, written
   // by the daemon. The `X-ROOKS-Mission` header the MCP client also sends is
   // spoofable, so the token binding wins; the header stays as the fallback for

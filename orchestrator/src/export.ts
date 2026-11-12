@@ -23,7 +23,7 @@ import {
 import { hostname, tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { config } from './config/load.js';
-import { packagedCli, readDataVersion, novaVersion, writeDataVersion } from './data-version.js';
+import { packagedCli, readDataVersion, rooksVersion, writeDataVersion } from './data-version.js';
 import { createGenericHost } from './host/generic.js';
 import { tightenToOwner } from './host/owner-only.js';
 import { copyTree } from './tree-copy.js';
@@ -36,7 +36,7 @@ export type ExportManifest = {
   version: number;
   exportedAt: number;
   hostname: string;
-  novaVersion: string;
+  rooksVersion: string;
   profile: string;
   withArchive: boolean;
 };
@@ -87,7 +87,7 @@ function copyConfigEntry(entry: string, from: string, to: string, withArchive: b
  * Builds the archive. `db` is the daemon's open SQLite handle when it
  * runs; without it, the database is opened for the duration of the VACUUM.
  */
-export function exportNova(opts: {
+export function exportRooks(opts: {
   out: string;
   withArchive?: boolean;
   home?: string;
@@ -124,7 +124,7 @@ export function exportNova(opts: {
       version: EXPORT_MANIFEST_VERSION,
       exportedAt: Date.now(),
       hostname: hostname(),
-      novaVersion: novaVersion(),
+      rooksVersion: rooksVersion(),
       profile: opts.profile ?? 'linux-desktop',
       withArchive,
     };
@@ -290,7 +290,7 @@ function withStagedDb<T>(
  * Restores an archive into `to`. Refuses a non-empty folder without `--force`:
  * overwriting an inhabited `~/.rooks` is irreversible.
  */
-export function importNova(opts: {
+export function importRooks(opts: {
   file: string;
   to?: string;
   force?: boolean;
@@ -363,7 +363,7 @@ export function importNova(opts: {
 
     // Without a recorded version, an existing database reads as the legacy 0.1.0
     // install and the next start would ask to approve an update nobody made.
-    if (packagedCli() && readDataVersion(to) === null) writeDataVersion(to, novaVersion());
+    if (packagedCli() && readDataVersion(to) === null) writeDataVersion(to, rooksVersion());
 
     return { to, manifest, restored, todo: IMPORT_TODO, skippedProjects, missingProjects };
   } finally {

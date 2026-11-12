@@ -71,8 +71,8 @@ export function isFormCardTool(toolName: string): boolean {
  */
 export const ASK_MCP_FORMS_ONLY_ENV = 'ROOKS_ASK_FORMS_ONLY';
 
-/** Archive-era server names (Nova body). Still matched, never registered. */
-export const ARCHIVE_ASK_MCP_SERVERS = Object.freeze(['nova_ask', 'nova_permission'] as const);
+/** Archive-era server names (upstream body). Still matched, never registered. */
+export const ARCHIVE_ASK_MCP_SERVERS = Object.freeze(['rooks_ask', 'rooks_permission'] as const);
 
 /** Whether `name` is the forms server, under its current, legacy, or archive name. */
 export function isAskMcpServer(name: string): boolean {

@@ -31,7 +31,7 @@ const { getHost } = await import('../host/index.js');
 const { spawnAgent, upsertAgent } = await import('../agent.js');
 const { ensureDaemonToken } = await import('../plugins-bundled/http/auth.js');
 const { config, setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { dbApi } = await import('../db.js');
 const { seal } = await import('../secrets/box.js');
 const { resolveMasterKey } = await import('../secrets/key.js');
@@ -61,7 +61,7 @@ function fakeChild(): FakeChild {
 
 function allowExec(...names: string[]): () => void {
   const previous = config();
-  setConfig(NovaConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: names } } }));
+  setConfig(RooksConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: names } } }));
   return () => setConfig(previous);
 }
 

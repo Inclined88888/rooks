@@ -61,7 +61,7 @@ const TITLED = [
   'mission_search', 'trace_get', 'workflow_list', 'workflow_status', 'workflow_run', 'workflow_get',
   'workflow_node_types', 'workflow_propose', 'workflow_node_done', 'mission_message_get', 'chat_show_media', 'chat_post_message', 'terminal_propose',
   'mission_spawn', 'agent_create', 'agent_set_avatar', 'project_create', 'project_update',
-  'project_demo_create', 'workspace_list', 'nova_http_call', 'secret_create', 'secret_request',
+  'project_demo_create', 'workspace_list', 'rooks_http_call', 'secret_create', 'secret_request',
 ];
 
 test('a tool title follows the convention', async () => {

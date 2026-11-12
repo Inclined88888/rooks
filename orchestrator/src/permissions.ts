@@ -598,7 +598,7 @@ export type RequestInput = {
    * the command), whereas an ACP agent names a call after its kind or title, and
    * a shell call named otherwise would be remembered as "any command".
    */
-  novaScopes?: boolean;
+  rooksScopes?: boolean;
   /**
    * Called once, with the command, when the owner answers "Paste into a
    * terminal". For a caller whose agent never reads the deny message: an ACP
@@ -801,13 +801,13 @@ export function requestPermission(input: RequestInput): Promise<PermissionDecisi
 
   // 3 bis. An approval the human already widened to this session, or to every
   //    mission of this agent, answers in their place. Only where Rooks keeps
-  //    them (`novaScopes`, claude): an agent with scopes of its own would not
+  //    them (`rooksScopes`, claude): an agent with scopes of its own would not
   //    be asking.
   //    Nothing here reaches past the human click — the classifier's refusals
   //    never come this far (cf. `approval-rules.ts`).
   const nativeScopes = !!input.scopes?.length;
-  const novaKeeps = input.novaScopes === true && !nativeScopes;
-  if (novaKeeps) {
+  const rooksKeeps = input.rooksScopes === true && !nativeScopes;
+  if (rooksKeeps) {
     const rule = findApproval(input.mission_id, input.tool_name, input.input);
     if (rule) {
       const decision: PermissionDecision = { behavior: 'allow', updatedInput: input.input };
@@ -831,9 +831,9 @@ export function requestPermission(input: RequestInput): Promise<PermissionDecisi
   // show a button its owner cannot use.
   const shellCommand = shellCommandOf(input.tool_name, effectiveInput);
   const pasteable = shellCommand !== null && ownerCanPaste(dbApi.getMission(input.mission_id));
-  const novaScopes = novaKeeps ? rememberableScopes(input.mission_id, input.tool_name, input.input) : [];
-  const scopes = nativeScopes ? input.scopes : novaScopes.length ? novaScopes : undefined;
-  const motif = novaScopes.length ? approvalMotif(input.tool_name, input.input) : null;
+  const rooksScopes = rooksKeeps ? rememberableScopes(input.mission_id, input.tool_name, input.input) : [];
+  const scopes = nativeScopes ? input.scopes : rooksScopes.length ? rooksScopes : undefined;
+  const motif = rooksScopes.length ? approvalMotif(input.tool_name, input.input) : null;
   const remembers = motif ? motifLabel(motif) : undefined;
 
   // Known before the card goes out: the UI shows the countdown from the

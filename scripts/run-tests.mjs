@@ -194,7 +194,7 @@ export const DAEMON_ENV_KEYS = [
 ];
 
 /** `env` without DAEMON_ENV_KEYS, whatever their casing: a Windows env is
- *  case-insensitive, so `Nova_Api` would reach the child as ROOKS_API. */
+ *  case-insensitive, so `Rooks_Api` would reach the child as ROOKS_API. */
 export function withoutDaemonEnv(env) {
   const banned = new Set(DAEMON_ENV_KEYS);
   const out = {};

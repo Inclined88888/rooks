@@ -15,7 +15,7 @@ import { registerRoutes } from './routes.js';
 import { createDaemonAuthMiddleware } from '../http/auth.js';
 import { dbApi } from '../../db.js';
 import { hashSessionToken, SESSION_COOKIE } from '../../users/session.js';
-import { NovaConfigSchema } from '../../config/schema.js';
+import { RooksConfigSchema } from '../../config/schema.js';
 import { envOf } from '../web-app/index.js';
 
 process.env.ROOKS_RESOURCE_GUARD_ENABLED = '0';
@@ -36,7 +36,7 @@ for (const [row, token] of [[admin, 'admin-session'], [user, 'user-session']] as
   dbApi.createSession({ userId: row.id, tokenHash: hashSessionToken(token), expiresAt: Date.now() + 60_000 });
 }
 
-const cfg = NovaConfigSchema.parse({});
+const cfg = RooksConfigSchema.parse({});
 const appAllowsHttp = () => envOf(cfg).ROOKS_ALLOW_HTTP;
 
 const put = (headers: Record<string, string>) => fetch(`${base}/api/settings/ROOKS_ALLOW_HTTP`, {

@@ -8,7 +8,7 @@ const HOME = mkdtempSync(join(tmpdir(), 'rooks-config-test-'));
 process.env.ROOKS_HOME = HOME;
 
 const { loadConfig, migrateConfig, applyEnvOverrides, ConfigError } = await import('./load.js');
-const { NovaConfigSchema } = await import('./schema.js');
+const { RooksConfigSchema } = await import('./schema.js');
 
 function writeConfig(obj: unknown): string {
   const file = join(HOME, `cfg-${Math.random().toString(36).slice(2)}.json`);
@@ -155,7 +155,7 @@ test('ROOKS_INSTALL_DIR gagne sur le fichier, pour un daemon empaqueté', () => 
   const file = writeConfig({ daemon: { installDir: '/opt/from-file/orchestrator' } });
   assert.equal(loadConfig(file).daemon.installDir, '/opt/from-file/orchestrator');
 
-  const cfg = NovaConfigSchema.parse({ daemon: { installDir: '/opt/from-file/orchestrator' } });
+  const cfg = RooksConfigSchema.parse({ daemon: { installDir: '/opt/from-file/orchestrator' } });
   applyEnvOverrides(cfg, { ROOKS_INSTALL_DIR: '/tmp/.mount_abc/resources/orchestrator' });
   assert.equal(cfg.daemon.installDir, '/tmp/.mount_abc/resources/orchestrator');
 });
@@ -164,13 +164,13 @@ test("PORT déplace aussi le port de la config, pas seulement la socket", () => 
   // `web-app` construit l'`ORCHESTRATOR_URL` de l'app Next depuis
   // `daemon.listen.port` : un daemon déplacé par `PORT` seul donnait à l'UI
   // l'adresse d'un daemon absent.
-  const cfg = NovaConfigSchema.parse({});
+  const cfg = RooksConfigSchema.parse({});
   applyEnvOverrides(cfg, { PORT: '3010' });
   assert.equal(cfg.daemon.listen.port, 3010);
 });
 
 test('une valeur vide ou illisible laisse la config décider', () => {
-  const cfg = NovaConfigSchema.parse({ daemon: { installDir: '/opt/keep' } });
+  const cfg = RooksConfigSchema.parse({ daemon: { installDir: '/opt/keep' } });
   applyEnvOverrides(cfg, { ROOKS_INSTALL_DIR: '', PORT: 'tcp' });
   assert.equal(cfg.daemon.installDir, '/opt/keep');
   assert.equal(cfg.daemon.listen.port, 3000);
@@ -183,7 +183,7 @@ test('une valeur vide ou illisible laisse la config décider', () => {
  * (`desktop/src/config.ts`, `daemonEnvOverrides`).
  */
 test("le shell empaqueté peut allumer l'app et la déplacer", () => {
-  const cfg = NovaConfigSchema.parse({});
+  const cfg = RooksConfigSchema.parse({});
   assert.equal(cfg.app.enabled, false, "défaut du schéma : l'app reste servie par Compose");
   applyEnvOverrides(cfg, { ROOKS_APP_ENABLED: '1', ROOKS_APP_PORT: '3110', PORT: '3010' });
   assert.equal(cfg.app.enabled, true);

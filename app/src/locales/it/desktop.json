@@ -22,7 +22,7 @@
       "title": "Avvio di Rooks…",
       "hint": "Il primo avvio può richiedere un momento.",
       "restartTitle": "Riavvio di Rooks…",
-      "restartHint": "Rooks sta passando il tesnovae al suo servizio in background. La configurazione continua tra un attimo.",
+      "restartHint": "Rooks sta passando il testimone al suo servizio in background. La configurazione continua tra un attimo.",
       "verifying": "Verifica dell’installazione…",
       "verifyingHint": "Rooks controlla che i suoi file siano integri. Con un antivirus può richiedere fino a un minuto.",
       "service": {
@@ -103,7 +103,7 @@
       "handoverKept": "Il servizio in background di Rooks non ha risposto.",
       "handoverKeptDetail": "La configurazione continua con Rooks così com’è in esecuzione in questa finestra. Chiudi e riapri Rooks al termine della configurazione: riproverà con il servizio. I tuoi dati restano in {home}.",
       "refused": "Windows non avvia il servizio in background di Rooks per questo account.",
-      "refusedDetail": "L’attività pianificata NovaOrchestrator è registrata, ma Windows non l’ha mai eseguita. Succede con gli account di lavoro o scuola su un PC aggiunto a Microsoft Entra ID. Rooks usa invece il suo daemon integrato: si avvia con l’app e si ferma quando la chiudi o esci dalla sessione. Per rimuovere l’attività inutilizzata: rooks service uninstall (Windows chiede l’autorizzazione).",
+      "refusedDetail": "L’attività pianificata RooksOrchestrator è registrata, ma Windows non l’ha mai eseguita. Succede con gli account di lavoro o scuola su un PC aggiunto a Microsoft Entra ID. Rooks usa invece il suo daemon integrato: si avvia con l’app e si ferma quando la chiudi o esci dalla sessione. Per rimuovere l’attività inutilizzata: rooks service uninstall (Windows chiede l’autorizzazione).",
       "repair": "Il servizio in background di Rooks non è più installato.",
       "repairDetail": "Senza di esso, Rooks non si avvia con Windows e si ferma quando chiudi l’app o esci dalla sessione. Reinstallarlo richiede l’autorizzazione di Windows una sola volta.",
       "repairConfirm": "Reinstalla il servizio",

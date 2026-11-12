@@ -31,28 +31,28 @@ export async function installWithRuntime<R extends { ok: boolean }>(
 ): Promise<R> {
   const packaged = stagesPackagedRuntime(opts.platform, process.env);
   if (packaged) {
-    await stagePackagedRuntime(opts.novaHome, process.execPath, sourceInstallDir);
+    await stagePackagedRuntime(opts.rooksHome, process.execPath, sourceInstallDir);
     if (opts.platform === 'linux' && process.env.ROOKS_DESKTOP_EMBEDDED === '1') {
-      await recordHandover(opts.novaHome, process.pid);
+      await recordHandover(opts.rooksHome, process.pid);
     }
   }
-  const previousRelease = packaged ? await readActiveRelease(opts.novaHome) : null;
+  const previousRelease = packaged ? await readActiveRelease(opts.rooksHome) : null;
   const result = install(opts);
   if (result.ok && opts.unitName) {
-    await writeFile(join(runtimeDir(opts.novaHome), 'installed'), opts.unitName, { mode: 0o600 });
+    await writeFile(join(runtimeDir(opts.rooksHome), 'installed'), opts.unitName, { mode: 0o600 });
   }
   if (result.ok && packaged) {
-    await markActiveRelease(opts.novaHome);
+    await markActiveRelease(opts.rooksHome);
     if (opts.platform === 'linux') {
       try {
-        recordReleaseSource(opts.novaHome, process.execPath);
+        recordReleaseSource(opts.rooksHome, process.execPath);
       } catch (error) {
         console.warn('[desktop-runtime] could not record where this release was installed', error);
       }
     }
     // Cleanup is deliberately best-effort: a permission error must not turn
     // a successfully migrated daemon into a failed application startup.
-    await pruneInactiveReleases(opts.novaHome, undefined, previousRelease ? [previousRelease] : []).catch((error: unknown) => {
+    await pruneInactiveReleases(opts.rooksHome, undefined, previousRelease ? [previousRelease] : []).catch((error: unknown) => {
       console.warn('[desktop-runtime] could not remove an inactive release', error);
     });
   }
@@ -70,7 +70,7 @@ export async function uninstallWithRuntime<R extends { ok: boolean }>(
 ): Promise<R> {
   const result = uninstall(opts);
   if (result.ok && opts.unitName && !opts.dryRun) {
-    await rm(join(runtimeDir(opts.novaHome), 'installed'), { force: true });
+    await rm(join(runtimeDir(opts.rooksHome), 'installed'), { force: true });
   }
   return result;
 }

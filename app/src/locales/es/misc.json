@@ -60,7 +60,7 @@
     "limited": "Limitado",
     "limitsHint": "Este backend no puede:",
     "limitWorktree": "trabajar en la carpeta de Rooks (sin tareas de código ni de merge)",
-    "limitNovaMcp": "usar las herramientas de Rooks (Kanban, mensajes, memoria)",
+    "limitRooksMcp": "usar las herramientas de Rooks (Kanban, mensajes, memoria)",
     "limitAttachments": "recibir archivos adjuntos (solo imágenes)",
     "unverified": "Sin verificar",
     "unverifiedHint": "Escrito a partir de la documentación del fabricante: no se ha comprobado con el programa real.",

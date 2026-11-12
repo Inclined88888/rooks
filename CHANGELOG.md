@@ -6,4 +6,4 @@ All notable changes to Rooks are documented in this file.
 
 ### Added
 
-- First public Rooks release notes on the Nova-body line.
+- First public Rooks release notes on the upstream-body line.

@@ -15,7 +15,7 @@ import { cpus, totalmem } from 'node:os';
 import { bus, type BusEvent } from '../../bus.js';
 import { config } from '../../config/load.js';
 import { dbApi } from '../../db.js';
-import { novaVersion, packagedDaemon } from '../../data-version.js';
+import { rooksVersion, packagedDaemon } from '../../data-version.js';
 import { daemonMode, stdoutIsJournal } from '../../system-info.js';
 import { licenseState } from '../../license/runtime.js';
 import { loadConfig } from '../../agent-config.js';
@@ -205,7 +205,7 @@ export function startTelemetry(opts: TelemetryOptions = {}): TelemetryRuntime {
 
   const now = opts.now ?? Date.now;
   const home = opts.home ?? ROOKS_HOME;
-  const version = versionValue(novaVersion()) ?? '0.0.0';
+  const version = versionValue(rooksVersion()) ?? '0.0.0';
   // Drawn on the first event actually queued: an installation that never
   // shares anything never gets an identity either.
   let state: TelemetryState | null = null;

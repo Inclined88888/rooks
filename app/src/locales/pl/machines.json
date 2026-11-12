@@ -68,7 +68,7 @@
       "invalidUrl": "Tego adresu nie można użyć: podaj sam adres maszyny, bez loginu, zapytania i fragmentu.",
       "httpsRequired": "Z maszyną trzeba łączyć się przez HTTPS. Zwykły HTTP jest akceptowany tylko na tym komputerze.",
       "blockedAddress": "Ten adres nigdy nie wskazuje maszyny Rooks.",
-      "notNova": "Pod tym adresem nie odpowiada żadna maszyna Rooks.",
+      "notRooks": "Pod tym adresem nie odpowiada żadna maszyna Rooks.",
       "requiresTls": "Maszyna nie widzi tego połączenia jako HTTPS: sprawdź ustawienia HTTPS jej reverse proxy.",
       "unreachable": "Z maszyną nie można się teraz połączyć.",
       "unauthorized": "Maszyna nie akceptuje już tego komputera: jego dostęp odwołano lub wygasł. Sparuj ją ponownie.",

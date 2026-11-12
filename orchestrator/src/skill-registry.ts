@@ -267,7 +267,7 @@ function scanPlugins(): SkillEntry[] {
 
 /* ───────────────────────── ROOKS scanner ───────────────────────── */
 
-function scanNova(): SkillEntry[] {
+function scanRooks(): SkillEntry[] {
   const out: SkillEntry[] = [];
   for (const id of listDirs(SKILLS_DIR)) {
     if (!ID_RE.test(id)) continue;
@@ -305,7 +305,7 @@ export type ListOptions = {
  */
 export function listAllSkills(opts: ListOptions = {}): SkillEntry[] {
   const entries: SkillEntry[] = [];
-  entries.push(...scanNova());
+  entries.push(...scanRooks());
   entries.push(...scanSkillDir(join(CLAUDE_HOME, 'skills'), 'claude-user', 'global', true));
   entries.push(...scanCommandDir(join(CLAUDE_HOME, 'commands'), 'claude-user', 'global', true));
 
@@ -422,7 +422,7 @@ export function deleteEntryFile(path: string): boolean {
 }
 
 /** Path where to create a NEW ROOKS skill (folder format). */
-export function novaSkillPath(id: string): string {
+export function rooksSkillPath(id: string): string {
   return join(ROOKS_HOME, 'skills', id, 'SKILL.md');
 }
 

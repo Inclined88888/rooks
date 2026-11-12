@@ -86,7 +86,7 @@ function shellQuote(value: string): string {
 }
 
 /** The Rooks units this account defines, sorted. No readable directory: none. */
-export function linuxNovaUnits(homeDir: string): string[] {
+export function linuxRooksUnits(homeDir: string): string[] {
   let names: string[];
   try { names = readdirSync(join(homeDir, '.config', 'systemd', 'user')); } catch { return []; }
   // `rooks-orchestrator`, `rooks-dev-orchestrator`, `rooks-desktop-<hash>`;
@@ -96,7 +96,7 @@ export function linuxNovaUnits(homeDir: string): string[] {
 
 function linuxOrphans(opts: OrphanScanOptions, exists: (path: string) => boolean): OrphanService[] {
   const found: OrphanService[] = [];
-  for (const unit of linuxNovaUnits(opts.homeDir)) {
+  for (const unit of linuxRooksUnits(opts.homeDir)) {
     const definition = unitPath(opts.homeDir, unit);
     const text = readIfPresent(definition);
     const home = text === null ? null : homeOfUnit(text, opts.homeDir);

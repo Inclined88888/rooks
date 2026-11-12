@@ -26,7 +26,7 @@ const { dbApi } = await import('../db.js');
 const { hashPassword } = await import('../users/password.js');
 const { createRun } = await import('../workflows/engine.js');
 const { workflowsFor } = await import('./workflows-facade.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { assertSpawnAllowed, resetPluginPolicyState } = await import('./policy.js');
 
@@ -170,7 +170,7 @@ test('a run with nobody in front is a spawn: approval, then the quota shared wit
   const workflow = seed(ada.id, 'Gated');
   const runs = () => dbApi.listWorkflowRuns(workflow).length;
   const policy = (spawn: { approved: string[]; max?: number; windowMs?: number }) => {
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn } }));
     resetPluginPolicyState();
   };
   // An event handler or a webhook delivery acts for Ada, without Ada.

@@ -19,7 +19,7 @@ const { readManifest } = await import('./manifest.js');
 const { createPluginContext, daemonHost } = await import('./context.js');
 const { PluginPolicyError } = await import('./policy.js');
 const { config, setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { getHost } = await import('../host/index.js');
 const { readOsCredential, resetOsCredentialMisses } = await import('../host/os-credentials.js');
 const { ProviderBinaryError } = await import('../backends/provider-binary.js');
@@ -69,7 +69,7 @@ function pluginContext(pluginId: string, binaries: string[], extra: Record<strin
 
 function allowExec(...names: string[]): () => void {
   const previous = config();
-  setConfig(NovaConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: names } } }));
+  setConfig(RooksConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: names } } }));
   return () => setConfig(previous);
 }
 

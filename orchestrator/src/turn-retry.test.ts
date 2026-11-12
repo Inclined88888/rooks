@@ -63,10 +63,10 @@ test('the replay prompt never repeats the request, and the final answer names bo
   assert.match(prompt, /retry 2\/3/);
   assert.match(prompt, /Do not redo/);
   const reply = transientFailureReply({
-    cause: 'stream disconnected', provider_retries: 5, provider_max: 5, nova_retries: 3, nova_max: 3,
+    cause: 'stream disconnected', provider_retries: 5, provider_max: 5, rooks_retries: 3, rooks_max: 3,
   });
   assert.match(reply, /unreachable \(transient\) after 5 provider retries \+ 3 Rooks retries — retry later/);
   assert.match(transientFailureReply({
-    cause: 'x', provider_retries: 1, provider_max: null, nova_retries: 0, nova_max: 3,
+    cause: 'x', provider_retries: 1, provider_max: null, rooks_retries: 0, rooks_max: 3,
   }), /after 1 provider retry — retry later/);
 });

@@ -921,7 +921,7 @@ declare module '@rooks/ui' {
   /** Added to the catalogue less than a week ago: the product's rows show a "new" badge. Client API 13. */
   export function isNewModel(model: { addedAt?: number }, now?: number): boolean;
   /** What a provider declared it cannot do: work in Rooks's folder (`worktree`, a remote agent), Rooks's tools, attachments. Client API 13. */
-  export function backendLimits(catalog: BackendCatalog, backend: string): Array<'worktree' | 'novaMcp' | 'attachments'>;
+  export function backendLimits(catalog: BackendCatalog, backend: string): Array<'worktree' | 'rooksMcp' | 'attachments'>;
   /** The product's "Remote" / "Limited" chip for those limits, the list in its tooltip; nothing when there are none. Props: `{ catalog, backend, className? }`. Client API 13. */
   export const BackendLimitsBadge: PlatformComponent;
   /** The product's chip for an account to sign in again or cooling down, its reason in the tooltip; nothing when it can run. Props: `{ backend, className? }`. Client API 13. */

@@ -49,7 +49,7 @@ test('agent editor: on a backend that cannot read a skill on demand, every skill
     if (url.startsWith('/api/ui/backends/catalog')) {
       return Response.json({
         defaultBackend: 'gateway',
-        backends: [{ id: 'gateway', label: 'Gateway', models: [], defaultModel: null, capabilities: { worktree: false, novaMcp: false, attachments: false } }],
+        backends: [{ id: 'gateway', label: 'Gateway', models: [], defaultModel: null, capabilities: { worktree: false, rooksMcp: false, attachments: false } }],
       });
     }
     if (url.startsWith('/api/ui/skills')) return Response.json({ skills: [{ id: 'alpha', source: 'rooks' }, { id: 'beta', source: 'rooks' }] });

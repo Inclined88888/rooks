@@ -115,8 +115,8 @@ const EMAIL = 'owner@example.com';
 const PASSWORD = 'first-password';
 const account = { email: EMAIL, name: 'Owner', password: PASSWORD };
 
-test('the bundled plugin mounts the routes with email verification on', () => {
-  assert.equal(BUNDLED_USER_ROUTES.emailVerification, true);
+test('the bundled plugin mounts the routes with email verification off (local-first)', () => {
+  assert.equal(BUNDLED_USER_ROUTES.emailVerification, false);
   const index = readFileSync(new URL('./index.ts', import.meta.url), 'utf8');
   assert.match(index, /registerRoutes\(ctx\.http\.router\(\), BUNDLED_USER_ROUTES\)/);
 });

@@ -115,8 +115,8 @@ test('the card rule is closed by default: forms and Rooks\'s own MCP tools only'
     'mcp__rooks_ask__question', 'mcp__rooks_permission__ask_user']) {
     assert.equal(conversionToolCardRefusal(tool), null, tool);
   }
-  for (const tool of ['Bash', 'BashOutput', 'KillShell', 'Write', 'Edit', 'WebSearch', 'Task', 'read', 'mcp_nova',
-    'Read', 'Glob', 'Grep', 'LS', ...FOREIGN_MCP, 'mcp__rooks', 'mcp__rooks__', 'mcp__novax__skill_put', 'mcp__evil__mcp__rooks__skill_put',
+  for (const tool of ['Bash', 'BashOutput', 'KillShell', 'Write', 'Edit', 'WebSearch', 'Task', 'read', 'mcp_fake',
+    'Read', 'Glob', 'Grep', 'LS', ...FOREIGN_MCP, 'mcp__rooks', 'mcp__rooks__', 'mcp__fakex__skill_put', 'mcp__evil__mcp__rooks__skill_put',
     'mcp__chrome-devtools__navigate_page']) {
     assert.ok(conversionToolCardRefusal(tool), tool);
   }

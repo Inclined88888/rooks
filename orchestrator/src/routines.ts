@@ -11,7 +11,7 @@
  * running it so that we keep a trace".
  *
  * Exception: the built-in routine `rooks-backup-nightly` (step 4.6).
- * It calls `exportNova` in-process — spawning an LLM every night
+ * It calls `exportRooks` in-process — spawning an LLM every night
  * to run `tar` would burn quota and miss the slot. The
  * trace is the archive under `$ROOKS_HOME/backups/`.
  *
@@ -24,7 +24,7 @@ import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { CronExpressionParser } from 'cron-parser';
 import { db, dbApi, type RoutineRow, type TaskType } from './db.js';
-import { exportNova, type ExportResult } from './export.js';
+import { exportRooks, type ExportResult } from './export.js';
 import { ROOKS_HOME } from './paths.js';
 import { settingInt } from './settings.js';
 import { scheduleCadenceProblem } from './triggers/schema.js';
@@ -294,7 +294,7 @@ export function applyBackupDefault(): 'created' | 'kept' | 'already' {
 export function runNightlyBackup(when: Date = new Date()): ExportResult {
   const dir = backupsDir();
   mkdirSync(dir, { recursive: true });
-  const result = exportNova({
+  const result = exportRooks({
     out: join(dir, backupArchiveName(when)),
     home: ROOKS_HOME,
     vacuumInto: (dest) => {

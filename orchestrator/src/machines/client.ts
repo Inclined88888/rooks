@@ -19,7 +19,7 @@ import { request as httpRequest, type IncomingHttpHeaders, type RequestOptions }
 import { request as httpsRequest } from 'node:https';
 import { isIP, type LookupFunction } from 'node:net';
 import * as tls from 'node:tls';
-import { novaVersion } from '../data-version.js';
+import { rooksVersion } from '../data-version.js';
 import { parseMachineUrl, resolvedAddressAllowed } from './url.js';
 
 export const MACHINE_TIMEOUT_MS = 10_000;
@@ -133,7 +133,7 @@ export function machineConnectOptions(
   if (!parsed.ok) throw new MachineRequestError(parsed.problem === 'blocked_address' ? 'blocked_address' : 'invalid_url', 'invalid machine URL');
   const target = new URL(`${parsed.value.url}${call.path}`);
   const headers: Record<string, string> = {
-    'user-agent': `Rooks/${novaVersion()} (machines)`,
+    'user-agent': `Rooks/${rooksVersion()} (machines)`,
     ...call.headers,
   };
   if (call.token) headers.authorization = `Bearer ${call.token}`;

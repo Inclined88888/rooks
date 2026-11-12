@@ -68,7 +68,7 @@
       "invalidUrl": "Cette adresse ne convient pas : donnez l'adresse de la machine seule, sans identifiants, paramètres ni fragment.",
       "httpsRequired": "La machine doit être jointe en HTTPS. Le HTTP simple n'est accepté que sur cet ordinateur lui-même.",
       "blockedAddress": "Cette adresse ne désigne jamais une machine Rooks.",
-      "notNova": "Aucune machine Rooks ne répond à cette adresse.",
+      "notRooks": "Aucune machine Rooks ne répond à cette adresse.",
       "requiresTls": "La machine ne voit pas cette connexion comme du HTTPS : vérifiez les réglages HTTPS de son reverse proxy.",
       "unreachable": "La machine est injoignable pour le moment.",
       "unauthorized": "La machine n'accepte plus cet ordinateur : son accès a été révoqué ou a expiré. Appairez-la de nouveau.",

@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { apiPort, boundAddress } from './api-url.js';
 import { buildInfo } from './build-info.js';
 import { CONFIG_FILE, config } from './config/load.js';
-import { compareVersions, packagedDaemon, readDataVersion, novaVersion } from './data-version.js';
+import { compareVersions, packagedDaemon, readDataVersion, rooksVersion } from './data-version.js';
 import { diagnose, systemdPresent } from './doctor.js';
 import { buildDiagnosticReport, doctorSummary, type Finding } from './host/diagnostic-report.js';
 import { packagedRuntime } from './host/bundled-node.js';
@@ -207,7 +207,7 @@ function serviceReport(opts: ServiceOpts, mode: DaemonMode, packagedRuntime: boo
   let windows: ServiceReport['windows'] = null;
   let stale = false;
   if (platform === 'win32' && installed) {
-    const files = windowsServiceFiles(opts.novaHome, join);
+    const files = windowsServiceFiles(opts.rooksHome, join);
     const revision = readText(files.revision)?.trim() || null;
     const launcher = readText(files.launcher);
     const launcherMarked = launcher === null ? null : /set "ROOKS_DESKTOP_SERVICE=1"/i.test(launcher);
@@ -234,7 +234,7 @@ function osName(platform: NodeJS.Platform): string | null {
 export function systemInfo(): SystemInfo {
   const cfg = config();
   const platform = process.platform;
-  const version = novaVersion();
+  const version = rooksVersion();
   const dataVersion = readDataVersion(ROOKS_HOME);
   const journal = platform === 'linux' && stdoutIsJournal(process.env);
   const mode = daemonMode(process.env, platform, journal);

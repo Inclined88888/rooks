@@ -103,7 +103,7 @@
       "handoverKept": "De achtergronddienst van Rooks antwoordde niet.",
       "handoverKeptDetail": "De configuratie gaat verder met Rooks zoals het in dit venster draait. Sluit Rooks af en open het opnieuw zodra de configuratie klaar is: het probeert de dienst dan opnieuw. Je gegevens blijven in {home}.",
       "refused": "Windows start de achtergronddienst van Rooks niet voor dit account.",
-      "refusedDetail": "De geplande taak NovaOrchestrator is geregistreerd, maar Windows heeft haar nooit uitgevoerd. Dit gebeurt bij werk- of schoolaccounts op een pc die lid is van Microsoft Entra ID. Rooks gebruikt in plaats daarvan zijn ingebouwde daemon: die start met de app en stopt als je haar sluit of je afmeldt. Om de ongebruikte taak te verwijderen: rooks service uninstall (Windows vraagt om toestemming).",
+      "refusedDetail": "De geplande taak RooksOrchestrator is geregistreerd, maar Windows heeft haar nooit uitgevoerd. Dit gebeurt bij werk- of schoolaccounts op een pc die lid is van Microsoft Entra ID. Rooks gebruikt in plaats daarvan zijn ingebouwde daemon: die start met de app en stopt als je haar sluit of je afmeldt. Om de ongebruikte taak te verwijderen: rooks service uninstall (Windows vraagt om toestemming).",
       "repair": "De achtergronddienst van Rooks is niet meer geïnstalleerd.",
       "repairDetail": "Zonder dienst start Rooks niet met Windows en stopt het als je de app sluit of je afmeldt. Opnieuw installeren vraagt één keer om toestemming van Windows.",
       "repairConfirm": "Dienst opnieuw installeren",

@@ -224,7 +224,7 @@ export function packagedCli(
 }
 
 /** The release version, shared by the three package.json files. */
-export function novaVersion(): string {
+export function rooksVersion(): string {
   try {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version?: unknown };
     return typeof pkg.version === 'string' ? pkg.version : '0.0.0';

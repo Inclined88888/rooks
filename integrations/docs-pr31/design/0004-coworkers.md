@@ -17,7 +17,7 @@ The labels mean this. **Works**: code plus passing tests. **Untested**: code, no
 
 ## 2. Licensing
 
-ROOKS is proprietary (`LICENSE`). Rerun is AGPL 3.0, with `ee/` directories under a separate commercial licence, and its name, logo, coworker characters and "Foreman" are trademarks (`TRADEMARK.md`). Any copied code, or a close port of its file structure, would oblige ROOKS to publish its source under AGPL. Decision: **no code, prompts, schemas, assets or names are taken from Rerun.** Only general mechanisms are studied, and each ROOKS implementation is written from the ROOKS code outward. The word "Foreman" is not used.
+ROOKS is proprietary (`LICENSE`). Rerun is proprietary 3.0, with `ee/` directories under a separate commercial licence, and its name, logo, coworker characters and "Foreman" are trademarks (`TRADEMARK.md`). Any copied code, or a close port of its file structure, would oblige ROOKS to publish its source under proprietary. Decision: **no code, prompts, schemas, assets or names are taken from Rerun.** Only general mechanisms are studied, and each ROOKS implementation is written from the ROOKS code outward. The word "Foreman" is not used.
 
 ## 3. What ROOKS has today
 

@@ -25,7 +25,7 @@ export interface SavedWindow {
   fullScreen: boolean;
   /** The display it was on, as `screen.getDisplayMatching` named it; null when unknown. */
   displayId: number | null;
-  /** The machine it drove; null = the `nova_machine` cookie. */
+  /** The machine it drove; null = the `rooks_machine` cookie. */
   machineId: string | null;
   /** The page it showed (`layoutRoute`); null = the home page. */
   route: string | null;

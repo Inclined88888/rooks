@@ -21,10 +21,10 @@ const { dbApi } = await import('../db.js');
 const { createSecret } = await import('../secrets/store.js');
 const { readPluginSecret } = await import('../secrets/plugins.js');
 const { revokeSecret } = await import('../secrets/store.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 
-const withHttpPolicy = (allow: string[]) => setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { allow } } }));
+const withHttpPolicy = (allow: string[]) => setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { allow } } }));
 
 type Identity = Parameters<typeof runPluginRequest>[0];
 const caller = (id: string, permissions: string[], isSuperadmin = false): Identity => ({
@@ -297,7 +297,7 @@ test('a host opened to one plugin in pluginPolicy.http.byPlugin is brokered for 
   });
   const net = recordFetch();
   try {
-    setConfig(NovaConfigSchema.parse({ pluginPolicy: { http: { byPlugin: { 'byplugin-a': ['api.example.com'] } } } }));
+    setConfig(RooksConfigSchema.parse({ pluginPolicy: { http: { byPlugin: { 'byplugin-a': ['api.example.com'] } } } }));
     await assert.rejects(as(broker, () => b.plugin.secrets.httpCall({ identity: 'BYPLUGIN_API', path: '/' })), (e) =>
       e instanceof PluginAdminError && e.reason === 'policy-denied');
     await assert.rejects(b.plugin.secrets.httpCall({ identity: 'BYPLUGIN_API', path: '/' }), (e) =>

@@ -60,7 +60,7 @@
     "limited": "制限あり",
     "limitsHint": "このバックエンドでできないこと:",
     "limitWorktree": "Rooks のフォルダーでの作業 (code タスクや merge タスクなし)",
-    "limitNovaMcp": "Rooks のツールの使用 (Kanban、メッセージ、メモリ)",
+    "limitRooksMcp": "Rooks のツールの使用 (Kanban、メッセージ、メモリ)",
     "limitAttachments": "添付ファイルの受信 (画像のみ)",
     "unverified": "未検証",
     "unverifiedHint": "ベンダーのドキュメントをもとに記述: 実際のプログラムでは確認されていません。",

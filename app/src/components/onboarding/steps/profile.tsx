@@ -98,6 +98,14 @@ export function ProfileStep(): ReactElement {
       {failed && (
         <p role="alert" className="mt-3 text-sm text-destructive">{t('onboarding.profile.failed')}</p>
       )}
+      <button
+        type="button"
+        data-profile-skip
+        className="mt-4 text-[13px] text-muted-foreground underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
+        onClick={next}
+      >
+        {t('onboarding.profile.skip')}
+      </button>
     </section>
   );
 }

@@ -6,7 +6,7 @@ const send = (message: Record<string, unknown>) => ipcRenderer.send('rooks:annot
 const listen = (channel: string) => (listener: (value: unknown) => void) => {
   ipcRenderer.on(channel, (_event: unknown, value: unknown) => listener(value));
 };
-contextBridge.exposeInMainWorld('novaBubble', {
+contextBridge.exposeInMainWorld('rooksBubble', {
   ready: () => send({ type: 'ready' }),
   draft: (text: unknown) => send({ type: 'draft', text: String(text) }),
   add: (text: unknown) => send({ type: 'add', text: String(text) }),

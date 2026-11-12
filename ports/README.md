@@ -14,4 +14,4 @@ These trees won their areas in the Rooks-body takeover comparison and are kept a
 | `windows-pack/` | Windows MSI / Job-object Room packaging from PR #31 |
 | `icons/` | Rooks tower mark and platform icons |
 
-Wiring these into the Rooks daemon (providers, MCP bridges, settings slots) is follow-up work after the owner decides on AGPL-3.0 distribution.
+Wiring these into the Rooks daemon (providers, MCP bridges, settings slots) is follow-up work after the owner decides on proprietary distribution.

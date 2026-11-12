@@ -80,18 +80,18 @@ export function LlmStep(): ReactElement {
           ? <PlanBlock onContinue={next} />
           : shown === 'local'
             ? <LocalBlock onContinue={next} />
-            : <ChooseBlock onPick={setView} known={known} />)}
+            : <ChooseBlock onPick={setView} known={known} onSkip={next} />)}
       />
     </section>
   );
 }
 
-function ChooseBlock({ onPick, known }: { onPick: (view: LlmView) => void; known: ProviderAnswer }): ReactElement {
+function ChooseBlock({ onPick, known, onSkip }: { onPick: (view: LlmView) => void; known: ProviderAnswer; onSkip: () => void }): ReactElement {
   const legal = splitAtSlots((vars) => t('onboarding.llm.legal', vars), ['terms', 'privacy']);
   const providers = known ? subscriptionProviders(known) : { names: [], brands: [] };
   return (
     <>
-      <div className="w-full max-w-[460px] space-y-0.5 rounded-2xl bg-card p-1.5 text-left shadow-elev-2">
+      <div className="w-full max-w-[460px] space-y-0.5 rounded-2xl bg-card/80 p-1.5 text-left shadow-elev-2 ring-1 ring-border">
         <ChoiceRow
           title={t('onboarding.llm.plan.title')}
           detail={providers.names.length > 0 ? formatList(providers.names, 'or') : t('onboarding.llm.plan.detailAny')}
@@ -110,6 +110,14 @@ function ChooseBlock({ onPick, known }: { onPick: (view: LlmView) => void; known
           name="local"
         />
       </div>
+      <button
+        type="button"
+        data-llm-skip
+        className="mt-3 text-[13px] text-muted-foreground underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
+        onClick={onSkip}
+      >
+        {t('onboarding.llm.skip')}
+      </button>
       <p className="mt-4 max-w-[420px] text-xs leading-relaxed text-muted-foreground" data-legal>
         {legal.map((part, i) => (part.kind === 'text'
           ? <span key={i}>{part.text}</span>

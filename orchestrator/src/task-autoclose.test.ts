@@ -89,7 +89,7 @@ test('une mission morte n\'hérite d\'aucun retour : la phrase ne vaut que pour 
   } finally { stop(); }
 });
 
-// A backend that declares `novaMcp: false` gives its agent no tool to close the
+// A backend that declares `rooksMcp: false` gives its agent no tool to close the
 // task: the last reply is the only report there will ever be.
 registerDialect('autoclose-test', 'autoclose-no-tools', {
   defaultCmd: 'echo',
@@ -100,7 +100,7 @@ registerDialect('autoclose-test', 'autoclose-no-tools', {
   permissionModel: 'none',
   rateLimitReporting: 'none',
   hostedConnectors: false,
-  capabilities: { worktree: false, novaMcp: false, attachments: false },
+  capabilities: { worktree: false, rooksMcp: false, attachments: false },
   async buildSpawn(_opts, profile) { return { cmd: profile.cmd, args: [], initialStdin: null }; },
   writeUserInput() { /* one-shot */ },
   parseLine() { return []; },

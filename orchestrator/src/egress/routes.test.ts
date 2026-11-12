@@ -27,7 +27,7 @@ const { dbApi } = await import('../db.js');
 const { issueMissionApiToken, issueMissionEgressToken } = await import('../users/api-tokens.js');
 const { SESSION_COOKIE } = await import('../users/session.js');
 const { config, setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 
 const TOKEN = 'witness-daemon-token';
 
@@ -139,7 +139,7 @@ test('anonymous is refused once accounts exist', async () => {
 test('the owner reads its mission, page by page', async (t) => {
   const defaults = config();
   t.after(() => setConfig(defaults));
-  setConfig(NovaConfigSchema.parse({ host: { isolation: { egress: { mode: 'log' } } } }));
+  setConfig(RooksConfigSchema.parse({ host: { isolation: { egress: { mode: 'log' } } } }));
   const cookie = await login('admin@example.com', 'admin-secret');
   const first = await call('GET', `/api/missions/${adminMission}/egress?limit=2`, { cookie });
   assert.equal(first.status, 200);

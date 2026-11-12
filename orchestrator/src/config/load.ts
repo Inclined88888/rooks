@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { canonicalizeIds } from '../kernel/legacy-ids.js';
 import { ROOKS_HOME } from '../paths.js';
 import { isLoopbackHost } from '../users/setup-token.js';
-import { CONFIG_VERSION, NovaConfigSchema, type NovaConfig } from './schema.js';
+import { CONFIG_VERSION, RooksConfigSchema, type RooksConfig } from './schema.js';
 
 export const CONFIG_FILE = join(ROOKS_HOME, 'rooks.config.json');
 
@@ -129,7 +129,7 @@ function canonicalizeLayer(layer: Json): Json {
  * config older than the `@rooks/` scope therefore keeps enabling and disabling
  * exactly the same modules as before the rename.
  */
-function canonicalizeModules(cfg: NovaConfig): NovaConfig {
+function canonicalizeModules(cfg: RooksConfig): RooksConfig {
   cfg.modules = canonicalizeIds(cfg.modules);
   return cfg;
 }
@@ -164,9 +164,9 @@ export const ENV_OVERRIDES: readonly EnvOverride[] = [
 
 /** Applied to the PARSED config, so `~/…` still goes through `expandPaths`. */
 export function applyEnvOverrides(
-  cfg: NovaConfig,
+  cfg: RooksConfig,
   env: NodeJS.ProcessEnv = process.env,
-): NovaConfig {
+): RooksConfig {
   for (const { key, path } of ENV_OVERRIDES) {
     const raw = env[key];
     if (raw === undefined || raw === '') continue;
@@ -191,7 +191,7 @@ export function applyEnvOverrides(
   return cfg;
 }
 
-function expandPaths(cfg: NovaConfig): NovaConfig {
+function expandPaths(cfg: RooksConfig): RooksConfig {
   if (cfg.workspacesRoot) cfg.workspacesRoot = expandTilde(cfg.workspacesRoot);
   cfg.daemon.installDir = expandTilde(cfg.daemon.installDir);
   for (const [k, v] of Object.entries(cfg.host.binaries)) {
@@ -214,7 +214,7 @@ const envLayer = new Set<string>();
  * Throws `ConfigError` (never a silent default) if the JSON is invalid, if
  * a key does not pass the schema, or if listening is exposed without auth.
  */
-export function loadConfig(file: string = CONFIG_FILE, opts: { readonly?: boolean } = {}): NovaConfig {
+export function loadConfig(file: string = CONFIG_FILE, opts: { readonly?: boolean } = {}): RooksConfig {
   let user: Json = existsSync(file) ? readJsonFile(file) : {};
 
   // Migration BEFORE any validation: the schema only knows the current
@@ -244,7 +244,7 @@ export function loadConfig(file: string = CONFIG_FILE, opts: { readonly?: boolea
   // the preset's `"@rooks/kanban-code": false`. Canonicalising after the merge
   // would lose their decision against a preset key with the current name.
   const merged = mergeDeep(canonicalizeLayer(preset), canonicalizeLayer(user));
-  const parsed = NovaConfigSchema.safeParse(merged);
+  const parsed = RooksConfigSchema.safeParse(merged);
   if (!parsed.success) {
     const details = parsed.error.issues
       .map((i) => `${i.path.length ? i.path.join('.') : '<root>'}: ${i.message}`)
@@ -280,16 +280,16 @@ export function loadConfig(file: string = CONFIG_FILE, opts: { readonly?: boolea
   return cfg;
 }
 
-let singleton: NovaConfig | null = null;
+let singleton: RooksConfig | null = null;
 
 /** Effective configuration of the process (loaded on first request). */
-export function config(): NovaConfig {
+export function config(): RooksConfig {
   if (!singleton) singleton = loadConfig();
   return singleton;
 }
 
 /** Forces a configuration (tests, boot that has already loaded the file). */
-export function setConfig(cfg: NovaConfig): void {
+export function setConfig(cfg: RooksConfig): void {
   singleton = cfg;
 }
 

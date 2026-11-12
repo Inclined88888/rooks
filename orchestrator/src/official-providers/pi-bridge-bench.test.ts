@@ -36,13 +36,13 @@ type Policy = Record<string, unknown> & { mode: 'read-only' | 'ask' | 'edits' | 
 const policy = (mode: Policy['mode']): Policy => ({
   mode,
   allowTools: [],
-  allowCommands: COMMAND_POLICY.novaCliCommands.map((c) => `rooks ${c}:*`),
+  allowCommands: COMMAND_POLICY.rooksCliCommands.map((c) => `rooks ${c}:*`),
   hintServers: ['rooks'],
   grantTools: [],
   grantCommands: [],
   denyTools: [],
   denyPrograms: [...COMMAND_POLICY.denyPrograms],
-  denyCommands: [...COMMAND_POLICY.denyCommands, ...COMMAND_POLICY.denyNovaCommands.map((c) => `rooks ${c}`)],
+  denyCommands: [...COMMAND_POLICY.denyCommands, ...COMMAND_POLICY.denyRooksCommands.map((c) => `rooks ${c}`)],
 });
 const { RpcSessionDriver } = await import('../../official-providers/provider-pi/lib/rpc-driver.js') as unknown as {
   RpcSessionDriver: new (opts: Record<string, unknown>) => SessionDriver;

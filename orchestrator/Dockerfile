@@ -49,7 +49,7 @@ COPY bin/rooks /usr/local/bin/rooks
 RUN chmod +x /usr/local/bin/rooks
 
 # Permission-prompt MCP server, spawned by claude per-mission via
-# --permission-prompt-tool mcp__nova_ask__request.
+# --permission-prompt-tool mcp__rooks_ask__request.
 COPY bin/permission-mcp.mjs /app/bin/permission-mcp.mjs
 RUN chmod +x /app/bin/permission-mcp.mjs
 

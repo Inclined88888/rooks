@@ -375,7 +375,7 @@ export const skillWeightsResponseSchema = z.object({
 export type SkillWeightsResponse = z.infer<typeof skillWeightsResponseSchema>;
 
 /** A backend with no way to read a skill on demand. */
-const REMOTE_CAPS = { ...DEFAULT_BACKEND_CAPABILITIES, novaMcp: false, attachments: false };
+const REMOTE_CAPS = { ...DEFAULT_BACKEND_CAPABILITIES, rooksMcp: false, attachments: false };
 
 /**
  * The weight of each Rooks skill in each mode, measured on the very text the

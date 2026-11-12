@@ -240,9 +240,9 @@ test('no reply while the provider retries, nor while Rooks replays the turn (TOD
   dbApi.insertEvent(recipient, 'provider_retry', { type: 'provider_retry', attempt: 2, max: 5, cause: 'websocket closed', delay_ms: null, kind: 'transport' });
   completeRequestReplies(recipient);
   assert.equal(replies(request.id).length, 0, 'a provider retry is no turn end');
-  const failure = { cause: 'stream disconnected', provider_retries: 5, provider_max: 5, nova_retries: 0, nova_max: 3 };
+  const failure = { cause: 'stream disconnected', provider_retries: 5, provider_max: 5, rooks_retries: 0, rooks_max: 3 };
   result(recipient, { subtype: 'error', is_error: true, error: 'stream disconnected', transient_failure: failure,
-    nova_retry: { attempt: 1, max: 3, delay_ms: 30000 } });
+    rooks_retry: { attempt: 1, max: 3, delay_ms: 30000 } });
   completeRequestReplies(recipient);
   assert.equal(replies(request.id).length, 0, 'the turn is being replayed');
   dbApi.insertEvent(recipient, 'user', { message: { content: 'Your previous turn was cut…' },
@@ -255,7 +255,7 @@ test('no reply while the provider retries, nor while Rooks replays the turn (TOD
 
 test('a transient failure Rooks could not cure says so, with both layers of retries', () => {
   const { recipient, request } = setup();
-  const failure = { cause: 'stream disconnected', provider_retries: 5, provider_max: 5, nova_retries: 3, nova_max: 3 };
+  const failure = { cause: 'stream disconnected', provider_retries: 5, provider_max: 5, rooks_retries: 3, rooks_max: 3 };
   result(recipient, { subtype: 'error', is_error: true, error: 'stream disconnected', transient_failure: failure });
   completeRequestReplies(recipient);
   assert.match(replies(request.id)[0]?.payload ?? '',
@@ -264,9 +264,9 @@ test('a transient failure Rooks could not cure says so, with both layers of retr
 
 test('a replay that never ran ends the request on its transient failure', () => {
   const { recipient, request } = setup();
-  const failure = { cause: 'ECONNRESET', provider_retries: 0, provider_max: null, nova_retries: 0, nova_max: 3 };
+  const failure = { cause: 'ECONNRESET', provider_retries: 0, provider_max: null, rooks_retries: 0, rooks_max: 3 };
   result(recipient, { subtype: 'error', is_error: true, error: 'ECONNRESET', transient_failure: failure,
-    nova_retry: { attempt: 1, max: 3, delay_ms: 30000 } });
+    rooks_retry: { attempt: 1, max: 3, delay_ms: 30000 } });
   dbApi.insertEvent(recipient, 'turn_retry_abandoned', { type: 'turn_retry_abandoned', reason: 'stopped by the user' });
   completeRequestReplies(recipient, 'failed');
   assert.match(replies(request.id)[0]?.payload ?? '', /unreachable \(transient\)/);

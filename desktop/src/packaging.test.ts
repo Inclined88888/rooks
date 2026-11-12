@@ -179,10 +179,10 @@ test('an older installer can replace a newer version, to go back after a bad upd
 test('the NSIS installer pauses the service with one elevation as it opens, over an existing install', () => {
   const nsh = readFileSync(join(root, 'build', 'installer.nsh'), 'utf8');
   for (const hook of ['customInit', 'customUnInit']) {
-    assert.match(nsh, new RegExp(`!macro ${hook}\\s+!insertmacro novaPauseService\\s+!macroend`));
+    assert.match(nsh, new RegExp(`!macro ${hook}\\s+!insertmacro rooksPauseService\\s+!macroend`));
   }
   assert.doesNotMatch(nsh, /!macro customCheckAppRunning/);
-  const pause = nsh.match(/!macro novaPauseService\s+([\s\S]*?)!macroend/)?.[1] ?? '';
+  const pause = nsh.match(/!macro rooksPauseService\s+([\s\S]*?)!macroend/)?.[1] ?? '';
   assert.doesNotMatch(pause, /tasklist/, 'no detection from an unelevated process');
   assert.match(pause, /\$\{IfNot\} \$\{Silent\}/, 'never prompt under /S');
   assert.ok(pause.includes('${FileExists} "$INSTDIR\\${APP_EXECUTABLE_FILENAME}"'), 'an existing install');
@@ -222,8 +222,8 @@ test('the NSIS installer pauses the service with one elevation as it opens, over
 test('the NSIS installer installs missing Node.js and Git with one elevation', () => {
   const nsh = readFileSync(join(root, 'build', 'installer.nsh'), 'utf8');
   const install = nsh.match(/!macro customInstall\s+([\s\S]*?)!macroend/)?.[1] ?? '';
-  assert.match(install, /!insertmacro novaPrerequisites/);
-  const prereq = nsh.match(/!macro novaPrerequisites\s+([\s\S]*?)!macroend/)?.[1] ?? '';
+  assert.match(install, /!insertmacro rooksPrerequisites/);
+  const prereq = nsh.match(/!macro rooksPrerequisites\s+([\s\S]*?)!macroend/)?.[1] ?? '';
   assert.match(prereq, /\$\{IfNot\} \$\{Silent\}/, 'never prompt under /S');
   assert.ok(prereq.includes('nodejs\\node.exe') && prereq.includes('Git\\cmd\\git.exe'), 'only what is missing');
   assert.match(prereq, /"runas"/);
@@ -255,7 +255,7 @@ test('the NSIS installer removes the daemon task, and never registers it', () =>
   assert.ok(nsh.includes('service uninstall'), 'installer.nsh must call `rooks service uninstall`');
   const install = nsh.match(/!macro customInstall\s+([\s\S]*?)!macroend/)?.[1];
   assert.ok(install, 'the install hook exposes the packaged CLI');
-  assert.match(install, /!insertmacro novaCliPath install/);
+  assert.match(install, /!insertmacro rooksCliPath install/);
   assert.doesNotMatch(install, /service|schtasks/i, 'service registration remains owned by first run');
   assert.doesNotMatch(
     nsh,
@@ -283,7 +283,7 @@ test('the NSIS installer removes the daemon task, and never registers it', () =>
   assert.ok(revision);
   assert.equal(desktopService.match(/export const WINDOWS_SERVICE_REVISION = '([^']+)'/u)?.[1], revision);
   // The marker `rooks service stop` leaves, read by the desktop at launch.
-  assert.match(service, /export function serviceStoppedMarker\(novaHome: string\): string \{\s*return join\(novaHome, 'run', 'service-stopped'\);/u);
+  assert.match(service, /export function serviceStoppedMarker\(rooksHome: string\): string \{\s*return join\(rooksHome, 'run', 'service-stopped'\);/u);
   assert.match(desktopService, /export function serviceStoppedMarkerFile\(home: string\): string \{ return join\(home, 'run', 'service-stopped'\); \}/u);
   // macOS: where the LaunchDaemon lives, read by the desktop without the host adapter.
   const daemonsDir = service.match(/export const MACOS_LAUNCH_DAEMONS_DIR = '([^']+)'/u)?.[1];
@@ -321,8 +321,8 @@ test('the NSIS installer removes the daemon task, and never registers it', () =>
   assert.equal(PACKAGED_DEFAULTS.daemon.listen.port, Number(hostPorts[1]));
   assert.equal(PACKAGED_DEFAULTS.app.listen.port, Number(hostPorts[2]));
   // The update exit must precede both CLI execution and the direct fallback.
-  assert.match(nsh, /Push \$2\s+(?:;[^\n]*\n\s*)*\$\{If\} \$\{isUpdated\}\s+Goto nova_task_done\s+\$\{EndIf\}/);
-  assert.match(nsh, /nova_task_done:\s+Pop \$2\s+Pop \$1\s+Pop \$0\s+!macroend/);
+  assert.match(nsh, /Push \$2\s+(?:;[^\n]*\n\s*)*\$\{If\} \$\{isUpdated\}\s+Goto rooks_task_done\s+\$\{EndIf\}/);
+  assert.match(nsh, /rooks_task_done:\s+Pop \$2\s+Pop \$1\s+Pop \$0\s+!macroend/);
 });
 
 test('the desktop reads a service\'s home the way the host adapter does', () => {
@@ -343,11 +343,11 @@ test('the desktop reads a service\'s home the way the host adapter does', () => 
   }
   // What those copies read is what the renderers write.
   const install = host('service-install.ts');
-  assert.match(install, /return join\(novaHome, 'run', 'rooks-service\.sh'\);/u);
+  assert.match(install, /return join\(rooksHome, 'run', 'rooks-service\.sh'\);/u);
   assert.ok(desktop.includes(String.raw`\/run\/rooks-service\.sh`));
   assert.ok(install.includes('`export ${key}=${shQuote(value)}`'), 'the launcher exports each variable, quoted');
   assert.ok(desktop.includes(String.raw`^export ROOKS_HOME='`));
-  assert.ok(install.includes('<string>${escapeXml(macosLauncherPath(opts.novaHome))}</string>'), 'the plist names the launcher');
+  assert.ok(install.includes('<string>${escapeXml(macosLauncherPath(opts.rooksHome))}</string>'), 'the plist names the launcher');
   assert.ok(install.includes('`    <key>${escapeXml(key)}</key><string>${escapeXml(value)}</string>`'), 'the plists set each variable');
   // The refusal says what the host adapter's says.
   assert.ok(host('service-ownership.ts').includes(': it was left in place.`') && desktop.includes(': it was left in place.`'));

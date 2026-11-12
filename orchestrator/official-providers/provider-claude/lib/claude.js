@@ -44,7 +44,7 @@ async function buildArgs(opts, thinkingArgs) {
  if (cfg.model) args.push('--model', cfg.model);
  args.push(...thinkingArgs);
  if (cfg.permission_mode) args.push('--permission-mode', cfg.permission_mode);
- const prompts = opts.novaMcp !== false && (cfg.permission_mode ?? 'auto') !== 'bypassPermissions';
+ const prompts = opts.rooksMcp !== false && (cfg.permission_mode ?? 'auto') !== 'bypassPermissions';
  const plan = await services.mcp(opts, { permissionPrompt: prompts });
  args.push('--allowedTools', [...new Set([...(cfg.allowed_tools ?? []), ...plan.preApprovedTools])].join(','));
  // MCP children inherit the mission token. It must never enter argv; user secrets live in a private file.

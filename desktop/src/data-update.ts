@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { readReleaseNotes, selectReleaseNotes } from '../scripts/release-notes.mjs';
 import { readDataVersion, localUpdateOffer } from '../scripts/data-update.mjs';
 import { compareVersions, markSnapshotWarningShown, snapshotFailureDialog, type SnapshotFailure } from './data-restore.js';
-import { isNova, probeHealth, type HealthResult } from './health.js';
+import { isRooks, probeHealth, type HealthResult } from './health.js';
 import { windowsLauncherUnmarked } from './service.js';
 import { shellText } from './shell-i18n.js';
 
@@ -28,7 +28,7 @@ export type UpdateOffer = NonNullable<ReturnType<typeof updateOffer>>;
  */
 export function unmanagedDaemon(home: string, health: HealthResult, serviceInstalled: boolean,
   tokenPresent: boolean = existsSync(join(home, 'update-token'))): string | null {
-  if (serviceInstalled || !health.ok || !isNova(health, home) || health.packaged === true) return null;
+  if (serviceInstalled || !health.ok || !isRooks(health, home) || health.packaged === true) return null;
   if (health.packaged === false) return 'it was not started by the Rooks app (it says so on /api/health)';
   // A daemon older than the `packaged` field: every packaged one since 0.1.1 wrote the token at boot.
   return tokenPresent ? null : 'it was not started by the Rooks app (it never wrote an update token)';
@@ -270,7 +270,7 @@ export async function finishUpdate(input: { home: string; origin: string; versio
   const copy = updateCopy(input.locale);
   const initialHealth = await deps.health(input.origin);
   // Another shell or an interrupted, already approved boot may have finished meanwhile.
-  if (isNova(initialHealth, input.home) && initialHealth.ok && !initialHealth.updatePending
+  if (isRooks(initialHealth, input.home) && initialHealth.ok && !initialHealth.updatePending
     && readDataVersion(input.home) === input.version) return;
   const status = await deps.request(input.origin, input.home);
   if (status.daemonVersion !== input.version) throw new Error('The running daemon is not the installed version.');
@@ -298,7 +298,7 @@ export async function finishUpdate(input: { home: string; origin: string; versio
   const deadline = now() + START_BUDGET_MS;
   while (now() < deadline) {
     const health = await deps.health(input.origin);
-    if (isNova(health, input.home) && health.ok && !health.updatePending) return;
+    if (isRooks(health, input.home) && health.ok && !health.updatePending) return;
     await deps.sleep(300);
   }
   throw new DaemonStartTimeoutError(copy.stillStarting, copy.stillStartingDetail);

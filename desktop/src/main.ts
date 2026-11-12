@@ -39,8 +39,8 @@ import {
 } from './restart.js';
 import { queueAppImageRelaunch } from './appimage-restart.js';
 import { LEAVE as UNLOAD_LEAVE, unloadPrompt } from './unload-prompt.js';
-import { daemonEnvOverrides, loadDesktopConfig, originOf, packagedFirstRun, resolveNovaHome, type DesktopConfig } from './config.js';
-import { isNova, probeHealth, waitForHealth, type HealthResult } from './health.js';
+import { daemonEnvOverrides, loadDesktopConfig, originOf, packagedFirstRun, resolveRooksHome, type DesktopConfig } from './config.js';
+import { isRooks, probeHealth, waitForHealth, type HealthResult } from './health.js';
 import {
   daemonEntryOf,
   daemonInstallDirOf,
@@ -315,7 +315,7 @@ function savedWindow(record: AppWindow): SavedWindow {
 /**
  * The window title names the machine the window drives ("Office VPS — Rooks").
  * The name comes from the local fleet list, read with the window's own session;
- * a window without a machine of its own follows the `nova_machine` cookie.
+ * a window without a machine of its own follows the `rooks_machine` cookie.
  */
 async function refreshTitle(record: AppWindow): Promise<void> {
   const w = record.window;
@@ -323,7 +323,7 @@ async function refreshTitle(record: AppWindow): Promise<void> {
   try {
     let id = pinned;
     if (id === null) {
-      const [cookie] = await w.webContents.session.cookies.get({ url: record.origin, name: 'nova_machine' });
+      const [cookie] = await w.webContents.session.cookies.get({ url: record.origin, name: 'rooks_machine' });
       let value: string | null = null;
       try { value = cookie ? decodeURIComponent(cookie.value) : null; } catch { /* malformed: served as local */ }
       id = isMachineId(value) ? value : LOCAL_MACHINE_ID;
@@ -974,7 +974,7 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
   // Last-moment lock: between the first probe and here, a service could have
   // come up. Two daemons on one ROOKS_HOME write the same database.
   const raced = await probeHealth(originOf(cfg.daemon.listen));
-  if (isNova(raced, cfg.home)) {
+  if (isRooks(raced, cfg.home)) {
     await completeApprovedUpdate(cfg);
     daemonUp = true;
     noteDesktopOpened(cfg);
@@ -1030,7 +1030,7 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
   });
 
   const health: HealthResult = await waitForHealth(originOf(cfg.daemon.listen), EMBEDDED_BOOT_BUDGET_MS);
-  daemonUp = isNova(health, cfg.home);
+  daemonUp = isRooks(health, cfg.home);
   noteDesktopOpened(cfg);
   console.log(`[desktop] embedded daemon health: ${describeHealth(health, cfg.home)}`);
   refreshTray(cfg, uiUrl);
@@ -1167,7 +1167,7 @@ async function offerDataRestore(home: string): Promise<string | null> {
  * into the restore. Wait for that boot rather than open on the old data.
  */
 async function waitForRestoreBoot(cfg: DesktopConfig, id: string): Promise<void> {
-  if (!isNova(await probeHealth(originOf(cfg.daemon.listen)), cfg.home)) return;
+  if (!isRooks(await probeHealth(originOf(cfg.daemon.listen)), cfg.home)) return;
   const deadline = Date.now() + EMBEDDED_BOOT_BUDGET_MS;
   while (restorePending(cfg.home, id) && Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -1253,7 +1253,7 @@ async function verifyInstalledRelease(): Promise<void> {
 /** One line for the desktop log: what answered, and whether it is this home's Rooks. */
 function describeHealth(health: HealthResult, home: string): string {
   if (!health.ok) return `no answer (${health.error ?? 'unknown'})`;
-  if (isNova(health, home)) return `Rooks, this home${health.updatePending ? ', update pending' : ''}`;
+  if (isRooks(health, home)) return `Rooks, this home${health.updatePending ? ', update pending' : ''}`;
   return health.identity === 'rooks' ? `Rooks of another home (HTTP ${health.status})` : `not Rooks (HTTP ${health.status})`;
 }
 
@@ -1470,14 +1470,14 @@ async function main(): Promise<void> {
   let daemonOrigin = originOf(cfg.daemon.listen);
   let health = await probeHealth(daemonOrigin);
   if (cfg.packagedDefaults && !hasDesktopService(cfg.home)
-    && (!health.ok || (health.identity === 'rooks' && health.instance && !isNova(health, cfg.home)))) {
+    && (!health.ok || (health.identity === 'rooks' && health.instance && !isRooks(health, cfg.home)))) {
     await assignBootstrapPorts(cfg);
     daemonOrigin = originOf(cfg.daemon.listen);
     health = await probeHealth(daemonOrigin);
   }
   const uiUrl = originOf(cfg.app.listen);
   interfaceUrl = uiUrl;
-  daemonUp = isNova(health, cfg.home);
+  daemonUp = isRooks(health, cfg.home);
   noteDesktopOpened(cfg);
   console.log(`[desktop] health of ${daemonOrigin}: ${describeHealth(health, cfg.home)}`);
 
@@ -1533,7 +1533,7 @@ async function main(): Promise<void> {
       // on the portable mode and the repair offer silent (TODO #342).
       clearServiceRefused(cfg.home);
       const serviceHealth = await waitForHealth(daemonOrigin, SERVICE_BOOT_BUDGET_MS);
-      daemonUp = isNova(serviceHealth, cfg.home);
+      daemonUp = isRooks(serviceHealth, cfg.home);
       noteDesktopOpened(cfg);
       console.log(`[desktop] service health after ${SERVICE_BOOT_BUDGET_MS / 1000}s: ${describeHealth(serviceHealth, cfg.home)}`);
       refreshTray(cfg, uiUrl);
@@ -1577,7 +1577,7 @@ if (devName) {
 // Windows: the installer's ID, which its shortcuts carry and the jump list hangs on (`jump-list.ts`).
 if (process.platform === 'win32' && app.isPackaged) app.setAppUserModelId(WINDOWS_APP_USER_MODEL_ID);
 // The session and single-instance lock belong to a data directory, not the whole product.
-const requestedHome = resolve(resolveNovaHome());
+const requestedHome = resolve(resolveRooksHome());
 mkdirSync(requestedHome, { recursive: true });
 desktopHome = realpathSync(requestedHome);
 installDesktopLog(desktopHome);
@@ -1656,7 +1656,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
       const cfg = loadDesktopConfig(desktopHome, { packaged: app.isPackaged });
       const health = await waitForHealth(originOf(cfg.daemon.listen), HANDOVER_BUDGET_MS);
       console.log(`[desktop] handover: service health: ${describeHealth(health, cfg.home)}`);
-      return isNova(health, cfg.home);
+      return isRooks(health, cfg.home);
     },
     resume: () => {
       const cfg = loadDesktopConfig(desktopHome, { packaged: app.isPackaged });

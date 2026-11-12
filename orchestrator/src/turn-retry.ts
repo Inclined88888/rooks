@@ -127,11 +127,11 @@ export type TransientFailureFields = {
     provider_retries: number;
     provider_max: number | null;
     /** Rooks's retries already spent on this turn. */
-    nova_retries: number;
-    nova_max: number;
+    rooks_retries: number;
+    rooks_max: number;
   };
   /** Present when Rooks replays the turn: the turn is NOT over. */
-  nova_retry?: { attempt: number; max: number; delay_ms: number };
+  rooks_retry?: { attempt: number; max: number; delay_ms: number };
 };
 
 /** The prompt that replays a turn in the session that holds it. The request
@@ -145,7 +145,7 @@ export function turnRetryPrompt(attempt: number, max: number, cause: string): st
 /** What the agent waiting on a request reads when the provider never came back. */
 export function transientFailureReply(fields: TransientFailureFields['transient_failure'] | null): string {
   if (!fields) return 'The recipient could not complete this request: its provider was unreachable (transient). Retry later.';
-  const rooks = fields.nova_retries > 0 ? ` + ${fields.nova_retries} Rooks retr${fields.nova_retries === 1 ? 'y' : 'ies'}` : '';
+  const rooks = fields.rooks_retries > 0 ? ` + ${fields.rooks_retries} Rooks retr${fields.rooks_retries === 1 ? 'y' : 'ies'}` : '';
   return 'The recipient could not complete this request: its provider was unreachable (transient) after '
     + `${fields.provider_retries} provider retr${fields.provider_retries === 1 ? 'y' : 'ies'}${rooks} — retry later. `
     + `Last error: ${fields.cause.slice(0, 300)}`;

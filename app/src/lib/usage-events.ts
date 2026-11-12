@@ -24,8 +24,8 @@ export const UI_ERROR_GAP_MS = 60_000;
 
 type Fetcher = (input: string, init: RequestInit) => Promise<unknown>;
 
-export function usageSurface(win: { novaDesktop?: unknown } | undefined = typeof window === 'undefined' ? undefined : window): UsageSurface {
-  return win && typeof win.novaDesktop === 'object' && win.novaDesktop !== null ? 'desktop' : 'web';
+export function usageSurface(win: { rooksDesktop?: unknown } | undefined = typeof window === 'undefined' ? undefined : window): UsageSurface {
+  return win && typeof win.rooksDesktop === 'object' && win.rooksDesktop !== null ? 'desktop' : 'web';
 }
 
 export function reportUsage(event: UsageEvent, fetcher: Fetcher = (input, init) => fetch(input, init)): void {
@@ -52,7 +52,7 @@ export type ReporterHost = {
   clearInterval(handle: unknown): void;
   addEventListener(type: 'popstate', fn: () => void): void;
   removeEventListener(type: 'popstate', fn: () => void): void;
-  novaDesktop?: unknown;
+  rooksDesktop?: unknown;
 };
 
 /**
@@ -100,14 +100,14 @@ export function startUsageReporting(host: ReporterHost, fetcher?: Fetcher): () =
 }
 
 /** The reporter's view of the real page: the global timers, which can be unref'd outside a browser. */
-export function windowReporterHost(win: Window & { novaDesktop?: unknown }): ReporterHost {
+export function windowReporterHost(win: Window & { rooksDesktop?: unknown }): ReporterHost {
   return {
     location: win.location,
     setInterval: (fn, ms) => globalThis.setInterval(fn, ms),
     clearInterval: (handle) => globalThis.clearInterval(handle as ReturnType<typeof setInterval>),
     addEventListener: (type, fn) => win.addEventListener(type, fn),
     removeEventListener: (type, fn) => win.removeEventListener(type, fn),
-    novaDesktop: win.novaDesktop,
+    rooksDesktop: win.rooksDesktop,
     now: () => Date.now(),
     loadMs: () => {
       const nav = win.performance?.getEntriesByType?.('navigation')[0] as PerformanceNavigationTiming | undefined;

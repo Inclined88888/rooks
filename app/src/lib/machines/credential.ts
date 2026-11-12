@@ -6,7 +6,7 @@
  * `orchestrator/src/machines/http.ts`). It answers only:
  *   - for the person whose LOCAL session cookie comes with the call — another
  *     account's machine and an unknown id are the same 404, so this lookup IS
- *     the check that the `nova_machine` cookie names a machine of this user;
+ *     the check that the `rooks_machine` cookie names a machine of this user;
  *   - to the relay, proven by `X-Rooks-Relay-Proof`: an HMAC keyed by this
  *     host's daemon-token over a timestamp and the machine id
  *     (`orchestrator/src/machines/relay-proof.ts` holds the contract). The

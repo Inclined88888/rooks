@@ -12,7 +12,7 @@ import { homedir } from 'node:os';
 import { extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Context } from '@deepseek-ai/cordis';
-import { novaVersion } from '../../data-version.js';
+import { rooksVersion } from '../../data-version.js';
 import type { Host } from '../../host/index.js';
 import type { ModuleManifest } from '../../kernel/registry.js';
 import { ROOKS_HOME } from '../../paths.js';
@@ -79,7 +79,7 @@ export function apply(ctx: Context): void {
     const hosted = new HostedSessions({
       endpoint: files.endpoint,
       tokenFile: files.token,
-      build: novaVersion(),
+      build: rooksVersion(),
       idleMs,
       local,
       launch: () => launchHost(host, files),

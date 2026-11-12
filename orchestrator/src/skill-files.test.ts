@@ -44,7 +44,7 @@ const base: Dialect = {
   extractSessionId() { return null; },
 };
 for (const [id, capabilities] of [
-  ['files-remote', { worktree: false, novaMcp: false, attachments: false, novaPreamble: false }],
+  ['files-remote', { worktree: false, rooksMcp: false, attachments: false, rooksPreamble: false }],
   ['files-tool-only', { attachments: false }],
 ] as const) {
   registerDialect(OWNER, id, { ...base, capabilities });

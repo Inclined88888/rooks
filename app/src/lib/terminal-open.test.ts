@@ -66,7 +66,7 @@ test('a workspace that refuses leaves the shell running and says so', async () =
 // project of its own, so the opener refused every card's scope and the user
 // only got a toast and the clipboard.
 const multichat: OpenView = { state: 'ready', scope: null, key: null };
-const novaView: OpenView = { state: 'ready', scope, key: 'project:rooks' };
+const rooksView: OpenView = { state: 'ready', scope, key: 'project:rooks' };
 const globex = { kind: 'project', slug: 'globex' } as const;
 
 test('a view of no project takes the scope a card names: the multichat cell opens its own project\'s shells', () => {
@@ -77,14 +77,14 @@ test('a view of no project takes the scope a card names: the multichat cell open
 });
 
 test('a request naming no scope, or the view\'s own, opens the view\'s shells', () => {
-  assert.deepEqual(openScope(novaView, undefined), { scope });
-  assert.deepEqual(openScope(novaView, { kind: 'project', slug: 'rooks' }), { scope });
+  assert.deepEqual(openScope(rooksView, undefined), { scope });
+  assert.deepEqual(openScope(rooksView, { kind: 'project', slug: 'rooks' }), { scope });
   assert.deepEqual(openScope(multichat, undefined), { scope: null });
 });
 
 test('another project\'s request is refused on a project\'s view, and anything while the view resolves', () => {
-  assert.equal(openScope(novaView, globex), null);
-  assert.equal(openScope(novaView, null), null);
+  assert.equal(openScope(rooksView, globex), null);
+  assert.equal(openScope(rooksView, null), null);
   assert.equal(openScope({ state: 'ready', scope: { kind: 'agent', name: 'solo' }, key: 'agent:solo' }, scope), null);
   assert.equal(openScope({ state: 'pending' }, scope), null);
   assert.equal(openScope({ state: 'pending' }, undefined), null);

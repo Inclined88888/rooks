@@ -25,11 +25,11 @@ const { hashPassword } = await import('../users/password.js');
 const { createRoutine } = await import('../routines.js');
 const { createPipeline } = await import('../pipelines.js');
 const { insertTrigger, getTriggerRow } = await import('../triggers/store.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 
 // A routine and a job's pipeline run are spawns: the operator approved these (TODO #591).
-setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn: { approved: ['ev-routine', 'ev-pipe'] } } }));
+setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn: { approved: ['ev-routine', 'ev-pipe'] } } }));
 test.after(() => resetConfig());
 
 mkdirSync(agentDir('worker'), { recursive: true });

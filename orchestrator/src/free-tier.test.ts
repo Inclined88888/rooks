@@ -28,7 +28,7 @@ const { LicenseCapabilityError } = await import('./license/capabilities.js');
 const { addPlugin, removePlugin, setPluginEnabled } = await import('./plugins/install.js');
 const { setModuleEnabled } = await import('./kernel/module-config.js');
 const { planEntries } = await import('./kernel/registry.js');
-const { NovaConfigSchema } = await import('./config/schema.js');
+const { RooksConfigSchema } = await import('./config/schema.js');
 const { CONFIG_FILE } = await import('./config/load.js');
 const { LICENSE_FILE } = await import('./paths.js');
 const { unsignedPluginsAllowed } = await import('./plugins/pubkey.js');
@@ -162,7 +162,7 @@ test('Free signed policy and all local admission boundaries', async (t) => {
   });
   await t.test('boot/reload decisions preserve options but ignore composition edits', () => {
     const catalog = [{ id: '@rooks/agenda', name: 'base', tier: 'opt' as const }, { id: '@rooks/extra', name: 'extra', tier: 'std' as const }];
-    const cfg = NovaConfigSchema.parse({ edition: 'expert', developer: { unsignedPlugins: true }, modules: { '@rooks/agenda': { enabled: false, account: 'work' }, '@rooks/extra': true } });
+    const cfg = RooksConfigSchema.parse({ edition: 'expert', developer: { unsignedPlugins: true }, modules: { '@rooks/agenda': { enabled: false, account: 'work' }, '@rooks/extra': true } });
     const result = planEntries(catalog, { config: cfg, capabilities: [] });
     assert.equal(result[0].disabled, false); assert.deepEqual(result[0].config, { account: 'work' });
     assert.equal(result[1].disabled, true);
@@ -203,24 +203,24 @@ test('Free signed policy and all local admission boundaries', async (t) => {
     const pkg = join(dir, 'node_modules', 'free-dev-plugin'); mkdirSync(pkg, { recursive: true });
     writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { 'free-dev-plugin': '1' } }));
     writeFileSync(join(pkg, 'package.json'), JSON.stringify({ name: 'free-dev-plugin', version: '1.0.0', type: 'module', main: 'index.js', rooks: { id: 'free-dev-plugin', apiVersion: 1 } }));
-    writeFileSync(join(pkg, 'index.js'), 'export const name = "free-dev-plugin";\nexport function apply() { globalThis.__novaFreeDevMounted = true; }\n');
-    const marker = globalThis as { __novaFreeDevMounted?: boolean };
+    writeFileSync(join(pkg, 'index.js'), 'export const name = "free-dev-plugin";\nexport function apply() { globalThis.__rooksFreeDevMounted = true; }\n');
+    const marker = globalThis as { __rooksFreeDevMounted?: boolean };
     const ctx = new Context();
     // A real key in the registry: an unset setting resolves closed, as shipped.
     for (const setting of [undefined, false] as const) {
       const closed = new PluginLoader(ctx, { dir, host: {} as import('./plugins/context.js').PluginHost, publicKeys: keys, allowUnsigned: () => unsignedPluginsAllowed(setting, { keys }), licensedPlugins: () => licenseState().plugins });
       const [record] = await closed.update();
       assert.equal(record.reason, 'skipped:unsigned', `setting ${String(setting)}`);
-      assert.equal(marker.__novaFreeDevMounted, undefined, 'refused before import');
+      assert.equal(marker.__rooksFreeDevMounted, undefined, 'refused before import');
       await closed.dispose();
     }
     const open = new PluginLoader(ctx, { dir, host: {} as import('./plugins/context.js').PluginHost, publicKeys: keys, allowUnsigned: () => unsignedPluginsAllowed(true, { keys }), licensedPlugins: () => licenseState().plugins });
     const [record] = await open.update();
     assert.equal(record.state, 'active', record.error ?? '');
     assert.equal(record.signed, false);
-    assert.equal(marker.__novaFreeDevMounted, true);
+    assert.equal(marker.__rooksFreeDevMounted, true);
     await open.dispose();
-    delete marker.__novaFreeDevMounted;
+    delete marker.__rooksFreeDevMounted;
     fixedPaid();
   });
   await t.test('Free grants every catalogue module and every plugin, machines included', async () => {
@@ -229,7 +229,7 @@ test('Free signed policy and all local admission boundaries', async (t) => {
     const state = licenseState();
     assert.equal(state.modules, '*'); assert.equal(state.plugins, '*'); assert.equal(state.edition, 'expert');
     assert.equal(state.users, 1); assert.equal(state.capabilities?.accounts, 'single-superadmin');
-    const cfg = NovaConfigSchema.parse({ edition: 'expert' });
+    const cfg = RooksConfigSchema.parse({ edition: 'expert' });
     const { licensedModulesOf } = await import('./kernel/registry.js');
     const decisions = planEntries(CATALOG, { config: cfg, capabilities: [], licensed: licensedModulesOf(CATALOG, state.modules), license: state });
     assert.deepEqual(decisions.filter((d) => d.reason === 'not included in this licence').map((d) => d.id), []);

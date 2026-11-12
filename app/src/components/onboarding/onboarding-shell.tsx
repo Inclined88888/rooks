@@ -35,9 +35,9 @@ function transition(swap: () => void, reduced: boolean): void {
     return;
   }
   const root = document.documentElement;
-  root.dataset.novaVt = 'onboarding';
+  root.dataset.rooksVt = 'onboarding';
   const vt = document.startViewTransition(() => { flushSync(swap); });
-  void vt.finished.finally(() => { delete root.dataset.novaVt; });
+  void vt.finished.finally(() => { delete root.dataset.rooksVt; });
 }
 
 type Position = { step: OnboardingStepId; direction: 1 | -1 };

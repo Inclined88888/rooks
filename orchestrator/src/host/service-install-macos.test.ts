@@ -26,7 +26,7 @@ function mac(opts: { token?: boolean; steps?: Record<string, number>; exec?: (c:
   const o: ServiceOpts = {
     platform: 'darwin',
     homeDir,
-    novaHome: join(homeDir, '.rooks'),
+    rooksHome: join(homeDir, '.rooks'),
     installDir: join(homeDir, 'Rooks App', 'orchestrator'),
     userName: 'tester',
     uid: 501,
@@ -51,8 +51,8 @@ function mac(opts: { token?: boolean; steps?: Record<string, number>; exec?: (c:
     },
   };
   if (opts.token) {
-    mkdirSync(dirname(claudeTokenMarkerPath(o.novaHome)), { recursive: true });
-    writeFileSync(claudeTokenMarkerPath(o.novaHome), 'configured\n');
+    mkdirSync(dirname(claudeTokenMarkerPath(o.rooksHome)), { recursive: true });
+    writeFileSync(claudeTokenMarkerPath(o.rooksHome), 'configured\n');
   }
   return { o, calls, killed };
 }
@@ -69,7 +69,7 @@ test('the LaunchDaemon plist names the user and an explicit environment', () => 
   assert.match(xml, /<key>ROOKS_SERVICE_KIND<\/key><string>launchd-system<\/string>/);
   assert.match(xml, /<key>KeepAlive<\/key><true\/>/);
   assert.match(xml, /<key>RunAtLoad<\/key><true\/>/);
-  assert.ok(xml.includes(`<string>${macosLauncherPath(o.novaHome)}</string>`));
+  assert.ok(xml.includes(`<string>${macosLauncherPath(o.rooksHome)}</string>`));
   assert.ok(xml.includes(join(o.homeDir, '.local', 'bin')));
   // Nothing release-specific: an update must not need a new plist, hence no prompt.
   assert.ok(!xml.includes(o.installDir));
@@ -80,7 +80,7 @@ test('the LaunchDaemon plist names the user and an explicit environment', () => 
 test('the launcher logs to daemon.log and execs the daemon, and parses as sh', () => {
   const { o } = mac();
   const sh = renderMacLauncher({ ...o, environment: { ELECTRON_RUN_AS_NODE: '1', PATH: '/custom/bin:/usr/bin' } });
-  assert.ok(sh.includes(`exec >>${shQuote(join(o.novaHome, 'tmp', 'daemon.log'))} 2>&1`));
+  assert.ok(sh.includes(`exec >>${shQuote(join(o.rooksHome, 'tmp', 'daemon.log'))} 2>&1`));
   assert.match(sh, /export ELECTRON_RUN_AS_NODE='1'/);
   assert.match(sh, /export PATH='\/custom\/bin:\/usr\/bin'/);
   assert.match(sh, /^exec '\/Applications\/Rooks\.app\/Contents\/MacOS\/Rooks' --max-old-space-size=4096 /m);
@@ -121,7 +121,7 @@ test('with a token: one prompt migrates the LaunchAgent to a LaunchDaemon', () =
   const order = ['bootout gui/501', 'bootout system/com.rooks.daemon', 'launchctl print', 'bootstrap system'].map((needle) => script.replace(/'/g, '').indexOf(needle));
   assert.ok(order.every((at, i) => at > 0 && (i === 0 || at > order[i - 1]!)), order.join(','));
   assert.equal(existsSync(plistPath(o.homeDir)), false, 'the agent file goes once the daemon is loaded');
-  const launcher = macosLauncherPath(o.novaHome);
+  const launcher = macosLauncherPath(o.rooksHome);
   assert.equal(statSync(launcher).mode & 0o777, 0o700);
   assert.ok(readFileSync(launcher, 'utf8').includes(shQuote(join(o.installDir, 'dist', 'boot.js'))));
   assert.match(res.lines.join('\n'), /LaunchDaemon/);
@@ -136,7 +136,7 @@ test('a refused prompt changes nothing: the agent keeps running, no launcher is 
   assert.equal(res.written, false);
   assert.match(res.reason!, /refused/);
   assert.equal(readFileSync(plistPath(o.homeDir), 'utf8'), '<plist>agent</plist>');
-  assert.equal(existsSync(macosLauncherPath(o.novaHome)), false);
+  assert.equal(existsSync(macosLauncherPath(o.rooksHome)), false);
   assert.ok(!calls.some((c) => c.name === 'launchctl' && c.args[0] === 'bootout'));
 });
 
@@ -149,7 +149,7 @@ test('an update with the same plist restarts the daemon without any prompt', () 
   assert.equal(res.ok, true, res.lines.join('\n'));
   assert.equal(elevated(calls).length, 0);
   assert.deepEqual(killed, [4242]);
-  assert.ok(readFileSync(macosLauncherPath(o.novaHome), 'utf8').includes('release-2'));
+  assert.ok(readFileSync(macosLauncherPath(o.rooksHome), 'utf8').includes('release-2'));
 });
 
 test('token removed: reinstalling goes back to the LaunchAgent', () => {
@@ -176,13 +176,13 @@ test('uninstall removes the LaunchDaemon, its launcher and the agent, never ROOK
   const { o, calls } = mac({ token: true, steps: { bootout: 0, wait: 0, remove: 0 } });
   mkdirSync(o.launchDaemonsDir!, { recursive: true });
   writeFileSync(launchDaemonPath(o.launchDaemonsDir), renderLaunchDaemonPlist(o));
-  mkdirSync(dirname(macosLauncherPath(o.novaHome)), { recursive: true });
-  writeFileSync(macosLauncherPath(o.novaHome), '#!/bin/sh\n');
+  mkdirSync(dirname(macosLauncherPath(o.rooksHome)), { recursive: true });
+  writeFileSync(macosLauncherPath(o.rooksHome), '#!/bin/sh\n');
   const res = uninstallService(o);
   assert.equal(res.ok, true, res.lines.join('\n'));
   assert.equal(elevated(calls).length, 1);
-  assert.equal(existsSync(macosLauncherPath(o.novaHome)), false);
-  assert.ok(existsSync(o.novaHome));
+  assert.equal(existsSync(macosLauncherPath(o.rooksHome)), false);
+  assert.ok(existsSync(o.rooksHome));
   // A refused prompt is not reported as an uninstall.
   const refused = mac({ exec: (c) => (c.name === 'osascript' ? { code: 1, stdout: '', stderr: '(-128)' } : undefined) });
   mkdirSync(refused.o.launchDaemonsDir!, { recursive: true });
@@ -206,13 +206,13 @@ test('a LaunchDaemon definition round-trips through read and restore, launcher i
     ? { code: 0, stdout: '\tpid = 7\n', stderr: '' } : undefined) });
   mkdirSync(o.launchDaemonsDir!, { recursive: true });
   writeFileSync(launchDaemonPath(o.launchDaemonsDir), renderLaunchDaemonPlist(o));
-  mkdirSync(dirname(macosLauncherPath(o.novaHome)), { recursive: true });
-  writeFileSync(macosLauncherPath(o.novaHome), 'old launcher\n');
+  mkdirSync(dirname(macosLauncherPath(o.rooksHome)), { recursive: true });
+  writeFileSync(macosLauncherPath(o.rooksHome), 'old launcher\n');
   const saved = readServiceDefinition(o)!;
-  writeFileSync(macosLauncherPath(o.novaHome), 'new launcher\n');
+  writeFileSync(macosLauncherPath(o.rooksHome), 'new launcher\n');
   const restored = restoreServiceDefinition(o, saved);
   assert.equal(restored.ok, true, restored.lines.join('\n'));
-  assert.equal(readFileSync(macosLauncherPath(o.novaHome), 'utf8'), 'old launcher\n');
+  assert.equal(readFileSync(macosLauncherPath(o.rooksHome), 'utf8'), 'old launcher\n');
   assert.equal(elevated(calls).length, 0);
   assert.deepEqual(killed, [7]);
   // And with nothing to restore, it is removed under one prompt.
@@ -247,14 +247,14 @@ test('a refused bootstrap rolls back: daemon removed, launcher and LaunchAgent r
     const { o, calls } = mac({ token: true, steps: failure });
     mkdirSync(dirname(plistPath(o.homeDir)), { recursive: true });
     writeFileSync(plistPath(o.homeDir), '<plist>agent</plist>');
-    mkdirSync(dirname(macosLauncherPath(o.novaHome)), { recursive: true });
-    writeFileSync(macosLauncherPath(o.novaHome), 'old launcher\n');
+    mkdirSync(dirname(macosLauncherPath(o.rooksHome)), { recursive: true });
+    writeFileSync(macosLauncherPath(o.rooksHome), 'old launcher\n');
     const res = installService(o);
     assert.equal(res.ok, false);
     assert.equal(res.written, false, 'everything is back: an upgrade must not restore (and prompt) again');
     assert.match(res.reason!, /previous service was restored/);
     assert.equal(readFileSync(plistPath(o.homeDir), 'utf8'), '<plist>agent</plist>');
-    assert.equal(readFileSync(macosLauncherPath(o.novaHome), 'utf8'), 'old launcher\n');
+    assert.equal(readFileSync(macosLauncherPath(o.rooksHome), 'utf8'), 'old launcher\n');
     // The daemon side is undone by root before the agent starts again.
     const prompt = calls.findIndex((c) => c.name === 'osascript');
     const relaunch = calls.findIndex((c) => c.name === 'launchctl' && c.args[0] === 'bootstrap' && c.args[1] === 'gui/501');
@@ -373,7 +373,7 @@ test('TIM-0045/0046: the install is refused while Rooks.app\'s daemon holds the 
   assert.match(res.reason!, /port 3010 is held by a Rooks daemon that is not the service \(pid 87183\)/);
   assert.match(res.reason!, /Quit Rooks\.app/);
   assert.equal(elevated(calls).length, 0);
-  assert.equal(existsSync(macosLauncherPath(o.novaHome)), false);
+  assert.equal(existsSync(macosLauncherPath(o.rooksHome)), false);
   assert.equal(existsSync(plistPath(o.homeDir)), false);
 });
 

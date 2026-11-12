@@ -24,7 +24,7 @@ export function applyBrowserFrameDisplay(frame: HTMLIFrameElement, mode: Display
     position: 'absolute', width: '100%', height: '100%',
     left: '0px', top: '0px', transform: 'none', transformOrigin: '0 0',
   });
-  if (!force && frame.dataset.novaDisplay === mode) return;
+  if (!force && frame.dataset.rooksDisplay === mode) return;
   try {
     const win = frame.contentWindow;
     if (!win) return;
@@ -33,6 +33,6 @@ export function applyBrowserFrameDisplay(frame: HTMLIFrameElement, mode: Display
     win.postMessage(mode === 'desktop'
       ? { type: 'setManualResolution', ...DESKTOP_RES }
       : { type: 'resetResolutionToWindow' }, origin);
-    frame.dataset.novaDisplay = mode;
+    frame.dataset.rooksDisplay = mode;
   } catch { /* The remote client may not have loaded yet; retry on load. */ }
 }

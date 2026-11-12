@@ -18,7 +18,7 @@ import { backendLimits, type BackendCatalog, type BackendCapability, type Backen
 
 const LIMIT_KEYS: Record<BackendCapability, string> = {
   worktree: 'llm.limitWorktree',
-  novaMcp: 'llm.limitNovaMcp',
+  rooksMcp: 'llm.limitRooksMcp',
   attachments: 'llm.limitAttachments',
 };
 

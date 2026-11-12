@@ -117,7 +117,7 @@ export function skillReadStats(agent: string, viewer: DbViewer | null, agentBack
   let unmeasured = 0;
   for (const { backend, n } of byBackend) {
     missions += n;
-    if (!backendCapabilities(backend || agentBackend).novaMcp) unmeasured += n;
+    if (!backendCapabilities(backend || agentBackend).rooksMcp) unmeasured += n;
   }
   const rows = db.prepare(
     `SELECT r.skill AS skill, COUNT(*) AS reads, COUNT(DISTINCT r.mission_id) AS missions

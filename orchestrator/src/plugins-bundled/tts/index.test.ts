@@ -35,7 +35,7 @@ import { Context } from '@deepseek-ai/cordis';
 process.env.ROOKS_RESOURCE_GUARD_ENABLED = '0';
 
 const { setConfig } = await import('../../config/load.js');
-const { NovaConfigSchema } = await import('../../config/schema.js');
+const { RooksConfigSchema } = await import('../../config/schema.js');
 const { createHostPlugin } = await import('../../kernel/host-service.js');
 const { setSetting } = await import('../../settings.js');
 const tts = await import('./index.js');
@@ -77,11 +77,11 @@ function fakeHost(withContainers: boolean) {
 
 /** `withCompose: false` reproduit la forme d'un paquet : un `installDir` sous
  *  `resources/`, sans dépôt au-dessus, donc sans `docker-compose.yml`. */
-function configFor(withCompose = true): { root: string; cfg: ReturnType<typeof NovaConfigSchema.parse> } {
+function configFor(withCompose = true): { root: string; cfg: ReturnType<typeof RooksConfigSchema.parse> } {
   const root = mkdtempSync(join(tmpdir(), 'rooks-tts-'));
   mkdirSync(join(root, 'orchestrator'), { recursive: true });
   if (withCompose) writeFileSync(join(root, 'docker-compose.yml'), 'services: {}\n');
-  const cfg = NovaConfigSchema.parse({ daemon: { installDir: join(root, 'orchestrator') } });
+  const cfg = RooksConfigSchema.parse({ daemon: { installDir: join(root, 'orchestrator') } });
   setConfig(cfg);
   return { root, cfg };
 }
@@ -145,7 +145,7 @@ test('la commande compose porte `-f`, `-p`, le profil docker et `--no-build`', (
 
 test('le nom de projet compose est DÉDUIT du dossier, comme le fait compose', () => {
   // L'inventer créerait une seconde stack à côté de celle qui tourne déjà.
-  assert.equal(tts.composeProjectOf('/home/user/webdev/projects/NOVAv2'), 'novav2');
+  assert.equal(tts.composeProjectOf('/home/user/webdev/projects/ROOKSv2'), 'rooksv2');
   assert.equal(tts.composeProjectOf('/home/user/webdev/projects/acme-site'), 'acme-site');
 });
 

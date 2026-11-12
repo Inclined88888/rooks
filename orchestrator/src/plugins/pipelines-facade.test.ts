@@ -24,11 +24,11 @@ const { agentDir } = await import('../paths.js');
 const { hashPassword } = await import('../users/password.js');
 const { createPipeline, runPipeline } = await import('../pipelines.js');
 const { MAX_PLUGIN_OPEN_RUNS, MAX_PLUGIN_PIPELINES } = await import('./pipelines-facade.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { setConfig, resetConfig } = await import('../config/load.js');
 const { assertSpawnAllowed, resetPluginPolicyState } = await import('./policy.js');
 const policy = (spawn: { approved: string[]; max?: number; windowMs?: number }) => {
-  setConfig(NovaConfigSchema.parse({ pluginPolicy: { spawn } }));
+  setConfig(RooksConfigSchema.parse({ pluginPolicy: { spawn } }));
   resetPluginPolicyState();
 };
 

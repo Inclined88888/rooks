@@ -26,7 +26,7 @@ process.env.ROOKS_RESOURCE_GUARD_ENABLED = '0';
 
 const { setConfig } = await import('../../config/load.js');
 const { createHostPlugin } = await import('../../kernel/host-service.js');
-const { NovaConfigSchema } = await import('../../config/schema.js');
+const { RooksConfigSchema } = await import('../../config/schema.js');
 const telegram = await import('./index.js');
 const web = await import('../web-app/index.js');
 
@@ -75,7 +75,7 @@ function appRoot(): string {
 }
 
 function configFor(root: string, modules: Record<string, unknown>) {
-  const cfg = NovaConfigSchema.parse({ daemon: { installDir: join(root, 'orchestrator') }, modules });
+  const cfg = RooksConfigSchema.parse({ daemon: { installDir: join(root, 'orchestrator') }, modules });
   setConfig(cfg);
   return cfg;
 }

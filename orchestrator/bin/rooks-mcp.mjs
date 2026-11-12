@@ -31,7 +31,7 @@
  *   - memory_rule_list : lists memory rules for a scope
  *   - mission_search : full-text search over mission history
  *                      (initial prompt + assistant/user turns)
- *   - nova_http_call : performs an HTTP call under a BROKERED secret identity.
+ *   - rooks_http_call : performs an HTTP call under a BROKERED secret identity.
  *                      The daemon checks the grant, checks the host against the
  *                      identity's allowlist, injects the credential and returns
  *                      status + body. The value never reaches the agent.

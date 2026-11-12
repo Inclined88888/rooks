@@ -12,7 +12,7 @@ import { dirname } from 'node:path';
 import { statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
-import type { NovaConfig } from '../config/schema.js';
+import type { RooksConfig } from '../config/schema.js';
 import type { BinaryPins } from './generic.js';
 import { guardEnabled, MISSION_SLICE, profileLimits } from '../resources.js';
 import { settingStr } from '../settings.js';
@@ -147,7 +147,7 @@ function createSecretToolKeyring(base: Host, pins: BinaryPins): Keyring | undefi
   return readBack ? keyring : undefined;
 }
 
-export function createLinuxHost(config: NovaConfig, pins?: BinaryPins): Host {
+export function createLinuxHost(config: RooksConfig, pins?: BinaryPins): Host {
   const binaryPins: BinaryPins = pins ?? (() => config.host.binaries);
   const base = createGenericHost(config, {}, binaryPins);
   const guiEnabled = config.host.gui !== 'disabled'

@@ -1,5 +1,5 @@
 # Pauses the Rooks background service while the installer replaces its files.
-# Run by installer.nsh (novaPauseService), never by hand: elevated when
+# Run by installer.nsh (rooksPauseService), never by hand: elevated when
 # Windows grants it, and once more without elevation when it does not.
 #
 # Why elevated: the service runs under a Task Scheduler S4U logon, in session 0.

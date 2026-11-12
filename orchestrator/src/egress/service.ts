@@ -10,7 +10,7 @@
 import type { AddressInfo } from 'node:net';
 import { apiBaseUrl } from '../api-url.js';
 import { config } from '../config/load.js';
-import type { NovaConfig } from '../config/schema.js';
+import type { RooksConfig } from '../config/schema.js';
 import { dbApi } from '../db.js';
 import { loadConfig as loadAgentConfig } from '../agent-config.js';
 import { taskProjectSlug } from '../task-project.js';
@@ -116,7 +116,7 @@ export function egressProxyAddress(): AddressInfo | null {
  * Starts the proxy per `host.isolation.egress`; the returned function stops it.
  * A failure to bind is logged, not thrown: missions run as before without it.
  */
-export function startEgressProxy(settings: NovaConfig['host']['isolation']['egress'] = config().host.isolation.egress): () => void {
+export function startEgressProxy(settings: RooksConfig['host']['isolation']['egress'] = config().host.isolation.egress): () => void {
   if (settings.mode === 'off') {
     console.log('[egress] proxy off (host.isolation.egress.mode): missions get no proxy variables');
     return () => {};

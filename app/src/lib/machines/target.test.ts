@@ -127,23 +127,23 @@ test('the local target is the daemon this app belongs to', () => {
 test('no machine cookie, the local id or a malformed one: the local daemon, nothing asked', async () => {
   assert.deepEqual(await mod.resolveTarget(), mod.localTarget());
   assert.deepEqual(await mod.resolveTarget(page(`rooks_session=${SESSION}`)), mod.localTarget());
-  assert.deepEqual(await mod.resolveTarget(page(`rooks_session=${SESSION}; nova_machine=local`)), mod.localTarget());
-  assert.deepEqual(await mod.resolveTarget(page('nova_machine=https%3A%2F%2Fevil.example')), mod.localTarget());
+  assert.deepEqual(await mod.resolveTarget(page(`rooks_session=${SESSION}; rooks_machine=local`)), mod.localTarget());
+  assert.deepEqual(await mod.resolveTarget(page('rooks_machine=https%3A%2F%2Fevil.example')), mod.localTarget());
   assert.equal(daemonSeen.length, 0);
 });
 
 test('the machine cookie carries an id, never an URL', () => {
-  assert.equal(mod.machineIdFromCookieHeader('a=1; nova_machine=vps-2 ; b=2'), 'vps-2');
-  assert.equal(mod.machineIdFromCookieHeader('nova_machine=https%3A%2F%2Fevil.example'), null);
-  assert.equal(mod.machineIdFromCookieHeader('nova_machine=a/b'), null);
-  assert.equal(mod.machineIdFromCookieHeader('nova_machine=%E0%A4%A'), null);
-  assert.equal(mod.machineIdFromCookieHeader('x_nova_machine=vps'), null);
+  assert.equal(mod.machineIdFromCookieHeader('a=1; rooks_machine=vps-2 ; b=2'), 'vps-2');
+  assert.equal(mod.machineIdFromCookieHeader('rooks_machine=https%3A%2F%2Fevil.example'), null);
+  assert.equal(mod.machineIdFromCookieHeader('rooks_machine=a/b'), null);
+  assert.equal(mod.machineIdFromCookieHeader('rooks_machine=%E0%A4%A'), null);
+  assert.equal(mod.machineIdFromCookieHeader('x_rooks_machine=vps'), null);
   assert.equal(mod.machineIdFromCookieHeader(''), null);
   assert.equal(mod.machineIdFromCookieHeader(null), null);
 });
 
 test('a machine of this person resolves to its URL and device token, given by the local daemon', async () => {
-  const t = await mod.resolveTarget(page(`other=1; rooks_session=${SESSION}; nova_machine=vps`));
+  const t = await mod.resolveTarget(page(`other=1; rooks_session=${SESSION}; rooks_machine=vps`));
   assert.equal(t.kind, 'remote');
   if (t.kind !== 'remote') return;
   assert.equal(t.id, 'vps');
@@ -155,7 +155,7 @@ test('a machine of this person resolves to its URL and device token, given by th
 
 test('the credential call: the local session and the proof only — no browser header, never the daemon token', async () => {
   // Everything a browser sends, on the page request the relay serves.
-  await mod.resolveTarget(page(`rooks_session=${SESSION}; nova_machine=vps; tracker=x`, {
+  await mod.resolveTarget(page(`rooks_session=${SESSION}; rooks_machine=vps; tracker=x`, {
     origin: 'http://app.test', 'sec-fetch-site': 'same-origin', 'sec-fetch-dest': 'empty', authorization: 'Bearer from-browser', 'x-forwarded-host': 'app.test',
   }));
   const call = credentialCalls()[0];
@@ -180,7 +180,7 @@ test('the proof binds the machine id and the time: another id or a stale one is 
 test('forged cookie: an unknown id, or another account\'s machine, is refused — nothing relayed anywhere', async () => {
   // The daemon answers the same 404 for both (owner-filtered).
   for (const id of ['unknown-machine', 'bobs-machine']) {
-    const t = await mod.resolveTarget(page(`rooks_session=${SESSION}; nova_machine=${id}`));
+    const t = await mod.resolveTarget(page(`rooks_session=${SESSION}; rooks_machine=${id}`));
     assert.equal(t.kind, 'unavailable', id);
     const res = await mod.relayFetch(t, '/api/agents', { method: 'DELETE' }, { incoming: browser({ 'sec-fetch-site': 'same-origin' }) });
     assert.equal(res.status, 404, id);
@@ -193,7 +193,7 @@ test('forged cookie: an unknown id, or another account\'s machine, is refused �
 });
 
 test('without a local session, a remote machine is refused before the daemon is even asked', async () => {
-  for (const cookie of ['nova_machine=vps', 'rooks_session=; nova_machine=vps']) {
+  for (const cookie of ['rooks_machine=vps', 'rooks_session=; rooks_machine=vps']) {
     const t = await mod.resolveTarget(page(cookie));
     assert.equal(t.kind, 'unavailable');
     const res = await mod.relayFetch(t, '/api/agents');
@@ -205,7 +205,7 @@ test('without a local session, a remote machine is refused before the daemon is 
 });
 
 test('a local session the daemon no longer accepts is refused like no session', async () => {
-  const t = await mod.resolveTarget(page('rooks_session=revoked; nova_machine=vps'));
+  const t = await mod.resolveTarget(page('rooks_session=revoked; rooks_machine=vps'));
   assert.equal(t.kind, 'unavailable');
   assert.equal((await mod.relayFetch(t, '/api/agents')).status, 401);
   assert.equal(seen.length, 0);
@@ -223,7 +223,7 @@ test('the daemon unable to hand out the token: a typed 502, never the local daem
   for (const [i, answer] of answers.entries()) {
     cred.forgetMachineCredentials();
     daemonHandler = answer;
-    const t = await mod.resolveTarget(page(`rooks_session=${SESSION}; nova_machine=vps`));
+    const t = await mod.resolveTarget(page(`rooks_session=${SESSION}; rooks_machine=vps`));
     assert.equal(t.kind, 'unavailable', String(i));
     const res = await mod.relayFetch(t, '/api/agents');
     assert.equal(res.status, 502, String(i));
@@ -237,7 +237,7 @@ test('without the daemon token, no proof can be made: refused, and nothing is as
   const saved = process.env.ROOKS_DAEMON_TOKEN;
   delete process.env.ROOKS_DAEMON_TOKEN;
   try {
-    const t = await mod.resolveTarget(page(`rooks_session=${SESSION}; nova_machine=vps`));
+    const t = await mod.resolveTarget(page(`rooks_session=${SESSION}; rooks_machine=vps`));
     assert.equal(t.kind, 'unavailable');
     assert.equal(daemonSeen.length, 0);
   } finally {
@@ -247,11 +247,11 @@ test('without the daemon token, no proof can be made: refused, and nothing is as
 });
 
 test('the credential is kept a minute at most, per session: another session asks again', async () => {
-  const alice = page(`rooks_session=${SESSION}; nova_machine=vps`);
+  const alice = page(`rooks_session=${SESSION}; rooks_machine=vps`);
   await mod.resolveTarget(alice);
   await Promise.all([mod.resolveTarget(alice), mod.resolveTarget(alice)]);
   assert.equal(credentialCalls().length, 1);
-  await mod.resolveTarget(page('rooks_session=someone-else; nova_machine=vps'));
+  await mod.resolveTarget(page('rooks_session=someone-else; rooks_machine=vps'));
   assert.equal(credentialCalls().length, 2);
   assert.ok(cred.CREDENTIAL_TTL_MS <= 60_000);
   const realNow = Date.now;
@@ -266,14 +266,14 @@ test('the credential is kept a minute at most, per session: another session asks
 
 test('a failed lookup is not kept: the next request asks again', async () => {
   daemonHandler = (_req, res) => { res.writeHead(503); res.end(); };
-  const alice = page(`rooks_session=${SESSION}; nova_machine=vps`);
+  const alice = page(`rooks_session=${SESSION}; rooks_machine=vps`);
   assert.equal((await mod.resolveTarget(alice)).kind, 'unavailable');
   daemonHandler = fleetDaemon();
   assert.equal((await mod.resolveTarget(alice)).kind, 'remote');
 });
 
 test('an account or fleet change relayed to the local daemon empties the credential cache', async () => {
-  const alice = page(`rooks_session=${SESSION}; nova_machine=vps`);
+  const alice = page(`rooks_session=${SESSION}; rooks_machine=vps`);
   await mod.resolveTarget(alice);
   // A read does not.
   await mod.relayFetch(mod.localTarget(), '/api/machines');
@@ -287,7 +287,7 @@ test('an account or fleet change relayed to the local daemon empties the credent
 });
 
 test('a relay through a resolved machine sends its device token, and only that', async () => {
-  const t = await mod.resolveTarget(page(`rooks_session=${SESSION}; nova_machine=vps`));
+  const t = await mod.resolveTarget(page(`rooks_session=${SESSION}; rooks_machine=vps`));
   await mod.relayFetch(t, '/api/agents', { headers: { cookie: `rooks_session=${SESSION}`, authorization: `Bearer ${DAEMON_TOKEN}` } });
   assert.equal(seen.length, 1);
   assert.equal(seen[0]?.headers.authorization, `Bearer ${DEVICE_TOKEN}`);
@@ -302,31 +302,31 @@ const pinned = (machine: string, cookie: string) => new Request('http://app.test
 
 test('the header is read first, then the cookie; blank or absent leaves the cookie in charge', () => {
   const read = (h: Record<string, string>) => mod.machineIdFromRequest(new Headers(h));
-  assert.deepEqual(read({ 'x-rooks-machine': 'nas', cookie: 'nova_machine=vps' }), { kind: 'named', id: 'nas', by: 'header' });
+  assert.deepEqual(read({ 'x-rooks-machine': 'nas', cookie: 'rooks_machine=vps' }), { kind: 'named', id: 'nas', by: 'header' });
   assert.deepEqual(read({ 'x-rooks-machine': ' nas ' }), { kind: 'named', id: 'nas', by: 'header' });
-  assert.deepEqual(read({ cookie: 'nova_machine=vps' }), { kind: 'named', id: 'vps', by: 'cookie' });
-  assert.deepEqual(read({ 'x-rooks-machine': '', cookie: 'nova_machine=vps' }), { kind: 'named', id: 'vps', by: 'cookie' });
-  assert.deepEqual(read({ 'x-rooks-machine': '   ', cookie: 'nova_machine=vps' }), { kind: 'named', id: 'vps', by: 'cookie' });
+  assert.deepEqual(read({ cookie: 'rooks_machine=vps' }), { kind: 'named', id: 'vps', by: 'cookie' });
+  assert.deepEqual(read({ 'x-rooks-machine': '', cookie: 'rooks_machine=vps' }), { kind: 'named', id: 'vps', by: 'cookie' });
+  assert.deepEqual(read({ 'x-rooks-machine': '   ', cookie: 'rooks_machine=vps' }), { kind: 'named', id: 'vps', by: 'cookie' });
   assert.deepEqual(read({}), { kind: 'none' });
   // A malformed cookie is still ignored; a malformed header is not.
-  assert.deepEqual(read({ cookie: 'nova_machine=a/b' }), { kind: 'none' });
+  assert.deepEqual(read({ cookie: 'rooks_machine=a/b' }), { kind: 'none' });
   for (const bad of ['https://evil.example', '../vps', 'vps, nas', 'a'.repeat(65), 'vps%2F']) {
-    assert.deepEqual(read({ 'x-rooks-machine': bad, cookie: 'nova_machine=vps' }), { kind: 'malformed' }, bad);
+    assert.deepEqual(read({ 'x-rooks-machine': bad, cookie: 'rooks_machine=vps' }), { kind: 'malformed' }, bad);
   }
 });
 
 test('X-Rooks-Machine wins over the cookie, both ways', async () => {
-  const there = await mod.resolveTarget(pinned('vps', `rooks_session=${SESSION}; nova_machine=local`));
+  const there = await mod.resolveTarget(pinned('vps', `rooks_session=${SESSION}; rooks_machine=local`));
   assert.equal(there.kind, 'remote');
   assert.equal(there.id, 'vps');
   assert.deepEqual(credentialCalls().map((c) => c.url), ['/api/machines/vps/credential']);
-  assert.deepEqual(await mod.resolveTarget(pinned('local', `rooks_session=${SESSION}; nova_machine=vps`)), mod.localTarget());
+  assert.deepEqual(await mod.resolveTarget(pinned('local', `rooks_session=${SESSION}; rooks_machine=vps`)), mod.localTarget());
   assert.equal(credentialCalls().length, 1);
 });
 
 test('X-Rooks-Machine naming another account\'s machine, or an unknown one: unavailable, nothing relayed anywhere', async () => {
   for (const id of ['bobs-machine', 'unknown-machine']) {
-    const t = await mod.resolveTarget(pinned(id, `rooks_session=${SESSION}; nova_machine=vps`));
+    const t = await mod.resolveTarget(pinned(id, `rooks_session=${SESSION}; rooks_machine=vps`));
     assert.equal(t.kind, 'unavailable', id);
     assert.equal(t.id, id);
     const res = await mod.relayFetch(t, '/api/agents', { method: 'DELETE' }, { incoming: browser({ 'sec-fetch-site': 'same-origin' }) });
@@ -338,7 +338,7 @@ test('X-Rooks-Machine naming another account\'s machine, or an unknown one: unav
 });
 
 test('X-Rooks-Machine without a local session: refused before the daemon is asked', async () => {
-  for (const cookie of ['', 'rooks_session=', 'nova_machine=local']) {
+  for (const cookie of ['', 'rooks_session=', 'rooks_machine=local']) {
     const t = await mod.resolveTarget(pinned('vps', cookie));
     assert.equal(t.kind, 'unavailable', cookie);
     assert.equal((await mod.relayFetch(t, '/api/agents')).status, 401, cookie);
@@ -348,7 +348,7 @@ test('X-Rooks-Machine without a local session: refused before the daemon is aske
 });
 
 test('a malformed X-Rooks-Machine is unavailable: neither the cookie\'s machine nor local serves it', async () => {
-  const t = await mod.resolveTarget(pinned('../vps', `rooks_session=${SESSION}; nova_machine=vps`));
+  const t = await mod.resolveTarget(pinned('../vps', `rooks_session=${SESSION}; rooks_machine=vps`));
   assert.equal(t.kind, 'unavailable');
   assert.equal(t.id, mod.MALFORMED_MACHINE_ID);
   assert.equal((await mod.relayFetch(t, '/api/agents', { method: 'DELETE' }, { incoming: browser({ 'sec-fetch-site': 'same-origin' }) })).status, 404);
@@ -379,7 +379,7 @@ test('the account and the fleet stay local even for a request pinned to a remote
 // ---- anchored on the local daemon -----------------------------------------
 
 test('the account and the fleet stay on the local daemon whatever the active machine', async () => {
-  const onRemote = page(`rooks_session=${SESSION}; nova_machine=vps`);
+  const onRemote = page(`rooks_session=${SESSION}; rooks_machine=vps`);
   for (const path of ['/api/auth/me', '/api/auth/logout', '/api/machines', '/api/machines/vps', '/api/machines/vps/status', '/API/Machines/pair', '/api/x/../machines']) {
     assert.equal(mod.anchoredLocally(path), true, path);
     assert.deepEqual(await mod.targetFor(path, onRemote), mod.localTarget(), path);
@@ -392,7 +392,7 @@ test('the account and the fleet stay on the local daemon whatever the active mac
 });
 
 test('the light/dark mode is written on the active machine, like its primary colour: never on this computer\'s account', async () => {
-  const onRemote = page(`rooks_session=${SESSION}; nova_machine=vps`);
+  const onRemote = page(`rooks_session=${SESSION}; rooks_machine=vps`);
   assert.equal(mod.anchoredLocally('/api/prefs'), false);
   assert.equal((await mod.targetFor('/api/prefs', onRemote)).kind, 'remote');
   assert.equal((await mod.targetFor('/api/layout?scope=ui-appearance', onRemote)).kind, 'remote');
@@ -602,8 +602,8 @@ const sameOrigin = { host: 'app.test:3101', origin: 'https://app.test:3101' };
 const nodeHeaders = (h: Record<string, string>) => mod.nodeRequestHeaders(h);
 
 test('a Node request is read like a Fetch one', () => {
-  const h = mod.nodeRequestHeaders({ cookie: 'nova_machine=vps', 'x-forwarded-for': ['a', 'b'] as unknown as string });
-  assert.equal(h.get('Cookie'), 'nova_machine=vps');
+  const h = mod.nodeRequestHeaders({ cookie: 'rooks_machine=vps', 'x-forwarded-for': ['a', 'b'] as unknown as string });
+  assert.equal(h.get('Cookie'), 'rooks_machine=vps');
   assert.equal(h.get('x-forwarded-for'), 'a, b');
   assert.equal(h.get('origin'), null);
 });
@@ -650,7 +650,7 @@ test('remote upgrade: plain HTTP off loopback and a failing token store are refu
 });
 
 test('a Node request pinned by X-Rooks-Machine resolves like a Fetch one', async () => {
-  const t = await mod.resolveTarget({ headers: nodeHeaders({ 'x-rooks-machine': 'vps', cookie: `rooks_session=${SESSION}; nova_machine=local`, ...sameOrigin }) });
+  const t = await mod.resolveTarget({ headers: nodeHeaders({ 'x-rooks-machine': 'vps', cookie: `rooks_session=${SESSION}; rooks_machine=local`, ...sameOrigin }) });
   assert.equal(t.kind, 'remote');
   assert.equal(t.id, 'vps');
   const other = await mod.resolveTarget({ headers: nodeHeaders({ 'x-rooks-machine': 'bobs-machine', cookie: `rooks_session=${SESSION}`, ...sameOrigin }) });
@@ -660,7 +660,7 @@ test('a Node request pinned by X-Rooks-Machine resolves like a Fetch one', async
 });
 
 test('remote upgrade without a local session: refused, the remote never asked', async () => {
-  const t = await mod.resolveTarget({ headers: nodeHeaders({ cookie: 'nova_machine=vps', ...sameOrigin }) });
+  const t = await mod.resolveTarget({ headers: nodeHeaders({ cookie: 'rooks_machine=vps', ...sameOrigin }) });
   assert.deepEqual(await mod.upgradeCredential(t, nodeHeaders(sameOrigin), undefined), { ok: false, status: 401 });
   assert.equal(daemonSeen.length, 0);
 });

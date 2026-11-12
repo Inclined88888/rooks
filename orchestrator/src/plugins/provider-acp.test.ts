@@ -20,7 +20,7 @@ import type { NormalizedEvent } from '../backends/types.js';
 const { readManifest } = await import('./manifest.js');
 const { createPluginContext, daemonHost } = await import('./context.js');
 const { config, setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const registry = await import('../backends/registry.js');
 const { getBackend } = await import('../backends/index.js');
 
@@ -31,7 +31,7 @@ if (!res.ok) throw new Error(res.message);
 const ctx = createPluginContext(new Context(), { manifest: res.manifest, version: '1.0.0' }, daemonHost());
 
 const previous = config();
-setConfig(NovaConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: ['acme-acp'] } } }));
+setConfig(RooksConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: ['acme-acp'] } } }));
 test.after(() => setConfig(previous));
 
 const definition = ctx.provider.runtime.acp.defineProvider(ctx.provider, {
@@ -96,7 +96,7 @@ test('registered, it launches the agent in ACP mode and speaks the protocol thro
 
 test('a declaration the core reads works for an ACP agent too: its sign-in folder is masked from the others', async () => {
   const { resolveIsolation } = await import('../host/isolation.js');
-  const deny = resolveIsolation(NovaConfigSchema.parse({}), { home: '/home/t', backend: 'claude' }).deny;
+  const deny = resolveIsolation(RooksConfigSchema.parse({}), { home: '/home/t', backend: 'claude' }).deny;
   assert.ok(deny.includes('/home/t/.acme'));
 });
 

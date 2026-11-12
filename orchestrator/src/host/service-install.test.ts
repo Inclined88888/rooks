@@ -97,7 +97,7 @@ function fixture(platform: NodeJS.Platform, exec?: (n: string, a: string[]) => E
   return {
     platform,
     homeDir,
-    novaHome: join(homeDir, '.rooks'),
+    rooksHome: join(homeDir, '.rooks'),
     installDir,
     userName: 'tester',
     uid: 1000,
@@ -165,7 +165,7 @@ test('linux: repair the known packaged template, but refuse foreign units, chang
     const file = unitPath(opts.homeDir, opts.unitName);
     mkdirSync(join(opts.homeDir, '.config/systemd/user'), { recursive: true });
     let legacy = opts.legacyUnitContent!.replace(/^Environment="PATH=.*"$/m, 'Environment="PATH=/tmp/old-mount:/usr/bin"');
-    if (scenario === 'foreign') legacy = legacy.replaceAll(opts.novaHome, '/another/home');
+    if (scenario === 'foreign') legacy = legacy.replaceAll(opts.rooksHome, '/another/home');
     if (scenario === 'command') legacy += 'ExecStartPost=/usr/bin/true\n';
     writeFileSync(file, legacy);
     const calls: string[][] = [];
@@ -176,7 +176,7 @@ test('linux: repair the known packaged template, but refuse foreign units, chang
       const bad = readFileSync(file, 'utf8').includes('WorkingDirectory="');
       return { code: 0, stderr: '', stdout:
         `LoadState=${bad ? 'bad-setting' : 'loaded'}\nNeedDaemonReload=no\nActiveState=active\nUnitFileState=enabled\n`
-        + `WorkingDirectory=${opts.installDir}\nEnvironment="ROOKS_HOME=${opts.novaHome}"\n`
+        + `WorkingDirectory=${opts.installDir}\nEnvironment="ROOKS_HOME=${opts.rooksHome}"\n`
         + `FragmentPath=${file}\nDropInPaths=${scenario === 'drop-in' ? '/some/override.conf' : ''}` };
     };
     const result = installService(opts);
@@ -208,7 +208,7 @@ test('macos: the plist declares KeepAlive, RunAtLoad and an explicit PATH', () =
   assert.match(xml, /<string>\/usr\/bin\/node<\/string>/);
   assert.match(xml, /--max-old-space-size=4096/);
   assert.match(xml, /\.local\/bin/, 'PATH must carry ~/.local/bin, where claude lives');
-  assert.ok(xml.includes(join(opts.novaHome, 'tmp', 'daemon.log')));
+  assert.ok(xml.includes(join(opts.rooksHome, 'tmp', 'daemon.log')));
 });
 
 test('macos: a packaged Electron daemon is forced into Node mode', () => {
@@ -301,7 +301,7 @@ test('windows: la tâche planifiée est créée depuis un XML, au boot, en S4U',
   assert.equal(res.ok, true);
   assert.equal(res.code, 0);
 
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   assert.equal(readFileSync(files.launcher, 'utf8'), renderWindowsLauncher({
     ...opts,
     nodePath: 'C:\\Program Files\\Rooks\\Rooks.exe',
@@ -309,7 +309,7 @@ test('windows: la tâche planifiée est créée depuis un XML, au boot, en S4U',
   // The revision is what tells the desktop this task needs no migration.
   assert.equal(readFileSync(files.revision, 'utf8').trim(), WINDOWS_SERVICE_REVISION);
   if (process.platform !== 'win32') {
-    assert.equal(existsSync(windowsLauncherPath(opts.novaHome)), false,
+    assert.equal(existsSync(windowsLauncherPath(opts.rooksHome)), false,
       'Windows separators must not become a literal filename in the working directory');
   }
 
@@ -377,7 +377,7 @@ test('windows: sans témoin de session scellé, rien n\'est élevé ni enregistr
 });
 
 const WINDOWS_PATHS = {
-  novaHome: 'C:\\Users\\robin\\.rooks',
+  rooksHome: 'C:\\Users\\robin\\.rooks',
   installDir: 'C:\\Program Files\\Rooks\\resources\\orchestrator',
   heapMb: 4096,
   port: 3010,
@@ -391,7 +391,7 @@ const WINDOWS_PATHS = {
  * écarté `cmd` n'existe pas ici : une tâche S4U tourne en session 0.
  */
 test('windows: la tâche lance un batch qui tient le daemon', () => {
-  assert.equal(windowsLauncherPath(WINDOWS_PATHS.novaHome),
+  assert.equal(windowsLauncherPath(WINDOWS_PATHS.rooksHome),
     'C:\\Users\\robin\\.rooks\\run\\rooks-service.cmd');
   const args = windowsTaskCommand(WINDOWS_PATHS);
   // `/s` + guillemets doublés : cmd retire la paire extérieure et garde le
@@ -437,7 +437,7 @@ test('windows: le lanceur attend le témoin DPAPI, puis démarre le daemon sur s
 });
 
 test('windows: le lanceur double les % et refuse un guillemet', () => {
-  const bat = renderWindowsLauncher({ ...WINDOWS_PATHS, novaHome: 'C:\\Users\\100%\\.rooks' });
+  const bat = renderWindowsLauncher({ ...WINDOWS_PATHS, rooksHome: 'C:\\Users\\100%\\.rooks' });
   assert.ok(bat.includes('set "ROOKS_HOME=C:\\Users\\100%%\\.rooks"'));
   assert.throws(() => renderWindowsLauncher({ ...WINDOWS_PATHS, nodePath: 'C:\\a"b.exe' }), /Invalid service value/);
   assert.throws(() => renderWindowsLauncher({ ...WINDOWS_PATHS, environment: { 'A B': '1' } }), /Invalid service environment/);
@@ -494,7 +494,7 @@ test('windows: après /Run, le batch élevé vérifie que la tâche a tourné, e
 
 test('windows: une tâche jamais lancée est un refus honnête, sans révision, avec un marqueur', () => {
   const opts = fixture('win32', () => ({ code: 0, stdout: '', stderr: '' }));
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   const res = installService({ ...opts, readFile: () => transcript({ create: 0, stop: 0, run: 0, verify: TASK_NEVER_RAN_REMOVED }) });
   assert.equal(res.ok, false);
   assert.equal(res.refused, true);
@@ -505,7 +505,7 @@ test('windows: une tâche jamais lancée est un refus honnête, sans révision, 
 
   // Pas supprimable : la tâche reste, sa révision aussi (le desktop la voit et repart en intégré).
   const kept = fixture('win32', () => ({ code: 0, stdout: '', stderr: '' }));
-  const keptFiles = windowsServiceFiles(kept.novaHome, join);
+  const keptFiles = windowsServiceFiles(kept.rooksHome, join);
   const res2 = installService({ ...kept, readFile: () => transcript({ create: 0, stop: 0, run: 0, verify: TASK_NEVER_RAN_KEPT }) });
   assert.equal(res2.refused, true);
   assert.equal(readFileSync(keptFiles.revision, 'utf8').trim(), WINDOWS_SERVICE_REVISION);
@@ -525,7 +525,7 @@ test('windows: une tâche jamais lancée est un refus honnête, sans révision, 
 test('windows: l\'appel élevé a son propre budget, un batch coupé avant sa vérification n\'est pas une réussite', () => {
   const timeouts: (number | undefined)[] = [];
   const opts = fixture('win32', () => ({ code: 0, stdout: '', stderr: '' }));
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   const res = installService({
     ...opts,
     exec: (_n, a, options) => { if (a.some((arg) => arg.includes('RunAs'))) timeouts.push(options?.timeout); return { code: 0, stdout: '', stderr: '' }; },
@@ -543,7 +543,7 @@ test('windows: l\'appel élevé a son propre budget, un batch coupé avant sa v�
 test('windows: le XML échappe ce qui casserait le document', () => {
   const xml = renderTaskXml({
     userName: 'a & b',
-    novaHome: 'C:\\home',
+    rooksHome: 'C:\\home',
     installDir: 'C:\\dir',
   });
   assert.match(xml, /<UserId>a &amp; b<\/UserId>/);
@@ -556,7 +556,7 @@ test('windows: le XML échappe ce qui casserait le document', () => {
  * de CETTE instance, retrouvé par sa ligne de commande.
  */
 test('windows: arrêter la tâche arrête l\'arbre du lanceur de cette instance', () => {
-  const step = stopLauncherStep(WINDOWS_PATHS.novaHome);
+  const step = stopLauncherStep(WINDOWS_PATHS.rooksHome);
   assert.equal(step.program, 'powershell');
   const script = step.args.at(-1)!;
   assert.ok(script.includes("'c:\\users\\robin\\.rooks\\run\\rooks-service.cmd'"));
@@ -599,7 +599,7 @@ test('windows: install ends the daemon of this installation that holds the port'
 test('windows: restart ends the launcher tree then runs the task, under one elevation', () => {
   const calls: string[][] = [];
   const opts = fixture('win32', (n, a) => { calls.push([n, ...a]); return { code: 0, stdout: '', stderr: '' }; });
-  const steps = windowsRestartSteps(opts.novaHome);
+  const steps = windowsRestartSteps(opts.rooksHome);
   assert.deepEqual(steps.map((s) => s.label), ['stop', 'run']);
   const res = restartWindowsService({ ...opts, readFile: () => transcript({ stop: 0, run: 0 }) });
   assert.equal(res.ok, true);
@@ -629,10 +629,10 @@ test('windows: uninstall supprime la tâche, arrête son daemon, et laisse ROOKS
     calls.push([n, ...a]);
     return { code: 0, stdout: '', stderr: '' };
   });
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   mkdirSync(dirname(files.launcher), { recursive: true });
   for (const file of [files.launcher, files.legacyLauncher, files.sessionWitness, files.revision, files.repairDeclined, files.refused]) writeFileSync(file, 'x');
-  writeFileSync(join(opts.novaHome, 'rooks.db'), 'data', 'utf8');
+  writeFileSync(join(opts.rooksHome, 'rooks.db'), 'data', 'utf8');
   const res = uninstallService({ ...opts, readFile: () => transcript({ end: 0, delete: 0, stop: 0 }) });
   assert.equal(res.ok, true);
   assert.equal(calls.length, 1);
@@ -649,16 +649,16 @@ test('windows: uninstall supprime la tâche, arrête son daemon, et laisse ROOKS
   for (const file of [files.launcher, files.legacyLauncher, files.sessionWitness, files.revision, files.repairDeclined, files.refused]) {
     assert.equal(existsSync(file), false, file);
   }
-  assert.equal(readFileSync(join(opts.novaHome, 'rooks.db'), 'utf8'), 'data');
-  assert.ok(res.lines.join(' ').includes(`${opts.novaHome} left untouched`));
+  assert.equal(readFileSync(join(opts.rooksHome, 'rooks.db'), 'utf8'), 'data');
+  assert.ok(res.lines.join(' ').includes(`${opts.rooksHome} left untouched`));
 });
 
 test('windows: every service gesture writes under the home, nothing in the working directory (TODO #706)', () => {
   const opts = fixture('win32', () => ({ code: 0, stdout: '', stderr: '' }));
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   for (const file of Object.values(files)) {
-    const inside = relative(opts.novaHome, file);
-    assert.ok(!inside.startsWith('..') && !isAbsolute(inside), `${file} is outside ${opts.novaHome}`);
+    const inside = relative(opts.rooksHome, file);
+    assert.ok(!inside.startsWith('..') && !isAbsolute(inside), `${file} is outside ${opts.rooksHome}`);
   }
 
   const elevated = { ...opts, readFile: () => transcript({ create: 0, end: 0, delete: 0, stop: 0, run: 0, verify: 0 }) };
@@ -687,7 +687,7 @@ test('windows: every service gesture writes under the home, nothing in the worki
 
 test('windows: une tâche qui n\'a pas pu être supprimée garde son lanceur', () => {
   const opts = fixture('win32', () => ({ code: 0, stdout: '', stderr: '' }));
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   mkdirSync(dirname(files.launcher), { recursive: true });
   writeFileSync(files.launcher, 'x');
   writeFileSync(files.refused, 'x');
@@ -788,13 +788,13 @@ test('uninstall removes the unit and never touches ROOKS_HOME', () => {
     return { code: 0, stdout: '', stderr: '' };
   });
   installService(opts);
-  mkdirSync(opts.novaHome, { recursive: true });
-  writeFileSync(join(opts.novaHome, 'rooks.db'), 'data', 'utf8');
+  mkdirSync(opts.rooksHome, { recursive: true });
+  writeFileSync(join(opts.rooksHome, 'rooks.db'), 'data', 'utf8');
 
   const res = uninstallService(opts);
   assert.equal(res.ok, true);
   assert.equal(existsSync(unitPath(opts.homeDir)), false);
-  assert.equal(readFileSync(join(opts.novaHome, 'rooks.db'), 'utf8'), 'data');
+  assert.equal(readFileSync(join(opts.rooksHome, 'rooks.db'), 'utf8'), 'data');
   assert.ok(res.lines.some((l) => l.includes('left untouched')));
   assert.ok(calls.some((c) => c.join(' ') === `systemctl --user disable --now ${LINUX_UNIT}`));
 });
@@ -844,11 +844,11 @@ test('status: « enregistré » et « tourne » sont deux réponses distinctes',
   // encore le port.
   const opts = fixture('linux', () => ({ code: 0, stdout: '', stderr: '' }));
   installService(opts);
-  const stopped = statusService({ ...opts, exec: () => ({ code: 0, stdout: `LoadState=loaded\nNeedDaemonReload=no\nActiveState=inactive\nWorkingDirectory=${opts.installDir}\nEnvironment=ROOKS_HOME=${opts.novaHome}`, stderr: '' }) });
+  const stopped = statusService({ ...opts, exec: () => ({ code: 0, stdout: `LoadState=loaded\nNeedDaemonReload=no\nActiveState=inactive\nWorkingDirectory=${opts.installDir}\nEnvironment=ROOKS_HOME=${opts.rooksHome}`, stderr: '' }) });
   assert.equal(stopped.installed, true);
   assert.equal(stopped.ok, false);
 
-  const running = statusService({ ...opts, exec: () => ({ code: 0, stdout: `LoadState=loaded\nNeedDaemonReload=no\nActiveState=active\nWorkingDirectory=${opts.installDir}\nEnvironment=ROOKS_HOME=${opts.novaHome}`, stderr: '' }) });
+  const running = statusService({ ...opts, exec: () => ({ code: 0, stdout: `LoadState=loaded\nNeedDaemonReload=no\nActiveState=active\nWorkingDirectory=${opts.installDir}\nEnvironment=ROOKS_HOME=${opts.rooksHome}`, stderr: '' }) });
   assert.equal(running.installed, true);
   assert.equal(running.ok, true);
 });
@@ -881,7 +881,7 @@ test('linux: a development service is neither adopted, overwritten nor stopped',
 
 test('linux: the same home with another installation is a conflict too', () => {
   const opts = fixture('linux');
-  opts.exec = () => ({ code: 0, stderr: '', stdout: supervised(opts, opts.novaHome, '/other/orchestrator') });
+  opts.exec = () => ({ code: 0, stderr: '', stdout: supervised(opts, opts.rooksHome, '/other/orchestrator') });
   assert.equal(statusService(opts).installed, false);
   assert.equal(installService(opts).ok, false);
   assert.equal(existsSync(unitPath(opts.homeDir)), false);
@@ -891,7 +891,7 @@ test('linux: stale definitions and unavailable supervisors fail closed', () => {
   const opts = fixture('linux');
   for (const result of [
     { code: 1, stdout: '', stderr: 'No bus' },
-    { code: 0, stdout: supervised(opts, opts.novaHome, opts.installDir, 'NeedDaemonReload=yes'), stderr: '' },
+    { code: 0, stdout: supervised(opts, opts.rooksHome, opts.installDir, 'NeedDaemonReload=yes'), stderr: '' },
   ]) {
     const calls: string[][] = [];
     opts.exec = (name, args) => { calls.push([name, ...args]); return result; };
@@ -904,28 +904,28 @@ test('linux: stale definitions and unavailable supervisors fail closed', () => {
 
 test('linux: quoted paths, home specifiers and the legacy default are recognized', () => {
   const opts = fixture('linux');
-  for (const home of [opts.novaHome, '%h/.rooks']) {
+  for (const home of [opts.rooksHome, '%h/.rooks']) {
     opts.exec = () => ({ code: 0, stderr: '', stdout: supervised(opts, home) });
     assert.equal(statusService(opts).ok, true);
   }
-  opts.exec = () => ({ code: 0, stderr: '', stdout: supervised(opts, opts.novaHome).replace(/Environment=.*\n/, 'Environment=NODE_ENV=production\n') });
+  opts.exec = () => ({ code: 0, stderr: '', stdout: supervised(opts, opts.rooksHome).replace(/Environment=.*\n/, 'Environment=NODE_ENV=production\n') });
   assert.equal(statusService(opts).ok, true);
-  opts.novaHome = join(opts.homeDir, 'data with spaces');
-  opts.exec = () => ({ code: 0, stderr: '', stdout: supervised(opts, opts.novaHome) });
+  opts.rooksHome = join(opts.homeDir, 'data with spaces');
+  opts.exec = () => ({ code: 0, stderr: '', stdout: supervised(opts, opts.rooksHome) });
   assert.equal(statusService(opts).ok, true);
 });
 
 test('linux: rendering persists the selected home in the real shipped template', () => {
   const opts = fixture('linux');
   opts.installDir = resolve('src/host/../../');
-  opts.novaHome = '/tmp/a home % "quoted"';
+  opts.rooksHome = '/tmp/a home % "quoted"';
   const unit = renderUnit(opts);
   assert.match(unit, /\[Service\]\nEnvironment="ROOKS_HOME=\/tmp\/a home %% \\"quoted\\""/);
   // The template names `[Service]` in a comment too: only the section counts.
   const section = unit.slice(unit.search(/^\[Service\]$/m));
   assert.match(section, /^\[Service\]\nEnvironment="ROOKS_HOME=\/tmp\/a home %% \\"quoted\\""$/m);
   assert.doesNotMatch(unit.slice(0, unit.search(/^\[Service\]$/m)), /ROOKS_HOME=/);
-  assert.throws(() => renderUnit({ ...opts, novaHome: '/tmp/home\nExecStart=bad' }));
+  assert.throws(() => renderUnit({ ...opts, rooksHome: '/tmp/home\nExecStart=bad' }));
 });
 
 /** A packaged unit left by the previous release, and the systemctl that reports it. */
@@ -940,7 +940,7 @@ function previousRelease(runningFrom: (opts: ServiceOpts) => string) {
   opts.exec = (name, args) => {
     calls.push([name, ...args]);
     if (!args.includes('show')) return { code: 0, stdout: '', stderr: '' };
-    return { code: 0, stderr: '', stdout: supervised(opts, opts.novaHome, runningFrom(opts), 'UnitFileState=enabled\n') };
+    return { code: 0, stderr: '', stdout: supervised(opts, opts.rooksHome, runningFrom(opts), 'UnitFileState=enabled\n') };
   };
   return { opts, file, old, calls };
 }
@@ -980,8 +980,8 @@ test('linux upgrade: a first install does not restart, and nothing outside our r
   }
   // An unpackaged unit never gains the releases exemption.
   const cli = fixture('linux');
-  cli.releasesRoot = join(cli.novaHome, 'desktop-runtime', 'releases');
-  cli.exec = () => ({ code: 0, stderr: '', stdout: supervised(cli, cli.novaHome, join(cli.releasesRoot!, 'r', 'resources', 'orchestrator')) });
+  cli.releasesRoot = join(cli.rooksHome, 'desktop-runtime', 'releases');
+  cli.exec = () => ({ code: 0, stderr: '', stdout: supervised(cli, cli.rooksHome, join(cli.releasesRoot!, 'r', 'resources', 'orchestrator')) });
   assert.equal(statusService(cli).installed, false);
 });
 
@@ -1019,7 +1019,7 @@ test('a failed upgrade puts the previous definition back and restarts it', () =>
   assert.match(winCalls[0]!.at(-1)!, /OutputEncoding = \[Text\.Encoding\]::UTF8; Export-ScheduledTask -TaskName 'RooksOrchestrator'/);
   assert.equal(readServiceDefinition(fixture('win32', () => ({ code: 1, stdout: '', stderr: 'not found' }))), null);
 
-  const files = windowsServiceFiles(win.novaHome, join);
+  const files = windowsServiceFiles(win.rooksHome, join);
   mkdirSync(dirname(files.revision), { recursive: true });
   writeFileSync(files.revision, `${WINDOWS_SERVICE_REVISION}\n`);
   const legacy = '<Task><Command>wscript.exe</Command></Task>';
@@ -1069,7 +1069,7 @@ test('a definition written with nothing to restore is stopped and removed', () =
   assert.equal(existsSync(plistPath(mac.homeDir)), false);
 
   const win = fixture('win32', () => ({ code: 0, stdout: '', stderr: '' }));
-  const revision = windowsServiceFiles(win.novaHome, join).revision;
+  const revision = windowsServiceFiles(win.rooksHome, join).revision;
   mkdirSync(dirname(revision), { recursive: true });
   writeFileSync(revision, WINDOWS_SERVICE_REVISION);
   assert.equal(removeServiceDefinition({ ...win, readFile: () => transcript({ end: 0, delete: 0, stop: 0 }) }).ok, true);
@@ -1085,7 +1085,7 @@ test('TIM-0107: `rooks service repair` seals the witness again only when it cann
       calls.push([n, ...a]);
       return { code: a.at(-1)!.includes('ConvertFrom-SecureString') ? sealCode : readCode, stdout: '', stderr: sealCode ? 'DPAPI unavailable' : '' };
     });
-    const files = windowsServiceFiles(opts.novaHome, join);
+    const files = windowsServiceFiles(opts.rooksHome, join);
     if (launcher) { mkdirSync(dirname(files.launcher), { recursive: true }); writeFileSync(files.launcher, 'x'); }
     return { res: repairSessionWitness(opts), files };
   };
@@ -1115,7 +1115,7 @@ test('TIM-0107: `rooks service repair` seals the witness again only when it cann
 test('TIM-0107: the read command and the launcher judge the witness the same way', () => {
   const file = 'C:\\Users\\robin\\.rooks\\run\\session-witness.dpapi';
   const command = readSessionWitnessCommand(file).at(-1)!;
-  const launcher = renderWindowsLauncher({ novaHome: 'C:\\Users\\robin\\.rooks', installDir: 'C:\\T', heapMb: 4096, port: 3010, nodePath: 'C:\\T\\Rooks.exe' });
+  const launcher = renderWindowsLauncher({ rooksHome: 'C:\\Users\\robin\\.rooks', installDir: 'C:\\T', heapMb: 4096, port: 3010, nodePath: 'C:\\T\\Rooks.exe' });
   const shared = command.slice(command.indexOf('if (-not (Test-Path'), command.lastIndexOf('; [Console]::Error.WriteLine($why)'));
   assert.ok(launcher.includes(shared), 'same decrypt-and-compare statements');
   assert.ok(command.startsWith(`$f = '${file}'`));
@@ -1155,7 +1155,7 @@ test('TODO #550: status and repair show why the witness cannot be opened', () =>
   assert.ok(silent.some((line) => line.endsWith('run `rooks service repair`')), 'no cause, no empty suffix');
 
   const opts = fixture('win32', (_n, a) => ({ code: a.at(-1)!.includes('ConvertFrom-SecureString') ? 0 : 1, stdout: '', stderr: a.at(-1)!.includes('ConvertFrom-SecureString') ? '' : cause }));
-  const files = windowsServiceFiles(opts.novaHome, join);
+  const files = windowsServiceFiles(opts.rooksHome, join);
   mkdirSync(dirname(files.launcher), { recursive: true });
   writeFileSync(files.launcher, 'x');
   assert.ok(repairSessionWitness(opts).lines.includes(`the session witness cannot be opened (cause: ${cause})`));
@@ -1199,7 +1199,7 @@ test('TIM-0115: the sweep targets this installation\'s daemon and terminal host,
 test('TIM-0115: uninstall sweeps after deleting the task, fails visibly when the elevation is refused, and says when programs remain', () => {
   const run = (codes: Record<string, number> | null) => {
     const opts = fixture('win32', () => ({ code: codes ? 0 : 1223, stdout: '', stderr: '' }));
-    const files = windowsServiceFiles(opts.novaHome, join);
+    const files = windowsServiceFiles(opts.rooksHome, join);
     mkdirSync(dirname(files.launcher), { recursive: true });
     writeFileSync(files.launcher, 'x');
     return { res: uninstallService({ ...opts, readFile: () => (codes ? transcript(codes) : '') }), files, opts };
@@ -1244,7 +1244,7 @@ test('windows: stop disables the task, ends the daemon and the orphans under one
   assert.ok(order.every((at) => at >= 0), batch);
   assert.deepEqual([...order].sort((x, y) => x - y), order, 'disabled first, the daemon next, the sweep last');
   assert.doesNotMatch(batch, /\/Delete/, 'the task stays registered');
-  assert.equal(existsSync(serviceStoppedMarker(opts.novaHome)), true);
+  assert.equal(existsSync(serviceStoppedMarker(opts.rooksHome)), true);
   assert.match(res.lines.join('\n'), /starts again when you open Rooks/);
 
   const left = stopService({ ...opts, readFile: () => transcript({ disable: 0, end: 0, stop: 0, sweep: PROCESSES_REMAIN }) });
@@ -1257,7 +1257,7 @@ test('windows: stop says when elevation is refused or the task is absent, and le
   const refused = stopService({ ...refusedOpts, readFile: () => '' });
   assert.equal(refused.ok, false);
   assert.match(refused.reason ?? '', /elevation refused.*keep running/);
-  assert.equal(existsSync(serviceStoppedMarker(refusedOpts.novaHome)), false);
+  assert.equal(existsSync(serviceStoppedMarker(refusedOpts.rooksHome)), false);
 
   const calls: string[][] = [];
   const absentOpts = fixture('win32', (n, a) => { calls.push([n, ...a]); return { code: n === 'schtasks' ? 1 : 0, stdout: '', stderr: 'ERROR: not found' }; });
@@ -1273,7 +1273,7 @@ test('windows: stop says when elevation is refused or the task is absent, and le
 
 test('windows: start enables the task, runs it, and clears the marker', () => {
   const opts = fixture('win32', () => ({ code: 0, stdout: 'Status: Disabled', stderr: '' }));
-  const marker = serviceStoppedMarker(opts.novaHome);
+  const marker = serviceStoppedMarker(opts.rooksHome);
   mkdirSync(dirname(marker), { recursive: true });
   writeFileSync(marker, 'x');
   assert.deepEqual(windowsStartSteps().map((s) => s.label), ['enable', 'run']);
@@ -1300,18 +1300,18 @@ test('linux: stop and start go through systemctl, the unit stays enabled, the ma
   const stopped = stopService(opts);
   assert.equal(stopped.ok, true, stopped.lines.join('\n'));
   assert.deepEqual(calls, [['systemctl', '--user', 'stop', LINUX_UNIT]]);
-  assert.equal(existsSync(serviceStoppedMarker(opts.novaHome)), true);
+  assert.equal(existsSync(serviceStoppedMarker(opts.rooksHome)), true);
   assert.match(statusService(opts).lines.join('\n'), /stopped\s+: by the user/);
   calls.length = 0;
   const started = startService(opts);
   assert.equal(started.ok, true);
   assert.deepEqual(calls, [['systemctl', '--user', 'start', LINUX_UNIT]]);
-  assert.equal(existsSync(serviceStoppedMarker(opts.novaHome)), false);
+  assert.equal(existsSync(serviceStoppedMarker(opts.rooksHome)), false);
 
   const bare = fixture('linux');
   const none = stopService(bare);
   assert.equal(none.ok, false, 'no unit: nothing to stop');
-  assert.equal(existsSync(serviceStoppedMarker(bare.novaHome)), false);
+  assert.equal(existsSync(serviceStoppedMarker(bare.rooksHome)), false);
 });
 
 test('macos: stop boots the agent out and start loads it again; a LaunchDaemon goes through the administrator prompt', () => {
@@ -1329,7 +1329,7 @@ test('macos: stop boots the agent out and start loads it again; a LaunchDaemon g
   const stopped = stopService(agent);
   assert.equal(stopped.ok, true, stopped.lines.join('\n'));
   assert.deepEqual(calls, [['launchctl', 'bootout', `gui/1000/${MACOS_LABEL}`]]);
-  assert.equal(existsSync(serviceStoppedMarker(agent.novaHome)), true);
+  assert.equal(existsSync(serviceStoppedMarker(agent.rooksHome)), true);
   calls.length = 0;
   const started = startService(agent);
   assert.equal(started.ok, true, started.lines.join('\n'));
@@ -1337,7 +1337,7 @@ test('macos: stop boots the agent out and start loads it again; a LaunchDaemon g
     ['launchctl', 'bootout', `gui/1000/${MACOS_LABEL}`],
     ['launchctl', 'bootstrap', 'gui/1000', plist],
   ]);
-  assert.equal(existsSync(serviceStoppedMarker(agent.novaHome)), false);
+  assert.equal(existsSync(serviceStoppedMarker(agent.rooksHome)), false);
 
   calls.length = 0;
   writeFileSync(join(agent.launchDaemonsDir, `${MACOS_LABEL}.plist`), 'daemon');

@@ -284,7 +284,7 @@ install_package() {
   esac
 }
 
-nova_command() {
+rooks_cli_path() {
   if [ -x /opt/Rooks/cli/rooks ] && [ "$OS" = linux ]; then
     say /opt/Rooks/cli/rooks
   elif has rooks; then
@@ -319,25 +319,25 @@ after_install() {
   fi
 
   if [ "$SERVER" = yes ]; then
-    nova_bin=$(nova_command)
-    [ -n "$nova_bin" ] || die 'the rooks command was not installed; see the package output above'
+    rooks_bin=$(rooks_cli_path)
+    [ -n "$rooks_bin" ] || die 'the rooks command was not installed; see the package output above'
     if [ "$NO_SERVICE" = 1 ]; then
       say 'Next steps, as the account that will own Rooks (not root): install the background service,'
       say '  rooks service install'
       say 'then create your account:'
-      account_step "$nova_bin"
+      account_step "$rooks_bin"
     elif [ "$(id -u)" = 0 ]; then
       say 'The background service runs as the account that owns Rooks, never as root.'
       say 'Log in as that account, then install the background service:'
       say '  rooks service install'
       say 'and create your account:'
-      account_step "$nova_bin"
+      account_step "$rooks_bin"
     else
       say 'Installing the background service...'
-      if "$nova_bin" service install </dev/null; then
+      if "$rooks_bin" service install </dev/null; then
         say ''
         say 'Rooks runs in the background. Next step, create your account:'
-        account_step "$nova_bin"
+        account_step "$rooks_bin"
       else
         warn 'the background service was not installed. Run it again to see why:'
         warn '  rooks service install'

@@ -9,9 +9,9 @@ import {
   launchDaemonPath, plistPath, renderLaunchDaemonPlist, renderPlist, renderTaskXml, unitPath, type ServiceOpts,
 } from './service-install.js';
 
-function base(homeDir: string, novaHome: string, platform: NodeJS.Platform = 'linux'): ServiceOpts {
+function base(homeDir: string, rooksHome: string, platform: NodeJS.Platform = 'linux'): ServiceOpts {
   return {
-    platform, homeDir, novaHome, installDir: join(homeDir, 'install'), userName: 't', uid: 501,
+    platform, homeDir, rooksHome, installDir: join(homeDir, 'install'), userName: 't', uid: 501,
     heapMb: 1024, port: 3010, nodePath: process.execPath,
     exec: () => ({ code: 1, stdout: '', stderr: '' }),
   };
@@ -28,7 +28,7 @@ test('the home is read back from each supervisor definition as it is rendered', 
   assert.equal(homeOfUnit('[Service]\nEnvironment=PATH=/usr/bin\n', '/home/t'), null);
   assert.equal(homeOfPlist(renderPlist(base('/Users/t', '/var/folders/x/T/a&b'))), '/var/folders/x/T/a&b');
   assert.equal(homeOfPlist(renderLaunchDaemonPlist(base('/Users/t', '/private/tmp/rc'))), '/private/tmp/rc');
-  const xml = renderTaskXml({ userName: 't', novaHome: 'C:\\Users\\t\\AppData\\Local\\Temp\\rc & co', installDir: 'C:\\Rooks' });
+  const xml = renderTaskXml({ userName: 't', rooksHome: 'C:\\Users\\t\\AppData\\Local\\Temp\\rc & co', installDir: 'C:\\Rooks' });
   assert.equal(homeOfTask(xml), 'C:\\Users\\t\\AppData\\Local\\Temp\\rc & co');
   assert.equal(homeOfTask('<Task><Actions><Exec><Command>notepad.exe</Command></Exec></Actions></Task>'), null);
 });
@@ -88,7 +88,7 @@ test('#464: macOS checks both the LaunchDaemon and the LaunchAgent', () => {
 
 test('#464: Windows reads the home from the registered task', () => {
   const dead = 'C:\\Users\\t\\AppData\\Local\\Temp\\rc';
-  const xml = renderTaskXml({ userName: 't', novaHome: dead, installDir: 'C:\\Rooks' });
+  const xml = renderTaskXml({ userName: 't', rooksHome: dead, installDir: 'C:\\Rooks' });
   const exists = (path: string) => path !== dead;
   const found = orphanServices({ platform: 'win32', homeDir: 'C:\\Users\\t', readWindowsTask: () => xml, exists });
   assert.deepEqual(found.map((orphan) => [orphan.name, orphan.home]), [['RooksOrchestrator', dead]]);

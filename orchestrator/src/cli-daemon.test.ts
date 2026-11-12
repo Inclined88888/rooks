@@ -42,7 +42,7 @@ function baseEnv(home: string, from: NodeJS.ProcessEnv = process.env): NodeJS.Pr
   return env;
 }
 
-function runNova(args: string[], env: NodeJS.ProcessEnv): Promise<{
+function runRooks(args: string[], env: NodeJS.ProcessEnv): Promise<{
   code: number | null;
   stdout: string;
   stderr: string;
@@ -179,7 +179,7 @@ test('the CLI\'s stderr stays empty under an environment that sets both FORCE_CO
   const mock = await startMock();
   try {
     writeFileSync(join(home, 'desktop-bootstrap.json'), JSON.stringify({ daemonPort: Number(new URL(mock.url).port) }));
-    const r = await runNova(['list'], baseEnv(home, { ...process.env, FORCE_COLOR: '1', NO_COLOR: '1' }));
+    const r = await runRooks(['list'], baseEnv(home, { ...process.env, FORCE_COLOR: '1', NO_COLOR: '1' }));
     assert.equal(r.code, 0, r.stderr);
     assert.equal(r.stderr, '');
   } finally {
@@ -194,26 +194,26 @@ test('real CLI discovers local targets and keeps explicit daemon URLs and tokens
   try {
     const port = Number(new URL(mock.url).port);
     writeFileSync(join(home, 'desktop-bootstrap.json'), JSON.stringify({ daemonPort: port }));
-    const bootstrap = await runNova(['list'], baseEnv(home));
+    const bootstrap = await runRooks(['list'], baseEnv(home));
     assert.equal(bootstrap.code, 0, bootstrap.stderr);
     assert.equal(bootstrap.stderr, '');
     writeFileSync(join(home, 'desktop-bootstrap.json'), '{"daemonPort":1}');
     writeFileSync(join(home, 'rooks.config.json'), JSON.stringify({ daemon: { listen: { host: '::', port } } }));
-    const config = await runNova(['list'], baseEnv(home));
+    const config = await runRooks(['list'], baseEnv(home));
     assert.equal(config.code, 0, config.stderr);
     writeFileSync(join(home, 'rooks.config.json'), '{"daemon":{"listen":{"port":1}}}');
     writeFileSync(join(home, 'cli-daemons.json'), JSON.stringify({ local: { url: mock.url, token: 'profile-token' } }));
-    const profile = await runNova(['--daemon', 'local', 'list'], baseEnv(home));
+    const profile = await runRooks(['--daemon', 'local', 'list'], baseEnv(home));
     assert.equal(profile.code, 0, profile.stderr);
     const env = { ...baseEnv(home), ROOKS_API: envTarget.url, ROOKS_API_TOKEN: 'env-token' };
-    const override = await runNova(['--daemon', 'local', 'list'], env);
+    const override = await runRooks(['--daemon', 'local', 'list'], env);
     assert.equal(override.code, 0, override.stderr);
     assert.equal(mock.seen[3]?.auth, 'Bearer profile-token');
-    const explicit = await runNova(['--daemon', mock.url, 'list'], env);
+    const explicit = await runRooks(['--daemon', mock.url, 'list'], env);
     assert.equal(explicit.code, 0, explicit.stderr);
     assert.equal(mock.seen[4]?.auth, 'Bearer env-token');
     assert.equal(envTarget.seen.length, 0, 'Explicit targets must not send requests or tokens to ROOKS_API');
-    const withoutFlag = await runNova(['list'], env);
+    const withoutFlag = await runRooks(['list'], env);
     assert.equal(withoutFlag.code, 0, withoutFlag.stderr);
     assert.equal(envTarget.seen.length, 1);
     assert.equal(envTarget.seen[0]?.auth, 'Bearer env-token');
@@ -225,7 +225,7 @@ test('real CLI discovers local targets and keeps explicit daemon URLs and tokens
 
 test('daemon add : fichier 0600 sous ROOKS_HOME, stdout sans le token', async () => {
   const home = freshHome();
-  const r = await runNova(
+  const r = await runRooks(
     ['daemon', 'add', 'vps', 'https://rooks.example.ts.net/', 's3cr3t-token'],
     baseEnv(home),
   );
@@ -242,7 +242,7 @@ test('daemon add : fichier 0600 sous ROOKS_HOME, stdout sans le token', async ()
   assert.equal(parsed.vps.token, 's3cr3t-token');
   assert.equal(statSync(file).mode & 0o777, 0o600);
 
-  const listed = await runNova(['daemon', 'list'], baseEnv(home));
+  const listed = await runRooks(['daemon', 'list'], baseEnv(home));
   assert.equal(listed.code, 0, listed.stderr);
   assert.match(listed.stdout, /vps\s+https:\/\/rooks\.example\.ts\.net/);
   assert.doesNotMatch(listed.stdout, /s3cr3t-token/);
@@ -252,19 +252,19 @@ test('daemon add refuse un nom traversal, une url sans schéma, un token vide', 
   const home = freshHome();
   const env = baseEnv(home);
 
-  const badName = await runNova(
+  const badName = await runRooks(
     ['daemon', 'add', '../x', 'http://127.0.0.1:9', 'tok'],
     env,
   );
   assert.equal(badName.code, 64);
 
-  const dots = await runNova(
+  const dots = await runRooks(
     ['daemon', 'add', '..', 'http://127.0.0.1:9', 'tok'],
     env,
   );
   assert.equal(dots.code, 64);
 
-  const badUrl = await runNova(
+  const badUrl = await runRooks(
     ['daemon', 'add', 'vps', 'not-a-url', 'tok'],
     env,
   );
@@ -275,7 +275,7 @@ test('rooks --daemon vps task list : Bearer du profil, pas de ROOKS_API_TOKEN', 
   const home = freshHome();
   const mock = await startMock();
   try {
-    const added = await runNova(
+    const added = await runRooks(
       ['daemon', 'add', 'vps', mock.url, 'profil-token'],
       baseEnv(home),
     );
@@ -283,7 +283,7 @@ test('rooks --daemon vps task list : Bearer du profil, pas de ROOKS_API_TOKEN', 
 
     const env = baseEnv(home);
     env.ROOKS_API_TOKEN = 'token-env-a-ignorer';
-    const r = await runNova(['--daemon', 'vps', 'task', 'list'], env);
+    const r = await runRooks(['--daemon', 'vps', 'task', 'list'], env);
     assert.equal(r.code, 0, r.stderr);
     assert.match(r.stdout, /"id": "t1"/);
     assert.equal(mock.seen.length, 1);
@@ -300,7 +300,7 @@ test('rooks --daemon <url> : Bearer de ROOKS_API_TOKEN', async () => {
   try {
     const env = baseEnv(home);
     env.ROOKS_API_TOKEN = 'env-token';
-    const r = await runNova(['--daemon', mock.url, 'list'], env);
+    const r = await runRooks(['--daemon', mock.url, 'list'], env);
     assert.equal(r.code, 0, r.stderr);
     assert.equal(mock.seen.length, 1);
     assert.equal(mock.seen[0]?.url, '/api/agents');
@@ -319,14 +319,14 @@ test('sans --daemon : ROOKS_API_TOKEN gagne sur daemon-token ; sinon le fichier'
     writeFileSync(join(home, 'rooks.config.json'), JSON.stringify({ daemon: { listen: { host: 'localhost', port } } }));
     const envFile = baseEnv(home);
     envFile.ROOKS_API = mock.url;
-    const viaFile = await runNova(['list'], envFile);
+    const viaFile = await runRooks(['list'], envFile);
     assert.equal(viaFile.code, 0, viaFile.stderr);
     assert.equal(mock.seen[0]?.auth, 'Bearer fichier-token');
 
     const envTok = baseEnv(home);
     envTok.ROOKS_API = mock.url;
     envTok.ROOKS_API_TOKEN = 'env-gagne';
-    const viaEnv = await runNova(['list'], envTok);
+    const viaEnv = await runRooks(['list'], envTok);
     assert.equal(viaEnv.code, 0, viaEnv.stderr);
     assert.equal(mock.seen[1]?.auth, 'Bearer env-gagne');
   } finally {
@@ -346,16 +346,16 @@ test('raw remote URL never inherits the local file token, even with a matching p
     writeFileSync(join(home, 'desktop-bootstrap.json'), JSON.stringify({ daemonPort: port }));
     const env = { ...baseEnv(home), ROOKS_API: mock.url };
     for (const token of [undefined, '', '   ']) {
-      const result = await runNova(['--daemon', mock.url, 'list'], { ...env, ROOKS_API_TOKEN: token });
+      const result = await runRooks(['--daemon', mock.url, 'list'], { ...env, ROOKS_API_TOKEN: token });
       assert.equal(result.code, 0, result.stderr);
     }
     assert.equal(mock.seen.length, 3);
     assert.ok(mock.seen.every((request) => request.auth === undefined));
-    const explicit = await runNova(['--daemon', mock.url, 'list'], { ...env, ROOKS_API_TOKEN: 'remote-token' });
+    const explicit = await runRooks(['--daemon', mock.url, 'list'], { ...env, ROOKS_API_TOKEN: 'remote-token' });
     assert.equal(explicit.code, 0, explicit.stderr);
     assert.equal(mock.seen[3]?.auth, 'Bearer remote-token');
     writeFileSync(join(home, 'cli-daemons.json'), JSON.stringify({ remote: { url: mock.url, token: 'profile-token' } }));
-    const profile = await runNova(['--daemon', 'remote', 'list'], env);
+    const profile = await runRooks(['--daemon', 'remote', 'list'], env);
     assert.equal(profile.code, 0, profile.stderr);
     assert.equal(mock.seen[4]?.auth, 'Bearer profile-token');
   } finally {
@@ -374,12 +374,12 @@ test('ROOKS_API without --daemon: a remote URL never receives the local file tok
     const port = Number(new URL(mock.url).port);
     writeFileSync(join(home, 'rooks.config.json'), JSON.stringify({ daemon: { listen: { host: '127.0.0.1', port } } }));
     for (const token of [undefined, '', '   ']) {
-      const result = await runNova(['list'], { ...baseEnv(home), ROOKS_API: mock.url, ROOKS_API_TOKEN: token });
+      const result = await runRooks(['list'], { ...baseEnv(home), ROOKS_API: mock.url, ROOKS_API_TOKEN: token });
       assert.equal(result.code, 0, result.stderr);
     }
     assert.equal(mock.seen.length, 3);
     assert.ok(mock.seen.every((request) => request.auth === undefined), JSON.stringify(mock.seen));
-    const explicit = await runNova(['list'], { ...baseEnv(home), ROOKS_API: mock.url, ROOKS_API_TOKEN: 'remote-token' });
+    const explicit = await runRooks(['list'], { ...baseEnv(home), ROOKS_API: mock.url, ROOKS_API_TOKEN: 'remote-token' });
     assert.equal(explicit.code, 0, explicit.stderr);
     assert.equal(mock.seen[3]?.auth, 'Bearer remote-token');
   } finally {
@@ -396,12 +396,12 @@ test('ROOKS_API without --daemon: another loopback port or a path behind the lis
     const port = Number(new URL(mock.url).port);
     writeFileSync(join(home, 'rooks.config.json'), JSON.stringify({ daemon: { listen: { host: '127.0.0.1', port } } }));
     for (const url of [other.url, `${mock.url}/proxy`, `${mock.url}/?via=proxy`]) {
-      const result = await runNova(['list'], { ...baseEnv(home), ROOKS_API: url });
+      const result = await runRooks(['list'], { ...baseEnv(home), ROOKS_API: url });
       assert.equal(result.code, 0, result.stderr);
     }
     assert.equal(other.seen.length, 1);
     assert.ok([...mock.seen, ...other.seen].every((request) => request.auth === undefined), JSON.stringify([...mock.seen, ...other.seen]));
-    const own = await runNova(['list'], { ...baseEnv(home), ROOKS_API: `${mock.url.replace('127.0.0.1', 'localhost')}/` });
+    const own = await runRooks(['list'], { ...baseEnv(home), ROOKS_API: `${mock.url.replace('127.0.0.1', 'localhost')}/` });
     assert.equal(own.code, 0, own.stderr);
     assert.equal(mock.seen.at(-1)?.auth, 'Bearer local-private-token');
   } finally {
@@ -418,7 +418,7 @@ test('raw loopback URL only inherits the file token for the configured local lis
     const port = Number(new URL(mock.url).port);
     writeFileSync(join(home, 'rooks.config.json'), JSON.stringify({ daemon: { listen: { host: 'localhost', port } } }));
     for (const url of [mock.url, other.url, `${mock.url}/other`]) {
-      const result = await runNova(['--daemon', url, 'list'], { ...baseEnv(home), ROOKS_API: other.url });
+      const result = await runRooks(['--daemon', url, 'list'], { ...baseEnv(home), ROOKS_API: other.url });
       assert.equal(result.code, 0, result.stderr);
     }
     assert.equal(mock.seen.length, 2);
@@ -443,16 +443,16 @@ test('a daemon listening on its own LAN address receives the file token, and onl
   try {
     const port = Number(new URL(mock.url).port);
     writeFileSync(join(home, 'rooks.config.json'), JSON.stringify({ daemon: { listen: { host: address, port } } }));
-    const discovered = await runNova(['list'], baseEnv(home));
+    const discovered = await runRooks(['list'], baseEnv(home));
     assert.equal(discovered.code, 0, discovered.stderr);
     assert.equal(mock.seen[0]?.auth, 'Bearer local-private-token');
-    const explicit = await runNova(['--daemon', mock.url, 'list'], baseEnv(home));
+    const explicit = await runRooks(['--daemon', mock.url, 'list'], baseEnv(home));
     assert.equal(explicit.code, 0, explicit.stderr);
     assert.equal(mock.seen[1]?.auth, 'Bearer local-private-token');
     // Another port on the same address, a path behind it, and the loopback
     // (where this daemon does not listen) are someone else.
     for (const url of [other.url, `${mock.url}/proxy`, loopback.url]) {
-      const result = await runNova(['list'], { ...baseEnv(home), ROOKS_API: url });
+      const result = await runRooks(['list'], { ...baseEnv(home), ROOKS_API: url });
       assert.equal(result.code, 0, result.stderr);
     }
     for (const url of [`http://127.0.0.1:${port}`, `http://localhost:${port}`, `https://${address}:${port}`]) {
@@ -480,7 +480,7 @@ test('a LAN listener address the machine no longer holds, or a host name, never 
 
 test('rooks --daemon nom-inconnu : exit 64, aucun HTTP', async () => {
   const home = freshHome();
-  const r = await runNova(['--daemon', 'absent', 'task', 'list'], baseEnv(home));
+  const r = await runRooks(['--daemon', 'absent', 'task', 'list'], baseEnv(home));
   assert.equal(r.code, 64);
   assert.match(r.stderr, /unknown daemon 'absent'/);
 });

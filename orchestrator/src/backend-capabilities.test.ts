@@ -43,7 +43,7 @@ const remoteDialect: Dialect = {
   permissionModel: 'none',
   rateLimitReporting: 'none',
   hostedConnectors: false,
-  capabilities: { worktree: false, novaMcp: false, attachments: false, novaPreamble: false },
+  capabilities: { worktree: false, rooksMcp: false, attachments: false, rooksPreamble: false },
   async buildSpawn(_opts, profile) {
     return { cmd: profile.cmd, args: [], initialStdin: null };
   },
@@ -74,21 +74,21 @@ test('the product backends keep every capability: nothing changes for claude and
     assert.deepEqual(backendCapabilities(id), DEFAULT_BACKEND_CAPABILITIES, id);
     const entry = backendCatalog().find((b) => b.id === id);
     assert.ok(entry, `${id} is in the catalogue`);
-    assert.deepEqual(entry.capabilities, { worktree: true, novaMcp: true, attachments: true, novaPreamble: true }, id);
+    assert.deepEqual(entry.capabilities, { worktree: true, rooksMcp: true, attachments: true, rooksPreamble: true }, id);
   }
 });
 
 test('the catalogue carries what a backend declared it cannot do', () => {
   const entry = backendCatalog().find((b) => b.id === 'remote-llm');
   assert.ok(entry);
-  assert.deepEqual(entry.capabilities, { worktree: false, novaMcp: false, attachments: false, novaPreamble: false });
+  assert.deepEqual(entry.capabilities, { worktree: false, rooksMcp: false, attachments: false, rooksPreamble: false });
   assert.deepEqual(backendCapabilities('remote-llm'), entry.capabilities);
 });
 
 test('a profile narrows its dialect and can never widen it', () => {
   assert.deepEqual(
     resolveCapabilities({ capabilities: { worktree: false } }, { capabilities: { worktree: true, attachments: false } }),
-    { worktree: false, novaMcp: true, attachments: false, novaPreamble: true },
+    { worktree: false, rooksMcp: true, attachments: false, rooksPreamble: true },
   );
   assert.deepEqual(resolveCapabilities(undefined, undefined), DEFAULT_BACKEND_CAPABILITIES);
   assert.deepEqual(backendCapabilities('nobody-registered-this'), DEFAULT_BACKEND_CAPABILITIES);

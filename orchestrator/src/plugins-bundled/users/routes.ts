@@ -227,9 +227,14 @@ export type UserRoutesOptions = {
   mailRelay?: MailRelayOptions;
 };
 
-/** What the bundled `@rooks/users` plugin mounts the routes with. */
+/**
+ * What the bundled `@rooks/users` plugin mounts the routes with.
+ * Email verification is off by default: Rooks is local-first — the first
+ * account lives on this machine and must not need an internet mail relay.
+ * Tests that exercise codes pass `emailVerification: true` explicitly.
+ */
 export const BUNDLED_USER_ROUTES: UserRoutesOptions = Object.freeze({
-  emailVerification: true,
+  emailVerification: false,
 });
 
 /**

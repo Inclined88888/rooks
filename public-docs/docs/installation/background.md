@@ -11,7 +11,7 @@ What each system needs is described on its own page:
 | --- | --- | --- |
 | Linux | A systemd user service with user lingering: it starts at boot and survives logout. | [Linux](linux.md) |
 | macOS | A launchd daemon, once a long-lived Claude token is set: it starts at boot and survives logout. Without a token, the service is a launchd agent that stops when you log out. | [macOS](macos.md#keep-rooks-running-when-you-are-logged-out) |
-| Windows | The `NovaOrchestrator` scheduled task: it starts at boot and survives sign-out. After a restart, Rooks waits for your first sign-in. | [Windows](windows.md) |
+| Windows | The `RooksOrchestrator` scheduled task: it starts at boot and survives sign-out. After a restart, Rooks waits for your first sign-in. | [Windows](windows.md) |
 
 Check the service at any time with:
 
@@ -34,7 +34,7 @@ rooks service start
 | --- | --- | --- |
 | Linux | Stops the systemd user unit; it stays enabled. | Opening Rooks, `rooks service start`, or the next boot. |
 | macOS | Unloads the launchd agent; a launchd daemon asks for an administrator password. | Opening Rooks (the daemon asks for the password again), `rooks service start`, or the next login (agent) or boot (daemon). |
-| Windows | Disables the `NovaOrchestrator` task and ends the daemon; Windows asks for permission. | Opening Rooks or `rooks service start`, with one more permission prompt. A disabled task does not start at boot. |
+| Windows | Disables the `RooksOrchestrator` task and ends the daemon; Windows asks for permission. | Opening Rooks or `rooks service start`, with one more permission prompt. A disabled task does not start at boot. |
 
 Stopping the service also ends the programs of the missions that were still running. If the daemon ever stops without ending them (a crash, a forced stop), its next start does.
 

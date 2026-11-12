@@ -24,7 +24,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import type { Context } from '@deepseek-ai/cordis';
 import type { Host } from '../../host/index.js';
 import type { ModuleManifest } from '../../kernel/registry.js';
-import type { NovaConfig } from '../../config/schema.js';
+import type { RooksConfig } from '../../config/schema.js';
 import { config } from '../../config/load.js';
 import { CHANNELS_DIR, ROOKS_HOME } from '../../paths.js';
 import { superviseChild, MAX_RESTARTS, RESTART_WINDOW_MS } from '../../kernel/child-supervisor.js';
@@ -54,7 +54,7 @@ export type Worker = (typeof WORKERS)[number];
  * Anything that isn't an explicit `true` counts as "disabled" — including
  * `"auto"`, the default for a module absent from the table.
  */
-export function isEnabled(cfg: NovaConfig): boolean {
+export function isEnabled(cfg: RooksConfig): boolean {
   const setting = cfg.modules[manifest.name];
   if (setting === true) return true;
   if (typeof setting === 'object' && setting !== null) return setting.enabled === true;
@@ -81,7 +81,7 @@ export function hasChannels(dir = CHANNELS_DIR): boolean {
  * `host.docker.internal:3000` only exist inside the Docker network. On the
  * host, it's the loopback.
  */
-export function envOf(cfg: NovaConfig, worker: Worker): NodeJS.ProcessEnv {
+export function envOf(cfg: RooksConfig, worker: Worker): NodeJS.ProcessEnv {
   return {
     ...process.env,
     NODE_ENV: 'production',
@@ -99,7 +99,7 @@ export function envOf(cfg: NovaConfig, worker: Worker): NodeJS.ProcessEnv {
  * binary (`ELECTRON_RUN_AS_NODE`), because a tester's machine often has no
  * `node` on its PATH — the workers never started there.
  */
-export function superviseWorkers(host: Host, cfg: NovaConfig, appDir: string, node: NodeRuntime = nodeRuntime(cfg)): () => void {
+export function superviseWorkers(host: Host, cfg: RooksConfig, appDir: string, node: NodeRuntime = nodeRuntime(cfg)): () => void {
   const stops = WORKERS.map((worker) => {
     console.log(`[telegram] worker ${worker} served by the daemon (cwd ${appDir})`);
     return superviseChild(host, {

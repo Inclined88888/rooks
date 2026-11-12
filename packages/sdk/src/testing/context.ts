@@ -96,7 +96,7 @@ function fakeMcpPlan(spawn: BuildSpawnOpts, options: ProviderMcpOptions | undefi
     ROOKS_API_TOKEN: FAKE_TOKEN_REFERENCE,
   };
   const prompt = options?.permissionPrompt === true;
-  const rooks: ProviderMcpServer[] = spawn.novaMcp === false ? [] : [
+  const rooks: ProviderMcpServer[] = spawn.rooksMcp === false ? [] : [
     { role: 'rooks', type: 'stdio', name: 'rooks', command: 'node', args: ['rooks-mcp.mjs'], env: identityEnv },
     {
       role: 'forms', type: 'stdio', name: ASK_MCP_SERVER, command: 'node', args: ['permission-mcp.mjs'],
@@ -108,7 +108,7 @@ function fakeMcpPlan(spawn: BuildSpawnOpts, options: ProviderMcpOptions | undefi
     identityEnv,
     daemonUrl: identityEnv.ROOKS_ORCH_URL,
     scripts: { rooks: 'rooks-mcp.mjs', forms: 'permission-mcp.mjs' },
-    permissionTool: prompt && spawn.novaMcp !== false ? CLAUDE_PERMISSION_PROMPT_TOOL : null,
+    permissionTool: prompt && spawn.rooksMcp !== false ? CLAUDE_PERMISSION_PROMPT_TOOL : null,
     preApprovedTools: [...claudeAskToolNames(), ...PRE_APPROVED_MCP_TOOLS],
     commandPolicy: COMMAND_POLICY,
   };

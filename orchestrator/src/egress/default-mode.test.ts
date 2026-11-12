@@ -23,7 +23,7 @@ const { missionEnv } = await import('../agent.js');
 const { db, dbApi } = await import('../db.js');
 const { EGRESS_PROXY_TOKEN_SCOPE } = await import('../users/permissions.js');
 const { config, setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { egressProxyAddress, startEgressProxy } = await import('./service.js');
 const { listMissionEgress } = await import('./journal.js');
 
@@ -35,7 +35,7 @@ const newHostAlerts = (missionId: string): number =>
   dbApi.listNotifications({ limit: 50 }).filter((n) => n.anchor === `egress:${missionId}`).length;
 
 test('with no egress key in the config: no proxy port, no proxy variable, no credential, no alert', async () => {
-  assert.equal(NovaConfigSchema.parse({}).host.isolation.egress.mode, 'off');
+  assert.equal(RooksConfigSchema.parse({}).host.isolation.egress.mode, 'off');
   assert.equal(config().host.isolation.egress.mode, 'off');
 
   const stop = startEgressProxy();
@@ -62,7 +62,7 @@ test('`log` written in the config: the proxy listens, the mission gets its varia
   after(() => upstream.close());
   const upstreamPort = (upstream.address() as AddressInfo).port;
 
-  setConfig(NovaConfigSchema.parse({ host: { isolation: { egress: { mode: 'log' } } } }));
+  setConfig(RooksConfigSchema.parse({ host: { isolation: { egress: { mode: 'log' } } } }));
   const stop = startEgressProxy();
   after(stop);
   for (let i = 0; i < 300 && !egressProxyAddress(); i += 1) await new Promise((r) => setTimeout(r, 10));

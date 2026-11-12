@@ -62,7 +62,7 @@
     "newAgent": "Nieuwe agent",
     "askAgent": "{name} vragen",
     "notifications": "Meldingen",
-    "novaAgentsAccess": "Toegang tot {brand}-agents",
+    "rooksAgentsAccess": "Toegang tot {brand}-agents",
     "openOrchestrator": "Orchestrator {name} openen",
     "openHealthAgent": "Gezondheidsagent openen",
     "mainAgentFallback": "de hoofdagent"

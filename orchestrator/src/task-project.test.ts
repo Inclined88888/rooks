@@ -9,10 +9,10 @@ import assert from 'node:assert/strict';
 import { projectFromCwd, taskProjectSlug } from './task-project.js';
 
 const HORS_PROJET = { project: null, cwd: '/home/user/scratch' };
-const AGENT_NOVA = { project: 'rooks', cwd: '/home/user/webdev/projects/rooks' };
+const AGENT_ROOKS = { project: 'rooks', cwd: '/home/user/webdev/projects/rooks' };
 
 test('le slug explicite de la task prime sur celui de l\'agent', () => {
-  assert.equal(taskProjectSlug({ project: 'globex' }, AGENT_NOVA), 'globex');
+  assert.equal(taskProjectSlug({ project: 'globex' }, AGENT_ROOKS), 'globex');
 });
 
 test('le slug explicite prime aussi sur celui dérivé du cwd', () => {
@@ -30,7 +30,7 @@ test('un agent hors projet reçoit quand même le slug explicite', () => {
 });
 
 test('sans slug explicite, le comportement historique est inchangé', () => {
-  assert.equal(taskProjectSlug({ project: null }, AGENT_NOVA), 'rooks');
+  assert.equal(taskProjectSlug({ project: null }, AGENT_ROOKS), 'rooks');
   assert.equal(
     taskProjectSlug({}, { project: null, cwd: '/home/user/webdev/projects/markets' }),
     'markets',
@@ -39,7 +39,7 @@ test('sans slug explicite, le comportement historique est inchangé', () => {
 });
 
 test('un slug explicite vide ne masque pas la dérivation', () => {
-  assert.equal(taskProjectSlug({ project: '' }, AGENT_NOVA), 'rooks');
+  assert.equal(taskProjectSlug({ project: '' }, AGENT_ROOKS), 'rooks');
 });
 
 test('projectFromCwd conserve ses trois motifs', () => {

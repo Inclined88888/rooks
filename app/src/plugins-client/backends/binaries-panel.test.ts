@@ -126,7 +126,7 @@ test('the panel lists, pins, refuses, browses and unpins', async (suite) => {
 
     await suite.test('with the desktop picker, Browse fills the field', async () => {
       await React.act(async () => root.render(React.createElement('div')));
-      (dom.window as unknown as { novaDesktop: unknown }).novaDesktop = {
+      (dom.window as unknown as { rooksDesktop: unknown }).rooksDesktop = {
         restartAfterSetup: async () => undefined,
         selectExecutable: async () => '/Applications/Codex.app/Contents/Resources/codex',
       };
@@ -134,7 +134,7 @@ test('the panel lists, pins, refuses, browses and unpins', async (suite) => {
       await React.act(async () => { button(/Browse/, row('codex'))!.click(); });
       await settle();
       assert.equal(input('codex').value, '/Applications/Codex.app/Contents/Resources/codex');
-      delete (dom.window as unknown as { novaDesktop?: unknown }).novaDesktop;
+      delete (dom.window as unknown as { rooksDesktop?: unknown }).rooksDesktop;
     });
 
     await suite.test('a refused list paints nothing', async () => {

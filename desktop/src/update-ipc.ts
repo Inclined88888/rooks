@@ -8,7 +8,7 @@ import {
 
 /**
  * "Download" on the new-version banner, in the desktop app (docs/AUTO-UPDATE.md
- * §6, P2): the channels exposed through `window.novaDesktop.updates`
+ * §6, P2): the channels exposed through `window.rooksDesktop.updates`
  * (preload.cts) and the controller behind them.
  *
  * The renderer is the realm every client plugin shares, so it names nothing:

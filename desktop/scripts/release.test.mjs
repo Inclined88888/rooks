@@ -54,7 +54,7 @@ test('the sealed ESM keeps its imports and exports, and ships the daemon readabl
   const result = boot(root);
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), { keys: ['pinned'], result: 'Hello Rooks' });
-  // The daemon is public under AGPL: the release signs it, it never rewrites it.
+  // The daemon is public under proprietary: the release signs it, it never rewrites it.
   assert.equal(readFileSync(join(root, 'dist/feature.js'), 'utf8'), '// source comment\nexport function greet(name) { return `Hello ${name}`; }');
   const keyring = await import(pathToFileURL(join(root, 'dist/license/pubkey.js')).href);
   assert.throws(() => keyring.overrideKeyringForTests([]), /unavailable/);

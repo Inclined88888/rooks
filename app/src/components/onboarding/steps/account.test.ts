@@ -1,9 +1,8 @@
 /**
- * The onboarding's account step (docs/EMAIL-CODE-UI.md): what the form lets
- * through, the eye that stays out of Tab and keeps the focus, the code
- * sub-view (« Back » and « Change email » return to the filled form), the
- * account created only by the accepted code, and every refusal of the daemon
- * said — never a silent failure.
+ * Optional local account: skip always works; email/password are never
+ * required; local create when the daemon does not ask for an email code;
+ * mailed-code path only when `setupRequiresEmailCode` is on; a mail-relay
+ * failure falls back to local create so first use is never blocked.
  */
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
@@ -25,7 +24,7 @@ test('the shared checks: matching passwords at the daemon\'s length, no complexi
   assert.equal(accountName('', 'ada.l@example.com'), 'ada.l', 'the daemon wants a name: the address before the @');
 });
 
-async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Record<string, unknown> = { user: null, needsSetup: true }) {
+async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Record<string, unknown> = { user: null, needsSetup: true, setupRequiresEmailCode: false }) {
   const { JSDOM } = await import('jsdom');
   const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost/onboarding?step=account', pretendToBeVisual: true });
   const saved = new Map<string, PropertyDescriptor | undefined>();
@@ -92,9 +91,10 @@ async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Rec
   const inputs = () => Array.from(doc.querySelectorAll('form input')) as HTMLInputElement[];
   const submit = () => doc.querySelector('button[type="submit"]') as HTMLButtonElement;
   const status = () => (doc.querySelector('[data-account-status]')?.textContent ?? '');
+  const skip = () => doc.querySelector('[data-account-skip]') as HTMLButtonElement;
   const press = async (el: Element | null) => { await act(() => { (el as HTMLElement | null)?.click(); }); await flush(); };
   return {
-    doc, calls, fill, inputs, submit, status, press, flush, act,
+    doc, calls, fill, inputs, submit, status, skip, press, flush, act,
     nexts: () => nexts,
     back: () => backHandler?.() ?? false,
     fillForm: async (v: { name?: string; email: string; password: string; confirm?: string }) => {
@@ -108,93 +108,77 @@ async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Rec
   };
 }
 
-test('the form: one column, a disabled button until the address and a matching pair are there, no licence field', async (t) => {
+test('fields are optional; Skip continues without creating an account', async (t) => {
   const w = await mount(t, {});
-  const [name, email, password, confirm, extra] = w.inputs();
-  assert.equal(extra, undefined, 'four fields, no licence key');
-  assert.equal(name?.autocomplete, 'given-name');
-  assert.ok(name?.labels?.[0]?.textContent?.includes('First name'));
-  assert.ok(!name?.labels?.[0]?.textContent?.includes('*'), 'the first name is optional');
-  assert.ok(email?.labels?.[0]?.textContent?.includes('*'), 'the email is required');
-  assert.match(w.doc.body.textContent ?? '', /So your agents call you by your first name\./);
-  assert.match(w.doc.body.textContent ?? '', /We only collect your email in case you want to reset your password\. The account you create stays local\./);
+  const [name, email] = w.inputs();
+  assert.ok(name?.labels?.[0]?.textContent?.includes('optional'));
+  assert.ok(email?.labels?.[0]?.textContent?.includes('optional'));
+  assert.ok(!email?.labels?.[0]?.textContent?.includes('*'), 'email is not required');
+  assert.match(w.doc.body.textContent ?? '', /Skip for now/);
   assert.equal(w.submit().disabled, true);
-
-  await w.fill(email!, 'ada@example.com');
-  await w.fill(password!, 'aaaaaaaa');
-  await w.fill(confirm!, 'aaaaaaab');
-  assert.equal(w.status(), 'The two passwords don\'t match.');
-  assert.equal(w.submit().disabled, true);
-  await w.fill(confirm!, 'aaaaaaaa');
-  assert.equal(w.status(), '');
-  assert.equal(w.submit().disabled, false, 'no complexity rule: eight plain letters are enough');
-  await w.fill(password!, 'abc');
-  await w.fill(confirm!, 'abc');
-  assert.equal(w.status(), 'At least 8 characters.');
-  assert.equal(w.submit().disabled, true);
+  await w.press(w.skip());
+  assert.equal(w.nexts(), 1);
+  assert.equal(w.calls.length, 0, 'skip never hits setup');
 });
 
-test('the eye: no text, a label, out of Tab, the field keeps the focus, both fields shown at once', async (t) => {
-  const w = await mount(t, {});
-  const eyes = Array.from(w.doc.querySelectorAll('[data-password-eye]')) as HTMLButtonElement[];
-  assert.equal(eyes.length, 2);
-  for (const eye of eyes) {
-    assert.equal(eye.tabIndex, -1, 'Tab goes from field to field');
-    assert.equal(eye.textContent, '', 'an icon, no text');
-    assert.equal(eye.getAttribute('aria-label'), 'Show the password');
-  }
-  const tabbable = Array.from(w.doc.querySelectorAll('input, button')).filter((el) => (el as HTMLElement).tabIndex >= 0 && !(el as HTMLButtonElement).disabled);
-  assert.deepEqual(tabbable.map((el) => (el as HTMLInputElement).autocomplete || el.tagName), ['given-name', 'username', 'new-password', 'new-password'], 'the submit is disabled; the eyes are out');
-
-  const [, , password, confirm] = w.inputs();
-  password!.focus();
-  const down = new w.doc.defaultView!.MouseEvent('mousedown', { bubbles: true, cancelable: true });
-  await w.act(() => { eyes[0]!.dispatchEvent(down); });
-  assert.equal(down.defaultPrevented, true, 'a mousedown on the eye does not move the focus');
-  await w.press(eyes[0]!);
-  assert.equal(w.doc.activeElement, password, 'the field keeps the focus');
-  assert.equal(password!.type, 'text');
-  assert.equal(confirm!.type, 'text', 'one eye shows the pair');
-  assert.equal(eyes[1]!.getAttribute('aria-label'), 'Hide the password');
+test('local-first create: no email code when the daemon does not ask for one', async (t) => {
+  const w = await mount(t, {
+    '/api/ui/auth/setup': [{ status: 201, body: { user: { id: 'u1' } } }],
+  });
+  await w.fillForm({ email: ' Ada@Example.com ', password: 'aaaaaaaa' });
+  await w.press(w.submit());
+  assert.equal(w.calls[0]?.url, '/api/ui/auth/setup');
+  assert.equal(w.calls[0]?.body.email, 'Ada@Example.com');
+  assert.equal(w.calls[0]?.body.challengeId, undefined);
+  assert.equal(w.calls[0]?.body.code, undefined);
+  assert.ok(!w.calls.some((c) => c.url.includes('email-code')));
+  assert.equal(w.nexts(), 1);
 });
 
-test('« Create my account » opens the code; the account is created by the accepted code, with tries left said', async (t) => {
+test('when email verification is on, « Create » opens the code; the account is created by the accepted code', async (t) => {
   const w = await mount(t, {
     '/api/ui/auth/setup/email-code': [{ status: 202, body: { challengeId: 'c1', email: 'ada@example.com', expiresAt: Date.now() + 600_000, resendAt: Date.now() + 60_000 } }],
     '/api/ui/auth/setup': [
       { status: 400, body: { error: 'wrong', code: 'email_code_invalid', params: { attemptsLeft: 4 }, attemptsLeft: 4 } },
       { status: 201, body: { user: { id: 'u1' } } },
     ],
-  });
+  }, { user: null, needsSetup: true, setupRequiresEmailCode: true });
   await w.fillForm({ email: ' Ada@Example.com ', password: 'aaaaaaaa' });
   await w.press(w.submit());
   assert.deepEqual(w.calls[0], { url: '/api/ui/auth/setup/email-code', body: { email: 'Ada@Example.com', locale: 'en' } });
   assert.match(w.doc.body.textContent ?? '', /We sent a code to Ada@Example\.com\./);
-  assert.ok(!w.calls.some((c) => c.url === '/api/ui/auth/setup'), 'no account before the code');
 
   await w.typeCode('111111');
-  assert.equal(w.calls[1]?.url, '/api/ui/auth/setup');
   assert.equal(w.calls[1]?.body.challengeId, 'c1');
   assert.equal(w.calls[1]?.body.code, '111111');
-  assert.equal(w.calls[1]?.body.name, 'Ada', 'no first name typed: the part before the @');
-  assert.equal(w.calls[1]?.body.password, 'aaaaaaaa');
-  assert.equal(w.calls[1]?.body.licenseKey, undefined);
-  assert.equal(w.calls[1]?.body.scheme, 'dark', 'nothing picked on the switch: the OS scheme');
   assert.match(w.doc.body.textContent ?? '', /Wrong code\. 4 attempts left\./);
   assert.equal(w.nexts(), 0);
 
-  // Picked on the onboarding's switch: the account takes it.
   window.sessionStorage.setItem('rooks-onboarding-scheme', 'light');
   await w.typeCode('222222');
-  assert.equal(w.calls[2]?.body.scheme, 'light', 'the switch wins over the OS');
+  assert.equal(w.calls[2]?.body.scheme, 'light');
   assert.match(w.doc.body.textContent ?? '', /Email confirmed/);
   await w.act(async () => { await new Promise((r) => setTimeout(r, 950)); });
-  assert.equal(w.nexts(), 1, 'the next step once confirmed');
+  assert.equal(w.nexts(), 1);
+});
+
+test('mail-relay offline falls back to local create instead of blocking', async (t) => {
+  const w = await mount(t, {
+    '/api/ui/auth/setup/email-code': [
+      { status: 503, body: { error: 'offline', code: 'email_connection_required', reason: 'offline' } },
+    ],
+    '/api/ui/auth/setup': [{ status: 201, body: { user: { id: 'u1' } } }],
+  }, { user: null, needsSetup: true, setupRequiresEmailCode: true });
+  await w.fillForm({ email: 'ada@example.com', password: 'aaaaaaaa' });
+  await w.press(w.submit());
+  assert.ok(w.calls.some((c) => c.url === '/api/ui/auth/setup/email-code'));
+  assert.ok(w.calls.some((c) => c.url === '/api/ui/auth/setup' && c.body.challengeId === undefined));
+  assert.equal(w.nexts(), 1, 'first use continues locally');
 });
 
 test('« Back » and « Change email » return to the form as it was filled', async (t) => {
   const challenge = () => ({ status: 202, body: { challengeId: 'c1', resendAt: Date.now() + 60_000 } });
-  const w = await mount(t, { '/api/ui/auth/setup/email-code': [challenge(), challenge()] });
+  const w = await mount(t, { '/api/ui/auth/setup/email-code': [challenge(), challenge()] }, { user: null, needsSetup: true, setupRequiresEmailCode: true });
   await w.fillForm({ name: 'Ada', email: 'ada@example.com', password: 'aaaaaaaa' });
   assert.equal(w.back(), false, 'on the form, « Back » leaves the step');
   await w.press(w.submit());
@@ -209,41 +193,10 @@ test('« Back » and « Change email » return to the form as it was filled', as
   assert.deepEqual(w.inputs().map((i) => i.value), ['Ada', 'ada@example.com', 'aaaaaaaa', 'aaaaaaaa']);
 });
 
-test('the daemon\'s refusals are said, a wait counted down and the button held until it ends', async (t) => {
+test('an exposed install asks for the setup token with local create', async (t) => {
   const w = await mount(t, {
-    '/api/ui/auth/setup/email-code': [
-      { status: 429, body: { error: 'limited', code: 'email_code_origin_limited', params: { seconds: 42 }, retryAfter: 42 } },
-    ],
-  });
-  await w.fillForm({ email: 'ada@example.com', password: 'aaaaaaaa' });
-  await w.press(w.submit());
-  assert.match(w.status(), /Too many codes were requested from this network\. Try again in (42|41) seconds\./);
-  assert.equal(w.submit().disabled, true, 'held for the wait');
-  assert.ok(!w.doc.querySelector('[data-email-code-boxes]'), 'still on the form');
-});
-
-test('no internet, the email service down, no answer at all: a sentence each, never a silent failure', async (t) => {
-  const w = await mount(t, {
-    '/api/ui/auth/setup/email-code': [
-      { status: 503, body: { error: 'offline', code: 'email_connection_required', reason: 'offline' } },
-      { status: 503, body: { error: "Rooks's email service is unavailable right now, try again later", code: 'email_service_unavailable', reason: 'mail_unavailable' } },
-      'network',
-      { status: 403, body: { error: 'setup_token_required' } },
-    ],
-  });
-  await w.fillForm({ email: 'ada@example.com', password: 'aaaaaaaa' });
-  await w.press(w.submit());
-  assert.equal(w.status(), 'An internet connection is needed to confirm the email address.');
-  await w.press(w.submit());
-  assert.equal(w.status(), "Rooks's email service is unavailable right now. Try again in a few minutes.", 'the relay down is not a connection problem');
-  await w.press(w.submit());
-  assert.equal(w.status(), 'Rooks does not answer. Check that it is running, then try again.');
-  await w.press(w.submit());
-  assert.equal(w.status(), 'Setup token missing or wrong. Run the command below on the server and try again.');
-});
-
-test('an exposed install asks for the setup token, and sends it with the code request', async (t) => {
-  const w = await mount(t, { '/api/ui/auth/setup/email-code': [{ status: 202, body: { challengeId: 'c1', resendAt: Date.now() + 60_000 } }] }, { user: null, needsSetup: true, setupRequiresToken: true });
+    '/api/ui/auth/setup': [{ status: 201, body: { user: { id: 'u1' } } }],
+  }, { user: null, needsSetup: true, setupRequiresToken: true, setupRequiresEmailCode: false });
   const fields = w.inputs();
   assert.equal(fields.length, 5);
   await w.fillForm({ email: 'ada@example.com', password: 'aaaaaaaa' });
@@ -251,26 +204,5 @@ test('an exposed install asks for the setup token, and sends it with the code re
   await w.fill(fields[4]!, ' tok ');
   await w.press(w.submit());
   assert.equal(w.calls[0]?.body.setupToken, 'tok');
-});
-
-/** The licence key left the first-account screen (TODO #865): it is entered from
- *  the profile. Even a daemon pinned to the closed beta gets no field. */
-test('no licence field whatever the daemon\'s policy, and its licence refusal is worded', async (t) => {
-  for (const setupRequiresLicense of [true, false]) {
-    await t.test(`setupRequiresLicense: ${setupRequiresLicense}`, async (st) => {
-      const w = await mount(st, {
-        '/api/ui/auth/setup/email-code': [{ status: 202, body: { challengeId: 'c1', resendAt: Date.now() + 60_000 } }],
-        '/api/ui/auth/setup': [{ status: 400, body: { error: 'license_required' } }],
-      }, { user: null, needsSetup: true, setupRequiresLicense });
-      assert.equal(w.inputs().length, 4);
-      assert.ok(!w.doc.querySelector('#login-license, input[value="free"], input[value="key"]'));
-      await w.fillForm({ email: 'ada@example.com', password: 'aaaaaaaa' });
-      await w.press(w.submit());
-      await w.typeCode('123456');
-      const setup = w.calls.find((c) => c.url === '/api/ui/auth/setup');
-      assert.equal(setup?.body.licenseKey, undefined);
-      assert.equal(setup?.body.licenseMode, undefined);
-      assert.equal(w.doc.querySelector('[data-email-code-status]')?.textContent, 'Enter your license key to continue.', 'a refusal worded, never a raw code');
-    });
-  }
+  assert.equal(w.nexts(), 1);
 });

@@ -3,4 +3,4 @@
 
 # Variable: BACKEND\_CAPABILITIES
 
-> `const` **BACKEND\_CAPABILITIES**: readonly \[`"worktree"`, `"novaMcp"`, `"attachments"`, `"novaPreamble"`\]
+> `const` **BACKEND\_CAPABILITIES**: readonly \[`"worktree"`, `"rooksMcp"`, `"attachments"`, `"rooksPreamble"`\]

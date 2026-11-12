@@ -94,7 +94,7 @@ export type ClientOptions = {
   allowRotate?: boolean;
 };
 
-function novaVersion(): string {
+function rooksVersion(): string {
   try {
     const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as { version?: unknown };
     return typeof pkg.version === 'string' ? pkg.version : '0.0.0';
@@ -121,7 +121,7 @@ function baseUrlOf(opts: ClientOptions): string {
 /** §5 preamble: every route requires this header, so a request without it is
  *  refused before any of the bodies below matter. */
 function userAgent(): string {
-  return `rooks-daemon/${novaVersion()} (${process.platform})`;
+  return `rooks-daemon/${rooksVersion()} (${process.platform})`;
 }
 
 /**
@@ -209,7 +209,7 @@ function activateBody(key: string, device: string): Record<string, unknown> {
     deviceId: device,
     deviceName: deviceLabel(),
     platform: process.platform,
-    appVersion: novaVersion(),
+    appVersion: rooksVersion(),
     fp: fingerprint(),
   };
 }
@@ -252,7 +252,7 @@ export async function activate(key: string, opts: ClientOptions = {}): Promise<A
  * activation on the server, so renewing it would only earn a 404.
  */
 export async function renew(key: string, opts: ClientOptions = {}): Promise<ActivationResponse> {
-  const body = { key, deviceId: deviceId(), appVersion: novaVersion(), fp: fingerprint() };
+  const body = { key, deviceId: deviceId(), appVersion: rooksVersion(), fp: fingerprint() };
   try {
     return tokenFrom(await post('/api/v1/license/renew', body, opts));
   } catch (err) {

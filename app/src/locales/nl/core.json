@@ -195,8 +195,8 @@
       "project": "project",
       "plugin": "plug-in"
     },
-    "sectionNova": "{brand}-skills",
-    "sectionNovaHint": "~/.rooks/skills — te koppelen aan een agent, in de catalogus of volledig geïmporteerd",
+    "sectionRooks": "{brand}-skills",
+    "sectionRooksHint": "~/.rooks/skills — te koppelen aan een agent, in de catalogus of volledig geïmporteerd",
     "sectionUser": "Globale Claude-skills",
     "sectionUserHint": "~/.claude/skills & ~/.claude/commands — niet geladen door missies; importeer er een in {brand} om hem te koppelen",
     "sectionProject": "Projectskills",
@@ -2034,9 +2034,9 @@
     "providerRecovered": "Opnieuw verbonden na {count} pogingen",
     "providerRecoveredOne": "Opnieuw verbonden na 1 poging",
     "providerExhausted": "Servers van {provider} onbereikbaar na {count} pogingen",
-    "providerExhaustedWithNova": "Servers van {provider} onbereikbaar na {count} pogingen van de provider en {rooks} van Rooks",
-    "novaRetryIn": "Rooks-poging {attempt}/{max} over {seconds} s…",
-    "novaRetryRunning": "Rooks-poging {attempt}/{max}…",
+    "providerExhaustedWithRooks": "Servers van {provider} onbereikbaar na {count} pogingen van de provider en {rooks} van Rooks",
+    "rooksRetryIn": "Rooks-poging {attempt}/{max} over {seconds} s…",
+    "rooksRetryRunning": "Rooks-poging {attempt}/{max}…",
     "retryTurn": "Opnieuw proberen",
     "retryTurnUnavailable": "Niets om opnieuw te proberen: het laatste bericht staat niet meer in dit gesprek.",
     "quotaExhaustedTitle": "Quotum op",
@@ -2293,7 +2293,7 @@
       "other": "Je eigen document"
     }
   },
-  "novaPreamble": {
+  "rooksPreamble": {
     "title": "Rooks-preambule",
     "description": "Bij elke start ter plekke opgebouwd en als eerste naar elke agent gestuurd. Alleen-lezen: ze komt van Rooks, niet uit een bestand van jou. Getoond zoals ze voor de hoofdagent wordt opgebouwd.",
     "empty": "Geen preambule voor deze agent.",
@@ -2454,8 +2454,8 @@
     "llmLabel": "LLM",
     "llmHint": "Welke CLI van welke provider deze agent draait, en op welk model. Elk account meldt zich zelf aan.",
     "subscription": "Abonnement",
-    "skillSectionNovaLabel": "ROOKS-skills",
-    "skillSectionNovaHint": "te koppelen — in de catalogus of geïmporteerd in de prompt",
+    "skillSectionRooksLabel": "ROOKS-skills",
+    "skillSectionRooksHint": "te koppelen — in de catalogus of geïmporteerd in de prompt",
     "skillSectionProjectLabel": "Projectskills",
     "skillSectionProjectHint": "<cwd>/.claude — alleen native geladen door Claude Code",
     "skillSectionUserLabel": "Globale skills",
@@ -2498,7 +2498,7 @@
     "mcpEmpty": "Nog geen MCP-servers toegevoegd — voeg er toe via",
     "mcpBuiltinTitle": "Ingebouwd in Rooks — altijd aan, niets toe te kennen",
     "mcpBuiltinHint": "Elke agent krijgt deze op elke backend, wat er hieronder ook is geselecteerd, en de MCP-overschrijving van een Kanban-taak verwijdert ze nooit. Sommige rooks-tools (agents of projecten aanmaken, MCP-servers declareren) vereisen daarnaast de rechten van je account op de pagina Gebruikers, die deze lijst niet wijzigt.",
-    "mcpBuiltinNova": "Kanban, missies, agents, geheugen, deze documentatie",
+    "mcpBuiltinRooks": "Kanban, missies, agents, geheugen, deze documentatie",
     "mcpBuiltinAsk": "Formulieren die je in de chat iets vragen",
     "mcpBuiltinBrowser": "De ingebouwde browser van het project, zolang hij draait",
     "mcpBuiltinGrepai": "De semantische index van het project, als het project er een heeft",
@@ -2624,7 +2624,7 @@
       "title": "Docker-containers",
       "description": "Of de stack van het project draait, op welke lokale URL en welke dienst plat ligt; starten, herstarten of stoppen."
     },
-    "novaDaemon": {
+    "rooksDaemon": {
       "title": "Rooks-daemon",
       "description": "De toestand van Rooks zelf, voor het project rooks."
     },

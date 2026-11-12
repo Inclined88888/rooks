@@ -20,7 +20,7 @@ import { containerProjectMount } from './browser-container-paths.js';
 import { UPLOAD_RELAY_SPEC_ENV, type UploadRelaySpec } from './browser-upload-relay.js';
 
 /** Shared persistent browser for agents without a resolvable project. */
-export const GENERAL_BROWSER_SLUG = '__nova_general__';
+export const GENERAL_BROWSER_SLUG = '__rooks_general__';
 
 const SLUG_RE = /^[A-Za-z0-9._-]{1,64}$/;
 

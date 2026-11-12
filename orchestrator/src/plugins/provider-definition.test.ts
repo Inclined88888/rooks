@@ -18,7 +18,7 @@ const { readManifest } = await import('./manifest.js');
 const { createPluginContext, daemonHost } = await import('./context.js');
 const { PluginPolicyError } = await import('./policy.js');
 const { config, setConfig } = await import('../config/load.js');
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const registry = await import('../backends/registry.js');
 const { providerRuntime } = await import('../backends/provider-runtime.js');
 const { binaryCandidates } = await import('../host/binary-path.js');
@@ -94,7 +94,7 @@ function pluginContext(pluginId: string, binaries: Array<{ name: string; aliases
 /** The policy an operator who authorized these binaries would have. */
 function allowExec(...names: string[]): () => void {
   const previous = config();
-  setConfig(NovaConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: names } } }));
+  setConfig(RooksConfigSchema.parse({ ...previous, pluginPolicy: { ...previous.pluginPolicy, exec: { allow: names } } }));
   return () => setConfig(previous);
 }
 
@@ -374,7 +374,7 @@ test('C2: another provider\'s sign-in folder is masked, the mission\'s own is sp
     def.declares = { binary: { names: ['acme-agent'] }, credentialDirs: ['.acme', '.config/acme'] };
     const release = ctx.provider.registerProvider(def);
     registry.registerProfile('acme-plugin-l', { id: 'acme-l-profile', dialect: 'acme-l', label: 'Acme', models: [], defaultModel: null });
-    const cfg = NovaConfigSchema.parse({});
+    const cfg = RooksConfigSchema.parse({});
     const home = '/home/tester';
     const onClaude = resolveIsolation(cfg, { home, backend: 'claude' });
     assert.ok(onClaude.deny.includes(`${home}/.acme`) && onClaude.deny.includes(`${home}/.config/acme`), 'a claude mission cannot read acme\'s sign-in');

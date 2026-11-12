@@ -31,7 +31,7 @@ export const WIDGET_PICTOS: Readonly<Record<string, string>> = Object.freeze({
   agentTasks: '<rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.3"/><path d="M5.2 6.9l1.4 1.4 2-2.6"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.3"/><path d="M13.5 6.8h7M13.5 17.3h7"/>',
   videoFactory: '<path d="M3.5 10h17v8.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M3.8 10l-.5-3.2a1.5 1.5 0 0 1 1.2-1.7l13.3-2.2a1.5 1.5 0 0 1 1.7 1.2l.4 2.4z"/><path d="M8.3 4.5l2.2 4M13.3 3.7l2.2 4"/>',
   docker: '<rect x="3" y="10" width="5.4" height="5.4" rx=".8"/><rect x="9.3" y="10" width="5.4" height="5.4" rx=".8"/><rect x="9.3" y="3.7" width="5.4" height="5.4" rx=".8"/><rect x="15.6" y="10" width="5.4" height="5.4" rx=".8"/><path d="M3 19.5c3 1.3 6 1.3 9 0s6-1.3 9 0"/>',
-  novaDaemon: '<rect x="4" y="4" width="16" height="7" rx="1.5"/><rect x="4" y="13" width="16" height="7" rx="1.5"/><path d="M7.5 7.5h.01M7.5 16.5h.01" stroke-width="2.6"/><path d="M11 7.5h5.5M11 16.5h5.5"/>',
+  rooksDaemon: '<rect x="4" y="4" width="16" height="7" rx="1.5"/><rect x="4" y="13" width="16" height="7" rx="1.5"/><path d="M7.5 7.5h.01M7.5 16.5h.01" stroke-width="2.6"/><path d="M11 7.5h5.5M11 16.5h5.5"/>',
   missionDetails: '<rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M12 10.8v5.2"/><path d="M12 7.7h.01" stroke-width="2.6"/>',
   agentSkills: '<path d="M11 3.5l2.2 5.3 5.3 2.2-5.3 2.2L11 18.5l-2.2-5.3L3.5 11l5.3-2.2z"/><path d="M18.5 15.5v5M16 18h5"/>',
   mcpServers: '<path d="M9 3.5v4M15 3.5v4"/><path d="M6.5 7.5h11v3a5.5 5.5 0 0 1-11 0z"/><path d="M12 16v4.5"/>',

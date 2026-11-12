@@ -68,7 +68,7 @@
       "invalidUrl": "Diese Adresse ist nicht verwendbar: Gib nur die Adresse des Rechners an, ohne Login, Query oder Fragment.",
       "httpsRequired": "Der Rechner muss über HTTPS erreicht werden. Reines HTTP wird nur auf diesem Computer selbst akzeptiert.",
       "blockedAddress": "Diese Adresse zeigt nie auf einen Rooks-Rechner.",
-      "notNova": "Unter dieser Adresse antwortet kein Rooks-Rechner.",
+      "notRooks": "Unter dieser Adresse antwortet kein Rooks-Rechner.",
       "requiresTls": "Der Rechner sieht diese Verbindung nicht als HTTPS: Prüfe die HTTPS-Einstellungen seines Reverse Proxys.",
       "unreachable": "Der Rechner ist gerade nicht erreichbar.",
       "unauthorized": "Der Rechner akzeptiert diesen Computer nicht mehr: Sein Zugriff wurde widerrufen oder ist abgelaufen. Kopple ihn erneut.",

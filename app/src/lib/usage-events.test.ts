@@ -12,7 +12,7 @@ function fakeHost(path: string, desktop = false) {
     clearInterval: () => { tick = null; },
     addEventListener: (_type, fn) => { popstate = fn; },
     removeEventListener: () => { popstate = null; },
-    ...(desktop ? { novaDesktop: {} } : {}),
+    ...(desktop ? { rooksDesktop: {} } : {}),
   };
   const fetcher = async (url: string, init: RequestInit) => {
     assert.equal(url, USAGE_EVENT_ROUTE);
@@ -45,7 +45,7 @@ test('setup is not a completed setup, the desktop shell is the desktop surface',
   const h = fakeHost('/setup/agent', true);
   startUsageReporting(h.host, h.fetcher)();
   assert.deepEqual(h.sent[0], { name: 'app_opened', surface: 'desktop', setupCompleted: false });
-  assert.equal(usageSurface({ novaDesktop: {} }), 'desktop');
+  assert.equal(usageSurface({ rooksDesktop: {} }), 'desktop');
   assert.equal(usageSurface({}), 'web');
   assert.equal(usageSurface(undefined), 'web');
 });

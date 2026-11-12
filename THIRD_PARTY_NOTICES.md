@@ -1,6 +1,6 @@
 # Third-party notices
 
-Timon is built on open-source software. This file lists the third-party code
+Rooks uses open-source software. This file lists the third-party code
 this repository carries itself, and the licences of the dependencies that ask
 for a notice. The npm dependencies keep their own licence files in their
 packages; the installed app ships them with the code.
@@ -20,7 +20,7 @@ extra condition:
 
 | Package | Licence | What it asks |
 |---|---|---|
-| `web-push` | MPL-2.0 | Its source files stay under MPL-2.0 and available; Timon uses them unmodified, from npm |
+| `web-push` | MPL-2.0 | Its source files stay under MPL-2.0 and available; Rooks uses them unmodified, from npm |
 | `dompurify` | MPL-2.0 OR Apache-2.0 | Used under Apache-2.0 |
 | `caniuse-lite` | CC-BY-4.0 | Attribution: browser support data by the [caniuse.com](https://caniuse.com) project |
 | `argparse` | Python-2.0 | Keep its copyright notice |
@@ -37,5 +37,5 @@ in its `LICENSE` file).
 The provider logos under `.github/assets/logos/` are recoloured
 copies from [Simple Icons](https://simpleicons.org) (CC0-1.0) and, for Codex, Grok and
 Hermes, from [LobeHub Icons](https://github.com/lobehub/lobe-icons) (MIT,
-Copyright (c) 2023 LobeHub). They name the tools Timon works with; each mark
+Copyright (c) 2023 LobeHub). They name tools Rooks works with; each mark
 belongs to its owner and implies no endorsement.

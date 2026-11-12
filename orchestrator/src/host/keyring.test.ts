@@ -19,12 +19,12 @@ process.env.ROOKS_HOME = mkdtempSync(join(tmpdir(), 'rooks-keyring-test-'));
 // ever reach the `secret-tool` call it means to exercise.
 process.env.DBUS_SESSION_BUS_ADDRESS = 'unix:path=/nonexistent/rooks-test-bus';
 
-const { NovaConfigSchema } = await import('../config/schema.js');
+const { RooksConfigSchema } = await import('../config/schema.js');
 const { createGenericHost } = await import('./generic.js');
 const { createLinuxHost } = await import('./linux.js');
 
 /** Docker disabled everywhere here: its probe costs seconds and proves nothing. */
-const cfg = (over: Record<string, unknown> = {}) => NovaConfigSchema.parse({
+const cfg = (over: Record<string, unknown> = {}) => RooksConfigSchema.parse({
   host: { docker: 'disabled', ...(over.host as object ?? {}) },
   ...over,
 });
@@ -59,7 +59,7 @@ test("secrets.keyring: 'off' does not even run the probe", () => {
 });
 
 test("secrets.keyring defaults to 'auto'", () => {
-  assert.equal(NovaConfigSchema.parse({}).secrets.keyring, 'auto');
+  assert.equal(RooksConfigSchema.parse({}).secrets.keyring, 'auto');
 });
 
 /**

@@ -427,7 +427,7 @@ async function installOnboardingService(): Promise<OnboardingResult> {
     const opts = serviceOptsFromEnvironment();
     // Not refused here: a release-candidate test on a throwaway home has to get
     // through onboarding. Its script removes the service at the end (#464).
-    const temporary = temporaryHomeNotice(opts.novaHome, true);
+    const temporary = temporaryHomeNotice(opts.rooksHome, true);
     if (temporary) console.warn(`[onboarding] ${temporary.lines.join(' ')}`);
     const refused = foreignServiceRefusal(opts, config().daemon.installDir);
     if (refused) return refused;

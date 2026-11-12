@@ -90,7 +90,7 @@ export function expandTilde(p: string, home: string = homedir()): string {
 }
 
 /** `ROOKS_HOME` if set and non-empty, else `~/.rooks`. */
-export function resolveNovaHome(env: NodeJS.ProcessEnv = process.env): string {
+export function resolveRooksHome(env: NodeJS.ProcessEnv = process.env): string {
   const fromEnv = env.ROOKS_HOME;
   return fromEnv && fromEnv.length > 0 ? fromEnv : join(homedir(), '.rooks');
 }
@@ -131,7 +131,7 @@ export function packagedFirstRun(home: string, packaged: boolean): boolean {
 }
 
 export function loadDesktopConfig(
-  home: string = resolveNovaHome(),
+  home: string = resolveRooksHome(),
   opts: { packaged?: boolean } = {},
 ): DesktopConfig {
   let raw: Record<string, unknown> = {};

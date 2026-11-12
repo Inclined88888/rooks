@@ -46,14 +46,14 @@ const SPIKE_RECORDER = String.raw`
 const CDP_WORLD_SOURCE = String.raw`
 // The DOM is shared between worlds: these marks tell the page-side probe whether the world script ran at all.
 document.addEventListener('DOMContentLoaded', () => {
-  document.documentElement.dataset.spikeWorld = typeof globalThis.__novaSpikeBinding;
+  document.documentElement.dataset.spikeWorld = typeof globalThis.__rooksSpikeBinding;
 });
 document.addEventListener('click', () => { document.documentElement.dataset.spikeClicks = String(Number(document.documentElement.dataset.spikeClicks || 0) + 1); }, true);
 for (const type of ['click', 'change', 'keydown']) window.addEventListener(type, (event) => {
   if (event.type === 'keydown' && event.key !== 'Enter') return;
-  globalThis.__novaSpikeBinding(JSON.stringify({ type: event.type, trusted: event.isTrusted, target: event.target && event.target.id }));
+  globalThis.__rooksSpikeBinding(JSON.stringify({ type: event.type, trusted: event.isTrusted, target: event.target && event.target.id }));
 }, true);
-globalThis.__novaSpikeBinding(JSON.stringify({ type: 'hello', url: location.href }));
+globalThis.__rooksSpikeBinding(JSON.stringify({ type: 'hello', url: location.href }));
 `;
 
 const fixture = String.raw`
@@ -212,10 +212,10 @@ const page = (title) => '<!doctype html><title>' + title + '</title><style>body{
     if (!debug.isAttached()) debug.attach('1.3');
     const bindings = [];
     debug.on('message', (_event, method, params) => {
-      if (method === 'Runtime.bindingCalled' && params.name === '__novaSpikeBinding') bindings.push({ ...JSON.parse(params.payload), contextId: params.executionContextId });
+      if (method === 'Runtime.bindingCalled' && params.name === '__rooksSpikeBinding') bindings.push({ ...JSON.parse(params.payload), contextId: params.executionContextId });
     });
     await debug.sendCommand('Page.addScriptToEvaluateOnNewDocument', { source: CDP_WORLD_SOURCE, worldName: 'rooks-recorder' });
-    await debug.sendCommand('Runtime.addBinding', { name: '__novaSpikeBinding', executionContextName: 'rooks-recorder' });
+    await debug.sendCommand('Runtime.addBinding', { name: '__rooksSpikeBinding', executionContextName: 'rooks-recorder' });
     const reloaded = report.hellos.length;
     await debug.sendCommand('Page.reload');
     await waitFor('cdp tab reload', () => report.hellos.length > reloaded);
@@ -225,7 +225,7 @@ const page = (title) => '<!doctype html><title>' + title + '</title><style>body{
     await human.key(cdpContents, 'Enter');
     await delay(300);
     const withoutRuntime = { hello: helloBindings, events: bindings.slice(helloBindings).map(b => b.type + ':' + b.target + ':' + (b.trusted ? 'trusted' : 'synthetic')) };
-    const mainWorldBinding = await cdpContents.executeJavaScript('typeof globalThis.__novaSpikeBinding');
+    const mainWorldBinding = await cdpContents.executeJavaScript('typeof globalThis.__rooksSpikeBinding');
     const worldMarks = await cdpContents.executeJavaScript('({ world: document.documentElement.dataset.spikeWorld ?? null, clicks: Number(document.documentElement.dataset.spikeClicks || 0) })');
     // Control: the same world with Runtime enabled, so that a negative answer above is not a broken fixture.
     let withRuntime = null;
@@ -317,7 +317,7 @@ test('recording spike: a preload listener sees human, agent and synthetic events
     assert.deepEqual(checks.synthetic, ['click:btn:synthetic', 'click:btn:synthetic', 'keydown:field:synthetic', 'change:check:synthetic'],
       'events the page dispatches itself are untrusted, so they can be filtered');
     assert.deepEqual(checks.pageGlobals, { require: 'undefined', process: 'undefined', ipcRenderer: 'undefined', electron: 'undefined',
-      exposed: ['__novaNativePrompt'] }, 'the page sees only the existing prompt bridge, no recorder channel');
+      exposed: ['__rooksNativePrompt'] }, 'the page sees only the existing prompt bridge, no recorder channel');
 
     assert.deepEqual(checks.agent, ['click:field:trusted', 'keydown:field:trusted'],
       'agent CDP gestures are indistinguishable by isTrusted: recording must refuse them (409)');

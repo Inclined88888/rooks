@@ -27,7 +27,7 @@ function sameDir(a: string, b: string): boolean {
   return resolvePath(a) === resolvePath(b);
 }
 
-function resolveNovaHome(): string {
+function resolveRooksHome(): string {
   const fromEnv = process.env.ROOKS_HOME;
   if (process.env.NODE_TEST_CONTEXT && (fromEnv === undefined || fromEnv === '')) {
     throw new Error(
@@ -56,7 +56,7 @@ function resolveNovaHome(): string {
   return home;
 }
 
-export const ROOKS_HOME = resolveNovaHome();
+export const ROOKS_HOME = resolveRooksHome();
 export const AGENTS_DIR = join(ROOKS_HOME, 'agents');
 export const SKILLS_DIR = join(ROOKS_HOME, 'skills');
 export const PROJECTS_DIR = join(ROOKS_HOME, 'projects');

@@ -1,6 +1,6 @@
 /**
  * The preamble describes the tools the agent really has. A backend that
- * declares `capabilities.novaMcp: false` is handed neither `rooks` nor
+ * declares `capabilities.rooksMcp: false` is handed neither `rooks` nor
  * `rooks_ask`, so no section may promise them (the agent would call tools that
  * do not exist); a backend that declares nothing keeps the whole preamble.
  */
@@ -26,14 +26,14 @@ const noTools: Dialect = {
   permissionModel: 'none',
   rateLimitReporting: 'none',
   hostedConnectors: false,
-  capabilities: { worktree: false, novaMcp: false, attachments: false },
+  capabilities: { worktree: false, rooksMcp: false, attachments: false },
   async buildSpawn(_opts, profile) { return { cmd: profile.cmd, args: [], initialStdin: null }; },
   writeUserInput() { /* one-shot */ },
   parseLine() { return []; },
   extractSessionId() { return null; },
 };
 registerDialect(OWNER, 'preamble-no-tools', noTools);
-registerDialect(OWNER, 'preamble-own-identity', { ...noTools, capabilities: { ...noTools.capabilities, novaPreamble: false } });
+registerDialect(OWNER, 'preamble-own-identity', { ...noTools, capabilities: { ...noTools.capabilities, rooksPreamble: false } });
 registerProfile(OWNER, {
   id: 'preamble-own-identity', dialect: 'preamble-own-identity', label: 'Own identity', custom: true,
   defaultModel: null, models: [],

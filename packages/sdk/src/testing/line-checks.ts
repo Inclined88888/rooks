@@ -188,12 +188,12 @@ export function lineProviderChecks(
     }
   });
 
-  add("novaMcp: false declares none of Rooks's MCP servers", async () => {
-    const sp = await provider.buildSpawn(spawnOpts(null, { novaMcp: false }));
+  add("rooksMcp: false declares none of Rooks's MCP servers", async () => {
+    const sp = await provider.buildSpawn(spawnOpts(null, { rooksMcp: false }));
     const reachable = sp.args.join(' ') + (sp.initialStdin ?? '') + filesUnder(scratch);
     // The server DECLARED (a JSON entry, a TOML table); naming one of its tools in an allow-list is harmless.
     const declared = /"rooks(_ask)?"\s*:\s*\{|\[mcp_servers\.rooks(_ask)?[\].]/.exec(reachable);
-    assert.equal(declared, null, `Rooks's MCP server is declared (${declared?.[0] ?? ''}) although novaMcp is false`);
+    assert.equal(declared, null, `Rooks's MCP server is declared (${declared?.[0] ?? ''}) although rooksMcp is false`);
   });
 
   add('parseLine: the normalized vocabulary', () => {

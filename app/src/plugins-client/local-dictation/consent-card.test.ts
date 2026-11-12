@@ -33,7 +33,7 @@ async function mount() {
     microphone: async () => ({ status: 'granted' }),
     onEvent: (listener: (event: unknown) => void) => { emit = listener; return () => {}; },
   };
-  (dom.window as unknown as { novaDesktop: unknown }).novaDesktop = { restartAfterSetup: async () => {}, speech };
+  (dom.window as unknown as { rooksDesktop: unknown }).rooksDesktop = { restartAfterSetup: async () => {}, speech };
 
   const React = await import('react');
   install('React', React);

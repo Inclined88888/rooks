@@ -29,7 +29,7 @@ const CATALOG: BackendCatalog = {
     },
     {
       id: 'codex', label: 'Codex', vendor: 'OpenAI', brand: 'openai', defaultModel: 'gpt-5.5',
-      capabilities: { worktree: false, novaMcp: true, attachments: true },
+      capabilities: { worktree: false, rooksMcp: true, attachments: true },
       selfManagedPermissions: true,
       models: [{ slug: 'gpt-5.5', label: 'GPT-5.5', addedAt: Date.now() - 60_000 }],
     },

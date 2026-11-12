@@ -64,7 +64,7 @@ test('saving the configuration never ends on a dialog', async (suite) => {
     try {
       for (const mode of ['failed-save', 'saved'] as const) {
         await suite.test(mode, async () => {
-          delete (window as { novaDesktop?: unknown }).novaDesktop;
+          delete (window as { rooksDesktop?: unknown }).rooksDesktop;
           globalThis.fetch = (async (input: string) => {
             switch (String(input)) {
               case '/api/ui/doctor': return Response.json(DOCTOR);
@@ -113,7 +113,7 @@ test('on the desktop, saving hands over to the service before step 3', async () 
     const { default: SetupPage } = await import('../app/setup/page');
     const originalFetch = globalThis.fetch;
     const asked: string[] = [];
-    (window as { novaDesktop?: unknown }).novaDesktop = {
+    (window as { rooksDesktop?: unknown }).rooksDesktop = {
       restartAfterSetup: async () => {},
       // The shell takes the window and never answers the page.
       handOverToService: (route: string) => { asked.push(route); return new Promise<string>(() => {}); },
@@ -143,7 +143,7 @@ test('on the desktop, saving hands over to the service before step 3', async () 
     } finally {
       await React.act(async () => { root.unmount(); });
       globalThis.fetch = originalFetch;
-      delete (window as { novaDesktop?: unknown }).novaDesktop;
+      delete (window as { rooksDesktop?: unknown }).rooksDesktop;
     }
   });
 });
@@ -160,7 +160,7 @@ test('step 5 restarts the daemon, waits for a NEW one, and cannot be walked past
     };
     try {
       await suite.test('the daemon restarts itself', async () => {
-        delete (window as { novaDesktop?: unknown }).novaDesktop;
+        delete (window as { rooksDesktop?: unknown }).rooksDesktop;
         let pending = true;
         let restarts = 0;
         globalThis.fetch = (async (input: string, init?: RequestInit) => {
@@ -186,7 +186,7 @@ test('step 5 restarts the daemon, waits for a NEW one, and cannot be walked past
 
       await suite.test('the desktop client restarts the daemon it owns, and gives the button back when it refuses', async () => {
         let restarts = 0;
-        (window as { novaDesktop?: unknown }).novaDesktop = {
+        (window as { rooksDesktop?: unknown }).rooksDesktop = {
           restartAfterSetup: async () => {
             restarts++;
             // First launch of the package: the embedded daemon still holds the
@@ -215,12 +215,12 @@ test('step 5 restarts the daemon, waits for a NEW one, and cannot be walked past
           assert.ok(document.querySelector('a[href="/"]'));
         } finally {
           await React.act(async () => { root.unmount(); });
-          delete (window as { novaDesktop?: unknown }).novaDesktop;
+          delete (window as { rooksDesktop?: unknown }).rooksDesktop;
         }
       });
 
       await suite.test('a daemon that cannot restart itself shows the command', async () => {
-        delete (window as { novaDesktop?: unknown }).novaDesktop;
+        delete (window as { rooksDesktop?: unknown }).rooksDesktop;
         globalThis.fetch = (async (_input: string, init?: RequestInit) => (init?.method === 'POST'
           ? Response.json({ restarting: false, command: 'launchctl kickstart -k gui/$(id -u)/com.rooks.daemon' }, { status: 409 })
           : Response.json({ pending: true, supervisor: 'launchd', canSelfRestart: false, command: 'launchctl kickstart -k gui/$(id -u)/com.rooks.daemon' }))) as typeof globalThis.fetch;
@@ -237,7 +237,7 @@ test('step 5 restarts the daemon, waits for a NEW one, and cannot be walked past
       });
 
       await suite.test('a machine with no supervisor may continue', async () => {
-        delete (window as { novaDesktop?: unknown }).novaDesktop;
+        delete (window as { rooksDesktop?: unknown }).rooksDesktop;
         let skipped = 0;
         globalThis.fetch = (async (input: string, init?: RequestInit) => {
           if (String(input) === '/api/ui/setup/restart/skip') {

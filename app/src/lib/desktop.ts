@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    novaDesktop?: {
+    rooksDesktop?: {
       setupRestartPending?: () => Promise<boolean>;
       restartAfterSetup: () => Promise<void>;
       /** End of a first setup: the service takes the embedded daemon's place, then the window opens `route`. Absent from an older desktop. */
@@ -78,8 +78,8 @@ declare global {
 
 /** A browser connected to a desktop daemon does not have shell privileges. */
 export function desktopBridge() {
-  return typeof window !== 'undefined' && typeof window.novaDesktop?.restartAfterSetup === 'function'
-    ? window.novaDesktop : null;
+  return typeof window !== 'undefined' && typeof window.rooksDesktop?.restartAfterSetup === 'function'
+    ? window.rooksDesktop : null;
 }
 
 /**
