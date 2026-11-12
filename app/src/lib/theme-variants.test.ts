@@ -11,7 +11,7 @@ function luminance(hsl: string): number {
 function contrast(a: string, b: string) { const values = [luminance(a), luminance(b)].sort((x, y) => y - x); return (values[0]! + .05) / (values[1]! + .05); }
 test('accents meet text contrast in both modes, including primary buttons', () => {
   assert.equal(new Set(THEME_VARIANTS.map((v) => v.id)).size, 4);
-  assert.ok(!THEME_VARIANTS.some((v) => v.id === 'teal' || v.id === 'iris'), 'no teal or purple variants');
+  assert.deepEqual([...THEME_VARIANTS.map((v) => v.id)].sort(), ['amber', 'cobalt', 'coral', 'graphite'], 'no teal or purple variants');
   for (const v of THEME_VARIANTS) {
     assert.ok(contrast(v.dark, '0 0% 8%') >= 4.5, `${v.id}: dark button text`);
     assert.ok(contrast(v.light, '0 0% 100%') >= 4.5, `${v.id}: light button text`);
