@@ -17,6 +17,7 @@
     "licenseUserLimit": "This license does not allow an administrator profile. Contact support.",
     "buildExpired": "This beta build has expired: no account can be created on it. Install the latest version.",
     "title": "Sign in",
+    "tagline": "Your agents. Your machine. Your keys.",
     "sessionExpired": "Your session has expired. Sign in again.",
     "forgot": "Forgot your password?",
     "description": "Sign in with the email and password of your Rooks account.",

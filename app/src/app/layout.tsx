@@ -61,7 +61,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const instance = instanceIdentity();
   return {
     title: instance.fullName,
-    description: 'Local-first agentic OS',
+    description: 'Local-first agent workspace',
     // iOS ignores most manifest fields, so it needs its own meta tags.
     // capable=true strips Safari's chrome when launched from the home
     // screen; black-translucent lets the page paint under the status bar.

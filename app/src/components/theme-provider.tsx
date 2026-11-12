@@ -17,6 +17,7 @@ import { FIRST_RUN_DEFAULT_SCHEME, chosenFirstRunScheme, schemeFollowsSystem, st
 import { sharedGet } from '@/lib/shared-read';
 import { schemeOfMe } from '@/lib/machines/acting-account';
 import { reportWindowScheme } from '@/lib/window-scheme';
+import { osScheme, readSchemeMode, storeSchemeMode, type SchemeMode } from '@/lib/scheme-mode';
 
 type SchemeContextValue = {
   scheme: ColorScheme;
@@ -28,6 +29,9 @@ type SchemeContextValue = {
   applied: ColorScheme;
   /** The onboarding's switch: overrides the default dark until the account exists and takes it (`firstRunScheme`). */
   chooseFirstRunScheme: (scheme: ColorScheme) => void;
+  /** Customize: light, dark, or follow the OS (local preference). */
+  schemeMode: SchemeMode;
+  setSchemeMode: (mode: SchemeMode) => void;
 };
 
 const SchemeContext = createContext<SchemeContextValue | null>(null);
@@ -47,16 +51,9 @@ export function useColorScheme(): SchemeContextValue {
 }
 
 /**
- * Light/dark still uses next-themes (class on `<html>`). The chosen
- * scheme travels with the account (`prefs.scheme`), not `localStorage` —
- * the account of the ACTIVE machine (`schemeOfMe`): it is stored where the
- * primary colour is, so each machine keeps its own mode.
- * `forcedTheme` is what stops next-themes from reading a storage key.
- *
- * One exception: the onboarding surfaces (`schemeFollowsSystem`) are shown
- * before any preference exists. They open dark for everyone, whatever the OS;
- * the onboarding's switch picks the other (`chooseFirstRunScheme`), and the
- * account takes that choice when it is created.
+ * Light/dark still uses next-themes (class on `<html>`). Account prefs store
+ * light|dark. Customize can also choose "system", kept locally so the daemon
+ * schema stays light|dark only.
  */
 export function ThemeProvider({
   children,
@@ -72,11 +69,27 @@ export function ThemeProvider({
   const pathname = usePathname();
   const revision = useRef(0);
   const [scheme, setSchemeState] = useState<ColorScheme>(initialScheme);
-  // Read after mount, like the OS scheme: the server has no session storage.
   const [chosen, setChosen] = useState<ColorScheme | null>(null);
-  useEffect(() => { setChosen(chosenFirstRunScheme()); }, []);
-  const followSystem = schemeFollowsSystem(pathname ?? '/');
-  const applied = followSystem ? chosen ?? FIRST_RUN_DEFAULT_SCHEME : scheme;
+  const [schemeMode, setSchemeModeState] = useState<SchemeMode>('dark');
+  const [os, setOs] = useState<ColorScheme>('dark');
+
+  useEffect(() => {
+    setChosen(chosenFirstRunScheme());
+    setSchemeModeState(readSchemeMode());
+    setOs(osScheme());
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const onChange = () => setOs(mq.matches ? 'light' : 'dark');
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  const onboardingFollow = schemeFollowsSystem(pathname ?? '/');
+  const followOs = schemeMode === 'system' && !onboardingFollow;
+  const applied: ColorScheme = onboardingFollow
+    ? (chosen ?? FIRST_RUN_DEFAULT_SCHEME)
+    : followOs
+      ? os
+      : scheme;
 
   useEffect(() => {
     try {
@@ -102,13 +115,22 @@ export function ThemeProvider({
     };
   }, [pathname]);
 
-  // The chosen mode, not the OS one onboarding follows: what the shell
-  // remembers for this machine's next window.
-  useEffect(() => { reportWindowScheme(scheme); }, [scheme]);
+  useEffect(() => { reportWindowScheme(applied); }, [applied]);
 
   const setScheme = useCallback((next: ColorScheme) => {
     revision.current += 1;
     setSchemeState(next);
+    setSchemeModeState(next);
+    storeSchemeMode(next);
+  }, []);
+
+  const setSchemeMode = useCallback((mode: SchemeMode) => {
+    setSchemeModeState(mode);
+    storeSchemeMode(mode);
+    if (mode === 'light' || mode === 'dark') {
+      revision.current += 1;
+      setSchemeState(mode);
+    }
   }, []);
 
   const chooseFirstRunScheme = useCallback((next: ColorScheme) => {
@@ -117,12 +139,14 @@ export function ThemeProvider({
   }, []);
 
   return (
-    <SchemeContext.Provider value={{ scheme, setScheme, initialAppearance, initialTheme, applied, chooseFirstRunScheme }}>
+    <SchemeContext.Provider value={{
+      scheme, setScheme, initialAppearance, initialTheme, applied, chooseFirstRunScheme, schemeMode, setSchemeMode,
+    }}>
       <NextThemesProvider
         attribute="class"
         defaultTheme="dark"
-        forcedTheme={applied}
-        enableSystem={false}
+        forcedTheme={followOs ? undefined : applied}
+        enableSystem={followOs}
         themes={['light', 'dark']}
       >
         {children}

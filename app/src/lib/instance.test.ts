@@ -37,7 +37,7 @@ test('the product identity carries no marker at all', () => {
   // The long name is what the window title and the PWA advertise. `Rooks`
   // alone stays the SHORT label (logotype alt, navigation, launcher tile) and
   // is also the electron-builder `productName`, which must never grow spaces.
-  assert.equal(release.fullName, 'Rooks beta - Agentic Workstation');
+  assert.equal(release.fullName, 'Rooks');
   assert.equal(release.shortName, 'Rooks');
   assert.equal(release.badge, null);
   assert.equal(release.icons.small, '/icon-192.png');
@@ -95,7 +95,7 @@ test('the installed PWA carries the instance name and its own artwork', async ()
     delete process.env.ROOKS_INSTANCE;
     const release = manifest();
     assert.equal(release.short_name, 'Rooks');
-    assert.equal(release.name, 'Rooks beta - Agentic Workstation');
+    assert.equal(release.name, 'Rooks');
     assert.deepEqual(release.icons?.map((i) => i.src), ['/icon-192.png', '/icon-512.png', '/icon.svg']);
   } finally {
     if (previous === undefined) delete process.env.ROOKS_INSTANCE;

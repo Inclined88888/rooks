@@ -6,7 +6,7 @@ import { t } from '@/lib/i18n';
 import { fetchMe, type AuthMe } from '@/lib/auth';
 import { forgetAllChatMissions } from '@/lib/chat-mission-cache';
 import { setupErrorMessage } from '@/lib/setup-license';
-import { BrandLogo } from '@/components/brand-logo';
+import { BrandWordmark } from '@/components/brand-wordmark';
 import { OnboardingBackdrop } from '@/components/onboarding-backdrop';
 import { PasswordReset } from '@/components/auth/password-reset';
 import { Button } from '@/components/ui/button';
@@ -17,19 +17,26 @@ import { loginOpensWelcome, ONBOARDING_PATH } from '@/components/onboarding/onbo
 import { signedInTarget } from '@/components/onboarding/welcome-landing';
 
 /**
- * The only page served outside the cockpit shell (no topbar, no nav): it
- * owns the whole viewport, hence the centring here rather than in a layout.
- * It signs in, and leads a forgotten password through its emailed code; the
- * first account is made by the onboarding's account step (docs/ONBOARDING.md).
+ * Sign-in: brand-led split composition. Wordmark is the hero; the form is a
+ * quiet column with a hairline — not a centered SaaS card.
  */
 function LoginShell({ children }: { children: React.ReactNode }) {
   return (
-    <OnboardingBackdrop center className="max-w-sm">
-      <div className="mb-8 flex justify-center">
-        <BrandLogo className="h-11" alt="Rooks" />
-      </div>
-      <div className="rounded-xl border border-border bg-card p-6 shadow-elev-2 sm:p-7">
-        {children}
+    <OnboardingBackdrop className="max-w-5xl">
+      <div className="grid min-h-[min(72vh,640px)] w-full items-stretch gap-10 md:grid-cols-[1.1fr_0.9fr] md:gap-16">
+        <div className="flex flex-col justify-center gap-6 px-1 md:px-2">
+          <BrandWordmark markClassName="h-12" />
+          <p className="max-w-[28ch] text-pretty text-[15px] leading-relaxed text-muted-foreground">
+            {t('loginPage.tagline')}
+          </p>
+          <div className="hidden h-px w-16 bg-border md:block" aria-hidden />
+          <p className="hidden max-w-[36ch] text-[12px] leading-relaxed text-muted-foreground/80 md:block">
+            {t('loginPage.local')}
+          </p>
+        </div>
+        <div className="flex flex-col justify-center border-t border-border pt-8 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+          {children}
+        </div>
       </div>
     </OnboardingBackdrop>
   );
@@ -43,7 +50,6 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [resetting, setResetting] = useState(false);
 
-  // `AuthRedirect` sends a signed-out user here with `?reason=expired`: say why, instead of a silent bounce.
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('reason') === 'expired') setMessage(t('loginPage.sessionExpired'));
   }, []);
@@ -54,8 +60,6 @@ export default function LoginPage() {
     return () => { alive = false; };
   }, []);
 
-  // A fresh install starts on the onboarding's welcome, whose account step makes the first account;
-  // an account made before that onboarding meets its welcome once, then signs in there (`Upgrade welcome`).
   const toWelcome = me !== null && !me.user && loginOpensWelcome(me.needsSetup, me.welcome ?? null);
   useEffect(() => {
     if (toWelcome) window.location.replace(ONBOARDING_PATH);
@@ -66,9 +70,6 @@ export default function LoginPage() {
     if (!me?.user) return;
     let alive = true;
     void signedInTarget({ welcome }).then((target) => {
-      // Authentication changes every viewer-scoped store and SSE subscription.
-      // A soft navigation retains the root layout mounted anonymously, its
-      // failed stream and its cached permissions. Start a fresh document.
       if (!alive) return;
       forgetAllChatMissions();
       window.location.replace(target);
@@ -128,8 +129,8 @@ export default function LoginPage() {
 
   return (
     <LoginShell>
-      <h1 className="text-lg font-semibold tracking-tight">{t('loginPage.title')}</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">{t('loginPage.description')}</p>
+      <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-[-0.03em]">{t('loginPage.title')}</h1>
+      <p className="mt-1.5 text-[13px] text-muted-foreground">{t('loginPage.description')}</p>
       <form className="mt-6 space-y-4" aria-busy={busy} onSubmit={(event) => { void submit(event); }}>
         <div className="space-y-1.5">
           <Label htmlFor="login-email">{t('loginPage.email')}</Label>
@@ -140,6 +141,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="username"
             required
+            className="h-10"
           />
         </div>
         <div className="space-y-1.5">
@@ -151,9 +153,10 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             required
+            className="h-10"
           />
         </div>
-        <Button className="w-full gap-2" disabled={busy || !me} type="submit">
+        <Button className="h-10 w-full gap-2" disabled={busy || !me} type="submit">
           {busy ? t('loginPage.working') : t('loginPage.submit')}
           {!busy && <ArrowRight className="h-4 w-4" aria-hidden />}
         </Button>
@@ -171,13 +174,13 @@ export default function LoginPage() {
       )}
       {message && (
         <p
-          className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="mt-4 border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
           role="status"
         >
           {message}
         </p>
       )}
-      <p className="mt-5 flex items-start gap-2 text-xs leading-[1.45] text-muted-foreground">
+      <p className="mt-5 flex items-start gap-2 text-xs leading-[1.45] text-muted-foreground md:hidden">
         <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <span>{t('loginPage.local')}</span>
       </p>

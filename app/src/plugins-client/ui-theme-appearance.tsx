@@ -27,8 +27,67 @@ import { GLASS_SCOPES, GLASS_TUNING_ENABLED } from '@/lib/glass-scope';
 import { GlassTuningSettings } from './ui-theme-glass-tuning';
 import { GlassProfilesSection } from '@/components/glass-profiles';
 import { mascotAnimationPref, useMascotAnimation } from '@/components/mascot/mascot-animation-pref';
+import type { SchemeMode } from '@/lib/scheme-mode';
+import { Monitor, Moon, Sun } from 'lucide-react';
 
 type CatalogPayload = { plugins?: AppearanceCatalogRow[] };
+
+/** Colour mode in Customize › Appearance — dark / light / system, once. */
+function SchemeModeSection(): ReactElement {
+  const { schemeMode, setSchemeMode, setScheme, applied } = useColorScheme();
+  const [saving, setSaving] = useState(false);
+  async function choose(mode: SchemeMode) {
+    const previous = schemeMode;
+    setSchemeMode(mode);
+    setSaving(true);
+    try {
+      if (mode === 'light' || mode === 'dark') {
+        setScheme(mode);
+        const res = await fetch('/api/ui/prefs', {
+          method: 'PUT', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ scheme: mode }), cache: 'no-store',
+        });
+        if (!res.ok) throw new Error('save');
+      }
+    } catch {
+      setSchemeMode(previous);
+      toast.error(t('appearance.saveError'));
+    } finally { setSaving(false); }
+  }
+  const choices: { mode: SchemeMode; Icon: typeof Sun; label: string }[] = [
+    { mode: 'light', Icon: Sun, label: t('appearance.schemeLight') },
+    { mode: 'dark', Icon: Moon, label: t('appearance.schemeDark') },
+    { mode: 'system', Icon: Monitor, label: t('appearance.schemeSystem') },
+  ];
+  return (
+    <fieldset className="pb-6 pt-2">
+      <legend className="text-sm font-medium">{t('appearance.schemeTitle')}</legend>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t('appearance.schemeHint')}</p>
+      <div role="radiogroup" aria-label={t('appearance.schemeTitle')} className="mt-4 flex flex-wrap gap-2">
+        {choices.map(({ mode, Icon, label }) => (
+          <button
+            key={mode}
+            type="button"
+            role="radio"
+            aria-checked={schemeMode === mode}
+            disabled={saving}
+            onClick={() => { void choose(mode); }}
+            className={cn(
+              'inline-flex h-9 items-center gap-2 border px-3 text-[13px] transition-colors',
+              schemeMode === mode ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Icon className="size-3.5" aria-hidden />
+            {label}
+            {mode === 'system' && schemeMode === 'system' && (
+              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{applied}</span>
+            )}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
 
 /** "Animate mascots": the live states of the agents' mascots (docs/AGENT-MASCOT.md). */
 export function MascotAnimationSetting(): ReactElement {
@@ -279,6 +338,7 @@ export function AppearanceSettings(): ReactElement {
 
   return (
     <div className="flex flex-col gap-2">
+      <SchemeModeSection />
       {selectedTheme === '@rooks/ui-theme' && <fieldset className="pb-6 pt-4">
         <legend className="text-sm font-medium">{t('appearance.styleTitle')}</legend>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t('appearance.styleHint')}</p>

@@ -1,16 +1,10 @@
-# Rooks theme
+# Rooks theme — Carbon Tower
 
-Built-in Rooks plugin, written on the public plugin contract only: the brand
-palette in dark and light, as a `theme` plugin (`docs/PLUGINS.md`).
+Built-in Rooks plugin on the public theme contract (`docs/PLUGINS.md`).
 
-Built in and enabled by default (`orchestrator/builtin-plugins.json`). It is
-the theme of every account made from version 0.1.7 on; an account that
-existed before keeps the theme it had. Pick it in Settings → Appearance.
+- **Dark:** cool graphite (no violet night), signal-orange primary, crisp ivory text.
+- **Light:** cool paper canvas (no beige cream), deeper orange primary for contrast.
+- **Atmosphere:** fine grid + quiet corner washes — not peach glow orbs.
+- **Type:** Sora + IBM Plex Mono; radius 6px; hairline depth.
 
-- Dark: the website's night (`#16131a`), peach champagne primary, warm ivory text.
-- Light: a beige canvas, a copper apricot primary, obsidian text.
-- Two very light glows on the page background.
-
-Being a package, it reloads hot: change `lib/client.js` and the open windows
-repaint without a rebuild. The app keeps a copy of the tokens for the first
-paint (`app/src/plugins-client/theme-rooks-floor.ts`); a test keeps it equal.
+Enabled by default. Tokens for first paint live in `app/src/plugins-client/theme-rooks-floor.ts` and must stay equal (`theme-rooks.test.ts`).

@@ -4,14 +4,15 @@
     "continue": "Continue",
     "progress": "Step {current} of {total}",
     "scheme": {
-      "label": "Light or dark mode",
+      "label": "Colour mode",
       "light": "Light",
-      "dark": "Dark"
+      "dark": "Dark",
+      "system": "System"
     },
     "splash": {
-      "title": "Your AI team,\nat home.",
-      "subtitle": "Agents that work on your machine, with the AI subscriptions you already pay for.",
-      "hint": "Psst, you can grab them."
+      "title": "Work that stays\non your desk.",
+      "subtitle": "Rooks runs agents on this computer with the models and subscriptions you already use.",
+      "hint": "Pick a language, then continue."
     },
     "language": {
       "title": "Choose your language",

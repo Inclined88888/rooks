@@ -1,128 +1,107 @@
 /**
- * The Rooks theme's palette for the first paint, as data — no React, no `'use client'`.
- *
- * The 2026 brand system's colours (NEW DA, `06_DESIGN_TOKENS/brand-system-v2.json`),
- * converted to the HSL triples the tokens carry:
- *
- * | Brand name       | HEX       | Dark role                      |
- * |------------------|-----------|--------------------------------|
- * | Peach champagne  | `#F9BB91` | primary (dark)                 |
- * | Warm ivory       | `#F7EFE7` | text (dark)                    |
- * | Muted warm gray  | `#BCACA4` | secondary text (dark)          |
- * | Obsidian         | `#1E1618` | text (light)                   |
- *
- * The dark surfaces are the website's night, not the kit's browns: the maintainer found
- * the kit's cacao "a touch too chocolate" next to rooks.local (05/11/2026),
- * so they take its hue (266°, `#16131a`), on the product's steps: with the
- * frame at 6.9% and the islands at 8.8% nothing stood apart, so the frame is
- * 4.5%, the islands 10.5%, the cards 13.5%, the menus 18.5%, the hover 22%. The light canvas leans beige, never neutral grey. In light the
- * peach cannot carry text, so the primary turns to a copper apricot.
- *
- * A COPY of the tokens of the built-in theme plugin
- * (`plugins/theme-rooks/lib/client.js`, the source of truth, which reloads
- * hot). The shell's floor (`plugin-host/theme-floor.tsx`) paints it in its
- * cascade layer before hydration when Rooks is the account's theme: the
- * plugin bundle is fetched after the first paint, and without the copy every
- * page would show the product palette for a moment first. The plugin's own
- * `<style>` is unlayered and wins as soon as it mounts. `theme-rooks.test.ts`
- * fails when the two drift apart.
+ * Carbon Tower palette for first paint — must stay equal to
+ * `plugins/theme-rooks/lib/client.js` (theme-rooks.test.ts).
  */
 export const ROOKS_THEME_PLUGIN = 'theme-rooks';
 
 export const ROOKS_THEME_TOKENS_CSS = `
 :root {
-    --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-sans: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-display: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
 
-    --surface-0: 266 15% 10.5%;
-    --surface-1: 268 13% 13.5%;
-    --surface-2: 270 12% 16%;
-    --surface-3: 271 11% 18.5%;
-    --surface-4: 272 10% 22%;
-    --surface-sunken: 266 18% 7.5%;
-    --chrome: 266 22% 4.5%;
+    --surface-0: 220 10% 7%;
+    --surface-1: 220 9% 9.5%;
+    --surface-2: 220 8% 12%;
+    --surface-3: 220 8% 14.5%;
+    --surface-4: 220 7% 18%;
+    --surface-sunken: 220 12% 5%;
+    --chrome: 220 12% 4%;
     --surface-chip: var(--surface-3);
 
-    --shadow-1: 0 1px 2px hsl(266 40% 2% / 0.5);
-    --shadow-2: 0 6px 18px -6px hsl(266 40% 2% / 0.62), 0 2px 6px -2px hsl(266 40% 2% / 0.42);
-    --shadow-3: 0 18px 44px -12px hsl(266 40% 2% / 0.78), 0 6px 14px -6px hsl(266 40% 2% / 0.5);
+    --shadow-1: 0 0 0 1px hsl(220 10% 100% / 0.04);
+    --shadow-2: 0 0 0 1px hsl(220 10% 100% / 0.06), 0 8px 24px -12px hsl(220 20% 0% / 0.55);
+    --shadow-3: 0 0 0 1px hsl(220 10% 100% / 0.08), 0 16px 40px -16px hsl(220 20% 0% / 0.65);
 
     --background: var(--surface-0);
-    --foreground: 30 50% 93.7%;
+    --foreground: 210 20% 96%;
     --card: var(--surface-1);
-    --card-foreground: 30 50% 93.7%;
+    --card-foreground: 210 20% 96%;
     --popover: var(--surface-3);
-    --popover-foreground: 30 50% 93.7%;
-    --primary: 24 90% 77.3%;
-    --primary-foreground: 266 15% 10.5%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 220 15% 6%;
     --secondary: var(--surface-4);
-    --secondary-foreground: 30 50% 93.7%;
+    --secondary-foreground: 210 20% 96%;
     --muted: var(--surface-2);
-    --muted-foreground: 20 15% 69%;
+    --muted-foreground: 215 10% 62%;
     --accent: var(--primary);
-    --accent-foreground: 266 15% 10.5%;
-    --border: 268 10% 25.5%;
-    --input: 268 10% 25.5%;
+    --accent-foreground: 220 15% 6%;
+    --destructive: 0 72% 58%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 8% 18%;
+    --input: 220 8% 18%;
     --ring: var(--primary);
-    --radius: 0.75rem;
+    --radius: 0.375rem;
 
     --salmon: var(--primary);
     --salmon-2: var(--primary);
     --salmon-3: var(--primary);
     --salmon-soft: var(--primary) / 0.12;
 
-    --bubble-user: color-mix(in srgb, hsl(var(--primary)) 14%, hsl(var(--card)));
-    --bubble-user-border: color-mix(in srgb, hsl(var(--primary)) 30%, hsl(var(--card)));
-
-    --rooks-scrollbar-thumb: hsl(var(--primary) / 0.26);
-    --rooks-scrollbar-thumb-hover: hsl(var(--primary) / 0.45);
-
-    --hl-bg: #110e15;
-}
-
-:root.light {
-    --surface-0: 32 42% 93.9%;
-    --surface-1: 34 47% 97.1%;
-    --surface-2: 32 35% 90.4%;
-    --surface-3: 34 50% 98.6%;
-    --surface-4: 31 32% 87.3%;
-    --surface-sunken: 32 35% 90.4%;
-    --chrome: 31 33% 85.3%;
-    --surface-chip: var(--surface-2);
-
-    --shadow-1: 0 1px 2px hsl(15 30% 20% / 0.08);
-    --shadow-2: 0 6px 18px -6px hsl(15 30% 20% / 0.14), 0 2px 6px -2px hsl(15 30% 20% / 0.08);
-    --shadow-3: 0 18px 44px -12px hsl(15 30% 20% / 0.2), 0 6px 14px -6px hsl(15 30% 20% / 0.12);
-
-    --background: var(--surface-0);
-    --foreground: 345 15% 10.2%;
-    --card: var(--surface-1);
-    --card-foreground: 345 15% 10.2%;
-    --popover: var(--surface-3);
-    --popover-foreground: 345 15% 10.2%;
-    --primary: 21 48% 47.8%;
-    --primary-foreground: 30 60% 97.5%;
-    --secondary: var(--surface-4);
-    --secondary-foreground: 345 15% 10.2%;
-    --muted: var(--surface-2);
-    --muted-foreground: 16 12% 37.5%;
-    --accent: var(--primary);
-    --accent-foreground: 30 60% 97.5%;
-    --border: 29 32% 79.8%;
-    --input: 29 32% 79.8%;
-    --ring: var(--primary);
-
-    --salmon: var(--primary);
-    --salmon-2: var(--primary);
-    --salmon-3: var(--primary);
-    --salmon-soft: var(--primary) / 0.12;
-
-    --bubble-user: color-mix(in srgb, hsl(var(--primary)) 12%, hsl(var(--card)));
-    --bubble-user-border: color-mix(in srgb, hsl(var(--primary)) 28%, hsl(var(--card)));
+    --bubble-user: color-mix(in srgb, hsl(var(--primary)) 16%, hsl(var(--card)));
+    --bubble-user-border: color-mix(in srgb, hsl(var(--primary)) 36%, hsl(var(--card)));
 
     --rooks-scrollbar-thumb: hsl(var(--primary) / 0.28);
     --rooks-scrollbar-thumb-hover: hsl(var(--primary) / 0.48);
 
-    --hl-bg: #efe7de;
+    --hl-bg: #0b0e12;
+    --avatar-radius: 0.375rem;
+}
+
+:root.light {
+    --surface-0: 210 18% 97.5%;
+    --surface-1: 0 0% 100%;
+    --surface-2: 210 14% 94%;
+    --surface-3: 0 0% 100%;
+    --surface-4: 210 12% 91%;
+    --surface-sunken: 210 16% 93%;
+    --chrome: 210 16% 93.5%;
+    --surface-chip: var(--surface-2);
+
+    --shadow-1: 0 0 0 1px hsl(220 15% 10% / 0.06);
+    --shadow-2: 0 0 0 1px hsl(220 15% 10% / 0.08), 0 8px 20px -14px hsl(220 20% 10% / 0.18);
+    --shadow-3: 0 0 0 1px hsl(220 15% 10% / 0.1), 0 18px 36px -18px hsl(220 20% 10% / 0.22);
+
+    --background: var(--surface-0);
+    --foreground: 220 18% 10%;
+    --card: var(--surface-1);
+    --card-foreground: 220 18% 10%;
+    --popover: var(--surface-3);
+    --popover-foreground: 220 18% 10%;
+    --primary: 24 90% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--surface-4);
+    --secondary-foreground: 220 18% 10%;
+    --muted: var(--surface-2);
+    --muted-foreground: 215 10% 40%;
+    --accent: var(--primary);
+    --accent-foreground: 0 0% 100%;
+    --border: 210 12% 86%;
+    --input: 210 12% 86%;
+    --ring: var(--primary);
+
+    --salmon: var(--primary);
+    --salmon-2: var(--primary);
+    --salmon-3: var(--primary);
+    --salmon-soft: var(--primary) / 0.12;
+
+    --bubble-user: color-mix(in srgb, hsl(var(--primary)) 10%, hsl(var(--card)));
+    --bubble-user-border: color-mix(in srgb, hsl(var(--primary)) 24%, hsl(var(--card)));
+
+    --rooks-scrollbar-thumb: hsl(var(--primary) / 0.3);
+    --rooks-scrollbar-thumb-hover: hsl(var(--primary) / 0.5);
+
+    --hl-bg: #e8edf3;
 }
 `;
-

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -28,13 +29,13 @@
        runtime through a ResizeObserver — varies with the row of active agents.
        Default = height of a single-row header, so pages that align on it are
        not left at 0px before the first paint. */
-    --rooks-topbar-h: 68px;
+    --rooks-topbar-h: 52px;
     --rooks-chrome-fill: hsl(var(--chrome));
     /* Islands: every zone of a split screen is a rounded panel and the
        backdrop (the chrome colour) is the only separator between them. The
        radius matches the corners painted by components/chrome-corners.tsx. */
-    --rooks-island-gap: 8px;
-    --rooks-island-radius: 16px;
+    --rooks-island-gap: 4px;
+    --rooks-island-radius: 8px;
     /* Width of the COLLAPSED vertical nav (see components/vertical-nav.tsx)
        — constant (unlike --rooks-topbar-h), no ResizeObserver needed.
        Unfolding on hover is an overlay above the content, so it never
@@ -1178,3 +1179,31 @@ html[data-glass-bubbles] .chat-bubble[data-glass-surface='user'][data-glass-visi
 
 .widget-stack > .widget-content > section > header:not(:has(button, a, input)) { display: none; }
 
+
+
+/* Carbon Tower stage surfaces */
+.rooks-stage { background: hsl(var(--background)); }
+.rooks-stage-grid {
+  background-image:
+    linear-gradient(hsl(var(--foreground) / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--foreground) / 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 20%, transparent 75%);
+}
+.rooks-onboarding-rise {
+  animation: rooks-rise 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.rooks-onboarding-fade {
+  animation: rooks-fade 640ms ease-out both;
+}
+@keyframes rooks-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rooks-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rooks-onboarding-rise, .rooks-onboarding-fade { animation: none; }
+}

@@ -18,11 +18,12 @@ export const THEME_TOKENS_CSS = `
     /* Product fonts live on the theme so a third-party occupant can
      * replace them. System stack: no next/font, no hosted files.
      * code-font: the face of code blocks, editors and terminals. */
-    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    --font-sans: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
     /* Opaque neutral surfaces: canvas, panels, fields, menus, controls. */
-    --surface-0: 220 12% 11%;
+    --surface-0: 220 10% 7%;
     --surface-1: 220 10% 13.5%;
     --surface-2: 220 9% 16.5%;
     --surface-3: 220 9% 18.5%;
@@ -34,7 +35,7 @@ export const THEME_TOKENS_CSS = `
     --surface-sunken: 220 12% 8.5%;       /* code block, tool output */
     /* The frame (topbar + rail): no border, so it is told from the page by
      * its own colour — darker than the canvas here, greyer than it in light. */
-    --chrome: 220 12% 3.5%;
+    --chrome: 220 12% 4%;
     --surface-chip: var(--surface-3); /* inline code, chip */
 
     /* Drop shadows per level. In dark, a shadow does not "darken" enough
@@ -51,7 +52,7 @@ export const THEME_TOKENS_CSS = `
     --card-foreground: 0 0% 92%;
     --popover: var(--surface-3);
     --popover-foreground: 0 0% 92%;
-    --primary: 13 67% 63%;            /* salmon #E07A5F */
+    --primary: 24 95% 53%;            /* signal orange */
     --primary-foreground: 0 0% 8%;
     --secondary: var(--surface-4);
     --secondary-foreground: 0 0% 92%;
@@ -70,7 +71,7 @@ export const THEME_TOKENS_CSS = `
                                           * buttons. */
     --input: 220 8% 24%;
     --ring: var(--primary);
-    --radius: 0.5rem;
+    --radius: 0.375rem;
 
     /* ROOKS extras */
     --salmon: var(--primary);
@@ -100,7 +101,7 @@ export const THEME_TOKENS_CSS = `
      * A theme that wants square thumbnails sets a radius here, and both
      * sides of the conversation follow it together. These tokens are
      * outside the .light block: geometry does not depend on lightness. */
-    --avatar-radius: 9999px;
+    --avatar-radius: 0.375rem;
 
     /* The human's bubble: OPAQUE by default. A translucent gradient let
      * the page background show through the text. The mix keeps the active

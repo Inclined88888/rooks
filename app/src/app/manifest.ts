@@ -25,7 +25,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: instance.fullName,
     short_name: instance.shortName,
-    description: 'Local-first agentic OS',
+    description: 'Local-first agent workspace',
     start_url: '/agents',
     scope: '/',
     display: 'standalone',

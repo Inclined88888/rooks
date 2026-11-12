@@ -55,7 +55,7 @@ export type InstanceIdentity = {
 const RELEASE: InstanceIdentity = Object.freeze({
   variant: 'release',
   displayName: BRAND.displayName,
-  fullName: `${BRAND.displayName} beta - Agentic Workstation`,
+  fullName: `${BRAND.displayName}`,
   shortName: BRAND.displayName,
   badge: null,
   icons: { small: '/icon-192.png', large: '/icon-512.png', apple: '/apple-icon-180.png', vector: '/icon.svg' },
@@ -66,7 +66,7 @@ const RELEASE: InstanceIdentity = Object.freeze({
 const DEV: InstanceIdentity = Object.freeze({
   variant: 'dev',
   displayName: `${BRAND.displayName} DEV`,
-  fullName: `${BRAND.displayName} beta - Agentic Workstation DEV`,
+  fullName: `${BRAND.displayName} DEV`,
   shortName: `${BRAND.displayName} DEV`,
   badge: 'DEV',
   icons: { small: '/icon-dev-192.png', large: '/icon-dev-512.png', apple: '/apple-icon-dev-180.png', vector: '/icon-dev.svg' },
