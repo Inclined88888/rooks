@@ -2,7 +2,7 @@
 /**
  * Fails a pull request whose author is not a maintainer when it changes a
  * protected path (`.github/protected-paths`) or a field of a `package.json`
- * that says what the package is or runs at install time.
+ * that says what the package is, what it pulls in, or runs at install time.
  *
  * Run by .github/workflows/protected-paths.yml on `pull_request_target`: this
  * file and the list come from main, never from the pull request, and the
@@ -31,6 +31,14 @@ export const APPROVAL_LABEL = 'protected-paths-approved';
 export const PACKAGE_IDENTITY_FIELDS = ['name', 'author', 'license', 'repository', 'publishConfig', 'bin', 'private'];
 /** npm scripts that run on their own when the package is installed or published. */
 export const PACKAGE_LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall', 'prepare', 'prepublish', 'prepublishOnly'];
+/**
+ * Fields that decide which third-party code gets installed. A dependency is
+ * code nobody reads line by line, so even a version bump needs a maintainer.
+ */
+export const PACKAGE_DEPENDENCY_FIELDS = [
+  'dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies',
+  'bundleDependencies', 'bundledDependencies', 'overrides', 'resolutions', 'workspaces',
+];
 
 export function parseProtectedList(text) {
   const patterns = [];
@@ -66,6 +74,14 @@ function pick(pkg, field) {
   return JSON.stringify(pkg?.[field] ?? null);
 }
 
+/** `{}`, `[]`, `false` and an absent field pull nothing in. */
+function declaresSomething(value) {
+  if (value === undefined || value === null || value === false) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object') return Object.keys(value).length > 0;
+  return true;
+}
+
 /** What changed in a package.json, as `field` or `scripts.<name>` entries. */
 export function packageFieldChanges(base, head, status) {
   if (status === 'removed') return ['the whole package.json (removed)'];
@@ -74,6 +90,10 @@ export function packageFieldChanges(base, head, status) {
     for (const field of PACKAGE_IDENTITY_FIELDS) {
       if (pick(base, field) !== pick(head, field)) changes.push(field);
     }
+  }
+  for (const field of PACKAGE_DEPENDENCY_FIELDS) {
+    const changed = status === 'added' ? declaresSomething(head?.[field]) : pick(base, field) !== pick(head, field);
+    if (changed) changes.push(field);
   }
   for (const script of PACKAGE_LIFECYCLE_SCRIPTS) {
     if (pick(base?.scripts, script) !== pick(head?.scripts, script)) changes.push(`scripts.${script}`);
@@ -169,8 +189,8 @@ async function main() {
     `This pull request changes ${violations.length} protected item(s):`,
     ...list,
     '',
-    'Licences, governance files, the keys and addresses Timon trusts and the identity of its packages',
-    'are changed by the maintainers only. A maintainer reviews these changes and approves them with the',
+    'Licences, governance files, the keys and addresses Timon trusts, the identity of its packages',
+    'and their dependencies are changed by the maintainers only. A maintainer reviews these changes and approves them with the',
     `label ${APPROVAL_LABEL}, or asks you to remove them from the pull request.`,
   ].join('\n'));
   process.exitCode = 1;
