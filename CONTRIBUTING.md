@@ -114,4 +114,6 @@ licence and its attack surface: justify it in the pull request.
   maintained by the project: the list is `.github/protected-paths`. A pull
   request that changes one of them fails the "protected paths" check until a
   maintainer has reviewed and approved that change; if you need one, say why
-  in the pull request or open an issue.
+  in the pull request or open an issue. Dependencies are among them: adding,
+  removing or upgrading a package (a `package.json` dependency field or a
+  lockfile) needs a maintainer's approval.
