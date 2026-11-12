@@ -8,12 +8,12 @@ export type SchemeMode = 'light' | 'dark' | 'system';
 export const SCHEME_MODE_KEY = 'rooks.appearance.schemeMode';
 
 export function readSchemeMode(): SchemeMode {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'system';
   try {
     const v = window.localStorage.getItem(SCHEME_MODE_KEY);
     if (v === 'light' || v === 'dark' || v === 'system') return v;
   } catch { /* private mode */ }
-  return 'dark';
+  return 'system';
 }
 
 export function storeSchemeMode(mode: SchemeMode): void {

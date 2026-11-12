@@ -9,8 +9,9 @@ function luminance(hsl: string): number {
   return .2126 * channel(0) + .7152 * channel(8) + .0722 * channel(4);
 }
 function contrast(a: string, b: string) { const values = [luminance(a), luminance(b)].sort((x, y) => y - x); return (values[0]! + .05) / (values[1]! + .05); }
-test('five accents meet text contrast in both modes, including primary buttons', () => {
-  assert.equal(new Set(THEME_VARIANTS.map((v) => v.id)).size, 5);
+test('accents meet text contrast in both modes, including primary buttons', () => {
+  assert.equal(new Set(THEME_VARIANTS.map((v) => v.id)).size, 4);
+  assert.ok(!THEME_VARIANTS.some((v) => v.id === 'teal' || v.id === 'iris'), 'no teal or purple variants');
   for (const v of THEME_VARIANTS) {
     assert.ok(contrast(v.dark, '0 0% 8%') >= 4.5, `${v.id}: dark button text`);
     assert.ok(contrast(v.light, '0 0% 100%') >= 4.5, `${v.id}: light button text`);
@@ -19,8 +20,8 @@ test('five accents meet text contrast in both modes, including primary buttons',
   }
 });
 test('corrupt variants recover to native default', () => {
-  for (const value of [undefined, {}, [], 42, { variant: 'removed' }]) assert.equal(readThemeVariant(value), 'teal');
-  assert.equal(readThemeVariant({ variant: 'teal' }), 'teal');
+  for (const value of [undefined, {}, [], 42, { variant: 'removed' }]) assert.equal(readThemeVariant(value), 'amber');
+  assert.equal(readThemeVariant({ variant: 'amber' }), 'amber');
   assert.equal(readThemeVariant({ variant: 'coral' }), 'coral', 'an explicit saved choice is preserved');
 });
 test('a custom accent keeps its hue and meets the same contrast as the native variants', () => {
@@ -38,7 +39,8 @@ test('a custom accent keeps its hue and meets the same contrast as the native va
 });
 test('the appearance row reads old rows unchanged and rejects malformed colours', () => {
   assert.deepEqual(readNativeAppearance({ variant: 'coral' }), { variant: 'coral', primary: null, glass: false, glassBubbles: false, glassScope: 'island', widgetsBorderless: true, widgetsTransparent: false, widgetsStyleAt: 0, glassBlur: 16, glassTransparency: 40, glassTint: null, glassZones: {}, glassFloor: 0, tintDark: null, tintLight: null });
-  assert.deepEqual(readNativeAppearance('iris'), { variant: 'iris', primary: null, glass: false, glassBubbles: false, glassScope: 'island', widgetsBorderless: true, widgetsTransparent: false, widgetsStyleAt: 0, glassBlur: 16, glassTransparency: 40, glassTint: null, glassZones: {}, glassFloor: 0, tintDark: null, tintLight: null });
+  assert.deepEqual(readNativeAppearance('iris'), { variant: 'amber', primary: null, glass: false, glassBubbles: false, glassScope: 'island', widgetsBorderless: true, widgetsTransparent: false, widgetsStyleAt: 0, glassBlur: 16, glassTransparency: 40, glassTint: null, glassZones: {}, glassFloor: 0, tintDark: null, tintLight: null });
+  assert.equal(readThemeVariant({ variant: 'teal' }), 'amber', 'legacy teal maps to tower amber');
   for (const primary of ['red', '#fff', 'url(x)', '#12345g', 42]) assert.equal(readNativeAppearance({ primary }).primary, null);
   assert.equal(readNativeAppearance({ primary: '#AABBCC', glass: true, glassBubbles: 'yes' }).primary, '#aabbcc');
   assert.equal(readNativeAppearance({ glass: true, glassBubbles: 'yes' }).glassBubbles, false);
@@ -47,8 +49,8 @@ test('the appearance row reads old rows unchanged and rejects malformed colours'
   for (const glassScope of [undefined, 'cards', 1, null]) assert.equal(readNativeAppearance({ glassScope }).glassScope, 'island');
   assert.deepEqual(readNativeAppearance({ widgetsBorderless: true, widgetsTransparent: 'yes' }).widgetsBorderless, true);
   assert.equal(readNativeAppearance({ widgetsTransparent: 'yes' }).widgetsTransparent, false, 'only a real true counts');
-  assert.equal(themeVariantCss('teal'), themeVariantCss('teal', null), 'no colour, no change');
-  assert.ok(themeVariantCss('teal', '#ff0000').includes(customPrimaryShades('#ff0000').dark));
+  assert.equal(themeVariantCss('amber'), themeVariantCss('amber', null), 'no colour, no change');
+  assert.ok(themeVariantCss('amber', '#ff0000').includes(customPrimaryShades('#ff0000').dark));
 });
 test('glass tuning is clamped and painted as custom properties', () => {
   assert.equal(readNativeAppearance({ glassBlur: 99 }).glassBlur, 40);
@@ -79,7 +81,7 @@ test('a zone tunes its own glass and the readability floor holds up the zones th
   assert.match(css, /--rooks-glass-bubble-alpha: 0\.5;/);
 });
 test('an ambient tint moves the whole neutral scale and keeps the text readable', () => {
-  assert.equal(appearanceCss(DEFAULT_APPEARANCE), themeVariantCss('teal') + '\n' + glassCss(DEFAULT_APPEARANCE), 'no tint, native greys');
+  assert.equal(appearanceCss(DEFAULT_APPEARANCE), themeVariantCss('amber') + '\n' + glassCss(DEFAULT_APPEARANCE), 'no tint, native greys');
   for (const hex of ['#101830', '#000000', '#ffffff', '#ff00ff', '#1a1420']) {
     const dark = ambientShades(hex, 'dark', 24);
     const order = ['--chrome', '--surface-sunken', '--surface-0', '--surface-1', '--surface-2', '--surface-3', '--surface-4'].map((k) => Number(dark[k]!.match(/[\d.]+/g)![2]));
@@ -147,6 +149,6 @@ test('the shared presets scope ignores the project and fits daemon grammar', asy
 
 test('widgets are borderless by default, and an explicit false is kept', () => {
   assert.equal(readNativeAppearance(undefined).widgetsBorderless, true);
-  assert.equal(readNativeAppearance({ variant: 'teal' }).widgetsBorderless, true);
+  assert.equal(readNativeAppearance({ variant: 'amber' }).widgetsBorderless, true);
   assert.equal(readNativeAppearance({ widgetsBorderless: false }).widgetsBorderless, false);
 });

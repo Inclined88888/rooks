@@ -6,8 +6,7 @@ import { t } from '@/lib/i18n';
 import { fetchMe, type AuthMe } from '@/lib/auth';
 import { forgetAllChatMissions } from '@/lib/chat-mission-cache';
 import { setupErrorMessage } from '@/lib/setup-license';
-import { BrandWordmark } from '@/components/brand-wordmark';
-import { OnboardingBackdrop } from '@/components/onboarding-backdrop';
+import { BrandLogo } from '@/components/brand-logo';
 import { PasswordReset } from '@/components/auth/password-reset';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,29 +14,33 @@ import { Label } from '@/components/ui/label';
 import { apiErrorMessage } from '@/lib/api-error';
 import { loginOpensWelcome, ONBOARDING_PATH } from '@/components/onboarding/onboarding-flow';
 import { signedInTarget } from '@/components/onboarding/welcome-landing';
+import { InstanceBadge, useInstance } from '@/components/instance-provider';
 
 /**
- * Sign-in: brand-led split composition. Wordmark is the hero; the form is a
- * quiet column with a hairline — not a centered SaaS card.
+ * Sign-in inside a quiet inverted-L shell — no marketing hero, no centered card.
  */
 function LoginShell({ children }: { children: React.ReactNode }) {
+  const instance = useInstance();
   return (
-    <OnboardingBackdrop className="max-w-5xl">
-      <div className="grid min-h-[min(72vh,640px)] w-full items-stretch gap-10 md:grid-cols-[1.1fr_0.9fr] md:gap-16">
-        <div className="flex flex-col justify-center gap-6 px-1 md:px-2">
-          <BrandWordmark markClassName="h-12" />
-          <p className="max-w-[28ch] text-pretty text-[15px] leading-relaxed text-muted-foreground">
-            {t('loginPage.tagline')}
-          </p>
-          <p className="hidden max-w-[36ch] text-[12px] leading-relaxed text-muted-foreground/80 md:block">
-            {t('loginPage.local')}
-          </p>
+    <div className="flex min-h-screen w-full bg-background text-foreground">
+      <aside className="hidden w-[232px] shrink-0 flex-col bg-chrome md:flex">
+        <div className="flex h-[46px] items-center gap-2 px-3">
+          <BrandLogo className="h-5" alt={instance.displayName} />
+          <InstanceBadge />
         </div>
-        <div className="flex flex-col justify-center pt-2 md:pl-2 md:pt-0">
-          {children}
+        <div className="flex flex-1 flex-col justify-end p-3 text-[12px] text-muted-foreground">
+          <p className="leading-relaxed">{t('loginPage.local')}</p>
         </div>
+      </aside>
+      <div className="flex min-w-0 flex-1 flex-col bg-background">
+        <div className="flex h-[46px] items-center px-4 md:hidden">
+          <BrandLogo className="h-5" alt={instance.displayName} />
+        </div>
+        <main className="flex flex-1 justify-center px-4 py-10 sm:px-8">
+          <div className="w-full max-w-[360px]">{children}</div>
+        </main>
       </div>
-    </OnboardingBackdrop>
+    </div>
   );
 }
 
@@ -104,31 +107,29 @@ export default function LoginPage() {
   if (me?.user || toWelcome) {
     return (
       <LoginShell>
-        <p className="text-sm text-muted-foreground">{t('route.loading')}</p>
+        <p className="text-[13px] text-muted-foreground">{t('route.loading')}</p>
       </LoginShell>
     );
   }
 
   if (resetting) {
     return (
-      <OnboardingBackdrop center className="max-w-[560px]">
-        <div className="flex justify-center">
-          <PasswordReset
-            initialEmail={email}
-            onClose={(address) => {
-              if (address) setEmail(address);
-              setMessage(null);
-              setResetting(false);
-            }}
-          />
-        </div>
-      </OnboardingBackdrop>
+      <LoginShell>
+        <PasswordReset
+          initialEmail={email}
+          onClose={(address) => {
+            if (address) setEmail(address);
+            setMessage(null);
+            setResetting(false);
+          }}
+        />
+      </LoginShell>
     );
   }
 
   return (
     <LoginShell>
-      <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-[-0.03em]">{t('loginPage.title')}</h1>
+      <h1 className="text-[16px] font-semibold tracking-[-0.02em]">{t('loginPage.title')}</h1>
       <p className="mt-1.5 text-[13px] text-muted-foreground">{t('loginPage.description')}</p>
       <form className="mt-6 space-y-4" aria-busy={busy} onSubmit={(event) => { void submit(event); }}>
         <div className="space-y-1.5">
@@ -140,7 +141,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="username"
             required
-            className="h-10"
+            className="h-9 rounded-[8px]"
           />
         </div>
         <div className="space-y-1.5">
@@ -152,10 +153,10 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             required
-            className="h-10"
+            className="h-9 rounded-[8px]"
           />
         </div>
-        <Button className="h-10 w-full gap-2" disabled={busy || !me} type="submit">
+        <Button className="h-9 w-full gap-2 rounded-[8px]" disabled={busy || !me} type="submit">
           {busy ? t('loginPage.working') : t('loginPage.submit')}
           {!busy && <ArrowRight className="h-4 w-4" aria-hidden />}
         </Button>
@@ -173,13 +174,13 @@ export default function LoginPage() {
       )}
       {message && (
         <p
-          className="mt-4 border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="mt-4 border border-destructive/40 bg-destructive/10 px-3 py-2 text-[13px] text-destructive"
           role="status"
         >
           {message}
         </p>
       )}
-      <p className="mt-5 flex items-start gap-2 text-xs leading-[1.45] text-muted-foreground md:hidden">
+      <p className="mt-5 flex items-start gap-2 text-[12px] leading-[1.45] text-muted-foreground md:hidden">
         <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <span>{t('loginPage.local')}</span>
       </p>

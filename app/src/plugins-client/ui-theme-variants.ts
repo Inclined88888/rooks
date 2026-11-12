@@ -3,10 +3,9 @@ import { DEFAULT_GLASS_SCOPE, GLASS_SCOPE_ATTRIBUTE, GLASS_TUNING_ENABLED, readG
 /** Native theme variants. Surfaces stay opaque; the accent and geometry form
  * one deliberately small family shared by every route and plugin. */
 export const THEME_VARIANTS = [
-  { id: 'coral', name: 'Coral', description: 'Warm · soft corners', dark: '13 67% 67%', light: '12 63% 41%', radius: 10, borderDark: '220 8% 24%', borderLight: '220 10% 83%' },
-  { id: 'teal', name: 'Teal', description: 'Precise · subtle borders', dark: '173 51% 58%', light: '174 72% 27%', radius: 8, borderDark: '180 8% 24%', borderLight: '180 9% 82%' },
+  { id: 'amber', name: 'Amber', description: 'Tower · hairline borders', dark: '31 79% 57%', light: '29 82% 34%', radius: 6, borderDark: '240 4% 16%', borderLight: '40 12% 82%' },
+  { id: 'coral', name: 'Coral', description: 'Warm · soft corners', dark: '13 67% 67%', light: '12 63% 41%', radius: 10, borderDark: '240 4% 16%', borderLight: '40 12% 82%' },
   { id: 'cobalt', name: 'Cobalt', description: 'Technical · crisp corners', dark: '216 85% 73%', light: '218 74% 43%', radius: 6, borderDark: '218 12% 29%', borderLight: '218 14% 78%' },
-  { id: 'iris', name: 'Iris', description: 'Soft · rounded lines', dark: '263 65% 77%', light: '263 48% 43%', radius: 12, borderDark: '260 8% 25%', borderLight: '260 10% 84%' },
   { id: 'graphite', name: 'Graphite', description: 'Monochrome · defined borders', dark: '220 9% 85%', light: '220 12% 28%', radius: 0, borderDark: '220 7% 33%', borderLight: '220 8% 73%' },
 ] as const;
 export type ThemeVariant = typeof THEME_VARIANTS[number]['id'];
@@ -14,7 +13,9 @@ export const APPEARANCE_SCOPE = 'appearance.native';
 export const APPEARANCE_EVENT = 'rooks:native-theme';
 export function readThemeVariant(raw: unknown): ThemeVariant {
   const id = raw && typeof raw === 'object' ? (raw as { variant?: unknown }).variant : raw;
-  return THEME_VARIANTS.find((v) => v.id === id)?.id ?? 'teal';
+  // Legacy teal / iris rows fall back to tower amber (moodboard default).
+  if (id === 'teal' || id === 'iris') return 'amber';
+  return THEME_VARIANTS.find((v) => v.id === id)?.id ?? 'amber';
 }
 
 /**
@@ -70,7 +71,7 @@ const ZONE_CSS: Record<GlassZone, string> = { chrome: 'chrome', islands: 'island
 /** The zones the readability floor holds up: the ones text is written on. */
 const TEXT_ZONES: ReadonlySet<GlassZone> = new Set(['islands', 'widgets', 'bubbles']);
 export const GLASS_TRANSPARENCY_RANGE = { min: 0, max: 100, default: 40 } as const;
-export const DEFAULT_APPEARANCE: NativeAppearance = { variant: 'teal', primary: null, glass: false, glassBubbles: false, glassScope: DEFAULT_GLASS_SCOPE, widgetsBorderless: true, widgetsTransparent: false, widgetsStyleAt: 0, glassBlur: GLASS_BLUR_RANGE.default, glassTransparency: GLASS_TRANSPARENCY_RANGE.default, glassTint: null, glassZones: {}, glassFloor: GLASS_FLOOR_RANGE.default, tintDark: null, tintLight: null };
+export const DEFAULT_APPEARANCE: NativeAppearance = { variant: 'amber', primary: null, glass: false, glassBubbles: false, glassScope: DEFAULT_GLASS_SCOPE, widgetsBorderless: true, widgetsTransparent: false, widgetsStyleAt: 0, glassBlur: GLASS_BLUR_RANGE.default, glassTransparency: GLASS_TRANSPARENCY_RANGE.default, glassTint: null, glassZones: {}, glassFloor: GLASS_FLOOR_RANGE.default, tintDark: null, tintLight: null };
 const HEX = /^#[0-9a-f]{6}$/i;
 function readHex(value: unknown): string | null {
   return typeof value === 'string' && HEX.test(value) ? value.toLowerCase() : null;
@@ -161,7 +162,7 @@ export function hslTripleToHex(triple: string): string {
 }
 
 export function themeVariantCss(id: ThemeVariant, primary: string | null = null): string {
-  const v = THEME_VARIANTS.find((v) => v.id === id) ?? THEME_VARIANTS.find((v) => v.id === 'teal')!;
+  const v = THEME_VARIANTS.find((v) => v.id === id) ?? THEME_VARIANTS.find((v) => v.id === 'amber')!;
   const accent = primary && HEX.test(primary) ? customPrimaryShades(primary) : { dark: v.dark, light: v.light };
   return `:root { --primary: ${accent.dark}; --border: ${v.borderDark}; --input: var(--border); --radius: ${v.radius}px; }
 :root.light { --primary: ${accent.light}; --border: ${v.borderLight}; --input: var(--border); }
@@ -234,7 +235,7 @@ export function glassCss(appearance: GlassVarsInput): string {
   return `:root { ${Object.entries(glassVars(appearance)).map(([k, v]) => `${k}: ${v};`).join(' ')} }`;
 }
 const borderLightness = (appearance: NativeAppearance, scheme: 'dark' | 'light') => {
-  const v = THEME_VARIANTS.find((x) => x.id === appearance.variant) ?? THEME_VARIANTS.find((x) => x.id === 'teal')!;
+  const v = THEME_VARIANTS.find((x) => x.id === appearance.variant) ?? THEME_VARIANTS.find((x) => x.id === 'amber')!;
   return lightnessOf(scheme === 'dark' ? v.borderDark : v.borderLight);
 };
 

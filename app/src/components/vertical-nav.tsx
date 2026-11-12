@@ -62,12 +62,19 @@ import { t } from '@/lib/i18n';
 // list, after the product's own entries, until the person moves it: the
 // order, the separators and the foot of the menu are theirs (TODO #456).
 
-// Must match `w-56` (14rem = 224px) on the expanded nav below.
-const NAV_W_PINNED = '224px';
+// Inverted-L desk sidebar (~232px). Must match `w-[232px]` below.
+const NAV_W_PINNED = '232px';
 const NAV_W_DEFAULT = '56px';
 // Mobile: the drawer overlays the content, no page should reserve a
 // left-hand gutter for it.
 const NAV_W_MOBILE = '0px';
+
+/** Fresh installs and rows that never stored a pin open expanded. */
+function deskPinned(prefs: unknown): boolean {
+  if (prefs == null) return true;
+  if (typeof prefs === 'object' && !Array.isArray(prefs) && !('pinned' in (prefs as object))) return true;
+  return navPinnedOf(prefs);
+}
 // Must match the Tailwind `md` breakpoint used on the desktop variants
 // below: both describe the same boundary.
 const MOBILE_MQ = '(max-width: 767px)';
@@ -124,7 +131,7 @@ export function VerticalNav({
   // starts on the first paint: the server's seed of the row still speaks.
   const navSeed = useLayoutSeed(navScope);
   const navPrefs = readPrefs ?? (peekStoredLayout(navScope) ?? navSeed ?? null);
-  const pinned = navPinnedOf(navPrefs);
+  const pinned = deskPinned(navPrefs);
   const [hovered, setHovered] = useState(false);
   const railRef = useRef<HTMLElement>(null);
   const rereadHover = useRef<(() => void) | null>(null);
@@ -248,12 +255,17 @@ export function VerticalNav({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className={cn(
-          // over it and stays against the screen's left edge.
-          'rooks-nav-rail fixed left-0 top-[var(--rooks-topbar-h)] bottom-0 z-[15] hidden flex-col overflow-hidden bg-chrome transition-[width] duration-150 md:flex',
-          expanded ? 'w-56' : 'w-[var(--rooks-nav-w)]',
+          // Inverted-L: full-height sidebar under the traffic lights; content
+          // top bar starts to its right (see TopBar).
+          'rooks-nav-rail fixed left-0 top-0 bottom-0 z-[15] hidden flex-col overflow-hidden bg-chrome transition-[width] duration-150 md:flex',
+          expanded ? 'w-[232px]' : 'w-[var(--rooks-nav-w)]',
         )}
       >
-        <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-2">
+        <div className="flex h-[46px] shrink-0 items-center gap-2 px-3">
+          <BrandLogo className="h-5" alt={instance.displayName} />
+          {expanded && <InstanceBadge />}
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-2 text-[13px]">
           <NavChromeProvider value={{ expanded, forceLabel: false, holdExpanded, ...items }}>
             <NavItems stored={stored} onLayoutChange={onLayoutChange} onDraggingChange={setDragging} />
           </NavChromeProvider>

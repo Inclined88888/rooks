@@ -17,59 +17,54 @@ export const THEME_TOKENS_CSS = `
 :root {
     /* Product fonts live on the theme so a third-party occupant can
      * replace them. System stack: no next/font, no hosted files. */
-    --font-sans: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
-    --font-display: "Sora", "Sora Fallback", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
     /* code-font: the face of code blocks, editors and terminals. */
-    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
     /* Opaque neutral surfaces: canvas, panels, fields, menus, controls. */
-    --surface-0: 220 10% 7%;
-    --surface-1: 220 10% 13.5%;
-    --surface-2: 220 9% 16.5%;
-    --surface-3: 220 9% 18.5%;
-    --surface-4: 220 8% 22.5%;
+    --surface-0: 240 4% 4.5%;
+    --surface-1: 240 5% 8.2%;
+    --surface-2: 240 5% 10%;
+    --surface-3: 240 5% 11.6%;
+    --surface-4: 240 4% 15%;
     /* Two surfaces outside the scale, for what sinks instead of rising.
      * In dark they go below the canvas, in light they rise towards
      * grey — a code block must be recessed in both cases, which a
      * single step of the scale cannot express. */
-    --surface-sunken: 220 12% 8.5%;       /* code block, tool output */
+    --surface-sunken: 240 5% 3%;       /* code block, tool output */
     /* The frame (topbar + rail): no border, so it is told from the page by
      * its own colour — darker than the canvas here, greyer than it in light. */
-    --chrome: 220 12% 4%;
+    --chrome: 240 4% 2.5%;
     --surface-chip: var(--surface-3); /* inline code, chip */
 
-    /* Drop shadows per level. In dark, a shadow does not "darken" enough
-     * to lift a surface: it mostly puts a halo around floating elements,
-     * hence the generous radii and the high opacities. */
-    --shadow-1: 0 1px 2px hsl(0 0% 0% / 0.45);
-    --shadow-2: 0 6px 18px -6px hsl(0 0% 0% / 0.6), 0 2px 6px -2px hsl(0 0% 0% / 0.4);
-    --shadow-3: 0 18px 44px -12px hsl(0 0% 0% / 0.75), 0 6px 14px -6px hsl(0 0% 0% / 0.5);
+    /* Depth is hairlines, not soft shadows. */
+    --shadow-1: 0 0 0 1px hsl(0 0% 100% / 0.06);
+    --shadow-2: 0 0 0 1px hsl(0 0% 100% / 0.06);
+    --shadow-3: 0 0 0 1px hsl(0 0% 100% / 0.08);
 
     /* shadcn (dark) */
     --background: var(--surface-0);
-    --foreground: 0 0% 92%;
+    --foreground: 40 8% 92.4%;
     --card: var(--surface-1);
-    --card-foreground: 0 0% 92%;
+    --card-foreground: 40 8% 92.4%;
     --popover: var(--surface-3);
-    --popover-foreground: 0 0% 92%;
-    --primary: 24 95% 53%;            /* signal orange */
-    --primary-foreground: 0 0% 8%;
+    --popover-foreground: 40 8% 92.4%;
+    --primary: 31 79% 56.9%;            /* tower amber */
+    --primary-foreground: 240 5% 6%;
     --secondary: var(--surface-4);
-    --secondary-foreground: 0 0% 92%;
+    --secondary-foreground: 40 8% 92.4%;
     --muted: var(--surface-2);
-    --muted-foreground: 220 8% 70%;    /* raised from 54 %: the caption
-                                          * grey became unreadable once
-                                          * placed on the lightened
-                                          * surfaces above. */
+    --muted-foreground: 40 2% 52.9%;
     --accent: var(--primary);
-    --accent-foreground: 0 0% 8%;
+    --accent-foreground: 240 5% 6%;
     --destructive: 0 64% 68%;         /* #e07a7a */
     --destructive-foreground: 0 0% 98%;
-    --border: 220 8% 24%;              /* must stay above
+    --border: 240 4% 16%;              /* must stay above
                                           * --surface-4: otherwise borders
                                           * would vanish on secondary
                                           * buttons. */
-    --input: 220 8% 24%;
+    --input: 240 4% 16%;
     --ring: var(--primary);
     --radius: 0.375rem;
 
@@ -91,8 +86,8 @@ export const THEME_TOKENS_CSS = `
     --agenda-2: 212 62% 68%;
     --agenda-3: 128 42% 62%;
     --agenda-4: 34 67% 63%;
-    --agenda-5: 272 52% 72%;
-    --agenda-6: 178 45% 56%;
+    --agenda-5: 34 67% 63%;
+    --agenda-6: 212 62% 68%;
 
     /* canvas dotted-grid colour, used by .rooks-canvas */
     --rooks-grid: transparent;
@@ -132,38 +127,38 @@ export const THEME_TOKENS_CSS = `
 }
 
 :root.light {
-    /* Light mode uses neutral white panels and a quiet grey canvas. */
-    --surface-0: 220 14% 97%;
-    --surface-1: 0 0% 100%;
-    --surface-2: 220 12% 94%;
-    --surface-3: 0 0% 100%;
-    --surface-4: 220 11% 91%;
-    --surface-sunken: 220 12% 94%;
-    --chrome: 220 12% 89%;
-    --surface-chip: 220 12% 94%;
+    /* Light mode: cream paper canvas and warm near-black ink. */
+    --surface-0: 42 31% 93.7%;
+    --surface-1: 34 100% 98.6%;
+    --surface-2: 40 24% 91%;
+    --surface-3: 34 100% 98.6%;
+    --surface-4: 40 18% 88%;
+    --surface-sunken: 42 22% 90%;
+    --chrome: 42 24% 90%;
+    --surface-chip: 40 24% 91%;
 
-    --shadow-1: 0 1px 2px hsl(40 10% 20% / 0.08);
-    --shadow-2: 0 6px 18px -6px hsl(40 10% 20% / 0.14), 0 2px 6px -2px hsl(40 10% 20% / 0.08);
-    --shadow-3: 0 18px 44px -12px hsl(40 10% 20% / 0.2), 0 6px 14px -6px hsl(40 10% 20% / 0.12);
+    --shadow-1: 0 0 0 1px hsl(40 12% 9% / 0.08);
+    --shadow-2: 0 0 0 1px hsl(40 12% 9% / 0.08);
+    --shadow-3: 0 0 0 1px hsl(40 12% 9% / 0.1);
 
     --background: var(--surface-0);
-    --foreground: 0 0% 9%;            /* #181818 */
+    --foreground: 40 13% 9%;
     --card: var(--surface-1);
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 40 13% 9%;
     --popover: var(--surface-3);
-    --popover-foreground: 0 0% 9%;
-    --primary: 11 58% 52%;            /* #c95a3f */
+    --popover-foreground: 40 13% 9%;
+    --primary: 29 82% 42.7%;            /* tower amber */
     --primary-foreground: 0 0% 100%;
     --secondary: var(--surface-4);
-    --secondary-foreground: 0 0% 9%;
+    --secondary-foreground: 40 13% 9%;
     --muted: var(--surface-2);
-    --muted-foreground: 220 8% 40%;     /* #4a4a4a */
+    --muted-foreground: 38 5% 41.4%;
     --accent: var(--primary);
     --accent-foreground: 0 0% 100%;
     --destructive: 4 62% 45%;         /* #b8362c */
     --destructive-foreground: 0 0% 100%;
-    --border: 220 10% 83%;
-    --input: 220 10% 83%;
+    --border: 40 12% 82%;
+    --input: 40 12% 82%;
     --ring: var(--primary);
 
     --salmon: var(--primary);
@@ -178,8 +173,8 @@ export const THEME_TOKENS_CSS = `
     --agenda-2: 212 60% 41%;
     --agenda-3: 144 50% 30%;
     --agenda-4: 32 78% 34%;
-    --agenda-5: 272 45% 46%;
-    --agenda-6: 184 62% 27%;
+    --agenda-5: 32 78% 34%;
+    --agenda-6: 212 60% 41%;
 
     --rooks-grid: transparent;
 

@@ -10,6 +10,7 @@ import { LicenseBanner } from '@/components/license-banner';
 import { UpdateBannerHost } from '@/components/updates/update-banner';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { BrowserToggle } from '@/components/browser-toggle';
+import { CommandPaletteTrigger } from '@/components/command-palette';
 import { VerticalNav } from '@/components/vertical-nav';
 import { InstanceBadge, useInstance } from '@/components/instance-provider';
 import { Slot } from '@/lib/plugin-host/render';
@@ -127,7 +128,7 @@ export function TopBar({
     <>
     <header
       ref={headerRef}
-      className="sticky top-0 z-20 w-full"
+      className="sticky top-0 z-20 w-full md:pl-[var(--rooks-nav-w)]"
     >
       {/* Drawn over the menu bar once it has slid up behind them. */}
       <div className="relative z-[1]">
@@ -174,17 +175,15 @@ export function TopBar({
         {/* The logotype sets the band height; the padding only breathes
             around it. The right-hand controls (h-9) are shorter and just
             centre themselves in the row. */}
-        <div className="flex items-center gap-3 px-3 py-1.5 sm:px-4">
+        <div className="flex h-[46px] items-center gap-3 px-3 sm:px-4">
           <Link
             prefetch={false}
             href="/"
-            aria-label={`${instance.displayName} — cockpit`}
-            className="relative z-10 flex shrink-0 items-center no-underline"
+            aria-label={`${instance.displayName} — desk`}
+            className="relative z-10 flex shrink-0 items-center no-underline md:hidden"
           >
-            {/* Discreet on purpose: the mark is ~1.6× as wide as it is
-                tall, a small height already reads at a glance. */}
-            <BrandLogo className="h-5 md:h-6" />
-            {/* Only the development instance paints anything here. */}
+            {/* Mobile only: desktop logo lives in the inverted-L sidebar. */}
+            <BrandLogo className="h-5" />
             <InstanceBadge className="ml-1.5" />
           </Link>
           {/* From `md` the middle zone sits in the bar, between the logo and
@@ -211,7 +210,8 @@ export function TopBar({
           <Slot name="topbar.item" />
           {/* Mobile: the hamburger takes the place of the theme toggle,
               which moves into the drawer (see VerticalNav). */}
-          <div className="hidden items-center md:flex">
+          <div className="hidden items-center gap-1 md:flex">
+            <CommandPaletteTrigger />
             <BrowserToggle />
             <ThemeToggle />
           </div>

@@ -159,7 +159,7 @@ export function NavLink({
       } : undefined}
       title={showLabel ? undefined : label}
       className={cn(
-        'flex items-center gap-3 overflow-hidden whitespace-nowrap rounded-md px-3 py-2 text-[12.5px] no-underline transition-colors',
+        'flex h-[30px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-[6px] px-3 text-[13px] no-underline transition-colors duration-150',
         active
           ? 'bg-primary/10 text-primary'
           : 'text-muted-foreground hover:bg-muted hover:text-foreground',

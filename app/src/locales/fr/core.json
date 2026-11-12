@@ -328,7 +328,7 @@
     "dismiss": "Masquer {name} (il revient à sa prochaine mission)"
   },
   "nav": {
-    "cockpit": "Cockpit",
+    "cockpit": "Desk",
     "chat": "Chat",
     "brain": "Brain",
     "agents": "Agents",
@@ -4622,6 +4622,18 @@
         "diskFull": "Pas assez d'espace disque pour télécharger l'installeur.",
         "filesystem": "L'installeur n'a pas pu être enregistré dans le dossier de données de Rooks."
       }
+    }
+  },
+  "commandPalette": {
+    "title": "Command palette",
+    "placeholder": "Search pages and actions…",
+    "placeholderShort": "Search",
+    "empty": "Nothing matches.",
+    "footer": "Jump anywhere",
+    "appearance": "Appearance",
+    "group": {
+      "go": "Go",
+      "customize": "Customize"
     }
   }
 }

@@ -39,11 +39,11 @@ test('the unfolded strip follows the rail: same width, same pace', () => {
   assert.match(css, /@property --rooks-glass-rail-w \{\s*syntax: '<length>';/);
   assert.match(css, /\.rooks-glass-rail \{[^}]*--rooks-glass-rail-w: var\(--rooks-nav-w\);/);
   assert.match(css, /\.rooks-glass-rail \{[^}]*transition: --rooks-glass-rail-w 150ms cubic-bezier\(0\.4, 0, 0\.2, 1\);/);
-  // Unfolded, the rail is `w-56` (14rem) and the strip says the same.
-  assert.match(css, /\.rooks-glass-rail\[data-expanded\] \{ --rooks-glass-rail-w: 14rem; \}/);
-  assert.match(nav, /expanded \? 'w-56' : 'w-\[var\(--rooks-nav-w\)\]'/);
+  // Unfolded, the rail is 232px and the strip says the same.
+  assert.match(css, /\.rooks-glass-rail\[data-expanded\] \{ --rooks-glass-rail-w: 232px; \}/);
+  assert.match(nav, /expanded \? 'w-\[232px\]' : 'w-\[var\(--rooks-nav-w\)\]'/);
   assert.match(nav, /'rooks-nav-rail [^']*duration-150/);
-  assert.match(nav, /const NAV_W_PINNED = '224px';/);
+  assert.match(nav, /const NAV_W_PINNED = '232px';/);
   assert.match(nav, /<GlassRail expanded=\{expanded\} \/>/);
 });
 

@@ -48,17 +48,19 @@ function railClass(html: string): string {
 }
 
 test('a pinned rail is painted expanded by the server render (full reload)', async () => {
-  assert.match(railClass(await render({ pinned: true })), /\bw-56\b/);
+  assert.match(railClass(await render({ pinned: true })), /w-\[232px\]/);
 });
 
-test('an unpinned or unseeded rail is painted collapsed', async () => {
-  assert.doesNotMatch(railClass(await render({ pinned: false })), /\bw-56\b/);
-  assert.doesNotMatch(railClass(await render(undefined)), /\bw-56\b/);
-  assert.doesNotMatch(railClass(await render(null)), /\bw-56\b/);
+test('an unpinned rail is painted collapsed; unseeded defaults to desk width', async () => {
+  assert.doesNotMatch(railClass(await render({ pinned: false })), /w-\[232px\]/);
+  // Rows that never stored a pin open expanded (inverted-L desk).
+  assert.match(railClass(await render(undefined)), /w-\[232px\]/);
+  assert.match(railClass(await render(null)), /w-\[232px\]/);
 });
 
 test('a seed derived for another account is ignored', async () => {
-  assert.doesNotMatch(railClass(await render({ pinned: true }, 'owner-b')), /\bw-56\b/);
+  // Ignored seed reads as unseeded — inverted-L desk opens expanded.
+  assert.match(railClass(await render({ pinned: true }, 'owner-b')), /w-\[232px\]/);
 });
 
 test('the seeded scope is the one the client derives', async () => {
@@ -74,8 +76,8 @@ test('navPinnedOf only reads a literal true', () => {
 
 test('the pinned gutter is reserved on desktop widths only', () => {
   const css = readFileSync(join(process.cwd(), 'src', 'styles', 'globals.css'), 'utf8');
-  const m = /@media \(min-width: 768px\) \{\s*:root\[data-nav-pinned\] \{\s*--rooks-nav-w: 224px;/.exec(css);
-  assert.ok(m, 'data-nav-pinned reserves 224px under min-width: 768px');
+  const m = /@media \(min-width: 768px\) \{\s*:root\[data-nav-pinned\] \{\s*--rooks-nav-w: 232px;/.exec(css);
+  assert.ok(m, 'data-nav-pinned reserves 232px under min-width: 768px');
   const layout = readFileSync(join(process.cwd(), 'src', 'app', 'layout.tsx'), 'utf8');
   assert.match(layout, /data-nav-pinned=\{navPinned \? '' : undefined\}/);
   assert.match(layout, /navScope=\{navScope\}/);

@@ -314,7 +314,7 @@
     "dismiss": "{name} 숨기기 (다음 미션 때 다시 나타남)"
   },
   "nav": {
-    "cockpit": "콕핏",
+    "cockpit": "Desk",
     "chat": "채팅",
     "brain": "브레인",
     "agents": "에이전트",
@@ -4495,5 +4495,17 @@
   },
   "mcpTab": {
     "yourServers": "내 MCP 서버"
+  },
+  "commandPalette": {
+    "title": "Command palette",
+    "placeholder": "Search pages and actions…",
+    "placeholderShort": "Search",
+    "empty": "Nothing matches.",
+    "footer": "Jump anywhere",
+    "appearance": "Appearance",
+    "group": {
+      "go": "Go",
+      "customize": "Customize"
+    }
   }
 }

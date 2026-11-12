@@ -28,6 +28,7 @@ import { SlotSingle } from '@/lib/plugin-host/render';
 import { ThemeFloor } from '@/lib/plugin-host/theme-floor';
 import { ThemeColorSync } from '@/components/theme-color-sync';
 import { Toaster } from '@/components/ui/sonner';
+import { CommandPaletteHost } from '@/components/command-palette';
 import { AgentEditorModal } from '@/components/agent-editor/agent-editor-modal';
 import { UnsavedDocumentDialog } from '@/components/chat/unsaved-document-dialog';
 import { ConfirmDialogHost } from '@/components/confirm-dialog/confirm-dialog';
@@ -323,6 +324,7 @@ export default async function RootLayout({
               browser panel is pinned. Pages call `toast()` and nothing
               else. */}
           <Toaster />
+          <CommandPaletteHost />
           {/* "Save changes?" before a document closes: asked by an island
               tab that may be unmounted, so it lives here, once. */}
           <UnsavedDocumentDialog />

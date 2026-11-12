@@ -70,7 +70,7 @@ export function ThemeProvider({
   const revision = useRef(0);
   const [scheme, setSchemeState] = useState<ColorScheme>(initialScheme);
   const [chosen, setChosen] = useState<ColorScheme | null>(null);
-  const [schemeMode, setSchemeModeState] = useState<SchemeMode>('dark');
+  const [schemeMode, setSchemeModeState] = useState<SchemeMode>('system');
   const [os, setOs] = useState<ColorScheme>('dark');
 
   useEffect(() => {

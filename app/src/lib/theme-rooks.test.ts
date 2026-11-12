@@ -1,6 +1,6 @@
 /**
- * The Rooks theme (Carbon Tower): built-in plugin package, floor copy equality,
- * cool graphite + signal orange — not the upstream violet/peach system.
+ * The Rooks theme (moodboard): built-in plugin package, floor copy equality,
+ * warm near-black / cream + tower amber — not teal, purple, or grid glow.
  */
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -47,7 +47,7 @@ test('installed is not worn: the loader mounts it only for the account that chos
   assert.equal(isClientPluginWanted(plugin, { theme: '@rooks/ui-theme', layout: '@rooks/ui-layout' }), false);
 });
 
-test('the package registers its palette and atmosphere in the theme slot', async (t) => {
+test('the package registers its palette in the theme slot', async (t) => {
   const platform = clientSource.replace(/import React from 'react'\n/, 'const React = globalThis.__rooksThemeReact\n');
   assert.notEqual(platform, clientSource, 'the client imports react');
   Object.assign(globalThis, { __rooksThemeReact: React });
@@ -60,7 +60,8 @@ test('the package registers its palette and atmosphere in the theme slot', async
   mod.apply({ slots: { register: (options: { slot: string }, C: React.ComponentType) => { slot = options.slot; Component = C; return () => undefined; } } });
   assert.equal(slot, 'theme');
   const html = renderToStaticMarkup(React.createElement(Component!));
-  assert.ok(html.includes('id="rooks-theme-rooks"') && html.includes('--surface-0: 220 10% 7%') && html.includes('linear-gradient'));
+  assert.ok(html.includes('id="rooks-theme-rooks"') && html.includes('--surface-0: 240 4% 4.5%'));
+  assert.ok(!html.includes('linear-gradient'), 'no decorative grid or glow');
 });
 
 test('the floor copy is the package\'s tokens, word for word', () => {
@@ -69,36 +70,39 @@ test('the floor copy is the package\'s tokens, word for word', () => {
   assert.equal(ROOKS_THEME_TOKENS_CSS, tokens, 'app/src/plugins-client/theme-rooks-floor.ts must copy plugins/theme-rooks/lib/client.js');
 });
 
-test('the palette: cool graphite in dark, cool paper in light, signal orange', () => {
+test('the palette: warm near-black dark, cream light, tower amber, Geist', () => {
   const [dark, light] = template('TOKENS').split(':root.light');
   assert.ok(dark && light);
-  assert.match(dark, /--surface-0: 220 10% 7%;/);
+  assert.match(dark, /--surface-0: 240 4% 4\.5%;/);
   const lightness = (name: string) => Number(new RegExp(`--${name}: \\d+ \\d+% ([\\d.]+)%`).exec(dark)?.[1]);
   assert.ok(lightness('surface-0') - lightness('chrome') >= 2, 'islands stand off the frame');
   assert.ok(lightness('surface-1') - lightness('surface-0') >= 2, 'cards stand off the islands');
   assert.ok(lightness('border') >= lightness('surface-4'), 'borders at or above the highest surface');
-  assert.match(dark, /--primary: 24 95% 53%;/);
-  assert.match(dark, /--font-sans: "Sora"/);
-  assert.match(light, /--surface-0: 210 18% 97\.5%;/);
-  assert.match(light, /--primary: 24 90% 45%;/);
+  assert.match(dark, /--primary: 31 79% 56\.9%;/);
+  assert.match(dark, /--font-sans: "Geist"/);
+  assert.match(dark, /--font-mono: "Geist Mono"/);
+  assert.match(light, /--surface-0: 42 31% 93\.7%;/);
+  assert.match(light, /--primary: 29 82% 42\.7%;/);
   const surfaces = (block: string) => [...block.matchAll(/--surface-\d: (\d+) (\d+)%/g)].map((m) => ({ h: Number(m[1]), s: Number(m[2]) }));
   assert.ok(surfaces(dark).length >= 5 && surfaces(light).length >= 5);
-  for (const { h } of surfaces(dark)) assert.ok(h >= 210 && h <= 230, `cool graphite, not violet: ${h}`);
-  assert.match(light, /--surface-0: 210 18% 97\.5%;/, 'cool paper canvas');
-  assert.ok(!/32 42% 93\.9%/.test(light), 'no beige cream canvas');
+  for (const { h } of surfaces(dark)) assert.ok(h >= 230 && h <= 250, `warm near-black, not teal/violet: ${h}`);
+  assert.match(light, /--surface-0: 42 31% 93\.7%;/, 'cream paper canvas');
+  assert.ok(!/173 |174 |263 /.test(dark + light), 'no teal or purple accents in the floor');
 });
 
-test('atmosphere uses a grid, stays out of the floor', () => {
+test('atmosphere is flat — no grid or glow', () => {
   const atmo = template('ATMO');
-  assert.ok(atmo.includes('linear-gradient'));
+  assert.ok(atmo.includes('background-color'));
+  assert.ok(!atmo.includes('linear-gradient'));
+  assert.ok(!atmo.includes('radial-gradient'));
   assert.ok(!ROOKS_THEME_TOKENS_CSS.includes('linear-gradient(hsl(var(--foreground)'));
 });
 
 test('the floor paints Rooks\'s tokens before hydration for an account that wears it, after the product\'s', () => {
   const worn = renderToStaticMarkup(React.createElement(Floor, { theme: ROOKS_THEME_PLUGIN }));
   assert.ok(worn.includes('@layer rooks-floor'));
-  assert.ok(worn.lastIndexOf('--surface-0: 220 10% 7%') > worn.indexOf('--surface-0: 220 10% 7%') || worn.includes('--surface-0: 220 10% 7%'), 'Rooks floor present');
-  assert.ok(worn.includes('--primary: 24 95% 53%'));
+  assert.ok(worn.includes('--surface-0: 240 4% 4.5%'), 'Rooks floor present');
+  assert.ok(worn.includes('--primary: 31 79% 56.9%'));
   const product = renderToStaticMarkup(React.createElement(Floor, { theme: '@rooks/ui-theme' }));
-  assert.ok(!product.includes('24 95% 53%') || product.includes('--primary'), 'product theme floor still paints');
+  assert.ok(product.includes('--primary'), 'product theme floor still paints');
 });

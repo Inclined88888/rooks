@@ -314,7 +314,7 @@
     "dismiss": "{name} を非表示 (次のミッションで再表示されます)"
   },
   "nav": {
-    "cockpit": "コックピット",
+    "cockpit": "Desk",
     "chat": "チャット",
     "brain": "ブレイン",
     "agents": "エージェント",
@@ -4495,5 +4495,17 @@
   },
   "mcpTab": {
     "yourServers": "自分の MCP サーバー"
+  },
+  "commandPalette": {
+    "title": "Command palette",
+    "placeholder": "Search pages and actions…",
+    "placeholderShort": "Search",
+    "empty": "Nothing matches.",
+    "footer": "Jump anywhere",
+    "appearance": "Appearance",
+    "group": {
+      "go": "Go",
+      "customize": "Customize"
+    }
   }
 }

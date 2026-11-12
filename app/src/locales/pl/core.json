@@ -314,7 +314,7 @@
     "dismiss": "Ukryj {name} (wróci przy następnej misji)"
   },
   "nav": {
-    "cockpit": "Kokpit",
+    "cockpit": "Desk",
     "chat": "Czat",
     "brain": "Mózg",
     "agents": "Agenci",
@@ -4495,5 +4495,17 @@
   },
   "mcpTab": {
     "yourServers": "Twoje serwery MCP"
+  },
+  "commandPalette": {
+    "title": "Command palette",
+    "placeholder": "Search pages and actions…",
+    "placeholderShort": "Search",
+    "empty": "Nothing matches.",
+    "footer": "Jump anywhere",
+    "appearance": "Appearance",
+    "group": {
+      "go": "Go",
+      "customize": "Customize"
+    }
   }
 }
