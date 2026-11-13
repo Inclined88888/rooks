@@ -27,9 +27,9 @@ type SchemeContextValue = {
   setScheme: (scheme: ColorScheme) => void;
   /** What the page paints: the account's scheme, or on the onboarding surfaces the one picked there, else the OS one. */
   applied: ColorScheme;
-  /** The onboarding's switch: overrides the default dark until the account exists and takes it (`firstRunScheme`). */
+  /** Onboarding switch: Light default, or System→OS until the account exists. */
   chooseFirstRunScheme: (scheme: ColorScheme) => void;
-  /** Customize: light, dark, or follow the OS (local preference). */
+  /** Customize: Light or System (legacy "dark" still honoured if already stored). */
   schemeMode: SchemeMode;
   setSchemeMode: (mode: SchemeMode) => void;
 };
@@ -70,14 +70,13 @@ export function ThemeProvider({
   const revision = useRef(0);
   const [scheme, setSchemeState] = useState<ColorScheme>(initialScheme);
   const [chosen, setChosen] = useState<ColorScheme | null>(null);
-  const [schemeMode, setSchemeModeState] = useState<SchemeMode>('system');
-  const [os, setOs] = useState<ColorScheme>('dark');
+  const [schemeMode, setSchemeModeState] = useState<SchemeMode>('light');
+  const [os, setOs] = useState<ColorScheme>('light');
 
   useEffect(() => {
-    const first = chosenFirstRunScheme();
-    setChosen(first);
-    // Onboarding pick wins over a stale local schemeMode until an account exists.
-    setSchemeModeState(first === 'light' || first === 'dark' ? first : readSchemeMode());
+    setChosen(chosenFirstRunScheme());
+    // Mode from localStorage (Light | System); never infer mode from the painted color.
+    setSchemeModeState(readSchemeMode());
     setOs(osScheme());
     const mq = window.matchMedia('(prefers-color-scheme: light)');
     const onChange = () => setOs(mq.matches ? 'light' : 'dark');
@@ -85,13 +84,16 @@ export function ThemeProvider({
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const onboardingFollow = schemeFollowsSystem(pathname ?? '/');
-  const followOs = schemeMode === 'system' && !onboardingFollow;
-  const applied: ColorScheme = onboardingFollow
-    ? (chosen ?? FIRST_RUN_DEFAULT_SCHEME)
-    : followOs
-      ? os
-      : scheme;
+  const onFirstRun = schemeFollowsSystem(pathname ?? '/');
+  const followOs = schemeMode === 'system';
+  // First launch: Light until the person picks System. System always follows the OS.
+  const applied: ColorScheme = followOs
+    ? os
+    : onFirstRun
+      ? (chosen ?? FIRST_RUN_DEFAULT_SCHEME)
+      : schemeMode === 'light' || schemeMode === 'dark'
+        ? schemeMode
+        : scheme;
 
   useEffect(() => {
     try {
@@ -146,9 +148,9 @@ export function ThemeProvider({
     }}>
       <NextThemesProvider
         attribute="class"
-        defaultTheme="dark"
-        forcedTheme={followOs ? undefined : applied}
-        enableSystem={followOs}
+        defaultTheme="light"
+        forcedTheme={applied}
+        enableSystem={false}
         themes={['light', 'dark']}
       >
         {children}

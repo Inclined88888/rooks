@@ -48,7 +48,6 @@
     "scheme": {
       "label": "색 모드",
       "light": "밝게",
-      "dark": "어둡게",
       "system": "시스템"
     },
     "discover": {

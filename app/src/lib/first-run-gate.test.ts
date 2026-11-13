@@ -114,11 +114,11 @@ test('the restart no longer holds anyone: the banner offers it', () => {
   assert.equal(firstRunTarget({ pathname: '/', ...pending, teamOnboarding: true, mainAgentOnboarding: true }), WELCOME_PATH);
 });
 
-test('the onboarding opens dark for everyone, whatever the OS, until someone picks', () => {
+test('the onboarding opens light for everyone, whatever the OS, until someone picks', () => {
   const globals = globalThis as { window?: unknown };
   assert.equal(firstRunScheme(), undefined, 'no browser, no scheme');
   for (const light of [true, false]) {
     globals.window = { matchMedia: () => ({ matches: light }), sessionStorage: { getItem: () => null } };
-    try { assert.equal(firstRunScheme(), 'dark', `OS ${light ? 'light' : 'dark'}: dark`); } finally { delete globals.window; }
+    try { assert.equal(firstRunScheme(), 'light', `OS ${light ? 'light' : 'dark'}: light`); } finally { delete globals.window; }
   }
 });

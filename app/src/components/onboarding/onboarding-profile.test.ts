@@ -168,13 +168,12 @@ test('the step shows three rows with a mascot each; a click records the profile,
   });
 });
 
-test('a refused write says so and stays on the step', async () => {
+test('a refused write still continues with a local note', async () => {
   await renderStep((call) => (call.method === 'PUT' ? Response.json({ error: 'unauthorized' }, { status: 401 }) : Response.json({ profile: null })), async (host, state, React) => {
     await React.act(async () => { row(host, 'developer')?.click(); });
     await settle(React);
-    assert.equal(state.nexts, 0);
-    assert.ok(host.querySelector('[role="alert"]'), 'the failure is shown');
-    assert.equal(row(host, 'developer')?.disabled, false, 'the rows can be clicked again');
+    assert.equal(state.nexts, 1, 'Skip-auth / warming session must not block the agent step');
+    assert.ok(host.querySelector('[role="status"]'), 'saved-locally note is shown');
   });
 });
 

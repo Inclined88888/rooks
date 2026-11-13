@@ -116,7 +116,7 @@ async function loadInitialMe(): Promise<{ scheme: ColorScheme; owner: string | n
     if (!res.ok) return { scheme: DEFAULT_USER_PREFS.scheme, owner: null, theme: DEFAULT_USER_PREFS.theme };
     const body = (await res.json()) as { prefs?: { scheme?: unknown; theme?: unknown }; user?: { id?: unknown } | null };
     return {
-      scheme: body.prefs?.scheme === 'light' ? 'light' : 'dark',
+      scheme: body.prefs?.scheme === 'dark' ? 'dark' : 'light',
       owner: typeof body.user?.id === 'string' ? body.user.id : null,
       // The theme the page is painted with before the plugins mount (`ThemeFloor`).
       theme: typeof body.prefs?.theme === 'string' && body.prefs.theme ? body.prefs.theme : DEFAULT_USER_PREFS.theme,
@@ -245,16 +245,13 @@ export default async function RootLayout({
     >
       <head>
         <script type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify({ imports: PLATFORM_MODULES }) }} />
-        {/* Onboarding opens dark for everyone, and it must do so BEFORE the
-            first paint: the scheme is resolved on the server from the account
-            preference, which does not exist yet during a first run. Same
-            decision as `ThemeProvider` (`schemeFollowsSystem`), applied early
-            enough to be invisible; a scheme picked on the onboarding's switch
-            (`FIRST_RUN_SCHEME_KEY`) wins, as it does there. The slash character class survives template escaping.
-            `suppressHydrationWarning` on <html> is what lets the
-            class differ from the server's. */}
+        {/* First-run opens light for everyone before paint. Dark only when the
+            onboarding switch stored dark (System + OS dark). Same decision as
+            ThemeProvider / FIRST_RUN_SCHEME_KEY. The slash character class
+            survives template escaping. `suppressHydrationWarning` on <html>
+            lets the class differ from the server's. */}
         <script
-          dangerouslySetInnerHTML={{ __html: `(function(){try{var a=${JSON.stringify(FIRST_RUN_ALLOWED)};var p=location.pathname.replace(/[/]+$/,'')||'/';if(!a.some(function(x){return p===x||p.indexOf(x+'/')===0;}))return;var s=null;try{s=sessionStorage.getItem(${JSON.stringify(FIRST_RUN_SCHEME_KEY)});}catch(e){}var l=s==='light';var c=document.documentElement.classList;c.toggle('light',l);c.toggle('dark',!l);}catch(e){}})()` }}
+          dangerouslySetInnerHTML={{ __html: `(function(){try{var a=${JSON.stringify(FIRST_RUN_ALLOWED)};var p=location.pathname.replace(/[/]+$/,'')||'/';if(!a.some(function(x){return p===x||p.indexOf(x+'/')===0;}))return;var s=null;try{s=sessionStorage.getItem(${JSON.stringify(FIRST_RUN_SCHEME_KEY)});}catch(e){}var d=s==='dark';var c=document.documentElement.classList;c.toggle('dark',d);c.toggle('light',!d);}catch(e){}})()` }}
         />
       </head>
       <body>

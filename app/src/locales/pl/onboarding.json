@@ -48,7 +48,6 @@
     "scheme": {
       "label": "Tryb kolorów",
       "light": "Jasny",
-      "dark": "Ciemny",
       "system": "System"
     },
     "discover": {

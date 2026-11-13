@@ -28,7 +28,7 @@ import { GlassTuningSettings } from './ui-theme-glass-tuning';
 import { GlassProfilesSection } from '@/components/glass-profiles';
 import { mascotAnimationPref, useMascotAnimation } from '@/components/mascot/mascot-animation-pref';
 import type { SchemeMode } from '@/lib/scheme-mode';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Monitor, Sun } from 'lucide-react';
 
 type CatalogPayload = { plugins?: AppearanceCatalogRow[] };
 
@@ -56,7 +56,6 @@ function SchemeModeSection(): ReactElement {
   }
   const choices: { mode: SchemeMode; Icon: typeof Sun; label: string }[] = [
     { mode: 'light', Icon: Sun, label: t('appearance.schemeLight') },
-    { mode: 'dark', Icon: Moon, label: t('appearance.schemeDark') },
     { mode: 'system', Icon: Monitor, label: t('appearance.schemeSystem') },
   ];
   return (

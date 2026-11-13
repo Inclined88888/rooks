@@ -1,11 +1,8 @@
 /**
  * The profile a person chose in the onboarding (developer, automation,
- * beginner): one row per account, so every agent of that account can fit its
- * explanations and proposals to them later (`onboarding_profile_get`).
- *
- * The agent records it once the person answered: a mission writes for the
- * account that launched it, never for another (`callerOf`). A signed-in browser
- * reads and writes its own.
+ * beginner): one row per account. During first-run with zero users (Skip
+ * account), reads/writes a machine-scoped setup row so the agent step never
+ * 401s into an error banner.
  */
 import type { Router } from 'express';
 import { z } from 'zod';
@@ -14,6 +11,8 @@ import { auditRequest } from '../../users/audit-actor.js';
 import { callerOf } from './widget-routes.js';
 
 export const ONBOARDING_PROFILE_SCOPE = 'onboarding.profile';
+/** Machine-scoped row while no account exists yet (Skip path). */
+export const FIRST_RUN_PROFILE_OWNER = '';
 export const ONBOARDING_PROFILES = ['developer', 'automation', 'beginner'] as const;
 export type OnboardingProfile = (typeof ONBOARDING_PROFILES)[number];
 
@@ -34,8 +33,17 @@ export function readOnboardingProfile(owner: string): Stored | null {
   }
 }
 
+function firstRunOpen(): boolean {
+  return dbApi.countUsers() === 0;
+}
+
 export function registerOnboardingProfileRoutes(app: Router): void {
   app.get('/api/onboarding/profile', (req, res) => {
+    if (!req.auth && firstRunOpen()) {
+      const stored = readOnboardingProfile(FIRST_RUN_PROFILE_OWNER);
+      res.json({ profile: stored?.profile ?? null, at: stored?.at ?? null });
+      return;
+    }
     const caller = callerOf(req, res, 'read');
     if (!caller) return;
     const stored = readOnboardingProfile(caller.owner.id);
@@ -43,8 +51,6 @@ export function registerOnboardingProfileRoutes(app: Router): void {
   });
 
   app.put('/api/onboarding/profile', (req, res) => {
-    const caller = callerOf(req, res, 'write');
-    if (!caller) return;
     if (Buffer.byteLength(JSON.stringify(req.body ?? null)) > BODY_MAX_BYTES) {
       res.status(413).json({ error: 'too_large' });
       return;
@@ -55,6 +61,15 @@ export function registerOnboardingProfileRoutes(app: Router): void {
       return;
     }
     const stored: Stored = { profile: parsed.data.profile, at: Date.now() };
+
+    if (!req.auth && firstRunOpen()) {
+      dbApi.uiLayoutSet(FIRST_RUN_PROFILE_OWNER, ONBOARDING_PROFILE_SCOPE, JSON.stringify(stored));
+      res.json(stored);
+      return;
+    }
+
+    const caller = callerOf(req, res, 'write');
+    if (!caller) return;
     dbApi.uiLayoutSet(caller.owner.id, ONBOARDING_PROFILE_SCOPE, JSON.stringify(stored));
     auditRequest(req, 'onboarding.profile', parsed.data.profile);
     res.json(stored);

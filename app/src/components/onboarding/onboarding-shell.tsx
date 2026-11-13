@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * Onboarding frame: app-window feel (hairline stage, step rail, flat surface).
- * No radial glow, no language step, no system-health toast mid-flow.
+ * Onboarding frame. Layout/stage follows Timon (full viewport, step owns its
+ * width) — the calm 520px card cage crushed the agent step on real Mac sizes.
+ * Rooks chrome only: hairline top bar, no radial glow.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { flushSync } from 'react-dom';
@@ -117,9 +118,8 @@ export function OnboardingShell({
   return (
     <OnboardingProvider value={nav}>
       <div className="fixed inset-0 overflow-hidden bg-background text-foreground">
-        {/* App chrome: inverted-L hairline frame */}
-        <header className="absolute inset-x-0 top-0 z-20 flex h-12 items-center justify-between border-b border-border px-4">
-          <div className="flex min-w-[140px] items-center gap-2">
+        <header className="absolute inset-x-0 top-0 z-20 flex h-12 items-center justify-between border-b border-border px-3 sm:px-4">
+          <div className="flex min-w-0 shrink-0 items-center gap-2 sm:min-w-[120px]">
             {canGoBack(at.step) ? (
               <Button variant="ghost" size="sm" className="h-8 gap-1 rounded-lg px-2 text-[13px]" onClick={onBack}>
                 <ChevronLeft className="h-4 w-4" aria-hidden />
@@ -133,7 +133,7 @@ export function OnboardingShell({
             )}
           </div>
           {dots ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 px-2">
               <span className="sr-only">
                 {t('onboarding.progress', { current: stepIndex + 1, total: DOTTED_STEPS.length })}
               </span>
@@ -151,17 +151,14 @@ export function OnboardingShell({
                 />
               ))}
             </div>
-          ) : <span className="h-1.5 w-5" aria-hidden />}
-          <div className="flex min-w-[140px] justify-end">
+          ) : <span className="h-1.5 w-5 flex-1" aria-hidden />}
+          <div className="flex min-w-0 shrink-0 justify-end sm:min-w-[120px]">
             <SchemeSwitch className="rounded-lg border border-border bg-card p-0.5" />
           </div>
         </header>
-        <main className="absolute inset-0 top-12 overflow-auto">
-          <div className="mx-auto flex min-h-full w-full max-w-[520px] items-center justify-center px-6 py-8">
-            <div className="relative w-full overflow-hidden rounded-lg border border-border bg-card">
-              {Step && <Gate step={at.step}><Step key={at.step} /></Gate>}
-            </div>
-          </div>
+        {/* Timon stage: step owns its width — no outer max-w cage. */}
+        <main className="absolute inset-0 top-12 flex flex-col items-center justify-center overflow-auto p-4 sm:p-6 md:p-8">
+          {Step && <Gate step={at.step}><Step key={at.step} /></Gate>}
         </main>
         {companions.map((Companion, i) => <Companion key={i} step={at.step} stays={stays} />)}
       </div>

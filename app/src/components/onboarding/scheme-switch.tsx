@@ -1,21 +1,17 @@
 'use client';
 
 /**
- * Colour mode switch on onboarding: light, dark, or system.
- * Square segments — not rounded-full pills.
+ * Colour mode on onboarding: Light (default) or System. No manual Dark —
+ * dark only when System follows an OS dark appearance.
  */
 import type { ReactElement } from 'react';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Monitor, Sun } from 'lucide-react';
 import { useOptionalColorScheme } from '@/components/theme-provider';
-import { osScheme, storeSchemeMode, type SchemeMode } from '@/lib/scheme-mode';
+import { osScheme, SCHEME_MODE_CHOICES, storeSchemeMode } from '@/lib/scheme-mode';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-const CHOICES: readonly { mode: SchemeMode; Icon: typeof Sun }[] = [
-  { mode: 'light', Icon: Sun },
-  { mode: 'dark', Icon: Moon },
-  { mode: 'system', Icon: Monitor },
-];
+const ICONS: Record<'light' | 'system', typeof Sun> = { light: Sun, system: Monitor };
 
 export function SchemeSwitch({ className }: { className?: string }): ReactElement | null {
   const color = useOptionalColorScheme();
@@ -23,7 +19,8 @@ export function SchemeSwitch({ className }: { className?: string }): ReactElemen
   const { chooseFirstRunScheme, schemeMode, setSchemeMode } = color;
   return (
     <div role="group" aria-label={t('onboarding.scheme.label')} className={cn('flex gap-0.5 border border-border bg-muted/40 p-0.5', className)}>
-      {CHOICES.map(({ mode, Icon }) => {
+      {SCHEME_MODE_CHOICES.map((mode) => {
+        const Icon = ICONS[mode];
         const pressed = schemeMode === mode;
         return (
           <button
@@ -37,7 +34,7 @@ export function SchemeSwitch({ className }: { className?: string }): ReactElemen
               setSchemeMode(mode);
               storeSchemeMode(mode);
               if (mode === 'system') chooseFirstRunScheme(osScheme());
-              else chooseFirstRunScheme(mode);
+              else chooseFirstRunScheme('light');
             }}
             className={cn(
               'flex h-7 w-7 items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

@@ -48,7 +48,6 @@
     "scheme": {
       "label": "Farbmodus",
       "light": "Hell",
-      "dark": "Dunkel",
       "system": "System"
     },
     "discover": {

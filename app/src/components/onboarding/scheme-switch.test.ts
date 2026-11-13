@@ -1,7 +1,6 @@
 /**
- * The onboarding's light/dark/system switch, rendered under the real ThemeProvider:
- * System is the default (moodboard A-spec); a pick paints at once, outlives a
- * navigation, and is what the account step sends as the account's scheme.
+ * Onboarding Light | System switch under ThemeProvider: Light is the default;
+ * System follows the OS; a pick paints at once and outlives a navigation.
  */
 import '@/lib/i18n-test-locales';
 import assert from 'node:assert/strict';
@@ -29,7 +28,6 @@ async function render(osLight: boolean, stored: string | null, run: (host: HTMLE
   for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Node', 'MutationObserver', 'Event', 'getComputedStyle', 'localStorage', 'sessionStorage', 'matchMedia']) {
     install(key, key === 'window' ? dom.window : (dom.window as unknown as Record<string, unknown>)[key]);
   }
-  // What an earlier page of the same tab left (session storage survives a navigation).
   if (stored) dom.window.sessionStorage.setItem('rooks-onboarding-scheme', stored);
   install('IS_REACT_ACT_ENVIRONMENT', true);
   install('fetch', async () => new Response(JSON.stringify({ user: null }), { status: 200, headers: { 'content-type': 'application/json' } }));
@@ -44,7 +42,7 @@ async function render(osLight: boolean, stored: string | null, run: (host: HTMLE
   try {
     await React.act(async () => {
       root.render(React.createElement(PathnameContext.Provider, { value: '/onboarding' },
-        React.createElement(ThemeProvider, { initialScheme: 'dark', children: React.createElement(SchemeSwitch) })));
+        React.createElement(ThemeProvider, { initialScheme: 'light', children: React.createElement(SchemeSwitch) })));
     });
     await run(host, dom as unknown as Dom, React);
   } finally {
@@ -59,27 +57,38 @@ async function render(osLight: boolean, stored: string | null, run: (host: HTMLE
 
 const pressed = (host: HTMLElement): string | null => host.querySelector('[aria-pressed="true"]')?.getAttribute('data-scheme') ?? null;
 
-test('the switch defaults to System, follows the OS until someone picks, then paints the pick at once', async () => {
-  await render(true, null, async (host, dom, React) => {
+test('the switch defaults to Light, never offers Dark, and System follows the OS', async () => {
+  await render(false, null, async (host, dom, React) => {
     const { firstRunScheme } = await import('@/lib/first-run-gate');
-    assert.equal(pressed(host), 'system', 'no pick yet: System is the default');
-    // Until someone picks, first-run scheme falls back to the product dark default.
-    assert.equal(firstRunScheme(), 'dark', 'no pick: the account would still be dark');
-    await React.act(async () => { (host.querySelector('[data-scheme="light"]') as HTMLElement).click(); });
-    assert.equal(pressed(host), 'light');
-    assert.ok(dom.window.document.documentElement.classList.contains('light'), 'applied straight away');
-    assert.equal(dom.window.sessionStorage.getItem('rooks-onboarding-scheme'), 'light', 'kept for the next page of the flow');
-    assert.equal(firstRunScheme(), 'light', 'what the account step sends as the account scheme');
+    assert.equal(pressed(host), 'light', 'no pick yet: Light is the default');
+    assert.equal(host.querySelector('[data-scheme="dark"]'), null, 'Dark is not a manual choice');
+    assert.equal(firstRunScheme(), 'light', 'no pick: first launch stays light even when OS is dark');
+    assert.ok(dom.window.document.documentElement.classList.contains('light'));
+
+    await React.act(async () => { (host.querySelector('[data-scheme="system"]') as HTMLElement).click(); });
+    assert.equal(pressed(host), 'system');
+    assert.ok(dom.window.document.documentElement.classList.contains('dark'), 'System + OS dark paints dark');
+    assert.equal(dom.window.sessionStorage.getItem('rooks-onboarding-scheme'), 'dark');
+    assert.equal(dom.window.localStorage.getItem('rooks.appearance.schemeMode'), 'system');
   });
 });
 
-test('a pick made earlier in the flow survives a full navigation', async () => {
-  await render(false, 'light', async (host) => {
-    assert.equal(pressed(host), 'light', 'the stored pick wins over the System default');
+test('picking Light paints light and stores the mode', async () => {
+  await render(true, null, async (host, dom, React) => {
+    const { firstRunScheme } = await import('@/lib/first-run-gate');
+    await React.act(async () => { (host.querySelector('[data-scheme="system"]') as HTMLElement).click(); });
+    await React.act(async () => { (host.querySelector('[data-scheme="light"]') as HTMLElement).click(); });
+    assert.equal(pressed(host), 'light');
+    assert.ok(dom.window.document.documentElement.classList.contains('light'));
+    assert.equal(dom.window.sessionStorage.getItem('rooks-onboarding-scheme'), 'light');
+    assert.equal(firstRunScheme(), 'light');
+    assert.equal(dom.window.localStorage.getItem('rooks.appearance.schemeMode'), 'light');
   });
-  await render(true, 'auto', async (host) => {
-    // Junk in sessionStorage is ignored; the switch stays on System.
-    assert.equal(pressed(host), 'system', 'anything else in storage is ignored: System default');
+});
+
+test('a Light pick made earlier in the flow survives a full navigation', async () => {
+  await render(false, 'light', async (host) => {
+    assert.equal(pressed(host), 'light', 'stored Light wins over OS dark');
   });
 });
 

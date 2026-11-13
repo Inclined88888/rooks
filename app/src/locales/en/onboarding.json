@@ -6,7 +6,6 @@
     "scheme": {
       "label": "Colour mode",
       "light": "Light",
-      "dark": "Dark",
       "system": "System"
     },
     "splash": {
@@ -119,7 +118,8 @@
         "title": "I'm discovering",
         "description": "I want to understand AI agents, step by step."
       },
-      "failed": "Your choice could not be saved. Try again."
+      "failed": "Your choice could not be saved. Try again.",
+      "savedLocally": "Saved on this device. You can change it later."
     },
     "agent": {
       "names": "Rooks, Pixel, Ziggy, Misty, Oslo, Kiwi, Lumen, Sasha, Tempo, Pico",
@@ -135,6 +135,7 @@
       "will": "It will",
       "loading": "Loading your profile…",
       "profileError": "Your profile could not be read, so here is the simplest view.",
+      "profileFallback": "Starter templates — change anything later.",
       "retry": "Retry",
       "cap": {
         "base": "Chat with you in Rooks",
@@ -156,9 +157,9 @@
       "views": {
         "label": "View",
         "recommended": "Recommended for your profile",
-        "templates": "Beginner · Templates",
-        "interview": "Automation · Interview",
-        "sheet": "Developer · Sheet"
+        "templates": "Templates",
+        "interview": "Interview",
+        "sheet": "Sheet"
       },
       "templates": {
         "title": "Pick its profile",

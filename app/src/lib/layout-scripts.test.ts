@@ -33,10 +33,10 @@ function layoutScripts(): string[] {
   return scripts;
 }
 
-// The onboarding opens dark for everyone, whatever the OS (07d23060c): the
-// pre-paint script must not consult the OS at all, and outside the onboarding
-// it must leave the server's class alone.
-test('server-rendered layout scripts parse and paint the onboarding dark whatever the OS', () => {
+// First-run opens light for everyone, whatever the OS: the pre-paint script
+// must not consult the OS at all, and outside first-run it must leave the
+// server's class alone.
+test('server-rendered layout scripts parse and paint the onboarding light whatever the OS', () => {
   const scripts = layoutScripts().map((code) => new Script(code));
   for (const pathname of ['/', '/agents', '/chat', '/login', '/login///', '/setup', '/setup/team/', '/setup-other', "/projects/l'été ` </script>"]) {
     for (const light of [true, false]) {
@@ -51,16 +51,22 @@ test('server-rendered layout scripts parse and paint the onboarding dark whateve
       };
       for (const script of scripts) script.runInNewContext(context);
       assert.equal(osAsked, false, pathname);
-      assert.equal(classes.has('light'), false, pathname);
-      assert.equal(classes.has('dark'), true, pathname);
+      if (schemeFollowsSystem(pathname)) {
+        assert.equal(classes.has('light'), true, pathname);
+        assert.equal(classes.has('dark'), false, pathname);
+      } else {
+        // Outside first-run the script returns early — leaves the server's class.
+        assert.equal(classes.has('dark'), true, pathname);
+        assert.equal(classes.has('light'), false, pathname);
+      }
     }
   }
 });
 
-test('a scheme picked on the onboarding switch wins over the dark default, on the onboarding only', () => {
+test('a scheme picked on the onboarding switch wins over the light default, on the onboarding only', () => {
   const scripts = layoutScripts().map((code) => new Script(code));
   for (const pathname of ['/onboarding', '/login', '/chat']) {
-    for (const [stored, light, expected] of [['dark', true, 'dark'], ['light', false, 'light'], ['light', true, 'light'], ['auto', true, 'dark'], [null, true, 'dark']] as const) {
+    for (const [stored, light, expected] of [['dark', true, 'dark'], ['light', false, 'light'], ['light', true, 'light'], ['auto', true, 'light'], [null, true, 'light']] as const) {
       const classes = new Set(['dark']);
       const context = {
         location: { pathname },
@@ -73,6 +79,7 @@ test('a scheme picked on the onboarding switch wins over the dark default, on th
       for (const script of scripts) script.runInNewContext(context);
       const want = schemeFollowsSystem(pathname) ? expected : 'dark';
       assert.equal(classes.has('light'), want === 'light', `${pathname} ${String(stored)}`);
+      assert.equal(classes.has('dark'), want === 'dark', `${pathname} ${String(stored)}`);
     }
   }
 });

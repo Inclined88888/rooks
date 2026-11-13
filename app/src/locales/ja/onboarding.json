@@ -48,7 +48,6 @@
     "scheme": {
       "label": "カラーモード",
       "light": "ライト",
-      "dark": "ダーク",
       "system": "システム"
     },
     "discover": {

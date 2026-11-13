@@ -64,10 +64,9 @@ export const RESTART_PATH = '/setup/restart';
  * Does this page take its light/dark from the onboarding rather than from an account?
  *
  * The onboarding surfaces — the account form, then every `/setup` step — are
- * shown BEFORE a preference exists. They open dark for everyone, whatever the
- * OS (the maintainer, 05/11/2026: the brand is shown dark, people switch if they want);
- * the onboarding's switch picks the other one, and the account takes that
- * choice when it is created. Everywhere else the account's choice wins.
+ * shown BEFORE a preference exists. They open light for everyone (owner:
+ * first launch is Light; System is opt-in). The onboarding switch can pick
+ * System (follow OS) or stay Light; the account takes that choice when created.
  *
  * The same list as `FIRST_RUN_ALLOWED`, deliberately: login and `/setup` are one
  * continuous first-run surface (cf. `onboarding-backdrop.tsx`), and a scheme
@@ -78,8 +77,8 @@ export function schemeFollowsSystem(pathname: string): boolean {
   return FIRST_RUN_ALLOWED.some((allowed) => path === allowed || path.startsWith(`${allowed}/`));
 }
 
-/** The scheme of the first-run surfaces before anyone picks one: dark, for everyone. */
-export const FIRST_RUN_DEFAULT_SCHEME = 'dark' as const;
+/** The scheme of the first-run surfaces before anyone picks one: light, for everyone. */
+export const FIRST_RUN_DEFAULT_SCHEME = 'light' as const;
 
 /**
  * Where the light/dark picked on the onboarding's switch waits for the account
@@ -108,7 +107,7 @@ export function storeFirstRunScheme(scheme: 'light' | 'dark'): void {
   }
 }
 
-/** The scheme the first-run surfaces paint: the one picked on the switch, else dark. */
+/** The scheme the first-run surfaces paint: the one picked on the switch, else light. */
 export function firstRunScheme(): 'light' | 'dark' | undefined {
   if (typeof window === 'undefined') return undefined;
   return chosenFirstRunScheme() ?? FIRST_RUN_DEFAULT_SCHEME;

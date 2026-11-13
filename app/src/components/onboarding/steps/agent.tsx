@@ -14,7 +14,7 @@
  * opens its welcome conversation.
  */
 import { useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import { ArrowRight, Loader2, Star } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDirectoryPicker } from '@/components/directory-browser';
 import { isAgentLook, normalizeAgentLook } from '@/components/mascot/agent-look';
@@ -23,22 +23,20 @@ import { useBackendCatalog } from '@/lib/backends';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import {
-  AGENT_VIEWS, creationName, creationPatch, initialDraft, INTERVIEW_QUESTIONS, lookOf, missionsOf, namePool,
+  AGENT_VIEWS, creationName, creationPatch, initialDraft, INTERVIEW_QUESTIONS, missionsOf, namePool,
   randomName, readyToCreate, shownModel, TEMPLATES, type AgentDraft, type TemplateId,
 } from '../agent-draft';
-import { randomLook } from '@/components/mascot/random-look';
 import { createMainAgent, loadMainAgent, loadSheetCatalogs, type MainAgentState, type SheetCatalogs } from '../agent-create';
 import { IdentityCard } from '../agent/identity-card';
 import { InterviewView, interviewAnswer, triggerLabel } from '../agent/interview-view';
-import { LookStylerPanel } from '../agent/look-styler-panel';
 import { Capabilities, SummaryRow, type UpdateDraft } from '../agent/parts';
 import { SheetView } from '../agent/sheet-view';
 import { TemplatesView } from '../agent/templates-view';
 import { useOnboarding, useOnboardingBack } from '../onboarding-context';
 import { agentViewFor, useOnboardingProfile, type AgentCreationView } from '../onboarding-profile';
 
-/** Long enough to see the mascot land its jump before "Discover Rooks" opens. */
-const LEAVE_MS = 520;
+/** Brief pause before Discover so the create feedback is visible. */
+const LEAVE_MS = 320;
 
 const SEED_NAMES = new Set(['_main', 'rooks.main']);
 
@@ -58,8 +56,6 @@ export function AgentStep(): ReactElement {
   const update = useCallback<UpdateDraft>((change) => setDraft(change), []);
   const [agent, setAgent] = useState<MainAgentState | null>(null);
   const [catalogs, setCatalogs] = useState<SheetCatalogs | null>(null);
-  const [styling, setStyling] = useState(false);
-  const [jump, setJump] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const leaving = useRef<number | null>(null);
@@ -107,23 +103,19 @@ export function AgentStep(): ReactElement {
 
   useEffect(() => () => { if (leaving.current !== null) window.clearTimeout(leaving.current); }, []);
 
-  // "Back" closes the panel first, then walks the interview back, then leaves the step.
+  // "Back" walks the interview first, then leaves the step.
   useOnboardingBack(() => {
-    if (styling) { setStyling(false); return true; }
     if (view === 'interview' && draft.question > 1) { update((d) => ({ ...d, question: d.question - 1 })); return true; }
     return false;
   });
 
-  const look = lookOf(view, draft);
   const model = shownModel(catalog, draft.model, agent ? { backend: agent.backend ?? undefined, model: agent.model ?? undefined } : null);
   const ready = readyToCreate(view, draft) && !busy;
-  const bounce = (): void => setJump((n) => n + 1);
 
   const pickTemplate = (id: TemplateId): void => {
     setDraft((d) => (d.nameAuto || !d.name.trim()
       ? { ...d, template: id, name: randomName(pool, d.name), nameAuto: true }
       : { ...d, template: id }));
-    bounce();
   };
 
   const pickFolder = async (): Promise<void> => {
@@ -149,8 +141,6 @@ export function AgentStep(): ReactElement {
       setBusy(false);
       return;
     }
-    setStyling(false);
-    bounce();
     leaving.current = window.setTimeout(next, reduced ? 0 : LEAVE_MS);
   };
 
@@ -186,37 +176,32 @@ export function AgentStep(): ReactElement {
     <section
       data-onboarding-step="agent"
       data-agent-view={view}
-      className={cn(
-        // Room around the content: the scroller clips what overflows it, and
-        // without it the card's shadow was cut into a grey box.
-        'flex max-h-full w-full max-w-[944px] flex-col overflow-y-auto px-8 pb-12',
-      )}
+      className="flex max-h-full w-full min-w-0 max-w-[944px] flex-col overflow-y-auto px-3 pb-10 pt-1 sm:px-6 sm:pb-12"
     >
-      <ViewSwitcher view={view} recommended={recommended} styling={styling} onPick={(v) => { setChosenView(v); setError(null); }} />
-      <div className="grid w-full grid-cols-1 items-start gap-[30px] pt-2.5 md:grid-cols-[330px_minmax(0,500px)] md:justify-center">
+      <ViewSwitcher view={view} recommended={recommended} onPick={(v) => { setChosenView(v); setError(null); }} />
+      {/* Timon grid restored; lg breakpoint so 1280×800 keeps two columns without crushing. */}
+      <div className="grid w-full grid-cols-1 items-start gap-6 pt-2 sm:gap-[30px] lg:grid-cols-[minmax(240px,330px)_minmax(0,500px)] lg:justify-center">
         <IdentityCard
-          look={look}
           name={draft.name}
           onName={(name) => update((d) => ({ ...d, name, nameAuto: false }))}
-          onRollName={() => { update((d) => ({ ...d, name: randomName(pool, d.name), nameAuto: false })); bounce(); }}
-          onRandomLook={() => { update((d) => ({ ...d, customLook: randomLook() })); bounce(); }}
-          onCustomise={() => setStyling(true)}
-          styling={styling}
+          onRollName={() => { update((d) => ({ ...d, name: randomName(pool, d.name), nameAuto: false })); }}
           role={roleLabel}
           model={model}
-          jump={jump}
           disabled={busy}
           summary={<Summary view={view} draft={draft} />}
         />
-        {/* While customising, the configurator takes the form's place, beside the card. */}
-        <div className={cn('min-w-0 flex-col text-left', styling ? 'hidden' : 'flex')}>
-          <header className="mb-[18px] mt-0.5">
-            <h1 className="text-[30px] font-bold leading-tight tracking-[-0.02em]">{t(`onboarding.agent.${view}.title`)}</h1>
-            <p className="mt-1.5 text-[15px] leading-normal text-muted-foreground">{t(`onboarding.agent.${view}.subtitle`)}</p>
-            {status === 'error' && profile === null && (
-              <p data-profile-error className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                {t('onboarding.agent.profileError')}
-                <button type="button" className="underline underline-offset-2 hover:text-foreground" onClick={reload}>{t('onboarding.agent.retry')}</button>
+        <div className="flex min-w-0 flex-col text-left">
+          <header className="mb-4 mt-0.5 sm:mb-[18px]">
+            <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.025em] sm:text-[26px]">
+              {t(`onboarding.agent.${view}.title`)}
+            </h1>
+            <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground sm:text-[15px]">
+              {t(`onboarding.agent.${view}.subtitle`)}
+            </p>
+            {/* Intentional quiet note when profile is unavailable — not an error toast. */}
+            {status === 'ready' && profile === null && view === 'templates' && (
+              <p data-profile-fallback className="mt-2 text-xs text-muted-foreground">
+                {t('onboarding.agent.profileFallback')}
               </p>
             )}
           </header>
@@ -232,14 +217,6 @@ export function AgentStep(): ReactElement {
             </p>
           </div>
         </div>
-        <LookStylerPanel
-          open={styling}
-          name={shownName || t('onboarding.agent.createNoName')}
-          role={view === 'sheet' ? draft.role : null}
-          look={look}
-          onChange={(picked) => { update((d) => ({ ...d, customLook: picked })); }}
-          onClose={() => setStyling(false)}
-        />
       </div>
       {directory.dialog}
     </section>
@@ -287,18 +264,15 @@ function Summary({ view, draft }: { view: AgentCreationView; draft: AgentDraft }
   );
 }
 
-function ViewSwitcher({ view, recommended, styling, onPick }: {
-  view: AgentCreationView; recommended: AgentCreationView; styling: boolean; onPick: (view: AgentCreationView) => void;
+function ViewSwitcher({ view, recommended, onPick }: {
+  view: AgentCreationView; recommended: AgentCreationView; onPick: (view: AgentCreationView) => void;
 }): ReactElement {
   return (
     <div
       role="radiogroup"
       aria-label={t('onboarding.agent.views.label')}
       data-view-switcher
-      className={cn(
-        // In the corner from tablets up; above the card on a phone, where the corner is "Back"'s row.
-        'z-[25] mb-3 flex items-center gap-1 self-center rounded-xl bg-card p-1 md:fixed md:right-4 md:top-3.5 md:mb-0',
-      )}
+      className="mb-3 flex max-w-full flex-wrap items-center gap-1 self-center rounded-lg border border-border bg-card p-1"
     >
       <span className="pl-2 pr-1.5 text-[11.5px] text-muted-foreground">{t('onboarding.agent.views.label')}</span>
       {AGENT_VIEWS.map((v) => (
@@ -311,15 +285,13 @@ function ViewSwitcher({ view, recommended, styling, onPick }: {
           data-recommended={v === recommended ? 'true' : undefined}
           title={v === recommended ? t('onboarding.agent.views.recommended') : undefined}
           onClick={() => onPick(v)}
-          className={cn('inline-flex items-center gap-1 rounded-[9px] px-2.5 py-1.5 text-[12.5px] transition-colors', v === view ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground')}
+          className={cn(
+            'inline-flex items-center rounded-md px-2.5 py-1.5 text-[12.5px] transition-colors',
+            v === view ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
+          )}
         >
           {t(`onboarding.agent.views.${v}`)}
-          {v === recommended && (
-            <>
-              <Star className="size-3 fill-current text-amber-400" aria-hidden />
-              <span className="sr-only">{t('onboarding.agent.views.recommended')}</span>
-            </>
-          )}
+          {v === recommended && <span className="sr-only">{t('onboarding.agent.views.recommended')}</span>}
         </button>
       ))}
     </div>

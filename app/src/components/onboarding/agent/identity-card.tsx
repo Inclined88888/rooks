@@ -1,17 +1,12 @@
 'use client';
 
 /**
- * The left of the agent step, the same in every view: the agent's mascot,
- * alive, "Random" and "Customise" under it, its name with a draw button,
- * its role and model, and what it will do. The mascot goes through the
- * `agent.mascot` slot (`AgentMascotHost`): a plugin that replaces the mascot
- * replaces it here too.
+ * Left of the agent step: name + role + summary. Calm hairline card — no
+ * mascot, no Random/Customise look controls (owner: flat premium onboarding).
  */
 import type { ReactElement, ReactNode } from 'react';
-import { Dices, Paintbrush, Shuffle } from 'lucide-react';
+import { Dices } from 'lucide-react';
 import { BrandMark } from '@/components/brand-mark';
-import { AgentMascotHost } from '@/components/mascot/agent-mascot';
-import type { AgentLook } from '@/components/mascot/agent-look';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ModelOption } from '../agent-draft';
@@ -20,58 +15,31 @@ import type { ModelOption } from '../agent-draft';
 export const AGENT_NAME_MAX = 24;
 
 export type IdentityCardProps = {
-  look: AgentLook;
   name: string;
   onName: (name: string) => void;
   onRollName: () => void;
-  onRandomLook: () => void;
-  onCustomise: () => void;
-  styling: boolean;
   role: { label: string; empty?: boolean };
   model: ModelOption | null;
   summary: ReactNode;
-  /** Bumped to make the mascot jump (a new look, a new name, the creation). */
-  jump: number;
   disabled?: boolean;
 };
 
 export function IdentityCard(props: IdentityCardProps): ReactElement {
-  const { look, name, role, model, jump, disabled } = props;
+  const { name, role, model, disabled } = props;
+  const initial = (name.trim() || '?').slice(0, 1).toUpperCase();
   return (
     <aside
       data-identity-card
-      className="relative overflow-hidden rounded-lg bg-card px-5 pb-5 pt-[22px] text-center ring-1 ring-border md:sticky md:top-2"
+      className="relative min-w-0 rounded-lg border border-border bg-card px-5 pb-5 pt-5 text-center lg:sticky lg:top-2"
     >
-      <div className="relative grid h-[130px] place-items-center">
-        <span key={jump} className={cn('inline-grid', jump > 0 && 'rooks-mascot-jump')}>
-          <AgentMascotHost look={look} size={124} live label={name.trim() || null} />
-        </span>
+      <div
+        aria-hidden
+        className="mx-auto mb-3 grid size-14 place-items-center rounded-full border border-border bg-background text-lg font-semibold tracking-tight text-foreground"
+        data-identity-mark
+      >
+        {initial}
       </div>
-      <div className="relative mb-1 mt-1.5 flex justify-center gap-2">
-        <button
-          type="button"
-          data-random-look
-          disabled={disabled}
-          onClick={props.onRandomLook}
-          className="inline-flex h-[34px] items-center gap-[7px] rounded-full bg-foreground/10 pl-3 pr-3.5 text-[13px] font-semibold ring-1 ring-foreground/10 backdrop-blur transition-[background-color,transform] hover:-translate-y-px hover:bg-foreground/15 active:scale-95"
-        >
-          <Shuffle className="size-4" aria-hidden />
-          {t('onboarding.agent.random')}
-        </button>
-        <button
-          type="button"
-          data-customise
-          aria-expanded={props.styling}
-          aria-controls="agent-look-styler"
-          disabled={disabled}
-          onClick={props.onCustomise}
-          className="inline-flex h-[34px] items-center gap-[7px] rounded-full bg-foreground pl-3 pr-3.5 text-[13px] font-semibold text-background transition-[background-color,transform] hover:-translate-y-px active:scale-95"
-        >
-          <Paintbrush className="size-4" aria-hidden />
-          {t('onboarding.agent.customise')}
-        </button>
-      </div>
-      <label className="relative mb-2 mt-3.5 block text-left">
+      <label className="relative mb-2 block text-left">
         <span className="mb-1.5 ml-0.5 block text-[11.5px] font-semibold text-muted-foreground">{t('onboarding.agent.nameLabel')}</span>
         <span className="relative block">
           <input
@@ -81,7 +49,7 @@ export function IdentityCard(props: IdentityCardProps): ReactElement {
             disabled={disabled}
             placeholder={t('onboarding.agent.namePlaceholder')}
             onChange={(e) => props.onName(e.target.value)}
-            className="h-12 w-full rounded-[13px] bg-muted px-11 text-center text-xl font-bold tracking-[-0.01em] outline-none ring-1 ring-inset ring-border transition-shadow placeholder:font-semibold placeholder:text-muted-foreground hover:bg-accent focus:ring-[1.5px] focus:ring-foreground/55"
+            className="h-11 w-full rounded-lg border border-border bg-background px-10 text-center text-lg font-semibold tracking-[-0.01em] outline-none transition-shadow placeholder:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
           />
           <button
             type="button"
@@ -90,9 +58,9 @@ export function IdentityCard(props: IdentityCardProps): ReactElement {
             onClick={props.onRollName}
             title={t('onboarding.agent.nameRoll')}
             aria-label={t('onboarding.agent.nameRoll')}
-            className="absolute right-1.5 top-1/2 grid size-[34px] -translate-y-1/2 place-items-center rounded-[9px] text-muted-foreground hover:bg-card hover:text-foreground"
+            className="absolute right-1.5 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <Dices className="size-[18px]" aria-hidden />
+            <Dices className="size-4" aria-hidden />
           </button>
         </span>
       </label>
@@ -100,8 +68,8 @@ export function IdentityCard(props: IdentityCardProps): ReactElement {
         <span
           data-role-pill
           className={cn(
-            'inline-flex h-[26px] items-center rounded-full px-[11px] text-[12.5px]',
-            role.empty ? 'font-medium text-muted-foreground ring-1 ring-inset ring-border' : 'bg-foreground/10 font-semibold text-foreground',
+            'inline-flex h-[26px] max-w-full items-center truncate rounded-full px-[11px] text-[12.5px]',
+            role.empty ? 'font-medium text-muted-foreground ring-1 ring-inset ring-border' : 'bg-muted font-semibold text-foreground',
           )}
         >
           {role.label}
@@ -113,7 +81,7 @@ export function IdentityCard(props: IdentityCardProps): ReactElement {
           </span>
         )}
       </div>
-      <div className="relative flex min-h-[46px] flex-col gap-1.5 rounded-[15px] bg-background px-3.5 py-3 text-left" data-identity-summary>
+      <div className="relative flex min-h-[46px] flex-col gap-1.5 rounded-lg border border-border bg-background px-3.5 py-3 text-left" data-identity-summary>
         {props.summary}
       </div>
     </aside>

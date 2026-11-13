@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useRef, useState } from 'react';
-import { Check, ChevronRight, Compass, Focus, LayoutGrid, MessageSquare, Monitor, Moon, Palette, Settings2, Sun } from 'lucide-react';
+import { Check, ChevronRight, Compass, Focus, LayoutGrid, MessageSquare, Monitor, Palette, Settings2, Sun } from 'lucide-react';
 import type { SchemeMode } from '@/lib/scheme-mode';
 import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { toast } from 'sonner';
@@ -78,7 +78,6 @@ export function ThemeToggle() {
         <Dropdown.Label className="px-3 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">{t('appearance.schemeTitle')}</Dropdown.Label>
         {([
           { mode: 'light' as const, Icon: Sun, label: t('appearance.schemeLight') },
-          { mode: 'dark' as const, Icon: Moon, label: t('appearance.schemeDark') },
           { mode: 'system' as const, Icon: Monitor, label: t('appearance.schemeSystem') },
         ]).map(({ mode, Icon, label }) => (
           <Dropdown.CheckboxItem

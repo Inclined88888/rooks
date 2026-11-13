@@ -7,13 +7,18 @@ export type SchemeMode = 'light' | 'dark' | 'system';
 
 export const SCHEME_MODE_KEY = 'rooks.appearance.schemeMode';
 
+/** Modes offered in Settings / onboarding (Dark is not a manual choice). */
+export const SCHEME_MODE_CHOICES = ['light', 'system'] as const satisfies readonly SchemeMode[];
+
 export function readSchemeMode(): SchemeMode {
-  if (typeof window === 'undefined') return 'system';
+  if (typeof window === 'undefined') return 'light';
   try {
     const v = window.localStorage.getItem(SCHEME_MODE_KEY);
-    if (v === 'light' || v === 'dark' || v === 'system') return v;
+    if (v === 'light' || v === 'system') return v;
+    // Legacy "dark" pick: keep painting dark until the person chooses Light or System.
+    if (v === 'dark') return 'dark';
   } catch { /* private mode */ }
-  return 'system';
+  return 'light';
 }
 
 export function storeSchemeMode(mode: SchemeMode): void {
@@ -21,6 +26,6 @@ export function storeSchemeMode(mode: SchemeMode): void {
 }
 
 export function osScheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'light';
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }

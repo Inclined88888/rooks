@@ -82,6 +82,12 @@ export function loadOnboardingProfile(fetcher: Fetcher = fetch): Promise<Onboard
 async function fetchProfile(fetcher: Fetcher, started: number): Promise<OnboardingProfile | null> {
   try {
     const res = await fetcher(ONBOARDING_PROFILE_PATH, { cache: 'no-store' });
+    // 401/403 on Skip-account / warming session: treat as no profile yet (templates),
+    // not a hard error — agent step must not show a failure banner.
+    if (res.status === 401 || res.status === 403) {
+      if (started === generation) publish({ status: 'ready', profile: snapshot.profile });
+      return snapshot.profile;
+    }
     if (!res.ok) throw new OnboardingProfileError(res.status);
     const body = (await res.json()) as { profile?: unknown };
     const profile = isOnboardingProfile(body.profile) ? body.profile : null;
@@ -89,18 +95,27 @@ async function fetchProfile(fetcher: Fetcher, started: number): Promise<Onboardi
     publish({ status: 'ready', profile });
     return profile;
   } catch (error) {
-    if (started === generation) publish({ status: 'error', profile: snapshot.profile });
-    throw error;
+    // Network blip: keep any in-memory choice; otherwise ready with null (simplest view).
+    if (started === generation) {
+      publish({ status: 'ready', profile: snapshot.profile });
+    }
+    if (error instanceof OnboardingProfileError) throw error;
+    return snapshot.profile;
   }
 }
 
-/** Records `profile` for the signed-in account; rejects (and keeps the previous answer) when the daemon refuses. */
+/** Records `profile` for the signed-in account. On auth refusal, keeps the choice locally so onboarding continues. */
 export async function saveOnboardingProfile(profile: OnboardingProfile, fetcher: Fetcher = fetch): Promise<void> {
   const res = await fetcher(ONBOARDING_PROFILE_PATH, {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ profile }),
   });
+  if (res.status === 401 || res.status === 403) {
+    generation += 1;
+    publish({ status: 'ready', profile });
+    throw new OnboardingProfileError(res.status);
+  }
   if (!res.ok) throw new OnboardingProfileError(res.status);
   generation += 1;
   publish({ status: 'ready', profile });

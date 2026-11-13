@@ -48,7 +48,6 @@
     "scheme": {
       "label": "Modalità colore",
       "light": "Chiaro",
-      "dark": "Scuro",
       "system": "Sistema"
     },
     "discover": {

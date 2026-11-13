@@ -31,7 +31,7 @@ export const DEFAULT_USER_PREFS: UserPrefs = {
   // The Rooks theme since 0.1.7; the accounts made before keep their row.
   theme: 'theme-rooks',
   layout: '@rooks/ui-layout',
-  scheme: 'dark',
+  scheme: 'light',
 };
 
 /** The permissions `/api/auth/me` answers for the caller. Source of truth:
@@ -71,7 +71,7 @@ function coercePrefs(raw: unknown): UserPrefs {
   return {
     theme: typeof prefs.theme === 'string' ? prefs.theme : DEFAULT_USER_PREFS.theme,
     layout: typeof prefs.layout === 'string' ? prefs.layout : DEFAULT_USER_PREFS.layout,
-    scheme: prefs.scheme === 'light' ? 'light' : 'dark',
+    scheme: prefs.scheme === 'dark' ? 'dark' : 'light',
   };
 }
 
