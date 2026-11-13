@@ -70,6 +70,8 @@ export const CATALOG: readonly ModuleDescriptor[] = [
   { id: '@rooks/orchestrator-self', name: './plugins-bundled/orchestrator-self/index.js', tier: 'opt', requires: ['systemd'] },
   { id: '@rooks/web-app', name: './plugins-bundled/web-app/index.js', tier: 'std' },
   { id: '@rooks/telegram', name: './plugins-bundled/telegram/index.js', tier: 'opt' },
+  { id: '@rooks/whatsapp', name: './plugins-bundled/whatsapp/index.js', tier: 'opt' },
+
   { id: '@rooks/tts', name: './plugins-bundled/tts/index.js', tier: 'opt' },
   { id: '@rooks/gpt-live', name: './plugins-bundled/gpt-live/index.js', tier: 'opt' },
   { id: '@rooks/video-factory', name: './plugins-bundled/video-factory/index.js', tier: 'opt' },

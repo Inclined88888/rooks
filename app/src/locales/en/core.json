@@ -1607,6 +1607,36 @@
       "weak": "Weak: a shared token, not a signature. Anyone who sees one call can forge others."
     }
   },
+  "channelsSettings": {
+    "title": "WhatsApp",
+    "subtitle": "Message your Rooks assistant from WhatsApp. Local-first — Rooks does not host a webhook. Both options below stay on this machine.",
+    "modeLabel": "WhatsApp connection mode",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved.",
+    "saveFailed": "Could not save.",
+    "remove": "Remove",
+    "configured": "Configured",
+    "cloud": {
+      "title": "WhatsApp Business Cloud API",
+      "detail": "Official Meta API — bring your own token and phone number ID",
+      "tradeoffs": "Official and supported by Meta. Requires a Meta Business app, a phone number ID, and a local tunnel (cloudflared or ngrok) so Meta can reach this computer. Rooks never hosts the webhook.",
+      "phoneNumberId": "Phone number ID",
+      "accessToken": "Access token",
+      "appSecret": "App secret (optional, for signature checks)",
+      "tunnelTitle": "Local tunnel (you run it)",
+      "tunnelBody": "Point Meta’s webhook at your tunnel URL + the path below. Example helpers: cloudflared or ngrok. Do not open the daemon to the public internet without a tunnel you control.",
+      "webhookPath": "Webhook path:",
+      "verifyToken": "Verify token:"
+    },
+    "web": {
+      "title": "WhatsApp Web (linked device)",
+      "detail": "Scan a QR — session stays on this machine (unofficial)",
+      "tradeoffs": "Uses the unofficial WhatsApp Web protocol (Baileys). Fast to try, but Meta can ban or throttle linked devices. Prefer Cloud API for anything shared or production-like.",
+      "qrReady": "QR ready — scan in WhatsApp → Linked devices",
+      "linked": "Linked on this machine."
+    }
+  },
   "settingsDialog": {
     "backToSettings": "Back to settings",
     "close": "Close",
@@ -1667,7 +1697,8 @@
         "webui": "Web interface",
         "devices": "Devices",
         "urls": "URLs & push",
-        "browser": "Browser"
+        "browser": "Browser",
+        "channels": "Channels"
       },
       "system": {
         "installation": "Installation",

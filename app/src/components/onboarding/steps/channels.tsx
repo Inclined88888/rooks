@@ -12,9 +12,10 @@ import { cn } from '@/lib/utils';
 import { settingsPath } from '@/lib/settings-path';
 import { useOnboarding } from '../onboarding-context';
 
-type ChannelId = 'telegram' | 'slack' | 'discord';
+type ChannelId = 'whatsapp' | 'telegram' | 'slack' | 'discord';
 
-const CHANNELS: readonly { id: ChannelId; icon: typeof Send }[] = [
+const CHANNELS: readonly { id: ChannelId; icon: typeof Send; mark?: string }[] = [
+  { id: 'whatsapp', icon: MessageSquare, mark: 'WA' },
   { id: 'telegram', icon: Send },
   { id: 'slack', icon: Slack },
   { id: 'discord', icon: MessageSquare },
@@ -48,8 +49,8 @@ export function ChannelsStep(): ReactElement {
                 picked === ch.id && 'bg-muted',
               )}
             >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
-                <Icon className="size-4" aria-hidden />
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-[11px] font-semibold text-foreground">
+                {ch.mark ?? <Icon className="size-4" aria-hidden />}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[14.5px] font-semibold">{t(`onboarding.channels.${ch.id}.title`)}</span>
@@ -61,7 +62,11 @@ export function ChannelsStep(): ReactElement {
       </div>
       {picked && (
         <p className="mt-3 text-[12.5px] text-muted-foreground">
-          {t('onboarding.channels.connectHint', { settingsPath: settingsPath('plugins') })}
+          {t('onboarding.channels.connectHint', {
+            settingsPath: picked === 'whatsapp'
+              ? settingsPath('network', 'channels')
+              : settingsPath('plugins'),
+          })}
         </p>
       )}
       <div className="mt-6 flex flex-col items-center gap-2">

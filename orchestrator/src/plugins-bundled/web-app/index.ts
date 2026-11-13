@@ -64,6 +64,7 @@ export function tsxOf(appDir: string): string {
 export const APP_ENTRIES = {
   server: { source: 'src/server.ts', compiled: 'server.cjs' },
   'telegram-poll': { source: join('src', 'workers', 'telegram-poll.ts'), compiled: join('workers', 'telegram-poll.cjs') },
+  'whatsapp-web': { source: join('src', 'workers', 'whatsapp-web.ts'), compiled: join('workers', 'whatsapp-web.cjs') },
   'mission-watcher': { source: join('src', 'workers', 'mission-watcher.ts'), compiled: join('workers', 'mission-watcher.cjs') },
 } as const;
 export type AppEntry = keyof typeof APP_ENTRIES;

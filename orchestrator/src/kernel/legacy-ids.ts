@@ -41,6 +41,8 @@ export const LEGACY_IDS: Readonly<Record<string, string>> = Object.freeze({
   'orchestrator-self': '@rooks/orchestrator-self',
   'web-app': '@rooks/web-app',
   telegram: '@rooks/telegram',
+  whatsapp: '@rooks/whatsapp',
+
   tts: '@rooks/tts',
   'video-factory': '@rooks/video-factory',
 });

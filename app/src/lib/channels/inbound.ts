@@ -1,7 +1,9 @@
-import { createHmac, createHash } from 'node:crypto';
+import { createHmac, createHash, timingSafeEqual } from 'node:crypto';
 import { requireEnv } from './config';
 import { verifyHmac } from './hmac';
 import { isAllowedChat } from './transports/telegram';
+import { extractWhatsAppCloudMessage } from './whatsapp-cloud-api';
+import { isAllowedWhatsAppFrom } from './transports/whatsapp-cloud';
 import type { ChannelConfig, InboundMessage } from './types';
 
 export class InboundError extends Error {
@@ -28,12 +30,90 @@ export function telegramHeaders(body: string, secret: string, now = Date.now()):
     'x-rooks-signature': createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex') };
 }
 
+/** Same worker-signing scheme Telegram uses — Baileys worker → app inbound. */
+export function whatsappWebHeaders(body: string, secret: string, now = Date.now()): Record<string, string> {
+  return telegramHeaders(body, secret, now);
+}
+
 function record(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function safeEqualHex(expectedHex: string, provided: string): boolean {
+  try {
+    const a = Buffer.from(expectedHex, 'hex');
+    const b = Buffer.from(provided, 'hex');
+    return a.length === b.length && a.length > 0 && timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
+/** Meta Cloud API webhook GET verification. */
+export function verifyWhatsAppCloudChallenge(
+  cfg: Extract<ChannelConfig, { type: 'whatsapp-cloud' }>,
+  url: URL,
+): string {
+  const mode = url.searchParams.get('hub.mode');
+  const token = url.searchParams.get('hub.verify_token');
+  const challenge = url.searchParams.get('hub.challenge');
+  if (mode !== 'subscribe' || !challenge || !token) throw new InboundError(400, 'invalid verify request');
+  if (token !== requireEnv(cfg.verify_token_env)) throw new InboundError(403, 'verify token mismatch');
+  return challenge;
+}
+
+function verifyMetaSignature(raw: string, headers: Headers, appSecretEnv: string | undefined): void {
+  if (!appSecretEnv) return; // optional when the user has not set an app secret yet
+  const header = headers.get('x-hub-signature-256') ?? '';
+  const match = /^sha256=([a-f0-9]{64})$/i.exec(header);
+  if (!match) throw new InboundError(401, 'invalid signature');
+  const expected = createHmac('sha256', requireEnv(appSecretEnv)).update(raw).digest('hex');
+  if (!safeEqualHex(expected, match[1]!.toLowerCase())) throw new InboundError(401, 'invalid signature');
+}
+
 export function normalizeInbound(name: string, cfg: ChannelConfig, raw: string, headers: Headers, now = Date.now()): InboundMessage {
   if (cfg.type === 'discord') throw new InboundError(501, 'discord not implemented');
+
+  if (cfg.type === 'whatsapp-cloud') {
+    verifyMetaSignature(raw, headers, cfg.app_secret_env);
+    let parsed: unknown;
+    try { parsed = JSON.parse(raw); } catch { throw new InboundError(400, 'invalid JSON'); }
+    const msg = extractWhatsAppCloudMessage(parsed);
+    if (!msg) throw new InboundError(400, 'no WhatsApp text message');
+    if (!isAllowedWhatsAppFrom(cfg, msg.from)) throw new InboundError(403, 'sender not allowed');
+    return {
+      channel: name,
+      text: msg.text,
+      externalId: `whatsapp-cloud:${msg.messageId}`,
+      replyContext: { from: msg.from },
+      raw: msg.raw,
+    };
+  }
+
+  if (cfg.type === 'whatsapp-web') {
+    const timestamp = headers.get('x-rooks-timestamp') ?? '';
+    if (!/^\d{13}$/.test(timestamp) || Math.abs(now - Number(timestamp)) > 5 * 60_000
+      || !verifyHmac(requireEnv(cfg.worker_secret_env), `${timestamp}.${raw}`, headers.get('x-rooks-signature'))) {
+      throw new InboundError(401, 'invalid worker signature');
+    }
+    let parsed: unknown;
+    try { parsed = JSON.parse(raw); } catch { throw new InboundError(400, 'invalid JSON'); }
+    if (!record(parsed) || typeof parsed.jid !== 'string' || typeof parsed.message_id !== 'string') {
+      throw new InboundError(400, 'invalid WhatsApp Web message');
+    }
+    const text = typeof parsed.text === 'string' ? parsed.text : '';
+    if (!text.trim()) throw new InboundError(400, 'message text required');
+    const fromDigits = parsed.jid.replace(/@.*/, '').replace(/\D/g, '');
+    if (!isAllowedWhatsAppFrom(cfg, fromDigits)) throw new InboundError(403, 'sender not allowed');
+    return {
+      channel: name,
+      text,
+      externalId: `whatsapp-web:${parsed.message_id}`,
+      replyContext: { jid: parsed.jid },
+      raw: parsed,
+    };
+  }
+
   if (cfg.type === 'telegram') {
     const timestamp = headers.get('x-rooks-timestamp') ?? '';
     if (!/^\d{13}$/.test(timestamp) || Math.abs(now - Number(timestamp)) > 5 * 60_000

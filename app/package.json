@@ -14,6 +14,7 @@
     "pretest": "node scripts/build-locales.mjs",
     "test": "node ../scripts/run-tests.mjs",
     "worker:telegram": "tsx src/workers/telegram-poll.ts",
+    "worker:whatsapp-web": "tsx src/workers/whatsapp-web.ts",
     "worker:reply": "tsx src/workers/mission-watcher.ts"
   },
   "rooksTests": {
@@ -45,6 +46,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@uiw/react-codemirror": "^4.25.11",
+    "@whiskeysockets/baileys": "^6.7.22",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "@xyflow/react": "^12.11.6",

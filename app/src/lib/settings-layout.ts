@@ -33,7 +33,7 @@ export const SETTINGS_CATEGORY_IDS: readonly SettingsCategoryId[] = [
 ];
 
 /** Device-local panes: no row in the settings table. */
-export type NativePaneId = 'language' | 'push' | 'voice' | 'webui' | 'desktop' | 'installation' | 'instructions' | 'preamble' | 'fallback' | 'secrets' | 'connections' | 'accounts' | 'devices' | 'developer';
+export type NativePaneId = 'language' | 'push' | 'voice' | 'webui' | 'desktop' | 'installation' | 'instructions' | 'preamble' | 'fallback' | 'secrets' | 'connections' | 'accounts' | 'devices' | 'developer' | 'channels';
 
 type Placement = { category: SettingsCategoryId; tab: string };
 
@@ -86,6 +86,9 @@ export const STATIC_TABS: Readonly<Record<SettingsCategoryId, readonly StaticTab
     // Devices paired with the signed-in account (multi-machine P2b): core, so
     // it exists on every daemon, with or without the Machines plugin.
     { id: 'devices', kind: 'native', pane: 'devices' },
+    // Communication channels (WhatsApp Cloud API / linked-device). Not a
+    // Capabilities tab — Connectors stay MCP-only (menus once).
+    { id: 'channels', kind: 'native', pane: 'channels' },
     { id: 'urls', kind: 'rows' },
     { id: 'browser', kind: 'rows' },
   ],
@@ -368,6 +371,8 @@ const LEGACY_SLUGS: Readonly<Record<string, SettingsTarget>> = {
   voice: { category: 'interface', tab: 'voice' },
   webui: { category: 'network', tab: 'webui' },
   devices: { category: 'network', tab: 'devices' },
+  channels: { category: 'network', tab: 'channels' },
+  whatsapp: { category: 'network', tab: 'channels' },
   desktop: { category: 'system', tab: 'desktop' },
   missions: { category: 'missions', tab: 'execution' },
   wake: { category: 'missions', tab: 'execution' },

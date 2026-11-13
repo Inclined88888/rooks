@@ -41,18 +41,40 @@
       "subtitle": "Optional. Connect a channel so agents can reach you — or skip.",
       "skip": "Skip for now",
       "connectHint": "Finish connecting in {settingsPath} when you are ready.",
-      "telegram": { "title": "Telegram", "detail": "Chat with agents from Telegram" },
-      "slack": { "title": "Slack", "detail": "Bring agents into your workspace" },
-      "discord": { "title": "Discord", "detail": "Talk to agents in a server" }
+      "telegram": {
+        "title": "Telegram",
+        "detail": "Chat with agents from Telegram"
+      },
+      "slack": {
+        "title": "Slack",
+        "detail": "Bring agents into your workspace"
+      },
+      "discord": {
+        "title": "Discord",
+        "detail": "Talk to agents in a server"
+      },
+      "whatsapp": {
+        "title": "WhatsApp",
+        "detail": "Cloud API or linked device on this machine — optional"
+      }
     },
     "mail": {
       "title": "Connect your mail",
       "subtitle": "Optional. Agents can read and draft mail when you connect — or skip.",
       "skip": "Skip for now",
       "connectHint": "Finish connecting in {settingsPath} when you are ready.",
-      "gmail": { "title": "Gmail", "detail": "Google Workspace or personal Gmail" },
-      "microsoft": { "title": "Microsoft 365", "detail": "Outlook and work mail" },
-      "imap": { "title": "Other mail", "detail": "IMAP / SMTP later in settings" }
+      "gmail": {
+        "title": "Gmail",
+        "detail": "Google Workspace or personal Gmail"
+      },
+      "microsoft": {
+        "title": "Microsoft 365",
+        "detail": "Outlook and work mail"
+      },
+      "imap": {
+        "title": "Other mail",
+        "detail": "IMAP / SMTP later in settings"
+      }
     },
     "legacy": {
       "opening": "Opening the next screen…"

@@ -35,6 +35,7 @@ const appDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ENTRIES = [
   { source: join('src', 'server.ts'), out: 'server.cjs' },
   { source: join('src', 'workers', 'telegram-poll.ts'), out: join('workers', 'telegram-poll.cjs') },
+  { source: join('src', 'workers', 'whatsapp-web.ts'), out: join('workers', 'whatsapp-web.cjs') },
   { source: join('src', 'workers', 'mission-watcher.ts'), out: join('workers', 'mission-watcher.cjs') },
 ];
 
