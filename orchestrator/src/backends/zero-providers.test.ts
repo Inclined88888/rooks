@@ -57,8 +57,8 @@ test('a pinned executable makes its provider usable, a dead pin does not', { ski
   assert.ok(!usableProviders({ claude: join(dir, 'missing') }).includes('claude'));
 });
 
-test('setup refuses to finish with nothing usable, and counts the pins it is about to write', () => {
-  assert.match(noProviderForSetup({}, () => []) ?? '', /No LLM provider/);
+test('setup finishes without a provider (models Skip), and still counts pins it is about to write', () => {
+  assert.equal(noProviderForSetup({}, () => []), null, 'no CLI yet: Desk must still open');
   assert.equal(noProviderForSetup({}, () => ['codex']), null);
   let seen: Record<string, string> = {};
   noProviderForSetup({ binaries: { claude: ' /opt/claude ', codex: '', grok: null } }, (pins) => { seen = pins; return ['claude']; });

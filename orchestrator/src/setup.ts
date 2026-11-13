@@ -185,17 +185,17 @@ export function applySetup(
 }
 
 /**
- * Setup ends with something to think with. The core starts with no provider
- * guaranteed, and an instance written without one only fails at the first
- * message. The pins submitted with the form count: they are about to be written.
- * Returns the refusal to show, or `null`.
+ * First-run models step is skippable (local-first): writing `rooks.config.json`
+ * must not refuse when no CLI is installed yet. The first chat fails clearly
+ * without a provider; blocking Desk behind binaries undoes Skip. Pins still
+ * count when present (tests inject `usable`). Always returns `null`.
  */
 export function noProviderForSetup(input: SetupInput, usable: (pins: Record<string, string>) => string[] = usableProviders): string | null {
   const pins: Record<string, string> = {};
   for (const [name, path] of Object.entries(input.binaries ?? {})) {
     if (typeof path === 'string' && path.trim() !== '') pins[name] = path.trim();
   }
-  return usable(pins).length > 0
-    ? null
-    : 'No LLM provider can run on this machine yet — install or connect one (Claude, Codex, Grok, Copilot, or a provider plugin), then finish the setup.';
+  // Keep the pin walk so callers/tests still exercise the same shape; do not refuse.
+  void usable(pins);
+  return null;
 }
