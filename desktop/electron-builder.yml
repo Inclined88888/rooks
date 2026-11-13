@@ -140,7 +140,7 @@ deb:
   afterRemove: ../orchestrator/src/host/linux-cli-after-remove.tpl
   desktop:
     StartupWMClass: timon-desktop
-    Comment: Timon desktop client (Electron shell around the local daemon).
+    Comment: Rooks desktop client (Electron shell around the local daemon).
     Categories: Development;
     # french-ok: the French name of the action; a block scalar cannot hold the
     # marker (a `.desktop` comment line would be written into the entry), so
@@ -149,7 +149,7 @@ deb:
 appImage:
   desktop:
     StartupWMClass: timon-desktop
-    Comment: Timon desktop client (Electron shell around the local daemon).
+    Comment: Rooks desktop client (Electron shell around the local daemon).
     Categories: Development;
     # AppImageLauncher and appimaged rewrite every Exec of the entry, the
     # action's included, to the path of the AppImage.

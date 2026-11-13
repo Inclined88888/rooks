@@ -540,7 +540,7 @@ test('banner: an unknown or newer contract level is said once, and dismissed for
       await render(React.createElement('div'));
       window.sessionStorage.clear();
       await render(React.createElement(MachineBanner, { machineId: 'nas', machine: machineRow('nas', { api_level: 99 }) as never }));
-      assert.match(document.querySelector('[role="status"]')?.textContent ?? '', /NAS runs a newer Timon than this interface/);
+      assert.match(document.querySelector('[role="status"]')?.textContent ?? '', /NAS runs a newer Rooks than this interface/);
       await render(React.createElement(MachineBanner, { machineId: 'ok', machine: machineRow('ok') as never }));
       assert.ok(!document.querySelector('[role="status"]'), 'a compatible machine gets no notice');
     }, 'vps');

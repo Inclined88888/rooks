@@ -1,6 +1,6 @@
 # Third-party speech models
 
-The Timon desktop client never ships a speech model inside its installer. When
+The Rooks desktop client never ships a speech model inside its installer. When
 the user asks for one in Settings › Voice, the client downloads it from Hugging
 Face, at a pinned revision, and checks every file against its pinned sha256
 (`src/speech-catalog/builtin.ts`). Each model stays under its own licence; the

@@ -38,8 +38,8 @@ test('app menu: on macOS no entry keeps the native About panel, and « About Roo
 });
 
 test('app menu: the entry speaks the language of the app', () => {
-  assert.ok(aboutEntry(template('fr-FR'), 'À propos de Timon'));
-  assert.ok(aboutEntry(template('de'), 'Über Timon'));
+  assert.ok(aboutEntry(template('fr-FR'), 'À propos de Rooks'));
+  assert.ok(aboutEntry(template('de'), 'Über Rooks'));
   assert.ok(aboutEntry(template('sv'), 'About Rooks'));
 });
 
@@ -92,6 +92,8 @@ function boot(input: { platform: NodeJS.Platform; releasePending: boolean }) {
     showAboutWindow: (page: { locale: string; notices: string | null }) => { shown.push(page); },
     releasePending: input.releasePending,
     releaseCheckWindow: { show: () => check.push('show'), focus: () => check.push('focus') },
+    lastDaemonHealth: { ok: true, version: '0.2.0', builtAt: '2026-11-13T00:00:00.000Z' },
+    readShellBuiltAt: () => '2026-11-13T00:00:00.000Z',
   };
   runInNewContext(`${compiled}\ninstallAppMenu()`, context);
   return { context, shown, check, installed };
@@ -100,7 +102,7 @@ function boot(input: { platform: NodeJS.Platform; releasePending: boolean }) {
 test('main.ts: the macOS menu bar opens the same window, with the licences', () => {
   const { shown, installed, check } = boot({ platform: 'darwin', releasePending: false });
   assert.equal(installed.length, 1);
-  aboutEntry(installed[0] ?? [], 'À propos de Timon').click?.({} as never, undefined, {} as never);
+  aboutEntry(installed[0] ?? [], 'À propos de Rooks').click?.({} as never, undefined, {} as never);
   assert.equal(shown.length, 1);
   assert.equal(shown[0]?.notices, 'NOTICE');
   assert.deepEqual(check, []);
@@ -108,7 +110,7 @@ test('main.ts: the macOS menu bar opens the same window, with the licences', () 
 
 test('main.ts: while the release is being checked, the menu bar opens no window; once verified, it does', () => {
   const { context, shown, installed, check } = boot({ platform: 'darwin', releasePending: true });
-  const about = aboutEntry(installed[0] ?? [], 'À propos de Timon');
+  const about = aboutEntry(installed[0] ?? [], 'À propos de Rooks');
   about.click?.({} as never, undefined, {} as never);
   assert.equal(shown.length, 0, 'TODO #439: no other window until the release is verified');
   assert.deepEqual(check, ['show', 'focus']);

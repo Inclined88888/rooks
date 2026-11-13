@@ -1,7 +1,7 @@
 {
   "taskForm": {
     "detachWorktree": {"title": "工作树", "hint": "分离工作树会移除此任务的工作目录，但保留其分支（{branch}）和提交。任务再次运行时，会在该分支上创建新的工作目录。如果目录中有未提交的更改，则无法分离。", "action": "分离工作树", "detaching": "正在分离…", "confirm": "移除此任务的工作目录吗？分支和提交将保留。", "done": "工作树已分离，分支已保留", "failed": "无法分离工作树：{error}"},
-    "markMerged": {"title": "已在 Timon 外部合并？", "hint": "如果此任务的分支已在 GitHub 上通过拉取请求合并，或已手动合并，请提供合并提交。此任务将标记为已完成，依赖它的任务将开始执行。", "shaLabel": "合并提交", "shaPlaceholder": "提交 SHA，例如 bcd02520", "action": "标记为已合并", "marking": "正在标记…", "done": "任务已标记为已合并", "doneUnverified": "任务已标记为已合并。此提交尚未出现在仓库的本地副本中，无法验证。", "notInBase": "此提交不在仓库的基准分支中，请检查合并提交的 SHA。", "failed": "无法将任务标记为已合并：{error}", "unreachable": "Timon 未响应", "hintDone": "此任务已完成，但其分支未通过 Timon 合并。如果已在 GitHub 上通过拉取请求合并，或已手动合并，请提供合并提交。Timon 会记录该提交，并启动依赖此任务的任务。", "cardAction": "已合并？"},
+    "markMerged": {"title": "已在 Rooks 外部合并？", "hint": "如果此任务的分支已在 GitHub 上通过拉取请求合并，或已手动合并，请提供合并提交。此任务将标记为已完成，依赖它的任务将开始执行。", "shaLabel": "合并提交", "shaPlaceholder": "提交 SHA，例如 bcd02520", "action": "标记为已合并", "marking": "正在标记…", "done": "任务已标记为已合并", "doneUnverified": "任务已标记为已合并。此提交尚未出现在仓库的本地副本中，无法验证。", "notInBase": "此提交不在仓库的基准分支中，请检查合并提交的 SHA。", "failed": "无法将任务标记为已合并：{error}", "unreachable": "Rooks 未响应", "hintDone": "此任务已完成，但其分支未通过 Rooks 合并。如果已在 GitHub 上通过拉取请求合并，或已手动合并，请提供合并提交。Rooks 会记录该提交，并启动依赖此任务的任务。", "cardAction": "已合并？"},
     "editTitle": "编辑任务",
     "newTitle": "新建任务",
     "close": "关闭",
@@ -53,8 +53,8 @@
     "modelInheritHint": "优先使用项目中此任务类型对应角色的设置，否则使用智能体的设置",
     "modelInherited": "{model}（继承）",
     "modelHelp": "选择“项目角色”时，优先使用项目中此任务类型对应角色的模型，否则使用智能体的模型。",
-    "worktreeBlocked": "此后端在 Timon 目录之外运行。分配给它的编码或合并任务将被阻塞。",
-    "fallback": {"short": "备用模型", "label": "配额用尽时的备用模型", "inherit": "沿用系列计划或全局设置", "inheritHint": "优先使用系列计划，否则使用 Timon 的设置", "never": "从不自动切换"},
+    "worktreeBlocked": "此后端在 Rooks 目录之外运行。分配给它的编码或合并任务将被阻塞。",
+    "fallback": {"short": "备用模型", "label": "配额用尽时的备用模型", "inherit": "沿用系列计划或全局设置", "inheritHint": "优先使用系列计划，否则使用 Rooks 的设置", "never": "从不自动切换"},
     "permission": "权限",
     "permissionModes": {"default": "继承智能体设置", "acceptEdits": "允许编辑（acceptEdits）", "plan": "规划模式（plan）", "bypassPermissions": "跳过权限检查（bypassPermissions）"},
     "pipeline": {"label": "执行流程", "full": "完整流程：编码 → 审查 → 合并", "code-self": "仅编码，由编码智能体合并自己的分支", "code-group": "仅编码，整组统一合并", "fixed": "创建任务时设定。"},

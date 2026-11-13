@@ -22,7 +22,7 @@
       "loadError": "无法加载设备列表。"
     },
     "settings": {
-      "description": "管理本机可控制的其他 Timon 设备。切换后，当前窗口会显示所选设备的完整界面。每台设备都有独立的智能体、项目和设置。",
+      "description": "管理本机可控制的其他 Rooks 设备。切换后，当前窗口会显示所选设备的完整界面。每台设备都有独立的智能体、项目和设置。",
       "local": "此界面由本机提供。",
       "add": "添加设备",
       "addTitle": "添加设备",
@@ -67,8 +67,8 @@
       "invalidCode": "设备拒绝了此配对码：配对码不正确、已过期或已使用。请在该设备上生成新的配对码。",
       "invalidUrl": "此地址不可用：请仅输入设备地址，不要包含登录信息、查询参数或片段。",
       "httpsRequired": "必须通过 HTTPS 访问设备。只有访问本机时才允许使用 HTTP。",
-      "blockedAddress": "此地址不可能指向 Timon 设备。",
-      "notTimon": "此地址没有 Timon 设备响应。",
+      "blockedAddress": "此地址不可能指向 Rooks 设备。",
+      "notTimon": "此地址没有 Rooks 设备响应。",
       "requiresTls": "设备未将此连接识别为 HTTPS。请检查其反向代理的 HTTPS 设置。",
       "unreachable": "目前无法连接到该设备。",
       "unauthorized": "该设备不再允许本机访问：访问权限已撤销或已过期。请重新配对。",
@@ -78,7 +78,7 @@
       "throttled": "尝试次数过多。请等待几分钟后重试。",
       "tooMany": "最多可管理 50 台设备。",
       "vault": "密钥保险库不可用，无法保存设备访问凭据。",
-      "incompatible": "该设备上的 Timon 版本过旧，与当前界面不兼容。请先更新该设备上的 Timon。",
+      "incompatible": "该设备上的 Rooks 版本过旧，与当前界面不兼容。请先更新该设备上的 Rooks。",
       "notFound": "该设备已不在你的设备列表中。",
       "notHere": "请在已登录本机的浏览器中管理设备。",
       "sessionRequired": "请先登录本机。",
@@ -88,7 +88,7 @@
     "banner": {
       "unreachable": "目前无法连接到 {name}。",
       "apiUnknown": "{name} 未报告其所需的接口级别，部分页面可能无法使用。",
-      "apiNewer": "{name} 上的 Timon 版本比当前界面更新。请更新此应用以使用全部功能。",
+      "apiNewer": "{name} 上的 Rooks 版本比当前界面更新。请更新此应用以使用全部功能。",
       "retry": "重试",
       "dismiss": "关闭"
     },
@@ -106,7 +106,7 @@
       "body": {
         "unreachable": "设备没有响应，可能已关机或网络不可用。你在该设备上的工作不受影响。",
         "unauthorized": "本机在该设备上的访问权限已撤销或已过期。请在 {settingsPath} 中重新配对。",
-        "incompatible": "该设备的接口级别为 {level}，而当前界面至少需要 {min}。请更新该设备上的 Timon，再切换过去。",
+        "incompatible": "该设备的接口级别为 {level}，而当前界面至少需要 {min}。请更新该设备上的 Rooks，再切换过去。",
         "unknown": "此窗口控制的设备已从你的设备列表中移除，或属于其他账号。",
         "session_required": "你在本机的登录会话已结束。请返回本机重新登录。",
         "unavailable": "本机暂时无法访问该设备，可能是密钥保险库或守护进程不可用。请稍后重试。"

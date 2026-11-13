@@ -37,7 +37,7 @@
     "signin_not_in_progress": "Nenhuma entrada em andamento.",
     "workspace_unknown": "Espaço de trabalho desconhecido.",
     "project_no_cwd": "Este projeto não tem uma pasta configurada.",
-    "path_unknown": "Este caminho é desconhecido para o Timon: não é uma pasta de agente nem um worktree de tarefa.",
+    "path_unknown": "Este caminho é desconhecido para o Rooks: não é uma pasta de agente nem um worktree de tarefa.",
     "secret_unknown": "Segredo desconhecido.",
     "vault_unavailable": "O cofre de segredos está indisponível.",
     "license_server_unreachable": "Não foi possível acessar o servidor de licenças.",

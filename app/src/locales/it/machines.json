@@ -22,7 +22,7 @@
       "loadError": "Impossibile caricare le macchine."
     },
     "settings": {
-      "description": "Altre macchine Timon che questo computer può pilotare. Il cambio sostituisce l’intera interfaccia con quella della macchina scelta, in questa stessa finestra: ogni macchina mantiene i propri agenti, progetti e impostazioni.",
+      "description": "Altre macchine Rooks che questo computer può pilotare. Il cambio sostituisce l’intera interfaccia con quella della macchina scelta, in questa stessa finestra: ogni macchina mantiene i propri agenti, progetti e impostazioni.",
       "local": "La macchina da cui viene servita questa interfaccia.",
       "add": "Aggiungi una macchina",
       "addTitle": "Aggiungi una macchina",
@@ -67,8 +67,8 @@
       "invalidCode": "La macchina ha rifiutato questo codice: errato, scaduto o già usato. Chiedigliene uno nuovo.",
       "invalidUrl": "Questo indirizzo non può essere usato: indica solo l’indirizzo della macchina, senza login, query o frammento.",
       "httpsRequired": "La macchina deve essere raggiunta via HTTPS. L’HTTP semplice è accettato solo su questo stesso computer.",
-      "blockedAddress": "Questo indirizzo non punta mai a una macchina Timon.",
-      "notTimon": "Nessuna macchina Timon risponde a questo indirizzo.",
+      "blockedAddress": "Questo indirizzo non punta mai a una macchina Rooks.",
+      "notTimon": "Nessuna macchina Rooks risponde a questo indirizzo.",
       "requiresTls": "La macchina non vede questa connessione come HTTPS: controlla le impostazioni HTTPS del suo reverse proxy.",
       "unreachable": "La macchina non è raggiungibile in questo momento.",
       "unauthorized": "La macchina non accetta più questo computer: il suo accesso è stato revocato o è scaduto. Abbinala di nuovo.",
@@ -78,7 +78,7 @@
       "throttled": "Troppi tentativi. Attendi qualche minuto prima di riprovare.",
       "tooMany": "Una flotta contiene al massimo 50 macchine.",
       "vault": "L’archivio dei segreti non è disponibile: non è possibile conservare l’accesso alla macchina.",
-      "incompatible": "Questa macchina esegue una versione di Timon troppo vecchia per questa interfaccia. Aggiornala prima.",
+      "incompatible": "Questa macchina esegue una versione di Rooks troppo vecchia per questa interfaccia. Aggiornala prima.",
       "notFound": "Questa macchina non è più nella tua flotta.",
       "notHere": "Le macchine si gestiscono da un browser con accesso effettuato su questo computer.",
       "sessionRequired": "Accedi prima su questo computer.",
@@ -88,7 +88,7 @@
     "banner": {
       "unreachable": "{name} non è raggiungibile in questo momento.",
       "apiUnknown": "{name} non dice quale interfaccia si aspetta: alcune schermate potrebbero non funzionare.",
-      "apiNewer": "{name} esegue un Timon più recente di questa interfaccia: aggiorna questa app per usarla appieno.",
+      "apiNewer": "{name} esegue un Rooks più recente di questa interfaccia: aggiorna questa app per usarla appieno.",
       "retry": "Riprova",
       "dismiss": "Ignora"
     },
@@ -106,7 +106,7 @@
       "body": {
         "unreachable": "La macchina non risponde: potrebbe essere spenta o la sua rete non disponibile. Il tuo lavoro su di essa è intatto.",
         "unauthorized": "L’accesso di questo computer è stato revocato o è scaduto su quella macchina. Abbinala di nuovo da {settingsPath}.",
-        "incompatible": "Parla il livello di interfaccia {level}, e questa interfaccia richiede almeno {min}. Aggiorna Timon su quella macchina, poi passa di nuovo a essa.",
+        "incompatible": "Parla il livello di interfaccia {level}, e questa interfaccia richiede almeno {min}. Aggiorna Rooks su quella macchina, poi passa di nuovo a essa.",
         "unknown": "La macchina che questa finestra stava pilotando è stata rimossa dalla tua flotta, o appartiene a un altro account.",
         "session_required": "La tua sessione su questo computer è terminata. Torna lì per accedere di nuovo.",
         "unavailable": "Questo computer non può aprire il suo accesso alla macchina in questo momento (archivio dei segreti, daemon). Riprova tra un momento."

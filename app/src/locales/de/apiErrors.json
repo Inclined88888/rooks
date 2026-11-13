@@ -37,7 +37,7 @@
     "signin_not_in_progress": "Es läuft keine Anmeldung.",
     "workspace_unknown": "Unbekannter Arbeitsbereich.",
     "project_no_cwd": "Für dieses Projekt ist kein Ordner konfiguriert.",
-    "path_unknown": "Dieser Pfad ist Timon unbekannt: Er ist weder ein Agentenordner noch ein Worktree einer Aufgabe.",
+    "path_unknown": "Dieser Pfad ist Rooks unbekannt: Er ist weder ein Agentenordner noch ein Worktree einer Aufgabe.",
     "secret_unknown": "Unbekanntes Geheimnis.",
     "vault_unavailable": "Der Geheimnistresor ist nicht verfügbar.",
     "license_server_unreachable": "Der Lizenzserver ist nicht erreichbar.",

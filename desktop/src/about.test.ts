@@ -35,11 +35,11 @@ test('about: the page carries the version and the whole Cohere NOTICE, line brea
 
 test('about: a missing notices file says so instead of an empty section', () => {
   const { html, links } = aboutPage({ version: '0.2.0', electron: '38', notices: null, locale: 'fr-FR', scheme: 'light' });
-  assert.match(html, /À propos de Timon/);
+  assert.match(html, /À propos de Rooks/);
   assert.match(html, /role="alert">Le fichier THIRD-PARTY-MODELS\.md est introuvable/);
   assert.deepEqual(links, []);
-  assert.equal(aboutCopy('fr').trayItem, 'À propos de Timon');
-  assert.equal(aboutCopy('de').trayItem, 'Über Timon');
+  assert.equal(aboutCopy('fr').trayItem, 'À propos de Rooks');
+  assert.equal(aboutCopy('de').trayItem, 'Über Rooks');
   assert.equal(aboutCopy('sv').trayItem, 'About Rooks');
 });
 

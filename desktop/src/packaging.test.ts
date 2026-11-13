@@ -242,7 +242,7 @@ test('the NSIS installer installs missing Node.js and Git with one elevation', (
 test('the NSIS uninstaller removes the launcher files once the task is deleted', () => {
   const nsh = readFileSync(join(root, 'build', 'installer.nsh'), 'utf8');
   const uninstall = nsh.match(/!macro customUnInstall\s+([\s\S]*?)!macroend/)?.[1] ?? '';
-  const cleanup = uninstall.match(/\$\{If\} \$0 == 0\s+([\s\S]*?)\$\{EndIf\}\s+DetailPrint "Timon data has been kept\."/)?.[1] ?? '';
+  const cleanup = uninstall.match(/\$\{If\} \$0 == 0\s+([\s\S]*?)\$\{EndIf\}\s+DetailPrint "Rooks data has been kept\."/)?.[1] ?? '';
   for (const file of ['service-revision', 'timon-service.cmd', 'timon-service.vbs', 'session-witness.dpapi', 'service-repair-declined']) {
     assert.ok(cleanup.includes(`Delete "$PROFILE\\.timon\\run\\${file}"`), file);
   }
