@@ -77,14 +77,14 @@ test('V3: nothing is added for another origin, an unpinned window or a request w
   assert.deepEqual(withMachineHeader(request({ webContentsId: 1, url: 'data:text/plain,x' }), lookup), plain);
 });
 
-test('V3: the window title names the machine, from the fleet list', () => {
+test('V3: the window title is the product name, from the fleet list', () => {
   const fleet = { machines: [{ id: 'vps', name: ' Office VPS ' }, { id: 'nas', name: '' }] };
   assert.equal(machineNameIn(fleet, 'vps'), 'Office VPS');
   assert.equal(machineNameIn(fleet, 'nas'), null);
   assert.equal(machineNameIn(fleet, 'gone'), null);
   assert.equal(machineNameIn(null, 'vps'), null);
-  assert.equal(windowTitle('Timon', 'Office VPS'), 'Office VPS — Timon');
-  assert.equal(windowTitle('Timon', null), 'Timon');
+  assert.equal(windowTitle('Rooks', 'Office VPS'), 'Rooks');
+  assert.equal(windowTitle('Rooks', null), 'Rooks');
 });
 
 test('V3: a new window opens on the machine asked, else the last one used, else the cookie\'s', () => {
