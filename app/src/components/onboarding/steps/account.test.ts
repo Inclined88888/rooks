@@ -1,8 +1,8 @@
 /**
  * Optional local account: skip always works; email/password are never
- * required; local create when the daemon does not ask for an email code;
- * mailed-code path only when `setupRequiresEmailCode` is on; a mail-relay
- * failure falls back to local create so first use is never blocked.
+ * required; create is always local — never calls the mail relay / email-code
+ * routes, even when a daemon would have asked for a code. No required
+ * asterisks that contradict the optional copy.
  */
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
@@ -61,12 +61,11 @@ async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Rec
   const { OnboardingProvider } = await import('../onboarding-context');
   const { AccountStep } = await import('./account');
   let nexts = 0;
-  let backHandler: (() => boolean) | null = null;
   const nav = {
     step: 'account' as const, direction: 1 as const,
     next: () => { nexts += 1; }, back: () => {}, goTo: () => {},
     setLanguage: async (tag: string) => tag,
-    setBackHandler: (h: (() => boolean) | null) => { backHandler = h; },
+    setBackHandler: () => {},
   };
   const root = createRoot(dom.window.document.getElementById('root')!);
   const act = (fn: () => void | Promise<void>) => React.act(async () => { await fn(); });
@@ -96,7 +95,6 @@ async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Rec
   return {
     doc, calls, fill, inputs, submit, status, skip, press, flush, act,
     nexts: () => nexts,
-    back: () => backHandler?.() ?? false,
     fillForm: async (v: { name?: string; email: string; password: string; confirm?: string }) => {
       const [name, email, password, confirm] = inputs();
       if (v.name !== undefined) await fill(name!, v.name);
@@ -104,16 +102,18 @@ async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Rec
       await fill(password!, v.password);
       await fill(confirm!, v.confirm ?? v.password);
     },
-    typeCode: async (value: string) => { await fill(doc.querySelector('input[autocomplete="one-time-code"]') as HTMLInputElement, value); },
   };
 }
 
-test('fields are optional; Skip continues without creating an account', async (t) => {
+test('fields are optional; no required asterisks; Skip continues without creating an account', async (t) => {
   const w = await mount(t, {});
-  const [name, email] = w.inputs();
-  assert.ok(name?.labels?.[0]?.textContent?.includes('optional'));
-  assert.ok(email?.labels?.[0]?.textContent?.includes('optional'));
-  assert.ok(!email?.labels?.[0]?.textContent?.includes('*'), 'email is not required');
+  for (const input of w.inputs()) {
+    const label = input.labels?.[0]?.textContent ?? '';
+    assert.match(label, /optional/i, `label for ${input.id} marks optional`);
+    assert.ok(!label.includes('*'), `no required asterisk on ${input.id}`);
+    assert.equal(input.getAttribute('aria-required'), 'false');
+    assert.equal(input.required, false);
+  }
   assert.match(w.doc.body.textContent ?? '', /Skip for now/);
   assert.equal(w.submit().disabled, true);
   await w.press(w.skip());
@@ -121,7 +121,7 @@ test('fields are optional; Skip continues without creating an account', async (t
   assert.equal(w.calls.length, 0, 'skip never hits setup');
 });
 
-test('local-first create: no email code when the daemon does not ask for one', async (t) => {
+test('local-first create: always POSTs /setup, never the email-code route', async (t) => {
   const w = await mount(t, {
     '/api/ui/auth/setup': [{ status: 201, body: { user: { id: 'u1' } } }],
   });
@@ -133,64 +133,34 @@ test('local-first create: no email code when the daemon does not ask for one', a
   assert.equal(w.calls[0]?.body.code, undefined);
   assert.ok(!w.calls.some((c) => c.url.includes('email-code')));
   assert.equal(w.nexts(), 1);
+  assert.doesNotMatch(w.status(), /internet connection/i);
 });
 
-test('when email verification is on, « Create » opens the code; the account is created by the accepted code', async (t) => {
+test('even when a daemon claims setupRequiresEmailCode, create stays local with no mail call', async (t) => {
   const w = await mount(t, {
-    '/api/ui/auth/setup/email-code': [{ status: 202, body: { challengeId: 'c1', email: 'ada@example.com', expiresAt: Date.now() + 600_000, resendAt: Date.now() + 60_000 } }],
-    '/api/ui/auth/setup': [
-      { status: 400, body: { error: 'wrong', code: 'email_code_invalid', params: { attemptsLeft: 4 }, attemptsLeft: 4 } },
-      { status: 201, body: { user: { id: 'u1' } } },
-    ],
-  }, { user: null, needsSetup: true, setupRequiresEmailCode: true });
-  await w.fillForm({ email: ' Ada@Example.com ', password: 'aaaaaaaa' });
-  await w.press(w.submit());
-  assert.deepEqual(w.calls[0], { url: '/api/ui/auth/setup/email-code', body: { email: 'Ada@Example.com', locale: 'en' } });
-  assert.match(w.doc.body.textContent ?? '', /We sent a code to Ada@Example\.com\./);
-
-  await w.typeCode('111111');
-  assert.equal(w.calls[1]?.body.challengeId, 'c1');
-  assert.equal(w.calls[1]?.body.code, '111111');
-  assert.match(w.doc.body.textContent ?? '', /Wrong code\. 4 attempts left\./);
-  assert.equal(w.nexts(), 0);
-
-  window.sessionStorage.setItem('rooks-onboarding-scheme', 'light');
-  await w.typeCode('222222');
-  assert.equal(w.calls[2]?.body.scheme, 'light');
-  assert.match(w.doc.body.textContent ?? '', /Email confirmed/);
-  await w.act(async () => { await new Promise((r) => setTimeout(r, 950)); });
-  assert.equal(w.nexts(), 1);
-});
-
-test('mail-relay offline falls back to local create instead of blocking', async (t) => {
-  const w = await mount(t, {
+    '/api/ui/auth/setup': [{ status: 201, body: { user: { id: 'u1' } } }],
+    // If the UI wrongly asked for a code, this would be consumed — it must not be.
     '/api/ui/auth/setup/email-code': [
       { status: 503, body: { error: 'offline', code: 'email_connection_required', reason: 'offline' } },
     ],
+  }, { user: null, needsSetup: true, setupRequiresEmailCode: true });
+  await w.fillForm({ email: 'ada@example.com', password: 'Health@4115' });
+  await w.press(w.submit());
+  assert.ok(!w.calls.some((c) => c.url.includes('email-code')), 'never asks the mail relay');
+  assert.ok(w.calls.some((c) => c.url === '/api/ui/auth/setup' && c.body.challengeId === undefined));
+  assert.equal(w.nexts(), 1);
+  assert.doesNotMatch(w.status(), /internet connection|confirm the email/i);
+});
+
+test('mail-relay offline on a mistaken email-code reply cannot appear: create never hits that route', async (t) => {
+  const w = await mount(t, {
     '/api/ui/auth/setup': [{ status: 201, body: { user: { id: 'u1' } } }],
   }, { user: null, needsSetup: true, setupRequiresEmailCode: true });
   await w.fillForm({ email: 'ada@example.com', password: 'aaaaaaaa' });
   await w.press(w.submit());
-  assert.ok(w.calls.some((c) => c.url === '/api/ui/auth/setup/email-code'));
-  assert.ok(w.calls.some((c) => c.url === '/api/ui/auth/setup' && c.body.challengeId === undefined));
-  assert.equal(w.nexts(), 1, 'first use continues locally');
-});
-
-test('« Back » and « Change email » return to the form as it was filled', async (t) => {
-  const challenge = () => ({ status: 202, body: { challengeId: 'c1', resendAt: Date.now() + 60_000 } });
-  const w = await mount(t, { '/api/ui/auth/setup/email-code': [challenge(), challenge()] }, { user: null, needsSetup: true, setupRequiresEmailCode: true });
-  await w.fillForm({ name: 'Ada', email: 'ada@example.com', password: 'aaaaaaaa' });
-  assert.equal(w.back(), false, 'on the form, « Back » leaves the step');
-  await w.press(w.submit());
-  assert.ok(w.doc.querySelector('[data-email-code-boxes]'));
-  await w.act(() => { assert.equal(w.back(), true, 'on the code, « Back » stays in the step'); });
-  await w.flush();
-  assert.deepEqual(w.inputs().map((i) => i.value), ['Ada', 'ada@example.com', 'aaaaaaaa', 'aaaaaaaa']);
-
-  await w.press(w.submit());
-  const change = Array.from(w.doc.querySelectorAll('button')).find((b) => b.textContent?.includes('Change email'));
-  await w.press(change ?? null);
-  assert.deepEqual(w.inputs().map((i) => i.value), ['Ada', 'ada@example.com', 'aaaaaaaa', 'aaaaaaaa']);
+  assert.equal(w.calls.length, 1);
+  assert.equal(w.calls[0]?.url, '/api/ui/auth/setup');
+  assert.equal(w.nexts(), 1);
 });
 
 test('an exposed install asks for the setup token with local create', async (t) => {

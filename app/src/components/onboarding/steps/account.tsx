@@ -2,10 +2,9 @@
 
 /**
  * Optional local account. Email and password are never required to reach the
- * desk — Skip continues. When the person does fill them in, the account is
- * created on this machine. Email codes are used only when the daemon says
- * `setupRequiresEmailCode`; otherwise setup is local and never needs a mail
- * relay (no false “internet required” gate).
+ * desk — Skip continues. Creating an account is always local on this machine:
+ * no email-code request, no mail-relay / internet gate. Confirmation mail is
+ * never part of first-run setup.
  */
 import { useCallback, useEffect, useId, useState, type FormEvent, type ReactElement, type ReactNode } from 'react';
 import { ArrowRight, Loader2, Lock } from 'lucide-react';
@@ -15,15 +14,12 @@ import { Label } from '@/components/ui/label';
 import { AgentMascotHost } from '@/components/mascot/agent-mascot';
 import { PasswordInput } from '@/components/auth/password-input';
 import { accountName, looksLikeEmail, passwordPairReady, passwordProblem, MIN_PASSWORD } from '@/components/auth/auth-form';
-import { EmailCodeHost, useNow, type EmailCodeResent, type EmailCodeVerdict } from '@/components/email-code/email-code';
-import {
-  createAccount, requestSetupCode, resendSetupCode, RESTART_CODES, type CodeChallenge,
-} from '@/components/email-code/email-code-api';
-import { expiredChallenge, failureText, type CodeFailure } from '@/components/email-code/email-code-failure';
+import { createAccount } from '@/components/email-code/email-code-api';
+import { failureText, type CodeFailure } from '@/components/email-code/email-code-failure';
 import { fetchMe } from '@/lib/auth';
 import { firstRunScheme } from '@/lib/first-run-gate';
 import { t } from '@/lib/i18n';
-import { useOnboarding, useOnboardingBack } from '../onboarding-context';
+import { useOnboarding } from '../onboarding-context';
 
 const LOOK = { shape: 'round', color: '#ff8a2a', eyes: 'big' } as const;
 
@@ -47,13 +43,9 @@ function Field({ id, label, hint, children }: { id: string; label: string; hint?
 export function AccountStep(): ReactElement {
   const { next, goTo } = useOnboarding();
   const ids = useId();
-  const now = useNow();
   const [draft, setDraft] = useState<AccountDraft>(EMPTY);
   const [shown, setShown] = useState(false);
   const [needsToken, setNeedsToken] = useState(false);
-  const [needsEmailCode, setNeedsEmailCode] = useState(false);
-  const [challenge, setChallenge] = useState<CodeChallenge | null>(null);
-  const [view, setView] = useState<'form' | 'code'>('form');
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<CodeFailure | null>(null);
 
@@ -70,7 +62,6 @@ export function AccountStep(): ReactElement {
       // "setup already done" answer leaves for Welcome-back sign-in.
       if (me.needsSetup) {
         setNeedsToken(me.setupRequiresToken === true);
-        setNeedsEmailCode(me.setupRequiresEmailCode === true);
         return;
       }
       goTo('signin');
@@ -80,12 +71,6 @@ export function AccountStep(): ReactElement {
     return () => { alive = false; };
   }, [next, goTo]);
 
-  useOnboardingBack(() => {
-    if (view !== 'code') return false;
-    setView('form');
-    return true;
-  });
-
   const set = (field: keyof AccountDraft) => (e: { target: { value: string } }) => {
     const value = e.target.value;
     setDraft((d) => ({ ...d, [field]: value }));
@@ -93,15 +78,9 @@ export function AccountStep(): ReactElement {
 
   const email = draft.email.trim();
   const problem = passwordProblem(draft.password, draft.confirm);
-  const waiting = failureText(failure, now);
+  const waiting = failureText(failure, Date.now());
   const hasCredentials = looksLikeEmail(email) && passwordPairReady(draft.password, draft.confirm);
   const ready = hasCredentials && (!needsToken || draft.setupToken.trim() !== '');
-  const blocked = failure?.retryUntil != null && waiting !== null;
-
-  const ask = useCallback(async (): Promise<CodeChallenge | CodeFailure> => {
-    const answer = await requestSetupCode({ email, setupToken: needsToken ? draft.setupToken.trim() : undefined });
-    return answer.ok ? answer.value : answer.failure;
-  }, [email, draft.setupToken, needsToken]);
 
   const createLocal = useCallback(async (): Promise<CodeFailure | null> => {
     const scheme = firstRunScheme();
@@ -117,76 +96,15 @@ export function AccountStep(): ReactElement {
 
   const submit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
-    if (!ready || sending || blocked) return;
+    if (!ready || sending) return;
     setSending(true);
     setFailure(null);
-    if (needsEmailCode) {
-      const answer = await ask();
-      setSending(false);
-      if ('challengeId' in answer) {
-        setChallenge(answer);
-        setView('code');
-      } else if (answer.code === 'email_connection_required' || answer.code === 'email_service_unavailable' || answer.code === 'network') {
-        // Local-first fallback: mail relay unreachable must not block first use.
-        setSending(true);
-        const local = await createLocal();
-        setSending(false);
-        if (!local) next();
-        else setFailure(local);
-      } else {
-        setFailure(answer);
-      }
-      return;
-    }
+    // Always local: never POST /setup/email-code, never gate on mail relay.
     const local = await createLocal();
     setSending(false);
     if (!local) next();
     else setFailure(local);
   };
-
-  const verify = useCallback(async (code: string): Promise<EmailCodeVerdict> => {
-    if (!challenge) return { ok: false, failure: expiredChallenge() };
-    const scheme = firstRunScheme();
-    const answer = await createAccount({
-      email,
-      name: accountName(draft.name, email),
-      password: draft.password,
-      ...(scheme ? { scheme } : {}),
-      ...(needsToken ? { setupToken: draft.setupToken.trim() } : {}),
-      challengeId: challenge.challengeId,
-      code,
-    });
-    return answer.ok ? { ok: true } : { ok: false, failure: answer.failure };
-  }, [challenge, email, draft.name, draft.password, draft.setupToken, needsToken]);
-
-  const resend = useCallback(async (): Promise<EmailCodeResent> => {
-    if (!challenge) return { ok: false, failure: expiredChallenge() };
-    const answer = await resendSetupCode(challenge.challengeId);
-    if (answer.ok) return { ok: true, resendAt: answer.value.resendAt };
-    if (answer.failure.code && RESTART_CODES.has(answer.failure.code)) {
-      const fresh = await ask();
-      if (!('challengeId' in fresh)) return { ok: false, failure: fresh };
-      setChallenge(fresh);
-      return { ok: true, resendAt: fresh.resendAt };
-    }
-    return { ok: false, failure: answer.failure };
-  }, [challenge, ask]);
-
-  const changeEmail = useCallback(() => setView('form'), []);
-
-  if (view === 'code' && challenge) {
-    return (
-      <EmailCodeHost
-        purpose="verify"
-        email={email}
-        resendAt={challenge.resendAt}
-        verify={verify}
-        resend={resend}
-        onVerified={next}
-        changeEmail={changeEmail}
-      />
-    );
-  }
 
   const line = waiting ?? (problem === 'mismatch' ? t('onboarding.account.mismatch') : problem === 'short' ? t('onboarding.account.tooShort', { min: MIN_PASSWORD }) : null);
   const toggle = () => setShown((s) => !s);
@@ -210,6 +128,7 @@ export function AccountStep(): ReactElement {
             autoComplete="given-name"
             value={draft.name}
             onChange={set('name')}
+            aria-required={false}
             aria-describedby={`${ids}-name-hint`}
             className="h-10"
           />
@@ -222,6 +141,7 @@ export function AccountStep(): ReactElement {
             placeholder={t('onboarding.account.emailPlaceholder')}
             value={draft.email}
             onChange={set('email')}
+            aria-required={false}
             aria-describedby={`${ids}-email-hint`}
             className="h-10"
           />
@@ -234,6 +154,7 @@ export function AccountStep(): ReactElement {
             onChange={set('password')}
             shown={shown}
             onToggleShown={toggle}
+            aria-required={false}
             className="h-10"
           />
         </Field>
@@ -245,6 +166,7 @@ export function AccountStep(): ReactElement {
             onChange={set('confirm')}
             shown={shown}
             onToggleShown={toggle}
+            aria-required={false}
             aria-invalid={problem !== null}
             className="h-10"
           />
@@ -270,7 +192,7 @@ export function AccountStep(): ReactElement {
         <p role="status" aria-live="polite" data-account-status="" className="ml-0.5 min-h-4 text-[12.5px] leading-4 tabular-nums text-destructive">
           {line}
         </p>
-        <Button type="submit" size="lg" className="h-11 w-full gap-2" disabled={!ready || sending || blocked}>
+        <Button type="submit" size="lg" className="h-11 w-full gap-2" disabled={!ready || sending}>
           {sending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
           {t('onboarding.account.create')}
           {!sending && <ArrowRight className="h-4 w-4" aria-hidden />}

@@ -217,10 +217,11 @@ function endPreWelcomeSession(req: Request, res: Response): boolean {
 export type UserRoutesOptions = {
   setupPolicy?: SetupPolicy;
   /**
-   * The first account is created only once its email is confirmed by a
-   * mailed code (`docs/EMAIL-CODES.md`). Off unless asked: the many tests that
-   * bootstrap an account through `/api/auth/setup` are not about email. The
-   * bundled plugin passes `BUNDLED_USER_ROUTES` (on), and a test holds it on.
+   * When true, a mailed code *may* be checked if the caller sends one with
+   * setup (`docs/EMAIL-CODES.md`). It never gates first-account create: Rooks
+   * is local-first and must succeed without a mail relay or internet. The
+   * bundled plugin keeps this off; tests that exercise optional codes pass
+   * `emailVerification: true` explicitly.
    */
   emailVerification?: boolean;
   emailCodes?: EmailCodeStore;
@@ -229,9 +230,8 @@ export type UserRoutesOptions = {
 
 /**
  * What the bundled `@rooks/users` plugin mounts the routes with.
- * Email verification is off by default: Rooks is local-first — the first
- * account lives on this machine and must not need an internet mail relay.
- * Tests that exercise codes pass `emailVerification: true` explicitly.
+ * Email verification is off: the first account lives on this machine and
+ * must not need an internet mail relay. `setupRequiresEmailCode` stays false.
  */
 export const BUNDLED_USER_ROUTES: UserRoutesOptions = Object.freeze({
   emailVerification: false,
@@ -255,7 +255,8 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
   const emailDeps = defaultEmailCodeDeps({ store: options.emailCodes, relay: options.mailRelay });
   app.get('/api/auth/me', (req, res) => {
     const me = mePayload(req, endPreWelcomeSession(req, res));
-    res.json({ ...me, setupRequiresLicense: requiresLicense, setupRequiresEmailCode: me.needsSetup && emailVerification });
+    // Never advertise a first-run email-code gate: local create must work offline.
+    res.json({ ...me, setupRequiresLicense: requiresLicense, setupRequiresEmailCode: false });
   });
   registerEmailCodeRoutes(app, emailDeps);
 
@@ -437,10 +438,11 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
       res.status(400).json({ error: 'scheme must be light or dark' });
       return;
     }
-    // A browser confirms the address before the account exists; the operator
-    // (daemon-token, CLI) is trusted with the address it types.
+    // Optional proof only: if the caller sent a challenge+code, check it.
+    // Never require a mailed code — offline / no-relay first-run must succeed.
     let emailChallenge: string | null = null;
-    if (emailVerification && req.auth?.kind !== 'daemon-token') {
+    if (emailVerification && req.auth?.kind !== 'daemon-token'
+      && (body.challengeId !== undefined || body.code !== undefined)) {
       emailChallenge = checkSetupEmailCode(req, res, emailDeps, body, email);
       if (!emailChallenge) return;
     }

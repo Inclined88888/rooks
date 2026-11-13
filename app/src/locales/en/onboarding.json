@@ -34,7 +34,7 @@
       "tooShort": "At least {min} characters.",
       "create": "Create my account",
       "skip": "Skip for now",
-      "privacy": "Your account stays on this computer. Email is optional and never leaves this machine unless you choose to confirm it."
+      "privacy": "Your account stays on this computer. Email and password are optional — no internet is needed to create it."
     },
     "channels": {
       "title": "Communication channels",

@@ -3,11 +3,12 @@
  * address the test injects (`mailRelay.baseUrl`). Witness daemon on
  * 127.0.0.1:0.
  *
- * What matters: the first account exists only once its code is right; a code
+ * What matters: a mailed code may be checked when the caller sends one; a code
  * dies after 10 minutes, 5 wrong guesses, or one use; a resend waits 60 s;
- * the reset request answers the same for a known and an unknown address; a
- * reset revokes every session; offline is a clear 503; an anonymous caller
- * asking in a loop is braked per network, and cannot evict the owner's code.
+ * first-account create never requires a code (local-first); the reset request
+ * answers the same for a known and an unknown address; a reset revokes every
+ * session; offline is a clear 503; an anonymous caller asking in a loop is
+ * braked per network, and cannot evict the owner's code.
  */
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -121,17 +122,14 @@ test('the bundled plugin mounts the routes with email verification off (local-fi
   assert.match(index, /registerRoutes\(ctx\.http\.router\(\), BUNDLED_USER_ROUTES\)/);
 });
 
-test('/api/auth/me tells the form a code is required', async () => {
+test('/api/auth/me never gates first-run on an email code (local-first)', async () => {
   const me = await (await fetch(`${base}/api/auth/me`)).json() as Json;
   assert.equal(me.needsSetup, true);
-  assert.equal(me.setupRequiresEmailCode, true);
+  assert.equal(me.setupRequiresEmailCode, false);
 });
 
-test('an anonymous setup without a code creates nothing', async () => {
-  const none = await post('/api/auth/setup', account);
-  assert.equal(none.status, 400);
-  assert.equal(none.json.code, 'email_code_required');
-  const bogus = await post('/api/auth/setup', { ...account, challengeId: 'a'.repeat(32), code: '123456' });
+test('a bogus challenge+code on an open install is refused (optional proof still checked)', async () => {
+  const bogus = await post('/api/auth/setup', { ...account, email: 'bogus@example.com', challengeId: 'a'.repeat(32), code: '123456' });
   assert.equal(bogus.status, 410);
   const me = await (await fetch(`${base}/api/auth/me`)).json() as Json;
   assert.equal(me.needsSetup, true);
