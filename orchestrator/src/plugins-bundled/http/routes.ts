@@ -193,11 +193,13 @@ export function registerRoutes(app: Router): void {
   });
 
   /**
-   * Step 3 — the main agent's identity. Superadmin only, like the team screen:
-   * it renames an agent and writes into its directory.
+   * Step 3 — the main agent's identity. Same gate as `/api/setup`: anonymous
+   * while no account exists (Skip-for-now first-run), superadmin afterwards.
+   * Requiring a session here trapped Skip users with 401 after configure wrote
+   * `rooks.config.json` and ended the first-run hole.
    */
   app.get('/api/setup/main-agent', (req, res) => {
-    if (!requireSuperadmin(req, res)) return;
+    if (dbApi.countUsers() > 0 && !requireSuperadmin(req, res)) return;
     // The teammates the conversation recruited: the wizard lists them beside the chat.
     res.json({ ...mainAgentStatus(), team: setupTeam() });
   });
@@ -205,7 +207,7 @@ export function registerRoutes(app: Router): void {
   registerSetupChatRoutes(app);
 
   app.post('/api/setup/main-agent', (req, res) => {
-    if (!requireSuperadmin(req, res)) return;
+    if (dbApi.countUsers() > 0 && !requireSuperadmin(req, res)) return;
     if (req.body && (req.body as { skip?: unknown }).skip === true) {
       const skipped = skipMainAgent();
       // Answered by skipping: the conversation that was setting it up has nothing left it may do.

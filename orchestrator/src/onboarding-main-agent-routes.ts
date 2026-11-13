@@ -11,6 +11,7 @@
 import type { Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { auditRequest } from './users/audit-actor.js';
+import { dbApi } from './db.js';
 import { forbidden, requireSuperadmin, viewerFromRequest, isPersonAuth } from './users/identity.js';
 import { scopedDb } from './users/scoped-db.js';
 import {
@@ -61,8 +62,14 @@ function setupMission(req: Request, res: Response): { missionId: string } | null
   return { missionId: auth.missionId };
 }
 
-/** The wizard's browser: a superadmin SESSION. An agent's token is never the person at the screen. */
+/**
+ * The wizard's browser. Superadmin session once accounts exist. While the
+ * users table is empty (Skip for now), allow the name/config gestures so
+ * first-run is not trapped with 401 after configure wrote the config.
+ * An agent's mission token is never the person at the screen.
+ */
 function wizardBrowser(req: Request, res: Response): boolean {
+  if (dbApi.countUsers() === 0) return true;
   if (!requireSuperadmin(req, res)) return false;
   if (!isPersonAuth(req.auth)) {
     forbidden(req, res, { kind: 'scope', reason: 'the setup conversation is driven from the wizard\'s browser' });
