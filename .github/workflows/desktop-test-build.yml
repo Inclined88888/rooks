@@ -178,3 +178,5 @@ jobs:
             gh release create "$tag" "${files[@]}" --prerelease --title "$title" --notes "$notes"
           fi
           echo "Prerelease: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${tag}"
+
+# tip d0b49a07 pack-fix kick
