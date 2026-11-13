@@ -10,9 +10,9 @@
       "system": "System"
     },
     "splash": {
-      "title": "Work that stays\non your desk.",
+      "title": "Work that stays on your desk.",
       "subtitle": "Rooks runs agents on this computer with the models and subscriptions you already use.",
-      "hint": "Pick a language, then continue."
+      "hint": "Press Continue to set up — everything optional after this."
     },
     "language": {
       "title": "Choose your language",
@@ -58,8 +58,8 @@
       "opening": "Opening the next screen…"
     },
     "llm": {
-      "title": "Choose\nyour LLM.",
-      "subtitle": "Optional. Rooks runs on the AI subscriptions you already have — or skip and set models later.",
+      "title": "Choose your models",
+      "subtitle": "Optional. Use subscriptions you already have — or skip and set models later.",
       "skip": "Skip for now",
       "plan": {
         "title": "Use my AI subscription",

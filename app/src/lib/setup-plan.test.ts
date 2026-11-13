@@ -389,7 +389,8 @@ test('the four lines of the card follow the daemon, and the headline follows the
   const failed = preparationItems({ service: 'failed', doctor: 'ready', browser: 'available' });
   assert.equal(failed[0]?.state, 'failed');
   assert.equal(preparationHeadline(failed), 'failed');
-  assert.equal(preparationHeadline(preparationItems({ service: 'running', doctor: 'failed', browser: 'available' })), 'failed');
+  // A machine-read blip while the daemon warms must not headline "needs you".
+  assert.equal(preparationHeadline(preparationItems({ service: 'running', doctor: 'failed', browser: 'available' })), 'preparing');
   // Waiting for an account is not a failure.
   assert.equal(preparationItems({ service: 'account', doctor: 'ready', browser: null })[0]?.state, 'idle');
 });

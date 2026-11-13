@@ -526,7 +526,10 @@ function serviceItem(phase: ServicePhase): PreparationItemState {
  * a web install has none and still works), the AIs the doctor's detection.
  */
 export function preparationItems(s: PreparationSnapshot): PreparationItem[] {
-  const doctor: PreparationItemState = s.doctor === 'ready' ? 'done' : s.doctor === 'failed' ? 'failed' : 'running';
+  // A machine-read blip while the daemon is starting must not paint
+  // "Rooks needs you" — keep those lines running until a real answer lands.
+  // Install refusals still surface via the service line / gate.
+  const doctor: PreparationItemState = s.doctor === 'ready' ? 'done' : 'running';
   const browser: PreparationItemState = s.browser === 'available' ? 'done'
     : s.browser === 'unavailable' ? 'skipped'
       : s.browser === 'checking' ? 'running' : 'idle';

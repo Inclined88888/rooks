@@ -27,7 +27,7 @@ function Shell({ children }: { children: React.ReactNode }): ReactElement {
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            'radial-gradient(ellipse 55% 45% at 50% 15%, hsl(var(--primary) / 0.10), transparent 70%)',
+            'none',
         }}
       />
       <div className="relative w-full max-w-sm">

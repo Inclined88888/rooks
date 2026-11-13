@@ -43,7 +43,7 @@ export const ROOKS_THEME_TOKENS_CSS = `
     --border: 240 4% 16%;
     --input: 240 4% 16%;
     --ring: var(--primary);
-    --radius: 0.375rem;
+    --radius: 0.5rem;
 
     --salmon: var(--primary);
     --salmon-2: var(--primary);

@@ -65,14 +65,14 @@ function paint(ctx: CanvasRenderingContext2D, world: Avalanche, bitmaps: readonl
   }
 }
 
-export const MascotAvalanche = forwardRef<MascotAvalancheHandle, { className?: string }>(function MascotAvalanche({ className }, ref): ReactElement {
+export const MascotAvalanche = forwardRef<MascotAvalancheHandle, { className?: string; density?: number }>(function MascotAvalanche({ className, density = 36 }, ref): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const castRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<Avalanche | null>(null);
   const bitmaps = useRef<(HTMLCanvasElement | null)[]>([]);
   const [ready, setReady] = useState(false);
   const reduced = usePrefersReducedMotion();
-  const looks = useMemo(() => avalancheLooks(), []);
+  const looks = useMemo(() => avalancheLooks(density), [density]);
 
   useImperativeHandle(ref, () => ({
     scatter: () => { if (worldRef.current) scatter(worldRef.current); },
@@ -107,7 +107,19 @@ export const MascotAvalanche = forwardRef<MascotAvalancheHandle, { className?: s
     };
     measure();
     const heads = looks.map((look) => skullSize(look.shape));
-    let world = buildAvalanche({ width: w, height: h, looks: heads, still: reduced });
+    // density ≈ look count; 24 was the original cast size → pack 1.0
+    const pack = Math.max(1, density / 24);
+    // First paint can run before the absolute stage has a real size (canvas
+    // defaults to 300×150). Wait for a usable box before building heaps.
+    if (w < 80 || h < 80) {
+      const wait = new ResizeObserver(() => {
+        measure();
+        if (w >= 80 && h >= 80) wait.disconnect();
+      });
+      wait.observe(canvas);
+      // Fall through once measured; if still tiny, build a stub and relayout.
+    }
+    let world = buildAvalanche({ width: Math.max(w, 320), height: Math.max(h, 240), looks: heads, still: reduced, density: pack });
     worldRef.current = world;
     let relayout = 0;
     // The canvas follows the window at once (a stretched bitmap would blur); the heaps follow it once it stops.
@@ -115,15 +127,24 @@ export const MascotAvalanche = forwardRef<MascotAvalancheHandle, { className?: s
       measure();
       window.clearTimeout(relayout);
       relayout = window.setTimeout(() => {
+        if (w < 80 || h < 80) return;
         const next = resizeAvalanche(world, w, h, heads);
         if (next === world) return;
-        // A mascot in hand is dropped with the old scene.
-        world = next;
+        // A mascot in hand is dropped with the old scene — except a first
+        // layout from the 300×150 stub: rebuild with motion if we can.
+        const firstReal = world.width <= 320 && w > 320;
+        world = firstReal && !reduced
+          ? buildAvalanche({ width: w, height: h, looks: heads, still: false, density: pack })
+          : next;
         worldRef.current = world;
         canvas.style.cursor = '';
       }, RELAYOUT_MS);
     };
     window.addEventListener('resize', resize);
+    const ro = new ResizeObserver(() => resize());
+    ro.observe(canvas);
+    // Kick once after layout.
+    requestAnimationFrame(() => resize());
 
     const point = (e: PointerEvent): { x: number; y: number; t: number } => {
       const r = canvas.getBoundingClientRect();
@@ -165,6 +186,7 @@ export const MascotAvalanche = forwardRef<MascotAvalancheHandle, { className?: s
       cancelAnimationFrame(raf);
       window.clearTimeout(relayout);
       window.removeEventListener('resize', resize);
+      ro.disconnect();
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerup', onUp);
@@ -177,16 +199,15 @@ export const MascotAvalanche = forwardRef<MascotAvalancheHandle, { className?: s
 
   return (
     <>
-      <canvas ref={canvasRef} aria-hidden className={className} />
-      {!ready && (
-        <div ref={castRef} aria-hidden className="pointer-events-none fixed left-0 top-0 h-0 w-0 overflow-hidden opacity-0">
-          {looks.map((look, i) => (
-            <div key={i} data-avalanche-look="">
-              <AgentMascotHost look={look} size={200} fit shadow={false} />
-            </div>
-          ))}
-        </div>
-      )}
+      <canvas ref={canvasRef} aria-hidden className={className} style={{ display: 'block', width: '100%', height: '100%' }} />
+      {/* Keep the cast mounted (hidden) so a late plugin paint can still rasterise. */}
+      <div ref={castRef} aria-hidden className="pointer-events-none fixed left-[-9999px] top-0 h-[200px] w-[200px] overflow-hidden opacity-0">
+        {looks.map((look, i) => (
+          <div key={i} data-avalanche-look="">
+            <AgentMascotHost look={look} size={200} fit shadow={false} />
+          </div>
+        ))}
+      </div>
     </>
   );
 });

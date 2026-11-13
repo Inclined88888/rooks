@@ -25,7 +25,7 @@ import { firstRunScheme } from '@/lib/first-run-gate';
 import { t } from '@/lib/i18n';
 import { useOnboarding, useOnboardingBack } from '../onboarding-context';
 
-const LOOK = { shape: 'round', color: '#E8943A', eyes: 'big' } as const;
+const LOOK = { shape: 'round', color: '#ff8a2a', eyes: 'big' } as const;
 
 export type AccountDraft = { name: string; email: string; password: string; confirm: string; setupToken: string };
 
@@ -61,12 +61,21 @@ export function AccountStep(): ReactElement {
     let alive = true;
     void fetchMe().then((me) => {
       if (!alive) return;
-      if (me.user) next();
-      else if (!me.needsSetup) goTo('signin');
-      else {
+      if (me.user) {
+        next();
+        return;
+      }
+      // Stay on optional create + Skip while the daemon is warming
+      // (needsSetup true) or still unknown. Only a definitive
+      // "setup already done" answer leaves for Welcome-back sign-in.
+      if (me.needsSetup) {
         setNeedsToken(me.setupRequiresToken === true);
         setNeedsEmailCode(me.setupRequiresEmailCode === true);
+        return;
       }
+      goTo('signin');
+    }).catch(() => {
+      // Network blip / daemon starting: keep create + Skip, never scare.
     });
     return () => { alive = false; };
   }, [next, goTo]);
@@ -183,11 +192,11 @@ export function AccountStep(): ReactElement {
   const toggle = () => setShown((s) => !s);
 
   return (
-    <div className="relative flex w-full max-w-[440px] flex-col items-center text-center">
+    <div className="relative mx-auto flex w-full max-w-[440px] flex-col items-start px-8 py-10 text-left">
       <div className="rooks-onboarding-rise">
         <AgentMascotHost look={LOOK} size={56} />
       </div>
-      <h1 className="rooks-onboarding-rise mt-3 font-[family-name:var(--font-display)] text-[28px] font-semibold leading-tight tracking-[-0.03em]" style={{ animationDelay: '60ms' }}>
+      <h1 className="rooks-onboarding-rise mt-3 text-[28px] font-semibold leading-tight tracking-[-0.03em]" style={{ animationDelay: '60ms' }}>
         {t('onboarding.account.title')}
       </h1>
       <p className="rooks-onboarding-rise mt-1.5 text-sm leading-snug text-muted-foreground" style={{ animationDelay: '100ms' }}>

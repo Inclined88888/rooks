@@ -189,7 +189,7 @@ test('the two choices, the legal links and no statistics box under a fixed heade
     await ui.until(() => ui.$('[data-choice="plan"]')?.textContent?.includes('Claude Code or Codex') === true, 'the names read from the daemon');
     assert.notEqual(ui.$('[data-choice="plan"]')?.querySelectorAll('svg, img').length ?? 0, 0, 'their marks');
     assert.equal(ui.text().includes('Gemini'), false);
-    assert.ok(ui.$('[data-llm-step] h1')?.textContent?.includes('LLM'), 'the title');
+    assert.ok(ui.$('[data-llm-step] h1')?.textContent?.includes('models'), 'the title');
     assert.ok(ui.text().includes(t('onboarding.llm.subtitle')));
     assert.equal(ui.$('[data-view]')?.getAttribute('data-view'), 'choose');
     assert.ok(ui.$('[data-choice="plan"]') && ui.$('[data-choice="local"]'));

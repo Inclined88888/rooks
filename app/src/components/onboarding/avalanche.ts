@@ -69,6 +69,8 @@ export type Avalanche = {
   height: number;
   floorY: number;
   scale: number;
+  /** Packing factor used to build the heaps (kept for resize). */
+  density: number;
   bodies: AvalancheBody[];
   /** `false` once scattered: nothing holds the mascots in any more. */
   floor: boolean;
@@ -147,13 +149,19 @@ export type AvalancheOptions = {
   rng?: Rng;
   /** Reduced motion: every mascot starts on its spot, nothing flies. */
   still?: boolean;
+  /**
+   * How packed the corner heaps are (1 = original). Splash uses ~1.7 so the
+   * piles read like the mascot-heap reference instead of a sparse sprinkle.
+   */
+  density?: number;
 };
 
-export function buildAvalanche({ width: W, height: H, looks, rng = Math.random, still = false }: AvalancheOptions): Avalanche {
+export function buildAvalanche({ width: W, height: H, looks, rng = Math.random, still = false, density = 1 }: AvalancheOptions): Avalanche {
   const rnd = (a: number, b: number): number => a + rng() * (b - a);
   const gauss = (): number => (rng() + rng() + rng() - 1.5) / 1.5;
   const floorY = H - 4;
   const scale = clamp(H / 768, 0.75, 1.3);
+  const pack = clamp(density, 0.8, 2.2);
   const G = GRAVITY;
 
   const make = (side: -1 | 1, k: number): AvalancheBody => {
@@ -173,19 +181,19 @@ export function buildAvalanche({ width: W, height: H, looks, rng = Math.random, 
   };
 
   // Each side fills its own lumpy mountain profile: tallest against the edge, sloping toward the middle.
-  const peakH = H * 0.34;
-  const ext = W * 0.27;
+  const peakH = H * (0.38 + 0.1 * pack);
+  const ext = W * (0.28 + 0.06 * pack);
   const profile = (): ((d: number) => number) => {
-    const ph = peakH * rnd(0.8, 1.15);
-    const ex = ext * rnd(0.85, 1.15);
-    const curve = rnd(1, 1.3);
+    const ph = peakH * rnd(0.85, 1.2);
+    const ex = ext * rnd(0.9, 1.2);
+    const curve = rnd(1, 1.25);
     const b0 = rnd(0, 6.3);
     const b1 = rnd(0, 6.3);
     return (d) => ph * Math.pow(Math.max(0, 1 - d / ex), curve) * (1 + 0.18 * Math.sin((d / ex) * 9 + b0) + 0.1 * Math.sin((d / ex) * 17 + b1));
   };
   const avgA = 0.45 * 58 * scale * 0.8;
   const avgB = 0.35 * 58 * scale * 0.8;
-  const perSide = clamp(Math.round((0.42 * ext * peakH) / (Math.PI * avgA * avgB)), 16, 80);
+  const perSide = clamp(Math.round(((0.48 * pack) * ext * peakH) / (Math.PI * avgA * avgB)), 20, 110);
 
   const bodies: AvalancheBody[] = [];
   // Slide downhill until resting in a hollow, on the floor or against the edge.
@@ -221,17 +229,23 @@ export function buildAvalanche({ width: W, height: H, looks, rng = Math.random, 
       // Some slide all the way into a hollow, some stay perched, a few roll out to the foot.
       const slide = rng() < 0.3 ? Math.floor(rnd(0, 3)) : 60;
       const stray = rng() < 0.07;
+      // Never pour past the midline — title space stays clear even when packed.
+      const maxD = Math.min(ext * 1.25, W * 0.46 - b.a);
       for (let c = 0; c < (stray ? 1 : 3); c += 1) {
-        const d = stray ? rnd(ext * 0.95, ext * 1.45) : b.a + rng() * Math.max(1, ext - b.a);
+        const d = stray ? rnd(Math.max(b.a, maxD * 0.85), Math.max(b.a + 1, maxD)) : b.a + rng() * Math.max(1, maxD - b.a);
         const at = settle(b, edge + inward * d, slide);
         const score = stray ? 0 : target(Math.abs(at.x - edge)) - (floorY - (at.r.y - b.vb)) + rnd(-0.12, 0.12) * peakH;
         if (!best || score > best.score) best = { ...at, score };
       }
       if (!best) continue;
-      b.slot = { x: best.x, y: best.r.y };
-      b.sup = best.r.sup;
-      b.x = best.x;
-      b.y = best.r.y;
+      // Snap to the correct half if settle slid a head across.
+      const mid = W / 2;
+      const x = side < 0 ? Math.min(best.x, mid - b.a) : Math.max(best.x, mid + b.a);
+      const r = x === best.x ? best.r : restAt(b, x, bodies, floorY);
+      b.slot = { x, y: r.y };
+      b.sup = r.sup;
+      b.x = x;
+      b.y = r.y;
       bodies.push(b);
     }
   }
@@ -282,7 +296,7 @@ export function buildAvalanche({ width: W, height: H, looks, rng = Math.random, 
       b.fly = null;
     }
   }
-  return { width: W, height: H, floorY, scale, bodies, floor: true, drag: null, rng };
+  return { width: W, height: H, floorY, scale, density: pack, bodies, floor: true, drag: null, rng };
 }
 
 /**
@@ -294,7 +308,7 @@ export function buildAvalanche({ width: W, height: H, looks, rng = Math.random, 
  */
 export function resizeAvalanche(world: Avalanche, width: number, height: number, looks: readonly HeadSize[]): Avalanche {
   if (!world.floor || (width === world.width && height === world.height)) return world;
-  return buildAvalanche({ width, height, looks, rng: world.rng, still: true });
+  return buildAvalanche({ width, height, looks, rng: world.rng, still: true, density: world.density });
 }
 
 function land(world: Avalanche, b: AvalancheBody, y: number, hard: number): void {

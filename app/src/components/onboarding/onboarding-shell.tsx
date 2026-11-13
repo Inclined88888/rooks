@@ -1,14 +1,8 @@
 'use client';
 
 /**
- * The onboarding's frame (docs/ONBOARDING.md): one full-screen stage, the
- * progress dots above it, "Back" in one corner, the light/dark switch in the
- * other, and the current step from
- * `steps/registry.tsx` inside. It decides nothing about any step — it moves
- * between them, as a View Transition unless the reader asked for reduced
- * motion.
- *
- * Mounted by the `/onboarding` route, outside `(main)`: no top bar, no nav.
+ * Onboarding frame: app-window feel (hairline stage, step rail, flat surface).
+ * No radial glow, no language step, no system-health toast mid-flow.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { flushSync } from 'react-dom';
@@ -27,8 +21,8 @@ import {
 } from './onboarding-flow';
 import { ONBOARDING_COMPANIONS, ONBOARDING_GATE, ONBOARDING_STEPS, type OnboardingCompanion, type OnboardingStepEntry } from './steps/registry';
 import type { OnboardingGate } from './service-gate';
+import { BrandLogo } from '@/components/brand-logo';
 
-/** Runs `swap` inside a View Transition styled for the onboarding, or straight away. */
 function transition(swap: () => void, reduced: boolean): void {
   if (reduced || typeof document.startViewTransition !== 'function') {
     swap();
@@ -42,28 +36,20 @@ function transition(swap: () => void, reduced: boolean): void {
 
 type Position = { step: OnboardingStepId; direction: 1 | -1 };
 
-/**
- * Out of the onboarding, once the main agent is made: its welcome, on the TIMs
- * page. A full load, so the app's client host reads the install afresh.
- */
 export async function afterLastStep(): Promise<void> {
   window.location.assign(welcomeLanding(await fetchCapabilities(true).catch(() => null)));
 }
 
 export type OnboardingShellProps = {
-  /** The registry's; a test passes its own. */
   steps?: readonly OnboardingStepEntry[];
   companions?: readonly OnboardingCompanion[];
-  /** Decides whether the current step may mount (the service steps wait for the service). */
   gate?: OnboardingGate;
-  /** What "Continue" does on the last step; `afterLastStep` unless a test passes its own. */
   finish?: () => void;
 };
 
 export function OnboardingShell({
   steps = ONBOARDING_STEPS, companions = ONBOARDING_COMPANIONS, gate: Gate = ONBOARDING_GATE, finish,
 }: OnboardingShellProps): ReactElement | null {
-  // `null` until the URL is read: a reload on `?step=llm` must not flash the welcome.
   const [at, setAt] = useState<Position | null>(null);
   const [, setLanguageShown] = useState(getLocale);
   const reduced = usePrefersReducedMotion();
@@ -75,7 +61,6 @@ export function OnboardingShell({
   finishRef.current = finish ?? finishRef.current;
 
   useEffect(() => {
-    // A tab still on the former chat step goes where that conversation lives now.
     if (asksFormerChatStep(window.location.search)) { finishRef.current(); return; }
     const step = stepFromSearch(window.location.search);
     current.current = step;
@@ -85,7 +70,6 @@ export function OnboardingShell({
   const goTo = useCallback((step: OnboardingStepId, direction: 1 | -1 = 1): void => {
     if (step === current.current) return;
     current.current = step;
-    // The address follows the step, so a reload reopens it; Next keeps its own history state.
     window.history.replaceState(window.history.state, '', stepHref(step));
     transition(() => {
       backHandler.current = null;
@@ -128,44 +112,63 @@ export function OnboardingShell({
     if (backHandler.current?.()) return;
     back();
   };
+  const stepIndex = DOTTED_STEPS.indexOf(at.step);
 
   return (
     <OnboardingProvider value={nav}>
       <div className="fixed inset-0 overflow-hidden bg-background text-foreground">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{ backgroundImage: 'radial-gradient(ellipse 55% 45% at 50% 15%, hsl(var(--primary) / 0.10), transparent 70%)' }}
-        />
-        {dots && (
-          <div className="absolute left-1/2 top-[22px] z-20 flex -translate-x-1/2 gap-[7px]">
-            <span className="sr-only">
-              {t('onboarding.progress', { current: DOTTED_STEPS.indexOf(at.step) + 1, total: DOTTED_STEPS.length })}
-            </span>
-            {dots.map((state, k) => (
-              <i
-                key={k}
-                aria-hidden
-                data-dot={state}
-                className={cn(
-                  'rooks-onboarding-dot block h-1.5 rounded-full',
-                  state === 'current' ? 'w-[22px] bg-foreground' : 'w-1.5',
-                  state === 'done' && 'bg-muted-foreground',
-                  state === 'todo' && 'bg-border',
-                )}
-              />
-            ))}
+        {/* App chrome: inverted-L hairline frame */}
+        <header className="absolute inset-x-0 top-0 z-20 flex h-12 items-center justify-between border-b border-border px-4">
+          <div className="flex min-w-[140px] items-center gap-2">
+            {canGoBack(at.step) ? (
+              <Button variant="ghost" size="sm" className="h-8 gap-1 rounded-lg px-2 text-[13px]" onClick={onBack}>
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+                {t('onboarding.back')}
+              </Button>
+            ) : (
+              <span className="inline-flex items-center gap-2 text-[13px] font-medium tracking-[-0.02em]">
+                <BrandLogo className="h-5 w-5" alt="" />
+                Rooks
+              </span>
+            )}
           </div>
-        )}
-        {canGoBack(at.step) && (
-          <Button variant="ghost" size="sm" className="absolute left-4 top-3.5 z-20 gap-1" onClick={onBack}>
-            <ChevronLeft className="h-4 w-4" aria-hidden />
-            {t('onboarding.back')}
-          </Button>
-        )}
-        <SchemeSwitch className="absolute right-4 top-3.5 z-20" />
-        <main className="absolute inset-0 flex flex-col items-center justify-center overflow-auto p-8">
-          {Step && <Gate step={at.step}><Step key={at.step} /></Gate>}
+          {dots ? (
+            <div className="flex items-center gap-1.5">
+              <span className="sr-only">
+                {t('onboarding.progress', { current: stepIndex + 1, total: DOTTED_STEPS.length })}
+              </span>
+              {dots.map((state, k) => (
+                <i
+                  key={k}
+                  aria-hidden
+                  data-dot={state}
+                  className={cn(
+                    'rooks-onboarding-dot block h-1.5 rounded-full',
+                    state === 'current' ? 'w-5 bg-foreground' : 'w-1.5',
+                    state === 'done' && 'bg-muted-foreground/70',
+                    state === 'todo' && 'bg-border',
+                  )}
+                />
+              ))}
+            </div>
+          ) : <span className="h-1.5 w-5" aria-hidden />}
+          <div className="flex min-w-[140px] justify-end">
+            <SchemeSwitch className="rounded-lg border border-border bg-card p-0.5" />
+          </div>
+        </header>
+        <main className="absolute inset-0 top-12 overflow-auto">
+          <div className={cn(
+            'mx-auto flex min-h-full w-full items-stretch',
+            at.step === 'splash' ? 'max-w-[1100px] px-4 py-4' : 'max-w-[960px] px-6 py-8',
+          )}>
+            <div className={cn(
+              'relative flex w-full flex-1 flex-col overflow-hidden rounded-lg border border-border',
+              // Splash: flat stage so the heap reads; other steps: quiet card.
+              at.step === 'splash' ? 'bg-background' : 'bg-card',
+            )}>
+              {Step && <Gate step={at.step}><div className="flex min-h-[min(640px,calc(100vh-8rem))] flex-1 flex-col"><Step key={at.step} /></div></Gate>}
+            </div>
+          </div>
         </main>
         {companions.map((Companion, i) => <Companion key={i} step={at.step} stays={stays} />)}
       </div>

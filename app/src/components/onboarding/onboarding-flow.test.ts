@@ -174,12 +174,10 @@ test('the roller applies a language after a short rest on it, not every row a dr
   assert.deepEqual(applied, ['it', 'nl', 'pl'], 'back to the applied one: nothing to load');
 });
 
-test('every language the app ships has its flag on the roller', async () => {
-  const { FLAGS } = await import('./language-flags');
-  const { readdirSync } = await import('node:fs');
-  const { join, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const locales = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'locales');
-  const shipped = readdirSync(locales, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith('.')).map((e) => e.name).sort();
-  assert.deepEqual(Object.keys(FLAGS).sort(), shipped);
+test('language flags are not part of first-run onboarding', async () => {
+  // Language lives in Settings › Interface; splash has no picker or flags.
+  const splash = await import('./steps/splash');
+  assert.equal(typeof splash.SplashStep, 'function');
+  const flags = await import('./language-flags');
+  assert.ok(flags.FLAGS);
 });

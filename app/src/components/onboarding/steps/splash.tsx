@@ -1,29 +1,23 @@
 'use client';
 
 /**
- * Welcome splash: premium moodboard stage (cream light / near-black dark),
- * language first, living mascot heap settling into the corners — not a cheap
- * dark card.
+ * Welcome splash: flat moodboard stage, restrained Rooks mark, denser mascot
+ * heap settling into the corners. No language step — OS locale (Settings later).
  */
-import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
+import { useEffect, useRef, type ReactElement } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { availableLocales, getLocale, t } from '@/lib/i18n';
-import { selectableLocales } from '@/lib/locale-preference';
-import { BrandWordmark } from '@/components/brand-wordmark';
-import { LanguageRoller } from '../language-roller';
+import { BrandLogo } from '@/components/brand-logo';
+import { t } from '@/lib/i18n';
 import { fetchMe } from '@/lib/auth';
 import { useOnboarding } from '../onboarding-context';
 import { afterSplash } from '../onboarding-flow';
 import { MascotAvalanche, type MascotAvalancheHandle } from '../mascot-avalanche';
 
 export function SplashStep(): ReactElement {
-  const { goTo, setLanguage } = useOnboarding();
+  const { goTo } = useOnboarding();
   const returning = useRef(false);
-  const roller = useRef<HTMLDivElement>(null);
   const heap = useRef<MascotAvalancheHandle>(null);
-  const languages = useMemo(() => selectableLocales(availableLocales()), []);
-  const [language] = useState(getLocale);
 
   useEffect(() => {
     let alive = true;
@@ -31,55 +25,44 @@ export function SplashStep(): ReactElement {
     return () => { alive = false; };
   }, []);
 
-  useEffect(() => {
-    const focus = window.setTimeout(() => roller.current?.querySelector<HTMLElement>('[role="listbox"]')?.focus({ preventScroll: true }), 600);
-    return () => window.clearTimeout(focus);
-  }, []);
-
   const start = (): void => {
     heap.current?.scatter();
-    window.setTimeout(() => goTo(afterSplash(returning.current)), 280);
+    window.setTimeout(() => goTo(afterSplash(returning.current)), 320);
   };
 
   return (
-    <section className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden px-6">
-      {/* Soft stage atmosphere — not a card */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            'radial-gradient(ellipse 70% 55% at 50% 18%, hsl(var(--primary) / 0.10), transparent 58%), linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--surface-1)) 100%)',
-        }}
+    <section data-onboarding-step="splash" className="relative isolate flex min-h-[min(640px,calc(100vh-8rem))] w-full flex-1 flex-col">
+      <MascotAvalanche
+        ref={heap}
+        className="pointer-events-auto absolute inset-0 z-[1] h-full w-full"
+        density={56}
       />
-      <MascotAvalanche ref={heap} className="pointer-events-none absolute inset-0 z-[1]" />
-      <div className="relative z-[2] flex w-full max-w-lg -translate-y-[3vh] flex-col items-center text-center">
-        <BrandWordmark className="rooks-onboarding-rise mb-7" markClassName="h-11" />
+      {/* Quiet centre panel — no heavy card/blob; heap owns the corners. */}
+      <div className="pointer-events-none relative z-[2] mx-auto flex min-h-[min(640px,calc(100vh-8rem))] w-full max-w-[560px] flex-col justify-center px-10 py-12">
+        <div className="pointer-events-auto rooks-onboarding-rise flex items-center gap-2.5">
+          <BrandLogo className="h-7 w-7" alt="" />
+          <span className="text-[15px] font-medium tracking-[-0.02em] text-foreground">Rooks</span>
+        </div>
         <h1
-          className="rooks-onboarding-rise whitespace-pre-line font-[family-name:var(--font-display)] text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[1.05] tracking-[-0.045em]"
-          style={{ animationDelay: '70ms' }}
+          className="rooks-onboarding-rise mt-8 max-w-[16ch] text-[28px] font-semibold leading-[1.15] tracking-[-0.03em] text-foreground"
+          style={{ animationDelay: '50ms' }}
         >
           {t('onboarding.splash.title')}
         </h1>
-        <p className="rooks-onboarding-rise mt-4 max-w-[42ch] text-[15px] leading-relaxed text-muted-foreground" style={{ animationDelay: '120ms' }}>
+        <p
+          className="rooks-onboarding-rise mt-3 max-w-[36ch] text-[13.5px] leading-relaxed text-muted-foreground"
+          style={{ animationDelay: '90ms' }}
+        >
           {t('onboarding.splash.subtitle')}
         </p>
-        <div ref={roller} className="rooks-onboarding-rise relative mt-8 flex w-full flex-col items-center" style={{ animationDelay: '160ms' }}>
-          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">{t('onboarding.language.title')}</p>
-          <LanguageRoller
-            languages={languages}
-            value={language}
-            label={t('onboarding.language.title')}
-            onChange={(tag) => { void setLanguage(tag); }}
-            onConfirm={start}
-            className="mb-4 mt-2 h-[150px] w-[280px]"
-          />
-          <Button size="lg" className="relative z-[3] h-10 gap-2 px-6 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]" onClick={start}>
+        <div className="pointer-events-auto rooks-onboarding-rise mt-8 flex items-center gap-3" style={{ animationDelay: '130ms' }}>
+          <Button type="button" size="lg" className="h-10 gap-2 rounded-lg px-5 text-[13.5px] font-medium" onClick={start} data-splash-continue>
             {t('onboarding.continue')}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Button>
+          <kbd className="hidden rounded-md border border-border/80 bg-background/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground sm:inline">Enter</kbd>
         </div>
-        <p className="rooks-onboarding-fade mt-6 text-[12px] text-muted-foreground" style={{ animationDelay: '240ms' }}>
+        <p className="rooks-onboarding-fade mt-6 text-[12px] text-muted-foreground/80" style={{ animationDelay: '180ms' }}>
           {t('onboarding.splash.hint')}
         </p>
       </div>

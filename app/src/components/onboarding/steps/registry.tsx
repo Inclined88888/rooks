@@ -18,7 +18,6 @@
  */
 import type { ComponentType } from 'react';
 import type { OnboardingStepId } from '../onboarding-flow';
-import { PreparationCard } from '../preparation-card';
 import { ServiceGate, type OnboardingGate } from '../service-gate';
 import { AccountStep } from './account';
 import { AgentStep } from './agent';
@@ -55,10 +54,12 @@ export const ONBOARDING_STEPS: readonly OnboardingStepEntry[] = [
 /** Shown on every step, given the current one and whether it stays on this page. */
 export type OnboardingCompanion = ComponentType<{ step: OnboardingStepId; stays: boolean }>;
 
-export const ONBOARDING_COMPANIONS: readonly OnboardingCompanion[] = [
-  // "Preparing Rooks": the service installed in the background (docs/ONBOARDING-PREPARATION.md).
-  PreparationCard,
-];
+/**
+ * No floating system-health toast mid-onboarding — first-run stays quiet.
+ * Service readiness is still gated on the agent step via `ServiceGate`.
+ * Tests that need the card mount `PreparationCard` explicitly.
+ */
+export const ONBOARDING_COMPANIONS: readonly OnboardingCompanion[] = [];
 
 /**
  * Wraps every step: the agent step waits for the daemon service

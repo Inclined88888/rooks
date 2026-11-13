@@ -25,8 +25,8 @@ export function ChannelsStep(): ReactElement {
   const [picked, setPicked] = useState<ChannelId | null>(null);
 
   return (
-    <section data-onboarding-step="channels" className="flex w-full max-w-[520px] flex-col items-center text-center">
-      <h1 className="rooks-onboarding-rise font-[family-name:var(--font-display)] text-[28px] font-semibold leading-tight tracking-[-0.03em]">
+    <section data-onboarding-step="channels" className="flex w-full max-w-[520px] flex-col items-start px-8 py-10 text-left">
+      <h1 className="rooks-onboarding-rise text-[28px] font-semibold leading-tight tracking-[-0.03em]">
         {t('onboarding.channels.title')}
       </h1>
       <p className="rooks-onboarding-rise mb-6 mt-2.5 text-[15px] leading-normal text-muted-foreground" style={{ animationDelay: '60ms' }}>

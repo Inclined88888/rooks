@@ -67,7 +67,7 @@ export function HexBackdrop() {
         className="pointer-events-none fixed inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 60% 50% at 50% 40%, hsl(var(--primary) / 0.06), transparent 70%)',
+            'none',
         }}
         aria-hidden
       />

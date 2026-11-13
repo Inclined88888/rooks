@@ -14,8 +14,6 @@ import { useCallback, useEffect, useState, type ReactElement } from 'react';
 import { ArrowRight, Check, ChevronRight, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BrandMark } from '@/components/brand-mark';
-import { AgentMascotHost } from '@/components/mascot/agent-mascot';
-import type { AgentLook } from '@/components/mascot/agent-look';
 import { ProviderCliCards } from '@/components/provider-cli/provider-cli-cards';
 import { fetchProviderClis, type ProviderCli } from '@/lib/provider-clis';
 import { t } from '@/lib/i18n';
@@ -27,17 +25,6 @@ import {
 } from '../llm-choice';
 import { useOnboarding, useOnboardingBack } from '../onboarding-context';
 import { ViewSwap } from '../view-swap';
-
-/** The row above the title: a small crowd of every skull, standing on one line. */
-const TEAM: readonly { look: Partial<AgentLook>; size: number }[] = [
-  { look: { shape: 'round', color: '#7ed957', eyes: 'happy' }, size: 54 },
-  { look: { shape: 'squircle', color: '#ff5fbf', eyes: 'big' }, size: 38 },
-  { look: { shape: 'hex', color: '#d4a373', eyes: 'pill', acc: 'loupe' }, size: 64 },
-  { look: { shape: 'round', color: '#8a5a3b', eyes: 'wink', acc: 'coffee' }, size: 92 },
-  { look: { shape: 'gem', color: '#a35bff', eyes: 'star' }, size: 70 },
-  { look: { shape: 'squircle', color: '#3fa9ff', eyes: 'surprised' }, size: 36 },
-  { look: { shape: 'cloud', color: '#ffc233', eyes: 'squint', acc: 'pen' }, size: 50 },
-];
 
 export function LlmStep(): ReactElement {
   const { next } = useOnboarding();
@@ -59,23 +46,14 @@ export function LlmStep(): ReactElement {
   });
 
   return (
-    <section className="flex max-h-full min-h-0 w-[min(560px,100%)] flex-col items-center text-center" data-llm-step>
-      <div className="flex h-[clamp(64px,13vh,100px)] shrink-0 items-end justify-center gap-2.5" aria-hidden>
-        {TEAM.map((member, i) => (
-          <div key={i} className="rooks-onboarding-drop" style={{ animationDelay: `${0.06 * i}s` }}>
-            <div className="rooks-mascot-hop" style={{ animationDelay: `${0.9 + i * 0.18}s` }}>
-              <AgentMascotHost look={member.look} size={Math.round(member.size * 0.92)} live fit shadow={false} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <h1 className="mt-3 shrink-0 whitespace-pre-line text-[clamp(38px,min(8vw,10vh),92px)] font-extrabold leading-[0.95] tracking-[-0.045em]">
-        {t('onboarding.llm.title')}
+    <section className="mx-auto flex max-h-full min-h-0 w-full max-w-[560px] flex-col items-start px-8 py-10 text-left" data-llm-step>
+      <h1 className="shrink-0 text-[28px] font-semibold leading-tight tracking-[-0.03em]">
+        {t('onboarding.llm.title').replace(/\n/g, ' ')}
       </h1>
-      <p className="mb-5 mt-3 max-w-[470px] shrink-0 text-[15px] leading-normal text-muted-foreground">{t('onboarding.llm.subtitle')}</p>
+      <p className="mb-6 mt-2 max-w-[470px] shrink-0 text-[14px] leading-relaxed text-muted-foreground">{t('onboarding.llm.subtitle')}</p>
       <ViewSwap
         view={view}
-        className="flex min-h-0 w-full flex-col items-center px-4 pb-5"
+        className="flex min-h-0 w-full flex-col items-stretch pb-2"
         render={(shown) => (shown === 'plan'
           ? <PlanBlock onContinue={next} />
           : shown === 'local'
@@ -91,7 +69,7 @@ function ChooseBlock({ onPick, known, onSkip }: { onPick: (view: LlmView) => voi
   const providers = known ? subscriptionProviders(known) : { names: [], brands: [] };
   return (
     <>
-      <div className="w-full max-w-[460px] space-y-0.5 rounded-2xl bg-card/80 p-1.5 text-left shadow-elev-2 ring-1 ring-border">
+      <div className="w-full max-w-[460px] space-y-0.5 rounded-lg border border-border bg-background p-1 text-left">
         <ChoiceRow
           title={t('onboarding.llm.plan.title')}
           detail={providers.names.length > 0 ? formatList(providers.names, 'or') : t('onboarding.llm.plan.detailAny')}
@@ -203,7 +181,7 @@ function LocalBlock({ onContinue }: { onContinue: () => void }): ReactElement {
   return (
     <>
       <p className="mb-2.5 max-w-[460px] text-[13px] text-muted-foreground">{t('onboarding.llm.local.hint')}</p>
-      <div className="w-full max-w-[460px] rounded-2xl bg-card p-1.5 text-left shadow-elev-2" data-ollama>
+      <div className="w-full max-w-[460px] rounded-lg border border-border bg-background p-1 text-left" data-ollama>
         <div className="flex items-center gap-3 rounded-xl p-2.5">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-muted">
             <BrandMark brand="ollama" className="size-5" />

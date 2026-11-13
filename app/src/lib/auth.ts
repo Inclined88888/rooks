@@ -102,7 +102,14 @@ export function meCan(me: AuthMe | null, permission: MePermission): boolean | nu
 
 export async function fetchMe(): Promise<AuthMe> {
   const response = await sharedGet('/api/ui/auth/me');
-  if (!response.ok) return { user: null, needsSetup: false, prefs: { ...DEFAULT_USER_PREFS }, can: {}, acting: null };
+  if (!response.ok) {
+    // 5xx while the local daemon is still coming up must not look like
+    // "an account already exists" — onboarding would jump to Welcome-back
+    // sign-in and drop Skip. 401 stays needsSetup:false (signed-out on a
+    // machine that already has accounts).
+    const warming = response.status >= 500;
+    return { user: null, needsSetup: warming, prefs: { ...DEFAULT_USER_PREFS }, can: {}, acting: null };
+  }
   const body = await readJsonObject(response, '/api/ui/auth/me') as { user?: PublicUser | null; needsSetup?: boolean; setupRequiresLicense?: boolean; setupRequiresToken?: boolean; setupRequiresEmailCode?: boolean; prefs?: unknown; can?: unknown; acting?: unknown; welcome?: unknown };
   return readAuthMe(body);
 }

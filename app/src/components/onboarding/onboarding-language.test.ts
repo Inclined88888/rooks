@@ -93,7 +93,7 @@ test('switching language on the welcome screen translates the titles, then the n
         gate: ({ children }: { children: React.ReactNode }) => h(React.Fragment, null, children),
       }));
     });
-    assert.equal(title(), 'Work that stays\non your desk.');
+    assert.equal(title(), 'Work that stays on your desk.');
     await press('[data-lang="fr"]');
     assert.equal(title(), 'Votre équipe d’IA,\nchez vous.');
     await press('[data-lang="es"]');

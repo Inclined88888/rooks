@@ -32,6 +32,9 @@ test('authentication rejects empty, truncated and HTML responses with safe conte
     assert.equal((await fetchMe()).needsSetup, true);
     globalThis.fetch = async () => new Response(null, { status: 401 });
     assert.equal((await fetchMe()).needsSetup, false);
+    // Daemon still warming must keep first-run on create + Skip.
+    globalThis.fetch = async () => new Response(null, { status: 503 });
+    assert.equal((await fetchMe()).needsSetup, true);
   } finally { globalThis.fetch = original; console.warn = warn; }
 });
 
