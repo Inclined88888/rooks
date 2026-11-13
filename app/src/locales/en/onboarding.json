@@ -34,6 +34,7 @@
       "create": "Create my account",
       "skip": "Skip for now",
       "failed": "The account could not be created.",
+      "alreadyHere": "This Rooks already has an account. Continue opens it on this computer, without a password. If it does not, reset the password with rooks user reset-password.",
       "privacy": "We only collect your email in case you want to reset your password. The account you create stays local."
     },
     "legacy": {
@@ -89,6 +90,7 @@
       "createNoName": "Continue",
       "creating": "Saving {name}…",
       "configFailed": "{name} is named, but its settings could not be saved. Try again.",
+      "continueDefaults": "Continue with defaults",
       "will": "It will",
       "loading": "Loading your profile…",
       "profileError": "Your profile could not be read, so here is the simplest view.",

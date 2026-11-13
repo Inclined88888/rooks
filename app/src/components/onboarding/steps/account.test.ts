@@ -244,12 +244,17 @@ test('no internet, the email service down, no answer at all: a sentence each, ne
   assert.equal(w.status(), 'Setup token missing or wrong. Run the command below on the server and try again.');
 });
 
-test('Skip stays usable when the request fails, and an install already set up continues', async (t) => {
+test('Skip stays usable when the request fails, and an install already set up continues without a password', async (t) => {
   const w = await mount(t, {
     '/api/ui/auth/setup': [
       'network',
       { status: 409, body: { error: 'already set up', code: 'already_set_up' } },
+      { status: 409, body: { error: 'already set up', code: 'already_set_up' } },
       { status: 400, body: { error: 'setup_token_required', code: 'setup_token_required' } },
+    ],
+    '/api/ui/auth/login': [
+      { status: 401, body: { error: 'invalid credentials', code: 'invalid_credentials' } },
+      { status: 200, body: { user: { id: 'u1', name: 'Local' } } },
     ],
   });
   const skip = (): HTMLButtonElement | undefined => Array.from(w.doc.querySelectorAll('button')).find((b) => b.textContent?.includes('Skip'));
@@ -258,9 +263,14 @@ test('Skip stays usable when the request fails, and an install already set up co
   assert.equal(skip()?.disabled, false, 'a failed Skip can be pressed again');
   assert.equal(w.nexts(), 0);
   await w.press(skip() ?? null);
-  assert.equal(w.signins(), 1, 'already set up, and no session: the sign-in step');
+  assert.equal(w.signins(), 0, 'a 409 does not open the password sign-in');
   assert.equal(w.nexts(), 0);
+  assert.match(w.status(), /already has an account/);
+  assert.equal(w.calls.some((c) => c.url === '/api/ui/auth/login' && c.body.localDesktop === true && c.body.password === undefined), true);
   assert.equal(skip()?.disabled, false);
+  await w.press(skip() ?? null);
+  assert.equal(w.nexts(), 1, 'this computer opens the account without a password');
+  assert.equal(w.signins(), 0);
   await w.press(skip() ?? null);
   assert.match(w.status(), /setup_token_required|Setup token/);
   assert.equal(skip()?.disabled, false);

@@ -74,8 +74,28 @@ export function providerCliState(cli: Pick<ProviderCli, 'path' | 'signedIn' | 'b
  * leave a machine whose provider cannot tell stuck on this step forever; the
  * chat says so itself if the model then does not answer.
  */
-export function readyForSetupChat(backends: readonly ProviderCli[]): boolean {
+export function readyForSetupChat(backends: readonly Pick<ProviderCli, 'seedsMainAgent' | 'path' | 'signedIn'>[]): boolean {
   return backends.some((cli) => cli.seedsMainAgent && cli.path !== null && cli.signedIn !== false);
+}
+
+/**
+ * Whether the agent step may keep a chosen model.
+ *
+ * A seeding CLI counts, and so does any other installed CLI. A catalogue
+ * backend that is not one of those CLIs counts too: Ollama and an API-key
+ * profile (they never appear in the CLI list). An empty CLI report means
+ * nothing was found; the catalogue is only read once that report names the
+ * CLIs, so a model list can be told apart from a tool that can run.
+ */
+export function setupHasProvider(
+  clis: readonly Pick<ProviderCli, 'name' | 'path' | 'signedIn' | 'seedsMainAgent'>[],
+  catalog: readonly { id: string; signedIn?: boolean | null }[] = [],
+): boolean {
+  if (readyForSetupChat(clis)) return true;
+  if (clis.some((cli) => cli.seedsMainAgent !== true && cli.path !== null && cli.signedIn !== false)) return true;
+  if (clis.length === 0) return false;
+  const names = new Set(clis.map((cli) => cli.name));
+  return catalog.some((backend) => backend.id.length > 0 && !names.has(backend.id) && backend.signedIn !== false);
 }
 
 const BASE = '/api/ui/backends/provider-clis';

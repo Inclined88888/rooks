@@ -4,7 +4,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { providerCliState, readyForSetupChat, type ProviderCli } from './provider-clis';
+import { providerCliState, readyForSetupChat, setupHasProvider, type ProviderCli } from './provider-clis';
 
 function cli(over: Partial<ProviderCli>): ProviderCli {
   return {
@@ -31,4 +31,14 @@ test('the chat opens on one CLI it can start on, installed and not known to be s
   assert.equal(readyForSetupChat([cli({ path: '/a/claude', signedIn: true })]), true);
   // opencode alone: the chat cannot start on it, so it does not open the way.
   assert.equal(readyForSetupChat([cli({ name: 'opencode', path: '/a/opencode', signedIn: true, seedsMainAgent: false })]), false);
+});
+
+test('the agent step also keeps a model for Ollama, an API key, or any installed CLI', () => {
+  const missing = cli({ name: 'claude', path: null, seedsMainAgent: true });
+  assert.equal(setupHasProvider([]), false);
+  assert.equal(setupHasProvider([missing], [{ id: 'claude' }]), false, 'a CLI the report says is missing');
+  assert.equal(setupHasProvider([missing], [{ id: 'ollama' }]), true, 'local Ollama is not a seeding CLI');
+  assert.equal(setupHasProvider([missing], [{ id: 'ollama-cloud' }]), true, 'an API-key profile');
+  assert.equal(setupHasProvider([missing], [{ id: 'deepseek', signedIn: false }]), false, 'known not to be usable');
+  assert.equal(setupHasProvider([cli({ name: 'opencode', path: '/bin/opencode', signedIn: true, seedsMainAgent: false })]), true);
 });

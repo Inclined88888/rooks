@@ -45,7 +45,7 @@ function Field({ id, label, required = false, hint, children }: { id: string; la
 }
 
 export function AccountStep(): ReactElement {
-  const { next, goTo } = useOnboarding();
+  const { next } = useOnboarding();
   const ids = useId();
   const now = useNow();
   const [draft, setDraft] = useState<AccountDraft>(EMPTY);
@@ -56,18 +56,43 @@ export function AccountStep(): ReactElement {
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<CodeFailure | null>(null);
 
-  // An account already made (a reload after creating it) moves on; an install
-  // that has one but no session signs in from the onboarding.
+  const alreadyHere = (): CodeFailure => ({
+    code: 'already_set_up', status: 409, params: {}, message: t('onboarding.account.alreadyHere'), retryUntil: null, attemptsLeft: null,
+  });
+
+  // A name-only account has no password. This computer opens it. A password
+  // form is the wrong place for that, and for an account whose password was never shown.
+  const openExisting = useCallback(async (): Promise<boolean> => {
+    const current = await fetchMe().catch(() => null);
+    if (current?.user) { next(); return true; }
+    try {
+      const login = await fetch('/api/ui/auth/login', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ localDesktop: true }),
+      });
+      if (!login.ok) return false;
+    } catch {
+      return false;
+    }
+    next();
+    return true;
+  }, [next]);
+
+  // An account already made (a reload after creating it) moves on.
   useEffect(() => {
     let alive = true;
-    void fetchMe().then((me) => {
+    void fetchMe().then(async (me) => {
       if (!alive) return;
-      if (me.user) next();
-      else if (!me.needsSetup) goTo('signin');
-      else setNeedsToken(me.setupRequiresToken === true);
+      if (me.user) { next(); return; }
+      if (!me.needsSetup) {
+        const opened = await openExisting();
+        if (alive && !opened) setFailure(alreadyHere());
+        return;
+      }
+      setNeedsToken(me.setupRequiresToken === true);
     });
     return () => { alive = false; };
-  }, [next, goTo]);
+  }, [next, openExisting]);
 
   // "Back" on the code returns to the form, filled as it was left.
   useOnboardingBack(() => {
@@ -111,9 +136,8 @@ export function AccountStep(): ReactElement {
         error ? `${t('onboarding.account.failed')} (${error})` : t('onboarding.account.failed')
       ));
       if (answer.status === 409 && failure.code === 'already_set_up') {
-        const me = await fetchMe().catch(() => null);
-        if (me?.user) next();
-        else goTo('signin');
+        const opened = await openExisting();
+        if (!opened) setFailure(alreadyHere());
         return;
       }
       setFailure(failure);

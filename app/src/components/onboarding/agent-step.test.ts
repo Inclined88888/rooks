@@ -14,7 +14,7 @@ import {
 import { resetOnboardingProfile } from './onboarding-profile';
 
 type Call = { url: string; method: string; body: unknown };
-type Answer = (call: Call) => Response | undefined;
+type Answer = (call: Call) => Response | Promise<Response> | undefined;
 
 const CATALOG: BackendCatalog = {
   defaultBackend: 'claude',
@@ -79,6 +79,9 @@ test('a refused name writes nothing else; a refused config is told apart', async
   const again = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ ok: true }) : undefined));
   assert.deepEqual(await createMainAgent('Nova', { look: null }, again.fetcher, { name: 'nova' }), { ok: true, name: 'nova' });
   assert.equal(again.calls.some((c) => c.method === 'POST'), false, 'the named agent is not renamed again');
+  const renamed = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ ok: true }) : undefined));
+  assert.deepEqual(await createMainAgent('Other', { look: null }, renamed.fetcher, { name: 'nova' }), { ok: true, name: 'nova' });
+  assert.equal(renamed.calls.some((c) => c.method === 'POST'), false, 'a different name after a failed save does not rename again');
 });
 
 test('the main agent is read as it stands; an unreachable daemon is an empty agent', async () => {
@@ -275,6 +278,56 @@ test('the sheet writes no model when no AI tool is installed', async () => {
     : undefined));
 });
 
+test('a Continue before the provider list returns keeps the chosen model', async () => {
+  await renderStep('developer', async (r) => {
+    await click(r, '[data-tab="engine"]');
+    const sonnet = Array.from(r.host.querySelectorAll<HTMLButtonElement>('[data-picker-row]')).find((b) => b.textContent?.includes('Sonnet'));
+    assert.ok(sonnet);
+    await r.react.act(async () => { sonnet.click(); });
+    await click(r, '[data-create]');
+    const patch = patchOf(r.calls);
+    assert.equal(patch?.backend, 'claude');
+    assert.equal(patch?.model, 'sonnet');
+  }, (c) => (c.url.startsWith('/api/ui/backends/provider-clis')
+    ? new Promise((resolve) => { setTimeout(() => resolve(Response.json({ backends: [], jobs: {}, updateCheck: false })), 800); })
+    : undefined));
+});
+
+test('Ollama and an API-key profile keep the chosen model', async () => {
+  await renderStep('developer', async (r) => {
+    await click(r, '[data-tab="engine"]');
+    const sonnet = Array.from(r.host.querySelectorAll<HTMLButtonElement>('[data-picker-row]')).find((b) => b.textContent?.includes('Sonnet'));
+    assert.ok(sonnet);
+    await r.react.act(async () => { sonnet.click(); });
+    await click(r, '[data-create]');
+    const patch = patchOf(r.calls);
+    assert.equal(patch?.backend, 'claude');
+    assert.equal(patch?.model, 'sonnet');
+    assert.ok(r.host.querySelector('[data-model]'));
+  }, (c) => {
+    if (c.url.startsWith('/api/ui/backends/provider-clis')) {
+      return Response.json({
+        backends: [{
+          name: 'claude', label: 'Claude Code', brand: 'claude', path: null, bundled: false, signedIn: null,
+          installable: false, installCommand: null, installDocs: null, signInCommand: 'claude', signInThen: null,
+          seedsMainAgent: true, version: null, latest: null, updateAvailable: false, unsupportedVersion: false,
+        }],
+        jobs: {}, updateCheck: false,
+      });
+    }
+    if (c.url.startsWith('/api/ui/backends/catalog')) {
+      return Response.json({
+        defaultBackend: 'claude',
+        backends: [
+          CATALOG.backends[0],
+          { id: 'ollama-cloud', label: 'Ollama Cloud', brand: 'ollama', defaultModel: 'llama', models: [{ slug: 'llama', label: 'Llama' }] },
+        ],
+      });
+    }
+    return undefined;
+  });
+});
+
 test('a failed config save is retried on the same agent', async () => {
   let patches = 0;
   await renderStep('beginner', async (r) => {
@@ -291,6 +344,23 @@ test('a failed config save is retried on the same agent', async () => {
     patches += 1;
     return patches === 1 ? Response.json({ error: 'config' }, { status: 400 }) : undefined;
   });
+});
+
+test('after a failed save, Continue with defaults leaves the name and skips another write', async () => {
+  await renderStep('beginner', async (r) => {
+    await click(r, '[data-create]');
+    await settle(r.react, 40);
+    assert.ok(r.host.querySelector('[data-continue-defaults]'), 'a failed save can continue with defaults');
+    assert.equal(q<HTMLInputElement>(r.host, '[data-agent-name]').disabled, true, 'the name stays after the rename');
+    await click(r, '[data-create]');
+    await settle(r.react, 40);
+    assert.equal(r.calls.filter((c) => c.url === MAIN_AGENT_NAME_PATH).length, 1);
+    assert.equal(r.nexts(), 0);
+    await click(r, '[data-continue-defaults]');
+    assert.equal(r.nexts(), 1);
+    assert.equal(r.calls.filter((c) => c.method === 'PATCH').length, 2, 'defaults do not write the config again');
+    assert.equal(r.calls.filter((c) => c.url === MAIN_AGENT_NAME_PATH).length, 1);
+  }, (c) => (c.method === 'PATCH' ? Response.json({ error: 'config' }, { status: 400 }) : undefined));
 });
 
 test('Continue is on the step, and the mascot styler is not', async () => {

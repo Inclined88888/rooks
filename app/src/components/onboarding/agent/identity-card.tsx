@@ -21,11 +21,14 @@ export type IdentityCardProps = {
   role: { label: string; empty?: boolean };
   model: ModelOption | null;
   summary: ReactNode;
+  /** The seat already has this name: a failed save must not rename it. */
+  lockName?: boolean;
   disabled?: boolean;
 };
 
 export function IdentityCard(props: IdentityCardProps): ReactElement {
-  const { name, role, model, disabled } = props;
+  const { name, role, model, disabled, lockName } = props;
+  const nameHeld = disabled || lockName === true;
   return (
     <aside
       data-identity-card
@@ -41,7 +44,7 @@ export function IdentityCard(props: IdentityCardProps): ReactElement {
             data-agent-name
             value={name}
             maxLength={AGENT_NAME_MAX}
-            disabled={disabled}
+            disabled={nameHeld}
             placeholder={t('onboarding.agent.namePlaceholder')}
             onChange={(e) => props.onName(e.target.value)}
             className="h-12 w-full rounded-[13px] bg-muted px-11 text-center text-xl font-bold tracking-[-0.01em] outline-none ring-1 ring-inset ring-border transition-shadow placeholder:font-semibold placeholder:text-muted-foreground hover:bg-accent focus:ring-[1.5px] focus:ring-foreground/55"
@@ -49,7 +52,7 @@ export function IdentityCard(props: IdentityCardProps): ReactElement {
           <button
             type="button"
             data-roll-name
-            disabled={disabled}
+            disabled={nameHeld}
             onClick={props.onRollName}
             title={t('onboarding.agent.nameRoll')}
             aria-label={t('onboarding.agent.nameRoll')}

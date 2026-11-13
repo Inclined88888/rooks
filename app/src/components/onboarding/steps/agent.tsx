@@ -18,7 +18,7 @@ import { useDirectoryPicker } from '@/components/directory-browser';
 import { isAgentLook, normalizeAgentLook } from '@/components/mascot/agent-look';
 import { useBackendCatalog } from '@/lib/backends';
 import { t } from '@/lib/i18n';
-import { fetchProviderClis, readyForSetupChat } from '@/lib/provider-clis';
+import { fetchProviderClis, setupHasProvider } from '@/lib/provider-clis';
 import { cn } from '@/lib/utils';
 import {
   creationName, creationPatch, initialDraft, INTERVIEW_QUESTIONS, missionsOf, namePool,
@@ -42,7 +42,8 @@ export function AgentStep(): ReactElement {
   const directory = useDirectoryPicker();
 
   const view = agentViewFor(profile);
-  const [hasProvider, setHasProvider] = useState(false);
+  // `null` until the probe answers. A Continue in that window keeps a chosen model.
+  const [hasProvider, setHasProvider] = useState<boolean | null>(null);
   const profileKnown = profile !== null || status === 'ready' || status === 'error';
 
   const [draft, setDraft] = useState<AgentDraft>(initialDraft);
@@ -51,16 +52,27 @@ export function AgentStep(): ReactElement {
   const [catalogs, setCatalogs] = useState<SheetCatalogs | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [allowDefaults, setAllowDefaults] = useState(false);
   const pool = namePool(t('onboarding.agent.names'));
   const poolRef = useRef(pool);
   poolRef.current = pool;
 
-  // No AI tool on this machine: the save must not attach a model that cannot run.
+  // Unknown stays unknown: a failed probe must not drop a model the person chose.
+  // Ollama and an API-key profile count, not only a CLI that seeds the main agent.
   useEffect(() => {
     let live = true;
-    void fetchProviderClis()
-      .then((list) => { if (live) setHasProvider(readyForSetupChat(list.backends)); })
-      .catch(() => { if (live) setHasProvider(false); });
+    void Promise.all([
+      fetchProviderClis().catch(() => null),
+      fetch('/api/ui/backends/catalog', { cache: 'no-store' }).then((res) => (res.ok ? res.json() : null)).catch(() => null),
+    ]).then(([clis, catalog]) => {
+      if (!live || !clis) return;
+      const backends = catalog && Array.isArray((catalog as { backends?: unknown }).backends)
+        ? (catalog as { backends: { id?: unknown; signedIn?: boolean | null }[] }).backends.flatMap((backend) => (
+          typeof backend.id === 'string' ? [{ id: backend.id, signedIn: backend.signedIn }] : []
+        ))
+        : [];
+      setHasProvider(setupHasProvider(clis.backends, backends));
+    });
     return () => { live = false; };
   }, []);
 
@@ -134,12 +146,13 @@ export function AgentStep(): ReactElement {
       current: { skills: agent?.skills ?? [], mcp_servers: agent?.mcpServers ?? [] },
       shownSkills: catalogs?.skills.map((s) => s.id) ?? [],
       shownMcp: catalogs?.mcp.map((s) => s.id) ?? [],
-      hasProvider,
+      ...(hasProvider === false ? { hasProvider: false } : {}),
     });
     const seat = agent?.named && agent.name ? { name: agent.name } : null;
     const result = await createMainAgent(name, patch, fetch, seat);
     if (!result.ok) {
       if (result.stage === 'config') {
+        setAllowDefaults(true);
         setAgent((prev) => ({
           name: result.name,
           named: true,
@@ -198,7 +211,8 @@ export function AgentStep(): ReactElement {
           onName={(name) => update((d) => ({ ...d, name, nameAuto: false }))}
           onRollName={() => { update((d) => ({ ...d, name: randomName(pool, d.name), nameAuto: false })); }}
           role={roleLabel}
-          model={hasProvider ? model : null}
+          model={hasProvider === false ? null : model}
+          lockName={agent?.named === true}
           disabled={busy}
           summary={<Summary view={view} draft={draft} />}
         />
@@ -220,6 +234,11 @@ export function AgentStep(): ReactElement {
                 ? <><Loader2 className="mr-2 size-4 animate-spin" aria-hidden />{t('onboarding.agent.creating', { name: shownName })}</>
                 : <>{t('onboarding.continue')}<ArrowRight className="ml-2 size-4" aria-hidden /></>}
             </Button>
+            {allowDefaults && (
+              <Button type="button" variant="ghost" className="mt-2 w-full" data-continue-defaults disabled={busy} onClick={next}>
+                {t('onboarding.agent.continueDefaults')}
+              </Button>
+            )}
             <p className={cn('mt-2 min-h-4 text-xs', error ? 'text-destructive' : 'text-muted-foreground')} role={error ? 'alert' : undefined} data-create-hint>
               {error ?? (readyToCreate(view, leavingDraft) ? '' : hintFor(view, draft))}
             </p>

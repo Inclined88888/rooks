@@ -7,7 +7,6 @@
  * Both are the existing routes of the wizard's browser session; the step adds
  * none. The chat step after it finds the agent named and opens its conversation.
  */
-import { toAgentName } from '@/lib/agent-name';
 import type { AgentConfigPatch } from './agent-draft';
 
 export type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
@@ -71,13 +70,6 @@ export type CreationResult =
   | { ok: false; error: string; stage: 'name' }
   | { ok: false; error: string; stage: 'config'; name: string };
 
-/** The seat already carries this name: a second Continue must not rename it again. */
-function alreadyThisName(seat: string, requested: string): boolean {
-  const current = toAgentName(seat).toLowerCase();
-  const next = toAgentName(requested).toLowerCase();
-  return current !== '' && current === next;
-}
-
 export async function createMainAgent(
   name: string,
   patch: AgentConfigPatch,
@@ -85,7 +77,10 @@ export async function createMainAgent(
   seat: { name: string } | null = null,
 ): Promise<CreationResult> {
   let created: string;
-  if (seat && alreadyThisName(seat.name, name)) {
+  // Once the seat has a name, a failed save must not rename it again. The
+  // seed is already gone, so another name POST fails and the step sticks.
+  // A later edit of the field waits until the agent exists on Desk.
+  if (seat?.name) {
     created = seat.name;
   } else {
     try {
