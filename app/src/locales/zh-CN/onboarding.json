@@ -38,7 +38,7 @@
       "opening": "正在打开下一页…"
     },
     "llm": {
-      "title": "选择你的\n大语言模型。",
+      "title": "AI 工具",
       "subtitle": "Rooks 使用你已有的 AI 订阅，不按词元另行计费。",
       "plan": {
         "title": "使用我的 AI 订阅",
@@ -60,7 +60,7 @@
       "privacy": "隐私政策"
     },
     "profile": {
-      "title": "你想用 Rooks 做什么？",
+      "title": "默认设置",
       "subtitle": "Rooks 会根据你的选择调整默认设置和入门导览。",
       "developer": {
         "title": "我想编写代码",

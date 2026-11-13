@@ -301,6 +301,8 @@ export type CreationContext = {
   /** The ids the sheet listed: only those can have been unchecked. */
   shownSkills: readonly string[];
   shownMcp: readonly string[];
+  /** `false` when no AI tool can run: the patch then names no model. */
+  hasProvider?: boolean;
 };
 
 const keepHidden = (current: readonly string[], shown: readonly string[], checked: readonly string[]): string[] => (
@@ -314,7 +316,7 @@ export function creationPatch(view: AgentCreationView, draft: AgentDraft, ctx: C
   if (view === 'interview') patch.permission_mode = AUTONOMY_PERMISSION[draft.autonomy];
   if (view !== 'sheet') return patch;
   patch.permission_mode = draft.permission;
-  if (draft.model) { patch.backend = draft.model.backend; patch.model = draft.model.model; }
+  if (draft.model && ctx.hasProvider !== false) { patch.backend = draft.model.backend; patch.model = draft.model.model; }
   if (draft.folder.trim()) patch.cwd = draft.folder.trim();
   patch.skills = keepHidden(ctx.current.skills, ctx.shownSkills, draft.skills);
   patch.mcp_servers = keepHidden(ctx.current.mcp_servers, ctx.shownMcp, draft.mcp);

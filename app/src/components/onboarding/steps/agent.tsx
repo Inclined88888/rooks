@@ -4,8 +4,7 @@
  * "Bring your agent to life" (mockup screen `agent`, docs/ONBOARDING-AGENT.md).
  * One shell for every profile: the identity card on the left, the profile's
  * view on the right, the button always in the same place under it. The view
- * follows the profile chosen just before (`agentViewFor`); a switcher in the
- * corner opens the two others, a star on the recommended one.
+ * follows the profile chosen just before (`agentViewFor`).
  *
  * The creation writes the main agent for real: its name (the seed is renamed
  * and recorded as the main agent), then its look, role, model, permission
@@ -13,15 +12,16 @@
  * follows (`steps/discover.tsx`), then Desk, where the named agent opens.
  */
 import { useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import { ArrowRight, Loader2, Star } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDirectoryPicker } from '@/components/directory-browser';
 import { isAgentLook, normalizeAgentLook } from '@/components/mascot/agent-look';
 import { useBackendCatalog } from '@/lib/backends';
 import { t } from '@/lib/i18n';
+import { fetchProviderClis, readyForSetupChat } from '@/lib/provider-clis';
 import { cn } from '@/lib/utils';
 import {
-  AGENT_VIEWS, creationName, creationPatch, initialDraft, INTERVIEW_QUESTIONS, missionsOf, namePool,
+  creationName, creationPatch, initialDraft, INTERVIEW_QUESTIONS, missionsOf, namePool,
   randomName, readyToCreate, shownModel, TEMPLATES, type AgentDraft, type TemplateId,
 } from '../agent-draft';
 import { createMainAgent, loadMainAgent, loadSheetCatalogs, type MainAgentState, type SheetCatalogs } from '../agent-create';
@@ -41,9 +41,8 @@ export function AgentStep(): ReactElement {
   const catalog = useBackendCatalog();
   const directory = useDirectoryPicker();
 
-  const [chosenView, setChosenView] = useState<AgentCreationView | null>(null);
-  const recommended = agentViewFor(profile);
-  const view = chosenView ?? recommended;
+  const view = agentViewFor(profile);
+  const [hasProvider, setHasProvider] = useState(false);
   const profileKnown = profile !== null || status === 'ready' || status === 'error';
 
   const [draft, setDraft] = useState<AgentDraft>(initialDraft);
@@ -55,6 +54,15 @@ export function AgentStep(): ReactElement {
   const pool = namePool(t('onboarding.agent.names'));
   const poolRef = useRef(pool);
   poolRef.current = pool;
+
+  // No AI tool on this machine: the save must not attach a model that cannot run.
+  useEffect(() => {
+    let live = true;
+    void fetchProviderClis()
+      .then((list) => { if (live) setHasProvider(readyForSetupChat(list.backends)); })
+      .catch(() => { if (live) setHasProvider(false); });
+    return () => { live = false; };
+  }, []);
 
   // The agent as it stands: a name already given (a step back), a look already styled.
   useEffect(() => {
@@ -126,10 +134,24 @@ export function AgentStep(): ReactElement {
       current: { skills: agent?.skills ?? [], mcp_servers: agent?.mcpServers ?? [] },
       shownSkills: catalogs?.skills.map((s) => s.id) ?? [],
       shownMcp: catalogs?.mcp.map((s) => s.id) ?? [],
+      hasProvider,
     });
-    const result = await createMainAgent(name, patch);
+    const seat = agent?.named && agent.name ? { name: agent.name } : null;
+    const result = await createMainAgent(name, patch, fetch, seat);
     if (!result.ok) {
-      setError(result.stage === 'name' ? t(`mainAgentSetup.${result.error}`) : t('onboarding.agent.configFailed', { name }));
+      if (result.stage === 'config') {
+        setAgent((prev) => ({
+          name: result.name,
+          named: true,
+          backend: prev?.backend ?? null,
+          model: prev?.model ?? null,
+          skills: prev?.skills ?? [],
+          mcpServers: prev?.mcpServers ?? [],
+          look: prev?.look ?? null,
+          role: prev?.role ?? null,
+        }));
+      }
+      setError(result.stage === 'name' ? t(`mainAgentSetup.${result.error}`) : t('onboarding.agent.configFailed', { name: result.stage === 'config' ? result.name : name }));
       setBusy(false);
       return;
     }
@@ -170,14 +192,13 @@ export function AgentStep(): ReactElement {
       data-agent-view={view}
       className="flex w-full max-w-[944px] flex-col px-2 pb-6"
     >
-      <ViewSwitcher view={view} recommended={recommended} onPick={(v) => { setChosenView(v); setError(null); }} />
-      <div className="grid w-full grid-cols-1 items-start gap-[30px] pt-2.5 md:grid-cols-[330px_minmax(0,500px)] md:justify-center">
+      <div className="grid w-full grid-cols-1 items-start gap-[30px] md:grid-cols-[330px_minmax(0,500px)] md:justify-center">
         <IdentityCard
           name={draft.name}
           onName={(name) => update((d) => ({ ...d, name, nameAuto: false }))}
           onRollName={() => { update((d) => ({ ...d, name: randomName(pool, d.name), nameAuto: false })); }}
           role={roleLabel}
-          model={model}
+          model={hasProvider ? model : null}
           disabled={busy}
           summary={<Summary view={view} draft={draft} />}
         />
@@ -251,38 +272,3 @@ function Summary({ view, draft }: { view: AgentCreationView; draft: AgentDraft }
   );
 }
 
-function ViewSwitcher({ view, recommended, onPick }: {
-  view: AgentCreationView; recommended: AgentCreationView; onPick: (view: AgentCreationView) => void;
-}): ReactElement {
-  return (
-    <div
-      role="radiogroup"
-      aria-label={t('onboarding.agent.views.label')}
-      data-view-switcher
-      className="z-[1] mb-3 flex flex-wrap items-center justify-center gap-1 self-center rounded-xl bg-card p-1"
-    >
-      <span className="pl-2 pr-1.5 text-[11.5px] text-muted-foreground">{t('onboarding.agent.views.label')}</span>
-      {AGENT_VIEWS.map((v) => (
-        <button
-          key={v}
-          type="button"
-          role="radio"
-          aria-checked={v === view}
-          data-view={v}
-          data-recommended={v === recommended ? 'true' : undefined}
-          title={v === recommended ? t('onboarding.agent.views.recommended') : undefined}
-          onClick={() => onPick(v)}
-          className={cn('inline-flex items-center gap-1 rounded-[9px] px-2.5 py-1.5 text-[12.5px] transition-colors', v === view ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground')}
-        >
-          {t(`onboarding.agent.views.${v}`)}
-          {v === recommended && (
-            <>
-              <Star className="size-3 fill-current" aria-hidden />
-              <span className="sr-only">{t('onboarding.agent.views.recommended')}</span>
-            </>
-          )}
-        </button>
-      ))}
-    </div>
-  );
-}

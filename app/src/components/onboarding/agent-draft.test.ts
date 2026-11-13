@@ -137,6 +137,9 @@ test('the sheet sends model, exact permission mode, folder, skills, MCP servers,
   });
   const untouched = creationPatch('sheet', draft(), NO_CONTEXT);
   assert.equal(untouched.model, undefined, 'no model picked: the agent keeps its own');
+  const noTool = creationPatch('sheet', sheet, { ...NO_CONTEXT, shownSkills: ['tests'], shownMcp: ['github'], hasProvider: false });
+  assert.equal(noTool.backend, undefined, 'no AI tool: the patch names no model');
+  assert.equal(noTool.model, undefined);
   assert.equal(untouched.cwd, undefined, 'no folder: the workspace stays');
   assert.equal(directivesOf('sheet', draft({ rules: '   ' })), '', 'the pilot needs no line of work');
   assert.equal(directivesOf('sheet', draft({ role: 'code', rules: '' })), roleLine('code'));

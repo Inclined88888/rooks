@@ -16,11 +16,11 @@
       "privacy": "We verzamelen alleen je e-mailadres voor het geval je je wachtwoord wilt resetten. Het account dat je aanmaakt blijft lokaal."
     },
     "llm": {
-      "title": "Kies\nje LLM.",
+      "title": "AI-hulpmiddelen",
       "subtitle": "Rooks draait op de AI-abonnementen die je al hebt. Nooit een rekening per token."
     },
     "profile": {
-      "title": "Wat brengt je hier?",
+      "title": "Standaardinstellingen",
       "subtitle": "Rooks stemt zijn standaardinstellingen en rondleiding af op je antwoord."
     },
     "agent": {

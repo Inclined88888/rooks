@@ -21,17 +21,13 @@ import { EmailCodeHost, useNow, type EmailCodeResent, type EmailCodeVerdict } fr
 import {
   createAccount, requestSetupCode, resendSetupCode, RESTART_CODES, type CodeChallenge,
 } from '@/components/email-code/email-code-api';
-import { expiredChallenge, failureText, type CodeFailure } from '@/components/email-code/email-code-failure';
+import { codeFailure, expiredChallenge, failureText, networkFailure, type CodeFailure } from '@/components/email-code/email-code-failure';
 import { fetchMe } from '@/lib/auth';
 import { firstRunScheme } from '@/lib/first-run-gate';
 import { t } from '@/lib/i18n';
 import { useOnboarding, useOnboardingBack } from '../onboarding-context';
 
 export type AccountDraft = { name: string; email: string; password: string; confirm: string; setupToken: string };
-
-const setupFailed = (): CodeFailure => ({
-  code: 'setup_failed', status: 400, params: {}, message: 'The account could not be created.', retryUntil: null, attemptsLeft: null,
-});
 
 const EMPTY: AccountDraft = { name: '', email: '', password: '', confirm: '', setupToken: '' };
 
@@ -99,29 +95,56 @@ export function AccountStep(): ReactElement {
     return answer.ok ? answer.value : answer.failure;
   }, [email, draft.setupToken, needsToken]);
 
-  const submit = async (e: FormEvent): Promise<void> => {
-    e.preventDefault();
-    if (!ready || sending || blocked) return;
+  /** A name-only account. 409 already_set_up is the install moving on, not a failure. */
+  const postNameOnly = async (name: string): Promise<void> => {
     setSending(true);
     setFailure(null);
-    if (!emailPath) {
+    try {
       const scheme = firstRunScheme();
       const answer = await fetch('/api/ui/auth/setup', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name: draft.name.trim(), ...(scheme ? { scheme } : {}), ...(needsToken ? { setupToken: draft.setupToken.trim() } : {}) }),
+        body: JSON.stringify({ name, ...(scheme ? { scheme } : {}), ...(needsToken ? { setupToken: draft.setupToken.trim() } : {}) }),
       });
+      if (answer.ok) { next(); return; }
+      const body = await answer.json().catch(() => null);
+      const failure = codeFailure(answer.status, body, Date.now(), (error) => (
+        error ? `${t('onboarding.account.failed')} (${error})` : t('onboarding.account.failed')
+      ));
+      if (answer.status === 409 && failure.code === 'already_set_up') {
+        const me = await fetchMe().catch(() => null);
+        if (me?.user) next();
+        else goTo('signin');
+        return;
+      }
+      setFailure(failure);
+    } catch {
+      setFailure(networkFailure());
+    } finally {
       setSending(false);
-      if (answer.ok) next();
-      else setFailure(setupFailed());
+    }
+  };
+
+  const submit = async (e: FormEvent): Promise<void> => {
+    e.preventDefault();
+    if (!ready || sending || blocked) return;
+    if (!emailPath) {
+      await postNameOnly(draft.name.trim());
       return;
     }
-    const answer = await ask();
-    setSending(false);
-    if ('challengeId' in answer) {
-      setChallenge(answer);
-      setView('code');
-    } else {
-      setFailure(answer);
+    setSending(true);
+    setFailure(null);
+    try {
+      const answer = await ask();
+      if ('challengeId' in answer) {
+        setChallenge(answer);
+        setView('code');
+      } else {
+        setFailure(answer);
+      }
+    } catch {
+      setFailure(networkFailure());
+    } finally {
+      setSending(false);
     }
   };
 
@@ -248,14 +271,7 @@ export function AccountStep(): ReactElement {
         <p role="status" aria-live="polite" data-account-status="" className="ml-0.5 min-h-4 text-[12.5px] leading-4 tabular-nums text-destructive">
           {line}
         </p>
-        <Button type="button" variant="ghost" className="h-10 w-full" disabled={sending} onClick={() => {
-          setSending(true);
-          const scheme = firstRunScheme();
-          void fetch('/api/ui/auth/setup', {
-            method: 'POST', headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ name: draft.name.trim() || 'Local', ...(scheme ? { scheme } : {}), ...(needsToken ? { setupToken: draft.setupToken.trim() } : {}) }),
-          }).then((answer) => { setSending(false); if (answer.ok) next(); else setFailure(setupFailed()); });
-        }}>
+        <Button type="button" variant="ghost" className="h-10 w-full" disabled={sending} onClick={() => { void postNameOnly(draft.name.trim() || 'Local'); }}>
           {t('onboarding.account.skip')}
         </Button>
         <Button type="submit" size="lg" className="h-11 w-full gap-2 rounded-full" disabled={!ready || sending || blocked}>

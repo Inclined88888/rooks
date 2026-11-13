@@ -10,7 +10,8 @@ import test from 'node:test';
 import { getLocale, setLocale, t } from '@/lib/i18n';
 import { pageRequiresLogin, shouldRedirectOn401 } from '@/lib/auth';
 import { FIRST_RUN_PATH, WELCOME_PATH, firstRunTarget, schemeFollowsSystem } from '@/lib/first-run-gate';
-import { applyLanguage, LANGUAGE_DWELL_MS, languageDwell, type LanguageTarget } from './language';
+import { negotiateLocale, readLocaleChoice } from '@/lib/locale-preference';
+import { applyLanguage, type LanguageTarget } from './language';
 import {
   afterSplash, asksFormerChatStep, canGoBack, DOTTED_STEPS, isLastStep, loginOpensWelcome, nextStep, ONBOARDING_PATH, ONBOARDING_STEP_IDS,
   openedFromOnboarding, previousStep, progressDots, RETURNING_STEP_IDS, SETUP_AGENT_FROM_ONBOARDING, stepFromSearch, stepHref,
@@ -137,49 +138,8 @@ test('a language picked on the roller applies at once and is remembered', async 
   }
 });
 
-test('the roller applies a language after a short rest on it, not every row a drag crosses', () => {
-  const applied: string[] = [];
-  let clock = 0;
-  const queue = new Map<number, { at: number; run: () => void }>();
-  let ids = 0;
-  const timers = {
-    set: (run: () => void, ms: number): unknown => { ids += 1; queue.set(ids, { at: clock + ms, run }); return ids; },
-    clear: (handle: unknown): void => { queue.delete(handle as number); },
-  };
-  const advance = (ms: number): void => {
-    clock += ms;
-    for (const [id, job] of [...queue]) if (job.at <= clock) { queue.delete(id); job.run(); }
-  };
-  const dwell = languageDwell('en', (tag) => applied.push(tag), { timers });
-
-  for (const tag of ['fr', 'de', 'es', 'it']) { dwell.cross(tag); advance(30); }
-  assert.deepEqual(applied, [], 'a drag across four rows loads none of them');
-  advance(LANGUAGE_DWELL_MS);
-  assert.deepEqual(applied, ['it'], 'the row it rests on applies');
-  dwell.rest('it');
-  assert.deepEqual(applied, ['it'], 'the stop applies nothing twice');
-
-  dwell.cross('nl');
-  dwell.rest('nl');
-  advance(LANGUAGE_DWELL_MS);
-  assert.deepEqual(applied, ['it', 'nl'], 'released on a row: applied at once, once');
-
-  dwell.cross('pl');
-  dwell.flush();
-  dwell.flush();
-  assert.deepEqual(applied, ['it', 'nl', 'pl'], 'leaving mid-rest keeps the language in the middle');
-  dwell.cross('en');
-  dwell.cross('pl');
-  advance(LANGUAGE_DWELL_MS);
-  assert.deepEqual(applied, ['it', 'nl', 'pl'], 'back to the applied one: nothing to load');
-});
-
-test('every language the app ships has its flag on the roller', async () => {
-  const { FLAGS } = await import('./language-flags');
-  const { readdirSync } = await import('node:fs');
-  const { join, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const locales = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'locales');
-  const shipped = readdirSync(locales, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith('.')).map((e) => e.name).sort();
-  assert.deepEqual(Object.keys(FLAGS).sort(), shipped);
+test('the welcome follows a system language and does not pin it', () => {
+  assert.equal(negotiateLocale('fr-CA,fr;q=0.9,en;q=0.8'), 'fr');
+  assert.equal(negotiateLocale('pt-PT,en;q=0.5'), 'pt-BR');
+  assert.equal(readLocaleChoice(''), 'auto', 'nothing chosen: the system language stays in force');
 });

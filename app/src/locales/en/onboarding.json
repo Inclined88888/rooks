@@ -11,7 +11,7 @@
     },
     "splash": {
       "title": "Rooks",
-      "subtitle": "Choose a language, then continue.",
+      "subtitle": "",
       "hint": ""
     },
     "language": {
@@ -33,13 +33,14 @@
       "tooShort": "At least {min} characters.",
       "create": "Create my account",
       "skip": "Skip for now",
+      "failed": "The account could not be created.",
       "privacy": "We only collect your email in case you want to reset your password. The account you create stays local."
     },
     "legacy": {
       "opening": "Opening the next screen…"
     },
     "llm": {
-      "title": "Choose\nyour LLM.",
+      "title": "AI tools",
       "subtitle": "Rooks uses the AI tools already on this machine.",
       "plan": {
         "title": "Use my AI subscription",
@@ -61,7 +62,7 @@
       "privacy": "Privacy policy"
     },
     "profile": {
-      "title": "What brings you here?",
+      "title": "Defaults",
       "subtitle": "This choice sets the defaults and the tour.",
       "developer": {
         "title": "I write code",

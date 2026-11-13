@@ -16,11 +16,11 @@
       "privacy": "Raccogliamo solo la tua email nel caso tu voglia reimpostare la password. L’account che crei resta locale."
     },
     "llm": {
-      "title": "Scegli\nil tuo LLM.",
+      "title": "Strumenti di IA",
       "subtitle": "Rooks funziona con gli abbonamenti IA che hai già. Mai una fattura a token."
     },
     "profile": {
-      "title": "Cosa ti porta qui?",
+      "title": "Impostazioni predefinite",
       "subtitle": "Rooks adatta le sue impostazioni e la sua visita guidata alla tua risposta."
     },
     "agent": {

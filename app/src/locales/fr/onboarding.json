@@ -38,7 +38,7 @@
       "opening": "Ouverture de l’écran suivant…"
     },
     "llm": {
-      "title": "Choisissez\nvotre LLM.",
+      "title": "Outils d’IA",
       "subtitle": "Rooks fait travailler les abonnements IA que vous avez déjà. Jamais de facture au token.",
       "plan": {
         "title": "Utiliser mon abonnement IA",
@@ -60,7 +60,7 @@
       "privacy": "Politique de confidentialité"
     },
     "profile": {
-      "title": "Qu’est-ce qui vous amène ?",
+      "title": "Réglages par défaut",
       "subtitle": "Rooks adapte ses réglages et sa visite guidée à votre réponse.",
       "developer": {
         "title": "Je développe",

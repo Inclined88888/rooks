@@ -16,11 +16,11 @@
       "privacy": "Wir erfassen nur deine E-Mail-Adresse, falls du dein Passwort zurücksetzen möchtest. Das erstellte Konto bleibt lokal."
     },
     "llm": {
-      "title": "Wähle\ndein LLM.",
+      "title": "KI-Werkzeuge",
       "subtitle": "Rooks nutzt die KI-Abos, die du bereits hast. Nie eine Rechnung pro Token."
     },
     "profile": {
-      "title": "Was führt dich hierher?",
+      "title": "Vorgaben",
       "subtitle": "Rooks passt seine Voreinstellungen und seine Tour an deine Antwort an."
     },
     "agent": {

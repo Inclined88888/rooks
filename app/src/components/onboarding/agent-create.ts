@@ -7,6 +7,7 @@
  * Both are the existing routes of the wizard's browser session; the step adds
  * none. The chat step after it finds the agent named and opens its conversation.
  */
+import { toAgentName } from '@/lib/agent-name';
 import type { AgentConfigPatch } from './agent-draft';
 
 export type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
@@ -65,24 +66,43 @@ export async function loadMainAgent(fetcher: Fetcher = fetch): Promise<MainAgent
 /** The daemon's refusal codes the step words itself (`mainAgentSetup.<code>`); anything else is `failed`. */
 const NAME_ERRORS = new Set(['invalid_name', 'name_taken', 'rename_failed', 'workspace_unavailable', 'main_agent_unavailable']);
 
-export type CreationResult = { ok: true; name: string } | { ok: false; error: string; stage: 'name' | 'config' };
+export type CreationResult =
+  | { ok: true; name: string }
+  | { ok: false; error: string; stage: 'name' }
+  | { ok: false; error: string; stage: 'config'; name: string };
 
-export async function createMainAgent(name: string, patch: AgentConfigPatch, fetcher: Fetcher = fetch): Promise<CreationResult> {
+/** The seat already carries this name: a second Continue must not rename it again. */
+function alreadyThisName(seat: string, requested: string): boolean {
+  const current = toAgentName(seat).toLowerCase();
+  const next = toAgentName(requested).toLowerCase();
+  return current !== '' && current === next;
+}
+
+export async function createMainAgent(
+  name: string,
+  patch: AgentConfigPatch,
+  fetcher: Fetcher = fetch,
+  seat: { name: string } | null = null,
+): Promise<CreationResult> {
   let created: string;
-  try {
-    const res = await fetcher(MAIN_AGENT_NAME_PATH, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name }),
-    });
-    const body = await res.json().catch(() => ({})) as { name?: unknown; error?: unknown };
-    if (!res.ok || typeof body.name !== 'string') {
-      const code = typeof body.error === 'string' && NAME_ERRORS.has(body.error) ? body.error : 'failed';
-      return { ok: false, error: code, stage: 'name' };
+  if (seat && alreadyThisName(seat.name, name)) {
+    created = seat.name;
+  } else {
+    try {
+      const res = await fetcher(MAIN_AGENT_NAME_PATH, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const body = await res.json().catch(() => ({})) as { name?: unknown; error?: unknown };
+      if (!res.ok || typeof body.name !== 'string') {
+        const code = typeof body.error === 'string' && NAME_ERRORS.has(body.error) ? body.error : 'failed';
+        return { ok: false, error: code, stage: 'name' };
+      }
+      created = body.name;
+    } catch {
+      return { ok: false, error: 'failed', stage: 'name' };
     }
-    created = body.name;
-  } catch {
-    return { ok: false, error: 'failed', stage: 'name' };
   }
   try {
     const res = await fetcher(agentConfigPath(created), {
@@ -90,9 +110,9 @@ export async function createMainAgent(name: string, patch: AgentConfigPatch, fet
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(patch),
     });
-    if (!res.ok) return { ok: false, error: 'configFailed', stage: 'config' };
+    if (!res.ok) return { ok: false, error: 'configFailed', stage: 'config', name: created };
   } catch {
-    return { ok: false, error: 'configFailed', stage: 'config' };
+    return { ok: false, error: 'configFailed', stage: 'config', name: created };
   }
   return { ok: true, name: created };
 }

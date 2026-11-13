@@ -16,11 +16,11 @@
       "privacy": "Só coletamos seu e-mail caso você queira redefinir sua senha. A conta que você cria fica local."
     },
     "llm": {
-      "title": "Escolha\nseu LLM.",
+      "title": "Ferramentas de IA",
       "subtitle": "O Rooks funciona com as assinaturas de IA que você já tem. Nunca uma cobrança por token."
     },
     "profile": {
-      "title": "O que traz você aqui?",
+      "title": "Padrões",
       "subtitle": "O Rooks ajusta as configurações padrão e o tour guiado à sua resposta."
     },
     "agent": {

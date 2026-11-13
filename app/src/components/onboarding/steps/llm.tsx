@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * "Choose your LLM" (mockup screen `ai`, docs/ONBOARDING-LLM.md). The header
+ * The AI tools step (mockup screen `ai`, docs/ONBOARDING-LLM.md). The header
  * stays put — a row of mascots, the title, the promise — and only the block
  * under it changes, in place: the two choices, then the provider cards of the
  * subscription the person already pays for, or the local models. "Back"

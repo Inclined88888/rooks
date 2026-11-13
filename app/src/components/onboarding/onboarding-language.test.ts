@@ -1,17 +1,19 @@
 /**
- * Changing language on the welcome screen changes the step titles too.
+ * Changing language the way Settings does changes the step titles too.
  *
- * The maintainer saw the text follow the roller but not the titles (0.1.7-rc.1): they
- * were never translated outside English and French, so every other language
+ * The maintainer saw the text follow a language change but not the titles (0.1.7-rc.1):
+ * they were never translated outside English and French, so every other language
  * showed them in English. The rendered test switches language on the real
  * welcome and account steps; the guard below holds every language to the
- * titles and subtitles of every step.
+ * titles and subtitles of every step. The welcome itself has no language control.
  */
 import '@/lib/i18n-test-locales';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import test from 'node:test';
 import { DEFAULT_PATHS, discoverLocales, lookup, readLocaleDictionary } from '../../../scripts/build-locales.mjs';
+import type { Locale } from '@/lib/i18n';
+import type { OnboardingNav } from './onboarding-context';
 
 /** What each step shows in large type, and the line under it; the switch above them. */
 const STEP_HEADINGS = [
@@ -61,19 +63,35 @@ test('switching language on the welcome screen translates the titles, then the n
   install('React', React);
   const { createRoot } = await import('react-dom/client');
   const { getLocale, loadLocale } = await import('@/lib/i18n');
-  const { OnboardingShell } = await import('./onboarding-shell');
-  const { useOnboarding } = await import('./onboarding-context');
+  const { applyLanguage } = await import('./language');
+  const { OnboardingProvider } = await import('./onboarding-context');
   const { SplashStep } = await import('./steps/splash');
   const { AccountStep } = await import('./steps/account');
   const h = React.createElement;
-  // The roller's own gestures are another test's business: this calls what it calls.
-  function Welcome(): React.ReactElement {
-    const { setLanguage, next } = useOnboarding();
-    return h('div', null,
-      h('button', { 'data-lang': 'fr', onClick: () => { void setLanguage('fr'); } }),
-      h('button', { 'data-lang': 'es', onClick: () => { void setLanguage('es'); } }),
-      h('button', { 'data-next': '', onClick: next }),
-      h(SplashStep));
+  // The buttons stand in for Settings. The welcome itself has no language control.
+  function Stage(): React.ReactElement {
+    const [step, setStep] = React.useState<'splash' | 'account'>('splash');
+    const [, bump] = React.useState(0);
+    const setLanguage = async (tag: string): Promise<string> => {
+      const active = await applyLanguage(tag as Locale, document);
+      bump((n) => n + 1);
+      return active;
+    };
+    const nav: OnboardingNav = {
+      step, direction: 1,
+      next: () => setStep('account'),
+      back: () => setStep('splash'),
+      goTo: (id) => setStep(id === 'account' ? 'account' : 'splash'),
+      setLanguage,
+      setBackHandler: () => {},
+    };
+    return h(OnboardingProvider, { value: nav }, step === 'splash'
+      ? h('div', null,
+        h('button', { 'data-lang': 'fr', onClick: () => { void setLanguage('fr'); } }),
+        h('button', { 'data-lang': 'es', onClick: () => { void setLanguage('es'); } }),
+        h('button', { 'data-next': '', onClick: () => setStep('account') }),
+        h(SplashStep))
+      : h(AccountStep));
   }
   const host = dom.window.document.getElementById('root')!;
   const root = createRoot(host);
@@ -86,18 +104,14 @@ test('switching language on the welcome screen translates the titles, then the n
   };
   const initial = getLocale();
   try {
-    await React.act(async () => {
-      root.render(h(OnboardingShell, {
-        steps: [{ id: 'splash', Component: Welcome }, { id: 'account', Component: AccountStep }],
-        companions: [],
-        gate: ({ children }: { children: React.ReactNode }) => h(React.Fragment, null, children),
-      }));
-    });
-    assert.equal(title(), 'Your AI team,\nat home.');
+    await React.act(async () => { root.render(h(Stage)); });
+    assert.equal(title(), 'Rooks');
+    assert.equal(host.querySelector('[role="listbox"]'), null, 'the welcome does not ask for a language');
+    assert.equal(host.querySelector('[data-flag]'), null);
     await press('[data-lang="fr"]');
-    assert.equal(title(), 'Votre équipe d’IA,\nchez vous.');
+    assert.equal(title(), 'Rooks');
     await press('[data-lang="es"]');
-    assert.equal(title(), 'Tu equipo de IA,\nen casa.', 'a language other than French translates the title too');
+    assert.equal(title(), 'Rooks');
     await press('[data-next]');
     assert.equal(title(), 'Crea tu cuenta local');
   } finally {

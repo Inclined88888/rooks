@@ -15,7 +15,8 @@ import { flushSync } from 'react-dom';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { fetchCapabilities } from '@/lib/capabilities';
-import { getLocale, t } from '@/lib/i18n';
+import { getLocale, loadLocale, localeDirection, t } from '@/lib/i18n';
+import { negotiateLocale, readLocaleChoice } from '@/lib/locale-preference';
 import { welcomeLanding } from '@/app/setup/agent/setup-landing';
 import { cn } from '@/lib/utils';
 import { usePrefersReducedMotion } from '@/components/mascot/agent-mascot';
@@ -73,6 +74,22 @@ export function OnboardingShell({
   motion.current = reduced;
   const finishRef = useRef(finish ?? (() => { void afterLastStep(); }));
   finishRef.current = finish ?? finishRef.current;
+
+  // No language step: with no choice stored, the screen follows the system locale.
+  // A choice made in Settings (the cookie) is left as it is.
+  useEffect(() => {
+    if (readLocaleChoice(document.cookie) !== 'auto') return;
+    const tag = negotiateLocale(navigator.languages);
+    if (tag === getLocale()) return;
+    let live = true;
+    void loadLocale(tag).then(() => {
+      if (!live) return;
+      document.documentElement.lang = getLocale();
+      document.documentElement.dir = localeDirection(getLocale());
+      setLanguageShown(getLocale());
+    });
+    return () => { live = false; };
+  }, []);
 
   useEffect(() => {
     // A tab still on the former chat step goes where that conversation lives now.

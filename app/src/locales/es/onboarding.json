@@ -16,11 +16,11 @@
       "privacy": "Solo recopilamos tu correo por si quieres restablecer tu contraseña. La cuenta que creas se queda en local."
     },
     "llm": {
-      "title": "Elige\ntu LLM.",
+      "title": "Herramientas de IA",
       "subtitle": "Rooks funciona con las suscripciones de IA que ya tienes. Nunca una factura por token."
     },
     "profile": {
-      "title": "¿Qué te trae por aquí?",
+      "title": "Valores predeterminados",
       "subtitle": "Rooks ajusta sus valores por defecto y su recorrido a tu respuesta."
     },
     "agent": {

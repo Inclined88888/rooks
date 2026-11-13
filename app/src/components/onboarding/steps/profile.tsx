@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * "What brings you here?" (right after the language model): three rows. A
+ * The defaults step (right after the model step): three rows. A
  * click records the profile on the daemon (`PUT /api/onboarding/profile`) and
  * opens the agent step, whose creation view follows that answer
  * (`agentViewFor`). The guided tour reads the same row and never asks again.

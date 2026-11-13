@@ -37,6 +37,16 @@ function daemon(profile: string | null, override: Answer = () => undefined): { c
       if (call.url === '/api/ui/setup/main-agent') return Response.json({ status: 'pending', available: true, name: '_main', named: false });
       if (call.url === '/api/ui/agents/_main') return Response.json({ name: '_main', backend: 'claude', model: 'opus', skills: ['timon-task'], mcp_servers: ['sentry'], look: null });
       if (call.url.startsWith('/api/ui/backends/catalog')) return Response.json(CATALOG);
+      if (call.url.startsWith('/api/ui/backends/provider-clis')) {
+        return Response.json({
+          backends: [{
+            name: 'claude', label: 'Claude Code', brand: 'claude', path: '/bin/claude', bundled: false, signedIn: true,
+            installable: false, installCommand: null, installDocs: null, signInCommand: 'claude', signInThen: null,
+            seedsMainAgent: true, version: null, latest: null, updateAvailable: false, unsupportedVersion: false,
+          }],
+          jobs: {}, updateCheck: false,
+        });
+      }
       if (call.url === '/api/ui/skills') {
         return Response.json({ skills: [{ id: 'timon-task', source: 'timon' }, { id: 'tests', title: 'Tests', source: 'timon' }, { id: 'old', source: 'project', shadowed: true }] });
       }
@@ -65,7 +75,10 @@ test('a refused name writes nothing else; a refused config is told apart', async
   const odd = daemon(null, (c) => (c.url === MAIN_AGENT_NAME_PATH ? Response.json({ error: 'kaboom' }, { status: 500 }) : undefined));
   assert.equal((await createMainAgent('Nova', { look: null }, odd.fetcher)).ok, false);
   const badConfig = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ error: 'config' }, { status: 400 }) : undefined));
-  assert.deepEqual(await createMainAgent('Nova', { look: null }, badConfig.fetcher), { ok: false, error: 'configFailed', stage: 'config' });
+  assert.deepEqual(await createMainAgent('Nova', { look: null }, badConfig.fetcher), { ok: false, error: 'configFailed', stage: 'config', name: 'nova' });
+  const again = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ ok: true }) : undefined));
+  assert.deepEqual(await createMainAgent('Nova', { look: null }, again.fetcher, { name: 'nova' }), { ok: true, name: 'nova' });
+  assert.equal(again.calls.some((c) => c.method === 'POST'), false, 'the named agent is not renamed again');
 });
 
 test('the main agent is read as it stands; an unreachable daemon is an empty agent', async () => {
@@ -161,19 +174,14 @@ const click = async (r: Rendered, selector: string): Promise<void> => {
 };
 const patchOf = (calls: readonly Call[]): Record<string, unknown> | undefined => calls.find((c) => c.method === 'PATCH')?.body as Record<string, unknown> | undefined;
 
-test('each profile opens its view, starred; the switcher opens the others', async () => {
+test('each profile opens its view, with no view switcher', async () => {
   for (const [profile, view] of [['developer', 'sheet'], ['automation', 'interview'], ['beginner', 'templates']] as const) {
     await renderStep(profile, async (r) => {
       assert.equal(q(r.host, '[data-onboarding-step="agent"]').getAttribute('data-agent-view'), view);
-      assert.equal(q(r.host, '[data-recommended="true"]').getAttribute('data-view'), view, 'the star is on the profile\'s view');
-      assert.equal(q(r.host, `[data-view="${view}"]`).getAttribute('aria-checked'), 'true');
+      assert.equal(r.host.querySelector('[data-view-switcher]'), null);
+      assert.equal(r.host.querySelector('[data-view]'), null);
     });
   }
-  await renderStep('developer', async (r) => {
-    await click(r, '[data-view="templates"]');
-    assert.equal(q(r.host, '[data-onboarding-step="agent"]').getAttribute('data-agent-view'), 'templates');
-    assert.equal(q(r.host, '[data-recommended="true"]').getAttribute('data-view'), 'sheet', 'the star stays on the recommended view');
-  });
 });
 
 test('templates: « Create » waits for a profile, then writes the agent and opens the chat', async () => {
@@ -247,6 +255,41 @@ test('sheet: line of work, exact permission mode with its warning, the daemon\'s
     assert.deepEqual(patch?.mcp_servers, ['sentry', 'github']);
     assert.equal(patch?.look, null);
     assert.equal(r.nexts(), 1);
+  });
+});
+
+test('the sheet writes no model when no AI tool is installed', async () => {
+  await renderStep('developer', async (r) => {
+    await click(r, '[data-tab="engine"]');
+    const sonnet = Array.from(r.host.querySelectorAll<HTMLButtonElement>('[data-picker-row]')).find((b) => b.textContent?.includes('Sonnet'));
+    assert.ok(sonnet);
+    await r.react.act(async () => { sonnet.click(); });
+    await click(r, '[data-create]');
+    await settle(r.react, 40);
+    const patch = patchOf(r.calls);
+    assert.equal(patch?.backend, undefined);
+    assert.equal(patch?.model, undefined);
+    assert.equal(r.host.querySelector('[data-model]'), null);
+  }, (c) => (c.url.startsWith('/api/ui/backends/provider-clis')
+    ? Response.json({ backends: [], jobs: {}, updateCheck: false })
+    : undefined));
+});
+
+test('a failed config save is retried on the same agent', async () => {
+  let patches = 0;
+  await renderStep('beginner', async (r) => {
+    await click(r, '[data-create]');
+    await settle(r.react, 40);
+    assert.equal(r.nexts(), 0);
+    assert.equal(r.calls.filter((c) => c.url === MAIN_AGENT_NAME_PATH).length, 1);
+    await click(r, '[data-create]');
+    await settle(r.react, 40);
+    assert.equal(r.calls.filter((c) => c.url === MAIN_AGENT_NAME_PATH).length, 1, 'the second Continue does not rename again');
+    assert.equal(r.nexts(), 1);
+  }, (c) => {
+    if (c.method !== 'PATCH') return undefined;
+    patches += 1;
+    return patches === 1 ? Response.json({ error: 'config' }, { status: 400 }) : undefined;
   });
 });
 
