@@ -12,13 +12,14 @@ process.env.TIMON_RESOURCE_GUARD_ENABLED = '0';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-const { applyBackupDefault, backupStatus, BACKUP_DEFAULT_KEY, BACKUP_ROUTINE_ID, enableBackupRoutine, startRoutines, updateRoutine } = await import('./routines.js');
+const { applyBackupDefault, backupStatus, BACKUP_DEFAULT_KEY, BACKUP_ROUTINE_ID, LEGACY_BACKUP_ROUTINE_ID, enableBackupRoutine, startRoutines, updateRoutine } = await import('./routines.js');
 const { dbApi } = await import('./db.js');
 
 /** Back to an install that predates the default: no marker, no routine. */
 function predateDefault(): void {
   dbApi.deleteSetting(BACKUP_DEFAULT_KEY);
   dbApi.deleteRoutine(BACKUP_ROUTINE_ID);
+  dbApi.deleteRoutine(LEGACY_BACKUP_ROUTINE_ID);
 }
 
 test('a home that never configured the backup gets it enabled, once', () => {
@@ -52,6 +53,31 @@ test('turned off or deleted after the default, it is never re-armed', () => {
   dbApi.deleteRoutine(BACKUP_ROUTINE_ID);
   assert.equal(applyBackupDefault(), 'already');
   assert.equal(backupStatus().routine, null);
+});
+
+test('an old timon-backup-nightly row is renamed and stays off', () => {
+  predateDefault();
+  dbApi.createRoutine({
+    id: LEGACY_BACKUP_ROUTINE_ID,
+    name: 'Backup nocturne',
+    agent_name: 'timon',
+    prompt: 'Run timon backup into ~/.timon',
+    task_type: 'chore',
+    cron_expr: '30 3 * * *',
+    enabled: 0,
+    project: null,
+    last_run_at: null,
+    next_run_at: null,
+  });
+  dbApi.setSetting(BACKUP_DEFAULT_KEY, '1');
+  assert.equal(applyBackupDefault(), 'already');
+  assert.equal(dbApi.getRoutine(LEGACY_BACKUP_ROUTINE_ID), undefined);
+  const row = dbApi.getRoutine(BACKUP_ROUTINE_ID);
+  assert.ok(row);
+  assert.equal(row.enabled, 0);
+  assert.equal(row.name, 'Nightly backup');
+  assert.equal(row.agent_name, '__backup__');
+  assert.doesNotMatch(row.prompt, /timon|~\//);
 });
 
 test('the routines module applies the default when it starts', () => {

@@ -169,7 +169,7 @@ function draftsFor(agent: string, seg: PromptSegment): Draft[] {
   const base = { truncated: false, injected_by: 'timon' as const, source_path: null };
   switch (seg.id) {
     case 'preamble':
-      return [{ ...base, id: 'preamble', source: 'preamble', label: 'TIMON preamble', raw: seg.body, editable: false, edit_target: null }];
+      return [{ ...base, id: 'preamble', source: 'preamble', label: 'Rooks preamble', raw: seg.body, editable: false, edit_target: null }];
     case 'backend':
       return [{ ...base, id: 'backend', source: 'backend', label: 'LLM backend', raw: seg.body, editable: false, edit_target: null }];
     case 'global-instructions': {

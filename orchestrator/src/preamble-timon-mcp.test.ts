@@ -67,7 +67,7 @@ test('a backend without Timon MCP servers is not promised their tools', () => {
   const text = preambleFor('preamble-no-tools');
   for (const tool of TIMON_TOOLS) assert.ok(!text.includes(tool), `${tool} must not appear: it does not exist for this agent`);
   // What does not depend on the tools stays.
-  assert.match(text, /Runtime context — Timon/);
+  assert.match(text, /Runtime context — Rooks/);
   assert.match(text, /Where things live/);
   assert.match(text, /NEVER start a process that does not end/);
   assert.match(text, /Scheduling/);

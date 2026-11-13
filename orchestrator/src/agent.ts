@@ -16,7 +16,7 @@ import { join, sep } from 'node:path';
 import { loadavg, cpus, homedir } from 'node:os';
 import { agentTrashEnabled, restoreAgentDir, setTrashedAgentRefs, trashAgentDir, type AgentTrashRefs, type AgentTrashRestore } from './agent-trash.js';
 import {
-  AGENTS_DIR, GLOBAL_MEMORY_DIR, TIMON_HOME,
+  AGENTS_DIR, GLOBAL_MEMORY_DIR, STATE_STEM, TIMON_HOME,
   agentConfig, agentDir, agentLog, agentMemoryDir, agentMemoryFile, agentSystemPrompt,
   missionMemoryDir,
 } from './paths.js';
@@ -737,7 +737,7 @@ not a reason to switch to a daemon token or another transport.
 
 /** Browser bullet when Timon's MCP servers are handed to the agent. */
 function timonBrowserBullet(): string {
-  return `- **Browser**: each mission has an isolated browser profile (Timon's built-in browser), driven by
+  return `- **Browser**: each mission has an isolated browser profile (Rooks's built-in browser), driven by
   the \`timon-browser\` MCP tools (\`mcp__timon-browser__navigate_page\`, \`take_snapshot\`, \`click\`,
   \`fill\`, \`take_screenshot\`… — the same tools as chrome-devtools-mcp) — NOT by the \`timon\` MCP,
   which has no browser tool. If they are not in your tool list, load them (ToolSearch
@@ -753,7 +753,7 @@ function timonBrowserBullet(): string {
 /** Same, for an agent without Timon's MCP servers: the browser server is still
  *  declared to it, but `browser_status` / `start` / `stop` are tools of `timon`. */
 function timonBrowserBulletBare(): string {
-  return `- **Browser**: each mission has an isolated browser profile (Timon's built-in browser), driven by
+  return `- **Browser**: each mission has an isolated browser profile (Rooks's built-in browser), driven by
   the \`timon-browser\` MCP tools (\`mcp__timon-browser__navigate_page\`, \`take_snapshot\`, \`click\`,
   \`fill\`, \`take_screenshot\`…), when they are in your tool list. "No browser" or a forbidden profile
   is a refusal: never switch to another profile, a local Chrome, or a browser you launch yourself
@@ -769,7 +769,7 @@ const UI_DOCUMENTS_MODULE_ID = '@timon/ui-documents';
 function timonMediaBullets(): string {
   return `- **Show an image or video** with the \`chat_show_media\` tool (\`src\`, \`caption\`); a markdown
   image is not displayed. \`src\`: a local file under your working directory, a public
-  \`https://\` URL (Timon downloads it), or a \`data:image/…;base64,\` URI (10 MB). A refusal
+  \`https://\` URL (Rooks downloads it), or a \`data:image/…;base64,\` URI (10 MB). A refusal
   comes back with its reason: fix the source.
 ${moduleActive(UI_DOCUMENTS_MODULE_ID) ? uiRenderBullet() : ''}${commandsBullet()}`;
 }
@@ -806,11 +806,11 @@ function timonOfficialTools(): string {
 center. Send a \`report\` after a completed task whose result deserves to be seen, an
 \`alert --urgent\` when you are blocked and \`question\` does not fit. One short report beats three.
 
-## Official Timon tools (MCP \`timon\` and \`timon_ask\`)
+## Official Rooks tools (MCP \`timon\` and \`timon_ask\`)
 
 The full tool name depends on your CLI (\`mcp__timon__kanban_add\` / \`mcp__timon_ask__question\`, or
 \`timon_kanban_add\` / \`timon_ask_question\`): look for the short name in your tool list. **Do not
-confuse them** with your CLI's own todo tools (\`TaskCreate\`, \`TaskList\`…), which change nothing in Timon.
+confuse them** with your CLI's own todo tools (\`TaskCreate\`, \`TaskList\`…), which change nothing in Rooks.
 
 | You want to…                          | Tool to call                                  |
 |---------------------------------------|-----------------------------------------------|
@@ -828,7 +828,7 @@ confuse them** with your CLI's own todo tools (\`TaskCreate\`, \`TaskList\`…),
 | Send the user to a page of the app    | \`ui_routes\`, then \`ui_navigate\` (a card they follow) |
 | Memorise a rule durably               | \`memory_rule_add\`                             |
 | React to a cron, webhook or event     | \`trigger_create\`, check with \`trigger_test\`   |
-| Know how Timon works                  | \`docs_search\` then \`docs_read\`                |
+| Know how Rooks works                  | \`docs_search\` then \`docs_read\`                |
 
 - **Closing your task**: \`kanban_mark_as_done\` / \`mark_as_failed\` closes THE task of your mission
   (no id to copy). The comment is mandatory: it is all the orchestrator reads on return. A review
@@ -836,8 +836,8 @@ confuse them** with your CLI's own todo tools (\`TaskCreate\`, \`TaskList\`…),
   user, shown on the return card in the chat while the comment stays folded (no ids, shas or JSON).
 - **An idea is not a task**: \`kanban_add\` is dispatched within the minute; \`project_todo_add\` only parks.
   An idea's files (screenshots, logs): \`project_todo_attachments_list\` gives a path to open.
-- **Timon docs are local**: for "how does Timon do X", \`docs_search\` / \`docs_read\` (offline, this
-  version) before Timon's code or the web.
+- **Rooks docs are local**: for "how does Rooks do X", \`docs_search\` / \`docs_read\` (offline, this
+  version) before the source or the web.
 - **LLM per task**: \`kanban_add\` takes \`backend_override\` + \`model_override\` (a matching pair, from
   \`timon backends\`); leave both empty to inherit the project role. Never list models from memory.
 - **Never** call the \`Task\` / \`Agent\` / \`advisor\` tools: the sub-agent's stream and \`advisor\`'s
@@ -857,19 +857,19 @@ confuse them** with your CLI's own todo tools (\`TaskCreate\`, \`TaskList\`…),
  *  project's AGENTS.md. It is read at every spawn by every agent, so each line
  *  has to earn its tokens. */
 function timonPreambleHead(ctx: PreambleContext): string {
-  return `${ctx.timonMcp ? timonCommsContract() : ''}# Runtime context — Timon
+  return `${ctx.timonMcp ? timonCommsContract() : ''}# Runtime context — Rooks
 
-You are spawned by **Timon**, a local-first multi-agent platform running on the user's
-machine. This describes Timon only: the user's own conventions come from the global
+You are spawned by **Rooks**, a local-first multi-agent platform running on the user's
+machine. This describes Rooks only: the user's own conventions come from the global
 instructions, your identity docs, your memory rules and the project's AGENTS.md / CLAUDE.md.
 
 ## Where things live
 
 ${hostOsBullet()}
-- **Your code**: your working directory (\`cwd\`) is set. Timon runs on the host, not in a
+- **Your code**: your working directory (\`cwd\`) is set. Rooks runs on the host, not in a
   container: an agent you create needs an absolute host \`cwd\` that exists. Never invent
   \`/workspace/...\` or another container path (ENOENT at every spawn); check it exists first.
-- **Timon data** (\`${timonPath()}\`): database \`${timonPath('timon.db')}\` (never edit),
+- **Rooks data** (\`${timonPath()}\`): database \`${timonPath(`${STATE_STEM}.db`)}\` (never edit),
   agents \`${timonPath('agents', '<name>')}\` (config.json, system-prompt.md, SOUL.md and other
   identity docs), skills \`${timonPath('skills', '<id>', 'SKILL.md')}\`.
 - Read the instruction file at the root of your \`cwd\` (\`AGENTS.md\` or \`CLAUDE.md\`) before
