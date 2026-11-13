@@ -58,8 +58,13 @@ test('a stable build still expires by default', () => {
   assert.equal(createBuildInfo({ now: NOW, channel: 'stable' }).expiresAt, '2026-12-30T12:00:00.000Z');
 });
 
-test('only beta and stable can be asked for; dev is what an unpackaged daemon reports', () => {
-  assert.throws(() => createBuildInfo({ now: NOW, channel: 'dev' }), /--channel must be one of beta, stable/);
+test('a dev package never expires, and an unknown channel is refused', () => {
+  assert.deepEqual(createBuildInfo({ now: NOW, channel: 'dev', noExpiry: true }), {
+    channel: 'dev',
+    expiresAt: null,
+    builtAt: '2026-10-01T12:00:00.000Z',
+  });
+  assert.throws(() => createBuildInfo({ now: NOW, channel: 'dev' }), /does not expire/);
   assert.throws(() => createBuildInfo({ now: NOW, channel: 'nightly' }), /--channel/);
 });
 

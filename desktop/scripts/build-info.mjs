@@ -6,6 +6,7 @@
  *   { channel: 'beta' | 'stable' | 'dev', expiresAt: ISO8601 | null, builtAt: ISO8601 }
  *
  * Rooks does not stop on a date. `noExpiry` is allowed on every channel.
+ * A `dev` package is a test build: it never carries an expiry.
  *
  * The file is written in the build worktree by `scripts/build-rc.mjs` and
  * `scripts/build-all.mjs`, never committed (gitignored), staged by
@@ -44,12 +45,14 @@ export function parseIsoDate(value, what = 'date') {
  * `expires` (ISO) wins over the default; `noExpiry` is for a stable build only.
  */
 export function createBuildInfo({ channel = DEFAULT_CHANNEL, expires, noExpiry = false, now = new Date() } = {}) {
-  if (!PACKAGE_CHANNELS.includes(channel)) throw new Error(`--channel must be one of ${PACKAGE_CHANNELS.join(', ')} (got "${channel}")`);
+  const dev = channel === 'dev';
+  if (!dev && !PACKAGE_CHANNELS.includes(channel)) throw new Error(`--channel must be one of ${PACKAGE_CHANNELS.join(', ')} (got "${channel}")`);
+  if (dev && !noExpiry) throw new Error('a dev package does not expire: pass noExpiry');
   if (noExpiry && expires !== undefined && expires !== null) throw new Error('--no-expiry and --expires exclude each other');
   const built = new Date(now);
   if (Number.isNaN(built.getTime())) throw new Error('build date is invalid');
   const builtAt = built.toISOString();
-  const expiresAt = noExpiry
+  const expiresAt = dev || noExpiry
     ? null
     : expires === undefined || expires === null
       ? new Date(built.getTime() + DEFAULT_EXPIRY_DAYS * DAY_MS).toISOString()

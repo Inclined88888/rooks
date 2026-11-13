@@ -1,7 +1,9 @@
-# TEST ONLY desktop installers. The app is known-good Timon, plus the
-# portable-mode fix when the systemd user bus answers `offline`.
-# Unsigned OS code-signing is expected when no Apple or Windows identity is set.
-# Daemon release integrity uses an ephemeral TEST-ONLY Ed25519 pair for this job.
+# TEST ONLY desktop installers.
+# The package job checks out pull-request code, so it stays read-only.
+# Only the prerelease job may create the rooks-test tag.
+# One Ed25519 pair is minted for the whole run and used by every OS.
+# Linux natives are compiled on Debian bullseye so they need glibc 2.31 or older.
+# The stamp is the dev channel with no expiry.
 name: Desktop test build
 
 on:
@@ -9,16 +11,47 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: desktop-test-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  signing:
+    name: One test signing key
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Mint one Ed25519 pair for every OS
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signing-key
+          node <<'NODE'
+          const { generateKeyPairSync } = require('crypto');
+          const fs = require('fs');
+          const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+          fs.writeFileSync('signing-key/private.pem', privateKey.export({ type: 'pkcs8', format: 'pem' }), { mode: 0o600 });
+          fs.writeFileSync('signing-key/public.pem', publicKey.export({ type: 'spki', format: 'pem' }));
+          console.log('Minted one TEST-ONLY Ed25519 pair for this run.');
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-signing-key
+          path: signing-key
+          retention-days: 1
+          if-no-files-found: error
+
   package:
     name: ${{ matrix.os }} package (TEST ONLY)
+    needs: signing
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -27,7 +60,10 @@ jobs:
           # a cross build, which is why each OS builds only itself.
           - os: macos-26
             eb_args: '--mac dmg --publish never'
-          - os: ubuntu-latest
+          # ubuntu-22.04 is the job host. node-pty and better-sqlite3 are
+          # recompiled inside Debian bullseye afterwards, so the .node files
+          # need glibc 2.31 or older.
+          - os: ubuntu-22.04
             eb_args: '--linux AppImage deb --publish never'
           - os: windows-latest
             eb_args: '--win nsis --publish never'
@@ -40,6 +76,8 @@ jobs:
       NODE_ENV: production
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -63,32 +101,33 @@ jobs:
           npm ci --include=dev --prefix app
           npm ci --include=dev --prefix desktop
 
-      - name: Ephemeral TEST ONLY release keys
+      - name: Use the one test signing key
+        uses: actions/download-artifact@v4
+        with:
+          name: test-signing-key
+          path: signing-key
+
+      - name: Point the build at that key
         shell: bash
         run: |
-          mkdir -p "$RUNNER_TEMP/timon-keys"
-          PRIV="$RUNNER_TEMP/timon-keys/private.pem"
-          PUB="$RUNNER_TEMP/timon-keys/public.pem"
-          node <<'NODE'
-          const { generateKeyPairSync } = require('crypto');
-          const fs = require('fs');
-          const dir = process.env.RUNNER_TEMP + '/timon-keys';
-          const { privateKey, publicKey } = generateKeyPairSync('ed25519');
-          fs.writeFileSync(dir + '/private.pem', privateKey.export({ type: 'pkcs8', format: 'pem' }));
-          fs.writeFileSync(dir + '/public.pem', publicKey.export({ type: 'spki', format: 'pem' }));
-          console.log('Minted ephemeral TEST-ONLY Ed25519 release keys.');
-          NODE
-          echo "TIMON_RELEASE_PRIVATE_KEY_FILE=$PRIV" >> "$GITHUB_ENV"
-          echo "TIMON_RELEASE_PUBLIC_KEY_FILE=$PUB" >> "$GITHUB_ENV"
+          set -euo pipefail
+          test -s signing-key/private.pem
+          test -s signing-key/public.pem
+          echo "TIMON_RELEASE_PRIVATE_KEY_FILE=$GITHUB_WORKSPACE/signing-key/private.pem" >> "$GITHUB_ENV"
+          echo "TIMON_RELEASE_PUBLIC_KEY_FILE=$GITHUB_WORKSPACE/signing-key/public.pem" >> "$GITHUB_ENV"
 
-      - name: Write beta build-info
+      - name: Write dev build-info
         working-directory: desktop
         run: |
           node --input-type=module -e '
             import { createBuildInfo, writeBuildInfo } from "./scripts/build-info.mjs";
-            const info = createBuildInfo({ channel: "beta", noExpiry: true });
+            const info = createBuildInfo({ channel: "dev", noExpiry: true });
             console.log(writeBuildInfo("..", info));
-            console.log("channel", info.channel, "builtAt", info.builtAt);
+            console.log("channel", info.channel, "expiresAt", info.expiresAt, "builtAt", info.builtAt);
+            if (info.channel !== "dev" || info.expiresAt !== null) {
+              console.error("a test build must be the dev channel with no expiry");
+              process.exit(1);
+            }
           '
 
       - name: Build standalone web app
@@ -102,6 +141,10 @@ jobs:
         run: |
           npm run build
           npm run prepare:deps
+
+      - name: Rebuild Linux natives on Debian bullseye
+        if: runner.os == 'Linux'
+        run: bash desktop/scripts/rebuild-pty-bullseye.sh
 
       - name: electron-builder (${{ matrix.os }})
         working-directory: desktop
@@ -118,7 +161,12 @@ jobs:
           if [[ "$os" == macos-* ]]; then
             files=(release/*arm64*.dmg)
           elif [[ "$os" == ubuntu-* ]]; then
-            files=(release/*.AppImage release/*.deb)
+            files=(release/*.AppImage release/rooks_*.deb)
+            if [ ${#files[@]} -lt 2 ]; then
+              echo "Expected an AppImage and a deb named rooks_."
+              ls -lh release
+              exit 1
+            fi
           else
             files=(release/*.exe)
           fi
@@ -143,7 +191,10 @@ jobs:
     name: Attach TEST ONLY prerelease
     needs: package
     if: needs.package.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -166,15 +217,16 @@ jobs:
           dmg=(dist-out/*arm64*.dmg)
           exe=(dist-out/*.exe)
           appimage=(dist-out/*.AppImage)
-          deb=(dist-out/*.deb)
+          deb=(dist-out/rooks_*.deb)
           if [ ${#dmg[@]} -eq 0 ] || [ ${#exe[@]} -eq 0 ] || [ ${#appimage[@]} -eq 0 ] || [ ${#deb[@]} -eq 0 ]; then
-            echo "Refusing to publish until Mac arm64, Windows, AppImage, and deb are all present."
+            echo "Refusing to publish until Mac arm64, Windows, AppImage, and a rooks_ deb are all present."
+            ls -lh dist-out
             exit 1
           fi
           HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
           tag="rooks-test-${HEAD_SHA::8}"
           title="TEST ONLY — Rooks ${tag}"
-          notes=$'TEST ONLY. Rooks. Light on first launch, Light and System only, no mascot or slogan on onboarding. The Linux program, desktop entry, icon and deb package are named rooks.\n\n- Not a desktop-v release.\n- A user service that is offline stays portable.\n- Setup continues from the agent step when no AI tool is installed.\n- OS code signing is not applied.\n- Daemon integrity uses an ephemeral TEST-ONLY Ed25519 pair minted in this job.\n- Licence is unchanged (AGPL-3.0-only).\n'
+          notes=$'TEST ONLY. Rooks. Dev channel, no licence expiry. One test signing key for Mac, Windows and Linux.\n\n- Not a desktop-v release.\n- Linux program, desktop entry and deb package are named rooks.\n- Linux native modules are built on Debian bullseye (glibc 2.31 or older).\n- A user service that is offline stays portable. A clean first run does not ask for a restart.\n- Setup continues from the agent step when no AI tool is installed.\n- OS code signing is not applied.\n- Licence is unchanged (AGPL-3.0-only).\n'
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${dmg[@]}" "${exe[@]}" "${appimage[@]}" "${deb[@]}" --clobber
           else
