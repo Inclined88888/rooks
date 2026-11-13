@@ -149,6 +149,9 @@ export async function fetchCapabilities(force = false): Promise<Capabilities | n
     .then((r) => (r.ok ? (r.json() as Promise<Capabilities>) : null))
     .catch(() => null)
     .then((c) => {
+      // A warming daemon / empty stub without `modules` is "not loaded yet":
+      // show everything rather than crash mid-onboarding.
+      if (c && !Array.isArray(c.modules)) c = null;
       // Same content = same object. The capabilities are reread when any
       // component mounts after 60 s, and their identity is an effect
       // dependency: returning a fresh object for unchanged content would
@@ -174,7 +177,8 @@ export function useCapabilities(): Capabilities | null {
 }
 
 export function isModuleOn(caps: Capabilities | null, name: string): boolean {
-  if (!caps) return true; // not loaded yet: show
+  // Not loaded, or a partial/warming answer without modules: show (local-first).
+  if (!caps?.modules) return true;
   const m = caps.modules.find((x) => x.id === name);
   return m ? m.active : true;
 }
@@ -188,12 +192,12 @@ export function isModuleOn(caps: Capabilities | null, name: string): boolean {
  * empty object, so "the module's default".
  */
 export function moduleOptions(caps: Capabilities | null, name: string): Record<string, unknown> {
-  return caps?.modules.find((x) => x.id === name)?.options ?? {};
+  return caps?.modules?.find((x) => x.id === name)?.options ?? {};
 }
 
 export function isZoneVisible(caps: Capabilities | null, zone: string): boolean {
   if (!caps) return true;
-  if (caps.ui.hidden.includes(zone)) return false;
+  if (caps.ui?.hidden?.includes(zone)) return false;
   const required = ZONE_MODULE[zone];
   return required ? isModuleOn(caps, required) : true;
 }
