@@ -30,6 +30,7 @@ import {
   shouldInstallService,
   stepNeedsService,
   statusFailure,
+  unverifiableServiceIdentity,
   SERVICE_STEPS,
   type ServicePhase,
   type ServiceStatusRead,
@@ -323,6 +324,26 @@ test('after an install, the phase is what service-status says', () => {
   // Windows registered the task and never started it (TODO #342): the doctor now says portable.
   assert.deepEqual(
     phaseAfterInstall({ answer: { ok: false, reason: 'task refused' }, status: { ok: false, installed: false }, doctor: { supervisor: null } }),
+    { phase: 'portable', failure: null },
+  );
+  // Offline user bus: doctor may still claim systemd-user — do not trap on Try again.
+  const identity = 'Cannot verify the daemon service identity (unavailable or stale unit). No service will be modified.';
+  assert.equal(unverifiableServiceIdentity({ reason: identity }), true);
+  assert.equal(
+    servicePhaseFrom({
+      doctor: machine,
+      firstRun: true,
+      status: answer({ ok: false, installed: false, reason: identity }),
+      failure: null,
+    }),
+    'portable',
+  );
+  assert.deepEqual(
+    phaseAfterInstall({
+      answer: { ok: false, reason: identity },
+      status: { ok: false, installed: false, reason: identity },
+      doctor: machine,
+    }),
     { phase: 'portable', failure: null },
   );
 });

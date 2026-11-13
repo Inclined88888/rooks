@@ -425,9 +425,20 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
         return;
       }
     }
-    const email = parseEmail(body.email);
     const name = parseName(body.name);
-    const password = parsePassword(body.password);
+    // Name-only first account (desktop onboarding): synthesise a local address
+    // and a one-shot password. The setup response opens a session; email/password
+    // stay optional on the form.
+    const blankEmail = body.email === undefined || body.email === null || (typeof body.email === 'string' && body.email.trim() === '');
+    const blankPassword = body.password === undefined || body.password === null || body.password === '';
+    let email = parseEmail(body.email);
+    let password = parsePassword(body.password);
+    if (name && blankEmail && blankPassword) {
+      const slug = name.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim()
+        .replace(/[\s_]+/g, '.').replace(/^\.+|\.+$/g, '').slice(0, 48) || 'local';
+      email = `${slug}@rooks.local`;
+      password = generateTemporaryPassword();
+    }
     if (!email || !name || !password) {
       res.status(400).json({
         error: 'email, name and password (min 8 characters) required',

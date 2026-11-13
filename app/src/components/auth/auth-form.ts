@@ -38,3 +38,31 @@ export function accountName(name: string, email: string): string {
   if (typed) return typed;
   return email.trim().split('@')[0] || email.trim();
 }
+
+/** Name filled, email/password left blank — Create synthesises a local identity. */
+export function nameOnlyDraft(name: string, email: string, password: string, confirm: string): boolean {
+  return name.trim() !== '' && email.trim() === '' && password === '' && confirm === '';
+}
+
+/** Local address the daemon accepts for a name-only first account (`EMAIL_RE`). */
+export function localEmailForName(name: string): string {
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/[\s_]+/g, '.')
+    .replace(/^\.+|\.+$/g, '')
+    .slice(0, 48);
+  return `${slug || 'local'}@rooks.local`;
+}
+
+/** One-shot password for a name-only create; the setup response keeps the session. */
+export function localSetupPassword(): string {
+  const bytes = new Uint8Array(18);
+  crypto.getRandomValues(bytes);
+  let out = '';
+  for (const b of bytes) out += (b % 36).toString(36);
+  return out.length >= MIN_PASSWORD ? out : `${out}rookslocal`;
+}

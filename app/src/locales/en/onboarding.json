@@ -32,9 +32,10 @@
       "confirm": "Confirm the password",
       "mismatch": "The two passwords don't match.",
       "tooShort": "At least {min} characters.",
+      "createNeeds": "Finish the email and password, use a first name alone, or Skip for now.",
       "create": "Create my account",
       "skip": "Skip for now",
-      "privacy": "Your account stays on this computer. Email and password are optional — no internet is needed to create it."
+      "privacy": "Your account stays on this computer. A first name alone is enough — email and password are only if you want them. No internet needed. Skip anytime."
     },
     "channels": {
       "title": "Communication channels",

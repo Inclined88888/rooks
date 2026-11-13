@@ -11,7 +11,9 @@ type Call = { url: string; body: Record<string, unknown> };
 type Reply = { status: number; body: unknown } | 'network';
 
 test('the shared checks: matching passwords at the daemon\'s length, no complexity rule, a name even when none is typed', async () => {
-  const { accountName, looksLikeEmail, passwordPairReady, passwordProblem, MIN_PASSWORD } = await import('@/components/auth/auth-form');
+  const {
+    accountName, localEmailForName, looksLikeEmail, nameOnlyDraft, passwordPairReady, passwordProblem, MIN_PASSWORD,
+  } = await import('@/components/auth/auth-form');
   assert.equal(MIN_PASSWORD, 8);
   assert.equal(passwordProblem('abcdefgh', ''), null, 'nothing said before the confirmation');
   assert.equal(passwordProblem('abcdefgh', 'abcdefgx'), 'mismatch');
@@ -22,6 +24,9 @@ test('the shared checks: matching passwords at the daemon\'s length, no complexi
   assert.equal(looksLikeEmail('ada@example'), false);
   assert.equal(accountName('  Ada ', 'ada@example.com'), 'Ada');
   assert.equal(accountName('', 'ada.l@example.com'), 'ada.l', 'the daemon wants a name: the address before the @');
+  assert.equal(nameOnlyDraft('Ada', '', '', ''), true);
+  assert.equal(nameOnlyDraft('Ada', 'a@b.co', '', ''), false);
+  assert.equal(localEmailForName('  Ada Lovelace '), 'ada.lovelace@rooks.local');
 });
 
 async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Record<string, unknown> = { user: null, needsSetup: true, setupRequiresEmailCode: false }) {
@@ -116,9 +121,26 @@ test('fields are optional; no required asterisks; Skip continues without creatin
   }
   assert.match(w.doc.body.textContent ?? '', /Skip for now/);
   assert.equal(w.submit().disabled, true);
+  assert.equal(w.doc.querySelector('[data-onboarding-mascot], [data-mascot], svg.rooks-mascot'), null, 'no mascot on the account step');
   await w.press(w.skip());
   assert.equal(w.nexts(), 1);
   assert.equal(w.calls.length, 0, 'skip never hits setup');
+});
+
+test('Create with a first name alone synthesises a local @rooks.local identity', async (t) => {
+  const w = await mount(t, {
+    '/api/ui/auth/setup': [{ status: 201, body: { user: { id: 'u1' } } }],
+  });
+  const [name] = w.inputs();
+  await w.fill(name!, 'Ada');
+  assert.equal(w.submit().disabled, false, 'name alone enables Create');
+  await w.press(w.submit());
+  assert.equal(w.calls[0]?.url, '/api/ui/auth/setup');
+  assert.equal(w.calls[0]?.body.name, 'Ada');
+  assert.equal(w.calls[0]?.body.email, 'ada@rooks.local');
+  assert.equal(typeof w.calls[0]?.body.password, 'string');
+  assert.ok(String(w.calls[0]?.body.password).length >= 8);
+  assert.equal(w.nexts(), 1);
 });
 
 test('local-first create: always POSTs /setup, never the email-code route', async (t) => {

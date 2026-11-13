@@ -351,6 +351,16 @@ export type ServiceStatusRead =
 export type PreparationFailure = { text: string; command: string | null };
 
 /**
+ * Status/install refused because the user systemd manager cannot be verified
+ * (offline bus, stale unit, no D-Bus). Nothing is installed — treat as
+ * portable rather than trapping the reader on "Try again".
+ */
+export function unverifiableServiceIdentity(answer: Pick<OnboardingAnswer, 'reason' | 'lines' | 'error'>): boolean {
+  const text = [answer.reason, answer.error, ...(answer.lines ?? [])].filter(Boolean).join('\n');
+  return /Cannot verify the daemon service identity/i.test(text);
+}
+
+/**
  * The phase the machine is in. `failure` is the refusal kept from an earlier
  * attempt this session: shown as long as the machine still has no service,
  * forgotten the moment one is registered (installed by hand in a terminal).
@@ -369,6 +379,9 @@ export function servicePhaseFrom(input: {
   const { answer } = input.status;
   if (answer.ok) return 'running';
   if (answer.installed === true) return 'installed';
+  // Doctor may still claim systemd-user while the bus is offline — do not
+  // demand an install that can only fail with the same identity error.
+  if (unverifiableServiceIdentity(answer)) return 'portable';
   return input.failure ? 'failed' : 'missing';
 }
 
@@ -399,6 +412,10 @@ export function phaseAfterInstall(input: {
 }): { phase: ServicePhase; failure: PreparationFailure | null } {
   if (input.status.installed === true) return { phase: input.status.ok ? 'running' : 'installed', failure: null };
   if (input.doctor && !serviceInstallable(input.doctor)) return { phase: 'portable', failure: null };
+  // Offline / unavailable user bus: same portable escape as a null supervisor.
+  if (unverifiableServiceIdentity(input.answer) || unverifiableServiceIdentity(input.status)) {
+    return { phase: 'portable', failure: null };
+  }
   const shown = answerMessage(input.answer);
   return {
     phase: 'failed',

@@ -29,6 +29,19 @@ export function setSystemctlForTest(fn: ((args: string[]) => { ok: boolean; out:
   systemctlForTest = fn;
 }
 
+/**
+ * States from `systemctl is-system-running` where the user manager can still
+ * create scopes and units. `degraded` exits non-zero but is usable (failed
+ * units elsewhere). `offline` / `unknown` mean no usable user bus — common
+ * in containers, cloud VMs, and sessions without `systemd --user`.
+ */
+const USABLE_USER_MANAGER = new Set(['running', 'degraded', 'starting', 'initializing', 'maintenance']);
+
+/** Whether `is-system-running` stdout names a manager we can talk to. */
+export function userManagerUsable(state: string): boolean {
+  return USABLE_USER_MANAGER.has(state.trim().toLowerCase());
+}
+
 /** Probes only once: without a user systemd manager (container, macOS,
  *  CI), this whole module steps back and the spawn stays bare. Better an
  *  unconfined mission than a mission that does not start. */
@@ -37,9 +50,11 @@ export function hasSystemd(): boolean {
   if (process.platform !== 'linux') return (systemdAvailable = false);
   systemctlCalls += 1;
   const r = spawnSync('systemctl', ['--user', 'is-system-running'], { encoding: 'utf8' });
-  // `is-system-running` exits with code != 0 when the state is `degraded`, which
-  // in no way prevents creating scopes: we test that an answer is present.
-  systemdAvailable = r.error === undefined && typeof r.stdout === 'string' && r.stdout.trim() !== '';
+  // Exit code alone is not enough: `degraded` is non-zero yet usable, while
+  // `offline` prints a word and still has no user bus (install then fails
+  // with "Cannot verify the daemon service identity").
+  const state = typeof r.stdout === 'string' ? r.stdout.trim() : '';
+  systemdAvailable = r.error === undefined && userManagerUsable(state);
   if (!systemdAvailable) console.warn('[resources] no systemd user manager — guard inactive');
   return systemdAvailable;
 }

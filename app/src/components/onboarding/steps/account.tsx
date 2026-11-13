@@ -11,17 +11,17 @@ import { ArrowRight, Loader2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AgentMascotHost } from '@/components/mascot/agent-mascot';
 import { PasswordInput } from '@/components/auth/password-input';
-import { accountName, looksLikeEmail, passwordPairReady, passwordProblem, MIN_PASSWORD } from '@/components/auth/auth-form';
+import {
+  accountName, localEmailForName, localSetupPassword, looksLikeEmail, nameOnlyDraft,
+  passwordPairReady, passwordProblem, MIN_PASSWORD,
+} from '@/components/auth/auth-form';
 import { createAccount } from '@/components/email-code/email-code-api';
 import { failureText, type CodeFailure } from '@/components/email-code/email-code-failure';
 import { fetchMe } from '@/lib/auth';
 import { firstRunScheme } from '@/lib/first-run-gate';
 import { t } from '@/lib/i18n';
 import { useOnboarding } from '../onboarding-context';
-
-const LOOK = { shape: 'round', color: '#ff8a2a', eyes: 'big' } as const;
 
 export type AccountDraft = { name: string; email: string; password: string; confirm: string; setupToken: string };
 
@@ -79,20 +79,25 @@ export function AccountStep(): ReactElement {
   const email = draft.email.trim();
   const problem = passwordProblem(draft.password, draft.confirm);
   const waiting = failureText(failure, Date.now());
+  const nameOnly = nameOnlyDraft(draft.name, draft.email, draft.password, draft.confirm);
   const hasCredentials = looksLikeEmail(email) && passwordPairReady(draft.password, draft.confirm);
-  const ready = hasCredentials && (!needsToken || draft.setupToken.trim() !== '');
+  const ready = (nameOnly || hasCredentials) && (!needsToken || draft.setupToken.trim() !== '');
+  const incompleteCredentials = Boolean(email || draft.password || draft.confirm) && !hasCredentials;
 
   const createLocal = useCallback(async (): Promise<CodeFailure | null> => {
     const scheme = firstRunScheme();
+    const useNameOnly = nameOnlyDraft(draft.name, draft.email, draft.password, draft.confirm);
+    const setupEmail = useNameOnly ? localEmailForName(draft.name) : email;
+    const setupPassword = useNameOnly ? localSetupPassword() : draft.password;
     const answer = await createAccount({
-      email,
-      name: accountName(draft.name, email),
-      password: draft.password,
+      email: setupEmail,
+      name: accountName(draft.name, setupEmail),
+      password: setupPassword,
       ...(scheme ? { scheme } : {}),
       ...(needsToken ? { setupToken: draft.setupToken.trim() } : {}),
     });
     return answer.ok ? null : answer.failure;
-  }, [email, draft.name, draft.password, draft.setupToken, needsToken]);
+  }, [email, draft.name, draft.email, draft.password, draft.confirm, draft.setupToken, needsToken]);
 
   const submit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
@@ -106,15 +111,14 @@ export function AccountStep(): ReactElement {
     else setFailure(local);
   };
 
-  const line = waiting ?? (problem === 'mismatch' ? t('onboarding.account.mismatch') : problem === 'short' ? t('onboarding.account.tooShort', { min: MIN_PASSWORD }) : null);
+  const line = waiting
+    ?? (problem === 'mismatch' ? t('onboarding.account.mismatch') : problem === 'short' ? t('onboarding.account.tooShort', { min: MIN_PASSWORD }) : null)
+    ?? (incompleteCredentials && !sending ? t('onboarding.account.createNeeds') : null);
   const toggle = () => setShown((s) => !s);
 
   return (
     <div className="relative mx-auto flex w-full max-w-[440px] flex-col items-start px-8 py-8 text-left">
-      <div className="rooks-onboarding-rise">
-        <AgentMascotHost look={LOOK} size={56} />
-      </div>
-      <h1 className="rooks-onboarding-rise mt-3 text-[22px] font-semibold leading-tight tracking-[-0.025em]" style={{ animationDelay: '60ms' }}>
+      <h1 className="rooks-onboarding-rise text-[22px] font-semibold leading-tight tracking-[-0.025em]" style={{ animationDelay: '60ms' }}>
         {t('onboarding.account.title')}
       </h1>
       <p className="rooks-onboarding-rise mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground" style={{ animationDelay: '100ms' }}>
@@ -189,7 +193,12 @@ export function AccountStep(): ReactElement {
             </p>
           </Field>
         )}
-        <p role="status" aria-live="polite" data-account-status="" className="ml-0.5 min-h-4 text-[12.5px] leading-4 tabular-nums text-destructive">
+        <p
+          role="status"
+          aria-live="polite"
+          data-account-status=""
+          className={`ml-0.5 min-h-4 text-[12.5px] leading-4 ${waiting || problem ? 'tabular-nums text-destructive' : 'text-muted-foreground'}`}
+        >
           {line}
         </p>
         <Button type="submit" size="lg" className="h-11 w-full gap-2" disabled={!ready || sending}>
