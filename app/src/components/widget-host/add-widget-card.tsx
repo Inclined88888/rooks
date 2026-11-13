@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useWidgetHost } from './widget-host';
 import type { WidgetProps } from './widget-props';
 
-/** The dashed "Your widget here" card (`add-widget.ts`): its + opens the widget window. */
+/** Quiet empty slot for a fresh Desk column — + opens the widget catalog. */
 export function AddWidgetCard({ className }: WidgetProps) {
   const { setPaletteOpen } = useWidgetHost();
   return (
@@ -17,14 +17,19 @@ export function AddWidgetCard({ className }: WidgetProps) {
         aria-label={t('widgets.placeholder.add')}
         onClick={() => setPaletteOpen(true)}
         className={cn(
-          'group flex min-h-[132px] flex-1 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border px-4 text-muted-foreground transition-colors',
-          'hover:border-primary/50 hover:bg-primary/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'group flex min-h-[72px] flex-1 flex-col items-start justify-center gap-1 rounded-lg border border-border bg-card/60 px-3.5 py-3 text-left text-muted-foreground transition-colors',
+          'hover:border-border hover:bg-muted/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         )}
       >
-        <span className="grid size-9 place-items-center rounded-full bg-muted transition-colors group-hover:bg-primary/15 group-hover:text-primary">
-          <Plus className="size-4" aria-hidden />
+        <span className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground/90">
+          <span className="grid size-6 place-items-center rounded-md border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-primary">
+            <Plus className="size-3.5" aria-hidden />
+          </span>
+          {t('widgets.placeholder.title')}
         </span>
-        <span className="text-[13px] font-medium">{t('widgets.placeholder.title')}</span>
+        <span className="pl-8 text-[12px] leading-snug text-muted-foreground">
+          {t('widgets.placeholder.description')}
+        </span>
       </button>
     </div>
   );

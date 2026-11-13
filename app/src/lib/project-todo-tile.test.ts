@@ -133,7 +133,7 @@ test('type chips narrow the list, Open/Done count the selected types', async () 
 
   await React.act(async () => { puce('Bug').click(); puce('No type').click(); puce('Idea').click(); });
   await React.act(async () => { puce('Done').click(); });
-  assert.match(document.body.textContent!, /No idea of this type/);
+  assert.match(document.body.textContent!, /No ideas of this type/);
   const tout = Array.from(document.querySelectorAll('button')).find((b) => b.textContent === 'Show all types')!;
   await React.act(async () => { tout.click(); });
   assert.equal(lignes().length, 1);

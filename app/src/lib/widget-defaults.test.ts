@@ -31,12 +31,12 @@ test('a fresh install opens on the short arrangement the product ships (05/11/20
   const parRail = (rail: string) => column(cockpit, rail).map(w => w.id);
   const shares = (cards: typeof cockpit, rail: string) => column(cards, rail).map(w => w.fillPercent);
   assert.deepEqual(parRail('gauche'), ['plugin:@rooks/agents:notifications', add]);
-  assert.deepEqual(shares(cockpit, 'gauche'), [66, 34], 'the notifications take two thirds, « Your widget here » the rest');
+  assert.deepEqual(shares(cockpit, 'gauche'), [100, undefined], 'notifications fill the left column; add-widget is a compact footer');
   assert.deepEqual(parRail('centre'), [MAIN_AGENT_WIDGET_ID]);
   assert.deepEqual(parRail('droite'), ['plugin:@rooks/kanban:todo', 'plugin:@rooks/agents:tasks']);
-  assert.deepEqual(shares(cockpit, 'droite'), [50, 50]);
+  assert.deepEqual(shares(cockpit, 'droite'), [48, 52]);
   // Frameless and transparent: the cockpit's cards sit on the background
-  // rather than in boxes; the dashed placeholder draws its own outline.
+  // rather than in boxes; the add-widget slot draws its own outline.
   assert.ok(cockpit.filter(w => !isAddWidgetPlaceholder(w.id)).every(w => w.borderless && w.transparent));
 
   const chat = mergeWorkspaceWidgets(null, constraints, '/chat').filter(w => !w.removed);

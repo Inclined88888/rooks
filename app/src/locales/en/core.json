@@ -268,12 +268,12 @@
     "botMenu": "Menu of {name}",
     "teamMenu": "Menu of the team {team}",
     "noTeamYet": "No team yet: create one from the bar below.",
-    "teamEmpty": "No TIM yet: move one here from its menu.",
-    "noMatch": "No TIM matches.",
+    "teamEmpty": "No bot yet: move one here from its menu.",
+    "noMatch": "No bot matches.",
     "search": "Search",
     "clearSearch": "Clear the search",
     "noTeam": "No team",
-    "noTeamHint": "This TIM belongs to no team.",
+    "noTeamHint": "This bot belongs to no team.",
     "memberOf": "Team: {team}",
     "teams": "Teams",
     "newTeam": "New team",
@@ -285,23 +285,23 @@
     "save": "Save",
     "teamCreated": "Team created",
     "teamRenamed": "Team saved",
-    "teamDeleted": "Team “{team}” deleted — its TIMs kept, now without a team",
-    "teamsExplain": "TIMs of the same team may talk to each other; TIMs of different teams may not.",
+    "teamDeleted": "Team “{team}” deleted — its bots kept, now without a team",
+    "teamsExplain": "Bots of the same team may talk to each other; bots of different teams may not.",
     "moveToTeam": "Move to a team",
     "leaveTeam": "Leave its team",
     "forbidden": "Your account may not change teams.",
     "daemonUnreachable": "Rooks is unreachable.",
     "writeFailed": "The change was refused.",
-    "newBot": "New TIM",
+    "newBot": "New bot",
     "welcomeConversation": "Welcome from {name}",
     "welcomeSkip": "Skip the welcome",
-    "emptyNoBots": "No TIM yet. Create one, then talk to it here.",
-    "talksWithTeam": "{bot} is in team {team}: it only talks with TIMs of that team.",
-    "talksWithAll": "{bot} is in no team: it can talk with every TIM.",
+    "emptyNoBots": "No bot yet. Create one, then talk to it here.",
+    "talksWithTeam": "{bot} is in team {team}: it only talks with bots of that team.",
+    "talksWithAll": "{bot} is in no team: it can talk with every bot.",
     "crossTeamRefused": "Refused: {from} and {to} are not in the same team.",
-    "openRail": "TIMs",
-    "emptyTitle": "Pick a TIM on the left to talk to it.",
-    "showRail": "Show the TIMs list"
+    "openRail": "Bots",
+    "emptyTitle": "Pick a bot on the left to talk to it.",
+    "showRail": "Show the Bots list"
   },
   "workingAgents": {
     "options": "Working agents options",
@@ -332,7 +332,7 @@
     "chat": "Chat",
     "brain": "Brain",
     "agents": "Agents",
-    "bots": "TIMs",
+    "bots": "Bots",
     "multichat": "Multichat",
     "projects": "Projects",
     "kanban": "Kanban",
@@ -960,7 +960,7 @@
     "copyFailed": "Could not copy (clipboard denied by the browser)",
     "archiveTitle": "Notifications — Archive",
     "loading": "Loading…",
-    "empty": "No notifications.",
+    "empty": "No notifications yet.",
     "emptyFiltered": "No notifications of the kinds shown here.",
     "prefs": {
       "title": "Bell menu",
@@ -2602,8 +2602,8 @@
   },
   "widgetCatalog": {
     "botsRail": {
-      "title": "TIMs",
-      "description": "Your TIMs, grouped by team: pick one to open its chat."
+      "title": "Bots",
+      "description": "Your bots, grouped by team: pick one to open its chat."
     },
     "clock": {
       "title": "Clock",
@@ -2630,12 +2630,12 @@
       "description": "The hosts the open mission contacted, and its recent outbound connections."
     },
     "allTodo": {
-      "title": "All-projects TO DO",
-      "description": "The TO DO notebook of every project: ideas to sort, turn into tasks or close."
+      "title": "To-do",
+      "description": "Ideas across every project: sort them, turn them into tasks, or close them."
     },
     "projectTodo": {
-      "title": "Project TO DO",
-      "description": "The TO DO notebook of one project: ideas to sort, turn into tasks or close."
+      "title": "Project to-do",
+      "description": "Ideas for one project: sort them, turn them into tasks, or close them."
     },
     "workflowRuns": {
       "title": "Workflow runs",
@@ -2720,9 +2720,9 @@
   },
   "widgets": {
     "placeholder": {
-      "title": "Your widget here",
+      "title": "Add a widget",
       "add": "Add a widget",
-      "description": "A free spot: its + opens the widget window."
+      "description": "Open the widget catalog and place one here."
     },
     "dropHere": "Drop a widget here",
     "notAllowed": "This widget cannot go here",
@@ -3095,8 +3095,8 @@
     "activityThinking": "Thinking",
     "activityNeedsAction": "Needs validation",
     "activityIdle": "Idle",
-    "emptyTitle": "Queue empty",
-    "emptyBody": "No task running or waiting."
+    "emptyTitle": "Nothing in the queue",
+    "emptyBody": "No tasks running or waiting."
   },
   "systemSettings": {
     "description": "How Rooks runs on this machine. Only the superadmin sees this tab.",
@@ -3307,10 +3307,10 @@
       "to_test": "To test",
       "done": "Done"
     },
-    "titleAll": "All-projects TO DO",
-    "titleProject": "Project TO DO",
-    "empty": "No idea in reserve",
-    "emptyProject": "No idea for {project}",
+    "titleAll": "To-do",
+    "titleProject": "Project to-do",
+    "empty": "No ideas yet",
+    "emptyProject": "No ideas for {project}",
     "markDone": "Mark as done",
     "reopen": "Reopen",
     "delete": "Delete",
@@ -3325,7 +3325,7 @@
     "urgencyNone": "No type",
     "authorUser": "You",
     "authorUnknown": "Unknown",
-    "emptyFilter": "No idea of this type",
+    "emptyFilter": "No ideas of this type",
     "clearFilter": "Show all types",
     "add": "Add",
     "newIdea": "New idea",

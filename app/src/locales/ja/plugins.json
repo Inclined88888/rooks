@@ -225,7 +225,7 @@
         "description": "プロジェクトごとにまとめたエージェント。キャンバスとは別に無効にできます。"
       },
       "@rooks/bots": {
-        "label": "TIMs",
+        "label": "Bots",
         "description": "プロジェクトに属さないTIMをチームごとにまとめ、選んだTIMのチャットを表示します。"
       },
       "@rooks/files-widget": {

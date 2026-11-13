@@ -134,9 +134,9 @@ test('the cockpit cards keep their placement id, title, rail and heights', () =>
     catalogueDesTuiles().map((e) => [e.id, e.titre, e.railDefaut, e.hauteurDefaut, e.hauteurMin]),
     [
       ['plugin:@rooks/ui-layout:clock', 'Clock', 'gauche', 140, 110],
-      // « Your widget here », placed by the fresh-install arrangements only.
-      ['plugin:@rooks/ui-layout:add-widget', 'Your widget here', 'gauche', 160, 120],
-      ['plugin:@rooks/ui-layout:add-widget-2', 'Your widget here', 'gauche', 160, 120],
+      // Add-widget slot, placed by the fresh-install arrangements only.
+      ['plugin:@rooks/ui-layout:add-widget', 'Add a widget', 'gauche', 160, 120],
+      ['plugin:@rooks/ui-layout:add-widget-2', 'Add a widget', 'gauche', 160, 120],
       ['plugin:@rooks/vault:vault-graph', 'Vault graph', 'droite', 420, 200],
       // The top bar's agent tabs and the former « Agents list » card, one
       // widget: first placed in the middle of the top bar (TODO #479).
@@ -145,7 +145,7 @@ test('the cockpit cards keep their placement id, title, rail and heights', () =>
       ['plugin:@rooks/agents:tasks', 'Task queue', 'agents.right.widget', 400, 180],
       ['plugin:@rooks/agents:injections', 'Agent injections', 'droite', 420, 200],
       // The rail of `/bots`, shown there in an island of its own.
-      ['plugin:@rooks/bots:rail', 'TIMs', 'gauche', 420, 200],
+      ['plugin:@rooks/bots:rail', 'Bots', 'gauche', 420, 200],
       ['plugin:@rooks/missions:recent', 'Recent missions', 'gauche', 300, 150],
       // Sa surface par défaut est le rail du chat : la carte ne parle que d'une
       // conversation ouverte. Elle reste déplaçable partout ailleurs.
@@ -157,8 +157,8 @@ test('the cockpit cards keep their placement id, title, rail and heights', () =>
       // Le carnet a DEUX surfaces depuis le volet 4/4 : la colonne « TO DO » du
       // tableau, et cette tuile — un widget à part entière, pas l'alternative
       // qu'elle était du temps de `@rooks/backlog`.
-      ['plugin:@rooks/kanban:todo', 'All-projects TO DO', 'droite', 320, 160],
-      ['plugin:@rooks/kanban:project-todo', 'Project TO DO', 'droite', 300, 160],
+      ['plugin:@rooks/kanban:todo', 'To-do', 'droite', 320, 160],
+      ['plugin:@rooks/kanban:project-todo', 'Project to-do', 'droite', 300, 160],
       // Pas de tuile Dreams : le module retient ses surfaces pour la beta
       // tant que son option `ui` n'est pas vraie (cf. le test dedie plus bas).
       ['plugin:@rooks/agent-chat:new', 'New agent chat', 'gauche', 520, 280],

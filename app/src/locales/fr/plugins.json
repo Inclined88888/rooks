@@ -242,7 +242,7 @@
         "description": "Vue des agents regroupés par projet. Peut être désactivée indépendamment du canvas."
       },
       "@rooks/bots": {
-        "label": "TIMs",
+        "label": "Bots",
         "description": "Vos TIMs sans projet, regroupés par équipe, avec le chat de celui que vous choisissez."
       },
       "@rooks/files-widget": {

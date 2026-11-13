@@ -225,7 +225,7 @@
         "description": "Agents gegroepeerd per project. Los van het canvas uit te schakelen."
       },
       "@rooks/bots": {
-        "label": "TIMs",
+        "label": "Bots",
         "description": "Je TIMs zonder project, gegroepeerd per team, met de chat van de gekozen TIM."
       },
       "@rooks/files-widget": {

@@ -225,7 +225,7 @@
         "description": "Agentes agrupados por proyecto. Se puede desactivar independientemente del lienzo."
       },
       "@rooks/bots": {
-        "label": "TIMs",
+        "label": "Bots",
         "description": "Tus TIMs sin proyecto, agrupados por equipo, con el chat del que elijas."
       },
       "@rooks/files-widget": {

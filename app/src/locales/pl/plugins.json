@@ -225,7 +225,7 @@
         "description": "Agenci pogrupowani według projektu. Można wyłączyć niezależnie od płótna."
       },
       "@rooks/bots": {
-        "label": "TIMs",
+        "label": "Bots",
         "description": "Twoje TIM-y bez projektu, pogrupowane według zespołów, z czatem wybranego."
       },
       "@rooks/files-widget": {

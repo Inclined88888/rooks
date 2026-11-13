@@ -157,9 +157,9 @@ export function OnboardingShell({
           </div>
         </header>
         <main className="absolute inset-0 top-12 overflow-auto">
-          <div className="mx-auto flex min-h-full w-full max-w-[720px] items-stretch px-6 py-8">
-            <div className="relative flex w-full flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card">
-              {Step && <Gate step={at.step}><div className="flex min-h-[min(560px,calc(100vh-8rem))] flex-1 flex-col"><Step key={at.step} /></div></Gate>}
+          <div className="mx-auto flex min-h-full w-full max-w-[520px] items-center justify-center px-6 py-8">
+            <div className="relative w-full overflow-hidden rounded-lg border border-border bg-card">
+              {Step && <Gate step={at.step}><Step key={at.step} /></Gate>}
             </div>
           </div>
         </main>

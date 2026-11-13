@@ -16,12 +16,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useChatRail } from '@/components/chat/chat-rails';
+import { ProjectFilterPicker } from '@/components/project-filter-picker';
 import { t } from '@/lib/i18n';
 import { sharedGet } from '@/lib/shared-read';
 import type { WidgetProps } from '@/components/widget-host/widget-props';
 import type { ClientRealtime } from '@/lib/plugin-host/realtime';
 import { ProjectTodoTile } from './project-todo-tile';
 import { machineScopedStorage } from '@/lib/machines/machine-storage';
+
+const NONE = '__none__';
 
 /** The project picked by hand, per browser and per machine: the widget can be placed in
  *  several views, and the same notebook is expected in each. */
@@ -66,22 +69,21 @@ export function ProjectTodoWidget(props: WidgetProps & { realtime: ClientRealtim
   const selecteur = useMemo(() => {
     if (contexte) return null;
     return (
-      <select
-        value={choix ?? ''}
-        aria-label={t('projectTodo.selectProject')}
-        onChange={(e) => {
-          const v = e.target.value || null;
+      <ProjectFilterPicker
+        value={choix ?? NONE}
+        label={t('projectTodo.selectProject')}
+        triggerClassName="h-7 max-w-[10rem]"
+        onChange={(raw) => {
+          const v = raw === NONE ? null : raw;
           setChoix(v);
           if (v) machineScopedStorage(window.localStorage).setItem(CLE_CHOIX, v);
           else machineScopedStorage(window.localStorage).removeItem(CLE_CHOIX);
         }}
-        className="max-w-[10rem] rounded border border-border bg-background/40 px-1 py-0.5 text-[10px] uppercase tracking-[0.1em] text-muted-foreground/80 outline-none transition-colors focus:border-primary/60"
-      >
-        <option value="">{t('projectTodo.noProjectOption')}</option>
-        {projets.map((p) => (
-          <option key={p.slug} value={p.slug}>{p.name || p.slug}</option>
-        ))}
-      </select>
+        options={[
+          { value: NONE, label: t('projectTodo.noProjectOption') },
+          ...projets.map((p) => ({ value: p.slug, label: p.name || p.slug })),
+        ]}
+      />
     );
   }, [contexte, choix, projets]);
 

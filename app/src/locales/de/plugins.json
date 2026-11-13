@@ -225,7 +225,7 @@
         "description": "Agenten nach Projekt gruppiert. Unabhängig von der Arbeitsfläche deaktivierbar."
       },
       "@rooks/bots": {
-        "label": "TIMs",
+        "label": "Bots",
         "description": "Deine projektlosen TIMs, nach Team gruppiert, mit dem Chat des gewählten."
       },
       "@rooks/files-widget": {

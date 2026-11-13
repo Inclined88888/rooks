@@ -25,11 +25,12 @@ const [ADD_WIDGET, ADD_WIDGET_2] = ADD_WIDGET_IDS as [string, string];
  */
 const STARTERS: Record<string, Record<string, Starter>> = {
   '/': {
-    'plugin:@rooks/agents:notifications': { rail: 'gauche', rang: 0, hauteur: 520, heightMode: 'fill', fillPercent: 66, borderless: true, transparent: true },
-    [ADD_WIDGET]: { rail: 'gauche', rang: 1, hauteur: 160, heightMode: 'fill', fillPercent: 34 },
+    // Notifications own the left column; add-widget stays a compact footer.
+    'plugin:@rooks/agents:notifications': { rail: 'gauche', rang: 0, hauteur: 520, heightMode: 'fill', fillPercent: 100, borderless: true, transparent: true },
+    [ADD_WIDGET]: { rail: 'gauche', rang: 1, hauteur: 88 },
     [MAIN_AGENT_WIDGET_ID]: { rail: 'centre', rang: 0, hauteur: 520, heightMode: 'fill', borderless: true, transparent: true },
-    'plugin:@rooks/kanban:todo': { rail: 'droite', rang: 0, hauteur: 320, heightMode: 'fill', fillPercent: 50, borderless: true, transparent: true },
-    'plugin:@rooks/agents:tasks': { rail: 'droite', rang: 1, hauteur: 400, heightMode: 'fill', fillPercent: 50, borderless: true, transparent: true },
+    'plugin:@rooks/kanban:todo': { rail: 'droite', rang: 0, hauteur: 280, heightMode: 'fill', fillPercent: 48, borderless: true, transparent: true },
+    'plugin:@rooks/agents:tasks': { rail: 'droite', rang: 1, hauteur: 320, heightMode: 'fill', fillPercent: 52, borderless: true, transparent: true },
   },
   // The agents canvas starts bare: one "Your widget here" at the foot of
   // each column, at its own height (`widget-zone.tsx`, `docked`).

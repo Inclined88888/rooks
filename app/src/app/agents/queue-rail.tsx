@@ -4,6 +4,7 @@ import { ChatLink } from '@/components/chat/chat-link';
 import { Tile } from '@/components/tile';
 import type { WidgetProps } from '@/components/widget-host/widget-props';
 import { useChatRail } from '@/components/chat/chat-rails';
+import { ProjectFilterPicker } from '@/components/project-filter-picker';
 import { t } from '@/lib/i18n';
 import { chatHref } from '@/lib/chat-island-params';
 import { ALL_FILTER } from '@/lib/kanban-filters';
@@ -132,15 +133,18 @@ export function QueueRail({ poignee, className }: WidgetProps) {
   const empty = runningShown.length === 0 && queuedClean.length === 0;
 
   const picker = chatSlug ? null : (
-    <select
-      value={choice}
-      aria-label={t('agentsLayout.projectFilter')}
-      onChange={(e) => { setChoice(e.target.value); writeQueueRailProject(machineScopedStorage(window.localStorage), e.target.value); }}
-      className="pointer-events-auto w-full rounded border border-border bg-background/40 px-1.5 py-1 text-[11px] text-muted-foreground outline-none transition-colors focus:border-primary/60"
-    >
-      <option value={ALL_FILTER}>{t('agentsLayout.allProjects')}</option>
-      {projects.map((p) => <option key={p.slug} value={p.slug}>{p.name || p.slug}</option>)}
-    </select>
+    <div className="pointer-events-auto">
+      <ProjectFilterPicker
+        value={choice}
+        label={t('agentsLayout.projectFilter')}
+        triggerClassName="w-full justify-between"
+        onChange={(v) => { setChoice(v); writeQueueRailProject(machineScopedStorage(window.localStorage), v); }}
+        options={[
+          { value: ALL_FILTER, label: t('agentsLayout.allProjects') },
+          ...projects.map((p) => ({ value: p.slug, label: p.name || p.slug })),
+        ]}
+      />
+    </div>
   );
 
   // The rail keeps its place when the queue is empty instead of unmounting:
@@ -239,11 +243,11 @@ export function QueueRail({ poignee, className }: WidgetProps) {
       )}
 
       {empty && (
-        <div className="pointer-events-auto rounded-xl border border-dashed border-border/50 bg-card/40 px-3 py-4 text-center shadow-sm backdrop-blur">
-          <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
+        <div className="pointer-events-auto flex flex-col items-center justify-center gap-1 rounded-lg border border-border bg-card/50 px-3 py-6 text-center">
+          <p className="text-[13px] font-medium text-foreground/90">
             {t('agentsLayout.emptyTitle')}
           </p>
-          <p className="mt-1 text-[11.5px] leading-snug text-muted-foreground/60">
+          <p className="max-w-[24ch] text-[12px] leading-snug text-muted-foreground">
             {t('agentsLayout.emptyBody')}
           </p>
         </div>

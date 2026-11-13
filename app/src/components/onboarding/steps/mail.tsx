@@ -24,7 +24,7 @@ export function MailStep(): ReactElement {
   const [picked, setPicked] = useState<MailId | null>(null);
 
   return (
-    <section data-onboarding-step="mail" className="flex w-full max-w-[520px] flex-col items-start px-8 py-10 text-left">
+    <section data-onboarding-step="mail" className="flex w-full max-w-[520px] flex-col items-start px-8 py-8 text-left">
       <h1 className="rooks-onboarding-rise text-[22px] font-semibold leading-tight tracking-[-0.025em]">
         {t('onboarding.mail.title')}
       </h1>

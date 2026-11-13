@@ -285,7 +285,7 @@
     "talksWithTeam": "{bot} はチーム {team} に属しています。そのチームのTIMとだけ会話します。",
     "talksWithAll": "{bot} はどのチームにも属していません。すべてのTIMと会話できます。",
     "crossTeamRefused": "拒否: {from} と {to} は同じチームではありません。",
-    "openRail": "TIMs",
+    "openRail": "Bots",
     "emptyTitle": "会話するTIMを左から選んでください。",
     "showRail": "TIM一覧を表示"
   },
@@ -318,7 +318,7 @@
     "chat": "チャット",
     "brain": "ブレイン",
     "agents": "エージェント",
-    "bots": "TIMs",
+    "bots": "Bots",
     "multichat": "マルチチャット",
     "projects": "プロジェクト",
     "kanban": "Kanban",
@@ -2529,7 +2529,7 @@
   },
   "widgetCatalog": {
     "botsRail": {
-      "title": "TIMs",
+      "title": "Bots",
       "description": "チームごとにまとめたTIM。選ぶとチャットが開きます。"
     },
     "clock": {

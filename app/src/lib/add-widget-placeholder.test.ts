@@ -42,7 +42,7 @@ async function mount(stored: unknown[]) {
   resetSlotsForTests();
   declareSlot('cockpit.widget', 'list');
   for (const key of ADD_WIDGET_KEYS) {
-    register({ slot: 'cockpit.widget', pluginId: ADD_WIDGET_MODULE, key, widget: { title: 'Your widget here', frame: 'none', height: 160 } }, AddWidgetCard as never);
+    register({ slot: 'cockpit.widget', pluginId: ADD_WIDGET_MODULE, key, widget: { title: 'Add a widget', frame: 'none', height: 160 } }, AddWidgetCard as never);
   }
   register({ slot: 'cockpit.widget', pluginId: 'fixture', key: 'card', widget: { title: 'Card' } }, () => React.createElement('p', null, 'card'));
 
@@ -107,7 +107,7 @@ test('its + opens the widget window, which does not offer the placeholder', asyn
     await until(() => seen.paletteOpen, 'the widget window to open');
     const dialog = () => document.querySelector('[role="dialog"]');
     await until(() => dialog()?.textContent?.includes('Card') ?? false, 'the window to list the card taken out');
-    assert.ok(!dialog()!.textContent!.includes('Your widget here'), 'the placeholder taken out is not a widget to pick');
+    assert.ok(!dialog()!.textContent!.includes('Add a widget'), 'the placeholder taken out is not a widget to pick');
   } finally {
     await cleanup();
   }

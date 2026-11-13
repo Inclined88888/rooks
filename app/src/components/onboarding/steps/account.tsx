@@ -192,7 +192,7 @@ export function AccountStep(): ReactElement {
   const toggle = () => setShown((s) => !s);
 
   return (
-    <div className="relative mx-auto flex w-full max-w-[440px] flex-col items-start px-8 py-10 text-left">
+    <div className="relative mx-auto flex w-full max-w-[440px] flex-col items-start px-8 py-8 text-left">
       <div className="rooks-onboarding-rise">
         <AgentMascotHost look={LOOK} size={56} />
       </div>

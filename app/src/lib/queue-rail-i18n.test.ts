@@ -86,8 +86,8 @@ const BUSY: Feed = {
 
 test('the empty queue reads in English', async () => {
   const r = await renderRail('en', EMPTY);
-  assert.match(r.text, /Queue empty/);
-  assert.match(r.text, /No task running or waiting\./);
+  assert.match(r.text, /Nothing in the queue/);
+  assert.match(r.text, /No tasks running or waiting\./);
   assert.doesNotMatch(r.text, /file vide|Aucune/);
 });
 
@@ -95,7 +95,7 @@ test('the empty queue reads in French', async () => {
   const r = await renderRail('fr', EMPTY);
   assert.match(r.text, /File vide/);
   assert.match(r.text, /Aucune tâche en cours ni en attente\./);
-  assert.doesNotMatch(r.text, /Queue empty|No task/);
+  assert.doesNotMatch(r.text, /Nothing in the queue|No tasks/);
 });
 
 test('the counters and activity labels read in English', async () => {

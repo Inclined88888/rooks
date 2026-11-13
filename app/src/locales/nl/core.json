@@ -285,7 +285,7 @@
     "talksWithTeam": "{bot} zit in team {team}: hij praat alleen met TIMs van dat team.",
     "talksWithAll": "{bot} zit in geen team: hij kan met elke TIM praten.",
     "crossTeamRefused": "Geweigerd: {from} en {to} zitten niet in hetzelfde team.",
-    "openRail": "TIMs",
+    "openRail": "Bots",
     "emptyTitle": "Kies links een TIM om ermee te praten.",
     "showRail": "TIM-lijst tonen"
   },
@@ -318,7 +318,7 @@
     "chat": "Chat",
     "brain": "Brain",
     "agents": "Agents",
-    "bots": "TIMs",
+    "bots": "Bots",
     "multichat": "Multichat",
     "projects": "Projecten",
     "kanban": "Kanban",
@@ -2529,7 +2529,7 @@
   },
   "widgetCatalog": {
     "botsRail": {
-      "title": "TIMs",
+      "title": "Bots",
       "description": "Je TIMs, gegroepeerd per team: kies er een om zijn chat te openen."
     },
     "clock": {

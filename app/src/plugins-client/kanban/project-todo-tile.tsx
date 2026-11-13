@@ -254,9 +254,8 @@ export function ProjectTodoTile({
 
       <div className="scrollbar-thin flex min-h-0 flex-1 flex-col overflow-y-auto px-1.5 py-2">
         {visibles.length === 0 && !chargement ? (
-          <div className="flex flex-col items-center justify-center gap-1.5 py-4">
-            <span className="text-lg">🗒️</span>
-            <span className="text-center text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/50">
+          <div className="flex flex-col items-center justify-center gap-2 px-3 py-6">
+            <p className="max-w-[22ch] text-center text-[13px] leading-snug text-muted-foreground">
               {inerte
                 ? t('projectTodo.chooseProject')
                 : filtreVide
@@ -264,7 +263,7 @@ export function ProjectTodoTile({
                   : projet
                     ? t('projectTodo.emptyProject', { project: projet })
                     : t('projectTodo.empty')}
-            </span>
+            </p>
             {filtreVide && (
               <WidgetButton onClick={() => setTypes(new Set())} label={t('projectTodo.clearFilter')} />
             )}

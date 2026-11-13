@@ -28,7 +28,7 @@ export const NAV_PAGES: ReadonlyArray<{ path: string; title: string }> = [
   { path: '/', title: 'Cockpit' },
   { path: '/brain', title: 'Brain' },
   { path: '/agents', title: 'Agents' },
-  { path: '/bots', title: 'TIMs' },
+  { path: '/bots', title: 'Bots' },
   { path: '/projects', title: 'Projects' },
   { path: '/multichat', title: 'Multichat' },
   { path: '/kanban', title: 'Kanban' },

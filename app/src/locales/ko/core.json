@@ -285,7 +285,7 @@
     "talksWithTeam": "{bot}은(는) {team} 팀에 있어 그 팀의 TIM과만 대화합니다.",
     "talksWithAll": "{bot}은(는) 팀이 없어 모든 TIM과 대화할 수 있습니다.",
     "crossTeamRefused": "거부됨: {from}와(과) {to}은(는) 같은 팀이 아닙니다.",
-    "openRail": "TIMs",
+    "openRail": "Bots",
     "emptyTitle": "왼쪽에서 대화할 TIM을 선택하세요.",
     "showRail": "TIM 목록 표시"
   },
@@ -318,7 +318,7 @@
     "chat": "채팅",
     "brain": "브레인",
     "agents": "에이전트",
-    "bots": "TIMs",
+    "bots": "Bots",
     "multichat": "멀티채팅",
     "projects": "프로젝트",
     "kanban": "Kanban",
@@ -2529,7 +2529,7 @@
   },
   "widgetCatalog": {
     "botsRail": {
-      "title": "TIMs",
+      "title": "Bots",
       "description": "팀별로 묶은 TIM입니다. 하나를 고르면 채팅이 열립니다."
     },
     "clock": {
