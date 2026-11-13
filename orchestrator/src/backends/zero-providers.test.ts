@@ -59,6 +59,7 @@ test('a pinned executable makes its provider usable, a dead pin does not', { ski
 
 test('setup refuses to finish with nothing usable, and counts the pins it is about to write', () => {
   assert.match(noProviderForSetup({}, () => []) ?? '', /No LLM provider/);
+  assert.equal(noProviderForSetup({ withoutProvider: true }, () => []), null, 'the onboarding already continued past the model step');
   assert.equal(noProviderForSetup({}, () => ['codex']), null);
   let seen: Record<string, string> = {};
   noProviderForSetup({ binaries: { claude: ' /opt/claude ', codex: '', grok: null } }, (pins) => { seen = pins; return ['claude']; });
