@@ -33,7 +33,7 @@ test('/api/health names the service that answers', async () => {
     assert.equal(res.status, 200);
     const body = await res.json() as { ok: boolean; service: string; instance: string; packaged: boolean; version: string; builtAt: string | null };
     assert.equal(body.ok, true);
-    assert.equal(body.service, BRAND.id);
+    assert.equal(body.service, BRAND.displayName);
     assert.equal(body.instance, instanceId(HOME));
     assert.equal(body.packaged, false);
     assert.equal(typeof body.version, 'string');

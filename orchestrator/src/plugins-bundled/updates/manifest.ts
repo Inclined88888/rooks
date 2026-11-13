@@ -16,7 +16,7 @@ import { z } from 'zod';
 
 export const RELEASES_SCHEMA = 1;
 export const RELEASES_SIGNATURE_DOMAIN = 'timon-releases-v1\0';
-export const RELEASES_URL = 'https://timon-ai.com/.well-known/timon-releases.json';
+export const RELEASES_URL = 'https://github.com/Inclined88888/rooks/releases/latest/download/rooks-releases.json';
 export const NOTES_MAX = 64 * 1024;
 export const ENVELOPE_MAX = 1024 * 1024;
 export const CLOCK_SKEW_MS = 5 * 60_000;

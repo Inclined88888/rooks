@@ -104,7 +104,7 @@ export class TailscaleInstaller {
   constructor(private readonly deps: TailscaleInstallerDeps) {}
 
   async openInstaller(sender: Sender, uiOrigin: string): Promise<InstallerOutcome> {
-    if (!trustedSender(sender, uiOrigin)) throw new Error('Installing Tailscale is only available from Timon.');
+    if (!trustedSender(sender, uiOrigin)) throw new Error('Installing Tailscale is only available from Rooks.');
     const { platform } = this.deps;
     if (platform !== 'darwin' && platform !== 'win32') return { status: 'none' };
 
@@ -176,7 +176,7 @@ export class TailscaleInstaller {
    * `open -a` never reaches the user's session. A fixed path, nothing asked.
    */
   async openApp(sender: Sender, uiOrigin: string): Promise<OpenAppOutcome> {
-    if (!trustedSender(sender, uiOrigin)) throw new Error('Opening Tailscale is only available from Timon.');
+    if (!trustedSender(sender, uiOrigin)) throw new Error('Opening Tailscale is only available from Rooks.');
     if (this.deps.platform !== 'darwin') return { status: 'unsupported' };
     if (!this.deps.exists(TAILSCALE_MAC_APP)) return { status: 'missing' };
     // portability: macOS-only branch, the system `open`

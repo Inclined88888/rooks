@@ -65,7 +65,7 @@ test('about: the window opens only for the main frame of the Timon window; anyth
   assert.ok(open, 'the channel is registered');
   const timon = { isWindow: true, isMainFrame: true, url: `${origin}/?settings=system/installation` };
   for (const change of [{ isWindow: false }, { isMainFrame: false }, { url: 'https://evil.example/' }, { url: '' }]) {
-    assert.throws(() => open({ ...timon, ...change }), /only available from the Timon window/);
+    assert.throws(() => open({ ...timon, ...change }), /only available from the Rooks window/);
   }
   assert.equal(opened, 0);
   open(timon);

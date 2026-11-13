@@ -62,7 +62,7 @@ export function registerRoutes(app: Router): void {
     const built = readBuildInfo();
     res.json({
       ok: true,
-      service: BRAND.id,
+      service: BRAND.displayName,
       instance: instanceId(TIMON_HOME),
       packaged: packagedDaemon(),
       version: timonVersion(),

@@ -139,7 +139,7 @@ test('rejects foreign windows, subframes and origins before any request', async 
     const { deps, calls } = fake('linux', { '/a': 'file' }, client('/a'));
     await assert.rejects(
       revealEntry({ ...sender, ...change }, origin, { agentId: 'a', path: 'x' }, deps),
-      /only available from Timon/,
+      /only available from Rooks/,
     );
     assert.deepEqual(calls, []);
   }

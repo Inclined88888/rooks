@@ -232,7 +232,7 @@ function noArgument(input: unknown): void {
 
 export function registerUpdateIpc<S>(ipc: UpdateIpcLike<S>, allowed: (sender: S) => boolean, controller: () => UpdateController): void {
   const guard = (sender: S): void => {
-    if (!allowed(sender)) throw new Error('Updates are only downloaded from the Timon window of this machine.');
+    if (!allowed(sender)) throw new Error('Updates are only downloaded from the Rooks window of this machine.');
   };
   ipc.handle(UPDATE_CHANNELS.state, (sender, input) => {
     guard(sender);

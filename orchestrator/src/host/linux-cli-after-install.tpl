@@ -26,12 +26,6 @@ if hash update-desktop-database 2>/dev/null; then
     update-desktop-database /usr/share/applications || true
 fi
 
-# Do not replace a command owned by a source checkout or another package.
-if [ ! -e /usr/bin/timon ] && [ ! -L /usr/bin/timon ]; then
-    ln -s '/opt/${sanitizedProductName}/cli/timon' /usr/bin/timon
-elif [ "$(readlink /usr/bin/timon)" != '/opt/${sanitizedProductName}/cli/timon' ]; then
-    echo 'Timon CLI was not installed: /usr/bin/timon already belongs to another installation.' >&2
-fi
-
-echo 'Timon is installed. Open it from your applications.'
-echo 'On a server, as the account that will own Timon (not root): timon service install, then timon init.'
+# The application is /usr/bin/${executable}. Do not also claim /usr/bin/timon:
+# that name belongs to another product when both are installed.
+echo 'Rooks is installed. Open it from your applications.'

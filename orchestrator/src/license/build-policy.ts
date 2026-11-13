@@ -78,6 +78,8 @@ export function buildExpired(info: BuildInfo, nowMs: number): boolean {
 
 export function applyBuildPolicy(state: LicenseState, clock: BuildClock = {}): LicenseState {
   const info = clock.info ?? buildInfo();
+  // A local install does not stop on a build date and does not ask for a licence.
+  if (setupPolicy() === 'free') return state;
   if (info.channel !== 'beta') return state;
   if (buildExpired(info, clock.nowMs ?? Date.now())) return betaLocked('build_expired');
   if (state.status === 'valid' || setupPolicy() === 'free') return state;

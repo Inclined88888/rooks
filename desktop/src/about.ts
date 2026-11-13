@@ -120,7 +120,7 @@ export function registerAboutIpc(
   open: () => void,
 ): void {
   handle(ABOUT_CHANNEL, (sender) => {
-    if (!allowed(sender)) throw new Error('About Timon is only available from the Timon window.');
+    if (!allowed(sender)) throw new Error('About Rooks is only available from the Rooks window.');
     open();
   });
 }

@@ -17,7 +17,6 @@ import { bus } from '../../bus.js';
 import { timonVersion } from '../../data-version.js';
 import { createNotification } from '../../notifications.js';
 import { TIMON_HOME } from '../../paths.js';
-import { settingBool } from '../../settings.js';
 import { UpdateChecker, stateFileIn, type UpdateOffer } from './checker.js';
 import { activeReleaseKeyring } from './keyring.js';
 import { registerRoutes } from './routes.js';
@@ -40,12 +39,13 @@ export const CHECK_INTERVAL_MS = 6 * 3_600_000;
 const TICK_MS = 10 * 60_000;
 
 function checksAllowed(): boolean {
-  return buildInfo().channel !== 'dev' && settingBool(UPDATES_SETTING);
+  // Rooks does not fetch a release list and does not trust the previous product's update key.
+  return false;
 }
 
 export function createChecker(): UpdateChecker {
   const created: UpdateChecker = new UpdateChecker({
-    enabled: () => settingBool(UPDATES_SETTING),
+    enabled: () => false,
     channel: () => buildInfo().channel,
     buildExpiresAt: () => buildInfo().expiresAt,
     installed: timonVersion,
@@ -62,8 +62,8 @@ export function announce(target: UpdateChecker, offer: UpdateOffer, channel: 'be
   if (!target.markNotified(offer.version)) return;
   createNotification({
     type: 'report',
-    title: `Timon ${offer.version} is available`,
-    body: `You run ${timonVersion()}. Open Timon to see what changed and download the installer.`,
+    title: `Rooks ${offer.version} is available`,
+    body: `You run ${timonVersion()}. Open Rooks to see what changed and download the installer.`,
     anchor: `timon-update:${offer.version}`,
   });
 }

@@ -15,7 +15,7 @@ import { createHash, createPrivateKey, createPublicKey, sign, verify } from 'nod
 
 export const RELEASES_SCHEMA = 1;
 export const RELEASES_SIGNATURE_DOMAIN = 'timon-releases-v1\0';
-export const RELEASES_URL = 'https://timon-ai.com/.well-known/timon-releases.json';
+export const RELEASES_URL = 'https://github.com/Inclined88888/rooks/releases/latest/download/rooks-releases.json';
 export const CHANNELS = Object.freeze(['beta', 'stable']);
 /** Release notes are plain text in the payload; anything longer is cut and points to `notesUrl`. */
 export const NOTES_MAX = 64 * 1024;

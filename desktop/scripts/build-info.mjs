@@ -5,9 +5,7 @@
  *
  *   { channel: 'beta' | 'stable' | 'dev', expiresAt: ISO8601 | null, builtAt: ISO8601 }
  *
- * A beta build that never expires is how an old beta keeps running on a
- * tester's machine long after it stopped being supported, so expiry is the
- * DEFAULT (`builtAt + 90 days`) and a beta cannot opt out of it.
+ * Rooks does not stop on a date. `noExpiry` is allowed on every channel.
  *
  * The file is written in the build worktree by `scripts/build-rc.mjs` and
  * `scripts/build-all.mjs`, never committed (gitignored), staged by
@@ -48,7 +46,6 @@ export function parseIsoDate(value, what = 'date') {
 export function createBuildInfo({ channel = DEFAULT_CHANNEL, expires, noExpiry = false, now = new Date() } = {}) {
   if (!PACKAGE_CHANNELS.includes(channel)) throw new Error(`--channel must be one of ${PACKAGE_CHANNELS.join(', ')} (got "${channel}")`);
   if (noExpiry && expires !== undefined && expires !== null) throw new Error('--no-expiry and --expires exclude each other');
-  if (noExpiry && channel === 'beta') throw new Error('--no-expiry is refused for channel beta: a beta build must expire');
   const built = new Date(now);
   if (Number.isNaN(built.getTime())) throw new Error('build date is invalid');
   const builtAt = built.toISOString();
@@ -60,7 +57,7 @@ export function createBuildInfo({ channel = DEFAULT_CHANNEL, expires, noExpiry =
   return { channel, expiresAt, builtAt };
 }
 
-/** Throws unless `value` honours the contract; returns it typed-checked. A beta without an expiry is refused here too. */
+/** Throws unless `value` honours the contract; returns it typed-checked. A beta may leave `expiresAt` null. */
 export function validateBuildInfo(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${BUILD_INFO_FILE} must be a JSON object`);
   const keys = Object.keys(value).sort();
@@ -70,7 +67,6 @@ export function validateBuildInfo(value) {
   if (!CHANNELS.includes(value.channel)) throw new Error(`${BUILD_INFO_FILE}: channel "${value.channel}" is not one of ${CHANNELS.join(', ')}`);
   parseIsoDate(value.builtAt, 'builtAt');
   if (value.expiresAt !== null) parseIsoDate(value.expiresAt, 'expiresAt');
-  if (value.channel === 'beta' && value.expiresAt === null) throw new Error(`${BUILD_INFO_FILE}: a beta build must carry an expiresAt`);
   return value;
 }
 

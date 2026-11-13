@@ -43,9 +43,9 @@ test('--expires refuses what is not an unambiguous ISO 8601 date', () => {
   }
 });
 
-test('--no-expiry is refused for beta and only opens a stable build', () => {
-  assert.throws(() => createBuildInfo({ now: NOW, noExpiry: true }), /refused for channel beta/);
-  assert.throws(() => createBuildInfo({ now: NOW, channel: 'beta', noExpiry: true }), /refused for channel beta/);
+test('--no-expiry leaves expiresAt empty on beta and stable', () => {
+  assert.equal(createBuildInfo({ now: NOW, noExpiry: true }).expiresAt, null);
+  assert.equal(createBuildInfo({ now: NOW, channel: 'beta', noExpiry: true }).expiresAt, null);
   assert.deepEqual(createBuildInfo({ now: NOW, channel: 'stable', noExpiry: true }), {
     channel: 'stable',
     expiresAt: null,
@@ -68,7 +68,7 @@ test('validateBuildInfo holds the daemon contract exactly', () => {
   assert.equal(validateBuildInfo(ok), ok);
   assert.doesNotThrow(() => validateBuildInfo({ ...ok, channel: 'dev', expiresAt: null }));
   assert.doesNotThrow(() => validateBuildInfo({ ...ok, channel: 'stable', expiresAt: null }));
-  assert.throws(() => validateBuildInfo({ ...ok, expiresAt: null }), /beta build must carry an expiresAt/);
+  assert.equal(validateBuildInfo({ ...ok, expiresAt: null }).expiresAt, null);
   assert.throws(() => validateBuildInfo({ ...ok, channel: 'nightly' }), /channel/);
   assert.throws(() => validateBuildInfo({ ...ok, builtAt: 'yesterday' }), /builtAt/);
   assert.throws(() => validateBuildInfo({ channel: 'beta', builtAt: ok.builtAt }), /exactly channel, expiresAt and builtAt/);
@@ -89,7 +89,7 @@ test('writeBuildInfo puts the file in <worktree>/orchestrator and readBuildInfo 
   const file = writeBuildInfo(worktree, info);
   assert.equal(file, join(worktree, 'orchestrator', BUILD_INFO_FILE));
   assert.deepEqual(readBuildInfo(file), info);
-  assert.throws(() => writeBuildInfo(worktree, { ...info, expiresAt: null }), /beta build must carry/);
+  assert.equal(readBuildInfo(writeBuildInfo(worktree, { ...info, channel: 'beta', expiresAt: null })).expiresAt, null);
 });
 
 test('readBuildInfo names the build scripts when the file is missing or broken', (t) => {

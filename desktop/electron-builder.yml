@@ -120,10 +120,10 @@ linux:
   target:
     - AppImage
     - deb
-  # The dock ties a window to the entry whose StartupWMClass is the window's
-  # class (X11 WM_CLASS, Wayland app_id). Electron names it after the app's
-  # package.json, which carries `name` and no productName: `timon-desktop`.
-  # electron-builder's default (`Timon`) matches no window.
+  # Binary, `.desktop` file and icon. The npm package name stays `timon-desktop`
+  # because Electron's window class is that name (no productName in the packed
+  # package.json). StartupWMClass below still matches the window.
+  executableName: rooks
   desktop:
     StartupWMClass: timon-desktop
 # "New Window" on a right-click of Timon in the dock or the app grid (GNOME,
@@ -136,6 +136,8 @@ linux:
 # `packaging.test.ts` renders both entries with electron-builder's own code.
 # A target's `desktop` replaces the one of `linux`: StartupWMClass is repeated.
 deb:
+  packageName: rooks
+  artifactName: rooks_${version}_${arch}.${ext}
   afterInstall: ../orchestrator/src/host/linux-cli-after-install.tpl
   afterRemove: ../orchestrator/src/host/linux-cli-after-remove.tpl
   desktop:
@@ -145,7 +147,7 @@ deb:
     # french-ok: the French name of the action; a block scalar cannot hold the
     # marker (a `.desktop` comment line would be written into the entry), so
     # the value is double-quoted and its `ê` escaped.
-    Actions: "new-window;\n\n[Desktop Action new-window]\nName=New Window\nName[fr]=Nouvelle fen\u00eatre\nExec=/opt/Timon/timon-desktop --new-window"
+    Actions: "new-window;\n\n[Desktop Action new-window]\nName=New Window\nName[fr]=Nouvelle fen\u00eatre\nExec=/opt/Rooks/rooks --new-window"
 appImage:
   desktop:
     StartupWMClass: timon-desktop
@@ -173,8 +175,8 @@ mac:
   # extraResources below, mac only, and kept because no `electronLanguages`
   # is set (it would delete every .lproj it does not list).
   extendInfo:
-    NSCameraUsageDescription: "Timon can share this computer's camera with a site, with your permission."
-    NSMicrophoneUsageDescription: "Timon uses the microphone for voice dictation, transcribed on this computer, and can share it with a site, with your permission."
+    NSCameraUsageDescription: "Rooks can share this computer's camera with a site, with your permission."
+    NSMicrophoneUsageDescription: "Rooks uses the microphone for voice dictation, transcribed on this computer, and can share it with a site, with your permission."
   extraResources:
     - from: assets/mac/fr.lproj
       to: fr.lproj

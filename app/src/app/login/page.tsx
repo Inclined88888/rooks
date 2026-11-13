@@ -26,7 +26,7 @@ function LoginShell({ children }: { children: React.ReactNode }) {
   return (
     <OnboardingBackdrop center className="max-w-sm">
       <div className="mb-8 flex justify-center">
-        <BrandLogo className="h-11" alt="Timon" />
+        <BrandLogo className="h-11" alt="Rooks" />
       </div>
       <div className="rounded-xl border border-border bg-card p-6 shadow-elev-2 sm:p-7">
         {children}
@@ -60,6 +60,22 @@ export default function LoginPage() {
   useEffect(() => {
     if (toWelcome) window.location.replace(ONBOARDING_PATH);
   }, [toWelcome]);
+
+  // A name-only account has no password. This computer signs that account back in.
+  useEffect(() => {
+    if (!me || me.user || toWelcome) return;
+    let alive = true;
+    void fetch('/api/ui/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ localDesktop: true }),
+    }).then(async (response) => {
+      if (!alive || !response.ok) return;
+      const next = await fetchMe();
+      if (alive && next) setMe(next);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [me, toWelcome]);
 
   const welcome = me?.welcome ?? null;
   useEffect(() => {

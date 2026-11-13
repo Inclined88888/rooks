@@ -3,7 +3,7 @@
  * preferences, and the operator's account recovery. Administering accounts
  * belongs to the plugin that serves them (`ctx.accountProvider`).
  */
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { writeAppearance } from '../../appearance.js';
 import type { Router, Request, RequestHandler, Response } from 'express';
 import { freeAccountAllowed, FREE_ACCOUNT_RESTRICTED_MESSAGE } from '../../users/free-access.js';
@@ -59,6 +59,7 @@ import {
 import { cookieOpts, cookieSecure, setSession } from '../../users/session-open.js';
 import { accountProviderHolder } from '../../users/account-provider-state.js';
 import { apiError } from '../../api-error.js';
+import { isCrossSiteMutation } from '../http/auth.js';
 import type { EmailCodeStore } from '../../users/email-code.js';
 import type { MailRelayOptions } from '../../users/mail-relay.js';
 import {
@@ -245,6 +246,28 @@ export const operatorOnly: RequestHandler = (req, res, next) => {
 
 /** Tests exercise both release policies explicitly. The bundled plugin always
  * uses the shipped policy; neither config nor request data can override admission. */
+/** Stored instead of a password the person never saw. Login on this computer does not ask for it. */
+const LOCAL_DESKTOP_HASH = 'rooks-local';
+
+function setupNonceMatches(header: string | undefined): boolean {
+  const expected = process.env.ROOKS_SETUP_NONCE;
+  if (!expected) return true;
+  if (typeof header !== 'string' || header.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(header), Buffer.from(expected));
+}
+
+function requestIsLoopback(req: Request): boolean {
+  const addr = req.socket.remoteAddress ?? '';
+  return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
+}
+
+function jsonBody(req: Request, res: Response): boolean {
+  const type = (req.header('content-type') ?? '').toLowerCase();
+  if (type.includes('application/json')) return true;
+  res.status(415).json({ error: 'json_required' });
+  return false;
+}
+
 export function registerRoutes(app: Router, options: UserRoutesOptions = {}): void {
   const requiresLicense = (options.setupPolicy ?? setupPolicy()) === 'beta';
   const emailVerification = options.emailVerification === true;
@@ -398,8 +421,13 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
       res.status(409).json(apiError('already_set_up', 'already set up'));
       return;
     }
-    // A build past its end date is not a place to start: no licence would
-    // make it run, so no account is created on it.
+    if (isCrossSiteMutation(req)) {
+      res.status(403).json({ error: 'cross_site' });
+      return;
+    }
+    if (!jsonBody(req, res)) return;
+    // A closed-beta build past its end date still refuses a new account.
+    // The shipped free policy never reaches this state.
     if (licenseState().reason === 'build_expired') {
       res.status(403).json({ error: 'build_expired' });
       return;
@@ -427,11 +455,18 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
     // the emailed code. Skip sends only a name (or none, and we keep a local one).
     const nameOnly = email === null && (typeof body.password !== 'string' || body.password.trim() === '');
     if (nameOnly) {
-      const shown = name ?? 'Local';
-      email = `n${createHash('sha256').update(shown).digest('hex').slice(0, 20)}@local.host`;
-      password = randomBytes(24).toString('base64url');
+      if (!name) {
+        res.status(400).json({ error: 'name_required' });
+        return;
+      }
+      if (!setupNonceMatches(req.header('x-rooks-setup-nonce'))) {
+        res.status(403).json({ error: 'setup_nonce_required' });
+        return;
+      }
+      email = `n${createHash('sha256').update(name).digest('hex').slice(0, 20)}@local.host`;
+      password = LOCAL_DESKTOP_HASH;
     }
-    const accountName = name ?? (nameOnly ? 'Local' : null);
+    const accountName = name ?? null;
     if (!email || !accountName || !password) {
       res.status(400).json({
         error: 'email, name and password (min 8 characters) required',
@@ -511,7 +546,7 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
       const user = dbApi.createUser({
         email,
         name: accountName,
-        passwordHash: hashPassword(password),
+        passwordHash: nameOnly ? LOCAL_DESKTOP_HASH : hashPassword(password),
         isSuperadmin: true,
         status: 'active',
         source: 'setup',
@@ -551,7 +586,21 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
   });
 
   app.post('/api/auth/login', (req, res) => {
-    const body = (req.body ?? {}) as AuthBody;
+    const body = (req.body ?? {}) as AuthBody & { localDesktop?: boolean };
+    if (body.localDesktop === true) {
+      if (isCrossSiteMutation(req) || !requestIsLoopback(req) || !setupNonceMatches(req.header('x-rooks-setup-nonce'))) {
+        res.status(403).json({ error: 'local_desktop_refused' });
+        return;
+      }
+      const local = dbApi.getActiveSuperadmin();
+      if (!local || local.status !== 'active' || local.password_hash !== LOCAL_DESKTOP_HASH) {
+        res.status(401).json(apiError('invalid_credentials', 'invalid credentials'));
+        return;
+      }
+      setSession(res, local.id, req.header('user-agent') ?? undefined);
+      res.json({ user: toPublicUser(local) });
+      return;
+    }
     const email = parseEmail(body.email);
     const password = typeof body.password === 'string' ? body.password : '';
     const keys = throttleKeys(req, 'login', email);

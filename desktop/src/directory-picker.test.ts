@@ -39,7 +39,7 @@ test('rejects foreign windows, subframes and origins before opening the dialog',
   ]) {
     await assert.rejects(selectDirectory({ ...sender, ...change }, origin, '', async () => {
       assert.fail('untrusted sender opened the dialog');
-    }), /only available from Timon/);
+    }), /only available from Rooks/);
   }
 });
 
@@ -62,7 +62,7 @@ test('plugin source: a folder picker or a .tgz/.zip picker, from Timon only', as
   }
   await assert.rejects(selectPluginSource({ ...sender, url: 'https://example.com/plugins' }, origin, 'folder', async () => {
     assert.fail('untrusted sender opened the dialog');
-  }), /only available from Timon/);
+  }), /only available from Rooks/);
 });
 
 test('executable: a file picker that shows hidden folders and opens .app bundles, from Timon only', async () => {
@@ -84,5 +84,5 @@ test('executable: a file picker that shows hidden folders and opens .app bundles
   assert.equal(await selectExecutable(sender, origin, undefined, async () => ({ canceled: true, filePaths: [] }), 'linux'), null);
   await assert.rejects(selectExecutable({ ...sender, isMainFrame: false }, origin, undefined, async () => {
     assert.fail('untrusted sender opened the dialog');
-  }), /only available from Timon/);
+  }), /only available from Rooks/);
 });

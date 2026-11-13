@@ -11,6 +11,7 @@
  * the daemon-side supervisor writes to the database, which this side must not
  * touch. Any change to the numbers belongs in both places.
  */
+import { randomBytes } from 'node:crypto';
 import { execFile, type ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { basename, delimiter, join, win32 } from 'node:path';
@@ -121,6 +122,8 @@ export function embeddedEnv(
   const env: NodeJS.ProcessEnv = {
     ...withRuntimeEnv(process.env, { execPath: '', env: opts.runtimeEnv ?? { ELECTRON_RUN_AS_NODE: '1' } }),
     TIMON_DESKTOP_EMBEDDED: '1',
+    // A fresh value every launch. A page on another site cannot read it, and a parent shell cannot pin it.
+    ROOKS_SETUP_NONCE: randomBytes(24).toString('base64url'),
     TIMON_RESOURCE_GUARD_ENABLED: '0',
     TIMON_INSTALL_DIR: opts.installDir,
     PATH: embeddedExecutablePath(),

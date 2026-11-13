@@ -289,8 +289,8 @@ test('free policy: a beta build without a licence runs on local Free, and still 
     assert.equal(licenseState().status, 'valid');
     beta(-60);
     setLicenseState(unlicensed('missing'));
-    assert.equal(licenseState().reason, 'build_expired');
-    assert.equal(licenseState().localFree, false);
+    assert.equal(licenseState().reason, 'missing');
+    assert.equal(licenseState().localFree, true);
   } finally {
     overrideSetupPolicyForTests('beta');
     overrideBuildInfo(undefined);

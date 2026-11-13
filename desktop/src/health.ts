@@ -10,10 +10,10 @@ export type HealthResult =
   | { ok: true; status: number; identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean; version?: string; builtAt?: string | null }
   | { ok: false; status: number | null; error?: string };
 
-/** The daemon's own id, as `plugins-bundled/http/routes.ts` publishes it. */
+/** The daemon's own id, as older builds of `plugins-bundled/http/routes.ts` published it. */
 export const SERVICE_ID = 'timon';
-/** An older Rooks package published `rooks`. Both are this product. */
-const PRODUCT_IDS = new Set([SERVICE_ID, 'rooks']);
+/** This build publishes `Rooks`. Older packages published `rooks` or `timon`. All three are this product. */
+const PRODUCT_IDS = new Set([SERVICE_ID, 'rooks', 'Rooks']);
 
 async function identify(res: Response): Promise<{ identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean; version?: string; builtAt?: string | null }> {
   if (!res.ok) return { identity: 'foreign' };

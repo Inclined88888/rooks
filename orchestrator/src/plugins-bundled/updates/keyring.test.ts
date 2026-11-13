@@ -1,11 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { keyIdFor } from '../../../../scripts/release-manifest.mjs';
 import { RELEASE_PUBLIC_KEYS, activeReleaseKeyring, overrideReleaseKeyringForTests } from './keyring.js';
 
-test('every pinned keyId is the one the build machine derives from the key', () => {
-  assert.ok(RELEASE_PUBLIC_KEYS.length > 0);
-  for (const key of RELEASE_PUBLIC_KEYS) assert.equal(keyIdFor(key.publicKey), key.keyId);
+test('Rooks does not pin the previous product update key', () => {
+  assert.equal(RELEASE_PUBLIC_KEYS.length, 0);
+  assert.equal(RELEASE_PUBLIC_KEYS.some((key) => key.keyId === 'release-4253f18d5854243a'), false);
 });
 
 test('the pinned keyring cannot be changed in place', () => {

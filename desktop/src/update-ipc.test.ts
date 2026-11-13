@@ -66,9 +66,9 @@ test('a frame, another window or another origin cannot use the channels', async 
   const s = setup();
   s.distrust();
   for (const channel of [UPDATE_CHANNELS.state, UPDATE_CHANNELS.start, UPDATE_CHANNELS.cancel]) {
-    await assert.rejects(s.call(channel), /only downloaded from the Timon window/);
+    await assert.rejects(s.call(channel), /only downloaded from the Rooks window/);
   }
-  await assert.rejects(s.call(UPDATE_CHANNELS.open, { target: 'folder' }), /only downloaded from the Timon window/);
+  await assert.rejects(s.call(UPDATE_CHANNELS.open, { target: 'folder' }), /only downloaded from the Rooks window/);
   assert.deepEqual(s.requested, []);
 });
 
@@ -187,7 +187,7 @@ test('install takes a strict confirmation and nothing that names a file', async 
   await assert.rejects(s.call(UPDATE_CHANNELS.install, { confirmed: true, path: 'C:\\evil.exe' }));
   await assert.rejects(s.call(UPDATE_CHANNELS.install, { confirmed: 'yes' }));
   s.distrust();
-  await assert.rejects(s.call(UPDATE_CHANNELS.install, { confirmed: true }), /only downloaded from the Timon window/);
+  await assert.rejects(s.call(UPDATE_CHANNELS.install, { confirmed: true }), /only downloaded from the Rooks window/);
   assert.deepEqual(s.opened, []);
   assert.deepEqual(s.events, []);
 });

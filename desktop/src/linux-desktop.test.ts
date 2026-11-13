@@ -26,7 +26,7 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 /** What electron-builder's packager hands the helper, for this config (`linuxPackager.js`). */
 const packager = {
   appInfo: { productName: config.productName, sanitizedProductName: config.productName, description: pkg.description },
-  executableName: pkg.name.toLowerCase(),
+  executableName: config.linux.executableName ?? pkg.name.toLowerCase(),
   fileAssociations: [],
   config,
   platformSpecificBuildOptions: config.linux,
@@ -92,7 +92,9 @@ test('the packaged entry claims the class Electron gives a packaged window: the 
     assert.equal((await render(target)).get('Desktop Entry')!.get('StartupWMClass'), pkg.name);
   }
   assert.equal(config.linux.desktop?.StartupWMClass, pkg.name, 'and any other Linux target');
-  assert.equal(config.linux.executableName, undefined, 'the deb action names /opt/<productName>/<package name>');
+  assert.equal(config.linux.executableName, 'rooks', 'the Linux binary, desktop entry and icon are named rooks');
+  assert.equal(config.deb.packageName, 'rooks');
+  assert.match(String(config.deb.artifactName), /^rooks_/);
 });
 
 test('from the sources on Linux the shell renames itself after the dev entry, nowhere else', () => {

@@ -98,9 +98,9 @@ test('V3: the switcher IPC takes an id, never a URL, and only from the page on s
   for (const bad of ['https://evil.example', '../x', 'a, b', 42, null, { id: 'vps' }]) {
     assert.throws(() => handle(event(10), bad), /named by its id/);
   }
-  assert.throws(() => handle(event(1), 'vps'), /Only a Timon window/, 'the window\'s own blank webContents');
-  assert.throws(() => handle(event(9), 'vps'), /Only a Timon window/, 'a stranger webContents');
-  assert.throws(() => handle(event(10, 'https://evil.example/'), 'vps'), /Only a Timon window/, 'a page of another origin');
+  assert.throws(() => handle(event(1), 'vps'), /Only a Rooks window/, 'the window\'s own blank webContents');
+  assert.throws(() => handle(event(9), 'vps'), /Only a Rooks window/, 'a stranger webContents');
+  assert.throws(() => handle(event(10, 'https://evil.example/'), 'vps'), /Only a Rooks window/, 'a page of another origin');
   windows.get(1)!.pages.enter('nas', () => ({ contentsId: 11, machineId: 'nas', view: { contents: { id: 11, isDestroyed: () => false } } }));
   assert.throws(() => handle(event(10), 'vps'), /page on screen/, 'a hidden page');
   windows.get(2)!.closing = true;
@@ -165,10 +165,10 @@ test('browser panels attach in every local window; hidden and remote pages canno
   assert.equal(attach(event(20), {})?.attached, false, 'a remote page selects its video path, never a local profile');
   assert.deepEqual(attached, [1, 2, 2, 1]);
   allowed = false;
-  assert.throws(() => attach(event(11), {}), /only available from Timon/);
-  assert.throws(() => detach(event(11)), /only available from Timon/);
+  assert.throws(() => attach(event(11), {}), /only available from Rooks/);
+  assert.throws(() => detach(event(11)), /only available from Rooks/);
   allowed = true;
-  assert.throws(() => attach(event(999), {}), /only available from Timon/);
+  assert.throws(() => attach(event(999), {}), /only available from Rooks/);
 });
 
 const key = (over: Partial<{ key: string; control: boolean; meta: boolean; shift: boolean; alt: boolean; type: string }>) => ({
@@ -289,9 +289,9 @@ test('V5: a page of a window opens one of its routes in a new window, on its mac
 test('V5: only a page of a Timon window opens another, on a route of its own origin', () => {
   const windows = fleet();
   const { handle, opened } = openWindowHandler(windows);
-  assert.throws(() => handle(event(1), { route: '/' }), /Only a Timon window/, 'the window\'s own blank webContents');
-  assert.throws(() => handle(event(9), { route: '/' }), /Only a Timon window/, 'a stranger webContents');
-  assert.throws(() => handle(event(10, 'https://evil.example/'), { route: '/' }), /Only a Timon window/, 'a page of another origin');
+  assert.throws(() => handle(event(1), { route: '/' }), /Only a Rooks window/, 'the window\'s own blank webContents');
+  assert.throws(() => handle(event(9), { route: '/' }), /Only a Rooks window/, 'a stranger webContents');
+  assert.throws(() => handle(event(10, 'https://evil.example/'), { route: '/' }), /Only a Rooks window/, 'a page of another origin');
   for (const bad of [{ route: '//evil.example/' }, { route: 'https://evil.example/' }, { url: '/' }, '/kanban', { route: '/', machineId: 'a b' }]) {
     assert.throws(() => handle(event(10), bad), /route of this interface/);
   }
@@ -543,9 +543,9 @@ test('each machine its mode: a page reports what it paints, recorded under its w
 test('each machine its mode: only a page of a Timon window reports, and only a mode', () => {
   const windows = fleet();
   const { handle, recorded, painted } = schemeHandler(windows);
-  assert.throws(() => handle(event(1), { scheme: 'light' }), /Only a Timon window/, 'the window\'s own blank webContents');
-  assert.throws(() => handle(event(9), { scheme: 'light' }), /Only a Timon window/, 'a stranger webContents');
-  assert.throws(() => handle(event(10, 'https://evil.example/'), { scheme: 'light' }), /Only a Timon window/, 'a page of another origin');
+  assert.throws(() => handle(event(1), { scheme: 'light' }), /Only a Rooks window/, 'the window\'s own blank webContents');
+  assert.throws(() => handle(event(9), { scheme: 'light' }), /Only a Rooks window/, 'a stranger webContents');
+  assert.throws(() => handle(event(10, 'https://evil.example/'), { scheme: 'light' }), /Only a Rooks window/, 'a page of another origin');
   for (const bad of [{ scheme: 'sepia' }, 'light', { scheme: 'light', machineId: '../x' }]) {
     assert.throws(() => handle(event(10), bad), /light or dark/);
   }

@@ -104,10 +104,11 @@ export async function proxyJson(
   path: string,
   body?: unknown,
   to: ProxyTarget = {},
+  extraHeaders: Record<string, string> = {},
 ): Promise<Response> {
   // Next 14's fetch() memoises responses by URL by default; that's poison for
   // a proxy to a stateful service. Force a fresh upstream hit every time.
-  const headers = browserProxyHeaders();
+  const headers = { ...browserProxyHeaders(), ...extraHeaders };
   const init: RequestInit = { method, headers, cache: 'no-store' };
   if (body !== undefined) {
     headers['content-type'] = 'application/json';
