@@ -20,6 +20,14 @@ docker run --rm \
     rm -rf node_modules/node-pty/build node_modules/better-sqlite3/build
     npm rebuild better-sqlite3 node-pty --foreground-scripts
   '
+# The container runs as root. A later hard link fails when the files are not
+# owned by the account that packs the app.
+docker run --rm \
+  -v "$stage:/stage" \
+  -e HOST_UID="$(id -u)" \
+  -e HOST_GID="$(id -g)" \
+  node:22-bullseye \
+  bash -lc 'chown -R "$HOST_UID:$HOST_GID" /stage/node_modules/node-pty /stage/node_modules/better-sqlite3'
 if [[ -f "$app_sqlite" ]]; then
   cp -f "$stage/node_modules/better-sqlite3/build/Release/better_sqlite3.node" "$app_sqlite"
 fi
