@@ -141,7 +141,7 @@
   },
   "mainAgentSetup": {
     "title": "Voici votre agent principal.",
-    "description": "C'est l'orchestrateur principal de votre instance : l'agent à qui vous parlez et qui délègue aux autres. Donnez-lui un nom et un visage — Rooks les utilisera partout.",
+    "description": "C'est l'agent principal principal de votre instance : l'agent à qui vous parlez et qui délègue aux autres. Donnez-lui un nom et un visage — Rooks les utilisera partout.",
     "loading": "Chargement de votre agent…",
     "loadFailed": "Impossible de charger cette étape. Vérifiez votre connexion et réessayez.",
     "optional": "(Facultatif)",

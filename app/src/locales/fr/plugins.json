@@ -127,7 +127,7 @@
       },
       "@timon/kanban": {
         "label": "Kanban",
-        "description": "Le tableau des tasks : code, review, merge et le reste du pipeline. Sa colonne « TO DO » porte les idées que vous posez — l'orchestrateur ne vient jamais y prendre de travail."
+        "description": "Le tableau des tasks : code, review, merge et le reste du pipeline. Sa colonne « TO DO » porte les idées que vous posez — l'agent principal ne vient jamais y prendre de travail."
       },
       "@timon/kanban-code": {
         "label": "Pipeline code",
@@ -155,7 +155,7 @@
       },
       "@timon/dreams": {
         "label": "Rêves",
-        "description": "La passe nocturne : les pistes d'amélioration et les opportunités que l'orchestrateur propose, et le scoring de projets qui les classe."
+        "description": "La passe nocturne : les pistes d'amélioration et les opportunités que l'agent principal propose, et le scoring de projets qui les classe."
       },
       "@timon/agent-chat": {
         "label": "Chat d'agent",
@@ -203,7 +203,7 @@
       },
       "@timon/orchestrator-self": {
         "label": "Daemon",
-        "description": "Redémarrer et reconstruire l'orchestrateur depuis l'UI. Demande systemd."
+        "description": "Redémarrer et reconstruire l'agent principal depuis l'UI. Demande systemd."
       },
       "@timon/web-app": {
         "label": "App web",

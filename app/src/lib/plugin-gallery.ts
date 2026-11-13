@@ -130,6 +130,13 @@ function bundledCopy(plugin: PluginPublic, field: 'label' | 'description'): stri
   return plugin.description;
 }
 
+/** Stored module ids stay `@timon/…` so a saved toggle still matches. The desk
+ *  shows the locale name, never the scope. */
+const MODULE_LABEL: Record<string, string> = {
+  '@timon/ui-theme': 'Rooks',
+  '@timon/ui-layout': 'Standard',
+};
+
 /** Gallery title: locale copy for a bundled module, else `timon.label`, else the id. */
 export function pluginGalleryLabel(plugin: {
   id: string;
@@ -140,9 +147,12 @@ export function pluginGalleryLabel(plugin: {
   if (bundled) {
     const key = `pluginsPage.modules.${plugin.id}.label`;
     const value = t(key);
-    if (value !== key) return value;
+    if (value !== key && value !== 'Timon' && value !== 'Theme' && value !== 'Layout') return value;
   }
-  return plugin.label ?? plugin.id;
+  const alias = MODULE_LABEL[plugin.id];
+  if (alias) return alias;
+  if (plugin.label && plugin.label !== 'Timon') return plugin.label;
+  return plugin.label ?? plugin.id.replace(/^@timon\//, '');
 }
 
 export function toCardData(plugin: PluginPublic): PluginCardData {

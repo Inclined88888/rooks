@@ -53,6 +53,7 @@ type RawMission = {
   turn_complete?: boolean;
   liveness?: string | null;
   interrupted_reason?: string | null;
+  exit_code?: number | null;
   pending_messages?: number;
   open_deliveries?: number;
 };
@@ -154,11 +155,13 @@ function kfmt(n: number) {
   return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n);
 }
 
-function mapStatus(s: string | undefined, running?: boolean): Row['status'] {
+function mapStatus(s: string | undefined, running?: boolean, exitCode?: number | null): Row['status'] {
   if (running || s === 'running') return 'running';
+  if (s === 'failed' || s === 'error') return 'failed';
+  // A non-zero exit stored as completed still failed. A kill we asked for stays terminated.
+  if (typeof exitCode === 'number' && exitCode !== 0 && s !== 'terminated') return 'failed';
   if (s === 'completed' || s === 'done') return 'done';
   if (s === 'terminated') return 'terminated';
-  if (s === 'failed' || s === 'error') return 'failed';
   if (s === 'queued') return 'queued';
   return 'backlog';
 }
@@ -173,7 +176,7 @@ function shape(m: RawMission): Row {
     fullId: m.id,
     title: missionDisplayTitle(m, '').slice(0, 200),
     agent: m.agent_name || '—',
-    status: mapStatus(m.status, m.running),
+    status: mapStatus(m.status, m.running, m.exit_code),
     startedAt: m.started_at,
     duration: Math.max(0, dur),
     cost: m.total_cost_usd || 0,
@@ -378,15 +381,14 @@ export function MissionsClient() {
     const done = missions.filter((m) => m.status === 'done').length;
     const terminated = missions.filter((m) => m.status === 'terminated').length;
     const failed = missions.filter((m) => m.status === 'failed').length;
-    // The rate only covers TERMINAL missions (running/queued/backlog excluded).
-    // `terminated` (normal end via reaper/kill) counts as a non-failure, same
-    // as `done` — only `failed` (an actual problem) penalizes the rate.
+    // The rate covers terminal missions. A kill we asked for is not a success
+    // and not a failure. Only a clean completion counts; a failed run does not.
     const terminal = done + terminated + failed;
     return {
       count: missions.length,
       cost: missions.reduce((s, m) => s + m.cost, 0),
       tok: missions.reduce((s, m) => s + m.tokIn + m.tokOut, 0),
-      succ: terminal ? Math.round(((done + terminated) / terminal) * 100) + '%' : '—',
+      succ: terminal ? Math.round((done / terminal) * 100) + '%' : '—',
       failed,
     };
   }, [missions]);

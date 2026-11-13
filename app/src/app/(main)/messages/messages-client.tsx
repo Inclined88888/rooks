@@ -20,7 +20,7 @@ import { formatDateTime, formatRelativeTime } from '@/lib/intl';
 import { AgentAvatar, useAgentIdentities, type AgentIdentity } from '@/components/agent-avatar';
 import { mdToSafeHtml } from '@/lib/markdown';
 import { useHighlighterVersion } from '@/components/chat/bubble-html';
-import { isEmptyValue, isLongFieldSet, isPlainObject, parseMessageBody } from '@/lib/message-body';
+import { isEmptyValue, isPlainObject, parseMessageBody } from '@/lib/message-body';
 import { apiErrorMessage } from '@/lib/api-error';
 
 type MessageKind = 'msg' | 'request' | 'response' | 'notification';
@@ -183,12 +183,8 @@ function FieldValue({ value, depth }: { value: unknown; depth: number }) {
   if (isPlainObject(value) && depth < 2 && Object.keys(value).length > 0) {
     return <FieldTable fields={Object.entries(value)} depth={depth + 1} />;
   }
-  return (
-    // code-font: a machine field's raw JSON
-    <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all rounded bg-muted/40 p-2 font-mono text-[11px]">
-      {JSON.stringify(value, null, 2)}
-    </pre>
-  );
+  const count = Array.isArray(value) ? value.length : isPlainObject(value) ? Object.keys(value).length : 1;
+  return <span className="text-muted-foreground">{t('inboxPage.nested', { count })}</span>;
 }
 
 function FieldTable({ fields, depth = 0 }: { fields: Array<[string, unknown]>; depth?: number }) {
@@ -240,8 +236,7 @@ function MessageBody({ payload, compact, className }: { payload: string; compact
   const highlighter = useHighlighterVersion();
   const html = useMemo(() => (parsed.text ? mdToSafeHtml(parsed.text) : ''), [parsed.text, highlighter]);
   const fieldsShown = parsed.fields.filter(([, v]) => !isEmptyValue(v));
-  const long = isLongFieldSet(fieldsShown);
-  const [open, setOpen] = useState(!long && !compact);
+  const [open, setOpen] = useState(false);
   const [showEmpty, setShowEmpty] = useState(false);
   const hiddenEmpty = parsed.fields.length - fieldsShown.length;
   const tableFields = showEmpty ? parsed.fields : fieldsShown;

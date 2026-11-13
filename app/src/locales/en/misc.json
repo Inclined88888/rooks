@@ -34,7 +34,7 @@
     "openFullscreen": "graph open in full screen",
     "loadingGraph": "loading the graph…",
     "graphUnavailable": "graph unavailable ({error})",
-    "noNodes": "no node in the vault",
+    "noNodes": "Nothing in the brain yet.",
     "unknownError": "Unknown error",
     "loadingDisc": "loading the disc…",
     "discError": "disc: {error}",

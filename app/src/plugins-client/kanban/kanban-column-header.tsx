@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
  * columns and the TO DO column (an occupant of `kanban.column`), so a plugin
  * column and a status column read the same way.
  */
-export function KanbanColumnHeader({ label, count, dotClass, pulse }: {
+export function KanbanColumnHeader({ label, count, dotClass }: {
   label: string;
   count: ReactNode;
   /** A theme token class (`bg-primary`, `bg-warning`…), never a literal colour. */
@@ -17,7 +17,7 @@ export function KanbanColumnHeader({ label, count, dotClass, pulse }: {
 }) {
   return (
     <header className="flex items-center gap-2 px-3 pb-1.5 pt-3">
-      <span aria-hidden className={cn('size-2 flex-none rounded-full', dotClass, pulse && 'animate-pulse')} />
+      <span aria-hidden className={cn('size-2 flex-none rounded-full', dotClass)} />
       <h2 className="m-0 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</h2>
       <span className="ml-auto text-[12px] tabular-nums text-muted-foreground">{count}</span>
     </header>

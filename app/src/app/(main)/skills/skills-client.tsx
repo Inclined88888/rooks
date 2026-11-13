@@ -38,7 +38,7 @@ const SKILL_SOURCE_TILE: Record<SkillSource, string> = {
   plugin: 'bg-amber-500/15 text-amber-500',
 };
 
-const NEW_SKILL_PATH = '~/.timon/skills/<id>/SKILL.md';
+const NEW_SKILL_PATH = '~/.rooks/skills/<id>/SKILL.md';
 
 /**
  * The skills catalog. A skill opens in the island workspace
@@ -186,7 +186,7 @@ function SkillRow({ skill: s }: { skill: Skill }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-[13.5px] font-medium">/{s.id}</span>
+          <span className="truncate text-[13.5px] font-medium">{s.title?.trim() || s.id.replace(/^timon-/, '')}</span>
           {!s.editable && <Lock className="size-3 shrink-0 text-muted-foreground/60" aria-label={t('skillsPage.readOnly')} />}
           {!skillReachesMissions(s.source) && (
             <span title={t('skillMission.unavailableHint', { brand: BRAND.displayName })} className="inline-flex shrink-0">

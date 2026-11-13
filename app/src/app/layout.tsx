@@ -21,8 +21,6 @@ import { PlatformGlobals } from '@/lib/plugin-host/platform-globals';
 import { ClientPluginHost } from '@/lib/plugin-host/client-plugin-host';
 import { SettingsDialogHost } from '@/components/settings/settings-dialog-host';
 import { FirstRunGate } from '@/components/first-run-gate';
-import { BetaLockScreen } from '@/components/beta-lock-screen';
-import { betaLock, type BetaLock } from '@/lib/license';
 import { SlotSingle } from '@/lib/plugin-host/render';
 import { ThemeFloor } from '@/lib/plugin-host/theme-floor';
 import { ThemeColorSync } from '@/components/theme-color-sync';
@@ -124,23 +122,6 @@ async function loadInitialMe(): Promise<{ scheme: ColorScheme; owner: string | n
   }
 }
 
-/**
- * Whether this build is a locked beta (ended, expired, or no licence). The
- * daemon then answers 403 on everything but licence, auth and the export, so
- * the whole cockpit — capabilities, event stream, widgets — would fire refusals
- * at a screen nobody can use. Decided here, before anything is mounted, rather
- * than silenced call by call afterwards. An anonymous visitor gets a 401, which
- * is no lock: `/login` renders as usual.
- */
-async function loadBetaLock(): Promise<BetaLock | null> {
-  try {
-    const res = await fetchForRender('/api/license');
-    return res.ok ? betaLock(await res.json()) : null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function RootLayout({
   children,
 }: {
@@ -150,10 +131,9 @@ export default async function RootLayout({
   // The language first: the Server Components below read it from this module
   // graph, and `LocaleProvider` carries it to the client one and the browser.
   const locale = await applyRequestLocale();
-  const [me, initialAppearance, lock, target] = await Promise.all([
+  const [me, initialAppearance, target] = await Promise.all([
     loadInitialMe(),
     fetchForRender(`/api/layout?scope=${APPEARANCE_SCOPE}`).then(async (res) => res.ok ? readNativeAppearance((await res.json()).layout) : DEFAULT_APPEARANCE).catch(() => DEFAULT_APPEARANCE),
-    loadBetaLock(),
     resolveTarget(),
   ]);
   // A remote machine that cannot be used from here (unreachable, this
@@ -173,26 +153,6 @@ export default async function RootLayout({
             <ThemeProvider initialScheme={scheme} initialAppearance={initialAppearance} initialTheme={me.theme}>
               <ThemeFloor appearance={initialAppearance} theme={me.theme} />
               <MachineBlockedScreen name={machine.name} reason={machine.reason} apiLevel={machine.apiLevel} />
-            </ThemeProvider>
-          </InstanceProvider>
-          </LocaleProvider>
-          </Suspense>
-        </body>
-      </html>
-    );
-  }
-  if (lock) {
-    return (
-      <html lang={locale} dir={localeDirection(locale)} suppressHydrationWarning data-timon-machine={target.id}>
-        <body>
-          <Suspense fallback={null}>
-          <LocaleProvider locale={locale}>
-          <InstanceProvider value={instance}>
-            <ThemeProvider initialScheme={scheme} initialAppearance={initialAppearance} initialTheme={me.theme}>
-              <ThemeFloor appearance={initialAppearance} theme={me.theme} />
-              {/* The licence follows the active machine: a remote one's lock
-                  offers the way back to this computer. */}
-              <BetaLockScreen lock={lock} machine={machine.kind === 'remote' ? { name: machine.name } : undefined} />
             </ThemeProvider>
           </InstanceProvider>
           </LocaleProvider>

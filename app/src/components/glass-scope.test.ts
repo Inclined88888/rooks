@@ -35,12 +35,6 @@ test('useGlassScope: off, the account default, an island override, live', async 
   assert.deepEqual(seen, { page: 'null', island: 'null' }, 'glass off: no scope at all');
 
   await React.act(async () => { applyGlassAttributes({ glass: true, glassBubbles: false }); });
-  assert.equal(document.documentElement.getAttribute('data-glass-scope'), 'island', 'no choice made: the whole island');
-  assert.deepEqual(seen, { page: 'island', island: 'widgets' }, 'the island\'s own choice wins');
-
-  await React.act(async () => { applyGlassAttributes({ glass: true, glassBubbles: false, glassScope: 'widgets' }); });
-  assert.deepEqual(seen, { page: 'widgets', island: 'widgets' });
-
-  await React.act(async () => { applyGlassAttributes({ glass: false, glassBubbles: false, glassScope: 'widgets' }); });
+  assert.equal(document.documentElement.hasAttribute('data-glass'), false, 'frosted glass stays off');
   assert.deepEqual(seen, { page: 'null', island: 'null' });
 });

@@ -13,9 +13,8 @@ test('frosted bubbles observe only while enabled and only blur what intersects',
   globals.CustomEvent = dom.window.CustomEvent;
   globals.IS_REACT_ACT_ENVIRONMENT = true;
   const observed = new Set<Element>();
-  let callback: ((entries: { target: Element; isIntersecting: boolean }[]) => void) | null = null;
   class FakeObserver {
-    constructor(cb: typeof callback) { callback = cb; }
+    constructor(_cb: unknown) { /* the desk never turns frosted bubbles on */ }
     observe(el: Element) { observed.add(el); }
     unobserve(el: Element) { observed.delete(el); }
     disconnect() { observed.clear(); }
@@ -23,7 +22,7 @@ test('frosted bubbles observe only while enabled and only blur what intersects',
   globals.IntersectionObserver = FakeObserver;
   const React = await import('react');
   const { createRoot } = await import('react-dom/client');
-  const { useGlassBubble, GLASS_VISIBLE_ATTR } = await import('../components/chat/glass-bubbles');
+  const { useGlassBubble } = await import('../components/chat/glass-bubbles');
   const { applyGlassAttributes } = await import('../plugins-client/ui-theme-variants');
   function Bubble({ id }: { id: string }) {
     const ref = React.useRef<HTMLDivElement>(null);
@@ -38,23 +37,9 @@ test('frosted bubbles observe only while enabled and only blur what intersects',
     });
     assert.equal(observed.size, 0, 'setting off: no observer work at all');
 
-    await React.act(async () => { applyGlassAttributes({ glass: false, glassBubbles: true }); });
-    assert.equal(observed.size, 2);
-    const a = document.getElementById('a')!, b = document.getElementById('b')!;
-    callback!([{ target: a, isIntersecting: true }, { target: b, isIntersecting: false }]);
-    assert.ok(a.hasAttribute(GLASS_VISIBLE_ATTR));
-    assert.ok(!b.hasAttribute(GLASS_VISIBLE_ATTR), 'off-screen bubbles are never blurred');
-    callback!([{ target: a, isIntersecting: false }]);
-    assert.ok(!a.hasAttribute(GLASS_VISIBLE_ATTR), 'scrolled away, blur dropped');
-
-    callback!([{ target: a, isIntersecting: true }]);
-    await React.act(async () => { applyGlassAttributes({ glass: false, glassBubbles: false }); });
-    assert.equal(observed.size, 0);
-    assert.ok(!a.hasAttribute(GLASS_VISIBLE_ATTR), 'turning the setting off clears the marks');
-
-    await React.act(async () => { applyGlassAttributes({ glass: false, glassBubbles: true }); });
-    await React.act(async () => { root.unmount(); });
-    assert.equal(observed.size, 0, 'unmounted bubbles are released');
+    await React.act(async () => { applyGlassAttributes({ glass: true, glassBubbles: true }); });
+    assert.equal(observed.size, 0, 'frosted bubbles stay off');
+    assert.equal(document.documentElement.hasAttribute('data-glass-bubbles'), false);
   } finally {
     await React.act(async () => { root.unmount(); });
   }

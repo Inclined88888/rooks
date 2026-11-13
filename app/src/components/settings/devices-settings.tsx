@@ -17,7 +17,6 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useMe } from '@/hooks/use-me';
 import { actingUser } from '@/lib/auth';
-import { BRAND } from '@/lib/brand';
 import { useCapabilities } from '@/lib/capabilities';
 import { copyToClipboard } from '@/lib/clipboard';
 import {
@@ -55,9 +54,6 @@ function StatusChip({ device }: { device: PairedDevice }): ReactElement {
     : device.status === 'revoked' ? 'bg-destructive/15 text-destructive' : 'bg-muted text-muted-foreground';
   return <span className={cn('rounded-full px-2 py-0.5 text-[11px]', tone)}>{t(`devicesSettings.status.${device.status}`)}</span>;
 }
-
-/** Where the address to type next to the code is explained, when this machine cannot tell it. */
-const PAIRING_DOCS_URL = `https://docs.${BRAND.domain}/usage/machines#add-a-machine`;
 
 /** `undefined` while asked, `null` when this machine cannot tell (no tailnet handler, not an administrator). */
 function usePairingAddress(): string | null | undefined {
@@ -197,10 +193,7 @@ function PairingCodeCard({ code, onRenew, onDismiss, busy, canPublish }: {
           )}
           {address === null && (
             <p className="max-w-[65ch] text-[12px] leading-snug text-muted-foreground">
-              {t('devicesSettings.addressUnknown')}{' '}
-              <a href={PAIRING_DOCS_URL} target="_blank" rel="noopener noreferrer" className="text-foreground underline underline-offset-4">
-                {t('devicesSettings.addressDocs')}
-              </a>
+              {t('devicesSettings.addressUnknown')}
             </p>
           )}
           {address === null && canPublish && <MakeReachable onAddress={setPublished} />}

@@ -3,8 +3,8 @@
     "showProject": "Réafficher ce projet",
     "hideProject": "Masquer ce projet de la grille",
     "openAgent": "Ouvrir {name}",
-    "noOrchestrator": "Aucun agent orchestrateur pour ce projet",
-    "noOrchestratorNothingToOpen": "Aucun agent orchestrateur — rien à ouvrir",
+    "noOrchestrator": "Aucun agent principal pour ce projet",
+    "noOrchestratorNothingToOpen": "Aucun agent principal — rien à ouvrir",
     "grepaiIndex": "Index sémantique grepai",
     "noWorkingDirectory": "pas de working directory",
     "cwdMissing": "dossier introuvable · {path}",
@@ -64,7 +64,7 @@
     "askAgent": "Demander à {name}",
     "notifications": "Notifications",
     "timonAgentsAccess": "Accès aux agents {brand}",
-    "openOrchestrator": "Ouvrir l'orchestrateur {name}",
+    "openOrchestrator": "Ouvrir l'agent principal {name}",
     "openHealthAgent": "Ouvrir l'agent santé",
     "mainAgentFallback": "l'agent principal"
   }

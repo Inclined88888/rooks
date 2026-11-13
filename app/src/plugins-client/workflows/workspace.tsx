@@ -32,9 +32,8 @@ export function WorkflowWorkspace({ children, chat, open }: { children: ReactNod
 
   const stored = raw && typeof raw === 'object' && 'width' in raw ? raw.width : DEFAULT_WIDTH;
   const preferred = typeof stored === 'number' && Number.isFinite(stored) ? stored : DEFAULT_WIDTH;
-  // On small workspaces the chat overlays the canvas instead of squeezing it to zero.
-  const overlay = available > 0 && available < 928;
-  const maxWidth = available > 0 ? Math.max(0, Math.min(800, overlay ? available : available - 608)) : DEFAULT_WIDTH;
+  // The chat keeps its own column. Overlaying it paints the thread across the canvas.
+  const maxWidth = available > 0 ? Math.max(0, Math.min(800, available - 608)) : DEFAULT_WIDTH;
   const minWidth = Math.min(MIN_WIDTH, maxWidth);
   const clamp = (value: number) => Math.round(Math.max(minWidth, Math.min(maxWidth, value)));
   const width = clamp(preferred);
@@ -51,10 +50,10 @@ export function WorkflowWorkspace({ children, chat, open }: { children: ReactNod
   }, [open, workspace.key]);
 
   return (
-    <div ref={container} className="relative grid min-h-0 min-w-0 flex-1" style={{ gridTemplateColumns: `288px minmax(0,1fr) ${open && !overlay ? `${width}px` : '0px'}` }}>
+    <div ref={container} className="relative grid min-h-0 min-w-0 flex-1 overflow-hidden" style={{ gridTemplateColumns: `288px minmax(0,1fr) ${open ? `${width}px` : '0px'}` }}>
       {children}
       {open && (
-        <aside id="workflow-chat-panel" className={cn('relative min-h-0 min-w-0 bg-card', overlay && 'absolute inset-y-0 right-0 z-20')} style={{ width }}>
+        <aside id="workflow-chat-panel" className="relative min-h-0 min-w-0 overflow-hidden bg-card" style={{ width }}>
           <div
             role="separator"
             aria-orientation="vertical"

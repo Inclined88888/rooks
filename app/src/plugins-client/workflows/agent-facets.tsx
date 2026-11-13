@@ -185,7 +185,7 @@ export function AgentFacets({ definition, nodeId, runNodes, spans }: { definitio
   if (!node) return <div className="p-6 text-sm text-muted-foreground">{t('workflows.noAgentNode')}</div>;
   return (
     <div className={cn('wf-canvas h-full w-full')}>
-      <ReactFlow colorMode={scheme} nodes={nodes} edges={edges} nodeTypes={NODE_TYPES} fitView fitViewOptions={FIT} nodesDraggable={false} nodesConnectable={false} elementsSelectable={false} zoomOnDoubleClick={false} minZoom={0.3} maxZoom={1.6}>
+      <ReactFlow proOptions={{ hideAttribution: true }} colorMode={scheme} nodes={nodes} edges={edges} nodeTypes={NODE_TYPES} fitView fitViewOptions={FIT} nodesDraggable={false} nodesConnectable={false} elementsSelectable={false} zoomOnDoubleClick={false} minZoom={0.3} maxZoom={1.6}>
         <Background variant={BackgroundVariant.Dots} gap={18} size={1.2} color="hsl(var(--muted-foreground) / 0.35)" />
       </ReactFlow>
     </div>

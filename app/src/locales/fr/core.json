@@ -5,7 +5,7 @@
   "mcpTab": {"yourServers": "Vos serveurs MCP"},
   "mcpTab": {"yourServers": "Vos serveurs MCP"},
   "roles": {"modified": "Modifié", "reset": "Réinitialiser le prompt", "resetConfirm": "Restaurer le prompt livré pour « {id} » ? Les modifications non enregistrées seront aussi perdues.", "resetDone": "Prompt de « {id} » réinitialisé", "builtinPromptHint": "Ce prompt s’applique à tous les agents utilisant ce rôle. Seul le prompt peut être modifié."},
-  "chatEntry": { "unavailable": "Impossible de trouver l’agent principal. Vérifiez vos agents ou réessayez.", "retry": "Réessayer", "openMain": "Parler à l’agent principal", "manageAgents": "Ouvrir les agents", "unreadable": "La liste des agents est illisible ({status}).", "unreadableNoStatus": "La liste des agents est illisible (daemon injoignable).", "undesignated": "Aucun agent n’est désigné comme agent principal. Choisissez-en un :", "makeMain": "Faire de {name} l’agent principal", "makeMainFailed": "Impossible de désigner {name} : {error}", "none": "Cette installation n’a aucun orchestrateur hors projet. Créez-en un ou donnez le rôle d’orchestrateur à un agent sans projet." },
+  "chatEntry": { "unavailable": "Impossible de trouver l’agent principal. Vérifiez vos agents ou réessayez.", "retry": "Réessayer", "openMain": "Parler à l’agent principal", "manageAgents": "Ouvrir les agents", "unreadable": "La liste des agents est illisible ({status}).", "unreadableNoStatus": "La liste des agents est illisible (daemon injoignable).", "undesignated": "Aucun agent n’est désigné comme agent principal. Choisissez-en un :", "makeMain": "Faire de {name} l’agent principal", "makeMainFailed": "Impossible de désigner {name} : {error}", "none": "Cette installation n’a aucun agent principal hors projet. Créez-en un ou donnez le rôle d’agent principal à un agent sans projet." },
   "skillForm": {"unauthorized": "Reconnectez-vous pour enregistrer ce skill.", "forbidden": "Votre compte ne peut pas gérer les skills.", "failed": "Impossible d’enregistrer le skill. Vérifiez l’identifiant et les instructions, puis réessayez.", "network": "Rooks est injoignable. Vérifiez votre connexion et réessayez.", "idLabel": "Identifiant du skill", "idError": "Saisissez un identifiant avec des minuscules, chiffres, « . », « _ » ou « - ». Il ne peut pas être « . » ou « .. ».", "contentError": "Saisissez des instructions avant d’enregistrer le skill."},
   "dateTimePicker": {"clear": "Effacer la date", "time": "Heure", "done": "OK"},
   "skillIsland": {"notFound": "Skill /{id} introuvable.", "loadFailed": "Impossible de charger le skill.", "saved": "/{id} enregistré", "pathCopied": "Chemin copié", "copyFailed": "Impossible de copier le chemin.", "copyPath": "Copier le chemin", "delete": "Supprimer le skill", "deleteConfirm": "Supprimer /{id} ?\n{path}", "deleted": "/{id} supprimé", "deleteFailed": "Impossible de supprimer le skill.", "command": "commande", "skill": "skill", "readOnly": "lecture seule", "storedAt": "Stocké dans {path}"},
@@ -80,7 +80,7 @@
     "show": "Afficher",
     "showWorking": "Les agents au travail",
     "showAll": "Tous les agents",
-    "orchestratorOnly": "Orchestrateurs seuls",
+    "orchestratorOnly": "Agents principaux seuls",
     "groupByProject": "Regrouper par projet",
     "projectHoverList": "Lister les agents du projet au survol",
     "empty": "Aucun agent au travail pour l'instant.",
@@ -375,7 +375,7 @@
     "resizeChat": "Redimensionner le chat du workflow",
     "chatAgentError": "Impossible de charger l’agent du workflow.",
     "retryChatAgent": "Réessayer",
-    "buildWithAiHint": "Demande le graphe à ton orchestrateur. Il propose, tu relis le diff avant que rien ne change.",
+    "buildWithAiHint": "Demande le graphe à ton agent principal. Il propose, tu relis le diff avant que rien ne change.",
     "architectError": "Impossible de joindre l’architecte.",
     "proposal": "Proposition",
     "accept": "Accepter",
@@ -776,7 +776,7 @@
   },
   "settings": {
     "title": "Paramètres",
-    "description": "Réglages de l'orchestrateur. Priorité de résolution : variable d'environnement, puis valeur enregistrée ici, puis défaut du code.",
+    "description": "Réglages de l'agent principal. Priorité de résolution : variable d'environnement, puis valeur enregistrée ici, puis défaut du code.",
     "pushNotifications": "Notifications push"
   },
   "appearance": {
@@ -999,13 +999,13 @@
     "unsignedAllowed": "Mode développeur — plugins non signés autorisés"
   },
   "orchestratorSelf": {
-    "title": "Orchestrateur",
+    "title": "Agent principal",
     "state": "état",
     "rebuilding": "rebuild…",
     "since": "depuis",
     "mem": "mem",
     "build": "build",
-    "restartTitle": "Redémarre le process orchestrateur — tue toutes les missions en vol. Confirmation requise.",
+    "restartTitle": "Redémarre le process agent principal — tue toutes les missions en vol. Confirmation requise.",
     "rebuildTitle": "npm run build puis redémarrage si le build passe — tue toutes les missions en vol. Confirmation requise.",
     "confirm": "Confirmer ?",
     "restarting": "Redémarrage…",
@@ -1583,7 +1583,7 @@
       "reasonPinned": "le projet épingle ce rôle sur {agent} (roles.json)",
       "reasonMissing": "{named} n'existe pas",
       "reasonOtherProject": "{named} n'appartient pas au projet de la task",
-      "reasonOrchestrator": "{named} est un orchestrateur ou le créateur de la task",
+      "reasonOrchestrator": "{named} est un agent principal ou le créateur de la task",
       "reasonOtherRole": "{named} tient un autre rôle",
       "reasonUnknown": "le dispatcher a choisi l'agent qui tient le rôle"
     },
@@ -1649,7 +1649,7 @@
     "renameOpenTriggers": "Ouvrir les triggers",
     "autoFitView": "Auto-ajuster la vue",
     "poleProjects": "{count} projet(s)",
-    "newPole": "Nouveau pôle",
+    "newPole": "Nouveau groupe",
     "editPole": "Modifier le pôle",
     "editPoleNamed": "Modifier le pôle {name}",
     "poleName": "Nom",
@@ -1659,11 +1659,11 @@
     "poleNoLead": "Aucun — le pôle regroupe seulement ses projets",
     "poleCreate": "Créer le pôle",
     "poleSave": "Enregistrer",
-    "poleDelete": "Supprimer le pôle",
-    "poleDeleteConfirm": "Supprimer le pôle {name} ? Ses projets et ses agents restent, hors de tout pôle.",
+    "poleDelete": "Supprimer le groupe",
+    "poleDeleteConfirm": "Supprimer le groupe {name} ? Ses projets et ses agents restent, hors de tout groupe.",
     "poleCreated": "Pôle {name} créé",
     "poleSaved": "Pôle {name} enregistré",
-    "poleDeleted": "Pôle {name} supprimé",
+    "poleDeleted": "Groupe {name} supprimé",
     "cancel": "Annuler",
     "menuUnfold": "Afficher les sous-agents",
     "menuResetPosition": "Réinitialiser la position",
@@ -1692,7 +1692,7 @@
     "orgTitle": "Organisation",
     "orgHint": "Glissez un agent sur un autre pour changer son responsable. Glissez le lead d'un projet sur un pôle pour y déplacer le projet.",
     "orgActions": "Actions pour {name}",
-    "orgRootDrop": "Déposez ici pour remettre un agent sous son responsable par défaut", "mainSeatEmpty": "Aucun orchestrateur principal", "mainSeatEmptyHint": "Les agents sans responsable restent à la racine tant que personne n'occupe la place.", "mainSeatNoCandidate": "Aucun agent ne peut occuper la place : donnez le rôle d'orchestrateur à un agent sans projet.", "mainSeatSet": "Définir {name} comme orchestrateur principal"
+    "orgRootDrop": "Déposez ici pour remettre un agent sous son responsable par défaut", "mainSeatEmpty": "Aucun agent principal principal", "mainSeatEmptyHint": "Les agents sans responsable restent à la racine tant que personne n'occupe la place.", "mainSeatNoCandidate": "Aucun agent ne peut occuper la place : donnez le rôle d'agent principal à un agent sans projet.", "mainSeatSet": "Définir {name} comme agent principal principal"
   },
   "chatPage": {
     "setupModel": "Configurer un modèle",
@@ -1759,7 +1759,7 @@
     "modelChangeDenied": "Changement de modèle refusé",
     "modelLabel": "Modèle : {model}",
     "modelChangeFailed": "Changement de modèle impossible",
-    "orchestratorNoResponse": "l'orchestrateur n'a pas répondu",
+    "orchestratorNoResponse": "l'agent principal n'a pas répondu",
     "turnInProgress": "Un tour est en cours",
     "backendChangeDenied": "Changement de backend refusé",
     "contextCompacted": "contexte COMPACTÉ (résumé) — le transcript dépassait le seuil",
@@ -2106,7 +2106,7 @@
     "source": {
       "explicit": "Définie à la main pour cet agent.",
       "main": "L'agent principal orchestre tous les agents.",
-      "orchestrator": "Un orchestrateur orchestre tous les agents.",
+      "orchestrator": "Un agent principal orchestre tous les agents.",
       "reports_to": "Héritée : les agents qui lui rapportent, directement ou via un autre agent."
     },
     "allNote": "Tous les agents, y compris ceux créés plus tard.",
@@ -2371,7 +2371,7 @@
     },
     "workingAgents": {
       "title": "Agents au travail",
-      "description": "Vos agents au travail, les épinglés en tête ; un clic ouvre le chat de l'agent. Options : tous les agents, orchestrateurs seuls, regroupés par projet."
+      "description": "Vos agents au travail, les épinglés en tête ; un clic ouvre le chat de l'agent. Options : tous les agents, agents principaux seuls, regroupés par projet."
     },
     "notificationCenter": {
       "title": "Centre de notifications",
@@ -2717,6 +2717,7 @@
     "showEmpty": "Afficher {count} champs vides",
     "hideEmpty": "Masquer les champs vides",
     "copyRaw": "Copier le JSON brut",
+    "nested": "{count} détails de plus",
     "copied": "JSON brut copié",
     "copyFailed": "Copie impossible (presse-papiers refusé par le navigateur)"
   },
@@ -2991,11 +2992,11 @@
       "saved": "Idée enregistrée",
       "saveError": "Enregistrement impossible",
       "emptyTitle": "Le titre ne peut pas être vide",
-      "handoff": "Renvoyer à l'orchestrateur",
+      "handoff": "Renvoyer à l'agent principal",
       "handoffNeedsProject": "Renseigne un projet pour savoir à qui l'envoyer",
       "handoffError": "Renvoi impossible",
       "handoffSent": "Envoyé à {agent}",
-      "handoffSentHint": "l'orchestrateur en discutera avec toi à son prochain réveil"
+      "handoffSentHint": "l'agent principal en discutera avec toi à son prochain réveil"
     },
     "displayOptions": "Options d’affichage",
     "showId": "Numéro de l’idée",
@@ -3687,7 +3688,7 @@
       "levelAlert": "Alerte",
       "urgent": "Urgente",
       "silentReturn": "Retour silencieux",
-      "silentReturnHint": "Le rapport de l'agent reste là où la task le place (notes d'une idée, notification) ; son retour ne remonte jamais à l'orchestrateur.",
+      "silentReturnHint": "Le rapport de l'agent reste là où la task le place (notes d'une idée, notification) ; son retour ne remonte jamais à l'agent principal.",
       "workflow": "Workflow",
       "workflowHint": "Sa version publiée s’exécute ; le payload devient l’entrée du run.",
       "workflowUnpublished": "{name} (non publié)",
@@ -3901,7 +3902,7 @@
     "role": "Métier",
     "display": "Affichage",
     "automated": "Missions automatisées",
-    "groupByOrchestrator": "Grouper par orchestrateur",
+    "groupByOrchestrator": "Grouper par agent principal",
     "expandSubagents": "Déplier les sous-agents",
     "avatar": "Avatar",
     "newMission": "Nouvelle mission",

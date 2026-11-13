@@ -139,7 +139,7 @@ function ChipSelect({ options, value, onChange, empty }: { options: { id: string
           const on = value.includes(option.id);
           return (
             <button key={option.id} type="button" onClick={() => onChange(on ? value.filter((item) => item !== option.id) : [...value, option.id])} className={cn('max-w-full truncate rounded-md border px-1.5 py-0.5 text-[10px] transition-colors', on ? 'border-primary/50 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted')} title={option.label ?? option.id}>
-              {option.id}
+              {option.label?.trim() || option.id.replace(/^(@timon\/|timon-)/, '')}
             </button>
           );
         })}

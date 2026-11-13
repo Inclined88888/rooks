@@ -13,7 +13,7 @@
     "openFullscreen": "graphe ouvert en plein écran",
     "loadingGraph": "chargement du graphe…",
     "graphUnavailable": "graphe indisponible ({error})",
-    "noNodes": "aucun nœud dans le vault",
+    "noNodes": "Rien dans le cerveau pour l'instant.",
     "unknownError": "Erreur inconnue",
     "loadingDisc": "chargement du disque…",
     "discError": "disque : {error}",

@@ -787,3 +787,6 @@
     .vault-graph #vg-sidebar { border-right: 0; border-bottom: 1px solid var(--border); }
     .vault-graph #vg-detail { width: auto; left: 12px; }
   }
+
+  /* Debug and Save PNG are vendor controls. They are not part of the desk. */
+  .vault-graph #vg-png, .vault-graph #vg-dbg { display: none; }

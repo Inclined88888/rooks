@@ -6,7 +6,6 @@ import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BrandLogo } from '@/components/brand-logo';
 import { SetupRestartBanner } from '@/components/setup-restart-banner';
-import { LicenseBanner } from '@/components/license-banner';
 import { UpdateBannerHost } from '@/components/updates/update-banner';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { BrowserToggle } from '@/components/browser-toggle';
@@ -147,7 +146,6 @@ export function TopBar({
             scrolls away is a warning nobody reads. */}
         {banners && <SetupRestartBanner />}
         {banners && <UpdateBannerHost />}
-        {banners && <LicenseBanner />}
       </div>
       {/* Folds on phones only: the row drops to zero height at once and the
           bar, out of the flow's way, slides up over it (see the slide above).
