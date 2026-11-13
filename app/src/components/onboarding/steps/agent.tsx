@@ -9,43 +9,35 @@
  *
  * The creation writes the main agent for real: its name (the seed is renamed
  * and recorded as the main agent), then its look, role, model, permission
- * mode, skills, MCP servers and directives in one config PATCH. "Discover Timon"
- * follows (`steps/discover.tsx`), then the TIMs page, where the agent, named,
- * opens its welcome conversation.
+ * mode, skills, MCP servers and directives in one config PATCH. Discover
+ * follows (`steps/discover.tsx`), then Desk, where the named agent opens.
  */
 import { useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { ArrowRight, Loader2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDirectoryPicker } from '@/components/directory-browser';
 import { isAgentLook, normalizeAgentLook } from '@/components/mascot/agent-look';
-import { usePrefersReducedMotion } from '@/components/mascot/agent-mascot';
 import { useBackendCatalog } from '@/lib/backends';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import {
-  AGENT_VIEWS, creationName, creationPatch, initialDraft, INTERVIEW_QUESTIONS, lookOf, missionsOf, namePool,
+  AGENT_VIEWS, creationName, creationPatch, initialDraft, INTERVIEW_QUESTIONS, missionsOf, namePool,
   randomName, readyToCreate, shownModel, TEMPLATES, type AgentDraft, type TemplateId,
 } from '../agent-draft';
-import { randomLook } from '@/components/mascot/random-look';
 import { createMainAgent, loadMainAgent, loadSheetCatalogs, type MainAgentState, type SheetCatalogs } from '../agent-create';
 import { IdentityCard } from '../agent/identity-card';
 import { InterviewView, interviewAnswer, triggerLabel } from '../agent/interview-view';
-import { LookStylerPanel } from '../agent/look-styler-panel';
 import { Capabilities, SummaryRow, type UpdateDraft } from '../agent/parts';
 import { SheetView } from '../agent/sheet-view';
 import { TemplatesView } from '../agent/templates-view';
 import { useOnboarding, useOnboardingBack } from '../onboarding-context';
 import { agentViewFor, useOnboardingProfile, type AgentCreationView } from '../onboarding-profile';
 
-/** Long enough to see the mascot land its jump before "Discover Timon" opens. */
-const LEAVE_MS = 520;
-
 const SEED_NAMES = new Set(['_main', 'timon.main']);
 
 export function AgentStep(): ReactElement {
   const { next } = useOnboarding();
   const { status, profile, reload } = useOnboardingProfile();
-  const reduced = usePrefersReducedMotion();
   const catalog = useBackendCatalog();
   const directory = useDirectoryPicker();
 
@@ -58,11 +50,8 @@ export function AgentStep(): ReactElement {
   const update = useCallback<UpdateDraft>((change) => setDraft(change), []);
   const [agent, setAgent] = useState<MainAgentState | null>(null);
   const [catalogs, setCatalogs] = useState<SheetCatalogs | null>(null);
-  const [styling, setStyling] = useState(false);
-  const [jump, setJump] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const leaving = useRef<number | null>(null);
   const pool = namePool(t('onboarding.agent.names'));
   const poolRef = useRef(pool);
   poolRef.current = pool;
@@ -105,25 +94,21 @@ export function AgentStep(): ReactElement {
     }));
   }, [catalogs, agent]);
 
-  useEffect(() => () => { if (leaving.current !== null) window.clearTimeout(leaving.current); }, []);
-
-  // "Back" closes the panel first, then walks the interview back, then leaves the step.
+  // "Back" walks the interview back, then leaves the step.
   useOnboardingBack(() => {
-    if (styling) { setStyling(false); return true; }
     if (view === 'interview' && draft.question > 1) { update((d) => ({ ...d, question: d.question - 1 })); return true; }
     return false;
   });
 
-  const look = lookOf(view, draft);
   const model = shownModel(catalog, draft.model, agent ? { backend: agent.backend ?? undefined, model: agent.model ?? undefined } : null);
-  const ready = readyToCreate(view, draft) && !busy;
-  const bounce = (): void => setJump((n) => n + 1);
+  // Templates can continue without a pick: the blank profile is the start.
+  const leavingDraft: AgentDraft = view === 'templates' && draft.template === null ? { ...draft, template: 'blank' } : draft;
+  const ready = readyToCreate(view, leavingDraft) && !busy;
 
   const pickTemplate = (id: TemplateId): void => {
     setDraft((d) => (d.nameAuto || !d.name.trim()
       ? { ...d, template: id, name: randomName(pool, d.name), nameAuto: true }
       : { ...d, template: id }));
-    bounce();
   };
 
   const pickFolder = async (): Promise<void> => {
@@ -135,10 +120,9 @@ export function AgentStep(): ReactElement {
     if (!ready) return;
     setBusy(true);
     setError(null);
-    const name = creationName(draft, pool);
-    // The button says whose life starts, a drawn name included.
-    setDraft((d) => ({ ...d, name }));
-    const patch = creationPatch(view, draft, {
+    const name = creationName(leavingDraft, pool);
+    setDraft((d) => ({ ...d, name, template: leavingDraft.template }));
+    const patch = creationPatch(view, { ...leavingDraft, name }, {
       current: { skills: agent?.skills ?? [], mcp_servers: agent?.mcpServers ?? [] },
       shownSkills: catalogs?.skills.map((s) => s.id) ?? [],
       shownMcp: catalogs?.mcp.map((s) => s.id) ?? [],
@@ -149,9 +133,7 @@ export function AgentStep(): ReactElement {
       setBusy(false);
       return;
     }
-    setStyling(false);
-    bounce();
-    leaving.current = window.setTimeout(next, reduced ? 0 : LEAVE_MS);
+    next();
   };
 
   const shownName = draft.name.trim();
@@ -186,30 +168,20 @@ export function AgentStep(): ReactElement {
     <section
       data-onboarding-step="agent"
       data-agent-view={view}
-      className={cn(
-        // Room around the content: the scroller clips what overflows it, and
-        // without it the card's shadow was cut into a grey box.
-        'flex max-h-full w-full max-w-[944px] flex-col overflow-y-auto px-8 pb-12',
-      )}
+      className="flex w-full max-w-[944px] flex-col px-2 pb-6"
     >
-      <ViewSwitcher view={view} recommended={recommended} styling={styling} onPick={(v) => { setChosenView(v); setError(null); }} />
+      <ViewSwitcher view={view} recommended={recommended} onPick={(v) => { setChosenView(v); setError(null); }} />
       <div className="grid w-full grid-cols-1 items-start gap-[30px] pt-2.5 md:grid-cols-[330px_minmax(0,500px)] md:justify-center">
         <IdentityCard
-          look={look}
           name={draft.name}
           onName={(name) => update((d) => ({ ...d, name, nameAuto: false }))}
-          onRollName={() => { update((d) => ({ ...d, name: randomName(pool, d.name), nameAuto: false })); bounce(); }}
-          onRandomLook={() => { update((d) => ({ ...d, customLook: randomLook() })); bounce(); }}
-          onCustomise={() => setStyling(true)}
-          styling={styling}
+          onRollName={() => { update((d) => ({ ...d, name: randomName(pool, d.name), nameAuto: false })); }}
           role={roleLabel}
           model={model}
-          jump={jump}
           disabled={busy}
           summary={<Summary view={view} draft={draft} />}
         />
-        {/* While customising, the configurator takes the form's place, beside the card. */}
-        <div className={cn('min-w-0 flex-col text-left', styling ? 'hidden' : 'flex')}>
+        <div className="flex min-w-0 flex-col text-left">
           <header className="mb-[18px] mt-0.5">
             <h1 className="text-[30px] font-bold leading-tight tracking-[-0.02em]">{t(`onboarding.agent.${view}.title`)}</h1>
             <p className="mt-1.5 text-[15px] leading-normal text-muted-foreground">{t(`onboarding.agent.${view}.subtitle`)}</p>
@@ -221,25 +193,17 @@ export function AgentStep(): ReactElement {
             )}
           </header>
           {right}
-          <div className="sticky bottom-0 mt-1.5 bg-gradient-to-b from-transparent to-background to-45% pb-1.5 pt-[18px] text-center">
+          <div className="sticky bottom-0 mt-4 bg-background pb-1.5 pt-3">
             <Button type="button" size="lg" className="w-full" data-create disabled={!ready} onClick={() => { void create(); }}>
               {busy
                 ? <><Loader2 className="mr-2 size-4 animate-spin" aria-hidden />{t('onboarding.agent.creating', { name: shownName })}</>
-                : <>{shownName ? t('onboarding.agent.create', { name: shownName }) : t('onboarding.agent.createNoName')}<ArrowRight className="ml-2 size-4" aria-hidden /></>}
+                : <>{t('onboarding.continue')}<ArrowRight className="ml-2 size-4" aria-hidden /></>}
             </Button>
             <p className={cn('mt-2 min-h-4 text-xs', error ? 'text-destructive' : 'text-muted-foreground')} role={error ? 'alert' : undefined} data-create-hint>
-              {error ?? (readyToCreate(view, draft) ? '' : hintFor(view, draft))}
+              {error ?? (readyToCreate(view, leavingDraft) ? '' : hintFor(view, draft))}
             </p>
           </div>
         </div>
-        <LookStylerPanel
-          open={styling}
-          name={shownName || t('onboarding.agent.createNoName')}
-          role={view === 'sheet' ? draft.role : null}
-          look={look}
-          onChange={(picked) => { update((d) => ({ ...d, customLook: picked })); }}
-          onClose={() => setStyling(false)}
-        />
       </div>
       {directory.dialog}
     </section>
@@ -287,18 +251,15 @@ function Summary({ view, draft }: { view: AgentCreationView; draft: AgentDraft }
   );
 }
 
-function ViewSwitcher({ view, recommended, styling, onPick }: {
-  view: AgentCreationView; recommended: AgentCreationView; styling: boolean; onPick: (view: AgentCreationView) => void;
+function ViewSwitcher({ view, recommended, onPick }: {
+  view: AgentCreationView; recommended: AgentCreationView; onPick: (view: AgentCreationView) => void;
 }): ReactElement {
   return (
     <div
       role="radiogroup"
       aria-label={t('onboarding.agent.views.label')}
       data-view-switcher
-      className={cn(
-        // In the corner from tablets up; above the card on a phone, where the corner is "Back"'s row.
-        'z-[25] mb-3 flex items-center gap-1 self-center rounded-xl bg-card p-1 md:fixed md:right-4 md:top-3.5 md:mb-0',
-      )}
+      className="z-[1] mb-3 flex flex-wrap items-center justify-center gap-1 self-center rounded-xl bg-card p-1"
     >
       <span className="pl-2 pr-1.5 text-[11.5px] text-muted-foreground">{t('onboarding.agent.views.label')}</span>
       {AGENT_VIEWS.map((v) => (
@@ -316,7 +277,7 @@ function ViewSwitcher({ view, recommended, styling, onPick }: {
           {t(`onboarding.agent.views.${v}`)}
           {v === recommended && (
             <>
-              <Star className="size-3 fill-current text-amber-400" aria-hidden />
+              <Star className="size-3 fill-current" aria-hidden />
               <span className="sr-only">{t('onboarding.agent.views.recommended')}</span>
             </>
           )}

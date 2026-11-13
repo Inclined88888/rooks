@@ -227,7 +227,7 @@ const AUTONOMY_BRIEF: Readonly<Record<Autonomy, string>> = {
   report: 'act, then tell the user what you did',
   silent: 'act without reporting, for safe routine work only',
 };
-const NOTIFY_BRIEF: Readonly<Record<NotifyChannel, string>> = { timon: 'in Timon', telegram: 'on Telegram', email: 'by email' };
+const NOTIFY_BRIEF: Readonly<Record<NotifyChannel, string>> = { timon: 'in Rooks', telegram: 'on Telegram', email: 'by email' };
 
 function triggerBrief(trigger: InterviewTrigger, at: string): string {
   if (trigger === 'chat') return 'when the user talks to you';
@@ -271,9 +271,10 @@ export function directivesOf(view: AgentCreationView, draft: AgentDraft): string
 }
 
 /**
- * The config PATCH (`PATCH /api/ui/agents/:name/config`): the look always;
- * the model, permission mode, skills, MCP servers and folder from the sheet; the permission mode from the interview's autonomy; the directives
- * from whatever the view asked.
+ * The config PATCH (`PATCH /api/ui/agents/:name/config`): no mascot look
+ * (`look: null` clears one a seed already wears); the model, permission mode,
+ * skills, MCP servers and folder from the sheet; the permission mode from the
+ * interview's autonomy; the directives from whatever the view asked.
  *
  * Skills and MCP servers are whole sets on the daemon (`skills` replaces the
  * agent's attachments): the ones the sheet did not show are kept as they are,
@@ -283,7 +284,8 @@ export function directivesOf(view: AgentCreationView, draft: AgentDraft): string
  * (`applyMainAgentName`) and this PATCH, sent right after, must not undo it.
  */
 export type AgentConfigPatch = {
-  look: AgentLook;
+  /** `null` clears a mascot. Onboarding does not assign one. */
+  look: null;
   backend?: BackendName;
   model?: string;
   permission_mode?: PermissionMode;
@@ -306,7 +308,7 @@ const keepHidden = (current: readonly string[], shown: readonly string[], checke
 );
 
 export function creationPatch(view: AgentCreationView, draft: AgentDraft, ctx: CreationContext): AgentConfigPatch {
-  const patch: AgentConfigPatch = { look: lookOf(view, draft) };
+  const patch: AgentConfigPatch = { look: null };
   const directives = directivesOf(view, draft);
   if (directives) patch.directives = directives;
   if (view === 'interview') patch.permission_mode = AUTONOMY_PERMISSION[draft.autonomy];

@@ -1,30 +1,30 @@
 'use client';
 
 /**
- * The "Discover Timon" drawings, one per slide (`discover-slides.ts`): schematics of the
- * product's views, never screenshots — a screenshot ages with every release
- * and reads in one language only. Drawn with the theme's tokens, so they
+ * The discover drawings, one per slide (`discover-slides.ts`): schematics of the
+ * product's views, never screenshots. Drawn with the theme's tokens so they
  * follow light and dark; animated by the `timon-discover-*` classes of
  * `globals.css`, which the reduced-motion query stills.
- *
- * The person's own TIM, just made on the agent step, plays the lead in every
- * drawing: the slides are about their TIMs, not about a stock character.
  */
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import {
-  Brain, CalendarDays, Check, Clock, FolderOpen, Mail, MessageSquare, Plug, Puzzle, ScrollText, Workflow, Wrench, Sparkles,
+  Brain, CalendarDays, Check, Clock, FolderOpen, Mail, MessageSquare, Plug, Puzzle, ScrollText, Workflow, Wrench,
   type LucideIcon,
 } from 'lucide-react';
-import { defaultLookFor, type AgentLook } from '@/components/mascot/agent-look';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { DiscoverSlideId } from '../discover-slides';
 
-function AgentMascotHost({ size = 40 }: { size?: number; look?: unknown; live?: boolean; label?: string | null }): ReactElement {
-  return <span aria-hidden className="inline-block" style={{ width: size, height: size }} />;
-}
+export type DiscoverDrawingProps = { name: string | null };
 
-export type DiscoverDrawingProps = { look: AgentLook };
+function AgentMark({ name }: { name: string | null }): ReactElement {
+  const label = name?.trim() || t('onboarding.discover.agent');
+  return (
+    <span className="inline-flex h-10 max-w-[140px] items-center truncate rounded-lg bg-muted px-3 text-sm font-semibold text-foreground">
+      {label}
+    </span>
+  );
+}
 
 const delay = (seconds: number): CSSProperties => ({ animationDelay: `${seconds}s` });
 
@@ -64,10 +64,10 @@ function Spokes({ to, flow = false }: { to: readonly (readonly [number, number])
   );
 }
 
-/** Slide 1, "Agent canvas": the TIM at the centre of what it can use. */
-function AutonomousDrawing({ look }: DiscoverDrawingProps): ReactElement {
+/** Slide 1: the agent at the centre of what it can use. */
+function AutonomousDrawing({ name }: DiscoverDrawingProps): ReactElement {
   const nodes: readonly { icon: LucideIcon; key: string; at: readonly [number, number] }[] = [
-    { icon: Sparkles, key: 'skills', at: [20, 20] },
+    { icon: ScrollText, key: 'skills', at: [20, 20] },
     { icon: Wrench, key: 'tools', at: [80, 20] },
     { icon: Brain, key: 'memory', at: [20, 80] },
     { icon: Clock, key: 'schedule', at: [80, 80] },
@@ -87,7 +87,7 @@ function AutonomousDrawing({ look }: DiscoverDrawingProps): ReactElement {
       ))}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <div className="timon-discover-pop" style={delay(0.05)}>
-          <AgentMascotHost look={look} size={84} live />
+          <AgentMark name={name} />
         </div>
         <Chip
           icon={Check}
@@ -102,12 +102,8 @@ function AutonomousDrawing({ look }: DiscoverDrawingProps): ReactElement {
 }
 
 const TEAM_COLUMNS = ['todo', 'doing', 'done'] as const;
-/** When the travelling card reaches each column, in seconds: the column's TIM hops then. */
-const TEAM_ARRIVALS = [0.4, 2.3, 4.3] as const;
-
-/** Slide 2, "Kanban": one task goes from TIM to TIM. */
-function TeamsDrawing({ look }: DiscoverDrawingProps): ReactElement {
-  const team: readonly AgentLook[] = [look, defaultLookFor('code'), defaultLookFor('review')];
+/** Slide 2: one task moves across the board. */
+function TeamsDrawing(_props: DiscoverDrawingProps): ReactElement {
   return (
     <div className="flex size-full flex-col justify-center gap-3 px-5">
       <div className="relative grid grid-cols-3 gap-2.5">
@@ -120,35 +116,26 @@ function TeamsDrawing({ look }: DiscoverDrawingProps): ReactElement {
         ))}
         {/* The card rides above the columns, on the same grid, so one step is one column. */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-7 grid grid-cols-3 gap-2.5 px-2">
-          <span className="timon-discover-travel flex h-8 items-center gap-1.5 rounded-lg bg-card px-2 text-[11.5px] font-medium shadow-elev-3 ring-1 ring-primary/40">
+          <span className="timon-discover-travel flex h-8 items-center gap-1.5 rounded-lg bg-card px-2 text-[11.5px] font-medium ring-1 ring-border">
             <span className="size-2 shrink-0 rounded-full bg-primary" />
             <span className="truncate">{t('onboarding.discover.teams.card')}</span>
           </span>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2.5">
-        {team.map((member, i) => (
-          <div key={i} className="flex justify-center">
-            <span className="timon-mascot-jump" style={{ ...delay(TEAM_ARRIVALS[i] ?? 0), animationFillMode: 'both' }}>
-              <AgentMascotHost look={member} size={50} live={i === 0} />
-            </span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
 
-/** Slide 3, the point of the slides: your TIMs go everywhere, a project's TIMs stay home. */
-function ProjectsDrawing({ look }: DiscoverDrawingProps): ReactElement {
-  const projects: readonly { key: 'alpha' | 'beta'; team: readonly AgentLook[] }[] = [
-    { key: 'alpha', team: [defaultLookFor('code'), defaultLookFor('review')] },
-    { key: 'beta', team: [defaultLookFor(['mail']), defaultLookFor(['research'])] },
+/** Slide 3: an agent outside a project, and agents that stay in one. */
+function ProjectsDrawing({ name }: DiscoverDrawingProps): ReactElement {
+  const projects: readonly { key: 'alpha' | 'beta' }[] = [
+    { key: 'alpha' },
+    { key: 'beta' },
   ];
   return (
     <div className="flex size-full flex-col items-center justify-center gap-3 px-4">
       <div className="timon-discover-pop flex items-center gap-2" style={delay(0.05)}>
-        <AgentMascotHost look={look} size={44} live />
+        <AgentMark name={name} />
         <span className="text-[12px] font-medium text-muted-foreground">{t('onboarding.discover.projects.general')}</span>
       </div>
       <div className="grid w-full grid-cols-2 gap-3">
@@ -162,13 +149,6 @@ function ProjectsDrawing({ look }: DiscoverDrawingProps): ReactElement {
               <FolderOpen className="size-4 text-primary" aria-hidden />
               {t(`onboarding.discover.projects.${project.key}`)}
             </span>
-            <div className="flex justify-center gap-2 py-1">
-              {project.team.map((member, k) => (
-                <span key={k} className="timon-discover-bob" style={delay(0.6 * k + 0.4 * i)}>
-                  <AgentMascotHost look={member} size={40} />
-                </span>
-              ))}
-            </div>
             <div className="flex flex-wrap justify-center gap-1.5">
               <Chip icon={ScrollText} className="timon-discover-pop px-2 text-[11px]" style={delay(1.1 + 0.2 * i)}>
                 {t('onboarding.discover.projects.rules')}
@@ -189,8 +169,8 @@ function ProjectsDrawing({ look }: DiscoverDrawingProps): ReactElement {
   );
 }
 
-/** Slide 4, "Connectors, Workflows, Plugins": everything else plugs into the TIM. */
-function ConnectedDrawing({ look }: DiscoverDrawingProps): ReactElement {
+/** Slide 4: mail, calendar, workflows, and plugins around the agent. */
+function ConnectedDrawing({ name }: DiscoverDrawingProps): ReactElement {
   const around: readonly { key: string; icon: LucideIcon; at: readonly [number, number]; extra?: readonly LucideIcon[] }[] = [
     { key: 'connectors', icon: Plug, at: [22, 24], extra: [Mail, CalendarDays, MessageSquare] },
     { key: 'workflows', icon: Workflow, at: [78, 24] },
@@ -211,7 +191,7 @@ function ConnectedDrawing({ look }: DiscoverDrawingProps): ReactElement {
           {item.extra && (
             <span className="flex gap-1">
               {item.extra.map((Icon, k) => (
-                <span key={k} className="timon-discover-pop grid size-6 place-items-center rounded-md bg-card shadow-elev-2 ring-1 ring-border" style={delay(0.9 + 0.15 * k)}>
+                <span key={k} className="timon-discover-pop grid size-6 place-items-center rounded-md bg-card ring-1 ring-border" style={delay(0.9 + 0.15 * k)}>
                   <Icon className="size-3.5 text-muted-foreground" aria-hidden />
                 </span>
               ))}
@@ -220,7 +200,7 @@ function ConnectedDrawing({ look }: DiscoverDrawingProps): ReactElement {
         </div>
       ))}
       <div className="timon-discover-pop absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={delay(0.05)}>
-        <AgentMascotHost look={look} size={76} live />
+        <AgentMark name={name} />
       </div>
     </div>
   );

@@ -1,16 +1,12 @@
 'use client';
 
 /**
- * The left of the agent step, the same in every view: the agent's mascot,
- * alive, "Random" and "Customise" under it, its name with a draw button,
- * its role and model, and what it will do. The mascot goes through the
- * `agent.mascot` slot (`AgentMascotHost`): a plugin that replaces the mascot
- * replaces it here too.
+ * The left of the agent step, the same in every view: a mark, its name with a
+ * draw button, its role and model, and what it will do.
  */
 import type { ReactElement, ReactNode } from 'react';
 import { Dices } from 'lucide-react';
 import { BrandMark } from '@/components/brand-mark';
-import type { AgentLook } from '@/components/mascot/agent-look';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ModelOption } from '../agent-draft';
@@ -19,18 +15,12 @@ import type { ModelOption } from '../agent-draft';
 export const AGENT_NAME_MAX = 24;
 
 export type IdentityCardProps = {
-  look: AgentLook;
   name: string;
   onName: (name: string) => void;
   onRollName: () => void;
-  onRandomLook: () => void;
-  onCustomise: () => void;
-  styling: boolean;
   role: { label: string; empty?: boolean };
   model: ModelOption | null;
   summary: ReactNode;
-  /** Bumped to make the mascot jump (a new look, a new name, the creation). */
-  jump: number;
   disabled?: boolean;
 };
 

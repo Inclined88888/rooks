@@ -159,8 +159,12 @@ export function OnboardingShell({
           </Button>
         )}
         <SchemeSwitch className="absolute right-4 top-3.5 z-20" />
-        <main className="absolute inset-0 flex flex-col items-center justify-center overflow-auto p-8">
-          {Step && <Gate step={at.step}><Step key={at.step} /></Gate>}
+        <main className="absolute inset-0 overflow-auto">
+          {/* min-h-full centres a short step and still scrolls a tall one.
+              justify-center on the scroller itself clips the agent step's Continue. */}
+          <div className="flex min-h-full flex-col items-center justify-center p-8">
+            {Step && <Gate step={at.step}><Step key={at.step} /></Gate>}
+          </div>
         </main>
         {companions.map((Companion, i) => <Companion key={i} step={at.step} stays={stays} />)}
       </div>

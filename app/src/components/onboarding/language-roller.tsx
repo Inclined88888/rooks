@@ -172,7 +172,7 @@ export function LanguageRoller({ languages, value, onChange, onConfirm, label, c
         kick();
       }}
     >
-      <div aria-hidden className="absolute inset-x-0 top-1/2 -mt-[23px] h-[46px] rounded-xl bg-muted/80 backdrop-blur" />
+      <div aria-hidden className="absolute inset-x-0 top-1/2 -mt-[23px] h-[46px] rounded-xl bg-muted" />
       {languages.map((info, i) => (
         <div
           key={info.tag}

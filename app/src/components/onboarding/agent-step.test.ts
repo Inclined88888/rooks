@@ -50,22 +50,22 @@ function daemon(profile: string | null, override: Answer = () => undefined): { c
 
 test('the creation names the agent, then writes its config on the name the daemon answered', async () => {
   const d = daemon(null);
-  const result = await createMainAgent('Nova', { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'coffee' }, directives: 'Never push.' }, d.fetcher);
+  const result = await createMainAgent('Nova', { look: null, directives: 'Never push.' }, d.fetcher);
   assert.deepEqual(result, { ok: true, name: 'nova' });
   assert.deepEqual(d.calls.map((c) => `${c.method} ${c.url}`), ['POST /api/ui/setup/main-agent/name', 'PATCH /api/ui/agents/nova/config']);
   assert.deepEqual(d.calls[0]?.body, { name: 'Nova' });
-  assert.deepEqual(d.calls[1]?.body, { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'coffee' }, directives: 'Never push.' });
+  assert.deepEqual(d.calls[1]?.body, { look: null, directives: 'Never push.' });
   assert.equal(agentConfigPath('a b'), '/api/ui/agents/a%20b/config');
 });
 
 test('a refused name writes nothing else; a refused config is told apart', async () => {
   const taken = daemon(null, (c) => (c.url === MAIN_AGENT_NAME_PATH ? Response.json({ error: 'name_taken' }, { status: 409 }) : undefined));
-  assert.deepEqual(await createMainAgent('Nova', { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'none' } }, taken.fetcher), { ok: false, error: 'name_taken', stage: 'name' });
+  assert.deepEqual(await createMainAgent('Nova', { look: null }, taken.fetcher), { ok: false, error: 'name_taken', stage: 'name' });
   assert.equal(taken.calls.length, 1);
   const odd = daemon(null, (c) => (c.url === MAIN_AGENT_NAME_PATH ? Response.json({ error: 'kaboom' }, { status: 500 }) : undefined));
-  assert.equal((await createMainAgent('Nova', { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'none' } }, odd.fetcher)).ok, false);
-  const badConfig = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ error: 'look.acc: unknown value' }, { status: 400 }) : undefined));
-  assert.deepEqual(await createMainAgent('Nova', { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'none' } }, badConfig.fetcher), { ok: false, error: 'configFailed', stage: 'config' });
+  assert.equal((await createMainAgent('Nova', { look: null }, odd.fetcher)).ok, false);
+  const badConfig = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ error: 'config' }, { status: 400 }) : undefined));
+  assert.deepEqual(await createMainAgent('Nova', { look: null }, badConfig.fetcher), { ok: false, error: 'configFailed', stage: 'config' });
 });
 
 test('the main agent is read as it stands; an unreachable daemon is an empty agent', async () => {
@@ -179,7 +179,7 @@ test('each profile opens its view, starred; the switcher opens the others', asyn
 test('templates: « Create » waits for a profile, then writes the agent and opens the chat', async () => {
   await renderStep('beginner', async (r) => {
     assert.ok((q<HTMLInputElement>(r.host, '[data-agent-name]').value).length > 0, 'a name is drawn');
-    assert.equal(q<HTMLButtonElement>(r.host, '[data-create]').disabled, true);
+    assert.equal(q<HTMLButtonElement>(r.host, '[data-create]').disabled, false, 'Continue is available before a profile is picked');
     await click(r, '[data-template="assist"]');
     assert.equal(q(r.host, '[data-role-pill]').textContent, 'Personal assistant');
     assert.deepEqual(Array.from(r.host.querySelectorAll('[data-cap]')).map((el) => el.getAttribute('data-cap')), ['base', 'mail', 'agenda']);
@@ -190,7 +190,7 @@ test('templates: « Create » waits for a profile, then writes the agent and ope
     const named = r.calls.find((c) => c.url === MAIN_AGENT_NAME_PATH);
     assert.deepEqual(named?.body, { name });
     const patch = patchOf(r.calls);
-    assert.deepEqual(patch?.look, { shape: 'squircle', color: '#ff5fbf', eyes: 'pill', acc: 'clipboard' });
+    assert.equal(patch?.look, null);
     assert.match(String(patch?.directives), /email/);
     assert.equal(r.calls.find((c) => c.method === 'PATCH')?.url, `/api/ui/agents/${encodeURIComponent(name.toLowerCase())}/config`);
     assert.equal(r.nexts(), 1, 'the chat step opens');
@@ -245,27 +245,17 @@ test('sheet: line of work, exact permission mode with its warning, the daemon\'s
     assert.equal(patch?.model, 'sonnet');
     assert.deepEqual(patch?.skills, ['timon-task', 'tests'], 'the product\'s own skill is kept');
     assert.deepEqual(patch?.mcp_servers, ['sentry', 'github']);
-    assert.equal((patch?.look as { acc?: string } | undefined)?.acc, 'pen', 'a reviewer holds the red pen');
+    assert.equal(patch?.look, null);
     assert.equal(r.nexts(), 1);
   });
 });
 
-test('« Customise » opens the panel; a pick is kept and sent; Escape closes it', async () => {
+test('Continue is on the step, and the mascot styler is not', async () => {
   await renderStep('developer', async (r) => {
-    assert.equal(q(r.host, '[data-look-styler]').getAttribute('data-look-styler'), 'closed');
-    await click(r, '[data-customise]');
-    assert.equal(q(r.host, '[data-look-styler]').getAttribute('data-look-styler'), 'open');
-    await click(r, '[data-shape="bean"]');
-    await click(r, '[data-acc="globe"]');
-    await r.react.act(async () => { window.dispatchEvent(new r.dom.window.KeyboardEvent('keydown', { key: 'Escape' })); });
-    await settle(r.react);
-    assert.equal(q(r.host, '[data-look-styler]').getAttribute('data-look-styler'), 'closed');
-    await click(r, '[data-role="chore"]');
-    await click(r, '[data-create]');
-    await settle(r.react, 40);
-    const look = patchOf(r.calls)?.look as { shape?: string; acc?: string } | undefined;
-    assert.equal(look?.shape, 'bean', 'the styled look survives a change of role');
-    assert.equal(look?.acc, 'globe');
+    assert.equal(r.host.querySelector('[data-customise]'), null);
+    assert.equal(r.host.querySelector('[data-look-styler]'), null);
+    assert.match(q(r.host, '[data-create]').textContent ?? '', /Continue/);
+    assert.equal(q<HTMLButtonElement>(r.host, '[data-create]').disabled, false);
   });
 });
 
@@ -288,7 +278,7 @@ test('interview: five questions, answered ones reopen, then « Create » writes 
     const patch = patchOf(r.calls);
     assert.equal(patch?.permission_mode, 'auto');
     assert.match(String(patch?.directives), /Gmail/);
-    assert.equal((patch?.look as { acc?: string } | undefined)?.acc, 'envelope');
+    assert.equal(patch?.look, null);
   });
 });
 
@@ -307,36 +297,3 @@ test('a profile that could not be read says so, and « Retry » reads it again',
     : undefined));
 });
 
-test('« Customise » opens the shared configurator: a plugin that takes `agent.lookstyler` paints inside the panel', async () => {
-  const { register, resetSlotsForTests, AGENT_LOOK_STYLER_SLOT } = await import('@/lib/plugin-host/slots');
-  const { useLookStyler } = await import('@/components/mascot/look-styler/look-styler-context');
-  const React = await import('react');
-  resetSlotsForTests();
-  function Replacement() {
-    const v = useLookStyler();
-    return React.createElement('button', {
-      type: 'button',
-      'data-plugin-styler': v?.name,
-      onClick: () => v?.onChange({ shape: 'cloud', color: '#3fa9ff', eyes: 'star', acc: 'telescope' }),
-    });
-  }
-  const dispose = register({ slot: AGENT_LOOK_STYLER_SLOT, pluginId: 'acme-styler' }, Replacement);
-  try {
-    await renderStep('developer', async (r) => {
-      assert.ok(!r.host.querySelector('[data-plugin-styler]') && !document.querySelector('[data-plugin-styler]'), 'nothing painted while the panel is closed');
-      await click(r, '[data-customise]');
-      const name = q<HTMLInputElement>(r.host, '[data-agent-name]').value;
-      assert.equal(q(r.host, '[data-plugin-styler]').getAttribute('data-plugin-styler'), name, 'the plugin reads the agent\'s name');
-      assert.ok(!document.querySelector('[data-look-styler-content]'), 'the product\'s grids stepped aside');
-      assert.ok(q(r.host, '[data-style-done]'), 'the panel and its « Done » stay the step\'s');
-      await click(r, '[data-plugin-styler]');
-      await click(r, '[data-style-done]');
-      await click(r, '[data-create]');
-      await settle(r.react, 40);
-      assert.deepEqual(patchOf(r.calls)?.look, { shape: 'cloud', color: '#3fa9ff', eyes: 'star', acc: 'telescope' });
-    });
-  } finally {
-    dispose();
-    resetSlotsForTests();
-  }
-});

@@ -1,49 +1,30 @@
 'use client';
 
 /**
- * "What brings you here?" (mockup screen `profile`, right after the LLM):
- * three rows, each with its mascot. A click makes the mascot jump, records
- * the profile on the daemon (`PUT /api/onboarding/profile`) and opens the
- * agent step, whose creation view follows that answer (`agentViewFor`). The
- * guided tour reads the same row and never asks again.
+ * "What brings you here?" (right after the language model): three rows. A
+ * click records the profile on the daemon (`PUT /api/onboarding/profile`) and
+ * opens the agent step, whose creation view follows that answer
+ * (`agentViewFor`). The guided tour reads the same row and never asks again.
  */
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import type { AgentLook } from '@/components/mascot/agent-look';
-import { usePrefersReducedMotion } from '@/components/mascot/agent-mascot';
 import { useOnboarding } from '../onboarding-context';
 import { useOnboardingProfile, type OnboardingProfile } from '../onboarding-profile';
 
-/** Long enough to see the mascot land its jump before the screen changes. */
-const JUMP_MS = 380;
-
-type Row = { profile: OnboardingProfile; look: Partial<AgentLook> };
-
-const ROWS: readonly Row[] = [
-  { profile: 'developer', look: { shape: 'hex', color: '#7ed957', eyes: 'pill' } },
-  { profile: 'automation', look: { shape: 'cloud', color: '#ff8a2a', eyes: 'pill' } },
-  { profile: 'beginner', look: { shape: 'tri', color: '#ff5fbf', eyes: 'big' } },
-];
+const ROWS: readonly OnboardingProfile[] = ['developer', 'automation', 'beginner'];
 
 export function ProfileStep(): ReactElement {
   const { next } = useOnboarding();
   const { profile: recorded, save } = useOnboardingProfile();
-  const reduced = usePrefersReducedMotion();
   const [picked, setPicked] = useState<OnboardingProfile | null>(null);
   const [failed, setFailed] = useState(false);
-  const leaving = useRef<number | null>(null);
-
-  useEffect(() => () => {
-    if (leaving.current !== null) window.clearTimeout(leaving.current);
-  }, []);
 
   const choose = async (profile: OnboardingProfile): Promise<void> => {
     if (picked !== null) return;
     setPicked(profile);
     setFailed(false);
-    const started = Date.now();
     try {
       await save(profile);
     } catch {
@@ -51,9 +32,7 @@ export function ProfileStep(): ReactElement {
       setFailed(true);
       return;
     }
-    // The jump started with the click: only what is left of it is waited for.
-    const wait = reduced ? 0 : Math.max(0, JUMP_MS - (Date.now() - started));
-    leaving.current = window.setTimeout(next, wait);
+    next();
   };
 
   return (
@@ -66,27 +45,24 @@ export function ProfileStep(): ReactElement {
         aria-busy={picked !== null}
         className="flex w-full flex-col gap-0.5 rounded-2xl bg-card p-1.5 text-left shadow-elev-3 ring-1 ring-border"
       >
-        {ROWS.map((row, i) => (
+        {ROWS.map((profile, i) => (
           <button
-            key={row.profile}
+            key={profile}
             type="button"
-            data-profile={row.profile}
-            aria-current={recorded === row.profile ? 'true' : undefined}
+            data-profile={profile}
+            aria-current={recorded === profile ? 'true' : undefined}
             disabled={picked !== null}
-            onClick={() => { void choose(row.profile); }}
+            onClick={() => { void choose(profile); }}
             style={{ animationDelay: `${0.08 * i}s` }}
             className={cn(
               'timon-onboarding-rise group flex w-full items-center gap-3.5 rounded-xl p-3.5 text-left transition-colors',
               'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default',
-              (recorded === row.profile || picked === row.profile) && 'bg-muted',
+              (recorded === profile || picked === profile) && 'bg-muted',
             )}
           >
-            <span aria-hidden className="grid size-[46px] shrink-0 place-items-center rounded-xl bg-muted text-sm font-semibold text-muted-foreground">
-              {t(`onboarding.profile.${row.profile}.title`).slice(0, 1)}
-            </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[14.5px] font-semibold">{t(`onboarding.profile.${row.profile}.title`)}</span>
-              <span className="mt-0.5 block text-[13px] leading-snug text-muted-foreground">{t(`onboarding.profile.${row.profile}.description`)}</span>
+              <span className="block text-[14.5px] font-semibold">{t(`onboarding.profile.${profile}.title`)}</span>
+              <span className="mt-0.5 block text-[13px] leading-snug text-muted-foreground">{t(`onboarding.profile.${profile}.description`)}</span>
             </span>
             <ChevronRight
               aria-hidden

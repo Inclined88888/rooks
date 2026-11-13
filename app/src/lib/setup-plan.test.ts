@@ -412,10 +412,10 @@ test('the guard waits, blocks, configures, then opens', () => {
 
 test('the guard writes /setup defaults, and resumes a home that already holds work', () => {
   assert.deepEqual(setupAnswers({ supervisor: 'launchd', desktop: true }), {
-    edition: 'expert', supervisor: 'launchd', appEnabled: true, binaries: {}, vaultPath: '',
+    edition: 'expert', supervisor: 'launchd', appEnabled: true, binaries: {}, vaultPath: '', withoutProvider: true,
   });
   assert.deepEqual(setupAnswers({ supervisor: null, desktop: false }), {
-    edition: 'expert', supervisor: 'none', appEnabled: false, binaries: {}, vaultPath: '',
+    edition: 'expert', supervisor: 'none', appEnabled: false, binaries: {}, vaultPath: '', withoutProvider: true,
   });
   assert.equal(setupAnswers(null).supervisor, 'none');
   assert.deepEqual(configureTarget(false, '/onboarding?step=agent'), { endpoint: '/api/ui/setup', next: '/onboarding?step=agent' });

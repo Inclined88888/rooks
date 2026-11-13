@@ -583,6 +583,8 @@ export function setupAnswers(doctor: Pick<SetupDoctor, 'supervisor' | 'desktop'>
   appEnabled: boolean;
   binaries: Record<string, string>;
   vaultPath: string;
+  /** The model step already continued. The repair screen does not use this. */
+  withoutProvider: true;
 } {
   return {
     edition: 'expert',
@@ -590,6 +592,7 @@ export function setupAnswers(doctor: Pick<SetupDoctor, 'supervisor' | 'desktop'>
     appEnabled: doctor?.desktop === true,
     binaries: {},
     vaultPath: PATH_DEFAULTS.vaultPath,
+    withoutProvider: true,
   };
 }
 
