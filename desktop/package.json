@@ -6,7 +6,10 @@
   "type": "module",
   "description": "Rooks desktop",
   "homepage": "https://github.com/Inclined88888/rooks",
-  "author": "Rooks",
+  "author": {
+    "name": "Rooks",
+    "email": "Inclined88888@users.noreply.github.com"
+  },
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
