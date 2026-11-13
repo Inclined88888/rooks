@@ -32,6 +32,44 @@ from .policy import parse_categories
 LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "[::1]", "::1")
 
 
+def _rooks_home() -> Path:
+    env = (os.environ.get("ROOKS_HOME") or "").strip()
+    return Path(env).expanduser() if env else Path.home() / ".rooks"
+
+
+def _needs_you_dir() -> Path:
+    return _rooks_home() / "run" / "needs-you"
+
+
+def _drop_needs_you(anchor: str, *, title: str, detail: str = "") -> None:
+    """Best-effort file drop for Desk — same channel terminal uses (`~/.rooks/run/needs-you`)."""
+    try:
+        d = _needs_you_dir()
+        d.mkdir(parents=True, exist_ok=True)
+        safe = "".join(c for c in anchor if c.isalnum() or c in "._:-")[:80] or uuid.uuid4().hex[:8]
+        path = d / f"{safe}.json"
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({
+            "id": anchor, "anchor": anchor, "kind": "approval", "title": title[:200],
+            "detail": detail[:4000], "source": "rooks-browser", "status": "pending",
+        }, ensure_ascii=False, indent=1), encoding="utf-8")
+        os.chmod(tmp, 0o600)
+        tmp.replace(path)
+    except OSError:
+        pass
+
+
+def _clear_needs_you(anchor: str) -> None:
+    try:
+        safe = "".join(c for c in anchor if c.isalnum() or c in "._:-")[:80]
+        if not safe:
+            return
+        p = _needs_you_dir() / f"{safe}.json"
+        if p.is_file():
+            p.unlink()
+    except OSError:
+        pass
+
 
 def _auto_or_none() -> str | None:
     try:
@@ -159,6 +197,9 @@ class Jobs:
             with self.lock:
                 self.jobs[jid]["approvals"].append(entry)
             self._set(jid, waiting_for_approval=ap.id)
+            # Shared Needs-you drop under ~/.rooks so Desk can surface the same wait.
+            _drop_needs_you(f"b:{jid}:{ap.id}", title=getattr(ap, "summary", None) or getattr(ap, "category", None) or "Browser needs you",
+                            detail=str(getattr(ap, "detail", "") or getattr(ap, "reason", "") or "")[:2000])
             try:
                 ok = await asyncio.wait_for(fut, self.approval_timeout)
             except asyncio.TimeoutError:
@@ -167,6 +208,7 @@ class Jobs:
             entry["answer"] = "approved" if ok else "denied"
             self.waiting.pop(ap.id, None)
             self._set(jid, waiting_for_approval=None)
+            _clear_needs_you(f"b:{jid}:{ap.id}")
             return ok
 
         async def save(ag, *paths):  # write then rename, so the app never reads half a PNG

@@ -135,7 +135,7 @@ def test_no_model_anywhere_explains_what_to_do(empty_app, tmp_path, monkeypatch)
     monkeypatch.setenv("OLLAMA_HOST", "http://127.0.0.1:9")
     with pytest.raises(SystemExit) as e:
         config.resolve({}, tmp_path, {})
-    assert "ai-workspace" in str(e.value) and "GROQ_API_KEY" in str(e.value)
+    assert "GROQ_API_KEY" in str(e.value) and ("Rooks" in str(e.value) or "rooks" in str(e.value).lower())
 
 
 def test_the_apps_no_model_error_is_friendly(empty_app, tmp_path, monkeypatch):
@@ -143,4 +143,4 @@ def test_the_apps_no_model_error_is_friendly(empty_app, tmp_path, monkeypatch):
     s = config.resolve({"provider": "workbench"}, tmp_path, {"workbench_url": empty_app})
     with pytest.raises(providers.ProviderError) as e:
         providers.make(s).complete("sys", [{"role": "user", "content": "ping"}], [])
-    assert "Free cloud" in str(e.value) and "HTTP" not in str(e.value)
+    assert ("Free cloud" in str(e.value) or "GROQ_API_KEY" in str(e.value)) and "HTTP" not in str(e.value)

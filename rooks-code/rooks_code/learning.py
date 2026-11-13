@@ -8,8 +8,9 @@ chat helps in the terminal and the other way round:
   * after a request, it is sent to the app, which keeps it in the chat history as a terminal chat and, in the
     background, learns facts and (after a task of several steps) saves or improves a reusable skill
 
-With any other provider the same tools work on a local file (memory.json next to rooks.toml): remembered facts come
-back in every later session, in every folder.
+With any other provider the same tools work on the shared local brain under ~/.rooks
+(`config/terminal-memory.json`, migrated from legacy memory.json next to the old ai-workspace config):
+remembered facts come back in every later session. Skills also come from ~/.rooks/skills when offline.
 
 Learning never blocks or breaks a request: every call has a short timeout and failures are ignored.
 """
@@ -23,7 +24,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from . import config
+from . import config, local_brain
 from .tools import Plan, ToolError
 
 TIMEOUT = 4  # seconds; the app is local
@@ -44,7 +45,12 @@ SKILL_SPEC = {"name": "load_skill", "description": "Read the steps of one of you
 
 
 def local_path() -> Path:
-    return config.config_path().parent / "memory.json"
+    """Shared standalone memory under ROOKS_HOME (legacy ai-workspace memory.json migrated once)."""
+    return local_brain.ensure_migrated_file(
+        local_brain.terminal_memory_path(),
+        local_brain.legacy_config_dir() / "memory.json",
+        config.config_path_dir() / "memory.json",
+    )
 
 
 def _load_local() -> list[str]:
@@ -102,9 +108,20 @@ class Learning:
                 parts.append("Your saved skills (call load_skill before doing that kind of task):\n" +
                              "\n".join(f"- {s['name']}: {s.get('description', '')}" for s in self.skills))
             return "\n\n".join(parts)
+        # Offline: shared ~/.rooks memory + the same skills registry Desk uses.
+        self.skills = [
+            {"name": s["name"], "description": s.get("description") or s.get("title") or ""}
+            for s in local_brain.list_rooks_skills()
+        ]
+        parts: list[str] = []
         facts = _load_local()
-        return ("What you remember about the user (from earlier sessions):\n" + "\n".join(f"- {f}" for f in facts[-40:])
-                if facts else "")
+        if facts:
+            parts.append("What you remember about the user (from earlier sessions):\n" +
+                         "\n".join(f"- {f}" for f in facts[-40:]))
+        if self.skills:
+            parts.append("Your saved skills (call load_skill before doing that kind of task):\n" +
+                         "\n".join(f"- {s['name']}: {s.get('description', '')}" for s in self.skills))
+        return "\n\n".join(parts)
 
     def specs(self) -> list[dict]:
         return SPECS + ([SKILL_SPEC] if self.skills else [])
@@ -197,8 +214,10 @@ class Learning:
             return []
 
     def skill_list(self) -> list[dict]:
-        """Saved skills, for /skills (the app's; none without it)."""
+        """Saved skills from the app when linked, else ~/.rooks/skills (Desk registry)."""
         if self.app and not self.skills:
+            self.context("")
+        if not self.skills and not self.app:
             self.context("")
         return self.skills
 
@@ -223,14 +242,17 @@ class Learning:
         return self.s.base_url.rstrip("/").removesuffix("/v1") + path
 
     def load_skill(self, name: str) -> str:
-        if not self.app:
-            return "Error: saved skills come from the Rooks app; it is not connected."
-        try:
-            d = self._req("GET", "/skills/" + urllib.parse.quote(name, safe=""))
-        except urllib.error.HTTPError as e:
-            return f"Error: no skill named {name}" if e.code == 404 else f"Error: {e}"
-        except (OSError, ValueError, urllib.error.URLError) as e:
-            return f"Error: {e}"
+        if self.app:
+            try:
+                d = self._req("GET", "/skills/" + urllib.parse.quote(name, safe=""))
+            except urllib.error.HTTPError as e:
+                return f"Error: no skill named {name}" if e.code == 404 else f"Error: {e}"
+            except (OSError, ValueError, urllib.error.URLError) as e:
+                return f"Error: {e}"
+            return f"Skill {d.get('name')}: {d.get('description', '')}\n\n{d.get('steps', '')}"
+        d = local_brain.read_rooks_skill(name)
+        if not d:
+            return f"Error: no skill named {name} under {local_brain.skills_dir()}"
         return f"Skill {d.get('name')}: {d.get('description', '')}\n\n{d.get('steps', '')}"
 
     # after a request -----------------------------------------------------------------------------------------------

@@ -1,8 +1,9 @@
 """Settings: built-in defaults < config file < environment < command-line flags.
 
-Config file (TOML): $ROOKS_CONFIG, else ~/.config/ai-workspace/rooks.toml (Windows: %APPDATA%\\ai-workspace\\rooks.toml).
+Config file (TOML): $ROOKS_CONFIG, else ~/.rooks/config/rooks.toml (same ROOKS_HOME as the Desk daemon).
+Legacy dual path ~/.config/ai-workspace/rooks.toml is read once and copied into the new home on first use.
 Keys: each provider names the environment variable that holds its key, and that always wins. `rooks login` can also
-keep a key in rooks-keys.json next to the config file, readable only by you (mode 600); never in rooks.toml.
+keep a key in ~/.rooks/config/rooks-keys.json (and mirrors into ~/.rooks/secrets.env for the daemon); never in rooks.toml.
 """
 
 from __future__ import annotations
@@ -14,6 +15,8 @@ import sys
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from . import local_brain
 
 # kind: "openai" = OpenAI Chat Completions protocol (also OpenRouter, Ollama, LM Studio, vLLM, llama.cpp, Groq, ...)
 #       "anthropic" = Anthropic Messages protocol
@@ -57,17 +60,20 @@ PROVIDERS: dict[str, dict] = {
 
 
 def app_link_path() -> Path:
-    """app.json, written by the running desktop app (desktop/sidecar/workbench_server.py) and removed when it quits."""
+    """app.json bridge: ~/.rooks/run/app.json (legacy ai-workspace path still read / migrated)."""
     if os.environ.get("AI_WORKSPACE_APP_FILE"):
         return Path(os.environ["AI_WORKSPACE_APP_FILE"])
-    return config_path_dir() / "app.json"
+    if os.environ.get("ROOKS_APP_FILE"):
+        return Path(os.environ["ROOKS_APP_FILE"])
+    return local_brain.ensure_migrated_file(
+        local_brain.run_dir() / "app.json",
+        local_brain.legacy_config_dir() / "app.json",
+    )
 
 
 def config_path_dir() -> Path:
-    if sys.platform == "win32" and os.environ.get("APPDATA"):
-        return Path(os.environ["APPDATA"]) / "ai-workspace"
-    base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config")
-    return Path(base) / "ai-workspace"
+    """Directory that holds rooks.toml / keys / choice — under ROOKS_HOME."""
+    return local_brain.config_dir()
 
 
 def app_link() -> dict:
@@ -90,9 +96,9 @@ NO_MODEL_HELP = (
     "No AI model is set up yet.\n"
     "\n"
     "Quick options:\n"
-    "  1. Run `rooks login` and follow the prompts.\n"
-    "  2. Open the app: run `ai-workspace`, pick \"Free cloud\", paste a free Gemini or Groq key (2 min, no card).\n"
-    "  3. Set a key in this terminal:\n"
+    "  1. Run `rooks-code login` (or `rooks login`) and follow the prompts.\n"
+    "  2. Open the Rooks Desk app, add a free Gemini or Groq key (2 min, no card).\n"
+    "  3. Set a key in this terminal (same names the Desk secrets.env uses):\n"
     "       export GROQ_API_KEY=...     # free at https://console.groq.com/keys\n"
     "       export GEMINI_API_KEY=...   # free at https://aistudio.google.com/apikey\n"
     "     On Windows PowerShell:\n"
@@ -104,10 +110,14 @@ DOCKER_URL = "http://localhost:3100"  # where setup.sh publishes Workbench (WORK
 
 
 def keys_path() -> Path:
-    return config_path().parent / "rooks-keys.json"
+    return local_brain.ensure_migrated_file(
+        config_path_dir() / "rooks-keys.json",
+        local_brain.legacy_config_dir() / "rooks-keys.json",
+    )
 
 
 def stored_keys() -> dict[str, str]:
+    """Provider → key from rooks-keys.json. Env vars and secrets.env win at resolve time via Settings.api_key."""
     try:
         d = json.loads(keys_path().read_text(encoding="utf-8"))
         return {str(k): str(v) for k, v in d.items()} if isinstance(d, dict) else {}
@@ -115,8 +125,35 @@ def stored_keys() -> dict[str, str]:
         return {}
 
 
+def _mirror_key_into_secrets_env(provider: str, key: str) -> None:
+    """Keep Desk/daemon secrets.env in sync when the CLI stores a provider key."""
+    env_name = (PROVIDERS.get(provider) or {}).get("key_env") or ""
+    if not env_name or not key:
+        return
+    path = local_brain.secrets_env_path()
+    try:
+        existing = local_brain.parse_secrets_env(path.read_text(encoding="utf-8")) if path.exists() else {}
+    except OSError:
+        existing = {}
+    if existing.get(env_name) == key:
+        return
+    existing[env_name] = key
+    lines = [f"{k}={v}\n" for k, v in sorted(existing.items())]
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write("# Synced from rooks-code login / store_key — shared with Desk daemon\n")
+            f.writelines(lines)
+        os.chmod(tmp, 0o600)
+        tmp.replace(path)
+    except OSError:
+        pass
+
+
 def store_key(provider: str, key: str) -> Path:
-    """Keep a key for a provider, readable by the owner only. Written to a temp file first so a crash leaves no half file."""
+    """Keep a key for a provider under ~/.rooks (and mirror into secrets.env for Desk)."""
     p = keys_path()
     p.parent.mkdir(parents=True, exist_ok=True)
     keys = {**stored_keys(), provider: key}
@@ -126,6 +163,7 @@ def store_key(provider: str, key: str) -> Path:
         json.dump(keys, f, indent=1)
     os.chmod(tmp, 0o600)
     tmp.replace(p)
+    _mirror_key_into_secrets_env(provider, key)
     return p
 
 
@@ -171,10 +209,10 @@ def _ollama_up(base: str = "http://localhost:11434") -> bool:
 def config_path() -> Path:
     if os.environ.get("ROOKS_CONFIG"):
         return Path(os.environ["ROOKS_CONFIG"])
-    if sys.platform == "win32" and os.environ.get("APPDATA"):
-        return Path(os.environ["APPDATA"]) / "ai-workspace" / "rooks.toml"
-    base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config")
-    return Path(base) / "ai-workspace" / "rooks.toml"
+    return local_brain.ensure_migrated_file(
+        config_path_dir() / "rooks.toml",
+        local_brain.legacy_config_dir() / "rooks.toml",
+    )
 
 
 @dataclass
@@ -213,7 +251,15 @@ class Settings:
 
     @property
     def api_key(self) -> str:
-        return (os.environ.get(self.key_env, "") if self.key_env else "") or self.key or stored_keys().get(self.provider, "")
+        # Same store Desk uses: process env, then ~/.rooks/secrets.env, then rooks-keys.json, then app bridge key.
+        from_env = (os.environ.get(self.key_env, "") if self.key_env else "")
+        if from_env:
+            return from_env
+        if self.key_env:
+            from_secrets = local_brain.secrets_env_keys().get(self.key_env, "")
+            if from_secrets:
+                return from_secrets
+        return self.key or stored_keys().get(self.provider, "")
 
     def trusted(self) -> bool:
         root = self.root.resolve()

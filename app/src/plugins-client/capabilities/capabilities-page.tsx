@@ -2,8 +2,10 @@
 
 /**
  * Capabilities: what an agent can be given — skills (instruction files) and
- * MCP servers (tools) — as two tabs of one nav entry. Each tab is the view its
- * own route still serves (`/skills`, `/mcp`), so existing links keep working.
+ * MCP servers / connectors (tools) — as two tabs of **one** nav entry.
+ * Customize / Skills / Connectors are never duplicated in the side menu:
+ * Skills + Connectors live here; Customize is appearance / menu chrome only.
+ * Deep links `/skills` and `/mcp` still work as tab aliases.
  */
 
 import { useCallback, type ReactElement } from 'react';

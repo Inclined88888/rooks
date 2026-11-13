@@ -3,7 +3,7 @@
 Restraint, like the app (design record 0003, section 6): text is neutral, and one amber accent marks only what is live or
 needs you. ok and error are calm greens and reds for diffs and results; nothing else is coloured.
 
-Which theme: --theme, then ROOKS_THEME, then the app's choice in ~/.ai-workspace/appearance.json (written by the app;
+Which theme: --theme, then ROOKS_THEME, then the app's choice in ~/.rooks/appearance.json (written by the app;
 AI_WORKSPACE_APPEARANCE_FILE overrides the path), then auto. An older saved name is mapped the way the app maps it:
 night, lamp, neon, cherry -> dark; contrast -> contrast; everything else -> light.
 Which variant: a colour that reads on black fails on white, so every theme has a set for dark terminals and one for
@@ -46,8 +46,14 @@ BOLD_THEMES = ("contrast",)  # high contrast also makes every coloured line bold
 
 
 def appearance_file() -> Path:
-    p = os.environ.get("AI_WORKSPACE_APPEARANCE_FILE")
-    return Path(p) if p else Path.home() / ".ai-workspace" / "appearance.json"
+    p = os.environ.get("AI_WORKSPACE_APPEARANCE_FILE") or os.environ.get("ROOKS_APPEARANCE_FILE")
+    if p:
+        return Path(p)
+    from . import local_brain
+    return local_brain.ensure_migrated_file(
+        local_brain.appearance_path(),
+        Path.home() / ".ai-workspace" / "appearance.json",
+    )
 
 
 def normalise(name: str | None) -> str | None:

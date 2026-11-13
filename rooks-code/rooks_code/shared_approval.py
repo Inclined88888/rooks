@@ -1,11 +1,11 @@
-"""One approval, two places: the terminal prompt and the Rooks app's Approvals list.
+"""One approval, two places: the terminal prompt and the Rooks Desk notification channel.
 
 When rooks is linked to an app conversation (provider workbench), every change it asks about is also posted to the app
-(/v1/rooks/approvals) with its diff or command. The first answer wins: typed here, or clicked in the app (browser, app
-window or phone). The other side is told, so the app's card closes or the terminal goes ahead. Each request has its
-own id, so an earlier answer can never approve a later change.
+(/v1/rooks/approvals) with its diff or command. Independently, a Needs-you drop under ~/.rooks/run/needs-you/ is
+written and — when the daemon is reachable — an action_required card is raised in Desk notifications
+(POST /api/notifications). The first answer wins: typed here, or clicked in the app. Each request has its own id.
 
-Not linked, or the app unreachable: the plain local prompt, exactly as before.
+Not linked, or the app unreachable: the plain local prompt, with the Desk drop/notification still attempted.
 """
 
 from __future__ import annotations
@@ -17,6 +17,9 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import uuid
+
+from . import local_brain
 
 ANSWERS = {"y": "y", "yes": "y", "n": "n", "no": "n", "a": "a", "always": "a"}
 POLL_S = 1.0
@@ -82,11 +85,18 @@ def ask(ui, plan, show_prompt, read_line) -> str:
     """Return 'y', 'n' or 'a'. show_prompt() prints the question; read_line() reads one line ('' at end of input)."""
     link = Link.of(ui)
     aid = link.create(plan) if link else None
-    if aid:
-        ui.p(ui.c("dim", "  Also waiting in Needs you in the app. Answer here or there."))
+    anchor = f"t:{aid}" if aid else f"t:local-{uuid.uuid4().hex[:12]}"
+    title = (getattr(plan, "summary", None) or getattr(plan, "effect", None) or "Needs your approval")[:120]
+    preview = (getattr(plan, "preview", None) or "")[:2000]
+    local_brain.notify_desk_needs_you(
+        title=f"Terminal: {title}", body=preview or title, anchor=anchor, source="rooks-code",
+    )
+    ui.p(ui.c("dim", "  Also waiting in Needs you on Desk. Answer here or there."))
     show_prompt()
     if not aid or link is None:
-        return _local(ui, show_prompt, read_line)
+        answer = _local(ui, show_prompt, read_line)
+        local_brain.dismiss_desk_needs_you(anchor)
+        return answer
     keyboard = True
     deadline = None
     while True:
@@ -105,6 +115,7 @@ def ask(ui, plan, show_prompt, read_line) -> str:
                 show_prompt()
                 continue
             stood = link.answer(aid, a in ("y", "a"))
+            local_brain.dismiss_desk_needs_you(anchor)
             if stood == "denied" and a != "n":
                 ui.p(ui.c("error", "  Already denied in the app."))
                 return "n"
@@ -116,13 +127,16 @@ def ask(ui, plan, show_prompt, read_line) -> str:
             time.sleep(POLL_S)
             if deadline and time.monotonic() > deadline:
                 link.answer(aid, False)
+                local_brain.dismiss_desk_needs_you(anchor)
                 ui.p(ui.c("error", "  No answer in time: denied."))
                 return "n"
         st = link.status(aid)
         if st == "approved":
+            local_brain.dismiss_desk_needs_you(anchor)
             ui.p(ui.c("ok", "  Approved in the app."))
             return "y"
         if st == "denied":
+            local_brain.dismiss_desk_needs_you(anchor)
             ui.p(ui.c("error", "  Denied in the app."))
             return "n"
 
