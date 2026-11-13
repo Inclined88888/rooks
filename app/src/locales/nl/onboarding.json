@@ -12,16 +12,16 @@
     },
     "account": {
       "title": "Maak je lokale account aan",
-      "subtitle": "Hiermee meld je je aan bij Timon. Jij bent de beheerder.",
+      "subtitle": "Hiermee meld je je aan bij Rooks. Jij bent de beheerder.",
       "privacy": "We verzamelen alleen je e-mailadres voor het geval je je wachtwoord wilt resetten. Het account dat je aanmaakt blijft lokaal."
     },
     "llm": {
       "title": "Kies\nje LLM.",
-      "subtitle": "Timon draait op de AI-abonnementen die je al hebt. Nooit een rekening per token."
+      "subtitle": "Rooks draait op de AI-abonnementen die je al hebt. Nooit een rekening per token."
     },
     "profile": {
       "title": "Wat brengt je hier?",
-      "subtitle": "Timon stemt zijn standaardinstellingen en rondleiding af op je antwoord."
+      "subtitle": "Rooks stemt zijn standaardinstellingen en rondleiding af op je antwoord."
     },
     "agent": {
       "templates": {
@@ -39,7 +39,7 @@
     },
     "signin": {
       "title": "Welkom terug",
-      "subtitle": "Timon heeft een nieuw uiterlijk. Meld je aan met je Timon-account om verder te gaan."
+      "subtitle": "Rooks heeft een nieuw uiterlijk. Meld je aan met je Rooks-account om verder te gaan."
     },
     "mascot": {
       "title": "Maak kennis met de mascotte van {name}",
@@ -48,10 +48,11 @@
     "scheme": {
       "label": "Lichte of donkere modus",
       "light": "Licht",
-      "dark": "Donker"
+      "dark": "Donker",
+      "system": "System"
     },
     "discover": {
-      "label": "Ontdek Timon",
+      "label": "Ontdek Rooks",
       "slide": "Dia {current} van {total}",
       "next": "Volgende",
       "skip": "Alles overslaan",

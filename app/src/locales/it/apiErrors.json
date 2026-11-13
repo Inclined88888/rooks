@@ -37,7 +37,7 @@
     "signin_not_in_progress": "Nessun accesso in corso.",
     "workspace_unknown": "Area di lavoro sconosciuta.",
     "project_no_cwd": "Questo progetto non ha una cartella configurata.",
-    "path_unknown": "Questo percorso è sconosciuto a Timon: non è né una cartella di un agente né un worktree di un’attività.",
+    "path_unknown": "Questo percorso è sconosciuto a Rooks: non è né una cartella di un agente né un worktree di un’attività.",
     "secret_unknown": "Segreto sconosciuto.",
     "vault_unavailable": "L’archivio dei segreti non è disponibile.",
     "license_server_unreachable": "Il server delle licenze non è raggiungibile.",

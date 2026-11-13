@@ -4,9 +4,10 @@
     "continue": "Continue",
     "progress": "Step {current} of {total}",
     "scheme": {
-      "label": "Light or dark mode",
+      "label": "Light or system",
       "light": "Light",
-      "dark": "Dark"
+      "dark": "Dark",
+      "system": "System"
     },
     "splash": {
       "title": "Your AI team,\nat home.",
@@ -20,7 +21,7 @@
     },
     "account": {
       "title": "Create your local account",
-      "subtitle": "You sign in to Timon with it. You are its administrator.",
+      "subtitle": "A name is enough. Email is optional. You are the administrator.",
       "name": "First name",
       "nameHint": "So your agents call you by your first name.",
       "email": "Email",
@@ -31,6 +32,7 @@
       "mismatch": "The two passwords don't match.",
       "tooShort": "At least {min} characters.",
       "create": "Create my account",
+      "skip": "Skip for now",
       "privacy": "We only collect your email in case you want to reset your password. The account you create stays local."
     },
     "legacy": {
@@ -38,11 +40,11 @@
     },
     "llm": {
       "title": "Choose\nyour LLM.",
-      "subtitle": "Timon runs on the AI subscriptions you already have. Never a bill per token.",
+      "subtitle": "Rooks runs on the AI subscriptions you already have. Never a bill per token.",
       "plan": {
         "title": "Use my AI subscription",
         "detailAny": "The AI tools you already pay for",
-        "hint": "Timon looked for the AI tools already on this machine.",
+        "hint": "Rooks looked for the AI tools already on this machine.",
         "ready": "Ready with {names}.",
         "none": "Connect at least one AI to continue.",
         "anyway": "Continue anyway"
@@ -60,7 +62,7 @@
     },
     "profile": {
       "title": "What brings you here?",
-      "subtitle": "Timon tunes its defaults and its tour to your answer.",
+      "subtitle": "Rooks tunes its defaults and its tour to your answer.",
       "developer": {
         "title": "I write code",
         "description": "Agents that code, review and merge in my repositories."
@@ -91,7 +93,7 @@
       "profileError": "Your profile could not be read, so here is the simplest view.",
       "retry": "Retry",
       "cap": {
-        "base": "Chat with you in Timon",
+        "base": "Chat with you in Rooks",
         "mail": "Read and sort your email",
         "agenda": "Check and fill your calendar",
         "code": "Work in your Git repositories",
@@ -196,7 +198,7 @@
           }
         },
         "notify": {
-          "timon": "In Timon",
+          "timon": "In Rooks",
           "telegram": "Telegram",
           "email": "By email"
         },
@@ -251,7 +253,7 @@
           "default": "Ask for every sensitive tool",
           "acceptEdits": "Accept file edits, ask for the rest",
           "plan": "Read-only: plans, changes nothing",
-          "auto": "Auto: Timon’s classifier decides, a card only when unsure",
+          "auto": "Auto: Rooks’s classifier decides, a card only when unsure",
           "bypassPermissions": "Allow everything, no checks at all"
         },
         "bypassWarning": "No approval card at all: it can do anything on this machine.",
@@ -283,7 +285,7 @@
     },
     "signin": {
       "title": "Welcome back",
-      "subtitle": "Timon has a new look. Sign in with your Timon account to continue."
+      "subtitle": "Rooks has a new look. Sign in with your Rooks account to continue."
     },
     "mascot": {
       "title": "Meet {name}'s mascot",
@@ -294,7 +296,7 @@
       "failed": "The look could not be saved. Try again, or choose “Not now”."
     },
     "discover": {
-      "label": "Discover Timon",
+      "label": "Discover Rooks",
       "slide": "Slide {current} of {total}",
       "next": "Next",
       "skip": "Skip all",

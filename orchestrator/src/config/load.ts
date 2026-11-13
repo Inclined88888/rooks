@@ -15,11 +15,11 @@ import { homedir } from 'node:os';
 import { dirname, join, resolve as resolvePath } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonicalizeIds } from '../kernel/legacy-ids.js';
-import { TIMON_HOME } from '../paths.js';
+import { STATE_STEM, TIMON_HOME } from '../paths.js';
 import { isLoopbackHost } from '../users/setup-token.js';
 import { CONFIG_VERSION, TimonConfigSchema, type TimonConfig } from './schema.js';
 
-export const CONFIG_FILE = join(TIMON_HOME, 'timon.config.json');
+export const CONFIG_FILE = join(TIMON_HOME, `${STATE_STEM}.config.json`);
 
 export class ConfigError extends Error {}
 

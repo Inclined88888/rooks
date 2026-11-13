@@ -43,7 +43,7 @@ test('installation settings: the About button exists only in a desktop that can 
     root = createRoot(document.getElementById('root')!);
     await React.act(async () => { root.render(React.createElement(SystemInstallationSettings)); });
   };
-  const aboutButton = () => Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'About Timon and third-party licences');
+  const aboutButton = () => Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'About Rooks and third-party licences');
   try {
     await remount();
     assert.ok(document.querySelector('section'), 'the pane rendered');

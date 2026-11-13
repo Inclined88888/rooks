@@ -31,8 +31,8 @@ export function setSystemctlForTest(fn: ((args: string[]) => { ok: boolean; out:
 
 /** States in which a user manager can still install and start a unit.
  *  `offline` is what a container prints when pid 1 is not systemd: the word is
- *  non-empty, and the next `systemctl` cannot talk to a bus. Treating that as
- *  a manager blocks portable mode and setup never finishes. */
+ *  non-empty, and the next `systemctl show` cannot talk to a bus. Treating
+ *  that as a manager blocks portable mode and the setup never finishes. */
 const USABLE_SYSTEMD_STATES = new Set(['running', 'degraded', 'starting', 'initializing', 'maintenance']);
 
 export function systemdUserManagerUsable(state: string): boolean {

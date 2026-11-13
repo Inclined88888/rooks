@@ -66,10 +66,11 @@ test('installDir expands a leading tilde', () => {
   assert.equal(expandTilde('/abs/path'), '/abs/path');
 });
 
-test('TIMON_HOME wins over the real home', () => {
+test('ROOKS_HOME wins, and a fresh install lives in ~/.rooks', () => {
+  assert.equal(resolveTimonHome({ ROOKS_HOME: '/tmp/rooks-home', TIMON_HOME: '/tmp/elsewhere' }), '/tmp/rooks-home');
   assert.equal(resolveTimonHome({ TIMON_HOME: '/tmp/elsewhere' }), '/tmp/elsewhere');
-  assert.ok(resolveTimonHome({}).endsWith('/.timon'));
-  assert.ok(resolveTimonHome({ TIMON_HOME: '' }).endsWith('/.timon'));
+  assert.ok(resolveTimonHome({}).endsWith('/.rooks'));
+  assert.ok(resolveTimonHome({ TIMON_HOME: '' }).endsWith('/.rooks'));
 });
 
 test('a wildcard listen address is dialled back to the loopback', () => {

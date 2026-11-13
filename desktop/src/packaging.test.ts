@@ -242,7 +242,7 @@ test('the NSIS installer installs missing Node.js and Git with one elevation', (
 test('the NSIS uninstaller removes the launcher files once the task is deleted', () => {
   const nsh = readFileSync(join(root, 'build', 'installer.nsh'), 'utf8');
   const uninstall = nsh.match(/!macro customUnInstall\s+([\s\S]*?)!macroend/)?.[1] ?? '';
-  const cleanup = uninstall.match(/\$\{If\} \$0 == 0\s+([\s\S]*?)\$\{EndIf\}\s+DetailPrint "Timon data has been kept\."/)?.[1] ?? '';
+  const cleanup = uninstall.match(/\$\{If\} \$0 == 0\s+([\s\S]*?)\$\{EndIf\}\s+DetailPrint "Rooks data has been kept\."/)?.[1] ?? '';
   for (const file of ['service-revision', 'timon-service.cmd', 'timon-service.vbs', 'session-witness.dpapi', 'service-repair-declined']) {
     assert.ok(cleanup.includes(`Delete "$PROFILE\\.timon\\run\\${file}"`), file);
   }
@@ -346,7 +346,7 @@ test('the desktop reads a service\'s home the way the host adapter does', () => 
   assert.match(install, /return join\(timonHome, 'run', 'timon-service\.sh'\);/u);
   assert.ok(desktop.includes(String.raw`\/run\/timon-service\.sh`));
   assert.ok(install.includes('`export ${key}=${shQuote(value)}`'), 'the launcher exports each variable, quoted');
-  assert.ok(desktop.includes(String.raw`^export TIMON_HOME='`));
+  assert.ok(desktop.includes(String.raw`^export (?:TIMON_HOME|ROOKS_HOME)='`));
   assert.ok(install.includes('<string>${escapeXml(macosLauncherPath(opts.timonHome))}</string>'), 'the plist names the launcher');
   assert.ok(install.includes('`    <key>${escapeXml(key)}</key><string>${escapeXml(value)}</string>`'), 'the plists set each variable');
   // The refusal says what the host adapter's says.
@@ -397,8 +397,8 @@ test('every installer the package builds is one the in-app update can install (P
 });
 
 test('the appId carries the brand, frozen in phase R', () => {
-  assert.match(yml, /appId:\s*com\.timon\.desktop/);
-  assert.match(yml, /productName:\s*Timon/);
+  assert.match(yml, /appId:\s*com\.rooks\.desktop/);
+  assert.match(yml, /productName:\s*Rooks/);
 });
 
 /**

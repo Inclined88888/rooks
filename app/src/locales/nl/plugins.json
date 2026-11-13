@@ -43,10 +43,10 @@
     "verified": "Geverifieerd",
     "unverified": "Niet geverifieerd",
     "builtin": "Ingebouwd",
-    "builtinHint": "Wordt met Timon meegeleverd: hij kan worden uitgezet, niet verwijderd.",
+    "builtinHint": "Wordt met Rooks meegeleverd: hij kan worden uitgezet, niet verwijderd.",
     "awaitingApproval": "Goed te keuren op deze computer",
     "awaitingApprovalHint": "Deze machine draait hem, maar zijn interfacecode laadt hier pas als dezelfde versie, met dezelfde handtekening, op deze computer is geïnstalleerd en ingeschakeld.",
-    "awaitingApprovalBuiltinHint": "Deze machine draait hem, maar zijn interfacecode laadt hier pas als deze computer dezelfde versie van deze plug-in, met dezelfde interfacecode, meelevert en heeft ingeschakeld. Twee Timon-releases kunnen onder één plug-inversie verschillende code leveren: werk de oudere machine bij.",
+    "awaitingApprovalBuiltinHint": "Deze machine draait hem, maar zijn interfacecode laadt hier pas als deze computer dezelfde versie van deze plug-in, met dezelfde interfacecode, meelevert en heeft ingeschakeld. Twee Rooks-releases kunnen onder één plug-inversie verschillende code leveren: werk de oudere machine bij.",
     "modules": {
       "@timon/db": {
         "label": "Database",
@@ -178,11 +178,11 @@
       },
       "@timon/terminal-web": {
         "label": "Ingebouwde terminal",
-        "description": "Een terminal in Timon — desktop, browser of telefoon — die een shell op deze machine draait. Voorbehouden aan accounts die er een mogen openen."
+        "description": "Een terminal in Rooks — desktop, browser of telefoon — die een shell op deze machine draait. Voorbehouden aan accounts die er een mogen openen."
       },
       "@timon/ui-documents": {
         "label": "Documenten in de chat",
-        "description": "Interactieve HTML-documenten die een agent, jij of een plug-in in een gesprek toont, geïsoleerd van Timon in een sandboxframe."
+        "description": "Interactieve HTML-documenten die een agent, jij of een plug-in in een gesprek toont, geïsoleerd van Rooks in een sandboxframe."
       },
       "@timon/orchestrator-self": {
         "label": "Daemon",
@@ -210,11 +210,11 @@
       },
       "@timon/telemetry": {
         "label": "Gebruiksstatistieken",
-        "description": "Stuurt anonieme gebruiksstatistieken naar het Timon-team: welke functies worden gebruikt, hoe beurten verlopen, waar de configuratie stokt. Nooit je inhoud, namen of paden. Kan worden uitgezet in de privacyinstellingen."
+        "description": "Stuurt anonieme gebruiksstatistieken naar het Rooks-team: welke functies worden gebruikt, hoe beurten verlopen, waar de configuratie stokt. Nooit je inhoud, namen of paden. Kan worden uitgezet in de privacyinstellingen."
       },
       "@timon/machines": {
         "label": "Machines",
-        "description": "Andere Timon-machines aan deze koppelen en hun toegang in de kluis bewaren, om de interface van de ene machine naar de andere te wisselen. Uit tot je het aanzet."
+        "description": "Andere Rooks-machines aan deze koppelen en hun toegang in de kluis bewaren, om de interface van de ene machine naar de andere te wisselen. Uit tot je het aanzet."
       },
       "@timon/company": {
         "label": "Company",
@@ -262,8 +262,8 @@
       "tampered": "Gewijzigd pakket",
       "unsignedLoads": "Niet ondertekend — laadt in ontwikkelaarsmodus",
       "unsignedBlocked": "Niet ondertekend — laadt niet",
-      "manifestRefused": "Timon kan deze plug-in niet gebruiken: {reason}",
-      "nodeEngineRefused": "Deze plug-in draait niet op de Node die deze Timon gebruikt: {reason}",
+      "manifestRefused": "Rooks kan deze plug-in niet gebruiken: {reason}",
+      "nodeEngineRefused": "Deze plug-in draait niet op de Node die deze Rooks gebruikt: {reason}",
       "tamperedHint": "De bestanden komen niet meer overeen met hun handtekening: dit pakket is na het ondertekenen gewijzigd. Het kan niet worden geïnstalleerd.",
       "permissions": "Vraagt om",
       "permissionsNone": "geen toestemming",
@@ -286,7 +286,7 @@
           "unreadable": "Kan pas na installatie worden gelezen: hij wordt geïnstalleerd zonder dat hem iets wordt toegekend. Ken zijn geheimen toe via de pagina Geheimen; is het een provider, dan blijft hij inactief tot je hem autoriseert in {settingsPath}.",
           "unresolved": "Geen van de afhankelijkheden van deze bundel levert hem: hij wordt niet geïnstalleerd, dus er wordt niets voor gevraagd.",
           "tampered": "Zijn bestanden komen niet meer overeen met hun handtekening: hij wordt niet geladen, dus er wordt niets voor gevraagd.",
-          "nodeEngine": "Hij draait niet op de Node die deze Timon gebruikt: hij wordt niet geladen, dus er wordt niets voor gevraagd. {reason}"
+          "nodeEngine": "Hij draait niet op de Node die deze Rooks gebruikt: hij wordt niet geladen, dus er wordt niets voor gevraagd. {reason}"
         },
         "refused": {
           "not-installed": "‘{name}’ is niet geïnstalleerd, dus zijn programma's zijn niet geautoriseerd.",
@@ -305,7 +305,7 @@
         "read": "Leest kluisgeheimen op naam, zonder ze op dit blad te noemen: je geeft elk geheim aan deze plug-in via Geheimen, of via de kaart die hij toont als hij erom vraagt.",
         "broker": "Roept API's aan onder kluisidentiteiten zonder hun sleutels te zien, alleen die hem bij naam zijn toegekend.",
         "brokerNoHttp": "Hij declareert http:outbound niet, dus zijn API-aanroepen via de broker worden geweigerd.",
-        "network": "Zijn netwerktoegang is beperkt tot de hosts die in timon.config.json zijn geopend, voor elke plug-in (pluginPolicy.http.allow) of alleen voor deze (pluginPolicy.http.byPlugin), en tot de adressen van goedgekeurde verbindingen.",
+        "network": "Zijn netwerktoegang is beperkt tot de hosts die in rooks.config.json zijn geopend, voor elke plug-in (pluginPolicy.http.allow) of alleen voor deze (pluginPolicy.http.byPlugin), en tot de adressen van goedgekeurde verbindingen.",
         "secretsLead": "Geheimen die hij noemt. Een aangevinkt geheim wordt alleen aan deze plug-in toegekend; uitvinken trekt nooit een toekenning in (dat gebeurt via Geheimen).",
         "hostsLead": "Hosts die hij bereikt. Een aangevinkte host wordt alleen voor deze plug-in geopend.",
         "hostOwn": "Al open voor deze plug-in. Vink uit om hem te sluiten: zijn hosts worden vervangen door de hier aangevinkte.",
@@ -325,7 +325,7 @@
         "choose": "Kiezen op de pagina Geheimen"
       },
       "disclaimerTitle": "Plug-in van derden",
-      "disclaimer": "Deze plug-in is niet gemaakt, nagekeken of gegarandeerd door Timon, en Timon is niet verantwoordelijk voor wat hij doet. Eenmaal geïnstalleerd draait hij in Timon met de rechten van je account. Installeer alleen plug-ins van auteurs die je vertrouwt.",
+      "disclaimer": "Deze plug-in is niet gemaakt, nagekeken of gegarandeerd door Rooks, en Rooks is niet verantwoordelijk voor wat hij doet. Eenmaal geïnstalleerd draait hij in Rooks met de rechten van je account. Installeer alleen plug-ins van auteurs die je vertrouwt.",
       "cancel": "Annuleren",
       "installing": "Installeren…",
       "reinstall": "Deze versie installeren",
@@ -333,7 +333,7 @@
       "refreshed": "{reason} Het blad hieronder is bijgewerkt: bekijk het en installeer opnieuw.",
       "errors": {
         "unauthenticated": "Je sessie is verlopen — meld je opnieuw aan.",
-        "forbidden": "Alleen een superadmin die bij Timon is aangemeld, kan een plug-in installeren.",
+        "forbidden": "Alleen een superadmin die bij Rooks is aangemeld, kan een plug-in installeren.",
         "too-large": "Deze plug-in is te groot (hooguit 25 MB archief, 200 MB bestanden).",
         "too-many-entries": "Deze plug-in bevat te veel bestanden.",
         "not-gzip": "Dit is geen plug-inarchief: .tgz of .zip verwacht.",
@@ -343,22 +343,22 @@
         "corrupt": "Dit archief is beschadigd.",
         "not-archive": "Dit is geen plug-inarchief: .tgz of .zip verwacht.",
         "not-zip": "Dit is geen geldig .zip-archief.",
-        "zip64": "Deze .zip gebruikt het formaat zip64, dat Timon niet leest. Zip de plug-in opnieuw met een standaardtool, of gebruik een .tgz.",
+        "zip64": "Deze .zip gebruikt het formaat zip64, dat Rooks niet leest. Zip de plug-in opnieuw met een standaardtool, of gebruik een .tgz.",
         "encrypted": "Deze .zip is met een wachtwoord beveiligd. Zip de plug-in opnieuw zonder wachtwoord.",
         "multi-volume": "Deze .zip is in meerdere delen gesplitst. Maak één .zip.",
-        "compression": "Deze .zip gebruikt een compressiemethode die Timon niet kan lezen. Zip de plug-in opnieuw met standaardcompressie.",
-        "not-a-plugin": "Dit is geen Timon-plug-in: geen package.json met een `timon`-manifest.",
+        "compression": "Deze .zip gebruikt een compressiemethode die Rooks niet kan lezen. Zip de plug-in opnieuw met standaardcompressie.",
+        "not-a-plugin": "Dit is geen Rooks-plug-in: geen package.json met een `timon`-manifest.",
         "invalid-path": "Dit pad kan niet worden gebruikt.",
         "forbidden-path": "Uit deze map kunnen geen plug-ins worden geïnstalleerd.",
         "not-found": "Daar is niets meer gevonden.",
         "expired": "Dit voorbeeld is verlopen. Kies de plug-in opnieuw.",
         "tampered": "Het pakket is na het ondertekenen gewijzigd. Het kan niet worden geïnstalleerd.",
         "manifest": "Het manifest van de plug-in is ongeldig. Hij kan niet worden geïnstalleerd.",
-        "npm-missing": "npm is niet beschikbaar op de machine waarop Timon draait. Installeer Node.js en probeer het opnieuw.",
-        "install-failed": "De installatie is mislukt. Het Timon-log bevat de details.",
+        "npm-missing": "npm is niet beschikbaar op de machine waarop Rooks draait. Installeer Node.js en probeer het opnieuw.",
+        "install-failed": "De installatie is mislukt. Het Rooks-log bevat de details.",
         "name-taken": "Een ander pakket gebruikt deze naam al in de plug-inmap.",
         "generic": "De daemon weigerde (HTTP {status}).",
-        "unreadable": "Timon mag deze locatie niet lezen. Sta het op macOS toe in Systeeminstellingen › Privacy en beveiliging, of verplaats de plug-in.",
+        "unreadable": "Rooks mag deze locatie niet lezen. Sta het op macOS toe in Systeeminstellingen › Privacy en beveiliging, of verplaats de plug-in.",
         "mismatch": "Wat deze plug-in vraagt (een programma, een geheim of een host) is gewijzigd sinds het werd getoond.",
         "refused": "Dit programma mag nooit door een plug-in worden uitgevoerd.",
         "not-provider": "Deze plug-in is geen provider.",
@@ -373,7 +373,7 @@
   },
   "providersSettings": {
     "title": "Providers",
-    "description": "Providerplug-ins brengen een AI-dienst naar Timon. Elk programma dat een provider start, wordt hier via zijn opgeloste pad geautoriseerd voordat het kan draaien.",
+    "description": "Providerplug-ins brengen een AI-dienst naar Rooks. Elk programma dat een provider start, wordt hier via zijn opgeloste pad geautoriseerd voordat het kan draaien.",
     "cancel": "Annuleren",
     "consent": {
       "prompts": "Krijgt elke instructie en elk antwoord van de missies die hij bedient.",
@@ -384,7 +384,7 @@
       "osCredentialAccount": "Leest het item ‘{service}’ ({account}) van je systeemopslag voor inloggegevens (macOS-sleutelhanger). Alleen lezen."
     },
     "install": {
-      "allow": "Timon toestaan de hierboven genoemde programma's uit te voeren.",
+      "allow": "Rooks toestaan de hierboven genoemde programma's uit te voeren.",
       "allowHint": "Zonder dit is de provider geïnstalleerd maar blijft hij inactief tot je hem autoriseert in {settingsPath}."
     },
     "plugins": {
@@ -394,7 +394,7 @@
       "notFound": "niet geïnstalleerd op deze machine",
       "authorize": "Bekijken en autoriseren",
       "authorizeTitle": "{name} autoriseren",
-      "authorizeBody": "Timon heeft deze programma's op deze machine opgelost. Sta alleen de paden toe die je herkent.",
+      "authorizeBody": "Rooks heeft deze programma's op deze machine opgelost. Sta alleen de paden toe die je herkent.",
       "authorizeConfirm": "Deze programma's toestaan",
       "authorized": "{name} is geautoriseerd.",
       "state": {
@@ -412,10 +412,10 @@
     },
     "acp": {
       "title": "ACP-register",
-      "description": "Agents uit het officiële register van het Agent Client Protocol. Timon downloadt het programma, controleert het en draait het als backend.",
+      "description": "Agents uit het officiële register van het Agent Client Protocol. Rooks downloadt het programma, controleert het en draait het als backend.",
       "browse": "Register doorbladeren",
       "refresh": "Vernieuwen",
-      "stale": "Het register was niet bereikbaar; dit is de laatste lijst die Timon las.",
+      "stale": "Het register was niet bereikbaar; dit is de laatste lijst die Rooks las.",
       "verified": "sha256 geverifieerd",
       "noHash": "Geen gepubliceerde hash",
       "unsupported": "Hier niet beschikbaar: {reason}",
@@ -438,7 +438,7 @@
       "confirmAction": "Toch installeren"
     },
     "errors": {
-      "forbidden": "Alleen een superadmin die bij Timon is aangemeld, kan providers beheren.",
+      "forbidden": "Alleen een superadmin die bij Rooks is aangemeld, kan providers beheren.",
       "generic": "De daemon weigerde (HTTP {status}).",
       "mismatch": "Het programma is gewijzigd sinds het werd getoond. Bekijk het opnieuw.",
       "refused": "Dit programma mag nooit door een plug-in worden uitgevoerd.",
@@ -452,14 +452,14 @@
       "checksum": "Het gedownloade bestand komt niet overeen met de gepubliceerde controlesom. Het is verwijderd.",
       "archive": "Het archief is als onveilig geweigerd.",
       "command-missing": "Het programma dat het register noemt, staat niet in het archief.",
-      "definition-refused": "Timon heeft deze agent geweigerd: zijn beschrijving spreekt zichzelf tegen.",
-      "authorize-failed": "Het programma kon niet worden geautoriseerd. Het Timon-log bevat de details.",
-      "failed": "De bewerking is mislukt. Het Timon-log bevat de details."
+      "definition-refused": "Rooks heeft deze agent geweigerd: zijn beschrijving spreekt zichzelf tegen.",
+      "authorize-failed": "Het programma kon niet worden geautoriseerd. Het Rooks-log bevat de details.",
+      "failed": "De bewerking is mislukt. Het Rooks-log bevat de details."
     }
   },
   "binariesSettings": {
     "title": "CLI-programma's",
-    "description": "Waar Timon de opdrachtregeltool van elke AI-provider op deze machine heeft gevonden. Ontbreekt er een of staat hij op een ongewone plek, zet dan zijn volledige pad vast: het geldt vanaf de volgende missie, zonder Timon te herstarten.",
+    "description": "Waar Rooks de opdrachtregeltool van elke AI-provider op deze machine heeft gevonden. Ontbreekt er een of staat hij op een ongewone plek, zet dan zijn volledige pad vast: het geldt vanaf de volgende missie, zonder Rooks te herstarten.",
     "recheck": "Opnieuw controleren",
     "rechecked": "Programma's opnieuw gecontroleerd.",
     "none": "Geen lokale provider gebruikt een opdrachtregeltool.",
@@ -473,7 +473,7 @@
     "save": "Pad opslaan",
     "clear": "Vastzetting verwijderen",
     "saved": "{name}: pad opgeslagen. Nieuwe missies gebruiken het.",
-    "cleared": "{name}: vastzetting verwijderd. Timon zoekt het weer zelf.",
+    "cleared": "{name}: vastzetting verwijderd. Rooks zoekt het weer zelf.",
     "state": {
       "found": "Gevonden",
       "pinned": "Vastgezet",
@@ -488,7 +488,7 @@
       "path_not_file": "Dit is een map. Kies het programmabestand zelf.",
       "path_not_executable": "Dit bestand kan niet worden uitgevoerd: het is niet uitvoerbaar.",
       "no_config": "Rond eerst de configuratie af.",
-      "config_unreadable": "timon.config.json kan niet worden gelezen. Herstel het bestand en controleer opnieuw.",
+      "config_unreadable": "rooks.config.json kan niet worden gelezen. Herstel het bestand en controleer opnieuw.",
       "invalid_body": "Dit pad kan niet worden opgeslagen.",
       "browse": "De bestandskiezer kon niet worden geopend.",
       "generic": "De wijziging is mislukt (fout {status})."

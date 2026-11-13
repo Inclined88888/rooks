@@ -70,7 +70,7 @@ export function homeOfUnit(text: string, homeDir: string): string | null {
 
 /** `TIMON_HOME` of a LaunchAgent or LaunchDaemon plist (`renderPlist`, `renderLaunchDaemonPlist`). */
 export function homeOfPlist(text: string): string | null {
-  const match = /<key>TIMON_HOME<\/key>\s*<string>([^<]*)<\/string>/.exec(text);
+  const match = /<key>(?:TIMON_HOME|ROOKS_HOME)<\/key>\s*<string>([^<]*)<\/string>/.exec(text);
   return match ? unescapeXml(match[1]!) : null;
 }
 

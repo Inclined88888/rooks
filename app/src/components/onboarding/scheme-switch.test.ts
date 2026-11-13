@@ -59,33 +59,27 @@ async function render(osLight: boolean, stored: string | null, run: (host: HTMLE
 
 const pressed = (host: HTMLElement): string | null => host.querySelector('[aria-pressed="true"]')?.getAttribute('data-scheme') ?? null;
 
-test('the switch shows dark until someone picks, even on a light OS, then paints the pick at once', async () => {
+test('the switch shows light until someone picks system', async () => {
   await render(true, null, async (host, dom, React) => {
     const { firstRunScheme } = await import('@/lib/first-run-gate');
-    assert.equal(pressed(host), 'dark', 'a light OS: still dark, for everyone');
-    assert.equal(firstRunScheme(), 'dark', 'no pick: the account would be dark');
-    assert.ok(dom.window.document.documentElement.classList.contains('dark'));
-    await React.act(async () => { (host.querySelector('[data-scheme="light"]') as HTMLElement).click(); });
-    assert.equal(pressed(host), 'light');
-    assert.ok(dom.window.document.documentElement.classList.contains('light'), 'applied straight away');
-    assert.equal(dom.window.sessionStorage.getItem('timon-onboarding-scheme'), 'light', 'kept for the next page of the flow');
-    assert.equal(firstRunScheme(), 'light', 'what the account step sends as the account scheme');
+    assert.equal(pressed(host), 'light', 'a first launch is light');
+    assert.equal(firstRunScheme(), 'light');
+    await React.act(async () => { (host.querySelector('[data-scheme="system"]') as HTMLElement).click(); });
+    assert.equal(pressed(host), 'system');
+    assert.equal(dom.window.localStorage.getItem('rooks.appearance.schemeMode'), 'system');
   });
 });
 
-test('a pick made earlier in the flow survives a full navigation', async () => {
-  await render(false, 'light', async (host) => {
-    assert.equal(pressed(host), 'light', 'the stored pick wins over the default dark');
-  });
-  await render(true, 'auto', async (host) => {
-    assert.equal(pressed(host), 'dark', 'anything else in storage is ignored: the default dark');
+test('light stays selected when nothing has chosen system', async () => {
+  await render(false, null, async (host) => {
+    assert.equal(pressed(host), 'light');
   });
 });
 
 test('the switch speaks the active language', async () => {
   const { loadLocale } = await import('@/lib/i18n');
   await render(false, null, async (host) => {
-    assert.equal(host.querySelector('[role="group"]')?.getAttribute('aria-label'), 'Light or dark mode');
+    assert.equal(host.querySelector('[role="group"]')?.getAttribute('aria-label'), 'Light or system');
   });
   await loadLocale('fr');
   try {

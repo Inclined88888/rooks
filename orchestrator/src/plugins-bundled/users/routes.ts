@@ -3,6 +3,7 @@
  * preferences, and the operator's account recovery. Administering accounts
  * belongs to the plugin that serves them (`ctx.accountProvider`).
  */
+import { createHash, randomBytes } from 'node:crypto';
 import { writeAppearance } from '../../appearance.js';
 import type { Router, Request, RequestHandler, Response } from 'express';
 import { freeAccountAllowed, FREE_ACCOUNT_RESTRICTED_MESSAGE } from '../../users/free-access.js';
@@ -419,10 +420,19 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
         return;
       }
     }
-    const email = parseEmail(body.email);
     const name = parseName(body.name);
-    const password = parsePassword(body.password);
-    if (!email || !name || !password) {
+    let email = parseEmail(body.email);
+    let password = parsePassword(body.password);
+    // A name is enough. Email and a password stay the existing path, including
+    // the emailed code. Skip sends only a name (or none, and we keep a local one).
+    const nameOnly = email === null && (typeof body.password !== 'string' || body.password.trim() === '');
+    if (nameOnly) {
+      const shown = name ?? 'Local';
+      email = `n${createHash('sha256').update(shown).digest('hex').slice(0, 20)}@local.host`;
+      password = randomBytes(24).toString('base64url');
+    }
+    const accountName = name ?? (nameOnly ? 'Local' : null);
+    if (!email || !accountName || !password) {
       res.status(400).json({
         error: 'email, name and password (min 8 characters) required',
       });
@@ -435,7 +445,7 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
     // A browser confirms the address before the account exists; the operator
     // (daemon-token, CLI) is trusted with the address it types.
     let emailChallenge: string | null = null;
-    if (emailVerification && req.auth?.kind !== 'daemon-token') {
+    if (!nameOnly && emailVerification && req.auth?.kind !== 'daemon-token') {
       emailChallenge = checkSetupEmailCode(req, res, emailDeps, body, email);
       if (!emailChallenge) return;
     }
@@ -500,7 +510,7 @@ export function registerRoutes(app: Router, options: UserRoutesOptions = {}): vo
       }
       const user = dbApi.createUser({
         email,
-        name,
+        name: accountName,
         passwordHash: hashPassword(password),
         isSuperadmin: true,
         status: 'active',

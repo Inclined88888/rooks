@@ -173,8 +173,8 @@ jobs:
           fi
           HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
           tag="rooks-test-${HEAD_SHA::8}"
-          title="TEST ONLY — Timon desktop ${tag}"
-          notes=$'TEST ONLY. Known-good Timon screens and setup, plus one fix: a systemd user bus that answers `offline` is not a supervisor, so setup can finish in portable mode.\n\n- Not a desktop-v release.\n- The app still says Timon. Renaming the screens waits.\n- OS code signing is not applied.\n- Daemon integrity uses an ephemeral TEST-ONLY Ed25519 pair minted in this job.\n- Licence is unchanged (AGPL-3.0-only).\n'
+          title="TEST ONLY — Rooks desktop ${tag}"
+          notes=$'TEST ONLY. Timon setup, with Rooks names and the visual rules: light on first launch, Light and System only, no mascot or slogan on onboarding.\n\n- Not a desktop-v release.\n- A systemd user bus that answers offline is not a supervisor.\n- OS code signing is not applied.\n- Daemon integrity uses an ephemeral TEST-ONLY Ed25519 pair minted in this job.\n- Licence is unchanged (AGPL-3.0-only).\n'
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${dmg[@]}" "${exe[@]}" "${appimage[@]}" "${deb[@]}" --clobber
           else

@@ -8,11 +8,9 @@
  * replaces it here too.
  */
 import type { ReactElement, ReactNode } from 'react';
-import { Dices, Paintbrush, Shuffle } from 'lucide-react';
+import { Dices } from 'lucide-react';
 import { BrandMark } from '@/components/brand-mark';
-import { AgentMascotHost } from '@/components/mascot/agent-mascot';
 import type { AgentLook } from '@/components/mascot/agent-look';
-import { furOf } from '@/components/mascot/mascot-geometry';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ModelOption } from '../agent-draft';
@@ -37,45 +35,14 @@ export type IdentityCardProps = {
 };
 
 export function IdentityCard(props: IdentityCardProps): ReactElement {
-  const { look, name, role, model, jump, disabled } = props;
+  const { name, role, model, disabled } = props;
   return (
     <aside
       data-identity-card
       className="relative overflow-hidden rounded-[26px] bg-card px-5 pb-5 pt-[22px] text-center shadow-elev-3 ring-1 ring-border md:sticky md:top-2"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-60 opacity-50 transition-[background] duration-500"
-        style={{ background: `radial-gradient(260px 200px at 50% 26%, ${furOf(look.color)}, transparent 70%)` }}
-      />
-      <div className="relative grid h-[130px] place-items-center">
-        <span key={jump} className={cn('inline-grid', jump > 0 && 'timon-mascot-jump')}>
-          <AgentMascotHost look={look} size={124} live label={name.trim() || null} />
-        </span>
-      </div>
-      <div className="relative mb-1 mt-1.5 flex justify-center gap-2">
-        <button
-          type="button"
-          data-random-look
-          disabled={disabled}
-          onClick={props.onRandomLook}
-          className="inline-flex h-[34px] items-center gap-[7px] rounded-full bg-foreground/10 pl-3 pr-3.5 text-[13px] font-semibold ring-1 ring-foreground/10 backdrop-blur transition-[background-color,transform] hover:-translate-y-px hover:bg-foreground/15 active:scale-95"
-        >
-          <Shuffle className="size-4" aria-hidden />
-          {t('onboarding.agent.random')}
-        </button>
-        <button
-          type="button"
-          data-customise
-          aria-expanded={props.styling}
-          aria-controls="agent-look-styler"
-          disabled={disabled}
-          onClick={props.onCustomise}
-          className="inline-flex h-[34px] items-center gap-[7px] rounded-full bg-foreground pl-3 pr-3.5 text-[13px] font-semibold text-background transition-[background-color,transform] hover:-translate-y-px active:scale-95"
-        >
-          <Paintbrush className="size-4" aria-hidden />
-          {t('onboarding.agent.customise')}
-        </button>
+      <div className="relative grid h-[72px] place-items-center text-lg font-semibold text-muted-foreground">
+        {(name.trim() || 'R').slice(0, 1)}
       </div>
       <label className="relative mb-2 mt-3.5 block text-left">
         <span className="mb-1.5 ml-0.5 block text-[11.5px] font-semibold text-muted-foreground">{t('onboarding.agent.nameLabel')}</span>

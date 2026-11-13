@@ -79,7 +79,7 @@ export function schemeFollowsSystem(pathname: string): boolean {
 }
 
 /** The scheme of the first-run surfaces before anyone picks one: dark, for everyone. */
-export const FIRST_RUN_DEFAULT_SCHEME = 'dark' as const;
+export const FIRST_RUN_DEFAULT_SCHEME = 'light' as const;
 
 /**
  * Where the light/dark picked on the onboarding's switch waits for the account

@@ -12,16 +12,16 @@
     },
     "account": {
       "title": "Erstelle dein lokales Konto",
-      "subtitle": "Damit meldest du dich bei Timon an. Du bist sein Administrator.",
+      "subtitle": "Damit meldest du dich bei Rooks an. Du bist sein Administrator.",
       "privacy": "Wir erfassen nur deine E-Mail-Adresse, falls du dein Passwort zurücksetzen möchtest. Das erstellte Konto bleibt lokal."
     },
     "llm": {
       "title": "Wähle\ndein LLM.",
-      "subtitle": "Timon nutzt die KI-Abos, die du bereits hast. Nie eine Rechnung pro Token."
+      "subtitle": "Rooks nutzt die KI-Abos, die du bereits hast. Nie eine Rechnung pro Token."
     },
     "profile": {
       "title": "Was führt dich hierher?",
-      "subtitle": "Timon passt seine Voreinstellungen und seine Tour an deine Antwort an."
+      "subtitle": "Rooks passt seine Voreinstellungen und seine Tour an deine Antwort an."
     },
     "agent": {
       "templates": {
@@ -39,7 +39,7 @@
     },
     "signin": {
       "title": "Willkommen zurück",
-      "subtitle": "Timon hat ein neues Aussehen. Melde dich mit deinem Timon-Konto an, um fortzufahren."
+      "subtitle": "Rooks hat ein neues Aussehen. Melde dich mit deinem Rooks-Konto an, um fortzufahren."
     },
     "mascot": {
       "title": "Das ist das Maskottchen von {name}",
@@ -48,10 +48,11 @@
     "scheme": {
       "label": "Heller oder dunkler Modus",
       "light": "Hell",
-      "dark": "Dunkel"
+      "dark": "Dunkel",
+      "system": "System"
     },
     "discover": {
-      "label": "Timon entdecken",
+      "label": "Rooks entdecken",
       "slide": "Folie {current} von {total}",
       "next": "Weiter",
       "skip": "Alle überspringen",

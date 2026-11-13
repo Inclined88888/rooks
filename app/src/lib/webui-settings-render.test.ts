@@ -129,7 +129,7 @@ test('the WebUI tab reads the daemon, and answers the PWA question per origin', 
       const mac = { ...absent, tailscale: { ...absent.tailscale, platform: 'darwin', installCommand: 'brew install --cask tailscale' } };
       const text = await render('http://timon.localhost/?settings=network%2Fwebui', () => Response.json(mac));
       assert.match(text, /Tailscale not installed/);
-      assert.match(text, /machine hosting Timon \(macOS\)/);
+      assert.match(text, /machine hosting Rooks \(macOS\)/);
       assert.match(text, /brew install --cask tailscale/);
       assert.match(text, /Mac App Store/);
 

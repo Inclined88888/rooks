@@ -90,7 +90,7 @@ export function renderNotices(markdown: string): { html: string; links: string[]
 
 export const ABOUT_CLOSE_URL = 'timon-about:close';
 
-export function aboutPage(input: { version: string; electron: string; notices: string | null; locale: string; scheme: 'light' | 'dark' }): { html: string; links: string[] } {
+export function aboutPage(input: { version: string; electron: string; notices: string | null; locale: string; scheme: 'light' | 'dark'; appBuiltAt?: string | null; daemonVersion?: string | null; daemonBuiltAt?: string | null }): { html: string; links: string[] } {
   const THEME = themeFor(input.scheme);
   const copy = aboutCopy(input.locale);
   const { tag, dir } = shellText(input.locale);
@@ -100,7 +100,8 @@ export function aboutPage(input: { version: string; electron: string; notices: s
 <title>${escape(copy.title)}</title><style>
 :root{color-scheme:${input.scheme}}*{box-sizing:border-box}body{margin:0;background:${THEME.background};color:${THEME.foreground};font:14px/1.6 system-ui,sans-serif}main{max-width:720px;margin:auto;padding:28px 32px}h1{font-size:22px;line-height:1.3;margin:0 0 4px}h2{font-size:17px;margin:28px 0 8px}h3{font-size:15px;margin:20px 0 4px}p,li{max-width:72ch;overflow-wrap:anywhere}ul{margin:4px 0;padding-left:22px}.muted{color:${THEME.muted};font-size:13px;margin:0}.tabular{font-variant-numeric:tabular-nums}a{color:${THEME.primary}}a:focus-visible{outline:3px solid ${THEME.primary};outline-offset:4px}code{font:12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:${THEME.chip};padding:1px 5px;border-radius:4px}.notice{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 system-ui,sans-serif;background:${THEME.chip};padding:12px 14px;border-radius:8px}footer{display:flex;justify-content:flex-end;margin-top:28px}.button{padding:8px 18px;border:1px solid ${THEME.border};border-radius:6px;text-decoration:none;color:${THEME.foreground}}.button:hover{filter:brightness(1.2)}
 </style><main><h1>${escape(copy.title)}</h1>
-<p class="muted tabular">${escape(copy.version)} ${escape(input.version)} · ${escape(copy.runtime)} ${escape(input.electron)}</p>
+<p class="muted tabular">${escape(copy.version)} ${escape(input.version)}${input.appBuiltAt ? ` · ${escape(input.appBuiltAt)}` : ''} · ${escape(copy.runtime)} ${escape(input.electron)}</p>
+${input.daemonVersion || input.daemonBuiltAt ? `<p class="muted tabular">Service ${escape(input.daemonVersion ?? '')}${input.daemonBuiltAt ? ` · ${escape(input.daemonBuiltAt)}` : ''}</p>` : ''}
 <h2>${escape(copy.noticesTitle)}</h2>
 ${notices ? `<div class="notices">${notices.html}</div>` : `<p role="alert">${escape(copy.noticesMissing)}</p>`}
 <footer><a class="button" role="button" href="${ABOUT_CLOSE_URL}">${escape(copy.close)}</a></footer></main></html>` };

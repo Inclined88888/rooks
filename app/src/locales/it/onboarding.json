@@ -12,16 +12,16 @@
     },
     "account": {
       "title": "Crea il tuo account locale",
-      "subtitle": "Lo usi per accedere a Timon. Ne sei l’amministratore.",
+      "subtitle": "Lo usi per accedere a Rooks. Ne sei l’amministratore.",
       "privacy": "Raccogliamo solo la tua email nel caso tu voglia reimpostare la password. L’account che crei resta locale."
     },
     "llm": {
       "title": "Scegli\nil tuo LLM.",
-      "subtitle": "Timon funziona con gli abbonamenti IA che hai già. Mai una fattura a token."
+      "subtitle": "Rooks funziona con gli abbonamenti IA che hai già. Mai una fattura a token."
     },
     "profile": {
       "title": "Cosa ti porta qui?",
-      "subtitle": "Timon adatta le sue impostazioni e la sua visita guidata alla tua risposta."
+      "subtitle": "Rooks adatta le sue impostazioni e la sua visita guidata alla tua risposta."
     },
     "agent": {
       "templates": {
@@ -39,7 +39,7 @@
     },
     "signin": {
       "title": "Bentornato",
-      "subtitle": "Timon ha un nuovo look. Accedi con il tuo account Timon per continuare."
+      "subtitle": "Rooks ha un nuovo look. Accedi con il tuo account Rooks per continuare."
     },
     "mascot": {
       "title": "Ecco la mascotte di {name}",
@@ -48,10 +48,11 @@
     "scheme": {
       "label": "Modalità chiara o scura",
       "light": "Chiaro",
-      "dark": "Scuro"
+      "dark": "Scuro",
+      "system": "System"
     },
     "discover": {
-      "label": "Scopri Timon",
+      "label": "Scopri Rooks",
       "slide": "Slide {current} di {total}",
       "next": "Avanti",
       "skip": "Salta tutto",

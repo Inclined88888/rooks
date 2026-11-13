@@ -31,7 +31,7 @@ export const DEFAULT_USER_PREFS: UserPrefs = {
   // The Timon theme since 0.1.7; the accounts made before keep their row.
   theme: 'theme-timon',
   layout: '@timon/ui-layout',
-  scheme: 'dark',
+  scheme: 'light',
 };
 
 /** The permissions `/api/auth/me` answers for the caller. Source of truth:

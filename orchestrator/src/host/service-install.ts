@@ -43,7 +43,7 @@ import type { ExecResult } from './types.js';
 import { isBundledNode } from './bundled-node.js';
 
 export const LINUX_UNIT = 'timon-orchestrator';
-export const MACOS_LABEL = 'com.timon.daemon';
+export const MACOS_LABEL = 'com.rooks.daemon';
 /** No space in the task name: it travels through `schtasks`, NSIS and a shell,
  *  and each of the three would quote it differently. */
 export const WINDOWS_TASK = 'TimonOrchestrator';

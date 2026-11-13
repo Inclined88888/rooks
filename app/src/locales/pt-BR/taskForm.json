@@ -10,7 +10,7 @@
       "failed": "Não foi possível desanexar o worktree: {error}"
     },
     "markMerged": {
-      "title": "Merge feito fora do Timon?",
+      "title": "Merge feito fora do Rooks?",
       "hint": "Se o branch desta tarefa já foi mesclado (um pull request aceito no GitHub, um merge manual), informe o commit do merge: a tarefa é encerrada como concluída e as tarefas que dependem dela começam.",
       "shaLabel": "Commit do merge",
       "shaPlaceholder": "Sha do commit, ex.: bcd02520",
@@ -20,8 +20,8 @@
       "doneUnverified": "Tarefa marcada como mesclada. Este commit ainda não está na cópia local do repositório, então não pôde ser verificado.",
       "notInBase": "Este commit não está no branch base do repositório. Verifique o sha do merge.",
       "failed": "Não foi possível marcar a tarefa como mesclada: {error}",
-      "unreachable": "O Timon não respondeu",
-      "hintDone": "Esta tarefa está concluída, mas o branch dela nunca passou por um merge no Timon. Se foi mesclado em outro lugar (um pull request aceito no GitHub, um merge manual), informe o commit do merge: ele é registrado e as tarefas que dependem dela começam.",
+      "unreachable": "O Rooks não respondeu",
+      "hintDone": "Esta tarefa está concluída, mas o branch dela nunca passou por um merge no Rooks. Se foi mesclado em outro lugar (um pull request aceito no GitHub, um merge manual), informe o commit do merge: ele é registrado e as tarefas que dependem dela começam.",
       "cardAction": "mesclada?"
     },
     "editTitle": "Editar tarefa",
@@ -90,12 +90,12 @@
     "modelInheritHint": "Quem decide é a função do projeto para este tipo de tarefa; na falta dela, o agente",
     "modelInherited": "{model} (herdado)",
     "modelHelp": "« Função do projeto » executa a tarefa com o que a função do projeto para este tipo decidir; na falta dela, o agente.",
-    "worktreeBlocked": "Este backend trabalha fora da pasta do Timon: uma tarefa de código ou de merge atribuída a ele será bloqueada.",
+    "worktreeBlocked": "Este backend trabalha fora da pasta do Rooks: uma tarefa de código ou de merge atribuída a ele será bloqueada.",
     "fallback": {
       "short": "Alternativo",
       "label": "Alternativo se a cota acabar",
       "inherit": "Série ou configuração global",
-      "inheritHint": "Quem decide é o plano da série; na falta dele, a configuração do Timon",
+      "inheritHint": "Quem decide é o plano da série; na falta dele, a configuração do Rooks",
       "never": "Nunca trocar sozinho"
     },
     "permission": "Permissão",

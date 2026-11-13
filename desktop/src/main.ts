@@ -39,8 +39,10 @@ import {
 } from './restart.js';
 import { queueAppImageRelaunch } from './appimage-restart.js';
 import { LEAVE as UNLOAD_LEAVE, unloadPrompt } from './unload-prompt.js';
-import { daemonEnvOverrides, loadDesktopConfig, originOf, packagedFirstRun, resolveTimonHome, type DesktopConfig } from './config.js';
+import { configFile, daemonEnvOverrides, homeNames, loadDesktopConfig, originOf, packagedFirstRun, resolveTimonHome, type DesktopConfig } from './config.js';
 import { isTimon, probeHealth, waitForHealth, type HealthResult } from './health.js';
+import { daemonIsStale, readShellBuiltAt } from './daemon-version.js';
+import { clearShellCacheIfBuildChanged, shellCacheKey } from './shell-cache.js';
 import {
   daemonEntryOf,
   daemonInstallDirOf,
@@ -108,7 +110,7 @@ import { devShellName } from './linux-desktop.js';
 import { WINDOWS_APP_USER_MODEL_ID, windowsUserTasks } from './jump-list.js';
 import { ErrorBoxGate, quitAfterBox, type ShutdownWindow } from './shutdown-sequence.js';
 
-const DISPLAY_NAME = 'Timon';
+const DISPLAY_NAME = 'Rooks';
 // Before any word is shown: a package reads its languages from `resources/locales`.
 useShellLocales(shellLocalesDir({
   packaged: app.isPackaged,
@@ -833,8 +835,12 @@ function buildTray(cfg: DesktopConfig, uiUrl: string): void {
 function openAbout(): void {
   // The menu bar exists before the release is verified, and no other window opens until then (TODO #439).
   if (releasePending) { releaseCheckWindow?.show(); releaseCheckWindow?.focus(); return; }
+  const daemon = lastDaemonHealth && lastDaemonHealth.ok ? lastDaemonHealth : null;
   showAboutWindow({
     version: app.getVersion(),
+    appBuiltAt: readShellBuiltAt(process.resourcesPath),
+    daemonVersion: daemon?.version ?? null,
+    daemonBuiltAt: daemon?.builtAt ?? null,
     electron: process.versions.electron ?? '',
     notices: readThirdPartyNotices(thirdPartyNoticesPath({
       packaged: app.isPackaged,
@@ -974,7 +980,7 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
   // Last-moment lock: between the first probe and here, a service could have
   // come up. Two daemons on one TIMON_HOME write the same database.
   const raced = await probeHealth(originOf(cfg.daemon.listen));
-  if (isTimon(raced, cfg.home)) {
+  if (isTimon(raced, cfg.home) && !daemonIsStale(raced, { packaged: app.isPackaged, version: app.getVersion(), builtAt: readShellBuiltAt(process.resourcesPath) })) {
     await completeApprovedUpdate(cfg);
     daemonUp = true;
     noteDesktopOpened(cfg);
@@ -995,6 +1001,7 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
     installDir: daemonInstallDirOf(process.resourcesPath),
     overrides: { ...daemonEnvOverrides(cfg), TIMON_DESKTOP_VERSION: app.getVersion() },
     home: cfg.home,
+    names: homeNames(),
     heapMb: cfg.daemon.heapMb,
     execPath: shellDaemonRuntime().execPath,
     runtimeEnv: shellDaemonRuntime().env,
@@ -1030,6 +1037,7 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
   });
 
   const health: HealthResult = await waitForHealth(originOf(cfg.daemon.listen), EMBEDDED_BOOT_BUDGET_MS);
+  lastDaemonHealth = health;
   daemonUp = isTimon(health, cfg.home);
   noteDesktopOpened(cfg);
   console.log(`[desktop] embedded daemon health: ${describeHealth(health, cfg.home)}`);
@@ -1093,7 +1101,7 @@ function reportForeignDaemon(cfg: DesktopConfig): void {
     message: t('startup.portTaken', { origin: originOf(cfg.daemon.listen) }),
     detail: t('startup.portTakenDetail', {
       app: DISPLAY_NAME,
-      config: join(cfg.home, 'timon.config.json'),
+      config: configFile(cfg.home),
       reopen: reopenHint(locale, tray !== null, DISPLAY_NAME),
     }),
   });
@@ -1324,7 +1332,34 @@ function installMachineHeader(): void {
   });
 }
 
+function configPresent(home: string): boolean {
+  return existsSync(join(home, 'rooks.config.json')) || existsSync(join(home, 'timon.config.json'));
+}
+
+let lastDaemonHealth: HealthResult | null = null;
+
+async function stopLeftoverDaemon(cfg: DesktopConfig, origin: string): Promise<void> {
+  try { await controlDesktopService('stop', runnerSeams(cfg)); }
+  catch (error) { console.error('[desktop] leftover service stop failed', error); }
+  const still = await probeHealth(origin);
+  if (!still.ok || still.identity !== 'timon') return;
+  await new Promise<void>((resolve) => {
+    const killer = spawn('fuser', ['-k', `${cfg.daemon.listen.port}/tcp`], { stdio: 'ignore' });
+    killer.on('exit', () => resolve());
+    killer.on('error', () => resolve());
+  });
+}
+
 async function main(): Promise<void> {
+  const builtAt = readShellBuiltAt(process.resourcesPath);
+  try {
+    const cleared = await clearShellCacheIfBuildChanged(
+      app.getPath('userData'),
+      shellCacheKey(app.getVersion(), builtAt),
+      () => session.defaultSession.clearCache(),
+    );
+    if (cleared) console.log('[desktop] cleared the window cache for this build');
+  } catch (error) { console.warn('[desktop] cache clear failed', error); }
   // Before any window: without handlers Electron grants every request.
   installWindowPermissions(session.defaultSession, {
     windowOrigin: () => windowOrigin,
@@ -1433,7 +1468,7 @@ async function main(): Promise<void> {
   const repair = serviceRepairVerdict(cfg.home, app.getVersion(), {
     packaged: app.isPackaged,
     // A portable install chose no supervisor: nothing was lost there.
-    configured: cfg.daemon.supervisor !== 'none' && existsSync(join(cfg.home, 'timon.config.json')),
+    configured: cfg.daemon.supervisor !== 'none' && configPresent(cfg.home),
     taskExists: taskState?.exists ?? true,
   });
   if (repair !== 'task-exists' && repair !== 'not-applicable') console.log(`[desktop] service repair verdict: ${repair}`);
@@ -1477,6 +1512,13 @@ async function main(): Promise<void> {
   }
   const uiUrl = originOf(cfg.app.listen);
   interfaceUrl = uiUrl;
+  const ownBuild = { packaged: app.isPackaged, version: app.getVersion(), builtAt: readShellBuiltAt(process.resourcesPath) };
+  if (health.ok && health.identity === 'timon' && daemonIsStale(health, ownBuild)) {
+    console.log('[desktop] leftover daemon is another build; stopping it');
+    await stopLeftoverDaemon(cfg, daemonOrigin);
+    health = await probeHealth(daemonOrigin);
+  }
+  lastDaemonHealth = health;
   daemonUp = isTimon(health, cfg.home);
   noteDesktopOpened(cfg);
   console.log(`[desktop] health of ${daemonOrigin}: ${describeHealth(health, cfg.home)}`);
@@ -1582,9 +1624,14 @@ mkdirSync(requestedHome, { recursive: true });
 desktopHome = realpathSync(requestedHome);
 installDesktopLog(desktopHome);
 console.log(`[desktop] Timon ${app.getVersion()} starting on ${process.platform} (packaged: ${app.isPackaged}), home ${desktopHome}`);
-const configuredAtLaunch = existsSync(join(desktopHome, 'timon.config.json'));
+const configuredAtLaunch = configPresent(desktopHome);
 // Also inherited by app.relaunch: never create or select another instance.
-process.env.TIMON_HOME = desktopHome;
+if (homeNames() === 'rooks') {
+  process.env.ROOKS_HOME = desktopHome;
+  delete process.env.TIMON_HOME;
+} else {
+  process.env.TIMON_HOME = desktopHome;
+}
 app.setPath('userData', join(desktopHome, 'desktop-profile'));
 layoutKeeper = new WindowLayoutKeeper(readWindowLayout(desktopHome), {
   snapshot: () => liveWindows().map(savedWindow),
@@ -1600,7 +1647,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
 } else {
   const restartAfterSetup = setupRestarter({
     validate: () => {
-      if (!existsSync(join(desktopHome, 'timon.config.json'))) {
+      if (!configPresent(desktopHome)) {
         throw new Error('Save the configuration before restarting Timon.');
       }
       const options = relaunchOptions(process.platform, process.env, process.argv);
@@ -1631,7 +1678,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
       const state = {
         embedded: stopEmbedded !== null,
         configuredAtLaunch,
-        configuredNow: existsSync(join(desktopHome, 'timon.config.json')),
+        configuredNow: configPresent(desktopHome),
         serviceInstalled: hasDesktopService(desktopHome),
         serviceRefused: existsSync(windowsServiceRefusedFile(desktopHome)),
         supervisor: cfg.daemon.supervisor,
@@ -1922,7 +1969,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
     if (!canRestartFromSetup(senderOf(event), senderOrigin(event))) throw new Error('Restart status is only available to the Timon window.');
     return setupRestartPending({
       embedded: stopEmbedded !== null, configuredAtLaunch,
-      configuredNow: existsSync(join(desktopHome, 'timon.config.json')),
+      configuredNow: configPresent(desktopHome),
       serviceInstalled: hasDesktopService(desktopHome),
     });
   });

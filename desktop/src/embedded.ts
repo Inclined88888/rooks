@@ -43,6 +43,8 @@ export type EmbeddedOpts = {
   overrides?: Record<string, string>;
   /** `TIMON_HOME` the daemon must use — never guessed by the child. */
   home: string;
+  /** `rooks` writes `ROOKS_HOME` so the child opens `rooks.db`. Tests keep `timon`. */
+  names?: 'rooks' | 'timon';
   heapMb: number;
   /** The daemon's runtime (`daemonRuntime`): the Node the package ships, or Electron run as plain Node. */
   execPath: string;
@@ -114,17 +116,23 @@ export function embeddedExecutablePath(
  */
 const STRIPPED = new Set(['TIMON_INSTANCE', 'NODE_OPTIONS']);
 export function embeddedEnv(
-  opts: Pick<EmbeddedOpts, 'home' | 'heapMb' | 'installDir' | 'overrides' | 'runtimeEnv'>,
+  opts: Pick<EmbeddedOpts, 'home' | 'heapMb' | 'installDir' | 'overrides' | 'runtimeEnv' | 'names'>,
 ): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {
     ...withRuntimeEnv(process.env, { execPath: '', env: opts.runtimeEnv ?? { ELECTRON_RUN_AS_NODE: '1' } }),
     TIMON_DESKTOP_EMBEDDED: '1',
     TIMON_RESOURCE_GUARD_ENABLED: '0',
-    TIMON_HOME: opts.home,
     TIMON_INSTALL_DIR: opts.installDir,
     PATH: embeddedExecutablePath(),
     ...opts.overrides,
   };
+  if (opts.names === 'rooks') {
+    env.ROOKS_HOME = opts.home;
+    delete env.TIMON_HOME;
+  } else {
+    env.TIMON_HOME = opts.home;
+    delete env.ROOKS_HOME;
+  }
   // Apply after overrides, including case-insensitive Windows environment keys.
   for (const key of Object.keys(env)) {
     if (STRIPPED.has(key.toUpperCase())) delete env[key];
