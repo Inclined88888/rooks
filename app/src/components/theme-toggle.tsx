@@ -3,7 +3,8 @@
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useRef, useState } from 'react';
-import { Check, ChevronRight, Compass, Focus, LayoutGrid, MessageSquare, Moon, Palette, Settings2 } from 'lucide-react';
+import { Check, ChevronRight, Compass, Focus, LayoutGrid, MessageSquare, Monitor, Palette, Settings2, Sun } from 'lucide-react';
+import { appliedScheme, readSchemeMode, storeSchemeMode, osScheme, type SchemeMode } from '@/lib/scheme-mode';
 import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ const ITEM = 'flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-x
 /** Appearance controls share one place in every topbar. Widgets move and
  * resize at any time: there is no layout editing mode to switch on here. */
 export function ThemeToggle() {
-  const { scheme, setScheme } = useColorScheme();
+  const { setScheme } = useColorScheme();
   const { open: openSettings } = useSettingsNavigation();
   const { paletteOpen, setPaletteOpen, palette } = useWidgetHost();
   // Focus mode only slides the chat's columns away: offering it on a page
@@ -39,19 +40,23 @@ export function ThemeToggle() {
   // trigger, the catalog's search field has it.
   const toPalette = useRef(false);
 
-  async function toggleTheme() {
-    const previous = scheme;
-    const next = scheme === 'light' ? 'dark' : 'light';
-    setScheme(next);
+  async function chooseMode(next: SchemeMode) {
+    const previous = readSchemeMode();
+    const painted = next === 'system' ? osScheme() : 'light';
+    storeSchemeMode(next);
+    setScheme(painted);
+    window.dispatchEvent(new Event('rooks-scheme-mode'));
     setSaving(true);
     try {
       const res = await fetch('/api/ui/prefs', {
         method: 'PUT', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ scheme: next }), cache: 'no-store',
+        body: JSON.stringify({ scheme: painted }), cache: 'no-store',
       });
       if (!res.ok) throw new Error('save');
     } catch {
-      setScheme(previous);
+      storeSchemeMode(previous);
+      setScheme(appliedScheme(previous));
+      window.dispatchEvent(new Event('rooks-scheme-mode'));
       toast.error(t('appearance.saveError'));
     } finally { setSaving(false); }
   }
@@ -70,10 +75,14 @@ export function ThemeToggle() {
       <Dropdown.Content align="end" sideOffset={8} onCloseAutoFocus={(e) => { if (toPalette.current) { e.preventDefault(); toPalette.current = false; } }} className="z-50 w-60 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-elev-2">
         <NativeViewCover />
         <Dropdown.Label className="px-3 py-2 text-xs font-medium">{t('appearance.menu.title')}</Dropdown.Label>
-        <Dropdown.CheckboxItem checked={scheme === 'dark'} disabled={saving} onCheckedChange={() => void toggleTheme()} onSelect={e => e.preventDefault()} className={ITEM}>
-          <Moon className="size-4" /><span className="flex-1">{t('nav.darkTheme')}</span>
-          <span aria-hidden="true" className={`flex h-4 w-7 items-center rounded-full p-0.5 ${scheme === 'dark' ? 'bg-primary' : 'bg-muted-foreground/30'}`}><span className={`size-3 rounded-full bg-popover ${scheme === 'dark' ? 'translate-x-3' : ''}`} /></span>
-        </Dropdown.CheckboxItem>
+        <Dropdown.Item disabled={saving} onSelect={() => void chooseMode('light')} className={ITEM}>
+          <Sun className="size-4" /><span className="flex-1">{t('onboarding.scheme.light')}</span>
+          {readSchemeMode() !== 'system' && <Check className="size-3.5" aria-hidden />}
+        </Dropdown.Item>
+        <Dropdown.Item disabled={saving} onSelect={() => void chooseMode('system')} className={ITEM}>
+          <Monitor className="size-4" /><span className="flex-1">{t('onboarding.scheme.system')}</span>
+          {readSchemeMode() === 'system' && <Check className="size-3.5" aria-hidden />}
+        </Dropdown.Item>
         {/* The full settings sit next to the quick switch they extend. */}
         <Dropdown.Item className={ITEM} onSelect={() => openSettings({ category: 'interface', tab: 'appearance' })}>
           <Settings2 className="size-4" /><span className="flex-1">{t('appearance.title')}</span>

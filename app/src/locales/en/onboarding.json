@@ -4,9 +4,10 @@
     "continue": "Continue",
     "progress": "Step {current} of {total}",
     "scheme": {
-      "label": "Light or dark mode",
+      "label": "Light or system",
       "light": "Light",
-      "dark": "Dark"
+      "dark": "Dark",
+      "system": "System"
     },
     "splash": {
       "title": "Your AI team,\nat home.",
@@ -20,7 +21,7 @@
     },
     "account": {
       "title": "Create your local account",
-      "subtitle": "You sign in to Timon with it. You are its administrator.",
+      "subtitle": "A name is enough. Email is optional. You are the administrator.",
       "name": "First name",
       "nameHint": "So your agents call you by your first name.",
       "email": "Email",
@@ -31,6 +32,7 @@
       "mismatch": "The two passwords don't match.",
       "tooShort": "At least {min} characters.",
       "create": "Create my account",
+      "skip": "Skip for now",
       "privacy": "We only collect your email in case you want to reset your password. The account you create stays local."
     },
     "legacy": {

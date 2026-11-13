@@ -11,8 +11,8 @@
       "iconMissingDetail": "Please reinstall Timon to restore the icon. You can keep using this window; closing it will quit Timon."
     },
     "about": {
-      "item": "About Timon",
-      "title": "About Timon",
+      "item": "About Rooks",
+      "title": "About Rooks",
       "version": "Version",
       "noticesTitle": "Third-party model licences",
       "noticesMissing": "THIRD-PARTY-MODELS.md is missing from this installation. Reinstall Timon to restore it.",

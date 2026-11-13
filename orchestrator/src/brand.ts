@@ -45,7 +45,7 @@ export type Brand = {
 };
 
 export const BRAND: Readonly<Brand> = Object.freeze({
-  displayName: 'Timon',
+  displayName: 'Rooks',
   id: 'timon',
   cliName: 'timon',
   domain: 'timon-ai.com',

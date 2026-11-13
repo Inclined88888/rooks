@@ -6,7 +6,8 @@
     "scheme": {
       "label": "浅色或深色模式",
       "light": "浅色",
-      "dark": "深色"
+      "dark": "深色",
+      "system": "System"
     },
     "splash": {
       "title": "你的 AI 团队，\n就在你的电脑上。",

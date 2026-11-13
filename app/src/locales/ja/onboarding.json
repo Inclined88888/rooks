@@ -48,7 +48,8 @@
     "scheme": {
       "label": "ライトモードまたはダークモード",
       "light": "ライト",
-      "dark": "ダーク"
+      "dark": "ダーク",
+      "system": "System"
     },
     "discover": {
       "label": "Timonを知る",

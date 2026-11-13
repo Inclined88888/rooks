@@ -21,47 +21,58 @@ import { join, resolve as resolvePath, sep } from 'node:path';
  */
 const REAL_PKOS_HOME = join(homedir(), '.pkos'); // public-name-ok: the archive guard refuses it by name
 const REAL_TIMON_HOME = join(homedir(), '.timon');
+const REAL_ROOKS_HOME = join(homedir(), '.rooks');
 
 function sameDir(a: string, b: string): boolean {
   // Normalises without touching the filesystem: `realpath` would read the archive.
   return resolvePath(a) === resolvePath(b);
 }
 
-function resolveTimonHome(): string {
-  const fromEnv = process.env.TIMON_HOME;
-  if (process.env.NODE_TEST_CONTEXT && (fromEnv === undefined || fromEnv === '')) {
+function resolveTimonHome(): { home: string; legacyNames: boolean } {
+  const fromRooks = process.env.ROOKS_HOME;
+  const fromTimon = process.env.TIMON_HOME;
+  const namedRooks = typeof fromRooks === 'string' && fromRooks.length > 0;
+  const namedTimon = typeof fromTimon === 'string' && fromTimon.length > 0;
+  if (process.env.NODE_TEST_CONTEXT && !namedRooks && !namedTimon) {
     throw new Error(
-      'TIMON_HOME is required under the test runner: without it, this test would write into '
-      + `${REAL_TIMON_HOME} (the real Timon home). `
+      'TIMON_HOME or ROOKS_HOME is required under the test runner: without it, this test would write into '
+      + `${REAL_ROOKS_HOME} (the real Rooks home). `
       + 'Point it at a temporary folder BEFORE the first import of the tested module, e.g.:\n'
       + "  const HOME = mkdtempSync(join(tmpdir(), 'timon-<suite>-test-'));\n"
       + "  process.env.TIMON_HOME = HOME;\n"
       + "  const { dbApi } = await import('./db.js');   // dynamic import, after the variable",
     );
   }
-  const home = (fromEnv && fromEnv.length > 0) ? fromEnv : REAL_TIMON_HOME;
+  // A checkout started with TIMON_HOME keeps the timon file names the suites write.
+  // The installed app sets ROOKS_HOME (or neither) and uses rooks.config.json / rooks.db,
+  // which is the home an older Rooks test build already has.
+  const home = namedRooks ? fromRooks : namedTimon ? fromTimon : REAL_ROOKS_HOME;
+  const legacyNames = namedTimon && !namedRooks;
   if (sameDir(home, REAL_PKOS_HOME)) {
     throw new Error(
       // public-name-ok: the archive guard names what it refuses
-      'TIMON_HOME refuses ~/.pkos (the frozen PKOS home). '
-      + 'Timon lives in ~/.timon, or in a temporary TIMON_HOME for tests.',
+      'The home refuses ~/.pkos (the frozen PKOS home). '
+      + 'Rooks lives in ~/.rooks, or in a temporary TIMON_HOME / ROOKS_HOME for tests.',
     );
   }
-  if (process.env.NODE_TEST_CONTEXT && sameDir(home, REAL_TIMON_HOME)) {
+  if (process.env.NODE_TEST_CONTEXT && (sameDir(home, REAL_TIMON_HOME) || sameDir(home, REAL_ROOKS_HOME))) {
     throw new Error(
-      'TIMON_HOME refuses the real ~/.timon under the test runner. '
+      'The test runner refuses the real ~/.timon and ~/.rooks. '
       + 'Use a temporary folder (mkdtemp).',
     );
   }
-  return home;
+  return { home, legacyNames };
 }
 
-export const TIMON_HOME = resolveTimonHome();
+const resolvedHome = resolveTimonHome();
+export const TIMON_HOME = resolvedHome.home;
+/** `timon` while a test or checkout sets only TIMON_HOME; `rooks` for the installed app. */
+export const STATE_STEM = resolvedHome.legacyNames ? 'timon' : 'rooks';
 export const AGENTS_DIR = join(TIMON_HOME, 'agents');
 export const SKILLS_DIR = join(TIMON_HOME, 'skills');
 export const PROJECTS_DIR = join(TIMON_HOME, 'projects');
 export const GLOBAL_MEMORY_DIR = join(TIMON_HOME, 'memory');
-export const DB_PATH = join(TIMON_HOME, 'timon.db');
+export const DB_PATH = join(TIMON_HOME, `${STATE_STEM}.db`);
 export const INTEGRATIONS_DB_PATH = join(TIMON_HOME, 'integrations.db');
 /** The rows of the account tables the core no longer keeps, owner-only, for the
  *  plugin that serves the accounts to read once (`users/legacy-account-tables.ts`).

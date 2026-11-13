@@ -2896,7 +2896,7 @@
     "showReport": "Show report",
     "hideReport": "Hide report",
     "openLogs": "Open logs folder",
-    "openAbout": "About Timon and third-party licences",
+    "openAbout": "About Rooks and third-party licences",
     "reportCopied": "Diagnostic copied: paste it in your support request (Discord, e-mail).",
     "reportCopyFailed": "The clipboard refused the copy: select the report below and copy it by hand, or save it.",
     "reportSaved": "Report downloaded as {name}.",

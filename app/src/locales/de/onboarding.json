@@ -48,7 +48,8 @@
     "scheme": {
       "label": "Heller oder dunkler Modus",
       "light": "Hell",
-      "dark": "Dunkel"
+      "dark": "Dunkel",
+      "system": "System"
     },
     "discover": {
       "label": "Timon entdecken",

@@ -6,7 +6,8 @@
     "scheme": {
       "label": "Mode clair ou sombre",
       "light": "Clair",
-      "dark": "Sombre"
+      "dark": "Sombre",
+      "system": "System"
     },
     "splash": {
       "title": "Votre équipe d’IA,\nchez vous.",

@@ -24,11 +24,11 @@ function aboutEntry(items: Item[], label: string): Item {
   return entry;
 }
 
-test('app menu: on macOS no entry keeps the native About panel, and « About Timon » calls Timon\'s window', () => {
+test('app menu: on macOS no entry keeps the native About panel, and « About Rooks » calls Timon\'s window', () => {
   let opened = 0;
   const items = template('en-US', () => { opened += 1; });
   assert.equal(flatten(items).filter((item) => item.role === 'about').length, 0);
-  const about = aboutEntry(items, 'About Timon');
+  const about = aboutEntry(items, 'About Rooks');
   assert.equal(items[0]?.label, 'Timon');
   assert.ok(Array.isArray(items[0]?.submenu));
   assert.equal(items[0].submenu[0], about, 'first entry of the application menu, where macOS users look for it');
@@ -40,7 +40,7 @@ test('app menu: on macOS no entry keeps the native About panel, and « About Tim
 test('app menu: the entry speaks the language of the app', () => {
   assert.ok(aboutEntry(template('fr-FR'), 'À propos de Timon'));
   assert.ok(aboutEntry(template('de'), 'Über Timon'));
-  assert.ok(aboutEntry(template('sv'), 'About Timon'));
+  assert.ok(aboutEntry(template('sv'), 'About Rooks'));
 });
 
 // Replacing the default menu must not take its keys away: Cmd+C and Cmd+V reach a page through Edit, Cmd+Q through the app menu.

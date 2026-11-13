@@ -48,7 +48,8 @@
     "scheme": {
       "label": "Lichte of donkere modus",
       "light": "Licht",
-      "dark": "Donker"
+      "dark": "Donker",
+      "system": "System"
     },
     "discover": {
       "label": "Ontdek Timon",

@@ -18,11 +18,11 @@
 # electron-builder to rebuild, and letting it try only hides which tree won.
 #
 # OS identities are supplied by the release environment, never checked in.
-appId: com.timon.desktop
-productName: Timon
+appId: com.rooks.desktop
+productName: Rooks
 # Share the PWA artwork; electron-builder converts it for each platform.
 icon: ../app/public/icon-512.png
-copyright: Timon
+copyright: Rooks
 directories:
   output: release
   buildResources: build

@@ -37,7 +37,8 @@ import { galleryPlugins, loaderFromApp } from '../../plugins/runtime.js';
 import { instanceId } from '../../host/packaged-service.js';
 import { TIMON_HOME } from '../../paths.js';
 import { BRAND } from '../../brand.js';
-import { packagedDaemon } from '../../data-version.js';
+import { packagedDaemon, timonVersion } from '../../data-version.js';
+import { readBuildInfo } from '../../build-info.js';
 import { onboardingStep } from '../../onboarding-events.js';
 import { apiError } from '../../api-error.js';
 
@@ -58,7 +59,15 @@ export function registerRoutes(app: Router): void {
     // `packaged` tells the desktop whether this daemon is one it can update: a
     // daemon run from the sources has no update routes and no update token, so
     // offering it a data migration could only end in a failure (TODO #477).
-    res.json({ ok: true, service: BRAND.id, instance: instanceId(TIMON_HOME), packaged: packagedDaemon() });
+    const built = readBuildInfo();
+    res.json({
+      ok: true,
+      service: BRAND.id,
+      instance: instanceId(TIMON_HOME),
+      packaged: packagedDaemon(),
+      version: timonVersion(),
+      builtAt: built.builtAt,
+    });
   });
 
   /**

@@ -48,7 +48,8 @@
     "scheme": {
       "label": "Tryb jasny lub ciemny",
       "light": "Jasny",
-      "dark": "Ciemny"
+      "dark": "Ciemny",
+      "system": "System"
     },
     "discover": {
       "label": "Poznaj Timona",

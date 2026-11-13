@@ -48,7 +48,8 @@
     "scheme": {
       "label": "Modo claro ou escuro",
       "light": "Claro",
-      "dark": "Escuro"
+      "dark": "Escuro",
+      "system": "System"
     },
     "discover": {
       "label": "Conheça o Timon",

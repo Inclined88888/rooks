@@ -48,7 +48,8 @@
     "scheme": {
       "label": "라이트 또는 다크 모드",
       "light": "라이트",
-      "dark": "다크"
+      "dark": "다크",
+      "system": "System"
     },
     "discover": {
       "label": "Timon 알아보기",
