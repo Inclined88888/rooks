@@ -16,7 +16,7 @@
  */
 import { cookies, headers as requestHeaders } from 'next/headers';
 import { machineTarget, relayFetch, targetFor, type RelayOptions } from '../machines/target';
-import { browserOriginHeaders, proxyAuthHeaders, SESSION_COOKIE } from './proxy-auth';
+import { browserOriginHeaders, proxyAuthHeaders, readSessionToken } from './proxy-auth';
 import { htmlFailureAsJson } from './proxy-errors';
 import { uiDocumentProxyHeaders } from './ui-document-headers';
 
@@ -74,7 +74,7 @@ function browserProxyHeaders(): Record<string, string> {
 
 function sessionTokenFromCookies(): string | undefined {
   try {
-    return cookies().get(SESSION_COOKIE)?.value;
+    return readSessionToken((name) => cookies().get(name)?.value);
   } catch {
     return undefined;
   }
@@ -104,10 +104,11 @@ export async function proxyJson(
   path: string,
   body?: unknown,
   to: ProxyTarget = {},
+  extraHeaders: Record<string, string> = {},
 ): Promise<Response> {
   // Next 14's fetch() memoises responses by URL by default; that's poison for
   // a proxy to a stateful service. Force a fresh upstream hit every time.
-  const headers = browserProxyHeaders();
+  const headers = { ...browserProxyHeaders(), ...extraHeaders };
   const init: RequestInit = { method, headers, cache: 'no-store' };
   if (body !== undefined) {
     headers['content-type'] = 'application/json';

@@ -4,14 +4,15 @@
     "continue": "Continue",
     "progress": "Step {current} of {total}",
     "scheme": {
-      "label": "Light or dark mode",
+      "label": "Light or system",
       "light": "Light",
-      "dark": "Dark"
+      "dark": "Dark",
+      "system": "System"
     },
     "splash": {
-      "title": "Your AI team,\nat home.",
-      "subtitle": "Agents that work on your machine, with the AI subscriptions you already pay for.",
-      "hint": "Psst, you can grab them."
+      "title": "Rooks",
+      "subtitle": "",
+      "hint": ""
     },
     "language": {
       "title": "Choose your language",
@@ -20,7 +21,7 @@
     },
     "account": {
       "title": "Create your local account",
-      "subtitle": "You sign in to Timon with it. You are its administrator.",
+      "subtitle": "A name is enough. Email is optional. You are the administrator.",
       "name": "First name",
       "nameHint": "So your agents call you by your first name.",
       "email": "Email",
@@ -31,18 +32,21 @@
       "mismatch": "The two passwords don't match.",
       "tooShort": "At least {min} characters.",
       "create": "Create my account",
+      "skip": "Skip for now",
+      "failed": "The account could not be created.",
+      "alreadyHere": "This Rooks already has an account. Continue opens it on this computer, without a password. If it does not, reset the password with rooks user reset-password.",
       "privacy": "We only collect your email in case you want to reset your password. The account you create stays local."
     },
     "legacy": {
       "opening": "Opening the next screen…"
     },
     "llm": {
-      "title": "Choose\nyour LLM.",
-      "subtitle": "Timon runs on the AI subscriptions you already have. Never a bill per token.",
+      "title": "AI tools",
+      "subtitle": "Rooks uses the AI tools already on this machine.",
       "plan": {
         "title": "Use my AI subscription",
         "detailAny": "The AI tools you already pay for",
-        "hint": "Timon looked for the AI tools already on this machine.",
+        "hint": "Rooks looked for the AI tools already on this machine.",
         "ready": "Ready with {names}.",
         "none": "Connect at least one AI to continue.",
         "anyway": "Continue anyway"
@@ -59,8 +63,8 @@
       "privacy": "Privacy policy"
     },
     "profile": {
-      "title": "What brings you here?",
-      "subtitle": "Timon tunes its defaults and its tour to your answer.",
+      "title": "Defaults",
+      "subtitle": "This choice sets the defaults and the tour.",
       "developer": {
         "title": "I write code",
         "description": "Agents that code, review and merge in my repositories."
@@ -82,16 +86,17 @@
       "nameLabel": "Its name",
       "namePlaceholder": "Give it a name",
       "nameRoll": "Random name",
-      "create": "Bring {name} to life",
-      "createNoName": "Bring your agent to life",
-      "creating": "Bringing {name} to life…",
+      "create": "Continue",
+      "createNoName": "Continue",
+      "creating": "Saving {name}…",
       "configFailed": "{name} is named, but its settings could not be saved. Try again.",
+      "continueDefaults": "Continue with defaults",
       "will": "It will",
       "loading": "Loading your profile…",
       "profileError": "Your profile could not be read, so here is the simplest view.",
       "retry": "Retry",
       "cap": {
-        "base": "Chat with you in Timon",
+        "base": "Chat with you in Rooks",
         "mail": "Read and sort your email",
         "agenda": "Check and fill your calendar",
         "code": "Work in your Git repositories",
@@ -196,7 +201,7 @@
           }
         },
         "notify": {
-          "timon": "In Timon",
+          "timon": "In Rooks",
           "telegram": "Telegram",
           "email": "By email"
         },
@@ -251,7 +256,7 @@
           "default": "Ask for every sensitive tool",
           "acceptEdits": "Accept file edits, ask for the rest",
           "plan": "Read-only: plans, changes nothing",
-          "auto": "Auto: Timon’s classifier decides, a card only when unsure",
+          "auto": "Auto: Rooks’s classifier decides, a card only when unsure",
           "bypassPermissions": "Allow everything, no checks at all"
         },
         "bypassWarning": "No approval card at all: it can do anything on this machine.",
@@ -283,7 +288,7 @@
     },
     "signin": {
       "title": "Welcome back",
-      "subtitle": "Timon has a new look. Sign in with your Timon account to continue."
+      "subtitle": "Rooks has a new look. Sign in with your Rooks account to continue."
     },
     "mascot": {
       "title": "Meet {name}'s mascot",
@@ -294,15 +299,16 @@
       "failed": "The look could not be saved. Try again, or choose “Not now”."
     },
     "discover": {
-      "label": "Discover Timon",
+      "label": "Discover Rooks",
+      "agent": "Agent",
       "slide": "Slide {current} of {total}",
       "next": "Next",
       "skip": "Skip all",
-      "finish": "Meet {name}",
-      "finishNoName": "Let's go",
+      "finish": "Open Desk",
+      "finishNoName": "Open Desk",
       "autonomous": {
-        "title": "Your TIMs work on their own",
-        "body": "Give a TIM a mission, a time or a trigger: it picks its skills and tools, remembers what it learns, and reports back once the work is done.",
+        "title": "An agent can run a mission",
+        "body": "Give an agent a mission, a time, or a trigger. It uses its skills and tools, keeps what it learns, and reports when the work is done.",
         "nodes": {
           "skills": "Skills",
           "tools": "Tools",
@@ -312,8 +318,8 @@
         "done": "Report sent"
       },
       "teams": {
-        "title": "Build teams of TIMs",
-        "body": "One plans, one codes, one reviews: tasks pass from TIM to TIM on the Kanban, and the Multichat lets you talk to all of them at once.",
+        "title": "Agents can share a task",
+        "body": "One agent plans, one writes, one reviews. The task moves on the board, and you can talk to them together.",
         "columns": {
           "todo": "To do",
           "doing": "In progress",
@@ -322,17 +328,17 @@
         "card": "Landing page"
       },
       "projects": {
-        "title": "Projects with their own TIMs",
-        "body": "A general assistant knows a little about everything. A project’s TIMs work in that project only, with its own rules and its own memory, and never leave it.",
-        "general": "Your TIMs go everywhere",
+        "title": "A project keeps its agents",
+        "body": "An agent outside a project can work anywhere. An agent in a project stays there, with that project's rules and memory.",
+        "general": "Outside a project",
         "alpha": "Website",
         "beta": "Accounting",
         "rules": "Its rules",
         "memory": "Its memory"
       },
       "connected": {
-        "title": "Plug in everything else",
-        "body": "Connectors bring in your mail, calendar and tools; workflows chain the steps; plugins add what is missing, down to the interface."
+        "title": "Mail, calendar, and plugins",
+        "body": "Connectors bring in mail, calendar, and other tools. Workflows chain steps. Plugins add the rest."
       },
       "views": {
         "label": "Where to find it",

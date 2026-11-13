@@ -22,7 +22,7 @@
       "loadError": "The machines could not be loaded."
     },
     "settings": {
-      "description": "Other Timon machines this computer can drive. Switching replaces the whole interface with the chosen machine's, in this same window: each machine keeps its own agents, projects and settings.",
+      "description": "Other Rooks machines this computer can drive. Switching replaces the whole interface with the chosen machine's, in this same window: each machine keeps its own agents, projects and settings.",
       "local": "The machine this interface is served from.",
       "add": "Add a machine",
       "addTitle": "Add a machine",
@@ -67,8 +67,8 @@
       "invalidCode": "The machine refused this code: wrong, expired or already used. Ask it for a new one.",
       "invalidUrl": "This address cannot be used: give the machine's address alone, with no login, query or fragment.",
       "httpsRequired": "The machine must be reached over HTTPS. Plain HTTP is only accepted on this computer itself.",
-      "blockedAddress": "This address never points to a Timon machine.",
-      "notTimon": "No Timon machine answers at this address.",
+      "blockedAddress": "This address never points to a Rooks machine.",
+      "notTimon": "No Rooks machine answers at this address.",
       "requiresTls": "The machine does not see this connection as HTTPS: check the HTTPS settings of its reverse proxy.",
       "unreachable": "The machine cannot be reached right now.",
       "unauthorized": "The machine no longer accepts this computer: its access was revoked or expired. Pair it again.",
@@ -78,7 +78,7 @@
       "throttled": "Too many attempts. Wait a few minutes before trying again.",
       "tooMany": "A fleet holds at most 50 machines.",
       "vault": "The secrets vault is unavailable: machine access cannot be kept.",
-      "incompatible": "This machine runs a Timon version too old for this interface. Update it first.",
+      "incompatible": "This machine runs a Rooks version too old for this interface. Update it first.",
       "notFound": "This machine is no longer in your fleet.",
       "notHere": "Machines are managed from a browser signed in on this computer.",
       "sessionRequired": "Sign in on this computer first.",
@@ -88,7 +88,7 @@
     "banner": {
       "unreachable": "{name} cannot be reached right now.",
       "apiUnknown": "{name} does not say which interface it expects: some screens may not work.",
-      "apiNewer": "{name} runs a newer Timon than this interface: update this app to use it fully.",
+      "apiNewer": "{name} runs a newer Rooks than this interface: update this app to use it fully.",
       "retry": "Retry",
       "dismiss": "Dismiss"
     },
@@ -106,7 +106,7 @@
       "body": {
         "unreachable": "The machine does not answer: it may be off, or its network unavailable. Your work on it is untouched.",
         "unauthorized": "This computer's access was revoked or expired on that machine. Pair it again from {settingsPath}.",
-        "incompatible": "It speaks interface level {level}, and this interface needs at least {min}. Update Timon on that machine, then switch to it again.",
+        "incompatible": "It speaks interface level {level}, and this interface needs at least {min}. Update Rooks on that machine, then switch to it again.",
         "unknown": "The machine this window was driving was removed from your fleet, or belongs to another account.",
         "session_required": "Your session on this computer ended. Go back to it to sign in again.",
         "unavailable": "This computer cannot open its access to the machine right now (secrets vault, daemon). Try again in a moment."

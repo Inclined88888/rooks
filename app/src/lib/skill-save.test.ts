@@ -110,7 +110,7 @@ test('the new-skill form shows the id error and does not POST an empty id', asyn
   try {
     await React.act(async () => root.render(React.createElement(SkillsClient)));
     const button = (label: string) => Array.from(document.querySelectorAll('button')).find((node) => node.textContent?.trim() === label)!;
-    await React.act(async () => button('New Timon skill').click());
+    await React.act(async () => button('New Rooks skill').click());
     await React.act(async () => button('Create').click());
     assert.equal(document.querySelectorAll('[aria-invalid="true"]').length, 1);
     assert.equal(document.querySelectorAll('[role="alert"]').length, 1);

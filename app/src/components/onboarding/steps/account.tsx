@@ -15,21 +15,17 @@ import { ArrowRight, Loader2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AgentMascotHost } from '@/components/mascot/agent-mascot';
 import { PasswordInput } from '@/components/auth/password-input';
 import { accountName, looksLikeEmail, passwordPairReady, passwordProblem, MIN_PASSWORD } from '@/components/auth/auth-form';
 import { EmailCodeHost, useNow, type EmailCodeResent, type EmailCodeVerdict } from '@/components/email-code/email-code';
 import {
   createAccount, requestSetupCode, resendSetupCode, RESTART_CODES, type CodeChallenge,
 } from '@/components/email-code/email-code-api';
-import { expiredChallenge, failureText, type CodeFailure } from '@/components/email-code/email-code-failure';
+import { codeFailure, expiredChallenge, failureText, networkFailure, type CodeFailure } from '@/components/email-code/email-code-failure';
 import { fetchMe } from '@/lib/auth';
 import { firstRunScheme } from '@/lib/first-run-gate';
 import { t } from '@/lib/i18n';
 import { useOnboarding, useOnboardingBack } from '../onboarding-context';
-
-/** The mockup's blue round head: the reader's own, before any agent exists. */
-const LOOK = { shape: 'round', color: '#3fa9ff', eyes: 'big' } as const;
 
 export type AccountDraft = { name: string; email: string; password: string; confirm: string; setupToken: string };
 
@@ -49,7 +45,7 @@ function Field({ id, label, required = false, hint, children }: { id: string; la
 }
 
 export function AccountStep(): ReactElement {
-  const { next, goTo } = useOnboarding();
+  const { next } = useOnboarding();
   const ids = useId();
   const now = useNow();
   const [draft, setDraft] = useState<AccountDraft>(EMPTY);
@@ -60,18 +56,43 @@ export function AccountStep(): ReactElement {
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<CodeFailure | null>(null);
 
-  // An account already made (a reload after creating it) moves on; an install
-  // that has one but no session signs in from the onboarding.
+  const alreadyHere = (): CodeFailure => ({
+    code: 'already_set_up', status: 409, params: {}, message: t('onboarding.account.alreadyHere'), retryUntil: null, attemptsLeft: null,
+  });
+
+  // A name-only account has no password. This computer opens it. A password
+  // form is the wrong place for that, and for an account whose password was never shown.
+  const openExisting = useCallback(async (): Promise<boolean> => {
+    const current = await fetchMe().catch(() => null);
+    if (current?.user) { next(); return true; }
+    try {
+      const login = await fetch('/api/ui/auth/login', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ localDesktop: true }),
+      });
+      if (!login.ok) return false;
+    } catch {
+      return false;
+    }
+    next();
+    return true;
+  }, [next]);
+
+  // An account already made (a reload after creating it) moves on.
   useEffect(() => {
     let alive = true;
-    void fetchMe().then((me) => {
+    void fetchMe().then(async (me) => {
       if (!alive) return;
-      if (me.user) next();
-      else if (!me.needsSetup) goTo('signin');
-      else setNeedsToken(me.setupRequiresToken === true);
+      if (me.user) { next(); return; }
+      if (!me.needsSetup) {
+        const opened = await openExisting();
+        if (alive && !opened) setFailure(alreadyHere());
+        return;
+      }
+      setNeedsToken(me.setupRequiresToken === true);
     });
     return () => { alive = false; };
-  }, [next, goTo]);
+  }, [next, openExisting]);
 
   // "Back" on the code returns to the form, filled as it was left.
   useOnboardingBack(() => {
@@ -88,7 +109,10 @@ export function AccountStep(): ReactElement {
   const email = draft.email.trim();
   const problem = passwordProblem(draft.password, draft.confirm);
   const waiting = failureText(failure, now);
-  const ready = looksLikeEmail(email) && passwordPairReady(draft.password, draft.confirm) && (!needsToken || draft.setupToken.trim() !== '');
+  const emailPath = email.trim() !== '' || draft.password !== '' || draft.confirm !== '';
+  const ready = emailPath
+    ? looksLikeEmail(email) && passwordPairReady(draft.password, draft.confirm) && (!needsToken || draft.setupToken.trim() !== '')
+    : draft.name.trim() !== '' && (!needsToken || draft.setupToken.trim() !== '');
   const blocked = failure?.retryUntil != null && waiting !== null;
 
   const ask = useCallback(async (): Promise<CodeChallenge | CodeFailure> => {
@@ -96,18 +120,55 @@ export function AccountStep(): ReactElement {
     return answer.ok ? answer.value : answer.failure;
   }, [email, draft.setupToken, needsToken]);
 
+  /** A name-only account. 409 already_set_up is the install moving on, not a failure. */
+  const postNameOnly = async (name: string): Promise<void> => {
+    setSending(true);
+    setFailure(null);
+    try {
+      const scheme = firstRunScheme();
+      const answer = await fetch('/api/ui/auth/setup', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name, ...(scheme ? { scheme } : {}), ...(needsToken ? { setupToken: draft.setupToken.trim() } : {}) }),
+      });
+      if (answer.ok) { next(); return; }
+      const body = await answer.json().catch(() => null);
+      const failure = codeFailure(answer.status, body, Date.now(), (error) => (
+        error ? `${t('onboarding.account.failed')} (${error})` : t('onboarding.account.failed')
+      ));
+      if (answer.status === 409 && failure.code === 'already_set_up') {
+        const opened = await openExisting();
+        if (!opened) setFailure(alreadyHere());
+        return;
+      }
+      setFailure(failure);
+    } catch {
+      setFailure(networkFailure());
+    } finally {
+      setSending(false);
+    }
+  };
+
   const submit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     if (!ready || sending || blocked) return;
+    if (!emailPath) {
+      await postNameOnly(draft.name.trim());
+      return;
+    }
     setSending(true);
     setFailure(null);
-    const answer = await ask();
-    setSending(false);
-    if ('challengeId' in answer) {
-      setChallenge(answer);
-      setView('code');
-    } else {
-      setFailure(answer);
+    try {
+      const answer = await ask();
+      if ('challengeId' in answer) {
+        setChallenge(answer);
+        setView('code');
+      } else {
+        setFailure(answer);
+      }
+    } catch {
+      setFailure(networkFailure());
+    } finally {
+      setSending(false);
     }
   };
 
@@ -162,8 +223,7 @@ export function AccountStep(): ReactElement {
 
   return (
     <div className="flex w-full max-w-[440px] flex-col items-center text-center">
-      <AgentMascotHost look={LOOK} size={56} />
-      <h1 className="mt-2 text-[28px] font-bold leading-tight tracking-[-0.02em]">{t('onboarding.account.title')}</h1>
+      <h1 className="mt-2 text-[28px] font-semibold leading-tight tracking-tight">{t('onboarding.account.title')}</h1>
       <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{t('onboarding.account.subtitle')}</p>
       <form noValidate aria-busy={sending} className="mt-[18px] flex w-full flex-col gap-2.5 text-left" onSubmit={(e) => { void submit(e); }}>
         <Field id={`${ids}-name`} label={t('onboarding.account.name')} hint={t('onboarding.account.nameHint')}>
@@ -177,11 +237,10 @@ export function AccountStep(): ReactElement {
             className="h-10"
           />
         </Field>
-        <Field id={`${ids}-email`} label={t('onboarding.account.email')} required hint={t('onboarding.account.emailHint')}>
+        <Field id={`${ids}-email`} label={t('onboarding.account.email')} hint={t('onboarding.account.emailHint')}>
           <Input
             id={`${ids}-email`}
             type="email"
-            required
             autoComplete="username"
             placeholder={t('onboarding.account.emailPlaceholder')}
             value={draft.email}
@@ -190,10 +249,9 @@ export function AccountStep(): ReactElement {
             className="h-10"
           />
         </Field>
-        <Field id={`${ids}-password`} label={t('onboarding.account.password')} required>
+        <Field id={`${ids}-password`} label={t('onboarding.account.password')}>
           <PasswordInput
             id={`${ids}-password`}
-            required
             autoComplete="new-password"
             value={draft.password}
             onChange={set('password')}
@@ -202,10 +260,9 @@ export function AccountStep(): ReactElement {
             className="h-10"
           />
         </Field>
-        <Field id={`${ids}-confirm`} label={t('onboarding.account.confirm')} required>
+        <Field id={`${ids}-confirm`} label={t('onboarding.account.confirm')}>
           <PasswordInput
             id={`${ids}-confirm`}
-            required
             autoComplete="new-password"
             value={draft.confirm}
             onChange={set('confirm')}
@@ -238,6 +295,9 @@ export function AccountStep(): ReactElement {
         <p role="status" aria-live="polite" data-account-status="" className="ml-0.5 min-h-4 text-[12.5px] leading-4 tabular-nums text-destructive">
           {line}
         </p>
+        <Button type="button" variant="ghost" className="h-10 w-full" disabled={sending} onClick={() => { void postNameOnly(draft.name.trim() || 'Local'); }}>
+          {t('onboarding.account.skip')}
+        </Button>
         <Button type="submit" size="lg" className="h-11 w-full gap-2 rounded-full" disabled={!ready || sending || blocked}>
           {sending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
           {t('onboarding.account.create')}

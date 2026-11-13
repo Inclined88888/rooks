@@ -716,7 +716,7 @@
    only while the onboarding runs one (`data-timon-vt`), so no other screen
    inherits it. */
 .timon-onboarding-rise { opacity: 0; animation: timon-onboarding-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-@keyframes timon-onboarding-rise { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes timon-onboarding-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 .timon-onboarding-fade { opacity: 0; animation: timon-onboarding-fade 1s forwards; }
 @keyframes timon-onboarding-fade { to { opacity: 1; } }
 .timon-onboarding-drop { animation: timon-onboarding-drop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
@@ -726,8 +726,8 @@
 .timon-onboarding-roller-item { will-change: transform, opacity; backface-visibility: hidden; }
 html[data-timon-vt='onboarding']::view-transition-old(root) { animation: timon-onboarding-vt-out 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 html[data-timon-vt='onboarding']::view-transition-new(root) { animation: timon-onboarding-vt-in 0.48s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-@keyframes timon-onboarding-vt-out { to { opacity: 0; transform: translateY(-10px) scale(0.985); filter: blur(4px); } }
-@keyframes timon-onboarding-vt-in { from { opacity: 0; transform: translateY(14px) scale(0.985); filter: blur(6px); } }
+@keyframes timon-onboarding-vt-out { to { opacity: 0; transform: translateY(-10px); } }
+@keyframes timon-onboarding-vt-in { from { opacity: 0; transform: translateY(14px); } }
 
 /* The onboarding's "Discover Timon" slides (steps/discover.tsx, discover/drawings.tsx):
    the progress bar of the current slide fills, the drawings' parts pop in,
@@ -735,7 +735,7 @@ html[data-timon-vt='onboarding']::view-transition-new(root) { animation: timon-o
    columns, the project TIMs bob inside their project's ring. */
 .timon-discover-fill { transform: scaleX(0); animation-name: timon-discover-fill; animation-timing-function: linear; animation-fill-mode: forwards; }
 @keyframes timon-discover-fill { to { transform: scaleX(1); } }
-.timon-discover-grid { background-image: radial-gradient(hsl(var(--muted-foreground) / 0.22) 1px, transparent 1.2px); background-size: 16px 16px; }
+.timon-discover-grid { background: transparent; }
 .timon-discover-pop { animation: timon-discover-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 @keyframes timon-discover-pop { from { opacity: 0; scale: 0.6; } }
 .timon-discover-draw { stroke-dasharray: 100; stroke-dashoffset: 100; animation: timon-discover-draw 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }

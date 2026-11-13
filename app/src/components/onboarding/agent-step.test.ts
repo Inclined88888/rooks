@@ -14,7 +14,7 @@ import {
 import { resetOnboardingProfile } from './onboarding-profile';
 
 type Call = { url: string; method: string; body: unknown };
-type Answer = (call: Call) => Response | undefined;
+type Answer = (call: Call) => Response | Promise<Response> | undefined;
 
 const CATALOG: BackendCatalog = {
   defaultBackend: 'claude',
@@ -37,6 +37,16 @@ function daemon(profile: string | null, override: Answer = () => undefined): { c
       if (call.url === '/api/ui/setup/main-agent') return Response.json({ status: 'pending', available: true, name: '_main', named: false });
       if (call.url === '/api/ui/agents/_main') return Response.json({ name: '_main', backend: 'claude', model: 'opus', skills: ['timon-task'], mcp_servers: ['sentry'], look: null });
       if (call.url.startsWith('/api/ui/backends/catalog')) return Response.json(CATALOG);
+      if (call.url.startsWith('/api/ui/backends/provider-clis')) {
+        return Response.json({
+          backends: [{
+            name: 'claude', label: 'Claude Code', brand: 'claude', path: '/bin/claude', bundled: false, signedIn: true,
+            installable: false, installCommand: null, installDocs: null, signInCommand: 'claude', signInThen: null,
+            seedsMainAgent: true, version: null, latest: null, updateAvailable: false, unsupportedVersion: false,
+          }],
+          jobs: {}, updateCheck: false,
+        });
+      }
       if (call.url === '/api/ui/skills') {
         return Response.json({ skills: [{ id: 'timon-task', source: 'timon' }, { id: 'tests', title: 'Tests', source: 'timon' }, { id: 'old', source: 'project', shadowed: true }] });
       }
@@ -50,22 +60,28 @@ function daemon(profile: string | null, override: Answer = () => undefined): { c
 
 test('the creation names the agent, then writes its config on the name the daemon answered', async () => {
   const d = daemon(null);
-  const result = await createMainAgent('Nova', { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'coffee' }, directives: 'Never push.' }, d.fetcher);
+  const result = await createMainAgent('Nova', { look: null, directives: 'Never push.' }, d.fetcher);
   assert.deepEqual(result, { ok: true, name: 'nova' });
   assert.deepEqual(d.calls.map((c) => `${c.method} ${c.url}`), ['POST /api/ui/setup/main-agent/name', 'PATCH /api/ui/agents/nova/config']);
   assert.deepEqual(d.calls[0]?.body, { name: 'Nova' });
-  assert.deepEqual(d.calls[1]?.body, { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'coffee' }, directives: 'Never push.' });
+  assert.deepEqual(d.calls[1]?.body, { look: null, directives: 'Never push.' });
   assert.equal(agentConfigPath('a b'), '/api/ui/agents/a%20b/config');
 });
 
 test('a refused name writes nothing else; a refused config is told apart', async () => {
   const taken = daemon(null, (c) => (c.url === MAIN_AGENT_NAME_PATH ? Response.json({ error: 'name_taken' }, { status: 409 }) : undefined));
-  assert.deepEqual(await createMainAgent('Nova', { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'none' } }, taken.fetcher), { ok: false, error: 'name_taken', stage: 'name' });
+  assert.deepEqual(await createMainAgent('Nova', { look: null }, taken.fetcher), { ok: false, error: 'name_taken', stage: 'name' });
   assert.equal(taken.calls.length, 1);
   const odd = daemon(null, (c) => (c.url === MAIN_AGENT_NAME_PATH ? Response.json({ error: 'kaboom' }, { status: 500 }) : undefined));
-  assert.equal((await createMainAgent('Nova', { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'none' } }, odd.fetcher)).ok, false);
-  const badConfig = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ error: 'look.acc: unknown value' }, { status: 400 }) : undefined));
-  assert.deepEqual(await createMainAgent('Nova', { look: { shape: 'tri', color: '#7ed957', eyes: 'code', acc: 'none' } }, badConfig.fetcher), { ok: false, error: 'configFailed', stage: 'config' });
+  assert.equal((await createMainAgent('Nova', { look: null }, odd.fetcher)).ok, false);
+  const badConfig = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ error: 'config' }, { status: 400 }) : undefined));
+  assert.deepEqual(await createMainAgent('Nova', { look: null }, badConfig.fetcher), { ok: false, error: 'configFailed', stage: 'config', name: 'nova' });
+  const again = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ ok: true }) : undefined));
+  assert.deepEqual(await createMainAgent('Nova', { look: null }, again.fetcher, { name: 'nova' }), { ok: true, name: 'nova' });
+  assert.equal(again.calls.some((c) => c.method === 'POST'), false, 'the named agent is not renamed again');
+  const renamed = daemon(null, (c) => (c.method === 'PATCH' ? Response.json({ ok: true }) : undefined));
+  assert.deepEqual(await createMainAgent('Other', { look: null }, renamed.fetcher, { name: 'nova' }), { ok: true, name: 'nova' });
+  assert.equal(renamed.calls.some((c) => c.method === 'POST'), false, 'a different name after a failed save does not rename again');
 });
 
 test('the main agent is read as it stands; an unreachable daemon is an empty agent', async () => {
@@ -161,25 +177,20 @@ const click = async (r: Rendered, selector: string): Promise<void> => {
 };
 const patchOf = (calls: readonly Call[]): Record<string, unknown> | undefined => calls.find((c) => c.method === 'PATCH')?.body as Record<string, unknown> | undefined;
 
-test('each profile opens its view, starred; the switcher opens the others', async () => {
+test('each profile opens its view, with no view switcher', async () => {
   for (const [profile, view] of [['developer', 'sheet'], ['automation', 'interview'], ['beginner', 'templates']] as const) {
     await renderStep(profile, async (r) => {
       assert.equal(q(r.host, '[data-onboarding-step="agent"]').getAttribute('data-agent-view'), view);
-      assert.equal(q(r.host, '[data-recommended="true"]').getAttribute('data-view'), view, 'the star is on the profile\'s view');
-      assert.equal(q(r.host, `[data-view="${view}"]`).getAttribute('aria-checked'), 'true');
+      assert.equal(r.host.querySelector('[data-view-switcher]'), null);
+      assert.equal(r.host.querySelector('[data-view]'), null);
     });
   }
-  await renderStep('developer', async (r) => {
-    await click(r, '[data-view="templates"]');
-    assert.equal(q(r.host, '[data-onboarding-step="agent"]').getAttribute('data-agent-view'), 'templates');
-    assert.equal(q(r.host, '[data-recommended="true"]').getAttribute('data-view'), 'sheet', 'the star stays on the recommended view');
-  });
 });
 
 test('templates: « Create » waits for a profile, then writes the agent and opens the chat', async () => {
   await renderStep('beginner', async (r) => {
     assert.ok((q<HTMLInputElement>(r.host, '[data-agent-name]').value).length > 0, 'a name is drawn');
-    assert.equal(q<HTMLButtonElement>(r.host, '[data-create]').disabled, true);
+    assert.equal(q<HTMLButtonElement>(r.host, '[data-create]').disabled, false, 'Continue is available before a profile is picked');
     await click(r, '[data-template="assist"]');
     assert.equal(q(r.host, '[data-role-pill]').textContent, 'Personal assistant');
     assert.deepEqual(Array.from(r.host.querySelectorAll('[data-cap]')).map((el) => el.getAttribute('data-cap')), ['base', 'mail', 'agenda']);
@@ -190,7 +201,7 @@ test('templates: « Create » waits for a profile, then writes the agent and ope
     const named = r.calls.find((c) => c.url === MAIN_AGENT_NAME_PATH);
     assert.deepEqual(named?.body, { name });
     const patch = patchOf(r.calls);
-    assert.deepEqual(patch?.look, { shape: 'squircle', color: '#ff5fbf', eyes: 'pill', acc: 'clipboard' });
+    assert.equal(patch?.look, null);
     assert.match(String(patch?.directives), /email/);
     assert.equal(r.calls.find((c) => c.method === 'PATCH')?.url, `/api/ui/agents/${encodeURIComponent(name.toLowerCase())}/config`);
     assert.equal(r.nexts(), 1, 'the chat step opens');
@@ -245,27 +256,119 @@ test('sheet: line of work, exact permission mode with its warning, the daemon\'s
     assert.equal(patch?.model, 'sonnet');
     assert.deepEqual(patch?.skills, ['timon-task', 'tests'], 'the product\'s own skill is kept');
     assert.deepEqual(patch?.mcp_servers, ['sentry', 'github']);
-    assert.equal((patch?.look as { acc?: string } | undefined)?.acc, 'pen', 'a reviewer holds the red pen');
+    assert.equal(patch?.look, null);
     assert.equal(r.nexts(), 1);
   });
 });
 
-test('« Customise » opens the panel; a pick is kept and sent; Escape closes it', async () => {
+test('the sheet writes no model when no AI tool is installed', async () => {
   await renderStep('developer', async (r) => {
-    assert.equal(q(r.host, '[data-look-styler]').getAttribute('data-look-styler'), 'closed');
-    await click(r, '[data-customise]');
-    assert.equal(q(r.host, '[data-look-styler]').getAttribute('data-look-styler'), 'open');
-    await click(r, '[data-shape="bean"]');
-    await click(r, '[data-acc="globe"]');
-    await r.react.act(async () => { window.dispatchEvent(new r.dom.window.KeyboardEvent('keydown', { key: 'Escape' })); });
-    await settle(r.react);
-    assert.equal(q(r.host, '[data-look-styler]').getAttribute('data-look-styler'), 'closed');
-    await click(r, '[data-role="chore"]');
+    await click(r, '[data-tab="engine"]');
+    const sonnet = Array.from(r.host.querySelectorAll<HTMLButtonElement>('[data-picker-row]')).find((b) => b.textContent?.includes('Sonnet'));
+    assert.ok(sonnet);
+    await r.react.act(async () => { sonnet.click(); });
     await click(r, '[data-create]');
     await settle(r.react, 40);
-    const look = patchOf(r.calls)?.look as { shape?: string; acc?: string } | undefined;
-    assert.equal(look?.shape, 'bean', 'the styled look survives a change of role');
-    assert.equal(look?.acc, 'globe');
+    const patch = patchOf(r.calls);
+    assert.equal(patch?.backend, undefined);
+    assert.equal(patch?.model, undefined);
+    assert.equal(r.host.querySelector('[data-model]'), null);
+  }, (c) => (c.url.startsWith('/api/ui/backends/provider-clis')
+    ? Response.json({ backends: [], jobs: {}, updateCheck: false })
+    : undefined));
+});
+
+test('a Continue before the provider list returns keeps the chosen model', async () => {
+  await renderStep('developer', async (r) => {
+    await click(r, '[data-tab="engine"]');
+    const sonnet = Array.from(r.host.querySelectorAll<HTMLButtonElement>('[data-picker-row]')).find((b) => b.textContent?.includes('Sonnet'));
+    assert.ok(sonnet);
+    await r.react.act(async () => { sonnet.click(); });
+    await click(r, '[data-create]');
+    const patch = patchOf(r.calls);
+    assert.equal(patch?.backend, 'claude');
+    assert.equal(patch?.model, 'sonnet');
+  }, (c) => (c.url.startsWith('/api/ui/backends/provider-clis')
+    ? new Promise((resolve) => { setTimeout(() => resolve(Response.json({ backends: [], jobs: {}, updateCheck: false })), 800); })
+    : undefined));
+});
+
+test('Ollama and an API-key profile keep the chosen model', async () => {
+  await renderStep('developer', async (r) => {
+    await click(r, '[data-tab="engine"]');
+    const sonnet = Array.from(r.host.querySelectorAll<HTMLButtonElement>('[data-picker-row]')).find((b) => b.textContent?.includes('Sonnet'));
+    assert.ok(sonnet);
+    await r.react.act(async () => { sonnet.click(); });
+    await click(r, '[data-create]');
+    const patch = patchOf(r.calls);
+    assert.equal(patch?.backend, 'claude');
+    assert.equal(patch?.model, 'sonnet');
+    assert.ok(r.host.querySelector('[data-model]'));
+  }, (c) => {
+    if (c.url.startsWith('/api/ui/backends/provider-clis')) {
+      return Response.json({
+        backends: [{
+          name: 'claude', label: 'Claude Code', brand: 'claude', path: null, bundled: false, signedIn: null,
+          installable: false, installCommand: null, installDocs: null, signInCommand: 'claude', signInThen: null,
+          seedsMainAgent: true, version: null, latest: null, updateAvailable: false, unsupportedVersion: false,
+        }],
+        jobs: {}, updateCheck: false,
+      });
+    }
+    if (c.url.startsWith('/api/ui/backends/catalog')) {
+      return Response.json({
+        defaultBackend: 'claude',
+        backends: [
+          CATALOG.backends[0],
+          { id: 'ollama-cloud', label: 'Ollama Cloud', brand: 'ollama', defaultModel: 'llama', models: [{ slug: 'llama', label: 'Llama' }] },
+        ],
+      });
+    }
+    return undefined;
+  });
+});
+
+test('a failed config save is retried on the same agent', async () => {
+  let patches = 0;
+  await renderStep('beginner', async (r) => {
+    await click(r, '[data-create]');
+    await settle(r.react, 40);
+    assert.equal(r.nexts(), 0);
+    assert.equal(r.calls.filter((c) => c.url === MAIN_AGENT_NAME_PATH).length, 1);
+    await click(r, '[data-create]');
+    await settle(r.react, 40);
+    assert.equal(r.calls.filter((c) => c.url === MAIN_AGENT_NAME_PATH).length, 1, 'the second Continue does not rename again');
+    assert.equal(r.nexts(), 1);
+  }, (c) => {
+    if (c.method !== 'PATCH') return undefined;
+    patches += 1;
+    return patches === 1 ? Response.json({ error: 'config' }, { status: 400 }) : undefined;
+  });
+});
+
+test('after a failed save, Continue with defaults leaves the name and skips another write', async () => {
+  await renderStep('beginner', async (r) => {
+    await click(r, '[data-create]');
+    await settle(r.react, 40);
+    assert.ok(r.host.querySelector('[data-continue-defaults]'), 'a failed save can continue with defaults');
+    assert.equal(q<HTMLInputElement>(r.host, '[data-agent-name]').disabled, true, 'the name stays after the rename');
+    await click(r, '[data-create]');
+    await settle(r.react, 40);
+    assert.equal(r.calls.filter((c) => c.url === MAIN_AGENT_NAME_PATH).length, 1);
+    assert.equal(r.nexts(), 0);
+    await click(r, '[data-continue-defaults]');
+    assert.equal(r.nexts(), 1);
+    assert.equal(r.calls.filter((c) => c.method === 'PATCH').length, 2, 'defaults do not write the config again');
+    assert.equal(r.calls.filter((c) => c.url === MAIN_AGENT_NAME_PATH).length, 1);
+  }, (c) => (c.method === 'PATCH' ? Response.json({ error: 'config' }, { status: 400 }) : undefined));
+});
+
+test('Continue is on the step, and the mascot styler is not', async () => {
+  await renderStep('developer', async (r) => {
+    assert.equal(r.host.querySelector('[data-customise]'), null);
+    assert.equal(r.host.querySelector('[data-look-styler]'), null);
+    assert.match(q(r.host, '[data-create]').textContent ?? '', /Continue/);
+    assert.equal(q<HTMLButtonElement>(r.host, '[data-create]').disabled, false);
   });
 });
 
@@ -288,7 +391,7 @@ test('interview: five questions, answered ones reopen, then « Create » writes 
     const patch = patchOf(r.calls);
     assert.equal(patch?.permission_mode, 'auto');
     assert.match(String(patch?.directives), /Gmail/);
-    assert.equal((patch?.look as { acc?: string } | undefined)?.acc, 'envelope');
+    assert.equal(patch?.look, null);
   });
 });
 
@@ -307,36 +410,3 @@ test('a profile that could not be read says so, and « Retry » reads it again',
     : undefined));
 });
 
-test('« Customise » opens the shared configurator: a plugin that takes `agent.lookstyler` paints inside the panel', async () => {
-  const { register, resetSlotsForTests, AGENT_LOOK_STYLER_SLOT } = await import('@/lib/plugin-host/slots');
-  const { useLookStyler } = await import('@/components/mascot/look-styler/look-styler-context');
-  const React = await import('react');
-  resetSlotsForTests();
-  function Replacement() {
-    const v = useLookStyler();
-    return React.createElement('button', {
-      type: 'button',
-      'data-plugin-styler': v?.name,
-      onClick: () => v?.onChange({ shape: 'cloud', color: '#3fa9ff', eyes: 'star', acc: 'telescope' }),
-    });
-  }
-  const dispose = register({ slot: AGENT_LOOK_STYLER_SLOT, pluginId: 'acme-styler' }, Replacement);
-  try {
-    await renderStep('developer', async (r) => {
-      assert.ok(!r.host.querySelector('[data-plugin-styler]') && !document.querySelector('[data-plugin-styler]'), 'nothing painted while the panel is closed');
-      await click(r, '[data-customise]');
-      const name = q<HTMLInputElement>(r.host, '[data-agent-name]').value;
-      assert.equal(q(r.host, '[data-plugin-styler]').getAttribute('data-plugin-styler'), name, 'the plugin reads the agent\'s name');
-      assert.ok(!document.querySelector('[data-look-styler-content]'), 'the product\'s grids stepped aside');
-      assert.ok(q(r.host, '[data-style-done]'), 'the panel and its « Done » stay the step\'s');
-      await click(r, '[data-plugin-styler]');
-      await click(r, '[data-style-done]');
-      await click(r, '[data-create]');
-      await settle(r.react, 40);
-      assert.deepEqual(patchOf(r.calls)?.look, { shape: 'cloud', color: '#3fa9ff', eyes: 'star', acc: 'telescope' });
-    });
-  } finally {
-    dispose();
-    resetSlotsForTests();
-  }
-});

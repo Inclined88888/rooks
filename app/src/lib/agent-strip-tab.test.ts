@@ -81,12 +81,10 @@ test('the tab shows the agent avatar where the state dot was, with the state wor
   });
 });
 
-test('a working agent pulses around its avatar, never under reduced motion', async () => {
+test('a working agent has no glow around its avatar', async () => {
   await renderChip(agent('thinking'), {}, (host) => {
-    const pulse = host.querySelector('[data-chip-avatar] [data-chip-pulse]')!;
-    assert.ok(pulse, 'the pulse wraps the avatar');
-    assert.match(pulse.className, /motion-safe:animate-/);
-    assert.match(pulse.className, /motion-reduce:hidden/);
+    assert.equal(host.querySelector('[data-chip-avatar] [data-chip-pulse]'), null);
+    assert.equal(host.querySelector('[data-chip-ring]'), null);
   });
 });
 

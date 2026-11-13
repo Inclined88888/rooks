@@ -18,8 +18,8 @@ import { instanceIdentity, resolveInstanceVariant, RELEASE_INSTANCE } from './in
 test('an explicit dev instance renames and re-badges every surface', () => {
   const dev = instanceIdentity({ TIMON_INSTANCE: 'dev' });
   assert.equal(dev.variant, 'dev');
-  assert.equal(dev.displayName, 'Timon DEV');
-  assert.equal(dev.shortName, 'Timon DEV');
+  assert.equal(dev.displayName, 'Rooks DEV');
+  assert.equal(dev.shortName, 'Rooks DEV');
   assert.ok(dev.fullName.includes('DEV'), 'the window title must carry the marker too');
   assert.equal(dev.badge, 'DEV');
   // Distinct artwork, or the home screen still shows two identical icons.
@@ -33,12 +33,11 @@ test('an explicit dev instance renames and re-badges every surface', () => {
 test('the product identity carries no marker at all', () => {
   const release = instanceIdentity({});
   assert.equal(release.variant, 'release');
-  assert.equal(release.displayName, 'Timon');
-  // The long name is what the window title and the PWA advertise. `Timon`
-  // alone stays the SHORT label (logotype alt, navigation, launcher tile) and
-  // is also the electron-builder `productName`, which must never grow spaces.
-  assert.equal(release.fullName, 'Timon beta - Agentic Workstation');
-  assert.equal(release.shortName, 'Timon');
+  assert.equal(release.displayName, 'Rooks');
+  // The window title is the product name. The packager's productName stays
+  // separate: it names files and paths, and must never grow spaces.
+  assert.equal(release.fullName, 'Rooks');
+  assert.equal(release.shortName, 'Rooks');
   assert.equal(release.badge, null);
   assert.equal(release.icons.small, '/icon-192.png');
   assert.equal(release.logo.color, 'hsl(var(--primary))', 'the product mark follows the theme');
@@ -88,14 +87,14 @@ test('the installed PWA carries the instance name and its own artwork', async ()
   try {
     process.env.TIMON_INSTANCE = 'dev';
     const dev = manifest();
-    assert.equal(dev.short_name, 'Timon DEV');
+    assert.equal(dev.short_name, 'Rooks DEV');
     assert.ok(dev.name?.includes('DEV'));
     assert.deepEqual(dev.icons?.map((i) => i.src), ['/icon-dev-192.png', '/icon-dev-512.png', '/icon-dev.svg']);
 
     delete process.env.TIMON_INSTANCE;
     const release = manifest();
-    assert.equal(release.short_name, 'Timon');
-    assert.equal(release.name, 'Timon beta - Agentic Workstation');
+    assert.equal(release.short_name, 'Rooks');
+    assert.equal(release.name, 'Rooks');
     assert.deepEqual(release.icons?.map((i) => i.src), ['/icon-192.png', '/icon-512.png', '/icon.svg']);
   } finally {
     if (previous === undefined) delete process.env.TIMON_INSTANCE;

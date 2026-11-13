@@ -19,7 +19,7 @@ import { t } from '@/lib/i18n';
 import { defaultImportId, requestSkillImport, type ImportableSource, type SkillImportError } from '@/lib/skill-import';
 import { cn } from '@/lib/utils';
 
-const IMPORT_PATH = '~/.timon/skills/<id>/';
+const IMPORT_PATH = '~/.rooks/skills/<id>/';
 
 export function SkillMissionBadge({ className }: { className?: string }): ReactElement {
   const brand = { brand: BRAND.displayName };

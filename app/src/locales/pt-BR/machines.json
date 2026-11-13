@@ -22,7 +22,7 @@
       "loadError": "Não foi possível carregar as máquinas."
     },
     "settings": {
-      "description": "Outras máquinas Timon que este computador pode controlar. Trocar substitui toda a interface pela da máquina escolhida, nesta mesma janela: cada máquina mantém seus próprios agentes, projetos e configurações.",
+      "description": "Outras máquinas Rooks que este computador pode controlar. Trocar substitui toda a interface pela da máquina escolhida, nesta mesma janela: cada máquina mantém seus próprios agentes, projetos e configurações.",
       "local": "A máquina que serve esta interface.",
       "add": "Adicionar uma máquina",
       "addTitle": "Adicionar uma máquina",
@@ -67,8 +67,8 @@
       "invalidCode": "A máquina recusou este código: incorreto, expirado ou já usado. Peça um novo a ela.",
       "invalidUrl": "Este endereço não pode ser usado: informe apenas o endereço da máquina, sem login, query ou fragmento.",
       "httpsRequired": "A máquina deve ser acessada por HTTPS. HTTP simples só é aceito neste próprio computador.",
-      "blockedAddress": "Este endereço nunca aponta para uma máquina Timon.",
-      "notTimon": "Nenhuma máquina Timon responde neste endereço.",
+      "blockedAddress": "Este endereço nunca aponta para uma máquina Rooks.",
+      "notTimon": "Nenhuma máquina Rooks responde neste endereço.",
       "requiresTls": "A máquina não enxerga esta conexão como HTTPS: verifique as configurações de HTTPS do proxy reverso dela.",
       "unreachable": "Não foi possível alcançar a máquina agora.",
       "unauthorized": "A máquina não aceita mais este computador: o acesso foi revogado ou expirou. Pareie-a novamente.",
@@ -78,7 +78,7 @@
       "throttled": "Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.",
       "tooMany": "Uma frota comporta no máximo 50 máquinas.",
       "vault": "O cofre de segredos está indisponível: não é possível manter o acesso às máquinas.",
-      "incompatible": "Esta máquina executa uma versão do Timon antiga demais para esta interface. Atualize-a primeiro.",
+      "incompatible": "Esta máquina executa uma versão do Rooks antiga demais para esta interface. Atualize-a primeiro.",
       "notFound": "Esta máquina não está mais na sua frota.",
       "notHere": "As máquinas são gerenciadas a partir de um navegador com sessão iniciada neste computador.",
       "sessionRequired": "Entre primeiro neste computador.",
@@ -88,7 +88,7 @@
     "banner": {
       "unreachable": "Não foi possível alcançar {name} agora.",
       "apiUnknown": "{name} não informa qual interface espera: algumas telas podem não funcionar.",
-      "apiNewer": "{name} executa um Timon mais recente que esta interface: atualize este aplicativo para usá-la plenamente.",
+      "apiNewer": "{name} executa um Rooks mais recente que esta interface: atualize este aplicativo para usá-la plenamente.",
       "retry": "Tentar novamente",
       "dismiss": "Dispensar"
     },
@@ -106,7 +106,7 @@
       "body": {
         "unreachable": "A máquina não responde: ela pode estar desligada ou com a rede indisponível. Seu trabalho nela não foi afetado.",
         "unauthorized": "O acesso deste computador foi revogado ou expirou nessa máquina. Pareie-o novamente em {settingsPath}.",
-        "incompatible": "Ela fala o nível de interface {level}, e esta interface exige no mínimo {min}. Atualize o Timon nessa máquina e depois mude para ela novamente.",
+        "incompatible": "Ela fala o nível de interface {level}, e esta interface exige no mínimo {min}. Atualize o Rooks nessa máquina e depois mude para ela novamente.",
         "unknown": "A máquina que esta janela controlava foi removida da sua frota ou pertence a outra conta.",
         "session_required": "Sua sessão neste computador terminou. Volte a ele para entrar novamente.",
         "unavailable": "Este computador não consegue abrir o acesso à máquina agora (cofre de segredos, daemon). Tente novamente em instantes."

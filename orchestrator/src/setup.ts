@@ -91,6 +91,11 @@ export type SetupInput = {
   vaultPath?: string;
   /** Injected by the tests; production reads the running configuration. */
   envDecisions?: EnvDecisions;
+  /**
+   * The onboarding's model step already let the person continue with no CLI.
+   * The repair screen does not set this, so it still asks for a provider.
+   */
+  withoutProvider?: boolean;
 };
 
 export class SetupError extends Error {}
@@ -191,6 +196,7 @@ export function applySetup(
  * Returns the refusal to show, or `null`.
  */
 export function noProviderForSetup(input: SetupInput, usable: (pins: Record<string, string>) => string[] = usableProviders): string | null {
+  if (input.withoutProvider === true) return null;
   const pins: Record<string, string> = {};
   for (const [name, path] of Object.entries(input.binaries ?? {})) {
     if (typeof path === 'string' && path.trim() !== '') pins[name] = path.trim();

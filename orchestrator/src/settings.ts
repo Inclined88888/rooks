@@ -94,11 +94,9 @@ export const SETTINGS: SettingDef[] = [
     advanced: true },
 
   // ── Timon updates (filed under @timon/updates) ────────────────────────
-  { key: 'TIMON_UPDATES_CHECK', type: 'bool', default: true, group: 'Misc', owner: '@timon/updates',
-    label: 'Check for Timon updates',
-    description: "Reads the signed list of Timon releases on timon-ai.com at startup and every 6 hours, to show "
-      + "a banner when a newer version is published for this build's channel. The request carries no licence, "
-      + "account or machine identifier. Off: nothing is requested. A build run from the sources never checks." },
+  { key: 'TIMON_UPDATES_CHECK', type: 'bool', default: false, group: 'Misc', owner: '@timon/updates',
+    label: 'Check for Rooks updates',
+    description: "Off. Rooks does not download a release list and does not trust another product's update key." },
 
   // ── Missions & concurrency ────────────────────────────────────────────
   { key: 'TIMON_MAX_LIVE_MISSIONS', type: 'int', default: 12, group: 'Missions',

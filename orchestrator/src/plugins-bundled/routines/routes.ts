@@ -84,7 +84,7 @@ function backupOperator(req: Request, res: Response): boolean {
   if (!req.auth.isSuperadmin) {
     forbidden(req, res, {
       kind: 'operator',
-      hint: 'The nightly backup covers every account: a superadmin manages it, or the operator runs `timon backup status|enable` from a terminal.',
+      hint: 'The nightly backup covers every account. A superadmin turns it on from Settings.',
     });
     return false;
   }

@@ -59,7 +59,8 @@ test('the main nav entries come from the modules, ranked, not from a hard list',
   mountLayout();
   mountBundledClients(null);
   const entries = slotEntries('nav.item');
-  assert.ok(entries.length >= 14, `expected every product entry, got ${entries.length}`);
+  assert.ok(entries.length >= 13, `expected every product entry, got ${entries.length}`);
+  assert.equal(entries.some((e) => e.pluginId === '@timon/plugins'), false, 'the gallery is opened from Settings');
   assert.deepEqual(
     [...entries].map((e) => e.order),
     [...entries].map((e) => e.order).sort((a, b) => a - b),
@@ -145,7 +146,7 @@ test('the cockpit cards keep their placement id, title, rail and heights', () =>
       ['plugin:@timon/agents:tasks', 'Task queue', 'agents.right.widget', 400, 180],
       ['plugin:@timon/agents:injections', 'Agent injections', 'droite', 420, 200],
       // The rail of `/bots`, shown there in an island of its own.
-      ['plugin:@timon/bots:rail', 'TIMs', 'gauche', 420, 200],
+      ['plugin:@timon/bots:rail', 'Bots', 'gauche', 420, 200],
       ['plugin:@timon/missions:recent', 'Recent missions', 'gauche', 300, 150],
       // Sa surface par défaut est le rail du chat : la carte ne parle que d'une
       // conversation ouverte. Elle reste déplaçable partout ailleurs.

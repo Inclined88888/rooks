@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -47,20 +47,15 @@ import type { ProjectTodo } from './project-todo-types';
 import { confirmAction } from '@/components/confirm-dialog/confirm-dialog-context';
 
 /** `tint`: the theme token (an HSL triple) the column's corner wash is drawn with. */
-type ColumnDef = { key: TaskStatus; labelKey: string; emptyKey: string; dot: string; tint: string };
+type ColumnDef = { key: TaskStatus; labelKey: string; emptyKey: string; dot: string; };
 
 // Column dots are theme tokens: the four statuses read the same in light and dark.
 const COLUMNS: ColumnDef[] = [
-  { key: 'PENDING', labelKey: 'kanbanPage.columns.pending', emptyKey: 'kanbanPage.columns.pendingEmpty', dot: 'bg-warning', tint: '--warning' },
-  { key: 'IN_PROGRESS', labelKey: 'kanbanPage.columns.inProgress', emptyKey: 'kanbanPage.columns.inProgressEmpty', dot: 'bg-info', tint: '--info' },
-  { key: 'DONE', labelKey: 'kanbanPage.columns.done', emptyKey: 'kanbanPage.columns.doneEmpty', dot: 'bg-success', tint: '--success' },
-  { key: 'BLOCKED', labelKey: 'kanbanPage.columns.blocked', emptyKey: 'kanbanPage.columns.blockedEmpty', dot: 'bg-destructive', tint: '--destructive' },
+  { key: 'PENDING', labelKey: 'kanbanPage.columns.pending', emptyKey: 'kanbanPage.columns.pendingEmpty', dot: 'bg-warning' },
+  { key: 'IN_PROGRESS', labelKey: 'kanbanPage.columns.inProgress', emptyKey: 'kanbanPage.columns.inProgressEmpty', dot: 'bg-info' },
+  { key: 'DONE', labelKey: 'kanbanPage.columns.done', emptyKey: 'kanbanPage.columns.doneEmpty', dot: 'bg-success' },
+  { key: 'BLOCKED', labelKey: 'kanbanPage.columns.blocked', emptyKey: 'kanbanPage.columns.blockedEmpty', dot: 'bg-destructive' },
 ];
-
-/** A faint wash of the column's colour from its top-left corner, laid over the island's own fill. */
-function columnWash(token: string): CSSProperties {
-  return { backgroundImage: `radial-gradient(120% 70% at 0% 0%, hsl(var(${token}) / 0.13), transparent 70%)` };
-}
 
 // ── Main kanban ────────────────────────────────────────────────────────────────
 
@@ -425,7 +420,6 @@ export function KanbanClient({ defaultAgent }: { defaultAgent?: string }) {
                 'timon-island flex w-[82vw] flex-none flex-col transition-shadow md:w-auto',
                 dragId && col.key !== 'IN_PROGRESS' && 'ring-2 ring-inset ring-primary/40',
               )}
-              style={columnWash(col.tint)}
               onDragOver={(e) => { e.preventDefault(); onDragOverCol(col.key); }}
               onDrop={() => onDropCol(col.key)}
             >

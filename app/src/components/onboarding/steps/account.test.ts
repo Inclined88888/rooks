@@ -62,10 +62,11 @@ async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Rec
   const { OnboardingProvider } = await import('../onboarding-context');
   const { AccountStep } = await import('./account');
   let nexts = 0;
+  let signins = 0;
   let backHandler: (() => boolean) | null = null;
   const nav = {
     step: 'account' as const, direction: 1 as const,
-    next: () => { nexts += 1; }, back: () => {}, goTo: () => {},
+    next: () => { nexts += 1; }, back: () => {}, goTo: () => { signins += 1; },
     setLanguage: async (tag: string) => tag,
     setBackHandler: (h: (() => boolean) | null) => { backHandler = h; },
   };
@@ -96,6 +97,7 @@ async function mount(ctx: TestContext, replies: Record<string, Reply[]>, me: Rec
   return {
     doc, calls, fill, inputs, submit, status, press, flush, act,
     nexts: () => nexts,
+    signins: () => signins,
     back: () => backHandler?.() ?? false,
     fillForm: async (v: { name?: string; email: string; password: string; confirm?: string }) => {
       const [name, email, password, confirm] = inputs();
@@ -115,7 +117,7 @@ test('the form: one column, a disabled button until the address and a matching p
   assert.equal(name?.autocomplete, 'given-name');
   assert.ok(name?.labels?.[0]?.textContent?.includes('First name'));
   assert.ok(!name?.labels?.[0]?.textContent?.includes('*'), 'the first name is optional');
-  assert.ok(email?.labels?.[0]?.textContent?.includes('*'), 'the email is required');
+  assert.ok(!email?.labels?.[0]?.textContent?.includes('*'), 'the email is optional');
   assert.match(w.doc.body.textContent ?? '', /So your agents call you by your first name\./);
   assert.match(w.doc.body.textContent ?? '', /We only collect your email in case you want to reset your password\. The account you create stays local\./);
   assert.equal(w.submit().disabled, true);
@@ -144,7 +146,7 @@ test('the eye: no text, a label, out of Tab, the field keeps the focus, both fie
     assert.equal(eye.getAttribute('aria-label'), 'Show the password');
   }
   const tabbable = Array.from(w.doc.querySelectorAll('input, button')).filter((el) => (el as HTMLElement).tabIndex >= 0 && !(el as HTMLButtonElement).disabled);
-  assert.deepEqual(tabbable.map((el) => (el as HTMLInputElement).autocomplete || el.tagName), ['given-name', 'username', 'new-password', 'new-password'], 'the submit is disabled; the eyes are out');
+  assert.deepEqual(tabbable.map((el) => (el as HTMLInputElement).autocomplete || el.tagName), ['given-name', 'username', 'new-password', 'new-password', 'BUTTON'], 'the submit is disabled; Skip stays; the eyes are out');
 
   const [, , password, confirm] = w.inputs();
   password!.focus();
@@ -179,7 +181,7 @@ test('« Create my account » opens the code; the account is created by the acce
   assert.equal(w.calls[1]?.body.name, 'Ada', 'no first name typed: the part before the @');
   assert.equal(w.calls[1]?.body.password, 'aaaaaaaa');
   assert.equal(w.calls[1]?.body.licenseKey, undefined);
-  assert.equal(w.calls[1]?.body.scheme, 'dark', 'nothing picked on the switch: the OS scheme');
+  assert.equal(w.calls[1]?.body.scheme, 'light', 'nothing picked on the switch: the first-run default is light');
   assert.match(w.doc.body.textContent ?? '', /Wrong code\. 4 attempts left\./);
   assert.equal(w.nexts(), 0);
 
@@ -235,11 +237,43 @@ test('no internet, the email service down, no answer at all: a sentence each, ne
   await w.press(w.submit());
   assert.equal(w.status(), 'An internet connection is needed to confirm the email address.');
   await w.press(w.submit());
-  assert.equal(w.status(), "Timon's email service is unavailable right now. Try again in a few minutes.", 'the relay down is not a connection problem');
+  assert.equal(w.status(), "Rooks's email service is unavailable right now. Try again in a few minutes.", 'the relay down is not a connection problem');
   await w.press(w.submit());
-  assert.equal(w.status(), 'Timon does not answer. Check that it is running, then try again.');
+  assert.equal(w.status(), 'Rooks does not answer. Check that it is running, then try again.');
   await w.press(w.submit());
   assert.equal(w.status(), 'Setup token missing or wrong. Run the command below on the server and try again.');
+});
+
+test('Skip stays usable when the request fails, and an install already set up continues without a password', async (t) => {
+  const w = await mount(t, {
+    '/api/ui/auth/setup': [
+      'network',
+      { status: 409, body: { error: 'already set up', code: 'already_set_up' } },
+      { status: 409, body: { error: 'already set up', code: 'already_set_up' } },
+      { status: 400, body: { error: 'setup_token_required', code: 'setup_token_required' } },
+    ],
+    '/api/ui/auth/login': [
+      { status: 401, body: { error: 'invalid credentials', code: 'invalid_credentials' } },
+      { status: 200, body: { user: { id: 'u1', name: 'Local' } } },
+    ],
+  });
+  const skip = (): HTMLButtonElement | undefined => Array.from(w.doc.querySelectorAll('button')).find((b) => b.textContent?.includes('Skip'));
+  await w.press(skip() ?? null);
+  assert.match(w.status(), /does not answer/);
+  assert.equal(skip()?.disabled, false, 'a failed Skip can be pressed again');
+  assert.equal(w.nexts(), 0);
+  await w.press(skip() ?? null);
+  assert.equal(w.signins(), 0, 'a 409 does not open the password sign-in');
+  assert.equal(w.nexts(), 0);
+  assert.match(w.status(), /already has an account/);
+  assert.equal(w.calls.some((c) => c.url === '/api/ui/auth/login' && c.body.localDesktop === true && c.body.password === undefined), true);
+  assert.equal(skip()?.disabled, false);
+  await w.press(skip() ?? null);
+  assert.equal(w.nexts(), 1, 'this computer opens the account without a password');
+  assert.equal(w.signins(), 0);
+  await w.press(skip() ?? null);
+  assert.match(w.status(), /setup_token_required|Setup token/);
+  assert.equal(skip()?.disabled, false);
 });
 
 test('an exposed install asks for the setup token, and sends it with the code request', async (t) => {

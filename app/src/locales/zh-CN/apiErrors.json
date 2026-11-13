@@ -39,7 +39,7 @@
     "workspace_unknown": "未知工作区。",
     "project_no_cwd": "此项目未配置文件夹。",
     "invalid_repo": "此仓库不是项目内的文件夹。",
-    "path_unknown": "Timon 无法识别此路径：它既不是智能体文件夹，也不是任务工作树。",
+    "path_unknown": "Rooks 无法识别此路径：它既不是智能体文件夹，也不是任务工作树。",
     "secret_unknown": "未知机密项。",
     "vault_unavailable": "机密库不可用。",
     "license_server_unreachable": "无法连接许可证服务器。",
@@ -71,7 +71,7 @@
     "email_code_origin_limited": "此网络请求验证码的次数过多。请在 {seconds, plural, other {# 秒}}后重试。",
     "email_code_busy": "待处理的验证码过多。请在 {seconds, plural, other {# 秒}}后重试。",
     "email_connection_required": "验证邮箱需要连接互联网。",
-    "email_service_unavailable": "Timon 的邮件服务暂不可用。请几分钟后重试。",
+    "email_service_unavailable": "Rooks 的邮件服务暂不可用。请几分钟后重试。",
     "email_rate_limited": "向此邮箱发送的邮件过多。请在 {seconds, plural, other {# 秒}}后重试。",
     "email_rejected": "此邮箱无法接收验证码。",
     "password_too_short": "密码至少需要 {min} 个字符。"

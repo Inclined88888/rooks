@@ -93,8 +93,8 @@ export function SettingsRow({
             {setting.description}
           </p>
         )}
-        <p /* code-font: setting key */ className="mt-1 font-mono text-[10.5px] text-muted-foreground/70">
-          {setting.key} · {t('settingsPage.default')} : {String(setting.default) || t('settingsPage.empty')}
+        <p className="mt-1 text-[10.5px] text-muted-foreground/70">
+          {t('settingsPage.default')} : {String(setting.default) || t('settingsPage.empty')}
         </p>
       </div>
 

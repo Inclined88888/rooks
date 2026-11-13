@@ -462,7 +462,7 @@ export interface IpcMainLike {
 
 export function registerSpeechIpc(ipc: IpcMainLike, isTrusted: (event: SenderEvent) => boolean, controller: () => SpeechController): void {
   const guard = (event: SenderEvent): void => {
-    if (!isTrusted(event)) throw new Error('Dictation is only available in the Timon window.');
+    if (!isTrusted(event)) throw new Error('Dictation is only available in the Rooks window.');
   };
   ipc.handle(SPEECH_CHANNELS.state, (event, input) => {
     guard(event);
@@ -522,7 +522,7 @@ export function registerSpeechIpc(ipc: IpcMainLike, isTrusted: (event: SenderEve
  */
 export function registerMicrophoneIpc(ipc: IpcMainLike, isTrusted: (event: SenderEvent) => boolean, access: MicrophoneAccess): void {
   ipc.handle(SPEECH_CHANNELS.microphone, async (event, input): Promise<{ status: MicrophoneStatus }> => {
-    if (!isTrusted(event)) throw new Error('Dictation is only available in the Timon window.');
+    if (!isTrusted(event)) throw new Error('Dictation is only available in the Rooks window.');
     const request = microphoneRequestSchema.parse(input)?.request === true;
     return { status: request ? await access.ensure() : access.status() };
   });

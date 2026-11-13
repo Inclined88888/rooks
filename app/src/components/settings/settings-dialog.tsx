@@ -6,7 +6,7 @@
  * the filing of rows, grafts and plugin panes lives in `settings-layout.ts`.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type MutableRefObject, type ReactElement } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Brain, ChevronLeft, Cpu, Gauge, Globe, KeyRound, LayoutPanelLeft, Puzzle, Rocket, ScrollText, Wrench, type LucideIcon,
 } from 'lucide-react';
@@ -32,7 +32,6 @@ import { GptLiveSettings } from '@/components/gpt-live-settings';
 import { WebUiSettings } from '@/components/webui-settings';
 import { SettingsAccount } from '@/components/settings/settings-account';
 import { ProfileClient } from '@/app/(main)/profile/profile-client';
-import { LicenseClient } from '@/app/(main)/license/license-client';
 import { SettingsCloseButton, SettingsDialogFrame } from '@/components/settings/settings-dialog-frame';
 import { SettingsSearchField, SettingsSearchResultsView } from '@/components/settings/settings-search';
 import { SettingsRow, type Setting } from '@/components/settings/settings-row';
@@ -108,14 +107,14 @@ export function SettingsDialog(): ReactElement | null {
 }
 
 function SettingsPanel({ onClose, unsavedRef }: { onClose: () => void; unsavedRef: MutableRefObject<boolean> }): ReactElement {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const target = parseSettingsParam(searchParams.get(SETTINGS_PARAM)) ?? { category: 'interface', tab: null };
   const { select: navigate, selectAccount } = useSettingsNavigation();
   const me = useMe();
   const parsedView = parseSettingsAccountView(searchParams.get(SETTINGS_PARAM));
-  // Licence belongs to the superadmin; a pasted `?settings=license` from anyone
-  // else (or while the account is still loading) falls back to the categories.
-  const accountView = parsedView === 'license' && !actingUser(me)?.is_superadmin ? null : parsedView;
+  // The licence page is gone. An old `?settings=license` link opens the profile.
+  const accountView = parsedView === 'license' ? 'profile' : parsedView;
   const caps = useCapabilities();
   // Advanced rows are always on screen; only a preset that hides the zone (lite) drops them.
   const includeAdvanced = isZoneVisible(caps, 'settings.advanced');
@@ -266,6 +265,13 @@ function SettingsPanel({ onClose, unsavedRef }: { onClose: () => void; unsavedRe
                 {categoryLabel('plugins')}
               </span>
             </div>
+            <button
+              type="button"
+              onClick={() => { onClose(); router.push('/plugins'); }}
+              className="mt-3 w-full rounded-lg px-2.5 py-1.5 text-left text-[13px] text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
+            >
+              {t('pluginsPage.browse')}
+            </button>
             <ul className="mt-2 space-y-0.5" aria-label={categoryLabel('plugins')}>
               {resolved.category.tabs.map((tab) => (
                 <li key={tab.id}>
@@ -307,13 +313,13 @@ function SettingsPanel({ onClose, unsavedRef }: { onClose: () => void; unsavedRe
           <>
             <header className="flex items-center gap-3 py-3 pl-5 pr-3 md:pl-8 md:pr-4">
               <h2 className="min-w-0 flex-1 truncate text-[18px] font-semibold tracking-[-0.02em]">
-                {t(accountView === 'profile' ? 'session.profile' : 'session.license')}
+                {t('session.profile')}
               </h2>
               <SettingsCloseButton onClose={onClose} />
             </header>
             {/* The page's own component, in the pane: it brings its scroll. */}
             <div className="min-h-0 flex-1 overflow-hidden">
-              {accountView === 'profile' ? <ProfileClient /> : <LicenseClient />}
+              <ProfileClient />
             </div>
           </>
         ) : (

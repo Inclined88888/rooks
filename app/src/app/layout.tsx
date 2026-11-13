@@ -21,9 +21,6 @@ import { PlatformGlobals } from '@/lib/plugin-host/platform-globals';
 import { ClientPluginHost } from '@/lib/plugin-host/client-plugin-host';
 import { SettingsDialogHost } from '@/components/settings/settings-dialog-host';
 import { FirstRunGate } from '@/components/first-run-gate';
-import { FIRST_RUN_ALLOWED, FIRST_RUN_SCHEME_KEY } from '@/lib/first-run-gate';
-import { BetaLockScreen } from '@/components/beta-lock-screen';
-import { betaLock, type BetaLock } from '@/lib/license';
 import { SlotSingle } from '@/lib/plugin-host/render';
 import { ThemeFloor } from '@/lib/plugin-host/theme-floor';
 import { ThemeColorSync } from '@/components/theme-color-sync';
@@ -31,7 +28,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { AgentEditorModal } from '@/components/agent-editor/agent-editor-modal';
 import { UnsavedDocumentDialog } from '@/components/chat/unsaved-document-dialog';
 import { ConfirmDialogHost } from '@/components/confirm-dialog/confirm-dialog';
-import { APPEARANCE_SCOPE, DEFAULT_APPEARANCE, effectiveGlass, readNativeAppearance } from '@/plugins-client/ui-theme-variants';
+import { APPEARANCE_SCOPE, DEFAULT_APPEARANCE, readNativeAppearance } from '@/plugins-client/ui-theme-variants';
 import { BACKGROUND_SCOPE } from '@/components/background/background-model';
 import { DEFAULT_USER_PREFS, type ColorScheme } from '@/lib/auth';
 import { fetchForRender, resolveLayoutSeeds, resolveWorkspace } from '@/lib/ui/server-workspace';
@@ -115,30 +112,13 @@ async function loadInitialMe(): Promise<{ scheme: ColorScheme; owner: string | n
     if (!res.ok) return { scheme: DEFAULT_USER_PREFS.scheme, owner: null, theme: DEFAULT_USER_PREFS.theme };
     const body = (await res.json()) as { prefs?: { scheme?: unknown; theme?: unknown }; user?: { id?: unknown } | null };
     return {
-      scheme: body.prefs?.scheme === 'light' ? 'light' : 'dark',
+      scheme: body.prefs?.scheme === 'dark' ? 'dark' : 'light',
       owner: typeof body.user?.id === 'string' ? body.user.id : null,
       // The theme the page is painted with before the plugins mount (`ThemeFloor`).
       theme: typeof body.prefs?.theme === 'string' && body.prefs.theme ? body.prefs.theme : DEFAULT_USER_PREFS.theme,
     };
   } catch {
     return { scheme: DEFAULT_USER_PREFS.scheme, owner: null, theme: DEFAULT_USER_PREFS.theme };
-  }
-}
-
-/**
- * Whether this build is a locked beta (ended, expired, or no licence). The
- * daemon then answers 403 on everything but licence, auth and the export, so
- * the whole cockpit — capabilities, event stream, widgets — would fire refusals
- * at a screen nobody can use. Decided here, before anything is mounted, rather
- * than silenced call by call afterwards. An anonymous visitor gets a 401, which
- * is no lock: `/login` renders as usual.
- */
-async function loadBetaLock(): Promise<BetaLock | null> {
-  try {
-    const res = await fetchForRender('/api/license');
-    return res.ok ? betaLock(await res.json()) : null;
-  } catch {
-    return null;
   }
 }
 
@@ -151,10 +131,9 @@ export default async function RootLayout({
   // The language first: the Server Components below read it from this module
   // graph, and `LocaleProvider` carries it to the client one and the browser.
   const locale = await applyRequestLocale();
-  const [me, initialAppearance, lock, target] = await Promise.all([
+  const [me, initialAppearance, target] = await Promise.all([
     loadInitialMe(),
     fetchForRender(`/api/layout?scope=${APPEARANCE_SCOPE}`).then(async (res) => res.ok ? readNativeAppearance((await res.json()).layout) : DEFAULT_APPEARANCE).catch(() => DEFAULT_APPEARANCE),
-    loadBetaLock(),
     resolveTarget(),
   ]);
   // A remote machine that cannot be used from here (unreachable, this
@@ -174,26 +153,6 @@ export default async function RootLayout({
             <ThemeProvider initialScheme={scheme} initialAppearance={initialAppearance} initialTheme={me.theme}>
               <ThemeFloor appearance={initialAppearance} theme={me.theme} />
               <MachineBlockedScreen name={machine.name} reason={machine.reason} apiLevel={machine.apiLevel} />
-            </ThemeProvider>
-          </InstanceProvider>
-          </LocaleProvider>
-          </Suspense>
-        </body>
-      </html>
-    );
-  }
-  if (lock) {
-    return (
-      <html lang={locale} dir={localeDirection(locale)} suppressHydrationWarning data-timon-machine={target.id}>
-        <body>
-          <Suspense fallback={null}>
-          <LocaleProvider locale={locale}>
-          <InstanceProvider value={instance}>
-            <ThemeProvider initialScheme={scheme} initialAppearance={initialAppearance} initialTheme={me.theme}>
-              <ThemeFloor appearance={initialAppearance} theme={me.theme} />
-              {/* The licence follows the active machine: a remote one's lock
-                  offers the way back to this computer. */}
-              <BetaLockScreen lock={lock} machine={machine.kind === 'remote' ? { name: machine.name } : undefined} />
             </ThemeProvider>
           </InstanceProvider>
           </LocaleProvider>
@@ -226,12 +185,7 @@ export default async function RootLayout({
       lang={locale}
       dir={localeDirection(locale)}
       suppressHydrationWarning
-      // Read on the server so a frosted chrome paints frosted on the first
-      // frame; the Appearance screen flips them live (`applyGlassAttributes`).
-      data-glass={initialAppearance.glass ? '' : undefined}
-      data-glass-bubbles={initialAppearance.glassBubbles ? '' : undefined}
-      // Whole island or each widget: the default an island's menu may override.
-      data-glass-scope={effectiveGlass(initialAppearance).glassScope}
+      // Frosted glass is not part of the desk. Widget style still follows the account.
       data-widgets-borderless={initialAppearance.widgetsBorderless ? '' : undefined}
       data-widgets-transparent={initialAppearance.widgetsTransparent ? '' : undefined}
       data-widgets-style-at={String(initialAppearance.widgetsStyleAt)}
@@ -244,16 +198,10 @@ export default async function RootLayout({
     >
       <head>
         <script type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify({ imports: PLATFORM_MODULES }) }} />
-        {/* Onboarding opens dark for everyone, and it must do so BEFORE the
-            first paint: the scheme is resolved on the server from the account
-            preference, which does not exist yet during a first run. Same
-            decision as `ThemeProvider` (`schemeFollowsSystem`), applied early
-            enough to be invisible; a scheme picked on the onboarding's switch
-            (`FIRST_RUN_SCHEME_KEY`) wins, as it does there. The slash character class survives template escaping.
-            `suppressHydrationWarning` on <html> is what lets the
-            class differ from the server's. */}
+        {/* First paint is light unless Settings is following a dark system.
+            `suppressHydrationWarning` on <html> lets this class differ from the server's. */}
         <script
-          dangerouslySetInnerHTML={{ __html: `(function(){try{var a=${JSON.stringify(FIRST_RUN_ALLOWED)};var p=location.pathname.replace(/[/]+$/,'')||'/';if(!a.some(function(x){return p===x||p.indexOf(x+'/')===0;}))return;var s=null;try{s=sessionStorage.getItem(${JSON.stringify(FIRST_RUN_SCHEME_KEY)});}catch(e){}var l=s==='light';var c=document.documentElement.classList;c.toggle('light',l);c.toggle('dark',!l);}catch(e){}})()` }}
+          dangerouslySetInnerHTML={{ __html: `(function(){try{var mode=null;try{mode=localStorage.getItem('rooks.appearance.schemeMode');}catch(e){}var dark=false;if(mode==='system'){try{dark=window.matchMedia('(prefers-color-scheme: dark)').matches;}catch(e2){dark=false;}}var c=document.documentElement.classList;c.toggle('light',!dark);c.toggle('dark',dark);}catch(e){}})()` }}
         />
       </head>
       <body>

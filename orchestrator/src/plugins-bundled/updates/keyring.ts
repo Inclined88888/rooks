@@ -10,7 +10,6 @@
  * Rotation: the next key ships in a version signed with this one, and this one
  * stays listed until the builds that only know it are gone.
  */
-import { pemFromJwkX } from '../../license/pubkey.js';
 import { assertTestRunner } from '../../license/test-runner.js';
 import type { ReleasePublicKey } from './manifest.js';
 
@@ -23,13 +22,8 @@ function frozenKeyring(keys: readonly ReleasePublicKey[]): readonly ReleasePubli
  * the raw Ed25519 point, so a human can diff it against
  * `release-public-key.pem` (`keyring.test.ts` recomputes the keyId).
  */
-export const RELEASE_PUBLIC_KEYS: readonly ReleasePublicKey[] = frozenKeyring([
-  {
-    keyId: 'release-4253f18d5854243a',
-    publicKey: pemFromJwkX('_exKqVlkcdYZ9xhlreEUFmnjlu_7VfHpfPXfdbIyeAk'),
-    expiresAt: '2028-11-04T00:00:00.000Z',
-  },
-]);
+/** Empty on purpose: the previous product's update key is not a Rooks trust root. */
+export const RELEASE_PUBLIC_KEYS: readonly ReleasePublicKey[] = frozenKeyring([]);
 
 let override: readonly ReleasePublicKey[] | null = null;
 

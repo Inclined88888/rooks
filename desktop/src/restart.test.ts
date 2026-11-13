@@ -279,7 +279,7 @@ test('deferred setup survives navigation but clears on the next configured launc
   const boot = { embedded: true, configuredAtLaunch: false, configuredNow: false, serviceInstalled: false };
   assert.equal(setupRestartPending(boot), false);
   const saved = { ...boot, configuredNow: true };
-  assert.equal(setupRestartPending(saved), true, 'saved bootstrap configuration awaits restart on every platform');
+  assert.equal(setupRestartPending(saved), false, 'a portable first run does not ask for a restart');
   assert.equal(setupRestartPending({ ...saved, serviceInstalled: true }), true);
   assert.equal(setupRestartPending({ ...saved, configuredAtLaunch: true }), false, 'ordinary portable launch');
   assert.equal(setupRestartPending({ ...saved, configuredAtLaunch: true, embedded: false, serviceInstalled: true }), false, 'service took over');

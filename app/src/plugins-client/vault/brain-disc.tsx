@@ -114,6 +114,7 @@ export default function BrainDisc() {
   const themeRef = useRef(resolvedTheme);
   themeRef.current = resolvedTheme;
   const [error, setError] = useState<string | null>(null);
+  const [empty, setEmpty] = useState(false);
   const [openNoteId, setOpenNoteId] = useState<string | null>(null);
   const generation = useRef(0);
 
@@ -194,6 +195,11 @@ export default function BrainDisc() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as VaultDiscData;
         if (cancelled) return;
+        if (!json.nodes?.length) {
+          setEmpty(true);
+          return;
+        }
+        setEmpty(false);
         dataRef.current = json;
         await mount(json, themeRef.current);
       } catch (err: unknown) {
@@ -206,6 +212,11 @@ export default function BrainDisc() {
           const res = await fetch('/api/ui/vault/disc', { cache: 'no-store' });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const json = (await res.json()) as VaultDiscData;
+          if (!json.nodes?.length) {
+            setEmpty(true);
+            return;
+          }
+          setEmpty(false);
           dataRef.current = json;
           await mount(json, themeRef.current);
         } catch (err: unknown) {
@@ -259,6 +270,14 @@ export default function BrainDisc() {
     host.addEventListener('click', onClick);
     return () => host.removeEventListener('click', onClick);
   }, []);
+
+  if (empty) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center px-6 text-center text-sm text-muted-foreground">
+        {t('vault.noNodes')}
+      </div>
+    );
+  }
 
   if (error) {
     return (

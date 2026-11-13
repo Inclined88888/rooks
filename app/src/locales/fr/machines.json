@@ -22,7 +22,7 @@
       "loadError": "Les machines n'ont pas pu être chargées."
     },
     "settings": {
-      "description": "Les autres machines Timon que cet ordinateur peut piloter. Basculer remplace toute l'interface par celle de la machine choisie, dans cette même fenêtre : chaque machine garde ses agents, ses projets et ses réglages.",
+      "description": "Les autres machines Rooks que cet ordinateur peut piloter. Basculer remplace toute l'interface par celle de la machine choisie, dans cette même fenêtre : chaque machine garde ses agents, ses projets et ses réglages.",
       "local": "La machine qui sert cette interface.",
       "add": "Ajouter une machine",
       "addTitle": "Ajouter une machine",
@@ -67,8 +67,8 @@
       "invalidCode": "La machine a refusé ce code : erroné, expiré ou déjà utilisé. Demandez-lui-en un nouveau.",
       "invalidUrl": "Cette adresse ne convient pas : donnez l'adresse de la machine seule, sans identifiants, paramètres ni fragment.",
       "httpsRequired": "La machine doit être jointe en HTTPS. Le HTTP simple n'est accepté que sur cet ordinateur lui-même.",
-      "blockedAddress": "Cette adresse ne désigne jamais une machine Timon.",
-      "notTimon": "Aucune machine Timon ne répond à cette adresse.",
+      "blockedAddress": "Cette adresse ne désigne jamais une machine Rooks.",
+      "notTimon": "Aucune machine Rooks ne répond à cette adresse.",
       "requiresTls": "La machine ne voit pas cette connexion comme du HTTPS : vérifiez les réglages HTTPS de son reverse proxy.",
       "unreachable": "La machine est injoignable pour le moment.",
       "unauthorized": "La machine n'accepte plus cet ordinateur : son accès a été révoqué ou a expiré. Appairez-la de nouveau.",
@@ -78,7 +78,7 @@
       "throttled": "Trop de tentatives. Patientez quelques minutes avant de réessayer.",
       "tooMany": "Un parc compte au plus 50 machines.",
       "vault": "Le coffre des secrets est indisponible : l'accès aux machines ne peut pas être gardé.",
-      "incompatible": "Cette machine fait tourner une version de Timon trop ancienne pour cette interface. Mettez-la à jour d'abord.",
+      "incompatible": "Cette machine fait tourner une version de Rooks trop ancienne pour cette interface. Mettez-la à jour d'abord.",
       "notFound": "Cette machine ne fait plus partie de votre parc.",
       "notHere": "Les machines se gèrent depuis un navigateur connecté sur cet ordinateur.",
       "sessionRequired": "Connectez-vous d'abord sur cet ordinateur.",
@@ -88,7 +88,7 @@
     "banner": {
       "unreachable": "{name} est injoignable pour le moment.",
       "apiUnknown": "{name} ne dit pas quelle interface elle attend : certains écrans peuvent ne pas fonctionner.",
-      "apiNewer": "{name} fait tourner un Timon plus récent que cette interface : mettez cette application à jour pour en profiter pleinement.",
+      "apiNewer": "{name} fait tourner un Rooks plus récent que cette interface : mettez cette application à jour pour en profiter pleinement.",
       "retry": "Réessayer",
       "dismiss": "Masquer"
     },
@@ -106,7 +106,7 @@
       "body": {
         "unreachable": "La machine ne répond pas : elle est peut-être éteinte, ou son réseau indisponible. Votre travail sur elle est intact.",
         "unauthorized": "L'accès de cet ordinateur a été révoqué ou a expiré sur cette machine. Appairez-la de nouveau depuis {settingsPath}.",
-        "incompatible": "Elle parle le niveau d'interface {level}, et cette interface exige au moins le {min}. Mettez Timon à jour sur cette machine, puis basculez de nouveau dessus.",
+        "incompatible": "Elle parle le niveau d'interface {level}, et cette interface exige au moins le {min}. Mettez Rooks à jour sur cette machine, puis basculez de nouveau dessus.",
         "unknown": "La machine que pilotait cette fenêtre a été retirée de votre parc, ou appartient à un autre compte.",
         "session_required": "Votre session sur cet ordinateur a pris fin. Revenez-y pour vous reconnecter.",
         "unavailable": "Cet ordinateur ne peut pas ouvrir son accès à la machine pour le moment (coffre des secrets, daemon). Réessayez dans un instant."

@@ -345,7 +345,7 @@ export function WorkflowBuilder({ slug }: { slug: string }) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [fitKey, setFitKey] = useState(0);
-  const [rightOpen, setRightOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(false);
   const [dialog, setDialog] = useState<null | 'variables' | 'settings' | 'delete'>(null);
   const [runsOpen, setRunsOpen] = useState(false);
   const [busy, setBusy] = useState<null | 'publish' | 'run'>(null);
@@ -443,7 +443,8 @@ export function WorkflowBuilder({ slug }: { slug: string }) {
     if (!current) return;
     const id = newNodeId(type, current);
     const anchor = current.nodes.find((node) => selection?.kind === 'node' && node.id === selection.id) ?? current.nodes[current.nodes.length - 1];
-    const spot = position ?? { x: (anchor?.position?.x ?? 40) + 320, y: anchor?.position?.y ?? 160 };
+    // Stack downward in the open canvas. A step to the right lands under the chat.
+    const spot = position ?? { x: anchor?.position?.x ?? 80, y: (anchor?.position?.y ?? 80) + (anchor ? 160 : 0) };
     update({ ...current, nodes: [...current.nodes, { id, type, label: defaultLabel(type), position: spot, config: defaultConfig(type) }] });
     setSelection({ kind: 'node', id });
   }, [selection, update]);

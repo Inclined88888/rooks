@@ -13,6 +13,7 @@
  * usable CLI out of three must still boot, and a backend can be installed
  * while the daemon runs.
  */
+import { BRAND } from '../brand.js';
 import { config } from '../config/load.js';
 import {
   findExecutableBinary, resolvePinnedBinary, type BinarySearchOptions,
@@ -129,12 +130,12 @@ export function backendBinaryNotice(status: BackendBinaryStatus): { title: strin
   // Settings first: a tester who cannot edit JSON can still pin the path
   // there, and it applies without restarting the daemon (TODO #413).
   const repair = status.pinned
-    ? `The path pinned for \`${status.cmd}\` (\`host.binaries.${status.cmd}\`) does not point to an executable file. Fix it in ${BINARIES_SETTINGS}, or clear it to let Timon look for the CLI itself.`
+    ? `The path pinned for \`${status.cmd}\` (\`host.binaries.${status.cmd}\`) does not point to an executable file. Fix it in ${BINARIES_SETTINGS}, or clear it to let ${BRAND.displayName} look for the CLI itself.`
     : `Install it, then click **Check again** in ${BINARIES_SETTINGS} — or pin the full path of the \`${status.cmd}\` binary there (\`host.binaries.${status.cmd}\`).`;
   return {
     title: `Backend ${backends}: the \`${status.cmd}\` CLI was not found`,
     body: [
-      `Timon cannot run \`${status.cmd}\` on this machine, so every mission on ${backends} fails as soon as it starts.`,
+      `${BRAND.displayName} cannot run \`${status.cmd}\` on this machine, so every mission on ${backends} fails as soon as it starts.`,
       '',
       `**Action needed:** ${repair}`,
       ...(install ? ['', `- Install command on this machine: \`${install}\``] : []),
@@ -165,6 +166,8 @@ export function reportBackendBinaries(): BackendBinaryStatus[] {
       // answered it: the anchor is what lets us take it back.
       dbApi.dismissNotificationsByAnchor(backendBinaryAnchor(status.cmd), 'alert');
       if (status.path !== null) continue;
+      // A tool that was never installed is the ordinary first-run state, not an alert.
+      if (!status.pinned) continue;
       const { title, body } = backendBinaryNotice(status);
       createNotification({
         type: 'alert',

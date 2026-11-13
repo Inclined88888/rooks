@@ -439,7 +439,7 @@ export function ProjectCard({
             title={t('agentsGrid.openAgent', { name: main.name })}
             // The ring and the initials follow the theme: a near-black project
             // colour would draw a ring nobody sees on the dark background.
-            className="relative grid size-16 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--accent-soft)] shadow-[0_0_0_1.5px_var(--accent-border)] transition-transform hover:scale-[1.05] dark:bg-[var(--accent-soft-dark)] dark:shadow-[0_0_0_1.5px_var(--accent-border-dark)]"
+            className="relative grid size-16 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--accent-soft)] dark:bg-[var(--accent-soft-dark)]"
             style={accentVars(color)}
           >
             <ProjectAvatar project={project} />

@@ -129,7 +129,7 @@ const CATALOG: Record<string, NodePresentation> = {
   },
   script: {
     category: 'action', icon: Terminal,
-    fields: [{ key: 'bin', kind: 'text', mono: true, placeholder: 'timon' }, { key: 'args', kind: 'list', placeholder: 'pipeline, run, feature-flow' }, { key: 'cwd', kind: 'text', mono: true }, { key: 'timeoutMs', kind: 'number' }, { key: 'env', kind: 'list', placeholder: 'GITHUB_TOKEN' }],
+    fields: [{ key: 'bin', kind: 'text', mono: true, placeholder: 'node' }, { key: 'args', kind: 'list', placeholder: 'script.js' }, { key: 'cwd', kind: 'text', mono: true }, { key: 'timeoutMs', kind: 'number' }, { key: 'env', kind: 'list', placeholder: 'GITHUB_TOKEN' }],
     summary: (config) => [config.bin ? excerpt(`${str(config.bin)} ${list(config.args).join(' ')}`) : t('workflows.summary.noBin')],
   },
   http: {

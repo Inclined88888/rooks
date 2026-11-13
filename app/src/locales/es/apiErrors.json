@@ -37,7 +37,7 @@
     "signin_not_in_progress": "No hay ningún inicio de sesión en curso.",
     "workspace_unknown": "Espacio de trabajo desconocido.",
     "project_no_cwd": "Este proyecto no tiene ninguna carpeta configurada.",
-    "path_unknown": "Timon no conoce esta ruta: no es ni una carpeta de agente ni un worktree de tarea.",
+    "path_unknown": "Rooks no conoce esta ruta: no es ni una carpeta de agente ni un worktree de tarea.",
     "secret_unknown": "Secreto desconocido.",
     "vault_unavailable": "El almacén de secretos no está disponible.",
     "license_server_unreachable": "No se puede acceder al servidor de licencias.",

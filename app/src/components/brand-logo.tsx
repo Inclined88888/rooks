@@ -11,7 +11,7 @@ import { useDevProductLogo } from '@/lib/dev-logo';
 import { t } from '@/lib/i18n';
 
 /**
- * The Timon mark, drawn inline so it takes the colour of the instance: the
+ * The Rooks wordmark, drawn inline so it takes the colour of the instance: the
  * theme's primary colour for the product, so a theme (the product's or a
  * plugin's) recolours it with everything else; a fixed colour of its own for
  * the development copy, so the maintainer cannot confuse the two windows.
@@ -53,7 +53,7 @@ export function BrandLogo({
         onContextMenu={dev ? openMenu : undefined}
         {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}
       >
-        <path fill="currentColor" d={TIMON_MARK.d} />
+        <text x="0" y="14" fill="currentColor" fontSize="14" fontFamily="system-ui, sans-serif" fontWeight="600">{TIMON_MARK.word}</text>
       </svg>
       {dev && menu && (
         <FileContextMenu

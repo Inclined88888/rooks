@@ -1,0 +1,235 @@
+# TEST ONLY desktop installers.
+# The package job checks out pull-request code, so it stays read-only.
+# Only the prerelease job may create the rooks-test tag.
+# One Ed25519 pair is minted for the whole run and used by every OS.
+# Linux natives are compiled on Debian bullseye so they need glibc 2.31 or older.
+# The stamp is the dev channel with no expiry.
+name: Desktop test build
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  signing:
+    name: One test signing key
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Mint one Ed25519 pair for every OS
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signing-key
+          node <<'NODE'
+          const { generateKeyPairSync } = require('crypto');
+          const fs = require('fs');
+          const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+          fs.writeFileSync('signing-key/private.pem', privateKey.export({ type: 'pkcs8', format: 'pem' }), { mode: 0o600 });
+          fs.writeFileSync('signing-key/public.pem', publicKey.export({ type: 'spki', format: 'pem' }));
+          console.log('Minted one TEST-ONLY Ed25519 pair for this run.');
+          NODE
+      - uses: actions/upload-artifact@v6
+        with:
+          name: test-signing-key
+          path: signing-key
+          retention-days: 1
+          if-no-files-found: error
+
+  package:
+    name: ${{ matrix.os }} package (TEST ONLY)
+    needs: signing
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-26 is Apple silicon (macos-14 was retired). beforePack refuses
+          # a cross build, which is why each OS builds only itself.
+          - os: macos-26
+            eb_args: '--mac dmg --publish never'
+          # ubuntu-22.04 is the job host. node-pty and better-sqlite3 are
+          # recompiled inside Debian bullseye afterwards, so the .node files
+          # need glibc 2.31 or older.
+          - os: ubuntu-22.04
+            eb_args: '--linux AppImage deb --publish never'
+          - os: windows-latest
+            eb_args: '--win nsis --publish never'
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: bash
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            orchestrator/package-lock.json
+            app/package-lock.json
+            desktop/package-lock.json
+
+      - name: Require Apple silicon on the Mac job
+        if: runner.os == 'macOS'
+        run: |
+          arch=$(uname -m)
+          echo "arch=$arch"
+          test "$arch" = "arm64"
+
+      - name: Install dependencies
+        run: |
+          npm ci --include=dev --prefix orchestrator
+          npm ci --include=dev --prefix app
+          npm ci --include=dev --prefix desktop
+
+      - name: Use the one test signing key
+        uses: actions/download-artifact@v7
+        with:
+          name: test-signing-key
+          path: signing-key
+
+      - name: Point the build at that key
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s signing-key/private.pem
+          test -s signing-key/public.pem
+          echo "TIMON_RELEASE_PRIVATE_KEY_FILE=$GITHUB_WORKSPACE/signing-key/private.pem" >> "$GITHUB_ENV"
+          echo "TIMON_RELEASE_PUBLIC_KEY_FILE=$GITHUB_WORKSPACE/signing-key/public.pem" >> "$GITHUB_ENV"
+
+      - name: Write dev build-info
+        working-directory: desktop
+        run: |
+          node --input-type=module -e '
+            import { createBuildInfo, writeBuildInfo } from "./scripts/build-info.mjs";
+            const info = createBuildInfo({ channel: "dev", noExpiry: true });
+            console.log(writeBuildInfo("..", info));
+            console.log("channel", info.channel, "expiresAt", info.expiresAt, "builtAt", info.builtAt);
+            if (info.channel !== "dev" || info.expiresAt !== null) {
+              console.error("a test build must be the dev channel with no expiry");
+              process.exit(1);
+            }
+          '
+
+      - name: Build standalone web app
+        working-directory: app
+        env:
+          TIMON_NEXT_STANDALONE: '1'
+        run: npm run build
+
+      - name: Prepare packaged dependencies
+        working-directory: desktop
+        run: |
+          npm run build
+          npm run prepare:deps
+
+      - name: Rebuild Linux natives on Debian bullseye
+        if: runner.os == 'Linux'
+        run: bash desktop/scripts/rebuild-pty-bullseye.sh
+
+      - name: electron-builder (${{ matrix.os }})
+        working-directory: desktop
+        run: npx electron-builder --config electron-builder.yml ${{ matrix.eb_args }}
+
+      - name: Require the installer for this OS
+        working-directory: desktop
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          echo "Release directory:"
+          ls -lh release
+          os="${{ matrix.os }}"
+          if [[ "$os" == macos-* ]]; then
+            files=(release/*arm64*.dmg)
+          elif [[ "$os" == ubuntu-* ]]; then
+            files=(release/*.AppImage release/rooks_*.deb)
+            if [ ${#files[@]} -lt 2 ]; then
+              echo "Expected an AppImage and a deb named rooks_."
+              ls -lh release
+              exit 1
+            fi
+          else
+            files=(release/*.exe)
+          fi
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No installer matched for $os"
+            exit 1
+          fi
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v6
+        with:
+          name: rooks-test-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            desktop/release/*.dmg
+            desktop/release/*.AppImage
+            desktop/release/*.deb
+            desktop/release/*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  prerelease:
+    name: Attach TEST ONLY prerelease
+    needs: package
+    if: needs.package.result == 'success'
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Download all package artefacts
+        uses: actions/download-artifact@v7
+        with:
+          path: dist-out
+          pattern: rooks-test-*
+          merge-multiple: true
+      - name: Create prerelease rooks-test-*
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          echo "Downloaded:"
+          ls -lh dist-out
+          dmg=(dist-out/*arm64*.dmg)
+          exe=(dist-out/*.exe)
+          appimage=(dist-out/*.AppImage)
+          deb=(dist-out/rooks_*.deb)
+          if [ ${#dmg[@]} -eq 0 ] || [ ${#exe[@]} -eq 0 ] || [ ${#appimage[@]} -eq 0 ] || [ ${#deb[@]} -eq 0 ]; then
+            echo "Refusing to publish until Mac arm64, Windows, AppImage, and a rooks_ deb are all present."
+            ls -lh dist-out
+            exit 1
+          fi
+          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          tag="rooks-test-${HEAD_SHA::8}"
+          title="TEST ONLY — Rooks ${tag}"
+          notes=$'TEST ONLY. Rooks. Dev channel, no licence expiry. One test signing key for Mac, Windows and Linux.\n\n- Not a desktop-v release.\n- Linux program, desktop entry and deb package are named rooks.\n- Linux native modules are built on Debian bullseye (glibc 2.31 or older).\n- A user service that is offline stays portable. A clean first run does not ask for a restart.\n- Setup continues from the agent step when no AI tool is installed.\n- OS code signing is not applied.\n- Licence is unchanged (AGPL-3.0-only).\n'
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${dmg[@]}" "${exe[@]}" "${appimage[@]}" "${deb[@]}" --clobber
+          else
+            gh release create "$tag" "${dmg[@]}" "${exe[@]}" "${appimage[@]}" "${deb[@]}" --prerelease --title "$title" --notes "$notes" --target "${HEAD_SHA}"
+          fi
+          echo "Prerelease: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${tag}"

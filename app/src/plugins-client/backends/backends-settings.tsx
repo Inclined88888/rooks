@@ -88,10 +88,9 @@ function VerdictLine({ verdict }: { verdict: Verdict | null }): ReactElement | n
  *  rather than "Inactive": it is the one inactive state with a plain cause. */
 function statusKey(backend: CustomBackend): string {
   if (backend.disabled) return 'backendsSettings.disabled';
+  if (backend.reason && /^binary .+ not found in PATH$/.test(backend.reason)) return 'backendsSettings.notDetected';
   if (backend.active) return 'backendsSettings.active';
-  return backend.reason && /^binary .+ not found in PATH$/.test(backend.reason)
-    ? 'backendsSettings.notDetected'
-    : 'backendsSettings.inactive';
+  return 'backendsSettings.inactive';
 }
 
 function SortableBackendRow({ id, busy, below, children }: { id: string; busy: boolean; below?: ReactNode; children: ReactNode }): ReactElement {

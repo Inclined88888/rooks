@@ -286,8 +286,10 @@ export function appearanceCss(appearance: NativeAppearance): string {
 export function applyGlassAttributes(appearance: Pick<NativeAppearance, 'glass' | 'glassBubbles'> & Partial<Pick<NativeAppearance, 'glassScope' | 'widgetsBorderless' | 'widgetsTransparent' | 'widgetsStyleAt'>>): void {
   const root = document.documentElement;
   appearance = effectiveGlass(appearance);
-  root.toggleAttribute('data-glass', appearance.glass);
-  root.toggleAttribute('data-glass-bubbles', appearance.glassBubbles);
+  // Frosted glass is not a desk surface. Stored flags stay in the row; the
+  // document never wears them.
+  root.removeAttribute('data-glass');
+  root.removeAttribute('data-glass-bubbles');
   root.setAttribute(GLASS_SCOPE_ATTRIBUTE, appearance.glassScope ?? DEFAULT_GLASS_SCOPE);
   root.toggleAttribute('data-widgets-borderless', appearance.widgetsBorderless === true);
   root.toggleAttribute('data-widgets-transparent', appearance.widgetsTransparent === true);

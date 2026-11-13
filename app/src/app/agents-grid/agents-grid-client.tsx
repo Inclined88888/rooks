@@ -500,7 +500,7 @@ export function AgentsGridClient() {
               large screen, 2 then 1 when the rails eat the room. */}
           {visible.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border/70 p-10 text-center text-[12.5px] text-muted-foreground">
-              {loading ? t('agentsGrid.loading') : t('agentsGrid.noMatchingProject')}
+              {loading ? t('agentsGrid.loading') : query.trim() ? t('agentsGrid.noMatchingProject') : t('agentsGrid.noProjects')}
             </p>
           ) : (
             <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(290px,1fr))]">

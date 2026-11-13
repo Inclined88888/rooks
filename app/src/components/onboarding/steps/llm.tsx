@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * "Choose your LLM" (mockup screen `ai`, docs/ONBOARDING-LLM.md). The header
+ * The AI tools step (mockup screen `ai`, docs/ONBOARDING-LLM.md). The header
  * stays put — a row of mascots, the title, the promise — and only the block
  * under it changes, in place: the two choices, then the provider cards of the
  * subscription the person already pays for, or the local models. "Back"
@@ -14,8 +14,6 @@ import { useCallback, useEffect, useState, type ReactElement } from 'react';
 import { ArrowRight, Check, ChevronRight, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BrandMark } from '@/components/brand-mark';
-import { AgentMascotHost } from '@/components/mascot/agent-mascot';
-import type { AgentLook } from '@/components/mascot/agent-look';
 import { ProviderCliCards } from '@/components/provider-cli/provider-cli-cards';
 import { fetchProviderClis, type ProviderCli } from '@/lib/provider-clis';
 import { t } from '@/lib/i18n';
@@ -28,16 +26,6 @@ import {
 import { useOnboarding, useOnboardingBack } from '../onboarding-context';
 import { ViewSwap } from '../view-swap';
 
-/** The row above the title: a small crowd of every skull, standing on one line. */
-const TEAM: readonly { look: Partial<AgentLook>; size: number }[] = [
-  { look: { shape: 'round', color: '#7ed957', eyes: 'happy' }, size: 54 },
-  { look: { shape: 'squircle', color: '#ff5fbf', eyes: 'big' }, size: 38 },
-  { look: { shape: 'hex', color: '#d4a373', eyes: 'pill', acc: 'loupe' }, size: 64 },
-  { look: { shape: 'round', color: '#8a5a3b', eyes: 'wink', acc: 'coffee' }, size: 92 },
-  { look: { shape: 'gem', color: '#a35bff', eyes: 'star' }, size: 70 },
-  { look: { shape: 'squircle', color: '#3fa9ff', eyes: 'surprised' }, size: 36 },
-  { look: { shape: 'cloud', color: '#ffc233', eyes: 'squint', acc: 'pen' }, size: 50 },
-];
 
 export function LlmStep(): ReactElement {
   const { next } = useOnboarding();
@@ -60,16 +48,7 @@ export function LlmStep(): ReactElement {
 
   return (
     <section className="flex max-h-full min-h-0 w-[min(560px,100%)] flex-col items-center text-center" data-llm-step>
-      <div className="flex h-[clamp(64px,13vh,100px)] shrink-0 items-end justify-center gap-2.5" aria-hidden>
-        {TEAM.map((member, i) => (
-          <div key={i} className="timon-onboarding-drop" style={{ animationDelay: `${0.06 * i}s` }}>
-            <div className="timon-mascot-hop" style={{ animationDelay: `${0.9 + i * 0.18}s` }}>
-              <AgentMascotHost look={member.look} size={Math.round(member.size * 0.92)} live fit shadow={false} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <h1 className="mt-3 shrink-0 whitespace-pre-line text-[clamp(38px,min(8vw,10vh),92px)] font-extrabold leading-[0.95] tracking-[-0.045em]">
+      <h1 className="mt-3 shrink-0 text-[28px] font-semibold leading-tight tracking-tight">
         {t('onboarding.llm.title')}
       </h1>
       <p className="mb-5 mt-3 max-w-[470px] shrink-0 text-[15px] leading-normal text-muted-foreground">{t('onboarding.llm.subtitle')}</p>

@@ -74,7 +74,7 @@ test('module éteint : le préambule du spawn est bien formé, sans sa section m
   const backend = getBackend('claude');
 
   const off = withMemory(false, () => buildEffectivePrompt(agent, cfg, backend, 'une mission quelconque'));
-  assert.match(off, /# Runtime context — Timon/, 'la tête du préambule reste');
+  assert.match(off, /# Runtime context — Rooks/, 'la tête du préambule reste');
   assert.match(off, /## Asking the user — hard rule/, 'la queue du préambule reste');
   // Le préambule ne parle que de Timon : la commande de test est celle de
   // l'utilisateur, elle vit dans ses règles mémoire ou l'AGENTS.md du projet.
@@ -83,7 +83,7 @@ test('module éteint : le préambule du spawn est bien formé, sans sa section m
   assert.doesNotMatch(off, /timon memory rule add/, 'plus aucun geste mémoire prescrit');
   assert.doesNotMatch(off, /🧠/, 'pas de bloc de rappel injecté');
   // Ordre : la queue suit la tête sans trou ni doublon.
-  assert.ok(off.indexOf('# Runtime context — Timon') < off.indexOf('## Asking the user — hard rule'));
+  assert.ok(off.indexOf('# Runtime context — Rooks') < off.indexOf('## Asking the user — hard rule'));
 
   const on = withMemory(true, () => buildEffectivePrompt(agent, cfg, backend, 'une mission quelconque'));
   assert.match(on, /## Timon memory/, 'module allumé : la section revient');

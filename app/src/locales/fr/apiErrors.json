@@ -39,7 +39,7 @@
     "workspace_unknown": "Espace de travail inconnu.",
     "project_no_cwd": "Ce projet n'a aucun dossier configuré.",
     "invalid_repo": "Ce dépôt n'est pas un dossier du projet.",
-    "path_unknown": "Ce chemin est inconnu de Timon : ce n'est ni le dossier d'un agent ni le worktree d'une tâche.",
+    "path_unknown": "Ce chemin est inconnu de Rooks : ce n'est ni le dossier d'un agent ni le worktree d'une tâche.",
     "secret_unknown": "Secret inconnu.",
     "vault_unavailable": "Le coffre de secrets est indisponible.",
     "license_server_unreachable": "Le serveur de licences est injoignable.",
@@ -71,7 +71,7 @@
     "email_code_origin_limited": "Trop de codes demandés depuis ce réseau. Réessayez dans {seconds, plural, one {# seconde} other {# secondes}}.",
     "email_code_busy": "Trop de codes en attente. Réessayez dans {seconds, plural, one {# seconde} other {# secondes}}.",
     "email_connection_required": "Une connexion à Internet est nécessaire pour confirmer l'adresse e-mail.",
-    "email_service_unavailable": "Le service d'e-mail de Timon est indisponible pour le moment. Réessayez dans quelques minutes.",
+    "email_service_unavailable": "Le service d'e-mail de Rooks est indisponible pour le moment. Réessayez dans quelques minutes.",
     "email_rate_limited": "Trop d'e-mails envoyés à cette adresse. Réessayez dans {seconds, plural, one {# seconde} other {# secondes}}.",
     "email_rejected": "Cette adresse e-mail ne peut pas recevoir de code.",
     "password_too_short": "Le mot de passe doit compter au moins {min} caractères."

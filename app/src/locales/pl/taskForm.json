@@ -10,7 +10,7 @@
       "failed": "Nie udało się odłączyć worktree: {error}"
     },
     "markMerged": {
-      "title": "Scalone poza Timon?",
+      "title": "Scalone poza Rooks?",
       "hint": "Jeśli gałąź tego zadania została już scalona (pull request scalony na GitHubie, ręczny merge), podaj commit scalenia: zadanie zostanie zamknięte jako wykonane, a zależne od niego zadania wystartują.",
       "shaLabel": "Commit scalenia",
       "shaPlaceholder": "Sha commita, np. bcd02520",
@@ -20,8 +20,8 @@
       "doneUnverified": "Zadanie oznaczone jako scalone. Tego commita nie ma jeszcze w lokalnej kopii repozytorium, więc nie można go było sprawdzić.",
       "notInBase": "Tego commita nie ma w gałęzi bazowej repozytorium. Sprawdź sha scalenia.",
       "failed": "Nie udało się oznaczyć zadania jako scalonego: {error}",
-      "unreachable": "Timon nie odpowiedział",
-      "hintDone": "To zadanie jest wykonane, ale jego gałąź nigdy nie przeszła przez merge w Timon. Jeśli została scalona gdzie indziej (pull request scalony na GitHubie, ręczny merge), podaj commit scalenia: zostanie zapisany, a zależne zadania wystartują.",
+      "unreachable": "Rooks nie odpowiedział",
+      "hintDone": "To zadanie jest wykonane, ale jego gałąź nigdy nie przeszła przez merge w Rooks. Jeśli została scalona gdzie indziej (pull request scalony na GitHubie, ręczny merge), podaj commit scalenia: zostanie zapisany, a zależne zadania wystartują.",
       "cardAction": "scalone?"
     },
     "editTitle": "Edytuj zadanie",
@@ -90,12 +90,12 @@
     "modelInheritHint": "Decyduje rola projektu dla tego typu zadania, w przeciwnym razie agent",
     "modelInherited": "{model} (dziedziczony)",
     "modelHelp": "„Rola projektu” uruchamia zadanie na tym, o czym decyduje rola projektu dla tego typu, a w przeciwnym razie agent.",
-    "worktreeBlocked": "Ten backend pracuje poza folderem Timon: przypisane mu zadanie code lub merge zostanie zablokowane.",
+    "worktreeBlocked": "Ten backend pracuje poza folderem Rooks: przypisane mu zadanie code lub merge zostanie zablokowane.",
     "fallback": {
       "short": "Zapasowy",
       "label": "Zapasowy, gdy skończy się limit",
       "inherit": "Ustawienie serii lub globalne",
-      "inheritHint": "Decyduje plan serii, w przeciwnym razie ustawienie Timon",
+      "inheritHint": "Decyduje plan serii, w przeciwnym razie ustawienie Rooks",
       "never": "Nigdy nie przełączaj samodzielnie"
     },
     "permission": "Uprawnienie",

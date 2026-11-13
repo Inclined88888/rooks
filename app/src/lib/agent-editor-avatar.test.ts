@@ -122,7 +122,6 @@ async function withEditor(run: (h: {
 }
 
 const tabSelected = (q: (s: string) => HTMLElement | null, tab: string) => q(`[role="tab"][data-tab="${tab}"]`)?.getAttribute('aria-selected');
-const modeChecked = (q: (s: string) => HTMLElement | null) => q('[data-avatar-mode][aria-checked="true"]')?.getAttribute('data-avatar-mode');
 
 test('the Avatar tab comes before Identity, the editor opens on it when asked, and on Identity otherwise', async () => {
   await withEditor(async ({ open, q }) => {
@@ -132,92 +131,42 @@ test('the Avatar tab comes before Identity, the editor opens on it when asked, a
     assert.equal(tabSelected(q, 'identity'), 'true');
     await open('Hera', 'avatar');
     assert.equal(tabSelected(q, 'avatar'), 'true');
-    assert.equal(modeChecked(q), 'image', 'no head picked: the one the historical order shows, read only');
-    assert.match(q('[data-editor-avatar]')?.innerHTML ?? '', /hera\.png/);
+    assert.equal(q('[data-avatar-tab]')?.getAttribute('data-avatar-tab'), 'image');
+    assert.match(q('[data-avatar-preview]')?.innerHTML ?? '', /hera\.png/);
+    assert.ok(q('[data-avatar-upload]'), 'the picture can be replaced');
+    assert.ok(!q('[data-agent-mascot]'));
   });
 });
 
-test('each mode is saved with every setting: changing the head never clears the other two', async () => {
-  await withEditor(async ({ open, click, save, q }) => {
-    await open('Hera', 'avatar');
-    await click(q('[data-avatar-mode="mascot"]'));
-    assert.ok(q('[data-editor-avatar] [data-agent-mascot]'), 'the header follows the mode: the mascot over the picture');
-    assert.ok(q('[data-look-styler-content]'), 'the shared configurator');
-    assert.equal(document.querySelectorAll('[data-look-styler-choices] [data-avatar-mode]').length, 3, 'the mode switch sits with the mascot\'s choices');
-    await click(q('button[data-shape="cloud"]'));
-    const mascot = await save();
-    assert.equal(mascot.config.avatar, 'mascot');
-    assert.deepEqual(mascot.config.look, { ...LOOK, shape: 'cloud' });
-    assert.equal(mascot.config.emoji, '🦊', 'the emoji is kept');
-    assert.equal(mascot.config.icon_url, '/api/uploads/hera.png', 'the picture is kept');
-
-    await open('Hera', 'avatar');
-    await click(q('[data-avatar-mode="emoji"]'));
-    // By value: jsdom's selector engine does not match an emoji in an attribute selector.
-    await click(Array.from(document.querySelectorAll('[data-avatar-emoji]')).find((el) => el.getAttribute('data-avatar-emoji') === '🤖'));
-    assert.ok(q('[data-avatar-preview]'), 'the head on its own, beside the switch and the emoji grid');
-    assert.match(q('[data-editor-avatar]')?.textContent ?? '', /🤖/, 'the header shows the emoji');
-    const emoji = await save();
-    assert.equal(emoji.config.avatar, 'emoji');
-    assert.equal(emoji.config.emoji, '🤖');
-    assert.equal(emoji.config.icon_url, '/api/uploads/hera.png');
-    assert.deepEqual(emoji.config.look, LOOK, 'the look is kept');
-
-    await open('Hera', 'avatar');
-    await click(q('[data-avatar-mode="image"]'));
-    const image = await save();
-    assert.equal(image.config.avatar, 'image');
-    assert.equal(image.config.icon_url, '/api/uploads/hera.png');
-    assert.equal(image.config.emoji, '🦊');
-    assert.deepEqual(image.config.look, LOOK);
-  });
-});
-
-test('a mascot picked without touching the configurator is saved with the role\'s default look; no pick writes no mode', async () => {
-  const { defaultLookFor } = await import('@/components/mascot/agent-look');
-  await withEditor(async ({ open, click, save, q }) => {
+test('opening the avatar tab does not invent a mascot, and a save keeps the stored picture', async () => {
+  await withEditor(async ({ open, save, q }) => {
     await open('Zeus', 'avatar');
-    assert.equal(modeChecked(q), 'mascot', 'nothing set: the tab opens on the mascot');
+    assert.equal(q('[data-avatar-tab]')?.getAttribute('data-avatar-tab'), 'image');
+    assert.match(q('[data-avatar-preview]')?.textContent ?? '', /Z/);
+    assert.ok(!q('[data-agent-mascot]'));
     const untouched = await save();
     assert.ok(!('avatar' in untouched.config) && !('look' in untouched.config), 'opening the tab writes nothing');
-    await open('Zeus', 'avatar');
-    await click(q('[data-avatar-mode="mascot"]'));
-    const picked = await save();
-    assert.equal(picked.config.avatar, 'mascot');
-    assert.deepEqual(picked.config.look, defaultLookFor('review'));
 
-    await open('Zeus', 'avatar');
-    await click(q('[data-avatar-mode="image"]'));
-    assert.ok(q('[data-avatar-missing]'), 'an image mode without a picture says the face stays as it is');
-
-    await open('Iris', 'avatar');
-    assert.equal(modeChecked(q), 'emoji', 'an unknown mode reads as none');
-    const unknown = await save();
-    assert.ok(!('avatar' in unknown.config), 'and is not written back');
+    await open('Hera', 'avatar');
+    const image = await save();
+    assert.equal(image.config.icon_url, '/api/uploads/hera.png');
+    assert.equal(image.config.emoji, '🦊', 'a stored emoji stays in the record');
+    assert.deepEqual(image.config.look, LOOK, 'a stored look stays in the record');
   });
 });
 
-test('the Avatar tab\'s mascot is the `agent.lookstyler` slot: a plugin that takes it paints here', async () => {
+test('the avatar tab does not mount the mascot styler', async () => {
   const { register, AGENT_LOOK_STYLER_SLOT } = await import('@/lib/plugin-host/slots');
-  const { useLookStyler } = await import('@/components/mascot/look-styler/look-styler-context');
-  await withEditor(async ({ React, open, click, save, q }) => {
+  await withEditor(async ({ React, open, q }) => {
     function Replacement() {
-      const v = useLookStyler();
-      return React.createElement('button', {
-        type: 'button',
-        'data-plugin-styler': `${v?.name}/${v?.role}`,
-        onClick: () => v?.onChange({ shape: 'bean', color: '#a35bff', eyes: 'heart', acc: 'brush' }),
-      });
+      return React.createElement('button', { type: 'button', 'data-plugin-styler': 'shown' });
     }
     const dispose = register({ slot: AGENT_LOOK_STYLER_SLOT, pluginId: 'acme-styler' }, Replacement);
     try {
       await open('Hera', 'avatar');
-      await click(q('[data-avatar-mode="mascot"]'));
-      assert.equal(q('[data-plugin-styler]')?.getAttribute('data-plugin-styler'), 'Hera/coder');
-      assert.ok(!q('[data-look-styler-content]'), 'the product\'s grids stepped aside');
-      await click(q('[data-plugin-styler]'));
-      const post = await save();
-      assert.deepEqual(post.config.look, { shape: 'bean', color: '#a35bff', eyes: 'heart', acc: 'brush' });
+      assert.ok(!q('[data-plugin-styler]'));
+      assert.ok(!q('[data-look-styler-content]'));
+      assert.ok(q('[data-avatar-upload]'));
     } finally {
       dispose();
     }

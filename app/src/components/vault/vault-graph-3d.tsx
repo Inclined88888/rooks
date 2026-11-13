@@ -59,13 +59,13 @@ const FOLDER_SAT = '72%';
  *  slightly raised opacity. */
 const PALETTES = {
   clair: {
-    fond: 'radial-gradient(ellipse at center, #ffffff 0%, #f6f4ef 55%, #e9e5dc 100%)',
+    fond: '#f6f4ef',
     luminositeNoeud: '48%',
     couleurLien: '#5a5a60',
     opaciteLien: 0.13,
   },
   sombre: {
-    fond: 'radial-gradient(ellipse at center, #1c1714 0%, #131010 55%, #0a0808 100%)',
+    fond: '#131010',
     luminositeNoeud: '62%',
     couleurLien: '#c9c2b8',
     opaciteLien: 0.16,

@@ -9,10 +9,9 @@
  * starts below it, so it's never covered/overlapped on collapse-expand.
  *
  * Collapsed by default (icons only, `--timon-nav-w` = 56px, reserved in
- * every page's layout). Hovering expands it as an overlay above the
- * content (`fixed`, pushes nothing); a button at the bottom lets you pin
- * it expanded (persisted in localStorage) for those who prefer to keep
- * labels visible permanently.
+ * every page's layout). Hovering widens that same gutter so the labels
+ * do not cover the page; a button at the bottom lets you pin it expanded
+ * (persisted in localStorage) for those who prefer to keep labels visible.
  *
  * Mobile (<768px): no hover, no room for a permanent rail. The nav
  * disappears completely (`--timon-nav-w` = 0) and becomes a drawer that
@@ -26,7 +25,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Check,
   Globe,
-  Moon,
+  Monitor,
   Pin,
   PinOff,
   Sun,
@@ -34,6 +33,7 @@ import {
   Palette,
 } from 'lucide-react';
 import { hiddenOf, setHidden } from '@/lib/nav-hidden';
+import { osScheme, readSchemeMode, storeSchemeMode } from '@/lib/scheme-mode';
 import { navLayoutOf, withNavLayout } from '@/lib/nav-order';
 import { NavItems } from '@/components/nav-items';
 import { useWorkspaceLayout } from '@/components/workspace-layout-provider';
@@ -88,7 +88,7 @@ export function VerticalNav({
 } = {}) {
   const pathname = usePathname();
   const instance = useInstance();
-  const { scheme: resolvedTheme, setScheme: setTheme } = useColorScheme();
+  const { setScheme: setTheme } = useColorScheme();
   const { key, owner, previousOwner } = useWorkspaceLayout();
   const seededScope = useSeededNavScope(owner);
   // Seeded from what this document already derived: a page change remounts
@@ -174,15 +174,16 @@ export function VerticalNav({
   // page change (the previous rail's cleanup has just reset it).
   useEffect(() => {
     try {
+      const wide = !isMobile && (pinned || hovered || held);
       document.documentElement.style.setProperty(
         '--timon-nav-w',
-        isMobile ? NAV_W_MOBILE : pinned ? NAV_W_PINNED : NAV_W_DEFAULT,
+        isMobile ? NAV_W_MOBILE : wide ? NAV_W_PINNED : NAV_W_DEFAULT,
       );
     } catch { /* ignore */ }
     return () => {
       try { document.documentElement.style.setProperty('--timon-nav-w', NAV_W_DEFAULT); } catch { /* ignore */ }
     };
-  }, [pinned, isMobile]);
+  }, [pinned, isMobile, hovered, held]);
 
   // Navigating closes the drawer: without this it would stay open over
   // the page just requested. `onMobileClose` isn't a dependency — only a
@@ -236,8 +237,6 @@ export function VerticalNav({
   // markup and the hydrating render agree on it; the transient states
   // (hover, an open menu, a drag) only exist once mounted.
   const expanded = pinned || (mounted && (hovered || held || dragging));
-
-  const isLight = mounted && resolvedTheme === 'light';
 
   return (
     <>
@@ -376,14 +375,18 @@ export function VerticalNav({
         <button
           type="button"
           onClick={() => {
-            const scheme = isLight ? 'dark' : 'light';
+            // Light, or follow the system. Dark is not its own choice.
+            const next = readSchemeMode() === 'system' ? 'light' : 'system';
+            const scheme = next === 'system' ? osScheme() : 'light';
+            storeSchemeMode(next);
             setTheme(scheme);
+            window.dispatchEvent(new Event('rooks-scheme-mode'));
             void fetch('/api/ui/prefs', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scheme }) });
           }}
           className="mx-2 mt-1 flex shrink-0 items-center gap-3 whitespace-nowrap rounded-md px-3 py-2.5 text-[12.5px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          {isLight ? <Moon className="size-4 shrink-0" /> : <Sun className="size-4 shrink-0" />}
-          <span>{isLight ? t('nav.darkTheme') : t('nav.lightTheme')}</span>
+          {readSchemeMode() === 'system' ? <Sun className="size-4 shrink-0" /> : <Monitor className="size-4 shrink-0" />}
+          <span>{readSchemeMode() === 'system' ? t('onboarding.scheme.light') : t('onboarding.scheme.system')}</span>
         </button>
         <div className="shrink-0 p-2">
           <NavChromeProvider value={{ expanded, forceLabel: true }}>

@@ -37,7 +37,7 @@
     "signin_not_in_progress": "Er loopt geen aanmelding.",
     "workspace_unknown": "Onbekende werkruimte.",
     "project_no_cwd": "Voor dit project is geen map ingesteld.",
-    "path_unknown": "Dit pad is onbekend voor Timon: het is geen agentmap en geen worktree van een taak.",
+    "path_unknown": "Dit pad is onbekend voor Rooks: het is geen agentmap en geen worktree van een taak.",
     "secret_unknown": "Onbekend geheim.",
     "vault_unavailable": "De geheimenkluis is niet beschikbaar.",
     "license_server_unreachable": "De licentieserver is niet bereikbaar.",

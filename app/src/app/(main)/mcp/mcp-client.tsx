@@ -535,7 +535,7 @@ export function McpClient({ leading }: { leading?: ReactNode } = {}) {
             </div>
             <p className="text-[11.5px] text-muted-foreground/80">
               Internal slug — used as the filename
-              <span /* code-font: file path */ className="mx-1 font-mono">~/.timon/mcp/&lt;id&gt;.json</span>
+              <span /* code-font: file path */ className="mx-1 font-mono">~/.rooks/mcp/&lt;id&gt;.json</span>
               and as the reference in each agent's <span /* code-font: config key */ className="font-mono">mcp_servers</span> list.
               Allowed: <span /* code-font: character set */ className="font-mono">a-z 0-9 . _ -</span>
             </p>

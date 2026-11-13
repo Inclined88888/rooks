@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 const { TerminalSessions } = await import('../../terminal-host/sessions.js');
-const { ensureSpawnHelperExecutable, loadNodePty, nodePtySpawner, ptySpawnOptions } = await import('../../terminal-host/pty.js');
+const { ensureSpawnHelperExecutable, loadNodePty, nativePtyLoadError, nodePtySpawner, ptySpawnOptions } = await import('../../terminal-host/pty.js');
 const { defaultCwd, resolveShell, shellEnv } = await import('./shell.js');
 const { chmodSync, mkdirSync, mkdtempSync, statSync, writeFileSync } = await import('node:fs');
 const { join } = await import('node:path');
@@ -49,6 +49,12 @@ test('a real shell runs and streams to the client', { skip: loadNodePty() === nu
   } finally {
     sessions.disposeAll();
   }
+});
+
+test('a failed native load keeps the dlopen text instead of a directory list', () => {
+  const message = nativePtyLoadError(() => { throw new Error("/lib/x86_64-linux-gnu/libc.so.6: version 'GLIBC_2.42' not found"); }, 'pty.node');
+  assert.match(message ?? '', /GLIBC_2\.42/);
+  assert.equal(nativePtyLoadError(() => ({}), 'pty.node'), null);
 });
 
 test('the macOS spawn-helper regains its executable bit, other platforms are left alone', { skip: process.platform === 'win32' }, () => {

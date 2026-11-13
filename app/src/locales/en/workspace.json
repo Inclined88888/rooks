@@ -40,7 +40,7 @@
     "empty": "No projects. Create the first one.", "edit": "Edit", "delete": "Delete",
     "editTitle": "Edit \"{slug}\"", "createTitle": "Create project", "name": "Name", "slug": "Slug",
     "logo": "Logo", "color": "Color", "workspace": "Workspace",
-    "workingDirectory": "Working directory", "speech": "Speech (description)",
+    "workingDirectory": "Working directory", "speech": "Description",
     "uploading": "Uploading…", "chooseImage": "Choose an image", "clearLogo": "Clear the logo",
     "logoHint": "Click the circle to browse, paste (Ctrl/Cmd+V) or drop an image — or pick an emoji.", "logoPlaceholder": "Emoji or short text",
     "autoColor": "Auto-generate from name", "auto": "auto",

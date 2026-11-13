@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import { logoFallbackFor, logoUrlFor } from '@/app/multichat/types';
+import { logoUrlFor } from '@/app/multichat/types';
 import { isIconUrl } from '@/lib/project-visual';
-import { avatarModeOf, lookOfAgent } from '@/components/agent-avatar';
 import type { AgentLook } from '@/components/mascot/agent-look';
 
 /** What the card needs of an agent: how to name it, how to picture it, and
@@ -115,18 +114,14 @@ export function visageAgent(
   // The head the agent picked (docs/AGENT-AVATAR.md), unless the card carries
   // its own photo. Without a pick, or without the pick's setting, this view's
   // order stays as it was: no agent changes face here by itself.
+  const glyphe = (agent?.name || nom).trim().charAt(0).toLowerCase() || '?';
   if (agent && !explicite) {
-    const mode = avatarModeOf(agent.avatar);
-    const look = lookOfAgent(agent);
-    const glyphe = logoFallbackFor(agent, undefined);
-    if (mode === 'mascot' && look) return { image: null, glyphe, couleur, look };
-    if (mode === 'emoji' && agent.emoji?.trim()) return { image: null, glyphe: agent.emoji.trim(), couleur };
-    if (mode === 'image' && agent.icon_url && isIconUrl(agent.icon_url)) return { image: agent.icon_url, glyphe, couleur };
+    const picture = agent.icon_url && isIconUrl(agent.icon_url) ? agent.icon_url : null;
+    if (picture) return { image: picture, glyphe, couleur };
   }
   return {
     image: propre || logoUrlFor(agent, projet),
-    // A customised photo can be an emoji: it stands in for the glyph.
-    glyphe: explicite && !propre ? explicite : logoFallbackFor(agent ?? { name: nom }, projet),
+    glyphe,
     couleur,
   };
 }

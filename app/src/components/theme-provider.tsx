@@ -13,7 +13,8 @@ import {
 import { usePathname } from 'next/navigation';
 import { DEFAULT_APPEARANCE, type NativeAppearance } from '@/plugins-client/ui-theme-variants';
 import { DEFAULT_USER_PREFS, type ColorScheme } from '@/lib/auth';
-import { FIRST_RUN_DEFAULT_SCHEME, chosenFirstRunScheme, schemeFollowsSystem, storeFirstRunScheme } from '@/lib/first-run-gate';
+import { storeFirstRunScheme } from '@/lib/first-run-gate';
+import { appliedScheme, readSchemeMode, type SchemeMode } from '@/lib/scheme-mode';
 import { sharedGet } from '@/lib/shared-read';
 import { schemeOfMe } from '@/lib/machines/acting-account';
 import { reportWindowScheme } from '@/lib/window-scheme';
@@ -72,11 +73,24 @@ export function ThemeProvider({
   const pathname = usePathname();
   const revision = useRef(0);
   const [scheme, setSchemeState] = useState<ColorScheme>(initialScheme);
-  // Read after mount, like the OS scheme: the server has no session storage.
-  const [chosen, setChosen] = useState<ColorScheme | null>(null);
-  useEffect(() => { setChosen(chosenFirstRunScheme()); }, []);
-  const followSystem = schemeFollowsSystem(pathname ?? '/');
-  const applied = followSystem ? chosen ?? FIRST_RUN_DEFAULT_SCHEME : scheme;
+  const [mode, setMode] = useState<SchemeMode>('light');
+  const [osEpoch, setOsEpoch] = useState(0);
+  useEffect(() => { setMode(readSchemeMode()); }, [pathname]);
+  useEffect(() => {
+    const sync = () => setMode(readSchemeMode());
+    window.addEventListener('rooks-scheme-mode', sync);
+    return () => window.removeEventListener('rooks-scheme-mode', sync);
+  }, []);
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
+    if (!mq) return;
+    const onChange = () => setOsEpoch((n) => n + 1);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  const applied = appliedScheme(mode);
+  void osEpoch;
+  useEffect(() => { setSchemeState(applied); }, [applied]);
 
   useEffect(() => {
     try {
@@ -93,8 +107,7 @@ export function ThemeProvider({
       .then((r) => (r.ok ? r.json() : null))
       .then((body: unknown) => {
         if (cancelled || started !== revision.current) return;
-        const next = schemeOfMe(body);
-        if (next) setSchemeState(next);
+        if (schemeOfMe(body)) setSchemeState(appliedScheme(readSchemeMode()));
       })
       .catch(() => {});
     return () => {
@@ -102,9 +115,8 @@ export function ThemeProvider({
     };
   }, [pathname]);
 
-  // The chosen mode, not the OS one onboarding follows: what the shell
-  // remembers for this machine's next window.
-  useEffect(() => { reportWindowScheme(scheme); }, [scheme]);
+  // What is painted now, so System tracks the OS in the window as well as the page.
+  useEffect(() => { reportWindowScheme(applied); }, [applied]);
 
   const setScheme = useCallback((next: ColorScheme) => {
     revision.current += 1;
@@ -113,7 +125,7 @@ export function ThemeProvider({
 
   const chooseFirstRunScheme = useCallback((next: ColorScheme) => {
     storeFirstRunScheme(next);
-    setChosen(next);
+    setSchemeState(next);
   }, []);
 
   return (

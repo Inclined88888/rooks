@@ -234,7 +234,19 @@ async function activateOnce(key: string, device: string, opts: ClientOptions): P
  * Nothing else needs threading afterwards: `rotateDeviceId` persists the new
  * id, so `verifyLicenseToken` reads it from disk like any other boot.
  */
+/** No injected server and no TIMON_LICENSE_SERVER: this install does not phone a licence host or read a machine fingerprint for one. */
+function licenseServerDisabled(opts: ClientOptions): boolean {
+  return opts.fetch === undefined && (opts.baseUrl === undefined || opts.baseUrl === '') && !process.env.TIMON_LICENSE_SERVER;
+}
+
+function refuseRemoteLicense(opts: ClientOptions): void {
+  if (licenseServerDisabled(opts)) {
+    throw new LicenseServerError(0, 'license_disabled', 'this install does not call a licence server');
+  }
+}
+
 export async function activate(key: string, opts: ClientOptions = {}): Promise<ActivationResponse> {
+  refuseRemoteLicense(opts);
   try {
     return await activateOnce(key, deviceId(), opts);
   } catch (err) {
@@ -252,6 +264,7 @@ export async function activate(key: string, opts: ClientOptions = {}): Promise<A
  * activation on the server, so renewing it would only earn a 404.
  */
 export async function renew(key: string, opts: ClientOptions = {}): Promise<ActivationResponse> {
+  refuseRemoteLicense(opts);
   const body = { key, deviceId: deviceId(), appVersion: timonVersion(), fp: fingerprint() };
   try {
     return tokenFrom(await post('/api/v1/license/renew', body, opts));
@@ -298,6 +311,7 @@ export function isNameLocked(err: unknown): boolean {
  * failure, never a refusal, and `post` already makes that distinction.
  */
 export async function setMachineName(key: string, name: string, opts: ClientOptions = {}): Promise<string> {
+  refuseRemoteLicense(opts);
   const customName = parseMachineName(name);
   if (customName === null) {
     throw new LicenseServerError(0, 'invalid_name', `machine name must be 1 to ${MACHINE_NAME_MAX} characters, without control characters`);
@@ -314,6 +328,7 @@ export async function setMachineName(key: string, name: string, opts: ClientOpti
 /** §5.3 — releases the seat. No `fp`, no `appVersion`: the contract asks for
  *  the key and the device, and nothing more. */
 export async function deactivate(key: string, opts: ClientOptions = {}): Promise<void> {
+  refuseRemoteLicense(opts);
   const result = await post('/api/v1/license/deactivate', { key, deviceId: deviceId() }, opts);
   if (!result || typeof result !== 'object' || (result as { ok?: unknown }).ok !== true) {
     throw new LicenseServerError(200, 'invalid_response', 'license server did not acknowledge deactivation');

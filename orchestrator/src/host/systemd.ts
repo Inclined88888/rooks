@@ -29,6 +29,16 @@ export function setSystemctlForTest(fn: ((args: string[]) => { ok: boolean; out:
   systemctlForTest = fn;
 }
 
+/** States in which a user manager can still install and start a unit.
+ *  `offline` is what a container prints when pid 1 is not systemd: the word is
+ *  non-empty, and the next `systemctl show` cannot talk to a bus. Treating
+ *  that as a manager blocks portable mode and the setup never finishes. */
+const USABLE_SYSTEMD_STATES = new Set(['running', 'degraded', 'starting', 'initializing', 'maintenance']);
+
+export function systemdUserManagerUsable(state: string): boolean {
+  return USABLE_SYSTEMD_STATES.has(state.trim());
+}
+
 /** Probes only once: without a user systemd manager (container, macOS,
  *  CI), this whole module steps back and the spawn stays bare. Better an
  *  unconfined mission than a mission that does not start. */
@@ -37,9 +47,9 @@ export function hasSystemd(): boolean {
   if (process.platform !== 'linux') return (systemdAvailable = false);
   systemctlCalls += 1;
   const r = spawnSync('systemctl', ['--user', 'is-system-running'], { encoding: 'utf8' });
-  // `is-system-running` exits with code != 0 when the state is `degraded`, which
-  // in no way prevents creating scopes: we test that an answer is present.
-  systemdAvailable = r.error === undefined && typeof r.stdout === 'string' && r.stdout.trim() !== '';
+  // `degraded` exits non-zero and can still create scopes. `offline` cannot.
+  const state = r.error === undefined && typeof r.stdout === 'string' ? r.stdout : '';
+  systemdAvailable = systemdUserManagerUsable(state);
   if (!systemdAvailable) console.warn('[resources] no systemd user manager — guard inactive');
   return systemdAvailable;
 }

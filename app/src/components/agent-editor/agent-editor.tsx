@@ -903,7 +903,7 @@ export function AgentEditor({ agent, isNew, onClose, onDirtyChange, initialTab }
       });
       if (!r.ok) throw new Error(await r.text());
       await syncSkillAttachments(draft.name, draft.skills);
-      toast.success('Saved to ~/.timon/agents/' + draft.name + '/');
+      toast.success('Saved to ~/.rooks/agents/' + draft.name + '/');
       announceAgentsChanged();
       const list = await fetchAll();
       const row = list.find((a) => a.name === draft.name);
@@ -1081,7 +1081,7 @@ export function AgentEditor({ agent, isNew, onClose, onDirtyChange, initialTab }
                 <Input
                   data-agent-editor-name
                   aria-label={t('editPage.name')}
-                  
+                  autoFocus={wantsNew}
                   value={draft.name}
                   onChange={(e) => updateDraft('name', e.target.value)}
                 />
@@ -1483,7 +1483,7 @@ export function AgentEditor({ agent, isNew, onClose, onDirtyChange, initialTab }
                                       : 'cursor-default border-dashed border-border/70 bg-transparent text-muted-foreground/70',
                                 )}
                               >
-                                /{s.id}
+                                {s.title?.trim() || s.id.replace(/^timon-/, '')}
                                 {weight !== undefined && (
                                   <span className="ml-1.5 tabular-nums opacity-70" title={t('editPage.skillWeightHint')}>
                                     {t('editPage.skillWeightShort', { n: formatTokens(weight) })}
@@ -1611,6 +1611,7 @@ export function AgentEditor({ agent, isNew, onClose, onDirtyChange, initialTab }
         </ScrollArea>
 
         <footer className="flex items-center gap-2 bg-muted/40 px-6 py-3">
+          {!wantsNew && (
           <Button
             variant="outline"
             onClick={remove}
@@ -1618,6 +1619,7 @@ export function AgentEditor({ agent, isNew, onClose, onDirtyChange, initialTab }
           >
             Delete
           </Button>
+          )}
           <div className="flex-1" />
           <Button onClick={save} disabled={saving || excludingSkill !== null} className="font-semibold">
             {saving ? 'Saving…' : 'Save'}

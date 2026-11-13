@@ -15,7 +15,7 @@
 
 export const BRAND = Object.freeze({
   /** Name shown to a human. Never a key, a path or an identifier. */
-  displayName: 'Timon',
+  displayName: 'Rooks',
   /** Product identifier: paths, env keys, CLI. */
   id: 'timon',
   cliName: 'timon',

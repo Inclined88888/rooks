@@ -10,7 +10,7 @@
       "failed": "워크트리를 분리할 수 없습니다: {error}"
     },
     "markMerged": {
-      "title": "Timon 밖에서 병합했나요?",
+      "title": "Rooks 밖에서 병합했나요?",
       "hint": "이 작업의 브랜치가 이미 병합되었다면(GitHub에서 병합한 풀 리퀘스트, 직접 병합) 병합 커밋을 입력하세요: 작업이 완료로 닫히고 이에 의존하는 작업이 시작됩니다.",
       "shaLabel": "병합 커밋",
       "shaPlaceholder": "커밋 sha, 예: bcd02520",
@@ -20,8 +20,8 @@
       "doneUnverified": "작업이 병합됨으로 표시되었습니다. 이 커밋은 아직 저장소의 로컬 사본에 없어 확인할 수 없었습니다.",
       "notInBase": "이 커밋은 저장소의 기본 브랜치에 없습니다. 병합 sha를 확인하세요.",
       "failed": "작업을 병합됨으로 표시할 수 없습니다: {error}",
-      "unreachable": "Timon이 응답하지 않았습니다",
-      "hintDone": "이 작업은 완료되었지만 브랜치가 Timon에서 병합된 적이 없습니다. 다른 곳에서 병합했다면(GitHub에서 병합한 풀 리퀘스트, 직접 병합) 병합 커밋을 입력하세요: 기록되고 이에 의존하는 작업이 시작됩니다.",
+      "unreachable": "Rooks이 응답하지 않았습니다",
+      "hintDone": "이 작업은 완료되었지만 브랜치가 Rooks에서 병합된 적이 없습니다. 다른 곳에서 병합했다면(GitHub에서 병합한 풀 리퀘스트, 직접 병합) 병합 커밋을 입력하세요: 기록되고 이에 의존하는 작업이 시작됩니다.",
       "cardAction": "병합됨?"
     },
     "editTitle": "작업 편집",
@@ -90,12 +90,12 @@
     "modelInheritHint": "이 작업 유형에 대한 프로젝트 역할이 정하고, 없으면 에이전트가 정합니다",
     "modelInherited": "{model} (상속됨)",
     "modelHelp": "« 프로젝트 역할 »은 이 유형에 대한 프로젝트 역할, 없으면 에이전트가 정한 설정으로 작업을 실행합니다.",
-    "worktreeBlocked": "이 백엔드는 Timon 폴더 밖에서 작업합니다: 여기에 할당한 code 또는 merge 작업은 차단됩니다.",
+    "worktreeBlocked": "이 백엔드는 Rooks 폴더 밖에서 작업합니다: 여기에 할당한 code 또는 merge 작업은 차단됩니다.",
     "fallback": {
       "short": "대체",
       "label": "할당량이 소진되면 대체",
       "inherit": "시리즈 또는 전역 설정",
-      "inheritHint": "시리즈 계획이 정하고, 없으면 Timon 설정",
+      "inheritHint": "시리즈 계획이 정하고, 없으면 Rooks 설정",
       "never": "스스로 전환하지 않음"
     },
     "permission": "권한",

@@ -24,35 +24,27 @@ function railHead(agent: Partial<AgentMeta>, project?: { slug: string; icon?: st
   return renderToStaticMarkup(createElement(RailAvatar, { agent: meta, project, color: '#123456', state: undefined }));
 }
 
-test('Multichat rail: the picked head, then the historical order', () => {
-  const mascot = railHead({ ...FULL, avatar: 'mascot' });
-  assert.match(mascot, /data-agent-head="mascot"/);
-  assert.match(mascot, /data-agent-mascot/);
-  assert.doesNotMatch(mascot, /<img/);
-
-  const emoji = railHead({ ...FULL, avatar: 'emoji' });
-  assert.doesNotMatch(emoji, /data-agent-mascot|<img/);
-  assert.match(emoji, />🦊</);
-
-  assert.match(railHead({ ...FULL, avatar: 'image' }), /<img[^>]+nova\.png/);
-  // No pick: picture, then project logo, then mascot, then emoji, then initial (upper-cased by CSS).
-  assert.match(railHead(FULL), /<img[^>]+nova\.png/);
+test('Multichat rail: a picture or the initial, never a mascot or an emoji', () => {
+  for (const avatar of ['mascot', 'emoji', 'image', undefined] as const) {
+    const html = railHead({ ...FULL, avatar });
+    assert.match(html, /data-agent-head="disc"/);
+    assert.doesNotMatch(html, /data-agent-mascot|🦊/);
+    assert.match(html, /<img[^>]+nova\.png/);
+  }
   assert.match(railHead({ look: LOOK, emoji: '🦊' }, { slug: 'acme', icon: '/api/uploads/acme.png' }), /<img[^>]+acme\.png/);
-  assert.match(railHead({ look: LOOK, emoji: '🦊' }), /data-agent-mascot/);
+  assert.match(railHead({ look: LOOK, emoji: '🦊' }), /class="uppercase"[^>]*>n</);
+  assert.doesNotMatch(railHead({ look: LOOK, emoji: '🦊' }), /data-agent-mascot|🦊/);
   assert.match(railHead({}), /class="uppercase"[^>]*>n</);
 });
 
-test('Agents graph: a node shows the picked head, its own initials when it has nothing', () => {
+test('Agents graph: a picture, or the node\'s own initials', () => {
   const agent = { name: 'nova', role: 'coder', ...FULL };
-  const mascot = graphNodeFace({ ...agent, avatar: 'mascot' }, null);
-  assert.equal(mascot.iconUrl, null);
-  assert.equal(mascot.look?.shape, 'hex');
-  assert.deepEqual(graphNodeFace({ ...agent, avatar: 'emoji' }, null), { iconUrl: null, look: null, glyph: '🦊' });
+  assert.deepEqual(graphNodeFace({ ...agent, avatar: 'mascot' }, null), { iconUrl: '/api/uploads/nova.png', look: null, glyph: null });
+  assert.deepEqual(graphNodeFace({ ...agent, avatar: 'emoji' }, null), { iconUrl: '/api/uploads/nova.png', look: null, glyph: null });
   assert.deepEqual(graphNodeFace({ ...agent, avatar: 'image' }, null), { iconUrl: '/api/uploads/nova.png', look: null, glyph: null });
-  // Historical order without a pick.
   assert.equal(graphNodeFace(agent, null).iconUrl, '/api/uploads/nova.png');
   assert.equal(graphNodeFace({ name: 'nova', look: LOOK }, { icon: '/api/uploads/acme.png' }).iconUrl, '/api/uploads/acme.png');
-  assert.equal(graphNodeFace({ name: 'nova', look: LOOK }, null).look?.shape, 'hex');
-  assert.deepEqual(graphNodeFace({ name: 'nova' }, { icon: '🚀' }), { iconUrl: null, look: null, glyph: '🚀' });
+  assert.equal(graphNodeFace({ name: 'nova', look: LOOK }, null).look, null);
+  assert.deepEqual(graphNodeFace({ name: 'nova' }, { icon: '🚀' }), { iconUrl: null, look: null, glyph: null });
   assert.deepEqual(graphNodeFace({ name: 'nova' }, null), { iconUrl: null, look: null, glyph: null }, 'the node writes its initials');
 });

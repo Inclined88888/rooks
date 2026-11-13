@@ -81,7 +81,7 @@ export function loadTrayIcon<T extends TrayImage<T>>(
   images.warn('[tray] Tray icon missing or unreadable; using the resized app icon.');
   const appImage = choice.fallback ? image : images.createFromPath(input.appIconPath);
   // An incomplete installation must fail visibly instead of creating an invisible tray item.
-  if (appImage.isEmpty()) throw new Error('The Timon app icon is missing or unreadable. Reinstall Timon.');
+  if (appImage.isEmpty()) throw new Error('The Rooks app icon is missing or unreadable. Reinstall Rooks.');
   const platform = input.platform === 'win32' || input.platform === 'darwin' ? input.platform : 'linux';
   const size = TRAY_FALLBACK_SIZE[platform];
   return appImage.resize({ width: size, height: size });

@@ -4374,7 +4374,7 @@ export const DEFAULT_USER_PREFS: UserPrefs = {
   // written once when `theme_kept` appears.
   theme: 'theme-timon',
   layout: '@timon/ui-layout',
-  scheme: 'dark',
+  scheme: 'light',
 };
 
 export function isColorScheme(value: unknown): value is ColorScheme {

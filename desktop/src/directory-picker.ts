@@ -14,7 +14,7 @@ export async function selectDirectory(
     trusted = sender.isWindow && sender.isMainFrame
       && new URL(sender.url).origin === new URL(uiOrigin).origin;
   } catch { /* Reject malformed or missing frame URLs. */ }
-  if (!trusted) throw new Error('Directory selection is only available from Timon.');
+  if (!trusted) throw new Error('Directory selection is only available from Rooks.');
   const result = await open({
     properties: ['openDirectory', 'createDirectory'],
     ...(typeof defaultPath === 'string' && isAbsolute(defaultPath)
@@ -43,7 +43,7 @@ export async function selectPluginSource(
     trusted = sender.isWindow && sender.isMainFrame
       && new URL(sender.url).origin === new URL(uiOrigin).origin;
   } catch { /* Reject malformed or missing frame URLs. */ }
-  if (!trusted) throw new Error('Plugin selection is only available from Timon.');
+  if (!trusted) throw new Error('Plugin selection is only available from Rooks.');
   if (kind !== 'folder' && kind !== 'archive') throw new Error('Unknown plugin source kind.');
   const result = await open(kind === 'folder'
     ? { properties: ['openDirectory'] }
@@ -74,7 +74,7 @@ export async function selectExecutable(
     trusted = sender.isWindow && sender.isMainFrame
       && new URL(sender.url).origin === new URL(uiOrigin).origin;
   } catch { /* Reject malformed or missing frame URLs. */ }
-  if (!trusted) throw new Error('Binary selection is only available from Timon.');
+  if (!trusted) throw new Error('Binary selection is only available from Rooks.');
   const result = await open({
     properties: ['openFile', 'showHiddenFiles', 'treatPackageAsDirectory'],
     ...(platform === 'win32'

@@ -5,9 +5,9 @@ export const SETUP_RESTART_CHANNEL = 'timon:restart-after-setup';
 export const SETUP_RESTART_STATUS_CHANNEL = 'timon:setup-restart-pending';
 export const SETUP_HANDOVER_CHANNEL = 'timon:setup-handover';
 
-/** Only a bootstrap daemon needs handover; a normal portable launch stays quiet. */
+/** A portable first run already saved into the embedded daemon. The banner is only for handing that daemon over to an installed service. */
 export function setupRestartPending(state: { embedded: boolean; configuredAtLaunch: boolean; configuredNow: boolean; serviceInstalled: boolean }): boolean {
-  return state.embedded && state.configuredNow && (!state.configuredAtLaunch || state.serviceInstalled);
+  return state.embedded && state.configuredNow && state.serviceInstalled && !state.configuredAtLaunch;
 }
 
 export function canRestartFromSetup(sender: {

@@ -135,7 +135,7 @@ export function KanbanTaskCard({
   const context = (validation || t.interrupted_reason || t.blocked_reason) ? (
     <>
       {validation && (
-        <div className="flex animate-pulse items-center gap-1 rounded-md bg-warning/10 px-1.5 py-0.5 text-[11px] font-semibold text-warning">
+        <div className="flex items-center gap-1 rounded-md bg-warning/10 px-1.5 py-0.5 text-[11px] font-semibold text-warning">
           <span aria-hidden>⚠</span>
           <span>{i18n('kanbanPage.validationRequired')}</span>
         </div>

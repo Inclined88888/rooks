@@ -11,7 +11,7 @@ export function instanceId(home: string): string {
   return createHash('sha256').update(resolve(home)).digest('hex').slice(0, 24);
 }
 export function packagedUnit(home: string): string {
-  return `timon-desktop-${instanceId(home)}`;
+  return `rooks-desktop-${instanceId(home)}`;
 }
 export function runtimeDir(home: string): string { return join(home, 'desktop-runtime'); }
 export function packagedReleaseId(version = process.env.TIMON_DESKTOP_VERSION ?? 'current'): string {

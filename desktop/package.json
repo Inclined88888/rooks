@@ -4,11 +4,11 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "type": "module",
-  "description": "Timon desktop client (Electron shell around the local daemon).",
-  "homepage": "https://timon-ai.com",
+  "description": "Rooks desktop",
+  "homepage": "https://github.com/Inclined88888/rooks",
   "author": {
-    "name": "Timon",
-    "email": "contact@timon-ai.com"
+    "name": "Rooks",
+    "email": "Inclined88888@users.noreply.github.com"
   },
   "main": "dist/main.js",
   "scripts": {

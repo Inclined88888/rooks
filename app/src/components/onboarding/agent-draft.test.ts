@@ -83,12 +83,13 @@ test('names are drawn from the language\'s pool, never the one shown', () => {
   assert.deepEqual(look, { shape: 'hex', color: '#7ed957', eyes: 'code', acc: 'coffee' });
 });
 
-test('templates send the look and the missions as directives, nothing else', () => {
+test('templates send the missions as directives and clear any mascot', () => {
   const patch = creationPatch('templates', draft({ template: 'assist' }), NO_CONTEXT);
   assert.deepEqual(Object.keys(patch).sort(), ['directives', 'look']);
-  assert.deepEqual(patch.look, defaultLookFor(['mail', 'agenda']));
+  assert.equal(patch.look, null);
   assert.match(patch.directives ?? '', /read and sort their email; check and fill their calendar/);
   assert.deepEqual(Object.keys(creationPatch('templates', draft({ template: 'blank' }), NO_CONTEXT)), ['look'], 'from scratch: no directives');
+  assert.equal(creationPatch('templates', draft({ template: 'blank' }), NO_CONTEXT).look, null);
 });
 
 test('the interview sends its autonomy as a permission mode and every answer as directives', () => {
@@ -107,7 +108,7 @@ test('the interview sends its autonomy as a permission mode and every answer as 
     'Tools the user allowed: Gmail, Slack.',
     'When to start: when the user talks to you; every day at 07:30.',
     'Before an important action: act, then tell the user what you did.',
-    'Where to let the user know: in Timon, by email.',
+    'Where to let the user know: in Rooks, by email.',
   ]);
   assert.equal(AUTONOMY_PERMISSION.ask, 'default');
   assert.equal(AUTONOMY_PERMISSION.silent, 'auto', 'silence never bypasses the checks');
@@ -124,7 +125,7 @@ test('the sheet sends model, exact permission mode, folder, skills, MCP servers,
     shownMcp: ['github', 'sentry'],
   });
   assert.deepEqual(patch, {
-    look: STYLED,
+    look: null,
     directives: 'Main line of work: reviewing changes before they land. You remain the main agent and pilot: delegate what falls outside it.\nNever push.',
     permission_mode: 'bypassPermissions',
     backend: 'codex',
@@ -136,6 +137,9 @@ test('the sheet sends model, exact permission mode, folder, skills, MCP servers,
   });
   const untouched = creationPatch('sheet', draft(), NO_CONTEXT);
   assert.equal(untouched.model, undefined, 'no model picked: the agent keeps its own');
+  const noTool = creationPatch('sheet', sheet, { ...NO_CONTEXT, shownSkills: ['tests'], shownMcp: ['github'], hasProvider: false });
+  assert.equal(noTool.backend, undefined, 'no AI tool: the patch names no model');
+  assert.equal(noTool.model, undefined);
   assert.equal(untouched.cwd, undefined, 'no folder: the workspace stays');
   assert.equal(directivesOf('sheet', draft({ rules: '   ' })), '', 'the pilot needs no line of work');
   assert.equal(directivesOf('sheet', draft({ role: 'code', rules: '' })), roleLine('code'));

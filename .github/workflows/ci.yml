@@ -42,14 +42,14 @@ jobs:
       NODE_ENV: test
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # The runner context is not available in a job's env: the temporary home is set from a step.
       - name: Temporary Timon home
         shell: bash
         run: echo "TIMON_HOME=${RUNNER_TEMP}/timon-home" >> "$GITHUB_ENV"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -108,8 +108,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

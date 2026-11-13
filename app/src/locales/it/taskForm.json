@@ -10,7 +10,7 @@
       "failed": "Impossibile scollegare il worktree: {error}"
     },
     "markMerged": {
-      "title": "Unito fuori da Timon?",
+      "title": "Unito fuori da Rooks?",
       "hint": "Se il branch di questa attività è già stato unito (una pull request unita su GitHub, un merge a mano), indica il commit di merge: l’attività viene chiusa come completata e partono le attività che ne dipendono.",
       "shaLabel": "Commit di merge",
       "shaPlaceholder": "Sha del commit, es. bcd02520",
@@ -20,8 +20,8 @@
       "doneUnverified": "Attività segnata come unita. Questo commit non è ancora nella copia locale del repository, quindi non è stato possibile verificarlo.",
       "notInBase": "Questo commit non è nel branch di base del repository. Controlla lo sha del merge.",
       "failed": "Impossibile segnare l’attività come unita: {error}",
-      "unreachable": "Timon non ha risposto",
-      "hintDone": "Questa attività è completata ma il suo branch non è mai passato da un merge in Timon. Se è stato unito altrove (una pull request unita su GitHub, un merge a mano), indica il commit di merge: viene registrato e partono le attività che ne dipendono.",
+      "unreachable": "Rooks non ha risposto",
+      "hintDone": "Questa attività è completata ma il suo branch non è mai passato da un merge in Rooks. Se è stato unito altrove (una pull request unita su GitHub, un merge a mano), indica il commit di merge: viene registrato e partono le attività che ne dipendono.",
       "cardAction": "unito?"
     },
     "editTitle": "Modifica l’attività",
@@ -90,12 +90,12 @@
     "modelInheritHint": "Decide il ruolo del progetto per questo tipo di attività, altrimenti l’agente",
     "modelInherited": "{model} (ereditato)",
     "modelHelp": "« Ruolo del progetto » esegue l’attività con ciò che decide il ruolo del progetto per questo tipo, altrimenti l’agente.",
-    "worktreeBlocked": "Questo backend lavora fuori dalla cartella di Timon: un’attività di codice o di merge assegnata a lui sarà bloccata.",
+    "worktreeBlocked": "Questo backend lavora fuori dalla cartella di Rooks: un’attività di codice o di merge assegnata a lui sarà bloccata.",
     "fallback": {
       "short": "Alternativa",
       "label": "Alternativa se la quota si esaurisce",
       "inherit": "Impostazione della serie o globale",
-      "inheritHint": "Decide il piano della serie, altrimenti l’impostazione di Timon",
+      "inheritHint": "Decide il piano della serie, altrimenti l’impostazione di Rooks",
       "never": "Non cambiare mai da solo"
     },
     "permission": "Permesso",

@@ -110,9 +110,9 @@ export function machineNameIn(body: unknown, id: string): string | null {
   return null;
 }
 
-/** "<machine> — Timon"; just the product name until the machine is known. */
-export function windowTitle(product: string, machineName: string | null): string {
-  return machineName ? `${machineName} — ${product}` : product;
+/** The window title is the product name. A machine name is not part of it. */
+export function windowTitle(product: string, _machineName: string | null): string {
+  return product;
 }
 
 /**

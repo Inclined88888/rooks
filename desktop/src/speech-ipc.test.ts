@@ -111,7 +111,7 @@ test('every speech channel refuses a sender that is not the Timon window', async
     SPEECH_CHANNELS.state, SPEECH_CHANNELS.download, SPEECH_CHANNELS.cancelDownload, SPEECH_CHANNELS.deleteModel, SPEECH_CHANNELS.start,
     SPEECH_CHANNELS.listModels, SPEECH_CHANNELS.importModel,
   ]) {
-    await assert.rejects(Promise.resolve().then(() => f.invoke(channel, undefined, foreign)), /only available in the Timon window/, channel);
+    await assert.rejects(Promise.resolve().then(() => f.invoke(channel, undefined, foreign)), /only available in the Rooks window/, channel);
   }
   for (const channel of [SPEECH_CHANNELS.stop, SPEECH_CHANNELS.cancel]) {
     await assert.rejects(Promise.resolve().then(() => f.invoke(channel, { sessionId: SESSION }, foreign)), /only available/, channel);
@@ -510,7 +510,7 @@ test('the microphone channel refuses a foreign sender, reads without prompting, 
   registerMicrophoneIpc({ handle: (channel, listener) => handlers.set(channel, listener), on: () => {} },
     (event) => event.isWindow && event.isMainFrame && new URL(event.url).origin === 'http://127.0.0.1:3110', access);
   const invoke = (input: unknown, event: SenderEvent = trusted) => Promise.resolve().then(() => handlers.get(SPEECH_CHANNELS.microphone)!(event, input));
-  await assert.rejects(invoke(undefined, foreign), /only available in the Timon window/);
+  await assert.rejects(invoke(undefined, foreign), /only available in the Rooks window/);
   await assert.rejects(invoke({ request: true }, { ...trusted, isMainFrame: false }));
   assert.deepEqual(calls, [], 'a refused sender never reaches the OS');
   assert.deepEqual(await invoke(undefined), { status: 'not-determined' });

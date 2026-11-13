@@ -1,11 +1,8 @@
 'use client';
 
 /**
- * "Discover Timon" (docs/ONBOARDING.md, `Discover`): right after the main agent
- * is made, four quick animated slides on what sets Timon apart — TIMs that
- * work on their own, teams of TIMs, projects whose TIMs never leave them, and
- * everything that plugs in around them. Then the TIMs page, where the agent
- * opens its welcome.
+ * Discover: right after the main agent is made, four short slides, then Desk,
+ * where the agent opens its welcome.
  *
  * Short on purpose: a slide moves on by itself after `DISCOVER_SLIDE_MS` (pointer
  * resting on it holds it), "Next" does not wait, "Skip all" leaves at
@@ -15,7 +12,6 @@
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { isAgentLook, normalizeAgentLook, DEFAULT_LOOK, type AgentLook } from '@/components/mascot/agent-look';
 import { usePrefersReducedMotion } from '@/components/mascot/agent-mascot';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -26,14 +22,11 @@ import {
 } from '../discover-slides';
 import { DISCOVER_DRAWINGS } from '../discover/drawings';
 
-type Lead = { name: string | null; look: AgentLook };
+type Lead = { name: string | null };
 
-/** The main agent as the agent step left it: its chosen name, its look. */
+/** The main agent as the agent step left it: its chosen name. */
 export function leadOf(state: MainAgentState): Lead {
-  return {
-    name: state.named && state.name ? state.name : null,
-    look: isAgentLook(state.look) ? normalizeAgentLook(state.look) : DEFAULT_LOOK,
-  };
+  return { name: state.named && state.name ? state.name : null };
 }
 
 export type DiscoverStepProps = {
@@ -46,7 +39,7 @@ export function DiscoverStep({ loadAgent = loadMainAgent }: DiscoverStepProps): 
   const reduced = usePrefersReducedMotion();
   const [index, setIndex] = useState(0);
   const [held, setHeld] = useState(false);
-  const [lead, setLead] = useState<Lead>({ name: null, look: DEFAULT_LOOK });
+  const [lead, setLead] = useState<Lead>({ name: null });
 
   useEffect(() => {
     let live = true;
@@ -144,8 +137,8 @@ export function DiscoverStep({ loadAgent = loadMainAgent }: DiscoverStepProps): 
             ))}
           </div>
         </div>
-        <div className="timon-onboarding-fade h-[300px] overflow-hidden rounded-2xl bg-card shadow-elev-3 ring-1 ring-border">
-          <Drawing look={lead.look} />
+        <div className="timon-onboarding-fade h-[300px] overflow-hidden rounded-2xl bg-card ring-1 ring-border">
+          <Drawing name={lead.name} />
         </div>
       </div>
 

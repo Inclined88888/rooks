@@ -15,8 +15,8 @@
     "id": "theme-timon",
     "apiVersion": 1,
     "kind": "theme",
-    "label": "Timon",
-    "description": "The Timon brand palette, dark and light: the website's violet-tinted night, beige-leaning whites, peach and copper accents.",
+    "label": "Violet",
+    "description": "A violet palette: a violet-tinted night, beige-leaning whites, peach and copper accents.",
     "author": "Timon",
     "permissions": [],
     "client": {

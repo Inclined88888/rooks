@@ -37,7 +37,7 @@
     "signin_not_in_progress": "進行中のサインインはありません。",
     "workspace_unknown": "不明なワークスペースです。",
     "project_no_cwd": "このプロジェクトにはフォルダーが設定されていません。",
-    "path_unknown": "このパスは Timon にとって不明です。エージェントのフォルダーでもタスクのワークツリーでもありません。",
+    "path_unknown": "このパスは Rooks にとって不明です。エージェントのフォルダーでもタスクのワークツリーでもありません。",
     "secret_unknown": "不明なシークレットです。",
     "vault_unavailable": "シークレット保管庫を利用できません。",
     "license_server_unreachable": "ライセンスサーバーに接続できません。",

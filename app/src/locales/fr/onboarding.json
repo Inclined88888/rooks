@@ -6,7 +6,8 @@
     "scheme": {
       "label": "Mode clair ou sombre",
       "light": "Clair",
-      "dark": "Sombre"
+      "dark": "Sombre",
+      "system": "System"
     },
     "splash": {
       "title": "Votre équipe d’IA,\nchez vous.",
@@ -20,7 +21,7 @@
     },
     "account": {
       "title": "Créez votre compte local",
-      "subtitle": "C’est avec lui que vous vous connectez à Timon. Vous en êtes l’administrateur.",
+      "subtitle": "C’est avec lui que vous vous connectez à Rooks. Vous en êtes l’administrateur.",
       "name": "Prénom",
       "nameHint": "Pour que vos agents vous appellent par votre prénom.",
       "email": "E-mail",
@@ -37,12 +38,12 @@
       "opening": "Ouverture de l’écran suivant…"
     },
     "llm": {
-      "title": "Choisissez\nvotre LLM.",
-      "subtitle": "Timon fait travailler les abonnements IA que vous avez déjà. Jamais de facture au token.",
+      "title": "Outils d’IA",
+      "subtitle": "Rooks fait travailler les abonnements IA que vous avez déjà. Jamais de facture au token.",
       "plan": {
         "title": "Utiliser mon abonnement IA",
         "detailAny": "Les outils d’IA que vous payez déjà",
-        "hint": "Timon a cherché les outils d’IA déjà présents sur cette machine.",
+        "hint": "Rooks a cherché les outils d’IA déjà présents sur cette machine.",
         "ready": "Prêt avec {names}.",
         "none": "Connectez au moins une IA pour continuer.",
         "anyway": "Continuer quand même"
@@ -59,8 +60,8 @@
       "privacy": "Politique de confidentialité"
     },
     "profile": {
-      "title": "Qu’est-ce qui vous amène ?",
-      "subtitle": "Timon adapte ses réglages et sa visite guidée à votre réponse.",
+      "title": "Réglages par défaut",
+      "subtitle": "Rooks adapte ses réglages et sa visite guidée à votre réponse.",
       "developer": {
         "title": "Je développe",
         "description": "Des agents qui codent, relisent et mergent dans mes dépôts."
@@ -91,7 +92,7 @@
       "profileError": "Votre profil n’a pas pu être lu : voici la vue la plus simple.",
       "retry": "Réessayer",
       "cap": {
-        "base": "Discuter avec vous dans Timon",
+        "base": "Discuter avec vous dans Rooks",
         "mail": "Lire et trier vos mails",
         "agenda": "Consulter et remplir votre agenda",
         "code": "Travailler dans vos dépôts Git",
@@ -196,7 +197,7 @@
           }
         },
         "notify": {
-          "timon": "Dans Timon",
+          "timon": "Dans Rooks",
           "telegram": "Telegram",
           "email": "Par e-mail"
         },
@@ -251,7 +252,7 @@
           "default": "Demander pour chaque outil sensible",
           "acceptEdits": "Accepter les modifications de fichiers, demander pour le reste",
           "plan": "Lecture seule : il planifie, ne modifie rien",
-          "auto": "Auto : le classifieur de Timon tranche, carte seulement en cas de doute",
+          "auto": "Auto : le classifieur de Rooks tranche, carte seulement en cas de doute",
           "bypassPermissions": "Tout autoriser, sans aucune vérification"
         },
         "bypassWarning": "Aucune carte de validation : il pourra tout faire sur cette machine.",
@@ -283,7 +284,7 @@
     },
     "signin": {
       "title": "Bon retour",
-      "subtitle": "Timon fait peau neuve. Connectez-vous avec votre compte Timon pour continuer."
+      "subtitle": "Rooks fait peau neuve. Connectez-vous avec votre compte Rooks pour continuer."
     },
     "mascot": {
       "title": "Découvrez la mascotte de {name}",
@@ -294,7 +295,7 @@
       "failed": "Le look n’a pas pu être enregistré. Réessayez, ou choisissez « Plus tard »."
     },
     "discover": {
-      "label": "Découvrir Timon",
+      "label": "Découvrir Rooks",
       "slide": "Diapo {current} sur {total}",
       "next": "Suivant",
       "skip": "Tout passer",

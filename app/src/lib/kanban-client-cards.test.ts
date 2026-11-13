@@ -107,7 +107,7 @@ test('a card shows its agent, model, idea tags, schedule and dependency counts',
     assert.ok(!card('old-dddddd')?.querySelector('[aria-label="Stop the mission"]'), 'a finished task cannot be stopped');
     assert.doesNotMatch(card('base-aaaaaa')?.innerHTML ?? '', /md:opacity-0/, 'the actions are always visible');
     assert.doesNotMatch(text('base-aaaaaa'), /#base-aaa/, 'the task id stays in the popup');
-    assert.ok(running.querySelector('[data-chip-avatar] [data-chip-pulse]'), 'the working agent pulses');
+    assert.equal(running.querySelector('[data-chip-avatar] [data-chip-pulse]'), null, 'a working agent does not pulse');
 
     // Idea tags, schedule, attachments, highlighted priority.
     const followUp = text('next-bbbbbb');
@@ -123,12 +123,11 @@ test('a card shows its agent, model, idea tags, schedule and dependency counts',
       .map((s) => [s.getAttribute('aria-label'), s.querySelector('header span:last-child')?.textContent]);
     assert.deepEqual(counts, [['Pending', '1'], ['In progress', '1'], ['Done', '1'], ['Blocked', '0']]);
     assert.match(document.querySelector('section[aria-label="Blocked"]')?.textContent ?? '', /Nothing blocked/);
-    // Each status column carries a faint wash of its own colour from the top-left corner.
     const wash = (label: string) => (document.querySelector(`section[aria-label="${label}"]`) as HTMLElement | null)?.style.backgroundImage ?? '';
-    assert.match(wash('Pending'), /radial-gradient.*--warning/);
-    assert.match(wash('In progress'), /--info/);
-    assert.match(wash('Done'), /--success/);
-    assert.match(wash('Blocked'), /--destructive/);
+    assert.equal(wash('Pending'), '');
+    assert.equal(wash('In progress'), '');
+    assert.equal(wash('Done'), '');
+    assert.equal(wash('Blocked'), '');
   } finally {
     await React.act(async () => { root.unmount(); });
     await React.act(async () => { await new Promise((resolve) => setTimeout(resolve, 30)); });

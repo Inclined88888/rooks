@@ -8,6 +8,7 @@ import './test-home.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,9 +40,9 @@ test('le home du process de test n\'est ni ~/.pkos ni ~/.timon', () => {
 });
 
 test('sans TIMON_HOME, le runner refuse de charger paths.ts', () => {
-  const r = probe({ TIMON_HOME: null });
+  const r = probe({ TIMON_HOME: null, ROOKS_HOME: null });
   assert.notEqual(r.status, 0);
-  assert.match(r.stderr, /TIMON_HOME is required/);
+  assert.match(r.stderr, /TIMON_HOME or ROOKS_HOME is required/);
 });
 
 // public-name-ok: the archive guard refuses it by name
@@ -55,4 +56,18 @@ test('TIMON_HOME=~/.timon réel est refusé sous le runner', () => {
   const r = probe({ TIMON_HOME: join(homedir(), '.timon') });
   assert.notEqual(r.status, 0);
   assert.match(r.stderr, /the real ~\/\.timon/);
+});
+
+test('a Rooks home that already holds Timon files keeps those names', () => {
+  const home = mkdtempSync(join(tmpdir(), 'timon-upgrade-stem-'));
+  writeFileSync(join(home, 'timon.config.json'), '{}\n');
+  const env: NodeJS.ProcessEnv = { ...process.env, NODE_TEST_CONTEXT: '1', ROOKS_HOME: home };
+  delete env.TIMON_HOME;
+  const r = spawnSync(
+    process.execPath,
+    ['--import', 'tsx', '-e', "const p = await import('./src/paths.ts'); process.stdout.write(p.STATE_STEM)"],
+    { encoding: 'utf8', cwd: orchestrator, env },
+  );
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, 'timon');
 });

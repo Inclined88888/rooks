@@ -43,14 +43,14 @@
     "verified": "已验证",
     "unverified": "未验证",
     "builtin": "内置",
-    "builtinHint": "随 Timon 提供：可以停用，但不能卸载。",
+    "builtinHint": "随 Rooks 提供：可以停用，但不能卸载。",
     "awaitingApproval": "等待在此电脑上批准",
     "awaitingApprovalHint": "插件在所连接的设备上运行，但只有在此电脑上安装并启用版本和签名均相同的插件后，才会在此加载其界面代码。",
-    "awaitingApprovalBuiltinHint": "插件在所连接的设备上运行，但只有此电脑自带版本及界面代码均相同的插件且已启用时，才会在此加载其界面代码。不同 Timon 版本可能包含同一插件版本的不同代码，请更新运行较旧版本的设备。",
+    "awaitingApprovalBuiltinHint": "插件在所连接的设备上运行，但只有此电脑自带版本及界面代码均相同的插件且已启用时，才会在此加载其界面代码。不同 Rooks 版本可能包含同一插件版本的不同代码，请更新运行较旧版本的设备。",
     "packages": {
       "agent-import": {
         "label": "导入智能体",
-        "description": "从 Hermes、Grok Bot、其他智能体工具或另一套 Timon 导入智能体。先预览将创建的内容，再确认导入。"
+        "description": "从 Hermes、Grok Bot、其他智能体工具或另一套 Rooks 导入智能体。先预览将创建的内容，再确认导入。"
       }
     },
     "modules": {
@@ -184,11 +184,11 @@
       },
       "@timon/terminal-web": {
         "label": "内置终端",
-        "description": "在 Timon 的桌面端、浏览器或手机端使用终端，在此设备上运行 shell。仅限有权打开终端的账户使用。"
+        "description": "在 Rooks 的桌面端、浏览器或手机端使用终端，在此设备上运行 shell。仅限有权打开终端的账户使用。"
       },
       "@timon/ui-documents": {
         "label": "聊天文档",
-        "description": "智能体、你或插件可以在对话中展示交互式 HTML 文档。文档在沙箱框架中运行，与 Timon 隔离。"
+        "description": "智能体、你或插件可以在对话中展示交互式 HTML 文档。文档在沙箱框架中运行，与 Rooks 隔离。"
       },
       "@timon/orchestrator-self": {
         "label": "守护进程",
@@ -215,16 +215,16 @@
         "description": "根据静态图片和提示词生成视频。"
       },
       "@timon/updates": {
-        "label": "Timon 更新",
+        "label": "Rooks 更新",
         "description": "当你所用的更新渠道发布较新版本时，显示横幅，提供发行说明和适用于当前系统的安装程序。此插件只读取 timon-ai.com 上经过签名的列表，不会发送你的任何信息，可在设置中关闭。"
       },
       "@timon/telemetry": {
         "label": "使用统计",
-        "description": "向 Timon 团队发送匿名使用统计，包括使用了哪些功能、对话轮次的运行情况以及设置中断在哪一步。绝不发送你的内容、名称或路径。可在隐私设置中关闭。"
+        "description": "向 Rooks 团队发送匿名使用统计，包括使用了哪些功能、对话轮次的运行情况以及设置中断在哪一步。绝不发送你的内容、名称或路径。可在隐私设置中关闭。"
       },
       "@timon/machines": {
         "label": "设备",
-        "description": "将其他运行 Timon 的设备与此设备配对，并在保管库中保存访问凭据，以便在同一界面中切换设备。默认关闭。"
+        "description": "将其他运行 Rooks 的设备与此设备配对，并在保管库中保存访问凭据，以便在同一界面中切换设备。默认关闭。"
       },
       "@timon/company": {
         "label": "组织",
@@ -272,8 +272,8 @@
       "tampered": "插件包已被修改",
       "unsignedLoads": "未签名，仅在开发者模式下加载",
       "unsignedBlocked": "未签名，不会加载",
-      "manifestRefused": "Timon 无法使用此插件：{reason}",
-      "nodeEngineRefused": "此插件无法在当前 Timon 使用的 Node 版本上运行：{reason}",
+      "manifestRefused": "Rooks 无法使用此插件：{reason}",
+      "nodeEngineRefused": "此插件无法在当前 Rooks 使用的 Node 版本上运行：{reason}",
       "tamperedHint": "文件与签名不再匹配：此插件包在签名后被修改，无法安装。",
       "permissions": "请求的权限",
       "permissionsNone": "无需权限",
@@ -296,7 +296,7 @@
           "unreadable": "只有安装后才能读取：安装时不会授予任何权限。请在“机密”页面授予机密访问权；如果它是提供商，则需在 {settingsPath} 授权后才会启用。",
           "unresolved": "此插件包的依赖项均不提供该插件，因此不会安装，也不会为它请求权限。",
           "tampered": "文件与签名不再匹配，因此不会加载，也不会为它请求权限。",
-          "nodeEngine": "无法在当前 Timon 使用的 Node 版本上运行，因此不会加载，也不会为它请求权限。{reason}"
+          "nodeEngine": "无法在当前 Rooks 使用的 Node 版本上运行，因此不会加载，也不会为它请求权限。{reason}"
         },
         "refused": {
           "not-installed": "“{name}”未安装，因此未授权其程序运行。",
@@ -315,7 +315,7 @@
         "read": "插件按名称读取保管库中的机密，但此处不显示这些名称。你可以在“机密”页面或插件发起请求时显示的卡片上逐项授权。",
         "broker": "插件可通过保管库身份调用 API，而无法看到密钥。只可使用已按名称授予它的身份。",
         "brokerNoHttp": "插件未声明 http:outbound，无法通过代理调用 API。",
-        "network": "插件仅可访问 timon.config.json 中向所有插件开放的主机（pluginPolicy.http.allow）、仅向此插件开放的主机（pluginPolicy.http.byPlugin）以及已批准连接的地址。",
+        "network": "插件仅可访问 rooks.config.json 中向所有插件开放的主机（pluginPolicy.http.allow）、仅向此插件开放的主机（pluginPolicy.http.byPlugin）以及已批准连接的地址。",
         "secretsLead": "插件指定的机密。勾选后，仅向此插件授权；取消勾选不会撤销现有授权，如需撤销请前往“机密”页面。",
         "hostsLead": "插件访问的主机。勾选后，仅向此插件开放相应主机。",
         "hostOwn": "已向此插件开放。取消勾选可关闭访问；此插件的主机列表将以此处勾选的主机为准。",
@@ -335,7 +335,7 @@
         "choose": "前往“机密”页面选择"
       },
       "disclaimerTitle": "第三方插件",
-      "disclaimer": "此插件并非由 Timon 制作或审核，Timon 不为此插件提供保证，也不对其行为负责。安装后，插件会以你的账户权限在 Timon 中运行。请仅安装来自可信作者的插件。",
+      "disclaimer": "此插件并非由 Rooks 制作或审核，Rooks 不为此插件提供保证，也不对其行为负责。安装后，插件会以你的账户权限在 Rooks 中运行。请仅安装来自可信作者的插件。",
       "cancel": "取消",
       "installing": "正在安装…",
       "reinstall": "安装此版本",
@@ -343,7 +343,7 @@
       "refreshed": "{reason} 下方确认信息已更新，请核对后重新安装。",
       "errors": {
         "unauthenticated": "登录会话已过期，请重新登录。",
-        "forbidden": "只有已登录 Timon 的超级管理员才能安装插件。",
+        "forbidden": "只有已登录 Rooks 的超级管理员才能安装插件。",
         "too-large": "此插件过大（压缩包上限为 25 MB，解压后的文件总大小上限为 200 MB）。",
         "too-many-entries": "此插件包含的文件过多。",
         "not-gzip": "这不是插件压缩包：需要 .tgz 或 .zip 文件。",
@@ -353,22 +353,22 @@
         "corrupt": "此压缩包已损坏。",
         "not-archive": "这不是插件压缩包：需要 .tgz 或 .zip 文件。",
         "not-zip": "这不是有效的 .zip 压缩包。",
-        "zip64": "此 .zip 文件使用了 Timon 不支持的 zip64 格式。请使用标准工具重新压缩插件，或改用 .tgz 格式。",
+        "zip64": "此 .zip 文件使用了 Rooks 不支持的 zip64 格式。请使用标准工具重新压缩插件，或改用 .tgz 格式。",
         "encrypted": "此 .zip 文件受密码保护。请重新压缩插件，不要设置密码。",
         "multi-volume": "此 .zip 文件分成了多个分卷。请打包成一个 .zip 文件。",
-        "compression": "此 .zip 文件使用了 Timon 无法读取的压缩方式。请使用标准压缩方式重新打包。",
-        "not-a-plugin": "这不是 Timon 插件：找不到包含 `timon` 清单的 package.json。",
+        "compression": "此 .zip 文件使用了 Rooks 无法读取的压缩方式。请使用标准压缩方式重新打包。",
+        "not-a-plugin": "这不是 Rooks 插件：找不到包含 `timon` 清单的 package.json。",
         "invalid-path": "无法使用此路径。",
         "forbidden-path": "无法从此文件夹安装插件。",
         "not-found": "原位置已找不到相应内容。",
         "expired": "此预览已过期，请重新选择插件。",
         "tampered": "插件包在签名后被修改，无法安装。",
         "manifest": "插件清单无效，无法安装。",
-        "npm-missing": "运行 Timon 的设备上没有可用的 npm。请安装 Node.js 后重试。",
-        "install-failed": "安装失败。详情请查看 Timon 日志。",
+        "npm-missing": "运行 Rooks 的设备上没有可用的 npm。请安装 Node.js 后重试。",
+        "install-failed": "安装失败。详情请查看 Rooks 日志。",
         "name-taken": "插件文件夹中已有另一个插件包使用此名称。",
         "generic": "守护进程拒绝了请求（HTTP {status}）。",
-        "unreadable": "Timon 无权读取此位置。在 macOS 上，请前往“系统设置 › 隐私与安全性”授权，或将插件移到其他位置。",
+        "unreadable": "Rooks 无权读取此位置。在 macOS 上，请前往“系统设置 › 隐私与安全性”授权，或将插件移到其他位置。",
         "mismatch": "此插件请求的程序、机密或主机与上次显示的内容不一致。",
         "refused": "插件一律不得运行此程序。",
         "not-provider": "此插件不是提供商插件。",
@@ -383,7 +383,7 @@
   },
   "providersSettings": {
     "title": "提供商",
-    "description": "提供商插件将 AI 服务接入 Timon。提供商要启动的每个程序，必须先在此处按解析后的路径获得授权，才能运行。",
+    "description": "提供商插件将 AI 服务接入 Rooks。提供商要启动的每个程序，必须先在此处按解析后的路径获得授权，才能运行。",
     "cancel": "取消",
     "consent": {
       "prompts": "接收其所服务任务会话中的所有指令和回复。",
@@ -394,7 +394,7 @@
       "osCredentialAccount": "读取系统凭据存储（macOS 钥匙串）中的“{service}”（{account}）条目。只读。"
     },
     "install": {
-      "allow": "允许 Timon 运行上面列出的程序。",
+      "allow": "允许 Rooks 运行上面列出的程序。",
       "allowHint": "若不勾选，提供商插件仍会安装，但需在 {settingsPath} 中授权后才会启用。"
     },
     "plugins": {
@@ -404,7 +404,7 @@
       "notFound": "未在此设备上安装",
       "authorize": "核对并授权",
       "authorizeTitle": "授权 {name}",
-      "authorizeBody": "Timon 已在此设备上找到以下程序。请仅授权你认识的路径。",
+      "authorizeBody": "Rooks 已在此设备上找到以下程序。请仅授权你认识的路径。",
       "authorizeConfirm": "允许运行这些程序",
       "authorized": "已授权 {name}。",
       "state": {
@@ -422,10 +422,10 @@
     },
     "acp": {
       "title": "ACP 注册表",
-      "description": "浏览官方 Agent Client Protocol 注册表中发布的智能体。Timon 会下载并检查程序，然后将其作为后端运行。",
+      "description": "浏览官方 Agent Client Protocol 注册表中发布的智能体。Rooks 会下载并检查程序，然后将其作为后端运行。",
       "browse": "浏览注册表",
       "refresh": "刷新",
-      "stale": "无法连接注册表，当前显示 Timon 上次读取的列表。",
+      "stale": "无法连接注册表，当前显示 Rooks 上次读取的列表。",
       "verified": "SHA-256 已验证",
       "noHash": "未发布哈希值",
       "unsupported": "此处不可用：{reason}",
@@ -448,7 +448,7 @@
       "confirmAction": "仍然安装"
     },
     "errors": {
-      "forbidden": "只有已登录 Timon 的超级管理员才能管理提供商。",
+      "forbidden": "只有已登录 Rooks 的超级管理员才能管理提供商。",
       "generic": "守护进程拒绝了请求（HTTP {status}）。",
       "mismatch": "程序与上次显示的内容不一致，请重新核对。",
       "refused": "插件一律不得运行此程序。",
@@ -462,14 +462,14 @@
       "checksum": "下载的文件与发布的校验和不一致，已删除。",
       "archive": "压缩包存在安全风险，已被拒绝。",
       "command-missing": "压缩包中没有注册表指定的程序。",
-      "definition-refused": "Timon 拒绝了此智能体：其描述内容相互矛盾。",
-      "authorize-failed": "无法授权此程序。详情请查看 Timon 日志。",
-      "failed": "操作失败。详情请查看 Timon 日志。"
+      "definition-refused": "Rooks 拒绝了此智能体：其描述内容相互矛盾。",
+      "authorize-failed": "无法授权此程序。详情请查看 Rooks 日志。",
+      "failed": "操作失败。详情请查看 Rooks 日志。"
     }
   },
   "binariesSettings": {
     "title": "命令行可执行文件",
-    "description": "查看 Timon 在此设备上找到的各 AI 提供商命令行工具的位置。如果工具找不到或不在常用位置，可以指定其完整路径。无需重启 Timon，新路径将从下一次任务会话起生效。",
+    "description": "查看 Rooks 在此设备上找到的各 AI 提供商命令行工具的位置。如果工具找不到或不在常用位置，可以指定其完整路径。无需重启 Rooks，新路径将从下一次任务会话起生效。",
     "recheck": "重新检查",
     "rechecked": "已重新检查可执行文件。",
     "none": "没有本地提供商使用命令行工具。",
@@ -483,7 +483,7 @@
     "save": "保存路径",
     "clear": "取消指定路径",
     "saved": "{name}：路径已保存，新任务会话将使用此路径。",
-    "cleared": "{name}：已取消指定路径，Timon 将恢复自动查找。",
+    "cleared": "{name}：已取消指定路径，Rooks 将恢复自动查找。",
     "state": {
       "found": "已找到",
       "pinned": "已指定路径",
@@ -498,7 +498,7 @@
       "path_not_file": "这是一个文件夹，请选择程序文件本身。",
       "path_not_executable": "此文件不是可执行文件，无法运行。",
       "no_config": "请先完成设置。",
-      "config_unreadable": "无法读取 timon.config.json。请修复或还原该文件后重新检查。",
+      "config_unreadable": "无法读取 rooks.config.json。请修复或还原该文件后重新检查。",
       "invalid_body": "无法保存此路径。",
       "browse": "无法打开文件选择器。",
       "generic": "更改失败（错误 {status}）。"

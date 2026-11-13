@@ -27,10 +27,10 @@ jobs:
     timeout-minutes: 5
     steps:
       # The default ref of pull_request_target is the base branch: main.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Check the changed files

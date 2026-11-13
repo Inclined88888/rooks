@@ -3,7 +3,7 @@
     "title": "Officiële connectors",
     "subtitle": "De MCP-servers van de diensten waarmee je agents werken, met één klik gekoppeld.",
     "count": "{connected} gekoppeld · {total} connectors",
-    "loadFailed": "De connectors konden niet worden geladen. Controleer of Timon draait en herlaad de pagina.",
+    "loadFailed": "De connectors konden niet worden geladen. Controleer of Rooks draait en herlaad de pagina.",
     "noMatch": "Geen connector komt overeen met deze zoekopdracht.",
     "footer": "Elke connector is een externe MCP-server die door de uitgever wordt gehost en ontvangt wat je agents ernaar sturen. Een gekoppelde connector is nog aan geen agent gegeven: voeg hem toe via de MCP-servers van de agent. Agents op een backend die alleen lokale MCP-servers laadt, slaan externe connectors over.",
     "category": {
@@ -35,7 +35,7 @@
         "blocked": "Er bestaat een MCP-server met dezelfde naam"
       },
       "examples": "Wat je kunt vragen",
-      "keyKept": "De sleutel staat in de geheimenkluis van Timon en wordt alleen naar deze connector gestuurd.",
+      "keyKept": "De sleutel staat in de geheimenkluis van Rooks en wordt alleen naar deze connector gestuurd.",
       "vaultOff": "De geheimenkluis staat uit: deze connector kan niet worden gekoppeld.",
       "getKey": "Sleutel aanvragen",
       "consentPending": "Meld je aan op de pagina die is geopend en kom dan hier terug.",
@@ -92,7 +92,7 @@
     "unauthorized": "Meld je opnieuw aan om deze skill op te slaan.",
     "forbidden": "Je account kan geen skills beheren.",
     "failed": "De skill kon niet worden opgeslagen. Controleer de id en de instructies en probeer het opnieuw.",
-    "network": "Timon is niet bereikbaar. Controleer je verbinding en probeer het opnieuw.",
+    "network": "Rooks is niet bereikbaar. Controleer je verbinding en probeer het opnieuw.",
     "idLabel": "Skill-id",
     "idError": "Voer een id in met kleine letters, cijfers, '.', '_' of '-'. Hij mag niet '.' of '..' zijn.",
     "contentError": "Voer instructies in voordat je de skill opslaat."
@@ -196,7 +196,7 @@
       "plugin": "plug-in"
     },
     "sectionTimon": "{brand}-skills",
-    "sectionTimonHint": "~/.timon/skills — te koppelen aan een agent, in de catalogus of volledig geïmporteerd",
+    "sectionTimonHint": "~/.rooks/skills — te koppelen aan een agent, in de catalogus of volledig geïmporteerd",
     "sectionUser": "Globale Claude-skills",
     "sectionUserHint": "~/.claude/skills & ~/.claude/commands — niet geladen door missies; importeer er een in {brand} om hem te koppelen",
     "sectionProject": "Projectskills",
@@ -239,7 +239,7 @@
     "forbidden": "Je account kan deze taak, of een deel van haar keten, niet verwijderen.",
     "notFound": "Deze taak bestaat niet meer of is niet toegankelijk voor je account. Vernieuw het bord.",
     "failed": "De taak kon niet worden verwijderd. Probeer het opnieuw.",
-    "network": "Timon is niet bereikbaar. Controleer je verbinding en probeer het opnieuw."
+    "network": "Rooks is niet bereikbaar. Controleer je verbinding en probeer het opnieuw."
   },
   "starterWidgets": {
     "loading": "Laden...",
@@ -278,7 +278,7 @@
     "moveToTeam": "Naar een team verplaatsen",
     "leaveTeam": "Team verlaten",
     "forbidden": "Je account mag teams niet wijzigen.",
-    "daemonUnreachable": "Timon is niet bereikbaar.",
+    "daemonUnreachable": "Rooks is niet bereikbaar.",
     "writeFailed": "De wijziging is geweigerd.",
     "newBot": "Nieuwe TIM",
     "emptyNoBots": "Nog geen TIM. Maak er een en praat er hier mee.",
@@ -825,7 +825,7 @@
     "emailSending": "Verzenden…",
     "emailRequested": "Bevestigingslink klaar.",
     "emailError": "De wijziging kon niet worden aangevraagd.",
-    "emailLinkHint": "Open deze link vanaf het nieuwe adres om het te bevestigen. Timon verstuurt geen e-mail — kopieer de link en stuur hem zelf, net als een uitnodiging.",
+    "emailLinkHint": "Open deze link vanaf het nieuwe adres om het te bevestigen. Rooks verstuurt geen e-mail — kopieer de link en stuur hem zelf, net als een uitnodiging.",
     "emailLinkCopy": "Link kopiëren",
     "emailLinkCopied": "Link gekopieerd.",
     "emailLinkCopyFailed": "De link kon niet worden gekopieerd."
@@ -844,7 +844,7 @@
     "paymentActive": "Bij",
     "paymentPastDue": "Achterstallig",
     "noneTitle": "Free — geen licentie nodig",
-    "noneDescription": "Timon werkt lokaal met elke functie en plug-in, voor één actieve superadmin. Geen sleutel, registratie of verlenging nodig. Activeer alleen een licentie om accounts toe te voegen.",
+    "noneDescription": "Rooks werkt lokaal met elke functie en plug-in, voor één actieve superadmin. Geen sleutel, registratie of verlenging nodig. Activeer alleen een licentie om accounts toe te voegen.",
     "buy": "Licenties bekijken op {domain}",
     "replaceTitle": "Licentie vervangen",
     "machineTitle": "Deze machine",
@@ -872,7 +872,7 @@
     "pastDueUntil": "Betaling achterstallig — het abonnement eindigt op {date}",
     "notActivated": "Free is actief — extra accounts hebben een licentie nodig",
     "activate": "Activeren",
-    "offlineSince": "Licentieserver onbereikbaar sinds {date} — betaalde rechten blijven beschikbaar tijdens de offlinetolerantie, daarna keert Timon terug naar Free.",
+    "offlineSince": "Licentieserver onbereikbaar sinds {date} — betaalde rechten blijven beschikbaar tijdens de offlinetolerantie, daarna keert Rooks terug naar Free.",
     "buildEndsSoon": "Deze bètabuild stopt op {date}. Installeer vóór die tijd de nieuwste versie.",
     "buildEndsUrgent": "Deze bètabuild stopt op {date}. Installeer nu de nieuwste versie.",
     "licenseEndsSoon": "Je licentie eindigt op {date}. Voer vóór die tijd een nieuwe sleutel in.",
@@ -907,7 +907,7 @@
     "retry": "Opnieuw proberen"
   },
   "activate": {
-    "title": "Timon activeren",
+    "title": "Rooks activeren",
     "description": "Plak de activeringssleutel die je hebt ontvangen (uitgewisseld met de licentieserver) of een licentietoken (lokaal gecontroleerd, geen netwerk nodig).",
     "rejected": "Licentie geweigerd",
     "deviceMismatch": "dit apparaat is {device}",
@@ -1147,11 +1147,11 @@
         "fileSize": "Deze foto is groter dan 25 MB. Kies een kleiner bestand.",
         "decode": "Deze afbeelding kon niet worden geopend. Exporteer haar opnieuw als JPEG of PNG.",
         "encode": "Deze foto kon niet worden geoptimaliseerd voor upload. Probeer een kleinere afbeelding.",
-        "network": "De fotodienst is onbereikbaar. Controleer de verbinding met Timon en probeer het opnieuw.",
+        "network": "De fotodienst is onbereikbaar. Controleer de verbinding met Rooks en probeer het opnieuw.",
         "session": "De foto-upload is niet geautoriseerd. Meld je opnieuw aan en probeer het nog eens.",
-        "unavailable": "Foto-uploads zijn niet beschikbaar op deze server. De bijgewerkte Timon-daemon moet worden gestart; de pagina vernieuwen is niet genoeg.",
+        "unavailable": "Foto-uploads zijn niet beschikbaar op deze server. De bijgewerkte Rooks-daemon moet worden gestart; de pagina vernieuwen is niet genoeg.",
         "server": "De server kon deze foto niet aannemen. Probeer het opnieuw.",
-        "storage": "Timon kon de foto niet op schijf opslaan. Controleer de vrije ruimte en de schrijfrechten."
+        "storage": "Rooks kon de foto niet op schijf opslaan. Controleer de vrije ruimte en de schrijfrechten."
       }
     },
     "menu": {
@@ -1324,7 +1324,7 @@
     "categories": "Categorieën",
     "selectCategory": "Categorie",
     "modified": "gewijzigd",
-    "definedInConfig": "ingesteld in timon.config.json",
+    "definedInConfig": "ingesteld in rooks.config.json",
     "forcedByEnv": "afgedwongen door de omgeving",
     "default": "standaard",
     "empty": "(leeg)",
@@ -1338,7 +1338,7 @@
     "secretConfigured": "Geheim ingesteld"
   },
   "devicesSettings": {
-    "description": "Apparaten die deze machine kunnen openen vanuit een andere Timon-interface, met de rechten van je account. Autoriseer er een met een eenmalige code en trek de toegang in wanneer je wilt.",
+    "description": "Apparaten die deze machine kunnen openen vanuit een andere Rooks-interface, met de rechten van je account. Autoriseer er een met een eenmalige code en trek de toegang in wanneer je wilt.",
     "authorize": "Nieuw apparaat autoriseren",
     "enterCode": "Een code van een andere machine invoeren",
     "enterCodeOff": {
@@ -1352,7 +1352,7 @@
     "codeTitle": "Koppelcode",
     "codeHint": "Open op de computer die deze machine gaat besturen {path} → Een machine toevoegen (de plug-in Machines moet daar aan staan) en voer deze code in met het adres van deze machine. Hij werkt één keer.",
     "reachable": {
-      "lead": "Timon kan de daemon van deze machine met tailscale serve publiceren op je tailnet: alleen je eigen tailnet-apparaten bereiken hem, nooit het internet.",
+      "lead": "Rooks kan de daemon van deze machine met tailscale serve publiceren op je tailnet: alleen je eigen tailnet-apparaten bereiken hem, nooit het internet.",
       "action": "Deze machine bereikbaar maken",
       "retry": "Opnieuw proberen",
       "busy": "Publiceren…",
@@ -1368,7 +1368,7 @@
         "not_connected": "Tailscale is geïnstalleerd, maar deze machine is niet verbonden met je tailnet.",
         "serve_disabled": "HTTPS is nog niet ingeschakeld op je tailnet: Tailscale heeft het nodig om deze machine te publiceren.",
         "permission": "Tailscale weigerde de configuratie te wijzigen: dit account mag dat niet.",
-        "unreadable": "Tailscale antwoordde iets wat Timon niet kan lezen in plaats van zijn status. Het bericht staat hieronder.",
+        "unreadable": "Tailscale antwoordde iets wat Rooks niet kan lezen in plaats van zijn status. Het bericht staat hieronder.",
         "no_free_port": "De poorten 8443, 10000 en 443 worden op deze machine al gebruikt door tailscale serve. Maak er een vrij en probeer het opnieuw.",
         "listen_not_loopback": "De daemon luistert op een netwerkadres in plaats van op dat van deze computer: tailscale serve kan hem niet bereiken. Zet daemon.listen.host op 127.0.0.1.",
         "failed": "Tailscale kon deze machine niet publiceren.",
@@ -1378,33 +1378,33 @@
     },
     "tailscale": {
       "checking": "Tailscale controleren op deze machine…",
-      "installLead": "Tailscale is niet geïnstalleerd op deze machine. Timon kan het installeren vanaf de officiële site van Tailscale: je systeem vraagt om je wachtwoord, Timon ziet het nooit.",
+      "installLead": "Tailscale is niet geïnstalleerd op deze machine. Rooks kan het installeren vanaf de officiële site van Tailscale: je systeem vraagt om je wachtwoord, Rooks ziet het nooit.",
       "install": "Tailscale installeren",
       "downloading": "Tailscale downloaden van de officiële site…",
       "verifying": "Controleren of het pakket door Tailscale is ondertekend…",
       "installingMac": "Rond de installatie af in het venster van het macOS-installatieprogramma (het vraagt om je wachtwoord)…",
       "installingWindows": "Accepteer de beheerdersvraag van Windows om de installatie af te ronden…",
       "installingLinux": "Voer je wachtwoord in het systeemvenster in om de installatie af te ronden…",
-      "handoffMac": "Timon opent het macOS-installatieprogramma: rond de installatie daar af (het vraagt om je wachtwoord)…",
+      "handoffMac": "Rooks opent het macOS-installatieprogramma: rond de installatie daar af (het vraagt om je wachtwoord)…",
       "reopenInstaller": "Installatieprogramma opnieuw openen",
-      "handoffWindows": "Timon opent het installatieprogramma van Tailscale: accepteer de beheerdersvraag van Windows om af te ronden…",
+      "handoffWindows": "Rooks opent het installatieprogramma van Tailscale: accepteer de beheerdersvraag van Windows om af te ronden…",
       "connectLead": "Tailscale is geïnstalleerd. Meld deze machine aan bij je tailnet: er opent een Tailscale-pagina in je browser.",
       "connect": "Aanmelden bij Tailscale",
       "waitingLogin": "Wachten tot je je in de browser aanmeldt bij Tailscale…",
       "openSignIn": "Aanmeldpagina van Tailscale openen",
       "ready": "Tailscale is verbonden.",
-      "operatorLead": "Laat Timon Tailscale beheren op deze computer: je systeem vraagt één keer om je wachtwoord, daarna publiceert Timon zonder.",
-      "operator": "Timon Tailscale laten beheren",
+      "operatorLead": "Laat Rooks Tailscale beheren op deze computer: je systeem vraagt één keer om je wachtwoord, daarna publiceert Rooks zonder.",
+      "operator": "Rooks Tailscale laten beheren",
       "operatorWaiting": "Voer je wachtwoord in het systeemvenster in…",
       "failures": {
         "download_failed": "Tailscale kon niet worden gedownload van de officiële site.",
         "checksum_mismatch": "Het gedownloade pakket komt niet overeen met wat Tailscale publiceerde: het is niet geopend.",
         "signature_invalid": "Het gedownloade pakket is niet door Tailscale ondertekend: het is niet geopend.",
-        "no_desktop": "Timon draait op de achtergrond zonder toegang tot je bureaublad en kan het installatieprogramma dus niet vanuit deze browser tonen. Klik op Tailscale installeren in de Timon-desktopapp op deze computer, of voer de opdracht hieronder uit.",
-        "elevation_unavailable": "Timon kan op deze computer geen beheerdersrechten vragen.",
+        "no_desktop": "Rooks draait op de achtergrond zonder toegang tot je bureaublad en kan het installatieprogramma dus niet vanuit deze browser tonen. Klik op Tailscale installeren in de Rooks-desktopapp op deze computer, of voer de opdracht hieronder uit.",
+        "elevation_unavailable": "Rooks kan op deze computer geen beheerdersrechten vragen.",
         "cancelled": "De installatie is geannuleerd.",
         "installer_failed": "Het installatieprogramma van Tailscale is niet voltooid.",
-        "unsupported": "Timon weet niet hoe Tailscale op dit systeem moet worden geïnstalleerd.",
+        "unsupported": "Rooks weet niet hoe Tailscale op dit systeem moet worden geïnstalleerd.",
         "not_installed": "Tailscale is niet geïnstalleerd op deze machine.",
         "not_running": "Tailscale draait nog niet. Open de Tailscale-app, rond de configuratie af en probeer het opnieuw.",
         "permission": "Tailscale weigerde: dit account mag de instellingen niet wijzigen.",
@@ -1456,7 +1456,7 @@
   },
   "integrationReceipts": {
     "title": "Berichtenintegraties",
-    "description": "Via een berichtenintegratie ontvangen berichten die niet konden worden verwerkt. Timon probeert het ongeveer een dag opnieuw, stopt dan en bewaart het bericht hier gedurende de bewaartermijn, zodat je het opnieuw kunt afspelen.",
+    "description": "Via een berichtenintegratie ontvangen berichten die niet konden worden verwerkt. Rooks probeert het ongeveer een dag opnieuw, stopt dan en bewaart het bericht hier gedurende de bewaartermijn, zodat je het opnieuw kunt afspelen.",
     "healthy": "Alle berichten komen door.",
     "stage": {
       "inbox": "Missie starten",
@@ -1525,7 +1525,7 @@
   },
   "pluginWebhooks": {
     "title": "Inkomende webhooks",
-    "description": "Een dienst buiten Timon (GitHub, Stripe, Slack…) kan deze plug-in op deze adressen aanroepen. Elke aanroep wordt in het handtekeningformaat van de dienst gecontroleerd voordat de plug-in hem ziet.",
+    "description": "Een dienst buiten Rooks (GitHub, Stripe, Slack…) kan deze plug-in op deze adressen aanroepen. Elke aanroep wordt in het handtekeningformaat van de dienst gecontroleerd voordat de plug-in hem ziet.",
     "copyUrl": "Adres kopiëren",
     "urlCopied": "Adres gekopieerd",
     "notConfigured": "Nog geen geheim: aanroepen worden geweigerd.",
@@ -1586,7 +1586,7 @@
     },
     "tab": {
       "instructions": {
-        "preamble": "Timon-preambule",
+        "preamble": "Rooks-preambule",
         "global": "Globale instructies"
       },
       "interface": {
@@ -2002,12 +2002,12 @@
     "loadOlderMessages": "Oudere berichten tonen",
     "loadingOlderMessages": "Oudere berichten laden…",
     "turnInterrupted": "beurt onderbroken",
-    "turnCutByRestart": "beurt onderbroken: Timon is herstart",
+    "turnCutByRestart": "beurt onderbroken: Rooks is herstart",
     "conversationResumable": "het gesprek blijft hervatbaar — het volgende bericht gaat verder met de context",
     "hardStop": "HARDE STOP: deze backend kan zijn sessie niet hervatten, het volgende bericht begint opnieuw",
-    "spawnFailedMissing": "De CLI van {backend} kon niet worden gestart: de opdracht `{binary}` is niet gevonden op deze machine. Installeer haar, of wijs Timon ernaar met `host.binaries.{binary}` in je configuratie.",
-    "spawnFailedNotExecutable": "De CLI van {backend} kon niet worden gestart: `{binary}` bestaat maar is niet uitvoerbaar. Herstel de rechten, of wijs Timon naar een andere kopie met `host.binaries.{binary}` in je configuratie.",
-    "spawnFailedUnknown": "De CLI van {backend} kon niet worden gestart: `{binary}` kon niet worden gestart. Controleer of ze is geïnstalleerd, of wijs Timon ernaar met `host.binaries.{binary}` in je configuratie.",
+    "spawnFailedMissing": "De CLI van {backend} kon niet worden gestart: de opdracht `{binary}` is niet gevonden op deze machine. Installeer haar, of wijs Rooks ernaar met `host.binaries.{binary}` in je configuratie.",
+    "spawnFailedNotExecutable": "De CLI van {backend} kon niet worden gestart: `{binary}` bestaat maar is niet uitvoerbaar. Herstel de rechten, of wijs Rooks naar een andere kopie met `host.binaries.{binary}` in je configuratie.",
+    "spawnFailedUnknown": "De CLI van {backend} kon niet worden gestart: `{binary}` kon niet worden gestart. Controleer of ze is geïnstalleerd, of wijs Rooks ernaar met `host.binaries.{binary}` in je configuratie.",
     "backendFailed": "De backend {backend} stopte zonder te antwoorden (exitcode {code}). Controleer of hij is aangemeld en op deze machine mag draaien.",
     "backendFailedDetail": "Zijn laatste woorden: {detail}",
     "backendFailedMission": "Missie {missionId}",
@@ -2029,9 +2029,9 @@
     "providerRecovered": "Opnieuw verbonden na {count} pogingen",
     "providerRecoveredOne": "Opnieuw verbonden na 1 poging",
     "providerExhausted": "Servers van {provider} onbereikbaar na {count} pogingen",
-    "providerExhaustedWithTimon": "Servers van {provider} onbereikbaar na {count} pogingen van de provider en {timon} van Timon",
-    "timonRetryIn": "Timon-poging {attempt}/{max} over {seconds} s…",
-    "timonRetryRunning": "Timon-poging {attempt}/{max}…",
+    "providerExhaustedWithTimon": "Servers van {provider} onbereikbaar na {count} pogingen van de provider en {timon} van Rooks",
+    "timonRetryIn": "Rooks-poging {attempt}/{max} over {seconds} s…",
+    "timonRetryRunning": "Rooks-poging {attempt}/{max}…",
     "retryTurn": "Opnieuw proberen",
     "retryTurnUnavailable": "Niets om opnieuw te proberen: het laatste bericht staat niet meer in dit gesprek.",
     "quotaExhaustedTitle": "Quotum op",
@@ -2050,7 +2050,7 @@
     "steerUnavailableQueued": "deze agent kan nu niet worden bijgestuurd — bericht in de wachtrij gezet voor het einde van de beurt",
     "messageQueuedInline": "bericht in de wachtrij — het gaat weg aan het einde van de huidige beurt",
     "voiceDictationUnavailable": "Spraakdictee is niet beschikbaar in deze browser.",
-    "voiceDictationDesktopUnavailable": "Spraakdictee is niet beschikbaar in deze desktopapp: werk Timon bij, of deze computer wordt niet ondersteund. Het werkt als Timon in Chrome of Edge is geopend.",
+    "voiceDictationDesktopUnavailable": "Spraakdictee is niet beschikbaar in deze desktopapp: werk Rooks bij, of deze computer wordt niet ondersteund. Het werkt als Rooks in Chrome of Edge is geopend.",
     "dictationUnavailable": "Dictee niet beschikbaar: {error}",
     "messagePlaceholder": "Bericht aan {name}…",
     "stopDictation": "Dictee stoppen",
@@ -2171,7 +2171,7 @@
     "openFailed": "kon niet worden geopend",
     "openedInExplorer": "geopend in verkenner: {path}",
     "openRootInExplorer": "Hoofdmap openen in de systeemverkenner",
-    "revealNoDesktop": "Dit bestand staat op de computer waarop de Timon-daemon draait, en die heeft geen bureaubladsessie om het te tonen. Open het vanuit de Timon-desktopapp op die computer.",
+    "revealNoDesktop": "Dit bestand staat op de computer waarop de Rooks-daemon draait, en die heeft geen bureaubladsessie om het te tonen. Open het vanuit de Rooks-desktopapp op die computer.",
     "refreshFiles": "Bestanden vernieuwen",
     "cannotOpen": "kan {path} niet openen",
     "dirtyWorkingTreeConfirm": "Werkmap met wijzigingen ({count} bestand(en)). Toch naar ‘{branch}’ wisselen?",
@@ -2289,15 +2289,15 @@
     }
   },
   "timonPreamble": {
-    "title": "Timon-preambule",
-    "description": "Bij elke start ter plekke opgebouwd en als eerste naar elke agent gestuurd. Alleen-lezen: ze komt van Timon, niet uit een bestand van jou. Getoond zoals ze voor de hoofdagent wordt opgebouwd.",
+    "title": "Rooks-preambule",
+    "description": "Bij elke start ter plekke opgebouwd en als eerste naar elke agent gestuurd. Alleen-lezen: ze komt van Rooks, niet uit een bestand van jou. Getoond zoals ze voor de hoofdagent wordt opgebouwd.",
     "empty": "Geen preambule voor deze agent.",
     "loading": "Preambule lezen…",
     "error": "De preambule kon niet worden gelezen: {message}"
   },
   "globalInstructions": {
     "title": "Globale instructies",
-    "description": "Wat je van elke agent wilt, bij elke start meteen na de Timon-preambule verstuurd: je taal, hoe commits moeten worden geschreven, hoe je test. Projectregels horen in de AGENTS.md van het project, die van een agent in zijn identiteitsdocumenten.",
+    "description": "Wat je van elke agent wilt, bij elke start meteen na de Rooks-preambule verstuurd: je taal, hoe commits moeten worden geschreven, hoe je test. Projectregels horen in de AGENTS.md van het project, die van een agent in zijn identiteitsdocumenten.",
     "path": "Bestand: {path}",
     "limit": "{tokens} · hooguit {max} tekens",
     "empty": "Nog niets. Elke agent begint zonder instructies van jou.",
@@ -2408,9 +2408,9 @@
       "not_found": "Deze map bestaat niet op die machine.",
       "not_a_directory": "Dit pad is een bestand, geen map.",
       "relative_path": "Typ een volledig pad, vanaf de hoofdmap van de schijf.",
-      "unreadable": "Timon kan deze map op die machine niet lezen.",
+      "unreadable": "Rooks kan deze map op die machine niet lezen.",
       "forbidden": "Je account kan de mappen van deze machine niet doorbladeren. Typ het pad direct.",
-      "outdated": "Deze machine draait een oudere Timon die haar mappen niet kan tonen. Typ het pad direct.",
+      "outdated": "Deze machine draait een oudere Rooks die haar mappen niet kan tonen. Typ het pad direct.",
       "failed": "De mappen van deze machine konden niet worden gelezen. Probeer het opnieuw, of typ het pad direct."
     },
     "file": {
@@ -2427,14 +2427,14 @@
       "selected": "Geselecteerd: {path}",
       "errors": {
         "forbidden": "Alleen een beheerder kan de bestanden van deze machine doorbladeren.",
-        "outdated": "Deze machine draait een oudere Timon die haar bestanden niet kan tonen: werk haar eerst bij."
+        "outdated": "Deze machine draait een oudere Rooks die haar bestanden niet kan tonen: werk haar eerst bij."
       }
     }
   },
   "editPage": {
     "name": "Naam",
     "nameHint": "getoond in graaf + console",
-    "directoryPickerUnavailable": "Gebruik een actuele Timon-desktopapp om mappen te doorbladeren. Je kunt het pad ook direct typen.",
+    "directoryPickerUnavailable": "Gebruik een actuele Rooks-desktopapp om mappen te doorbladeren. Je kunt het pad ook direct typen.",
     "directoryPickerFailed": "De mapkiezer kon niet worden geopend. Je kunt het pad direct typen.",
     "imageInvalid": "afbeeldingsbestand verwacht (png, jpg, webp, gif)",
     "imageTooLarge": "afbeelding te groot (max. 8 MB)",
@@ -2491,7 +2491,7 @@
     "permissionHintMcpBridge": "Deze backend beslist over elk toolgebruik: de classifier regelt duidelijke gevallen en toont alleen voor twijfelgevallen een Toestaan/Weigeren-kaart in de interface.",
     "mcpIntro": "Model Context Protocol-servers die je zelf hebt toegevoegd. De hier geselecteerde verbinden bij elke start met deze agent; beheer ze via",
     "mcpEmpty": "Nog geen MCP-servers toegevoegd — voeg er toe via",
-    "mcpBuiltinTitle": "Ingebouwd in Timon — altijd aan, niets toe te kennen",
+    "mcpBuiltinTitle": "Ingebouwd in Rooks — altijd aan, niets toe te kennen",
     "mcpBuiltinHint": "Elke agent krijgt deze op elke backend, wat er hieronder ook is geselecteerd, en de MCP-overschrijving van een Kanban-taak verwijdert ze nooit. Sommige timon-tools (agents of projecten aanmaken, MCP-servers declareren) vereisen daarnaast de rechten van je account op de pagina Gebruikers, die deze lijst niet wijzigt.",
     "mcpBuiltinTimon": "Kanban, missies, agents, geheugen, deze documentatie",
     "mcpBuiltinAsk": "Formulieren die je in de chat iets vragen",
@@ -2500,7 +2500,7 @@
     "permissionHintSandbox": "Deze backend kan niet midden in een beurt beslissen: de modus wordt bij de start vertaald naar een sandboxniveau (plan → alleen lezen, bypassPermissions → volledige toegang, anders workspace-write). Geen Toestaan/Weigeren-kaart, geen classifier.",
     "permissionHintNone": "Deze backend biedt geen toestemmingsbeveiliging — de modus hieronder heeft er geen effect op.",
     "permissionHintProtocol": "Deze backend vraagt via zijn protocol vóór een toolgebruik: je krijgt een Toestaan/Weigeren-kaart in de interface. Wat de agent zelf beslist, bereikt je nooit en blijft onder zijn eigen regels — de modus hieronder overschrijft ze niet.",
-    "permissionHintProtocolMode": "Deze backend vraagt Timon vóór een toolgebruik, en Timon past eerst de modus hieronder toe: lezen gaat door, plan weigert bewerkingen en opdrachten, acceptEdits en auto laten bewerkingen binnen de werkmap door. Wat de modus en de toegestane tools van de agent niet regelen, wordt een Toestaan/Weigeren-kaart in de interface.",
+    "permissionHintProtocolMode": "Deze backend vraagt Rooks vóór een toolgebruik, en Rooks past eerst de modus hieronder toe: lezen gaat door, plan weigert bewerkingen en opdrachten, acceptEdits en auto laten bewerkingen binnen de werkmap door. Wat de modus en de toegestane tools van de agent niet regelen, wordt een Toestaan/Weigeren-kaart in de interface.",
     "permissionsSelfBadge": "Beheert zijn eigen toestemmingen",
     "permissionsSelfBadgeHint": "Deze agent beslist zelf over toolgebruik: de sandbox van zijn eigen configuratie geldt, en TIMON toont voor hem geen Toestaan/Weigeren-kaart.",
     "permissionModeLabel": "Toestemmingsmodus",
@@ -2573,7 +2573,7 @@
     },
     "notificationCenter": {
       "title": "Meldingencentrum",
-      "description": "De meldingen van je agents en van Timon, om te lezen en op te reageren."
+      "description": "De meldingen van je agents en van Rooks, om te lezen en op te reageren."
     },
     "taskQueue": {
       "title": "Takenwachtrij",
@@ -2581,7 +2581,7 @@
     },
     "injections": {
       "title": "Agentinjecties",
-      "description": "Alles wat Timon een agent bij de start meegeeft (regels, geheugen, skills), om een agent te begrijpen die afdwaalt."
+      "description": "Alles wat Rooks een agent bij de start meegeeft (regels, geheugen, skills), om een agent te begrijpen die afdwaalt."
     },
     "bell": {
       "title": "Meldingenbel",
@@ -2620,8 +2620,8 @@
       "description": "Of de stack van het project draait, op welke lokale URL en welke dienst plat ligt; starten, herstarten of stoppen."
     },
     "timonDaemon": {
-      "title": "Timon-daemon",
-      "description": "De toestand van Timon zelf, voor het project timon."
+      "title": "Rooks-daemon",
+      "description": "De toestand van Rooks zelf, voor het project timon."
     },
     "missionDetails": {
       "title": "Missiedetails",
@@ -2733,7 +2733,7 @@
     "writeOnlyNotice": "Een opgeslagen waarde wordt standaard nooit getoond. Gebruik Tonen om haar opnieuw te lezen (accountwachtwoord vereist); vervang haar om haar te wijzigen.",
     "new": "Nieuw geheim",
     "refresh": "Vernieuwen",
-    "empty": "Nog geen geheim. De daemon leest nog steeds ~/.timon/secrets.env, maar niets is aan een agent toegewezen.",
+    "empty": "Nog geen geheim. De daemon leest nog steeds ~/.rooks/secrets.env, maar niets is aan een agent toegewezen.",
     "saved": "Geheim opgeslagen.",
     "confirmDelete": "{name} verwijderen? Agents die erop rekenen, verliezen de toegang.",
     "configured": "ingesteld",
@@ -2856,7 +2856,7 @@
     "contains": "Installeert",
     "enable": "{name} inschakelen",
     "disable": "{name} uitschakelen",
-    "bundled": "Meegeleverd met Timon",
+    "bundled": "Meegeleverd met Rooks",
     "bundledSubtitle": "Modules van het product. Uitzetten houdt hem geïnstalleerd en werkt meteen.",
     "thirdParty": "Hier geïnstalleerd",
     "notInLicence": "Niet inbegrepen in je licentie",
@@ -2931,7 +2931,7 @@
     "noAgent": "Nog geen agent.",
     "loading": "Injecties lezen…",
     "error": "De injecties konden niet worden gelezen: {message}",
-    "listLabel": "Injecties, in de volgorde waarin Timon ze aan het model geeft",
+    "listLabel": "Injecties, in de volgorde waarin Rooks ze aan het model geeft",
     "tokens": "~{n} tokens",
     "beforeFirst": "Ongeveer {tokens} tokens context gaan weg vóór het eerste bericht.",
     "onDemand": "Catalogusskills voegen alleen ~{tokens} tokens toe als de agent ze leest (skill_get): niet in dit totaal.",
@@ -2973,15 +2973,15 @@
       "role": "rol",
       "agent": "deze agent",
       "config": "aangevinkt",
-      "code": "toegevoegd door Timon"
+      "code": "toegevoegd door Rooks"
     },
     "skillReads": {
-      "title": "Leesacties van de missies van deze agent in de laatste {days} dagen: skill_get-aanroepen en bestanden die via hun volledige pad zijn geopend. Dit is een minimum: een leesactie die Timon niet ziet, wordt niet geteld.",
+      "title": "Leesacties van de missies van deze agent in de laatste {days} dagen: skill_get-aanroepen en bestanden die via hun volledige pad zijn geopend. Dit is een minimum: een leesactie die Rooks niet ziet, wordt niet geteld.",
       "read": "{reads}× gelezen · {missions}/{total} missies · {days} d",
       "never": "nooit gelezen · {total} missies · {days} d",
       "idle": "geen missie in {days} d",
       "unmeasured": "leesacties niet gemeten op deze backend · {days} d",
-      "unmeasuredTitle": "De missies van deze agent draaiden op een backend zonder de tool skill_get: Timon kan niet zeggen of ze deze skill hebben gelezen.",
+      "unmeasuredTitle": "De missies van deze agent draaiden op een backend zonder de tool skill_get: Rooks kan niet zeggen of ze deze skill hebben gelezen.",
       "neverCount": "nooit gelezen: {n}",
       "neverHint": "Geen missie van deze agent heeft deze skill in {days} dagen gelezen: herschrijf de beschrijving zodat de agent weet wanneer hij hem moet pakken."
     },
@@ -2994,12 +2994,12 @@
     "masking": {
       "shown": "Alleen op dit scherm gemaskeerd: de agent krijgt de kluiswaarden in leesbare vorm.",
       "cli": "Alleen op dit scherm gemaskeerd: als de backend-CLI dit bestand leest, krijgt de agent de kluiswaarden in leesbare vorm.",
-      "sent": "Ook gemaskeerd bij verzending: deze backend bereikt de map van de skill noch de tools van Timon, dus de agent krijgt deze kluiswaarden niet."
+      "sent": "Ook gemaskeerd bij verzending: deze backend bereikt de map van de skill noch de tools van Rooks, dus de agent krijgt deze kluiswaarden niet."
     },
     "why": {
       "redacted": "De gemaskeerde tekst opslaan zou de echte waarde overschrijven, dus kan hij niet vanuit deze lijst worden bewerkt.",
-      "cli": "Gevonden in de werkmap. Timon injecteert hem niet: of de backend-CLI hem leest en waar hij in de prompt belandt, bepaalt die CLI, dus deze regel hoort niet bij de gemeten volgorde. Bewerk het bestand in het project.",
-      "code": "Door Timon in code geschreven: niet bewerkbaar.",
+      "cli": "Gevonden in de werkmap. Rooks injecteert hem niet: of de backend-CLI hem leest en waar hij in de prompt belandt, bepaalt die CLI, dus deze regel hoort niet bij de gemeten volgorde. Bewerk het bestand in het project.",
+      "code": "Door Rooks in code geschreven: niet bewerkbaar.",
       "roleShared": "Dit bewerken wijzigt de rol voor elke agent die haar heeft."
     }
   },
@@ -3021,19 +3021,19 @@
     "emptyBody": "Geen taak bezig of in de wachtrij."
   },
   "systemSettings": {
-    "description": "Hoe Timon op deze machine draait. Alleen de superadmin ziet dit tabblad.",
+    "description": "Hoe Rooks op deze machine draait. Alleen de superadmin ziet dit tabblad.",
     "forbidden": "Alleen de superadmin kan de installatie zien.",
     "loadError": "De installatie kon niet worden gelezen. Controleer of de daemon draait.",
     "unknown": "onbekend",
     "yes": "ja",
     "no": "nee",
     "versionTitle": "Versie",
-    "daemonVersion": "Timon (daemon)",
+    "daemonVersion": "Rooks (daemon)",
     "desktopVersion": "Desktopapp",
-    "versionGap": "De app is {desktop} maar de daemon is {daemon}: de daemon is niet bijgewerkt. Sluit Timon af en open het opnieuw; als de versies nog verschillen, voer dit uit in een terminal:",
+    "versionGap": "De app is {desktop} maar de daemon is {daemon}: de daemon is niet bijgewerkt. Sluit Rooks af en open het opnieuw; als de versies nog verschillen, voer dit uit in een terminal:",
     "dataVersion": "Gegevensversie",
     "dataBehind": "Je gegevens zijn het laatst geopend door {data}; deze daemon is {version}. Ze worden bij de volgende start bijgewerkt zodra je de update accepteert.",
-    "dataAhead": "Je gegevens zijn geopend door een nieuwere Timon ({data}) dan deze daemon ({version}). Werk deze installatie bij voordat je haar gebruikt.",
+    "dataAhead": "Je gegevens zijn geopend door een nieuwere Rooks ({data}) dan deze daemon ({version}). Werk deze installatie bij voordat je haar gebruikt.",
     "license": "Licentie",
     "licenseValue": "{edition} · {plan} · {status} · build {channel}",
     "licenseValid": "actief",
@@ -3045,7 +3045,7 @@
     "daemonTitle": "Daemon",
     "mode": "Draait als",
     "modeValue": {
-      "embedded": "In de app (draagbaar): stopt als je Timon afsluit",
+      "embedded": "In de app (draagbaar): stopt als je Rooks afsluit",
       "service": "Systeemdienst: blijft draaien als de app gesloten is",
       "process": "Handmatig gestart (terminal of script)"
     },
@@ -3065,7 +3065,7 @@
       "stopped": "Geïnstalleerd, draait niet",
       "running": "Geïnstalleerd en actief"
     },
-    "serviceNextLaunch": "De eigen daemon van de app bezet de poort: de dienst neemt het over bij de volgende start van Timon.",
+    "serviceNextLaunch": "De eigen daemon van de app bezet de poort: de dienst neemt het over bij de volgende start van Rooks.",
     "supervisor": {
       "systemd-user": "systemd-unit",
       "launchd": "launchd-label",
@@ -3074,14 +3074,14 @@
     "windowsRevision": "Revisie van de taak",
     "windowsRevisionValue": "{revision} (huidig: {expected})",
     "windowsUnmarked": "Zijn starter mist de pakketmarkering.",
-    "installWhy": "Met de dienst blijft Timon draaien als de app gesloten is en start het met de computer.",
+    "installWhy": "Met de dienst blijft Rooks draaien als de app gesloten is en start het met de computer.",
     "repairWhy": "Opnieuw installeren herschrijft de dienst met de definitie van deze versie. Je gegevens blijven onaangeroerd.",
     "installService": "Dienst installeren",
     "repairService": "Dienst herstellen",
     "serviceBusy": "Bezig…",
-    "serviceFromTerminal": "Deze daemon is de dienst zelf: voer dit uit in een terminal (Timon herstart)",
+    "serviceFromTerminal": "Deze daemon is de dienst zelf: voer dit uit in een terminal (Rooks herstart)",
     "serviceInstalledRunning": "Dienst geïnstalleerd en actief.",
-    "serviceInstalledNext": "Dienst geïnstalleerd. Hij neemt het over bij de volgende start van Timon.",
+    "serviceInstalledNext": "Dienst geïnstalleerd. Hij neemt het over bij de volgende start van Rooks.",
     "serviceFailed": "De dienst kon niet worden geïnstalleerd.",
     "pathsTitle": "Paden",
     "installDir": "Installatiemap",
@@ -3097,18 +3097,18 @@
     "exporting": "Exporteren…",
     "exported": "Archief geschreven: {path}",
     "exportFailed": "De export is mislukt.",
-    "importWhy": "Importeren vervangt de database en kan dus niet draaien terwijl Timon draait. Sluit de Timon-app af en voer dan deze opdrachten op volgorde uit in een terminal, met ARCHIVE.tar.gz vervangen door je archief. Je gegevens blijven tot de import waar ze zijn.",
-    "importWhyEmbedded": "Importeren vervangt de database en kan dus niet draaien terwijl Timon draait. Sluit de Timon-app af en voer dan deze opdracht uit in een terminal, met ARCHIVE.tar.gz vervangen door je archief.",
+    "importWhy": "Importeren vervangt de database en kan dus niet draaien terwijl Rooks draait. Sluit de Rooks-app af en voer dan deze opdrachten op volgorde uit in een terminal, met ARCHIVE.tar.gz vervangen door je archief. Je gegevens blijven tot de import waar ze zijn.",
+    "importWhyEmbedded": "Importeren vervangt de database en kan dus niet draaien terwijl Rooks draait. Sluit de Rooks-app af en voer dan deze opdracht uit in een terminal, met ARCHIVE.tar.gz vervangen door je archief.",
     "importStep": "In een terminal",
     "supportTitle": "Supportdiagnose",
-    "supportWhy": "Alles wat support nodig heeft in één keer: versies, hoe Timon hier draait, de dienst, gevonden problemen en de laatste logregels (nieuwste eerst). Tokens en geheimen zijn gemaskeerd. Plak het in je supportverzoek.",
+    "supportWhy": "Alles wat support nodig heeft in één keer: versies, hoe Rooks hier draait, de dienst, gevonden problemen en de laatste logregels (nieuwste eerst). Tokens en geheimen zijn gemaskeerd. Plak het in je supportverzoek.",
     "copyReport": "Diagnose kopiëren",
     "reportPreparing": "Voorbereiden…",
     "saveReport": "Rapport opslaan",
     "showReport": "Rapport tonen",
     "hideReport": "Rapport verbergen",
     "openLogs": "Logmap openen",
-    "openAbout": "Over Timon en licenties van derden",
+    "openAbout": "Over Rooks en licenties van derden",
     "reportCopied": "Diagnose gekopieerd: plak haar in je supportverzoek (Discord, e-mail).",
     "reportCopyFailed": "Het klembord weigerde het kopiëren: selecteer het rapport hieronder en kopieer het handmatig, of sla het op.",
     "reportSaved": "Rapport gedownload als {name}.",
@@ -3120,23 +3120,23 @@
   },
   "desktopUninstall": {
     "category": "Desktopapplicatie",
-    "title": "Timon verwijderen",
+    "title": "Rooks verwijderen",
     "description": "Stopt agents, workflows en browsers op deze computer, verwijdert de dienst en schakelt het starten bij aanmelden uit. Met deze instantie verbonden PWA's worden losgekoppeld.",
     "dataPath": "Gegevensmap van deze installatie",
     "dataChoice": "Wat moet er met je gegevens gebeuren?",
     "keep": "Mijn gegevens bewaren (aanbevolen)",
     "keepDescription": "Agents, gesprekken, instellingen, inloggegevens en browserprofielen bewaren voor een herinstallatie. Programmakopieën die de dienst gebruikt, worden verwijderd.",
     "delete": "Alles verwijderen",
-    "deleteDescription": "Verwijdert definitief de hele inhoud van de hierboven getoonde Timon-map, inclusief agents, gesprekken, instellingen, geheimen, cookies en browserprofielen. Dit kan niet ongedaan worden gemaakt.",
-    "external": "Projectmappen en externe configuraties (Claude, Codex enz.) buiten de Timon-map blijven behouden. Symbolische links naar externe mappen worden niet gevolgd.",
+    "deleteDescription": "Verwijdert definitief de hele inhoud van de hierboven getoonde Rooks-map, inclusief agents, gesprekken, instellingen, geheimen, cookies en browserprofielen. Dit kan niet ongedaan worden gemaakt.",
+    "external": "Projectmappen en externe configuraties (Claude, Codex enz.) buiten de Rooks-map blijven behouden. Symbolische links naar externe mappen worden niet gevolgd.",
     "confirmation": "Typ SUPPRIMER om definitief verwijderen toe te staan.",
     "finish": {
-      "mac": "Sleep Timon.app in Finder naar de prullenmand nadat Timon is gesloten en het opruimen klaar is.",
-      "windows": "Verwijder Timon na het opruimen via de Windows-instellingen voor apps.",
+      "mac": "Sleep Rooks.app in Finder naar de prullenmand nadat Rooks is gesloten en het opruimen klaar is.",
+      "windows": "Verwijder Rooks na het opruimen via de Windows-instellingen voor apps.",
       "appimage": "Verwijder na het opruimen het AppImage-bestand.",
-      "linux": "Verwijder na het opruimen het Timon-pakket via het softwarebeheer van je distributie."
+      "linux": "Verwijder na het opruimen het Rooks-pakket via het softwarebeheer van je distributie."
     },
-    "action": "Timon verwijderen…",
+    "action": "Rooks verwijderen…",
     "busy": "Verwijderen…"
   },
   "freeLicense": {
@@ -3144,7 +3144,7 @@
     "retainedData": "Na een terugkeer naar Free blijven extra accounts bewaard maar onbeschikbaar. Elke functie en plug-in blijft beschikbaar. Een geldige licentie herstelt de accounts die ze dekt.",
     "local_free": "Free is lokaal en heeft geen machineactivering om te beheren.",
     "free_unavailable": "Free-registratie is nog niet open voor deze versie. Probeer het later opnieuw of gebruik een bestaande licentiesleutel.",
-    "client_upgrade_required": "Werk Timon bij naar een ondersteunde versie en probeer het opnieuw.",
+    "client_upgrade_required": "Werk Rooks bij naar een ondersteunde versie en probeer het opnieuw.",
     "summary": "Free werkt lokaal zonder sleutel of verlenging: elke functie en plug-in, voor één actieve superadmin.",
     "plugin_composition_fixed": "Dit aanbod heeft een vaste samenstelling van plug-ins. Configureer de inbegrepen plug-ins of stap over om haar te wijzigen.",
     "single_superadmin_required": "Free staat één actief account toe, en dat moet een superadmin zijn.",
@@ -3152,7 +3152,7 @@
     "license_changed": "De licentie is tijdens dit verzoek gewijzigd. Herlaad en probeer het opnieuw.",
     "activation_key_missing": "Er is geen activeringssleutel op dit apparaat opgeslagen. Gebruik je licentieaccount of neem contact op met support om hem vrij te geven.",
     "deactivate": "Deze machine deactiveren",
-    "deactivateConfirm": "Deze machine deactiveren? Timon gaat verder met Free. Extra accounts worden opgeschort; hun gegevens blijven bewaard.",
+    "deactivateConfirm": "Deze machine deactiveren? Rooks gaat verder met Free. Extra accounts worden opgeschort; hun gegevens blijven bewaard.",
     "deactivated": "Machine gedeactiveerd. De plek blijft bezet tot het laatste token van deze machine verloopt; wie eerder een andere machine activeert, krijgt het exacte tijdstip om het opnieuw te proberen.",
     "transfer_pending": "Het token van de vorige machine is nog niet verlopen. Wacht voordat je deze machine activeert.",
     "transfer_pending_until": "Het token van de vorige machine is nog niet verlopen: deze machine kan worden geactiveerd vanaf {until}."
@@ -3215,7 +3215,7 @@
     "fieldLinkedTasks": "gekoppelde taken",
     "linkedTasksHint": "Het idee sluit zichzelf zodra hun werk is gemerged.",
     "fieldExternalLinks": "elders",
-    "externalLinksHint": "Waar dit idee buiten Timon leeft, zoals de plug-in die het koppelde het heeft vastgelegd.",
+    "externalLinksHint": "Waar dit idee buiten Rooks leeft, zoals de plug-in die het koppelde het heeft vastgelegd.",
     "urgency": {
       "critical": "Kritiek",
       "bug": "Bug",
@@ -3266,18 +3266,18 @@
   "dictation": {
     "egressReload": {
       "title": "{plugin} moet worden herladen",
-      "body": "Timon is geopend voordat deze plug-in werd geïnstalleerd, dus het venster laat hem {host} nog niet bereiken. Herlaad om hem te gebruiken.",
+      "body": "Rooks is geopend voordat deze plug-in werd geïnstalleerd, dus het venster laat hem {host} nog niet bereiken. Herlaad om hem te gebruiken.",
       "reload": "Herladen"
     },
     "localEngine": {
-      "label": "Timon (op deze computer)"
+      "label": "Rooks (op deze computer)"
     },
     "destination": {
       "title": "Waar je stem naartoe gaat",
       "device": "Je stem blijft op deze computer.",
       "window": "Je stem blijft in dit venster: de plug-in verklaart dat er niets uit gaat.",
-      "daemon": "Je stem gaat naar de Timon-daemon van {machine}.",
-      "daemonActive": "Je stem gaat naar de Timon-daemon van de actieve machine.",
+      "daemon": "Je stem gaat naar de Rooks-daemon van {machine}.",
+      "daemonActive": "Je stem gaat naar de Rooks-daemon van de actieve machine.",
       "hosts": "Je stem gaat naar {hosts}.",
       "undeclared": "Deze engine zegt niet waar je stem naartoe gaat.",
       "engineLine": "{engine}: {line}",
@@ -3289,7 +3289,7 @@
     "consent": {
       "title": "{engine} naar je laten luisteren?",
       "from": "Dicteerengine van de plug-in {plugin}",
-      "scope": "Deze keuze geldt alleen voor {machine}. Timon vraagt het opnieuw als de plug-in wijzigt waar je stem naartoe gaat.",
+      "scope": "Deze keuze geldt alleen voor {machine}. Rooks vraagt het opnieuw als de plug-in wijzigt waar je stem naartoe gaat.",
       "allow": "Toestaan",
       "deny": "Niet toestaan",
       "granted": "Toegestaan. Klik op de microfoon om te dicteren.",
@@ -3299,7 +3299,7 @@
       "title": "Dicteerengine",
       "intro": "Welke engine dicteert in de chat en in de spraakmodus van de cockpit, op {machine}.",
       "auto": "Automatisch",
-      "autoHint": "Eerst de eigen engine van Timon; in een browser de spraakherkenning van de browser vóór elke plug-in.",
+      "autoHint": "Eerst de eigen engine van Rooks; in een browser de spraakherkenning van de browser vóór elke plug-in.",
       "webSpeech": "Browser (Web Speech)",
       "webSpeechHint": "De spraakherkenning van je browser. Chrome en Edge sturen de stem naar de dienst van hun leverancier.",
       "unavailableOption": "{engine} (niet beschikbaar)",
@@ -3314,20 +3314,20 @@
       "inUse": "Gebruikt voor dicteren",
       "granted": "Toegestaan op {machine}.",
       "refused": "Niet toegestaan: dicteren met deze engine blijft uit.",
-      "notAsked": "Nog niet toegestaan: Timon vraagt het bij het eerste dictee.",
+      "notAsked": "Nog niet toegestaan: Rooks vraagt het bij het eerste dictee.",
       "withdraw": "Intrekken",
       "undeclared": "Niet gebruikt: zijn plug-in zegt niet waar je stem naartoe gaat."
     },
     "errors": {
       "modelMissing": "Lokaal dicteren heeft zijn spraakmodel nodig: download het in {settingsPath}.",
-      "microphoneDenied": "Timon mag de microfoon niet gebruiken. Sta het toe in de privacyinstellingen van je systeem en probeer het opnieuw.",
+      "microphoneDenied": "Rooks mag de microfoon niet gebruiken. Sta het toe in de privacyinstellingen van je systeem en probeer het opnieuw.",
       "microphoneLost": "De microfoon is losgekoppeld: het dicteren is gestopt.",
       "busy": "Dicteren gestopt: het is in een ander venster of paneel gestart.",
       "engineCrashed": "De dicteerengine is onverwacht gestopt. Klik op de microfoon om opnieuw te beginnen.",
       "engineUnavailable": "Lokaal dicteren is niet beschikbaar op deze computer.",
       "initFailed": "De dicteerengine kon niet starten. Probeer het opnieuw, of verwijder het spraakmodel in {settingsPath} en download het opnieuw.",
       "engineNotAllowed": "Deze dicteerengine is niet toegestaan. Sta hem toe in {settingsPath}.",
-      "engineUndeclared": "Deze dicteerengine zegt niet waar je stem naartoe gaat: Timon gebruikt hem niet."
+      "engineUndeclared": "Deze dicteerengine zegt niet waar je stem naartoe gaat: Rooks gebruikt hem niet."
     },
     "model": {
       "consentTitle": "Lokaal dicteren",
@@ -3401,18 +3401,18 @@
       "peakMemory": "{size} geheugen op het piekmoment",
       "languageRequired": "Heeft een dicteertaal nodig: het kan haar niet raden (geen Auto).",
       "finalOnly": "Toont alleen de definitieve tekst.",
-      "fromPlugin": "Uit de plug-in {plugin}. Timon kan niet instaan voor een model van derden.",
+      "fromPlugin": "Uit de plug-in {plugin}. Rooks kan niet instaan voor een model van derden.",
       "addPack": "Toevoegen en {size} downloaden…",
       "packErrors": {
         "invalid": "De modelvermelding van deze plug-in is ongeldig.",
-        "unknownFamily": "Dit model heeft een nieuwere versie van Timon nodig.",
+        "unknownFamily": "Dit model heeft een nieuwere versie van Rooks nodig.",
         "exists": "Dit model staat al in je catalogus.",
         "busy": "Een ander model wacht op je antwoord.",
         "engineUnavailable": "Lokaal dicteren is niet beschikbaar op deze computer.",
         "notFound": "De plug-in biedt dit model niet meer aan.",
         "unavailable": "De modellen van de plug-in konden niet worden gelezen. Probeer het opnieuw."
       },
-      "unverified": "Niet geverifieerd: Timon kan niet instaan voor deze bestanden.",
+      "unverified": "Niet geverifieerd: Rooks kan niet instaan voor deze bestanden.",
       "usedFor": "Gebruikt voor {languages}",
       "download": "{size} downloaden",
       "confirmLarge": "{model} weegt {size}. Het wordt één keer gedownload en heeft tijdens het dicteren tot {memory} geheugen nodig. Je stem blijft op deze computer.",
@@ -3422,7 +3422,7 @@
     "import": {
       "button": "Lokaal model toevoegen…",
       "trust": "Importeer alleen modellen uit bronnen die je vertrouwt.",
-      "done": "{model} is toegevoegd. Het is niet geverifieerd: Timon kan niet instaan voor de bestanden.",
+      "done": "{model} is toegevoegd. Het is niet geverifieerd: Rooks kan niet instaan voor de bestanden.",
       "whichFamily": "Wat voor model bevat deze map?",
       "languages": "Talen van het model",
       "languagesHint": "Taalcodes, zoals nl, en. Leeg laten voor een model dat de taal herkent.",
@@ -3440,7 +3440,7 @@
         "tooManyFiles": "De map bevat te veel bestanden voor een spraakmodel.",
         "tooLarge": "Het model is groter dan 8 GB.",
         "roles": "De map ziet er niet uit als een spraakmodel (encoder-, decoder- en tokenbestanden).",
-        "unsupportedFamily": "Deze versie van Timon kan dit soort model nog niet draaien.",
+        "unsupportedFamily": "Deze versie van Rooks kan dit soort model nog niet draaien.",
         "unsafeGraph": "Dit model verwijst naar bestanden buiten zijn map: het is geweigerd.",
         "changed": "Een bestand is tijdens het kopiëren gewijzigd. Probeer het opnieuw.",
         "diskFull": "Onvoldoende schijfruimte om het model te kopiëren.",
@@ -3503,7 +3503,7 @@
         "none": "geen"
       }
     },
-    "intro": "Beheer al je LLM-providers en hun modellen. Wijzigingen gelden zonder Timon te herstarten.",
+    "intro": "Beheer al je LLM-providers en hun modellen. Wijzigingen gelden zonder Rooks te herstarten.",
     "edit": "Bewerken",
     "editTitle": "Provider bewerken",
     "saved": "Provider bijgewerkt.",
@@ -3549,7 +3549,7 @@
     "testButton": "Testen",
     "destinationNotice": "Elke prompt van een missie op deze provider wordt naar {host} gestuurd.",
     "keyHint": "Opgeslagen in de geheimenkluis, nooit in het bestand, en nooit meer getoond. Leeg laten voor een lokale server die er geen vraagt.",
-    "fileHint": "Elke provider is een bestand in ~/.timon/backends/. Je kunt daar ook handmatig een JSON-bestand neerzetten: het wordt binnen een seconde opgepikt.",
+    "fileHint": "Elke provider is een bestand in ~/.rooks/backends/. Je kunt daar ook handmatig een JSON-bestand neerzetten: het wordt binnen een seconde opgepikt.",
     "fields": {
       "name": "Naam",
       "protocol": "Protocol",
@@ -3588,11 +3588,11 @@
     "reorder": "Sleep om deze provider te verplaatsen",
     "claudeToken": {
       "title": "Langlevend Claude-token",
-      "hint": "Optioneel. Voer `claude setup-token` uit in een terminal en plak het token hier: elke Claude-missie gebruikt het dan in plaats van de eigen aanmelding van de CLI. Op macOS kan Timon zo blijven draaien zonder open sessie; voer daarna `timon service install` uit om de dienst om te zetten. Het token wordt versleuteld opgeslagen en nooit meer getoond.",
+      "hint": "Optioneel. Voer `claude setup-token` uit in een terminal en plak het token hier: elke Claude-missie gebruikt het dan in plaats van de eigen aanmelding van de CLI. Op macOS kan Rooks zo blijven draaien zonder open sessie; voer daarna `timon service install` uit om de dienst om te zetten. Het token wordt versleuteld opgeslagen en nooit meer getoond.",
       "none": "Niet ingesteld",
       "set": "Ingesteld",
       "unreadable": "Ingesteld, maar onleesbaar — plak het opnieuw",
-      "required": "Timon draait als achtergronddienst op macOS: Claude-missies mislukken tot er een token is ingesteld.",
+      "required": "Rooks draait als achtergronddienst op macOS: Claude-missies mislukken tot er een token is ingesteld.",
       "saved": "Claude-token opgeslagen.",
       "cleared": "Claude-token verwijderd.",
       "clear": "Verwijderen"
@@ -3602,7 +3602,7 @@
     "disableTitle": "{name} uitschakelen?",
     "disableHint": "Hij verdwijnt uit de keuzelijsten. Nieuwe starts die hem expliciet gebruiken worden geweigerd, zonder automatische reserve. Bestaande keuzes hieronder blijven behouden.",
     "disable": "Provider uitschakelen",
-    "managedHint": "Je kunt modellen hernoemen, toevoegen, verwijderen en verbergen, en namen, afbeeldingen en het standaardmodel wijzigen. De verbindingsinstellingen worden beheerd door Timon of de providerplug-in.",
+    "managedHint": "Je kunt modellen hernoemen, toevoegen, verwijderen en verbergen, en namen, afbeeldingen en het standaardmodel wijzigen. De verbindingsinstellingen worden beheerd door Rooks of de providerplug-in.",
     "origins": {
       "builtin": "Ingebouwd",
       "plugin": "Plug-in",
@@ -3705,12 +3705,12 @@
     },
     "tabHints": {
       "routines": "Planningen (cron): elke tik voert zijn acties op een vast tijdstip uit.",
-      "webhooks": "Een externe dienst roept een adres van Timon aan, ondertekend met een geheim.",
-      "events": "Er gebeurt iets in Timon: een taak sluit, een missie eindigt, een agent schrijft, een melding komt binnen."
+      "webhooks": "Een externe dienst roept een adres van Rooks aan, ondertekend met een geheim.",
+      "events": "Er gebeurt iets in Rooks: een taak sluit, een missie eindigt, een agent schrijft, een melding komt binnen."
     },
     "redirecting": "De pagina Routines is nu het tabblad Routines van Triggers…",
     "loopback": {
-      "body": "De daemon luistert alleen op deze machine (loopback). Een webhook is van buitenaf alleen bereikbaar via een tunnel of reverse proxy die je zelf instelt: Timon opent zelf niets.",
+      "body": "De daemon luistert alleen op deze machine (loopback). Een webhook is van buitenaf alleen bereikbaar via een tunnel of reverse proxy die je zelf instelt: Rooks opent zelf niets.",
       "none": "Een route zonder authenticatie beantwoordt alleen aanroepen die op deze machine rechtstreeks naar de daemon gaan: stel haar nooit open via een tunnel."
     },
     "scheduleTriggers": "Planningstriggers",
@@ -3722,7 +3722,7 @@
     "countOther": "{count} triggers",
     "empty": {
       "schedule": "Nog geen planningstrigger.",
-      "webhook": "Nog geen webhook. Maak er een om een dienst (GitHub, GitLab, een bot…) werk in Timon te laten leggen.",
+      "webhook": "Nog geen webhook. Maak er een om een dienst (GitHub, GitLab, een bot…) werk in Rooks te laten leggen.",
       "event": "Nog geen gebeurtenistrigger."
     },
     "enable": "Klik om in te schakelen",
@@ -3738,7 +3738,7 @@
       "github": "GitHub-handtekening",
       "gitlab": "GitLab-token",
       "standard": "Standard Webhooks",
-      "generic": "Timon-handtekening",
+      "generic": "Rooks-handtekening",
       "none": "Geen authenticatie"
     },
     "events": {
@@ -3777,7 +3777,7 @@
     "secret": {
       "title": "Webhookgeheim",
       "outboundTitle": "Ondertekeningsgeheim van de verstuurde aanroepen",
-      "howtoOutbound": "Plak het in de ontvangende dienst: elke aanroep bevat webhook-id, webhook-timestamp en webhook-signature (Standard Webhooks, HMAC-SHA256 van ‘id.timestamp.body’ met dit whsec_-geheim). Het is niet het geheim van een webhook die Timon ontvangt.",
+      "howtoOutbound": "Plak het in de ontvangende dienst: elke aanroep bevat webhook-id, webhook-timestamp en webhook-signature (Standard Webhooks, HMAC-SHA256 van ‘id.timestamp.body’ met dit whsec_-geheim). Het is niet het geheim van een webhook die Rooks ontvangt.",
       "once": "Kopieer het nu: het wordt niet opnieuw getoond. Raak je het kwijt, geef de webhook dan een nieuw.",
       "label": "Geheim (gemaskeerd)",
       "copy": "Geheim kopiëren",
@@ -3789,7 +3789,7 @@
         "github": "GitHub: Settings van de repository → Webhooks → Add webhook. Payload URL: het adres hieronder, content type application/json, Secret: dit geheim.",
         "gitlab": "GitLab: Settings → Webhooks. URL: het adres hieronder, Secret token: dit geheim. GitLab stuurt het ongewijzigd, dus een onderschepte aanroep kan worden herhaald: kies liever een ondertekend schema als de afzender er een biedt.",
         "standard": "Standard Webhooks (Svix, Clerk, Resend…): plak dit ondertekeningsgeheim (whsec_…) in de endpointinstellingen van de provider.",
-        "generic": "Je eigen afzender: stuur X-Timon-Timestamp (Unix-seconden) en X-Timon-Signature: sha256=<hex HMAC-SHA256 van ‘timestamp.body’ met dit geheim>. Aanroepen ouder dan 5 minuten worden geweigerd.",
+        "generic": "Je eigen afzender: stuur X-Rooks-Timestamp (Unix-seconden) en X-Rooks-Signature: sha256=<hex HMAC-SHA256 van ‘timestamp.body’ met dit geheim>. Aanroepen ouder dan 5 minuten worden geweigerd.",
         "none": "Geen geheim: deze route beantwoordt alleen aanroepen vanaf deze machine."
       }
     },
@@ -3825,7 +3825,7 @@
         "github": "X-Hub-Signature-256: HMAC van de body. Het geheim wordt bij het aanmaken gegenereerd.",
         "gitlab": "X-Gitlab-Token: het geheim zelf, bij elke aanroep verstuurd.",
         "standard": "Headers webhook-id, webhook-timestamp en webhook-signature, ±5 minuten.",
-        "generic": "X-Timon-Timestamp en X-Timon-Signature, ±5 minuten.",
+        "generic": "X-Rooks-Timestamp en X-Rooks-Signature, ±5 minuten.",
         "none": "Geen bewijs van herkomst: alleen aanroepen die op deze machine rechtstreeks naar de daemon gaan, worden geaccepteerd."
       },
       "event": "Gebeurtenis",
@@ -3871,7 +3871,7 @@
       "actionN": "Actie {n}",
       "actionType": "Type van actie {n}",
       "webhookUrl": "Adres (https) *",
-      "webhookHint": "Timon stuurt met POST '{type, timestamp, data}' hierheen, waarbij data de payload is zoals ontvangen, ondertekend met een geheim dat bij het opslaan één keer wordt getoond. Tot 10 pogingen met oplopende wachttijd. Alles wat het filter doorlaat, verlaat deze machine.",
+      "webhookHint": "Rooks stuurt met POST '{type, timestamp, data}' hierheen, waarbij data de payload is zoals ontvangen, ondertekend met een geheim dat bij het opslaan één keer wordt getoond. Tot 10 pogingen met oplopende wachttijd. Alles wat het filter doorlaat, verlaat deze machine.",
       "removeAction": "verwijderen",
       "addAction": "+ Actie",
       "todoText": "Idee *",
@@ -3983,7 +3983,7 @@
     "deleteConfirm": "Het account ‘{name}’ verwijderen? De aanmelding wordt van deze machine verwijderd, en de agents en taken die erop zijn ingesteld mislukken tot er een ander account is gekozen.",
     "deleted": "Account verwijderd",
     "signedInAs": "Aangemeld als {identity}",
-    "notSignedIn": "Niet via Timon aangemeld",
+    "notSignedIn": "Niet via Rooks aangemeld",
     "ownerInstance": "Instantie (missies zonder eigenaar)",
     "errorGeneric": "Het verzoek is mislukt. Probeer het opnieuw.",
     "rename": "Hernoemen",
@@ -4018,7 +4018,7 @@
       "create": "Aanmaken en aanmelden"
     },
     "login": {
-      "starting": "De aanmelding starten op de Timon-machine…",
+      "starting": "De aanmelding starten op de Rooks-machine…",
       "openPage": "Aanmeldpagina openen",
       "copy": "Kopiëren",
       "copied": "Gekopieerd",
@@ -4044,8 +4044,8 @@
       "mismatch": "Dit account hoort bij {identity}: meld je aan met dat abonnement, of voeg een ander account toe.",
       "not_signed_in": "De aanmelding is niet voltooid. Begin opnieuw.",
       "cli_failed": "De opdrachtregeltool van de provider faalde tijdens de aanmelding. Begin opnieuw.",
-      "cli_missing": "De opdrachtregeltool van de provider is niet geïnstalleerd op de Timon-machine.",
-      "unsupported": "Deze provider kan niet vanuit Timon worden aangemeld."
+      "cli_missing": "De opdrachtregeltool van de provider is niet geïnstalleerd op de Rooks-machine.",
+      "unsupported": "Deze provider kan niet vanuit Rooks worden aangemeld."
     }
   },
   "mcpPage": {
@@ -4125,7 +4125,7 @@
       "restart": "Gesprek opnieuw starten",
       "skipFailed": "Deze stap kon niet worden overgeslagen. Probeer het zo opnieuw.",
       "tool_error": {
-        "title": "Je assistent kan Timon niet gebruiken",
+        "title": "Je assistent kan Rooks niet gebruiken",
         "body": "Zijn verzoeken worden geweigerd, dus hij kan zijn configuratie niet afronden. Sla deze stap over: je kunt hem later op zijn pagina een naam en karakter geven."
       },
       "interrupted": {
@@ -4141,7 +4141,7 @@
         "body": "Hij heeft nog niets gezegd. Blijf wachten, of sla deze stap over en stel hem later in op zijn pagina."
       },
       "disconnected": {
-        "title": "Timon antwoordt niet",
+        "title": "Rooks antwoordt niet",
         "body": "De verbinding is verbroken. Wacht even, of sla deze stap over en stel je assistent later in op zijn pagina."
       }
     },
@@ -4149,7 +4149,7 @@
     "voice": "Dicteren",
     "voiceStop": "Dictee stoppen",
     "send": "Versturen",
-    "toTour": "Laten we even rondkijken in Timon…",
+    "toTour": "Laten we even rondkijken in Rooks…",
     "starting": "Je assistent wordt gewekt…",
     "name": {
       "title": "Hoe moet je assistent heten?",
@@ -4157,13 +4157,13 @@
       "submitNamed": "Maak kennis met {name}"
     },
     "troubleshoot": {
-      "title": "Om verder te gaan heeft Timon één AI-model nodig dat het kan bereiken. Installeer een van deze CLI's en meld je erbij aan:",
+      "title": "Om verder te gaan heeft Rooks één AI-model nodig dat het kan bereiken. Installeer een van deze CLI's en meld je erbij aan:",
       "other": "Of koppel een ander model met een API-sleutel in {settingsPath}.",
       "openSettings": "Instellingen openen"
     },
     "unavailable": {
       "title": "Je assistent kan nog niet starten",
-      "body": "Timon kon geen AI-model bereiken. Controleer of je modelaccount is gekoppeld in {settingsPath} en probeer het opnieuw — of sla deze stap over en regel het later.",
+      "body": "Rooks kon geen AI-model bereiken. Controleer of je modelaccount is gekoppeld in {settingsPath} en probeer het opnieuw — of sla deze stap over en regel het later.",
       "retry": "Opnieuw proberen"
     },
     "avatar": {
@@ -4178,10 +4178,10 @@
   },
   "guidedTour": {
     "menu": "Rondleiding",
-    "firstMessage": "Leid me rond in Timon en help me mijn scherm in te richten.",
+    "firstMessage": "Leid me rond in Rooks en help me mijn scherm in te richten.",
     "failed": "De rondleiding kon niet starten. Probeer het opnieuw via het weergavemenu.",
     "offer": {
-      "title": "Zin in een korte rondleiding door Timon?",
+      "title": "Zin in een korte rondleiding door Rooks?",
       "body": "Je assistent leidt je rond en helpt je je scherm in te richten. Hij kan pagina's voor je openen; je kunt de rondleiding altijd beëindigen. Later vind je haar in het weergavemenu (paletpictogram) › Rondleiding.",
       "start": "Leid me rond",
       "later": "Niet nu",
@@ -4274,7 +4274,7 @@
       "emptyFooter": "niets",
       "apply": "Op het menu toepassen"
     },
-    "unknownKind": "Deze versie van Timon kan dit voorstel niet tonen.",
+    "unknownKind": "Deze versie van Rooks kan dit voorstel niet tonen.",
     "errors": {
       "stale": "Deze schikking past niet meer bij je account: {reasons}",
       "already_decided": "Dit voorstel is al beantwoord.",
@@ -4290,7 +4290,7 @@
       "mission": "Bewaard tot het einde van deze missie.",
       "persistent": "Na deze missie in de kluis bewaard."
     },
-    "hosts": "Alleen naar {hosts} gestuurd (header {header}), door Timon — de agent ziet het nooit.",
+    "hosts": "Alleen naar {hosts} gestuurd (header {header}), door Rooks — de agent ziet het nooit.",
     "origin": "Alleen ingevuld in een pagina van {origin}, in de ingebouwde browser — de agent ziet het nooit, maar die pagina bevat het na het invullen.",
     "environment": "Komt bij de volgende start in de omgeving van de agent: alles wat hij uitvoert, kan het lezen.",
     "field": "Waarde van {name}",
@@ -4318,7 +4318,7 @@
     }
   },
   "uiDocument": {
-    "unavailable": "Documenten staan uit op deze Timon: dit document kan niet worden getoond.",
+    "unavailable": "Documenten staan uit op deze Rooks: dit document kan niet worden getoond.",
     "expired": "Dit document wordt niet meer bewaard: het gesprek is al een tijd geleden afgelopen.",
     "dismissed": "Dit document is gesloten.",
     "answered": "beantwoord",
@@ -4392,7 +4392,7 @@
     "unknownError": "onbekende fout",
     "turnInFlight": "De agent antwoordt: comprimeer zodra het antwoord klaar is.",
     "alreadyRunning": "Er loopt al een comprimering van dit gesprek.",
-    "lost": "Timon is deze comprimering kwijtgeraakt (de dienst is herstart). Probeer het opnieuw.",
+    "lost": "Rooks is deze comprimering kwijtgeraakt (de dienst is herstart). Probeer het opnieuw.",
     "traceRequested": "Comprimering aangevraagd",
     "traceForked": "Gecomprimeerd naar een nieuw gesprek",
     "traceNativeTokens": "Gesprek gecomprimeerd · {from} → {to} tokens",
@@ -4422,14 +4422,14 @@
   "telemetrySettings": {
     "tab": "Privacy",
     "title": "Anonieme gebruiksstatistieken",
-    "description": "Timon kan zijn team laten weten hoe de app wordt gebruikt — welke functies, hoe vaak beurten slagen, waar de configuratie stokt — zodat we weten wat eerst moet worden opgelost. Het is anoniem: een willekeurige id die op deze computer wordt getrokken, nooit je account of je machine.",
+    "description": "Rooks kan zijn team laten weten hoe de app wordt gebruikt — welke functies, hoe vaak beurten slagen, waar de configuratie stokt — zodat we weten wat eerst moet worden opgelost. Het is anoniem: een willekeurige id die op deze computer wordt getrokken, nooit je account of je machine.",
     "share": "Anonieme gebruiksstatistieken delen",
     "shareDescription": "Standaard aan. Uitzetten stopt meteen elke verzending; een laatste bericht legt vast dat je het hebt uitgezet.",
     "lockedEnv": "Ingesteld door de omgevingsvariabele TIMON_TELEMETRY: wijzig het daar.",
     "lockedEnvMalformed": "TIMON_TELEMETRY bevat een waarde die yes noch no is: delen staat uit.",
-    "lockedConfig": "Ingesteld door telemetry.enabled in timon.config.json: wijzig het daar.",
-    "lockedConfigMalformed": "telemetry.enabled in timon.config.json is true noch false: delen staat uit.",
-    "inactiveBuild": "Deze build van Timon verstuurt niets, wat deze instelling ook zegt.",
+    "lockedConfig": "Ingesteld door telemetry.enabled in rooks.config.json: wijzig het daar.",
+    "lockedConfigMalformed": "telemetry.enabled in rooks.config.json is true noch false: delen staat uit.",
+    "inactiveBuild": "Deze build van Rooks verstuurt niets, wat deze instelling ook zegt.",
     "sentTitle": "Wat er wordt verstuurd",
     "sent": "App-versie, besturingssysteem, licentieniveau; starts en updates van de app; configuratiestappen; beurten, hun duur, uitkomst en tokenaantallen; welke ingebouwde tools en providers worden gebruikt; taak-, plug-in-, licentie- en browseracties als aantallen.",
     "neverTitle": "Wat er nooit wordt verstuurd",
@@ -4437,7 +4437,7 @@
     "learnMore": "Privacyverklaring lezen",
     "loadFailed": "Deze instelling kon niet worden gelezen.",
     "saveFailed": "Deze instelling kon niet worden opgeslagen.",
-    "forbidden": "Alleen een beheerder van deze Timon kan deze instelling wijzigen."
+    "forbidden": "Alleen een beheerder van deze Rooks kan deze instelling wijzigen."
   },
   "grepaiPanel": {
     "project": "project",

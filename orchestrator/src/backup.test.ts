@@ -119,8 +119,10 @@ test('enable crée la routine 03:30, idempotent, même id', () => {
   assert.equal(first.enabled, true);
   assert.equal(first.cron, '30 3 * * *');
   assert.equal(first.routine?.id, BACKUP_ROUTINE_ID);
-  assert.equal(first.routine?.agent_name, 'timon');
-  assert.match(first.routine?.prompt ?? '', /timon export --out/);
+  assert.equal(first.routine?.agent_name, '__backup__');
+  assert.match(first.routine?.prompt ?? '', /dated archive/);
+  assert.equal(first.routine?.name, 'Nightly backup');
+  assert.doesNotMatch(first.routine?.prompt ?? '', /timon|~\//);
   assert.ok(existsSync(first.dir));
   assert.notEqual(first.dir, REAL_TIMON_BACKUPS);
 

@@ -16,7 +16,6 @@ import { spawn } from 'node:child_process';
 import { accessSync, constants, createReadStream, mkdirSync, realpathSync, existsSync, lstatSync, readFileSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, resolve } from 'node:path';
-import { hostname } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import {
   controlDesktopService, daemonLogHint, forgetMissingWindowsService, forgetServiceStopped, hasDesktopService, repairSessionWitness,
@@ -39,8 +38,10 @@ import {
 } from './restart.js';
 import { queueAppImageRelaunch } from './appimage-restart.js';
 import { LEAVE as UNLOAD_LEAVE, unloadPrompt } from './unload-prompt.js';
-import { daemonEnvOverrides, loadDesktopConfig, originOf, packagedFirstRun, resolveTimonHome, type DesktopConfig } from './config.js';
+import { configFile, daemonEnvOverrides, homeNames, loadDesktopConfig, originOf, packagedFirstRun, resolveTimonHome, type DesktopConfig } from './config.js';
 import { isTimon, probeHealth, waitForHealth, type HealthResult } from './health.js';
+import { daemonIsStale, readShellBuiltAt } from './daemon-version.js';
+import { clearShellCacheIfBuildChanged, shellCacheKey } from './shell-cache.js';
 import {
   daemonEntryOf,
   daemonInstallDirOf,
@@ -108,7 +109,7 @@ import { devShellName } from './linux-desktop.js';
 import { WINDOWS_APP_USER_MODEL_ID, windowsUserTasks } from './jump-list.js';
 import { ErrorBoxGate, quitAfterBox, type ShutdownWindow } from './shutdown-sequence.js';
 
-const DISPLAY_NAME = 'Timon';
+const DISPLAY_NAME = 'Rooks';
 // Before any word is shown: a package reads its languages from `resources/locales`.
 useShellLocales(shellLocalesDir({
   packaged: app.isPackaged,
@@ -313,9 +314,9 @@ function savedWindow(record: AppWindow): SavedWindow {
 }
 
 /**
- * The window title names the machine the window drives ("Office VPS — Timon").
- * The name comes from the local fleet list, read with the window's own session;
- * a window without a machine of its own follows the `timon_machine` cookie.
+ * This computer's window is just "Rooks". A window driving another machine
+ * names that machine ("Office VPS — Rooks"). The name comes from the fleet
+ * list, read with the window's own session.
  */
 async function refreshTitle(record: AppWindow): Promise<void> {
   const w = record.window;
@@ -328,7 +329,7 @@ async function refreshTitle(record: AppWindow): Promise<void> {
       try { value = cookie ? decodeURIComponent(cookie.value) : null; } catch { /* malformed: served as local */ }
       id = isMachineId(value) ? value : LOCAL_MACHINE_ID;
     }
-    let name: string | null = hostname() || null;
+    let name: string | null = null;
     if (id !== LOCAL_MACHINE_ID) {
       const res = await w.webContents.session.fetch(`${record.origin}/api/ui/machines`, {
         credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(5_000),
@@ -833,8 +834,12 @@ function buildTray(cfg: DesktopConfig, uiUrl: string): void {
 function openAbout(): void {
   // The menu bar exists before the release is verified, and no other window opens until then (TODO #439).
   if (releasePending) { releaseCheckWindow?.show(); releaseCheckWindow?.focus(); return; }
+  const daemon = lastDaemonHealth && lastDaemonHealth.ok ? lastDaemonHealth : null;
   showAboutWindow({
     version: app.getVersion(),
+    appBuiltAt: readShellBuiltAt(process.resourcesPath),
+    daemonVersion: daemon?.version ?? null,
+    daemonBuiltAt: daemon?.builtAt ?? null,
     electron: process.versions.electron ?? '',
     notices: readThirdPartyNotices(thirdPartyNoticesPath({
       packaged: app.isPackaged,
@@ -974,7 +979,7 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
   // Last-moment lock: between the first probe and here, a service could have
   // come up. Two daemons on one TIMON_HOME write the same database.
   const raced = await probeHealth(originOf(cfg.daemon.listen));
-  if (isTimon(raced, cfg.home)) {
+  if (isTimon(raced, cfg.home) && !daemonIsStale(raced, { packaged: app.isPackaged, version: app.getVersion(), builtAt: readShellBuiltAt(process.resourcesPath) })) {
     await completeApprovedUpdate(cfg);
     daemonUp = true;
     noteDesktopOpened(cfg);
@@ -995,6 +1000,7 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
     installDir: daemonInstallDirOf(process.resourcesPath),
     overrides: { ...daemonEnvOverrides(cfg), TIMON_DESKTOP_VERSION: app.getVersion() },
     home: cfg.home,
+    names: homeNames(),
     heapMb: cfg.daemon.heapMb,
     execPath: shellDaemonRuntime().execPath,
     runtimeEnv: shellDaemonRuntime().env,
@@ -1030,6 +1036,7 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
   });
 
   const health: HealthResult = await waitForHealth(originOf(cfg.daemon.listen), EMBEDDED_BOOT_BUDGET_MS);
+  lastDaemonHealth = health;
   daemonUp = isTimon(health, cfg.home);
   noteDesktopOpened(cfg);
   console.log(`[desktop] embedded daemon health: ${describeHealth(health, cfg.home)}`);
@@ -1093,7 +1100,7 @@ function reportForeignDaemon(cfg: DesktopConfig): void {
     message: t('startup.portTaken', { origin: originOf(cfg.daemon.listen) }),
     detail: t('startup.portTakenDetail', {
       app: DISPLAY_NAME,
-      config: join(cfg.home, 'timon.config.json'),
+      config: configFile(cfg.home),
       reopen: reopenHint(locale, tray !== null, DISPLAY_NAME),
     }),
   });
@@ -1253,8 +1260,8 @@ async function verifyInstalledRelease(): Promise<void> {
 /** One line for the desktop log: what answered, and whether it is this home's Timon. */
 function describeHealth(health: HealthResult, home: string): string {
   if (!health.ok) return `no answer (${health.error ?? 'unknown'})`;
-  if (isTimon(health, home)) return `Timon, this home${health.updatePending ? ', update pending' : ''}`;
-  return health.identity === 'timon' ? `Timon of another home (HTTP ${health.status})` : `not Timon (HTTP ${health.status})`;
+  if (isTimon(health, home)) return `${DISPLAY_NAME}, this home${health.updatePending ? ', update pending' : ''}`;
+  return health.identity === 'timon' ? `${DISPLAY_NAME} of another home (HTTP ${health.status})` : `not ${DISPLAY_NAME} (HTTP ${health.status})`;
 }
 
 /** When this shell's main script was written, from the sources only: inside `app.asar` it is the time the process started (`shell-build.ts`). */
@@ -1307,7 +1314,7 @@ function senderOrigin(event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent
  */
 function pageFetch(caller: Caller): (url: string, init?: RequestInit) => Promise<Response> {
   return (url, init = {}) => {
-    if (!liveCaller(caller)) return Promise.reject(new Error('The Timon window is closed.'));
+    if (!liveCaller(caller)) return Promise.reject(new Error('The Rooks window is closed.'));
     const headers = new Headers(init.headers);
     if (caller.page.machineId !== null) headers.set('X-Timon-Machine', caller.page.machineId);
     return contentsOf(caller.page).session.fetch(url, { ...init, headers });
@@ -1324,7 +1331,34 @@ function installMachineHeader(): void {
   });
 }
 
+function configPresent(home: string): boolean {
+  return existsSync(join(home, 'rooks.config.json')) || existsSync(join(home, 'timon.config.json'));
+}
+
+let lastDaemonHealth: HealthResult | null = null;
+
+async function stopLeftoverDaemon(cfg: DesktopConfig, origin: string): Promise<void> {
+  try { await controlDesktopService('stop', runnerSeams(cfg)); }
+  catch (error) { console.error('[desktop] leftover service stop failed', error); }
+  const still = await probeHealth(origin);
+  if (!still.ok || still.identity !== 'timon') return;
+  await new Promise<void>((resolve) => {
+    const killer = spawn('fuser', ['-k', `${cfg.daemon.listen.port}/tcp`], { stdio: 'ignore' });
+    killer.on('exit', () => resolve());
+    killer.on('error', () => resolve());
+  });
+}
+
 async function main(): Promise<void> {
+  const builtAt = readShellBuiltAt(process.resourcesPath);
+  try {
+    const cleared = await clearShellCacheIfBuildChanged(
+      app.getPath('userData'),
+      shellCacheKey(app.getVersion(), builtAt),
+      () => session.defaultSession.clearCache(),
+    );
+    if (cleared) console.log('[desktop] cleared the window cache for this build');
+  } catch (error) { console.warn('[desktop] cache clear failed', error); }
   // Before any window: without handlers Electron grants every request.
   installWindowPermissions(session.defaultSession, {
     windowOrigin: () => windowOrigin,
@@ -1385,7 +1419,7 @@ async function main(): Promise<void> {
       const record = windows.find(w);
       const ownerId = record ? browserOwners.get(record.id) : undefined;
       const owner = liveCaller(ownerId === undefined ? null : windows.pageOf(ownerId));
-      if (!owner) return Promise.reject(new Error('The Timon window is closed.'));
+      if (!owner) return Promise.reject(new Error('The Rooks window is closed.'));
       return pageFetch(owner)(url, init);
     }, () => windowOrigin),
     // The keyboard goes back to the page on screen, not to the window's own blank webContents.
@@ -1433,7 +1467,7 @@ async function main(): Promise<void> {
   const repair = serviceRepairVerdict(cfg.home, app.getVersion(), {
     packaged: app.isPackaged,
     // A portable install chose no supervisor: nothing was lost there.
-    configured: cfg.daemon.supervisor !== 'none' && existsSync(join(cfg.home, 'timon.config.json')),
+    configured: cfg.daemon.supervisor !== 'none' && configPresent(cfg.home),
     taskExists: taskState?.exists ?? true,
   });
   if (repair !== 'task-exists' && repair !== 'not-applicable') console.log(`[desktop] service repair verdict: ${repair}`);
@@ -1477,6 +1511,13 @@ async function main(): Promise<void> {
   }
   const uiUrl = originOf(cfg.app.listen);
   interfaceUrl = uiUrl;
+  const ownBuild = { packaged: app.isPackaged, version: app.getVersion(), builtAt: readShellBuiltAt(process.resourcesPath) };
+  if (health.ok && health.identity === 'timon' && daemonIsStale(health, ownBuild)) {
+    console.log('[desktop] leftover daemon is another build; stopping it');
+    await stopLeftoverDaemon(cfg, daemonOrigin);
+    health = await probeHealth(daemonOrigin);
+  }
+  lastDaemonHealth = health;
   daemonUp = isTimon(health, cfg.home);
   noteDesktopOpened(cfg);
   console.log(`[desktop] health of ${daemonOrigin}: ${describeHealth(health, cfg.home)}`);
@@ -1581,10 +1622,15 @@ const requestedHome = resolve(resolveTimonHome());
 mkdirSync(requestedHome, { recursive: true });
 desktopHome = realpathSync(requestedHome);
 installDesktopLog(desktopHome);
-console.log(`[desktop] Timon ${app.getVersion()} starting on ${process.platform} (packaged: ${app.isPackaged}), home ${desktopHome}`);
-const configuredAtLaunch = existsSync(join(desktopHome, 'timon.config.json'));
+console.log(`[desktop] ${DISPLAY_NAME} ${app.getVersion()} starting on ${process.platform} (packaged: ${app.isPackaged}), home ${desktopHome}`);
+const configuredAtLaunch = configPresent(desktopHome);
 // Also inherited by app.relaunch: never create or select another instance.
-process.env.TIMON_HOME = desktopHome;
+if (homeNames() === 'rooks') {
+  process.env.ROOKS_HOME = desktopHome;
+  delete process.env.TIMON_HOME;
+} else {
+  process.env.TIMON_HOME = desktopHome;
+}
 app.setPath('userData', join(desktopHome, 'desktop-profile'));
 layoutKeeper = new WindowLayoutKeeper(readWindowLayout(desktopHome), {
   snapshot: () => liveWindows().map(savedWindow),
@@ -1600,8 +1646,8 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
 } else {
   const restartAfterSetup = setupRestarter({
     validate: () => {
-      if (!existsSync(join(desktopHome, 'timon.config.json'))) {
-        throw new Error('Save the configuration before restarting Timon.');
+      if (!configPresent(desktopHome)) {
+        throw new Error('Save the configuration before restarting Rooks.');
       }
       const options = relaunchOptions(process.platform, process.env, process.argv);
       if (options.execPath) accessSync(options.execPath, constants.X_OK);
@@ -1631,7 +1677,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
       const state = {
         embedded: stopEmbedded !== null,
         configuredAtLaunch,
-        configuredNow: existsSync(join(desktopHome, 'timon.config.json')),
+        configuredNow: configPresent(desktopHome),
         serviceInstalled: hasDesktopService(desktopHome),
         serviceRefused: existsSync(windowsServiceRefusedFile(desktopHome)),
         supervisor: cfg.daemon.supervisor,
@@ -1690,7 +1736,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
     // The window's own session carries the user's `timon_session` cookie, and the request its machine.
     callRoute: async (agentId, path) => {
       const caller = senderPage(event);
-      if (!caller) throw new Error('The Timon window is closed.');
+      if (!caller) throw new Error('The Rooks window is closed.');
       const res = await pageFetch(caller)(
         `${caller.record.origin}/api/ui/agents/${encodeURIComponent(agentId)}/files/reveal`,
         {
@@ -1716,7 +1762,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
   let tailscaleCaller: Caller | null = null;
   const tailscaleRoute = async (path: string, init: RequestInit = {}) => {
     const caller = liveCaller(tailscaleCaller) ?? activeCaller(windows.primary());
-    if (!caller) throw new Error('The Timon window is closed.');
+    if (!caller) throw new Error('The Rooks window is closed.');
     return pageFetch(caller)(`${caller.record.origin}/api/ui/devices/tailscale${path}`, {
       ...init,
       credentials: 'include',
@@ -1807,7 +1853,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
   // Every window may present a local profile. Remote pages use their daemon's video.
   ipcMain.handle(BROWSER_ATTACH_CHANNEL, (event, request: unknown) => {
     const caller = senderPage(event);
-    if (!browserSenderAllowed(event) || !caller || !nativeBrowser) throw new Error('Browser presentation is only available from Timon.');
+    if (!browserSenderAllowed(event) || !caller || !nativeBrowser) throw new Error('Browser presentation is only available from Rooks.');
     // A hidden page renews its panel on a timer: nothing shows, and no error either (it would greet the user on return).
     if (!caller.record.pages.isActive(caller.page.contentsId)) return;
     if (caller.page.machineId !== null && caller.page.machineId !== LOCAL_MACHINE_ID) return { attached: false };
@@ -1816,7 +1862,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
     return { attached: true };
   });
   ipcMain.handle(BROWSER_DETACH_CHANNEL, (event) => {
-    if (!browserSenderAllowed(event)) throw new Error('Browser presentation is only available from Timon.');
+    if (!browserSenderAllowed(event)) throw new Error('Browser presentation is only available from Rooks.');
     // Only the page the panel shows for takes it down: another window's, or a hidden page's, leaves it alone.
     const caller = senderPage(event);
     if (!caller || browserOwners.get(caller.record.id) !== caller.page.contentsId) return;
@@ -1824,18 +1870,18 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
   });
   const uninstallSenderAllowed = (event: Electron.IpcMainInvokeEvent) => app.isPackaged && canUninstall(senderOf(event), senderOrigin(event));
   ipcMain.handle(UNINSTALL_INFO_CHANNEL, event => {
-    if (!uninstallSenderAllowed(event)) throw new Error('Uninstall is only available in installed Timon settings.');
+    if (!uninstallSenderAllowed(event)) throw new Error('Uninstall is only available in installed Rooks settings.');
     return { home: desktopHome, platform: process.platform, appImage: process.env.APPIMAGE ?? null };
   });
   // Settings › System › Installation compares the app with its daemon, which
   // may be a service left on an older release.
   ipcMain.handle(APP_INFO_CHANNEL, (event) => {
-    if (!canReadAppInfo(senderOf(event), senderOrigin(event))) throw new Error('App information is only available in the Timon window.');
+    if (!canReadAppInfo(senderOf(event), senderOrigin(event))) throw new Error('App information is only available in the Rooks window.');
     return { version: app.getVersion() };
   });
   // Settings › System: the same folder as the error boxes (TODO #343).
   ipcMain.handle(OPEN_LOGS_CHANNEL, async (event) => {
-    if (!canReadAppInfo(senderOf(event), senderOrigin(event))) throw new Error('The logs folder is only available from the Timon window.');
+    if (!canReadAppInfo(senderOf(event), senderOrigin(event))) throw new Error('The logs folder is only available from the Rooks window.');
     const dir = logDir(desktopHome);
     mkdirSync(dir, { recursive: true });
     return shell.openPath(dir);
@@ -1871,7 +1917,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
     on: (channel, listener) => { ipcMain.on(channel, (event, input: unknown) => listener(senderOf(event), input)); },
   }, (sender) => canReadAppInfo(sender, windowOrigin), microphone);
   ipcMain.handle(UNINSTALL_CHANNEL, async (event, input: unknown) => {
-    if (!uninstallSenderAllowed(event)) throw new Error('Uninstall is only available in installed Timon settings.');
+    if (!uninstallSenderAllowed(event)) throw new Error('Uninstall is only available in installed Rooks settings.');
     if (uninstalling) throw new Error('Uninstall is already in progress.');
     const request = uninstallRequest(input);
     const parent = senderWindow(event)?.window ?? null;
@@ -1919,15 +1965,15 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
     } finally { if (!uninstallReadyToQuit) uninstalling = false; }
   });
   ipcMain.handle(SETUP_RESTART_STATUS_CHANNEL, (event) => {
-    if (!canRestartFromSetup(senderOf(event), senderOrigin(event))) throw new Error('Restart status is only available to the Timon window.');
+    if (!canRestartFromSetup(senderOf(event), senderOrigin(event))) throw new Error('Restart status is only available to the Rooks window.');
     return setupRestartPending({
       embedded: stopEmbedded !== null, configuredAtLaunch,
-      configuredNow: existsSync(join(desktopHome, 'timon.config.json')),
+      configuredNow: configPresent(desktopHome),
       serviceInstalled: hasDesktopService(desktopHome),
     });
   });
   ipcMain.handle(SETUP_HANDOVER_CHANNEL, async (event, route: unknown) => {
-    if (!canRestartFromSetup(senderOf(event), senderOrigin(event))) throw new Error('The handover is only available to the Timon window.');
+    if (!canRestartFromSetup(senderOf(event), senderOrigin(event))) throw new Error('The handover is only available to the Rooks window.');
     const path = handoverRoute(route, interfaceUrl);
     if (path === null) throw new Error('The handover route must be a path of the interface.');
     try {
@@ -1943,7 +1989,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
     }
   });
   ipcMain.handle(SETUP_RESTART_CHANNEL, async (event) => {
-    if (!canRestartFromSetup(senderOf(event), senderOrigin(event))) throw new Error('Restart is only available to the Timon window.');
+    if (!canRestartFromSetup(senderOf(event), senderOrigin(event))) throw new Error('Restart is only available to the Rooks window.');
     try {
       await restartAfterSetup();
     } catch (error) {
@@ -1986,7 +2032,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
   // `lastRouteFor` (V4); the caller is hidden as it is, it does not reload.
   ipcMain.handle(WINDOW_MACHINE_CHANNEL, (event, id: unknown, request: unknown) => {
     const caller = senderPage(event);
-    if (!caller || !canReadAppInfo(senderOf(event), caller.record.origin)) throw new Error('Only a Timon window chooses its machine.');
+    if (!caller || !canReadAppInfo(senderOf(event), caller.record.origin)) throw new Error('Only a Rooks window chooses its machine.');
     if (!caller.record.pages.isActive(caller.page.contentsId) || caller.record.closing) throw new Error('Only the page on screen chooses its window\'s machine.');
     if (!isMachineId(id)) throw new Error('A machine is named by its id.');
     const shown = enterMachine(caller.record, id, pageUrl(caller.record.origin, request));
@@ -2000,7 +2046,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
   // machine is the window's pin; an unpinned page names the one it was served for.
   ipcMain.handle(WINDOW_SCHEME_CHANNEL, (event, input: unknown) => {
     const caller = senderPage(event);
-    if (!caller || !canReadAppInfo(senderOf(event), caller.record.origin)) throw new Error('Only a Timon window reports its mode.');
+    if (!caller || !canReadAppInfo(senderOf(event), caller.record.origin)) throw new Error('Only a Rooks window reports its mode.');
     const report = parseWindowSchemeReport(input);
     if (!report) throw new Error('A mode is light or dark.');
     paintPageScheme(caller, report.scheme);
@@ -2011,7 +2057,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
   // machine it shows, never a URL; the address is the caller's own origin.
   ipcMain.handle(OPEN_WINDOW_CHANNEL, (event, input: unknown) => {
     const caller = senderWindow(event);
-    if (!caller || !canReadAppInfo(senderOf(event), caller.origin)) throw new Error('Only a Timon window opens another one.');
+    if (!caller || !canReadAppInfo(senderOf(event), caller.origin)) throw new Error('Only a Rooks window opens another one.');
     const request = parseOpenWindowRequest(input, caller.origin);
     if (!request) throw new Error('A window opens on a route of this interface.');
     const machineId = machineForDetachedWindow(caller.machineId, request.machineId);

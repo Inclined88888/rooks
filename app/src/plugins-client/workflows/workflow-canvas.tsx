@@ -179,7 +179,7 @@ function WorkflowFlowEdge({ id, sourceX, sourceY, targetX, targetY, sourcePositi
       {data?.label && (
         <EdgeLabelRenderer>
           <div
-            className={cn('pointer-events-none absolute rounded-md border px-1.5 py-px text-[9.5px]', taken ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground')}
+            className={cn('nodrag nopan pointer-events-none absolute z-[1] whitespace-nowrap rounded-md border px-1.5 py-px text-[9.5px]', taken ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground')}
             style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
           >
             {data.label}
@@ -364,6 +364,7 @@ function CanvasInner({ definition, nodeTypes, runNodes = NO_RUN_NODES, issues, r
   return (
     <div className={cn('wf-canvas relative h-full w-full', hover && 'wf-canvas-drop')} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
       <ReactFlow
+        proOptions={{ hideAttribution: true }}
         colorMode={scheme}
         nodes={flowNodes}
         edges={edges}

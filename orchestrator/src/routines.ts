@@ -115,17 +115,19 @@ export function updateRoutine(
   return dbApi.getRoutine(id)!;
 }
 
-/** Stable id: `timon backup enable` is idempotent, not a new UUID. */
-export const BACKUP_ROUTINE_ID = 'timon-backup-nightly';
+/** Stable id: enabling the backup is idempotent, not a new UUID.
+ *  Homes that already stored `timon-backup-nightly` are moved onto this id. */
+export const LEGACY_BACKUP_ROUTINE_ID = 'timon-backup-nightly';
+export const BACKUP_ROUTINE_ID = 'rooks-backup-nightly';
 export const BACKUP_CRON = '30 3 * * *';
 /** Default of `TIMON_BACKUP_KEEP`; the setting decides (`backupRetention`). */
 export const BACKUP_KEEP = 7;
-export const BACKUP_NAME = 'Backup nocturne';
-/** Schema sentinel — never dispatched, the tick runs the export itself. */
-export const BACKUP_AGENT = 'timon';
+export const BACKUP_NAME = 'Nightly backup';
+/** Schema sentinel — never dispatched, and not an agent name the desk can show. */
+export const BACKUP_AGENT = '__backup__';
 const BACKUP_PROMPT =
-  'timon export --out ~/.timon/backups/timon-<date>.tar.gz every night at 03:30, '
-  + 'then prune by TIMON_BACKUP_KEEP and TIMON_BACKUP_MAX_AGE_DAYS.';
+  'Write a dated archive of this install every night at 03:30, '
+  + 'then prune it by the retention count and the maximum age.';
 const BACKUP_ARCHIVE_RE = /^timon-(\d{4})-(\d{2})-(\d{2})\.tar\.gz$/;
 const DAY_MS = 86_400_000;
 
@@ -215,6 +217,7 @@ export type BackupStatus = {
 };
 
 export function backupStatus(): BackupStatus {
+  migrateBackupRoutine();
   const row = dbApi.getRoutine(BACKUP_ROUTINE_ID) ?? null;
   const retention = backupRetention();
   return {
@@ -230,8 +233,42 @@ export function backupStatus(): BackupStatus {
   };
 }
 
+/**
+ * Move a home that still has `timon-backup-nightly` onto the current id, and
+ * refresh the English name and prompt. `enabled` is copied, never forced on:
+ * a backup someone turned off stays off.
+ */
+export function migrateBackupRoutine(): void {
+  const legacy = dbApi.getRoutine(LEGACY_BACKUP_ROUTINE_ID);
+  if (legacy && !dbApi.getRoutine(BACKUP_ROUTINE_ID)) {
+    dbApi.createRoutine({
+      id: BACKUP_ROUTINE_ID,
+      name: BACKUP_NAME,
+      agent_name: BACKUP_AGENT,
+      prompt: BACKUP_PROMPT,
+      task_type: legacy.task_type,
+      cron_expr: legacy.cron_expr,
+      enabled: legacy.enabled,
+      project: legacy.project,
+      owner_user_id: legacy.owner_user_id,
+      last_run_at: legacy.last_run_at,
+      next_run_at: legacy.next_run_at,
+    });
+  }
+  if (legacy) dbApi.deleteRoutine(LEGACY_BACKUP_ROUTINE_ID);
+  const row = dbApi.getRoutine(BACKUP_ROUTINE_ID);
+  if (!row) return;
+  if (row.name === BACKUP_NAME && row.prompt === BACKUP_PROMPT && row.agent_name === BACKUP_AGENT) return;
+  updateRoutine(BACKUP_ROUTINE_ID, {
+    name: BACKUP_NAME,
+    agent_name: BACKUP_AGENT,
+    prompt: BACKUP_PROMPT,
+  });
+}
+
 /** Idempotent: creates or re-enables the canonical 03:30 routine. */
 export function enableBackupRoutine(): BackupStatus {
+  migrateBackupRoutine();
   const existing = dbApi.getRoutine(BACKUP_ROUTINE_ID);
   if (existing) {
     updateRoutine(BACKUP_ROUTINE_ID, {
@@ -280,6 +317,7 @@ export const BACKUP_DEFAULT_KEY = 'backup.default_on.applied_at';
  * left alone. A failure leaves the marker unset, so the next boot retries.
  */
 export function applyBackupDefault(): 'created' | 'kept' | 'already' {
+  migrateBackupRoutine();
   if (dbApi.getAllSettings()[BACKUP_DEFAULT_KEY]) return 'already';
   const outcome = dbApi.getRoutine(BACKUP_ROUTINE_ID) ? 'kept' : 'created';
   if (outcome === 'created') enableBackupRoutine();
@@ -315,6 +353,7 @@ export function runNightlyBackup(when: Date = new Date()): ExportResult {
  * The backup routine opens NO task: the export runs here.
  */
 export async function tickRoutines(): Promise<void> {
+  migrateBackupRoutine();
   const due = dbApi.listDueRoutines();
   for (const r of due) {
     const now = Date.now();

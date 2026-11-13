@@ -37,12 +37,32 @@ export function ensureSpawnHelperExecutable(moduleDir: string, platform: NodeJS.
   }
 }
 
+/**
+ * The message from loading one native file, or null when it loads.
+ * node-pty's own loader replaces a failed `dlopen` with "checked: build/Release",
+ * which hides `GLIBC_2.xx not found`. Callers log this text first.
+ */
+export function nativePtyLoadError(load: (file: string) => unknown, file: string): string | null {
+  try {
+    load(file);
+    return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
+  }
+}
+
 /** node-pty, or null when its native binary does not load on this host. */
 export function loadNodePty(): NodePty | null {
   if (nodePty !== undefined) return nodePty;
   try {
     const req = createRequire(import.meta.url);
-    ensureSpawnHelperExecutable(dirname(req.resolve('node-pty/package.json')));
+    const moduleDir = dirname(req.resolve('node-pty/package.json'));
+    ensureSpawnHelperExecutable(moduleDir);
+    const native = join(moduleDir, 'build', 'Release', 'pty.node');
+    if (existsSync(native)) {
+      const detail = nativePtyLoadError((file) => req(file), native);
+      if (detail) console.warn('[terminal-web] pty.node failed to load:', detail);
+    }
     nodePty = req('node-pty') as NodePty;
   } catch (err) {
     console.warn('[terminal-web] node-pty unavailable:', (err as Error).message);

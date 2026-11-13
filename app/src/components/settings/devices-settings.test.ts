@@ -377,7 +377,7 @@ test('the code card says where to enter it, with this machine\'s address when th
   }
 });
 
-test('without a known address, the code card links the documentation', async () => {
+test('without a known address, the code card does not link off-site', async () => {
   const realFetch = globalThis.fetch;
   const calls: Call[] = [];
   installFetch(calls);
@@ -388,8 +388,8 @@ test('without a known address, the code card links the documentation', async () 
       await settle(React);
       await React.act(async () => { button('Authorize a new device').click(); });
       await settle(React);
-      const link = Array.from(document.querySelectorAll('a')).find((a) => a.textContent === 'How to get one');
-      assert.equal(link?.getAttribute('href'), 'https://docs.timon-ai.com/usage/machines#add-a-machine');
+      const link = Array.from(document.querySelectorAll('a')).find((a) => (a.getAttribute('href') ?? '').includes('timon-ai.com'));
+      assert.equal(link, undefined);
     });
   } finally {
     Object.defineProperty(globalThis, 'fetch', { value: realFetch, configurable: true, writable: true });

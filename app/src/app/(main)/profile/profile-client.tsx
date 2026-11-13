@@ -25,7 +25,10 @@ import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/image-upload';
 import { LogoCropDialog, type LogoCropSource } from '@/components/logo-crop-dialog';
 import type { PublicUser } from '@/lib/auth';
 import { t } from '@/lib/i18n';
-import { LicenseSection } from './license-section';
+/** A name-only account has a generated address and no password. */
+function nameOnly(email: string): boolean {
+  return email.endsWith('@local.host');
+}
 
 /** Section chrome, so the three blocks below read as one page. */
 function Section({
@@ -334,9 +337,8 @@ export function ProfileClient(): ReactElement {
       </div>
       <div className="grid max-w-3xl gap-4">
         <IdentitySection user={user} />
-        <EmailSection user={user} />
-        <PasswordSection />
-        <LicenseSection canEdit={user.is_superadmin} />
+        {!nameOnly(user.email) && <EmailSection user={user} />}
+        {!nameOnly(user.email) && <PasswordSection />}
       </div>
     </div>
   );

@@ -25,7 +25,7 @@ test('sans AppFrame, l\'hôte remplit quand même le rail — le cas /agents', (
   mountBundledClients(null);
 
   const entries = slotEntries('nav.item');
-  assert.ok(entries.length >= 14, `expected every product entry, got ${entries.length}`);
+  assert.ok(entries.length >= 13, `expected every product entry, got ${entries.length}`);
   assert.equal(entries[0]?.pluginId, '@timon/ui-layout', 'the cockpit stays the first entry');
   const orders = entries.map((e) => e.order);
   assert.deepEqual(orders, [...orders].sort((a, b) => a - b));

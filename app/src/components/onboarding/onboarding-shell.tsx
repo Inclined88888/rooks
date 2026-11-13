@@ -15,7 +15,8 @@ import { flushSync } from 'react-dom';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { fetchCapabilities } from '@/lib/capabilities';
-import { getLocale, t } from '@/lib/i18n';
+import { getLocale, loadLocale, localeDirection, t } from '@/lib/i18n';
+import { negotiateLocale, readLocaleChoice } from '@/lib/locale-preference';
 import { welcomeLanding } from '@/app/setup/agent/setup-landing';
 import { cn } from '@/lib/utils';
 import { usePrefersReducedMotion } from '@/components/mascot/agent-mascot';
@@ -73,6 +74,22 @@ export function OnboardingShell({
   motion.current = reduced;
   const finishRef = useRef(finish ?? (() => { void afterLastStep(); }));
   finishRef.current = finish ?? finishRef.current;
+
+  // No language step: with no choice stored, the screen follows the system locale.
+  // A choice made in Settings (the cookie) is left as it is.
+  useEffect(() => {
+    if (readLocaleChoice(document.cookie) !== 'auto') return;
+    const tag = negotiateLocale(navigator.languages);
+    if (tag === getLocale()) return;
+    let live = true;
+    void loadLocale(tag).then(() => {
+      if (!live) return;
+      document.documentElement.lang = getLocale();
+      document.documentElement.dir = localeDirection(getLocale());
+      setLanguageShown(getLocale());
+    });
+    return () => { live = false; };
+  }, []);
 
   useEffect(() => {
     // A tab still on the former chat step goes where that conversation lives now.
@@ -132,11 +149,6 @@ export function OnboardingShell({
   return (
     <OnboardingProvider value={nav}>
       <div className="fixed inset-0 overflow-hidden bg-background text-foreground">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{ backgroundImage: 'radial-gradient(ellipse 55% 45% at 50% 15%, hsl(var(--primary) / 0.10), transparent 70%)' }}
-        />
         {dots && (
           <div className="absolute left-1/2 top-[22px] z-20 flex -translate-x-1/2 gap-[7px]">
             <span className="sr-only">
@@ -164,8 +176,12 @@ export function OnboardingShell({
           </Button>
         )}
         <SchemeSwitch className="absolute right-4 top-3.5 z-20" />
-        <main className="absolute inset-0 flex flex-col items-center justify-center overflow-auto p-8">
-          {Step && <Gate step={at.step}><Step key={at.step} /></Gate>}
+        <main className="absolute inset-0 overflow-auto">
+          {/* min-h-full centres a short step and still scrolls a tall one.
+              justify-center on the scroller itself clips the agent step's Continue. */}
+          <div className="flex min-h-full flex-col items-center justify-center p-8">
+            {Step && <Gate step={at.step}><Step key={at.step} /></Gate>}
+          </div>
         </main>
         {companions.map((Companion, i) => <Companion key={i} step={at.step} stays={stays} />)}
       </div>

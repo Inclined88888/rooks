@@ -2,12 +2,11 @@
 
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { useRef, useState } from 'react';
-import { Check, ChevronRight, Compass, Focus, LayoutGrid, MessageSquare, Moon, Palette, Settings2 } from 'lucide-react';
+import { useRef } from 'react';
+import { Check, ChevronRight, Compass, Focus, LayoutGrid, MessageSquare, Palette, Settings2 } from 'lucide-react';
 import * as Dropdown from '@radix-ui/react-dropdown-menu';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { useColorScheme } from '@/components/theme-provider';
 import { useWidgetHost } from '@/components/widget-host/widget-host';
 import { ChatAppearanceItems, useChatAppearanceControls } from '@/components/chat/chat-appearance-menu';
 import { GUIDED_TOUR_ENABLED, startOnboardingTour } from '@/lib/guided-tour';
@@ -26,7 +25,6 @@ const ITEM = 'flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-x
 /** Appearance controls share one place in every topbar. Widgets move and
  * resize at any time: there is no layout editing mode to switch on here. */
 export function ThemeToggle() {
-  const { scheme, setScheme } = useColorScheme();
   const { open: openSettings } = useSettingsNavigation();
   const { paletteOpen, setPaletteOpen, palette } = useWidgetHost();
   // Focus mode only slides the chat's columns away: offering it on a page
@@ -34,27 +32,9 @@ export function ThemeToggle() {
   const pathname = usePathname();
   const { appearance, toggle } = useChatAppearanceControls();
   const inChat = pathname === '/chat' || pathname === '/multichat';
-  const [saving, setSaving] = useState(false);
   // Set by "Add widget": the closing menu must not take focus back to its
   // trigger, the catalog's search field has it.
   const toPalette = useRef(false);
-
-  async function toggleTheme() {
-    const previous = scheme;
-    const next = scheme === 'light' ? 'dark' : 'light';
-    setScheme(next);
-    setSaving(true);
-    try {
-      const res = await fetch('/api/ui/prefs', {
-        method: 'PUT', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ scheme: next }), cache: 'no-store',
-      });
-      if (!res.ok) throw new Error('save');
-    } catch {
-      setScheme(previous);
-      toast.error(t('appearance.saveError'));
-    } finally { setSaving(false); }
-  }
 
   // Non-modal: "Appearance settings" opens the Settings dialog. A modal menu
   // still closing while it mounts leaves `pointer-events: none` on <body>,
@@ -70,11 +50,6 @@ export function ThemeToggle() {
       <Dropdown.Content align="end" sideOffset={8} onCloseAutoFocus={(e) => { if (toPalette.current) { e.preventDefault(); toPalette.current = false; } }} className="z-50 w-60 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-elev-2">
         <NativeViewCover />
         <Dropdown.Label className="px-3 py-2 text-xs font-medium">{t('appearance.menu.title')}</Dropdown.Label>
-        <Dropdown.CheckboxItem checked={scheme === 'dark'} disabled={saving} onCheckedChange={() => void toggleTheme()} onSelect={e => e.preventDefault()} className={ITEM}>
-          <Moon className="size-4" /><span className="flex-1">{t('nav.darkTheme')}</span>
-          <span aria-hidden="true" className={`flex h-4 w-7 items-center rounded-full p-0.5 ${scheme === 'dark' ? 'bg-primary' : 'bg-muted-foreground/30'}`}><span className={`size-3 rounded-full bg-popover ${scheme === 'dark' ? 'translate-x-3' : ''}`} /></span>
-        </Dropdown.CheckboxItem>
-        {/* The full settings sit next to the quick switch they extend. */}
         <Dropdown.Item className={ITEM} onSelect={() => openSettings({ category: 'interface', tab: 'appearance' })}>
           <Settings2 className="size-4" /><span className="flex-1">{t('appearance.title')}</span>
         </Dropdown.Item>

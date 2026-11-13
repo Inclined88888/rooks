@@ -22,10 +22,8 @@ import {
 } from './ui-theme-variants';
 import { Switch } from '@/components/ui/switch';
 import { useColorScheme } from '@/components/theme-provider';
+import { appliedScheme, storeSchemeMode } from '@/lib/scheme-mode';
 import { cn } from '@/lib/utils';
-import { GLASS_SCOPES, GLASS_TUNING_ENABLED } from '@/lib/glass-scope';
-import { GlassTuningSettings } from './ui-theme-glass-tuning';
-import { GlassProfilesSection } from '@/components/glass-profiles';
 import { mascotAnimationPref, useMascotAnimation } from '@/components/mascot/mascot-animation-pref';
 
 type CatalogPayload = { plugins?: AppearanceCatalogRow[] };
@@ -122,7 +120,11 @@ function RadioList({
  */
 export function AppearanceSettings(): ReactElement {
   const caps = useCapabilities();
-  const { scheme } = useColorScheme();
+  const { scheme, setScheme } = useColorScheme();
+  const [schemeMode, setSchemeMode] = useState<'light' | 'system'>('light');
+  useEffect(() => {
+    try { setSchemeMode(window.localStorage.getItem('rooks.appearance.schemeMode') === 'system' ? 'system' : 'light'); } catch { /* private mode */ }
+  }, []);
   const [native, setNative] = useState<NativeAppearance>(DEFAULT_APPEARANCE);
   const [variantReady, setVariantReady] = useState(false);
   useEffect(() => { void loadLayout({ scope: APPEARANCE_SCOPE, storage: null }).then((out) => {
@@ -279,6 +281,27 @@ export function AppearanceSettings(): ReactElement {
 
   return (
     <div className="flex flex-col gap-2">
+      <fieldset className="pb-2 pt-4">
+        <legend className="text-sm font-medium">{t('onboarding.scheme.label')}</legend>
+        <div className="mt-3 flex flex-wrap gap-4 text-[13px]">
+          {(['light', 'system'] as const).map((choice) => (
+            <label key={choice} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="scheme-mode"
+                checked={schemeMode === choice}
+                onChange={() => {
+                  storeSchemeMode(choice);
+                  setSchemeMode(choice);
+                  setScheme(appliedScheme(choice));
+                  window.dispatchEvent(new Event('rooks-scheme-mode'));
+                }}
+              />
+              <span>{t(`onboarding.scheme.${choice}`)}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       {selectedTheme === '@timon/ui-theme' && <fieldset className="pb-6 pt-4">
         <legend className="text-sm font-medium">{t('appearance.styleTitle')}</legend>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t('appearance.styleHint')}</p>
@@ -357,8 +380,6 @@ export function AppearanceSettings(): ReactElement {
           </div>
         </div>
       </fieldset>}
-      {/* The two switch groups sit side by side from `md`: how widgets are drawn on the left, the frosted glass on the right. */}
-      <div className="grid gap-x-10 md:grid-cols-2">
       <fieldset className="min-w-0 py-4">
         <legend className="text-[13px] font-medium leading-snug">{t('appearance.widgetsTitle')}</legend>
         <p className="mt-0.5 max-w-[65ch] text-[12px] leading-snug text-muted-foreground">{t('appearance.widgetsHint')}</p>
@@ -373,62 +394,6 @@ export function AppearanceSettings(): ReactElement {
           </label>
         </div>
       </fieldset>
-      <fieldset className="min-w-0 py-4">
-        <legend className="text-[13px] font-medium leading-snug">{t('appearance.glassTitle')}</legend>
-        <p className="mt-0.5 max-w-[65ch] text-[12px] leading-snug text-muted-foreground">{t('appearance.glassHint')}</p>
-        <div className="mt-3 flex flex-col gap-3">
-          <label className="flex cursor-pointer items-start gap-3">
-            <Switch checked={native.glass} disabled={!variantReady} onCheckedChange={(v) => { void persistNative({ glass: v }); }} className="mt-0.5" />
-            <span className="text-[13px] leading-snug">{t('appearance.glassChrome')}<span className="mt-0.5 block text-[11px] text-muted-foreground">{t('appearance.glassChromeHint')}</span></span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-3">
-            <Switch checked={native.glassBubbles} disabled={!variantReady} onCheckedChange={(v) => { void persistNative({ glassBubbles: v }); }} className="mt-0.5" />
-            <span className="text-[13px] leading-snug">{t('appearance.glassBubbles')}<span className="mt-0.5 block text-[11px] text-muted-foreground">{t('appearance.glassBubblesHint')}</span></span>
-          </label>
-        </div>
-        {/* Where the glass sits: the default each island follows until its menu says otherwise. */}
-        <div role="radiogroup" aria-label={t('appearance.glassScope')} className={cn('mt-4 flex flex-col gap-1', (!native.glass || !variantReady) && 'pointer-events-none opacity-60')}>
-          <span className="text-[13px] leading-snug">{t('appearance.glassScope')}<span className="mt-0.5 block text-[11px] text-muted-foreground">{t('appearance.glassScopeHint')}</span></span>
-          {GLASS_SCOPES.map((scope) => {
-            const checked = native.glassScope === scope;
-            const key = scope === 'island' ? 'Island' : scope === 'widgets' ? 'Widgets' : 'Both';
-            const [label, hint] = [t(`appearance.glassScope${key}`), t(`appearance.glassScope${key}Hint`)];
-            return (
-              <label
-                key={scope}
-                className={cn(
-                  'flex cursor-pointer items-start gap-2.5 rounded-lg px-2 py-1.5 text-[13px] leading-snug',
-                  checked ? 'bg-foreground/[0.08] text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground',
-                )}
-              >
-                <input
-                  type="radio"
-                  name="appearance-glass-scope"
-                  value={scope}
-                  checked={checked}
-                  disabled={!native.glass || !variantReady}
-                  onChange={() => { void persistNative({ glassScope: scope }); }}
-                  className="mt-0.5 size-3.5 accent-primary"
-                />
-                <span className={cn(checked && 'font-medium')}>{label}<span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">{hint}</span></span>
-              </label>
-            );
-          })}
-        </div>
-        {/* Hidden until finished (`GLASS_TUNING_ENABLED`): one section with the switches above. */}
-        {GLASS_TUNING_ENABLED && <>
-          <GlassTuningSettings
-            native={native}
-            disabled={(!native.glass && !native.glassBubbles) || !variantReady}
-            scheme={scheme === 'light' ? 'light' : 'dark'}
-            onPreview={previewPatch}
-            onReset={resetField}
-          />
-          <GlassProfilesSection native={native} onApply={(settings) => resetField(settings)} />
-        </>}
-      </fieldset>
-      </div>
-      <MascotAnimationSetting />
       <BackgroundSettings />
       <RadioList
         name="appearance-theme"

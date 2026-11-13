@@ -93,7 +93,7 @@ export async function revealEntry(
     trusted = sender.isWindow && sender.isMainFrame
       && new URL(sender.url).origin === new URL(uiOrigin).origin;
   } catch { /* Reject malformed or missing frame URLs. */ }
-  if (!trusted) throw new Error('Showing a path is only available from Timon.');
+  if (!trusted) throw new Error('Showing a path is only available from Rooks.');
 
   const { agentId, path } = (input && typeof input === 'object' ? input : {}) as { agentId?: unknown; path?: unknown };
   if (
