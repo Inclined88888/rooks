@@ -12,7 +12,6 @@ import { Dices, Paintbrush, Shuffle } from 'lucide-react';
 import { BrandMark } from '@/components/brand-mark';
 import { AgentMascotHost } from '@/components/mascot/agent-mascot';
 import type { AgentLook } from '@/components/mascot/agent-look';
-import { furOf } from '@/components/mascot/mascot-geometry';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ModelOption } from '../agent-draft';
@@ -41,13 +40,8 @@ export function IdentityCard(props: IdentityCardProps): ReactElement {
   return (
     <aside
       data-identity-card
-      className="relative overflow-hidden rounded-[26px] bg-card px-5 pb-5 pt-[22px] text-center shadow-elev-3 ring-1 ring-border md:sticky md:top-2"
+      className="relative overflow-hidden rounded-lg bg-card px-5 pb-5 pt-[22px] text-center ring-1 ring-border md:sticky md:top-2"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-60 opacity-50 transition-[background] duration-500"
-        style={{ background: `radial-gradient(260px 200px at 50% 26%, ${furOf(look.color)}, transparent 70%)` }}
-      />
       <div className="relative grid h-[130px] place-items-center">
         <span key={jump} className={cn('inline-grid', jump > 0 && 'rooks-mascot-jump')}>
           <AgentMascotHost look={look} size={124} live label={name.trim() || null} />

@@ -47,10 +47,10 @@ export function LlmStep(): ReactElement {
 
   return (
     <section className="mx-auto flex max-h-full min-h-0 w-full max-w-[560px] flex-col items-start px-8 py-10 text-left" data-llm-step>
-      <h1 className="shrink-0 text-[28px] font-semibold leading-tight tracking-[-0.03em]">
+      <h1 className="shrink-0 text-[22px] font-semibold leading-tight tracking-[-0.025em]">
         {t('onboarding.llm.title').replace(/\n/g, ' ')}
       </h1>
-      <p className="mb-6 mt-2 max-w-[470px] shrink-0 text-[14px] leading-relaxed text-muted-foreground">{t('onboarding.llm.subtitle')}</p>
+      <p className="mb-6 mt-2 max-w-[470px] shrink-0 text-[13.5px] leading-relaxed text-muted-foreground">{t('onboarding.llm.subtitle')}</p>
       <ViewSwap
         view={view}
         className="flex min-h-0 w-full flex-col items-stretch pb-2"

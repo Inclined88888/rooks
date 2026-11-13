@@ -174,10 +174,17 @@ test('the roller applies a language after a short rest on it, not every row a dr
   assert.deepEqual(applied, ['it', 'nl', 'pl'], 'back to the applied one: nothing to load');
 });
 
-test('language flags are not part of first-run onboarding', async () => {
-  // Language lives in Settings › Interface; splash has no picker or flags.
+test('splash has no mascot heap, language roller, or flags', async () => {
+  // Language lives in Settings › Interface; splash is a flat mark + Continue.
+  const { readFileSync } = await import('node:fs');
+  const { dirname, join } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const here = dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(join(here, 'steps/splash.tsx'), 'utf8');
+  assert.equal(src.includes('MascotAvalanche'), false, 'no heap canvas');
+  assert.equal(src.includes('LanguageRoller'), false, 'no language step');
+  assert.equal(src.includes('LanguageFlag'), false, 'no emoji flags');
+  assert.equal(src.includes('radial-gradient'), false, 'no radial glow');
   const splash = await import('./steps/splash');
   assert.equal(typeof splash.SplashStep, 'function');
-  const flags = await import('./language-flags');
-  assert.ok(flags.FLAGS);
 });

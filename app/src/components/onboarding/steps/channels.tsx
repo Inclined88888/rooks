@@ -26,13 +26,13 @@ export function ChannelsStep(): ReactElement {
 
   return (
     <section data-onboarding-step="channels" className="flex w-full max-w-[520px] flex-col items-start px-8 py-10 text-left">
-      <h1 className="rooks-onboarding-rise text-[28px] font-semibold leading-tight tracking-[-0.03em]">
+      <h1 className="rooks-onboarding-rise text-[22px] font-semibold leading-tight tracking-[-0.025em]">
         {t('onboarding.channels.title')}
       </h1>
-      <p className="rooks-onboarding-rise mb-6 mt-2.5 text-[15px] leading-normal text-muted-foreground" style={{ animationDelay: '60ms' }}>
+      <p className="rooks-onboarding-rise mb-6 mt-2 text-[13.5px] leading-relaxed text-muted-foreground" style={{ animationDelay: '60ms' }}>
         {t('onboarding.channels.subtitle')}
       </p>
-      <div className="rooks-onboarding-rise flex w-full flex-col gap-0.5 rounded-2xl bg-card/80 p-1.5 text-left shadow-elev-2 ring-1 ring-border" style={{ animationDelay: '100ms' }}>
+      <div className="rooks-onboarding-rise flex w-full flex-col gap-0.5 rounded-lg border border-border bg-background p-1 text-left" style={{ animationDelay: '100ms' }}>
         {CHANNELS.map((ch, i) => {
           const Icon = ch.icon;
           return (
@@ -43,12 +43,12 @@ export function ChannelsStep(): ReactElement {
               onClick={() => setPicked(ch.id)}
               style={{ animationDelay: `${120 + i * 40}ms` }}
               className={cn(
-                'rooks-onboarding-rise group flex w-full items-center gap-3.5 rounded-xl p-3.5 text-left transition-colors duration-150',
+                'rooks-onboarding-rise group flex w-full items-center gap-3.5 rounded-md p-3 text-left transition-colors duration-150',
                 'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 picked === ch.id && 'bg-muted',
               )}
             >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground transition-transform duration-150 group-hover:scale-105">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
                 <Icon className="size-4" aria-hidden />
               </span>
               <span className="min-w-0 flex-1">
@@ -65,7 +65,7 @@ export function ChannelsStep(): ReactElement {
         </p>
       )}
       <div className="mt-6 flex flex-col items-center gap-2">
-        <Button type="button" className="gap-2 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]" onClick={next} data-channels-continue>
+        <Button type="button" className="gap-2" onClick={next} data-channels-continue>
           {t('onboarding.continue')}
           <ArrowRight className="size-4" aria-hidden />
         </Button>

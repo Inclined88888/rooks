@@ -196,10 +196,10 @@ export function AccountStep(): ReactElement {
       <div className="rooks-onboarding-rise">
         <AgentMascotHost look={LOOK} size={56} />
       </div>
-      <h1 className="rooks-onboarding-rise mt-3 text-[28px] font-semibold leading-tight tracking-[-0.03em]" style={{ animationDelay: '60ms' }}>
+      <h1 className="rooks-onboarding-rise mt-3 text-[22px] font-semibold leading-tight tracking-[-0.025em]" style={{ animationDelay: '60ms' }}>
         {t('onboarding.account.title')}
       </h1>
-      <p className="rooks-onboarding-rise mt-1.5 text-sm leading-snug text-muted-foreground" style={{ animationDelay: '100ms' }}>
+      <p className="rooks-onboarding-rise mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground" style={{ animationDelay: '100ms' }}>
         {t('onboarding.account.subtitle')}
       </p>
       <form noValidate aria-busy={sending} className="rooks-onboarding-rise mt-[18px] flex w-full flex-col gap-2.5 text-left" style={{ animationDelay: '140ms' }} onSubmit={(e) => { void submit(e); }}>
