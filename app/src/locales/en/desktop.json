@@ -13,7 +13,8 @@
     "about": {
       "item": "About Rooks",
       "title": "About Rooks",
-      "version": "Version",
+      "version": "App",
+      "daemon": "Daemon",
       "noticesTitle": "Third-party model licences",
       "noticesMissing": "THIRD-PARTY-MODELS.md is missing from this installation. Reinstall Rooks to restore it.",
       "close": "Close"

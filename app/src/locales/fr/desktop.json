@@ -13,7 +13,8 @@
     "about": {
       "item": "À propos de Rooks",
       "title": "À propos de Rooks",
-      "version": "Version",
+      "version": "App",
+      "daemon": "Daemon",
       "noticesTitle": "Licences des modèles tiers",
       "noticesMissing": "Le fichier THIRD-PARTY-MODELS.md est introuvable dans cette installation. Réinstallez Rooks pour le restaurer.",
       "close": "Fermer"

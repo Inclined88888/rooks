@@ -21,7 +21,9 @@ test('about: the packaged app reads the notices at the root of its resources, th
 test('about: the page carries the version and the whole Cohere NOTICE, line breaks kept', () => {
   const { html, links } = aboutPage({ version: '0.2.0', electron: '38.1.0', notices, locale: 'en-US', scheme: 'dark' });
   assert.match(html, /About Rooks/);
-  assert.match(html, /Version 0\.2\.0 · Electron 38\.1\.0/);
+  assert.match(html, /App 0\.2\.0 · Daemon — · Electron 38\.1\.0/);
+  const withDaemon = aboutPage({ version: '0.2.0', daemonVersion: '0.2.0', electron: '38.1.0', notices, locale: 'en-US', scheme: 'dark' });
+  assert.match(withDaemon.html, /App 0\.2\.0 · Daemon 0\.2\.0 · Electron 38\.1\.0/);
   for (const model of ['Parakeet TDT 0.6B v3', 'Canary 180M Flash', 'Cohere Transcribe 03-2026']) assert.ok(html.includes(model), model);
   assert.match(html, /<pre class="notice">Cohere Transcribe 03-2026\nCopyright Cohere Labs\.\n/);
   assert.match(html, /Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\);\nyou may not use/);

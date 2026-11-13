@@ -5,7 +5,15 @@ import { ABOUT_CLOSE_URL, aboutCopy, aboutPage } from './about.js';
 /** One window at a time: asking again brings the open one forward. No preload, no Node, no remote document. */
 let current: BrowserWindow | null = null;
 
-export function showAboutWindow(input: { version: string; electron: string; notices: string | null; locale: string; scheme: 'light' | 'dark'; icon?: string }): void {
+export function showAboutWindow(input: {
+  version: string;
+  daemonVersion?: string | null;
+  electron: string;
+  notices: string | null;
+  locale: string;
+  scheme: 'light' | 'dark';
+  icon?: string;
+}): void {
   if (current && !current.isDestroyed()) {
     if (current.isMinimized()) current.restore();
     current.show();

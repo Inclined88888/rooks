@@ -37,7 +37,7 @@ import { galleryPlugins, loaderFromApp } from '../../plugins/runtime.js';
 import { instanceId } from '../../host/packaged-service.js';
 import { ROOKS_HOME } from '../../paths.js';
 import { BRAND } from '../../brand.js';
-import { packagedDaemon } from '../../data-version.js';
+import { packagedDaemon, rooksVersion } from '../../data-version.js';
 import { onboardingStep } from '../../onboarding-events.js';
 import { apiError } from '../../api-error.js';
 
@@ -58,7 +58,15 @@ export function registerRoutes(app: Router): void {
     // `packaged` tells the desktop whether this daemon is one it can update: a
     // daemon run from the sources has no update routes and no update token, so
     // offering it a data migration could only end in a failure (TODO #477).
-    res.json({ ok: true, service: BRAND.id, instance: instanceId(ROOKS_HOME), packaged: packagedDaemon() });
+    // `version` lets the packaged shell refuse a launchd/systemd daemon left
+    // from an older install (ROO-15) instead of painting that release's UI.
+    res.json({
+      ok: true,
+      service: BRAND.id,
+      instance: instanceId(ROOKS_HOME),
+      packaged: packagedDaemon(),
+      version: rooksVersion(),
+    });
   });
 
   /**

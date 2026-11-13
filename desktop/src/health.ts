@@ -6,19 +6,21 @@ export type Identity = 'rooks' | 'foreign';
 
 export type HealthResult =
   /** `packaged` is absent before 0.1.6: unknown, never read as "not packaged". */
-  | { ok: true; status: number; identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean }
+  /** `version` is absent before ROO-15: a packaged shell treats that as stale. */
+  | { ok: true; status: number; identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean; version?: string }
   | { ok: false; status: number | null; error?: string };
 
 /** The daemon's own id, as `plugins-bundled/http/routes.ts` publishes it. */
 export const SERVICE_ID = 'rooks';
 
-async function identify(res: Response): Promise<{ identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean }> {
+async function identify(res: Response): Promise<{ identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean; version?: string }> {
   if (!res.ok) return { identity: 'foreign' };
   try {
-    const body = await res.json() as { service?: unknown; instance?: unknown; status?: unknown; packaged?: unknown } | null;
+    const body = await res.json() as { service?: unknown; instance?: unknown; status?: unknown; packaged?: unknown; version?: unknown } | null;
     if (body?.service !== SERVICE_ID) return { identity: 'foreign' };
     return { identity: 'rooks', ...(body.status === 'update_pending' ? { updatePending: true } : {}), ...(typeof body.instance === 'string' ? { instance: body.instance } : {}),
-      ...(typeof body.packaged === 'boolean' ? { packaged: body.packaged } : {}) };
+      ...(typeof body.packaged === 'boolean' ? { packaged: body.packaged } : {}),
+      ...(typeof body.version === 'string' && body.version.trim() ? { version: body.version.trim() } : {}) };
   } catch { return { identity: 'foreign' }; }
 }
 

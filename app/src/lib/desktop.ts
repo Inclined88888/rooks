@@ -12,7 +12,7 @@ declare global {
       selectExecutable?: (defaultPath?: string) => Promise<string | null>;
       revealPath?: (request: { agentId: string; path: string }) => Promise<unknown>;
       /** Absent from a desktop older than 0.1.5. */
-      appInfo?: () => Promise<{ version: string }>;
+      appInfo?: () => Promise<{ version: string; daemonVersion?: string | null; build?: string }>;
       /** Opens the logs folder of the data directory; absent before 0.1.5. Resolves to '' or an error. */
       openLogsFolder?: () => Promise<string>;
       /** Opens "About Rooks" with the speech-model licences (TODO #582); absent from an older desktop. */

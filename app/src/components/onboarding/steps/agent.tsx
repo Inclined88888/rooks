@@ -198,8 +198,8 @@ export function AgentStep(): ReactElement {
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground sm:text-[15px]">
               {t(`onboarding.agent.${view}.subtitle`)}
             </p>
-            {/* Intentional quiet note when profile is unavailable — not an error toast. */}
-            {status === 'ready' && profile === null && view === 'templates' && (
+            {/* Quiet note when profile is unavailable — never the old error banner. */}
+            {(status === 'ready' || status === 'error') && profile === null && view === 'templates' && (
               <p data-profile-fallback className="mt-2 text-xs text-muted-foreground">
                 {t('onboarding.agent.profileFallback')}
               </p>

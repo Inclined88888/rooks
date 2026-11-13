@@ -2,8 +2,8 @@
  * The agent step, rendered (jsdom) against a fake daemon: the view follows the
  * profile and the switcher changes it, « Create » writes the main agent
  * (name, then one config PATCH) and opens the chat step, a refused name stays
- * on the step, « Customise » opens and closes, and a profile that could not
- * be read says so and can be read again.
+ * on the step, and a profile that could not be read stays on templates with
+ * a quiet fallback (no error banner). Look Random/Customise stay off the card.
  */
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -250,22 +250,13 @@ test('sheet: line of work, exact permission mode with its warning, the daemon\'s
   });
 });
 
-test('« Customise » opens the panel; a pick is kept and sent; Escape closes it', async () => {
+test('identity card has no Random/Customise look controls (calm onboarding)', async () => {
   await renderStep('developer', async (r) => {
-    assert.equal(q(r.host, '[data-look-styler]').getAttribute('data-look-styler'), 'closed');
-    await click(r, '[data-customise]');
-    assert.equal(q(r.host, '[data-look-styler]').getAttribute('data-look-styler'), 'open');
-    await click(r, '[data-shape="bean"]');
-    await click(r, '[data-acc="globe"]');
-    await r.react.act(async () => { window.dispatchEvent(new r.dom.window.KeyboardEvent('keydown', { key: 'Escape' })); });
-    await settle(r.react);
-    assert.equal(q(r.host, '[data-look-styler]').getAttribute('data-look-styler'), 'closed');
-    await click(r, '[data-role="chore"]');
-    await click(r, '[data-create]');
-    await settle(r.react, 40);
-    const look = patchOf(r.calls)?.look as { shape?: string; acc?: string } | undefined;
-    assert.equal(look?.shape, 'bean', 'the styled look survives a change of role');
-    assert.equal(look?.acc, 'globe');
+    assert.ok(q(r.host, '[data-identity-card]'));
+    assert.ok(q(r.host, '[data-identity-mark]'), 'initial mark instead of mascot');
+    assert.ok(!r.host.querySelector('[data-customise]'));
+    assert.ok(!r.host.querySelector('[data-random-look]'));
+    assert.ok(!r.host.querySelector('[data-look-styler]'));
   });
 });
 
@@ -292,51 +283,13 @@ test('interview: five questions, answered ones reopen, then « Create » writes 
   });
 });
 
-test('a profile that could not be read says so, and « Retry » reads it again', async () => {
-  let up = false;
+test('a profile that could not be read stays on templates with a quiet fallback (no error banner)', async () => {
   await renderStep(null, async (r) => {
     assert.equal(q(r.host, '[data-onboarding-step="agent"]').getAttribute('data-agent-view'), 'templates');
-    assert.ok(q(r.host, '[data-profile-error]'));
-    up = true;
-    await click(r, '[data-profile-error] button');
-    await settle(r.react, 40);
-    assert.ok(!r.host.querySelector('[data-profile-error]'));
-    assert.equal(q(r.host, '[data-onboarding-step="agent"]').getAttribute('data-agent-view'), 'sheet');
+    assert.ok(q(r.host, '[data-profile-fallback]'));
+    assert.ok(!r.host.querySelector('[data-profile-error]'), 'hard error toast is gone');
+    assert.match(q(r.host, '[data-profile-fallback]').textContent ?? '', /Starter templates/);
   }, (c) => (c.url === '/api/ui/onboarding/profile'
-    ? (up ? Response.json({ profile: 'developer', at: 1 }) : Response.json({ error: 'unreachable' }, { status: 502 }))
+    ? Response.json({ error: 'unreachable' }, { status: 502 })
     : undefined));
-});
-
-test('« Customise » opens the shared configurator: a plugin that takes `agent.lookstyler` paints inside the panel', async () => {
-  const { register, resetSlotsForTests, AGENT_LOOK_STYLER_SLOT } = await import('@/lib/plugin-host/slots');
-  const { useLookStyler } = await import('@/components/mascot/look-styler/look-styler-context');
-  const React = await import('react');
-  resetSlotsForTests();
-  function Replacement() {
-    const v = useLookStyler();
-    return React.createElement('button', {
-      type: 'button',
-      'data-plugin-styler': v?.name,
-      onClick: () => v?.onChange({ shape: 'cloud', color: '#3fa9ff', eyes: 'star', acc: 'telescope' }),
-    });
-  }
-  const dispose = register({ slot: AGENT_LOOK_STYLER_SLOT, pluginId: 'acme-styler' }, Replacement);
-  try {
-    await renderStep('developer', async (r) => {
-      assert.ok(!r.host.querySelector('[data-plugin-styler]') && !document.querySelector('[data-plugin-styler]'), 'nothing painted while the panel is closed');
-      await click(r, '[data-customise]');
-      const name = q<HTMLInputElement>(r.host, '[data-agent-name]').value;
-      assert.equal(q(r.host, '[data-plugin-styler]').getAttribute('data-plugin-styler'), name, 'the plugin reads the agent\'s name');
-      assert.ok(!document.querySelector('[data-look-styler-content]'), 'the product\'s grids stepped aside');
-      assert.ok(q(r.host, '[data-style-done]'), 'the panel and its « Done » stay the step\'s');
-      await click(r, '[data-plugin-styler]');
-      await click(r, '[data-style-done]');
-      await click(r, '[data-create]');
-      await settle(r.react, 40);
-      assert.deepEqual(patchOf(r.calls)?.look, { shape: 'cloud', color: '#3fa9ff', eyes: 'star', acc: 'telescope' });
-    });
-  } finally {
-    dispose();
-    resetSlotsForTests();
-  }
 });

@@ -40,7 +40,14 @@ export async function waitForDataUpdate(): Promise<void> {
     mountDataUpdateRoutes(app, update, token);
     // Public liveness only: supervisors must not roll back a healthy waiting process.
     app.get('/api/health', (_req, res) => {
-      res.json({ ok: true, service: BRAND.id, instance: instanceId(ROOKS_HOME), packaged: true, status: update.status().status === 'ready' ? 'starting' : 'update_pending' });
+      res.json({
+        ok: true,
+        service: BRAND.id,
+        instance: instanceId(ROOKS_HOME),
+        packaged: true,
+        version,
+        status: update.status().status === 'ready' ? 'starting' : 'update_pending',
+      });
     });
     app.use((_req, res) => { res.status(503).json({ error: 'update_pending' }); });
     const bound = listenAll(app, cfg.daemon.listen.host, cfg.daemon.listen.port, console.warn, cfg.daemon.listen.extraHosts);

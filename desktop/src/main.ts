@@ -41,6 +41,9 @@ import { queueAppImageRelaunch } from './appimage-restart.js';
 import { LEAVE as UNLOAD_LEAVE, unloadPrompt } from './unload-prompt.js';
 import { daemonEnvOverrides, loadDesktopConfig, originOf, packagedFirstRun, resolveRooksHome, type DesktopConfig } from './config.js';
 import { isRooks, probeHealth, waitForHealth, type HealthResult } from './health.js';
+import { daemonVersionOf, daemonVersionStale } from './daemon-version.js';
+import { replaceStaleDaemon, waitUntilDaemonGone } from './replace-stale-daemon.js';
+import { shellCacheClearNeeded, writeShellCacheVersion } from './shell-cache.js';
 import {
   daemonEntryOf,
   daemonInstallDirOf,
@@ -182,6 +185,8 @@ let speech: DesktopSpeech | null = null;
 const microphone = microphoneAccess(process.platform, systemPreferences);
 let tray: Tray | null = null;
 let daemonUp = false;
+/** Last `/api/health` version seen for this home — About and Settings compare it to the app. */
+let lastDaemonVersion: string | null = null;
 let stopEmbedded: (() => Promise<void>) | null = null;
 /** Where the embedded daemon listens, while it runs: the service taking its place must answer there. */
 let embeddedDaemonOrigin: string | null = null;
@@ -835,6 +840,7 @@ function openAbout(): void {
   if (releasePending) { releaseCheckWindow?.show(); releaseCheckWindow?.focus(); return; }
   showAboutWindow({
     version: app.getVersion(),
+    daemonVersion: lastDaemonVersion,
     electron: process.versions.electron ?? '',
     notices: readThirdPartyNotices(thirdPartyNoticesPath({
       packaged: app.isPackaged,
@@ -974,11 +980,22 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
   // Last-moment lock: between the first probe and here, a service could have
   // come up. Two daemons on one ROOKS_HOME write the same database.
   const raced = await probeHealth(originOf(cfg.daemon.listen));
-  if (isRooks(raced, cfg.home)) {
+  if (isRooks(raced, cfg.home)
+    && !daemonVersionStale(raced, app.getVersion(), { packaged: app.isPackaged, home: cfg.home })) {
+    rememberDaemonVersion(raced);
     await completeApprovedUpdate(cfg);
     daemonUp = true;
     noteDesktopOpened(cfg);
     showWindow(uiUrl);
+    refreshTray(cfg, uiUrl);
+    return;
+  }
+  // Stale Rooks still holding the port: embedding would fail to bind. Caller
+  // must stop it first (ROO-15); refuse to claim success here.
+  if (isRooks(raced, cfg.home) && daemonVersionStale(raced, app.getVersion(), { packaged: app.isPackaged, home: cfg.home })) {
+    console.error(`[desktop] embedded start blocked: ${describeHealth(raced, cfg.home)} still holds the port`);
+    daemonUp = false;
+    rememberDaemonVersion(raced);
     refreshTray(cfg, uiUrl);
     return;
   }
@@ -1030,7 +1047,9 @@ async function startEmbeddedDaemon(cfg: DesktopConfig, uiUrl: string): Promise<v
   });
 
   const health: HealthResult = await waitForHealth(originOf(cfg.daemon.listen), EMBEDDED_BOOT_BUDGET_MS);
-  daemonUp = isRooks(health, cfg.home);
+  rememberDaemonVersion(health);
+  daemonUp = isRooks(health, cfg.home)
+    && !daemonVersionStale(health, app.getVersion(), { packaged: app.isPackaged, home: cfg.home });
   noteDesktopOpened(cfg);
   console.log(`[desktop] embedded daemon health: ${describeHealth(health, cfg.home)}`);
   refreshTray(cfg, uiUrl);
@@ -1253,8 +1272,89 @@ async function verifyInstalledRelease(): Promise<void> {
 /** One line for the desktop log: what answered, and whether it is this home's Rooks. */
 function describeHealth(health: HealthResult, home: string): string {
   if (!health.ok) return `no answer (${health.error ?? 'unknown'})`;
-  if (isRooks(health, home)) return `Rooks, this home${health.updatePending ? ', update pending' : ''}`;
-  return health.identity === 'rooks' ? `Rooks of another home (HTTP ${health.status})` : `not Rooks (HTTP ${health.status})`;
+  const version = daemonVersionOf(health);
+  const versionBit = version ? `, version ${version}` : ', version unknown';
+  if (isRooks(health, home)) {
+    const stale = daemonVersionStale(health, app.getVersion(), { packaged: app.isPackaged, home })
+      ? ', stale vs app' : '';
+    return `Rooks, this home${versionBit}${stale}${health.updatePending ? ', update pending' : ''}`;
+  }
+  return health.identity === 'rooks' ? `Rooks of another home (HTTP ${health.status}${versionBit})` : `not Rooks (HTTP ${health.status})`;
+}
+
+function rememberDaemonVersion(health: HealthResult): void {
+  lastDaemonVersion = daemonVersionOf(health);
+}
+
+/**
+ * ROO-15: a launchd/systemd daemon left from an older pack must not paint this
+ * shell's window. Stop it, restage the service, or fall back to embedded.
+ */
+async function ensureDaemonMatchesApp(
+  cfg: DesktopConfig,
+  uiUrl: string,
+  health: HealthResult,
+): Promise<HealthResult> {
+  if (!daemonVersionStale(health, app.getVersion(), { packaged: app.isPackaged, home: cfg.home })) {
+    rememberDaemonVersion(health);
+    return health;
+  }
+  const origin = originOf(cfg.daemon.listen);
+  const result = await replaceStaleDaemon(health, {
+    packaged: app.isPackaged,
+    home: cfg.home,
+    appVersion: app.getVersion(),
+    serviceInstalled: hasDesktopService(cfg.home),
+    probe: () => probeHealth(origin),
+    waitForMatch: (budgetMs) => waitForHealth(origin, budgetMs),
+    waitUntilGone: (budgetMs) => waitUntilDaemonGone(() => probeHealth(origin), cfg.home, budgetMs),
+    stopService: async () => {
+      console.log(`[desktop] service stopped for version gate: ${await controlDesktopService('stop', runnerSeams(cfg))}`);
+    },
+    upgradeService: async () => {
+      await upgradePackagedService(cfg, {
+        execPath: shellDaemonRuntime().execPath,
+        runtimeEnv: shellDaemonRuntime().env,
+        resourcesPath: process.resourcesPath,
+        version: app.getVersion(),
+      });
+    },
+    startService: async () => {
+      console.log(`[desktop] service start after version gate: ${await controlDesktopService('start', runnerSeams(cfg))}`);
+    },
+    startEmbedded: async () => {
+      // Prefer a clean port: startEmbeddedDaemon returns void and sets daemonUp.
+      await startEmbeddedDaemon(cfg, uiUrl);
+      return probeHealth(origin);
+    },
+    log: (line) => console.log(line),
+    serviceBootBudgetMs: SERVICE_BOOT_BUDGET_MS,
+  });
+  rememberDaemonVersion(result.health);
+  if (result.action === 'replaced') {
+    daemonUp = isRooks(result.health, cfg.home);
+    console.log(`[desktop] stale daemon replaced via ${result.via}: ${describeHealth(result.health, cfg.home)}`);
+  } else if (result.action === 'failed') {
+    daemonUp = false;
+    console.error(`[desktop] stale daemon replace failed: ${result.reason}`);
+  }
+  return result.health;
+}
+
+/** Wipe Chromium HTTP caches once when the packaged app version changes. */
+async function clearShellHttpCacheIfNeeded(): Promise<void> {
+  if (!app.isPackaged) return;
+  const version = app.getVersion();
+  const userData = app.getPath('userData');
+  if (!shellCacheClearNeeded(userData, version)) return;
+  console.log(`[desktop] clearing renderer HTTP cache for app ${version}`);
+  try {
+    await session.defaultSession.clearCache();
+    await session.defaultSession.clearStorageData({ storages: ['cachestorage', 'serviceworkers'] });
+  } catch (error) {
+    console.warn('[desktop] renderer cache clear failed', error);
+  }
+  writeShellCacheVersion(userData, version);
 }
 
 /** When this shell's main script was written, from the sources only: inside `app.asar` it is the time the process started (`shell-build.ts`). */
@@ -1336,6 +1436,7 @@ async function main(): Promise<void> {
     log: (line) => console.log(line),
   });
   installMachineHeader();
+  await clearShellHttpCacheIfNeeded();
   await initShellLocale();
   installAppMenu();
   installJumpList();
@@ -1477,20 +1578,39 @@ async function main(): Promise<void> {
   }
   const uiUrl = originOf(cfg.app.listen);
   interfaceUrl = uiUrl;
+  rememberDaemonVersion(health);
   daemonUp = isRooks(health, cfg.home);
   noteDesktopOpened(cfg);
   console.log(`[desktop] health of ${daemonOrigin}: ${describeHealth(health, cfg.home)}`);
 
   if (!updateWindow) buildTray(cfg, uiUrl);
 
+  let bootHandled = false;
   if (daemonUp) {
     console.log('[desktop] branch: daemon already up');
     // Started again by other means (`rooks service start`, a boot): the marker
     // would otherwise prompt for a start that already happened.
     if (serviceStoppedByUser(cfg.home)) forgetServiceStopped(cfg.home);
-    await completeApprovedUpdate(cfg);
-    rearmAppIfDown(cfg, uiUrl);
-    showWindow(uiUrl);
+    health = await ensureDaemonMatchesApp(cfg, uiUrl, health);
+    daemonUp = isRooks(health, cfg.home)
+      && !daemonVersionStale(health, app.getVersion(), { packaged: app.isPackaged, home: cfg.home });
+    if (daemonUp) {
+      await completeApprovedUpdate(cfg);
+      rearmAppIfDown(cfg, uiUrl);
+      showWindow(uiUrl);
+      bootHandled = true;
+    } else if (health.ok && isRooks(health, cfg.home)) {
+      console.error(`[desktop] after version gate: still unusable (${describeHealth(health, cfg.home)})`);
+      reportForeignDaemon(cfg);
+      bootHandled = true;
+    } else {
+      // Gate stopped the stale service; continue like a cold start.
+      console.log('[desktop] after version gate: daemon down, continuing boot');
+    }
+  }
+
+  if (bootHandled) {
+    // Window already open (or refused).
   } else if (health.ok) {
     console.log('[desktop] branch: foreign daemon on the port');
     reportForeignDaemon(cfg);
@@ -1532,10 +1652,15 @@ async function main(): Promise<void> {
       // Windows ran the task this time: kept, the marker would keep the setup
       // on the portable mode and the repair offer silent (TODO #342).
       clearServiceRefused(cfg.home);
-      const serviceHealth = await waitForHealth(daemonOrigin, SERVICE_BOOT_BUDGET_MS);
-      daemonUp = isRooks(serviceHealth, cfg.home);
-      noteDesktopOpened(cfg);
+      let serviceHealth = await waitForHealth(daemonOrigin, SERVICE_BOOT_BUDGET_MS);
       console.log(`[desktop] service health after ${SERVICE_BOOT_BUDGET_MS / 1000}s: ${describeHealth(serviceHealth, cfg.home)}`);
+      if (isRooks(serviceHealth, cfg.home)) {
+        serviceHealth = await ensureDaemonMatchesApp(cfg, uiUrl, serviceHealth);
+      }
+      rememberDaemonVersion(serviceHealth);
+      daemonUp = isRooks(serviceHealth, cfg.home)
+        && !daemonVersionStale(serviceHealth, app.getVersion(), { packaged: app.isPackaged, home: cfg.home });
+      noteDesktopOpened(cfg);
       refreshTray(cfg, uiUrl);
       if (daemonUp) { await completeApprovedUpdate(cfg); showWindow(uiUrl); }
       else offerServiceInstall(cfg);
@@ -1831,7 +1956,7 @@ if (!app.requestSingleInstanceLock({ build: ownBuild } satisfies LaunchData)) {
   // may be a service left on an older release.
   ipcMain.handle(APP_INFO_CHANNEL, (event) => {
     if (!canReadAppInfo(senderOf(event), senderOrigin(event))) throw new Error('App information is only available in the Rooks window.');
-    return { version: app.getVersion() };
+    return { version: app.getVersion(), daemonVersion: lastDaemonVersion, build: ownBuild };
   });
   // Settings › System: the same folder as the error boxes (TODO #343).
   ipcMain.handle(OPEN_LOGS_CHANNEL, async (event) => {

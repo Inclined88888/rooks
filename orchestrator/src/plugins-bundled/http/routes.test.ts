@@ -31,7 +31,10 @@ test('/api/health names the service that answers', async () => {
   try {
     const res = await fetch(`http://127.0.0.1:${addr.port}/api/health`);
     assert.equal(res.status, 200);
-    assert.deepEqual(await res.json(), { ok: true, service: BRAND.id, instance: instanceId(HOME), packaged: false });
+    const { rooksVersion } = await import('../../data-version.js');
+    assert.deepEqual(await res.json(), {
+      ok: true, service: BRAND.id, instance: instanceId(HOME), packaged: false, version: rooksVersion(),
+    });
     const desktopModule = new URL('../../../../desktop/src/health.ts', import.meta.url).href;
     const desktop = await import(desktopModule);
     const health = await desktop.probeHealth(`http://127.0.0.1:${addr.port}`);
