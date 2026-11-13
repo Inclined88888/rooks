@@ -1,9 +1,9 @@
 /**
  * Local WhatsApp Web linked-device worker (Baileys).
  *
- * Pairs via QR, keeps the multi-file auth state under ROOKS_HOME, forwards
- * inbound text to `/api/channels/<name>/inbound`, and drains the outbox for
- * replies. Unofficial — see WHATSAPP_WEB_RISKS.
+ * Server/daemon child only — never imported by Next client or page modules.
+ * Pairs via QR, keeps multi-file auth under ROOKS_HOME, forwards inbound text
+ * to `/api/channels/<name>/inbound`, drains the outbox for replies.
  *
  * Run with:  npm run worker:whatsapp-web
  */
@@ -13,8 +13,7 @@ import { channelStore } from '../lib/channels/store';
 import { whatsappWebHeaders } from '../lib/channels/inbound';
 import { listChannels, requireEnv } from '../lib/channels/config';
 import { writeWhatsAppWebStatus } from '../lib/channels/transports/whatsapp-web';
-import { loadBaileys, resolveSessionDir } from '../lib/channels/whatsapp-web-session';
-import { CHANNELS_DIR } from '../lib/paths';
+import { CHANNELS_DIR, ROOKS_HOME } from '../lib/paths';
 import type { WhatsAppWebChannelConfig } from '../lib/channels/types';
 
 const APP_BASE = process.env.APP_URL ?? process.env.CHANNELS_URL ?? 'http://localhost:3100';
@@ -28,10 +27,31 @@ type SocketLike = {
   end?: (err?: Error) => void;
 };
 
+type BaileysLike = {
+  makeWASocket: (opts: Record<string, unknown>) => unknown;
+  useMultiFileAuthState: (dir: string) => Promise<{ state: unknown; saveCreds: () => Promise<void> }>;
+  fetchLatestBaileysVersion: () => Promise<{ version: number[] }>;
+};
+
+function resolveSessionDir(configured?: string | null): string {
+  if (configured && configured.trim()) {
+    return configured.startsWith('/') ? configured : join(ROOKS_HOME, configured);
+  }
+  return join(ROOKS_HOME, 'channels', 'whatsapp-web-session');
+}
+
+/** Dynamic import stays in this worker entry — Next client must never resolve Baileys. */
+async function loadBaileys(): Promise<BaileysLike> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mod: any = await import('@whiskeysockets/baileys');
+  return {
+    makeWASocket: mod.default ?? mod.makeWASocket,
+    useMultiFileAuthState: mod.useMultiFileAuthState,
+    fetchLatestBaileysVersion: mod.fetchLatestBaileysVersion ?? (async () => ({ version: [2, 3000, 0] })),
+  };
+}
+
 async function qrDataUrl(qr: string): Promise<string> {
-  // Tiny QR as a data URL without a heavy dependency: text fallback for UI.
-  // The Settings UI also shows the raw pairing state; desktop builds can replace
-  // this with a proper QR renderer later.
   return `data:text/plain;charset=utf-8,${encodeURIComponent(qr)}`;
 }
 
@@ -131,16 +151,13 @@ async function runOne(name: string, cfg: WhatsAppWebChannelConfig): Promise<void
     }
   });
 
-  // Drain outbox periodically and on file changes.
   const tick = () => { void drainOutbox(sock); };
   setInterval(tick, 2000);
   try { watch(OUTBOX, tick); } catch { /* watch optional */ }
-  // Keep process alive.
   await new Promise(() => {});
 }
 
 async function main(): Promise<void> {
-  // Touch the store so ROOKS_HOME exists consistently with other workers.
   channelStore();
   const webs = listChannels().filter(
     (c): c is { name: string; config: WhatsAppWebChannelConfig } => c.config.type === 'whatsapp-web',

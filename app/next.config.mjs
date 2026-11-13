@@ -84,9 +84,12 @@ const nextConfig = {
   // Pages Router — this app is App Router throughout, with no routing i18n.
   skipMiddlewareUrlNormalize: true,
   experimental: {
-    serverComponentsExternalPackages: ['better-sqlite3'],
+    // Baileys is worker/daemon-only (WhatsApp Web). Never ship it into the
+    // Next client graph — it pulls node:crypto / child_process / events.
+    serverComponentsExternalPackages: ['better-sqlite3', '@whiskeysockets/baileys'],
     externalDir: true,
   },
+
   // No redirect on `/` any more: the root serves the cockpit ((main)/page.tsx).
   // The redirect lived here because an old `src/app/page.tsx` only did
   // `redirect('/agents')` and its static prerender ended up baked into the
@@ -99,10 +102,19 @@ const nextConfig = {
       test: /vendor\/vault-graph\/(graphology\.umd\.min|sigma\.min)\.js$/,
       type: 'javascript/auto',
     });
+    // Client must never resolve Baileys (or the WhatsApp worker entry).
+    if (!isServer) {
+      config.resolve = config.resolve || {};
+      config.resolve.alias = {
+        ...(config.resolve.alias || {}),
+        '@whiskeysockets/baileys': false,
+      };
+    }
     // `scripts/measure-bundle.mjs --modules` reads this to say WHAT a chunk
     // carries. Opt-in: a regular build writes nothing more.
     if (!isServer && process.env.ROOKS_BUNDLE_STATS === '1') config.plugins.push(new BundleModulesPlugin());
     return config;
   },
 };
+
 export default nextConfig;

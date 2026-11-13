@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { WHATSAPP_WEB_RISKS } from '@/lib/channels/whatsapp-web-session';
+import { WHATSAPP_WEB_RISKS } from '@/lib/channels/whatsapp-web-copy';
 
 type Mode = 'cloud' | 'web';
 

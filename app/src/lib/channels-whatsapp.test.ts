@@ -18,13 +18,13 @@ const modules = Promise.all([
   import('./channels/whatsapp-cloud-api'),
   import('./channels/transports/whatsapp-cloud'),
   import('./channels/transports/whatsapp-web'),
-  import('./channels/whatsapp-web-session'),
+  import('./channels/whatsapp-web-copy'),
   import('./channels/replyDispatcher'),
 ]);
 
 async function loaded() {
-  const [config, inbound, cloudApi, cloudTransport, webTransport, session, dispatcher] = await modules;
-  return { config, inbound, cloudApi, cloudTransport, webTransport, session, dispatcher };
+  const [config, inbound, cloudApi, cloudTransport, webTransport, copy, dispatcher] = await modules;
+  return { config, inbound, cloudApi, cloudTransport, webTransport, copy, dispatcher };
 }
 
 const metaBody = JSON.stringify({
@@ -170,13 +170,12 @@ test('WhatsApp Web worker signature and reply outbox', async () => {
   }
 });
 
-test('allowlist helper and session path stay local under ROOKS_HOME', async () => {
-  const { cloudTransport, session } = await loaded();
+test('allowlist helper and browser-safe risk copy have no Node imports', async () => {
+  const { cloudTransport, copy } = await loaded();
   assert.equal(cloudTransport.isAllowedWhatsAppFrom({}, '1'), true);
   assert.equal(cloudTransport.isAllowedWhatsAppFrom({ allowed_from: ['1555'] }, '1555'), true);
   assert.equal(cloudTransport.isAllowedWhatsAppFrom({ allowed_from: ['1555'] }, '999'), false);
-  assert.ok(session.resolveSessionDir().includes('whatsapp-web-session'));
-  assert.ok(session.WHATSAPP_WEB_RISKS.length >= 3);
+  assert.ok(copy.WHATSAPP_WEB_RISKS.length >= 3);
 });
 
 test('upsertSecretsEnv writes secrets.env and mirrors process.env', async () => {
