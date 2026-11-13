@@ -120,12 +120,12 @@ export const BACKUP_ROUTINE_ID = 'timon-backup-nightly';
 export const BACKUP_CRON = '30 3 * * *';
 /** Default of `TIMON_BACKUP_KEEP`; the setting decides (`backupRetention`). */
 export const BACKUP_KEEP = 7;
-export const BACKUP_NAME = 'Backup nocturne';
+export const BACKUP_NAME = 'Nightly backup';
 /** Schema sentinel — never dispatched, the tick runs the export itself. */
 export const BACKUP_AGENT = 'timon';
 const BACKUP_PROMPT =
-  'timon export --out ~/.timon/backups/timon-<date>.tar.gz every night at 03:30, '
-  + 'then prune by TIMON_BACKUP_KEEP and TIMON_BACKUP_MAX_AGE_DAYS.';
+  'Write a dated archive of this install every night at 03:30, '
+  + 'then prune it by the retention count and the maximum age.';
 const BACKUP_ARCHIVE_RE = /^timon-(\d{4})-(\d{2})-(\d{2})\.tar\.gz$/;
 const DAY_MS = 86_400_000;
 

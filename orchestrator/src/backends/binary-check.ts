@@ -166,6 +166,8 @@ export function reportBackendBinaries(): BackendBinaryStatus[] {
       // answered it: the anchor is what lets us take it back.
       dbApi.dismissNotificationsByAnchor(backendBinaryAnchor(status.cmd), 'alert');
       if (status.path !== null) continue;
+      // A tool that was never installed is the ordinary first-run state, not an alert.
+      if (!status.pinned) continue;
       const { title, body } = backendBinaryNotice(status);
       createNotification({
         type: 'alert',
