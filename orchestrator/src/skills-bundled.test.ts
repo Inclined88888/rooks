@@ -168,7 +168,7 @@ test('the main agent welcome starts from the onboarding: greeting first, nothing
   rmSync(skillDir('timon-main-agent-setup'), { recursive: true, force: true });
   seedBundledSkills();
   const content = getSkill('timon-main-agent-setup')!.content;
-  assert.match(content, /<!-- timon-bundled-version: 12 -->/);
+  assert.match(content, /<!-- timon-bundled-version: 13 -->/);
   assert.ok(!content.includes('Which language do you speak?'), 'the language was chosen on the first screen');
   assert.ok(!content.includes('setup_request_avatar'), 'the look exists already');
   assert.ok(!content.includes('onboarding_profile_set'), 'the profile was chosen on the onboarding screens');
@@ -176,12 +176,12 @@ test('the main agent welcome starts from the onboarding: greeting first, nothing
   assert.match(content, /who they are \(their profile\)/);
   assert.match(content, /Always speak\s+<language>/);
   assert.match(content, /`question` tool, never a question typed/);
-  assert.match(content, /the TIMs page/);
+  assert.match(content, /the Bots page/);
   // The greeting comes first (the maintainer's request: the TIM answers at once); the soul is written once they picked.
   assert.ok(content.indexOf('"Hey <first name>, what do you want to do now?"') < content.indexOf('`setup_set_soul`'));
   assert.match(content, /Nothing before it: no tool call/);
   assert.match(content, /Never assume the default workspace/);
-  assert.match(content, /Never present Timon/);
+  assert.match(content, /Never present Rooks/);
 });
 
 test('the welcome offers two paths, a third only from the card, and every path ends with setup_finish', async () => {
@@ -189,7 +189,7 @@ test('the welcome offers two paths, a third only from the card, and every path e
   seedBundledSkills();
   const content = getSkill('timon-main-agent-setup')!.content;
   const ask = content.slice(content.indexOf('1. **What now, before anything else.**'), content.indexOf('2. **Your character'));
-  for (const option of ['Create another TIM', 'Create a project with a team of TIMs']) {
+  for (const option of ['Create another bot', 'Create a project with a team of bots']) {
     assert.ok(ask.includes(`**${option}**`), option);
   }
   // The guided tour is off for the launch (the maintainer, 05/11/2026): its menu arrangements hid the product.
@@ -204,11 +204,11 @@ test('the welcome offers two paths, a third only from the card, and every path e
     const next = content.indexOf('\n### ', from + 4);
     return content.slice(from, next > 0 ? next : content.indexOf('## After setup_finish'));
   };
-  const tim = branch('Create another TIM');
-  assert.match(tim, /"New TIM" button/);
-  assert.match(tim, /Never create the TIM yourself/);
+  const tim = branch('Create another bot');
+  assert.match(tim, /"New bot" button/);
+  assert.match(tim, /Never create the bot yourself/);
   assert.match(tim, /`setup_finish` with `tour: false`/);
-  const project = branch('Create a project with a team of TIMs');
+  const project = branch('Create a project with a team of bots');
   assert.match(project, /Kanban tasks/);
   assert.match(project, /The Agents page draws the team\s+as a canvas/);
   assert.ok(project.indexOf('`project_create`') < project.indexOf('`agent_create`'), 'the project is registered before its agents');
@@ -228,10 +228,10 @@ test('an install seeded with the previous welcome gets the new one at the next b
   rmSync(skillDir(id), { recursive: true, force: true });
   seedBundledSkills();
   const current = getSkill(id)!.content;
-  upsertSkill(id, current.replace('timon-bundled-version: 12', 'timon-bundled-version: 11').replace('1. **What now, before anything else.**', '1. **Your character, before a word.**'));
+  upsertSkill(id, current.replace('timon-bundled-version: 13', 'timon-bundled-version: 12').replace('1. **What now, before anything else.**', '1. **Your character, before a word.**'));
   seedBundledSkills();
   const reseeded = getSkill(id)!.content;
-  assert.match(reseeded, /<!-- timon-bundled-version: 12 -->/);
+  assert.match(reseeded, /<!-- timon-bundled-version: 13 -->/);
   assert.ok(reseeded.includes('1. **What now, before anything else.**'));
 });
 

@@ -50,7 +50,7 @@ const KNOWN = new Map(CORE_ROUTES.map((r) => [r.path, r]));
 /** Titles of the bundled pages that are menu entries but not `CORE_ROUTES` (`NAV_PAGES` mirror). */
 const BUNDLED_TITLES: Readonly<Record<string, string>> = {
   '/brain': 'Brain',
-  '/bots': 'TIMs',
+  '/bots': 'Bots',
   '/triggers': 'Triggers',
   '/workflows': 'Workflows',
   '/dreams': 'Dreams',
