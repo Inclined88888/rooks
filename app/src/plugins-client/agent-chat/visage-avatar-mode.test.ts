@@ -7,13 +7,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import type { AgentLook } from '@/components/mascot/agent-look';
 import { visageAgent, type AgentChoisissable } from './use-agents';
 import { FaceAgent } from './agent-avatar';
 
 // The test runner compiles JSX to `React.createElement`.
 Object.defineProperty(globalThis, 'React', { value: React, configurable: true, writable: true });
 
-const LOOK = { shape: 'hex', color: '#7ed957', eyes: 'code', acc: 'coffee' };
+const LOOK: AgentLook = { shape: 'hex', color: '#7ed957', eyes: 'code', acc: 'coffee' };
 const nova = (extra: Partial<AgentChoisissable>): AgentChoisissable[] => [{ name: 'nova', emoji: '🦊', icon_url: '/api/uploads/nova.png', look: LOOK, project: 'acme', ...extra }];
 const PROJECTS = [{ slug: 'acme', icon: '/api/uploads/acme.png' }];
 

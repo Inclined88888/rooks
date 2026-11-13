@@ -38,7 +38,7 @@ jobs:
           fs.writeFileSync('signing-key/public.pem', publicKey.export({ type: 'spki', format: 'pem' }));
           console.log('Minted one TEST-ONLY Ed25519 pair for this run.');
           NODE
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: test-signing-key
           path: signing-key
@@ -75,11 +75,11 @@ jobs:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       NODE_ENV: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -102,7 +102,7 @@ jobs:
           npm ci --include=dev --prefix desktop
 
       - name: Use the one test signing key
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: test-signing-key
           path: signing-key
@@ -176,7 +176,7 @@ jobs:
           fi
 
       - name: Upload installers
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: rooks-test-${{ matrix.os }}-${{ github.sha }}
           path: |
@@ -196,11 +196,11 @@ jobs:
       contents: write
       actions: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - name: Download all package artefacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: dist-out
           pattern: rooks-test-*
