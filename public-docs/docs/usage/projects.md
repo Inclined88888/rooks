@@ -1,0 +1,69 @@
+---
+title: Projects
+sidebar_position: 5
+---
+
+A project associates a working directory with its agents and default roles. Use it to keep work aimed at the right repository and to give coding, review and coordination tasks suitable workers.
+
+1. Register the project from the project controls and choose its existing directory.
+2. Associate agents with it, using paths on the **daemon host**.
+3. Set the agent, backend/model and permission defaults for each role you use.
+4. Create a small task and check that its assignee and working directory match the project.
+
+Use **Browse…** beside the working directory when creating or editing a
+project to choose a folder on the machine running Rooks. In the desktop app on
+this computer it opens your system's folder picker; connected to another
+machine, or in a web browser, it lists the folders of that machine instead
+(**Hidden folders** shows the ones starting with a dot). Cancelling keeps the
+current path. You can always type the path directly.
+
+If Rooks cannot use the working directory, the project card says why instead of showing "no working directory": **folder not found** (the path does not exist on the computer running Rooks), **access denied** with the system error code (on macOS, check System Settings › Privacy & Security for folders such as Documents or Desktop), or **not a folder**. The registered path is shown next to the reason. As the owner you may still save a path that does not exist yet; Rooks warns you when you do.
+
+Inspect project configuration from the CLI:
+
+```bash
+rooks project list
+rooks project roles PROJECT_SLUG
+```
+
+To assign an existing agent to a role:
+
+```bash
+rooks project set-role PROJECT_SLUG code PROJECT_AGENT
+```
+
+To register or edit a project from the terminal, and to see the workspaces (poles) it can belong to:
+
+```bash
+rooks workspace list
+rooks project create acme-app --name "Acme" --cwd /srv/acme --workspace "Design Studio"
+rooks project update acme-app --speech "Customer portal"
+```
+
+The directory must already exist on the machine. A workspace you name must exist too; add `--create-workspace` to create it. An empty value (`--speech ""`) clears a field.
+
+The project role is the normal default for a task; task-specific overrides are useful for exceptions. A project path is not a container path unless the daemon actually executes inside that container.
+
+## Docker containers
+
+When a project's directory runs a Docker Compose stack, the project card and the chat's **Docker** widget show its containers, their local address, and **Start**, **Stop**, **Restart** and **Rebuild** buttons, for the whole stack or one container.
+
+**Start** restarts the existing containers as they were created. If they were created on a Docker network that has since been deleted or renamed (moving a reverse proxy from `traefik_network` to `proxy_net`, for instance), Rooks recreates them with `docker compose up -d` on the networks of the current Compose file. If that fails too, the error names the missing network: fix the networks declared in the Compose file, then click **Rebuild**.
+
+## Deleting a project
+
+Open the project's edit window and use **Delete** in the danger zone. If the project still has agents, Rooks asks what to do with them:
+
+- **Move them to another project**: they keep their names and memory and join the project you pick. An agent that worked in the old project's folder now works in the new project's folder.
+- **Detach them**: they stay, with no project.
+- **Delete them**: their identity and memory are erased. This cannot be undone.
+
+The project's folder under your Rooks home is removed with the project; your own working directory is never touched.
+
+## Git isolation
+
+A coding task's worktree has its own branch and files. The final merge integrates that branch into the chosen base. Check the task's worktree information before editing or integrating: sharing a project does not mean sharing one working directory.
+
+Databases, credentials and services outside the repository remain shared. Coordinate changes to those resources separately from Git changes.
+
+The chat's [Git widget](git.md) shows a project's branches, its commit graph with every worktree, and its remotes.

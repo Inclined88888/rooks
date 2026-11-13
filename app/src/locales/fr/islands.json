@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "Réseau",
+      "titleOf": "Réseau · {mission}"
+    },
+    "widgetZone": {
+      "title": "Widgets"
+    },
+    "widgetCard": {
+      "title": "Widget",
+      "missing": "Le widget {widget} n'est pas disponible ici."
+    },
+    "page": "Page",
+    "arrangementPage": {
+      "loading": "Chargement de l'agencement…",
+      "missing": "Cet agencement n'existe plus. Son entrée de menu disparaît avec lui.",
+      "hint": "Cette page s'ouvre sur l'agencement. Ce que vous y changez reste sur cette page ; l'agencement enregistré n'est pas modifié.",
+      "restore": "Rétablir l'agencement",
+      "restoreFailed": "L'agencement n'a pas pu être rétabli."
+    },
+    "tabs": "Onglets de l'îlot",
+    "close": "Fermer",
+    "closeTab": "Fermer {title}",
+    "detach": "Ouvrir dans une fenêtre",
+    "resize": "Redimensionner",
+    "unavailable": "Contenu indisponible — {plugin}",
+    "refused": {
+      "maxIslands": "8 îlots au plus",
+      "maxDepth": "3 niveaux de découpage au plus",
+      "maxTabsPerIsland": "12 onglets au plus dans un îlot",
+      "maxTabs": "32 onglets au plus",
+      "routeTab": "La page de cette vue ne se ferme pas",
+      "self": "Déjà ici",
+      "unknownType": "Ce contenu ne s'ouvre pas dans l'espace",
+      "maxFloats": "4 popups au plus",
+      "floatEdge": "Une popup ne reçoit des onglets que par son centre"
+    },
+    "announce": {
+      "right": "{title} ouvert à droite de {target}",
+      "left": "{title} ouvert à gauche de {target}",
+      "top": "{title} ouvert au-dessus de {target}",
+      "bottom": "{title} ouvert en dessous de {target}",
+      "tab": "{title} ajouté en onglet à {target}",
+      "root": "{title} ouvert le long du bord de l'espace",
+      "closed": "{title} fermé",
+      "float": "{title} ouvert en popup",
+      "minimized": "{title} réduit"
+    },
+    "openIn": {
+      "menu": "Ouvrir dans un split",
+      "right": "À droite",
+      "left": "À gauche",
+      "bottom": "En dessous",
+      "top": "Au-dessus",
+      "center": "Dans un onglet",
+      "narrow": "Ouvrir dans l'espace",
+      "split": {
+        "right": "Ouvrir à droite",
+        "left": "Ouvrir à gauche",
+        "bottom": "Ouvrir en dessous",
+        "top": "Ouvrir au-dessus",
+        "center": "Ouvrir dans un onglet",
+        "float": "Ouvrir en popup"
+      },
+      "float": "En popup"
+    },
+    "drop": {
+      "right": "Ouvrir à droite de {target}",
+      "left": "Ouvrir à gauche de {target}",
+      "top": "Empiler au-dessus de {target}",
+      "bottom": "Empiler sous {target}",
+      "center": "Ajouter un onglet à {target}",
+      "root": {
+        "left": "Nouvelle colonne à gauche",
+        "right": "Nouvelle colonne à droite",
+        "top": "Nouvelle rangée en haut",
+        "bottom": "Nouvelle rangée en bas"
+      },
+      "float": "Ouvrir en popup (Alt)"
+    },
+    "drag": {
+      "island": "Glisser pour déplacer cet îlot"
+    },
+    "chat": {
+      "title": "Chat",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title} s'ouvre dans un nouvel îlot à droite",
+        "left": "{title} s'ouvre dans un nouvel îlot à gauche",
+        "top": "{title} s'ouvre dans un nouvel îlot au-dessus",
+        "bottom": "{title} s'ouvre dans un nouvel îlot en dessous"
+      },
+      "openTab": "{title} s'ouvre dans un onglet",
+      "cannotApply": "Cette disposition ne tient plus dans l'espace : l'îlot visé a été fermé, ou une limite est atteinte.",
+      "dropped": "Laissés de côté, leur contenu a refusé ses réglages : {titles}",
+      "unreadable": "votre disposition actuelle n'a pas pu être lue, réessayez dans un instant",
+      "noFit": "l'îlot visé a été fermé, ou une limite est atteinte",
+      "refusedParams": "{titles} a refusé les réglages fournis",
+      "closes": "Appliquer ferme : {titles}",
+      "closesIn": "Appliquer dans {project} ferme : {titles}",
+      "tabKept": "un onglet qu'elle fermerait est resté ouvert, rien n'a changé"
+    },
+    "arrangementProposal": {
+      "title": "{agent} propose l'un de vos agencements d'îlots",
+      "titleFrom": "{agent} propose l'un de vos agencements d'îlots ({project})",
+      "name": "Agencement : {name}",
+      "gone": "l'agencement « {name} » a été supprimé, rien n'a été modifié",
+      "stale": "Cet agencement a été supprimé depuis la proposition : rien n'a été modifié."
+    },
+    "menu": "Actions de l'îlot",
+    "move": {
+      "keys": "M : déplacer cet onglet · Maj+M : déplacer l'îlot",
+      "start": "Déplacement de {title}. Les flèches choisissent l'îlot, Tab la place, Entrée dépose, Échap annule.",
+      "hint": "Flèches : îlot · Tab : place · Entrée : déposer · Échap : annuler",
+      "cancelled": "Déplacement annulé"
+    },
+    "file": {
+      "title": "Fichier"
+    },
+    "popup": {
+      "open": "Ouvrir {title} en popup",
+      "dock": "Ancrer à l'espace",
+      "pin": "Garder sur toutes les pages",
+      "unpin": "Garder sur cette page seulement",
+      "close": "Fermer cette popup",
+      "minimize": "Réduire",
+      "restore": "Rouvrir {title}",
+      "minimized": "Popups réduites"
+    },
+    "glass": {
+      "menu": "Verre",
+      "follow": "Suivre le réglage d'Apparence",
+      "island": "Îlot entier",
+      "widgets": "Widgets",
+      "both": "Les deux"
+    },
+    "newTab": "Nouvel onglet",
+    "skill": {
+      "title": "Skill"
+    },
+    "paramsRefused": "Ce changement n'a pas pu être appliqué à l'onglet.",
+    "closeGuardFailed": "{title} n'a pas pu confirmer sa fermeture : l'onglet reste ouvert.",
+    "unsaved": {
+      "title": "Enregistrer les modifications de {name} ?",
+      "description": "Vos modifications seront perdues si vous fermez sans enregistrer.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "discard": "Ne pas enregistrer",
+      "cancel": "Annuler"
+    },
+    "stack": {
+      "earlier": "Déplacer {title} à gauche",
+      "later": "Déplacer {title} à droite",
+      "moved": "{title} déplacé"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "Ouverte dans l'espace",
+      "openedThere": "Cette session est ouverte dans l'espace.",
+      "show": "L'afficher"
+    }
+  }
+}

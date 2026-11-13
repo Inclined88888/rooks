@@ -1,0 +1,295 @@
+{
+  "subscription, git worktree, grepai, two user servers, reasoning": {
+    "cmd": "codex",
+    "args": [
+      "exec",
+      "--json",
+      "--skip-git-repo-check",
+      "--sandbox",
+      "workspace-write",
+      "--model",
+      "gpt-5.5",
+      "-c",
+      "model_reasoning_effort=high",
+      "-"
+    ],
+    "env": {
+      "CODEX_HOME": "<HOME>"
+    },
+    "initialStdin": "# Instructions\nAgent de test.\n\n# Task\nBonjour.",
+    "config": {
+      "sandbox_workspace_write": [
+        "network_access = true",
+        "writable_roots = [\"<TMP>/repo/.git/worktrees/repo-wt\", \"<TMP>/repo/.git\", \"<TMP>/repo\"]"
+      ],
+      "mcp_servers.rooks": [
+        "args = [\"<ROOKS_MCP>\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\"",
+        "env_vars = [\"ROOKS_API_TOKEN\"]"
+      ],
+      "mcp_servers.rooks.env": [
+        "ROOKS_AGENT = \"parity.agent\"",
+        "ROOKS_HOME = \"<ROOKS_HOME>\"",
+        "ROOKS_MISSION_ID = \"parity-2040999904\"",
+        "ROOKS_ORCH_URL = \"http://localhost:3010\""
+      ],
+      "mcp_servers.rooks_ask": [
+        "args = [\"<FORMS_MCP>\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\"",
+        "env_vars = [\"ROOKS_API_TOKEN\"]"
+      ],
+      "mcp_servers.rooks_ask.env": [
+        "ROOKS_AGENT = \"parity.agent\"",
+        "ROOKS_ASK_FORMS_ONLY = \"1\"",
+        "ROOKS_MISSION_ID = \"parity-2040999904\"",
+        "ROOKS_ORCH_URL = \"http://localhost:3010\""
+      ],
+      "mcp_servers.grepai": [
+        "args = [\"mcp-serve\"]",
+        "command = \"grepai\"",
+        "default_tools_approval_mode = \"approve\""
+      ],
+      "mcp_servers.probe_stdio": [
+        "args = [\"/tmp/probe.mjs\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\""
+      ],
+      "mcp_servers.probe_stdio.env": [
+        "PROBE_TOKEN = \"x\""
+      ],
+      "mcp_servers.probe_http": [
+        "default_tools_approval_mode = \"approve\"",
+        "url = \"http://127.0.0.1:8787/mcp\""
+      ]
+    },
+    "authJson": "link",
+    "pictures": []
+  },
+  "plan mode resumes a thread with two pictures": {
+    "cmd": "codex",
+    "args": [
+      "exec",
+      "--json",
+      "--skip-git-repo-check",
+      "--sandbox",
+      "read-only",
+      "--model",
+      "gpt-5.6-sol",
+      "resume",
+      "thread-0001",
+      "-",
+      "-i",
+      "<HOME>/images/<uuid>.png",
+      "-i",
+      "<HOME>/images/<uuid>.jpg"
+    ],
+    "env": {
+      "CODEX_HOME": "<HOME>"
+    },
+    "initialStdin": "# Instructions\nAgent de test.\n\n# Task\nBonjour.",
+    "config": {
+      "sandbox_workspace_write": [
+        "network_access = true",
+        "writable_roots = [\"<TMP>/repo/.git/worktrees/repo-wt\", \"<TMP>/repo/.git\", \"<TMP>/repo\"]"
+      ],
+      "mcp_servers.rooks": [
+        "args = [\"<ROOKS_MCP>\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\"",
+        "env_vars = [\"ROOKS_API_TOKEN\"]"
+      ],
+      "mcp_servers.rooks.env": [
+        "ROOKS_AGENT = \"parity.agent\"",
+        "ROOKS_HOME = \"<ROOKS_HOME>\"",
+        "ROOKS_MISSION_ID = \"parity-1915765651\"",
+        "ROOKS_ORCH_URL = \"http://localhost:3010\""
+      ],
+      "mcp_servers.rooks_ask": [
+        "args = [\"<FORMS_MCP>\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\"",
+        "env_vars = [\"ROOKS_API_TOKEN\"]"
+      ],
+      "mcp_servers.rooks_ask.env": [
+        "ROOKS_AGENT = \"parity.agent\"",
+        "ROOKS_ASK_FORMS_ONLY = \"1\"",
+        "ROOKS_MISSION_ID = \"parity-1915765651\"",
+        "ROOKS_ORCH_URL = \"http://localhost:3010\""
+      ],
+      "mcp_servers.grepai": [
+        "args = [\"mcp-serve\"]",
+        "command = \"grepai\"",
+        "default_tools_approval_mode = \"approve\""
+      ]
+    },
+    "authJson": "link",
+    "pictures": [
+      "<uuid>.jpg",
+      "<uuid>.png"
+    ]
+  },
+  "without the Rooks servers": {
+    "cmd": "codex",
+    "args": [
+      "exec",
+      "--json",
+      "--skip-git-repo-check",
+      "--sandbox",
+      "danger-full-access",
+      "--model",
+      "gpt-5.6-sol",
+      "-"
+    ],
+    "env": {
+      "CODEX_HOME": "<HOME>"
+    },
+    "initialStdin": "# Instructions\nAgent de test.\n\n# Task\nBonjour.",
+    "config": {
+      "sandbox_workspace_write": [
+        "network_access = true",
+        "writable_roots = [\"<TMP>/repo/.git/worktrees/repo-wt\", \"<TMP>/repo/.git\", \"<TMP>/repo\"]"
+      ],
+      "mcp_servers.grepai": [
+        "args = [\"mcp-serve\"]",
+        "command = \"grepai\"",
+        "default_tools_approval_mode = \"approve\""
+      ]
+    },
+    "authJson": "link",
+    "pictures": []
+  },
+  "an API key stands for the sign-in": {
+    "cmd": "codex",
+    "args": [
+      "exec",
+      "--json",
+      "--skip-git-repo-check",
+      "--sandbox",
+      "workspace-write",
+      "--model",
+      "gpt-5.6-sol",
+      "-"
+    ],
+    "env": {
+      "CODEX_HOME": "<HOME>",
+      "CODEX_API_KEY": "sk-witness"
+    },
+    "initialStdin": "# Instructions\nAgent de test.\n\n# Task\nBonjour.",
+    "config": {
+      "sandbox_workspace_write": [
+        "network_access = true",
+        "writable_roots = [\"<TMP>/repo/.git/worktrees/repo-wt\", \"<TMP>/repo/.git\", \"<TMP>/repo\"]"
+      ],
+      "mcp_servers.rooks": [
+        "args = [\"<ROOKS_MCP>\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\"",
+        "env_vars = [\"ROOKS_API_TOKEN\"]"
+      ],
+      "mcp_servers.rooks.env": [
+        "ROOKS_AGENT = \"parity.keyed\"",
+        "ROOKS_HOME = \"<ROOKS_HOME>\"",
+        "ROOKS_MISSION_ID = \"parity-881165601\"",
+        "ROOKS_ORCH_URL = \"http://localhost:3010\""
+      ],
+      "mcp_servers.rooks_ask": [
+        "args = [\"<FORMS_MCP>\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\"",
+        "env_vars = [\"ROOKS_API_TOKEN\"]"
+      ],
+      "mcp_servers.rooks_ask.env": [
+        "ROOKS_AGENT = \"parity.keyed\"",
+        "ROOKS_ASK_FORMS_ONLY = \"1\"",
+        "ROOKS_MISSION_ID = \"parity-881165601\"",
+        "ROOKS_ORCH_URL = \"http://localhost:3010\""
+      ],
+      "mcp_servers.grepai": [
+        "args = [\"mcp-serve\"]",
+        "command = \"grepai\"",
+        "default_tools_approval_mode = \"approve\""
+      ]
+    },
+    "authJson": "absent",
+    "pictures": []
+  },
+  "Ollama Cloud: a provider block and a key, no sign-in": {
+    "cmd": "codex",
+    "args": [
+      "exec",
+      "--json",
+      "--skip-git-repo-check",
+      "--sandbox",
+      "workspace-write",
+      "--model",
+      "gpt-oss:120b",
+      "-"
+    ],
+    "env": {
+      "CODEX_HOME": "<HOME>",
+      "OLLAMA_API_KEY": "ollama-key-witness"
+    },
+    "initialStdin": "# Instructions\nAgent de test.\n\n# Task\nBonjour.",
+    "config": {
+      "": [
+        "experimental_use_freeform_apply_patch = false",
+        "model_provider = \"ollama-cloud\""
+      ],
+      "sandbox_workspace_write": [
+        "network_access = true",
+        "writable_roots = [\"<TMP>/repo/.git/worktrees/repo-wt\", \"<TMP>/repo/.git\", \"<TMP>/repo\"]"
+      ],
+      "mcp_servers.rooks": [
+        "args = [\"<ROOKS_MCP>\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\"",
+        "env_vars = [\"ROOKS_API_TOKEN\"]"
+      ],
+      "mcp_servers.rooks.env": [
+        "ROOKS_AGENT = \"parity.agent\"",
+        "ROOKS_HOME = \"<ROOKS_HOME>\"",
+        "ROOKS_MISSION_ID = \"parity-2110941018\"",
+        "ROOKS_ORCH_URL = \"http://localhost:3010\""
+      ],
+      "mcp_servers.rooks_ask": [
+        "args = [\"<FORMS_MCP>\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\"",
+        "env_vars = [\"ROOKS_API_TOKEN\"]"
+      ],
+      "mcp_servers.rooks_ask.env": [
+        "ROOKS_AGENT = \"parity.agent\"",
+        "ROOKS_ASK_FORMS_ONLY = \"1\"",
+        "ROOKS_MISSION_ID = \"parity-2110941018\"",
+        "ROOKS_ORCH_URL = \"http://localhost:3010\""
+      ],
+      "mcp_servers.grepai": [
+        "args = [\"mcp-serve\"]",
+        "command = \"grepai\"",
+        "default_tools_approval_mode = \"approve\""
+      ],
+      "mcp_servers.probe_stdio": [
+        "args = [\"/tmp/probe.mjs\"]",
+        "command = \"node\"",
+        "default_tools_approval_mode = \"approve\""
+      ],
+      "mcp_servers.probe_stdio.env": [
+        "PROBE_TOKEN = \"x\""
+      ],
+      "mcp_servers.probe_http": [
+        "default_tools_approval_mode = \"approve\"",
+        "url = \"http://127.0.0.1:8787/mcp\""
+      ],
+      "model_providers.ollama-cloud": [
+        "base_url = \"https://ollama.com/v1\"",
+        "env_key = \"OLLAMA_API_KEY\"",
+        "name = \"Ollama Cloud\"",
+        "wire_api = \"responses\""
+      ]
+    },
+    "authJson": "absent",
+    "pictures": []
+  }
+}

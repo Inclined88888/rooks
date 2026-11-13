@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "Netwerk",
+      "titleOf": "Netwerk · {mission}"
+    },
+    "widgetZone": {
+      "title": "Widgets"
+    },
+    "widgetCard": {
+      "title": "Widget",
+      "missing": "De widget {widget} is hier niet beschikbaar."
+    },
+    "page": "Pagina",
+    "arrangementPage": {
+      "loading": "Schikking laden…",
+      "missing": "Deze schikking bestaat niet meer. Haar menu-item verdwijnt mee.",
+      "hint": "Deze pagina opent met de schikking. Wat je hier wijzigt, blijft op deze pagina; de opgeslagen schikking blijft onaangeroerd.",
+      "restore": "Schikking herstellen",
+      "restoreFailed": "De schikking kon niet worden hersteld."
+    },
+    "tabs": "Tabbladen van het eiland",
+    "close": "Sluiten",
+    "closeTab": "{title} sluiten",
+    "detach": "In een venster openen",
+    "resize": "Grootte wijzigen",
+    "unavailable": "Inhoud niet beschikbaar — {plugin}",
+    "refused": {
+      "maxIslands": "Hooguit 8 eilanden",
+      "maxDepth": "Hooguit 3 splitsingsniveaus",
+      "maxTabsPerIsland": "Hooguit 12 tabbladen per eiland",
+      "maxTabs": "Hooguit 32 tabbladen",
+      "routeTab": "De pagina van deze weergave kan niet worden gesloten",
+      "self": "Al hier",
+      "unknownType": "Deze inhoud kan niet in de werkruimte worden geopend",
+      "maxFloats": "Hooguit 4 pop-ups",
+      "floatEdge": "Een pop-up neemt tabbladen alleen via zijn midden op"
+    },
+    "announce": {
+      "right": "{title} rechts van {target} geopend",
+      "left": "{title} links van {target} geopend",
+      "top": "{title} boven {target} geopend",
+      "bottom": "{title} onder {target} geopend",
+      "tab": "{title} als tabblad aan {target} toegevoegd",
+      "root": "{title} langs de rand van de werkruimte geopend",
+      "closed": "{title} gesloten",
+      "float": "{title} als pop-up geopend",
+      "minimized": "{title} geminimaliseerd"
+    },
+    "openIn": {
+      "menu": "In een splitsing openen",
+      "right": "Rechts",
+      "left": "Links",
+      "bottom": "Onder",
+      "top": "Boven",
+      "center": "In een tabblad",
+      "narrow": "In de werkruimte openen",
+      "split": {
+        "right": "Rechts openen",
+        "left": "Links openen",
+        "bottom": "Onder openen",
+        "top": "Boven openen",
+        "center": "In een tabblad openen",
+        "float": "Als pop-up openen"
+      },
+      "float": "Als pop-up"
+    },
+    "drop": {
+      "right": "Rechts van {target} openen",
+      "left": "Links van {target} openen",
+      "top": "Boven {target} stapelen",
+      "bottom": "Onder {target} stapelen",
+      "center": "Een tabblad aan {target} toevoegen",
+      "root": {
+        "left": "Nieuwe kolom links",
+        "right": "Nieuwe kolom rechts",
+        "top": "Nieuwe rij bovenaan",
+        "bottom": "Nieuwe rij onderaan"
+      },
+      "float": "Als pop-up openen (Alt)"
+    },
+    "drag": {
+      "island": "Sleep om dit eiland te verplaatsen"
+    },
+    "chat": {
+      "title": "Chat",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title} opent in een nieuw eiland rechts",
+        "left": "{title} opent in een nieuw eiland links",
+        "top": "{title} opent in een nieuw eiland boven",
+        "bottom": "{title} opent in een nieuw eiland onder"
+      },
+      "openTab": "{title} opent als tabblad",
+      "cannotApply": "Deze indeling past niet meer bij de werkruimte: het beoogde eiland is gesloten, of een limiet is bereikt.",
+      "dropped": "Weggelaten, hun inhoud weigerde de instellingen: {titles}",
+      "unreadable": "je huidige schikking kon niet worden gelezen, probeer het zo opnieuw",
+      "noFit": "het beoogde eiland is gesloten, of een limiet is bereikt",
+      "refusedParams": "{titles} weigerde de gegeven instellingen",
+      "closes": "Toepassen sluit: {titles}",
+      "closesIn": "Toepassen in {project} sluit: {titles}",
+      "tabKept": "een tabblad dat zou sluiten bleef open, er is niets gewijzigd"
+    },
+    "arrangementProposal": {
+      "title": "{agent} stelt een van je eilandschikkingen voor",
+      "titleFrom": "{agent} stelt een van je eilandschikkingen voor ({project})",
+      "name": "Schikking: {name}",
+      "gone": "de schikking ‘{name}’ is verwijderd, er is niets gewijzigd",
+      "stale": "Deze schikking is sinds het voorstel verwijderd: er is niets gewijzigd."
+    },
+    "menu": "Eilandacties",
+    "move": {
+      "keys": "M: dit tabblad verplaatsen · Shift+M: het eiland verplaatsen",
+      "start": "{title} verplaatsen. Pijltjestoetsen kiezen het eiland, Tab de plek, Enter zet neer, Escape annuleert.",
+      "hint": "Pijlen: eiland · Tab: plek · Enter: neerzetten · Esc: annuleren",
+      "cancelled": "Verplaatsen geannuleerd"
+    },
+    "file": {
+      "title": "Bestand"
+    },
+    "popup": {
+      "open": "{title} als pop-up openen",
+      "dock": "Aan de werkruimte vastmaken",
+      "pin": "Op elke pagina houden",
+      "unpin": "Alleen op deze pagina houden",
+      "close": "Deze pop-up sluiten",
+      "minimize": "Minimaliseren",
+      "restore": "{title} weer tonen",
+      "minimized": "Geminimaliseerde pop-ups"
+    },
+    "glass": {
+      "menu": "Glas",
+      "follow": "Instelling Weergave volgen",
+      "island": "Heel eiland",
+      "widgets": "Widgets",
+      "both": "Beide"
+    },
+    "newTab": "Nieuw tabblad",
+    "skill": {
+      "title": "Skill"
+    },
+    "paramsRefused": "Deze wijziging kon niet op het tabblad worden toegepast.",
+    "closeGuardFailed": "{title} kon niet bevestigen dat het mag sluiten: het blijft open.",
+    "unsaved": {
+      "title": "Wijzigingen in {name} opslaan?",
+      "description": "Je wijzigingen gaan verloren als je sluit zonder op te slaan.",
+      "save": "Opslaan",
+      "saving": "Opslaan…",
+      "discard": "Niet opslaan",
+      "cancel": "Annuleren"
+    },
+    "stack": {
+      "earlier": "{title} naar links",
+      "later": "{title} naar rechts",
+      "moved": "{title} verplaatst"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "In de werkruimte openen",
+      "openedThere": "Deze sessie is in de werkruimte geopend.",
+      "show": "Tonen"
+    }
+  }
+}

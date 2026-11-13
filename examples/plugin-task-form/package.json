@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-task-form",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-task-form",
+    "apiVersion": 14,
+    "kind": "behavior",
+    "label": "Quick task form",
+    "description": "Replaces the task form of the Kanban, the Agents page and the agents grid with a one-screen quick form.",
+    "permissions": [],
+    "client": {
+      "slots": ["task.form"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

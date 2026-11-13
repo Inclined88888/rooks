@@ -1,0 +1,657 @@
+{
+  "apiVersion": 15,
+  "clientContext": {
+    "api": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "effect": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "events": {
+      "type": "object",
+      "since": 1
+    },
+    "events.subscribe": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "id": {
+      "type": "string",
+      "since": 1
+    },
+    "navigate": {
+      "type": "function",
+      "arity": 1,
+      "since": 1
+    },
+    "realtime": {
+      "type": "object",
+      "since": 4
+    },
+    "realtime.subscribe": {
+      "type": "function",
+      "arity": 2,
+      "since": 4
+    },
+    "settings": {
+      "type": "object",
+      "since": 1
+    },
+    "settings.get": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "settings.set": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "slots": {
+      "type": "object",
+      "since": 1
+    },
+    "slots.register": {
+      "type": "function",
+      "arity": 2,
+      "since": 1
+    },
+    "theme": {
+      "type": "object",
+      "since": 1
+    },
+    "theme.current": {
+      "type": "function",
+      "arity": 0,
+      "since": 1
+    },
+    "usage": {
+      "type": "object",
+      "since": 2
+    },
+    "usage.list": {
+      "type": "function",
+      "arity": 0,
+      "since": 2
+    }
+  },
+  "modules": {
+    "react.js": {
+      "Component": {
+        "type": "export",
+        "since": 1
+      },
+      "Fragment": {
+        "type": "export",
+        "since": 1
+      },
+      "PureComponent": {
+        "type": "export",
+        "since": 1
+      },
+      "Suspense": {
+        "type": "export",
+        "since": 1
+      },
+      "cloneElement": {
+        "type": "export",
+        "since": 1
+      },
+      "createContext": {
+        "type": "export",
+        "since": 1
+      },
+      "createElement": {
+        "type": "export",
+        "since": 1
+      },
+      "default": {
+        "type": "export",
+        "since": 1
+      },
+      "lazy": {
+        "type": "export",
+        "since": 1
+      },
+      "memo": {
+        "type": "export",
+        "since": 1
+      },
+      "useCallback": {
+        "type": "export",
+        "since": 1
+      },
+      "useContext": {
+        "type": "export",
+        "since": 1
+      },
+      "useEffect": {
+        "type": "export",
+        "since": 1
+      },
+      "useId": {
+        "type": "export",
+        "since": 1
+      },
+      "useLayoutEffect": {
+        "type": "export",
+        "since": 1
+      },
+      "useMemo": {
+        "type": "export",
+        "since": 1
+      },
+      "useReducer": {
+        "type": "export",
+        "since": 1
+      },
+      "useRef": {
+        "type": "export",
+        "since": 1
+      },
+      "useState": {
+        "type": "export",
+        "since": 1
+      },
+      "useSyncExternalStore": {
+        "type": "export",
+        "since": 1
+      }
+    },
+    "react-dom.js": {
+      "createPortal": {
+        "type": "export",
+        "since": 1
+      },
+      "default": {
+        "type": "export",
+        "since": 1
+      },
+      "flushSync": {
+        "type": "export",
+        "since": 1
+      }
+    },
+    "ui.js": {
+      "Slot": {
+        "type": "export",
+        "since": 1
+      },
+      "SlotKeyed": {
+        "type": "export",
+        "since": 1
+      },
+      "Button": {
+        "type": "export",
+        "since": 2
+      },
+      "DropdownMenu": {
+        "type": "export",
+        "since": 2
+      },
+      "DropdownMenuCheckboxItem": {
+        "type": "export",
+        "since": 2
+      },
+      "DropdownMenuContent": {
+        "type": "export",
+        "since": 2
+      },
+      "DropdownMenuItem": {
+        "type": "export",
+        "since": 2
+      },
+      "DropdownMenuLabel": {
+        "type": "export",
+        "since": 2
+      },
+      "DropdownMenuSeparator": {
+        "type": "export",
+        "since": 2
+      },
+      "DropdownMenuTrigger": {
+        "type": "export",
+        "since": 2
+      },
+      "Input": {
+        "type": "export",
+        "since": 2
+      },
+      "Label": {
+        "type": "export",
+        "since": 2
+      },
+      "Separator": {
+        "type": "export",
+        "since": 2
+      },
+      "Switch": {
+        "type": "export",
+        "since": 2
+      },
+      "Tile": {
+        "type": "export",
+        "since": 2
+      },
+      "Tooltip": {
+        "type": "export",
+        "since": 2
+      },
+      "TooltipContent": {
+        "type": "export",
+        "since": 2
+      },
+      "TooltipProvider": {
+        "type": "export",
+        "since": 2
+      },
+      "TooltipTrigger": {
+        "type": "export",
+        "since": 2
+      },
+      "cn": {
+        "type": "export",
+        "since": 2
+      },
+      "createTranslator": {
+        "type": "export",
+        "since": 2
+      },
+      "getLocale": {
+        "type": "export",
+        "since": 2
+      },
+      "t": {
+        "type": "export",
+        "since": 2
+      },
+      "useTodoDetail": {
+        "type": "export",
+        "since": 6
+      },
+      "useTodoItem": {
+        "type": "export",
+        "since": 6
+      },
+      "BrandMark": {
+        "type": "export",
+        "since": 2
+      },
+      "Dialog": {
+        "type": "export",
+        "since": 4
+      },
+      "DialogPortal": {
+        "type": "export",
+        "since": 4
+      },
+      "DialogOverlay": {
+        "type": "export",
+        "since": 4
+      },
+      "DialogTrigger": {
+        "type": "export",
+        "since": 4
+      },
+      "DialogClose": {
+        "type": "export",
+        "since": 4
+      },
+      "DialogContent": {
+        "type": "export",
+        "since": 4
+      },
+      "DialogHeader": {
+        "type": "export",
+        "since": 4
+      },
+      "DialogFooter": {
+        "type": "export",
+        "since": 4
+      },
+      "DialogTitle": {
+        "type": "export",
+        "since": 4
+      },
+      "DialogDescription": {
+        "type": "export",
+        "since": 4
+      },
+      "Select": {
+        "type": "export",
+        "since": 4
+      },
+      "SelectGroup": {
+        "type": "export",
+        "since": 4
+      },
+      "SelectValue": {
+        "type": "export",
+        "since": 4
+      },
+      "SelectTrigger": {
+        "type": "export",
+        "since": 4
+      },
+      "SelectContent": {
+        "type": "export",
+        "since": 4
+      },
+      "SelectLabel": {
+        "type": "export",
+        "since": 4
+      },
+      "SelectItem": {
+        "type": "export",
+        "since": 4
+      },
+      "SelectSeparator": {
+        "type": "export",
+        "since": 4
+      },
+      "SelectScrollUpButton": {
+        "type": "export",
+        "since": 4
+      },
+      "SelectScrollDownButton": {
+        "type": "export",
+        "since": 4
+      },
+      "HUD_SURFACE": {
+        "type": "export",
+        "since": 4
+      },
+      "useMissionItem": {
+        "type": "export",
+        "since": 6
+      },
+      "AnchoredPopover": {
+        "type": "export",
+        "since": 6
+      },
+      "useConnectionForm": {
+        "type": "export",
+        "since": 7
+      },
+      "useIslandContent": {
+        "type": "export",
+        "since": 8
+      },
+      "startIslandDrag": {
+        "type": "export",
+        "since": 8
+      },
+      "openInIsland": {
+        "type": "export",
+        "since": 8
+      },
+      "UiDocumentFrame": {
+        "type": "export",
+        "since": 9
+      },
+      "uiDocumentUrl": {
+        "type": "export",
+        "since": 9
+      },
+      "useUiDocument": {
+        "type": "export",
+        "since": 9
+      },
+      "usePromptHistory": {
+        "type": "export",
+        "since": 12
+      },
+      "canRecallPrompt": {
+        "type": "export",
+        "since": 12
+      },
+      "isTextareaWrapped": {
+        "type": "export",
+        "since": 12
+      },
+      "useBrowserChrome": {
+        "type": "export",
+        "since": 13
+      },
+      "useBrowserRecording": {
+        "type": "export",
+        "since": 13
+      },
+      "useBrowserSurface": {
+        "type": "export",
+        "since": 13
+      },
+      "useBrowserAnnotations": {
+        "type": "export",
+        "since": 13
+      },
+      "accountStateHint": {
+        "type": "export",
+        "since": 13
+      },
+      "byPower": {
+        "type": "export",
+        "since": 13
+      },
+      "formatWindow": {
+        "type": "export",
+        "since": 13
+      },
+      "isPickable": {
+        "type": "export",
+        "since": 13
+      },
+      "matchesQuery": {
+        "type": "export",
+        "since": 13
+      },
+      "useBackendCatalog": {
+        "type": "export",
+        "since": 13
+      },
+      "useModelFavorites": {
+        "type": "export",
+        "since": 13
+      },
+      "useModelPicker": {
+        "type": "export",
+        "since": 13
+      },
+      "vendorLabel": {
+        "type": "export",
+        "since": 13
+      },
+      "AccountStateBadge": {
+        "type": "export",
+        "since": 13
+      },
+      "BackendLimitsBadge": {
+        "type": "export",
+        "since": 13
+      },
+      "backendLimits": {
+        "type": "export",
+        "since": 13
+      },
+      "isNewModel": {
+        "type": "export",
+        "since": 13
+      },
+      "useProviderCliCards": {
+        "type": "export",
+        "since": 14
+      },
+      "NativeViewCover": {
+        "type": "export",
+        "since": 14
+      },
+      "useTaskForm": {
+        "type": "export",
+        "since": 14
+      },
+      "useOpenInNewWindow": {
+        "type": "export",
+        "since": 14
+      },
+      "useDirectoryBrowser": {
+        "type": "export",
+        "since": 15
+      },
+      "confirmAction": {
+        "type": "export",
+        "since": 15
+      },
+      "useConfirmDialog": {
+        "type": "export",
+        "since": 15
+      },
+      "useGlassScope": {
+        "type": "export",
+        "since": 15
+      },
+      "useAppCard": {
+        "type": "export",
+        "since": 15
+      },
+      "useMcpTab": {
+        "type": "export",
+        "since": 15
+      },
+      "useAgentMenuItem": {
+        "type": "export",
+        "since": 15
+      },
+      "formatDate": {
+        "type": "export",
+        "since": 15
+      },
+      "formatTime": {
+        "type": "export",
+        "since": 15
+      },
+      "formatDateTime": {
+        "type": "export",
+        "since": 15
+      },
+      "formatNumber": {
+        "type": "export",
+        "since": 15
+      },
+      "formatPercent": {
+        "type": "export",
+        "since": 15
+      },
+      "formatBytes": {
+        "type": "export",
+        "since": 15
+      },
+      "formatRelativeTime": {
+        "type": "export",
+        "since": 15
+      },
+      "formatAgeShort": {
+        "type": "export",
+        "since": 15
+      },
+      "formatList": {
+        "type": "export",
+        "since": 15
+      },
+      "compareText": {
+        "type": "export",
+        "since": 15
+      },
+      "apiErrorMessage": {
+        "type": "export",
+        "since": 15
+      },
+      "useSecretRequest": {
+        "type": "export",
+        "since": 15
+      },
+      "useUpdateStatus": {
+        "type": "export",
+        "since": 15
+      },
+      "parseApiError": {
+        "type": "export",
+        "since": 15
+      },
+      "BoardCard": {
+        "type": "export",
+        "since": 15
+      },
+      "DetailShell": {
+        "type": "export",
+        "since": 15
+      },
+      "DetailFrame": {
+        "type": "export",
+        "since": 15
+      },
+      "useKanbanCard": {
+        "type": "export",
+        "since": 15
+      },
+      "useTodoForm": {
+        "type": "export",
+        "since": 15
+      },
+      "usePageToc": {
+        "type": "export",
+        "since": 15
+      },
+      "useAgentMascot": {
+        "type": "export",
+        "since": 15
+      },
+      "useEmailCode": {
+        "type": "export",
+        "since": 15
+      },
+      "MessageActionButton": {
+        "type": "export",
+        "since": 15
+      },
+      "useChatMessage": {
+        "type": "export",
+        "since": 15
+      },
+      "useComposerReply": {
+        "type": "export",
+        "since": 15
+      },
+      "useLookStyler": {
+        "type": "export",
+        "since": 15
+      },
+      "NavLink": {
+        "type": "export",
+        "since": 15
+      }
+    },
+    "api.js": {
+      "api": {
+        "type": "export",
+        "since": 1
+      }
+    },
+    "theme.js": {
+      "theme": {
+        "type": "export",
+        "since": 1
+      }
+    },
+    "navigate.js": {
+      "navigate": {
+        "type": "export",
+        "since": 1
+      }
+    }
+  }
+}

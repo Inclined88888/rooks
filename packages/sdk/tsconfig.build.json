@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noUncheckedIndexedAccess": true,
+    "outDir": "dist",
+    "rootDir": "../..",
+    "types": ["node"],
+    "typeRoots": ["../../orchestrator/node_modules/@types"]
+  },
+  "include": ["src/index.ts", "src/provider.ts", "src/testing.ts"]
+}

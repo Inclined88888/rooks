@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-page-toc",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-page-toc",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Numbered table of contents",
+    "description": "Replaces the table of contents of the Skills and MCP tabs with a numbered list, sub-sections numbered under their section.",
+    "permissions": [],
+    "client": {
+      "slots": ["page.toc"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

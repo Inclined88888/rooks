@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-confirm-dialog",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-confirm-dialog",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Two-step confirmation",
+    "description": "Replaces Rooks's confirmation dialog: a destructive question needs a second click on its button.",
+    "permissions": [],
+    "client": {
+      "slots": ["confirm.dialog"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

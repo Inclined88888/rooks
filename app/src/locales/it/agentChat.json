@@ -1,0 +1,65 @@
+{
+  "agentChat": {
+    "title": "Chat con l’agente",
+    "newCard": "Nuova chat con un agente",
+    "newCardHint": "Scegli l’agente mostrato da questa scheda. Dopo averla creata, aggiungi un’altra scheda dalla palette dei widget.",
+    "newConversation": "Nuova conversazione",
+    "shortcuts": "Scorciatoie degli agenti",
+    "shortcut": "Passa a {name}",
+    "addAgent": "Aggiungi un agente a questa scheda",
+    "picker": {
+      "label": "Cerca un agente",
+      "placeholder": "Aggiungi un agente…",
+      "empty": "Nessun agente corrispondente",
+      "onCard": "Sulla scheda"
+    },
+    "config": {
+      "agent": "Agente",
+      "agentPlaceholder": "es. alice.main",
+      "title": "Titolo della scheda",
+      "titlePlaceholder": "Nome dell’agente",
+      "subAgents": "Altri agenti sulla scheda",
+      "subAgentsHint": "Ancora nessuno. Cercane uno qui sotto, oppure usa il + alla fine della riga degli avatar.",
+      "removeSubAgent": "Rimuovi {name} dalla scheda",
+      "moveUp": "Sposta {name} su",
+      "moveDown": "Sposta {name} giù",
+      "save": "Salva",
+      "create": "Crea la scheda",
+      "cancel": "Annulla",
+      "delete": "Rimuovi questa scheda"
+    },
+    "menu": {
+      "customize": "Personalizza l’agente",
+      "edit": "Modifica l’agente",
+      "remove": "Rimuovi",
+      "stop": "Ferma tutto",
+      "makeMain": "Imposta come orchestratore principale",
+      "makeMainDone": "{name} è ora l’orchestratore principale: riepiloghi di risveglio e notifiche arrivano a lui",
+      "makeMainFailed": "Impossibile impostare {name} come orchestratore principale: {error}",
+      "stopConfirm": "Fermare davvero {name}? Le sue missioni in corso vengono terminate, la sua posta in arrivo svuotata, le attività in sospeso bloccate, i suoi trigger e i workflow che lo risveglierebbero disattivati.",
+      "stopped": "{name} fermato: {missions} missione/i, {messages} messaggio/i, {tasks} attività, {triggers} trigger, {runs} esecuzione/i di workflow, {workflows} workflow neutralizzati",
+      "stopFailed": "Impossibile fermare {name}: {error}",
+      "duplicate": "Duplica l’agente"
+    },
+    "customize": {
+      "title": "Personalizza l’agente",
+      "description": "Un soprannome e una foto per {name}, solo su questa scheda. L’agente in sé non cambia.",
+      "nickname": "Soprannome",
+      "photo": "Foto",
+      "save": "Salva",
+      "reset": "Ripristina"
+    },
+    "duplicate": {
+      "title": "Duplica {name}",
+      "description": "La copia riceve la stessa configurazione e lo stesso prompt con un nuovo nome. La sua memoria parte vuota e non è l’orchestratore principale, né prende il ruolo fissato di un progetto.",
+      "nameLabel": "Nome della copia",
+      "taken": "Esiste già un agente con questo nome.",
+      "invalid": "Usa solo lettere, cifre, '.', '_' e '-'.",
+      "failed": "Impossibile duplicare: {error}",
+      "done": "{name} creato come copia di {source}",
+      "skillsNotCopied": "{name} creato, ma queste skill non sono impostate come su {source}: {skills}",
+      "cancel": "Annulla",
+      "confirm": "Duplica"
+    }
+  }
+}

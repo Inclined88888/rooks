@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "Netzwerk",
+      "titleOf": "Netzwerk · {mission}"
+    },
+    "widgetZone": {
+      "title": "Widgets"
+    },
+    "widgetCard": {
+      "title": "Widget",
+      "missing": "Das Widget {widget} ist hier nicht verfügbar."
+    },
+    "page": "Seite",
+    "arrangementPage": {
+      "loading": "Anordnung wird geladen…",
+      "missing": "Diese Anordnung existiert nicht mehr. Ihr Menüeintrag verschwindet mit ihr.",
+      "hint": "Diese Seite öffnet sich mit der Anordnung. Was du hier änderst, bleibt auf dieser Seite; die gespeicherte Anordnung bleibt unberührt.",
+      "restore": "Anordnung wiederherstellen",
+      "restoreFailed": "Die Anordnung konnte nicht wiederhergestellt werden."
+    },
+    "tabs": "Insel-Tabs",
+    "close": "Schließen",
+    "closeTab": "{title} schließen",
+    "detach": "In einem Fenster öffnen",
+    "resize": "Größe ändern",
+    "unavailable": "Inhalt nicht verfügbar — {plugin}",
+    "refused": {
+      "maxIslands": "Höchstens 8 Inseln",
+      "maxDepth": "Höchstens 3 Teilungsebenen",
+      "maxTabsPerIsland": "Höchstens 12 Tabs pro Insel",
+      "maxTabs": "Höchstens 32 Tabs",
+      "routeTab": "Die Seite dieser Ansicht kann nicht geschlossen werden",
+      "self": "Schon hier",
+      "unknownType": "Dieser Inhalt kann nicht im Arbeitsbereich geöffnet werden",
+      "maxFloats": "Höchstens 4 Pop-ups",
+      "floatEdge": "Ein Pop-up nimmt Tabs nur über seine Mitte auf"
+    },
+    "announce": {
+      "right": "{title} rechts von {target} geöffnet",
+      "left": "{title} links von {target} geöffnet",
+      "top": "{title} über {target} geöffnet",
+      "bottom": "{title} unter {target} geöffnet",
+      "tab": "{title} als Tab zu {target} hinzugefügt",
+      "root": "{title} am Rand des Arbeitsbereichs geöffnet",
+      "closed": "{title} geschlossen",
+      "float": "{title} als Pop-up geöffnet",
+      "minimized": "{title} minimiert"
+    },
+    "openIn": {
+      "menu": "In einer Teilung öffnen",
+      "right": "Rechts",
+      "left": "Links",
+      "bottom": "Unten",
+      "top": "Oben",
+      "center": "In einem Tab",
+      "narrow": "Im Arbeitsbereich öffnen",
+      "split": {
+        "right": "Rechts öffnen",
+        "left": "Links öffnen",
+        "bottom": "Unten öffnen",
+        "top": "Oben öffnen",
+        "center": "In einem Tab öffnen",
+        "float": "Als Pop-up öffnen"
+      },
+      "float": "Als Pop-up"
+    },
+    "drop": {
+      "right": "Rechts von {target} öffnen",
+      "left": "Links von {target} öffnen",
+      "top": "Über {target} stapeln",
+      "bottom": "Unter {target} stapeln",
+      "center": "Tab zu {target} hinzufügen",
+      "root": {
+        "left": "Neue Spalte links",
+        "right": "Neue Spalte rechts",
+        "top": "Neue Zeile oben",
+        "bottom": "Neue Zeile unten"
+      },
+      "float": "Als Pop-up öffnen (Alt)"
+    },
+    "drag": {
+      "island": "Ziehen, um diese Insel zu verschieben"
+    },
+    "chat": {
+      "title": "Chat",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title} öffnet sich in einer neuen Insel rechts",
+        "left": "{title} öffnet sich in einer neuen Insel links",
+        "top": "{title} öffnet sich in einer neuen Insel oben",
+        "bottom": "{title} öffnet sich in einer neuen Insel unten"
+      },
+      "openTab": "{title} öffnet sich als Tab",
+      "cannotApply": "Dieses Layout passt nicht mehr zum Arbeitsbereich: Die Zielinsel wurde geschlossen, oder ein Limit ist erreicht.",
+      "dropped": "Weggelassen, ihr Inhalt hat seine Einstellungen abgelehnt: {titles}",
+      "unreadable": "deine aktuelle Anordnung konnte nicht gelesen werden, versuche es gleich erneut",
+      "noFit": "die Zielinsel wurde geschlossen, oder ein Limit ist erreicht",
+      "refusedParams": "{titles} hat die übergebenen Einstellungen abgelehnt",
+      "closes": "Anwenden schließt: {titles}",
+      "closesIn": "Anwenden in {project} schließt: {titles}",
+      "tabKept": "ein Tab, den es schließen würde, blieb offen, nichts wurde geändert"
+    },
+    "arrangementProposal": {
+      "title": "{agent} schlägt eine deiner Insel-Anordnungen vor",
+      "titleFrom": "{agent} schlägt eine deiner Insel-Anordnungen vor ({project})",
+      "name": "Anordnung: {name}",
+      "gone": "die Anordnung „{name}“ wurde gelöscht, nichts wurde geändert",
+      "stale": "Diese Anordnung wurde seit dem Vorschlag gelöscht: Nichts wurde geändert."
+    },
+    "menu": "Insel-Aktionen",
+    "move": {
+      "keys": "M: diesen Tab verschieben · Umschalt+M: die Insel verschieben",
+      "start": "{title} wird verschoben. Pfeiltasten wählen die Insel, Tab den Platz, Enter legt ab, Escape bricht ab.",
+      "hint": "Pfeile: Insel · Tab: Platz · Enter: ablegen · Esc: abbrechen",
+      "cancelled": "Verschieben abgebrochen"
+    },
+    "file": {
+      "title": "Datei"
+    },
+    "popup": {
+      "open": "{title} als Pop-up öffnen",
+      "dock": "Am Arbeitsbereich andocken",
+      "pin": "Auf jeder Seite behalten",
+      "unpin": "Nur auf dieser Seite behalten",
+      "close": "Dieses Pop-up schließen",
+      "minimize": "Minimieren",
+      "restore": "{title} wieder anzeigen",
+      "minimized": "Minimierte Pop-ups"
+    },
+    "glass": {
+      "menu": "Glas",
+      "follow": "Der Einstellung Darstellung folgen",
+      "island": "Ganze Insel",
+      "widgets": "Widgets",
+      "both": "Beides"
+    },
+    "newTab": "Neuer Tab",
+    "skill": {
+      "title": "Skill"
+    },
+    "paramsRefused": "Diese Änderung konnte nicht auf den Tab angewendet werden.",
+    "closeGuardFailed": "{title} konnte nicht bestätigen, dass es schließen darf: Es bleibt geöffnet.",
+    "unsaved": {
+      "title": "Änderungen an {name} speichern?",
+      "description": "Deine Änderungen gehen verloren, wenn du ohne Speichern schließt.",
+      "save": "Speichern",
+      "saving": "Wird gespeichert…",
+      "discard": "Nicht speichern",
+      "cancel": "Abbrechen"
+    },
+    "stack": {
+      "earlier": "{title} nach links",
+      "later": "{title} nach rechts",
+      "moved": "{title} verschoben"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "Im Arbeitsbereich öffnen",
+      "openedThere": "Diese Sitzung ist im Arbeitsbereich geöffnet.",
+      "show": "Anzeigen"
+    }
+  }
+}

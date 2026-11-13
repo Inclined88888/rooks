@@ -1,0 +1,59 @@
+{
+  "slug": "linear",
+  "name": "Linear",
+  "publisher": "Linear",
+  "category": "productivity",
+  "tagline": {
+    "en": "Issues, projects and cycles",
+    "fr": "Issues, projets et cycles"
+  },
+  "description": {
+    "en": "Lets your agents find, create and update Linear issues, follow projects and cycles, and comment on behalf of your account.",
+    "fr": "Vos agents trouvent, créent et mettent à jour les issues Linear, suivent les projets et les cycles, et commentent au nom de votre compte."
+  },
+  "examples": {
+    "en": [
+      "What is left in the current cycle of my team?",
+      "Create an issue for this bug and assign it to me",
+      "Summarise the progress of the onboarding project"
+    ],
+    "fr": [
+      "Que reste-t-il dans le cycle en cours de mon équipe ?",
+      "Crée une issue pour ce bug et assigne-la-moi",
+      "Résume l’avancement du projet d’onboarding"
+    ]
+  },
+  "mcp": {
+    "url": "https://mcp.linear.app/mcp",
+    "transport": "streamable-http"
+  },
+  "auth": {
+    "type": "oauth"
+  },
+  "links": {
+    "website": "https://linear.app",
+    "privacy": "https://linear.app/privacy",
+    "terms": "https://linear.app/terms"
+  },
+  "registry": {
+    "name": "app.linear/linear",
+    "proof": "domain"
+  },
+  "icon": {
+    "monogram": "Li",
+    "color": "#5E6AD2",
+    "logo": {
+      "viewBox": "0 0 24 24",
+      "paths": [
+        {
+          "d": "M2.886 4.18A11.982 11.982 0 0 1 11.99 0C18.624 0 24 5.376 24 12.009c0 3.64-1.62 6.903-4.18 9.105L2.887 4.18ZM1.817 5.626l16.556 16.556c-.524.33-1.075.62-1.65.866L.951 7.277c.247-.575.537-1.126.866-1.65ZM.322 9.163l14.515 14.515c-.71.172-1.443.282-2.195.322L0 11.358a12 12 0 0 1 .322-2.195Zm-.17 4.862 9.823 9.824a12.02 12.02 0 0 1-9.824-9.824Z"
+        }
+      ],
+      "source": "https://simpleicons.org/?q=linear"
+    }
+  },
+  "reviewed": {
+    "on": "2026-11-04",
+    "probe": "oauth: 401 then metadata and dynamic client registration accepted"
+  }
+}

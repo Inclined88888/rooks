@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["src/**/*"],
+  // Les tests tournent via tsx (`npm test`) — pas besoin de les compiler dans dist/.
+  "exclude": ["src/**/*.test.ts"]
+}

@@ -1,0 +1,26 @@
+{
+  "cockpit": {
+    "common": {
+      "loading": "Laden…"
+    },
+    "dreams": {
+      "pending": "{count} in behandeling",
+      "empty": "Geen droom in behandeling"
+    },
+    "accountUsage": {
+      "disconnected": "Niet aangemeld",
+      "connectCliThen": "Meld je via de CLI aan bij {name}: voer {command} uit, daarna {then}.",
+      "connectCli": "Meld je via de CLI aan bij {name}: voer {command} uit.",
+      "connect": "Meld je aan via de CLI van deze provider.",
+      "connectAccount": "Meld dit account opnieuw aan via {settingsPath}.",
+      "error": "Gebruik niet beschikbaar"
+    },
+    "board": {
+      "move": "{title} verplaatsen",
+      "resize": "Grootte van {title} wijzigen",
+      "centerZone": "Midden van de cockpit",
+      "leftRail": "Linkerbalk van de cockpit",
+      "rightRail": "Rechterbalk van de cockpit"
+    }
+  }
+}

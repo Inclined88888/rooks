@@ -1,0 +1,78 @@
+{
+  "terminal": {
+    "title": "Terminal",
+    "tabs": "Sesiones de terminal",
+    "state": {
+      "connecting": "Conectando…",
+      "retrying": "Conexión perdida, reconectando…",
+      "unauthorized": "Sesión caducada: inicia sesión de nuevo.",
+      "ended": "Sesión terminada.",
+      "exited": "El shell terminó (código {code})."
+    },
+    "actions": {
+      "new": "Nuevo terminal",
+      "kill": "Cerrar {name} (detiene su shell)",
+      "reconnect": "Reconectar ahora",
+      "popOut": "Abrir en una ventana flotante"
+    },
+    "keys": {
+      "toolbar": "Teclas adicionales",
+      "up": "Arriba",
+      "down": "Abajo",
+      "left": "Izquierda",
+      "right": "Derecha",
+      "copy": "Copiar"
+    },
+    "clipboard": {
+      "menu": "Portapapeles del terminal",
+      "copy": "Copiar",
+      "paste": "Pegar",
+      "copied": "Copiado al portapapeles.",
+      "copyFailed": "No se pudo copiar: el navegador denegó el acceso al portapapeles.",
+      "pasteFailed": "No se pudo leer el portapapeles: permite el acceso o pega con Ctrl+Shift+V (Cmd+V en Mac)."
+    },
+    "errors": {
+      "create": "No se pudo iniciar un terminal: {error}",
+      "kill": "No se pudo cerrar el terminal: {error}",
+      "load": "No se pudo contactar con el servicio de terminal: {error}"
+    },
+    "unavailable": {
+      "disabled": "El terminal integrado está desactivado. Un administrador puede activarlo en {settingsPath}.",
+      "forbidden": "Tu cuenta no tiene permiso para abrir un terminal (permiso \"terminal:open\").",
+      "session_required": "Inicia sesión desde el navegador para abrir un terminal.",
+      "unauthorized": "Inicia sesión para abrir un terminal.",
+      "pty_unavailable": "Esta máquina no puede iniciar un terminal: falló la carga del componente de pseudoterminal. Consulta el registro del daemon."
+    },
+    "titleScoped": "Terminal — {scope}",
+    "scopes": {
+      "none": "Sin proyecto",
+      "label": "Proyectos"
+    },
+    "request": {
+      "title": "{agent} te pide ejecutar un comando",
+      "titleFrom": "{agent} · {project} te pide ejecutar un comando",
+      "badge": "comando",
+      "allow": "Permitir",
+      "paste": "Pegar en un terminal",
+      "deny": "Descartar",
+      "copy": "Copiar el comando",
+      "copied": "Comando copiado al portapapeles.",
+      "hint": "Se pega sin Enter: léelo y pulsa Enter tú mismo.",
+      "state": {
+        "allow": "Permitido: el agente lo ejecuta",
+        "paste": "Pegado en un terminal",
+        "deny": "Descartado"
+      },
+      "errors": {
+        "forbidden": "Tu cuenta no puede abrir un terminal: no se pegó nada.",
+        "not_found": "Esta solicitud ya no existe.",
+        "already_decided": "Esta solicitud ya se resolvió.",
+        "not_offered": "Esta opción ya no se ofrece: el agente no puede ejecutar el comando ahora.",
+        "failed": "No se pudo registrar tu decisión. Vuelve a intentarlo."
+      },
+      "windowRefused": "Decisión registrada, pero el terminal de {scope} no está en pantalla. Abre una conversación de {scope} para pegarlo allí; el comando está en tu portapapeles.",
+      "windowRefusedNoClipboard": "Decisión registrada, pero el terminal de {scope} no está en pantalla. Abre una conversación de {scope} y copia el comando desde la tarjeta.",
+      "pendingBadge": "{count} comando(s) esperando tu decisión"
+    }
+  }
+}

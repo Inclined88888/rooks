@@ -1,0 +1,82 @@
+{
+  "name": "@rooks/plugin-agent-import",
+  "version": "0.1.0",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./hooks": "./lib/hooks.js"
+  },
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --tsconfig-raw={} --preserve-symlinks --loader:.md=text --alias:module=node:module --outfile=lib/index.js && esbuild src/client.tsx --bundle --format=esm --external:react --external:@rooks/ui --outfile=lib/client.js && esbuild src/hooks.ts --bundle --format=esm --external:react --outfile=lib/hooks.js",
+    "typecheck": "node ../../orchestrator/node_modules/typescript/bin/tsc -p tsconfig.json",
+    "test": "cd ../../orchestrator && npm test -- src/plugins/agent-import*.test.ts"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "js-yaml": "^5.4.1",
+    "zod": "^4.5.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "rooks": {
+    "id": "agent-import",
+    "apiVersion": 15,
+    "kind": [
+      "behavior"
+    ],
+    "label": "Agent import",
+    "description": "Bring your agents from Hermes, Grok Bot, another agent tool or another Rooks: preview what will be created, then import.",
+    "author": "Rooks",
+    "permissions": [
+      "storage",
+      "agents:read",
+      "agents:manage",
+      "agents:docs:read",
+      "agents:docs:write",
+      "agents:export",
+      "backends:read",
+      "skills:read",
+      "skills:write",
+      "mcp-servers:read",
+      "mcp-servers:write",
+      "memory:read",
+      "memory:write",
+      "triggers:write",
+      "kanban:write",
+      "missions:spawn",
+      "events:subscribe",
+      "events:register",
+      "events:publish"
+    ],
+    "client": {
+      "slots": [
+        "settings.section",
+        "agents.toolbar",
+        "onboarding.agent",
+        "agentimport.source",
+        "bots.rail.action",
+        "agent.menu.item"
+      ],
+      "external": [
+        "react",
+        "@rooks/ui"
+      ],
+      "mode": "esm"
+    },
+    "declares": {
+      "agentimport.source": "list"
+    },
+    "license": {
+      "required": false
+    }
+  }
+}

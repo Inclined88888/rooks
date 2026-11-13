@@ -1,0 +1,13 @@
+{
+  "invitePage": {
+    "title": "Einladung annehmen",
+    "description": "Wähle ein Passwort für {email}.",
+    "invalid": "Diese Einladung ist ungültig oder abgelaufen.",
+    "name": "Name",
+    "password": "Passwort",
+    "submit": "Konto erstellen",
+    "working": "Wird ausgeführt…",
+    "failed": "Einladung abgelehnt",
+    "goHome": "Weiter"
+  }
+}

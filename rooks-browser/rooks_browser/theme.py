@@ -4,7 +4,7 @@ The same module as the rooks terminal's (rooks-code/rooks_code/theme.py), so the
 look alike (design record 0003, section 6): text is neutral, and one amber accent marks only what is live or needs you.
 ok and error are calm greens and reds for results; nothing else is coloured.
 
-Which theme: --theme, then ROOKS_THEME, then the app's choice in ~/.ai-workspace/appearance.json (written by the app;
+Which theme: --theme, then ROOKS_THEME, then the app's choice in ~/.rooks/appearance.json (written by the app;
 AI_WORKSPACE_APPEARANCE_FILE overrides the path), then auto. An older saved name is mapped the way the app maps it:
 night, lamp, neon, cherry -> dark; contrast -> contrast; the old light names (sunshine, paper, linen, gallery, studio)
 -> light.
@@ -48,8 +48,15 @@ BOLD_THEMES = ("contrast",)  # high contrast also makes every coloured line bold
 
 
 def appearance_file() -> Path:
-    p = os.environ.get("AI_WORKSPACE_APPEARANCE_FILE")
-    return Path(p) if p else Path.home() / ".ai-workspace" / "appearance.json"
+    p = os.environ.get("AI_WORKSPACE_APPEARANCE_FILE") or os.environ.get("ROOKS_APPEARANCE_FILE")
+    if p:
+        return Path(p)
+    home = Path(os.environ.get("ROOKS_HOME") or Path.home() / ".rooks")
+    canonical = home / "appearance.json"
+    if canonical.exists():
+        return canonical
+    legacy = Path.home() / ".ai-workspace" / "appearance.json"
+    return canonical if not legacy.exists() else legacy
 
 
 def normalise(name: str | None) -> str | None:

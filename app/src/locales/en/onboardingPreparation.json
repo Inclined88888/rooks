@@ -1,0 +1,31 @@
+{
+  "onboarding": {
+    "preparation": {
+      "title": "Preparing Rooks",
+      "ready": "Rooks is ready",
+      "needsYou": "Rooks needs you",
+      "items": {
+        "service": "Background service",
+        "servicePortable": "Portable mode: Rooks runs while the app is open",
+        "serviceAccount": "Background service, after your account",
+        "database": "Local database",
+        "browser": "Built-in browser",
+        "browserAbsent": "Built-in browser: not on this install",
+        "providers": "Looking for your AIs"
+      },
+      "doctorFailed": "Rooks could not read this machine. Try again in a moment.",
+      "retry": "Try again",
+      "retrying": "Trying again…",
+      "repair": "Open the repair screen",
+      "gate": {
+        "waitTitle": "Rooks is finishing its installation",
+        "waitBody": "Your agent runs on the background service, so it keeps working when this window is closed. This step opens as soon as the service answers.",
+        "waitAccount": "The background service starts once your account is signed in.",
+        "blockedTitle": "The background service could not be installed",
+        "blockedBody": "Your agent needs it to keep working when this window is closed. Fix the problem below, then try again.",
+        "configuring": "Saving your setup…",
+        "configureFailed": "Your setup could not be saved"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "cockpit": {
+    "common": {
+      "loading": "Cargando…"
+    },
+    "dreams": {
+      "pending": "{count} pendiente(s)",
+      "empty": "Ningún sueño pendiente"
+    },
+    "accountUsage": {
+      "disconnected": "Sin sesión iniciada",
+      "connectCliThen": "Inicia sesión en {name} desde la CLI: ejecuta {command} y luego {then}.",
+      "connectCli": "Inicia sesión en {name} desde la CLI: ejecuta {command}.",
+      "connect": "Inicia sesión desde la CLI de este proveedor.",
+      "connectAccount": "Vuelve a iniciar sesión con esta cuenta desde {settingsPath}.",
+      "error": "Uso no disponible"
+    },
+    "board": {
+      "move": "Mover {title}",
+      "resize": "Cambiar el tamaño de {title}",
+      "centerZone": "Centro del Cockpit",
+      "leftRail": "Carril izquierdo del Cockpit",
+      "rightRail": "Carril derecho del Cockpit"
+    }
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "Sieć",
+      "titleOf": "Sieć · {mission}"
+    },
+    "widgetZone": {
+      "title": "Widżety"
+    },
+    "widgetCard": {
+      "title": "Widżet",
+      "missing": "Widżet {widget} nie jest tu dostępny."
+    },
+    "page": "Strona",
+    "arrangementPage": {
+      "loading": "Wczytywanie rozmieszczenia…",
+      "missing": "To rozmieszczenie już nie istnieje. Jego pozycja w menu znika razem z nim.",
+      "hint": "Ta strona otwiera się z rozmieszczeniem. To, co tu zmienisz, zostaje na tej stronie; zapisane rozmieszczenie pozostaje nietknięte.",
+      "restore": "Przywróć rozmieszczenie",
+      "restoreFailed": "Nie udało się przywrócić rozmieszczenia."
+    },
+    "tabs": "Karty wyspy",
+    "close": "Zamknij",
+    "closeTab": "Zamknij {title}",
+    "detach": "Otwórz w oknie",
+    "resize": "Zmień rozmiar",
+    "unavailable": "Zawartość niedostępna — {plugin}",
+    "refused": {
+      "maxIslands": "Najwyżej 8 wysp",
+      "maxDepth": "Najwyżej 3 poziomy podziałów",
+      "maxTabsPerIsland": "Najwyżej 12 kart w wyspie",
+      "maxTabs": "Najwyżej 32 karty",
+      "routeTab": "Nie można zamknąć strony tego widoku",
+      "self": "Już tutaj",
+      "unknownType": "Ta zawartość nie może otworzyć się w obszarze roboczym",
+      "maxFloats": "Najwyżej 4 okna wyskakujące",
+      "floatEdge": "Okno wyskakujące przyjmuje karty tylko środkiem"
+    },
+    "announce": {
+      "right": "Otwarto {title} na prawo od {target}",
+      "left": "Otwarto {title} na lewo od {target}",
+      "top": "Otwarto {title} nad {target}",
+      "bottom": "Otwarto {title} pod {target}",
+      "tab": "Dodano {title} jako kartę do {target}",
+      "root": "Otwarto {title} wzdłuż krawędzi obszaru roboczego",
+      "closed": "Zamknięto {title}",
+      "float": "Otwarto {title} jako okno wyskakujące",
+      "minimized": "Zminimalizowano {title}"
+    },
+    "openIn": {
+      "menu": "Otwórz w podziale",
+      "right": "Na prawo",
+      "left": "Na lewo",
+      "bottom": "Poniżej",
+      "top": "Powyżej",
+      "center": "W karcie",
+      "narrow": "Otwórz w obszarze roboczym",
+      "split": {
+        "right": "Otwórz na prawo",
+        "left": "Otwórz na lewo",
+        "bottom": "Otwórz poniżej",
+        "top": "Otwórz powyżej",
+        "center": "Otwórz w karcie",
+        "float": "Otwórz jako okno wyskakujące"
+      },
+      "float": "Jako okno wyskakujące"
+    },
+    "drop": {
+      "right": "Otwórz na prawo od {target}",
+      "left": "Otwórz na lewo od {target}",
+      "top": "Ułóż nad {target}",
+      "bottom": "Ułóż pod {target}",
+      "center": "Dodaj kartę do {target}",
+      "root": {
+        "left": "Nowa kolumna po lewej",
+        "right": "Nowa kolumna po prawej",
+        "top": "Nowy wiersz u góry",
+        "bottom": "Nowy wiersz u dołu"
+      },
+      "float": "Otwórz jako okno wyskakujące (Alt)"
+    },
+    "drag": {
+      "island": "Przeciągnij, aby przenieść tę wyspę"
+    },
+    "chat": {
+      "title": "Czat",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title} otworzy się w nowej wyspie po prawej",
+        "left": "{title} otworzy się w nowej wyspie po lewej",
+        "top": "{title} otworzy się w nowej wyspie powyżej",
+        "bottom": "{title} otworzy się w nowej wyspie poniżej"
+      },
+      "openTab": "{title} otworzy się jako karta",
+      "cannotApply": "Ten układ nie pasuje już do obszaru roboczego: docelowa wyspa została zamknięta albo osiągnięto limit.",
+      "dropped": "Pominięte, ich zawartość odrzuciła ustawienia: {titles}",
+      "unreadable": "nie udało się odczytać twojego obecnego rozmieszczenia, spróbuj ponownie za chwilę",
+      "noFit": "docelowa wyspa została zamknięta albo osiągnięto limit",
+      "refusedParams": "{titles} odrzuciło przekazane ustawienia",
+      "closes": "Zastosowanie zamknie: {titles}",
+      "closesIn": "Zastosowanie w {project} zamknie: {titles}",
+      "tabKept": "karta, którą zamknęłoby, pozostała otwarta, nic nie zmieniono"
+    },
+    "arrangementProposal": {
+      "title": "{agent} proponuje jedno z twoich rozmieszczeń wysp",
+      "titleFrom": "{agent} proponuje jedno z twoich rozmieszczeń wysp ({project})",
+      "name": "Rozmieszczenie: {name}",
+      "gone": "rozmieszczenie „{name}” zostało usunięte, nic nie zmieniono",
+      "stale": "To rozmieszczenie zostało usunięte od czasu propozycji: nic nie zmieniono."
+    },
+    "menu": "Akcje wyspy",
+    "move": {
+      "keys": "M: przenieś tę kartę · Shift+M: przenieś wyspę",
+      "start": "Przenoszenie {title}. Strzałki wybierają wyspę, Tab miejsce, Enter upuszcza, Escape anuluje.",
+      "hint": "Strzałki: wyspa · Tab: miejsce · Enter: upuść · Esc: anuluj",
+      "cancelled": "Przenoszenie anulowane"
+    },
+    "file": {
+      "title": "Plik"
+    },
+    "popup": {
+      "open": "Otwórz {title} jako okno wyskakujące",
+      "dock": "Zadokuj w obszarze roboczym",
+      "pin": "Zachowaj na każdej stronie",
+      "unpin": "Zachowaj tylko na tej stronie",
+      "close": "Zamknij to okno wyskakujące",
+      "minimize": "Minimalizuj",
+      "restore": "Pokaż ponownie {title}",
+      "minimized": "Zminimalizowane okna wyskakujące"
+    },
+    "glass": {
+      "menu": "Szkło",
+      "follow": "Zgodnie z ustawieniem Wygląd",
+      "island": "Cała wyspa",
+      "widgets": "Widżety",
+      "both": "Oba"
+    },
+    "newTab": "Nowa karta",
+    "skill": {
+      "title": "Umiejętność"
+    },
+    "paramsRefused": "Nie udało się zastosować tej zmiany do karty.",
+    "closeGuardFailed": "{title} nie mógł potwierdzić, że może zostać zamknięty: pozostaje otwarty.",
+    "unsaved": {
+      "title": "Zapisać zmiany w {name}?",
+      "description": "Twoje zmiany przepadną, jeśli zamkniesz bez zapisywania.",
+      "save": "Zapisz",
+      "saving": "Zapisywanie…",
+      "discard": "Nie zapisuj",
+      "cancel": "Anuluj"
+    },
+    "stack": {
+      "earlier": "Przesuń {title} w lewo",
+      "later": "Przesuń {title} w prawo",
+      "moved": "Przeniesiono {title}"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "Otwórz w obszarze roboczym",
+      "openedThere": "Ta sesja jest otwarta w obszarze roboczym.",
+      "show": "Pokaż ją"
+    }
+  }
+}

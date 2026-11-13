@@ -1,51 +1,30 @@
-# AGENTS.md: working on AI Workspace
+# AGENTS.md: working on Rooks
 
-AI Workspace is a personal AI assistant you run yourself: a web app (workbench) also shipped as a desktop app window,
-plus three command line agents: `rooks` (terminal coding agent), `rooks-browser` (browser agent), `rooks-desk`
-(computer use). All three can use the app's models, keys and plans through its OpenAI-shaped `/v1` bridge.
+Rooks is a local-first AI workspace: Electron desktop + Next.js app + Node daemon, plus terminal / browser / desk / Room agents.
 
 ## Layout
 
-- `workbench/backend/app/` FastAPI app (Python 3.12). `main.py` wires routers. Models: `llm.py`, `adapters.py`
-  (one class per protocol, `CliPlan` runs the user's own `claude`/`codex`/`copilot` CLI), `router.py` (Auto).
-  `/v1` bridge: `bridge.py`; terminal link (memory, skills, search): `rooks_link.py`. Mail: `mail.py` (IMAP/SMTP),
-  `cloud_mail.py` (Gmail and Microsoft Graph), `connect.py` (Google/Microsoft OAuth sign-in), `mail_autodetect.py`.
-  Database and migrations: `db.py` (SQLite, schema version in `SCHEMA_VERSION`). The Workroom: `presence.py`,
-  `needs_you.py`, `room.py`, `restart.py` (a restart reported honestly: the cut off turn gets a note, the next turn says
-  `resumed`, goals that opted in continue). A prompt that does not fit is compacted and retried in `assistant._run_turn`
-  (`compacted` event), never fatal at once.
-- `workbench/backend/tests/` pytest suite (about 770 tests, about 5 minutes).
-- `workbench/frontend/src/` React + Vite + TypeScript. The Workroom shell: `pages/registry.ts` (the one page list:
-  routes, rail, flyouts, More sheet, palette), `shell/` (rail, presence strip, stage host, phone bar), `ui/`
-  (primitives), `chat/` (thread, events, turns), `room/` (the Room page and stage), `stage/` (surfaces), `needs/` (the
-  Needs you sheet); tokens in `tokens.css`. Pages in `pages/`, shared helpers in `util.tsx`, API client in `api.ts`,
-  styles in `styles.css` and `connect.css`.
-- `rooks-code/rooks_code/` the `rooks` terminal: `agent.py` (loop), `tools.py` (file and command tools), `extras.py`
-  (todo, web, background jobs, sub-agents, project instructions), `learning.py` (memory and skills shared with the
-  app), `tui.py` (interactive terminal), `cli.py` (commands, plain mode), `config.py`, `providers.py`.
-- `rooks-browser/`, `rooks-desk/` the browser and computer agents. `rooks-try/` the Room: the assistant's own computer on
-  this machine (a private desktop on Linux, a Linux guest with QEMU, else a private folder and shell); the app side is
-  `workbench/backend/app/room.py` (`/api/room`, the `use_room` tool). Honesty rule: a screen is shown only when a real
-  display exists, status says `screen`, `pointer`, `isolation` and a plain label, the drawn terminal is never picked on
-  its own, and a file leaves the Room only after a yes in Needs you. `desktop/` launcher and native shell.
-- `install.sh` installs everything; `scripts/test-all.sh` runs every suite.
-
-## Commands
-
-- Everything: `./scripts/test-all.sh` (needs uv and npm). Must end with "All passed." before pushing.
-- Backend only: `cd workbench/backend && env -u OPENAI_API_KEY -u ANTHROPIC_API_KEY -u NVIDIA_API_KEY ~/.venvs/aiw/bin/python -m pytest -q -p no:cacheprovider -W ignore`
-  (provider keys unset, or tests call real providers).
-- Rooks only: `cd rooks-code && ~/.venvs/rooks/bin/python -m pytest -q -p no:cacheprovider`
-- Try Room only: `cd rooks-try && ~/.venvs/aiw/bin/python -m pytest -q -p no:cacheprovider tests`
-- Frontend: `cd workbench/frontend && npx tsc --noEmit -p . && npm run build && npm test`
+- `orchestrator/` — Cordis kernel, CLI (`rooks`), host adapters, bundled plugins. Brand: `src/brand.ts`.
+- `app/` — Next.js web UI; client plugins in `src/plugins-client/`; brand copy in `src/lib/brand.ts`.
+- `desktop/` — Electron shell around the local daemon (`com.rooks.desktop`).
+- `packages/sdk/` — `@rooks/sdk` plugin contracts (MIT for the SDK/examples).
+- `plugins/`, `examples/` — signed/official and example plugins.
+- `rooks-code/`, `rooks-browser/`, `rooks-desk/`, `rooks-try/` — agents (Python); coding CLI is `rooks-code` to avoid colliding with the product CLI `rooks`.
+- `integrations/work-suites/` — Microsoft 365 / Google Workspace modules.
+- `ports/` — installers, Windows pack scripts, icons.
 
 ## Rules
 
-- The install repo is `Inclined88888/rooks`, version 1.0.0, branch `main`. The old `ai-workspace` repo is not the install line. Do not merge that old `main` unless the owner says so.
-- Every user-facing string is plain words for non-technical people: no URLs, ids, "cli://", "OAuth", "MCP", "UTC",
-  "Workbench" or stack traces on normal screens. Technical detail only under "Advanced".
-- The terminal, the browser and the app must match: same features, names and behaviour. A feature added in one is
-  added (or reachable) in the others.
-- Never fake results. A test that guards a fix must fail on the old code first.
-- Secrets never go in logs, commits or chat. Keys live in the app; the terminal gets them from `app.json`.
-- Mail connects through the provider's own sign-in (Google, Microsoft) or app passwords; never scripts another app.
+- Product is local-first on each person’s computer; any task / any API key; no paywalls or caps.
+- First-run account, models, channels, and mail are optional — never block getting to the desk.
+- Menus (customize / skills / connectors) once — never duplicated.
+- Desktop UI should feel like Linear / Raycast / Things — never website-looking.
+- Keep the proprietary `LICENSE`, one-line `NOTICE.md`, and Rooks-worded `THIRD_PARTY_NOTICES.md`.
+- Secrets never go in logs, commits, or chat.
+
+## Checks
+
+- Orchestrator: `cd orchestrator && npm test`
+- App: `cd app && npm test` / `npm run typecheck`
+- Desktop: `cd desktop && npm test`
+- Agents: `cd rooks-code && python -m pytest -q` (and siblings) when a venv is available

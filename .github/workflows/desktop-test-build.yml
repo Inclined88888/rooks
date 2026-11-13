@@ -1,0 +1,184 @@
+# TEST ONLY desktop installers for PR / manual runs.
+# Unsigned OS code-signing is fine when secrets are missing.
+# Daemon release integrity still needs an Ed25519 pair: use repo secrets when
+# present, otherwise mint an ephemeral TEST-ONLY pair for this job.
+name: Desktop test build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - 'orchestrator/**'
+      - 'app/**'
+      - '.github/workflows/desktop-test-build.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: ${{ matrix.os }} package (TEST ONLY)
+    runs-on: ${{ matrix.os }}
+    # Do not block PR merge on packaging; morning test artefacts only.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            eb_args: '--mac dmg --publish never'
+            artifact: 'Rooks-*-mac*'
+          - os: ubuntu-latest
+            eb_args: '--linux AppImage deb --publish never'
+            artifact: 'Rooks-*-linux*'
+          - os: windows-latest
+            eb_args: '--win nsis --publish never'
+            artifact: 'Rooks-*-win*'
+    timeout-minutes: 180
+    # Bash on every OS: Windows pwsh rejects `if [ -f … ]` and heredocs in later steps.
+    defaults:
+      run:
+        shell: bash
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            orchestrator/package-lock.json
+            app/package-lock.json
+            desktop/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci --include=dev --prefix orchestrator
+          npm ci --include=dev --prefix app
+          npm ci --include=dev --prefix desktop
+
+      - name: Release signing keys (secrets or ephemeral TEST ONLY)
+        shell: bash
+        env:
+          ROOKS_RELEASE_PRIVATE_KEY: ${{ secrets.ROOKS_RELEASE_PRIVATE_KEY }}
+          ROOKS_RELEASE_PUBLIC_KEY: ${{ secrets.ROOKS_RELEASE_PUBLIC_KEY }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/rooks-keys"
+          PRIV="$RUNNER_TEMP/rooks-keys/private.pem"
+          PUB="$RUNNER_TEMP/rooks-keys/public.pem"
+          if [ -n "${ROOKS_RELEASE_PRIVATE_KEY:-}" ] && [ -n "${ROOKS_RELEASE_PUBLIC_KEY:-}" ]; then
+            printf '%s\n' "$ROOKS_RELEASE_PRIVATE_KEY" > "$PRIV"
+            printf '%s\n' "$ROOKS_RELEASE_PUBLIC_KEY" > "$PUB"
+            echo "Using repository release signing secrets."
+          else
+            node <<'NODE'
+          const { generateKeyPairSync } = require('crypto');
+          const fs = require('fs');
+          const dir = process.env.RUNNER_TEMP + '/rooks-keys';
+          const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+          fs.writeFileSync(dir + '/private.pem', privateKey.export({ type: 'pkcs8', format: 'pem' }));
+          fs.writeFileSync(dir + '/public.pem', publicKey.export({ type: 'spki', format: 'pem' }));
+          console.log('Minted ephemeral TEST-ONLY Ed25519 release keys (not for production).');
+          NODE
+          fi
+          echo "ROOKS_RELEASE_PRIVATE_KEY_FILE=$PRIV" >> "$GITHUB_ENV"
+          echo "ROOKS_RELEASE_PUBLIC_KEY_FILE=$PUB" >> "$GITHUB_ENV"
+
+      - name: Write beta build-info
+        working-directory: desktop
+        run: |
+          node --input-type=module -e '
+            import { createBuildInfo, writeBuildInfo } from "./scripts/build-info.mjs";
+            const info = createBuildInfo({ channel: "beta" });
+            console.log(writeBuildInfo("..", info), info);
+          '
+
+      - name: Build daemon TypeScript
+        working-directory: orchestrator
+        run: npm run build
+
+      - name: Build standalone web app
+        working-directory: app
+        env:
+          ROOKS_NEXT_STANDALONE: '1'
+        run: |
+          npm run build
+          if [ -f scripts/build-server.mjs ]; then node scripts/build-server.mjs; fi
+
+      - name: Seal daemon release + prepare packaged deps
+        working-directory: desktop
+        run: |
+          node scripts/prepare-daemon-release.mjs
+          npm run build
+          npm run prepare:deps
+
+      - name: electron-builder (${{ matrix.os }})
+        working-directory: desktop
+        run: npx electron-builder --config electron-builder.yml ${{ matrix.eb_args }}
+
+      - name: Upload installers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rooks-test-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            desktop/release/*.dmg
+            desktop/release/*.pkg
+            desktop/release/*.AppImage
+            desktop/release/*.deb
+            desktop/release/*.exe
+            desktop/release/*.yml
+            desktop/release/*.yaml
+            desktop/release/*.blockmap
+          if-no-files-found: warn
+          retention-days: 14
+
+  prerelease:
+    name: Attach TEST ONLY prerelease
+    needs: package
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all package artefacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-out
+          pattern: rooks-test-*
+          merge-multiple: true
+      - name: Create / update prerelease rooks-test-*
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(dist-out/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No installer artefacts to attach — packaging may have failed on every OS."
+            exit 0
+          fi
+          # On pull_request, GITHUB_SHA is the merge commit; prefer the PR head tip.
+          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          tag="rooks-test-${HEAD_SHA::8}"
+          title="TEST ONLY — Rooks desktop ${tag}"
+          notes=$'TEST ONLY build from branch '"${GITHUB_REF_NAME}"$'.\n\n- Not a desktop-v* release.\n- OS code signing may be missing (unsigned / Gatekeeper / SmartScreen warnings expected).\n- Daemon integrity uses repo secrets when set; otherwise an ephemeral TEST-ONLY Ed25519 pair minted in CI.\n- Packaged app auto-starts the embedded daemon / background service path on launch.\n- proprietary.\n'
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${files[@]}" --clobber
+          else
+            gh release create "$tag" "${files[@]}" --prerelease --title "$title" --notes "$notes"
+          fi
+          echo "Prerelease: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${tag}"
+
+# tip d0b49a07 pack-fix kick
+
+# tip pack kick 20261113T052054Z

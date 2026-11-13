@@ -1,0 +1,108 @@
+{
+  "onboarding": {
+    "back": "Terug",
+    "continue": "Doorgaan",
+    "language": {
+      "title": "Kies je taal"
+    },
+    "splash": {
+      "title": "Je AI-team,\nbij jou thuis.",
+      "subtitle": "Agents die op je eigen machine werken, met de AI-abonnementen die je al betaalt.",
+      "hint": "Psst, je kunt ze vastpakken."
+    },
+    "account": {
+      "title": "Maak je lokale account aan",
+      "subtitle": "Hiermee meld je je aan bij Rooks. Jij bent de beheerder.",
+      "privacy": "We verzamelen alleen je e-mailadres voor het geval je je wachtwoord wilt resetten. Het account dat je aanmaakt blijft lokaal."
+    },
+    "llm": {
+      "title": "Kies\nje LLM.",
+      "subtitle": "Rooks draait op de AI-abonnementen die je al hebt. Nooit een rekening per token."
+    },
+    "profile": {
+      "title": "Wat brengt je hier?",
+      "subtitle": "Rooks stemt zijn standaardinstellingen en rondleiding af op je antwoord."
+    },
+    "agent": {
+      "templates": {
+        "title": "Kies zijn profiel",
+        "subtitle": "Een kant-en-klaar vertrekpunt. Je kunt later alles wijzigen."
+      },
+      "interview": {
+        "title": "Laten we je automatisering instellen",
+        "subtitle": "Vijf vragen, en je agent weet wat hij moet doen, waarmee en wanneer."
+      },
+      "sheet": {
+        "title": "Configureer je agent",
+        "subtitle": "Elke instelling blijft aanpasbaar in zijn profiel."
+      }
+    },
+    "signin": {
+      "title": "Welkom terug",
+      "subtitle": "Rooks heeft een nieuw uiterlijk. Meld je aan met je Rooks-account om verder te gaan."
+    },
+    "mascot": {
+      "title": "Maak kennis met de mascotte van {name}",
+      "subtitle": "Nieuw in deze versie: elke agent heeft een mascotte die laat zien wat hij doet — nadenken, werken, op je wachten. Kleed {name} aan zoals je wilt."
+    },
+    "scheme": {
+      "label": "Kleurmodus",
+      "light": "Licht",
+      "system": "Systeem"
+    },
+    "discover": {
+      "label": "Ontdek Rooks",
+      "slide": "Dia {current} van {total}",
+      "next": "Volgende",
+      "skip": "Alles overslaan",
+      "finish": "Naar {name}",
+      "finishNoName": "Aan de slag",
+      "autonomous": {
+        "title": "Je TIMs werken zelfstandig",
+        "body": "Geef een TIM een missie, een tijdstip of een trigger: hij kiest zijn vaardigheden en tools, onthoudt wat hij leert en brengt verslag uit zodra het werk klaar is.",
+        "nodes": {
+          "skills": "Vaardigheden",
+          "tools": "Tools",
+          "memory": "Geheugen",
+          "schedule": "Planning"
+        },
+        "done": "Rapport verstuurd"
+      },
+      "teams": {
+        "title": "Stel teams van TIMs samen",
+        "body": "De een plant, de ander codeert, een derde reviewt: taken gaan op het Kanban van TIM naar TIM, en in de Multichat praat je met allemaal tegelijk.",
+        "columns": {
+          "todo": "Te doen",
+          "doing": "Bezig",
+          "done": "Klaar"
+        },
+        "card": "Landingspagina"
+      },
+      "projects": {
+        "title": "Projecten met eigen TIMs",
+        "body": "Een algemene assistent weet van alles een beetje. De TIMs van een project werken alleen in dat project, met eigen regels en een eigen geheugen, en verlaten het nooit.",
+        "general": "Je TIMs gaan overal mee",
+        "alpha": "Website",
+        "beta": "Boekhouding",
+        "rules": "Eigen regels",
+        "memory": "Eigen geheugen"
+      },
+      "connected": {
+        "title": "Sluit al het andere aan",
+        "body": "Connectors halen je mail, agenda en tools binnen; workflows rijgen de stappen aaneen; plugins voegen toe wat ontbreekt, tot in de interface."
+      },
+      "views": {
+        "label": "Waar je het vindt",
+        "canvas": "Agent-canvas",
+        "chat": "Chat",
+        "kanban": "Kanban",
+        "multichat": "Multichat",
+        "projectChat": "Projectchat",
+        "widgets": "Widgets",
+        "connectors": "Connectors",
+        "workflows": "Workflows",
+        "plugins": "Plugins"
+      }
+    }
+  }
+}

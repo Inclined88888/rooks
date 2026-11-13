@@ -1,0 +1,242 @@
+{
+  "version": 6,
+  "vendored": "Test copy of the licence token contract, reduced to the version and the example tokens. Written by sync-license-contract.mjs from the licence server checkout; do not edit by hand.",
+  "examples": [
+    {
+      "name": "beta-1-year",
+      "header": {
+        "alg": "EdDSA",
+        "typ": "JWT",
+        "kid": "license-2026-09"
+      },
+      "claims": {
+        "sub": "acme",
+        "lic": "lic_01J8Z9QK7M3T4B5N6P7R8S9T0V",
+        "did": "dev_2f8c41ba9e6d4c07",
+        "fph": "60e05bd1b195af2f94112fa7197a5c88289058840ce7c6df9693756bc6250f55",
+        "plan": "beta-1-year",
+        "plan_name": "Beta 1 year",
+        "edition": "expert",
+        "modules": [
+          "@rooks/kanban-code",
+          "@rooks/dreams",
+          "@rooks/backlog",
+          "@rooks/browser-embedded"
+        ],
+        "plugins": "*",
+        "features": [
+          "code-pipeline",
+          "browser",
+          "multichat"
+        ],
+        "seats": 2,
+        "users": 3,
+        "iat": 1756800000,
+        "nbf": 1756799940,
+        "exp": 1756800900,
+        "srv": 1756800000,
+        "jti": "01J8Z9QK7M3T4B5N6P7R8S9T0W",
+        "sub_exp": 1767225600,
+        "status": "active"
+      }
+    },
+    {
+      "name": "beta-lifetime",
+      "header": {
+        "alg": "EdDSA",
+        "typ": "JWT",
+        "kid": "license-2026-09"
+      },
+      "claims": {
+        "sub": "acme",
+        "lic": "lic_01J8Z9QK7M3T4B5N6P7R8S9T0X",
+        "did": "dev_2f8c41ba9e6d4c08",
+        "fph": "60e05bd1b195af2f94112fa7197a5c88289058840ce7c6df9693756bc6250f55",
+        "plan": "beta-lifetime",
+        "plan_name": "Beta lifetime",
+        "edition": "expert",
+        "modules": [
+          "@rooks/kanban-code",
+          "@rooks/dreams",
+          "@rooks/backlog",
+          "@rooks/browser-embedded"
+        ],
+        "plugins": "*",
+        "features": [
+          "code-pipeline",
+          "browser",
+          "multichat"
+        ],
+        "seats": 2,
+        "users": 3,
+        "iat": 1756800000,
+        "nbf": 1756799940,
+        "exp": 1756800900,
+        "srv": 1756800000,
+        "jti": "01J8Z9QK7M3T4B5N6P7R8S9T0Y",
+        "sub_exp": null,
+        "status": "active"
+      }
+    },
+    {
+      "name": "developer",
+      "header": {
+        "alg": "EdDSA",
+        "typ": "JWT",
+        "kid": "license-2026-09"
+      },
+      "claims": {
+        "sub": "rom",
+        "lic": "lic_01J8Z9QK7M3T4B5N6P7R8S9T10",
+        "did": "dev_7b1e05c3fa2d4988",
+        "fph": "60e05bd1b195af2f94112fa7197a5c88289058840ce7c6df9693756bc6250f55",
+        "plan": "internal",
+        "plan_name": "Developer",
+        "edition": "expert",
+        "modules": [
+          "@rooks/kanban-code",
+          "@rooks/dreams",
+          "@rooks/backlog",
+          "@rooks/browser-embedded"
+        ],
+        "plugins": "*",
+        "features": [
+          "code-pipeline",
+          "browser",
+          "multichat"
+        ],
+        "seats": 5,
+        "users": null,
+        "iat": 1756800000,
+        "nbf": 1756799940,
+        "exp": 1756800900,
+        "srv": 1756800000,
+        "jti": "01J8Z9QK7M3T4B5N6P7R8S9T11",
+        "sub_exp": null,
+        "status": "active"
+      }
+    },
+    {
+      "name": "free",
+      "header": {
+        "alg": "EdDSA",
+        "typ": "JWT",
+        "kid": "license-2026-09"
+      },
+      "claims": {
+        "sub": "acme",
+        "lic": "lic_01J8Z9QK7M3T4B5N6P7R8S9T0V",
+        "did": "dev_2f8c41ba9e6d4c07",
+        "fph": "60e05bd1b195af2f94112fa7197a5c88289058840ce7c6df9693756bc6250f55",
+        "plan": "free",
+        "plan_name": "Free",
+        "edition": "lite",
+        "modules": [
+          "@rooks/db",
+          "@rooks/settings",
+          "@rooks/http",
+          "@rooks/users",
+          "@rooks/plugins",
+          "@rooks/secrets-vault",
+          "@rooks/ui-layout",
+          "@rooks/ui-theme",
+          "@rooks/backends",
+          "@rooks/agents",
+          "@rooks/missions",
+          "@rooks/ui-documents",
+          "@rooks/company",
+          "@rooks/agents-projects",
+          "@rooks/bots",
+          "@rooks/files-widget",
+          "@rooks/skills-widget",
+          "@rooks/mcp-widget",
+          "@rooks/projects",
+          "@rooks/notifications",
+          "@rooks/web-push",
+          "@rooks/memory",
+          "@rooks/kanban",
+          "@rooks/git",
+          "@rooks/triggers",
+          "@rooks/routines",
+          "@rooks/workflows",
+          "@rooks/agent-chat",
+          "@rooks/resources-guard",
+          "@rooks/vault",
+          "@rooks/agenda",
+          "@rooks/google-calendar",
+          "@rooks/terminal-web",
+          "@rooks/web-app",
+          "@rooks/telegram",
+          "@rooks/tts",
+          "@rooks/gpt-live"
+        ],
+        "plugins": [],
+        "features": [],
+        "seats": 1,
+        "users": 1,
+        "iat": 1756800000,
+        "nbf": 1756799940,
+        "exp": 1756800900,
+        "srv": 1756800000,
+        "jti": "01J8Z9QK7M3T4B5N6P7R8S9T0W",
+        "sub_exp": null,
+        "status": "active",
+        "capabilities": {
+          "version": 1,
+          "plugins": "fixed",
+          "accounts": "single-superadmin"
+        }
+      }
+    }
+  ],
+  "localFree": {
+    "edition": "lite",
+    "modules": [
+      "@rooks/db",
+      "@rooks/settings",
+      "@rooks/http",
+      "@rooks/users",
+      "@rooks/plugins",
+      "@rooks/secrets-vault",
+      "@rooks/ui-layout",
+      "@rooks/ui-theme",
+      "@rooks/backends",
+      "@rooks/agents",
+      "@rooks/missions",
+      "@rooks/ui-documents",
+      "@rooks/company",
+      "@rooks/agents-projects",
+      "@rooks/bots",
+      "@rooks/files-widget",
+      "@rooks/skills-widget",
+      "@rooks/mcp-widget",
+      "@rooks/projects",
+      "@rooks/notifications",
+      "@rooks/web-push",
+      "@rooks/memory",
+      "@rooks/kanban",
+      "@rooks/git",
+      "@rooks/triggers",
+      "@rooks/routines",
+      "@rooks/workflows",
+      "@rooks/agent-chat",
+      "@rooks/resources-guard",
+      "@rooks/vault",
+      "@rooks/agenda",
+      "@rooks/google-calendar",
+      "@rooks/terminal-web",
+      "@rooks/web-app",
+      "@rooks/telegram",
+      "@rooks/tts",
+      "@rooks/gpt-live"
+    ],
+    "plugins": [],
+    "features": [],
+    "users": 1,
+    "capabilities": {
+      "version": 1,
+      "plugins": "fixed",
+      "accounts": "single-superadmin"
+    }
+  }
+}

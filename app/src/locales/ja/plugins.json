@@ -1,0 +1,497 @@
+{
+  "pluginsPage": {
+    "kind": {
+      "widget": "ウィジェット",
+      "page": "ページ",
+      "island": "アイランド",
+      "overlay": "オーバーレイ",
+      "theme": "テーマ",
+      "composer": "入力欄",
+      "layout": "レイアウト",
+      "behavior": "バックエンド",
+      "provider": "プロバイダー",
+      "dictation": "音声入力",
+      "bundle": "バンドル"
+    },
+    "tier": {
+      "core": "コア",
+      "std": "標準",
+      "dev": "開発者",
+      "opt": "オプション"
+    },
+    "by": "作成者: {name}",
+    "openDetails": "{name} の詳細を開く",
+    "noPreview": "プレビューはまだありません",
+    "backendHint": "バックエンドのモジュール — 独自の画面はありません。",
+    "declares": "提供するスロット",
+    "settings": "設定",
+    "authorUnknown": "作成者不明",
+    "backTo": "{name} に戻る",
+    "containedMissing": "このマシンにはインストールされていません",
+    "searchPlaceholder": "プラグインを検索…",
+    "typesLabel": "種類",
+    "typesAll": "すべて",
+    "gallery": "スクリーンショット",
+    "prevSlide": "前の画像",
+    "nextSlide": "次の画像",
+    "noMatch": "これらのフィルターに一致するものはありません。",
+    "provenance": {
+      "all": "すべて",
+      "rooks": "@rooks",
+      "marketplace": "マーケットプレイス"
+    },
+    "verified": "検証済み",
+    "unverified": "未検証",
+    "builtin": "組み込み",
+    "builtinHint": "Rooks に同梱: オフにはできますが、アンインストールはできません。",
+    "awaitingApproval": "このコンピューターで承認が必要",
+    "awaitingApprovalHint": "このマシンでは実行されていますが、インターフェースのコードがここで読み込まれるのは、同じバージョン・同じ署名のものがこのコンピューターにインストールされ、有効になってからです。",
+    "awaitingApprovalBuiltinHint": "このマシンでは実行されていますが、インターフェースのコードがここで読み込まれるのは、このコンピューターがこのプラグインの同じバージョン・同じインターフェースコードを同梱し、有効にしてからです。2 つの Rooks リリースが、同じプラグインバージョンで異なるコードを同梱する場合があります: 古いほうのマシンを更新してください。",
+    "modules": {
+      "@rooks/db": {
+        "label": "データベース",
+        "description": "SQLite のストアとそのコールドアーカイブ。他のすべてのモジュールがこれを注入するため、最初の読み取り前にスキーマが最新になります。"
+      },
+      "@rooks/settings": {
+        "label": "設定",
+        "description": "製品の設定ページと、他のモジュールが読み込むテーブル。"
+      },
+      "@rooks/http": {
+        "label": "HTTP と統計",
+        "description": "共有 Express アプリ、UI プロキシの認証、統計ダッシュボード。"
+      },
+      "@rooks/users": {
+        "label": "アカウント",
+        "description": "あなたのアカウント、そのセッション、ログイン画面。"
+      },
+      "@rooks/plugins": {
+        "label": "プラグインギャラリー",
+        "description": "同梱のモジュールとサードパーティのパッケージを一覧表示し、オン/オフの状態を書き込みます。"
+      },
+      "@rooks/secrets-vault": {
+        "label": "シークレット",
+        "description": "封印されたシークレット保管庫。値が平文でデーモンの外に出ることはありません。"
+      },
+      "@rooks/ui-layout": {
+        "label": "レイアウト",
+        "description": "アプリの外枠: ナビゲーション、上部バー、コックピットのレール、オーバーレイ層。置き換え可能 — ルートスロットを占有します。"
+      },
+      "@rooks/ui-theme": {
+        "label": "テーマ",
+        "description": "製品の色トークン。テーマスロットを占有します。オフにすると外枠に色が付かなくなります。"
+      },
+      "@rooks/backends": {
+        "label": "LLM プロバイダー",
+        "description": "言語モデルのプロバイダーとその認証情報のカタログ。"
+      },
+      "@rooks/agents": {
+        "label": "エージェント",
+        "description": "エージェント一覧、スキル、MCP サーバー。ページ: /agents、/skills、/mcp。"
+      },
+      "@rooks/missions": {
+        "label": "ミッション",
+        "description": "ミッションを起動、追跡、記録します。ページ: /missions、/multichat、/messages。"
+      },
+      "@rooks/projects": {
+        "label": "プロジェクト",
+        "description": "プロジェクトの登録: cwd、ロール、フォルダーとエージェントの対応付け。"
+      },
+      "@rooks/notifications": {
+        "label": "通知",
+        "description": "アプリ内の通知センター。エージェントがあなたに知らせるためのチャネルです。"
+      },
+      "@rooks/web-push": {
+        "label": "Web プッシュ",
+        "description": "Web Push によるスマートフォンへのシステム通知。通知センターと VAPID キーが必要です。"
+      },
+      "@rooks/memory": {
+        "label": "メモリ",
+        "description": "長期記憶のルールと、ミッションに注入される内容の監査。"
+      },
+      "@rooks/kanban": {
+        "label": "Kanban",
+        "description": "タスクボード: code、review、merge、その他のパイプライン。「TO DO」列は保留にしたアイデアを置く場所で、オーケストレーターがそこから作業を拾うことはありません。"
+      },
+      "@rooks/kanban-code": {
+        "label": "コードパイプライン",
+        "description": "code タスクごとに専用の git ワークツリーとブランチを用意し、レビューしてマージします。Git プラグインが必要です。"
+      },
+      "@rooks/git": {
+        "label": "Git",
+        "description": "チャットの Git カードで、プロジェクトのブランチ、チェックアウト、GitHub のリモートを扱います。Kanban の有無にかかわらず動作し、このマシンに git が必要です。"
+      },
+      "@rooks/todo-outcomes": {
+        "label": "TODO の結果",
+        "description": "TO DO のアイデアに結果と作成者向けの公開メモを付け、todo_resolved イベントでアイデアの出所のチャネルに通知します。使うには設定で「アイデアの結果」をオンにしてください。"
+      },
+      "@rooks/routines": {
+        "label": "ルーティン",
+        "description": "スケジュールされたジョブ: 自らミッションを起動する cron 風のルーティン。"
+      },
+      "@rooks/triggers": {
+        "label": "トリガー",
+        "description": "ネイティブのトリガー: スケジュール、Webhook、内部イベントで、TO DO のアイデア、エージェントのタスク、通知を実行します。"
+      },
+      "@rooks/workflows": {
+        "label": "ワークフロー",
+        "description": "視覚的な自動化フロー、実行、その完全な実行トレース。"
+      },
+      "@rooks/dreams": {
+        "label": "ドリーム",
+        "description": "夜間の処理: オーケストレーターが提案する改善の手がかりと機会、およびそれらを順位付けするプロジェクトのスコアリング。"
+      },
+      "@rooks/agent-chat": {
+        "label": "エージェントチャット",
+        "description": "1 枚のカードに 1 エージェントのスレッド。各インスタンスがエージェントと、アバターの下に並ぶサブエージェントを選びます。"
+      },
+      "@rooks/resources-guard": {
+        "label": "リソースガード",
+        "description": "ミッションの cgroup が積み重ならないようにします。systemd が必要です。ない場合、同じマシン上の 2 つのデーモンが互いを強制終了します。"
+      },
+      "@rooks/vault": {
+        "label": "ボールト",
+        "description": "Obsidian のボールト: コックピットのグラフタイルと /brain のディスク。"
+      },
+      "@rooks/grepai": {
+        "label": "Grepai",
+        "description": "プロジェクトのセマンティックインデックス。grepai のバイナリと、ウォッチャーを維持するための systemd が必要です。"
+      },
+      "@rooks/docker-supervision": {
+        "label": "Docker",
+        "description": "プロジェクトごとのコンテナの状態と起動/停止。コンテナエンジンが必要です。"
+      },
+      "@rooks/browser-embedded": {
+        "label": "埋め込みブラウザー",
+        "description": "プロジェクトごとの永続プロファイル付き Chromium。Traefik 経由で公開されます。"
+      },
+      "@rooks/browser-recording": {
+        "label": "ブラウザーの記録",
+        "description": "組み込みブラウザーで操作の流れを記録・確認し、エージェントにスキルへ変換させます。"
+      },
+      "@rooks/browser-annotations": {
+        "label": "ブラウザーの注釈",
+        "description": "組み込みブラウザーの要素を指し、変えたいことを伝えて、エージェントに送ります。"
+      },
+      "@rooks/terminal-native": {
+        "label": "ホストのターミナル",
+        "description": "マシンのターミナルまたはファイルマネージャーをデスクトップのウィンドウで開きます。グラフィカルなセッションが必要です。"
+      },
+      "@rooks/terminal-web": {
+        "label": "組み込みターミナル",
+        "description": "Rooks 内のターミナル (デスクトップ、ブラウザー、スマートフォン) で、このマシン上のシェルを実行します。開く権限のあるアカウント専用です。"
+      },
+      "@rooks/ui-documents": {
+        "label": "チャット内のドキュメント",
+        "description": "エージェント、あなた、またはプラグインが会話内に表示する対話型の HTML ドキュメント。サンドボックス化されたフレームで Rooks から隔離されます。"
+      },
+      "@rooks/orchestrator-self": {
+        "label": "デーモン",
+        "description": "UI からオーケストレーターを再起動・再ビルドします。systemd が必要です。"
+      },
+      "@rooks/web-app": {
+        "label": "Web アプリ",
+        "description": "Compose の代わりに、Next.js の UI をデーモンの子プロセスとして起動します。"
+      },
+      "@rooks/telegram": {
+        "label": "Telegram",
+        "description": "Telegram の受信チャネル: チャットからエージェントと話します。"
+      },
+      "@rooks/tts": {
+        "label": "読み上げ",
+        "description": "ミッションの出力のテキスト読み上げ。"
+      },
+      "@rooks/gpt-live": {
+        "label": "GPT-Live 音声",
+        "description": "OpenAI GPT-Live による、ミッションとのライブ音声会話。"
+      },
+      "@rooks/video-factory": {
+        "label": "動画ファクトリー",
+        "description": "静止画とプロンプトから動画をレンダリングします。"
+      },
+      "@rooks/telemetry": {
+        "label": "使用状況統計",
+        "description": "匿名の使用状況統計を Rooks チームに送信します: どの機能が使われているか、ターンの状況、セットアップがどこで止まるか。あなたのコンテンツ、名前、パスは決して送信しません。「プライバシー」の設定でオフにできます。"
+      },
+      "@rooks/machines": {
+        "label": "マシン",
+        "description": "他の Rooks マシンをこのマシンとペアリングし、そのアクセス権を保管庫に保持して、インターフェースをマシン間で切り替えます。オンにするまでオフです。"
+      },
+      "@rooks/company": {
+        "label": "Company",
+        "description": "エージェントを編集可能な組織図で整理します。"
+      },
+      "@rooks/agents-projects": {
+        "label": "エージェント · プロジェクト",
+        "description": "プロジェクトごとにまとめたエージェント。キャンバスとは別に無効にできます。"
+      },
+      "@rooks/bots": {
+        "label": "Bots",
+        "description": "プロジェクトに属さないTIMをチームごとにまとめ、選んだTIMのチャットを表示します。"
+      },
+      "@rooks/files-widget": {
+        "label": "ファイル",
+        "description": "チャットのファイルカード: エージェントの作業フォルダーのファイルを閲覧・編集します。"
+      },
+      "@rooks/skills-widget": {
+        "label": "スキル",
+        "description": "チャットのスキルカード: エージェントのスキルをオン・オフします。"
+      },
+      "@rooks/mcp-widget": {
+        "label": "MCP",
+        "description": "チャットの MCP カード: エージェントの MCP サーバーをオン・オフします。"
+      },
+      "@rooks/mcp-apps": {
+        "label": "公式コネクタ",
+        "description": "MCP タブの公式コネクタ: GitHub、Linear、Notion などの提供元のリモート MCP サーバーをワンクリックで接続します。"
+      }
+    },
+    "install": {
+      "sectionLabel": "プラグインをインストール",
+      "button": "プラグインをインストール",
+      "reading": "読み込み中…",
+      "pickFolder": "プラグインのフォルダーを選択…",
+      "pickArchive": "プラグインのアーカイブ (.tgz または .zip) を選択…",
+      "hintDesktop": "プラグインのフォルダー、またはその .tgz / .zip アーカイブ。インストール前に詳細が表示されます。",
+      "available": "プラグインフォルダーにあるが未インストール ({count})",
+      "previewFailed": "このプラグインを読み取れませんでした",
+      "pickerFailed": "ファイルの選択画面を開けませんでした。",
+      "done": "「{name}」をインストールしました",
+      "doneRefused": "「{name}」はインストールされましたが、読み込まれません: {reason}",
+      "failed": "プラグインはインストールされませんでした",
+      "signed": "署名を検証済み",
+      "tampered": "改変されたパッケージ",
+      "unsignedLoads": "未署名 — 開発者モードで読み込み",
+      "unsignedBlocked": "未署名 — 読み込まれません",
+      "manifestRefused": "Rooks はこのプラグインを使用できません: {reason}",
+      "nodeEngineRefused": "このプラグインは、この Rooks が使う Node では動作しません: {reason}",
+      "tamperedHint": "ファイルが署名と一致しません: このパッケージは署名後に変更されています。インストールできません。",
+      "permissions": "要求する権限",
+      "permissionsNone": "権限なし",
+      "webhooks": "Webhook",
+      "source": "提供元",
+      "origin": {
+        "upload": "このブラウザーから送信したアーカイブ",
+        "path": "このコンピューター上のファイル",
+        "detected": "プラグインフォルダー"
+      },
+      "alreadyInstalled": "バージョン {version} はすでにインストールされています。インストールすると置き換わります。",
+      "replacesPackage": "この ID は、すでにインストールされていない別のパッケージ {pkg} のものでした。これをインストールすると、{pkg} に付与されていたもの (保管庫のシークレット、開放したホスト、承認) が取り消されます。その設定と保存データは削除され (シークレットの設定は再入力が必要)、データフォルダーはごみ箱に移動されます。ユーザーの接続は承認待ちに戻り、キーは削除されます。",
+      "updatesUnsigned": "このパッケージの未署名のコピーから更新: データ、設定、付与はそのまま保持されます。",
+      "childReplacesPackage": "このバンドルが含む {id} は、すでにインストールされていない別のパッケージ {pkg} の ID を使います。これをインストールすると、{pkg} に付与されていたもの (保管庫のシークレット、開放したホスト、承認) が取り消されます。その設定と保存データは削除され (シークレットの設定は再入力が必要)、データフォルダーはごみ箱に移動されます。ユーザーの接続は承認待ちに戻り、キーは削除されます。",
+      "childrenAccess": {
+        "title": "このバンドルが含むプラグイン",
+        "permissions": "要求: {list}",
+        "state": {
+          "kept": "インストール済み: このバンドルはそのままにするため、ここでは何も要求されません。",
+          "unreadable": "インストール後にのみ読み取れます: 何も付与されずにインストールされます。シークレットは「シークレット」ページから付与してください。プロバイダーの場合は、{settingsPath} で承認するまで無効のままです。",
+          "unresolved": "このバンドルの依存関係のどれも提供していません: インストールされないため、何も要求されません。",
+          "tampered": "ファイルが署名と一致しません: 読み込まれないため、何も要求されません。",
+          "nodeEngine": "この Rooks が使う Node では動作しません: 読み込まれないため、何も要求されません。{reason}"
+        },
+        "refused": {
+          "not-installed": "「{name}」はインストールされなかったため、そのプログラムは承認されていません。",
+          "changed": "「{name}」はシートの表示内容と異なるため、そのプログラムは承認されていません。{settingsPath} で確認してください。",
+          "grant-failed": "「{name}」のプログラムを承認できませんでした。{settingsPath} でもう一度お試しください。"
+        },
+        "vaultRefused": {
+          "not-installed": "「{name}」はインストールされなかったため、シークレットもホストも付与されていません。",
+          "changed": "「{name}」はシートの表示内容と異なるため、シークレットもホストも付与されていません。シークレットは「シークレット」ページから付与してください。",
+          "grant-failed": "「{name}」のシークレットとホストを付与できませんでした。シークレットは「シークレット」ページから付与してください。"
+        }
+      },
+      "licenseRequired": "このプラグインは、対象となるライセンスがある場合にのみ読み込まれます。",
+      "vault": {
+        "title": "シークレットとネットワーク",
+        "read": "このシートに名前を示さずに、保管庫のシークレットを名前で読み取ります: 「シークレット」から、またはプラグインが要求したときに表示されるカードから、個別にこのプラグインに渡します。",
+        "broker": "名前で付与されたものに限り、キーを見ることなく保管庫の ID で API を呼び出します。",
+        "brokerNoHttp": "http:outbound を宣言していないため、ブローカー経由の API 呼び出しは拒否されます。",
+        "network": "ネットワークアクセスは、rooks.config.json ですべてのプラグイン (pluginPolicy.http.allow) またはこのプラグインだけ (pluginPolicy.http.byPlugin) に開放したホストと、承認済みの接続のアドレスに限られます。",
+        "secretsLead": "指定されているシークレット。チェックしたシークレットはこのプラグインだけに付与されます。チェックを外しても付与は取り消されません (取り消しは「シークレット」から)。",
+        "hostsLead": "接続するホスト。チェックしたホストはこのプラグインだけに開放されます。",
+        "hostOwn": "すでにこのプラグインに開放されています。チェックを外すと閉じます: ホストはここでチェックしたものに置き換えられます。",
+        "hostGlobal": "すでにすべてのプラグインに開放されています (pluginPolicy.http.allow)。",
+        "mode": {
+          "read": "プラグインが読み取る",
+          "broker": "ブローカー経由で使用、プラグインからは見えない"
+        },
+        "state": {
+          "granted": "すでにこのプラグインに付与済み。",
+          "missing": "まだ保管庫にありません。",
+          "otherMode": "保管庫にはこの名前のシークレットが別の用途で保存されており、このプラグインには使えません。",
+          "ambiguous": "この名前のシークレットが複数あります: どれを付与するかは「シークレット」ページで選びます。",
+          "vault-off": "保管庫が無効です: このプラグインはシークレットを読み取れません。"
+        },
+        "create": "「シークレット」ページで作成",
+        "choose": "「シークレット」ページで選択"
+      },
+      "disclaimerTitle": "サードパーティのプラグイン",
+      "disclaimer": "このプラグインは Rooks が作成・審査・保証したものではなく、Rooks はその動作に責任を負いません。インストールすると、あなたのアカウントの権限で Rooks 内で実行されます。信頼できる作成者のプラグインだけをインストールしてください。",
+      "cancel": "キャンセル",
+      "installing": "インストール中…",
+      "reinstall": "このバージョンをインストール",
+      "confirm": "インストール",
+      "refreshed": "{reason} 下のシートは最新です: 確認してから、もう一度インストールしてください。",
+      "errors": {
+        "unauthenticated": "セッションの有効期限が切れました — もう一度サインインしてください。",
+        "forbidden": "プラグインをインストールできるのは、Rooks にサインインしたスーパー管理者だけです。",
+        "too-large": "このプラグインは大きすぎます (アーカイブは最大 25 MB、ファイルは最大 200 MB)。",
+        "too-many-entries": "このプラグインはファイルが多すぎます。",
+        "not-gzip": "プラグインのアーカイブではありません: .tgz または .zip が必要です。",
+        "unsafe-path": "このアーカイブはフォルダー外に書き込もうとしたため、拒否されました。",
+        "link": "このプラグインには、プラグインに含められないリンクや特殊ファイルが含まれています。",
+        "layout": "このアーカイブはプラグインパッケージの構成ではありません: ルートに package.json があるか、それを含む最上位フォルダーが 1 つ必要です。",
+        "corrupt": "このアーカイブは破損しています。",
+        "not-archive": "プラグインのアーカイブではありません: .tgz または .zip が必要です。",
+        "not-zip": "有効な .zip アーカイブではありません。",
+        "zip64": "この .zip は Rooks が読めない zip64 形式です。標準のツールでプラグインを zip し直すか、.tgz を使ってください。",
+        "encrypted": "この .zip はパスワードで保護されています。パスワードなしで zip し直してください。",
+        "multi-volume": "この .zip は複数に分割されています。1 つの .zip にしてください。",
+        "compression": "この .zip は Rooks が読めない圧縮方式を使っています。標準の圧縮でプラグインを zip し直してください。",
+        "not-a-plugin": "Rooks のプラグインではありません: `rooks` マニフェストを含む package.json がありません。",
+        "invalid-path": "このパスは使用できません。",
+        "forbidden-path": "このフォルダーからはプラグインをインストールできません。",
+        "not-found": "そこには何も見つかりませんでした。",
+        "expired": "このプレビューは期限切れです。もう一度プラグインを選んでください。",
+        "tampered": "パッケージは署名後に改変されています。インストールできません。",
+        "manifest": "プラグインのマニフェストが無効です。インストールできません。",
+        "npm-missing": "Rooks を実行しているマシンで npm を利用できません。Node.js をインストールしてから、もう一度お試しください。",
+        "install-failed": "インストールに失敗しました。詳細は Rooks のログにあります。",
+        "name-taken": "プラグインフォルダーで、別のパッケージがすでにこの名前を使っています。",
+        "generic": "デーモンが拒否しました (HTTP {status})。",
+        "unreadable": "Rooks にはこの場所を読み取る権限がありません。macOS では、システム設定 › プライバシーとセキュリティ で許可するか、プラグインを別の場所に移動してください。",
+        "mismatch": "このプラグインが要求するもの (プログラム、シークレット、ホスト) が、表示後に変わりました。",
+        "refused": "このプログラムはプラグインからは決して実行できません。",
+        "not-provider": "このプラグインはプロバイダーではありません。",
+        "not-grantable": "チェックしたシークレットはこのシートからは付与できません。",
+        "conflict": "保管庫が付与を拒否しました: この名前のシークレットはすでに付与されています。「シークレット」ページで解決してください。"
+      },
+      "pickFolderRemote": "接続中のマシンでプラグインのフォルダーを選択…",
+      "pickArchiveRemote": "接続中のマシンでプラグインのアーカイブを選択…",
+      "uploadArchive": "このコンピューターからアーカイブを送信…",
+      "hintRemote": "このウィンドウが接続しているマシン上のプラグインのフォルダーまたはその .tgz / .zip アーカイブ、またはこのコンピューターから送信するアーカイブ。インストール前に詳細が表示されます。"
+    }
+  },
+  "providersSettings": {
+    "title": "プロバイダー",
+    "description": "プロバイダーのプラグインは AI サービスを Rooks に追加します。プロバイダーが起動する各プログラムは、実行前に解決済みのパスでここで承認されます。",
+    "cancel": "キャンセル",
+    "consent": {
+      "prompts": "担当するミッションのすべての指示と回答を受け取ります。",
+      "credentials": "自身のプロファイルの認証情報を受け取ります。",
+      "binary": "プログラム {path} を起動します。",
+      "credentialDir": "コマンドラインツールのサインインフォルダー「~/{dir}」を読み取り、その中のファイルを自身のミッションだけに公開します。",
+      "osCredential": "システムの認証情報ストア (macOS キーチェーン) の項目「{service}」を読み取ります。読み取り専用です。",
+      "osCredentialAccount": "システムの認証情報ストア (macOS キーチェーン) の項目「{service}」({account}) を読み取ります。読み取り専用です。"
+    },
+    "install": {
+      "allow": "上に記載されたプログラムの実行を Rooks に許可します。",
+      "allowHint": "許可しない場合、プロバイダーはインストールされますが、{settingsPath} で承認するまで無効のままです。"
+    },
+    "plugins": {
+      "title": "プロバイダーのプラグイン",
+      "none": "プロバイダーのプラグインはインストールされていません。",
+      "backends": "バックエンド: {list}",
+      "notFound": "このマシンにはインストールされていません",
+      "authorize": "確認して承認",
+      "authorizeTitle": "{name} を承認",
+      "authorizeBody": "Rooks はこのマシンでこれらのプログラムを解決しました。見覚えのあるパスだけを許可してください。",
+      "authorizeConfirm": "これらのプログラムを許可",
+      "authorized": "{name} を承認しました。",
+      "state": {
+        "active": "有効",
+        "failed": "要対応",
+        "disabled": "オフ",
+        "skipped": "拒否"
+      },
+      "binary": {
+        "authorize": "承認待ち",
+        "ready": "承認済み",
+        "install": "先にインストール",
+        "refused": "許可不可"
+      }
+    },
+    "acp": {
+      "title": "ACP レジストリ",
+      "description": "公式の Agent Client Protocol レジストリで公開されているエージェント。Rooks がプログラムをダウンロードして確認し、バックエンドとして実行します。",
+      "browse": "レジストリを閲覧",
+      "refresh": "更新",
+      "stale": "レジストリに接続できませんでした。これは Rooks が最後に読み込んだ一覧です。",
+      "verified": "sha256 検証済み",
+      "noHash": "公開ハッシュなし",
+      "unsupported": "ここでは利用できません: {reason}",
+      "install": "インストール",
+      "update": "更新",
+      "repair": "再インストール",
+      "installing": "インストール中…",
+      "remove": "削除",
+      "installed": "{name} をインストールしました。",
+      "updated": "{name} は最新です。",
+      "removed": "{name} を削除しました。",
+      "state": {
+        "ok": "{version} インストール済み",
+        "tampered": "ファイルが変更されています — 使用しません",
+        "missing": "ファイルがありません",
+        "pending": "{version} を確認中…"
+      },
+      "confirmTitle": "公開ハッシュなしで {name} をインストールしますか？",
+      "confirmBody": "レジストリはこのプログラムのチェックサムを提供していません。完全性は https でのダウンロードだけに依存します。提供元を信頼できる場合のみインストールしてください。",
+      "confirmAction": "それでもインストール"
+    },
+    "errors": {
+      "forbidden": "プロバイダーを管理できるのは、Rooks にサインインしたスーパー管理者だけです。",
+      "generic": "デーモンが拒否しました (HTTP {status})。",
+      "mismatch": "表示後にプログラムが変更されました。もう一度確認してください。",
+      "refused": "このプログラムはプラグインからは決して実行できません。",
+      "unverified": "このエージェントはハッシュを公開していません: それでもインストールするには確認してください。",
+      "already-installed": "このバージョンはすでにインストール済みで、破損していません。",
+      "not-installed": "このエージェントはインストールされていません。",
+      "unknown-agent": "レジストリにこのエージェントはありません。",
+      "unsupported": "このエージェントはこのマシンにインストールできません。",
+      "registry-unavailable": "ACP レジストリに接続できませんでした。",
+      "download-failed": "ダウンロードに失敗しました。",
+      "checksum": "ダウンロードしたファイルが公開されたチェックサムと一致しません。削除しました。",
+      "archive": "アーカイブは安全でないとして拒否されました。",
+      "command-missing": "レジストリが指定するプログラムがアーカイブにありません。",
+      "definition-refused": "Rooks はこのエージェントを拒否しました: 説明内容に矛盾があります。",
+      "authorize-failed": "プログラムを承認できませんでした。詳細は Rooks のログにあります。",
+      "failed": "操作に失敗しました。詳細は Rooks のログにあります。"
+    }
+  },
+  "binariesSettings": {
+    "title": "CLI のバイナリ",
+    "description": "このマシンで Rooks が各 AI プロバイダーのコマンドラインツールを見つけた場所。ないものや通常と異なる場所にあるものは、フルパスを固定してください: Rooks を再起動せずに次のミッションから適用されます。",
+    "recheck": "再確認",
+    "rechecked": "バイナリを再確認しました。",
+    "none": "コマンドラインツールを使うローカルプロバイダーはありません。",
+    "backends": "使用元: {list}",
+    "resolved": "{path} を実行",
+    "brokenPin": "固定したパスは実行できません: {path}",
+    "notFound": "このマシンには見つかりません。インストールするか、下でパスを固定してください。",
+    "pathLabel": "{name} バイナリのパス",
+    "placeholder": "フルパス (例: /usr/local/bin/claude または C:\\Users\\you\\AppData\\Roaming\\npm\\claude.cmd)",
+    "browse": "参照…",
+    "save": "パスを保存",
+    "clear": "固定を解除",
+    "saved": "{name}: パスを保存しました。新しいミッションで使われます。",
+    "cleared": "{name}: 固定を解除しました。Rooks が再び自動で探します。",
+    "state": {
+      "found": "検出",
+      "pinned": "固定",
+      "brokenPin": "固定したパスが壊れています",
+      "missing": "見つかりません"
+    },
+    "errors": {
+      "forbidden": "これらのパスを変更できるのは、アプリにサインインしたスーパー管理者だけです。",
+      "unknown_binary": "これはローカルプロバイダーのコマンドラインツールではありません。",
+      "path_not_absolute": "ドライブのルートから始まるフルパスを指定してください。",
+      "path_missing": "このパスには何もありません。",
+      "path_not_file": "これはフォルダーです。プログラムのファイル自体を選んでください。",
+      "path_not_executable": "このファイルは実行可能ではないため、実行できません。",
+      "no_config": "先にセットアップを完了してください。",
+      "config_unreadable": "rooks.config.json を読み取れません。修正または復元してから、再確認してください。",
+      "invalid_body": "このパスは保存できません。",
+      "browse": "ファイルの選択画面を開けませんでした。",
+      "generic": "変更に失敗しました (エラー {status})。"
+    }
+  }
+}

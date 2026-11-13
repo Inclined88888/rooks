@@ -1,0 +1,13 @@
+{
+  "invitePage": {
+    "title": "Przyjmij zaproszenie",
+    "description": "Wybierz hasło dla {email}.",
+    "invalid": "To zaproszenie jest nieprawidłowe lub wygasło.",
+    "name": "Nazwa",
+    "password": "Hasło",
+    "submit": "Utwórz konto",
+    "working": "Trwa praca…",
+    "failed": "Zaproszenie zostało odrzucone",
+    "goHome": "Dalej"
+  }
+}

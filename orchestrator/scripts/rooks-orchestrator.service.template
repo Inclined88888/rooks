@@ -1,0 +1,67 @@
+# systemd user unit for the host-mode orchestrator.
+#
+# Install:
+#   mkdir -p ~/.config/systemd/user
+#   sed "s|@REPO@|$(pwd)|g; s|@USER@|$(whoami)|g; s|@PORT@|3000|g; s|@HEAP@|4096|g" \
+#     orchestrator/scripts/rooks-orchestrator.service.template \
+#     > ~/.config/systemd/user/rooks-orchestrator.service
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now rooks-orchestrator
+#
+# Logs:  journalctl --user -u rooks-orchestrator -f
+# Stop:  systemctl --user stop rooks-orchestrator
+#
+# This unit declares NO `Environment=ROOKS_*` (step 3.6). The `ROOKS_*`
+# settings live in the `settings.ts` registry — so they can be set from the UI
+# or in `~/.rooks/rooks.config.json > settings` — and the secrets in
+# `~/.rooks/secrets.env`. Putting them back here would make them WIN over both
+# (a variable already set in the environment takes precedence, see step 3.5)
+# and a setting changed from the UI would no longer have any effect.
+
+[Unit]
+Description=ROOKS orchestrator (host mode)
+After=network-online.target
+# If the orchestrator crashes more than 5 times in 60 s, systemd stops trying
+# and leaves it failed. That avoids an endless loop that would hide a bug; it
+# is restarted by hand after a diagnosis (`systemctl --user start rooks-orchestrator`).
+#
+# These two directives belong in [Unit], NOT in [Service]: systemd silently
+# ignores them in the Service section — the unit starts, the limit is never
+# applied, and nothing says so. Seen on the live unit at the kernel switch of
+# 29/08/2026.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=@REPO@/orchestrator
+# 4 GB of V8 heap: the default (~2 GB) runs out on long sessions that keep
+# many SSE events in memory (OOM seen when running "ROOKS inside ROOKS").
+ExecStart=/usr/bin/env node --max-old-space-size=@HEAP@ dist/index.js
+Restart=always
+RestartSec=5
+# Explicit PATH: under `systemctl --user` it shrinks to a minimal set where
+# `claude` (in ~/.local/bin) cannot be found — spawning agents would fail with
+# ENOENT. Docker and gh are in /usr/bin.
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=NODE_ENV=production
+# Listening port of the API. Read by `boot.ts`; it is not a `ROOKS_*` key of
+# the settings registry.
+#
+# Substituted at install time (step 5.7.6), not fixed at 3000: a package
+# starts on 3010/3110 so as to clash with neither the v1 nor the dev home, and
+# a service listening on 3000 would leave the desktop client looking for its
+# daemon where it is not — blank page, no message.
+Environment=PORT=@PORT@
+# Secrets (ROOKS_REMOTE_MASTER, TELEGRAM_BOT_TOKEN…)
+# and keys of third-party backend profiles. The `-` makes the file OPTIONAL:
+# when it is missing, the orchestrator starts and those profiles stay inactive.
+# Outside the repo, mode 0600. Since step 3.5 `boot.ts` loads this file itself:
+# loading it twice is idempotent (the environment already set wins), and the
+# unit stays useful for what the daemon spawns before the boot.
+EnvironmentFile=-%h/.rooks/secrets.env
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

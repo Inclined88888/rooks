@@ -1,0 +1,78 @@
+{
+  "terminal": {
+    "title": "Terminal",
+    "tabs": "Terminalsitzungen",
+    "state": {
+      "connecting": "Wird verbunden…",
+      "retrying": "Verbindung verloren, neue Verbindung…",
+      "unauthorized": "Sitzung abgelaufen: Melde dich erneut an.",
+      "ended": "Sitzung beendet.",
+      "exited": "Shell beendet (Code {code})."
+    },
+    "actions": {
+      "new": "Neues Terminal",
+      "kill": "{name} schließen (stoppt seine Shell)",
+      "reconnect": "Jetzt neu verbinden",
+      "popOut": "In einem schwebenden Fenster öffnen"
+    },
+    "keys": {
+      "toolbar": "Zusatztasten",
+      "up": "Hoch",
+      "down": "Runter",
+      "left": "Links",
+      "right": "Rechts",
+      "copy": "Kopieren"
+    },
+    "clipboard": {
+      "menu": "Zwischenablage des Terminals",
+      "copy": "Kopieren",
+      "paste": "Einfügen",
+      "copied": "In die Zwischenablage kopiert.",
+      "copyFailed": "Kopieren nicht möglich: Der Browser hat den Zugriff auf die Zwischenablage verweigert.",
+      "pasteFailed": "Die Zwischenablage konnte nicht gelesen werden: Erlaube den Zugriff oder füge mit Strg+Umschalt+V ein (Cmd+V auf dem Mac)."
+    },
+    "errors": {
+      "create": "Terminal konnte nicht gestartet werden: {error}",
+      "kill": "Terminal konnte nicht geschlossen werden: {error}",
+      "load": "Der Terminaldienst ist nicht erreichbar: {error}"
+    },
+    "unavailable": {
+      "disabled": "Das eingebaute Terminal ist ausgeschaltet. Ein Administrator kann es unter {settingsPath} aktivieren.",
+      "forbidden": "Dein Konto darf kein Terminal öffnen (Berechtigung \"terminal:open\").",
+      "session_required": "Melde dich im Browser an, um ein Terminal zu öffnen.",
+      "unauthorized": "Melde dich an, um ein Terminal zu öffnen.",
+      "pty_unavailable": "Dieser Rechner kann kein Terminal starten: Die Pseudoterminal-Komponente konnte nicht geladen werden. Sieh im Daemon-Log nach."
+    },
+    "titleScoped": "Terminal — {scope}",
+    "scopes": {
+      "none": "Kein Projekt",
+      "label": "Projekte"
+    },
+    "request": {
+      "title": "{agent} bittet dich, einen Befehl auszuführen",
+      "titleFrom": "{agent} · {project} bittet dich, einen Befehl auszuführen",
+      "badge": "Befehl",
+      "allow": "Erlauben",
+      "paste": "In ein Terminal einfügen",
+      "deny": "Ignorieren",
+      "copy": "Befehl kopieren",
+      "copied": "Befehl in die Zwischenablage kopiert.",
+      "hint": "Ohne Enter eingefügt: Lies ihn und drücke dann selbst Enter.",
+      "state": {
+        "allow": "Erlaubt: Der Agent führt ihn aus",
+        "paste": "In ein Terminal eingefügt",
+        "deny": "Ignoriert"
+      },
+      "errors": {
+        "forbidden": "Dein Konto kann kein Terminal öffnen: Nichts wurde eingefügt.",
+        "not_found": "Diese Anfrage existiert nicht mehr.",
+        "already_decided": "Über diese Anfrage wurde bereits entschieden.",
+        "not_offered": "Diese Wahl wird nicht mehr angeboten: Der Agent kann den Befehl jetzt nicht ausführen.",
+        "failed": "Deine Entscheidung konnte nicht gespeichert werden. Versuche es erneut."
+      },
+      "windowRefused": "Entscheidung gespeichert, aber das Terminal von {scope} ist nicht auf dem Bildschirm. Öffne eine Unterhaltung von {scope}, um ihn dort einzufügen; der Befehl ist in deiner Zwischenablage.",
+      "windowRefusedNoClipboard": "Entscheidung gespeichert, aber das Terminal von {scope} ist nicht auf dem Bildschirm. Öffne eine Unterhaltung von {scope} und kopiere dann den Befehl aus der Karte.",
+      "pendingBadge": "{count} Befehl(e) warten auf deine Entscheidung"
+    }
+  }
+}

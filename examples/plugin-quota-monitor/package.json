@@ -1,0 +1,34 @@
+{
+  "name": "@rooks/plugin-quota-monitor",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    "./client": "./lib/client.js"
+  },
+  "files": ["lib", "icon.svg", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "quota-monitor",
+    "apiVersion": 6,
+    "kind": ["widget"],
+    "label": "LLM quota monitor",
+    "description": "Usage of your LLM accounts: a movable widget — rings in the top bar or a sidebar, details on click, a tile in a wide zone — with history and thresholds. Written entirely with the SDK — not one line in the daemon.",
+    "author": "Rooks",
+    "icon": "icon.svg",
+    "permissions": ["usage:read", "storage", "settings"],
+    "client": {
+      "slots": ["cockpit.widget", "settings.section"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [
+      { "key": "warningAt", "type": "number", "label": "Warning threshold (%)", "default": 70 },
+      { "key": "criticalAt", "type": "number", "label": "Critical threshold (%)", "default": 90 },
+      { "key": "hiddenBackends", "type": "string", "label": "Hidden providers (comma-separated ids)", "default": "" },
+      { "key": "historyDays", "type": "number", "label": "Days of history kept", "default": 90 }
+    ],
+    "license": { "required": false }
+  }
+}

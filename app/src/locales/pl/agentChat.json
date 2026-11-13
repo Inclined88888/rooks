@@ -1,0 +1,65 @@
+{
+  "agentChat": {
+    "title": "Czat z agentem",
+    "newCard": "Nowy czat z agentem",
+    "newCardHint": "Wybierz agenta, którego pokazuje ta karta. Kolejną kartę dodasz z palety widżetów, gdy ta zostanie utworzona.",
+    "newConversation": "Nowa rozmowa",
+    "shortcuts": "Skróty agentów",
+    "shortcut": "Przełącz na {name}",
+    "addAgent": "Dodaj agenta do tej karty",
+    "picker": {
+      "label": "Szukaj agenta",
+      "placeholder": "Dodaj agenta…",
+      "empty": "Brak pasującego agenta",
+      "onCard": "Na karcie"
+    },
+    "config": {
+      "agent": "Agent",
+      "agentPlaceholder": "np. alice.main",
+      "title": "Tytuł karty",
+      "titlePlaceholder": "Nazwa agenta",
+      "subAgents": "Inni agenci na karcie",
+      "subAgentsHint": "Jeszcze brak. Wyszukaj poniżej lub użyj + na końcu rzędu awatarów.",
+      "removeSubAgent": "Usuń {name} z karty",
+      "moveUp": "Przesuń {name} w górę",
+      "moveDown": "Przesuń {name} w dół",
+      "save": "Zapisz",
+      "create": "Utwórz kartę",
+      "cancel": "Anuluj",
+      "delete": "Usuń tę kartę"
+    },
+    "menu": {
+      "customize": "Dostosuj agenta",
+      "edit": "Edytuj agenta",
+      "remove": "Usuń",
+      "stop": "Zatrzymaj wszystko",
+      "makeMain": "Ustaw jako głównego orkiestratora",
+      "makeMainDone": "{name} jest teraz głównym orkiestratorem: trafiają do niego podsumowania wybudzeń i powiadomienia",
+      "makeMainFailed": "Nie udało się ustawić {name} jako głównego orkiestratora: {error}",
+      "stopConfirm": "Naprawdę zatrzymać {name}? Jego trwające misje zostaną zakończone, skrzynka opróżniona, oczekujące zadania zablokowane, a wyzwalacze i przepływy, które by go wybudziły, wyłączone.",
+      "stopped": "Zatrzymano {name}. Zneutralizowano — misje: {missions}, wiadomości: {messages}, zadania: {tasks}, wyzwalacze: {triggers}, uruchomienia przepływów: {runs}, przepływy: {workflows}",
+      "stopFailed": "Nie udało się zatrzymać {name}: {error}",
+      "duplicate": "Duplikuj agenta"
+    },
+    "customize": {
+      "title": "Dostosuj agenta",
+      "description": "Pseudonim i zdjęcie dla {name}, tylko na tej karcie. Sam agent się nie zmienia.",
+      "nickname": "Pseudonim",
+      "photo": "Zdjęcie",
+      "save": "Zapisz",
+      "reset": "Przywróć"
+    },
+    "duplicate": {
+      "title": "Duplikuj {name}",
+      "description": "Kopia dostaje tę samą konfigurację i prompt pod nową nazwą. Jej pamięć startuje pusta; nie jest głównym orkiestratorem i nie przejmuje przypiętej roli w projekcie.",
+      "nameLabel": "Nazwa kopii",
+      "taken": "Agent o tej nazwie już istnieje.",
+      "invalid": "Używaj tylko liter, cyfr oraz '.', '_' i '-'.",
+      "failed": "Nie udało się zduplikować: {error}",
+      "done": "Utworzono {name} jako kopię {source}",
+      "skillsNotCopied": "Utworzono {name}, ale te umiejętności nie są ustawione tak jak w {source}: {skills}",
+      "cancel": "Anuluj",
+      "confirm": "Duplikuj"
+    }
+  }
+}

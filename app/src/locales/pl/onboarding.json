@@ -1,0 +1,108 @@
+{
+  "onboarding": {
+    "back": "Wstecz",
+    "continue": "Dalej",
+    "language": {
+      "title": "Wybierz język"
+    },
+    "splash": {
+      "title": "Twój zespół AI,\nu ciebie w domu.",
+      "subtitle": "Agenci, którzy pracują na twoim komputerze, z subskrypcjami AI, za które już płacisz.",
+      "hint": "Psst, możesz je złapać."
+    },
+    "account": {
+      "title": "Utwórz konto lokalne",
+      "subtitle": "Za jego pomocą logujesz się do Rooks. Jesteś jego administratorem.",
+      "privacy": "Zbieramy tylko twój adres e-mail na wypadek, gdybyś chciał zresetować hasło. Utworzone konto pozostaje lokalne."
+    },
+    "llm": {
+      "title": "Wybierz\nswój LLM.",
+      "subtitle": "Rooks działa na subskrypcjach AI, które już masz. Nigdy rachunku za tokeny."
+    },
+    "profile": {
+      "title": "Co cię tu sprowadza?",
+      "subtitle": "Rooks dopasuje ustawienia domyślne i przewodnik do twojej odpowiedzi."
+    },
+    "agent": {
+      "templates": {
+        "title": "Wybierz jego profil",
+        "subtitle": "Gotowy punkt wyjścia. Później możesz wszystko zmienić."
+      },
+      "interview": {
+        "title": "Skonfigurujmy twoją automatyzację",
+        "subtitle": "Pięć pytań i twój agent wie, co robić, czym i kiedy."
+      },
+      "sheet": {
+        "title": "Skonfiguruj agenta",
+        "subtitle": "Każde ustawienie można później zmienić w jego profilu."
+      }
+    },
+    "signin": {
+      "title": "Witaj ponownie",
+      "subtitle": "Rooks ma nowy wygląd. Zaloguj się na swoje konto Rooks, aby kontynuować."
+    },
+    "mascot": {
+      "title": "Poznaj maskotkę agenta {name}",
+      "subtitle": "Nowość w tej wersji: każdy agent ma maskotkę, która pokazuje, co robi — myśli, pracuje, czeka na ciebie. Ubierz agenta {name}, jak chcesz."
+    },
+    "scheme": {
+      "label": "Tryb kolorów",
+      "light": "Jasny",
+      "system": "System"
+    },
+    "discover": {
+      "label": "Poznaj Rooks",
+      "slide": "Slajd {current} z {total}",
+      "next": "Dalej",
+      "skip": "Pomiń wszystko",
+      "finish": "Przejdź do: {name}",
+      "finishNoName": "Zaczynamy",
+      "autonomous": {
+        "title": "Twoje TIM-y pracują samodzielnie",
+        "body": "Daj TIM-owi misję, godzinę albo wyzwalacz: sam wybierze umiejętności i narzędzia, zapamięta, czego się nauczy, i zda raport po skończonej pracy.",
+        "nodes": {
+          "skills": "Umiejętności",
+          "tools": "Narzędzia",
+          "memory": "Pamięć",
+          "schedule": "Harmonogram"
+        },
+        "done": "Raport wysłany"
+      },
+      "teams": {
+        "title": "Twórz zespoły TIM-ów",
+        "body": "Jeden planuje, drugi koduje, trzeci sprawdza: zadania przechodzą od TIM-a do TIM-a na Kanbanie, a w Multichacie rozmawiasz ze wszystkimi naraz.",
+        "columns": {
+          "todo": "Do zrobienia",
+          "doing": "W toku",
+          "done": "Gotowe"
+        },
+        "card": "Strona główna"
+      },
+      "projects": {
+        "title": "Projekty z własnymi TIM-ami",
+        "body": "Asystent ogólny wie po trochu o wszystkim. TIM-y projektu pracują tylko w tym projekcie, z jego własnymi zasadami i własną pamięcią, i nigdy go nie opuszczają.",
+        "general": "Twoje TIM-y są wszędzie",
+        "alpha": "Strona WWW",
+        "beta": "Księgowość",
+        "rules": "Własne zasady",
+        "memory": "Własna pamięć"
+      },
+      "connected": {
+        "title": "Podłącz całą resztę",
+        "body": "Konektory wnoszą pocztę, kalendarz i narzędzia; workflowy łączą kroki; wtyczki dodają to, czego brakuje, aż po interfejs."
+      },
+      "views": {
+        "label": "Gdzie to znaleźć",
+        "canvas": "Kanwa agenta",
+        "chat": "Czat",
+        "kanban": "Kanban",
+        "multichat": "Multichat",
+        "projectChat": "Czat projektu",
+        "widgets": "Widżety",
+        "connectors": "Konektory",
+        "workflows": "Workflowy",
+        "plugins": "Wtyczki"
+      }
+    }
+  }
+}

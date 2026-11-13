@@ -1,0 +1,22 @@
+{
+  "name": "@rooks/plugin-island",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-island",
+    "apiVersion": 8,
+    "kind": "island",
+    "label": "Island example",
+    "description": "A board opened in a workspace tab or split, using only the public client SDK.",
+    "permissions": [],
+    "client": {
+      "slots": ["island.content"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    }
+  }
+}

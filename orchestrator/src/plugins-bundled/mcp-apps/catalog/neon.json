@@ -1,0 +1,61 @@
+{
+  "slug": "neon",
+  "name": "Neon",
+  "publisher": "Neon",
+  "category": "data",
+  "tagline": {
+    "en": "Serverless Postgres and branches",
+    "fr": "Postgres serverless et branches"
+  },
+  "description": {
+    "en": "Lets your agents manage your Neon projects: create database branches, run SQL, compare schemas and prepare migrations on a branch before they reach production.",
+    "fr": "Vos agents gèrent vos projets Neon : créer des branches de base, lancer du SQL, comparer des schémas et préparer des migrations sur une branche avant la production."
+  },
+  "examples": {
+    "en": [
+      "Create a branch of the main database to test a migration",
+      "Describe the schema of the orders table",
+      "Which queries are the slowest on this branch?"
+    ],
+    "fr": [
+      "Crée une branche de la base principale pour tester une migration",
+      "Décris le schéma de la table orders",
+      "Quelles requêtes sont les plus lentes sur cette branche ?"
+    ]
+  },
+  "mcp": {
+    "url": "https://mcp.neon.tech/mcp",
+    "transport": "streamable-http"
+  },
+  "auth": {
+    "type": "oauth"
+  },
+  "links": {
+    "website": "https://neon.com",
+    "privacy": "https://neon.com/privacy-policy",
+    "terms": "https://neon.com/terms-of-service"
+  },
+  "registry": {
+    "name": "com.neon/mcp",
+    "proof": "documented",
+    "evidence": "https://neon.com/docs/ai/neon-mcp-server"
+  },
+  "icon": {
+    "monogram": "Ne",
+    "color": "#0C0D0D",
+    "logo": {
+      "viewBox": "0 0 24 24",
+      "paths": [
+        {
+          "d": "M24 0V24l-9.365-8.045V24H0V0ZM2.942 21.087h8.751V9.563l9.365 8.204V2.919L2.942 2.914Z",
+          "fill": "#34D59A"
+        }
+      ],
+      "source": "https://simpleicons.org/?q=neon"
+    }
+  },
+  "reviewed": {
+    "on": "2026-11-04",
+    "probe": "oauth: 401 then metadata and dynamic client registration accepted"
+  }
+}

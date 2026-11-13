@@ -1,0 +1,76 @@
+{
+  "name": "@rooks/provider-grok",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "rooks": {
+    "id": "provider-grok",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Grok Build",
+    "description": "Runs missions on the Grok Build CLI (xAI) with the user's own SuperGrok / X Premium+ subscription.",
+    "author": "Rooks",
+    "permissions": ["backends:register"],
+    "provider": {
+      "binaries": [
+        {
+          "name": "grok"
+        }
+      ],
+      "credentialDirs": [
+        ".grok"
+      ],
+      "backends": [
+        {
+          "id": "grok",
+          "rank": 30,
+          "binary": {
+            "names": [
+              "grok"
+            ],
+            "install": {
+              "any": {
+                "kind": "script",
+                "posix": "curl -fsSL https://x.ai/cli/install.sh | bash",
+                "windows": "irm https://x.ai/cli/install.ps1 | iex"
+              }
+            },
+            "searchDirs": {
+              "any": [
+                "~/.grok/bin"
+              ]
+            },
+            "standaloneInstaller": {
+              "label": "Grok",
+              "posix": "curl -fsSL https://x.ai/cli/install.sh | bash",
+              "windows": "irm https://x.ai/cli/install.ps1 | iex"
+            }
+          },
+          "credentialDirs": [
+            ".grok"
+          ],
+          "signInCommand": "grok login",
+          "installDocs": "https://x.ai/cli",
+          "updateCheck": {
+            "latest": {
+              "text": "https://x.ai/cli/stable"
+            }
+          },
+          "setupCard": {
+            "label": "Grok",
+            "order": 3
+          },
+          "modelBrands": [
+            {
+              "match": "grok",
+              "brand": "grok"
+            }
+          ],
+          "seedsMainAgent": true
+        }
+      ]
+    },
+    "license": { "required": false }
+  }
+}

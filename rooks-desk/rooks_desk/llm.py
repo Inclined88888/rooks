@@ -67,27 +67,41 @@ def _env(*names: str) -> str:
     return ""
 
 
+def _rooks_home() -> str:
+    return (os.environ.get("ROOKS_HOME") or "").strip() or os.path.join(os.path.expanduser("~"), ".rooks")
+
+
+def _app_json_candidates() -> list[str]:
+    if os.getenv("ROOKS_APP_FILE"):
+        return [os.environ["ROOKS_APP_FILE"]]
+    if os.getenv("AI_WORKSPACE_APP_FILE"):
+        return [os.environ["AI_WORKSPACE_APP_FILE"]]
+    home = _rooks_home()
+    legacy = (
+        os.path.join(os.environ["APPDATA"], "ai-workspace", "app.json")
+        if os.name == "nt" and os.getenv("APPDATA")
+        else os.path.join(os.getenv("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config"),
+                          "ai-workspace", "app.json")
+    )
+    return [os.path.join(home, "run", "app.json"), legacy]
+
+
 def app_link() -> dict:
-    """The running AI Workspace desktop app ({"url", "key"}) from the app.json it writes, or WORKBENCH_URL /
-    WORKBENCH_API_KEY. Empty when neither is there. Same file as rooks_code.config.app_link."""
+    """The running Rooks Desk app ({"url", "key"}) from ~/.rooks/run/app.json (legacy ai-workspace still read)."""
     if _env("WORKBENCH_URL"):
         return {"url": _env("WORKBENCH_URL").rstrip("/"), "key": _env("WORKBENCH_API_KEY", "BROWSER_API_KEY")}
-    if os.getenv("AI_WORKSPACE_APP_FILE"):
-        path = os.environ["AI_WORKSPACE_APP_FILE"]
-    elif os.name == "nt" and os.getenv("APPDATA"):
-        path = os.path.join(os.environ["APPDATA"], "ai-workspace", "app.json")
-    else:
-        path = os.path.join(os.getenv("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config"), "ai-workspace", "app.json")
-    try:
-        with open(path, encoding="utf-8") as f:
-            d = json.load(f)
-        url = str(d.get("url") or "").rstrip("/")
-        if not url:
-            return {}
-        urllib.request.urlopen(f"{url}/healthz", timeout=1.5).close()  # a file left by a crashed app is ignored
-        return {"url": url, "key": str(d.get("key") or "")}
-    except (OSError, ValueError, AttributeError):
-        return {}
+    for path in _app_json_candidates():
+        try:
+            with open(path, encoding="utf-8") as f:
+                d = json.load(f)
+            url = str(d.get("url") or "").rstrip("/")
+            if not url:
+                continue
+            urllib.request.urlopen(f"{url}/healthz", timeout=1.5).close()  # a file left by a crashed app is ignored
+            return {"url": url, "key": str(d.get("key") or "")}
+        except (OSError, ValueError, AttributeError):
+            continue
+    return {}
 
 
 def app_has_models(link: dict) -> bool:

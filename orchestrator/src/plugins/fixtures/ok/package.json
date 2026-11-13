@@ -1,0 +1,43 @@
+{
+  "name": "@fixtures/plugin-ok",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    "./client": "./lib/client.js"
+  },
+  "rooks": {
+    "id": "fixture-ok",
+    "apiVersion": 1,
+    "kind": [
+      "behavior"
+    ],
+    "label": "Fixture OK",
+    "description": "Une fixture qui embarque une cover.",
+    "cover": "cover.png",
+    "icon": "icon.svg",
+    "permissions": [
+      "storage",
+      "notify"
+    ],
+    "client": {
+      "slots": [
+        "nav.item"
+      ]
+    },
+    "settings": [
+      {
+        "key": "greeting",
+        "type": "string",
+        "label": "Salutation",
+        "default": "bonjour"
+      },
+      {
+        "key": "apiToken",
+        "type": "secret",
+        "label": "Jeton API"
+      }
+    ]
+  }
+}

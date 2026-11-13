@@ -1,0 +1,27 @@
+{
+  "name": "@rooks/plugin-widget",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "icon.svg", "cover.jpg", "still-1.jpg", "still-2.jpg", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-widget",
+    "apiVersion": 1,
+    "kind": "widget",
+    "label": "Example widget",
+    "description": "A card you can move to any host zone (cockpit, sidebars, a third-party page).",
+    "cover": "cover.jpg",
+    "icon": "icon.svg",
+    "screenshots": ["still-1.jpg", "still-2.jpg"],
+    "permissions": [],
+    "client": {
+      "slots": ["cockpit.widget"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

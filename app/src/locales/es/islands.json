@@ -1,0 +1,167 @@
+{
+  "islands": {
+    "missionEgress": {
+      "title": "Red",
+      "titleOf": "Red · {mission}"
+    },
+    "widgetZone": {
+      "title": "Widgets"
+    },
+    "widgetCard": {
+      "title": "Widget",
+      "missing": "El widget {widget} no está disponible aquí."
+    },
+    "page": "Página",
+    "arrangementPage": {
+      "loading": "Cargando la disposición…",
+      "missing": "Esta disposición ya no existe. Su entrada de menú desaparece con ella.",
+      "hint": "Esta página se abre con la disposición. Lo que cambies aquí se queda en esta página; la disposición guardada no se toca.",
+      "restore": "Restaurar la disposición",
+      "restoreFailed": "No se pudo restaurar la disposición."
+    },
+    "tabs": "Pestañas de la isla",
+    "close": "Cerrar",
+    "closeTab": "Cerrar {title}",
+    "detach": "Abrir en una ventana",
+    "resize": "Redimensionar",
+    "unavailable": "Contenido no disponible — {plugin}",
+    "refused": {
+      "maxIslands": "8 islas como máximo",
+      "maxDepth": "3 niveles de divisiones como máximo",
+      "maxTabsPerIsland": "12 pestañas como máximo en una isla",
+      "maxTabs": "32 pestañas como máximo",
+      "routeTab": "La página de esta vista no se puede cerrar",
+      "self": "Ya está aquí",
+      "unknownType": "Este contenido no se puede abrir en el espacio de trabajo",
+      "maxFloats": "4 ventanas emergentes como máximo",
+      "floatEdge": "Una ventana emergente solo acepta pestañas por su centro"
+    },
+    "announce": {
+      "right": "{title} se abrió a la derecha de {target}",
+      "left": "{title} se abrió a la izquierda de {target}",
+      "top": "{title} se abrió encima de {target}",
+      "bottom": "{title} se abrió debajo de {target}",
+      "tab": "{title} se añadió como pestaña a {target}",
+      "root": "{title} se abrió en el borde del espacio de trabajo",
+      "closed": "{title} cerrado",
+      "float": "{title} se abrió como ventana emergente",
+      "minimized": "{title} minimizado"
+    },
+    "openIn": {
+      "menu": "Abrir en una división",
+      "right": "A la derecha",
+      "left": "A la izquierda",
+      "bottom": "Debajo",
+      "top": "Encima",
+      "center": "En una pestaña",
+      "narrow": "Abrir en el espacio de trabajo",
+      "split": {
+        "right": "Abrir a la derecha",
+        "left": "Abrir a la izquierda",
+        "bottom": "Abrir debajo",
+        "top": "Abrir encima",
+        "center": "Abrir en una pestaña",
+        "float": "Abrir como ventana emergente"
+      },
+      "float": "Como ventana emergente"
+    },
+    "drop": {
+      "right": "Abrir a la derecha de {target}",
+      "left": "Abrir a la izquierda de {target}",
+      "top": "Apilar encima de {target}",
+      "bottom": "Apilar debajo de {target}",
+      "center": "Añadir una pestaña a {target}",
+      "root": {
+        "left": "Nueva columna a la izquierda",
+        "right": "Nueva columna a la derecha",
+        "top": "Nueva fila arriba",
+        "bottom": "Nueva fila abajo"
+      },
+      "float": "Abrir como ventana emergente (Alt)"
+    },
+    "drag": {
+      "island": "Arrastra para mover esta isla"
+    },
+    "chat": {
+      "title": "Chat",
+      "titleOf": "{agent}"
+    },
+    "proposal": {
+      "open": {
+        "right": "{title} se abre en una isla nueva a la derecha",
+        "left": "{title} se abre en una isla nueva a la izquierda",
+        "top": "{title} se abre en una isla nueva encima",
+        "bottom": "{title} se abre en una isla nueva debajo"
+      },
+      "openTab": "{title} se abre como pestaña",
+      "cannotApply": "Esta disposición ya no cabe en el espacio de trabajo: la isla a la que apunta se cerró o se alcanzó un límite.",
+      "dropped": "Omitidos, su contenido rechazó sus ajustes: {titles}",
+      "unreadable": "no se pudo leer tu disposición actual, vuelve a intentarlo en un momento",
+      "noFit": "la isla a la que apunta se cerró o se alcanzó un límite",
+      "refusedParams": "{titles} rechazó los ajustes recibidos",
+      "closes": "Al aplicar se cierran: {titles}",
+      "closesIn": "Al aplicar en {project} se cierran: {titles}",
+      "tabKept": "una pestaña que se habría cerrado permaneció abierta, no se cambió nada"
+    },
+    "arrangementProposal": {
+      "title": "{agent} propone una de tus disposiciones de islas",
+      "titleFrom": "{agent} propone una de tus disposiciones de islas ({project})",
+      "name": "Disposición: {name}",
+      "gone": "la disposición \"{name}\" se eliminó, no se cambió nada",
+      "stale": "Esta disposición se eliminó después de la propuesta: no se cambió nada."
+    },
+    "menu": "Acciones de la isla",
+    "move": {
+      "keys": "M: mover esta pestaña · Shift+M: mover la isla",
+      "start": "Moviendo {title}. Las flechas eligen la isla, Tab el lugar, Enter lo suelta, Escape cancela.",
+      "hint": "Flechas: isla · Tab: lugar · Enter: soltar · Esc: cancelar",
+      "cancelled": "Movimiento cancelado"
+    },
+    "file": {
+      "title": "Archivo"
+    },
+    "popup": {
+      "open": "Abrir {title} como ventana emergente",
+      "dock": "Acoplar al espacio de trabajo",
+      "pin": "Mantener en todas las páginas",
+      "unpin": "Mantener solo en esta página",
+      "close": "Cerrar esta ventana emergente",
+      "minimize": "Minimizar",
+      "restore": "Mostrar {title} de nuevo",
+      "minimized": "Ventanas emergentes minimizadas"
+    },
+    "glass": {
+      "menu": "Cristal",
+      "follow": "Seguir el ajuste de Apariencia",
+      "island": "Toda la isla",
+      "widgets": "Widgets",
+      "both": "Ambos"
+    },
+    "newTab": "Nueva pestaña",
+    "skill": {
+      "title": "Skill"
+    },
+    "paramsRefused": "No se pudo aplicar este cambio a la pestaña.",
+    "closeGuardFailed": "{title} no pudo confirmar que se puede cerrar: permanece abierto.",
+    "unsaved": {
+      "title": "¿Guardar los cambios de {name}?",
+      "description": "Tus cambios se perderán si cierras sin guardar.",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "discard": "No guardar",
+      "cancel": "Cancelar"
+    },
+    "stack": {
+      "earlier": "Mover {title} a la izquierda",
+      "later": "Mover {title} a la derecha",
+      "moved": "{title} movido"
+    }
+  },
+  "terminal": {
+    "island": {
+      "marker": "Abrir en el espacio de trabajo",
+      "openedThere": "Esta sesión está abierta en el espacio de trabajo.",
+      "show": "Mostrar"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "plugins": [
+    {
+      "pkg": "@rooks/plugin-quota-monitor",
+      "source": "../examples/plugin-quota-monitor"
+    },
+    {
+      "pkg": "@rooks/provider-grok",
+      "source": "official-providers/provider-grok"
+    },
+    {
+      "pkg": "@rooks/provider-copilot",
+      "source": "official-providers/provider-copilot"
+    },
+    {
+      "pkg": "@rooks/provider-acp",
+      "source": "official-providers/provider-acp"
+    },
+    {
+      "pkg": "@rooks/provider-codex",
+      "source": "official-providers/provider-codex"
+    },
+    {
+      "pkg": "@rooks/provider-ollama-cloud",
+      "source": "official-providers/provider-ollama-cloud"
+    },
+    {
+      "pkg": "@rooks/provider-claude",
+      "source": "official-providers/provider-claude"
+    },
+    {
+      "pkg": "@rooks/provider-kimi",
+      "source": "official-providers/provider-kimi"
+    },
+    {
+      "pkg": "@rooks/provider-pi",
+      "source": "official-providers/provider-pi"
+    },
+    {
+      "pkg": "@rooks/plugin-hermes-gateway",
+      "source": "../plugins/hermes-gateway",
+      "enabledByDefault": false
+    },
+    {
+      "pkg": "@rooks/plugin-agent-import",
+      "source": "../plugins/agent-import"
+    },
+    {
+      "pkg": "@rooks/plugin-theme-rooks",
+      "source": "../plugins/theme-rooks"
+    }
+  ]
+}

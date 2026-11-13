@@ -1,0 +1,4 @@
+{
+  "_comment": "Files of orchestrator/src and orchestrator/bin that still carry French in their comments (TODO #628). Shrink-only: a file leaves the list once translated and never comes back; english-messages.test.ts fails on a listed file that no longer has any French.",
+  "files": []
+}

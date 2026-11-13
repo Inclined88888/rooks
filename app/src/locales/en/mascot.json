@@ -1,0 +1,26 @@
+{
+  "mascot": {
+    "field": {"shape": "Skull", "fur": "Fur", "eyes": "Eyes", "acc": "Accessory"},
+    "shape": {"squircle": "Classic", "tri": "Pear", "gem": "Egg", "round": "Round", "bean": "Wide", "cloud": "Tall", "hex": "Square"},
+    "fur": {
+      "sand": "Sand", "cinnamon": "Cinnamon", "cream": "Cream", "cocoa": "Cocoa", "caramel": "Caramel", "taupe": "Taupe",
+      "honey": "Honey", "bark": "Bark", "wheat": "Wheat", "pink": "Pink", "blue": "Blue", "green": "Green", "yellow": "Yellow", "orange": "Orange", "purple": "Purple", "custom": "Custom"
+    },
+    "eyes": {
+      "pill": "Calm", "big": "Wide open", "happy": "Happy", "wink": "Wink", "surprised": "Surprised",
+      "squint": "Focused", "sleepy": "Sleepy", "heart": "Hearts", "star": "Stars", "code": "Code"
+    },
+    "acc": {
+      "none": "None", "loupe": "Magnifier", "pen": "Red pen", "quill": "Quill", "hammer": "Hammer", "wrench": "Wrench",
+      "baton": "Baton", "telescope": "Spyglass", "envelope": "Envelope", "calendar": "Calendar", "clipboard": "Clipboard",
+      "hourglass": "Hourglass", "teacher": "Book and cap", "calculator": "Calculator", "chart": "Chart", "brush": "Brush",
+      "globe": "Globe", "megaphone": "Megaphone", "shield": "Shield", "coffee": "Coffee mug"
+    },
+    "state": {
+      "idle": "Idle", "listening": "Listening", "thinking": "Thinking", "working": "Working", "searching": "Searching",
+      "waiting": "Waiting for you", "done": "Done", "error": "Error", "sleeping": "Sleeping",
+      "happy": "Happy", "celebrate": "Celebrating", "confused": "Confused", "surprised": "Surprised", "sad": "Sad",
+      "angry": "Angry", "love": "Fan", "shy": "Shy", "coding": "Coding"
+    }
+  }
+}

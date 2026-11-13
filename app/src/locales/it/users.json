@@ -1,0 +1,13 @@
+{
+  "invitePage": {
+    "title": "Accetta l’invito",
+    "description": "Scegli una password per {email}.",
+    "invalid": "Questo invito non è valido o è scaduto.",
+    "name": "Nome",
+    "password": "Password",
+    "submit": "Crea l’account",
+    "working": "Elaborazione…",
+    "failed": "L’invito è stato rifiutato",
+    "goHome": "Continua"
+  }
+}

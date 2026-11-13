@@ -1,0 +1,46 @@
+{
+  "name": "@rooks/plugin-todo-connector-discord",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    "./client": "./lib/client.js"
+  },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "todo-connector-discord",
+    "apiVersion": 15,
+    "kind": ["behavior"],
+    "label": "Discord connector",
+    "description": "Keeps the TO DO notebook and the Discord bot's tickets and suggestions in step: a ticket opens an idea and an investigation, an outcome or a closure goes back to the bot. Written with the public SDK only.",
+    "author": "Rooks",
+    "permissions": [
+      "webhooks:receive", "todos:read", "todos:write", "events:subscribe", "kanban:write",
+      "http:outbound", "secrets:read", "storage", "settings", "triggers:disable"
+    ],
+    "webhooks": [{ "name": "events", "auth": "standard" }],
+    "http": {
+      "hosts": [
+        { "host": "cdn.discordapp.com", "why": "Downloads the files attached to a ticket." },
+        { "host": "media.discordapp.net", "why": "Downloads the files attached to a ticket." }
+      ]
+    },
+    "client": {
+      "slots": ["kanban.todo.badge", "settings.section"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [
+      { "key": "workerUrl", "type": "string", "label": "Worker URL the outcomes are posted to (https://…/rooks/events)", "default": "" },
+      { "key": "signingSecret", "type": "string", "label": "Name of the vault entry that signs them (whsec_…, scoped to this plugin)", "default": "DISCORD_WORKER_SIGNING" },
+      { "key": "referencePattern", "type": "string", "label": "Reference pattern of the tickets this connector handles", "default": "^(TIM|SUG)-\\d{4,6}$" },
+      { "key": "investigationAgent", "type": "string", "label": "Agent that investigates a new ticket", "default": "rooks.researcher" },
+      { "key": "project", "type": "string", "label": "Project of the ideas and investigations", "default": "rooks" },
+      { "key": "investigationPrompt", "type": "string", "label": "Investigation prompt ({data.public_id}, {data.title}, {data.kind}, {data.url}, {data.product_area}, {data.details})", "default": "" },
+      { "key": "silentInvestigation", "type": "boolean", "label": "The investigation reports in the idea only, never back to the orchestrator", "default": true }
+    ],
+    "license": { "required": false }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "widget": {
+    "title": "Hallo in deiner Sprache",
+    "greeting": "Hallo, {name}!",
+    "notes": "{count, plural, =0 {Noch keine Notizen} one {# Notiz} other {# Notizen}}",
+    "add": "Notiz hinzufügen"
+  }
+}

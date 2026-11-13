@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-mascot",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-mascot",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Pixel mascot",
+    "description": "Replaces every agent's mascot with a flat pixel face in the agent's colour, whose eyes follow its state.",
+    "permissions": [],
+    "client": {
+      "slots": ["agent.mascot"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

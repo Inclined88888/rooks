@@ -1,0 +1,23 @@
+{
+  "name": "@rooks/plugin-provider",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "provider-example",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Example LLM provider",
+    "description": "Adds a compatible provider profile and a custom dialect for a different CLI protocol.",
+    "author": "Rooks",
+    "permissions": ["backends:register", "settings"],
+    "provider": { "binaries": [{ "name": "echo" }] },
+    "settings": [
+      { "key": "apiKey", "type": "secret", "label": "Provider API key" }
+    ],
+    "license": { "required": false }
+  }
+}

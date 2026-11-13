@@ -1,0 +1,31 @@
+import './test-home.js';
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { browserControls } from './native-browser-control.js';
+
+test('spectators cannot renew, resize or release another controller; explicit takeover is possible', () => {
+  let now = 0;
+  const controls = browserControls(() => now);
+  const user = { id: 'user:desktop', kind: 'human' as const };
+  const agent = { id: 'mission:1', kind: 'agent' as const };
+  controls.renew('one', user);
+  assert.deepEqual(controls.status('one', user), { holder: null, kind: null });
+  assert.equal(controls.acquire('one', agent), true);
+  assert.equal(controls.acquire('one', agent), false);
+  assert.throws(() => controls.acquire('one', user), /Another controller/);
+  assert.throws(() => controls.release('one', user), /current controller/);
+  now = 59_000;
+  controls.renew('one', user);
+  now = 60_001;
+  assert.deepEqual(controls.status('one'), { holder: null, kind: null });
+  controls.acquire('one', agent);
+  controls.acquire('one', user, true);
+  assert.deepEqual(controls.status('one', agent), { holder: 'other', kind: 'human' });
+  assert.equal(controls.acquire('two', agent), true, 'profiles have independent controllers');
+  now += 59_000;
+  controls.renew('one', user);
+  now += 2000;
+  assert.equal(controls.status('one', user).holder, 'you');
+  controls.release('one', user);
+  assert.equal(controls.status('one').holder, null);
+});

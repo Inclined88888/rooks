@@ -1,6 +1,0 @@
-*
-!server.mjs
-!Dockerfile.claude
-!codex.mjs
-!codex-config.toml
-!Dockerfile.codex

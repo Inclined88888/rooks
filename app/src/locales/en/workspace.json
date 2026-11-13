@@ -1,0 +1,85 @@
+{
+  "logoCrop": {
+    "title": "Frame the logo", "zoom": "Zoom", "apply": "Apply", "uploading": "Uploading…",
+    "adjust": "Adjust", "loading": "Loading…", "loadFailed": "This image could not be loaded.",
+    "imageTooLarge": "Image too large (max 8 MB)",
+    "dragHint": "Drag the image to reframe it.", "fit": "Fit", "fill": "Fill",
+    "background": "Background", "transparent": "Transparent", "projectColor": "Theme colour",
+    "customBackground": "Custom background colour"
+  },
+  "emojiPicker": {
+    "trigger": "Emoji", "title": "Emoji picker", "search": "Search an emoji…",
+    "loading": "Loading…", "noResults": "No emoji for this search.",
+    "groups": {
+      "smileys": "Smileys & emotion", "people": "People & body", "nature": "Animals & nature",
+      "food": "Food & drink", "travel": "Travel & places", "activities": "Activities",
+      "objects": "Objects", "symbols": "Symbols", "flags": "Flags"
+    }
+  },
+  "projectsPage": {"namePlaceholder": "My Project", "slugPlaceholder": "my-project", "cwdPlaceholder": "/path/to/my-project", 
+    "invalidSlug": "Invalid slug (letters, numbers, . _ -; 1–64 chars)",
+    "updated": "Updated: {slug}", "created": "Created: {slug}", "deleted": "Deleted: {slug}",
+    "cwdWarnMissing": "Saved, but the daemon cannot find this folder: {path}",
+    "cwdWarnDenied": "Saved, but the daemon is refused access to this folder ({code}): {path}. On macOS, check System Settings › Privacy & Security.",
+    "cwdWarnNotDirectory": "Saved, but this path is not a folder: {path}",
+    "deleteConfirm": "Delete project \"{slug}\"?",
+    "fateTitle": "What happens to the {count} agent(s) of \"{slug}\"?",
+    "fate": {
+      "move": "Move them to another project",
+      "moveHint": "They keep their names and memory and join the project you pick.",
+      "detach": "Detach them",
+      "detachHint": "They stay, with no project.",
+      "delete": "Delete them",
+      "deleteHint": "Their identity and memory are erased. This cannot be undone.",
+      "target": "Destination project",
+      "confirm": "Delete the project"
+    },
+    "imageOnly": "Image only", "imageTooLarge": "Image too large (max 8 MB)",
+    "invalidUploadResponse": "Invalid upload response", "iconUploaded": "Icon uploaded",
+    "create": "Create", "refresh": "Refresh", "projectCount": "{count} project(s)",
+    "empty": "No projects. Create the first one.", "edit": "Edit", "delete": "Delete",
+    "editTitle": "Edit \"{slug}\"", "createTitle": "Create project", "name": "Name", "slug": "Slug",
+    "logo": "Logo", "color": "Color", "workspace": "Workspace",
+    "workingDirectory": "Working directory", "speech": "Speech (description)",
+    "uploading": "Uploading…", "chooseImage": "Choose an image", "clearLogo": "Clear the logo",
+    "logoHint": "Click the circle to browse, paste (Ctrl/Cmd+V) or drop an image — or pick an emoji.", "logoPlaceholder": "Emoji or short text",
+    "autoColor": "Auto-generate from name", "auto": "auto",
+    "saving": "Saving…", "save": "Save",
+    "deleting": "Deleting…", "dangerZone": "Danger zone", "dangerZoneHint": "Deleting a project is permanent."
+  },
+  "memoryPage": {
+    "title": "Memory", "dashboard": "Dashboard", "browse": "Browse", "loading": "Loading…",
+    "curationRun": "Curation run", "decisionsRun": "{count} decision(s) · run {run}",
+    "detailError": "Could not load details", "noAudit": "No record for this run.", "reverted": "reverted", "noCandidateText": "(no text — see the targeted rule)",
+    "facts": "Facts", "pitfalls": "Pitfalls", "pending": "Pending", "projects": "Projects", "agents": "Agents",
+    "pendingPromotions": "Pending promotions", "noProposals": "No pending proposals.", "latestRuns": "Latest curation runs",
+    "noRuns": "No recorded runs.", "promote": "Promote", "reject": "Reject", "rejected": "Rejected",
+    "promoted": "Promoted → {target}", "projectFile": "project file", "target": "target",
+    "noProjects": "No projects.", "noAgents": "No agents.", "chooseProject": "Choose a project.", "chooseAgent": "Choose an agent.",
+    "permanentInstructions": "Permanent instructions (always injected)", "technicalDecisions": "Technical decisions",
+    "editorPlaceholder": "No {file} for {slug}. Write permanent rules — they will be injected into every project agent.",
+    "noCapturedMemory": "No memory captured for {agent} (at least 3 turns and capture must be enabled).",
+    "injectedPitfalls": "Injected pitfalls (pieges.md)", "saving": "saving…", "saved": "saved ✓", "saveFailed": "failed",
+    "browseByProject": "Browse by project"
+  },
+  "gitPage": {
+    "refresh": "Refresh", "loading": "Loading…", "selectProject": "Select a project.", "unreadableRepo": "Unreadable git repository.", "staged": "Staged", "delete": "Delete", "projects": "Projects", "repoCount": "{count} repository(ies)",
+    "never": "—", "justNow": "just now", "minutesAgo": "{count} min ago", "hoursAgo": "{count} h ago", "daysAgo": "{count} d ago",
+    "checkedOut": "Switched to {branch}", "branchDeleted": "Branch {branch} deleted", "title": "Git", "noProjects": "No project has a configured cwd.",
+    "workingTree": "Working tree", "cleanTree": "Working tree clean — nothing to commit.", "modified": "Modified", "untracked": "Untracked",
+    "branches": "Branches", "unmergedBranches": "Unmerged branches", "allMerged": "All branches are merged into", "deleteBranchTitle": "Delete branch?",
+    "current": "current", "base": "base", "worktree": "worktree", "merged": "merged", "unmerged": "unmerged", "switch": "Switch"
+  },
+  "gitWidget": {
+    "tabs": {"branches": "Branches", "graph": "Graph", "publish": "Publish"},
+    "detached": "detached HEAD",
+    "noProject": "This agent has no project: no repository to show.",
+    "repos": {"label": "Repository", "root": "{name} (root)", "otherToPush": "{name}: {count} to push"},
+    "status": {"toPush": "{count} to push", "unpublished": "not published", "noRemote": "no remote", "synced": "up to date", "unknown": "count unknown", "changes": "{count} uncommitted change(s)"},
+    "branches": {"workingTree": "Working tree", "title": "Branches", "worktree": "worktree", "localOnly": "local only", "localOnlyTitle": "Never pushed: these commits only exist on this disk.", "checkout": "Switch to {branch}", "switched": "Switched to {branch}"},
+    "publish": {"addRemote": "Add a remote…", "addRemoteTitle": "SSH, GitLab, Gitea, your own server: any git URL", "remotes": "Remotes…", "remotesTitle": "Add, change or remove a remote", "project": "project", "remote": "remote", "notRepo": "not a git repository", "none": "none", "branch": "branch", "noUpstream": "no upstream", "toPush": "to push", "ahead": "ahead", "upToDate": "up to date", "commits": "{count} commit(s)", "unknown": "unknown", "unknownTitle": "The comparison branch does not resolve: the count is unknown, not zero.", "notPublished": "not published", "notPublishedCount": "not published · {count} commit(s)", "comparedTo": "compared to {ref}", "neverPushedVs": "never pushed — gap measured against {ref}", "nothingPublished": "nothing published on the remote", "behind": "behind", "dirty": "uncommitted", "files": "{count} file(s)", "last": "last", "notVersioned": "This folder is not versioned: {cmd} then a first commit before publishing.", "noRemote": "No remote: this code only lives on this disk.", "noRemoteNoCommit": "No remote and no commit: make a first commit before publishing.", "neverPushed": "Branch never pushed — the push will set its upstream.", "detachedHint": "Detached HEAD: pick a branch to push.", "ghMissing": "gh CLI not found", "noCommit": "no commit to publish", "createRemote": "Create on GitHub…", "push": "Push", "pushing": "Pushing…", "publishBranch": "Publish", "fetch": "Fetch", "fetchTitle": "git fetch — refresh the behind count", "destination": "Push destination", "upstreamTag": "upstream", "remoteAbsent": "branch absent", "remotePending": "{count} to push", "pushTo": "Push to {remote}", "confirmPushTitle": "Push {branch} to {url}?", "confirmPushCount": "{count} commit(s) of {branch} will be published on {remote} ({url}). A push cannot be taken back: this history will exist there.", "confirmPushAbsent": "{branch} does not exist on {remote} ({url}) yet: its whole history will be published there. A push cannot be taken back.", "confirmPushUnknown": "The number of commits {remote} ({url}) lacks is unknown: everything not already there will be published. A push cannot be taken back.", "confirmRepo": "Repository {repo}.", "confirmNotUpstream": "{remote} is not the upstream of {branch}.", "confirmUpstreamUnknown": "Destination: the remote {remote} ({url}). The number of commits it lacks is unknown: everything not already there will be published. A push cannot be taken back.", "confirmUpstreamAbsent": "{branch} does not exist on {remote} ({url}) yet: its whole history will be published there, and {remote} becomes its upstream. A push cannot be taken back.", "confirmUpstream": "Destination: the remote {remote} ({url}), the branch's upstream. A push cannot be taken back.", "confirmPublishTitle": "Publish {branch} on {url}?", "confirmPushCountTitle": "Push {count, plural, one {# commit} other {# commits}} of {branch} to {url}?"},
+    "graph": {"loading": "Reading the history…", "empty": "No commit yet.", "truncated": "The latest {count} commits.", "copyHash": "Copy the hash", "copied": "Hash copied", "parents": "parents", "close": "Close", "held": "checked out in {path}", "detachedWorktree": "worktree on a detached HEAD: {path}", "synced": "same commit on the remote", "more": "+{count}", "label": "Commit history"},
+    "remotes": {"title": "Remotes", "intro": "Where this project's code is pushed and fetched from. An SSH key or git's credential helper holds the secrets, never the URL.", "loading": "Reading the remotes…", "empty": "No remote yet: this code only lives on this disk.", "publication": "pushes go here", "pushUrl": "push: {url}", "edit": "Change the URL", "remove": "Remove", "confirmRemove": "Remove", "removing": "Removing…", "addTitle": "Add a remote", "editTitle": "Change the URL of {name}", "name": "Name", "url": "URL", "urlPlaceholder": "git@gitlab.com:team/project.git", "urlHint": "SSH (git@host:path or ssh://), HTTPS without credentials, git://, file:// or a folder on this machine.", "issue": {"name": "Letters, digits, dots, dashes and underscores, not starting with a dash.", "credentials": "No user or token in the URL: use an SSH key or git's credential helper.", "url": "Not a remote URL."}, "add": "Add", "save": "Save", "saving": "Saving…", "cancelEdit": "Cancel", "close": "Close", "reached": "{name} saved, and it answers.", "saved": "{name} saved.", "unreached": "{name} is saved, but git could not reach it:", "removed": "{name} removed."},
+    "picker": {"title": "Branches and worktrees", "branches": "Branches", "worktrees": "Worktrees", "loading": "Reading the repository…", "current": "current", "here": "here", "main": "main checkout", "locked": "locked", "missing": "missing", "inWorktree": "This conversation works in the worktree {name}: switch its branch from that folder.", "otherRepo": "This conversation works in {name}, another repository than the project's: switch its branch from that folder.", "otherRepoUnnamed": "This conversation works in another repository than the project's: switch its branch from that folder.", "dirty": "uncommitted changes", "clean": "clean tree", "diff": "{added} line(s) added, {removed} removed against HEAD", "worktreeOf": "worktree {name}"}
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "terminal": {
+    "title": "터미널",
+    "tabs": "터미널 세션",
+    "state": {
+      "connecting": "연결 중…",
+      "retrying": "연결이 끊어졌습니다. 다시 연결 중…",
+      "unauthorized": "세션이 만료되었습니다: 다시 로그인하세요.",
+      "ended": "세션이 끝났습니다.",
+      "exited": "셸이 종료되었습니다 (코드 {code})."
+    },
+    "actions": {
+      "new": "새 터미널",
+      "kill": "{name} 닫기 (셸 중지)",
+      "reconnect": "지금 다시 연결",
+      "popOut": "플로팅 창에서 열기"
+    },
+    "keys": {
+      "toolbar": "추가 키",
+      "up": "위",
+      "down": "아래",
+      "left": "왼쪽",
+      "right": "오른쪽",
+      "copy": "복사"
+    },
+    "clipboard": {
+      "menu": "터미널 클립보드",
+      "copy": "복사",
+      "paste": "붙여넣기",
+      "copied": "클립보드에 복사했습니다.",
+      "copyFailed": "복사할 수 없음: 브라우저가 클립보드 접근을 거부했습니다.",
+      "pasteFailed": "클립보드를 읽을 수 없음: 접근을 허용하거나 Ctrl+Shift+V(Mac에서는 Cmd+V)로 붙여넣으세요."
+    },
+    "errors": {
+      "create": "터미널을 시작할 수 없습니다: {error}",
+      "kill": "터미널을 닫을 수 없습니다: {error}",
+      "load": "터미널 서비스에 연결할 수 없습니다: {error}"
+    },
+    "unavailable": {
+      "disabled": "내장 터미널이 꺼져 있습니다. 관리자가 {settingsPath}에서 켤 수 있습니다.",
+      "forbidden": "계정으로 터미널을 열 수 없습니다 (권한 \"terminal:open\").",
+      "session_required": "터미널을 열려면 브라우저에서 로그인하세요.",
+      "unauthorized": "터미널을 열려면 로그인하세요.",
+      "pty_unavailable": "이 컴퓨터에서 터미널을 시작할 수 없습니다: 의사 터미널 구성 요소를 불러오지 못했습니다. 데몬 로그를 확인하세요."
+    },
+    "titleScoped": "터미널 — {scope}",
+    "scopes": {
+      "none": "프로젝트 없음",
+      "label": "프로젝트"
+    },
+    "request": {
+      "title": "{agent}이(가) 명령 실행을 요청합니다",
+      "titleFrom": "{agent} · {project}이(가) 명령 실행을 요청합니다",
+      "badge": "명령",
+      "allow": "허용",
+      "paste": "터미널에 붙여넣기",
+      "deny": "닫기",
+      "copy": "명령 복사",
+      "copied": "명령을 클립보드에 복사했습니다.",
+      "hint": "Enter 없이 붙여넣습니다: 읽어 본 뒤 직접 Enter를 누르세요.",
+      "state": {
+        "allow": "허용됨: 에이전트가 실행합니다",
+        "paste": "터미널에 붙여넣음",
+        "deny": "닫음"
+      },
+      "errors": {
+        "forbidden": "계정으로 터미널을 열 수 없습니다: 아무것도 붙여넣지 않았습니다.",
+        "not_found": "이 요청은 더 이상 존재하지 않습니다.",
+        "already_decided": "이 요청은 이미 결정되었습니다.",
+        "not_offered": "이 선택지는 더 이상 제공되지 않습니다: 에이전트가 지금 명령을 실행할 수 없습니다.",
+        "failed": "결정을 기록할 수 없습니다. 다시 시도하세요."
+      },
+      "windowRefused": "결정이 기록되었지만 {scope}의 터미널이 화면에 없습니다. 붙여넣으려면 {scope}의 대화를 여세요. 명령은 클립보드에 있습니다.",
+      "windowRefusedNoClipboard": "결정이 기록되었지만 {scope}의 터미널이 화면에 없습니다. {scope}의 대화를 연 뒤 카드에서 명령을 복사하세요.",
+      "pendingBadge": "결정을 기다리는 명령 {count}개"
+    }
+  }
+}

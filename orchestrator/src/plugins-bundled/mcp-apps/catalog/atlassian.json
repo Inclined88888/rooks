@@ -1,0 +1,59 @@
+{
+  "slug": "atlassian",
+  "name": "Atlassian",
+  "publisher": "Atlassian",
+  "category": "productivity",
+  "tagline": {
+    "en": "Jira issues and Confluence pages",
+    "fr": "Tickets Jira et pages Confluence"
+  },
+  "description": {
+    "en": "Lets your agents search and update Jira issues and read or write Confluence pages, with the permissions of your Atlassian account.",
+    "fr": "Vos agents cherchent et mettent à jour les tickets Jira, et lisent ou écrivent des pages Confluence, avec les droits de votre compte Atlassian."
+  },
+  "examples": {
+    "en": [
+      "Which Jira tickets of the sprint are still unassigned?",
+      "Create a Confluence page with these release notes",
+      "Summarise the comments on this ticket"
+    ],
+    "fr": [
+      "Quels tickets Jira du sprint ne sont toujours pas assignés ?",
+      "Crée une page Confluence avec ces notes de version",
+      "Résume les commentaires de ce ticket"
+    ]
+  },
+  "mcp": {
+    "url": "https://mcp.atlassian.com/v2/mcp",
+    "transport": "streamable-http"
+  },
+  "auth": {
+    "type": "oauth"
+  },
+  "links": {
+    "website": "https://www.atlassian.com",
+    "privacy": "https://www.atlassian.com/legal/privacy-policy",
+    "terms": "https://www.atlassian.com/legal/cloud-terms-of-service"
+  },
+  "registry": {
+    "name": "com.atlassian/atlassian-mcp-server",
+    "proof": "domain"
+  },
+  "icon": {
+    "monogram": "At",
+    "color": "#0052CC",
+    "logo": {
+      "viewBox": "0 0 24 24",
+      "paths": [
+        {
+          "d": "M7.12 11.084a.683.683 0 00-1.16.126L.075 22.974a.703.703 0 00.63 1.018h8.19a.678.678 0 00.63-.39c1.767-3.65.696-9.203-2.406-12.52zM11.434.386a15.515 15.515 0 00-.906 15.317l3.95 7.9a.703.703 0 00.628.388h8.19a.703.703 0 00.63-1.017L12.63.38a.664.664 0 00-1.196.006z"
+        }
+      ],
+      "source": "https://simpleicons.org/?q=atlassian"
+    }
+  },
+  "reviewed": {
+    "on": "2026-11-04",
+    "probe": "oauth: 401 then metadata with a registration endpoint"
+  }
+}

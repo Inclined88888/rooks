@@ -1,0 +1,54 @@
+{
+  "$comment": "Publication policy for the generated public references. Read by scripts/gen-cli.mjs and scripts/gen-config.mjs through scripts/doc-policy.mjs. See ../README.md for the rationale and for how to add an entry.",
+  "exclude": {
+    "cliSections": [],
+    "cliUsages": [],
+    "configKeys": []
+  },
+  "rewrites": [
+    {
+      "scope": "cli",
+      "why": "The licence commands stay public, their mechanism does not.",
+      "pattern": "^Offline license:$",
+      "flags": "gm",
+      "replacement": "Licence:"
+    },
+    {
+      "scope": "cli",
+      "why": "Document what the command shows, not how it is stored.",
+      "pattern": "(rooks license status\\s+)status, edition and expiration",
+      "flags": "g",
+      "replacement": "$1shows your licence status, edition and expiry date"
+    },
+    {
+      "scope": "cli",
+      "why": "Document the outcome, not the token format.",
+      "pattern": "(rooks license install <file>\\s+)validates then installs the JWT",
+      "flags": "g",
+      "replacement": "$1installs a licence file"
+    },
+    {
+      "scope": "cli",
+      "why": "Document the outcome, not the exchange with our infrastructure.",
+      "pattern": "(rooks license activate <key>\\s+)exchanges the key with the license server, then installs the JWT",
+      "flags": "g",
+      "replacement": "$1activates Rooks with your licence key"
+    }
+  ],
+  "forbidden": [
+    {"pattern": "\\bJWTs?\\b", "why": "Licence token format."},
+    {"pattern": "licen[cs]e server", "why": "Activation infrastructure."},
+    {"pattern": "offline licen[cs]e", "why": "Implies the offline validation design."},
+    {"pattern": "licen[cs]e.{0,80}\\bEd25519\\b|\\bEd25519\\b.{0,80}licen[cs]e", "why": "Licence signature algorithm. Ed25519 itself stays publishable: plugin packages and webhook formats are signed with it, and their guides say so."},
+    {"pattern": "\\bclaims\\b", "why": "Licence token payload."},
+    {"pattern": "\\bpubkey\\b", "why": "Verification key."},
+    {"pattern": "verification keys?", "why": "Verification key registry."},
+    {"pattern": "signature keys?", "why": "Signing material."},
+    {"pattern": "signing keys?", "why": "Signing material."},
+    {"pattern": "\\bseats\\b", "why": "Licence seat accounting."},
+    {"pattern": "\\brooks-site\\b", "why": "Private site administration commands are not customer documentation."},
+    {"pattern": "/api/v1/admin\\b", "why": "Private licence administration routes are not customer interfaces."},
+    {"pattern": "\\bADMIN_(?:KEY|UI_PATH|PASSWORD(?:_HASH)?|TOTP_SECRET|ALLOWED_IPS)\\b", "why": "Private site administration configuration."},
+    {"pattern": "\\bpkos\\b", "why": "Legacy internal identifier; never published."}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "widget": {
+    "title": "Cześć w twoim języku",
+    "greeting": "Cześć, {name}!",
+    "notes": "{count, plural, =0 {Brak notatek} one {# notatka} few {# notatki} many {# notatek} other {# notatki}}",
+    "add": "Dodaj notatkę",
+    "language": "Wyświetlane w języku {tag}"
+  }
+}

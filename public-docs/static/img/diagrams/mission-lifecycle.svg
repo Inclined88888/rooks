@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 612" width="760" height="612" role="img" aria-labelledby="title desc">
+  <title id="title">The life of a mission</title>
+  <desc id="desc">1. A mission starts from a chat message, rooks spawn, a Kanban task, a trigger or another agent. 2. Rooks prepares the agent: instructions, identity docs, skills, memory rules, backend and model. 3. The agent's CLI starts in its working folder with the rooks and rooks_ask MCP servers. 4. The agent works through a turn; its activity shows live and its questions wait for you. 5. The turn ends and the agent waits; a follow-up message starts a new turn. 6. The mission closes: a task's result returns to the orchestrator, an idle process is stopped, the history stays.</desc>
+  <style>
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #1f1b18; }
+    .t { font-size: 14px; font-weight: 650; }
+    .s { font-size: 12px; fill: #55504c; }
+    .n { font-size: 13px; font-weight: 700; fill: #ffffff; }
+    .l { font-size: 11.5px; fill: #3d3835; }
+    .ar { stroke: #6f6762; stroke-width: 1.6; fill: none; }
+    .step { fill: #ffffff; stroke: #d3c4bc; stroke-width: 1.2; }
+    .live { fill: #fcefea; stroke: #9b402c; stroke-width: 1.6; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#6f6762"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="759" height="611" rx="12" fill="#fbf9f7" stroke="#e7e0db"/>
+
+  <rect class="step" x="40" y="24" width="520" height="74" rx="9"/>
+  <circle cx="72" cy="61" r="15" fill="#9b402c"/>
+  <text class="n" x="72" y="66" text-anchor="middle">1</text>
+  <text class="t" x="100" y="52">A mission starts</text>
+  <text class="s" x="100" y="72">from your chat message, rooks spawn, a Kanban task, a trigger,</text>
+  <text class="s" x="100" y="88">or another agent that delegates work</text>
+  <path class="ar" d="M300 100V120" marker-end="url(#arrow)"/>
+  <rect class="step" x="40" y="122" width="520" height="74" rx="9"/>
+  <circle cx="72" cy="159" r="15" fill="#9b402c"/>
+  <text class="n" x="72" y="164" text-anchor="middle">2</text>
+  <text class="t" x="100" y="150">Rooks prepares the agent</text>
+  <text class="s" x="100" y="170">its instructions, identity docs, skills and memory rules,</text>
+  <text class="s" x="100" y="186">with the backend and model it runs on</text>
+  <path class="ar" d="M300 198V218" marker-end="url(#arrow)"/>
+  <rect class="step" x="40" y="220" width="520" height="74" rx="9"/>
+  <circle cx="72" cy="257" r="15" fill="#9b402c"/>
+  <text class="n" x="72" y="262" text-anchor="middle">3</text>
+  <text class="t" x="100" y="248">The agent’s CLI starts</text>
+  <text class="s" x="100" y="268">in the agent’s working folder, or a worktree for a code task,</text>
+  <text class="s" x="100" y="284">with the rooks and rooks_ask MCP servers</text>
+  <path class="ar" d="M300 296V316" marker-end="url(#arrow)"/>
+  <rect class="live" x="40" y="318" width="520" height="74" rx="9"/>
+  <circle cx="72" cy="355" r="15" fill="#9b402c"/>
+  <text class="n" x="72" y="360" text-anchor="middle">4</text>
+  <text class="t" x="100" y="346">The agent works through a turn</text>
+  <text class="s" x="100" y="366">output and tool activity show live in the chat; questions</text>
+  <text class="s" x="100" y="382">and permission requests wait for your answer</text>
+  <path class="ar" d="M300 394V414" marker-end="url(#arrow)"/>
+  <rect class="live" x="40" y="416" width="520" height="74" rx="9"/>
+  <circle cx="72" cy="453" r="15" fill="#9b402c"/>
+  <text class="n" x="72" y="458" text-anchor="middle">5</text>
+  <text class="t" x="100" y="444">The turn ends</text>
+  <text class="s" x="100" y="464">the answer is recorded and the agent waits for a next message;</text>
+  <text class="s" x="100" y="480">the mission stays open</text>
+  <path class="ar" d="M300 492V512" marker-end="url(#arrow)"/>
+  <rect class="step" x="40" y="514" width="520" height="74" rx="9"/>
+  <circle cx="72" cy="551" r="15" fill="#9b402c"/>
+  <text class="n" x="72" y="556" text-anchor="middle">6</text>
+  <text class="t" x="100" y="542">The mission closes</text>
+  <text class="s" x="100" y="562">a task agent closes its task and the result returns to the</text>
+  <text class="s" x="100" y="578">orchestrator; Rooks stops an idle process, the history stays</text>
+
+  <path class="ar" d="M562 453H604V355H564" marker-end="url(#arrow)"/>
+  <text class="l" x="616" y="390">a follow-up message</text>
+  <text class="l" x="616" y="407">starts a new turn</text>
+  <text class="l" x="616" y="424">from the chat or</text>
+  <text class="l" x="616" y="441">with rooks send</text>
+</svg>

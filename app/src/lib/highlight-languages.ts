@@ -1,0 +1,114 @@
+/**
+ * The grammars `markdown.ts` registers on its highlight.js core, in a chunk of
+ * their own: every page that renders markdown paid for them up front
+ * (docs/BUNDLE-SIZE.md).
+ */
+import type { HLJSApi } from 'highlight.js';
+import bash from 'highlight.js/lib/languages/bash';
+import json from 'highlight.js/lib/languages/json';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import yaml from 'highlight.js/lib/languages/yaml';
+import css from 'highlight.js/lib/languages/css';
+import xml from 'highlight.js/lib/languages/xml';
+import sql from 'highlight.js/lib/languages/sql';
+import diff from 'highlight.js/lib/languages/diff';
+import markdownLang from 'highlight.js/lib/languages/markdown';
+import rust from 'highlight.js/lib/languages/rust';
+import go from 'highlight.js/lib/languages/go';
+import ini from 'highlight.js/lib/languages/ini';
+import properties from 'highlight.js/lib/languages/properties';
+import dockerfile from 'highlight.js/lib/languages/dockerfile';
+import makefile from 'highlight.js/lib/languages/makefile';
+import php from 'highlight.js/lib/languages/php';
+import ruby from 'highlight.js/lib/languages/ruby';
+import java from 'highlight.js/lib/languages/java';
+import kotlin from 'highlight.js/lib/languages/kotlin';
+import swift from 'highlight.js/lib/languages/swift';
+import c from 'highlight.js/lib/languages/c';
+import cpp from 'highlight.js/lib/languages/cpp';
+import csharp from 'highlight.js/lib/languages/csharp';
+import scss from 'highlight.js/lib/languages/scss';
+import less from 'highlight.js/lib/languages/less';
+import lua from 'highlight.js/lib/languages/lua';
+import perl from 'highlight.js/lib/languages/perl';
+import powershell from 'highlight.js/lib/languages/powershell';
+import graphql from 'highlight.js/lib/languages/graphql';
+import nginx from 'highlight.js/lib/languages/nginx';
+import dart from 'highlight.js/lib/languages/dart';
+import scala from 'highlight.js/lib/languages/scala';
+import elixir from 'highlight.js/lib/languages/elixir';
+import haskell from 'highlight.js/lib/languages/haskell';
+import protobuf from 'highlight.js/lib/languages/protobuf';
+import http from 'highlight.js/lib/languages/http';
+import plaintext from 'highlight.js/lib/languages/plaintext';
+
+export function registerHighlightLanguages(hljs: HLJSApi): void {
+  hljs.registerLanguage('bash', bash);
+  hljs.registerAliases(['sh', 'shell', 'zsh'], { languageName: 'bash' });
+  hljs.registerLanguage('json', json);
+  hljs.registerLanguage('javascript', javascript);
+  hljs.registerAliases('js', { languageName: 'javascript' });
+  hljs.registerLanguage('typescript', typescript);
+  hljs.registerAliases(['ts', 'tsx', 'jsx'], { languageName: 'typescript' });
+  hljs.registerLanguage('python', python);
+  hljs.registerAliases('py', { languageName: 'python' });
+  hljs.registerLanguage('yaml', yaml);
+  hljs.registerAliases('yml', { languageName: 'yaml' });
+  hljs.registerLanguage('css', css);
+  hljs.registerLanguage('xml', xml);
+  hljs.registerAliases(['html', 'svg'], { languageName: 'xml' });
+  hljs.registerLanguage('sql', sql);
+  hljs.registerLanguage('diff', diff);
+  hljs.registerAliases('patch', { languageName: 'diff' });
+  hljs.registerLanguage('markdown', markdownLang);
+  hljs.registerAliases('md', { languageName: 'markdown' });
+  hljs.registerLanguage('rust', rust);
+  hljs.registerAliases('rs', { languageName: 'rust' });
+  hljs.registerLanguage('go', go);
+  hljs.registerAliases('golang', { languageName: 'go' });
+  // Fichiers de configuration : .env, .ini, .toml, .properties. `ini` couvre
+  // aussi bien les sections `[bloc]` que les paires `CLE=valeur` d'un .env.
+  hljs.registerLanguage('ini', ini);
+  hljs.registerAliases(['toml', 'env', 'dotenv', 'conf'], { languageName: 'ini' });
+  hljs.registerLanguage('properties', properties);
+  hljs.registerLanguage('dockerfile', dockerfile);
+  hljs.registerAliases('docker', { languageName: 'dockerfile' });
+  hljs.registerLanguage('makefile', makefile);
+  hljs.registerAliases(['make', 'mk'], { languageName: 'makefile' });
+  hljs.registerLanguage('php', php);
+  hljs.registerLanguage('ruby', ruby);
+  hljs.registerAliases('rb', { languageName: 'ruby' });
+  hljs.registerLanguage('java', java);
+  hljs.registerLanguage('kotlin', kotlin);
+  hljs.registerAliases('kt', { languageName: 'kotlin' });
+  hljs.registerLanguage('swift', swift);
+  hljs.registerLanguage('c', c);
+  hljs.registerLanguage('cpp', cpp);
+  hljs.registerAliases(['c++', 'cc', 'hpp'], { languageName: 'cpp' });
+  hljs.registerLanguage('csharp', csharp);
+  hljs.registerAliases('cs', { languageName: 'csharp' });
+  hljs.registerLanguage('scss', scss);
+  hljs.registerAliases('sass', { languageName: 'scss' });
+  hljs.registerLanguage('less', less);
+  hljs.registerLanguage('lua', lua);
+  hljs.registerLanguage('perl', perl);
+  hljs.registerAliases('pl', { languageName: 'perl' });
+  hljs.registerLanguage('powershell', powershell);
+  hljs.registerAliases('ps1', { languageName: 'powershell' });
+  hljs.registerLanguage('graphql', graphql);
+  hljs.registerAliases('gql', { languageName: 'graphql' });
+  hljs.registerLanguage('nginx', nginx);
+  hljs.registerLanguage('dart', dart);
+  hljs.registerLanguage('scala', scala);
+  hljs.registerLanguage('elixir', elixir);
+  hljs.registerAliases(['ex', 'exs'], { languageName: 'elixir' });
+  hljs.registerLanguage('haskell', haskell);
+  hljs.registerAliases('hs', { languageName: 'haskell' });
+  hljs.registerLanguage('protobuf', protobuf);
+  hljs.registerAliases('proto', { languageName: 'protobuf' });
+  hljs.registerLanguage('http', http);
+  hljs.registerLanguage('plaintext', plaintext);
+  hljs.registerAliases(['text', 'txt', 'log'], { languageName: 'plaintext' });
+}

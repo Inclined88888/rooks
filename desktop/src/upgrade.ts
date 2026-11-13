@@ -1,0 +1,270 @@
+/**
+ * Service migration performed by a newly installed desktop bundle.
+ *
+ * macOS and Linux run the service from a copy under `desktop-runtime/releases`,
+ * which installing a new version does not touch. Windows does not: its logon
+ * task runs from the installation directory, and the NSIS update stops every
+ * `Rooks.exe` (the daemon included) before replacing those files.
+ *
+ * Proof, in `orchestrator/src/onboarding.ts`: `stagesPackagedRuntime` is true
+ * for linux and darwin only, and gates both `packagedServiceOptions` (in
+ * `serviceOptsForPlatform`) and `stagePackagedRuntime` (in
+ * `installOnboardingService`). On win32 the task keeps `installDir` =
+ * `ROOKS_INSTALL_DIR` and `nodePath` = `process.execPath`, both in INSTDIR.
+ * The onboarding test
+ * `windows packagé : le service lance le dossier d'installation…` fails if
+ * that ever changes; extend this migration then.
+ *
+ * What Windows does need migrating is the task itself: an update replaces the
+ * files, never the registered task. A task whose recorded revision is not
+ * `WINDOWS_SERVICE_REVISION` — the logon task of revision 1, recognised by its
+ * launcher since it recorded none — is rewritten by the same runner, which
+ * restores it if the new one does not answer. So is a task of the current
+ * revision whose launcher does not mark its daemon as packaged (TIM-0087).
+ */
+import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import type { DesktopConfig } from './config.js';
+import { withRuntimeEnv } from './daemon-runtime.js';
+import { shellText } from './shell-i18n.js';
+import { startupText } from './startup-text.js';
+import {
+  WINDOWS_SERVICE_REVISION, windowsLauncherUnmarked, windowsLegacyLauncher, windowsRepairDeclinedFile, windowsServiceRefusedFile,
+  windowsServiceRevisionFile,
+} from './service.js';
+
+export function packagedReleaseId(version: string): string {
+  const readable = version.trim().replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 48) || 'unknown';
+  const digest = createHash('sha256').update(version).digest('hex').slice(0, 12);
+  return `${readable}-${digest}`;
+}
+
+export function activeReleaseFile(home: string): string {
+  return join(home, 'desktop-runtime', 'active-release');
+}
+
+export function serviceUpgradeNeeded(
+  home: string,
+  version: string,
+  facts: { platform?: NodeJS.Platform; packaged: boolean; serviceInstalled: boolean },
+): boolean {
+  const platform = facts.platform ?? process.platform;
+  if (platform === 'win32') return facts.packaged && windowsTaskOutdated(home);
+  if ((platform !== 'darwin' && platform !== 'linux') || !facts.packaged || !facts.serviceInstalled) return false;
+  try {
+    return readFileSync(activeReleaseFile(home), 'utf8').trim() !== packagedReleaseId(version);
+  } catch {
+    return true; // legacy service: its executable still lives inside the application
+  }
+}
+
+function windowsTaskOutdated(home: string): boolean {
+  let recorded: string;
+  try {
+    recorded = readFileSync(windowsServiceRevisionFile(home), 'utf8').trim();
+  } catch {
+    // No revision: a task exists only if the revision-1 launcher does. Without
+    // either, there is no task to migrate — never install one unasked.
+    return existsSync(windowsLegacyLauncher(home));
+  }
+  // Checked only once a task is known to exist: a launcher left behind by an
+  // uninstall must not bring a task back.
+  return recorded !== WINDOWS_SERVICE_REVISION || windowsLauncherUnmarked(home);
+}
+
+/**
+ * "Not now" to the repair offer, recorded with the version it was given to:
+ * the next version asks again, the same one stops asking at every launch.
+ */
+export function serviceRepairDeclinedFile(home: string): string {
+  return windowsRepairDeclinedFile(home);
+}
+
+/**
+ * Windows: a configured, packaged install whose boot task is gone. An
+ * uninstall deletes the task and a reinstall never wrote it back, so the
+ * desktop ran its embedded daemon unannounced: no start at boot, nothing left
+ * after sign-out (0.1.4 tester report). The service is mandatory at first run,
+ * so a configured install without it lost it; a first run (no configuration)
+ * gets it from the setup wizard instead.
+ */
+export type ServiceRepairVerdict = 'wanted' | 'not-applicable' | 'not-configured' | 'task-exists' | 'refused' | 'declined';
+
+/**
+ * Why the repair offer is made or not. The reason is logged by the desktop: a
+ * tester whose task was deleted and who was never offered it back (TIM-0108)
+ * could not tell "declined for this version" from "refused by Windows".
+ */
+export function serviceRepairVerdict(
+  home: string,
+  version: string,
+  facts: { platform?: NodeJS.Platform; packaged: boolean; configured: boolean; taskExists: boolean },
+): ServiceRepairVerdict {
+  if ((facts.platform ?? process.platform) !== 'win32' || !facts.packaged) return 'not-applicable';
+  if (!facts.configured) return 'not-configured';
+  if (facts.taskExists) return 'task-exists';
+  // Windows never started the task for this account (TODO #342): reinstalling
+  // it would ask for permission to register a task that will not run either.
+  if (existsSync(windowsServiceRefusedFile(home))) return 'refused';
+  try {
+    return readFileSync(serviceRepairDeclinedFile(home), 'utf8').trim() !== version ? 'wanted' : 'declined';
+  } catch {
+    return 'wanted';
+  }
+}
+
+export function serviceRepairWanted(
+  home: string,
+  version: string,
+  facts: { platform?: NodeJS.Platform; packaged: boolean; configured: boolean; taskExists: boolean },
+): boolean {
+  return serviceRepairVerdict(home, version, facts) === 'wanted';
+}
+
+export function declineServiceRepair(home: string, version: string): void {
+  const file = serviceRepairDeclinedFile(home);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${version}\n`);
+}
+
+/**
+ * Windows registered the task but never started it for this account (TODO
+ * #342). Recorded once, where the host adapter records the same verdict at
+ * install: the setup wizard then offers the portable mode, and the repair
+ * offer stays silent.
+ */
+export function recordServiceRefused(home: string): void {
+  const file = windowsServiceRefusedFile(home);
+  if (existsSync(file)) return;
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${new Date().toISOString()}\n`);
+}
+
+/** The task ran after all (`startDesktopService` → 'started'): the verdict no longer holds. */
+export function clearServiceRefused(home: string): void {
+  rmSync(windowsServiceRefusedFile(home), { force: true });
+}
+
+/** Where the version that last showed the "Windows does not start the service" notice is kept. */
+export function serviceRefusedNoticeFile(home: string): string {
+  return join(home, 'run', 'service-refused-notice');
+}
+
+/** Said once per version: at every launch, it would teach the user to dismiss it. */
+export function serviceRefusedNoticeDue(home: string, version: string): boolean {
+  try {
+    return readFileSync(serviceRefusedNoticeFile(home), 'utf8').trim() !== version;
+  } catch {
+    return true;
+  }
+}
+
+export function markServiceRefusedNotice(home: string, version: string): void {
+  const file = serviceRefusedNoticeFile(home);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${version}\n`);
+}
+
+export function serviceRefusedMessage(locale: string): { message: string; detail: string } {
+  const t = shellText(locale);
+  return { message: t('service.refused'), detail: t('service.refusedDetail') };
+}
+
+export function serviceRepairPrompt(locale: string): { message: string; detail: string; buttons: [string, string] } {
+  const t = shellText(locale);
+  return { message: t('service.repair'), detail: t('service.repairDetail'), buttons: [t('service.repairConfirm'), t('service.repairLater')] };
+}
+
+export function serviceRepairFailureMessage(error: unknown, home: string, locale: string): { message: string; detail: string } {
+  const stderr = (error as { stderr?: unknown } | null)?.stderr;
+  const reason = (typeof stderr === 'string' && runnerFailureReason(stderr)) || (error as Error | null)?.message || String(error);
+  const t = shellText(locale);
+  return { message: t('service.repairFailed'), detail: `${t('service.repairFailedDetail', { home })}\n\n${reason}` };
+}
+
+export type UpgradeExec = (
+  command: string,
+  args: string[],
+  options: { env: NodeJS.ProcessEnv; timeout: number },
+) => Promise<{ stdout: string; stderr: string }>;
+
+/**
+ * The runner's stderr without what Node prints around an uncaught error: the
+ * throwing source line (the whole minified module, several KB, which pushed
+ * the real message out of the dialog), its caret and the stack frames.
+ */
+export function runnerFailureReason(stderr: string): string {
+  const lines = stderr.split(/\r?\n/).map(line => line.trimEnd());
+  const thrown = lines.findIndex(line => /^[A-Za-z_$][\w$]*(Error|Exception)\b[^:]*:/.test(line));
+  const kept = (thrown >= 0 ? lines.slice(thrown) : lines)
+    .filter(line => line.trim() && line.length <= 500 && !/^\s+at\s/.test(line) && !/^\s*\^+\s*$/.test(line)
+      && !/^(file|node):\S+:\d+$/.test(line) && !/^Node\.js v\d/.test(line));
+  return kept.join('\n').trim();
+}
+
+/** Into the desktop log (TODO #343): the runner's output was read, then dropped. */
+function logRunnerOutput(label: string, stdout: unknown, stderr: unknown): void {
+  for (const [stream, text] of [['out', stdout], ['err', stderr]] as const) {
+    for (const line of String(text ?? '').split(/\r?\n/)) if (line.trim()) console.log(`[desktop] ${label} ${stream}: ${line}`);
+  }
+}
+
+const execUpgrade: UpgradeExec = (command, args, options) => new Promise((resolve, reject) => {
+  execFile(command, args, { ...options, windowsHide: true }, (error, stdout, stderr) => {
+    logRunnerOutput('service updater', stdout, stderr);
+    if (error) {
+      const reason = runnerFailureReason(stderr.toString());
+      if (reason) error.message = `The service updater failed: ${reason}`;
+      reject(Object.assign(error, { stdout, stderr }));
+    }
+    else resolve({ stdout: stdout.toString(), stderr: stderr.toString() });
+  });
+});
+
+/** Stages this release and rewrites the service; the runner rolls back if it does not answer. */
+export async function upgradePackagedService(
+  cfg: DesktopConfig,
+  input: { execPath: string; runtimeEnv?: Readonly<Record<string, string>>; resourcesPath: string; version: string },
+  execute: UpgradeExec = execUpgrade,
+): Promise<void> {
+  const runner = join(input.resourcesPath, 'orchestrator', 'dist', 'host', 'packaged-upgrade-runner.js');
+  if (!existsSync(runner)) throw new Error(`The packaged service updater is missing: ${runner}`);
+  await execute(input.execPath, [runner], {
+    timeout: 300_000,
+    env: {
+      ...withRuntimeEnv(process.env, { execPath: input.execPath, env: input.runtimeEnv ?? { ELECTRON_RUN_AS_NODE: '1' } }),
+      ROOKS_DESKTOP_EMBEDDED: '1',
+      ROOKS_DESKTOP_SERVICE: '0',
+      ROOKS_DESKTOP_UPGRADE: '1',
+      ROOKS_DESKTOP_VERSION: input.version,
+      ROOKS_HOME: cfg.home,
+      ROOKS_INSTALL_DIR: join(input.resourcesPath, 'orchestrator'),
+      ROOKS_APP_ENABLED: cfg.app.enabled ? '1' : '0',
+      ROOKS_APP_PORT: String(cfg.app.listen.port),
+      PORT: String(cfg.daemon.listen.port),
+    },
+  });
+}
+
+/**
+ * Exit code 2 of the runner: the new service was not kept and no previous one
+ * could be put back, so waiting on the supervisor would show nothing.
+ */
+export function upgradeNeedsFallback(error: unknown): boolean {
+  return (error as { code?: unknown } | null)?.code === 2;
+}
+
+/** What the user reads when the service could not be moved to this release. */
+export function upgradeFailureMessage(error: unknown, version: string, home: string, locale: string): { message: string; detail: string } {
+  const stderr = (error as { stderr?: unknown } | null)?.stderr;
+  const reason = (typeof stderr === 'string' && runnerFailureReason(stderr)) || (error as Error | null)?.message || String(error);
+  const t = startupText(locale);
+  return {
+    message: t('startup.upgradeFailed', { version }),
+    detail: upgradeNeedsFallback(error)
+      ? t('startup.upgradeFallbackDetail', { home, reason })
+      : t('startup.upgradeKeptDetail', { home, reason }),
+  };
+}

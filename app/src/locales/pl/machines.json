@@ -1,0 +1,123 @@
+{
+  "machines": {
+    "title": "Maszyny",
+    "thisComputer": "Ten komputer",
+    "backToLocal": "Wróć do tego komputera",
+    "status": {
+      "online": "Online",
+      "unreachable": "Nieosiągalna",
+      "unauthorized": "Dostęp odwołany",
+      "tls_error": "Certyfikat odrzucony",
+      "error": "Błąd",
+      "unknown": "Jeszcze niesprawdzona"
+    },
+    "switcher": {
+      "trigger": "Maszyna: {name}. Przełącz maszyny",
+      "menuTitle": "Maszyny",
+      "actingAs": "jako {account}",
+      "add": "Dodaj maszynę…",
+      "manage": "Zarządzaj połączeniami",
+      "active": "Aktywna",
+      "switching": "Przełączanie na {name}…",
+      "loadError": "Nie udało się wczytać maszyn."
+    },
+    "settings": {
+      "description": "Inne maszyny Rooks, którymi ten komputer może sterować. Przełączenie zastępuje cały interfejs interfejsem wybranej maszyny, w tym samym oknie: każda maszyna zachowuje własnych agentów, projekty i ustawienia.",
+      "local": "Maszyna, z której serwowany jest ten interfejs.",
+      "add": "Dodaj maszynę",
+      "addTitle": "Dodaj maszynę",
+      "addHint": "Na drugiej maszynie otwórz {settingsPath} i autoryzuj nowe urządzenie: pokaże jednorazowy kod ważny 5 minut. Maszyna musi być osiągalna przez HTTPS (tailscale serve, reverse proxy…).",
+      "urlLabel": "Adres maszyny",
+      "urlPlaceholder": "https://my-server.example.net",
+      "codeLabel": "Kod parowania",
+      "nameLabel": "Nazwa (opcjonalnie)",
+      "pair": "Sparuj",
+      "pairing": "Parowanie…",
+      "paired": "Dodano {name}.",
+      "repaired": "Ponownie sparowano {name}.",
+      "listTitle": "Sparowane maszyny",
+      "empty": "Brak innych maszyn.",
+      "loadError": "Nie udało się wczytać listy maszyn.",
+      "active": "Aktywna",
+      "switchTo": "Przełącz na nią",
+      "check": "Sprawdź teraz",
+      "checking": "Sprawdzanie…",
+      "online": "{name} odpowiada.",
+      "rename": "Zmień nazwę",
+      "renameLabel": "Nazwa maszyny",
+      "renamed": "Zmieniono nazwę maszyny.",
+      "save": "Zapisz",
+      "cancel": "Anuluj",
+      "remove": "Usuń",
+      "removeConfirm": "Usunąć {name} z tego komputera? Jego dostęp zostanie odwołany na tamtej maszynie, a to, co ta przeglądarka dla niej przechowywała, zostanie usunięte.",
+      "removeAction": "Usuń maszynę",
+      "removed": "Maszyna usunięta.",
+      "removedNotRevoked": "Maszyna usunięta. Nie udało się z nią połączyć: odwołaj ten komputer w jej ustawieniach Urządzenia.",
+      "version": "Wersja {version}",
+      "versionUnknown": "Wersja nieznana",
+      "apiNewer": "Nowsza niż ten interfejs",
+      "apiUnknown": "Poziom interfejsu nieznany",
+      "apiTooOld": "Za stara dla tego interfejsu",
+      "lastSeen": "Ostatnio osiągnięta {date}",
+      "neverSeen": "Nigdy nieosiągnięta",
+      "actingAs": "Działa jako {account}",
+      "actingAsAdmin": "Działa jako {account}, administrator"
+    },
+    "errors": {
+      "invalidCode": "Maszyna odrzuciła ten kod: błędny, wygasły lub już użyty. Poproś ją o nowy.",
+      "invalidUrl": "Tego adresu nie można użyć: podaj sam adres maszyny, bez loginu, zapytania i fragmentu.",
+      "httpsRequired": "Z maszyną trzeba łączyć się przez HTTPS. Zwykły HTTP jest akceptowany tylko na tym komputerze.",
+      "blockedAddress": "Ten adres nigdy nie wskazuje maszyny Rooks.",
+      "notRooks": "Pod tym adresem nie odpowiada żadna maszyna Rooks.",
+      "requiresTls": "Maszyna nie widzi tego połączenia jako HTTPS: sprawdź ustawienia HTTPS jej reverse proxy.",
+      "unreachable": "Z maszyną nie można się teraz połączyć.",
+      "unauthorized": "Maszyna nie akceptuje już tego komputera: jego dostęp odwołano lub wygasł. Sparuj ją ponownie.",
+      "tlsError": "Certyfikat maszyny został odrzucony.",
+      "redirect": "Maszyna odpowiedziała przekierowaniem: podaj jej docelowy adres.",
+      "badResponse": "Maszyna odpowiedziała czymś nieoczekiwanym.",
+      "throttled": "Zbyt wiele prób. Odczekaj kilka minut przed ponowną próbą.",
+      "tooMany": "Flota może liczyć najwyżej 50 maszyn.",
+      "vault": "Sejf sekretów jest niedostępny: nie można przechować dostępu do maszyny.",
+      "incompatible": "Ta maszyna ma wersję Rooks zbyt starą dla tego interfejsu. Najpierw ją zaktualizuj.",
+      "notFound": "Tej maszyny nie ma już w twojej flocie.",
+      "notHere": "Maszynami zarządza się z przeglądarki zalogowanej na tym komputerze.",
+      "sessionRequired": "Najpierw zaloguj się na tym komputerze.",
+      "invalidName": "Tej nazwy nie można użyć.",
+      "generic": "Coś poszło nie tak. Spróbuj ponownie."
+    },
+    "banner": {
+      "unreachable": "Z {name} nie można się teraz połączyć.",
+      "apiUnknown": "{name} nie mówi, jakiego interfejsu oczekuje: niektóre ekrany mogą nie działać.",
+      "apiNewer": "{name} ma nowszy Rooks niż ten interfejs: zaktualizuj tę aplikację, aby w pełni z niej korzystać.",
+      "retry": "Ponów",
+      "dismiss": "Odrzuć"
+    },
+    "blocked": {
+      "unnamed": "Ta maszyna",
+      "retry": "Spróbuj ponownie",
+      "title": {
+        "unreachable": "Z {name} nie można się połączyć",
+        "unauthorized": "{name} nie akceptuje już tego komputera",
+        "incompatible": "{name} jest za stara dla tego interfejsu",
+        "unknown": "Tej maszyny nie ma w twojej flocie",
+        "session_required": "Zaloguj się na tym komputerze",
+        "unavailable": "Nie można stąd otworzyć {name}"
+      },
+      "body": {
+        "unreachable": "Maszyna nie odpowiada: może być wyłączona lub jej sieć niedostępna. Twoja praca na niej jest nienaruszona.",
+        "unauthorized": "Dostęp tego komputera został odwołany lub wygasł na tamtej maszynie. Sparuj go ponownie w {settingsPath}.",
+        "incompatible": "Używa poziomu interfejsu {level}, a ten interfejs wymaga co najmniej {min}. Zaktualizuj Rooks na tamtej maszynie, a potem przełącz się na nią ponownie.",
+        "unknown": "Maszyna, którą sterowało to okno, została usunięta z twojej floty lub należy do innego konta.",
+        "session_required": "Twoja sesja na tym komputerze się zakończyła. Wróć do niego, aby zalogować się ponownie.",
+        "unavailable": "Ten komputer nie może teraz otworzyć dostępu do maszyny (sejf sekretów, demon). Spróbuj ponownie za chwilę."
+      }
+    },
+    "lock": {
+      "remote": "To licencja {name}, maszyny, którą steruje to okno. Ten komputer nie jest objęty zmianą.",
+      "unnamed": "inna maszyna"
+    },
+    "localOnly": {
+      "remoteSessions": "To zdalne tokeny API tego komputera, a nie maszyny, na którą przełączony jest ten interfejs."
+    }
+  }
+}

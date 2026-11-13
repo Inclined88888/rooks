@@ -1,0 +1,497 @@
+{
+  "pluginsPage": {
+    "kind": {
+      "widget": "위젯",
+      "page": "페이지",
+      "island": "아일랜드",
+      "overlay": "오버레이",
+      "theme": "테마",
+      "composer": "입력창",
+      "layout": "레이아웃",
+      "behavior": "백엔드",
+      "provider": "공급자",
+      "dictation": "받아쓰기",
+      "bundle": "번들"
+    },
+    "tier": {
+      "core": "핵심",
+      "std": "표준",
+      "dev": "개발자",
+      "opt": "선택"
+    },
+    "by": "제작: {name}",
+    "openDetails": "{name} 세부 정보 열기",
+    "noPreview": "아직 미리 보기 없음",
+    "backendHint": "백엔드 모듈 — 자체 화면이 없습니다.",
+    "declares": "여는 슬롯",
+    "settings": "설정",
+    "authorUnknown": "작성자 알 수 없음",
+    "backTo": "{name}(으)로 돌아가기",
+    "containedMissing": "이 머신에 설치되지 않음",
+    "searchPlaceholder": "플러그인 검색…",
+    "typesLabel": "유형",
+    "typesAll": "전체",
+    "gallery": "스크린샷",
+    "prevSlide": "이전 이미지",
+    "nextSlide": "다음 이미지",
+    "noMatch": "이 필터와 일치하는 항목이 없습니다.",
+    "provenance": {
+      "all": "전체",
+      "rooks": "@rooks",
+      "marketplace": "마켓플레이스"
+    },
+    "verified": "확인됨",
+    "unverified": "확인 안 됨",
+    "builtin": "내장",
+    "builtinHint": "Rooks에 포함: 끌 수는 있지만 제거할 수는 없습니다.",
+    "awaitingApproval": "이 컴퓨터에서 승인 필요",
+    "awaitingApprovalHint": "이 머신에서 실행 중이지만, 인터페이스 코드는 같은 버전과 같은 서명이 이 컴퓨터에 설치되고 켜진 뒤에야 여기서 불러옵니다.",
+    "awaitingApprovalBuiltinHint": "이 머신에서 실행 중이지만, 인터페이스 코드는 이 컴퓨터가 이 플러그인의 같은 버전과 같은 인터페이스 코드를 포함하고 켠 뒤에야 여기서 불러옵니다. 두 Rooks 릴리스가 같은 플러그인 버전으로 다른 코드를 포함할 수 있습니다: 더 오래된 머신을 업데이트하세요.",
+    "modules": {
+      "@rooks/db": {
+        "label": "데이터베이스",
+        "description": "SQLite 저장소와 그 콜드 아카이브. 다른 모든 모듈이 이를 주입하므로 처음 읽기 전에 스키마가 최신 상태가 됩니다."
+      },
+      "@rooks/settings": {
+        "label": "설정",
+        "description": "제품 설정 페이지와 다른 모듈이 읽는 테이블."
+      },
+      "@rooks/http": {
+        "label": "HTTP 및 통계",
+        "description": "공유 Express 앱, UI 프록시 인증, 통계 대시보드."
+      },
+      "@rooks/users": {
+        "label": "계정",
+        "description": "내 계정, 세션, 로그인 화면."
+      },
+      "@rooks/plugins": {
+        "label": "플러그인 갤러리",
+        "description": "포함된 모듈과 서드파티 패키지를 나열하고 켜기/끄기 상태를 기록합니다."
+      },
+      "@rooks/secrets-vault": {
+        "label": "시크릿",
+        "description": "봉인된 시크릿 볼트. 값은 절대 평문으로 데몬 밖으로 나가지 않습니다."
+      },
+      "@rooks/ui-layout": {
+        "label": "레이아웃",
+        "description": "앱의 외곽: 탐색, 상단 바, 콕핏 레일, 오버레이 층. 교체 가능 — 루트 슬롯을 차지합니다."
+      },
+      "@rooks/ui-theme": {
+        "label": "테마",
+        "description": "제품 색상 토큰. 테마 슬롯을 차지하며, 끄면 외곽에 색이 칠해지지 않습니다."
+      },
+      "@rooks/backends": {
+        "label": "LLM 공급자",
+        "description": "언어 모델 공급자와 그 자격 증명 카탈로그."
+      },
+      "@rooks/agents": {
+        "label": "에이전트",
+        "description": "에이전트 목록, 스킬, MCP 서버. 페이지: /agents, /skills, /mcp."
+      },
+      "@rooks/missions": {
+        "label": "미션",
+        "description": "미션을 생성하고, 추적하고, 기록합니다. 페이지: /missions, /multichat, /messages."
+      },
+      "@rooks/projects": {
+        "label": "프로젝트",
+        "description": "프로젝트 등록: cwd, 역할, 폴더와 에이전트의 연결."
+      },
+      "@rooks/notifications": {
+        "label": "알림",
+        "description": "앱 내 알림 센터. 에이전트가 나에게 알리는 채널입니다."
+      },
+      "@rooks/web-push": {
+        "label": "웹 푸시",
+        "description": "Web Push를 통한 휴대폰 시스템 알림. 알림 센터와 VAPID 키가 필요합니다."
+      },
+      "@rooks/memory": {
+        "label": "메모리",
+        "description": "장기 메모리 규칙과 미션에 주입되는 내용의 감사."
+      },
+      "@rooks/kanban": {
+        "label": "Kanban",
+        "description": "작업 보드: code, review, merge 및 나머지 파이프라인. « TO DO » 열에는 보류한 아이디어가 있으며, 오케스트레이터는 거기서 작업을 가져가지 않습니다."
+      },
+      "@rooks/kanban-code": {
+        "label": "코드 파이프라인",
+        "description": "각 code 작업에 전용 git 워크트리와 브랜치를 주고, 리뷰하고 병합합니다. Git 플러그인이 필요합니다."
+      },
+      "@rooks/git": {
+        "label": "Git",
+        "description": "채팅의 Git 카드에서 프로젝트의 브랜치, 체크아웃, GitHub 원격을 다룹니다. Kanban 유무와 관계없이 작동하며, 이 컴퓨터에 git이 필요합니다."
+      },
+      "@rooks/todo-outcomes": {
+        "label": "TODO 결과",
+        "description": "TO DO 아이디어에 결과와 작성자용 공개 메모를 붙이고, todo_resolved 이벤트로 아이디어가 온 채널에 알립니다. 사용하려면 설정에서 아이디어 결과를 켜세요."
+      },
+      "@rooks/routines": {
+        "label": "루틴",
+        "description": "예약된 작업: 스스로 미션을 생성하는 cron 방식의 루틴."
+      },
+      "@rooks/triggers": {
+        "label": "트리거",
+        "description": "기본 트리거: 일정, webhook, 내부 이벤트가 TO DO 아이디어, 에이전트 작업, 알림을 실행합니다."
+      },
+      "@rooks/workflows": {
+        "label": "워크플로",
+        "description": "시각적 자동화 흐름, 실행, 그 전체 실행 추적."
+      },
+      "@rooks/dreams": {
+        "label": "드림",
+        "description": "야간 처리: 오케스트레이터가 제안하는 개선 단서와 기회, 그리고 이를 순위 매기는 프로젝트 점수."
+      },
+      "@rooks/agent-chat": {
+        "label": "에이전트 채팅",
+        "description": "카드 하나에 에이전트 하나의 스레드. 각 인스턴스가 에이전트와 아바타 아래 나열되는 하위 에이전트를 고릅니다."
+      },
+      "@rooks/resources-guard": {
+        "label": "리소스 가드",
+        "description": "미션 cgroup이 쌓이지 않게 합니다. systemd가 필요하며, 없으면 같은 컴퓨터의 두 데몬이 서로를 종료합니다."
+      },
+      "@rooks/vault": {
+        "label": "볼트",
+        "description": "Obsidian 볼트: 콕핏의 그래프 타일과 /brain 디스크."
+      },
+      "@rooks/grepai": {
+        "label": "Grepai",
+        "description": "프로젝트의 시맨틱 인덱스. grepai 바이너리와 감시자를 유지할 systemd가 필요합니다."
+      },
+      "@rooks/docker-supervision": {
+        "label": "Docker",
+        "description": "프로젝트별 컨테이너 상태와 시작/중지. 컨테이너 엔진이 필요합니다."
+      },
+      "@rooks/browser-embedded": {
+        "label": "내장 브라우저",
+        "description": "영구 프로필이 있는 프로젝트별 Chromium으로, Traefik을 통해 게시됩니다."
+      },
+      "@rooks/browser-recording": {
+        "label": "브라우저 녹화",
+        "description": "내장 브라우저에서 흐름을 녹화하고 검토한 뒤 에이전트가 스킬로 바꾸게 합니다."
+      },
+      "@rooks/browser-annotations": {
+        "label": "브라우저 주석",
+        "description": "내장 브라우저의 요소를 가리키고 바꿀 점을 말한 뒤 에이전트에게 보냅니다."
+      },
+      "@rooks/terminal-native": {
+        "label": "호스트 터미널",
+        "description": "컴퓨터의 터미널이나 파일 관리자를 데스크톱 창에서 엽니다. 그래픽 세션이 필요합니다."
+      },
+      "@rooks/terminal-web": {
+        "label": "내장 터미널",
+        "description": "Rooks 안의 터미널(데스크톱, 브라우저, 휴대폰)로, 이 컴퓨터에서 셸을 실행합니다. 열 수 있는 권한이 있는 계정 전용입니다."
+      },
+      "@rooks/ui-documents": {
+        "label": "채팅 속 문서",
+        "description": "에이전트, 나 또는 플러그인이 대화에 표시하는 대화형 HTML 문서로, 샌드박스 프레임에서 Rooks과 격리됩니다."
+      },
+      "@rooks/orchestrator-self": {
+        "label": "데몬",
+        "description": "UI에서 오케스트레이터를 다시 시작하고 다시 빌드합니다. systemd가 필요합니다."
+      },
+      "@rooks/web-app": {
+        "label": "웹 앱",
+        "description": "Compose 대신 Next.js UI를 데몬의 자식 프로세스로 실행합니다."
+      },
+      "@rooks/telegram": {
+        "label": "Telegram",
+        "description": "Telegram 수신 채널: 채팅에서 에이전트와 대화합니다."
+      },
+      "@rooks/tts": {
+        "label": "음성",
+        "description": "미션 출력을 음성으로 읽어 줍니다."
+      },
+      "@rooks/gpt-live": {
+        "label": "GPT-Live 음성",
+        "description": "OpenAI GPT-Live 기반의 미션과의 실시간 음성 대화."
+      },
+      "@rooks/video-factory": {
+        "label": "비디오 팩토리",
+        "description": "정지 이미지와 프롬프트로 동영상을 렌더링합니다."
+      },
+      "@rooks/telemetry": {
+        "label": "사용 통계",
+        "description": "익명 사용 통계를 Rooks 팀에 보냅니다: 어떤 기능을 쓰는지, 턴이 어떻게 진행되는지, 설정이 어디서 멈추는지. 콘텐츠, 이름, 경로는 절대 보내지 않습니다. 개인정보 설정에서 끌 수 있습니다."
+      },
+      "@rooks/machines": {
+        "label": "머신",
+        "description": "다른 Rooks 머신을 이 머신과 페어링하고 접근 권한을 볼트에 보관해, 인터페이스를 머신 간에 전환합니다. 켤 때까지 꺼져 있습니다."
+      },
+      "@rooks/company": {
+        "label": "Company",
+        "description": "에이전트를 편집 가능한 조직도로 정리합니다."
+      },
+      "@rooks/agents-projects": {
+        "label": "에이전트 · 프로젝트",
+        "description": "프로젝트별로 묶은 에이전트. 캔버스와 별도로 끌 수 있습니다."
+      },
+      "@rooks/bots": {
+        "label": "Bots",
+        "description": "프로젝트 없는 TIM을 팀별로 묶고, 고른 TIM의 채팅을 보여 줍니다."
+      },
+      "@rooks/files-widget": {
+        "label": "파일",
+        "description": "채팅의 파일 카드: 에이전트 작업 폴더의 파일을 탐색하고 편집합니다."
+      },
+      "@rooks/skills-widget": {
+        "label": "스킬",
+        "description": "채팅의 스킬 카드: 에이전트의 스킬을 켜고 끕니다."
+      },
+      "@rooks/mcp-widget": {
+        "label": "MCP",
+        "description": "채팅의 MCP 카드: 에이전트의 MCP 서버를 켜고 끕니다."
+      },
+      "@rooks/mcp-apps": {
+        "label": "공식 커넥터",
+        "description": "MCP 탭의 공식 커넥터: GitHub, Linear, Notion 등 게시자의 원격 MCP 서버를 한 번에 연결합니다."
+      }
+    },
+    "install": {
+      "sectionLabel": "플러그인 설치",
+      "button": "플러그인 설치",
+      "reading": "읽는 중…",
+      "pickFolder": "플러그인 폴더 선택…",
+      "pickArchive": "플러그인 아카이브(.tgz 또는 .zip) 선택…",
+      "hintDesktop": "플러그인 폴더 또는 그 .tgz나 .zip 아카이브. 설치하기 전에 세부 정보가 표시됩니다.",
+      "available": "플러그인 폴더에 있지만 설치되지 않음 ({count})",
+      "previewFailed": "이 플러그인을 읽을 수 없습니다",
+      "pickerFailed": "파일 선택 창을 열 수 없습니다.",
+      "done": "“{name}”이(가) 설치되었습니다",
+      "doneRefused": "“{name}”이(가) 설치되었지만 불러오지 않습니다: {reason}",
+      "failed": "플러그인이 설치되지 않았습니다",
+      "signed": "서명 확인됨",
+      "tampered": "변조된 패키지",
+      "unsignedLoads": "서명 없음 — 개발자 모드에서 불러옴",
+      "unsignedBlocked": "서명 없음 — 불러오지 않음",
+      "manifestRefused": "Rooks이 이 플러그인을 사용할 수 없습니다: {reason}",
+      "nodeEngineRefused": "이 플러그인은 이 Rooks이 쓰는 Node에서 실행되지 않습니다: {reason}",
+      "tamperedHint": "파일이 서명과 일치하지 않습니다: 이 패키지는 서명된 뒤 수정되었습니다. 설치할 수 없습니다.",
+      "permissions": "요청 권한",
+      "permissionsNone": "권한 없음",
+      "webhooks": "Webhook",
+      "source": "출처",
+      "origin": {
+        "upload": "이 브라우저에서 보낸 아카이브",
+        "path": "이 컴퓨터의 파일",
+        "detected": "플러그인 폴더"
+      },
+      "alreadyInstalled": "버전 {version}이(가) 이미 설치되어 있습니다. 설치하면 교체됩니다.",
+      "replacesPackage": "이 ID는 더 이상 설치되어 있지 않은 다른 패키지 {pkg}의 것이었습니다. 이것을 설치하면 {pkg}에 부여된 것(볼트 시크릿, 열린 호스트, 승인)이 철회됩니다. 설정과 저장된 데이터는 삭제되며(시크릿 설정은 다시 입력해야 함) 데이터 폴더는 휴지통으로 옮겨집니다. 사용자 연결은 승인 대기로 돌아가고 키는 삭제됩니다.",
+      "updatesUnsigned": "이 패키지의 서명 없는 사본에서 업데이트: 데이터, 설정, 부여 권한은 유지됩니다.",
+      "childReplacesPackage": "이 번들이 가져오는 {id}은(는) 더 이상 설치되어 있지 않은 다른 패키지 {pkg}의 ID를 사용합니다. 이것을 설치하면 {pkg}에 부여된 것(볼트 시크릿, 열린 호스트, 승인)이 철회됩니다. 설정과 저장된 데이터는 삭제되며(시크릿 설정은 다시 입력해야 함) 데이터 폴더는 휴지통으로 옮겨집니다. 사용자 연결은 승인 대기로 돌아가고 키는 삭제됩니다.",
+      "childrenAccess": {
+        "title": "이 번들이 가져오는 플러그인",
+        "permissions": "요청: {list}",
+        "state": {
+          "kept": "이미 설치됨: 이 번들은 그대로 두므로 여기서 요청하는 것이 없습니다.",
+          "unreadable": "설치한 뒤에만 읽을 수 있음: 아무 권한도 부여되지 않은 채 설치됩니다. 시크릿은 시크릿 페이지에서 부여하세요. 공급자라면 {settingsPath}에서 승인할 때까지 비활성 상태로 남습니다.",
+          "unresolved": "이 번들의 의존성 중 어느 것도 제공하지 않음: 설치되지 않으므로 요청하는 것이 없습니다.",
+          "tampered": "파일이 서명과 일치하지 않음: 불러오지 않으므로 요청하는 것이 없습니다.",
+          "nodeEngine": "이 Rooks이 쓰는 Node에서 실행되지 않음: 불러오지 않으므로 요청하는 것이 없습니다. {reason}"
+        },
+        "refused": {
+          "not-installed": "“{name}”이(가) 설치되지 않아 프로그램이 승인되지 않았습니다.",
+          "changed": "“{name}”이(가) 시트에 표시된 것과 달라 프로그램이 승인되지 않았습니다. {settingsPath}에서 검토하세요.",
+          "grant-failed": "“{name}”의 프로그램을 승인할 수 없습니다. {settingsPath}에서 다시 시도하세요."
+        },
+        "vaultRefused": {
+          "not-installed": "“{name}”이(가) 설치되지 않아 시크릿과 호스트가 부여되지 않았습니다.",
+          "changed": "“{name}”이(가) 시트에 표시된 것과 달라 시크릿과 호스트가 부여되지 않았습니다. 시크릿은 시크릿 페이지에서 부여하세요.",
+          "grant-failed": "“{name}”의 시크릿과 호스트를 부여할 수 없습니다. 시크릿은 시크릿 페이지에서 부여하세요."
+        }
+      },
+      "licenseRequired": "이 플러그인은 이를 포함하는 라이선스가 있을 때만 불러옵니다.",
+      "vault": {
+        "title": "시크릿 및 네트워크",
+        "read": "이 시트에 이름을 밝히지 않고 이름으로 볼트 시크릿을 읽습니다: 각 시크릿은 시크릿 페이지에서, 또는 플러그인이 요청할 때 나타나는 카드에서 이 플러그인에 줍니다.",
+        "broker": "이름으로 부여된 것에 한해, 키를 보지 않고 볼트 ID로 API를 호출합니다.",
+        "brokerNoHttp": "http:outbound를 선언하지 않아 브로커를 통한 API 호출이 거부됩니다.",
+        "network": "네트워크 접근은 rooks.config.json에서 모든 플러그인(pluginPolicy.http.allow) 또는 이 플러그인에만(pluginPolicy.http.byPlugin) 연 호스트와 승인된 연결의 주소로 제한됩니다.",
+        "secretsLead": "지정된 시크릿. 선택한 시크릿은 이 플러그인에만 부여됩니다. 선택을 해제해도 부여가 취소되지는 않습니다 (취소는 시크릿에서).",
+        "hostsLead": "접속하는 호스트. 선택한 호스트는 이 플러그인에만 열립니다.",
+        "hostOwn": "이미 이 플러그인에 열려 있습니다. 선택을 해제하면 닫힙니다: 호스트는 여기서 선택한 것으로 바뀝니다.",
+        "hostGlobal": "이미 모든 플러그인에 열려 있습니다 (pluginPolicy.http.allow).",
+        "mode": {
+          "read": "플러그인이 읽음",
+          "broker": "브로커를 통해 사용, 플러그인은 보지 못함"
+        },
+        "state": {
+          "granted": "이미 이 플러그인에 부여됨.",
+          "missing": "아직 볼트에 없음.",
+          "otherMode": "볼트에 이 이름의 시크릿이 다른 용도로 있어 이 플러그인에는 쓸 수 없습니다.",
+          "ambiguous": "이 이름의 시크릿이 여러 개 있습니다: 어느 것을 부여할지는 시크릿 페이지에서 고릅니다.",
+          "vault-off": "볼트가 꺼져 있습니다: 이 플러그인은 시크릿을 읽을 수 없습니다."
+        },
+        "create": "시크릿 페이지에서 만들기",
+        "choose": "시크릿 페이지에서 선택"
+      },
+      "disclaimerTitle": "서드파티 플러그인",
+      "disclaimer": "이 플러그인은 Rooks이 만들거나 검토하거나 보증한 것이 아니며, Rooks은 그 동작에 책임지지 않습니다. 설치하면 내 계정의 권한으로 Rooks 안에서 실행됩니다. 신뢰하는 작성자의 플러그인만 설치하세요.",
+      "cancel": "취소",
+      "installing": "설치하는 중…",
+      "reinstall": "이 버전 설치",
+      "confirm": "설치",
+      "refreshed": "{reason} 아래 시트는 최신 상태입니다: 검토한 뒤 다시 설치하세요.",
+      "errors": {
+        "unauthenticated": "세션이 만료되었습니다 — 다시 로그인하세요.",
+        "forbidden": "Rooks에 로그인한 최고 관리자만 플러그인을 설치할 수 있습니다.",
+        "too-large": "이 플러그인은 너무 큽니다 (아카이브 최대 25MB, 파일 최대 200MB).",
+        "too-many-entries": "이 플러그인에는 파일이 너무 많습니다.",
+        "not-gzip": "플러그인 아카이브가 아닙니다: .tgz 또는 .zip이어야 합니다.",
+        "unsafe-path": "이 아카이브가 폴더 밖에 쓰려고 해서 거부되었습니다.",
+        "link": "이 플러그인에는 플러그인이 가질 수 없는 링크나 특수 파일이 있습니다.",
+        "layout": "이 아카이브는 플러그인 패키지 구조가 아닙니다: 루트에 package.json이 있거나, 이를 담은 최상위 폴더 하나가 있어야 합니다.",
+        "corrupt": "이 아카이브는 손상되었습니다.",
+        "not-archive": "플러그인 아카이브가 아닙니다: .tgz 또는 .zip이어야 합니다.",
+        "not-zip": "올바른 .zip 아카이브가 아닙니다.",
+        "zip64": "이 .zip은 Rooks이 읽지 못하는 zip64 형식입니다. 표준 도구로 플러그인을 다시 압축하거나 .tgz를 사용하세요.",
+        "encrypted": "이 .zip은 비밀번호로 보호되어 있습니다. 비밀번호 없이 다시 압축하세요.",
+        "multi-volume": "이 .zip은 여러 부분으로 나뉘어 있습니다. 하나의 .zip으로 만드세요.",
+        "compression": "이 .zip은 Rooks이 읽지 못하는 압축 방식을 사용합니다. 표준 압축으로 플러그인을 다시 압축하세요.",
+        "not-a-plugin": "Rooks 플러그인이 아닙니다: `rooks` 매니페스트가 있는 package.json이 없습니다.",
+        "invalid-path": "이 경로는 사용할 수 없습니다.",
+        "forbidden-path": "이 폴더에서는 플러그인을 설치할 수 없습니다.",
+        "not-found": "그곳에서 더 이상 아무것도 찾을 수 없습니다.",
+        "expired": "이 미리 보기는 만료되었습니다. 플러그인을 다시 선택하세요.",
+        "tampered": "패키지가 서명 후 변조되었습니다. 설치할 수 없습니다.",
+        "manifest": "플러그인의 매니페스트가 올바르지 않습니다. 설치할 수 없습니다.",
+        "npm-missing": "Rooks을 실행하는 컴퓨터에서 npm을 사용할 수 없습니다. Node.js를 설치한 뒤 다시 시도하세요.",
+        "install-failed": "설치에 실패했습니다. 자세한 내용은 Rooks 로그에 있습니다.",
+        "name-taken": "플러그인 폴더에서 다른 패키지가 이미 이 이름을 사용합니다.",
+        "generic": "데몬이 거부했습니다 (HTTP {status}).",
+        "unreadable": "Rooks에 이 위치를 읽을 권한이 없습니다. macOS에서는 시스템 설정 › 개인정보 보호 및 보안에서 허용하거나, 플러그인을 다른 곳으로 옮기세요.",
+        "mismatch": "이 플러그인이 요청하는 것(프로그램, 시크릿 또는 호스트)이 표시된 뒤 바뀌었습니다.",
+        "refused": "이 프로그램은 플러그인이 절대 실행할 수 없습니다.",
+        "not-provider": "이 플러그인은 공급자가 아닙니다.",
+        "not-grantable": "선택한 시크릿은 이 시트에서 부여할 수 없습니다.",
+        "conflict": "볼트가 부여를 거부했습니다: 이 이름의 시크릿이 이미 부여되어 있습니다. 시크릿 페이지에서 해결하세요."
+      },
+      "pickFolderRemote": "연결된 머신에서 플러그인 폴더 선택…",
+      "pickArchiveRemote": "연결된 머신에서 플러그인 아카이브 선택…",
+      "uploadArchive": "이 컴퓨터에서 아카이브 보내기…",
+      "hintRemote": "이 창이 연결된 머신의 플러그인 폴더나 그 .tgz 또는 .zip 아카이브, 또는 이 컴퓨터에서 보내는 아카이브. 설치하기 전에 세부 정보가 표시됩니다."
+    }
+  },
+  "providersSettings": {
+    "title": "공급자",
+    "description": "공급자 플러그인은 AI 서비스를 Rooks에 가져옵니다. 공급자가 실행하는 각 프로그램은 실행 전에 확인된 경로로 여기서 승인됩니다.",
+    "cancel": "취소",
+    "consent": {
+      "prompts": "담당하는 미션의 모든 지시와 모든 답변을 받습니다.",
+      "credentials": "자체 프로필의 자격 증명을 받습니다.",
+      "binary": "프로그램 {path}을(를) 실행합니다.",
+      "credentialDir": "명령줄 도구의 로그인 폴더 \"~/{dir}\"을(를) 읽고, 그 안의 파일을 자체 미션에만 노출합니다.",
+      "osCredential": "시스템 자격 증명 저장소(macOS 키체인)의 항목 \"{service}\"을(를) 읽습니다. 읽기 전용입니다.",
+      "osCredentialAccount": "시스템 자격 증명 저장소(macOS 키체인)의 항목 \"{service}\"({account})을(를) 읽습니다. 읽기 전용입니다."
+    },
+    "install": {
+      "allow": "위에 나열된 프로그램을 Rooks이 실행하도록 허용합니다.",
+      "allowHint": "허용하지 않으면 공급자는 설치되지만 {settingsPath}에서 승인할 때까지 비활성 상태로 남습니다."
+    },
+    "plugins": {
+      "title": "공급자 플러그인",
+      "none": "설치된 공급자 플러그인이 없습니다.",
+      "backends": "백엔드: {list}",
+      "notFound": "이 머신에 설치되지 않음",
+      "authorize": "검토하고 승인",
+      "authorizeTitle": "{name} 승인",
+      "authorizeBody": "Rooks이 이 머신에서 이 프로그램들을 확인했습니다. 알아보는 경로만 허용하세요.",
+      "authorizeConfirm": "이 프로그램 허용",
+      "authorized": "{name}이(가) 승인되었습니다.",
+      "state": {
+        "active": "활성",
+        "failed": "조치 필요",
+        "disabled": "꺼짐",
+        "skipped": "거부됨"
+      },
+      "binary": {
+        "authorize": "승인 필요",
+        "ready": "승인됨",
+        "install": "먼저 설치",
+        "refused": "허용 불가"
+      }
+    },
+    "acp": {
+      "title": "ACP 레지스트리",
+      "description": "공식 Agent Client Protocol 레지스트리에 게시된 에이전트. Rooks이 프로그램을 다운로드하고 확인한 뒤 백엔드로 실행합니다.",
+      "browse": "레지스트리 둘러보기",
+      "refresh": "새로 고침",
+      "stale": "레지스트리에 연결할 수 없습니다. 이것은 Rooks이 마지막으로 읽은 목록입니다.",
+      "verified": "sha256 확인됨",
+      "noHash": "게시된 해시 없음",
+      "unsupported": "여기서는 사용할 수 없음: {reason}",
+      "install": "설치",
+      "update": "업데이트",
+      "repair": "다시 설치",
+      "installing": "설치하는 중…",
+      "remove": "제거",
+      "installed": "{name}이(가) 설치되었습니다.",
+      "updated": "{name}은(는) 최신 상태입니다.",
+      "removed": "{name}이(가) 제거되었습니다.",
+      "state": {
+        "ok": "{version} 설치됨",
+        "tampered": "파일이 바뀜 — 사용 안 함",
+        "missing": "파일 없음",
+        "pending": "{version} 확인 중…"
+      },
+      "confirmTitle": "게시된 해시 없이 {name}을(를) 설치하시겠습니까?",
+      "confirmBody": "레지스트리가 이 프로그램의 체크섬을 제공하지 않습니다. 무결성은 https 다운로드에만 의존합니다. 게시자를 신뢰할 때만 설치하세요.",
+      "confirmAction": "그래도 설치"
+    },
+    "errors": {
+      "forbidden": "Rooks에 로그인한 최고 관리자만 공급자를 관리할 수 있습니다.",
+      "generic": "데몬이 거부했습니다 (HTTP {status}).",
+      "mismatch": "표시된 뒤 프로그램이 바뀌었습니다. 다시 검토하세요.",
+      "refused": "이 프로그램은 플러그인이 절대 실행할 수 없습니다.",
+      "unverified": "이 에이전트는 해시를 게시하지 않습니다: 그래도 설치하려면 확인하세요.",
+      "already-installed": "이 버전은 이미 설치되어 있으며 온전합니다.",
+      "not-installed": "이 에이전트는 설치되어 있지 않습니다.",
+      "unknown-agent": "레지스트리에 이 에이전트가 없습니다.",
+      "unsupported": "이 에이전트는 이 머신에 설치할 수 없습니다.",
+      "registry-unavailable": "ACP 레지스트리에 연결할 수 없습니다.",
+      "download-failed": "다운로드에 실패했습니다.",
+      "checksum": "다운로드한 파일이 게시된 체크섬과 일치하지 않아 삭제했습니다.",
+      "archive": "아카이브가 안전하지 않아 거부되었습니다.",
+      "command-missing": "레지스트리가 지정한 프로그램이 아카이브에 없습니다.",
+      "definition-refused": "Rooks이 이 에이전트를 거부했습니다: 설명 내용이 서로 모순됩니다.",
+      "authorize-failed": "프로그램을 승인할 수 없습니다. 자세한 내용은 Rooks 로그에 있습니다.",
+      "failed": "작업에 실패했습니다. 자세한 내용은 Rooks 로그에 있습니다."
+    }
+  },
+  "binariesSettings": {
+    "title": "CLI 바이너리",
+    "description": "이 컴퓨터에서 Rooks이 각 AI 공급자의 명령줄 도구를 찾은 위치입니다. 없거나 특이한 위치에 있으면 전체 경로를 고정하세요: Rooks을 다시 시작하지 않고 다음 미션부터 적용됩니다.",
+    "recheck": "다시 확인",
+    "rechecked": "바이너리를 다시 확인했습니다.",
+    "none": "명령줄 도구를 쓰는 로컬 공급자가 없습니다.",
+    "backends": "사용처: {list}",
+    "resolved": "{path} 실행",
+    "brokenPin": "고정된 경로를 실행할 수 없습니다: {path}",
+    "notFound": "이 컴퓨터에서 찾을 수 없습니다. 설치하거나 아래에 경로를 고정하세요.",
+    "pathLabel": "{name} 바이너리 경로",
+    "placeholder": "전체 경로, 예: /usr/local/bin/claude 또는 C:\\Users\\you\\AppData\\Roaming\\npm\\claude.cmd",
+    "browse": "찾아보기…",
+    "save": "경로 저장",
+    "clear": "고정 해제",
+    "saved": "{name}: 경로가 저장되었습니다. 새 미션이 이를 사용합니다.",
+    "cleared": "{name}: 고정이 해제되었습니다. Rooks이 다시 스스로 찾습니다.",
+    "state": {
+      "found": "찾음",
+      "pinned": "고정됨",
+      "brokenPin": "고정된 경로 손상",
+      "missing": "찾을 수 없음"
+    },
+    "errors": {
+      "forbidden": "앱에 로그인한 최고 관리자만 이 경로를 변경할 수 있습니다.",
+      "unknown_binary": "로컬 공급자의 명령줄 도구가 아닙니다.",
+      "path_not_absolute": "드라이브 루트부터 시작하는 전체 경로를 입력하세요.",
+      "path_missing": "이 경로에 아무것도 없습니다.",
+      "path_not_file": "폴더입니다. 프로그램 파일 자체를 선택하세요.",
+      "path_not_executable": "이 파일은 실행 가능하지 않아 실행할 수 없습니다.",
+      "no_config": "먼저 설정을 마치세요.",
+      "config_unreadable": "rooks.config.json을 읽을 수 없습니다. 고치거나 복원한 뒤 다시 확인하세요.",
+      "invalid_body": "이 경로는 저장할 수 없습니다.",
+      "browse": "파일 선택 창을 열 수 없습니다.",
+      "generic": "변경에 실패했습니다 (오류 {status})."
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-email-code",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-email-code",
+    "apiVersion": 15,
+    "kind": "behavior",
+    "label": "Single-field code",
+    "description": "Replaces the six boxes of an emailed code with one plain field, for screen readers and password managers that prefer it.",
+    "permissions": [],
+    "client": {
+      "slots": ["email.code"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

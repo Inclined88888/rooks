@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-bundle",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "dependencies": {
+    "@rooks/plugin-page": "file:../plugin-page",
+    "@rooks/plugin-widget": "file:../plugin-widget"
+  },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-bundle",
+    "apiVersion": 1,
+    "kind": "bundle",
+    "label": "Example board",
+    "description": "Installs the example page and its widget. Each child stays a plugin of its own.",
+    "contains": ["example-page", "example-widget"],
+    "permissions": [],
+    "settings": [],
+    "license": { "required": false }
+  }
+}

@@ -1,0 +1,4 @@
+{"type":"banner","text":"Echo CLI 0.1 — not a real provider"}
+{"type":"init","session":"echo-session-7f21c0d4"}
+{"type":"text","text":"Le fichier src/index.ts exporte le point d'entrée du daemon."}
+{"type":"done"}

@@ -1,0 +1,276 @@
+{
+  "taskForm": {
+    "detachWorktree": {
+      "title": "Worktree",
+      "hint": "Odłączenie usuwa folder roboczy tego zadania i zachowuje jego gałąź ({branch}) z commitami; przy następnym uruchomieniu zadanie dostaje nowy folder na tej gałęzi. Odrzucane, jeśli folder ma niezatwierdzone zmiany.",
+      "action": "Odłącz worktree",
+      "detaching": "Odłączanie…",
+      "confirm": "Usunąć folder roboczy tego zadania? Jego gałąź i commity zostaną zachowane.",
+      "done": "Worktree odłączone, gałąź zachowana",
+      "failed": "Nie udało się odłączyć worktree: {error}"
+    },
+    "markMerged": {
+      "title": "Scalone poza Rooks?",
+      "hint": "Jeśli gałąź tego zadania została już scalona (pull request scalony na GitHubie, ręczny merge), podaj commit scalenia: zadanie zostanie zamknięte jako wykonane, a zależne od niego zadania wystartują.",
+      "shaLabel": "Commit scalenia",
+      "shaPlaceholder": "Sha commita, np. bcd02520",
+      "action": "Oznacz jako scalone",
+      "marking": "Oznaczanie…",
+      "done": "Zadanie oznaczone jako scalone",
+      "doneUnverified": "Zadanie oznaczone jako scalone. Tego commita nie ma jeszcze w lokalnej kopii repozytorium, więc nie można go było sprawdzić.",
+      "notInBase": "Tego commita nie ma w gałęzi bazowej repozytorium. Sprawdź sha scalenia.",
+      "failed": "Nie udało się oznaczyć zadania jako scalonego: {error}",
+      "unreachable": "Rooks nie odpowiedział",
+      "hintDone": "To zadanie jest wykonane, ale jego gałąź nigdy nie przeszła przez merge w Rooks. Jeśli została scalona gdzie indziej (pull request scalony na GitHubie, ręczny merge), podaj commit scalenia: zostanie zapisany, a zależne zadania wystartują.",
+      "cardAction": "scalone?"
+    },
+    "editTitle": "Edytuj zadanie",
+    "newTitle": "Nowe zadanie",
+    "close": "Zamknij",
+    "delete": "Usuń",
+    "report": "Raport",
+    "title": "Tytuł",
+    "titlePlaceholder": "Co ma zrobić agent?",
+    "titleRequired": "Nadaj zadaniu tytuł.",
+    "tabs": {
+      "label": "Sekcje zadania",
+      "general": "Ogólne",
+      "dependencies": "Zależności",
+      "capabilities": "Możliwości"
+    },
+    "type": "Typ",
+    "priority": {
+      "label": "Priorytet",
+      "urgent": "Pilny",
+      "high": "Wysoki",
+      "normal": "Normalny",
+      "low": "Niski",
+      "someday": "Kiedyś"
+    },
+    "description": "Opis",
+    "descriptionPlaceholder": "Kontekst, ograniczenia, jak wygląda ukończenie…",
+    "write": "Pisz",
+    "preview": "Podgląd",
+    "previewEmpty": "Nie ma jeszcze czego podglądać.",
+    "todo": {
+      "label": "Pomysł TO DO",
+      "placeholder": "Numer, np. 209",
+      "hint": "Pomysł zamknie się sam, gdy łańcuch tego zadania wyląduje.",
+      "invalid": "Pomysł TO DO to liczba całkowita, np. 209."
+    },
+    "attachments": {
+      "label": "Załączniki",
+      "drop": "Upuść tu pliki lub",
+      "browse": "wybierz pliki",
+      "dropActive": "Upuść, aby załączyć",
+      "uploading": "Wysyłanie…",
+      "queued": "Wysyłane przy tworzeniu zadania",
+      "inherited": "Z wcześniejszej iteracji",
+      "remove": "Usuń {name}",
+      "open": "Otwórz {name}",
+      "enlarge": "Powiększ {name}",
+      "enlarged": "{name}, powiększony",
+      "closePreview": "Zamknij podgląd",
+      "tooLarge": "{name}: za duży (najwyżej 15 MB).",
+      "typeRefused": "{name}: ten typ pliku nie jest akceptowany.",
+      "quota": "{name}: zadanie ma już maksymalną liczbę plików (20 plików, 100 MB).",
+      "failed": "{name}: nie udało się wysłać ({error}).",
+      "removeFailed": "Nie udało się usunąć {name}: {error}",
+      "loadFailed": "Nie udało się odczytać załączonych plików.",
+      "dismiss": "Odrzuć",
+      "partial": "Zadanie zapisane, ale nie udało się wysłać niektórych plików: {names}"
+    },
+    "agent": "Agent",
+    "agentRequired": "Wybierz agenta, który wykona zadanie.",
+    "agentFilter": "Filtruj agentów…",
+    "noAgentMatch": "Żaden agent nie pasuje.",
+    "loadingAgents": "Wczytywanie agentów…",
+    "model": "Model",
+    "modelInherit": "Rola projektu",
+    "modelInheritHint": "Decyduje rola projektu dla tego typu zadania, w przeciwnym razie agent",
+    "modelInherited": "{model} (dziedziczony)",
+    "modelHelp": "„Rola projektu” uruchamia zadanie na tym, o czym decyduje rola projektu dla tego typu, a w przeciwnym razie agent.",
+    "worktreeBlocked": "Ten backend pracuje poza folderem Rooks: przypisane mu zadanie code lub merge zostanie zablokowane.",
+    "fallback": {
+      "short": "Zapasowy",
+      "label": "Zapasowy, gdy skończy się limit",
+      "inherit": "Ustawienie serii lub globalne",
+      "inheritHint": "Decyduje plan serii, w przeciwnym razie ustawienie Rooks",
+      "never": "Nigdy nie przełączaj samodzielnie"
+    },
+    "permission": "Uprawnienie",
+    "permissionModes": {
+      "default": "Dziedziczone z agenta",
+      "acceptEdits": "acceptEdits",
+      "plan": "plan",
+      "bypassPermissions": "bypassPermissions"
+    },
+    "pipeline": {
+      "label": "Potok",
+      "full": "Pełny: code → review → merge",
+      "code-self": "Tylko kod, koder scala swoją gałąź",
+      "code-group": "Tylko kod, jedno scalenie dla grupy",
+      "fixed": "Ustawione przy tworzeniu zadania."
+    },
+    "deps": {
+      "filter": "Filtruj zadania…",
+      "count": "wybrane: {selected} · kandydaci: {count}",
+      "none": "Brak kwalifikujących się zadań.",
+      "noMatch": "Żadne zadanie nie pasuje."
+    },
+    "status": {
+      "PENDING": "Oczekujące",
+      "IN_PROGRESS": "W toku",
+      "DONE": "Wykonane",
+      "BLOCKED": "Zablokowane",
+      "new": "Nowe"
+    },
+    "skills": "Umiejętności",
+    "skillsFilter": "Filtruj umiejętności…",
+    "selectedCount": "wybrane: {count}",
+    "noneSelected": "nic nie wybrano",
+    "noSkills": "brak zainstalowanych umiejętności",
+    "noSkillMatch": "Żadna umiejętność nie pasuje.",
+    "mcpServers": "Serwery MCP",
+    "noMcpServers": "brak skonfigurowanych serwerów MCP",
+    "extraAllowedTools": "Dodatkowe dozwolone narzędzia (oddzielone przecinkami)",
+    "allowedToolsPlaceholder": "Bash(git:*), mcp__rooks__kanban_add",
+    "schedule": {
+      "label": "Zaplanuj start (opcjonalnie)"
+    },
+    "summary": {
+      "label": "Podsumowanie",
+      "model": "Model",
+      "type": "Typ",
+      "priority": "Priorytet",
+      "deps": "Zależności",
+      "depsNone": "Brak",
+      "depsCount": "do ukończenia wcześniej: {count}",
+      "start": "Start",
+      "startAsap": "Jak najszybciej",
+      "status": "Stan",
+      "attachments": "Pliki",
+      "agentNone": "Nie wybrano agenta"
+    },
+    "cancel": "Anuluj",
+    "saving": "Zapisywanie…",
+    "creating": "Tworzenie…",
+    "save": "Zapisz",
+    "create": "Utwórz zadanie",
+    "toast": {
+      "updated": "Zadanie zaktualizowane",
+      "created": "Zadanie utworzone",
+      "saveFailed": "Nie udało się zapisać zadania: {error}"
+    },
+    "seriesPlan": {
+      "presets": {
+        "saveError": "Nie udało się zapisać zestawu modeli.",
+        "label": "Zestawy",
+        "columnIn": {
+          "main": "główny",
+          "fallback": "zapasowy"
+        },
+        "columnMain": "Główny",
+        "columnFallback": "Zapasowy",
+        "empty": "Brak zestawów",
+        "applyTitle": "Zastosuj „{name}” — {roles}",
+        "applyTo": "Zastosuj „{name}” do",
+        "menu": "Zestaw „{name}”",
+        "saveTitle": "Zapisz kolumnę {column} jako zestaw",
+        "saveNothing": "Najpierw wybierz model w kolumnie {column}",
+        "namePlaceholder": "Nazwa zestawu",
+        "confirmSave": "Zapisz",
+        "confirmRename": "Zmień nazwę",
+        "cancel": "Anuluj",
+        "overwriteConfirm": "„{name}” już istnieje. Zastąpić?",
+        "replace": "Zastąp",
+        "saveRefused": "Niezapisane: zestawy nie są jeszcze wczytane lub lista jest pełna.",
+        "renameTaken": "Inny zestaw ma już tę nazwę.",
+        "rename": "Zmień nazwę",
+        "delete": "Usuń",
+        "deleteConfirm": "Usunąć „{name}”?",
+        "notice": {
+          "applied": "Zastosowano „{name}” do kolumny {column}.",
+          "none": "„{name}” nie ustawia żadnej z pokazanych tu ról.",
+          "saved": "Zapisano jako „{name}”."
+        },
+        "skipped": "Pominięte, już niedostępne: {roles}",
+        "orphan": {
+          "account": "konto już niepołączone",
+          "model": "model już nieoferowany przez to konto"
+        }
+      },
+      "heading": "Plan serii — jak wykonać tę pracę?",
+      "role": "rola",
+      "model": "model",
+      "fallback": "zapasowy",
+      "current": "{value} (bieżący)",
+      "inheritRole": "dziedzicz rolę projektu",
+      "runningMission": "trwająca misja",
+      "mainModel": "Model główny",
+      "runningModel": "Model trwającej misji — nie można go tu zmienić",
+      "noFallback": "bez zapasowego",
+      "fallbackTitle": "Zapasowy, gdy model główny wyczerpie limit",
+      "notePlaceholder": "Notatka (może doprecyzować lub podważyć powyższe wybory)",
+      "launch": "Uruchom",
+      "answered": "odpowiedziano",
+      "groups": {
+        "general": "Ustawienia ogólne — dotyczą każdej grupy, która nic nie ustawia",
+        "other": "Inne wątki prac",
+        "inherits": "dziedziczy ustawienia ogólne",
+        "countOne": "{count} wątek prac",
+        "countMany": "{count} {count, plural, one {wątek prac} few {wątki prac} many {wątków prac} other {wątku prac}}",
+        "inheritGeneral": "{value} (ustawienie ogólne)",
+        "fallbackSummary": "zapasowy {value}",
+        "noRolesInMode": "Ten tryb nie tworzy zadań: nie ma modelu do wyboru dla grupy.",
+        "modeLabel": "Modele tej grupy",
+        "sync": "Użyj modeli ogólnych",
+        "override": "Nadpisz modele",
+        "statusSync": "Modele ogólne",
+        "statusCustom": "Własne modele",
+        "customEmpty": "własne modele — wybierz poniżej, w przeciwnym razie obowiązują ogólne"
+      },
+      "roles": {
+        "orchestrator": "Orkiestrator",
+        "mission": "Nowa misja",
+        "code": "Koder",
+        "review": "Recenzent",
+        "merge": "Scalający",
+        "doc": "Dokumentacja"
+      },
+      "modes": {
+        "sequential": {
+          "head": "Sekwencyjnie"
+        },
+        "sequentialHere": {
+          "sub": "w tej misji",
+          "title": "Sekwencyjnie — w tej misji",
+          "detail": "Agent realizuje wątki prac tutaj, w tej rozmowie. Nie powstaje żadne zadanie Kanban ani worktree."
+        },
+        "sequentialNewMission": {
+          "sub": "nowa misja",
+          "title": "Sekwencyjnie — nowa misja",
+          "detail": "To samo łańcuchowe wykonanie jest przekazywane nowemu kontekstowi misji, a ta rozmowa czeka na podsumowanie."
+        },
+        "full": {
+          "head": "Pełny potok",
+          "sub": "code → review → merge",
+          "title": "Kanban — code → review → merge",
+          "detail": "Jedno zadanie kodu na wątek prac w równoległych worktree, każde przeglądane i scalane. Najbezpieczniejsza opcja na pracę nocną."
+        },
+        "codeSelf": {
+          "head": "Tylko kod",
+          "sub": "każda gałąź scala się sama",
+          "title": "Kanban — tylko kod, scalanie na bieżąco",
+          "detail": "Jedno zadanie kodu na wątek prac bez przeglądu; każdy koder scala swoją gałąź po zakończeniu."
+        },
+        "codeGroup": {
+          "head": "Tylko kod",
+          "sub": "jedno scalenie na końcu",
+          "title": "Kanban — tylko kod, scalenie grupowe",
+          "detail": "Jedno zadanie kodu na wątek prac bez przeglądu; końcowe zadanie merge łączy gałęzie."
+        }
+      }
+    }
+  }
+}

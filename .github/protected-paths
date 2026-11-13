@@ -1,0 +1,26 @@
+# Paths only maintainers (@rooks-admin) may change without the
+# protected-paths-approved label. See scripts/check-protected-paths.mjs.
+@rooks-admin
+.github/protected-paths
+.github/workflows/protected-paths.yml
+scripts/check-protected-paths.mjs
+LICENSE
+LICENSE.*
+LICENSING.md
+CLA.md
+TRADEMARKS.md
+packages/sdk/LICENSE
+examples/LICENSE
+app/src/vendor/vault-graph/LICENSE
+plugins/hermes-gateway/NOTICE
+app/src/styles/fonts/NOTICE.md
+.github/workflows/ci.yml
+.github/workflows/cla.yml
+.github/CODEOWNERS
+AGENTS.md
+CONTRIBUTING.md
+orchestrator/src/license/pubkey.ts
+orchestrator/src/plugins-bundled/updates/keyring.ts
+scripts/install.sh
+scripts/install.ps1
+brand.ts

@@ -1,0 +1,123 @@
+{
+  "machines": {
+    "title": "Machines",
+    "thisComputer": "This computer",
+    "backToLocal": "Back to this computer",
+    "status": {
+      "online": "Online",
+      "unreachable": "Unreachable",
+      "unauthorized": "Access revoked",
+      "tls_error": "Certificate refused",
+      "error": "Error",
+      "unknown": "Not checked yet"
+    },
+    "switcher": {
+      "trigger": "Machine: {name}. Switch machines",
+      "menuTitle": "Machines",
+      "actingAs": "as {account}",
+      "add": "Add a machine…",
+      "manage": "Manage connections",
+      "active": "Active",
+      "switching": "Switching to {name}…",
+      "loadError": "The machines could not be loaded."
+    },
+    "settings": {
+      "description": "Other Rooks machines this computer can drive. Switching replaces the whole interface with the chosen machine's, in this same window: each machine keeps its own agents, projects and settings.",
+      "local": "The machine this interface is served from.",
+      "add": "Add a machine",
+      "addTitle": "Add a machine",
+      "addHint": "On the other machine, open {settingsPath} and authorize a new device: it shows a one-time code, valid 5 minutes. The machine must be reachable over HTTPS (tailscale serve, a reverse proxy…).",
+      "urlLabel": "Address of the machine",
+      "urlPlaceholder": "https://my-server.example.net",
+      "codeLabel": "Pairing code",
+      "nameLabel": "Name (optional)",
+      "pair": "Pair",
+      "pairing": "Pairing…",
+      "paired": "{name} added.",
+      "repaired": "{name} paired again.",
+      "listTitle": "Paired machines",
+      "empty": "No other machine yet.",
+      "loadError": "The list of machines could not be loaded.",
+      "active": "Active",
+      "switchTo": "Switch to it",
+      "check": "Check now",
+      "checking": "Checking…",
+      "online": "{name} answers.",
+      "rename": "Rename",
+      "renameLabel": "Machine name",
+      "renamed": "Machine renamed.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "remove": "Remove",
+      "removeConfirm": "Remove {name} from this computer? Its access is revoked on that machine, and what this browser kept for it is erased.",
+      "removeAction": "Remove the machine",
+      "removed": "Machine removed.",
+      "removedNotRevoked": "Machine removed. It could not be reached: revoke this computer in its Devices settings.",
+      "version": "Version {version}",
+      "versionUnknown": "Version unknown",
+      "apiNewer": "Newer than this interface",
+      "apiUnknown": "Interface level unknown",
+      "apiTooOld": "Too old for this interface",
+      "lastSeen": "Last reached {date}",
+      "neverSeen": "Never reached",
+      "actingAs": "Acts as {account}",
+      "actingAsAdmin": "Acts as {account}, administrator"
+    },
+    "errors": {
+      "invalidCode": "The machine refused this code: wrong, expired or already used. Ask it for a new one.",
+      "invalidUrl": "This address cannot be used: give the machine's address alone, with no login, query or fragment.",
+      "httpsRequired": "The machine must be reached over HTTPS. Plain HTTP is only accepted on this computer itself.",
+      "blockedAddress": "This address never points to a Rooks machine.",
+      "notRooks": "No Rooks machine answers at this address.",
+      "requiresTls": "The machine does not see this connection as HTTPS: check the HTTPS settings of its reverse proxy.",
+      "unreachable": "The machine cannot be reached right now.",
+      "unauthorized": "The machine no longer accepts this computer: its access was revoked or expired. Pair it again.",
+      "tlsError": "The machine's certificate was refused.",
+      "redirect": "The machine answered with a redirect: give its final address.",
+      "badResponse": "The machine answered something unexpected.",
+      "throttled": "Too many attempts. Wait a few minutes before trying again.",
+      "tooMany": "A fleet holds at most 50 machines.",
+      "vault": "The secrets vault is unavailable: machine access cannot be kept.",
+      "incompatible": "This machine runs a Rooks version too old for this interface. Update it first.",
+      "notFound": "This machine is no longer in your fleet.",
+      "notHere": "Machines are managed from a browser signed in on this computer.",
+      "sessionRequired": "Sign in on this computer first.",
+      "invalidName": "This name cannot be used.",
+      "generic": "Something went wrong. Try again."
+    },
+    "banner": {
+      "unreachable": "{name} cannot be reached right now.",
+      "apiUnknown": "{name} does not say which interface it expects: some screens may not work.",
+      "apiNewer": "{name} runs a newer Rooks than this interface: update this app to use it fully.",
+      "retry": "Retry",
+      "dismiss": "Dismiss"
+    },
+    "blocked": {
+      "unnamed": "This machine",
+      "retry": "Try again",
+      "title": {
+        "unreachable": "{name} cannot be reached",
+        "unauthorized": "{name} no longer accepts this computer",
+        "incompatible": "{name} is too old for this interface",
+        "unknown": "This machine is not in your fleet",
+        "session_required": "Sign in on this computer",
+        "unavailable": "{name} cannot be opened from here"
+      },
+      "body": {
+        "unreachable": "The machine does not answer: it may be off, or its network unavailable. Your work on it is untouched.",
+        "unauthorized": "This computer's access was revoked or expired on that machine. Pair it again from {settingsPath}.",
+        "incompatible": "It speaks interface level {level}, and this interface needs at least {min}. Update Rooks on that machine, then switch to it again.",
+        "unknown": "The machine this window was driving was removed from your fleet, or belongs to another account.",
+        "session_required": "Your session on this computer ended. Go back to it to sign in again.",
+        "unavailable": "This computer cannot open its access to the machine right now (secrets vault, daemon). Try again in a moment."
+      }
+    },
+    "lock": {
+      "remote": "This licence is the one of {name}, the machine this window drives. This computer is not affected.",
+      "unnamed": "another machine"
+    },
+    "localOnly": {
+      "remoteSessions": "These are the remote API tokens of this computer, not of the machine this interface is switched to."
+    }
+  }
+}

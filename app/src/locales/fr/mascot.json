@@ -1,0 +1,26 @@
+{
+  "mascot": {
+    "field": {"shape": "Crâne", "fur": "Pelage", "eyes": "Yeux", "acc": "Accessoire"},
+    "shape": {"squircle": "Classique", "tri": "Poire", "gem": "Œuf", "round": "Ronde", "bean": "Large", "cloud": "Haute", "hex": "Carrée"},
+    "fur": {
+      "sand": "Sable", "cinnamon": "Cannelle", "cream": "Crème", "cocoa": "Cacao", "caramel": "Caramel", "taupe": "Taupe",
+      "honey": "Miel", "bark": "Écorce", "wheat": "Blé", "pink": "Rose", "blue": "Bleu", "green": "Vert", "yellow": "Jaune", "orange": "Orange", "purple": "Violet", "custom": "Personnalisé"
+    },
+    "eyes": {
+      "pill": "Calmes", "big": "Grands ouverts", "happy": "Joyeux", "wink": "Clin d'œil", "surprised": "Surpris",
+      "squint": "Concentrés", "sleepy": "Endormis", "heart": "Cœurs", "star": "Étoiles", "code": "Code"
+    },
+    "acc": {
+      "none": "Aucun", "loupe": "Loupe", "pen": "Stylo rouge", "quill": "Plume", "hammer": "Marteau", "wrench": "Clé à molette",
+      "baton": "Baguette", "telescope": "Longue-vue", "envelope": "Enveloppe", "calendar": "Calendrier", "clipboard": "Presse-papiers",
+      "hourglass": "Sablier", "teacher": "Livre et toque", "calculator": "Calculatrice", "chart": "Graphique", "brush": "Pinceau",
+      "globe": "Globe", "megaphone": "Mégaphone", "shield": "Bouclier", "coffee": "Tasse de café"
+    },
+    "state": {
+      "idle": "Au repos", "listening": "Écoute", "thinking": "Réfléchit", "working": "Travaille", "searching": "Cherche",
+      "waiting": "Attend ta réponse", "done": "Terminé", "error": "Erreur", "sleeping": "Dort",
+      "happy": "Content", "celebrate": "Fait la fête", "confused": "Perplexe", "surprised": "Surpris", "sad": "Triste",
+      "angry": "Fâché", "love": "Fan", "shy": "Timide", "coding": "Code"
+    }
+  }
+}

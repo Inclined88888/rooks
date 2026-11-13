@@ -1,0 +1,108 @@
+{
+  "onboarding": {
+    "back": "Zurück",
+    "continue": "Weiter",
+    "language": {
+      "title": "Wähle deine Sprache"
+    },
+    "splash": {
+      "title": "Dein KI-Team,\nbei dir zu Hause.",
+      "subtitle": "Agenten, die auf deinem Rechner arbeiten, mit den KI-Abos, die du schon bezahlst.",
+      "hint": "Psst, du kannst sie packen."
+    },
+    "account": {
+      "title": "Erstelle dein lokales Konto",
+      "subtitle": "Damit meldest du dich bei Rooks an. Du bist sein Administrator.",
+      "privacy": "Wir erfassen nur deine E-Mail-Adresse, falls du dein Passwort zurücksetzen möchtest. Das erstellte Konto bleibt lokal."
+    },
+    "llm": {
+      "title": "Wähle\ndein LLM.",
+      "subtitle": "Rooks nutzt die KI-Abos, die du bereits hast. Nie eine Rechnung pro Token."
+    },
+    "profile": {
+      "title": "Was führt dich hierher?",
+      "subtitle": "Rooks passt seine Voreinstellungen und seine Tour an deine Antwort an."
+    },
+    "agent": {
+      "templates": {
+        "title": "Wähle sein Profil",
+        "subtitle": "Ein fertiger Ausgangspunkt. Du kannst später alles ändern."
+      },
+      "interview": {
+        "title": "Richten wir deine Automatisierung ein",
+        "subtitle": "Fünf Fragen, und dein Agent weiß, was er tun soll, womit und wann."
+      },
+      "sheet": {
+        "title": "Konfiguriere deinen Agenten",
+        "subtitle": "Jede Einstellung bleibt in seinem Profil änderbar."
+      }
+    },
+    "signin": {
+      "title": "Willkommen zurück",
+      "subtitle": "Rooks hat ein neues Aussehen. Melde dich mit deinem Rooks-Konto an, um fortzufahren."
+    },
+    "mascot": {
+      "title": "Das ist das Maskottchen von {name}",
+      "subtitle": "Neu in dieser Version: Jeder Agent hat ein Maskottchen, das zeigt, was er gerade tut — nachdenken, arbeiten, auf dich warten. Kleide {name} ein, wie du möchtest."
+    },
+    "scheme": {
+      "label": "Farbmodus",
+      "light": "Hell",
+      "system": "System"
+    },
+    "discover": {
+      "label": "Rooks entdecken",
+      "slide": "Folie {current} von {total}",
+      "next": "Weiter",
+      "skip": "Alle überspringen",
+      "finish": "Zu {name}",
+      "finishNoName": "Los geht’s",
+      "autonomous": {
+        "title": "Deine TIMs arbeiten selbstständig",
+        "body": "Gib einem TIM eine Mission, eine Uhrzeit oder einen Auslöser: Er wählt seine Fähigkeiten und Werkzeuge, merkt sich, was er lernt, und meldet sich, sobald die Arbeit erledigt ist.",
+        "nodes": {
+          "skills": "Fähigkeiten",
+          "tools": "Werkzeuge",
+          "memory": "Gedächtnis",
+          "schedule": "Zeitplan"
+        },
+        "done": "Bericht gesendet"
+      },
+      "teams": {
+        "title": "Stell Teams aus TIMs zusammen",
+        "body": "Einer plant, einer programmiert, einer prüft: Aufgaben wandern auf dem Kanban von TIM zu TIM, und im Multichat sprichst du mit allen gleichzeitig.",
+        "columns": {
+          "todo": "Zu tun",
+          "doing": "In Arbeit",
+          "done": "Erledigt"
+        },
+        "card": "Startseite"
+      },
+      "projects": {
+        "title": "Projekte mit eigenen TIMs",
+        "body": "Ein allgemeiner Assistent weiß von allem ein bisschen. Die TIMs eines Projekts arbeiten nur in diesem Projekt, mit seinen eigenen Regeln und seinem eigenen Gedächtnis, und verlassen es nie.",
+        "general": "Deine TIMs sind überall dabei",
+        "alpha": "Website",
+        "beta": "Buchhaltung",
+        "rules": "Seine Regeln",
+        "memory": "Sein Gedächtnis"
+      },
+      "connected": {
+        "title": "Schließ alles andere an",
+        "body": "Connectors bringen deine Mails, deinen Kalender und deine Tools mit; Workflows verketten die Schritte; Plugins ergänzen, was fehlt, bis hin zur Oberfläche."
+      },
+      "views": {
+        "label": "Wo du es findest",
+        "canvas": "Agenten-Canvas",
+        "chat": "Chat",
+        "kanban": "Kanban",
+        "multichat": "Multichat",
+        "projectChat": "Projekt-Chat",
+        "widgets": "Widgets",
+        "connectors": "Connectors",
+        "workflows": "Workflows",
+        "plugins": "Plugins"
+      }
+    }
+  }
+}

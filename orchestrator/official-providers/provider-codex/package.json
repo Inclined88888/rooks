@@ -1,0 +1,105 @@
+{
+  "name": "@rooks/provider-codex",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "rooks": {
+    "id": "provider-codex",
+    "apiVersion": 12,
+    "kind": "provider",
+    "label": "Codex (OpenAI)",
+    "description": "Runs missions on the Codex CLI with the user's own ChatGPT subscription, or an API key, and on any endpoint that speaks the OpenAI Responses API.",
+    "author": "Rooks",
+    "permissions": ["backends:register"],
+    "provider": {
+      "binaries": [
+        {
+          "name": "codex"
+        }
+      ],
+      "credentialDirs": [
+        ".codex"
+      ],
+      "backends": [
+        {
+          "id": "codex",
+          "rank": 20,
+          "binary": {
+            "names": [
+              "codex"
+            ],
+            "install": {
+              "darwin": {
+                "kind": "script",
+                "posix": "curl -fsSL https://chatgpt.com/codex/install.sh | sh"
+              },
+              "any": {
+                "kind": "npm",
+                "package": "@openai/codex"
+              }
+            },
+            "searchDirs": {
+              "win32": [
+                "${LOCALAPPDATA}/Programs/OpenAI/Codex/bin"
+              ],
+              "darwin": [
+                "/Applications/ChatGPT.app/Contents/Resources",
+                "/Applications/Codex.app/Contents/Resources",
+                "~/Applications/ChatGPT.app/Contents/Resources",
+                "~/Applications/Codex.app/Contents/Resources"
+              ]
+            },
+            "desktopBuilds": [
+              {
+                "platform": "win32",
+                "root": "${LOCALAPPDATA}/OpenAI/Codex/bin",
+                "executable": [
+                  "codex.exe"
+                ],
+                "order": "newest",
+                "folderPattern": "^[0-9a-f]+$"
+              }
+            ],
+            "standaloneInstaller": {
+              "label": "Codex",
+              "posix": "curl -fsSL https://chatgpt.com/codex/install.sh | sh",
+              "windows": "irm https://chatgpt.com/codex/install.ps1 | iex"
+            }
+          },
+          "credentialDirs": [
+            ".codex"
+          ],
+          "setupCard": {
+            "label": "GPT",
+            "order": 1,
+            "suggested": true
+          },
+          "modelBrands": [
+            {
+              "match": "gpt",
+              "brand": "openai"
+            }
+          ],
+          "seedsMainAgent": true,
+          "readOnlyTools": true,
+          "signInCommand": "codex login",
+          "installDocs": "https://developers.openai.com/codex/cli",
+          "updateCheck": {
+            "latest": {
+              "npm": "@openai/codex"
+            }
+          },
+          "apiKeyProviders": [
+            {
+              "id": "ollama-cloud",
+              "label": "Ollama Cloud",
+              "brand": "ollama"
+            }
+          ]
+        }
+      ]
+    },
+    "license": { "required": false }
+  }
+}

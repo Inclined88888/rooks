@@ -1,0 +1,7 @@
+{"type":"thread.started","thread_id":"0199f3c1-8b7a-7c2d-9e4f-5a6b7c8d9e0f"}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_0","type":"reasoning","text":""}}
+{"type":"item.completed","item":{"id":"item_0","type":"reasoning","text":"L'utilisateur veut lire le fichier avant de le modifier."}}
+{"type":"item.completed","item":{"id":"item_1","type":"command_execution","command":"cat src/index.ts","aggregated_output":"export const answer = 42;\n","exit_code":0,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"J'ai lu le fichier."}}
+{"type":"turn.completed","usage":{"input_tokens":5120,"cached_input_tokens":4096,"output_tokens":188,"reasoning_output_tokens":64}}

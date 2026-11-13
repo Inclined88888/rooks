@@ -1,0 +1,24 @@
+{
+  "name": "@rooks/plugin-theme",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": { "./client": "./lib/client.js" },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "example-theme",
+    "apiVersion": 1,
+    "kind": "theme",
+    "label": "Example theme",
+    "description": "A \"lagoon\" palette (teal / indigo) in place of the product's salmon.",
+    "permissions": [],
+    "client": {
+      "slots": ["theme"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    },
+    "settings": [],
+    "license": { "required": false }
+  }
+}

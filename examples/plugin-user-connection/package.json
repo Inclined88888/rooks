@@ -1,0 +1,25 @@
+{
+  "name": "@rooks/plugin-user-connection",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    "./client": "./lib/client.js"
+  },
+  "files": ["lib", "README.md", "SIGNATURE"],
+  "rooks": {
+    "id": "user-connection-example",
+    "apiVersion": 7,
+    "kind": ["behavior"],
+    "label": "Per-user connection example",
+    "description": "SDK example: each user saves their URL and key; the plugin reads them and reaches the approved host.",
+    "permissions": ["connections:register", "connections:users:read", "http:outbound"],
+    "client": {
+      "slots": ["settings.connection.form"],
+      "external": ["react", "@rooks/ui"],
+      "mode": "esm"
+    }
+  }
+}

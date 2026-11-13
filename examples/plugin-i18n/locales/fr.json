@@ -1,0 +1,9 @@
+{
+  "widget": {
+    "title": "Bonjour dans votre langue",
+    "greeting": "Bonjour, {name} !",
+    "notes": "{count, plural, =0 {Aucune note} one {# note} other {# notes}}",
+    "add": "Ajouter une note",
+    "language": "Affiché en {tag}"
+  }
+}
