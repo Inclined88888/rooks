@@ -191,7 +191,7 @@ function RoutineDialog({
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
                 className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                placeholder="timon"
+                placeholder="rooks"
               />
             </div>
             <div className="flex items-end">
@@ -323,9 +323,11 @@ export function RoutinesClient() {
                 {r.task_type}
               </span>
             )}
-            <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10.5px] text-muted-foreground">
-              → {r.agent_name}
-            </span>
+            {agents.some((a) => a.name === r.agent_name) && (
+              <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10.5px] text-muted-foreground">
+                → {r.agent_name}
+              </span>
+            )}
             <div className="hidden md:flex flex-col items-end text-[10.5px] text-muted-foreground/70 tabular-nums leading-tight">
               <span>{t('routinesPage.next', { date: fmtDate(r.next_run_at) })}</span>
               <span>{t('routinesPage.last', { date: fmtDate(r.last_run_at) })}</span>

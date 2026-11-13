@@ -6,7 +6,7 @@
  * the filing of rows, grafts and plugin panes lives in `settings-layout.ts`.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type MutableRefObject, type ReactElement } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Brain, ChevronLeft, Cpu, Gauge, Globe, KeyRound, LayoutPanelLeft, Puzzle, Rocket, ScrollText, Wrench, type LucideIcon,
 } from 'lucide-react';
@@ -108,6 +108,7 @@ export function SettingsDialog(): ReactElement | null {
 }
 
 function SettingsPanel({ onClose, unsavedRef }: { onClose: () => void; unsavedRef: MutableRefObject<boolean> }): ReactElement {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const target = parseSettingsParam(searchParams.get(SETTINGS_PARAM)) ?? { category: 'interface', tab: null };
   const { select: navigate, selectAccount } = useSettingsNavigation();
@@ -266,6 +267,13 @@ function SettingsPanel({ onClose, unsavedRef }: { onClose: () => void; unsavedRe
                 {categoryLabel('plugins')}
               </span>
             </div>
+            <button
+              type="button"
+              onClick={() => { onClose(); router.push('/plugins'); }}
+              className="mt-3 w-full rounded-lg px-2.5 py-1.5 text-left text-[13px] text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
+            >
+              {t('pluginsPage.browse')}
+            </button>
             <ul className="mt-2 space-y-0.5" aria-label={categoryLabel('plugins')}>
               {resolved.category.tabs.map((tab) => (
                 <li key={tab.id}>

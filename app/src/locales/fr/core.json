@@ -1695,6 +1695,7 @@
     "orgRootDrop": "Déposez ici pour remettre un agent sous son responsable par défaut", "mainSeatEmpty": "Aucun orchestrateur principal", "mainSeatEmptyHint": "Les agents sans responsable restent à la racine tant que personne n'occupe la place.", "mainSeatNoCandidate": "Aucun agent ne peut occuper la place : donnez le rôle d'orchestrateur à un agent sans projet.", "mainSeatSet": "Définir {name} comme orchestrateur principal"
   },
   "chatPage": {
+    "setupModel": "Configurer un modèle",
     "allowSession": "Autoriser pour cette session",
     "allowAlways": "Toujours autoriser",
     "allowCovers": "Couvre {motif}",
@@ -2643,7 +2644,8 @@
     "eyebrow": "Galerie locale",
     "title": "Plugins présents sur cette machine",
     "subtitle": "Tout ce qui est installé ici, branché ou non. Débrancher un plugin le laisse sur le disque avec ses réglages.",
-    "empty": "Aucun plugin installé. Ajoutez-en un avec `timon plugin add <paquet>`.",
+    "browse": "Parcourir et installer",
+    "empty": "Aucun plugin installé.",
     "inserts": "S'insère dans",
     "insertsNone": "rien (moitié hôte seule)",
     "modifies": "Modifie",

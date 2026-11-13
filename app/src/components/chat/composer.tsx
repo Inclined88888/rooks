@@ -65,6 +65,7 @@ import { detectTerminalPlatform } from '@/lib/terminal-keys';
 import { ContextGaugeMenu, fmtTokens } from './context-gauge-menu';
 import { compactStore, isRunning, useMissionCompaction } from '@/lib/mission-compact';
 import { openChat } from '@/lib/chat-navigation';
+import { openSettingsFromAnywhere } from '@/lib/settings-navigation';
 import { chatHref } from '@/lib/chat-island-params';
 import { ContextRing } from './context-ring';
 import { PermissionModeMenu } from './permission-mode-menu';
@@ -1172,7 +1173,7 @@ function ComposerSettingsPills({
 
   return (
     <div className="flex min-w-0 items-center gap-1.5">
-      {appearance.showModel && (
+      {appearance.showModel && (effModel ? (
         <LlmMenu
           backend={effBackend}
           model={effModel}
@@ -1209,7 +1210,15 @@ function ComposerSettingsPills({
             )}
           </button>
         </LlmMenu>
-      )}
+      ) : (
+        <button
+          type="button"
+          className={cn(pill, 'shrink')}
+          onClick={() => openSettingsFromAnywhere({ category: 'models', tab: null })}
+        >
+          {i18n('chatPage.setupModel')}
+        </button>
+      ))}
       {showEffort && (
         <ThinkingLevelMenu
           bar={thinkingBar}

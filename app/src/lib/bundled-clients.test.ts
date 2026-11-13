@@ -59,7 +59,8 @@ test('the main nav entries come from the modules, ranked, not from a hard list',
   mountLayout();
   mountBundledClients(null);
   const entries = slotEntries('nav.item');
-  assert.ok(entries.length >= 14, `expected every product entry, got ${entries.length}`);
+  assert.ok(entries.length >= 13, `expected every product entry, got ${entries.length}`);
+  assert.equal(entries.some((e) => e.pluginId === '@timon/plugins'), false, 'the gallery is opened from Settings');
   assert.deepEqual(
     [...entries].map((e) => e.order),
     [...entries].map((e) => e.order).sort((a, b) => a - b),

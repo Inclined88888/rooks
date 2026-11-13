@@ -34,6 +34,8 @@ test('the product identity carries no marker at all', () => {
   const release = instanceIdentity({});
   assert.equal(release.variant, 'release');
   assert.equal(release.displayName, 'Rooks');
+  // The window title is the product name. The packager's productName stays
+  // separate: it names files and paths, and must never grow spaces.
   assert.equal(release.fullName, 'Rooks');
   assert.equal(release.shortName, 'Rooks');
   assert.equal(release.badge, null);

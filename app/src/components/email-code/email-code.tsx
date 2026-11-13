@@ -192,7 +192,7 @@ export function ProductEmailCode(): ReactElement | null {
 
   return (
     <div className="flex w-full max-w-[560px] flex-col items-center text-center">
-      <BrandLogo className="mb-7 h-12" alt="Timon" />
+      <BrandLogo className="mb-7 h-12" alt="Rooks" />
       <h1 className="text-[28px] font-bold leading-tight tracking-[-0.02em]">{t('emailCode.title')}</h1>
       <p className="mt-2.5 text-[15px] text-muted-foreground">
         {before}<b className="font-semibold text-foreground">{code.email}</b>{after}

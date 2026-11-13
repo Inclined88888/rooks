@@ -42,14 +42,11 @@ test('an initial and a stored mascot both wear the round disc', () => {
   assert.equal(disc.textContent, 'n');
 });
 
-test('a working agent keeps its pulse and its state ring', () => {
+test('a working agent has no glow ring and no pulse', () => {
   const m = dom(createElement(ActiveAgentAvatar, { identity: mascot, state: 'thinking' }));
-  assert.ok(m.querySelector('[data-chip-pulse]'), 'the activity pulse is still there');
-  assert.match(m.querySelector('[data-chip-pulse]')!.getAttribute('class') ?? '', /animate-\[ping/);
-  assert.ok(m.querySelector('[data-chip-ring]'));
-
-  const idle = dom(createElement(ActiveAgentAvatar, { identity: emoji, state: 'idle' }));
-  assert.ok(!idle.querySelector('[data-chip-ring]'));
+  assert.equal(m.querySelector('[data-chip-pulse]'), null);
+  assert.equal(m.querySelector('[data-chip-ring]'), null);
+  assert.ok(m.querySelector('[data-chip-avatar]'));
 });
 
 test('the agent-chat frame stays for a stored look, a letter and a picture', () => {

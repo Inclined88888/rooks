@@ -9,10 +9,9 @@
  * starts below it, so it's never covered/overlapped on collapse-expand.
  *
  * Collapsed by default (icons only, `--timon-nav-w` = 56px, reserved in
- * every page's layout). Hovering expands it as an overlay above the
- * content (`fixed`, pushes nothing); a button at the bottom lets you pin
- * it expanded (persisted in localStorage) for those who prefer to keep
- * labels visible permanently.
+ * every page's layout). Hovering widens that same gutter so the labels
+ * do not cover the page; a button at the bottom lets you pin it expanded
+ * (persisted in localStorage) for those who prefer to keep labels visible.
  *
  * Mobile (<768px): no hover, no room for a permanent rail. The nav
  * disappears completely (`--timon-nav-w` = 0) and becomes a drawer that
@@ -175,15 +174,16 @@ export function VerticalNav({
   // page change (the previous rail's cleanup has just reset it).
   useEffect(() => {
     try {
+      const wide = !isMobile && (pinned || hovered || held);
       document.documentElement.style.setProperty(
         '--timon-nav-w',
-        isMobile ? NAV_W_MOBILE : pinned ? NAV_W_PINNED : NAV_W_DEFAULT,
+        isMobile ? NAV_W_MOBILE : wide ? NAV_W_PINNED : NAV_W_DEFAULT,
       );
     } catch { /* ignore */ }
     return () => {
       try { document.documentElement.style.setProperty('--timon-nav-w', NAV_W_DEFAULT); } catch { /* ignore */ }
     };
-  }, [pinned, isMobile]);
+  }, [pinned, isMobile, hovered, held]);
 
   // Navigating closes the drawer: without this it would stay open over
   // the page just requested. `onMobileClose` isn't a dependency — only a

@@ -7,7 +7,7 @@ import { useProjectMeta } from '@/hooks/use-project-meta';
 import { agentRoleKey, resolveRole } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { accentVars } from '@/lib/accent-color';
-import { STATE_VISUALS, type ActiveState } from '@/lib/agent-state';
+import { type ActiveState } from '@/lib/agent-state';
 import { chatSenderName } from '@/lib/main-agent';
 import { defaultLookFor, normalizeAgentLook, type AgentLook } from '@/components/mascot/agent-look';
 
@@ -243,14 +243,7 @@ export function AgentAvatar({ identity, size = 'md', className, roleBadge = true
   );
 }
 
-/**
- * The agent's face, with its state AROUND it: a thin ring in the state's
- * colour, and while it works (thinking, needs you) a pulse expanding from that
- * ring. Under `prefers-reduced-motion` the pulse is not painted; the ring and
- * the state word still say it. A mascot wears no static ring — its face
- * already shows the state, and a circle around it read as a frame — but keeps
- * the pulse while it works.
- */
+/** The agent's face. The state is the word beside it, not a glow around the picture. */
 export function ActiveAgentAvatar({ identity, state, size, className, label, live }: {
   identity: AgentIdentity;
   state: ActiveState;
@@ -260,8 +253,6 @@ export function ActiveAgentAvatar({ identity, state, size, className, label, liv
   /** Names the state for assistive tech where no word beside the face says it. */
   label?: string;
 }) {
-  const vis = STATE_VISUALS[state];
-  const mascot = showsMascot(identity);
   return (
     <span
       className="relative inline-grid shrink-0 place-items-center"
@@ -270,23 +261,7 @@ export function ActiveAgentAvatar({ identity, state, size, className, label, liv
       role={label ? 'img' : undefined}
       aria-label={label}
     >
-      {state !== 'idle' && !mascot && (
-        <span
-          aria-hidden
-          data-chip-ring
-          className="pointer-events-none absolute -inset-[2px] rounded-[var(--avatar-radius)]"
-          style={{ boxShadow: `0 0 0 1.5px ${vis.colorVar}` }}
-        />
-      )}
-      {vis.pulse && (
-        <span
-          aria-hidden
-          data-chip-pulse
-          className="pointer-events-none absolute -inset-[2px] rounded-[var(--avatar-radius)] opacity-70 motion-safe:animate-[ping_1.6s_ease-out_infinite] motion-reduce:hidden"
-          style={{ border: `1.5px solid ${vis.colorVar}` }}
-        />
-      )}
-      {/* Above the ring and the pulse, so the role badge is never painted over. */}
+      {/* The face sits above a role badge, with no glow around it. */}
       <span className="relative z-10 inline-grid">
         <AgentAvatar identity={identity} size={size} className={className} live={live} />
       </span>

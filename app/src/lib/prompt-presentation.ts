@@ -212,10 +212,10 @@ function badge(tone: string, label: string, title?: string): string {
 }
 
 function statusBadge(card: ReturnCard): string {
+  if (card.mission_status === 'failed' || card.status === 'FAILED') return badge('danger', t('chatPage.returnCard.missionFailed'));
   if (card.status === 'DONE') return badge('success', t('chatPage.returnCard.done'));
   if (card.status === 'BLOCKED') return badge('danger', t('chatPage.returnCard.blocked'));
   if (card.status) return badge('muted', t('chatPage.returnCard.inProgress'), card.status);
-  if (card.mission_status === 'failed') return badge('danger', t('chatPage.returnCard.missionFailed'));
   if (card.mission_status) return badge('success', t('chatPage.returnCard.missionEnded'), card.mission_status);
   return '';
 }

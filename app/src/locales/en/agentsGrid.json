@@ -56,6 +56,7 @@
     "refreshProjectsAgents": "Refresh projects and agents",
     "projectCount": "{count} project(s)",
     "loading": "Loading…",
+    "noProjects": "No projects yet.",
     "noMatchingProject": "No project matches the filter.",
     "newTask": "New task",
     "newProject": "New project",

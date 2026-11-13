@@ -74,13 +74,23 @@ export function ThemeProvider({
   const revision = useRef(0);
   const [scheme, setSchemeState] = useState<ColorScheme>(initialScheme);
   const [mode, setMode] = useState<SchemeMode>('light');
+  const [osEpoch, setOsEpoch] = useState(0);
   useEffect(() => { setMode(readSchemeMode()); }, [pathname]);
   useEffect(() => {
     const sync = () => setMode(readSchemeMode());
     window.addEventListener('rooks-scheme-mode', sync);
     return () => window.removeEventListener('rooks-scheme-mode', sync);
   }, []);
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
+    if (!mq) return;
+    const onChange = () => setOsEpoch((n) => n + 1);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
   const applied = appliedScheme(mode);
+  void osEpoch;
+  useEffect(() => { setSchemeState(applied); }, [applied]);
 
   useEffect(() => {
     try {
@@ -97,8 +107,7 @@ export function ThemeProvider({
       .then((r) => (r.ok ? r.json() : null))
       .then((body: unknown) => {
         if (cancelled || started !== revision.current) return;
-        const next = schemeOfMe(body);
-        if (next) setSchemeState(next);
+        if (schemeOfMe(body)) setSchemeState(appliedScheme(readSchemeMode()));
       })
       .catch(() => {});
     return () => {
@@ -106,9 +115,8 @@ export function ThemeProvider({
     };
   }, [pathname]);
 
-  // The chosen mode, not the OS one onboarding follows: what the shell
-  // remembers for this machine's next window.
-  useEffect(() => { reportWindowScheme(scheme); }, [scheme]);
+  // What is painted now, so System tracks the OS in the window as well as the page.
+  useEffect(() => { reportWindowScheme(applied); }, [applied]);
 
   const setScheme = useCallback((next: ColorScheme) => {
     revision.current += 1;

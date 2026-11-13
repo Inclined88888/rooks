@@ -54,7 +54,7 @@
     "noMatch": "Nothing matches these filters.",
     "provenance": {
       "all": "All",
-      "timon": "@timon",
+      "timon": "Rooks",
       "marketplace": "Marketplace"
     },
     "verified": "Verified",
@@ -96,11 +96,11 @@
         "description": "Sealed secrets vault. Values never leave the daemon in the clear."
       },
       "@timon/ui-layout": {
-        "label": "Layout",
+        "label": "Standard",
         "description": "The chrome of the app: nav, top bar, cockpit rails, overlay layer. Replaceable — it occupies the root slot."
       },
       "@timon/ui-theme": {
-        "label": "Theme",
+        "label": "Rooks",
         "description": "Product colour tokens. Occupies the theme slot; switching it off leaves the chrome unpainted."
       },
       "@timon/backends": {
@@ -233,7 +233,7 @@
       },
       "@timon/updates": {
         "label": "Rooks updates",
-        "description": "Shows a banner when a newer Rooks is published for your channel, with its notes and the installer for your system. It reads a signed list on timon-ai.com and sends nothing about you; it can be turned off in the settings."
+        "description": "Shows a banner when a newer Rooks is published for your channel, with its notes and the installer for your system. It reads a signed release list and sends nothing about you; it can be turned off in the settings."
       },
       "@timon/telemetry": {
         "label": "Usage statistics",
@@ -386,7 +386,7 @@
         "encrypted": "This .zip is password-protected. Zip the plugin again without a password.",
         "multi-volume": "This .zip is split into several parts. Make a single .zip.",
         "compression": "This .zip uses a compression method Rooks cannot read. Zip the plugin again with standard compression.",
-        "not-a-plugin": "This is not a Rooks plugin: no package.json with a `timon` manifest.",
+        "not-a-plugin": "This is not a Rooks plugin: package.json has no plugin manifest.",
         "invalid-path": "This path cannot be used.",
         "forbidden-path": "Plugins cannot be installed from this folder.",
         "not-found": "Nothing was found there anymore.",

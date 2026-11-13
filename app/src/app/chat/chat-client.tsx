@@ -1257,7 +1257,7 @@ export function ChatClient({
   // A new-host alert's link opens the mission's Network view beside the page's chat.
   useEgressDeepLink(missionParam, !compact && !inIsland && params.get(EGRESS_DEEP_LINK_PARAM) === '1');
 
-  const [agent, setAgent] = useState<Agent>({ name: agentId, model: 'sonnet', kind: 'live', status: 'idle' });
+  const [agent, setAgent] = useState<Agent>({ name: agentId, model: '', kind: 'live', status: 'idle' });
   /** True once the `/api/ui/agents/:id` fetch has settled (success or
    *  failure). While false, `agent.project` is still `undefined` — a state
    *  that must never be confused with "no project" (`null`, a legitimate
@@ -2359,10 +2359,16 @@ export function ChatClient({
   const acceptsFiles = capabilitiesFor(backendCatalog, effBackend).attachments;
   acceptsFilesRef.current = acceptsFiles;
   providerNameRef.current = backendLabel(backendCatalog, effBackend);
-  const effModel =
+  const usageKind = liveStats.accountUsage?.kind;
+  const signedOut = usageKind === 'disconnected';
+  const catalogDefault = usageKind === 'ok' || usageKind === 'unsupported'
+    ? defaultModelFor(backendCatalog, effBackend)
+    : '';
+  const chosenModel =
     (currentMissionId ? missionModel : pendingModelOverride)
-    ?? agent.model
-    ?? defaultModelFor(backendCatalog, effBackend);
+    || agent.model
+    || catalogDefault;
+  const effModel = signedOut ? '' : chosenModel;
 
   /** Switches the LLM of the current mission. The returned status says
    *  when the change takes effect — immediate on a persistent process,

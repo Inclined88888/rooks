@@ -169,7 +169,7 @@ export function MemoryClient() {
     <div className="flex h-full min-h-0 flex-col bg-background">
       {runId && <CurationRunDialog runId={runId} onClose={() => setRunId(null)} />}
       <div className="flex items-center gap-2 bg-background px-4 py-2.5">
-        <h1 className="mr-2 text-sm font-semibold">🧠 {t('memoryPage.title')}</h1>
+        <h1 className="mr-2 flex h-8 items-center text-sm font-semibold">{t('memoryPage.title')}</h1>
         <div className="inline-flex gap-0.5 rounded-md border border-border bg-muted/30 p-0.5">
           {(['dashboard', 'browse'] as const).map((m) => (
             <button

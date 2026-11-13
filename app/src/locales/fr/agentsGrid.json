@@ -56,6 +56,7 @@
     "refreshProjectsAgents": "Rafraîchir projets et agents",
     "projectCount": "{count} projet(s)",
     "loading": "Chargement…",
+    "noProjects": "Aucun projet pour l'instant.",
     "noMatchingProject": "Aucun projet ne correspond au filtre.",
     "newTask": "Nouvelle tâche",
     "newProject": "Nouveau projet",

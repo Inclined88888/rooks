@@ -139,7 +139,6 @@ export function WorkflowsPage() {
           <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><WorkflowIcon className="size-6" /></span>
           <h2 className="mt-4 text-sm font-semibold">{t('workflows.emptyTitle')}</h2>
           <p className="mt-1 max-w-md text-xs text-muted-foreground">{t('workflows.emptyHint')}</p>
-          <Button className="mt-5" size="sm" onClick={() => { resetDialog(); setOpen(true); }}><Plus className="mr-1 size-4" />{t('workflows.new')}</Button>
         </div>
       )}
       {workflows && workflows.length > 0 && (

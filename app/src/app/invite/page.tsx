@@ -27,7 +27,7 @@ function InviteShell({ children }: { children: React.ReactNode }) {
       />
       <div className="relative w-full max-w-sm">
         <div className="mb-8 flex justify-center">
-          <BrandLogo className="h-11" alt="Timon" />
+          <BrandLogo className="h-11" alt="Rooks" />
         </div>
         <div className="rounded-xl border border-border bg-card p-6 shadow-elev-2 sm:p-7">
           {children}

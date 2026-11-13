@@ -30,7 +30,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { AgentEditorModal } from '@/components/agent-editor/agent-editor-modal';
 import { UnsavedDocumentDialog } from '@/components/chat/unsaved-document-dialog';
 import { ConfirmDialogHost } from '@/components/confirm-dialog/confirm-dialog';
-import { APPEARANCE_SCOPE, DEFAULT_APPEARANCE, effectiveGlass, readNativeAppearance } from '@/plugins-client/ui-theme-variants';
+import { APPEARANCE_SCOPE, DEFAULT_APPEARANCE, readNativeAppearance } from '@/plugins-client/ui-theme-variants';
 import { BACKGROUND_SCOPE } from '@/components/background/background-model';
 import { DEFAULT_USER_PREFS, type ColorScheme } from '@/lib/auth';
 import { fetchForRender, resolveLayoutSeeds, resolveWorkspace } from '@/lib/ui/server-workspace';
@@ -225,12 +225,7 @@ export default async function RootLayout({
       lang={locale}
       dir={localeDirection(locale)}
       suppressHydrationWarning
-      // Read on the server so a frosted chrome paints frosted on the first
-      // frame; the Appearance screen flips them live (`applyGlassAttributes`).
-      data-glass={initialAppearance.glass ? '' : undefined}
-      data-glass-bubbles={initialAppearance.glassBubbles ? '' : undefined}
-      // Whole island or each widget: the default an island's menu may override.
-      data-glass-scope={effectiveGlass(initialAppearance).glassScope}
+      // Frosted glass is not part of the desk. Widget style still follows the account.
       data-widgets-borderless={initialAppearance.widgetsBorderless ? '' : undefined}
       data-widgets-transparent={initialAppearance.widgetsTransparent ? '' : undefined}
       data-widgets-style-at={String(initialAppearance.widgetsStyleAt)}

@@ -209,7 +209,7 @@
     "routesHint": "Extra output ports the agent may pick with a ```json timon:output block ('{ \"route\": \"…\" }').",
     "headersHint": "A vault secret goes in a header value as '{{secrets.NAME}}', never in the URL or the body.",
     "allowPrivateNetworkHint": "Lets the request reach this machine, the local network or Tailscale. Only an administrator's workflow may turn it on.",
-    "completionHint": "turn: the node ends on the first turn result. explicit: the agent calls `timon workflow node done`.",
+    "completionHint": "turn: the node ends on the first turn result. explicit: the agent marks the node done.",
     "triggerState": "Trigger",
     "triggerNotArmed": "Created at publish time. Publish the workflow to get its native trigger.",
     "webhookHint": "POST a JSON body to this native route, signed with its secret (Standard Webhooks by default).",
@@ -687,7 +687,7 @@
     "exporting": "Exporting…",
     "exported": "Archive saved: {path}",
     "exportFailed": "The export failed.",
-    "exportAdminOnly": "Only an administrator can export the data. You can also run `timon export` on this machine.",
+    "exportAdminOnly": "Only an administrator can export the data.",
     "signOut": "Sign out"
   },
   "error": {
@@ -1612,12 +1612,12 @@
     "inProgressManaged": "IN_PROGRESS is managed by the dispatcher.",
     "columns": {
       "todo": "To do",
-      "todoEmpty": "No idea parked",
+      "todoEmpty": "Nothing to do",
       "todoLoading": "Loading…",
       "pending": "Pending",
       "pendingEmpty": "No task queued",
       "inProgress": "In progress",
-      "inProgressEmpty": "Dispatcher idle",
+      "inProgressEmpty": "Nothing running",
       "done": "Done",
       "doneEmpty": "Nothing completed yet",
       "blocked": "Blocked",
@@ -1649,7 +1649,7 @@
     "renameOpenTriggers": "Open triggers",
     "autoFitView": "Auto-fit view",
     "poleProjects": "{count} project(s)",
-    "newPole": "New pole",
+    "newPole": "New group",
     "editPole": "Edit pole",
     "editPoleNamed": "Edit pole {name}",
     "poleName": "Name",
@@ -1695,6 +1695,7 @@
     "orgRootDrop": "Drop here to put an agent back under its default manager", "mainSeatEmpty": "No main orchestrator", "mainSeatEmptyHint": "Agents without a manager stay at the root until an agent holds the seat.", "mainSeatNoCandidate": "No agent can hold the seat: give the orchestrator role to an agent without a project.", "mainSeatSet": "Set {name} as main orchestrator"
   },
   "chatPage": {
+    "setupModel": "Set up a model",
     "allowSession": "Allow for this session",
     "allowAlways": "Always allow",
     "allowCovers": "Covers {motif}",
@@ -2293,7 +2294,7 @@
     "mcpIntro": "Model Context Protocol servers you added yourself. The ones selected here connect to this agent on every spawn; manage them on",
     "mcpEmpty": "No MCP servers added yet — add some on",
     "mcpBuiltinTitle": "Built into Rooks — always on, nothing to grant",
-    "mcpBuiltinHint": "Every agent gets these on every backend, whatever is selected below, and a Kanban task's MCP override never removes them. Some timon tools (creating agents or projects, declaring MCP servers) also need your account's permissions on the Users page, which this list does not change.",
+    "mcpBuiltinHint": "Every agent gets these on every backend, whatever is selected below, and a Kanban task's MCP override never removes them. Some built-in tools (creating agents or projects, declaring MCP servers) also need your account's permissions on the Users page, which this list does not change.",
     "mcpBuiltinTimon": "Kanban, missions, agents, memory, this documentation",
     "mcpBuiltinAsk": "Forms that ask you in the chat",
     "mcpBuiltinBrowser": "The project's built-in browser, while it is running",
@@ -2422,7 +2423,7 @@
     },
     "timonDaemon": {
       "title": "Rooks daemon",
-      "description": "The state of Rooks itself, for the timon project."
+      "description": "The state of Rooks itself, for this project."
     },
     "missionDetails": {
       "title": "Mission details",
@@ -2643,7 +2644,8 @@
     "eyebrow": "Local gallery",
     "title": "Plugins installed on this machine",
     "subtitle": "Everything installed here, plugged in or not. Turning one off keeps it on disk with its settings.",
-    "empty": "No plugin installed yet. Add one with `timon plugin add <package>`.",
+    "browse": "Browse and install",
+    "empty": "No plugin installed yet.",
     "inserts": "Plugs into",
     "insertsNone": "nothing (host half only)",
     "modifies": "Changes",
@@ -2742,7 +2744,7 @@
     "total": "Total",
     "view": { "rendered": "Rendered", "source": "Source" },
     "origin": {
-      "timon": "timon",
+      "timon": "Rooks",
       "user": "you",
       "agent": "agent",
       "memory": "memory",
@@ -3019,8 +3021,8 @@
     },
     "titleAll": "All-projects TO DO",
     "titleProject": "Project TO DO",
-    "empty": "No idea in reserve",
-    "emptyProject": "No idea for {project}",
+    "empty": "No ideas yet",
+    "emptyProject": "No ideas for {project}",
     "markDone": "Mark as done",
     "reopen": "Reopen",
     "delete": "Delete",
@@ -3044,7 +3046,7 @@
     "fieldDescription": "description (markdown)",
     "titlePlaceholder": "The idea, in one line",
     "descriptionPlaceholder": "Context, constraints, leads… (markdown)",
-    "projectPlaceholder": "slug (e.g. timon)",
+    "projectPlaceholder": "slug (e.g. rooks)",
     "create": "Add",
     "created": "Idea noted",
     "createFailed": "Could not add the idea",
@@ -3245,7 +3247,7 @@
   "languageSettings": {
     "label": "Interface language",
     "auto": "System language — {language}",
-    "hint": "System language follows the language of your browser or computer. Changing it reloads the page."
+    "hint": "System language follows the language of your browser or computer."
   },
   "voiceSettings": {
     "category": "Voice",
@@ -3381,7 +3383,7 @@
     "reorder": "Drag to reorder this provider",
     "claudeToken": {
       "title": "Claude long-lived token",
-      "hint": "Optional. Run `claude setup-token` in a terminal and paste the token here: every Claude mission then uses it instead of the CLI's own sign-in. On macOS it lets Rooks keep running with no session open; run `timon service install` afterwards to switch the service. The token is stored encrypted and never shown again.",
+      "hint": "Optional. Run `claude setup-token` in a terminal and paste the token here: every Claude mission then uses it instead of the CLI's own sign-in. On macOS it lets Rooks keep running with no session open. The token is stored encrypted and never shown again.",
       "none": "Not set",
       "set": "Set",
       "unreadable": "Set, but unreadable — paste it again",
