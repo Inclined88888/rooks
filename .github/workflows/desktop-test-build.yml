@@ -23,9 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macos-14 is Apple silicon, so the dmg is arm64. beforePack refuses
+          # macos-26 is Apple silicon (macos-14 was retired). beforePack refuses
           # a cross build, which is why each OS builds only itself.
-          - os: macos-14
+          - os: macos-26
             eb_args: '--mac dmg --publish never'
           - os: ubuntu-latest
             eb_args: '--linux AppImage deb --publish never'
@@ -49,6 +49,13 @@ jobs:
             orchestrator/package-lock.json
             app/package-lock.json
             desktop/package-lock.json
+
+      - name: Require Apple silicon on the Mac job
+        if: runner.os == 'macOS'
+        run: |
+          arch=$(uname -m)
+          echo "arch=$arch"
+          test "$arch" = "arm64"
 
       - name: Install dependencies
         run: |
