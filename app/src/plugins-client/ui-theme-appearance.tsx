@@ -454,7 +454,6 @@ export function AppearanceSettings(): ReactElement {
         </>}
       </fieldset>
       </div>
-      <MascotAnimationSetting />
       <BackgroundSettings />
       <RadioList
         name="appearance-theme"

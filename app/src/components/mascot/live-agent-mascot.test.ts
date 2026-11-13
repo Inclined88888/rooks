@@ -82,11 +82,11 @@ async function setup(opts: { rows: ActiveAgent[]; reduced?: boolean }) {
 
 const row = (name: string, state: ActiveAgent['state']): ActiveAgent => ({ name, state, mission_id: `m-${name}`, at: 1, pending_count: 0, project: null });
 
-async function avatars(env: Env, names: string[], extra: Record<string, unknown> = {}) {
-  const { AgentAvatar, agentIdentity } = await import('../agent-avatar');
+async function avatars(env: Env, names: string[], extra: { live?: boolean } = {}) {
+  const { LiveAgentMascot } = await import('./live-agent-mascot');
   const { createElement, Fragment } = env.React;
   await env.mount(createElement(Fragment, null, ...names.map((name) =>
-    createElement(AgentAvatar, { key: name, identity: agentIdentity({ name, look: LOOK, avatar: 'mascot' }, null), ...extra }))));
+    createElement(LiveAgentMascot, { key: name, name, look: LOOK, size: 32, live: extra.live !== false }))));
 }
 
 test('an avatar shows its agent\'s state, alive; thirty share one poll and one observer', async () => {
@@ -125,7 +125,7 @@ test('live={false}: the bare look, still, and nothing watched', async () => {
   try {
     await avatars(env, ['nova'], { live: false });
     assert.equal(env.q('[data-mascot-state]').length, 0, 'no state');
-    const svg = env.q<SVGSVGElement>('[data-agent-mascot] svg')[0]!;
+    const svg = env.q<SVGSVGElement>('svg')[0]!;
     assert.equal(svg.getAttribute('data-expr'), 'code', 'the look\'s own eyes');
     assert.ok(!svg.hasAttribute('data-live'));
     assert.equal(env.requests.filter((r) => r.url === '/api/ui/agents/active').length, 0, 'no subscription, no request');
@@ -152,11 +152,11 @@ test('« Animate mascots » off keeps the state still; the switch stores the cho
   const env = await setup({ rows: [row('nova', 'thinking')] });
   try {
     const { MascotAnimationSetting } = await import('@/plugins-client/ui-theme-appearance');
-    const { AgentAvatar, agentIdentity } = await import('../agent-avatar');
+    const { LiveAgentMascot } = await import('./live-agent-mascot');
     const { createElement, Fragment } = env.React;
     await env.mount(createElement(Fragment, null,
       createElement(MascotAnimationSetting),
-      createElement(AgentAvatar, { identity: agentIdentity({ name: 'nova', look: LOOK, avatar: 'mascot' }, null) })));
+      createElement(LiveAgentMascot, { name: 'nova', look: LOOK, size: 32 })));
     const svg = () => env.q<SVGSVGElement>('[data-mascot-state] svg')[0]!;
     const toggle = env.q<HTMLButtonElement>('[data-mascot-animation-switch]')[0]!;
     assert.equal(toggle.getAttribute('aria-checked'), 'true', 'on by default');

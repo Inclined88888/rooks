@@ -48,10 +48,11 @@ test('mobile list: each row draws the agent through AgentAvatar, picked head fir
     await React.act(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); });
     const rowOf = (name: string) => Array.from(dom.window.document.querySelectorAll<HTMLElement>('a'))
       .find((a) => a.textContent?.includes(name));
-    assert.ok(rowOf('alpha')?.querySelector('[data-agent-mascot] svg'), 'alpha: its mascot');
-    const beta = rowOf('beta');
-    assert.ok(beta && !beta.querySelector('[data-agent-mascot], img') && beta.textContent?.includes('🦊'), 'beta: its emoji');
-    assert.equal(rowOf('gamma')?.querySelector('img')?.getAttribute('src'), '/api/uploads/nova.png', 'gamma: no pick, its picture');
+    for (const name of ['alpha', 'beta', 'gamma']) {
+      const row = rowOf(name);
+      assert.ok(row && !row.querySelector('[data-agent-mascot]') && !row.textContent?.includes('🦊'), `${name}: no mascot and no emoji`);
+      assert.equal(row?.querySelector('img')?.getAttribute('src'), '/api/uploads/nova.png', `${name}: its picture`);
+    }
   } finally {
     await React.act(async () => { root.unmount(); });
     dom.window.close();

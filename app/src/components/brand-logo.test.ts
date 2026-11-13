@@ -1,5 +1,5 @@
 /**
- * The Timon mark is an inline SVG painted in the instance's colour: the
+ * The Rooks wordmark is an inline SVG painted in the instance's colour: the
  * theme's primary for the product, so a theme recolours it; a fixed amber for
  * the development copy. No raster file is served any more.
  */
@@ -13,13 +13,14 @@ test('the mark is one SVG in currentColor, coloured by the theme\'s primary', as
   const { renderToStaticMarkup } = await import('react-dom/server');
   const { BrandLogo } = await import('./brand-logo');
   const { TIMON_MARK } = await import('@/lib/brand-mark');
-  const html = renderToStaticMarkup(React.createElement(BrandLogo, { className: 'h-8', alt: 'Timon' }));
-  assert.match(html, /^<svg[^>]*viewBox="0 0 1268 785"/);
+  const html = renderToStaticMarkup(React.createElement(BrandLogo, { className: 'h-8', alt: 'Rooks' }));
+  assert.match(html, /^<svg[^>]*viewBox="0 0 72 18"/);
   assert.match(html, /color:hsl\(var\(--primary\)\)/, 'the product mark follows the theme');
   assert.match(html, /fill="currentColor"/);
-  assert.match(html, /role="img"[^>]*aria-label="Timon"|aria-label="Timon"[^>]*role="img"/);
+  assert.match(html, />Rooks</);
+  assert.match(html, /role="img"[^>]*aria-label="Rooks"|aria-label="Rooks"[^>]*role="img"/);
   assert.ok(!html.includes('<img'), 'no raster file');
-  assert.ok(TIMON_MARK.d.startsWith('M') && !TIMON_MARK.d.includes('NaN'));
+  assert.equal(TIMON_MARK.word, 'Rooks');
   const decorative = renderToStaticMarkup(React.createElement(BrandLogo, {}));
   assert.match(decorative, /aria-hidden="true"/, 'next to a label, decorative');
 });

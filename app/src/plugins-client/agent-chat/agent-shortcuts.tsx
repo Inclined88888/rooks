@@ -106,8 +106,8 @@ function ShortcutAvatar({
         'focus-visible:ring-2 focus-visible:ring-primary',
         // A mascot says it is the current one by its size alone: no circle around it.
         pressed
-          ? cn('size-10', faceFrame(visage, 'border-primary/70 shadow-[0_0_0_2px_hsl(var(--primary)/0.35),0_0_16px_-2px_hsl(var(--primary)/0.6)]'))
-          : cn('size-7 opacity-65 hover:opacity-100 focus-visible:opacity-100', faceFrame(visage, 'border-border hover:border-primary/50')),
+          ? cn('size-10', faceFrame(visage, 'border-primary'))
+          : cn('size-7 opacity-80 hover:opacity-100 focus-visible:opacity-100', faceFrame(visage, 'border-border hover:border-primary/50')),
       )}
     >
       <FaceAgent visage={visage} agent={mode.value} className={pressed ? 'text-sm' : 'text-[11px]'} />

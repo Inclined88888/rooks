@@ -119,18 +119,18 @@ const LOOK = { shape: 'hex', color: '#7ed957', eyes: 'code', acc: 'coffee' };
 const BASE = { name: 'timon.coder', role: 'coder', model: 'opus', emoji: '🦊', icon_url: '/api/uploads/coder.png', look: LOOK };
 const URL_ = 'http://localhost/chat?agent=timon.coder&mission=m1';
 
-test('a picked mascot is drawn on the bubbles, over the picture', async () => {
+test('a stored mascot is not drawn on the bubbles; the picture is', async () => {
   const r = await renderChat({ url: URL_, agent: { ...BASE, avatar: 'mascot' } });
   assert.ok(r.agentReads.includes('timon.coder'));
-  assert.equal(r.mascot, true);
-  assert.equal(r.image, null);
+  assert.equal(r.mascot, false);
+  assert.equal(r.image, '/api/uploads/coder.png');
 });
 
-test('a picked emoji is written on the bubbles, over the picture and the mascot', async () => {
+test('a stored emoji is not written on the bubbles; the picture is', async () => {
   const r = await renderChat({ url: URL_, agent: { ...BASE, avatar: 'emoji' } });
   assert.equal(r.mascot, false);
-  assert.equal(r.image, null);
-  assert.equal(r.text, '🦊');
+  assert.equal(r.image, '/api/uploads/coder.png');
+  assert.notEqual(r.text, '🦊');
 });
 
 test('without a pick the bubbles keep the historical order: the picture first', async () => {

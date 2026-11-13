@@ -1,8 +1,6 @@
 /**
- * A mascot is its own frame: no border, ring or round fill around it, in the
- * shared avatar and in the frames the agent-chat views put around `FaceAgent`.
- * An emoji or a picture keeps its round disc, and a working agent keeps its
- * animated pulse whatever its head.
+ * A face is a round disc: a picture or an initial. A working agent keeps its
+ * state ring and its pulse.
  */
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -33,43 +31,38 @@ function frames(doc: Document): Element[] {
   });
 }
 
-test('a mascot avatar wears no frame; an emoji keeps its round disc', () => {
+test('an initial and a stored mascot both wear the round disc', () => {
   const m = dom(createElement(AgentAvatar, { identity: mascot, roleBadge: false }));
-  assert.ok(m.querySelector('[data-agent-mascot] svg'), 'the mascot is drawn');
-  assert.deepEqual(frames(m), [], 'nothing around it');
+  assert.ok(!m.querySelector('[data-agent-mascot]'));
+  assert.equal(m.querySelector('#root > div > div')?.textContent, 'n');
 
   const e = dom(createElement(AgentAvatar, { identity: emoji, roleBadge: false }));
   const disc = e.querySelector('#root > div > div')!;
   assert.match(disc.getAttribute('class') ?? '', /rounded-\[var\(--avatar-radius\)\] border/);
-  assert.equal(disc.textContent, '🦊');
+  assert.equal(disc.textContent, 'n');
 });
 
-test('a working mascot keeps its pulse but loses the static ring; an emoji keeps both', () => {
+test('a working agent keeps its pulse and its state ring', () => {
   const m = dom(createElement(ActiveAgentAvatar, { identity: mascot, state: 'thinking' }));
   assert.ok(m.querySelector('[data-chip-pulse]'), 'the activity pulse is still there');
   assert.match(m.querySelector('[data-chip-pulse]')!.getAttribute('class') ?? '', /animate-\[ping/);
-  assert.ok(!m.querySelector('[data-chip-ring]'), 'no static circle around the mascot');
+  assert.ok(m.querySelector('[data-chip-ring]'));
 
-  const e = dom(createElement(ActiveAgentAvatar, { identity: emoji, state: 'thinking' }));
-  assert.ok(e.querySelector('[data-chip-pulse]'));
-  assert.ok(e.querySelector('[data-chip-ring]'), 'an emoji keeps its state ring');
-
-  // At rest nothing is painted around either.
   const idle = dom(createElement(ActiveAgentAvatar, { identity: emoji, state: 'idle' }));
   assert.ok(!idle.querySelector('[data-chip-ring]'));
 });
 
-test('the agent-chat frame drops for a mascot and stays for a glyph or a picture', () => {
+test('the agent-chat frame stays for a stored look, a letter and a picture', () => {
   const face: Visage = { image: null, glyphe: 'n', couleur: '#123456', look: { ...LOOK } };
   const glyph: Visage = { image: null, glyphe: 'n', couleur: '#123456', look: null };
   const picture: Visage = { image: '/api/uploads/nova.png', glyphe: 'n', couleur: '#123456' };
-  assert.equal(faceFrame(face, 'rounded-full border'), undefined);
+  assert.equal(faceFrame(face, 'rounded-full border'), 'rounded-full border');
   assert.equal(faceFrame(glyph, 'rounded-full border'), 'rounded-full border');
   assert.equal(faceFrame(picture, 'rounded-full border'), 'rounded-full border');
 
   const m = dom(createElement(FramedFace, { visage: face, className: 'size-6' }));
-  assert.ok(m.querySelector('[data-agent-mascot]'));
-  assert.deepEqual(frames(m), []);
+  assert.ok(!m.querySelector('[data-agent-mascot]'));
+  assert.match(m.querySelector('#root > span')!.getAttribute('class') ?? '', /rounded-full border border-border bg-card/);
   const g = dom(createElement(FramedFace, { visage: glyph, className: 'size-6' }));
   assert.match(g.querySelector('#root > span')!.getAttribute('class') ?? '', /rounded-full border border-border bg-card/);
 });

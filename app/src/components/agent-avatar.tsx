@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { accentVars } from '@/lib/accent-color';
 import { STATE_VISUALS, type ActiveState } from '@/lib/agent-state';
 import { chatSenderName } from '@/lib/main-agent';
-import { LiveAgentMascot } from '@/components/mascot/live-agent-mascot';
 import { defaultLookFor, normalizeAgentLook, type AgentLook } from '@/components/mascot/agent-look';
 
 /**
@@ -95,16 +94,19 @@ export function agentIdentity(
   const projectIcon = project?.icon ?? null;
   const projectColor = project?.color ?? null;
   const accent = agent.color || projectColor || paletteFor(agent.name);
-  const look = lookOfAgent(agent);
-  const emoji = agent.emoji?.trim() || null;
-  const base = { name: agent.name, accent, roleKey: agentRoleKey(agent.role), known: true, ...(look ? { lookBase: defaultLookFor(agent.role ?? '') } : {}) };
-  const mode = avatarModeOf(agent.avatar);
-  if (mode === 'mascot' && look) return { ...base, iconUrl: null, fallback: emoji || agent.name.charAt(0).toLowerCase(), look };
-  if (mode === 'emoji' && emoji) return { ...base, iconUrl: null, fallback: emoji, look: null };
-  if (mode === 'image' && isHttpUrl(agent.icon_url)) return { ...base, iconUrl: agent.icon_url, fallback: emoji || agent.name.charAt(0).toLowerCase(), look: null };
-  const iconUrl = isHttpUrl(agent.icon_url) ? agent.icon_url : (isHttpUrl(projectIcon) ? projectIcon : null);
-  const fallback = (projectIcon && !isHttpUrl(projectIcon) ? projectIcon : null) || agent.emoji || agent.name.charAt(0).toLowerCase();
-  return { ...base, iconUrl, fallback, look };
+  // A stored mascot or emoji stays on the agent. The desk draws a picture or
+  // the initial: those faces are the ones a person can see and change.
+  const own = isHttpUrl(agent.icon_url) ? agent.icon_url : null;
+  const projectPicture = isHttpUrl(projectIcon) ? projectIcon : null;
+  const letter = agent.name.trim().charAt(0).toLowerCase() || '?';
+  return {
+    name: agent.name,
+    accent,
+    roleKey: agentRoleKey(agent.role),
+    known: true,
+    iconUrl: own ?? projectPicture,
+    fallback: letter,
+  };
 }
 
 /** True when the identity's head is its mascot: no picture, and a look. */
@@ -119,22 +121,15 @@ export function showsMascot(identity: Pick<AgentIdentity, 'iconUrl' | 'look'>): 
  * not draw it the way `AgentAvatar` does. A caller that frames a mascot in a
  * clipped disc should drop the frame when `showsMascot(identity)`.
  */
-export function AgentHead({ identity, px, glyphClassName, glyphStyle, live = true }: {
+export function AgentHead({ identity, glyphClassName, glyphStyle }: {
   identity: AgentIdentity;
-  /** Edge of the caller's frame, in CSS pixels. */
-  px: number;
+  /** Edge of the caller's frame, in CSS pixels. Kept for callers that sized a mascot. */
+  px?: number;
   glyphClassName?: string;
   glyphStyle?: CSSProperties;
-  /** `false`: the mascot's bare look, still, without the agent's live state. */
+  /** Kept so a caller can still say the face is still. Faces are a picture or an initial. */
   live?: boolean;
 }) {
-  if (showsMascot(identity) && identity.look) {
-    return (
-      <span aria-hidden className="grid size-full place-items-center [&_svg]:size-full" data-agent-mascot>
-        <LiveAgentMascot name={identity.name} look={identity.look} size={px} live={live && identity.known} className="size-full" />
-      </span>
-    );
-  }
   if (isHttpUrl(identity.iconUrl)) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={identity.iconUrl} alt="" className="size-full object-cover" />;
@@ -203,7 +198,7 @@ const SIZE = {
 
 /** Round avatar shared by all agent bubbles: colored round disc, project/
  *  agent logo image if available else initial/emoji, + role badge. */
-export function AgentAvatar({ identity, size = 'md', className, roleBadge = true, live = true }: {
+export function AgentAvatar({ identity, size = 'md', className, roleBadge = true }: {
   identity: AgentIdentity;
   size?: keyof typeof SIZE;
   className?: string;
@@ -212,7 +207,7 @@ export function AgentAvatar({ identity, size = 'md', className, roleBadge = true
   /** A mascot shows what the agent does (docs/AGENT-MASCOT.md); `false`: its bare look, still — menus, very long lists. */
   live?: boolean;
 }) {
-  const { accent: color, iconUrl, fallback, roleKey, look, lookBase } = identity;
+  const { accent: color, iconUrl, fallback, roleKey } = identity;
   // Tiny role sub-badge bottom-right. Skip `main` (orchestrator) — the
   // avatar disc already carries project identity; a Network glyph here is noise.
   const roleVisual = roleBadge && roleKey && roleKey !== 'main' ? resolveRole(roleKey) : null;
@@ -225,26 +220,17 @@ export function AgentAvatar({ identity, size = 'md', className, roleBadge = true
           The logo fills the disc (`object-cover`, no padding): logos are
           framed at upload time, so a square picture in a round bubble is now
           the uploader's own crop rather than a letterboxed thumbnail. */}
-      {/* No picture but a look: the agent's mascot, through the `agent.mascot`
-          slot so a plugin that replaces the mascot replaces it here too, and
-          alive with what the agent is doing. */}
-      {!isHttpUrl(iconUrl) && look ? (
-        <div className={cn('grid place-items-center', s.disc)} data-agent-mascot>
-          <LiveAgentMascot name={identity.name} look={look} base={lookBase} size={s.px} live={live && identity.known} />
-        </div>
-      ) : (
-        <div
-          className={cn('grid place-items-center overflow-hidden rounded-[var(--avatar-radius)] border font-semibold bg-[var(--accent-soft)] border-[var(--accent-border)] text-[var(--accent)] dark:bg-[var(--accent-soft-dark)] dark:border-[var(--accent-border-dark)] dark:text-[var(--accent-dark)]', s.disc)}
-          style={accentVars(color)}
-        >
-          {isHttpUrl(iconUrl) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={iconUrl} alt="" className="size-full object-cover" />
-          ) : (
-            <span>{fallback}</span>
-          )}
-        </div>
-      )}
+      <div
+        className={cn('grid place-items-center overflow-hidden rounded-[var(--avatar-radius)] border font-semibold bg-[var(--accent-soft)] border-[var(--accent-border)] text-[var(--accent)] dark:bg-[var(--accent-soft-dark)] dark:border-[var(--accent-border-dark)] dark:text-[var(--accent-dark)]', s.disc)}
+        style={accentVars(color)}
+      >
+        {isHttpUrl(iconUrl) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={iconUrl} alt="" className="size-full object-cover" />
+        ) : (
+          <span>{fallback}</span>
+        )}
+      </div>
       {RoleIcon && roleVisual && (
         <span
           className={cn('absolute -bottom-1 -right-1 grid place-items-center rounded-full ring-2 ring-background', s.badge)}

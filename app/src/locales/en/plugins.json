@@ -252,8 +252,8 @@
         "description": "Agents grouped by project. Can be disabled independently of the canvas."
       },
       "@timon/bots": {
-        "label": "TIMs",
-        "description": "Your project-less TIMs, grouped by team, with the chat of the one you pick."
+        "label": "Bots",
+        "description": "Your project-less bots, grouped by team, with the chat of the one you pick."
       },
       "@timon/files-widget": {
         "label": "Files",

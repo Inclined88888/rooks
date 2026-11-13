@@ -1,22 +1,17 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { LiveAgentMascot } from '@/components/mascot/live-agent-mascot';
 import type { Visage } from './use-agents';
 
-/**
- * The frame classes a caller puts around `FaceAgent` (round clip, border,
- * fill), or nothing for a mascot: a mascot is its own frame, and a circle
- * around it read as one more ring (and clipped its ears).
- */
-export function faceFrame(visage: Visage, frame: string): string | undefined {
-  return visage.look ? undefined : frame;
+/** A face sits in the caller's disc. A stored mascot is not a frame of its own. */
+export function faceFrame(_visage: Visage, frame: string): string | undefined {
+  return frame;
 }
 
 /** The inside of a round avatar: the image, or the glyph in its colour. The
  *  frame (size, border, ring) is the caller's — the row and the picker do not
  *  draw it the same way; `faceFrame` drops it for a mascot. */
-export function FaceAgent({ visage, className, agent, live = true }: {
+export function FaceAgent({ visage, className, agent }: {
   visage: Visage;
   className?: string;
   /** The agent the face stands for: its mascot then shows what it does. Absent: the bare look. */
@@ -24,26 +19,25 @@ export function FaceAgent({ visage, className, agent, live = true }: {
   /** `false`: the bare look, still — pickers and menus. */
   live?: boolean;
 }) {
-  if (visage.look) {
-    // Scaled to the caller's frame: the mascot's own box is a fixed size in pixels.
-    return (
-      <span aria-hidden className="grid size-full place-items-center [&_svg]:size-full" data-agent-mascot>
-        <LiveAgentMascot name={agent ?? ''} look={visage.look} size={32} live={live && !!agent} className="size-full" />
-      </span>
-    );
-  }
   if (visage.image) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={visage.image} alt="" className="size-full object-cover" />;
   }
   return (
     <span aria-hidden className={cn('font-semibold uppercase leading-none', className)} style={{ color: visage.couleur }}>
-      {visage.glyphe}
+      {faceLetter(visage.glyphe, agent)}
     </span>
   );
 }
 
-/** `FaceAgent` in the round bordered frame of a list row, dropped for a mascot (`faceFrame`). */
+function faceLetter(glyphe: string, agent?: string): string {
+  const one = [...glyphe.trim()][0] ?? '';
+  if ([...glyphe.trim()].length === 1 && /^[\p{L}\p{N}]$/u.test(one)) return one;
+  const fromName = [...(agent ?? '').trim()][0];
+  return fromName && /^[\p{L}\p{N}]$/u.test(fromName) ? fromName : '?';
+}
+
+/** `FaceAgent` in the round bordered frame of a list row. */
 export function FramedFace({ visage, className, glyphClassName }: {
   visage: Visage;
   /** Size of the frame, e.g. `size-6`. */
