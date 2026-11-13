@@ -177,3 +177,5 @@ continues to preserve Rooks data. Use the in-app action first for complete remov
 # test build kick 20261113T002848Z
 
 <!-- kick: TEST ONLY pack for onboarding polish HEAD 2749d402 -->
+
+<!-- kick: TEST ONLY pack for Desk polish HEAD f3a27130 -->
