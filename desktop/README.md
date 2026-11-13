@@ -173,3 +173,5 @@ The final dialog explains how to remove the application itself: move `Rooks.app`
 to Trash on macOS, delete the AppImage or use the package manager on Linux, or
 remove Rooks from Windows Apps settings. Removing only the app through the OS
 continues to preserve Rooks data. Use the in-app action first for complete removal.
+
+# test build kick 20261113T002848Z
