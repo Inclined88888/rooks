@@ -37,7 +37,7 @@
     "signin_not_in_progress": "Żadne logowanie nie jest w toku.",
     "workspace_unknown": "Nieznany obszar roboczy.",
     "project_no_cwd": "Ten projekt nie ma skonfigurowanego folderu.",
-    "path_unknown": "Ta ścieżka jest nieznana dla Rooks: nie jest ani folderem agenta, ani worktree zadania.",
+    "path_unknown": "Ta ścieżka jest nieznana dla Timon: nie jest ani folderem agenta, ani worktree zadania.",
     "secret_unknown": "Nieznany sekret.",
     "vault_unavailable": "Sejf sekretów jest niedostępny.",
     "license_server_unreachable": "Nie można połączyć się z serwerem licencji.",

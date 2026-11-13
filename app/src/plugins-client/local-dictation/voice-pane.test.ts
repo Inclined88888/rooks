@@ -196,7 +196,7 @@ test('the catalog: size, memory, languages and licence of each model; a plugin\'
     assert.match(pane.text(), /670\sMB · 630\sMB of memory at peak · 5 languages · CC-BY-4\.0/);
     assert.match(pane.text(), /207\sMB · 630\sMB of memory at peak · English, Spanish, German, French · CC-BY-4\.0/);
     assert.match(pane.text(), /From plugins/);
-    assert.match(pane.text(), /From the plugin acme\. Rooks cannot vouch for a third-party model\./);
+    assert.match(pane.text(), /From the plugin acme\. Timon cannot vouch for a third-party model\./);
     assert.doesNotMatch(pane.text(), /Proposed by/);
     await pane.click(/^Download 820\sMB$/);
     assert.deepEqual(pane.calls, ['download:acme.fr-large']);

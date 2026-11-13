@@ -43,10 +43,10 @@
     "verified": "Verificado",
     "unverified": "Não verificado",
     "builtin": "Integrado",
-    "builtinHint": "Vem com o Rooks: pode ser desativado, mas não desinstalado.",
+    "builtinHint": "Vem com o Timon: pode ser desativado, mas não desinstalado.",
     "awaitingApproval": "A aprovar neste computador",
     "awaitingApprovalHint": "Esta máquina o executa, mas o código de interface dele só é carregado aqui quando a mesma versão, com a mesma assinatura, está instalada e ativada neste computador.",
-    "awaitingApprovalBuiltinHint": "Esta máquina o executa, mas o código de interface dele só é carregado aqui quando este computador inclui a mesma versão deste plugin, com o mesmo código de interface, e o tem ativado. Duas versões do Rooks podem incluir códigos diferentes sob uma mesma versão de plugin: atualize a máquina mais antiga.",
+    "awaitingApprovalBuiltinHint": "Esta máquina o executa, mas o código de interface dele só é carregado aqui quando este computador inclui a mesma versão deste plugin, com o mesmo código de interface, e o tem ativado. Duas versões do Timon podem incluir códigos diferentes sob uma mesma versão de plugin: atualize a máquina mais antiga.",
     "modules": {
       "@timon/db": {
         "label": "Banco de dados",
@@ -178,11 +178,11 @@
       },
       "@timon/terminal-web": {
         "label": "Terminal integrado",
-        "description": "Um terminal dentro do Rooks — desktop, navegador ou celular — executando um shell nesta máquina. Reservado a contas autorizadas a abrir um."
+        "description": "Um terminal dentro do Timon — desktop, navegador ou celular — executando um shell nesta máquina. Reservado a contas autorizadas a abrir um."
       },
       "@timon/ui-documents": {
         "label": "Documentos no chat",
-        "description": "Documentos HTML interativos que um agente, você ou um plugin exibe em uma conversa, isolados do Rooks em um frame em sandbox."
+        "description": "Documentos HTML interativos que um agente, você ou um plugin exibe em uma conversa, isolados do Timon em um frame em sandbox."
       },
       "@timon/orchestrator-self": {
         "label": "Daemon",
@@ -210,11 +210,11 @@
       },
       "@timon/telemetry": {
         "label": "Estatísticas de uso",
-        "description": "Envia estatísticas de uso anônimas à equipe do Rooks: quais recursos são usados, como os turnos transcorrem, onde a configuração para. Nunca seu conteúdo, nomes ou caminhos. Pode ser desativado nas configurações de Privacidade."
+        "description": "Envia estatísticas de uso anônimas à equipe do Timon: quais recursos são usados, como os turnos transcorrem, onde a configuração para. Nunca seu conteúdo, nomes ou caminhos. Pode ser desativado nas configurações de Privacidade."
       },
       "@timon/machines": {
         "label": "Máquinas",
-        "description": "Pareie outras máquinas Rooks com esta e guarde o acesso a elas no cofre, para alternar a interface de uma máquina para outra. Desligado até você ativá-lo."
+        "description": "Pareie outras máquinas Timon com esta e guarde o acesso a elas no cofre, para alternar a interface de uma máquina para outra. Desligado até você ativá-lo."
       },
       "@timon/company": {
         "label": "Empresa",
@@ -262,8 +262,8 @@
       "tampered": "Pacote alterado",
       "unsignedLoads": "Sem assinatura — carrega no modo desenvolvedor",
       "unsignedBlocked": "Sem assinatura — não será carregado",
-      "manifestRefused": "O Rooks não pode usar este plugin: {reason}",
-      "nodeEngineRefused": "Este plugin não funciona no Node usado por este Rooks: {reason}",
+      "manifestRefused": "O Timon não pode usar este plugin: {reason}",
+      "nodeEngineRefused": "Este plugin não funciona no Node usado por este Timon: {reason}",
       "tamperedHint": "Os arquivos não correspondem mais à assinatura: este pacote foi modificado depois de assinado. Ele não pode ser instalado.",
       "permissions": "Solicita",
       "permissionsNone": "nenhuma permissão",
@@ -286,7 +286,7 @@
           "unreadable": "Só pode ser lido depois de instalado: será instalado sem receber nenhuma concessão. Conceda seus segredos pela página Segredos; se for um provedor, ele fica inativo até você autorizá-lo em {settingsPath}.",
           "unresolved": "Nenhuma dependência deste pacote o fornece: ele não será instalado, então nada é solicitado para ele.",
           "tampered": "Seus arquivos não correspondem mais à assinatura: ele não será carregado, então nada é solicitado para ele.",
-          "nodeEngine": "Ele não funciona no Node usado por este Rooks: não será carregado, então nada é solicitado para ele. {reason}"
+          "nodeEngine": "Ele não funciona no Node usado por este Timon: não será carregado, então nada é solicitado para ele. {reason}"
         },
         "refused": {
           "not-installed": "“{name}” não foi instalado, então seus programas não foram autorizados.",
@@ -305,7 +305,7 @@
         "read": "Lê segredos do cofre pelo nome, sem nomeá-los nesta ficha: você concede cada um a este plugin em Segredos ou pelo cartão que ele exibe quando pede um.",
         "broker": "Chama APIs sob identidades do cofre sem ver suas chaves, apenas as que lhe foram concedidas pelo nome.",
         "brokerNoHttp": "Ele não declara http:outbound, então suas chamadas de API intermediadas serão recusadas.",
-        "network": "Seu acesso à rede é limitado aos hosts abertos em rooks.config.json, a todos os plugins (pluginPolicy.http.allow) ou somente a este (pluginPolicy.http.byPlugin), e aos endereços das conexões aprovadas.",
+        "network": "Seu acesso à rede é limitado aos hosts abertos em timon.config.json, a todos os plugins (pluginPolicy.http.allow) ou somente a este (pluginPolicy.http.byPlugin), e aos endereços das conexões aprovadas.",
         "secretsLead": "Segredos que ele cita. Um segredo marcado é concedido somente a este plugin; desmarcar nunca revoga uma concessão (isso é feito em Segredos).",
         "hostsLead": "Hosts que ele acessa. Um host marcado é aberto somente a este plugin.",
         "hostOwn": "Já aberto a este plugin. Desmarque para fechá-lo: seus hosts são substituídos pelos marcados aqui.",
@@ -325,7 +325,7 @@
         "choose": "Escolher na página Segredos"
       },
       "disclaimerTitle": "Plugin de terceiros",
-      "disclaimer": "Este plugin não é feito, revisado nem garantido pelo Rooks, e o Rooks não se responsabiliza pelo que ele faz. Depois de instalado, ele é executado dentro do Rooks com os direitos da sua conta. Instale apenas plugins de autores em quem você confia.",
+      "disclaimer": "Este plugin não é feito, revisado nem garantido pelo Timon, e o Timon não se responsabiliza pelo que ele faz. Depois de instalado, ele é executado dentro do Timon com os direitos da sua conta. Instale apenas plugins de autores em quem você confia.",
       "cancel": "Cancelar",
       "installing": "Instalando…",
       "reinstall": "Instalar esta versão",
@@ -333,7 +333,7 @@
       "refreshed": "{reason} A ficha abaixo está atualizada: revise-a e instale novamente.",
       "errors": {
         "unauthenticated": "Sua sessão expirou — entre novamente.",
-        "forbidden": "Somente um superadmin conectado ao Rooks pode instalar um plugin.",
+        "forbidden": "Somente um superadmin conectado ao Timon pode instalar um plugin.",
         "too-large": "Este plugin é grande demais (arquivo de 25 MB, 200 MB de arquivos no máximo).",
         "too-many-entries": "Este plugin contém arquivos demais.",
         "not-gzip": "Este não é um arquivo de plugin: esperado um .tgz ou um .zip.",
@@ -343,22 +343,22 @@
         "corrupt": "Este arquivo está danificado.",
         "not-archive": "Este não é um arquivo de plugin: esperado um .tgz ou um .zip.",
         "not-zip": "Este não é um arquivo .zip válido.",
-        "zip64": "Este .zip usa o formato zip64, que o Rooks não lê. Compacte o plugin novamente com uma ferramenta padrão ou use um .tgz.",
+        "zip64": "Este .zip usa o formato zip64, que o Timon não lê. Compacte o plugin novamente com uma ferramenta padrão ou use um .tgz.",
         "encrypted": "Este .zip é protegido por senha. Compacte o plugin novamente sem senha.",
         "multi-volume": "Este .zip está dividido em várias partes. Gere um único .zip.",
-        "compression": "Este .zip usa um método de compressão que o Rooks não consegue ler. Compacte o plugin novamente com a compressão padrão.",
-        "not-a-plugin": "Este não é um plugin do Rooks: não há package.json com um manifesto `timon`.",
+        "compression": "Este .zip usa um método de compressão que o Timon não consegue ler. Compacte o plugin novamente com a compressão padrão.",
+        "not-a-plugin": "Este não é um plugin do Timon: não há package.json com um manifesto `timon`.",
         "invalid-path": "Este caminho não pode ser usado.",
         "forbidden-path": "Não é possível instalar plugins a partir desta pasta.",
         "not-found": "Não há mais nada neste local.",
         "expired": "Esta prévia expirou. Escolha o plugin novamente.",
         "tampered": "O pacote foi alterado após a assinatura. Ele não pode ser instalado.",
         "manifest": "O manifesto do plugin é inválido. Ele não pode ser instalado.",
-        "npm-missing": "O npm não está disponível na máquina que executa o Rooks. Instale o Node.js e tente novamente.",
-        "install-failed": "A instalação falhou. O log do Rooks tem os detalhes.",
+        "npm-missing": "O npm não está disponível na máquina que executa o Timon. Instale o Node.js e tente novamente.",
+        "install-failed": "A instalação falhou. O log do Timon tem os detalhes.",
         "name-taken": "Outro pacote já usa este nome na pasta de plugins.",
         "generic": "O daemon recusou (HTTP {status}).",
-        "unreadable": "O Rooks não tem permissão para ler este local. No macOS, permita-o em Ajustes do Sistema › Privacidade e Segurança, ou mova o plugin para outro lugar.",
+        "unreadable": "O Timon não tem permissão para ler este local. No macOS, permita-o em Ajustes do Sistema › Privacidade e Segurança, ou mova o plugin para outro lugar.",
         "mismatch": "O que este plugin solicita (um programa, um segredo ou um host) mudou desde que foi exibido.",
         "refused": "Este programa nunca pode ser executado por um plugin.",
         "not-provider": "Este plugin não é um provedor.",
@@ -373,7 +373,7 @@
   },
   "providersSettings": {
     "title": "Provedores",
-    "description": "Os plugins de provedor trazem um serviço de IA para o Rooks. Cada programa que um provedor inicia é autorizado aqui, pelo seu caminho resolvido, antes de poder ser executado.",
+    "description": "Os plugins de provedor trazem um serviço de IA para o Timon. Cada programa que um provedor inicia é autorizado aqui, pelo seu caminho resolvido, antes de poder ser executado.",
     "cancel": "Cancelar",
     "consent": {
       "prompts": "Recebe todas as instruções e todas as respostas das missões que atende.",
@@ -384,7 +384,7 @@
       "osCredentialAccount": "Lê a entrada \"{service}\" ({account}) do repositório de credenciais do seu sistema (chaveiro do macOS). Somente leitura."
     },
     "install": {
-      "allow": "Permitir que o Rooks execute o(s) programa(s) listado(s) acima.",
+      "allow": "Permitir que o Timon execute o(s) programa(s) listado(s) acima.",
       "allowHint": "Sem isso, o provedor é instalado, mas permanece inativo até você autorizá-lo em {settingsPath}."
     },
     "plugins": {
@@ -394,7 +394,7 @@
       "notFound": "não instalado nesta máquina",
       "authorize": "Revisar e autorizar",
       "authorizeTitle": "Autorizar {name}",
-      "authorizeBody": "O Rooks resolveu estes programas nesta máquina. Permita apenas os caminhos que você reconhece.",
+      "authorizeBody": "O Timon resolveu estes programas nesta máquina. Permita apenas os caminhos que você reconhece.",
       "authorizeConfirm": "Permitir estes programas",
       "authorized": "{name} está autorizado.",
       "state": {
@@ -412,10 +412,10 @@
     },
     "acp": {
       "title": "Registro ACP",
-      "description": "Agentes publicados no registro oficial do Agent Client Protocol. O Rooks baixa o programa, o verifica e o executa como um backend.",
+      "description": "Agentes publicados no registro oficial do Agent Client Protocol. O Timon baixa o programa, o verifica e o executa como um backend.",
       "browse": "Explorar o registro",
       "refresh": "Atualizar",
-      "stale": "Não foi possível acessar o registro; esta é a última lista que o Rooks leu.",
+      "stale": "Não foi possível acessar o registro; esta é a última lista que o Timon leu.",
       "verified": "sha256 verificado",
       "noHash": "Sem hash publicado",
       "unsupported": "Indisponível aqui: {reason}",
@@ -438,7 +438,7 @@
       "confirmAction": "Instalar mesmo assim"
     },
     "errors": {
-      "forbidden": "Somente um superadmin conectado ao Rooks pode gerenciar provedores.",
+      "forbidden": "Somente um superadmin conectado ao Timon pode gerenciar provedores.",
       "generic": "O daemon recusou (HTTP {status}).",
       "mismatch": "O programa mudou desde que foi exibido. Revise-o novamente.",
       "refused": "Este programa nunca pode ser executado por um plugin.",
@@ -452,14 +452,14 @@
       "checksum": "O arquivo baixado não corresponde ao checksum publicado. Ele foi excluído.",
       "archive": "O arquivo foi recusado por ser inseguro.",
       "command-missing": "O programa indicado pelo registro não está no arquivo.",
-      "definition-refused": "O Rooks recusou este agente: a descrição dele se contradiz.",
-      "authorize-failed": "Não foi possível autorizar o programa. O log do Rooks tem os detalhes.",
-      "failed": "A operação falhou. O log do Rooks tem os detalhes."
+      "definition-refused": "O Timon recusou este agente: a descrição dele se contradiz.",
+      "authorize-failed": "Não foi possível autorizar o programa. O log do Timon tem os detalhes.",
+      "failed": "A operação falhou. O log do Timon tem os detalhes."
     }
   },
   "binariesSettings": {
     "title": "Binários de CLI",
-    "description": "Onde o Rooks encontrou a ferramenta de linha de comando de cada provedor de IA nesta máquina. Se algum estiver ausente ou em um local incomum, fixe o caminho completo: ele vale a partir da próxima missão, sem reiniciar o Rooks.",
+    "description": "Onde o Timon encontrou a ferramenta de linha de comando de cada provedor de IA nesta máquina. Se algum estiver ausente ou em um local incomum, fixe o caminho completo: ele vale a partir da próxima missão, sem reiniciar o Timon.",
     "recheck": "Verificar novamente",
     "rechecked": "Binários verificados novamente.",
     "none": "Nenhum provedor local usa uma ferramenta de linha de comando.",
@@ -473,7 +473,7 @@
     "save": "Salvar caminho",
     "clear": "Remover fixação",
     "saved": "{name}: caminho salvo. As novas missões o usam.",
-    "cleared": "{name}: fixação removida. O Rooks volta a procurá-lo sozinho.",
+    "cleared": "{name}: fixação removida. O Timon volta a procurá-lo sozinho.",
     "state": {
       "found": "Encontrado",
       "pinned": "Fixado",
@@ -488,7 +488,7 @@
       "path_not_file": "Isto é uma pasta. Escolha o próprio arquivo do programa.",
       "path_not_executable": "Este arquivo não pode ser executado: não é executável.",
       "no_config": "Conclua a configuração primeiro.",
-      "config_unreadable": "Não é possível ler rooks.config.json. Corrija-o ou restaure-o e verifique novamente.",
+      "config_unreadable": "Não é possível ler timon.config.json. Corrija-o ou restaure-o e verifique novamente.",
       "invalid_body": "Este caminho não pode ser salvo.",
       "browse": "Não foi possível abrir o seletor de arquivos.",
       "generic": "A alteração falhou (erro {status})."

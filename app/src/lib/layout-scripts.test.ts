@@ -5,7 +5,7 @@ import { runInNewContext, Script } from 'node:vm';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import ts from 'typescript';
-import { FIRST_RUN_ALLOWED, FIRST_RUN_SCHEME_KEY } from './first-run-gate';
+import { FIRST_RUN_ALLOWED, FIRST_RUN_SCHEME_KEY, schemeFollowsSystem } from './first-run-gate';
 import { PLATFORM_MODULES } from './plugin-host/modules';
 
 // Compile the actual JSX nodes: inspecting the template's source text misses
@@ -33,45 +33,46 @@ function layoutScripts(): string[] {
   return scripts;
 }
 
-// First paint is light. System follows the OS. Nothing else asks the OS.
-test('server-rendered layout scripts paint light until Settings follows the system', () => {
+// The onboarding opens dark for everyone, whatever the OS (07d23060c): the
+// pre-paint script must not consult the OS at all, and outside the onboarding
+// it must leave the server's class alone.
+test('server-rendered layout scripts parse and paint the onboarding dark whatever the OS', () => {
   const scripts = layoutScripts().map((code) => new Script(code));
-  for (const pathname of ['/', '/agents', '/chat', '/login', '/onboarding', '/setup']) {
+  for (const pathname of ['/', '/agents', '/chat', '/login', '/login///', '/setup', '/setup/team/', '/setup-other', "/projects/l'été ` </script>"]) {
     for (const light of [true, false]) {
       const classes = new Set(['dark']);
       let osAsked = false;
       const context = {
         location: { pathname },
-        window: { matchMedia: () => { osAsked = true; return { matches: !light }; } },
-        matchMedia: () => { osAsked = true; return { matches: !light }; },
-        localStorage: { getItem: () => null },
+        matchMedia: () => { osAsked = true; return { matches: light }; },
         document: { documentElement: { classList: {
           toggle: (name: string, enabled: boolean) => enabled ? classes.add(name) : classes.delete(name),
         } } },
       };
       for (const script of scripts) script.runInNewContext(context);
       assert.equal(osAsked, false, pathname);
-      assert.equal(classes.has('light'), true, pathname);
-      assert.equal(classes.has('dark'), false, pathname);
+      assert.equal(classes.has('light'), false, pathname);
+      assert.equal(classes.has('dark'), true, pathname);
     }
   }
 });
 
-test('system mode paints the operating system, and a stored light stays light', () => {
+test('a scheme picked on the onboarding switch wins over the dark default, on the onboarding only', () => {
   const scripts = layoutScripts().map((code) => new Script(code));
-  for (const [mode, osDark, want] of [['system', true, 'dark'], ['system', false, 'light'], ['light', true, 'light'], [null, true, 'light']] as const) {
-    const classes = new Set<string>();
-    const context = {
-      location: { pathname: '/bots' },
-      window: { matchMedia: () => ({ matches: osDark }) },
-      matchMedia: () => ({ matches: osDark }),
-      localStorage: { getItem: (key: string) => (key === 'rooks.appearance.schemeMode' ? mode : null) },
-      document: { documentElement: { classList: {
-        toggle: (name: string, enabled: boolean) => enabled ? classes.add(name) : classes.delete(name),
-      } } },
-    };
-    for (const script of scripts) script.runInNewContext(context);
-    assert.equal(classes.has('dark'), want === 'dark', `${String(mode)} osDark=${osDark}`);
-    assert.equal(classes.has('light'), want === 'light', `${String(mode)} osDark=${osDark}`);
+  for (const pathname of ['/onboarding', '/login', '/chat']) {
+    for (const [stored, light, expected] of [['dark', true, 'dark'], ['light', false, 'light'], ['light', true, 'light'], ['auto', true, 'dark'], [null, true, 'dark']] as const) {
+      const classes = new Set(['dark']);
+      const context = {
+        location: { pathname },
+        matchMedia: () => ({ matches: light }),
+        sessionStorage: { getItem: (key: string) => (key === FIRST_RUN_SCHEME_KEY ? stored : null) },
+        document: { documentElement: { classList: {
+          toggle: (name: string, enabled: boolean) => enabled ? classes.add(name) : classes.delete(name),
+        } } },
+      };
+      for (const script of scripts) script.runInNewContext(context);
+      const want = schemeFollowsSystem(pathname) ? expected : 'dark';
+      assert.equal(classes.has('light'), want === 'light', `${pathname} ${String(stored)}`);
+    }
   }
 });

@@ -26,7 +26,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Check,
   Globe,
-  Monitor,
+  Moon,
   Pin,
   PinOff,
   Sun,
@@ -34,7 +34,6 @@ import {
   Palette,
 } from 'lucide-react';
 import { hiddenOf, setHidden } from '@/lib/nav-hidden';
-import { osScheme, readSchemeMode, storeSchemeMode } from '@/lib/scheme-mode';
 import { navLayoutOf, withNavLayout } from '@/lib/nav-order';
 import { NavItems } from '@/components/nav-items';
 import { useWorkspaceLayout } from '@/components/workspace-layout-provider';
@@ -89,7 +88,7 @@ export function VerticalNav({
 } = {}) {
   const pathname = usePathname();
   const instance = useInstance();
-  const { setScheme: setTheme } = useColorScheme();
+  const { scheme: resolvedTheme, setScheme: setTheme } = useColorScheme();
   const { key, owner, previousOwner } = useWorkspaceLayout();
   const seededScope = useSeededNavScope(owner);
   // Seeded from what this document already derived: a page change remounts
@@ -238,6 +237,8 @@ export function VerticalNav({
   // (hover, an open menu, a drag) only exist once mounted.
   const expanded = pinned || (mounted && (hovered || held || dragging));
 
+  const isLight = mounted && resolvedTheme === 'light';
+
   return (
     <>
       {/* Desktop rail — unchanged: collapsed, expands on hover, pinnable. */}
@@ -375,18 +376,14 @@ export function VerticalNav({
         <button
           type="button"
           onClick={() => {
-            // Light, or follow the system. Dark is not its own choice.
-            const next = readSchemeMode() === 'system' ? 'light' : 'system';
-            const scheme = next === 'system' ? osScheme() : 'light';
-            storeSchemeMode(next);
+            const scheme = isLight ? 'dark' : 'light';
             setTheme(scheme);
-            window.dispatchEvent(new Event('rooks-scheme-mode'));
             void fetch('/api/ui/prefs', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scheme }) });
           }}
           className="mx-2 mt-1 flex shrink-0 items-center gap-3 whitespace-nowrap rounded-md px-3 py-2.5 text-[12.5px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          {readSchemeMode() === 'system' ? <Sun className="size-4 shrink-0" /> : <Monitor className="size-4 shrink-0" />}
-          <span>{readSchemeMode() === 'system' ? t('onboarding.scheme.light') : t('onboarding.scheme.system')}</span>
+          {isLight ? <Moon className="size-4 shrink-0" /> : <Sun className="size-4 shrink-0" />}
+          <span>{isLight ? t('nav.darkTheme') : t('nav.lightTheme')}</span>
         </button>
         <div className="shrink-0 p-2">
           <NavChromeProvider value={{ expanded, forceLabel: true }}>

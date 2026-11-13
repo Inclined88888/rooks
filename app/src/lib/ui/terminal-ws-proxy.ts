@@ -20,7 +20,7 @@ import type http from 'node:http';
 import type { Duplex } from 'node:stream';
 import { nodeRequestHeaders, resolveTarget, upgradeCredential } from '../machines/target';
 import { upstreamRequest } from '../machines/upstream-request';
-import { LEGACY_SESSION_COOKIE, SESSION_COOKIE } from './proxy-auth';
+import { SESSION_COOKIE } from './proxy-auth';
 
 const PATH_RE = /^\/api\/ui\/terminal\/web\/sessions\/([0-9a-fA-F-]{36})\/ws(?:\?[^#]*)?$/;
 
@@ -44,8 +44,7 @@ export function sessionCookieOnly(cookie: string | undefined): string | undefine
   for (const part of cookie.split(';')) {
     const eq = part.indexOf('=');
     if (eq < 0) continue;
-    const name = part.slice(0, eq).trim();
-    if (name !== SESSION_COOKIE && name !== LEGACY_SESSION_COOKIE) continue;
+    if (part.slice(0, eq).trim() !== SESSION_COOKIE) continue;
     const value = part.slice(eq + 1).trim();
     if (value) return `${SESSION_COOKIE}=${value}`;
   }

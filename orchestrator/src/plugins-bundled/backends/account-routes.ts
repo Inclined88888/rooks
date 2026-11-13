@@ -38,7 +38,7 @@ import {
   LoginFlowError, cancelAccountLogin, cancelAccountLoginInternal, getAccountLogin, startAccountLogin,
   submitAccountLoginCode, type LoginInitiator,
 } from '../../backends/account-login.js';
-import { hashSessionToken, readSessionCookie } from '../../users/session.js';
+import { SESSION_COOKIE, hashSessionToken, readCookie } from '../../users/session.js';
 import type { AccountState } from '../../plugins/contract/accounts.js';
 import type { PluginBackendCatalog } from '../../plugins/contract/backends.js';
 import type { Assert, Equals } from '../../type-equality.js';
@@ -123,7 +123,7 @@ function managed(req: Request, viewer: DbViewer, id: string, res: Response): Bac
 function loginInitiator(req: Request, res: Response): { viewer: DbViewer; initiator: LoginInitiator } | null {
   const viewer = manager(req, res);
   if (!viewer) return null;
-  const raw = req.auth!.kind === 'session' ? readSessionCookie(req.headers.cookie) : undefined;
+  const raw = req.auth!.kind === 'session' ? readCookie(req.headers.cookie, SESSION_COOKIE) : undefined;
   if (!raw) {
     forbidden(req, res, { kind: 'scope', reason: 'an account is signed in from a browser session', hint: 'Sign in to the account from the UI (Settings → Accounts).' });
     return null;

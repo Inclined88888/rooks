@@ -15,6 +15,7 @@ import { ArrowRight, Loader2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AgentMascotHost } from '@/components/mascot/agent-mascot';
 import { PasswordInput } from '@/components/auth/password-input';
 import { accountName, looksLikeEmail, passwordPairReady, passwordProblem, MIN_PASSWORD } from '@/components/auth/auth-form';
 import { EmailCodeHost, useNow, type EmailCodeResent, type EmailCodeVerdict } from '@/components/email-code/email-code';
@@ -27,11 +28,10 @@ import { firstRunScheme } from '@/lib/first-run-gate';
 import { t } from '@/lib/i18n';
 import { useOnboarding, useOnboardingBack } from '../onboarding-context';
 
-export type AccountDraft = { name: string; email: string; password: string; confirm: string; setupToken: string };
+/** The mockup's blue round head: the reader's own, before any agent exists. */
+const LOOK = { shape: 'round', color: '#3fa9ff', eyes: 'big' } as const;
 
-const setupFailed = (): CodeFailure => ({
-  code: 'setup_failed', status: 400, params: {}, message: 'The account could not be created.', retryUntil: null, attemptsLeft: null,
-});
+export type AccountDraft = { name: string; email: string; password: string; confirm: string; setupToken: string };
 
 const EMPTY: AccountDraft = { name: '', email: '', password: '', confirm: '', setupToken: '' };
 
@@ -88,10 +88,7 @@ export function AccountStep(): ReactElement {
   const email = draft.email.trim();
   const problem = passwordProblem(draft.password, draft.confirm);
   const waiting = failureText(failure, now);
-  const emailPath = email.trim() !== '' || draft.password !== '' || draft.confirm !== '';
-  const ready = emailPath
-    ? looksLikeEmail(email) && passwordPairReady(draft.password, draft.confirm) && (!needsToken || draft.setupToken.trim() !== '')
-    : draft.name.trim() !== '' && (!needsToken || draft.setupToken.trim() !== '');
+  const ready = looksLikeEmail(email) && passwordPairReady(draft.password, draft.confirm) && (!needsToken || draft.setupToken.trim() !== '');
   const blocked = failure?.retryUntil != null && waiting !== null;
 
   const ask = useCallback(async (): Promise<CodeChallenge | CodeFailure> => {
@@ -104,17 +101,6 @@ export function AccountStep(): ReactElement {
     if (!ready || sending || blocked) return;
     setSending(true);
     setFailure(null);
-    if (!emailPath) {
-      const scheme = firstRunScheme();
-      const answer = await fetch('/api/ui/auth/setup', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name: draft.name.trim(), ...(scheme ? { scheme } : {}), ...(needsToken ? { setupToken: draft.setupToken.trim() } : {}) }),
-      });
-      setSending(false);
-      if (answer.ok) next();
-      else setFailure(setupFailed());
-      return;
-    }
     const answer = await ask();
     setSending(false);
     if ('challengeId' in answer) {
@@ -176,7 +162,8 @@ export function AccountStep(): ReactElement {
 
   return (
     <div className="flex w-full max-w-[440px] flex-col items-center text-center">
-      <h1 className="mt-2 text-[28px] font-semibold leading-tight tracking-tight">{t('onboarding.account.title')}</h1>
+      <AgentMascotHost look={LOOK} size={56} />
+      <h1 className="mt-2 text-[28px] font-bold leading-tight tracking-[-0.02em]">{t('onboarding.account.title')}</h1>
       <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{t('onboarding.account.subtitle')}</p>
       <form noValidate aria-busy={sending} className="mt-[18px] flex w-full flex-col gap-2.5 text-left" onSubmit={(e) => { void submit(e); }}>
         <Field id={`${ids}-name`} label={t('onboarding.account.name')} hint={t('onboarding.account.nameHint')}>
@@ -190,10 +177,11 @@ export function AccountStep(): ReactElement {
             className="h-10"
           />
         </Field>
-        <Field id={`${ids}-email`} label={t('onboarding.account.email')} hint={t('onboarding.account.emailHint')}>
+        <Field id={`${ids}-email`} label={t('onboarding.account.email')} required hint={t('onboarding.account.emailHint')}>
           <Input
             id={`${ids}-email`}
             type="email"
+            required
             autoComplete="username"
             placeholder={t('onboarding.account.emailPlaceholder')}
             value={draft.email}
@@ -202,9 +190,10 @@ export function AccountStep(): ReactElement {
             className="h-10"
           />
         </Field>
-        <Field id={`${ids}-password`} label={t('onboarding.account.password')}>
+        <Field id={`${ids}-password`} label={t('onboarding.account.password')} required>
           <PasswordInput
             id={`${ids}-password`}
+            required
             autoComplete="new-password"
             value={draft.password}
             onChange={set('password')}
@@ -213,9 +202,10 @@ export function AccountStep(): ReactElement {
             className="h-10"
           />
         </Field>
-        <Field id={`${ids}-confirm`} label={t('onboarding.account.confirm')}>
+        <Field id={`${ids}-confirm`} label={t('onboarding.account.confirm')} required>
           <PasswordInput
             id={`${ids}-confirm`}
+            required
             autoComplete="new-password"
             value={draft.confirm}
             onChange={set('confirm')}
@@ -248,16 +238,6 @@ export function AccountStep(): ReactElement {
         <p role="status" aria-live="polite" data-account-status="" className="ml-0.5 min-h-4 text-[12.5px] leading-4 tabular-nums text-destructive">
           {line}
         </p>
-        <Button type="button" variant="ghost" className="h-10 w-full" disabled={sending} onClick={() => {
-          setSending(true);
-          const scheme = firstRunScheme();
-          void fetch('/api/ui/auth/setup', {
-            method: 'POST', headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ name: draft.name.trim() || 'Local', ...(scheme ? { scheme } : {}), ...(needsToken ? { setupToken: draft.setupToken.trim() } : {}) }),
-          }).then((answer) => { setSending(false); if (answer.ok) next(); else setFailure(setupFailed()); });
-        }}>
-          {t('onboarding.account.skip')}
-        </Button>
         <Button type="submit" size="lg" className="h-11 w-full gap-2 rounded-full" disabled={!ready || sending || blocked}>
           {sending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
           {t('onboarding.account.create')}

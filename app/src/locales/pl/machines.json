@@ -22,7 +22,7 @@
       "loadError": "Nie udało się wczytać maszyn."
     },
     "settings": {
-      "description": "Inne maszyny Rooks, którymi ten komputer może sterować. Przełączenie zastępuje cały interfejs interfejsem wybranej maszyny, w tym samym oknie: każda maszyna zachowuje własnych agentów, projekty i ustawienia.",
+      "description": "Inne maszyny Timon, którymi ten komputer może sterować. Przełączenie zastępuje cały interfejs interfejsem wybranej maszyny, w tym samym oknie: każda maszyna zachowuje własnych agentów, projekty i ustawienia.",
       "local": "Maszyna, z której serwowany jest ten interfejs.",
       "add": "Dodaj maszynę",
       "addTitle": "Dodaj maszynę",
@@ -67,8 +67,8 @@
       "invalidCode": "Maszyna odrzuciła ten kod: błędny, wygasły lub już użyty. Poproś ją o nowy.",
       "invalidUrl": "Tego adresu nie można użyć: podaj sam adres maszyny, bez loginu, zapytania i fragmentu.",
       "httpsRequired": "Z maszyną trzeba łączyć się przez HTTPS. Zwykły HTTP jest akceptowany tylko na tym komputerze.",
-      "blockedAddress": "Ten adres nigdy nie wskazuje maszyny Rooks.",
-      "notTimon": "Pod tym adresem nie odpowiada żadna maszyna Rooks.",
+      "blockedAddress": "Ten adres nigdy nie wskazuje maszyny Timon.",
+      "notTimon": "Pod tym adresem nie odpowiada żadna maszyna Timon.",
       "requiresTls": "Maszyna nie widzi tego połączenia jako HTTPS: sprawdź ustawienia HTTPS jej reverse proxy.",
       "unreachable": "Z maszyną nie można się teraz połączyć.",
       "unauthorized": "Maszyna nie akceptuje już tego komputera: jego dostęp odwołano lub wygasł. Sparuj ją ponownie.",
@@ -78,7 +78,7 @@
       "throttled": "Zbyt wiele prób. Odczekaj kilka minut przed ponowną próbą.",
       "tooMany": "Flota może liczyć najwyżej 50 maszyn.",
       "vault": "Sejf sekretów jest niedostępny: nie można przechować dostępu do maszyny.",
-      "incompatible": "Ta maszyna ma wersję Rooks zbyt starą dla tego interfejsu. Najpierw ją zaktualizuj.",
+      "incompatible": "Ta maszyna ma wersję Timon zbyt starą dla tego interfejsu. Najpierw ją zaktualizuj.",
       "notFound": "Tej maszyny nie ma już w twojej flocie.",
       "notHere": "Maszynami zarządza się z przeglądarki zalogowanej na tym komputerze.",
       "sessionRequired": "Najpierw zaloguj się na tym komputerze.",
@@ -88,7 +88,7 @@
     "banner": {
       "unreachable": "Z {name} nie można się teraz połączyć.",
       "apiUnknown": "{name} nie mówi, jakiego interfejsu oczekuje: niektóre ekrany mogą nie działać.",
-      "apiNewer": "{name} ma nowszy Rooks niż ten interfejs: zaktualizuj tę aplikację, aby w pełni z niej korzystać.",
+      "apiNewer": "{name} ma nowszy Timon niż ten interfejs: zaktualizuj tę aplikację, aby w pełni z niej korzystać.",
       "retry": "Ponów",
       "dismiss": "Odrzuć"
     },
@@ -106,7 +106,7 @@
       "body": {
         "unreachable": "Maszyna nie odpowiada: może być wyłączona lub jej sieć niedostępna. Twoja praca na niej jest nienaruszona.",
         "unauthorized": "Dostęp tego komputera został odwołany lub wygasł na tamtej maszynie. Sparuj go ponownie w {settingsPath}.",
-        "incompatible": "Używa poziomu interfejsu {level}, a ten interfejs wymaga co najmniej {min}. Zaktualizuj Rooks na tamtej maszynie, a potem przełącz się na nią ponownie.",
+        "incompatible": "Używa poziomu interfejsu {level}, a ten interfejs wymaga co najmniej {min}. Zaktualizuj Timon na tamtej maszynie, a potem przełącz się na nią ponownie.",
         "unknown": "Maszyna, którą sterowało to okno, została usunięta z twojej floty lub należy do innego konta.",
         "session_required": "Twoja sesja na tym komputerze się zakończyła. Wróć do niego, aby zalogować się ponownie.",
         "unavailable": "Ten komputer nie może teraz otworzyć dostępu do maszyny (sejf sekretów, demon). Spróbuj ponownie za chwilę."

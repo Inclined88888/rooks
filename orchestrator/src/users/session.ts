@@ -33,11 +33,6 @@ export function issueInviteToken(): string {
   return issueSessionToken();
 }
 
-/** This build's session, or the `rooks_session` cookie an older Rooks build set. */
-export function readSessionCookie(header: string | undefined): string | undefined {
-  return readCookie(header, SESSION_COOKIE) ?? readCookie(header, 'rooks_session');
-}
-
 export function readCookie(header: string | undefined, name: string): string | undefined {
   if (!header) return undefined;
   for (const part of header.split(';')) {

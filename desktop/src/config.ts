@@ -89,27 +89,14 @@ export function expandTilde(p: string, home: string = homedir()): string {
   return p;
 }
 
-/** `ROOKS_HOME`, else `TIMON_HOME`, else `~/.rooks`. */
+/** `TIMON_HOME` if set and non-empty, else `~/.timon`. */
 export function resolveTimonHome(env: NodeJS.ProcessEnv = process.env): string {
-  if (env.ROOKS_HOME && env.ROOKS_HOME.length > 0) return env.ROOKS_HOME;
-  if (env.TIMON_HOME && env.TIMON_HOME.length > 0) return env.TIMON_HOME;
-  return join(homedir(), '.rooks');
+  const fromEnv = env.TIMON_HOME;
+  return fromEnv && fromEnv.length > 0 ? fromEnv : join(homedir(), '.timon');
 }
 
-/** `rooks` for the installed app. A checkout that set only `TIMON_HOME` keeps `timon` file names. */
-export function homeNames(env: NodeJS.ProcessEnv = process.env): 'rooks' | 'timon' {
-  if (env.ROOKS_HOME && env.ROOKS_HOME.length > 0) return 'rooks';
-  if (env.TIMON_HOME && env.TIMON_HOME.length > 0) return 'timon';
-  return 'rooks';
-}
-
-/** The config that exists, or the name this home will create. */
-export function configFile(home: string, env: NodeJS.ProcessEnv = process.env): string {
-  const rooks = join(home, 'rooks.config.json');
-  const timon = join(home, 'timon.config.json');
-  if (existsSync(rooks)) return rooks;
-  if (existsSync(timon)) return timon;
-  return homeNames(env) === 'timon' ? timon : rooks;
+export function configFile(home: string): string {
+  return join(home, 'timon.config.json');
 }
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {

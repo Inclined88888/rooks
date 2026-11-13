@@ -1,0 +1,173 @@
+# TEST ONLY desktop installers. The app is known-good Timon, plus the
+# portable-mode fix when the systemd user bus answers `offline`.
+# Unsigned OS code-signing is expected when no Apple or Windows identity is set.
+# Daemon release integrity uses an ephemeral TEST-ONLY Ed25519 pair for this job.
+name: Desktop test build
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: ${{ matrix.os }} package (TEST ONLY)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-14 is Apple silicon, so the dmg is arm64. beforePack refuses
+          # a cross build, which is why each OS builds only itself.
+          - os: macos-14
+            eb_args: '--mac dmg --publish never'
+          - os: ubuntu-latest
+            eb_args: '--linux AppImage deb --publish never'
+          - os: windows-latest
+            eb_args: '--win nsis --publish never'
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: bash
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            orchestrator/package-lock.json
+            app/package-lock.json
+            desktop/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci --include=dev --prefix orchestrator
+          npm ci --include=dev --prefix app
+          npm ci --include=dev --prefix desktop
+
+      - name: Ephemeral TEST ONLY release keys
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/timon-keys"
+          PRIV="$RUNNER_TEMP/timon-keys/private.pem"
+          PUB="$RUNNER_TEMP/timon-keys/public.pem"
+          node <<'NODE'
+          const { generateKeyPairSync } = require('crypto');
+          const fs = require('fs');
+          const dir = process.env.RUNNER_TEMP + '/timon-keys';
+          const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+          fs.writeFileSync(dir + '/private.pem', privateKey.export({ type: 'pkcs8', format: 'pem' }));
+          fs.writeFileSync(dir + '/public.pem', publicKey.export({ type: 'spki', format: 'pem' }));
+          console.log('Minted ephemeral TEST-ONLY Ed25519 release keys.');
+          NODE
+          echo "TIMON_RELEASE_PRIVATE_KEY_FILE=$PRIV" >> "$GITHUB_ENV"
+          echo "TIMON_RELEASE_PUBLIC_KEY_FILE=$PUB" >> "$GITHUB_ENV"
+
+      - name: Write beta build-info
+        working-directory: desktop
+        run: |
+          node --input-type=module -e '
+            import { createBuildInfo, writeBuildInfo } from "./scripts/build-info.mjs";
+            const info = createBuildInfo({ channel: "beta" });
+            console.log(writeBuildInfo("..", info));
+            console.log("channel", info.channel, "builtAt", info.builtAt);
+          '
+
+      - name: Build standalone web app
+        working-directory: app
+        env:
+          TIMON_NEXT_STANDALONE: '1'
+        run: npm run build
+
+      - name: Prepare packaged dependencies
+        working-directory: desktop
+        run: |
+          npm run build
+          npm run prepare:deps
+
+      - name: electron-builder (${{ matrix.os }})
+        working-directory: desktop
+        run: npx electron-builder --config electron-builder.yml ${{ matrix.eb_args }}
+
+      - name: Require the installer for this OS
+        working-directory: desktop
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          echo "Release directory:"
+          ls -lh release
+          os="${{ matrix.os }}"
+          if [[ "$os" == macos-* ]]; then
+            files=(release/*arm64*.dmg)
+          elif [[ "$os" == ubuntu-* ]]; then
+            files=(release/*.AppImage release/*.deb)
+          else
+            files=(release/*.exe)
+          fi
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No installer matched for $os"
+            exit 1
+          fi
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: rooks-test-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            desktop/release/*.dmg
+            desktop/release/*.AppImage
+            desktop/release/*.deb
+            desktop/release/*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  prerelease:
+    name: Attach TEST ONLY prerelease
+    needs: package
+    if: needs.package.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all package artefacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-out
+          pattern: rooks-test-*
+          merge-multiple: true
+      - name: Create prerelease rooks-test-*
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          echo "Downloaded:"
+          ls -lh dist-out
+          dmg=(dist-out/*arm64*.dmg)
+          exe=(dist-out/*.exe)
+          appimage=(dist-out/*.AppImage)
+          deb=(dist-out/*.deb)
+          if [ ${#dmg[@]} -eq 0 ] || [ ${#exe[@]} -eq 0 ] || [ ${#appimage[@]} -eq 0 ] || [ ${#deb[@]} -eq 0 ]; then
+            echo "Refusing to publish until Mac arm64, Windows, AppImage, and deb are all present."
+            exit 1
+          fi
+          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          tag="rooks-test-${HEAD_SHA::8}"
+          title="TEST ONLY — Timon desktop ${tag}"
+          notes=$'TEST ONLY. Known-good Timon screens and setup, plus one fix: a systemd user bus that answers `offline` is not a supervisor, so setup can finish in portable mode.\n\n- Not a desktop-v release.\n- The app still says Timon. Renaming the screens waits.\n- OS code signing is not applied.\n- Daemon integrity uses an ephemeral TEST-ONLY Ed25519 pair minted in this job.\n- Licence is unchanged (AGPL-3.0-only).\n'
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${dmg[@]}" "${exe[@]}" "${appimage[@]}" "${deb[@]}" --clobber
+          else
+            gh release create "$tag" "${dmg[@]}" "${exe[@]}" "${appimage[@]}" "${deb[@]}" --prerelease --title "$title" --notes "$notes" --target "${HEAD_SHA}"
+          fi
+          echo "Prerelease: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${tag}"

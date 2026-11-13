@@ -43,10 +43,10 @@
     "verified": "확인됨",
     "unverified": "확인 안 됨",
     "builtin": "내장",
-    "builtinHint": "Rooks에 포함: 끌 수는 있지만 제거할 수는 없습니다.",
+    "builtinHint": "Timon에 포함: 끌 수는 있지만 제거할 수는 없습니다.",
     "awaitingApproval": "이 컴퓨터에서 승인 필요",
     "awaitingApprovalHint": "이 머신에서 실행 중이지만, 인터페이스 코드는 같은 버전과 같은 서명이 이 컴퓨터에 설치되고 켜진 뒤에야 여기서 불러옵니다.",
-    "awaitingApprovalBuiltinHint": "이 머신에서 실행 중이지만, 인터페이스 코드는 이 컴퓨터가 이 플러그인의 같은 버전과 같은 인터페이스 코드를 포함하고 켠 뒤에야 여기서 불러옵니다. 두 Rooks 릴리스가 같은 플러그인 버전으로 다른 코드를 포함할 수 있습니다: 더 오래된 머신을 업데이트하세요.",
+    "awaitingApprovalBuiltinHint": "이 머신에서 실행 중이지만, 인터페이스 코드는 이 컴퓨터가 이 플러그인의 같은 버전과 같은 인터페이스 코드를 포함하고 켠 뒤에야 여기서 불러옵니다. 두 Timon 릴리스가 같은 플러그인 버전으로 다른 코드를 포함할 수 있습니다: 더 오래된 머신을 업데이트하세요.",
     "modules": {
       "@timon/db": {
         "label": "데이터베이스",
@@ -178,11 +178,11 @@
       },
       "@timon/terminal-web": {
         "label": "내장 터미널",
-        "description": "Rooks 안의 터미널(데스크톱, 브라우저, 휴대폰)로, 이 컴퓨터에서 셸을 실행합니다. 열 수 있는 권한이 있는 계정 전용입니다."
+        "description": "Timon 안의 터미널(데스크톱, 브라우저, 휴대폰)로, 이 컴퓨터에서 셸을 실행합니다. 열 수 있는 권한이 있는 계정 전용입니다."
       },
       "@timon/ui-documents": {
         "label": "채팅 속 문서",
-        "description": "에이전트, 나 또는 플러그인이 대화에 표시하는 대화형 HTML 문서로, 샌드박스 프레임에서 Rooks과 격리됩니다."
+        "description": "에이전트, 나 또는 플러그인이 대화에 표시하는 대화형 HTML 문서로, 샌드박스 프레임에서 Timon과 격리됩니다."
       },
       "@timon/orchestrator-self": {
         "label": "데몬",
@@ -210,11 +210,11 @@
       },
       "@timon/telemetry": {
         "label": "사용 통계",
-        "description": "익명 사용 통계를 Rooks 팀에 보냅니다: 어떤 기능을 쓰는지, 턴이 어떻게 진행되는지, 설정이 어디서 멈추는지. 콘텐츠, 이름, 경로는 절대 보내지 않습니다. 개인정보 설정에서 끌 수 있습니다."
+        "description": "익명 사용 통계를 Timon 팀에 보냅니다: 어떤 기능을 쓰는지, 턴이 어떻게 진행되는지, 설정이 어디서 멈추는지. 콘텐츠, 이름, 경로는 절대 보내지 않습니다. 개인정보 설정에서 끌 수 있습니다."
       },
       "@timon/machines": {
         "label": "머신",
-        "description": "다른 Rooks 머신을 이 머신과 페어링하고 접근 권한을 볼트에 보관해, 인터페이스를 머신 간에 전환합니다. 켤 때까지 꺼져 있습니다."
+        "description": "다른 Timon 머신을 이 머신과 페어링하고 접근 권한을 볼트에 보관해, 인터페이스를 머신 간에 전환합니다. 켤 때까지 꺼져 있습니다."
       },
       "@timon/company": {
         "label": "Company",
@@ -262,8 +262,8 @@
       "tampered": "변조된 패키지",
       "unsignedLoads": "서명 없음 — 개발자 모드에서 불러옴",
       "unsignedBlocked": "서명 없음 — 불러오지 않음",
-      "manifestRefused": "Rooks이 이 플러그인을 사용할 수 없습니다: {reason}",
-      "nodeEngineRefused": "이 플러그인은 이 Rooks이 쓰는 Node에서 실행되지 않습니다: {reason}",
+      "manifestRefused": "Timon이 이 플러그인을 사용할 수 없습니다: {reason}",
+      "nodeEngineRefused": "이 플러그인은 이 Timon이 쓰는 Node에서 실행되지 않습니다: {reason}",
       "tamperedHint": "파일이 서명과 일치하지 않습니다: 이 패키지는 서명된 뒤 수정되었습니다. 설치할 수 없습니다.",
       "permissions": "요청 권한",
       "permissionsNone": "권한 없음",
@@ -286,7 +286,7 @@
           "unreadable": "설치한 뒤에만 읽을 수 있음: 아무 권한도 부여되지 않은 채 설치됩니다. 시크릿은 시크릿 페이지에서 부여하세요. 공급자라면 {settingsPath}에서 승인할 때까지 비활성 상태로 남습니다.",
           "unresolved": "이 번들의 의존성 중 어느 것도 제공하지 않음: 설치되지 않으므로 요청하는 것이 없습니다.",
           "tampered": "파일이 서명과 일치하지 않음: 불러오지 않으므로 요청하는 것이 없습니다.",
-          "nodeEngine": "이 Rooks이 쓰는 Node에서 실행되지 않음: 불러오지 않으므로 요청하는 것이 없습니다. {reason}"
+          "nodeEngine": "이 Timon이 쓰는 Node에서 실행되지 않음: 불러오지 않으므로 요청하는 것이 없습니다. {reason}"
         },
         "refused": {
           "not-installed": "“{name}”이(가) 설치되지 않아 프로그램이 승인되지 않았습니다.",
@@ -305,7 +305,7 @@
         "read": "이 시트에 이름을 밝히지 않고 이름으로 볼트 시크릿을 읽습니다: 각 시크릿은 시크릿 페이지에서, 또는 플러그인이 요청할 때 나타나는 카드에서 이 플러그인에 줍니다.",
         "broker": "이름으로 부여된 것에 한해, 키를 보지 않고 볼트 ID로 API를 호출합니다.",
         "brokerNoHttp": "http:outbound를 선언하지 않아 브로커를 통한 API 호출이 거부됩니다.",
-        "network": "네트워크 접근은 rooks.config.json에서 모든 플러그인(pluginPolicy.http.allow) 또는 이 플러그인에만(pluginPolicy.http.byPlugin) 연 호스트와 승인된 연결의 주소로 제한됩니다.",
+        "network": "네트워크 접근은 timon.config.json에서 모든 플러그인(pluginPolicy.http.allow) 또는 이 플러그인에만(pluginPolicy.http.byPlugin) 연 호스트와 승인된 연결의 주소로 제한됩니다.",
         "secretsLead": "지정된 시크릿. 선택한 시크릿은 이 플러그인에만 부여됩니다. 선택을 해제해도 부여가 취소되지는 않습니다 (취소는 시크릿에서).",
         "hostsLead": "접속하는 호스트. 선택한 호스트는 이 플러그인에만 열립니다.",
         "hostOwn": "이미 이 플러그인에 열려 있습니다. 선택을 해제하면 닫힙니다: 호스트는 여기서 선택한 것으로 바뀝니다.",
@@ -325,7 +325,7 @@
         "choose": "시크릿 페이지에서 선택"
       },
       "disclaimerTitle": "서드파티 플러그인",
-      "disclaimer": "이 플러그인은 Rooks이 만들거나 검토하거나 보증한 것이 아니며, Rooks은 그 동작에 책임지지 않습니다. 설치하면 내 계정의 권한으로 Rooks 안에서 실행됩니다. 신뢰하는 작성자의 플러그인만 설치하세요.",
+      "disclaimer": "이 플러그인은 Timon이 만들거나 검토하거나 보증한 것이 아니며, Timon은 그 동작에 책임지지 않습니다. 설치하면 내 계정의 권한으로 Timon 안에서 실행됩니다. 신뢰하는 작성자의 플러그인만 설치하세요.",
       "cancel": "취소",
       "installing": "설치하는 중…",
       "reinstall": "이 버전 설치",
@@ -333,7 +333,7 @@
       "refreshed": "{reason} 아래 시트는 최신 상태입니다: 검토한 뒤 다시 설치하세요.",
       "errors": {
         "unauthenticated": "세션이 만료되었습니다 — 다시 로그인하세요.",
-        "forbidden": "Rooks에 로그인한 최고 관리자만 플러그인을 설치할 수 있습니다.",
+        "forbidden": "Timon에 로그인한 최고 관리자만 플러그인을 설치할 수 있습니다.",
         "too-large": "이 플러그인은 너무 큽니다 (아카이브 최대 25MB, 파일 최대 200MB).",
         "too-many-entries": "이 플러그인에는 파일이 너무 많습니다.",
         "not-gzip": "플러그인 아카이브가 아닙니다: .tgz 또는 .zip이어야 합니다.",
@@ -343,22 +343,22 @@
         "corrupt": "이 아카이브는 손상되었습니다.",
         "not-archive": "플러그인 아카이브가 아닙니다: .tgz 또는 .zip이어야 합니다.",
         "not-zip": "올바른 .zip 아카이브가 아닙니다.",
-        "zip64": "이 .zip은 Rooks이 읽지 못하는 zip64 형식입니다. 표준 도구로 플러그인을 다시 압축하거나 .tgz를 사용하세요.",
+        "zip64": "이 .zip은 Timon이 읽지 못하는 zip64 형식입니다. 표준 도구로 플러그인을 다시 압축하거나 .tgz를 사용하세요.",
         "encrypted": "이 .zip은 비밀번호로 보호되어 있습니다. 비밀번호 없이 다시 압축하세요.",
         "multi-volume": "이 .zip은 여러 부분으로 나뉘어 있습니다. 하나의 .zip으로 만드세요.",
-        "compression": "이 .zip은 Rooks이 읽지 못하는 압축 방식을 사용합니다. 표준 압축으로 플러그인을 다시 압축하세요.",
-        "not-a-plugin": "Rooks 플러그인이 아닙니다: `timon` 매니페스트가 있는 package.json이 없습니다.",
+        "compression": "이 .zip은 Timon이 읽지 못하는 압축 방식을 사용합니다. 표준 압축으로 플러그인을 다시 압축하세요.",
+        "not-a-plugin": "Timon 플러그인이 아닙니다: `timon` 매니페스트가 있는 package.json이 없습니다.",
         "invalid-path": "이 경로는 사용할 수 없습니다.",
         "forbidden-path": "이 폴더에서는 플러그인을 설치할 수 없습니다.",
         "not-found": "그곳에서 더 이상 아무것도 찾을 수 없습니다.",
         "expired": "이 미리 보기는 만료되었습니다. 플러그인을 다시 선택하세요.",
         "tampered": "패키지가 서명 후 변조되었습니다. 설치할 수 없습니다.",
         "manifest": "플러그인의 매니페스트가 올바르지 않습니다. 설치할 수 없습니다.",
-        "npm-missing": "Rooks을 실행하는 컴퓨터에서 npm을 사용할 수 없습니다. Node.js를 설치한 뒤 다시 시도하세요.",
-        "install-failed": "설치에 실패했습니다. 자세한 내용은 Rooks 로그에 있습니다.",
+        "npm-missing": "Timon을 실행하는 컴퓨터에서 npm을 사용할 수 없습니다. Node.js를 설치한 뒤 다시 시도하세요.",
+        "install-failed": "설치에 실패했습니다. 자세한 내용은 Timon 로그에 있습니다.",
         "name-taken": "플러그인 폴더에서 다른 패키지가 이미 이 이름을 사용합니다.",
         "generic": "데몬이 거부했습니다 (HTTP {status}).",
-        "unreadable": "Rooks에 이 위치를 읽을 권한이 없습니다. macOS에서는 시스템 설정 › 개인정보 보호 및 보안에서 허용하거나, 플러그인을 다른 곳으로 옮기세요.",
+        "unreadable": "Timon에 이 위치를 읽을 권한이 없습니다. macOS에서는 시스템 설정 › 개인정보 보호 및 보안에서 허용하거나, 플러그인을 다른 곳으로 옮기세요.",
         "mismatch": "이 플러그인이 요청하는 것(프로그램, 시크릿 또는 호스트)이 표시된 뒤 바뀌었습니다.",
         "refused": "이 프로그램은 플러그인이 절대 실행할 수 없습니다.",
         "not-provider": "이 플러그인은 공급자가 아닙니다.",
@@ -373,7 +373,7 @@
   },
   "providersSettings": {
     "title": "공급자",
-    "description": "공급자 플러그인은 AI 서비스를 Rooks에 가져옵니다. 공급자가 실행하는 각 프로그램은 실행 전에 확인된 경로로 여기서 승인됩니다.",
+    "description": "공급자 플러그인은 AI 서비스를 Timon에 가져옵니다. 공급자가 실행하는 각 프로그램은 실행 전에 확인된 경로로 여기서 승인됩니다.",
     "cancel": "취소",
     "consent": {
       "prompts": "담당하는 미션의 모든 지시와 모든 답변을 받습니다.",
@@ -384,7 +384,7 @@
       "osCredentialAccount": "시스템 자격 증명 저장소(macOS 키체인)의 항목 \"{service}\"({account})을(를) 읽습니다. 읽기 전용입니다."
     },
     "install": {
-      "allow": "위에 나열된 프로그램을 Rooks이 실행하도록 허용합니다.",
+      "allow": "위에 나열된 프로그램을 Timon이 실행하도록 허용합니다.",
       "allowHint": "허용하지 않으면 공급자는 설치되지만 {settingsPath}에서 승인할 때까지 비활성 상태로 남습니다."
     },
     "plugins": {
@@ -394,7 +394,7 @@
       "notFound": "이 머신에 설치되지 않음",
       "authorize": "검토하고 승인",
       "authorizeTitle": "{name} 승인",
-      "authorizeBody": "Rooks이 이 머신에서 이 프로그램들을 확인했습니다. 알아보는 경로만 허용하세요.",
+      "authorizeBody": "Timon이 이 머신에서 이 프로그램들을 확인했습니다. 알아보는 경로만 허용하세요.",
       "authorizeConfirm": "이 프로그램 허용",
       "authorized": "{name}이(가) 승인되었습니다.",
       "state": {
@@ -412,10 +412,10 @@
     },
     "acp": {
       "title": "ACP 레지스트리",
-      "description": "공식 Agent Client Protocol 레지스트리에 게시된 에이전트. Rooks이 프로그램을 다운로드하고 확인한 뒤 백엔드로 실행합니다.",
+      "description": "공식 Agent Client Protocol 레지스트리에 게시된 에이전트. Timon이 프로그램을 다운로드하고 확인한 뒤 백엔드로 실행합니다.",
       "browse": "레지스트리 둘러보기",
       "refresh": "새로 고침",
-      "stale": "레지스트리에 연결할 수 없습니다. 이것은 Rooks이 마지막으로 읽은 목록입니다.",
+      "stale": "레지스트리에 연결할 수 없습니다. 이것은 Timon이 마지막으로 읽은 목록입니다.",
       "verified": "sha256 확인됨",
       "noHash": "게시된 해시 없음",
       "unsupported": "여기서는 사용할 수 없음: {reason}",
@@ -438,7 +438,7 @@
       "confirmAction": "그래도 설치"
     },
     "errors": {
-      "forbidden": "Rooks에 로그인한 최고 관리자만 공급자를 관리할 수 있습니다.",
+      "forbidden": "Timon에 로그인한 최고 관리자만 공급자를 관리할 수 있습니다.",
       "generic": "데몬이 거부했습니다 (HTTP {status}).",
       "mismatch": "표시된 뒤 프로그램이 바뀌었습니다. 다시 검토하세요.",
       "refused": "이 프로그램은 플러그인이 절대 실행할 수 없습니다.",
@@ -452,14 +452,14 @@
       "checksum": "다운로드한 파일이 게시된 체크섬과 일치하지 않아 삭제했습니다.",
       "archive": "아카이브가 안전하지 않아 거부되었습니다.",
       "command-missing": "레지스트리가 지정한 프로그램이 아카이브에 없습니다.",
-      "definition-refused": "Rooks이 이 에이전트를 거부했습니다: 설명 내용이 서로 모순됩니다.",
-      "authorize-failed": "프로그램을 승인할 수 없습니다. 자세한 내용은 Rooks 로그에 있습니다.",
-      "failed": "작업에 실패했습니다. 자세한 내용은 Rooks 로그에 있습니다."
+      "definition-refused": "Timon이 이 에이전트를 거부했습니다: 설명 내용이 서로 모순됩니다.",
+      "authorize-failed": "프로그램을 승인할 수 없습니다. 자세한 내용은 Timon 로그에 있습니다.",
+      "failed": "작업에 실패했습니다. 자세한 내용은 Timon 로그에 있습니다."
     }
   },
   "binariesSettings": {
     "title": "CLI 바이너리",
-    "description": "이 컴퓨터에서 Rooks이 각 AI 공급자의 명령줄 도구를 찾은 위치입니다. 없거나 특이한 위치에 있으면 전체 경로를 고정하세요: Rooks을 다시 시작하지 않고 다음 미션부터 적용됩니다.",
+    "description": "이 컴퓨터에서 Timon이 각 AI 공급자의 명령줄 도구를 찾은 위치입니다. 없거나 특이한 위치에 있으면 전체 경로를 고정하세요: Timon을 다시 시작하지 않고 다음 미션부터 적용됩니다.",
     "recheck": "다시 확인",
     "rechecked": "바이너리를 다시 확인했습니다.",
     "none": "명령줄 도구를 쓰는 로컬 공급자가 없습니다.",
@@ -473,7 +473,7 @@
     "save": "경로 저장",
     "clear": "고정 해제",
     "saved": "{name}: 경로가 저장되었습니다. 새 미션이 이를 사용합니다.",
-    "cleared": "{name}: 고정이 해제되었습니다. Rooks이 다시 스스로 찾습니다.",
+    "cleared": "{name}: 고정이 해제되었습니다. Timon이 다시 스스로 찾습니다.",
     "state": {
       "found": "찾음",
       "pinned": "고정됨",
@@ -488,7 +488,7 @@
       "path_not_file": "폴더입니다. 프로그램 파일 자체를 선택하세요.",
       "path_not_executable": "이 파일은 실행 가능하지 않아 실행할 수 없습니다.",
       "no_config": "먼저 설정을 마치세요.",
-      "config_unreadable": "rooks.config.json을 읽을 수 없습니다. 고치거나 복원한 뒤 다시 확인하세요.",
+      "config_unreadable": "timon.config.json을 읽을 수 없습니다. 고치거나 복원한 뒤 다시 확인하세요.",
       "invalid_body": "이 경로는 저장할 수 없습니다.",
       "browse": "파일 선택 창을 열 수 없습니다.",
       "generic": "변경에 실패했습니다 (오류 {status})."

@@ -31,14 +31,7 @@ test('/api/health names the service that answers', async () => {
   try {
     const res = await fetch(`http://127.0.0.1:${addr.port}/api/health`);
     assert.equal(res.status, 200);
-    const body = await res.json() as { ok: boolean; service: string; instance: string; packaged: boolean; version: string; builtAt: string | null };
-    assert.equal(body.ok, true);
-    assert.equal(body.service, BRAND.id);
-    assert.equal(body.instance, instanceId(HOME));
-    assert.equal(body.packaged, false);
-    assert.equal(typeof body.version, 'string');
-    assert.ok(body.version.length > 0);
-    assert.ok(body.builtAt === null || typeof body.builtAt === 'string');
+    assert.deepEqual(await res.json(), { ok: true, service: BRAND.id, instance: instanceId(HOME), packaged: false });
     const desktopModule = new URL('../../../../desktop/src/health.ts', import.meta.url).href;
     const desktop = await import(desktopModule);
     const health = await desktop.probeHealth(`http://127.0.0.1:${addr.port}`);

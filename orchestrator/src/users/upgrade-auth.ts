@@ -9,7 +9,7 @@ import type { IncomingMessage } from 'node:http';
 import { dbApi } from '../db.js';
 import { freeAccountAllowed } from './free-access.js';
 import type { RequestAuth } from './identity.js';
-import { hashSessionToken, readSessionCookie } from './session.js';
+import { hashSessionToken, readCookie, SESSION_COOKIE } from './session.js';
 import { isDeviceToken, lookupDevice } from './devices.js';
 import { auditDeadDeviceUse, deviceTransportAllowed, noteDeviceUse } from './devices-http.js';
 
@@ -57,7 +57,7 @@ export function upgradeAuth(req: IncomingMessage): RequestAuth | undefined {
     noteDeviceUse(req, found.device);
     return { kind: 'device', user: found.user, isSuperadmin: found.user.is_superadmin, deviceId: found.device.id };
   }
-  const raw = readSessionCookie(typeof req.headers.cookie === 'string' ? req.headers.cookie : undefined);
+  const raw = readCookie(typeof req.headers.cookie === 'string' ? req.headers.cookie : undefined, SESSION_COOKIE);
   if (!raw) return undefined;
   const live = dbApi.getLiveSession(hashSessionToken(raw));
   if (!live) return undefined;

@@ -11,7 +11,7 @@
     "licenseRateLimited": "Trop de tentatives. Patientez un moment avant de réessayer.",
     "setupInProgress": "La création du compte est déjà en cours. Patientez puis réessayez.",
     "setupToken": "Jeton de configuration",
-    "setupTokenHint": "Ce serveur est joignable depuis le réseau : lancez cette commande sur la machine qui héberge Rooks et collez le résultat.",
+    "setupTokenHint": "Ce serveur est joignable depuis le réseau : lancez cette commande sur la machine qui héberge Timon et collez le résultat.",
     "setupTokenInvalid": "Jeton de configuration absent ou incorrect. Lancez la commande ci-dessous sur le serveur et réessayez.",
     "alreadySetUp": "Un compte administrateur existe déjà. Rechargez cette page pour vous connecter.",
     "licenseUserLimit": "Cette licence ne permet pas de créer un profil administrateur. Contactez le support.",
@@ -19,7 +19,7 @@
     "title": "Connexion",
     "sessionExpired": "Votre session a expiré. Reconnectez-vous.",
     "forgot": "Mot de passe oublié ?",
-    "description": "Connectez-vous avec l'email et le mot de passe de votre compte Rooks.",
+    "description": "Connectez-vous avec l'email et le mot de passe de votre compte Timon.",
     "email": "Email",
     "password": "Mot de passe",
     "submit": "Se connecter",
@@ -27,10 +27,10 @@
     "failed": "La connexion a échoué",
     "setupFailed": "La création a été refusée",
     "freeUnavailable": "L’inscription Free n’est pas encore ouverte pour cette version. Réessayez plus tard ou utilisez une clé de licence existante.",
-    "clientUpgradeRequired": "Mettez Rooks à jour vers une version compatible, puis réessayez.",
+    "clientUpgradeRequired": "Mettez Timon à jour vers une version compatible, puis réessayez.",
     "transferPending": "Le jeton de la machine précédente n’a pas encore expiré. Patientez avant d’activer cette machine.",
     "freeIncompatible": "Free ne peut pas être activé avec les comptes ou plugins actuels. Vos données sont conservées.",
     "freeAccountRestricted": "Free autorise uniquement le premier superadmin actif. Ton compte et tes données sont conservés. Demande à cet administrateur d’activer une licence pour rétablir ton accès.",
-    "local": "Ce compte est local : la connexion n’appelle jamais le serveur Rooks."
+    "local": "Ce compte est local : la connexion n’appelle jamais le serveur Timon."
   }
 }

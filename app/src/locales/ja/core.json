@@ -3,7 +3,7 @@
     "title": "公式コネクタ",
     "subtitle": "エージェントが使うサービスの MCP サーバーを、ワンクリックで接続します。",
     "count": "接続済み {connected} · コネクタ {total} 個",
-    "loadFailed": "コネクタを読み込めませんでした。Rooks が実行中か確認してから、ページを再読み込みしてください。",
+    "loadFailed": "コネクタを読み込めませんでした。Timon が実行中か確認してから、ページを再読み込みしてください。",
     "noMatch": "この検索に一致するコネクタはありません。",
     "footer": "各コネクタは提供元がホストするリモート MCP サーバーで、エージェントが送信した内容を受け取ります。接続しただけではエージェントには渡されません。エージェントの MCP サーバーから追加してください。ローカル MCP サーバーしか読み込まないバックエンドのエージェントは、リモートコネクタを使用しません。",
     "category": {
@@ -35,7 +35,7 @@
         "blocked": "同じ名前の MCP サーバーが存在します"
       },
       "examples": "依頼できること",
-      "keyKept": "キーは Rooks のシークレット保管庫に保存され、このコネクタにのみ送信されます。",
+      "keyKept": "キーは Timon のシークレット保管庫に保存され、このコネクタにのみ送信されます。",
       "vaultOff": "シークレット保管庫がオフのため、このコネクタは接続できません。",
       "getKey": "キーを取得",
       "consentPending": "開いたページでサインインしてから、ここに戻ってください。",
@@ -92,7 +92,7 @@
     "unauthorized": "このスキルを保存するには、もう一度サインインしてください。",
     "forbidden": "あなたのアカウントではスキルを管理できません。",
     "failed": "スキルを保存できません。ID と指示を確認して、もう一度お試しください。",
-    "network": "Rooks に接続できません。接続を確認して、もう一度お試しください。",
+    "network": "Timon に接続できません。接続を確認して、もう一度お試しください。",
     "idLabel": "スキル ID",
     "idError": "小文字の英字、数字、「.」「_」「-」で ID を入力してください。「.」や「..」は使えません。",
     "contentError": "スキルを保存する前に指示を入力してください。"
@@ -196,7 +196,7 @@
       "plugin": "プラグイン"
     },
     "sectionTimon": "{brand} スキル",
-    "sectionTimonHint": "~/.rooks/skills — エージェントに割り当て可能 (カタログ内、または全体をインポート)",
+    "sectionTimonHint": "~/.timon/skills — エージェントに割り当て可能 (カタログ内、または全体をインポート)",
     "sectionUser": "グローバルな Claude スキル",
     "sectionUserHint": "~/.claude/skills と ~/.claude/commands — ミッションでは読み込まれません。割り当てるには {brand} にインポートしてください",
     "sectionProject": "プロジェクトのスキル",
@@ -239,7 +239,7 @@
     "forbidden": "あなたのアカウントでは、このタスクまたはそのチェーンの一部を削除できません。",
     "notFound": "このタスクはもう存在しないか、あなたのアカウントからアクセスできません。ボードを更新してください。",
     "failed": "タスクを削除できません。もう一度お試しください。",
-    "network": "Rooks に接続できません。接続を確認して、もう一度お試しください。"
+    "network": "Timon に接続できません。接続を確認して、もう一度お試しください。"
   },
   "starterWidgets": {
     "loading": "読み込み中...",
@@ -278,7 +278,7 @@
     "moveToTeam": "チームに移動",
     "leaveTeam": "チームから外す",
     "forbidden": "あなたのアカウントではチームを変更できません。",
-    "daemonUnreachable": "Rooks に接続できません。",
+    "daemonUnreachable": "Timon に接続できません。",
     "writeFailed": "変更が拒否されました。",
     "newBot": "新しいTIM",
     "emptyNoBots": "TIMはまだいません。作成してから、ここで会話してください。",
@@ -825,7 +825,7 @@
     "emailSending": "送信中…",
     "emailRequested": "確認リンクの準備ができました。",
     "emailError": "変更をリクエストできませんでした。",
-    "emailLinkHint": "新しいアドレスからこのリンクを開いて確認してください。Rooks はメールを送信しません。招待と同じように、コピーしてご自身で送ってください。",
+    "emailLinkHint": "新しいアドレスからこのリンクを開いて確認してください。Timon はメールを送信しません。招待と同じように、コピーしてご自身で送ってください。",
     "emailLinkCopy": "リンクをコピー",
     "emailLinkCopied": "リンクをコピーしました。",
     "emailLinkCopyFailed": "リンクをコピーできませんでした。"
@@ -844,7 +844,7 @@
     "paymentActive": "支払い済み",
     "paymentPastDue": "支払い期限超過",
     "noneTitle": "Free — ライセンス不要",
-    "noneDescription": "Rooks は、アクティブなスーパー管理者 1 名であれば、すべての機能とプラグインをローカルで利用できます。キー、登録、更新は不要です。ライセンスを有効化するのは、アカウントを追加する場合だけです。",
+    "noneDescription": "Timon は、アクティブなスーパー管理者 1 名であれば、すべての機能とプラグインをローカルで利用できます。キー、登録、更新は不要です。ライセンスを有効化するのは、アカウントを追加する場合だけです。",
     "buy": "{domain} でライセンスを見る",
     "replaceTitle": "ライセンスを置き換え",
     "machineTitle": "このマシン",
@@ -872,7 +872,7 @@
     "pastDueUntil": "支払い期限超過 — サブスクリプションは {date} に終了します",
     "notActivated": "Free が有効です — アカウントを追加するにはライセンスが必要です",
     "activate": "有効化",
-    "offlineSince": "{date} からライセンスサーバーに接続できません — オフライン猶予期間中は有料の権利を引き続き利用できますが、その後 Rooks は Free に戻ります。",
+    "offlineSince": "{date} からライセンスサーバーに接続できません — オフライン猶予期間中は有料の権利を引き続き利用できますが、その後 Timon は Free に戻ります。",
     "buildEndsSoon": "このベータ版ビルドは {date} に動作を停止します。それまでに最新バージョンをインストールしてください。",
     "buildEndsUrgent": "このベータ版ビルドは {date} に動作を停止します。今すぐ最新バージョンをインストールしてください。",
     "licenseEndsSoon": "ライセンスは {date} に終了します。それまでに新しいキーを入力してください。",
@@ -907,7 +907,7 @@
     "retry": "再試行"
   },
   "activate": {
-    "title": "Rooks を有効化",
+    "title": "Timon を有効化",
     "description": "受け取ったアクティベーションキー (ライセンスサーバーと交換) またはライセンストークン (ローカルで検証、ネットワーク不要) を貼り付けてください。",
     "rejected": "ライセンスが拒否されました",
     "deviceMismatch": "このデバイスは {device} です",
@@ -1147,11 +1147,11 @@
         "fileSize": "この写真は 25 MB を超えています。より小さいファイルを選択してください。",
         "decode": "この画像を開けませんでした。JPEG または PNG として書き出し直してみてください。",
         "encode": "この写真をアップロード用に最適化できませんでした。より小さい画像をお試しください。",
-        "network": "写真サービスに接続できません。Rooks への接続を確認して、もう一度お試しください。",
+        "network": "写真サービスに接続できません。Timon への接続を確認して、もう一度お試しください。",
         "session": "写真のアップロードが許可されませんでした。もう一度サインインしてから再試行してください。",
-        "unavailable": "このサーバーでは写真をアップロードできません。更新された Rooks デーモンを起動する必要があります。ページの再読み込みだけでは不十分です。",
+        "unavailable": "このサーバーでは写真をアップロードできません。更新された Timon デーモンを起動する必要があります。ページの再読み込みだけでは不十分です。",
         "server": "サーバーがこの写真を受け付けませんでした。再試行してください。",
-        "storage": "Rooks は写真をディスクに保存できませんでした。空き容量と書き込み権限を確認してください。"
+        "storage": "Timon は写真をディスクに保存できませんでした。空き容量と書き込み権限を確認してください。"
       }
     },
     "menu": {
@@ -1324,7 +1324,7 @@
     "categories": "カテゴリー",
     "selectCategory": "カテゴリー",
     "modified": "変更済み",
-    "definedInConfig": "rooks.config.json で定義",
+    "definedInConfig": "timon.config.json で定義",
     "forcedByEnv": "環境変数で強制",
     "default": "既定値",
     "empty": "(空)",
@@ -1338,7 +1338,7 @@
     "secretConfigured": "シークレット設定済み"
   },
   "devicesSettings": {
-    "description": "別の Rooks インターフェースから、あなたのアカウントの権限でこのマシンを開けるデバイス。ワンタイムコードで承認し、いつでも取り消せます。",
+    "description": "別の Timon インターフェースから、あなたのアカウントの権限でこのマシンを開けるデバイス。ワンタイムコードで承認し、いつでも取り消せます。",
     "authorize": "新しいデバイスを承認",
     "enterCode": "別のマシンのコードを入力",
     "enterCodeOff": {
@@ -1352,7 +1352,7 @@
     "codeTitle": "ペアリングコード",
     "codeHint": "このマシンを操作するコンピューターで {path} → マシンを追加 を開き (そちらでマシンプラグインがオンになっている必要があります)、このマシンのアドレスとともにこのコードを入力してください。コードは 1 回だけ使えます。",
     "reachable": {
-      "lead": "Rooks は tailscale serve を使って、このマシンのデーモンを tailnet に公開できます。アクセスできるのは自分の tailnet のデバイスだけで、インターネットからはアクセスできません。",
+      "lead": "Timon は tailscale serve を使って、このマシンのデーモンを tailnet に公開できます。アクセスできるのは自分の tailnet のデバイスだけで、インターネットからはアクセスできません。",
       "action": "このマシンにアクセスできるようにする",
       "retry": "もう一度試す",
       "busy": "公開中…",
@@ -1368,7 +1368,7 @@
         "not_connected": "Tailscale はインストールされていますが、このマシンは tailnet に接続されていません。",
         "serve_disabled": "tailnet で HTTPS がまだ有効になっていません。このマシンを公開するには Tailscale で HTTPS が必要です。",
         "permission": "Tailscale が設定の変更を拒否しました。このアカウントには許可がありません。",
-        "unreadable": "Tailscale がステータスの代わりに、Rooks が読み取れない応答を返しました。そのメッセージは下にあります。",
+        "unreadable": "Tailscale がステータスの代わりに、Timon が読み取れない応答を返しました。そのメッセージは下にあります。",
         "no_free_port": "このマシンではポート 8443、10000、443 がすでに tailscale serve に使われています。どれか 1 つを空けてから、もう一度お試しください。",
         "listen_not_loopback": "デーモンがこのコンピューター自身ではなくネットワークアドレスで待ち受けているため、tailscale serve から到達できません。daemon.listen.host を 127.0.0.1 に設定してください。",
         "failed": "Tailscale はこのマシンを公開できませんでした。",
@@ -1378,33 +1378,33 @@
     },
     "tailscale": {
       "checking": "このマシンの Tailscale を確認中…",
-      "installLead": "このマシンには Tailscale がインストールされていません。Rooks は Tailscale の公式サイトからインストールできます。パスワードはシステムが求め、Rooks がそれを見ることはありません。",
+      "installLead": "このマシンには Tailscale がインストールされていません。Timon は Tailscale の公式サイトからインストールできます。パスワードはシステムが求め、Timon がそれを見ることはありません。",
       "install": "Tailscale をインストール",
       "downloading": "Tailscale を公式サイトからダウンロード中…",
       "verifying": "パッケージが Tailscale によって署名されているか確認中…",
       "installingMac": "macOS のインストーラーのウィンドウでインストールを完了してください (パスワードを求められます)…",
       "installingWindows": "Windows の管理者確認を承認してインストールを完了してください…",
       "installingLinux": "システムのダイアログでパスワードを入力してインストールを完了してください…",
-      "handoffMac": "Rooks が macOS のインストーラーを開きます。そこでインストールを完了してください (パスワードを求められます)…",
+      "handoffMac": "Timon が macOS のインストーラーを開きます。そこでインストールを完了してください (パスワードを求められます)…",
       "reopenInstaller": "インストーラーを再度開く",
-      "handoffWindows": "Rooks が Tailscale のインストーラーを開きます。Windows の管理者確認を承認して完了してください…",
+      "handoffWindows": "Timon が Tailscale のインストーラーを開きます。Windows の管理者確認を承認して完了してください…",
       "connectLead": "Tailscale はインストール済みです。このマシンを tailnet にサインインさせてください。ブラウザーで Tailscale のページが開きます。",
       "connect": "Tailscale にサインイン",
       "waitingLogin": "ブラウザーでの Tailscale へのサインインを待っています…",
       "openSignIn": "Tailscale のサインインページを開く",
       "ready": "Tailscale に接続しました。",
-      "operatorLead": "このコンピューターの Tailscale の管理を Rooks に任せます。システムが一度だけパスワードを求め、その後 Rooks はパスワードなしで公開できます。",
-      "operator": "Tailscale の管理を Rooks に任せる",
+      "operatorLead": "このコンピューターの Tailscale の管理を Timon に任せます。システムが一度だけパスワードを求め、その後 Timon はパスワードなしで公開できます。",
+      "operator": "Tailscale の管理を Timon に任せる",
       "operatorWaiting": "システムのダイアログでパスワードを入力してください…",
       "failures": {
         "download_failed": "Tailscale を公式サイトからダウンロードできませんでした。",
         "checksum_mismatch": "ダウンロードしたパッケージが Tailscale の公開しているものと一致しないため、開きませんでした。",
         "signature_invalid": "ダウンロードしたパッケージが Tailscale によって署名されていないため、開きませんでした。",
-        "no_desktop": "Rooks はデスクトップにアクセスできないバックグラウンドで動作しているため、このブラウザーからインストーラーを表示できません。このコンピューターの Rooks デスクトップアプリで「Tailscale をインストール」をクリックするか、下のコマンドを実行してください。",
-        "elevation_unavailable": "Rooks はこのコンピューターで管理者権限を要求できません。",
+        "no_desktop": "Timon はデスクトップにアクセスできないバックグラウンドで動作しているため、このブラウザーからインストーラーを表示できません。このコンピューターの Timon デスクトップアプリで「Tailscale をインストール」をクリックするか、下のコマンドを実行してください。",
+        "elevation_unavailable": "Timon はこのコンピューターで管理者権限を要求できません。",
         "cancelled": "インストールはキャンセルされました。",
         "installer_failed": "Tailscale のインストーラーが完了しませんでした。",
-        "unsupported": "Rooks はこのシステムに Tailscale をインストールする方法を知りません。",
+        "unsupported": "Timon はこのシステムに Tailscale をインストールする方法を知りません。",
         "not_installed": "このマシンには Tailscale がインストールされていません。",
         "not_running": "Tailscale はまだ実行されていません。Tailscale アプリを開いてセットアップを完了してから、もう一度お試しください。",
         "permission": "Tailscale が拒否しました。このアカウントでは設定を変更できません。",
@@ -1456,7 +1456,7 @@
   },
   "integrationReceipts": {
     "title": "メッセージング連携",
-    "description": "メッセージング連携で受信したものの、処理できなかったメッセージ。Rooks は約 1 日再試行した後に停止し、再実行できるよう保持期間中ここにメッセージを保管します。",
+    "description": "メッセージング連携で受信したものの、処理できなかったメッセージ。Timon は約 1 日再試行した後に停止し、再実行できるよう保持期間中ここにメッセージを保管します。",
     "healthy": "すべてのメッセージが正常に処理されています。",
     "stage": {
       "inbox": "ミッションを開始中",
@@ -1525,7 +1525,7 @@
   },
   "pluginWebhooks": {
     "title": "受信 Webhook",
-    "description": "Rooks の外部のサービス (GitHub、Stripe、Slack…) は、これらのアドレスでこのプラグインを呼び出せます。各呼び出しは、プラグインに届く前にそのサービス独自の署名形式で検証されます。",
+    "description": "Timon の外部のサービス (GitHub、Stripe、Slack…) は、これらのアドレスでこのプラグインを呼び出せます。各呼び出しは、プラグインに届く前にそのサービス独自の署名形式で検証されます。",
     "copyUrl": "アドレスをコピー",
     "urlCopied": "アドレスをコピーしました",
     "notConfigured": "シークレット未設定: 呼び出しは拒否されます。",
@@ -1586,7 +1586,7 @@
     },
     "tab": {
       "instructions": {
-        "preamble": "Rooks のプリアンブル",
+        "preamble": "Timon のプリアンブル",
         "global": "グローバルな指示"
       },
       "interface": {
@@ -2002,12 +2002,12 @@
     "loadOlderMessages": "以前のメッセージを表示",
     "loadingOlderMessages": "以前のメッセージを読み込み中…",
     "turnInterrupted": "ターンが中断されました",
-    "turnCutByRestart": "ターンが中断されました: Rooks が再起動しました",
+    "turnCutByRestart": "ターンが中断されました: Timon が再起動しました",
     "conversationResumable": "会話は再開可能です — 次のメッセージでコンテキストを引き継いで再開します",
     "hardStop": "完全停止: このバックエンドはセッションを再開できないため、次のメッセージは最初からになります",
-    "spawnFailedMissing": "{backend} の CLI を起動できませんでした: このマシンでコマンド `{binary}` が見つかりません。インストールするか、設定の `host.binaries.{binary}` で Rooks に場所を指定してください。",
+    "spawnFailedMissing": "{backend} の CLI を起動できませんでした: このマシンでコマンド `{binary}` が見つかりません。インストールするか、設定の `host.binaries.{binary}` で Timon に場所を指定してください。",
     "spawnFailedNotExecutable": "{backend} の CLI を起動できませんでした: `{binary}` は存在しますが実行できません。権限を修正するか、設定の `host.binaries.{binary}` で別のコピーを指定してください。",
-    "spawnFailedUnknown": "{backend} の CLI を起動できませんでした: `{binary}` を起動できませんでした。インストールされているか確認するか、設定の `host.binaries.{binary}` で Rooks に場所を指定してください。",
+    "spawnFailedUnknown": "{backend} の CLI を起動できませんでした: `{binary}` を起動できませんでした。インストールされているか確認するか、設定の `host.binaries.{binary}` で Timon に場所を指定してください。",
     "backendFailed": "{backend} バックエンドが応答せずに停止しました (終了コード {code})。サインインしていて、このマシンで実行が許可されているか確認してください。",
     "backendFailedDetail": "最後の出力: {detail}",
     "backendFailedMission": "ミッション {missionId}",
@@ -2029,9 +2029,9 @@
     "providerRecovered": "{count} 回の再試行後に再接続しました",
     "providerRecoveredOne": "1 回の再試行後に再接続しました",
     "providerExhausted": "{count} 回再試行しましたが {provider} のサーバーに接続できません",
-    "providerExhaustedWithTimon": "プロバイダーで {count} 回、Rooks で {timon} 回再試行しましたが {provider} のサーバーに接続できません",
-    "timonRetryIn": "Rooks の再試行 {attempt}/{max}、{seconds} 秒後…",
-    "timonRetryRunning": "Rooks の再試行 {attempt}/{max}…",
+    "providerExhaustedWithTimon": "プロバイダーで {count} 回、Timon で {timon} 回再試行しましたが {provider} のサーバーに接続できません",
+    "timonRetryIn": "Timon の再試行 {attempt}/{max}、{seconds} 秒後…",
+    "timonRetryRunning": "Timon の再試行 {attempt}/{max}…",
     "retryTurn": "再試行",
     "retryTurnUnavailable": "再試行するものはありません: 最後のメッセージはもうこの会話にありません。",
     "quotaExhaustedTitle": "クォータ切れ",
@@ -2050,7 +2050,7 @@
     "steerUnavailableQueued": "このエージェントは今は方向を変えられません — メッセージをターン終了時のキューに追加しました",
     "messageQueuedInline": "メッセージをキューに追加しました — 現在のターンの終了時に送信されます",
     "voiceDictationUnavailable": "このブラウザーでは音声入力を利用できません。",
-    "voiceDictationDesktopUnavailable": "このデスクトップアプリでは音声入力を利用できません。Rooks を更新してください。またはこのコンピューターは対応していません。Chrome または Edge で Rooks を開くと動作します。",
+    "voiceDictationDesktopUnavailable": "このデスクトップアプリでは音声入力を利用できません。Timon を更新してください。またはこのコンピューターは対応していません。Chrome または Edge で Timon を開くと動作します。",
     "dictationUnavailable": "音声入力を利用できません: {error}",
     "messagePlaceholder": "{name} にメッセージ…",
     "stopDictation": "音声入力を停止",
@@ -2171,7 +2171,7 @@
     "openFailed": "開けませんでした",
     "openedInExplorer": "エクスプローラーで開きました: {path}",
     "openRootInExplorer": "ルートをシステムのエクスプローラーで開く",
-    "revealNoDesktop": "このファイルは Rooks デーモンを実行しているコンピューターにありますが、そこには表示するためのデスクトップセッションがありません。そのコンピューターの Rooks デスクトップアプリから開いてください。",
+    "revealNoDesktop": "このファイルは Timon デーモンを実行しているコンピューターにありますが、そこには表示するためのデスクトップセッションがありません。そのコンピューターの Timon デスクトップアプリから開いてください。",
     "refreshFiles": "ファイルを更新",
     "cannotOpen": "{path} を開けませんでした",
     "dirtyWorkingTreeConfirm": "作業ツリーに未コミットの変更があります (ファイル {count} 件)。それでも「{branch}」に切り替えますか？",
@@ -2289,15 +2289,15 @@
     }
   },
   "timonPreamble": {
-    "title": "Rooks のプリアンブル",
-    "description": "起動のたびにその場で生成され、すべてのエージェントに最初に送られます。読み取り専用: あなたのファイルではなく Rooks が提供します。メインエージェント向けに生成された内容を表示しています。",
+    "title": "Timon のプリアンブル",
+    "description": "起動のたびにその場で生成され、すべてのエージェントに最初に送られます。読み取り専用: あなたのファイルではなく Timon が提供します。メインエージェント向けに生成された内容を表示しています。",
     "empty": "このエージェントにはプリアンブルがありません。",
     "loading": "プリアンブルを読み込み中…",
     "error": "プリアンブルを読み込めませんでした: {message}"
   },
   "globalInstructions": {
     "title": "グローバルな指示",
-    "description": "すべてのエージェントに求めること。起動のたびに Rooks のプリアンブルの直後に送られます: 使用言語、コミットの書き方、テストの方法など。プロジェクトのルールはプロジェクトの AGENTS.md に、エージェント固有のものはそのアイデンティティドキュメントに書きます。",
+    "description": "すべてのエージェントに求めること。起動のたびに Timon のプリアンブルの直後に送られます: 使用言語、コミットの書き方、テストの方法など。プロジェクトのルールはプロジェクトの AGENTS.md に、エージェント固有のものはそのアイデンティティドキュメントに書きます。",
     "path": "ファイル: {path}",
     "limit": "{tokens} · 最大 {max} 文字",
     "empty": "まだ何もありません。すべてのエージェントはあなたの指示なしで開始します。",
@@ -2408,9 +2408,9 @@
       "not_found": "このフォルダーはそのマシンに存在しません。",
       "not_a_directory": "このパスはフォルダーではなくファイルです。",
       "relative_path": "ディスクのルートからのフルパスを入力してください。",
-      "unreadable": "Rooks はそのマシンでこのフォルダーを読み取れません。",
+      "unreadable": "Timon はそのマシンでこのフォルダーを読み取れません。",
       "forbidden": "あなたのアカウントではこのマシンのフォルダーを参照できません。パスを直接入力してください。",
-      "outdated": "このマシンは古い Rooks を実行しているため、フォルダーを一覧表示できません。パスを直接入力してください。",
+      "outdated": "このマシンは古い Timon を実行しているため、フォルダーを一覧表示できません。パスを直接入力してください。",
       "failed": "このマシンのフォルダーを読み取れませんでした。もう一度試すか、パスを直接入力してください。"
     },
     "file": {
@@ -2427,14 +2427,14 @@
       "selected": "選択中: {path}",
       "errors": {
         "forbidden": "このマシンのファイルを参照できるのは管理者だけです。",
-        "outdated": "このマシンは古い Rooks を実行しているため、ファイルを一覧表示できません。先に更新してください。"
+        "outdated": "このマシンは古い Timon を実行しているため、ファイルを一覧表示できません。先に更新してください。"
       }
     }
   },
   "editPage": {
     "name": "名前",
     "nameHint": "グラフとコンソールに表示",
-    "directoryPickerUnavailable": "フォルダーを参照するには、最新の Rooks デスクトップアプリを使用してください。パスを直接入力することもできます。",
+    "directoryPickerUnavailable": "フォルダーを参照するには、最新の Timon デスクトップアプリを使用してください。パスを直接入力することもできます。",
     "directoryPickerFailed": "フォルダーの選択画面を開けませんでした。パスを直接入力できます。",
     "imageInvalid": "画像ファイル (png、jpg、webp、gif) が必要です",
     "imageTooLarge": "画像が大きすぎます (最大 8 MB)",
@@ -2491,7 +2491,7 @@
     "permissionHintMcpBridge": "このバックエンドはすべてのツール使用を判定します: 分類器が明確なケースを処理し、判断が難しい場合のみ UI に許可/拒否カードを表示します。",
     "mcpIntro": "自分で追加した Model Context Protocol サーバー。ここで選択したものは、起動のたびにこのエージェントに接続されます。管理はこちら:",
     "mcpEmpty": "MCP サーバーはまだ追加されていません — 追加はこちら:",
-    "mcpBuiltinTitle": "Rooks に組み込み — 常にオン、付与するものはありません",
+    "mcpBuiltinTitle": "Timon に組み込み — 常にオン、付与するものはありません",
     "mcpBuiltinHint": "下で何を選んでも、すべてのバックエンドのすべてのエージェントがこれらを受け取り、Kanban タスクの MCP 上書きでも削除されません。一部の timon ツール (エージェントやプロジェクトの作成、MCP サーバーの宣言) には、「ユーザー」ページでのアカウントの権限も必要ですが、このリストでは変更されません。",
     "mcpBuiltinTimon": "Kanban、ミッション、エージェント、メモリ、このドキュメント",
     "mcpBuiltinAsk": "チャットであなたに確認するフォーム",
@@ -2500,7 +2500,7 @@
     "permissionHintSandbox": "このバックエンドはターンの途中で判定できません: モードは起動時にサンドボックスのレベルに変換されます (plan → 読み取り専用、bypassPermissions → フルアクセス、それ以外 → workspace-write)。許可/拒否カードも分類器もありません。",
     "permissionHintNone": "このバックエンドは権限のガードレールを公開していません — 下のモードは効果がありません。",
     "permissionHintProtocol": "このバックエンドはツール使用の前にプロトコル経由で確認します: UI に許可/拒否カードが表示されます。エージェントが自分で決めることはあなたに届かず、エージェント自身のルールに従います — 下のモードはそれを上書きしません。",
-    "permissionHintProtocolMode": "このバックエンドはツール使用の前に Rooks に確認し、Rooks はまず下のモードを適用します: 読み取りは通過、plan は編集とコマンドを拒否、acceptEdits と auto は作業フォルダー内の編集を通します。モードとエージェントの許可ツールで決まらないものは、UI の許可/拒否カードになります。",
+    "permissionHintProtocolMode": "このバックエンドはツール使用の前に Timon に確認し、Timon はまず下のモードを適用します: 読み取りは通過、plan は編集とコマンドを拒否、acceptEdits と auto は作業フォルダー内の編集を通します。モードとエージェントの許可ツールで決まらないものは、UI の許可/拒否カードになります。",
     "permissionsSelfBadge": "独自に権限を管理",
     "permissionsSelfBadgeHint": "このエージェントはツール使用を自分で判断します: 自身の設定によるサンドボックスが適用され、TIMON は許可/拒否カードを表示しません。",
     "permissionModeLabel": "権限モード",
@@ -2573,7 +2573,7 @@
     },
     "notificationCenter": {
       "title": "通知センター",
-      "description": "エージェントと Rooks が出した通知を読み、対応します。"
+      "description": "エージェントと Timon が出した通知を読み、対応します。"
     },
     "taskQueue": {
       "title": "タスクキュー",
@@ -2581,7 +2581,7 @@
     },
     "injections": {
       "title": "エージェントへの注入",
-      "description": "エージェントの起動時に Rooks が渡すすべて (ルール、メモリ、スキル)。挙動がずれるエージェントの理解に役立ちます。"
+      "description": "エージェントの起動時に Timon が渡すすべて (ルール、メモリ、スキル)。挙動がずれるエージェントの理解に役立ちます。"
     },
     "bell": {
       "title": "通知ベル",
@@ -2620,8 +2620,8 @@
       "description": "プロジェクトのスタックが実行中か、どのローカル URL か、どのサービスが停止しているか。起動、再起動、停止ができます。"
     },
     "timonDaemon": {
-      "title": "Rooks デーモン",
-      "description": "timon プロジェクト用の、Rooks 自体の状態。"
+      "title": "Timon デーモン",
+      "description": "timon プロジェクト用の、Timon 自体の状態。"
     },
     "missionDetails": {
       "title": "ミッションの詳細",
@@ -2733,7 +2733,7 @@
     "writeOnlyNotice": "保存した値は既定では表示されません。再度読むには「表示」を使い (アカウントのパスワードが必要)、変更するには置き換えてください。",
     "new": "新しいシークレット",
     "refresh": "更新",
-    "empty": "シークレットはまだありません。デーモンは引き続き ~/.rooks/secrets.env を読み込みますが、エージェントに限定されたものはありません。",
+    "empty": "シークレットはまだありません。デーモンは引き続き ~/.timon/secrets.env を読み込みますが、エージェントに限定されたものはありません。",
     "saved": "シークレットを保存しました。",
     "confirmDelete": "{name} を削除しますか？これを使っているエージェントはアクセスを失います。",
     "configured": "設定済み",
@@ -2856,7 +2856,7 @@
     "contains": "インストール内容",
     "enable": "{name} を有効にする",
     "disable": "{name} を無効にする",
-    "bundled": "Rooks に同梱",
+    "bundled": "Timon に同梱",
     "bundledSubtitle": "製品のモジュール。オフにしてもインストールされたままで、すぐに反映されます。",
     "thirdParty": "ここにインストール",
     "notInLicence": "ライセンスに含まれていません",
@@ -2931,7 +2931,7 @@
     "noAgent": "エージェントはまだいません。",
     "loading": "注入内容を読み込み中…",
     "error": "注入内容を読み込めませんでした: {message}",
-    "listLabel": "Rooks がモデルに渡す順の注入内容",
+    "listLabel": "Timon がモデルに渡す順の注入内容",
     "tokens": "約 {n} トークン",
     "beforeFirst": "最初のメッセージの前に、約 {tokens} トークンのコンテキストが送信されます。",
     "onDemand": "カタログのスキルは、エージェントが読んだとき (skill_get) にだけ約 {tokens} トークン追加されます。この合計には含まれません。",
@@ -2973,15 +2973,15 @@
       "role": "ロール",
       "agent": "このエージェント",
       "config": "チェック済み",
-      "code": "Rooks が追加"
+      "code": "Timon が追加"
     },
     "skillReads": {
-      "title": "過去 {days} 日間のこのエージェントのミッションによる読み取り: skill_get の呼び出しと、フルパスで開かれたファイル。これは最小値です: Rooks から見えない読み取りは数えられません。",
+      "title": "過去 {days} 日間のこのエージェントのミッションによる読み取り: skill_get の呼び出しと、フルパスで開かれたファイル。これは最小値です: Timon から見えない読み取りは数えられません。",
       "read": "{reads} 回読み取り · ミッション {missions}/{total} · {days} 日",
       "never": "未読 · ミッション {total} · {days} 日",
       "idle": "{days} 日間ミッションなし",
       "unmeasured": "このバックエンドでは読み取りを計測できません · {days} 日",
-      "unmeasuredTitle": "このエージェントのミッションは skill_get ツールのないバックエンドで実行されたため、このスキルを読んだかどうか Rooks にはわかりません。",
+      "unmeasuredTitle": "このエージェントのミッションは skill_get ツールのないバックエンドで実行されたため、このスキルを読んだかどうか Timon にはわかりません。",
       "neverCount": "未読: {n}",
       "neverHint": "{days} 日間、このエージェントのミッションがこのスキルを読んだ形跡はありません。エージェントがいつ使うべきかわかるよう、説明を書き直してください。"
     },
@@ -2994,12 +2994,12 @@
     "masking": {
       "shown": "この画面でのみマスクされています: エージェントは保管庫の値を平文で受け取ります。",
       "cli": "この画面でのみマスクされています: バックエンドの CLI がこのファイルを読む場合、エージェントは保管庫の値を平文で受け取ります。",
-      "sent": "送信時もマスクされます: このバックエンドはスキルのフォルダーにも Rooks のツールにも届かないため、エージェントはこれらの保管庫の値を受け取りません。"
+      "sent": "送信時もマスクされます: このバックエンドはスキルのフォルダーにも Timon のツールにも届かないため、エージェントはこれらの保管庫の値を受け取りません。"
     },
     "why": {
       "redacted": "マスクされたテキストを保存すると本来の値が上書きされるため、この一覧からは編集できません。",
-      "cli": "作業ディレクトリで見つかりました。Rooks はこれを注入しません: バックエンドの CLI が読むかどうか、プロンプトのどこに入るかはその CLI 次第のため、この行は計測された順序に含まれません。プロジェクト内でファイルを編集してください。",
-      "code": "Rooks がコード内で記述: 編集不可。",
+      "cli": "作業ディレクトリで見つかりました。Timon はこれを注入しません: バックエンドの CLI が読むかどうか、プロンプトのどこに入るかはその CLI 次第のため、この行は計測された順序に含まれません。プロジェクト内でファイルを編集してください。",
+      "code": "Timon がコード内で記述: 編集不可。",
       "roleShared": "これを編集すると、このロールを持つすべてのエージェントのロールが変わります。"
     }
   },
@@ -3021,19 +3021,19 @@
     "emptyBody": "実行中または待機中のタスクはありません。"
   },
   "systemSettings": {
-    "description": "このマシンでの Rooks の実行方法。このタブはスーパー管理者だけに表示されます。",
+    "description": "このマシンでの Timon の実行方法。このタブはスーパー管理者だけに表示されます。",
     "forbidden": "インストール情報を表示できるのはスーパー管理者だけです。",
     "loadError": "インストール情報を読み取れません。デーモンが実行中か確認してください。",
     "unknown": "不明",
     "yes": "はい",
     "no": "いいえ",
     "versionTitle": "バージョン",
-    "daemonVersion": "Rooks (デーモン)",
+    "daemonVersion": "Timon (デーモン)",
     "desktopVersion": "デスクトップアプリ",
-    "versionGap": "アプリは {desktop} ですが、デーモンは {daemon} です: デーモンが更新されていません。Rooks を終了して再度開いてください。それでもバージョンが異なる場合は、ターミナルで次を実行してください:",
+    "versionGap": "アプリは {desktop} ですが、デーモンは {daemon} です: デーモンが更新されていません。Timon を終了して再度開いてください。それでもバージョンが異なる場合は、ターミナルで次を実行してください:",
     "dataVersion": "データのバージョン",
     "dataBehind": "データを最後に開いたのは {data} で、このデーモンは {version} です。更新を承認すると、次回起動時に更新されます。",
-    "dataAhead": "データは、このデーモン ({version}) より新しい Rooks ({data}) で開かれています。使用する前にこのインストールを更新してください。",
+    "dataAhead": "データは、このデーモン ({version}) より新しい Timon ({data}) で開かれています。使用する前にこのインストールを更新してください。",
     "license": "ライセンス",
     "licenseValue": "{edition} · {plan} · {status} · {channel} ビルド",
     "licenseValid": "有効",
@@ -3045,7 +3045,7 @@
     "daemonTitle": "デーモン",
     "mode": "実行形態",
     "modeValue": {
-      "embedded": "アプリ内 (ポータブル): Rooks を終了すると停止します",
+      "embedded": "アプリ内 (ポータブル): Timon を終了すると停止します",
       "service": "システムサービス: アプリを閉じても実行を続けます",
       "process": "手動で起動 (ターミナルまたはスクリプト)"
     },
@@ -3065,7 +3065,7 @@
       "stopped": "インストール済み、停止中",
       "running": "インストール済み、実行中"
     },
-    "serviceNextLaunch": "アプリ自身のデーモンがポートを使用中です: 次回 Rooks を起動したときにサービスが引き継ぎます。",
+    "serviceNextLaunch": "アプリ自身のデーモンがポートを使用中です: 次回 Timon を起動したときにサービスが引き継ぎます。",
     "supervisor": {
       "systemd-user": "systemd ユニット",
       "launchd": "launchd ラベル",
@@ -3074,14 +3074,14 @@
     "windowsRevision": "タスクのリビジョン",
     "windowsRevisionValue": "{revision} (現在: {expected})",
     "windowsUnmarked": "起動ツールにパッケージのマーカーがありません。",
-    "installWhy": "サービスがあれば、アプリを閉じても Rooks は実行を続け、コンピューターの起動時に開始します。",
+    "installWhy": "サービスがあれば、アプリを閉じても Timon は実行を続け、コンピューターの起動時に開始します。",
     "repairWhy": "再インストールすると、このバージョンの定義でサービスを書き直します。データには影響しません。",
     "installService": "サービスをインストール",
     "repairService": "サービスを修復",
     "serviceBusy": "処理中…",
-    "serviceFromTerminal": "このデーモンはサービスそのものです: ターミナルで次を実行してください (Rooks が再起動します)",
+    "serviceFromTerminal": "このデーモンはサービスそのものです: ターミナルで次を実行してください (Timon が再起動します)",
     "serviceInstalledRunning": "サービスをインストールし、実行中です。",
-    "serviceInstalledNext": "サービスをインストールしました。次回 Rooks を起動したときに引き継ぎます。",
+    "serviceInstalledNext": "サービスをインストールしました。次回 Timon を起動したときに引き継ぎます。",
     "serviceFailed": "サービスをインストールできませんでした。",
     "pathsTitle": "パス",
     "installDir": "インストールフォルダー",
@@ -3097,18 +3097,18 @@
     "exporting": "エクスポート中…",
     "exported": "アーカイブを書き出しました: {path}",
     "exportFailed": "エクスポートに失敗しました。",
-    "importWhy": "インポートはデータベースを置き換えるため、Rooks の実行中は実行できません。Rooks アプリを終了してから、ターミナルでこれらのコマンドを順に実行してください。ARCHIVE.tar.gz はお使いのアーカイブに置き換えます。データはインポートまでそのまま残ります。",
-    "importWhyEmbedded": "インポートはデータベースを置き換えるため、Rooks の実行中は実行できません。Rooks アプリを終了してから、ターミナルでこのコマンドを実行してください。ARCHIVE.tar.gz はお使いのアーカイブに置き換えます。",
+    "importWhy": "インポートはデータベースを置き換えるため、Timon の実行中は実行できません。Timon アプリを終了してから、ターミナルでこれらのコマンドを順に実行してください。ARCHIVE.tar.gz はお使いのアーカイブに置き換えます。データはインポートまでそのまま残ります。",
+    "importWhyEmbedded": "インポートはデータベースを置き換えるため、Timon の実行中は実行できません。Timon アプリを終了してから、ターミナルでこのコマンドを実行してください。ARCHIVE.tar.gz はお使いのアーカイブに置き換えます。",
     "importStep": "ターミナルで",
     "supportTitle": "サポート用の診断",
-    "supportWhy": "サポートに必要な情報を一度に: バージョン、ここでの Rooks の実行方法、サービス、検出された問題、最新のログ行 (新しい順)。トークンとシークレットはマスクされます。サポートへの問い合わせに貼り付けてください。",
+    "supportWhy": "サポートに必要な情報を一度に: バージョン、ここでの Timon の実行方法、サービス、検出された問題、最新のログ行 (新しい順)。トークンとシークレットはマスクされます。サポートへの問い合わせに貼り付けてください。",
     "copyReport": "診断をコピー",
     "reportPreparing": "準備中…",
     "saveReport": "レポートを保存",
     "showReport": "レポートを表示",
     "hideReport": "レポートを隠す",
     "openLogs": "ログフォルダーを開く",
-    "openAbout": "Rooks とサードパーティライセンスについて",
+    "openAbout": "Timon とサードパーティライセンスについて",
     "reportCopied": "診断をコピーしました: サポートへの問い合わせ (Discord、メール) に貼り付けてください。",
     "reportCopyFailed": "クリップボードがコピーを拒否しました: 下のレポートを選択して手動でコピーするか、保存してください。",
     "reportSaved": "レポートを {name} としてダウンロードしました。",
@@ -3120,23 +3120,23 @@
   },
   "desktopUninstall": {
     "category": "デスクトップアプリ",
-    "title": "Rooks をアンインストール",
+    "title": "Timon をアンインストール",
     "description": "このコンピューター上のエージェント、ワークフロー、ブラウザーを停止し、サービスを削除し、ログイン時の起動を無効にします。このインスタンスに接続している PWA は切断されます。",
     "dataPath": "このインストールのデータディレクトリ",
     "dataChoice": "データをどうしますか？",
     "keep": "データを保持 (推奨)",
     "keepDescription": "再インストールに備えて、エージェント、会話、設定、認証情報、ブラウザープロファイルを保持します。サービスが使うプログラムのコピーは削除されます。",
     "delete": "すべて削除",
-    "deleteDescription": "上に表示された Rooks ディレクトリの内容 (エージェント、会話、設定、シークレット、Cookie、ブラウザープロファイルなど) をすべて完全に削除します。この操作は元に戻せません。",
-    "external": "Rooks ディレクトリ外のプロジェクトフォルダーや外部の設定 (Claude、Codex など) は保持されます。外部ディレクトリへのシンボリックリンクはたどりません。",
+    "deleteDescription": "上に表示された Timon ディレクトリの内容 (エージェント、会話、設定、シークレット、Cookie、ブラウザープロファイルなど) をすべて完全に削除します。この操作は元に戻せません。",
+    "external": "Timon ディレクトリ外のプロジェクトフォルダーや外部の設定 (Claude、Codex など) は保持されます。外部ディレクトリへのシンボリックリンクはたどりません。",
     "confirmation": "完全削除を許可するには SUPPRIMER と入力してください。",
     "finish": {
-      "mac": "Rooks が閉じてクリーンアップが終わったら、Finder で Rooks.app をゴミ箱に移動してください。",
-      "windows": "クリーンアップが終わったら、Windows の「アプリ」設定から Rooks を削除してください。",
+      "mac": "Timon が閉じてクリーンアップが終わったら、Finder で Timon.app をゴミ箱に移動してください。",
+      "windows": "クリーンアップが終わったら、Windows の「アプリ」設定から Timon を削除してください。",
       "appimage": "クリーンアップが終わったら、AppImage ファイルを削除してください。",
-      "linux": "クリーンアップが終わったら、お使いのディストリビューションのソフトウェアマネージャーで Rooks パッケージを削除してください。"
+      "linux": "クリーンアップが終わったら、お使いのディストリビューションのソフトウェアマネージャーで Timon パッケージを削除してください。"
     },
-    "action": "Rooks をアンインストール…",
+    "action": "Timon をアンインストール…",
     "busy": "アンインストール中…"
   },
   "freeLicense": {
@@ -3144,7 +3144,7 @@
     "retainedData": "Free に戻ると、追加アカウントは保存されたまま利用できなくなります。すべての機能とプラグインは引き続き利用できます。有効なライセンスがあれば、その対象アカウントが復元されます。",
     "local_free": "Free はローカルで動作し、管理するマシンのアクティベーションはありません。",
     "free_unavailable": "このバージョンでは Free の登録はまだ受け付けていません。後でもう一度試すか、既存のライセンスキーを使用してください。",
-    "client_upgrade_required": "Rooks をサポート対象のリリースに更新してから、もう一度お試しください。",
+    "client_upgrade_required": "Timon をサポート対象のリリースに更新してから、もう一度お試しください。",
     "summary": "Free はキーも更新も不要でローカルで動作します: アクティブなスーパー管理者 1 名に、すべての機能とプラグイン。",
     "plugin_composition_fixed": "このプランのプラグイン構成は固定です。含まれるプラグインを設定するか、アップグレードして変更してください。",
     "single_superadmin_required": "Free で使えるアクティブなアカウントは 1 つだけで、スーパー管理者である必要があります。",
@@ -3152,7 +3152,7 @@
     "license_changed": "このリクエスト中にライセンスが変わりました。再読み込みして再試行してください。",
     "activation_key_missing": "このデバイスにはアクティベーションキーが保存されていません。解除するにはライセンスアカウントを使うか、サポートに連絡してください。",
     "deactivate": "このマシンを無効化",
-    "deactivateConfirm": "このマシンを無効化しますか？Rooks は Free で続行します。追加アカウントは停止されますが、データは保持されます。",
+    "deactivateConfirm": "このマシンを無効化しますか？Timon は Free で続行します。追加アカウントは停止されますが、データは保持されます。",
     "deactivated": "マシンを無効化しました。このマシンの最後のトークンが期限切れになるまでシートは確保されたままです。それより前に別のマシンを有効化しようとすると、再試行できる正確な時刻が返されます。",
     "transfer_pending": "以前のマシンのトークンがまだ期限切れになっていません。このマシンを有効化するまでお待ちください。",
     "transfer_pending_until": "以前のマシンのトークンがまだ期限切れになっていません: このマシンは {until} から有効化できます。"
@@ -3215,7 +3215,7 @@
     "fieldLinkedTasks": "関連タスク",
     "linkedTasksHint": "それらの作業がマージされると、アイデアは自動的にクローズされます。",
     "fieldExternalLinks": "外部",
-    "externalLinksHint": "Rooks 外でこのアイデアがある場所 (リンクしたプラグインが記録したもの)。",
+    "externalLinksHint": "Timon 外でこのアイデアがある場所 (リンクしたプラグインが記録したもの)。",
     "urgency": {
       "critical": "重大",
       "bug": "バグ",
@@ -3266,18 +3266,18 @@
   "dictation": {
     "egressReload": {
       "title": "{plugin} の再読み込みが必要です",
-      "body": "このプラグインのインストール前に Rooks が開かれたため、このウィンドウではまだ {host} に接続できません。使うには再読み込みしてください。",
+      "body": "このプラグインのインストール前に Timon が開かれたため、このウィンドウではまだ {host} に接続できません。使うには再読み込みしてください。",
       "reload": "再読み込み"
     },
     "localEngine": {
-      "label": "Rooks (このコンピューター上)"
+      "label": "Timon (このコンピューター上)"
     },
     "destination": {
       "title": "音声の送信先",
       "device": "音声はこのコンピューターから出ません。",
       "window": "音声はこのウィンドウから出ません: プラグインは何も外部に送らないと宣言しています。",
-      "daemon": "音声は {machine} の Rooks デーモンに送信されます。",
-      "daemonActive": "音声はアクティブなマシンの Rooks デーモンに送信されます。",
+      "daemon": "音声は {machine} の Timon デーモンに送信されます。",
+      "daemonActive": "音声はアクティブなマシンの Timon デーモンに送信されます。",
       "hosts": "音声は {hosts} に送信されます。",
       "undeclared": "このエンジンは音声の送信先を示していません。",
       "engineLine": "{engine}: {line}",
@@ -3289,7 +3289,7 @@
     "consent": {
       "title": "{engine} に音声を聞かせますか？",
       "from": "プラグイン {plugin} の音声入力エンジン",
-      "scope": "この選択は {machine} にのみ適用されます。プラグインが音声の送信先を変えた場合、Rooks は再度確認します。",
+      "scope": "この選択は {machine} にのみ適用されます。プラグインが音声の送信先を変えた場合、Timon は再度確認します。",
       "allow": "許可",
       "deny": "許可しない",
       "granted": "許可しました。マイクをクリックして音声入力してください。",
@@ -3299,7 +3299,7 @@
       "title": "音声入力エンジン",
       "intro": "{machine} で、チャットとコックピットの音声モードで音声入力を行うエンジン。",
       "auto": "自動",
-      "autoHint": "Rooks 独自のエンジンを優先。ブラウザーでは、プラグインよりも先にブラウザーの認識機能を使います。",
+      "autoHint": "Timon 独自のエンジンを優先。ブラウザーでは、プラグインよりも先にブラウザーの認識機能を使います。",
       "webSpeech": "ブラウザー (Web Speech)",
       "webSpeechHint": "ブラウザーの音声認識機能。Chrome と Edge は音声をそれぞれのベンダーのサービスに送信します。",
       "unavailableOption": "{engine} (利用不可)",
@@ -3314,20 +3314,20 @@
       "inUse": "音声入力に使用中",
       "granted": "{machine} で許可済み。",
       "refused": "許可されていません: このエンジンでの音声入力はオフのままです。",
-      "notAsked": "まだ許可されていません: 最初の音声入力時に Rooks が確認します。",
+      "notAsked": "まだ許可されていません: 最初の音声入力時に Timon が確認します。",
       "withdraw": "取り消す",
       "undeclared": "未使用: プラグインが音声の送信先を示していません。"
     },
     "errors": {
       "modelMissing": "ローカルの音声入力には音声モデルが必要です: {settingsPath} でダウンロードしてください。",
-      "microphoneDenied": "Rooks にマイクの使用が許可されていません。システムのプライバシー設定で許可してから、もう一度お試しください。",
+      "microphoneDenied": "Timon にマイクの使用が許可されていません。システムのプライバシー設定で許可してから、もう一度お試しください。",
       "microphoneLost": "マイクが切断されたため、音声入力を停止しました。",
       "busy": "音声入力を停止しました: 別のウィンドウまたはパネルで開始されました。",
       "engineCrashed": "音声入力エンジンが予期せず停止しました。マイクをクリックして再開してください。",
       "engineUnavailable": "このコンピューターではローカルの音声入力を利用できません。",
       "initFailed": "音声入力エンジンを起動できませんでした。もう一度試すか、{settingsPath} で音声モデルを削除して再ダウンロードしてください。",
       "engineNotAllowed": "この音声入力エンジンは許可されていません。{settingsPath} で許可してください。",
-      "engineUndeclared": "この音声入力エンジンは音声の送信先を示していないため、Rooks は使用しません。"
+      "engineUndeclared": "この音声入力エンジンは音声の送信先を示していないため、Timon は使用しません。"
     },
     "model": {
       "consentTitle": "ローカルの音声入力",
@@ -3401,18 +3401,18 @@
       "peakMemory": "ピーク時のメモリ {size}",
       "languageRequired": "音声入力の言語の指定が必要です: 推測できません (「自動」なし)。",
       "finalOnly": "確定したテキストのみ表示します。",
-      "fromPlugin": "プラグイン {plugin} から。Rooks はサードパーティのモデルを保証できません。",
+      "fromPlugin": "プラグイン {plugin} から。Timon はサードパーティのモデルを保証できません。",
       "addPack": "追加して {size} をダウンロード…",
       "packErrors": {
         "invalid": "このプラグインのモデル項目は無効です。",
-        "unknownFamily": "このモデルには新しいバージョンの Rooks が必要です。",
+        "unknownFamily": "このモデルには新しいバージョンの Timon が必要です。",
         "exists": "このモデルはすでにカタログにあります。",
         "busy": "別のモデルがあなたの回答を待っています。",
         "engineUnavailable": "このコンピューターではローカルの音声入力を利用できません。",
         "notFound": "プラグインはこのモデルを提供しなくなりました。",
         "unavailable": "プラグインのモデルを読み取れませんでした。もう一度お試しください。"
       },
-      "unverified": "未検証: Rooks はこれらのファイルを保証できません。",
+      "unverified": "未検証: Timon はこれらのファイルを保証できません。",
       "usedFor": "{languages} に使用",
       "download": "{size} をダウンロード",
       "confirmLarge": "{model} は {size} あります。ダウンロードは一度だけで、音声入力中は最大 {memory} のメモリが必要です。音声はこのコンピューターから出ません。",
@@ -3422,7 +3422,7 @@
     "import": {
       "button": "ローカルモデルを追加…",
       "trust": "信頼できる提供元のモデルだけをインポートしてください。",
-      "done": "{model} を追加しました。未検証のため、Rooks はそのファイルを保証できません。",
+      "done": "{model} を追加しました。未検証のため、Timon はそのファイルを保証できません。",
       "whichFamily": "このフォルダーにはどの種類のモデルが入っていますか？",
       "languages": "モデルの言語",
       "languagesHint": "fr、en などの言語コード。言語を検出するモデルの場合は空欄にしてください。",
@@ -3440,7 +3440,7 @@
         "tooManyFiles": "音声モデルとしてはファイルが多すぎます。",
         "tooLarge": "モデルが 8 GB を超えています。",
         "roles": "フォルダーは音声モデル (エンコーダー、デコーダー、トークンのファイル) のようには見えません。",
-        "unsupportedFamily": "このバージョンの Rooks では、この種類のモデルはまだ実行できません。",
+        "unsupportedFamily": "このバージョンの Timon では、この種類のモデルはまだ実行できません。",
         "unsafeGraph": "このモデルはフォルダー外のファイルを参照しているため、拒否されました。",
         "changed": "コピー中にファイルが変更されました。もう一度お試しください。",
         "diskFull": "モデルをコピーするディスク容量が足りません。",
@@ -3503,7 +3503,7 @@
         "none": "なし"
       }
     },
-    "intro": "すべての LLM プロバイダーとそのモデルを管理します。変更は Rooks を再起動せずに適用されます。",
+    "intro": "すべての LLM プロバイダーとそのモデルを管理します。変更は Timon を再起動せずに適用されます。",
     "edit": "編集",
     "editTitle": "プロバイダーを編集",
     "saved": "プロバイダーを更新しました。",
@@ -3549,7 +3549,7 @@
     "testButton": "テスト",
     "destinationNotice": "このプロバイダーで実行されるミッションのすべてのプロンプトは {host} に送信されます。",
     "keyHint": "ファイルではなくシークレット保管庫に保存され、二度と表示されません。キーを求めないローカルサーバーの場合は空欄にしてください。",
-    "fileHint": "各プロバイダーは ~/.rooks/backends/ 内のファイルです。そこに JSON ファイルを手動で置くこともでき、1 秒以内に読み込まれます。",
+    "fileHint": "各プロバイダーは ~/.timon/backends/ 内のファイルです。そこに JSON ファイルを手動で置くこともでき、1 秒以内に読み込まれます。",
     "fields": {
       "name": "名前",
       "protocol": "プロトコル",
@@ -3588,11 +3588,11 @@
     "reorder": "ドラッグしてこのプロバイダーを並べ替え",
     "claudeToken": {
       "title": "Claude の長期トークン",
-      "hint": "任意。ターミナルで `claude setup-token` を実行し、トークンをここに貼り付けてください: 以後、すべての Claude ミッションは CLI 自身のサインインの代わりにこれを使います。macOS では、セッションを開いていなくても Rooks を実行し続けられます。その後 `timon service install` を実行してサービスを切り替えてください。トークンは暗号化して保存され、二度と表示されません。",
+      "hint": "任意。ターミナルで `claude setup-token` を実行し、トークンをここに貼り付けてください: 以後、すべての Claude ミッションは CLI 自身のサインインの代わりにこれを使います。macOS では、セッションを開いていなくても Timon を実行し続けられます。その後 `timon service install` を実行してサービスを切り替えてください。トークンは暗号化して保存され、二度と表示されません。",
       "none": "未設定",
       "set": "設定済み",
       "unreadable": "設定済みですが読み取れません — もう一度貼り付けてください",
-      "required": "Rooks は macOS のバックグラウンドサービスとして実行されています: トークンを設定するまで Claude のミッションは失敗します。",
+      "required": "Timon は macOS のバックグラウンドサービスとして実行されています: トークンを設定するまで Claude のミッションは失敗します。",
       "saved": "Claude のトークンを保存しました。",
       "cleared": "Claude のトークンを削除しました。",
       "clear": "削除"
@@ -3602,7 +3602,7 @@
     "disableTitle": "{name} を無効にしますか？",
     "disableHint": "選択欄から消えます。明示的にこれを使う新しい起動は拒否され、自動フォールバックはありません。下の既存の選択は保持されます。",
     "disable": "プロバイダーを無効化",
-    "managedHint": "モデルの名前変更・追加・削除・非表示、名前、画像、既定のモデルの変更ができます。接続設定は Rooks またはプロバイダーのプラグインが管理します。",
+    "managedHint": "モデルの名前変更・追加・削除・非表示、名前、画像、既定のモデルの変更ができます。接続設定は Timon またはプロバイダーのプラグインが管理します。",
     "origins": {
       "builtin": "組み込み",
       "plugin": "プラグイン",
@@ -3705,12 +3705,12 @@
     },
     "tabHints": {
       "routines": "スケジュール (cron): 決まった時刻に実行のたびにアクションを実行します。",
-      "webhooks": "外部サービスが、シークレットで署名して Rooks のアドレスを呼び出します。",
-      "events": "Rooks の内部で何かが起きる: タスクのクローズ、ミッションの終了、エージェントの書き込み、通知の到着。"
+      "webhooks": "外部サービスが、シークレットで署名して Timon のアドレスを呼び出します。",
+      "events": "Timon の内部で何かが起きる: タスクのクローズ、ミッションの終了、エージェントの書き込み、通知の到着。"
     },
     "redirecting": "ルーティンページは、トリガーの「ルーティン」タブになりました…",
     "loopback": {
-      "body": "デーモンはこのマシンでのみ待ち受けています (ループバック)。Webhook に外部から到達できるのは、自分で設定したトンネルまたはリバースプロキシ経由だけです: Rooks が自ら何かを開放することはありません。",
+      "body": "デーモンはこのマシンでのみ待ち受けています (ループバック)。Webhook に外部から到達できるのは、自分で設定したトンネルまたはリバースプロキシ経由だけです: Timon が自ら何かを開放することはありません。",
       "none": "認証のないルートは、このマシン上からデーモンに直接行われた呼び出しにだけ応答します: トンネル経由で公開しないでください。"
     },
     "scheduleTriggers": "スケジュールトリガー",
@@ -3722,7 +3722,7 @@
     "countOther": "トリガー {count} 件",
     "empty": {
       "schedule": "スケジュールトリガーはまだありません。",
-      "webhook": "Webhook はまだありません。作成すると、サービス (GitHub、GitLab、ボット…) が Rooks に作業を投入できます。",
+      "webhook": "Webhook はまだありません。作成すると、サービス (GitHub、GitLab、ボット…) が Timon に作業を投入できます。",
       "event": "イベントトリガーはまだありません。"
     },
     "enable": "クリックで有効化",
@@ -3738,7 +3738,7 @@
       "github": "GitHub の署名",
       "gitlab": "GitLab のトークン",
       "standard": "Standard Webhooks",
-      "generic": "Rooks の署名",
+      "generic": "Timon の署名",
       "none": "認証なし"
     },
     "events": {
@@ -3777,7 +3777,7 @@
     "secret": {
       "title": "Webhook のシークレット",
       "outboundTitle": "送信する呼び出しの署名シークレット",
-      "howtoOutbound": "受信側のサービスに貼り付けてください: すべての呼び出しには webhook-id、webhook-timestamp、webhook-signature が付きます (Standard Webhooks、この whsec_ シークレットによる \"id.timestamp.body\" の HMAC-SHA256)。Rooks が受信する Webhook のシークレットではありません。",
+      "howtoOutbound": "受信側のサービスに貼り付けてください: すべての呼び出しには webhook-id、webhook-timestamp、webhook-signature が付きます (Standard Webhooks、この whsec_ シークレットによる \"id.timestamp.body\" の HMAC-SHA256)。Timon が受信する Webhook のシークレットではありません。",
       "once": "今すぐコピーしてください: 二度と表示されません。紛失した場合は、Webhook に新しいものを設定してください。",
       "label": "シークレット (マスク済み)",
       "copy": "シークレットをコピー",
@@ -3789,7 +3789,7 @@
         "github": "GitHub: リポジトリの Settings → Webhooks → Add webhook。Payload URL: 下のアドレス、content type: application/json、Secret: これ。",
         "gitlab": "GitLab: Settings → Webhooks。URL: 下のアドレス、Secret token: これ。GitLab はこれをそのまま送るため、傍受された呼び出しは再送できてしまいます: 送信側が提供していれば署名方式を選んでください。",
         "standard": "Standard Webhooks (Svix、Clerk、Resend…): この署名シークレット (whsec_…) をプロバイダーのエンドポイント設定に貼り付けてください。",
-        "generic": "独自の送信側: X-Rooks-Timestamp (Unix 秒) と X-Rooks-Signature: sha256=<このシークレットによる \"timestamp.body\" の 16 進 HMAC-SHA256> を送信してください。5 分より古い呼び出しは拒否されます。",
+        "generic": "独自の送信側: X-Timon-Timestamp (Unix 秒) と X-Timon-Signature: sha256=<このシークレットによる \"timestamp.body\" の 16 進 HMAC-SHA256> を送信してください。5 分より古い呼び出しは拒否されます。",
         "none": "シークレットなし: このルートは、このマシン上で行われた呼び出しにだけ応答します。"
       }
     },
@@ -3825,7 +3825,7 @@
         "github": "X-Hub-Signature-256: 本文の HMAC。シークレットは作成時に生成されます。",
         "gitlab": "X-Gitlab-Token: シークレットそのもので、毎回の呼び出しで送信されます。",
         "standard": "webhook-id、webhook-timestamp、webhook-signature ヘッダー、±5 分。",
-        "generic": "X-Rooks-Timestamp と X-Rooks-Signature、±5 分。",
+        "generic": "X-Timon-Timestamp と X-Timon-Signature、±5 分。",
         "none": "送信元の証明なし: このマシン上からデーモンに直接行われた呼び出しだけを受け付けます。"
       },
       "event": "イベント",
@@ -3871,7 +3871,7 @@
       "actionN": "アクション {n}",
       "actionType": "アクション {n} の種類",
       "webhookUrl": "アドレス (https) *",
-      "webhookHint": "Rooks はここに '{type, timestamp, data}' を POST します。data は受信したままのペイロードで、保存時に一度だけ表示されるシークレットで署名されます。最大 10 回まで間隔を空けて再試行します。フィルターを通過したものはすべてこのマシンから送信されます。",
+      "webhookHint": "Timon はここに '{type, timestamp, data}' を POST します。data は受信したままのペイロードで、保存時に一度だけ表示されるシークレットで署名されます。最大 10 回まで間隔を空けて再試行します。フィルターを通過したものはすべてこのマシンから送信されます。",
       "removeAction": "削除",
       "addAction": "+ アクション",
       "todoText": "アイデア *",
@@ -3983,7 +3983,7 @@
     "deleteConfirm": "アカウント「{name}」を削除しますか？サインイン情報はこのマシンから削除され、このアカウントに設定されたエージェントとタスクは、別のアカウントを選ぶまで失敗します。",
     "deleted": "アカウントを削除しました",
     "signedInAs": "{identity} としてサインイン中",
-    "notSignedIn": "Rooks 経由でサインインしていません",
+    "notSignedIn": "Timon 経由でサインインしていません",
     "ownerInstance": "インスタンス (所有者のいないミッション)",
     "errorGeneric": "リクエストに失敗しました。もう一度お試しください。",
     "rename": "名前を変更",
@@ -4018,7 +4018,7 @@
       "create": "作成してサインイン"
     },
     "login": {
-      "starting": "Rooks のマシンでサインインを開始しています…",
+      "starting": "Timon のマシンでサインインを開始しています…",
       "openPage": "サインインページを開く",
       "copy": "コピー",
       "copied": "コピーしました",
@@ -4044,8 +4044,8 @@
       "mismatch": "このアカウントは {identity} のものです: そのサブスクリプションでサインインするか、別のアカウントを追加してください。",
       "not_signed_in": "サインインが完了しませんでした。最初からやり直してください。",
       "cli_failed": "サインイン中にプロバイダーのコマンドラインツールが失敗しました。最初からやり直してください。",
-      "cli_missing": "Rooks のマシンにプロバイダーのコマンドラインツールがインストールされていません。",
-      "unsupported": "このプロバイダーは Rooks からサインインできません。"
+      "cli_missing": "Timon のマシンにプロバイダーのコマンドラインツールがインストールされていません。",
+      "unsupported": "このプロバイダーは Timon からサインインできません。"
     }
   },
   "mcpPage": {
@@ -4125,7 +4125,7 @@
       "restart": "会話をやり直す",
       "skipFailed": "この手順をスキップできませんでした。しばらくしてからもう一度お試しください。",
       "tool_error": {
-        "title": "アシスタントが Rooks を使えません",
+        "title": "アシスタントが Timon を使えません",
         "body": "リクエストが拒否されているため、アシスタントは自分のセットアップを完了できません。この手順をスキップしてください: 名前や性格は後からアシスタントのページで設定できます。"
       },
       "interrupted": {
@@ -4141,7 +4141,7 @@
         "body": "まだ何も話していません。待ち続けるか、この手順をスキップして後からアシスタントのページで設定してください。"
       },
       "disconnected": {
-        "title": "Rooks が応答しません",
+        "title": "Timon が応答しません",
         "body": "接続が失われました。しばらく待つか、この手順をスキップして後からアシスタントのページで設定してください。"
       }
     },
@@ -4149,7 +4149,7 @@
     "voice": "音声入力",
     "voiceStop": "音声入力を停止",
     "send": "送信",
-    "toTour": "Rooks を見て回りましょう…",
+    "toTour": "Timon を見て回りましょう…",
     "starting": "アシスタントを起動しています…",
     "name": {
       "title": "アシスタントの名前は何にしますか？",
@@ -4157,13 +4157,13 @@
       "submitNamed": "{name} に会う"
     },
     "troubleshoot": {
-      "title": "続けるには、Rooks が接続できる AI モデルが 1 つ必要です。次のいずれかの CLI をインストールして、サインインしてください:",
+      "title": "続けるには、Timon が接続できる AI モデルが 1 つ必要です。次のいずれかの CLI をインストールして、サインインしてください:",
       "other": "または、{settingsPath} で API キーを使って別のモデルを接続してください。",
       "openSettings": "設定を開く"
     },
     "unavailable": {
       "title": "アシスタントはまだ起動できません",
-      "body": "Rooks は AI モデルに接続できませんでした。{settingsPath} でモデルのアカウントが接続されているか確認してから、もう一度お試しください — またはこの手順をスキップして後で設定してください。",
+      "body": "Timon は AI モデルに接続できませんでした。{settingsPath} でモデルのアカウントが接続されているか確認してから、もう一度お試しください — またはこの手順をスキップして後で設定してください。",
       "retry": "もう一度試す"
     },
     "avatar": {
@@ -4178,10 +4178,10 @@
   },
   "guidedTour": {
     "menu": "ガイドツアー",
-    "firstMessage": "Rooks を案内して、画面のセットアップを手伝ってください。",
+    "firstMessage": "Timon を案内して、画面のセットアップを手伝ってください。",
     "failed": "ツアーを開始できませんでした。外観メニューからもう一度お試しください。",
     "offer": {
-      "title": "Rooks の簡単なツアーを見ますか？",
+      "title": "Timon の簡単なツアーを見ますか？",
       "body": "アシスタントが案内し、画面の配置を手伝います。ページを代わりに開くこともでき、ツアーはいつでも終了できます。後からは外観メニュー (パレットのアイコン) › ガイドツアー から開始できます。",
       "start": "案内して",
       "later": "今はしない",
@@ -4274,7 +4274,7 @@
       "emptyFooter": "なし",
       "apply": "メニューに適用"
     },
-    "unknownKind": "このバージョンの Rooks では、この提案を表示できません。",
+    "unknownKind": "このバージョンの Timon では、この提案を表示できません。",
     "errors": {
       "stale": "この配置はもうあなたのアカウントに合いません: {reasons}",
       "already_decided": "この提案にはすでに回答済みです。",
@@ -4290,7 +4290,7 @@
       "mission": "このミッションが終了するまで保持されます。",
       "persistent": "このミッションの後も保管庫に保持されます。"
     },
-    "hosts": "Rooks によって {hosts} (ヘッダー {header}) にのみ送信されます — エージェントが見ることはありません。",
+    "hosts": "Timon によって {hosts} (ヘッダー {header}) にのみ送信されます — エージェントが見ることはありません。",
     "origin": "組み込みブラウザーで {origin} のページにのみ入力されます — エージェントが見ることはありませんが、入力後はそのページが保持します。",
     "environment": "次回起動時にエージェントの環境変数に入ります: エージェントが実行するものはすべて読み取れます。",
     "field": "{name} の値",
@@ -4318,7 +4318,7 @@
     }
   },
   "uiDocument": {
-    "unavailable": "この Rooks ではドキュメントがオフのため、これは表示できません。",
+    "unavailable": "この Timon ではドキュメントがオフのため、これは表示できません。",
     "expired": "このドキュメントはもう保持されていません: 会話はしばらく前に終了しました。",
     "dismissed": "このドキュメントは閉じられました。",
     "answered": "回答済み",
@@ -4392,7 +4392,7 @@
     "unknownError": "不明なエラー",
     "turnInFlight": "エージェントが応答中です: 返信が終わってから圧縮してください。",
     "alreadyRunning": "この会話の圧縮はすでに進行中です。",
-    "lost": "Rooks がこの圧縮を見失いました (サービスが再起動しました)。もう一度お試しください。",
+    "lost": "Timon がこの圧縮を見失いました (サービスが再起動しました)。もう一度お試しください。",
     "traceRequested": "圧縮をリクエストしました",
     "traceForked": "新しい会話に圧縮しました",
     "traceNativeTokens": "会話を圧縮しました · {from} → {to} トークン",
@@ -4422,14 +4422,14 @@
   "telemetrySettings": {
     "tab": "プライバシー",
     "title": "匿名の使用状況統計",
-    "description": "Rooks はアプリの使われ方 (どの機能か、ターンの成功頻度、セットアップがどこで止まるか) をチームに伝え、何を優先して直すべきかを把握できます。匿名です: このコンピューターで生成したランダムな識別子を使い、あなたのアカウントやマシンは送りません。",
+    "description": "Timon はアプリの使われ方 (どの機能か、ターンの成功頻度、セットアップがどこで止まるか) をチームに伝え、何を優先して直すべきかを把握できます。匿名です: このコンピューターで生成したランダムな識別子を使い、あなたのアカウントやマシンは送りません。",
     "share": "匿名の使用状況統計を共有",
     "shareDescription": "既定でオンです。オフにするとすべての送信がすぐに止まります。オフにしたことを記録する最後のメッセージが 1 件送信されます。",
     "lockedEnv": "環境変数 TIMON_TELEMETRY で設定されています: そちらで変更してください。",
     "lockedEnvMalformed": "TIMON_TELEMETRY の値が yes でも no でもないため、共有はオフです。",
-    "lockedConfig": "rooks.config.json の telemetry.enabled で設定されています: そちらで変更してください。",
-    "lockedConfigMalformed": "rooks.config.json の telemetry.enabled が true でも false でもないため、共有はオフです。",
-    "inactiveBuild": "この Rooks のビルドは、この設定にかかわらず何も送信しません。",
+    "lockedConfig": "timon.config.json の telemetry.enabled で設定されています: そちらで変更してください。",
+    "lockedConfigMalformed": "timon.config.json の telemetry.enabled が true でも false でもないため、共有はオフです。",
+    "inactiveBuild": "この Timon のビルドは、この設定にかかわらず何も送信しません。",
     "sentTitle": "送信されるもの",
     "sent": "アプリのバージョン、OS、ライセンスの種類。アプリの起動と更新。セットアップの手順。ターン、その所要時間、結果、トークン数。使われた組み込みツールとプロバイダー。タスク、プラグイン、ライセンス、ブラウザーの操作 (件数として)。",
     "neverTitle": "送信されないもの",
@@ -4437,7 +4437,7 @@
     "learnMore": "プライバシーに関する通知を読む",
     "loadFailed": "この設定を読み取れませんでした。",
     "saveFailed": "この設定を保存できませんでした。",
-    "forbidden": "この設定を変更できるのは、この Rooks の管理者だけです。"
+    "forbidden": "この設定を変更できるのは、この Timon の管理者だけです。"
   },
   "grepaiPanel": {
     "project": "プロジェクト",

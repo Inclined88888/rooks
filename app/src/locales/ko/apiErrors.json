@@ -37,7 +37,7 @@
     "signin_not_in_progress": "진행 중인 로그인이 없습니다.",
     "workspace_unknown": "알 수 없는 워크스페이스입니다.",
     "project_no_cwd": "이 프로젝트에 설정된 폴더가 없습니다.",
-    "path_unknown": "Rooks이 알지 못하는 경로입니다. 에이전트 폴더도 작업 워크트리도 아닙니다.",
+    "path_unknown": "Timon이 알지 못하는 경로입니다. 에이전트 폴더도 작업 워크트리도 아닙니다.",
     "secret_unknown": "알 수 없는 시크릿입니다.",
     "vault_unavailable": "시크릿 보관소를 사용할 수 없습니다.",
     "license_server_unreachable": "라이선스 서버에 연결할 수 없습니다.",

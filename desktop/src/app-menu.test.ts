@@ -24,11 +24,11 @@ function aboutEntry(items: Item[], label: string): Item {
   return entry;
 }
 
-test('app menu: on macOS no entry keeps the native About panel, and « About Rooks » calls Timon\'s window', () => {
+test('app menu: on macOS no entry keeps the native About panel, and « About Timon » calls Timon\'s window', () => {
   let opened = 0;
   const items = template('en-US', () => { opened += 1; });
   assert.equal(flatten(items).filter((item) => item.role === 'about').length, 0);
-  const about = aboutEntry(items, 'About Rooks');
+  const about = aboutEntry(items, 'About Timon');
   assert.equal(items[0]?.label, 'Timon');
   assert.ok(Array.isArray(items[0]?.submenu));
   assert.equal(items[0].submenu[0], about, 'first entry of the application menu, where macOS users look for it');
@@ -38,9 +38,9 @@ test('app menu: on macOS no entry keeps the native About panel, and « About Roo
 });
 
 test('app menu: the entry speaks the language of the app', () => {
-  assert.ok(aboutEntry(template('fr-FR'), 'À propos de Rooks'));
-  assert.ok(aboutEntry(template('de'), 'Über Rooks'));
-  assert.ok(aboutEntry(template('sv'), 'About Rooks'));
+  assert.ok(aboutEntry(template('fr-FR'), 'À propos de Timon'));
+  assert.ok(aboutEntry(template('de'), 'Über Timon'));
+  assert.ok(aboutEntry(template('sv'), 'About Timon'));
 });
 
 // Replacing the default menu must not take its keys away: Cmd+C and Cmd+V reach a page through Edit, Cmd+Q through the app menu.
@@ -92,8 +92,6 @@ function boot(input: { platform: NodeJS.Platform; releasePending: boolean }) {
     showAboutWindow: (page: { locale: string; notices: string | null }) => { shown.push(page); },
     releasePending: input.releasePending,
     releaseCheckWindow: { show: () => check.push('show'), focus: () => check.push('focus') },
-    lastDaemonHealth: { ok: true, version: '0.2.0', builtAt: '2026-11-13T00:00:00.000Z' },
-    readShellBuiltAt: () => '2026-11-13T00:00:00.000Z',
   };
   runInNewContext(`${compiled}\ninstallAppMenu()`, context);
   return { context, shown, check, installed };
@@ -102,7 +100,7 @@ function boot(input: { platform: NodeJS.Platform; releasePending: boolean }) {
 test('main.ts: the macOS menu bar opens the same window, with the licences', () => {
   const { shown, installed, check } = boot({ platform: 'darwin', releasePending: false });
   assert.equal(installed.length, 1);
-  aboutEntry(installed[0] ?? [], 'À propos de Rooks').click?.({} as never, undefined, {} as never);
+  aboutEntry(installed[0] ?? [], 'À propos de Timon').click?.({} as never, undefined, {} as never);
   assert.equal(shown.length, 1);
   assert.equal(shown[0]?.notices, 'NOTICE');
   assert.deepEqual(check, []);
@@ -110,7 +108,7 @@ test('main.ts: the macOS menu bar opens the same window, with the licences', () 
 
 test('main.ts: while the release is being checked, the menu bar opens no window; once verified, it does', () => {
   const { context, shown, installed, check } = boot({ platform: 'darwin', releasePending: true });
-  const about = aboutEntry(installed[0] ?? [], 'À propos de Rooks');
+  const about = aboutEntry(installed[0] ?? [], 'À propos de Timon');
   about.click?.({} as never, undefined, {} as never);
   assert.equal(shown.length, 0, 'TODO #439: no other window until the release is verified');
   assert.deepEqual(check, ['show', 'focus']);

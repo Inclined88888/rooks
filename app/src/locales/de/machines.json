@@ -22,7 +22,7 @@
       "loadError": "Die Rechner konnten nicht geladen werden."
     },
     "settings": {
-      "description": "Andere Rooks-Rechner, die dieser Computer steuern kann. Ein Wechsel ersetzt die ganze Oberfläche im selben Fenster durch die des gewählten Rechners: Jeder Rechner behält seine eigenen Agenten, Projekte und Einstellungen.",
+      "description": "Andere Timon-Rechner, die dieser Computer steuern kann. Ein Wechsel ersetzt die ganze Oberfläche im selben Fenster durch die des gewählten Rechners: Jeder Rechner behält seine eigenen Agenten, Projekte und Einstellungen.",
       "local": "Der Rechner, von dem diese Oberfläche ausgeliefert wird.",
       "add": "Rechner hinzufügen",
       "addTitle": "Rechner hinzufügen",
@@ -67,8 +67,8 @@
       "invalidCode": "Der Rechner hat diesen Code abgelehnt: falsch, abgelaufen oder bereits verwendet. Fordere einen neuen an.",
       "invalidUrl": "Diese Adresse ist nicht verwendbar: Gib nur die Adresse des Rechners an, ohne Login, Query oder Fragment.",
       "httpsRequired": "Der Rechner muss über HTTPS erreicht werden. Reines HTTP wird nur auf diesem Computer selbst akzeptiert.",
-      "blockedAddress": "Diese Adresse zeigt nie auf einen Rooks-Rechner.",
-      "notTimon": "Unter dieser Adresse antwortet kein Rooks-Rechner.",
+      "blockedAddress": "Diese Adresse zeigt nie auf einen Timon-Rechner.",
+      "notTimon": "Unter dieser Adresse antwortet kein Timon-Rechner.",
       "requiresTls": "Der Rechner sieht diese Verbindung nicht als HTTPS: Prüfe die HTTPS-Einstellungen seines Reverse Proxys.",
       "unreachable": "Der Rechner ist gerade nicht erreichbar.",
       "unauthorized": "Der Rechner akzeptiert diesen Computer nicht mehr: Sein Zugriff wurde widerrufen oder ist abgelaufen. Kopple ihn erneut.",
@@ -78,7 +78,7 @@
       "throttled": "Zu viele Versuche. Warte ein paar Minuten, bevor du es erneut versuchst.",
       "tooMany": "Ein Verbund umfasst höchstens 50 Rechner.",
       "vault": "Der Geheimnistresor ist nicht verfügbar: Der Rechnerzugriff kann nicht gespeichert werden.",
-      "incompatible": "Auf diesem Rechner läuft eine zu alte Rooks-Version für diese Oberfläche. Aktualisiere ihn zuerst.",
+      "incompatible": "Auf diesem Rechner läuft eine zu alte Timon-Version für diese Oberfläche. Aktualisiere ihn zuerst.",
       "notFound": "Dieser Rechner ist nicht mehr in deinem Verbund.",
       "notHere": "Rechner werden aus einem Browser verwaltet, der an diesem Computer angemeldet ist.",
       "sessionRequired": "Melde dich zuerst an diesem Computer an.",
@@ -88,7 +88,7 @@
     "banner": {
       "unreachable": "{name} ist gerade nicht erreichbar.",
       "apiUnknown": "{name} sagt nicht, welche Oberfläche er erwartet: Manche Bildschirme funktionieren eventuell nicht.",
-      "apiNewer": "Auf {name} läuft ein neueres Rooks als diese Oberfläche: Aktualisiere diese App, um ihn voll zu nutzen.",
+      "apiNewer": "Auf {name} läuft ein neueres Timon als diese Oberfläche: Aktualisiere diese App, um ihn voll zu nutzen.",
       "retry": "Wiederholen",
       "dismiss": "Ausblenden"
     },
@@ -106,7 +106,7 @@
       "body": {
         "unreachable": "Der Rechner antwortet nicht: Er ist vielleicht aus oder sein Netzwerk nicht verfügbar. Deine Arbeit darauf ist unberührt.",
         "unauthorized": "Der Zugriff dieses Computers wurde auf diesem Rechner widerrufen oder ist abgelaufen. Kopple ihn erneut über {settingsPath}.",
-        "incompatible": "Er spricht Oberflächenstufe {level}, und diese Oberfläche braucht mindestens {min}. Aktualisiere Rooks auf diesem Rechner und wechsle dann erneut dorthin.",
+        "incompatible": "Er spricht Oberflächenstufe {level}, und diese Oberfläche braucht mindestens {min}. Aktualisiere Timon auf diesem Rechner und wechsle dann erneut dorthin.",
         "unknown": "Der Rechner, den dieses Fenster gesteuert hat, wurde aus deinem Verbund entfernt oder gehört einem anderen Konto.",
         "session_required": "Deine Sitzung auf diesem Computer ist beendet. Geh dorthin zurück, um dich erneut anzumelden.",
         "unavailable": "Dieser Computer kann seinen Zugriff auf den Rechner gerade nicht öffnen (Geheimnistresor, Daemon). Versuche es gleich erneut."

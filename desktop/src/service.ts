@@ -13,8 +13,8 @@ import { startupText } from './startup-text.js';
 export function instanceId(home: string): string {
   return createHash('sha256').update(resolve(home)).digest('hex').slice(0, 24);
 }
-export function packagedUnit(home: string): string { return `rooks-desktop-${instanceId(home)}`; }
-export const MACOS_SERVICE_LABEL = 'com.rooks.daemon';
+export function packagedUnit(home: string): string { return `timon-desktop-${instanceId(home)}`; }
+export const MACOS_SERVICE_LABEL = 'com.timon.daemon';
 /** Copy of `launchDaemonPath()` (orchestrator `host/service-install.ts`):
  *  installed instead of the LaunchAgent once a claude token is configured. */
 export const MACOS_LAUNCH_DAEMONS_DIR = '/Library/LaunchDaemons';
@@ -33,7 +33,7 @@ function unescapeXml(value: string): string {
     { lt: '<', gt: '>', quot: '"', apos: '\'', amp: '&' } as Record<string, string>)[entity]!);
 }
 function homeOfPlist(text: string): string | null {
-  const match = /<key>(?:TIMON_HOME|ROOKS_HOME)<\/key>\s*<string>([^<]*)<\/string>/.exec(text);
+  const match = /<key>TIMON_HOME<\/key>\s*<string>([^<]*)<\/string>/.exec(text);
   return match ? unescapeXml(match[1]!) : null;
 }
 function unquoteShell(value: string): string {
@@ -67,7 +67,7 @@ function macDefinition(file: string, home: string, userHome: string): 'ours' | {
   if (plist === null) return 'ours';
   const launcherFile = /<string>([^<]*\/run\/timon-service\.sh)<\/string>/.exec(plist)?.[1];
   const launcher = launcherFile === undefined ? null : readOrNull(unescapeXml(launcherFile));
-  const exported = launcher === null ? undefined : /^export (?:TIMON_HOME|ROOKS_HOME)='((?:[^']|'\\'')*)'$/m.exec(launcher)?.[1];
+  const exported = launcher === null ? undefined : /^export TIMON_HOME='((?:[^']|'\\'')*)'$/m.exec(launcher)?.[1];
   const homes = [homeOfPlist(plist) ?? join(userHome, '.timon'), ...(exported === undefined ? [] : [unquoteShell(exported)])];
   const other = homes.find((named) => !samePath(named, home, 'darwin'));
   return other === undefined ? 'ours' : { other };

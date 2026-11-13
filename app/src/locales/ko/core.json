@@ -3,7 +3,7 @@
     "title": "공식 커넥터",
     "subtitle": "에이전트가 함께 쓰는 서비스의 MCP 서버를 한 번에 연결하세요.",
     "count": "연결됨 {connected} · 커넥터 {total}개",
-    "loadFailed": "커넥터를 불러올 수 없습니다. Rooks이 실행 중인지 확인한 뒤 페이지를 새로 고치세요.",
+    "loadFailed": "커넥터를 불러올 수 없습니다. Timon이 실행 중인지 확인한 뒤 페이지를 새로 고치세요.",
     "noMatch": "이 검색과 일치하는 커넥터가 없습니다.",
     "footer": "각 커넥터는 게시자가 호스팅하는 원격 MCP 서버이며, 에이전트가 보내는 내용을 받습니다. 연결해도 아직 에이전트에 제공되지는 않습니다. 에이전트의 MCP 서버에서 추가하세요. 로컬 MCP 서버만 불러오는 백엔드의 에이전트는 원격 커넥터를 건너뜁니다.",
     "category": {
@@ -35,7 +35,7 @@
         "blocked": "같은 이름의 MCP 서버가 있습니다"
       },
       "examples": "요청할 수 있는 것",
-      "keyKept": "키는 Rooks의 시크릿 보관소에 보관되며 이 커넥터에만 전송됩니다.",
+      "keyKept": "키는 Timon의 시크릿 보관소에 보관되며 이 커넥터에만 전송됩니다.",
       "vaultOff": "시크릿 보관소가 꺼져 있어 이 커넥터를 연결할 수 없습니다.",
       "getKey": "키 받기",
       "consentPending": "열린 페이지에서 로그인한 뒤 여기로 돌아오세요.",
@@ -92,7 +92,7 @@
     "unauthorized": "이 스킬을 저장하려면 다시 로그인하세요.",
     "forbidden": "계정으로 스킬을 관리할 수 없습니다.",
     "failed": "스킬을 저장할 수 없습니다. ID와 지침을 확인한 뒤 다시 시도하세요.",
-    "network": "Rooks에 연결할 수 없습니다. 연결을 확인한 뒤 다시 시도하세요.",
+    "network": "Timon에 연결할 수 없습니다. 연결을 확인한 뒤 다시 시도하세요.",
     "idLabel": "스킬 ID",
     "idError": "소문자, 숫자, '.', '_', '-'로 ID를 입력하세요. '.' 또는 '..'일 수는 없습니다.",
     "contentError": "스킬을 저장하기 전에 지침을 입력하세요."
@@ -196,7 +196,7 @@
       "plugin": "플러그인"
     },
     "sectionTimon": "{brand} 스킬",
-    "sectionTimonHint": "~/.rooks/skills — 에이전트에 연결 가능 (카탈로그에 포함하거나 전체 가져오기)",
+    "sectionTimonHint": "~/.timon/skills — 에이전트에 연결 가능 (카탈로그에 포함하거나 전체 가져오기)",
     "sectionUser": "전역 Claude 스킬",
     "sectionUserHint": "~/.claude/skills 및 ~/.claude/commands — 미션에서 불러오지 않음. 연결하려면 {brand}(으)로 가져오세요",
     "sectionProject": "프로젝트 스킬",
@@ -239,7 +239,7 @@
     "forbidden": "계정으로 이 작업 또는 체인의 일부를 삭제할 수 없습니다.",
     "notFound": "이 작업이 더 이상 없거나 계정에서 액세스할 수 없습니다. 보드를 새로 고치세요.",
     "failed": "작업을 삭제할 수 없습니다. 다시 시도하세요.",
-    "network": "Rooks에 연결할 수 없습니다. 연결을 확인한 뒤 다시 시도하세요."
+    "network": "Timon에 연결할 수 없습니다. 연결을 확인한 뒤 다시 시도하세요."
   },
   "starterWidgets": {
     "loading": "불러오는 중...",
@@ -278,7 +278,7 @@
     "moveToTeam": "팀으로 이동",
     "leaveTeam": "팀에서 나가기",
     "forbidden": "계정으로 팀을 변경할 수 없습니다.",
-    "daemonUnreachable": "Rooks에 연결할 수 없습니다.",
+    "daemonUnreachable": "Timon에 연결할 수 없습니다.",
     "writeFailed": "변경이 거부되었습니다.",
     "newBot": "새 TIM",
     "emptyNoBots": "아직 TIM이 없습니다. 하나 만든 뒤 여기서 대화하세요.",
@@ -825,7 +825,7 @@
     "emailSending": "보내는 중…",
     "emailRequested": "확인 링크가 준비되었습니다.",
     "emailError": "변경을 요청할 수 없습니다.",
-    "emailLinkHint": "새 주소에서 이 링크를 열어 확인하세요. Rooks은 메일을 보내지 않습니다. 초대와 똑같이 복사해서 직접 보내세요.",
+    "emailLinkHint": "새 주소에서 이 링크를 열어 확인하세요. Timon은 메일을 보내지 않습니다. 초대와 똑같이 복사해서 직접 보내세요.",
     "emailLinkCopy": "링크 복사",
     "emailLinkCopied": "링크가 복사되었습니다.",
     "emailLinkCopyFailed": "링크를 복사할 수 없습니다."
@@ -844,7 +844,7 @@
     "paymentActive": "정상",
     "paymentPastDue": "연체",
     "noneTitle": "Free — 라이선스 필요 없음",
-    "noneDescription": "Rooks은 활성 최고 관리자 한 명에 대해 모든 기능과 플러그인을 로컬에서 제공합니다. 키, 등록, 갱신이 필요 없습니다. 계정을 추가할 때만 라이선스를 활성화하세요.",
+    "noneDescription": "Timon은 활성 최고 관리자 한 명에 대해 모든 기능과 플러그인을 로컬에서 제공합니다. 키, 등록, 갱신이 필요 없습니다. 계정을 추가할 때만 라이선스를 활성화하세요.",
     "buy": "{domain}에서 라이선스 보기",
     "replaceTitle": "라이선스 교체",
     "machineTitle": "이 컴퓨터",
@@ -872,7 +872,7 @@
     "pastDueUntil": "결제 연체 — 구독이 {date}에 종료됩니다",
     "notActivated": "Free 사용 중 — 계정을 추가하려면 라이선스가 필요합니다",
     "activate": "활성화",
-    "offlineSince": "{date}부터 라이선스 서버에 연결할 수 없습니다 — 오프라인 유예 기간 동안은 유료 권한을 계속 쓸 수 있으며, 그 후 Rooks은 Free로 돌아갑니다.",
+    "offlineSince": "{date}부터 라이선스 서버에 연결할 수 없습니다 — 오프라인 유예 기간 동안은 유료 권한을 계속 쓸 수 있으며, 그 후 Timon은 Free로 돌아갑니다.",
     "buildEndsSoon": "이 베타 빌드는 {date}에 작동을 멈춥니다. 그 전에 최신 버전을 설치하세요.",
     "buildEndsUrgent": "이 베타 빌드는 {date}에 작동을 멈춥니다. 지금 최신 버전을 설치하세요.",
     "licenseEndsSoon": "라이선스가 {date}에 종료됩니다. 그 전에 새 키를 입력하세요.",
@@ -907,7 +907,7 @@
     "retry": "다시 시도"
   },
   "activate": {
-    "title": "Rooks 활성화",
+    "title": "Timon 활성화",
     "description": "받은 활성화 키(라이선스 서버와 교환) 또는 라이선스 토큰(로컬에서 확인, 네트워크 불필요)을 붙여넣으세요.",
     "rejected": "라이선스가 거부됨",
     "deviceMismatch": "이 기기는 {device}입니다",
@@ -1147,11 +1147,11 @@
         "fileSize": "이 사진은 25MB를 넘습니다. 더 작은 파일을 선택하세요.",
         "decode": "이 이미지를 열 수 없습니다. JPEG 또는 PNG로 다시 내보내 보세요.",
         "encode": "이 사진을 업로드용으로 최적화할 수 없습니다. 더 작은 이미지를 사용해 보세요.",
-        "network": "사진 서비스에 연결할 수 없습니다. Rooks 연결을 확인한 뒤 다시 시도하세요.",
+        "network": "사진 서비스에 연결할 수 없습니다. Timon 연결을 확인한 뒤 다시 시도하세요.",
         "session": "사진 업로드가 승인되지 않았습니다. 다시 로그인한 뒤 재시도하세요.",
-        "unavailable": "이 서버에서는 사진을 업로드할 수 없습니다. 업데이트된 Rooks 데몬을 시작해야 하며, 페이지를 새로 고치는 것만으로는 부족합니다.",
+        "unavailable": "이 서버에서는 사진을 업로드할 수 없습니다. 업데이트된 Timon 데몬을 시작해야 하며, 페이지를 새로 고치는 것만으로는 부족합니다.",
         "server": "서버가 이 사진을 받을 수 없습니다. 다시 시도하세요.",
-        "storage": "Rooks이 사진을 디스크에 저장하지 못했습니다. 사용 가능한 공간과 쓰기 권한을 확인하세요."
+        "storage": "Timon이 사진을 디스크에 저장하지 못했습니다. 사용 가능한 공간과 쓰기 권한을 확인하세요."
       }
     },
     "menu": {
@@ -1324,7 +1324,7 @@
     "categories": "카테고리",
     "selectCategory": "카테고리",
     "modified": "수정됨",
-    "definedInConfig": "rooks.config.json에 정의됨",
+    "definedInConfig": "timon.config.json에 정의됨",
     "forcedByEnv": "환경 변수로 강제됨",
     "default": "기본값",
     "empty": "(비어 있음)",
@@ -1338,7 +1338,7 @@
     "secretConfigured": "시크릿 설정됨"
   },
   "devicesSettings": {
-    "description": "다른 Rooks 인터페이스에서 계정 권한으로 이 컴퓨터를 열 수 있는 기기입니다. 일회용 코드로 승인하고 언제든 취소할 수 있습니다.",
+    "description": "다른 Timon 인터페이스에서 계정 권한으로 이 컴퓨터를 열 수 있는 기기입니다. 일회용 코드로 승인하고 언제든 취소할 수 있습니다.",
     "authorize": "새 기기 승인",
     "enterCode": "다른 컴퓨터의 코드 입력",
     "enterCodeOff": {
@@ -1352,7 +1352,7 @@
     "codeTitle": "페어링 코드",
     "codeHint": "이 컴퓨터를 조작할 컴퓨터에서 {path} → 컴퓨터 추가를 열고(그쪽에서 머신 플러그인이 켜져 있어야 함), 이 컴퓨터의 주소와 함께 이 코드를 입력하세요. 코드는 한 번만 쓸 수 있습니다.",
     "reachable": {
-      "lead": "Rooks은 tailscale serve로 이 컴퓨터의 데몬을 tailnet에 게시할 수 있습니다. 내 tailnet 기기만 접근할 수 있으며 인터넷에서는 절대 접근할 수 없습니다.",
+      "lead": "Timon은 tailscale serve로 이 컴퓨터의 데몬을 tailnet에 게시할 수 있습니다. 내 tailnet 기기만 접근할 수 있으며 인터넷에서는 절대 접근할 수 없습니다.",
       "action": "이 컴퓨터에 접근 가능하게 하기",
       "retry": "다시 시도",
       "busy": "게시하는 중…",
@@ -1368,7 +1368,7 @@
         "not_connected": "Tailscale이 설치되어 있지만 이 컴퓨터가 tailnet에 연결되어 있지 않습니다.",
         "serve_disabled": "tailnet에 아직 HTTPS가 켜져 있지 않습니다. 이 컴퓨터를 게시하려면 Tailscale에 HTTPS가 필요합니다.",
         "permission": "Tailscale이 설정 변경을 거부했습니다. 이 계정에는 권한이 없습니다.",
-        "unreadable": "Tailscale이 상태 대신 Rooks이 읽을 수 없는 응답을 보냈습니다. 메시지는 아래에 있습니다.",
+        "unreadable": "Tailscale이 상태 대신 Timon이 읽을 수 없는 응답을 보냈습니다. 메시지는 아래에 있습니다.",
         "no_free_port": "이 컴퓨터에서 포트 8443, 10000, 443을 이미 tailscale serve가 사용하고 있습니다. 하나를 비운 뒤 다시 시도하세요.",
         "listen_not_loopback": "데몬이 이 컴퓨터 자체가 아닌 네트워크 주소에서 수신 대기하고 있어 tailscale serve가 접근할 수 없습니다. daemon.listen.host를 127.0.0.1로 설정하세요.",
         "failed": "Tailscale이 이 컴퓨터를 게시하지 못했습니다.",
@@ -1378,33 +1378,33 @@
     },
     "tailscale": {
       "checking": "이 컴퓨터의 Tailscale 확인 중…",
-      "installLead": "이 컴퓨터에 Tailscale이 설치되어 있지 않습니다. Rooks이 Tailscale 공식 사이트에서 설치할 수 있습니다. 비밀번호는 시스템이 요청하며 Rooks은 절대 보지 않습니다.",
+      "installLead": "이 컴퓨터에 Tailscale이 설치되어 있지 않습니다. Timon이 Tailscale 공식 사이트에서 설치할 수 있습니다. 비밀번호는 시스템이 요청하며 Timon은 절대 보지 않습니다.",
       "install": "Tailscale 설치",
       "downloading": "공식 사이트에서 Tailscale 다운로드 중…",
       "verifying": "패키지가 Tailscale의 서명을 받았는지 확인 중…",
       "installingMac": "macOS 설치 프로그램 창에서 설치를 완료하세요 (비밀번호를 요청합니다)…",
       "installingWindows": "Windows 관리자 확인을 수락해 설치를 완료하세요…",
       "installingLinux": "시스템 대화 상자에 비밀번호를 입력해 설치를 완료하세요…",
-      "handoffMac": "Rooks이 macOS 설치 프로그램을 엽니다. 거기서 설치를 완료하세요 (비밀번호를 요청합니다)…",
+      "handoffMac": "Timon이 macOS 설치 프로그램을 엽니다. 거기서 설치를 완료하세요 (비밀번호를 요청합니다)…",
       "reopenInstaller": "설치 프로그램 다시 열기",
-      "handoffWindows": "Rooks이 Tailscale 설치 프로그램을 엽니다. Windows 관리자 확인을 수락해 완료하세요…",
+      "handoffWindows": "Timon이 Tailscale 설치 프로그램을 엽니다. Windows 관리자 확인을 수락해 완료하세요…",
       "connectLead": "Tailscale이 설치되었습니다. 이 컴퓨터를 tailnet에 로그인하세요. 브라우저에서 Tailscale 페이지가 열립니다.",
       "connect": "Tailscale에 로그인",
       "waitingLogin": "브라우저에서 Tailscale 로그인을 기다리는 중…",
       "openSignIn": "Tailscale 로그인 페이지 열기",
       "ready": "Tailscale이 연결되었습니다.",
-      "operatorLead": "이 컴퓨터의 Tailscale 관리를 Rooks에 맡기세요. 시스템이 비밀번호를 한 번 요청하고, 이후 Rooks은 비밀번호 없이 게시합니다.",
-      "operator": "Tailscale 관리를 Rooks에 맡기기",
+      "operatorLead": "이 컴퓨터의 Tailscale 관리를 Timon에 맡기세요. 시스템이 비밀번호를 한 번 요청하고, 이후 Timon은 비밀번호 없이 게시합니다.",
+      "operator": "Tailscale 관리를 Timon에 맡기기",
       "operatorWaiting": "시스템 대화 상자에 비밀번호를 입력하세요…",
       "failures": {
         "download_failed": "공식 사이트에서 Tailscale을 다운로드할 수 없습니다.",
         "checksum_mismatch": "다운로드한 패키지가 Tailscale이 게시한 것과 일치하지 않아 열지 않았습니다.",
         "signature_invalid": "다운로드한 패키지가 Tailscale의 서명을 받지 않아 열지 않았습니다.",
-        "no_desktop": "Rooks은 데스크톱에 접근할 수 없는 백그라운드에서 실행되므로 이 브라우저에서 설치 프로그램을 표시할 수 없습니다. 이 컴퓨터의 Rooks 데스크톱 앱에서 Tailscale 설치를 클릭하거나 아래 명령을 실행하세요.",
-        "elevation_unavailable": "Rooks이 이 컴퓨터에서 관리자 권한을 요청할 수 없습니다.",
+        "no_desktop": "Timon은 데스크톱에 접근할 수 없는 백그라운드에서 실행되므로 이 브라우저에서 설치 프로그램을 표시할 수 없습니다. 이 컴퓨터의 Timon 데스크톱 앱에서 Tailscale 설치를 클릭하거나 아래 명령을 실행하세요.",
+        "elevation_unavailable": "Timon이 이 컴퓨터에서 관리자 권한을 요청할 수 없습니다.",
         "cancelled": "설치가 취소되었습니다.",
         "installer_failed": "Tailscale 설치 프로그램이 완료되지 않았습니다.",
-        "unsupported": "Rooks이 이 시스템에 Tailscale을 설치하는 방법을 모릅니다.",
+        "unsupported": "Timon이 이 시스템에 Tailscale을 설치하는 방법을 모릅니다.",
         "not_installed": "이 컴퓨터에 Tailscale이 설치되어 있지 않습니다.",
         "not_running": "Tailscale이 아직 실행되지 않습니다. Tailscale 앱을 열어 설정을 마친 뒤 다시 시도하세요.",
         "permission": "Tailscale이 거부했습니다. 이 계정은 설정을 변경할 수 없습니다.",
@@ -1456,7 +1456,7 @@
   },
   "integrationReceipts": {
     "title": "메시징 연동",
-    "description": "메시징 연동으로 받았지만 처리하지 못한 메시지입니다. Rooks은 약 하루 동안 재시도한 뒤 멈추고, 다시 실행할 수 있도록 보존 기간 동안 여기에 메시지를 보관합니다.",
+    "description": "메시징 연동으로 받았지만 처리하지 못한 메시지입니다. Timon은 약 하루 동안 재시도한 뒤 멈추고, 다시 실행할 수 있도록 보존 기간 동안 여기에 메시지를 보관합니다.",
     "healthy": "모든 메시지가 정상적으로 처리되고 있습니다.",
     "stage": {
       "inbox": "미션 시작",
@@ -1525,7 +1525,7 @@
   },
   "pluginWebhooks": {
     "title": "수신 webhook",
-    "description": "Rooks 외부의 서비스(GitHub, Stripe, Slack…)가 이 주소로 이 플러그인을 호출할 수 있습니다. 각 호출은 플러그인에 전달되기 전에 해당 서비스 고유의 서명 형식으로 검증됩니다.",
+    "description": "Timon 외부의 서비스(GitHub, Stripe, Slack…)가 이 주소로 이 플러그인을 호출할 수 있습니다. 각 호출은 플러그인에 전달되기 전에 해당 서비스 고유의 서명 형식으로 검증됩니다.",
     "copyUrl": "주소 복사",
     "urlCopied": "주소가 복사되었습니다",
     "notConfigured": "아직 시크릿 없음: 호출이 거부됩니다.",
@@ -1586,7 +1586,7 @@
     },
     "tab": {
       "instructions": {
-        "preamble": "Rooks 프리앰블",
+        "preamble": "Timon 프리앰블",
         "global": "전역 지침"
       },
       "interface": {
@@ -2002,12 +2002,12 @@
     "loadOlderMessages": "이전 메시지 표시",
     "loadingOlderMessages": "이전 메시지를 불러오는 중…",
     "turnInterrupted": "턴 중단됨",
-    "turnCutByRestart": "턴 중단됨: Rooks이 다시 시작되었습니다",
+    "turnCutByRestart": "턴 중단됨: Timon이 다시 시작되었습니다",
     "conversationResumable": "대화는 계속 이어 갈 수 있습니다 — 다음 메시지가 컨텍스트와 함께 재개합니다",
     "hardStop": "완전 중지: 이 백엔드는 세션을 재개할 수 없어 다음 메시지는 처음부터 시작합니다",
-    "spawnFailedMissing": "{backend} CLI를 시작할 수 없습니다: 이 컴퓨터에서 `{binary}` 명령을 찾을 수 없습니다. 설치하거나 설정의 `host.binaries.{binary}`로 Rooks에 위치를 알려 주세요.",
+    "spawnFailedMissing": "{backend} CLI를 시작할 수 없습니다: 이 컴퓨터에서 `{binary}` 명령을 찾을 수 없습니다. 설치하거나 설정의 `host.binaries.{binary}`로 Timon에 위치를 알려 주세요.",
     "spawnFailedNotExecutable": "{backend} CLI를 시작할 수 없습니다: `{binary}`이(가) 있지만 실행할 수 없습니다. 권한을 수정하거나 설정의 `host.binaries.{binary}`로 다른 사본을 지정하세요.",
-    "spawnFailedUnknown": "{backend} CLI를 시작할 수 없습니다: `{binary}`을(를) 실행할 수 없습니다. 설치되어 있는지 확인하거나 설정의 `host.binaries.{binary}`로 Rooks에 위치를 알려 주세요.",
+    "spawnFailedUnknown": "{backend} CLI를 시작할 수 없습니다: `{binary}`을(를) 실행할 수 없습니다. 설치되어 있는지 확인하거나 설정의 `host.binaries.{binary}`로 Timon에 위치를 알려 주세요.",
     "backendFailed": "{backend} 백엔드가 응답 없이 멈췄습니다 (종료 코드 {code}). 로그인되어 있고 이 컴퓨터에서 실행이 허용되는지 확인하세요.",
     "backendFailedDetail": "마지막 출력: {detail}",
     "backendFailedMission": "미션 {missionId}",
@@ -2029,9 +2029,9 @@
     "providerRecovered": "{count}회 재시도 후 다시 연결됨",
     "providerRecoveredOne": "1회 재시도 후 다시 연결됨",
     "providerExhausted": "{count}회 재시도 후에도 {provider} 서버에 연결할 수 없음",
-    "providerExhaustedWithTimon": "공급자 재시도 {count}회와 Rooks 재시도 {timon}회 후에도 {provider} 서버에 연결할 수 없음",
-    "timonRetryIn": "Rooks 재시도 {attempt}/{max}, {seconds}초 후…",
-    "timonRetryRunning": "Rooks 재시도 {attempt}/{max}…",
+    "providerExhaustedWithTimon": "공급자 재시도 {count}회와 Timon 재시도 {timon}회 후에도 {provider} 서버에 연결할 수 없음",
+    "timonRetryIn": "Timon 재시도 {attempt}/{max}, {seconds}초 후…",
+    "timonRetryRunning": "Timon 재시도 {attempt}/{max}…",
     "retryTurn": "다시 시도",
     "retryTurnUnavailable": "다시 시도할 것이 없습니다: 마지막 메시지가 더 이상 이 대화에 없습니다.",
     "quotaExhaustedTitle": "할당량 소진",
@@ -2050,7 +2050,7 @@
     "steerUnavailableQueued": "이 에이전트는 지금 방향을 바꿀 수 없습니다 — 메시지가 턴 끝 대기열에 추가되었습니다",
     "messageQueuedInline": "메시지가 대기열에 추가되었습니다 — 현재 턴이 끝나면 전송됩니다",
     "voiceDictationUnavailable": "이 브라우저에서는 음성 받아쓰기를 사용할 수 없습니다.",
-    "voiceDictationDesktopUnavailable": "이 데스크톱 앱에서는 음성 받아쓰기를 사용할 수 없습니다. Rooks을 업데이트하세요. 또는 이 컴퓨터가 지원되지 않습니다. Chrome이나 Edge에서 Rooks을 열면 작동합니다.",
+    "voiceDictationDesktopUnavailable": "이 데스크톱 앱에서는 음성 받아쓰기를 사용할 수 없습니다. Timon을 업데이트하세요. 또는 이 컴퓨터가 지원되지 않습니다. Chrome이나 Edge에서 Timon을 열면 작동합니다.",
     "dictationUnavailable": "받아쓰기를 사용할 수 없음: {error}",
     "messagePlaceholder": "{name}에게 메시지…",
     "stopDictation": "받아쓰기 중지",
@@ -2171,7 +2171,7 @@
     "openFailed": "열 수 없음",
     "openedInExplorer": "탐색기에서 열림: {path}",
     "openRootInExplorer": "시스템 탐색기에서 루트 열기",
-    "revealNoDesktop": "이 파일은 Rooks 데몬을 실행하는 컴퓨터에 있지만, 그 컴퓨터에는 표시할 데스크톱 세션이 없습니다. 그 컴퓨터의 Rooks 데스크톱 앱에서 여세요.",
+    "revealNoDesktop": "이 파일은 Timon 데몬을 실행하는 컴퓨터에 있지만, 그 컴퓨터에는 표시할 데스크톱 세션이 없습니다. 그 컴퓨터의 Timon 데스크톱 앱에서 여세요.",
     "refreshFiles": "파일 새로 고침",
     "cannotOpen": "{path}을(를) 열 수 없음",
     "dirtyWorkingTreeConfirm": "작업 트리에 변경 사항이 있습니다 (파일 {count}개). 그래도 \"{branch}\"(으)로 전환하시겠습니까?",
@@ -2289,15 +2289,15 @@
     }
   },
   "timonPreamble": {
-    "title": "Rooks 프리앰블",
-    "description": "생성될 때마다 즉석에서 만들어져 모든 에이전트에 가장 먼저 전송됩니다. 읽기 전용: 내 파일이 아니라 Rooks이 제공합니다. 메인 에이전트용으로 만들어진 내용을 표시합니다.",
+    "title": "Timon 프리앰블",
+    "description": "생성될 때마다 즉석에서 만들어져 모든 에이전트에 가장 먼저 전송됩니다. 읽기 전용: 내 파일이 아니라 Timon이 제공합니다. 메인 에이전트용으로 만들어진 내용을 표시합니다.",
     "empty": "이 에이전트에는 프리앰블이 없습니다.",
     "loading": "프리앰블을 읽는 중…",
     "error": "프리앰블을 읽을 수 없습니다: {message}"
   },
   "globalInstructions": {
     "title": "전역 지침",
-    "description": "모든 에이전트에게 바라는 것으로, 생성될 때마다 Rooks 프리앰블 바로 다음에 전송됩니다: 사용할 언어, 커밋 작성 방식, 테스트 방법 등. 프로젝트 규칙은 프로젝트의 AGENTS.md에, 에이전트 고유 규칙은 그 정체성 문서에 둡니다.",
+    "description": "모든 에이전트에게 바라는 것으로, 생성될 때마다 Timon 프리앰블 바로 다음에 전송됩니다: 사용할 언어, 커밋 작성 방식, 테스트 방법 등. 프로젝트 규칙은 프로젝트의 AGENTS.md에, 에이전트 고유 규칙은 그 정체성 문서에 둡니다.",
     "path": "파일: {path}",
     "limit": "{tokens} · 최대 {max}자",
     "empty": "아직 아무것도 없습니다. 모든 에이전트는 내 지침 없이 시작합니다.",
@@ -2408,9 +2408,9 @@
       "not_found": "그 컴퓨터에 이 폴더가 없습니다.",
       "not_a_directory": "이 경로는 폴더가 아니라 파일입니다.",
       "relative_path": "디스크 루트부터 전체 경로를 입력하세요.",
-      "unreadable": "Rooks이 그 컴퓨터에서 이 폴더를 읽을 수 없습니다.",
+      "unreadable": "Timon이 그 컴퓨터에서 이 폴더를 읽을 수 없습니다.",
       "forbidden": "계정으로 이 컴퓨터의 폴더를 탐색할 수 없습니다. 경로를 직접 입력하세요.",
-      "outdated": "이 컴퓨터는 폴더를 나열할 수 없는 이전 Rooks을 실행 중입니다. 경로를 직접 입력하세요.",
+      "outdated": "이 컴퓨터는 폴더를 나열할 수 없는 이전 Timon을 실행 중입니다. 경로를 직접 입력하세요.",
       "failed": "이 컴퓨터의 폴더를 읽을 수 없습니다. 다시 시도하거나 경로를 직접 입력하세요."
     },
     "file": {
@@ -2427,14 +2427,14 @@
       "selected": "선택됨: {path}",
       "errors": {
         "forbidden": "관리자만 이 컴퓨터의 파일을 탐색할 수 있습니다.",
-        "outdated": "이 컴퓨터는 파일을 나열할 수 없는 이전 Rooks을 실행 중입니다. 먼저 업데이트하세요."
+        "outdated": "이 컴퓨터는 파일을 나열할 수 없는 이전 Timon을 실행 중입니다. 먼저 업데이트하세요."
       }
     }
   },
   "editPage": {
     "name": "이름",
     "nameHint": "그래프와 콘솔에 표시",
-    "directoryPickerUnavailable": "폴더를 탐색하려면 최신 Rooks 데스크톱 앱을 사용하세요. 경로를 직접 입력할 수도 있습니다.",
+    "directoryPickerUnavailable": "폴더를 탐색하려면 최신 Timon 데스크톱 앱을 사용하세요. 경로를 직접 입력할 수도 있습니다.",
     "directoryPickerFailed": "폴더 선택 창을 열 수 없습니다. 경로를 직접 입력할 수 있습니다.",
     "imageInvalid": "이미지 파일(png, jpg, webp, gif)이 필요합니다",
     "imageTooLarge": "이미지가 너무 큽니다 (최대 8MB)",
@@ -2491,7 +2491,7 @@
     "permissionHintMcpBridge": "이 백엔드는 모든 도구 사용을 판정합니다: 분류기가 명확한 경우를 처리하고 애매한 경우에만 UI에 허용/거부 카드를 표시합니다.",
     "mcpIntro": "직접 추가한 Model Context Protocol 서버입니다. 여기서 선택한 서버는 생성될 때마다 이 에이전트에 연결됩니다. 관리하는 곳:",
     "mcpEmpty": "아직 추가된 MCP 서버가 없습니다 — 추가하는 곳:",
-    "mcpBuiltinTitle": "Rooks에 내장 — 항상 켜져 있으며 부여할 것 없음",
+    "mcpBuiltinTitle": "Timon에 내장 — 항상 켜져 있으며 부여할 것 없음",
     "mcpBuiltinHint": "아래에서 무엇을 선택하든 모든 백엔드의 모든 에이전트가 이를 받으며, Kanban 작업의 MCP 재정의로도 제거되지 않습니다. 일부 timon 도구(에이전트나 프로젝트 만들기, MCP 서버 선언)는 사용자 페이지의 계정 권한도 필요하며, 이 목록으로는 바뀌지 않습니다.",
     "mcpBuiltinTimon": "Kanban, 미션, 에이전트, 메모리, 이 문서",
     "mcpBuiltinAsk": "채팅에서 나에게 묻는 양식",
@@ -2500,7 +2500,7 @@
     "permissionHintSandbox": "이 백엔드는 턴 중간에 판정할 수 없습니다: 모드는 실행 시 샌드박스 수준으로 변환됩니다 (plan → 읽기 전용, bypassPermissions → 전체 접근, 그 외 → workspace-write). 허용/거부 카드도 분류기도 없습니다.",
     "permissionHintNone": "이 백엔드는 권한 가드레일을 제공하지 않습니다 — 아래 모드는 효과가 없습니다.",
     "permissionHintProtocol": "이 백엔드는 도구 사용 전에 프로토콜로 묻습니다: UI에 허용/거부 카드가 나타납니다. 에이전트가 스스로 결정하는 것은 나에게 오지 않고 자체 규칙을 따르며, 아래 모드는 이를 덮어쓰지 않습니다.",
-    "permissionHintProtocolMode": "이 백엔드는 도구 사용 전에 Rooks에 묻고, Rooks은 먼저 아래 모드를 적용합니다: 읽기는 통과, plan은 편집과 명령을 거부, acceptEdits와 auto는 작업 폴더 안의 편집을 통과시킵니다. 모드와 에이전트의 허용 도구로 정해지지 않는 것은 UI의 허용/거부 카드가 됩니다.",
+    "permissionHintProtocolMode": "이 백엔드는 도구 사용 전에 Timon에 묻고, Timon은 먼저 아래 모드를 적용합니다: 읽기는 통과, plan은 편집과 명령을 거부, acceptEdits와 auto는 작업 폴더 안의 편집을 통과시킵니다. 모드와 에이전트의 허용 도구로 정해지지 않는 것은 UI의 허용/거부 카드가 됩니다.",
     "permissionsSelfBadge": "자체 권한 관리",
     "permissionsSelfBadgeHint": "이 에이전트는 도구 사용을 스스로 결정합니다: 자체 설정이 정한 샌드박스가 적용되며, TIMON은 허용/거부 카드를 표시하지 않습니다.",
     "permissionModeLabel": "권한 모드",
@@ -2573,7 +2573,7 @@
     },
     "notificationCenter": {
       "title": "알림 센터",
-      "description": "에이전트와 Rooks이 보낸 알림을 읽고 처리합니다."
+      "description": "에이전트와 Timon이 보낸 알림을 읽고 처리합니다."
     },
     "taskQueue": {
       "title": "작업 대기열",
@@ -2581,7 +2581,7 @@
     },
     "injections": {
       "title": "에이전트 주입",
-      "description": "에이전트가 시작할 때 Rooks이 건네는 모든 것(규칙, 메모리, 스킬)으로, 벗어나는 에이전트를 이해하는 데 도움이 됩니다."
+      "description": "에이전트가 시작할 때 Timon이 건네는 모든 것(규칙, 메모리, 스킬)으로, 벗어나는 에이전트를 이해하는 데 도움이 됩니다."
     },
     "bell": {
       "title": "알림 종",
@@ -2620,8 +2620,8 @@
       "description": "프로젝트 스택의 실행 여부, 로컬 URL, 중단된 서비스. 시작, 다시 시작, 중지할 수 있습니다."
     },
     "timonDaemon": {
-      "title": "Rooks 데몬",
-      "description": "timon 프로젝트용 Rooks 자체의 상태."
+      "title": "Timon 데몬",
+      "description": "timon 프로젝트용 Timon 자체의 상태."
     },
     "missionDetails": {
       "title": "미션 세부 정보",
@@ -2733,7 +2733,7 @@
     "writeOnlyNotice": "저장된 값은 기본적으로 표시되지 않습니다. 다시 보려면 표시를 사용하고(계정 비밀번호 필요), 바꾸려면 교체하세요.",
     "new": "새 시크릿",
     "refresh": "새로 고침",
-    "empty": "아직 시크릿이 없습니다. 데몬은 여전히 ~/.rooks/secrets.env를 읽지만 에이전트별로 지정된 것은 없습니다.",
+    "empty": "아직 시크릿이 없습니다. 데몬은 여전히 ~/.timon/secrets.env를 읽지만 에이전트별로 지정된 것은 없습니다.",
     "saved": "시크릿이 저장되었습니다.",
     "confirmDelete": "{name}을(를) 삭제하시겠습니까? 이를 사용하는 에이전트는 접근 권한을 잃습니다.",
     "configured": "설정됨",
@@ -2856,7 +2856,7 @@
     "contains": "설치 항목",
     "enable": "{name} 사용",
     "disable": "{name} 사용 안 함",
-    "bundled": "Rooks에 포함됨",
+    "bundled": "Timon에 포함됨",
     "bundledSubtitle": "제품의 모듈입니다. 꺼도 설치된 상태로 남으며 즉시 적용됩니다.",
     "thirdParty": "여기에 설치됨",
     "notInLicence": "라이선스에 포함되지 않음",
@@ -2931,7 +2931,7 @@
     "noAgent": "아직 에이전트가 없습니다.",
     "loading": "주입 내용을 읽는 중…",
     "error": "주입 내용을 읽을 수 없습니다: {message}",
-    "listLabel": "Rooks이 모델에 건네는 순서대로 나열한 주입 내용",
+    "listLabel": "Timon이 모델에 건네는 순서대로 나열한 주입 내용",
     "tokens": "~{n} 토큰",
     "beforeFirst": "첫 메시지 전에 약 {tokens} 토큰의 컨텍스트가 전송됩니다.",
     "onDemand": "카탈로그 스킬은 에이전트가 읽을 때(skill_get)만 ~{tokens} 토큰을 더하며, 이 합계에는 포함되지 않습니다.",
@@ -2973,15 +2973,15 @@
       "role": "역할",
       "agent": "이 에이전트",
       "config": "선택됨",
-      "code": "Rooks이 추가"
+      "code": "Timon이 추가"
     },
     "skillReads": {
-      "title": "지난 {days}일 동안 이 에이전트의 미션이 읽은 기록: skill_get 호출과 전체 경로로 연 파일. 최솟값입니다: Rooks이 볼 수 없는 읽기는 세지 않습니다.",
+      "title": "지난 {days}일 동안 이 에이전트의 미션이 읽은 기록: skill_get 호출과 전체 경로로 연 파일. 최솟값입니다: Timon이 볼 수 없는 읽기는 세지 않습니다.",
       "read": "{reads}회 읽음 · 미션 {missions}/{total} · {days}일",
       "never": "읽은 적 없음 · 미션 {total} · {days}일",
       "idle": "{days}일 동안 미션 없음",
       "unmeasured": "이 백엔드에서는 읽기를 측정하지 않음 · {days}일",
-      "unmeasuredTitle": "이 에이전트의 미션은 skill_get 도구가 없는 백엔드에서 실행되어, Rooks은 이 스킬을 읽었는지 알 수 없습니다.",
+      "unmeasuredTitle": "이 에이전트의 미션은 skill_get 도구가 없는 백엔드에서 실행되어, Timon은 이 스킬을 읽었는지 알 수 없습니다.",
       "neverCount": "읽은 적 없음: {n}",
       "neverHint": "{days}일 동안 이 에이전트의 미션이 이 스킬을 읽은 기록이 없습니다. 에이전트가 언제 써야 할지 알 수 있도록 설명을 다시 쓰세요."
     },
@@ -2994,12 +2994,12 @@
     "masking": {
       "shown": "이 화면에서만 가려집니다: 에이전트는 볼트 값을 평문으로 받습니다.",
       "cli": "이 화면에서만 가려집니다: 백엔드 CLI가 이 파일을 읽으면 에이전트는 볼트 값을 평문으로 받습니다.",
-      "sent": "전송 시에도 가려집니다: 이 백엔드는 스킬 폴더에도 Rooks의 도구에도 닿지 않으므로 에이전트는 이 볼트 값을 받지 않습니다."
+      "sent": "전송 시에도 가려집니다: 이 백엔드는 스킬 폴더에도 Timon의 도구에도 닿지 않으므로 에이전트는 이 볼트 값을 받지 않습니다."
     },
     "why": {
       "redacted": "가려진 텍스트를 저장하면 실제 값을 덮어쓰므로 이 목록에서는 편집할 수 없습니다.",
-      "cli": "작업 디렉터리에서 발견되었습니다. Rooks은 이를 주입하지 않습니다: 백엔드 CLI가 읽을지, 프롬프트의 어디에 들어갈지는 그 CLI에 달려 있으므로 이 행은 측정된 순서에 포함되지 않습니다. 프로젝트에서 파일을 편집하세요.",
-      "code": "Rooks이 코드에 작성: 편집 불가.",
+      "cli": "작업 디렉터리에서 발견되었습니다. Timon은 이를 주입하지 않습니다: 백엔드 CLI가 읽을지, 프롬프트의 어디에 들어갈지는 그 CLI에 달려 있으므로 이 행은 측정된 순서에 포함되지 않습니다. 프로젝트에서 파일을 편집하세요.",
+      "code": "Timon이 코드에 작성: 편집 불가.",
       "roleShared": "이것을 편집하면 이 역할을 가진 모든 에이전트의 역할이 바뀝니다."
     }
   },
@@ -3021,19 +3021,19 @@
     "emptyBody": "진행 중이거나 대기 중인 작업이 없습니다."
   },
   "systemSettings": {
-    "description": "이 컴퓨터에서 Rooks이 실행되는 방식. 이 탭은 최고 관리자만 볼 수 있습니다.",
+    "description": "이 컴퓨터에서 Timon이 실행되는 방식. 이 탭은 최고 관리자만 볼 수 있습니다.",
     "forbidden": "최고 관리자만 설치 정보를 볼 수 있습니다.",
     "loadError": "설치 정보를 읽을 수 없습니다. 데몬이 실행 중인지 확인하세요.",
     "unknown": "알 수 없음",
     "yes": "예",
     "no": "아니요",
     "versionTitle": "버전",
-    "daemonVersion": "Rooks (데몬)",
+    "daemonVersion": "Timon (데몬)",
     "desktopVersion": "데스크톱 앱",
-    "versionGap": "앱은 {desktop}이지만 데몬은 {daemon}입니다: 데몬이 업데이트되지 않았습니다. Rooks을 종료한 뒤 다시 여세요. 그래도 버전이 다르면 터미널에서 다음을 실행하세요:",
+    "versionGap": "앱은 {desktop}이지만 데몬은 {daemon}입니다: 데몬이 업데이트되지 않았습니다. Timon을 종료한 뒤 다시 여세요. 그래도 버전이 다르면 터미널에서 다음을 실행하세요:",
     "dataVersion": "데이터 버전",
     "dataBehind": "데이터를 마지막으로 연 것은 {data}이고 이 데몬은 {version}입니다. 업데이트를 수락하면 다음 시작 때 업데이트됩니다.",
-    "dataAhead": "데이터는 이 데몬({version})보다 새 Rooks({data})으로 열렸습니다. 사용하기 전에 이 설치를 업데이트하세요.",
+    "dataAhead": "데이터는 이 데몬({version})보다 새 Timon({data})으로 열렸습니다. 사용하기 전에 이 설치를 업데이트하세요.",
     "license": "라이선스",
     "licenseValue": "{edition} · {plan} · {status} · {channel} 빌드",
     "licenseValid": "활성",
@@ -3045,7 +3045,7 @@
     "daemonTitle": "데몬",
     "mode": "실행 방식",
     "modeValue": {
-      "embedded": "앱 내부 (포터블): Rooks을 종료하면 멈춥니다",
+      "embedded": "앱 내부 (포터블): Timon을 종료하면 멈춥니다",
       "service": "시스템 서비스: 앱을 닫아도 계속 실행됩니다",
       "process": "직접 시작 (터미널 또는 스크립트)"
     },
@@ -3065,7 +3065,7 @@
       "stopped": "설치됨, 실행 중 아님",
       "running": "설치됨, 실행 중"
     },
-    "serviceNextLaunch": "앱 자체 데몬이 포트를 사용 중입니다: 다음에 Rooks을 실행할 때 서비스가 이어받습니다.",
+    "serviceNextLaunch": "앱 자체 데몬이 포트를 사용 중입니다: 다음에 Timon을 실행할 때 서비스가 이어받습니다.",
     "supervisor": {
       "systemd-user": "systemd 유닛",
       "launchd": "launchd 레이블",
@@ -3074,14 +3074,14 @@
     "windowsRevision": "작업 리비전",
     "windowsRevisionValue": "{revision} (현재: {expected})",
     "windowsUnmarked": "실행기에 패키지 표식이 없습니다.",
-    "installWhy": "서비스가 있으면 앱을 닫아도 Rooks이 계속 실행되고 컴퓨터와 함께 시작됩니다.",
+    "installWhy": "서비스가 있으면 앱을 닫아도 Timon이 계속 실행되고 컴퓨터와 함께 시작됩니다.",
     "repairWhy": "다시 설치하면 이 버전의 정의로 서비스를 다시 씁니다. 데이터는 건드리지 않습니다.",
     "installService": "서비스 설치",
     "repairService": "서비스 복구",
     "serviceBusy": "처리 중…",
-    "serviceFromTerminal": "이 데몬이 바로 서비스입니다: 터미널에서 다음을 실행하세요 (Rooks이 다시 시작됩니다)",
+    "serviceFromTerminal": "이 데몬이 바로 서비스입니다: 터미널에서 다음을 실행하세요 (Timon이 다시 시작됩니다)",
     "serviceInstalledRunning": "서비스가 설치되어 실행 중입니다.",
-    "serviceInstalledNext": "서비스가 설치되었습니다. 다음에 Rooks을 실행할 때 이어받습니다.",
+    "serviceInstalledNext": "서비스가 설치되었습니다. 다음에 Timon을 실행할 때 이어받습니다.",
     "serviceFailed": "서비스를 설치할 수 없습니다.",
     "pathsTitle": "경로",
     "installDir": "설치 폴더",
@@ -3097,18 +3097,18 @@
     "exporting": "내보내는 중…",
     "exported": "아카이브 기록됨: {path}",
     "exportFailed": "내보내기에 실패했습니다.",
-    "importWhy": "가져오기는 데이터베이스를 교체하므로 Rooks이 실행 중일 때는 할 수 없습니다. Rooks 앱을 종료한 뒤 터미널에서 이 명령들을 순서대로 실행하세요. ARCHIVE.tar.gz는 내 아카이브로 바꾸세요. 데이터는 가져오기 전까지 그대로 남습니다.",
-    "importWhyEmbedded": "가져오기는 데이터베이스를 교체하므로 Rooks이 실행 중일 때는 할 수 없습니다. Rooks 앱을 종료한 뒤 터미널에서 이 명령을 실행하세요. ARCHIVE.tar.gz는 내 아카이브로 바꾸세요.",
+    "importWhy": "가져오기는 데이터베이스를 교체하므로 Timon이 실행 중일 때는 할 수 없습니다. Timon 앱을 종료한 뒤 터미널에서 이 명령들을 순서대로 실행하세요. ARCHIVE.tar.gz는 내 아카이브로 바꾸세요. 데이터는 가져오기 전까지 그대로 남습니다.",
+    "importWhyEmbedded": "가져오기는 데이터베이스를 교체하므로 Timon이 실행 중일 때는 할 수 없습니다. Timon 앱을 종료한 뒤 터미널에서 이 명령을 실행하세요. ARCHIVE.tar.gz는 내 아카이브로 바꾸세요.",
     "importStep": "터미널에서",
     "supportTitle": "지원용 진단",
-    "supportWhy": "지원팀에 필요한 모든 정보를 한 번에: 버전, 이곳에서 Rooks이 실행되는 방식, 서비스, 감지된 문제, 최근 로그 줄(최신순). 토큰과 시크릿은 가려집니다. 지원 요청에 붙여넣으세요.",
+    "supportWhy": "지원팀에 필요한 모든 정보를 한 번에: 버전, 이곳에서 Timon이 실행되는 방식, 서비스, 감지된 문제, 최근 로그 줄(최신순). 토큰과 시크릿은 가려집니다. 지원 요청에 붙여넣으세요.",
     "copyReport": "진단 복사",
     "reportPreparing": "준비하는 중…",
     "saveReport": "보고서 저장",
     "showReport": "보고서 표시",
     "hideReport": "보고서 숨기기",
     "openLogs": "로그 폴더 열기",
-    "openAbout": "Rooks 정보 및 서드파티 라이선스",
+    "openAbout": "Timon 정보 및 서드파티 라이선스",
     "reportCopied": "진단이 복사되었습니다: 지원 요청(Discord, 이메일)에 붙여넣으세요.",
     "reportCopyFailed": "클립보드가 복사를 거부했습니다: 아래 보고서를 선택해 직접 복사하거나 저장하세요.",
     "reportSaved": "보고서를 {name}(으)로 다운로드했습니다.",
@@ -3120,23 +3120,23 @@
   },
   "desktopUninstall": {
     "category": "데스크톱 애플리케이션",
-    "title": "Rooks 제거",
+    "title": "Timon 제거",
     "description": "이 컴퓨터의 에이전트, 워크플로, 브라우저를 중지하고, 서비스를 제거하며, 로그인 시 실행을 끕니다. 이 인스턴스에 연결된 PWA는 연결이 끊어집니다.",
     "dataPath": "이 설치의 데이터 디렉터리",
     "dataChoice": "데이터를 어떻게 하시겠습니까?",
     "keep": "데이터 유지 (권장)",
     "keepDescription": "다시 설치할 때를 위해 에이전트, 대화, 설정, 자격 증명, 브라우저 프로필을 유지합니다. 서비스가 사용하는 프로그램 사본은 제거됩니다.",
     "delete": "모두 삭제",
-    "deleteDescription": "위에 표시된 Rooks 디렉터리의 모든 내용(에이전트, 대화, 설정, 시크릿, 쿠키, 브라우저 프로필 포함)을 영구 삭제합니다. 이 작업은 되돌릴 수 없습니다.",
-    "external": "Rooks 디렉터리 밖의 프로젝트 폴더와 외부 설정(Claude, Codex 등)은 보존됩니다. 외부 디렉터리로의 심볼릭 링크는 따라가지 않습니다.",
+    "deleteDescription": "위에 표시된 Timon 디렉터리의 모든 내용(에이전트, 대화, 설정, 시크릿, 쿠키, 브라우저 프로필 포함)을 영구 삭제합니다. 이 작업은 되돌릴 수 없습니다.",
+    "external": "Timon 디렉터리 밖의 프로젝트 폴더와 외부 설정(Claude, Codex 등)은 보존됩니다. 외부 디렉터리로의 심볼릭 링크는 따라가지 않습니다.",
     "confirmation": "영구 삭제를 허용하려면 SUPPRIMER를 입력하세요.",
     "finish": {
-      "mac": "Rooks이 닫히고 정리가 끝나면 Finder에서 Rooks.app을 휴지통으로 옮기세요.",
-      "windows": "정리가 끝나면 Windows 앱 설정에서 Rooks을 제거하세요.",
+      "mac": "Timon이 닫히고 정리가 끝나면 Finder에서 Timon.app을 휴지통으로 옮기세요.",
+      "windows": "정리가 끝나면 Windows 앱 설정에서 Timon을 제거하세요.",
       "appimage": "정리가 끝나면 AppImage 파일을 삭제하세요.",
-      "linux": "정리가 끝나면 배포판의 소프트웨어 관리자로 Rooks 패키지를 제거하세요."
+      "linux": "정리가 끝나면 배포판의 소프트웨어 관리자로 Timon 패키지를 제거하세요."
     },
-    "action": "Rooks 제거…",
+    "action": "Timon 제거…",
     "busy": "제거하는 중…"
   },
   "freeLicense": {
@@ -3144,7 +3144,7 @@
     "retainedData": "Free로 돌아가면 추가 계정은 저장된 채로 사용할 수 없게 됩니다. 모든 기능과 플러그인은 계속 사용할 수 있습니다. 유효한 라이선스가 있으면 그 라이선스가 포함하는 계정이 복원됩니다.",
     "local_free": "Free는 로컬에서 작동하며 관리할 컴퓨터 활성화가 없습니다.",
     "free_unavailable": "이 버전에서는 아직 Free 등록을 받지 않습니다. 나중에 다시 시도하거나 기존 라이선스 키를 사용하세요.",
-    "client_upgrade_required": "Rooks을 지원되는 릴리스로 업데이트한 뒤 다시 시도하세요.",
+    "client_upgrade_required": "Timon을 지원되는 릴리스로 업데이트한 뒤 다시 시도하세요.",
     "summary": "Free는 키나 갱신 없이 로컬에서 작동합니다: 활성 최고 관리자 한 명에게 모든 기능과 플러그인을 제공합니다.",
     "plugin_composition_fixed": "이 요금제는 플러그인 구성이 고정되어 있습니다. 포함된 플러그인을 설정하거나 업그레이드해 변경하세요.",
     "single_superadmin_required": "Free는 활성 계정 하나만 허용하며, 그 계정은 최고 관리자여야 합니다.",
@@ -3152,7 +3152,7 @@
     "license_changed": "이 요청 중에 라이선스가 바뀌었습니다. 새로 고친 뒤 다시 시도하세요.",
     "activation_key_missing": "이 기기에 저장된 활성화 키가 없습니다. 해제하려면 라이선스 계정을 사용하거나 지원팀에 문의하세요.",
     "deactivate": "이 컴퓨터 비활성화",
-    "deactivateConfirm": "이 컴퓨터를 비활성화하시겠습니까? Rooks은 Free로 계속됩니다. 추가 계정은 정지되지만 데이터는 보존됩니다.",
+    "deactivateConfirm": "이 컴퓨터를 비활성화하시겠습니까? Timon은 Free로 계속됩니다. 추가 계정은 정지되지만 데이터는 보존됩니다.",
     "deactivated": "컴퓨터가 비활성화되었습니다. 이 컴퓨터의 마지막 토큰이 만료될 때까지 좌석은 계속 할당된 상태이며, 그 전에 다른 컴퓨터를 활성화하면 다시 시도할 정확한 시간을 알려 줍니다.",
     "transfer_pending": "이전 컴퓨터의 토큰이 아직 만료되지 않았습니다. 이 컴퓨터를 활성화하기 전에 기다리세요.",
     "transfer_pending_until": "이전 컴퓨터의 토큰이 아직 만료되지 않았습니다: 이 컴퓨터는 {until}부터 활성화할 수 있습니다."
@@ -3215,7 +3215,7 @@
     "fieldLinkedTasks": "연결된 작업",
     "linkedTasksHint": "해당 작업이 병합되면 아이디어가 자동으로 닫힙니다.",
     "fieldExternalLinks": "외부",
-    "externalLinksHint": "Rooks 밖에서 이 아이디어가 있는 곳 (연결한 플러그인이 기록한 대로).",
+    "externalLinksHint": "Timon 밖에서 이 아이디어가 있는 곳 (연결한 플러그인이 기록한 대로).",
     "urgency": {
       "critical": "심각",
       "bug": "버그",
@@ -3266,18 +3266,18 @@
   "dictation": {
     "egressReload": {
       "title": "{plugin}을(를) 다시 불러와야 합니다",
-      "body": "이 플러그인을 설치하기 전에 Rooks을 열었기 때문에 이 창에서는 아직 {host}에 연결할 수 없습니다. 사용하려면 다시 불러오세요.",
+      "body": "이 플러그인을 설치하기 전에 Timon을 열었기 때문에 이 창에서는 아직 {host}에 연결할 수 없습니다. 사용하려면 다시 불러오세요.",
       "reload": "다시 불러오기"
     },
     "localEngine": {
-      "label": "Rooks (이 컴퓨터)"
+      "label": "Timon (이 컴퓨터)"
     },
     "destination": {
       "title": "음성이 가는 곳",
       "device": "음성은 이 컴퓨터에 머뭅니다.",
       "window": "음성은 이 창에 머뭅니다: 플러그인이 아무것도 내보내지 않는다고 선언합니다.",
-      "daemon": "음성이 {machine}의 Rooks 데몬으로 전송됩니다.",
-      "daemonActive": "음성이 활성 컴퓨터의 Rooks 데몬으로 전송됩니다.",
+      "daemon": "음성이 {machine}의 Timon 데몬으로 전송됩니다.",
+      "daemonActive": "음성이 활성 컴퓨터의 Timon 데몬으로 전송됩니다.",
       "hosts": "음성이 {hosts}(으)로 전송됩니다.",
       "undeclared": "이 엔진은 음성이 어디로 가는지 밝히지 않습니다.",
       "engineLine": "{engine}: {line}",
@@ -3289,7 +3289,7 @@
     "consent": {
       "title": "{engine}이(가) 음성을 듣도록 허용하시겠습니까?",
       "from": "플러그인 {plugin}의 받아쓰기 엔진",
-      "scope": "이 선택은 {machine}에만 적용됩니다. 플러그인이 음성이 가는 곳을 바꾸면 Rooks이 다시 묻습니다.",
+      "scope": "이 선택은 {machine}에만 적용됩니다. 플러그인이 음성이 가는 곳을 바꾸면 Timon이 다시 묻습니다.",
       "allow": "허용",
       "deny": "허용 안 함",
       "granted": "허용되었습니다. 마이크를 클릭해 받아쓰세요.",
@@ -3299,7 +3299,7 @@
       "title": "받아쓰기 엔진",
       "intro": "{machine}에서 채팅과 콕핏 음성 모드의 받아쓰기를 맡는 엔진.",
       "auto": "자동",
-      "autoHint": "Rooks 자체 엔진을 먼저 쓰고, 브라우저에서는 플러그인보다 브라우저의 인식기를 먼저 씁니다.",
+      "autoHint": "Timon 자체 엔진을 먼저 쓰고, 브라우저에서는 플러그인보다 브라우저의 인식기를 먼저 씁니다.",
       "webSpeech": "브라우저 (Web Speech)",
       "webSpeechHint": "브라우저의 음성 인식기. Chrome과 Edge는 음성을 각 공급업체의 서비스로 보냅니다.",
       "unavailableOption": "{engine} (사용 불가)",
@@ -3314,20 +3314,20 @@
       "inUse": "받아쓰기에 사용 중",
       "granted": "{machine}에서 허용됨.",
       "refused": "허용 안 됨: 이 엔진으로 받아쓰기는 꺼져 있습니다.",
-      "notAsked": "아직 허용 안 됨: 첫 받아쓰기 때 Rooks이 묻습니다.",
+      "notAsked": "아직 허용 안 됨: 첫 받아쓰기 때 Timon이 묻습니다.",
       "withdraw": "철회",
       "undeclared": "사용 안 함: 플러그인이 음성이 가는 곳을 밝히지 않습니다."
     },
     "errors": {
       "modelMissing": "로컬 받아쓰기에는 음성 모델이 필요합니다: {settingsPath}에서 다운로드하세요.",
-      "microphoneDenied": "Rooks에 마이크 사용 권한이 없습니다. 시스템 개인정보 설정에서 허용한 뒤 다시 시도하세요.",
+      "microphoneDenied": "Timon에 마이크 사용 권한이 없습니다. 시스템 개인정보 설정에서 허용한 뒤 다시 시도하세요.",
       "microphoneLost": "마이크 연결이 끊어져 받아쓰기가 멈췄습니다.",
       "busy": "받아쓰기가 멈췄습니다: 다른 창이나 패널에서 시작되었습니다.",
       "engineCrashed": "받아쓰기 엔진이 예기치 않게 멈췄습니다. 마이크를 클릭해 다시 시작하세요.",
       "engineUnavailable": "이 컴퓨터에서는 로컬 받아쓰기를 사용할 수 없습니다.",
       "initFailed": "받아쓰기 엔진을 시작할 수 없습니다. 다시 시도하거나 {settingsPath}에서 음성 모델을 삭제한 뒤 다시 다운로드하세요.",
       "engineNotAllowed": "이 받아쓰기 엔진은 허용되지 않았습니다. {settingsPath}에서 허용하세요.",
-      "engineUndeclared": "이 받아쓰기 엔진은 음성이 어디로 가는지 밝히지 않아 Rooks이 사용하지 않습니다."
+      "engineUndeclared": "이 받아쓰기 엔진은 음성이 어디로 가는지 밝히지 않아 Timon이 사용하지 않습니다."
     },
     "model": {
       "consentTitle": "로컬 받아쓰기",
@@ -3401,18 +3401,18 @@
       "peakMemory": "최대 메모리 {size}",
       "languageRequired": "받아쓰기 언어가 필요합니다: 추측할 수 없습니다 (자동 없음).",
       "finalOnly": "최종 텍스트만 표시합니다.",
-      "fromPlugin": "플러그인 {plugin}에서 제공. Rooks은 서드파티 모델을 보증할 수 없습니다.",
+      "fromPlugin": "플러그인 {plugin}에서 제공. Timon은 서드파티 모델을 보증할 수 없습니다.",
       "addPack": "추가하고 {size} 다운로드…",
       "packErrors": {
         "invalid": "이 플러그인의 모델 항목이 올바르지 않습니다.",
-        "unknownFamily": "이 모델에는 더 새로운 버전의 Rooks이 필요합니다.",
+        "unknownFamily": "이 모델에는 더 새로운 버전의 Timon이 필요합니다.",
         "exists": "이 모델은 이미 카탈로그에 있습니다.",
         "busy": "다른 모델이 응답을 기다리고 있습니다.",
         "engineUnavailable": "이 컴퓨터에서는 로컬 받아쓰기를 사용할 수 없습니다.",
         "notFound": "플러그인이 더 이상 이 모델을 제공하지 않습니다.",
         "unavailable": "플러그인의 모델을 읽을 수 없습니다. 다시 시도하세요."
       },
-      "unverified": "확인되지 않음: Rooks은 이 파일들을 보증할 수 없습니다.",
+      "unverified": "확인되지 않음: Timon은 이 파일들을 보증할 수 없습니다.",
       "usedFor": "{languages}에 사용",
       "download": "{size} 다운로드",
       "confirmLarge": "{model}의 크기는 {size}입니다. 한 번만 다운로드하며, 받아쓰는 동안 최대 {memory}의 메모리가 필요합니다. 음성은 이 컴퓨터에 머뭅니다.",
@@ -3422,7 +3422,7 @@
     "import": {
       "button": "로컬 모델 추가…",
       "trust": "신뢰하는 출처의 모델만 가져오세요.",
-      "done": "{model}이(가) 추가되었습니다. 확인되지 않았으므로 Rooks은 그 파일을 보증할 수 없습니다.",
+      "done": "{model}이(가) 추가되었습니다. 확인되지 않았으므로 Timon은 그 파일을 보증할 수 없습니다.",
       "whichFamily": "이 폴더에는 어떤 종류의 모델이 들어 있나요?",
       "languages": "모델의 언어",
       "languagesHint": "fr, en 같은 언어 코드. 언어를 감지하는 모델이면 비워 두세요.",
@@ -3440,7 +3440,7 @@
         "tooManyFiles": "음성 모델치고 폴더에 파일이 너무 많습니다.",
         "tooLarge": "모델이 8GB보다 큽니다.",
         "roles": "폴더가 음성 모델(인코더, 디코더, 토큰 파일)처럼 보이지 않습니다.",
-        "unsupportedFamily": "이 버전의 Rooks은 아직 이 종류의 모델을 실행할 수 없습니다.",
+        "unsupportedFamily": "이 버전의 Timon은 아직 이 종류의 모델을 실행할 수 없습니다.",
         "unsafeGraph": "이 모델은 폴더 밖의 파일을 가리켜 거부되었습니다.",
         "changed": "복사하는 동안 파일이 바뀌었습니다. 다시 시도하세요.",
         "diskFull": "모델을 복사할 디스크 공간이 부족합니다.",
@@ -3503,7 +3503,7 @@
         "none": "없음"
       }
     },
-    "intro": "모든 LLM 공급자와 모델을 관리합니다. 변경 사항은 Rooks을 다시 시작하지 않고 적용됩니다.",
+    "intro": "모든 LLM 공급자와 모델을 관리합니다. 변경 사항은 Timon을 다시 시작하지 않고 적용됩니다.",
     "edit": "편집",
     "editTitle": "공급자 편집",
     "saved": "공급자가 업데이트되었습니다.",
@@ -3549,7 +3549,7 @@
     "testButton": "테스트",
     "destinationNotice": "이 공급자에서 실행되는 미션의 모든 프롬프트가 {host}(으)로 전송됩니다.",
     "keyHint": "파일이 아닌 시크릿 볼트에 저장되며 다시 표시되지 않습니다. 키를 요구하지 않는 로컬 서버라면 비워 두세요.",
-    "fileHint": "각 공급자는 ~/.rooks/backends/의 파일입니다. 그곳에 JSON 파일을 직접 넣을 수도 있으며, 1초 안에 인식됩니다.",
+    "fileHint": "각 공급자는 ~/.timon/backends/의 파일입니다. 그곳에 JSON 파일을 직접 넣을 수도 있으며, 1초 안에 인식됩니다.",
     "fields": {
       "name": "이름",
       "protocol": "프로토콜",
@@ -3588,11 +3588,11 @@
     "reorder": "드래그해서 이 공급자 순서 바꾸기",
     "claudeToken": {
       "title": "Claude 장기 토큰",
-      "hint": "선택 사항. 터미널에서 `claude setup-token`을 실행하고 토큰을 여기에 붙여넣으세요: 이후 모든 Claude 미션이 CLI 자체 로그인 대신 이 토큰을 사용합니다. macOS에서는 세션을 열지 않아도 Rooks이 계속 실행됩니다. 그런 다음 `timon service install`을 실행해 서비스를 전환하세요. 토큰은 암호화되어 저장되며 다시 표시되지 않습니다.",
+      "hint": "선택 사항. 터미널에서 `claude setup-token`을 실행하고 토큰을 여기에 붙여넣으세요: 이후 모든 Claude 미션이 CLI 자체 로그인 대신 이 토큰을 사용합니다. macOS에서는 세션을 열지 않아도 Timon이 계속 실행됩니다. 그런 다음 `timon service install`을 실행해 서비스를 전환하세요. 토큰은 암호화되어 저장되며 다시 표시되지 않습니다.",
       "none": "설정 안 됨",
       "set": "설정됨",
       "unreadable": "설정되었지만 읽을 수 없음 — 다시 붙여넣으세요",
-      "required": "Rooks이 macOS 백그라운드 서비스로 실행 중입니다: 토큰을 설정할 때까지 Claude 미션이 실패합니다.",
+      "required": "Timon이 macOS 백그라운드 서비스로 실행 중입니다: 토큰을 설정할 때까지 Claude 미션이 실패합니다.",
       "saved": "Claude 토큰이 저장되었습니다.",
       "cleared": "Claude 토큰이 제거되었습니다.",
       "clear": "제거"
@@ -3602,7 +3602,7 @@
     "disableTitle": "{name}을(를) 사용 안 함으로 설정하시겠습니까?",
     "disableHint": "선택기에서 사라집니다. 명시적으로 이를 사용하는 새 실행은 자동 대체 없이 거부됩니다. 아래의 기존 선택은 유지됩니다.",
     "disable": "공급자 사용 안 함",
-    "managedHint": "모델 이름 바꾸기, 추가, 삭제, 숨기기와 이름, 그림, 기본 모델 변경을 할 수 있습니다. 연결 설정은 Rooks 또는 공급자 플러그인이 관리합니다.",
+    "managedHint": "모델 이름 바꾸기, 추가, 삭제, 숨기기와 이름, 그림, 기본 모델 변경을 할 수 있습니다. 연결 설정은 Timon 또는 공급자 플러그인이 관리합니다.",
     "origins": {
       "builtin": "내장",
       "plugin": "플러그인",
@@ -3705,12 +3705,12 @@
     },
     "tabHints": {
       "routines": "일정(cron): 실행 시점마다 정해진 시간에 동작을 실행합니다.",
-      "webhooks": "외부 서비스가 시크릿으로 서명해 Rooks의 주소를 호출합니다.",
-      "events": "Rooks 내부에서 일이 일어남: 작업 종료, 미션 종료, 에이전트 작성, 알림 도착."
+      "webhooks": "외부 서비스가 시크릿으로 서명해 Timon의 주소를 호출합니다.",
+      "events": "Timon 내부에서 일이 일어남: 작업 종료, 미션 종료, 에이전트 작성, 알림 도착."
     },
     "redirecting": "루틴 페이지는 이제 트리거의 루틴 탭입니다…",
     "loopback": {
-      "body": "데몬은 이 컴퓨터에서만 수신 대기합니다(루프백). 외부에서 webhook에 접근하려면 직접 설정한 터널이나 리버스 프록시를 거쳐야 하며, Rooks은 스스로 아무것도 열지 않습니다.",
+      "body": "데몬은 이 컴퓨터에서만 수신 대기합니다(루프백). 외부에서 webhook에 접근하려면 직접 설정한 터널이나 리버스 프록시를 거쳐야 하며, Timon은 스스로 아무것도 열지 않습니다.",
       "none": "인증 없는 경로는 이 컴퓨터에서 데몬으로 직접 한 호출에만 응답합니다: 절대 터널로 노출하지 마세요."
     },
     "scheduleTriggers": "일정 트리거",
@@ -3722,7 +3722,7 @@
     "countOther": "트리거 {count}개",
     "empty": {
       "schedule": "아직 일정 트리거가 없습니다.",
-      "webhook": "아직 webhook이 없습니다. 만들면 서비스(GitHub, GitLab, 봇…)가 Rooks에 작업을 넣을 수 있습니다.",
+      "webhook": "아직 webhook이 없습니다. 만들면 서비스(GitHub, GitLab, 봇…)가 Timon에 작업을 넣을 수 있습니다.",
       "event": "아직 이벤트 트리거가 없습니다."
     },
     "enable": "클릭하면 활성화",
@@ -3738,7 +3738,7 @@
       "github": "GitHub 서명",
       "gitlab": "GitLab 토큰",
       "standard": "Standard Webhooks",
-      "generic": "Rooks 서명",
+      "generic": "Timon 서명",
       "none": "인증 없음"
     },
     "events": {
@@ -3777,7 +3777,7 @@
     "secret": {
       "title": "Webhook 시크릿",
       "outboundTitle": "보내는 호출의 서명 시크릿",
-      "howtoOutbound": "수신 서비스에 붙여넣으세요: 모든 호출에는 webhook-id, webhook-timestamp, webhook-signature가 붙습니다(Standard Webhooks, 이 whsec_ 시크릿으로 만든 \"id.timestamp.body\"의 HMAC-SHA256). Rooks이 받는 webhook의 시크릿이 아닙니다.",
+      "howtoOutbound": "수신 서비스에 붙여넣으세요: 모든 호출에는 webhook-id, webhook-timestamp, webhook-signature가 붙습니다(Standard Webhooks, 이 whsec_ 시크릿으로 만든 \"id.timestamp.body\"의 HMAC-SHA256). Timon이 받는 webhook의 시크릿이 아닙니다.",
       "once": "지금 복사하세요: 다시 표시되지 않습니다. 잃어버리면 webhook에 새 시크릿을 지정하세요.",
       "label": "시크릿 (가려짐)",
       "copy": "시크릿 복사",
@@ -3789,7 +3789,7 @@
         "github": "GitHub: 저장소 Settings → Webhooks → Add webhook. Payload URL: 아래 주소, content type: application/json, Secret: 이 값.",
         "gitlab": "GitLab: Settings → Webhooks. URL: 아래 주소, Secret token: 이 값. GitLab은 이를 그대로 보내므로 가로챈 호출이 재전송될 수 있습니다: 발신자가 제공한다면 서명 방식을 선택하세요.",
         "standard": "Standard Webhooks (Svix, Clerk, Resend…): 이 서명 시크릿(whsec_…)을 공급자의 엔드포인트 설정에 붙여넣으세요.",
-        "generic": "직접 만든 발신자: X-Rooks-Timestamp(Unix 초)와 X-Rooks-Signature: sha256=<이 시크릿으로 만든 \"timestamp.body\"의 16진 HMAC-SHA256>을 보내세요. 5분보다 오래된 호출은 거부됩니다.",
+        "generic": "직접 만든 발신자: X-Timon-Timestamp(Unix 초)와 X-Timon-Signature: sha256=<이 시크릿으로 만든 \"timestamp.body\"의 16진 HMAC-SHA256>을 보내세요. 5분보다 오래된 호출은 거부됩니다.",
         "none": "시크릿 없음: 이 경로는 이 컴퓨터에서 한 호출에만 응답합니다."
       }
     },
@@ -3825,7 +3825,7 @@
         "github": "X-Hub-Signature-256: 본문의 HMAC. 시크릿은 만들 때 생성됩니다.",
         "gitlab": "X-Gitlab-Token: 시크릿 자체로, 호출할 때마다 전송됩니다.",
         "standard": "webhook-id, webhook-timestamp, webhook-signature 헤더, ±5분.",
-        "generic": "X-Rooks-Timestamp와 X-Rooks-Signature, ±5분.",
+        "generic": "X-Timon-Timestamp와 X-Timon-Signature, ±5분.",
         "none": "출처 증명 없음: 이 컴퓨터에서 데몬으로 직접 한 호출만 받습니다."
       },
       "event": "이벤트",
@@ -3871,7 +3871,7 @@
       "actionN": "동작 {n}",
       "actionType": "동작 {n}의 유형",
       "webhookUrl": "주소 (https) *",
-      "webhookHint": "Rooks이 여기로 '{type, timestamp, data}'를 POST합니다. data는 받은 그대로의 페이로드이며, 저장할 때 한 번 표시되는 시크릿으로 서명됩니다. 최대 10회까지 간격을 늘려 가며 재시도합니다. 필터를 통과한 모든 것은 이 컴퓨터 밖으로 나갑니다.",
+      "webhookHint": "Timon이 여기로 '{type, timestamp, data}'를 POST합니다. data는 받은 그대로의 페이로드이며, 저장할 때 한 번 표시되는 시크릿으로 서명됩니다. 최대 10회까지 간격을 늘려 가며 재시도합니다. 필터를 통과한 모든 것은 이 컴퓨터 밖으로 나갑니다.",
       "removeAction": "제거",
       "addAction": "+ 동작",
       "todoText": "아이디어 *",
@@ -3983,7 +3983,7 @@
     "deleteConfirm": "계정 \"{name}\"을(를) 삭제하시겠습니까? 로그인 정보가 이 컴퓨터에서 제거되며, 이 계정에 설정된 에이전트와 작업은 다른 계정을 고를 때까지 실패합니다.",
     "deleted": "계정이 삭제되었습니다",
     "signedInAs": "{identity}(으)로 로그인됨",
-    "notSignedIn": "Rooks을 통해 로그인하지 않음",
+    "notSignedIn": "Timon을 통해 로그인하지 않음",
     "ownerInstance": "인스턴스 (소유자 없는 미션)",
     "errorGeneric": "요청에 실패했습니다. 다시 시도하세요.",
     "rename": "이름 바꾸기",
@@ -4018,7 +4018,7 @@
       "create": "만들고 로그인"
     },
     "login": {
-      "starting": "Rooks 컴퓨터에서 로그인을 시작하는 중…",
+      "starting": "Timon 컴퓨터에서 로그인을 시작하는 중…",
       "openPage": "로그인 페이지 열기",
       "copy": "복사",
       "copied": "복사됨",
@@ -4044,8 +4044,8 @@
       "mismatch": "이 계정은 {identity}의 것입니다: 그 구독으로 로그인하거나 다른 계정을 추가하세요.",
       "not_signed_in": "로그인이 완료되지 않았습니다. 다시 시작하세요.",
       "cli_failed": "로그인 중에 공급자의 명령줄 도구가 실패했습니다. 다시 시작하세요.",
-      "cli_missing": "Rooks 컴퓨터에 공급자의 명령줄 도구가 설치되어 있지 않습니다.",
-      "unsupported": "이 공급자는 Rooks에서 로그인할 수 없습니다."
+      "cli_missing": "Timon 컴퓨터에 공급자의 명령줄 도구가 설치되어 있지 않습니다.",
+      "unsupported": "이 공급자는 Timon에서 로그인할 수 없습니다."
     }
   },
   "mcpPage": {
@@ -4125,7 +4125,7 @@
       "restart": "대화 다시 시작",
       "skipFailed": "이 단계를 건너뛸 수 없습니다. 잠시 후 다시 시도하세요.",
       "tool_error": {
-        "title": "어시스턴트가 Rooks을 사용할 수 없습니다",
+        "title": "어시스턴트가 Timon을 사용할 수 없습니다",
         "body": "요청이 거부되고 있어 어시스턴트가 스스로 설정을 마칠 수 없습니다. 이 단계를 건너뛰세요: 이름과 성격은 나중에 어시스턴트 페이지에서 정할 수 있습니다."
       },
       "interrupted": {
@@ -4141,7 +4141,7 @@
         "body": "아직 아무 말도 하지 않았습니다. 계속 기다리거나, 이 단계를 건너뛰고 나중에 어시스턴트 페이지에서 설정하세요."
       },
       "disconnected": {
-        "title": "Rooks이 응답하지 않습니다",
+        "title": "Timon이 응답하지 않습니다",
         "body": "연결이 끊어졌습니다. 잠시 기다리거나, 이 단계를 건너뛰고 나중에 어시스턴트 페이지에서 설정하세요."
       }
     },
@@ -4149,7 +4149,7 @@
     "voice": "받아쓰기",
     "voiceStop": "받아쓰기 중지",
     "send": "보내기",
-    "toTour": "Rooks을 둘러봅시다…",
+    "toTour": "Timon을 둘러봅시다…",
     "starting": "어시스턴트를 깨우는 중…",
     "name": {
       "title": "어시스턴트의 이름을 무엇으로 할까요?",
@@ -4157,13 +4157,13 @@
       "submitNamed": "{name} 만나기"
     },
     "troubleshoot": {
-      "title": "계속하려면 Rooks이 접근할 수 있는 AI 모델이 하나 필요합니다. 다음 CLI 중 하나를 설치하고 로그인하세요:",
+      "title": "계속하려면 Timon이 접근할 수 있는 AI 모델이 하나 필요합니다. 다음 CLI 중 하나를 설치하고 로그인하세요:",
       "other": "또는 {settingsPath}에서 API 키로 다른 모델을 연결하세요.",
       "openSettings": "설정 열기"
     },
     "unavailable": {
       "title": "어시스턴트를 아직 시작할 수 없습니다",
-      "body": "Rooks이 AI 모델에 연결할 수 없습니다. {settingsPath}에서 모델 계정이 연결되어 있는지 확인한 뒤 다시 시도하세요 — 또는 이 단계를 건너뛰고 나중에 처리하세요.",
+      "body": "Timon이 AI 모델에 연결할 수 없습니다. {settingsPath}에서 모델 계정이 연결되어 있는지 확인한 뒤 다시 시도하세요 — 또는 이 단계를 건너뛰고 나중에 처리하세요.",
       "retry": "다시 시도"
     },
     "avatar": {
@@ -4178,10 +4178,10 @@
   },
   "guidedTour": {
     "menu": "둘러보기",
-    "firstMessage": "Rooks을 안내하고 화면 설정을 도와주세요.",
+    "firstMessage": "Timon을 안내하고 화면 설정을 도와주세요.",
     "failed": "둘러보기를 시작할 수 없습니다. 모양 메뉴에서 다시 시도하세요.",
     "offer": {
-      "title": "Rooks을 잠깐 둘러보시겠어요?",
+      "title": "Timon을 잠깐 둘러보시겠어요?",
       "body": "어시스턴트가 안내하고 화면 배치를 도와줍니다. 대신 페이지를 열어 줄 수 있으며, 언제든 끝낼 수 있습니다. 나중에는 모양 메뉴(팔레트 아이콘) › 둘러보기에 있습니다.",
       "start": "안내해 줘",
       "later": "나중에",
@@ -4274,7 +4274,7 @@
       "emptyFooter": "없음",
       "apply": "메뉴에 적용"
     },
-    "unknownKind": "이 버전의 Rooks은 이 제안을 표시할 수 없습니다.",
+    "unknownKind": "이 버전의 Timon은 이 제안을 표시할 수 없습니다.",
     "errors": {
       "stale": "이 배치는 더 이상 내 계정에 맞지 않습니다: {reasons}",
       "already_decided": "이 제안에는 이미 응답했습니다.",
@@ -4290,7 +4290,7 @@
       "mission": "이 미션이 끝날 때까지 보관됩니다.",
       "persistent": "이 미션 후에도 볼트에 보관됩니다."
     },
-    "hosts": "Rooks이 {hosts}(헤더 {header})에만 보냅니다 — 에이전트는 절대 보지 못합니다.",
+    "hosts": "Timon이 {hosts}(헤더 {header})에만 보냅니다 — 에이전트는 절대 보지 못합니다.",
     "origin": "내장 브라우저에서 {origin}의 페이지에만 입력됩니다 — 에이전트는 절대 보지 못하지만, 입력한 뒤에는 그 페이지가 값을 갖습니다.",
     "environment": "다음 실행 때 에이전트의 환경 변수에 들어갑니다: 에이전트가 실행하는 모든 것이 읽을 수 있습니다.",
     "field": "{name}의 값",
@@ -4318,7 +4318,7 @@
     }
   },
   "uiDocument": {
-    "unavailable": "이 Rooks에서는 문서가 꺼져 있어 이 문서를 표시할 수 없습니다.",
+    "unavailable": "이 Timon에서는 문서가 꺼져 있어 이 문서를 표시할 수 없습니다.",
     "expired": "이 문서는 더 이상 보관되지 않습니다: 대화가 끝난 지 오래되었습니다.",
     "dismissed": "이 문서는 닫혔습니다.",
     "answered": "응답함",
@@ -4392,7 +4392,7 @@
     "unknownError": "알 수 없는 오류",
     "turnInFlight": "에이전트가 답하는 중입니다: 답이 끝난 뒤 압축하세요.",
     "alreadyRunning": "이 대화의 압축이 이미 진행 중입니다.",
-    "lost": "Rooks이 이 압축을 놓쳤습니다 (서비스가 다시 시작됨). 다시 시도하세요.",
+    "lost": "Timon이 이 압축을 놓쳤습니다 (서비스가 다시 시작됨). 다시 시도하세요.",
     "traceRequested": "압축 요청됨",
     "traceForked": "새 대화로 압축됨",
     "traceNativeTokens": "대화 압축됨 · {from} → {to} 토큰",
@@ -4422,14 +4422,14 @@
   "telemetrySettings": {
     "tab": "개인정보",
     "title": "익명 사용 통계",
-    "description": "Rooks은 앱이 어떻게 쓰이는지(어떤 기능, 턴의 성공 빈도, 설정이 멈추는 지점)를 팀에 알려 무엇부터 고칠지 알 수 있게 합니다. 익명입니다: 이 컴퓨터에서 만든 무작위 식별자를 사용하며, 계정이나 컴퓨터 정보는 보내지 않습니다.",
+    "description": "Timon은 앱이 어떻게 쓰이는지(어떤 기능, 턴의 성공 빈도, 설정이 멈추는 지점)를 팀에 알려 무엇부터 고칠지 알 수 있게 합니다. 익명입니다: 이 컴퓨터에서 만든 무작위 식별자를 사용하며, 계정이나 컴퓨터 정보는 보내지 않습니다.",
     "share": "익명 사용 통계 공유",
     "shareDescription": "기본으로 켜져 있습니다. 끄면 모든 전송이 즉시 멈추며, 껐다는 사실을 기록하는 마지막 메시지 하나가 전송됩니다.",
     "lockedEnv": "TIMON_TELEMETRY 환경 변수로 설정됨: 그곳에서 변경하세요.",
     "lockedEnvMalformed": "TIMON_TELEMETRY의 값이 yes도 no도 아니어서 공유가 꺼져 있습니다.",
-    "lockedConfig": "rooks.config.json의 telemetry.enabled로 설정됨: 그곳에서 변경하세요.",
-    "lockedConfigMalformed": "rooks.config.json의 telemetry.enabled가 true도 false도 아니어서 공유가 꺼져 있습니다.",
-    "inactiveBuild": "이 Rooks 빌드는 이 설정과 관계없이 아무것도 보내지 않습니다.",
+    "lockedConfig": "timon.config.json의 telemetry.enabled로 설정됨: 그곳에서 변경하세요.",
+    "lockedConfigMalformed": "timon.config.json의 telemetry.enabled가 true도 false도 아니어서 공유가 꺼져 있습니다.",
+    "inactiveBuild": "이 Timon 빌드는 이 설정과 관계없이 아무것도 보내지 않습니다.",
     "sentTitle": "전송되는 것",
     "sent": "앱 버전, 운영 체제, 라이선스 등급, 앱 시작과 업데이트, 설정 단계, 턴과 소요 시간·결과·토큰 수, 사용된 내장 도구와 공급자, 작업·플러그인·라이선스·브라우저 동작 횟수.",
     "neverTitle": "절대 전송되지 않는 것",
@@ -4437,7 +4437,7 @@
     "learnMore": "개인정보 처리 안내 읽기",
     "loadFailed": "이 설정을 읽을 수 없습니다.",
     "saveFailed": "이 설정을 저장할 수 없습니다.",
-    "forbidden": "이 Rooks의 관리자만 이 설정을 변경할 수 있습니다."
+    "forbidden": "이 Timon의 관리자만 이 설정을 변경할 수 있습니다."
   },
   "grepaiPanel": {
     "project": "프로젝트",

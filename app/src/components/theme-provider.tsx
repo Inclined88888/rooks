@@ -13,8 +13,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { DEFAULT_APPEARANCE, type NativeAppearance } from '@/plugins-client/ui-theme-variants';
 import { DEFAULT_USER_PREFS, type ColorScheme } from '@/lib/auth';
-import { storeFirstRunScheme } from '@/lib/first-run-gate';
-import { appliedScheme, readSchemeMode, type SchemeMode } from '@/lib/scheme-mode';
+import { FIRST_RUN_DEFAULT_SCHEME, chosenFirstRunScheme, schemeFollowsSystem, storeFirstRunScheme } from '@/lib/first-run-gate';
 import { sharedGet } from '@/lib/shared-read';
 import { schemeOfMe } from '@/lib/machines/acting-account';
 import { reportWindowScheme } from '@/lib/window-scheme';
@@ -73,14 +72,11 @@ export function ThemeProvider({
   const pathname = usePathname();
   const revision = useRef(0);
   const [scheme, setSchemeState] = useState<ColorScheme>(initialScheme);
-  const [mode, setMode] = useState<SchemeMode>('light');
-  useEffect(() => { setMode(readSchemeMode()); }, [pathname]);
-  useEffect(() => {
-    const sync = () => setMode(readSchemeMode());
-    window.addEventListener('rooks-scheme-mode', sync);
-    return () => window.removeEventListener('rooks-scheme-mode', sync);
-  }, []);
-  const applied = appliedScheme(mode);
+  // Read after mount, like the OS scheme: the server has no session storage.
+  const [chosen, setChosen] = useState<ColorScheme | null>(null);
+  useEffect(() => { setChosen(chosenFirstRunScheme()); }, []);
+  const followSystem = schemeFollowsSystem(pathname ?? '/');
+  const applied = followSystem ? chosen ?? FIRST_RUN_DEFAULT_SCHEME : scheme;
 
   useEffect(() => {
     try {
@@ -117,7 +113,7 @@ export function ThemeProvider({
 
   const chooseFirstRunScheme = useCallback((next: ColorScheme) => {
     storeFirstRunScheme(next);
-    setSchemeState(next);
+    setChosen(next);
   }, []);
 
   return (

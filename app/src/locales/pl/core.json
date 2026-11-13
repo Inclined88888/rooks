@@ -3,7 +3,7 @@
     "title": "Oficjalne konektory",
     "subtitle": "Serwery MCP usług, z którymi pracują twoi agenci, połączone jednym kliknięciem.",
     "count": "połączone: {connected} · konektory: {total}",
-    "loadFailed": "Nie udało się wczytać konektorów. Sprawdź, czy Rooks działa, i odśwież stronę.",
+    "loadFailed": "Nie udało się wczytać konektorów. Sprawdź, czy Timon działa, i odśwież stronę.",
     "noMatch": "Żaden konektor nie pasuje do wyszukiwania.",
     "footer": "Każdy konektor to zdalny serwer MCP hostowany przez jego wydawcę, który otrzymuje to, co wysyłają mu twoi agenci. Połączenie konektora nie udostępnia go jeszcze agentowi: dodaj go w serwerach MCP agenta. Agenci na backendzie, który wczytuje tylko lokalne serwery MCP, pomijają zdalne konektory.",
     "category": {
@@ -35,7 +35,7 @@
         "blocked": "Istnieje serwer MCP o tej samej nazwie"
       },
       "examples": "O co możesz poprosić",
-      "keyKept": "Klucz jest przechowywany w sejfie sekretów Rooks i wysyłany tylko do tego konektora.",
+      "keyKept": "Klucz jest przechowywany w sejfie sekretów Timon i wysyłany tylko do tego konektora.",
       "vaultOff": "Sejf sekretów jest wyłączony: nie można połączyć tego konektora.",
       "getKey": "Uzyskaj klucz",
       "consentPending": "Zaloguj się na otwartej stronie, a potem wróć tutaj.",
@@ -92,7 +92,7 @@
     "unauthorized": "Zaloguj się ponownie, aby zapisać tę umiejętność.",
     "forbidden": "Twoje konto nie może zarządzać umiejętnościami.",
     "failed": "Nie udało się zapisać umiejętności. Sprawdź ID i instrukcje, a potem spróbuj ponownie.",
-    "network": "Nie można połączyć się z Rooks. Sprawdź połączenie i spróbuj ponownie.",
+    "network": "Nie można połączyć się z Timon. Sprawdź połączenie i spróbuj ponownie.",
     "idLabel": "ID umiejętności",
     "idError": "Podaj ID z małych liter, cyfr, '.', '_' lub '-'. Nie może to być '.' ani '..'.",
     "contentError": "Wpisz instrukcje przed zapisaniem umiejętności."
@@ -196,7 +196,7 @@
       "plugin": "wtyczka"
     },
     "sectionTimon": "Umiejętności {brand}",
-    "sectionTimonHint": "~/.rooks/skills — do dołączenia do agenta, w jego katalogu lub importowane w całości",
+    "sectionTimonHint": "~/.timon/skills — do dołączenia do agenta, w jego katalogu lub importowane w całości",
     "sectionUser": "Globalne umiejętności Claude",
     "sectionUserHint": "~/.claude/skills i ~/.claude/commands — niewczytywane przez misje; zaimportuj jedną do {brand}, aby ją dołączyć",
     "sectionProject": "Umiejętności projektu",
@@ -239,7 +239,7 @@
     "forbidden": "Twoje konto nie może usunąć tego zadania ani części jego łańcucha.",
     "notFound": "To zadanie już nie istnieje lub jest niedostępne dla twojego konta. Odśwież tablicę.",
     "failed": "Nie udało się usunąć zadania. Spróbuj ponownie.",
-    "network": "Nie można połączyć się z Rooks. Sprawdź połączenie i spróbuj ponownie."
+    "network": "Nie można połączyć się z Timon. Sprawdź połączenie i spróbuj ponownie."
   },
   "starterWidgets": {
     "loading": "Wczytywanie...",
@@ -278,7 +278,7 @@
     "moveToTeam": "Przenieś do zespołu",
     "leaveTeam": "Opuść zespół",
     "forbidden": "Twoje konto nie może zmieniać zespołów.",
-    "daemonUnreachable": "Rooks jest nieosiągalny.",
+    "daemonUnreachable": "Timon jest nieosiągalny.",
     "writeFailed": "Zmiana została odrzucona.",
     "newBot": "Nowy TIM",
     "emptyNoBots": "Brak TIM-ów. Utwórz TIM-a, a potem rozmawiaj z nim tutaj.",
@@ -825,7 +825,7 @@
     "emailSending": "Wysyłanie…",
     "emailRequested": "Link potwierdzający gotowy.",
     "emailError": "Nie udało się poprosić o zmianę.",
-    "emailLinkHint": "Otwórz ten link z nowego adresu, aby go potwierdzić. Rooks nie wysyła poczty — skopiuj link i wyślij go sam, tak jak zaproszenie.",
+    "emailLinkHint": "Otwórz ten link z nowego adresu, aby go potwierdzić. Timon nie wysyła poczty — skopiuj link i wyślij go sam, tak jak zaproszenie.",
     "emailLinkCopy": "Kopiuj link",
     "emailLinkCopied": "Skopiowano link.",
     "emailLinkCopyFailed": "Nie udało się skopiować linku."
@@ -844,7 +844,7 @@
     "paymentActive": "Aktualna",
     "paymentPastDue": "Zaległa",
     "noneTitle": "Free — licencja niepotrzebna",
-    "noneDescription": "Rooks działa lokalnie ze wszystkimi funkcjami i wtyczkami dla jednego aktywnego superadministratora. Nie potrzeba klucza, rejestracji ani odnawiania. Aktywuj licencję tylko po to, by dodać konta.",
+    "noneDescription": "Timon działa lokalnie ze wszystkimi funkcjami i wtyczkami dla jednego aktywnego superadministratora. Nie potrzeba klucza, rejestracji ani odnawiania. Aktywuj licencję tylko po to, by dodać konta.",
     "buy": "Zobacz licencje na {domain}",
     "replaceTitle": "Zastąp licencję",
     "machineTitle": "Ta maszyna",
@@ -872,7 +872,7 @@
     "pastDueUntil": "Zaległa płatność — subskrypcja kończy się {date}",
     "notActivated": "Aktywny jest Free — dodatkowe konta wymagają licencji",
     "activate": "Aktywuj",
-    "offlineSince": "Serwer licencji nieosiągalny od {date} — płatne uprawnienia pozostają dostępne w okresie tolerancji offline, potem Rooks wraca do Free.",
+    "offlineSince": "Serwer licencji nieosiągalny od {date} — płatne uprawnienia pozostają dostępne w okresie tolerancji offline, potem Timon wraca do Free.",
     "buildEndsSoon": "Ta kompilacja beta przestanie działać {date}. Zainstaluj wcześniej najnowszą wersję.",
     "buildEndsUrgent": "Ta kompilacja beta przestanie działać {date}. Zainstaluj teraz najnowszą wersję.",
     "licenseEndsSoon": "Twoja licencja kończy się {date}. Wpisz wcześniej nowy klucz.",
@@ -907,7 +907,7 @@
     "retry": "Ponów"
   },
   "activate": {
-    "title": "Aktywuj Rooks",
+    "title": "Aktywuj Timon",
     "description": "Wklej otrzymany klucz aktywacyjny (wymieniany z serwerem licencji) lub token licencji (weryfikowany lokalnie, bez sieci).",
     "rejected": "Licencja odrzucona",
     "deviceMismatch": "to urządzenie to {device}",
@@ -1147,11 +1147,11 @@
         "fileSize": "To zdjęcie przekracza 25 MB. Wybierz mniejszy plik.",
         "decode": "Nie udało się otworzyć tego obrazu. Spróbuj wyeksportować go ponownie jako JPEG lub PNG.",
         "encode": "Nie udało się zoptymalizować tego zdjęcia do przesłania. Spróbuj mniejszego obrazu.",
-        "network": "Usługa zdjęć jest nieosiągalna. Sprawdź połączenie z Rooks i spróbuj ponownie.",
+        "network": "Usługa zdjęć jest nieosiągalna. Sprawdź połączenie z Timon i spróbuj ponownie.",
         "session": "Przesyłanie zdjęcia nie zostało autoryzowane. Zaloguj się ponownie i spróbuj jeszcze raz.",
-        "unavailable": "Przesyłanie zdjęć jest niedostępne na tym serwerze. Trzeba uruchomić zaktualizowany demon Rooks; odświeżenie strony nie wystarczy.",
+        "unavailable": "Przesyłanie zdjęć jest niedostępne na tym serwerze. Trzeba uruchomić zaktualizowany demon Timon; odświeżenie strony nie wystarczy.",
         "server": "Serwer nie mógł przyjąć tego zdjęcia. Spróbuj ponownie.",
-        "storage": "Rooks nie mógł zapisać zdjęcia na dysku. Sprawdź wolne miejsce i uprawnienia zapisu."
+        "storage": "Timon nie mógł zapisać zdjęcia na dysku. Sprawdź wolne miejsce i uprawnienia zapisu."
       }
     },
     "menu": {
@@ -1324,7 +1324,7 @@
     "categories": "Kategorie",
     "selectCategory": "Kategoria",
     "modified": "zmienione",
-    "definedInConfig": "zdefiniowane w rooks.config.json",
+    "definedInConfig": "zdefiniowane w timon.config.json",
     "forcedByEnv": "wymuszone przez środowisko",
     "default": "domyślne",
     "empty": "(puste)",
@@ -1338,7 +1338,7 @@
     "secretConfigured": "Sekret skonfigurowany"
   },
   "devicesSettings": {
-    "description": "Urządzenia, które mogą otworzyć tę maszynę z innego interfejsu Rooks, z uprawnieniami twojego konta. Autoryzuj urządzenie jednorazowym kodem, odwołaj je, kiedy chcesz.",
+    "description": "Urządzenia, które mogą otworzyć tę maszynę z innego interfejsu Timon, z uprawnieniami twojego konta. Autoryzuj urządzenie jednorazowym kodem, odwołaj je, kiedy chcesz.",
     "authorize": "Autoryzuj nowe urządzenie",
     "enterCode": "Wpisz kod z innej maszyny",
     "enterCodeOff": {
@@ -1352,7 +1352,7 @@
     "codeTitle": "Kod parowania",
     "codeHint": "Na komputerze, który będzie sterować tą maszyną, otwórz {path} → Dodaj maszynę (musi tam być włączona wtyczka Maszyny) i wpisz ten kod wraz z adresem tej maszyny. Działa jednorazowo.",
     "reachable": {
-      "lead": "Rooks może opublikować demona tej maszyny w twoim tailnecie przez tailscale serve: dostęp mają tylko twoje urządzenia w tailnecie, nigdy internet.",
+      "lead": "Timon może opublikować demona tej maszyny w twoim tailnecie przez tailscale serve: dostęp mają tylko twoje urządzenia w tailnecie, nigdy internet.",
       "action": "Udostępnij tę maszynę",
       "retry": "Spróbuj ponownie",
       "busy": "Publikowanie…",
@@ -1368,7 +1368,7 @@
         "not_connected": "Tailscale jest zainstalowany, ale ta maszyna nie jest połączona z twoim tailnetem.",
         "serve_disabled": "HTTPS nie jest jeszcze włączony w twoim tailnecie: Tailscale potrzebuje go, by opublikować tę maszynę.",
         "permission": "Tailscale odmówił zmiany konfiguracji: to konto nie ma do tego uprawnień.",
-        "unreadable": "Tailscale zamiast statusu odpowiedział czymś, czego Rooks nie potrafi odczytać. Jego komunikat jest poniżej.",
+        "unreadable": "Tailscale zamiast statusu odpowiedział czymś, czego Timon nie potrafi odczytać. Jego komunikat jest poniżej.",
         "no_free_port": "Porty 8443, 10000 i 443 są już używane przez tailscale serve na tej maszynie. Zwolnij jeden z nich i spróbuj ponownie.",
         "listen_not_loopback": "Demon nasłuchuje na adresie sieciowym zamiast na adresie tego komputera: tailscale serve nie może do niego dotrzeć. Ustaw daemon.listen.host na 127.0.0.1.",
         "failed": "Tailscale nie mógł opublikować tej maszyny.",
@@ -1378,33 +1378,33 @@
     },
     "tailscale": {
       "checking": "Sprawdzanie Tailscale na tej maszynie…",
-      "installLead": "Tailscale nie jest zainstalowany na tej maszynie. Rooks może go zainstalować z oficjalnej strony Tailscale: system poprosi o twoje hasło, Rooks nigdy go nie widzi.",
+      "installLead": "Tailscale nie jest zainstalowany na tej maszynie. Timon może go zainstalować z oficjalnej strony Tailscale: system poprosi o twoje hasło, Timon nigdy go nie widzi.",
       "install": "Zainstaluj Tailscale",
       "downloading": "Pobieranie Tailscale z oficjalnej strony…",
       "verifying": "Sprawdzanie, czy pakiet jest podpisany przez Tailscale…",
       "installingMac": "Dokończ instalację w oknie Instalatora macOS (poprosi o twoje hasło)…",
       "installingWindows": "Zaakceptuj monit administratora Windows, aby dokończyć instalację…",
       "installingLinux": "Wpisz hasło w oknie systemowym, aby dokończyć instalację…",
-      "handoffMac": "Rooks otwiera Instalator macOS: dokończ tam instalację (poprosi o twoje hasło)…",
+      "handoffMac": "Timon otwiera Instalator macOS: dokończ tam instalację (poprosi o twoje hasło)…",
       "reopenInstaller": "Otwórz ponownie instalator",
-      "handoffWindows": "Rooks otwiera instalator Tailscale: zaakceptuj monit administratora Windows, aby dokończyć…",
+      "handoffWindows": "Timon otwiera instalator Tailscale: zaakceptuj monit administratora Windows, aby dokończyć…",
       "connectLead": "Tailscale jest zainstalowany. Zaloguj tę maszynę do swojego tailnetu: w przeglądarce otworzy się strona Tailscale.",
       "connect": "Zaloguj się do Tailscale",
       "waitingLogin": "Czekam, aż zalogujesz się do Tailscale w przeglądarce…",
       "openSignIn": "Otwórz stronę logowania Tailscale",
       "ready": "Tailscale jest połączony.",
-      "operatorLead": "Pozwól Rooks zarządzać Tailscale na tym komputerze: system raz poprosi o twoje hasło, a potem Rooks publikuje bez niego.",
-      "operator": "Pozwól Rooks zarządzać Tailscale",
+      "operatorLead": "Pozwól Timon zarządzać Tailscale na tym komputerze: system raz poprosi o twoje hasło, a potem Timon publikuje bez niego.",
+      "operator": "Pozwól Timon zarządzać Tailscale",
       "operatorWaiting": "Wpisz hasło w oknie systemowym…",
       "failures": {
         "download_failed": "Nie udało się pobrać Tailscale z oficjalnej strony.",
         "checksum_mismatch": "Pobrany pakiet nie zgadza się z opublikowanym przez Tailscale: nie został otwarty.",
         "signature_invalid": "Pobrany pakiet nie jest podpisany przez Tailscale: nie został otwarty.",
-        "no_desktop": "Rooks działa w tle bez dostępu do twojego pulpitu, więc nie może pokazać instalatora z tej przeglądarki. Kliknij Zainstaluj Tailscale w aplikacji desktopowej Rooks na tym komputerze albo uruchom poniższe polecenie.",
-        "elevation_unavailable": "Rooks nie może poprosić o uprawnienia administratora na tym komputerze.",
+        "no_desktop": "Timon działa w tle bez dostępu do twojego pulpitu, więc nie może pokazać instalatora z tej przeglądarki. Kliknij Zainstaluj Tailscale w aplikacji desktopowej Timon na tym komputerze albo uruchom poniższe polecenie.",
+        "elevation_unavailable": "Timon nie może poprosić o uprawnienia administratora na tym komputerze.",
         "cancelled": "Instalacja została anulowana.",
         "installer_failed": "Instalator Tailscale nie zakończył pracy.",
-        "unsupported": "Rooks nie wie, jak zainstalować Tailscale w tym systemie.",
+        "unsupported": "Timon nie wie, jak zainstalować Tailscale w tym systemie.",
         "not_installed": "Tailscale nie jest zainstalowany na tej maszynie.",
         "not_running": "Tailscale jeszcze nie działa. Otwórz aplikację Tailscale, dokończ konfigurację i spróbuj ponownie.",
         "permission": "Tailscale odmówił: to konto nie może zmieniać jego ustawień.",
@@ -1456,7 +1456,7 @@
   },
   "integrationReceipts": {
     "title": "Integracje komunikatorów",
-    "description": "Wiadomości odebrane przez integrację komunikatora, których nie udało się przetworzyć. Rooks ponawia próby przez około dobę, potem przestaje i przechowuje wiadomość tutaj przez okres retencji, abyś mógł ją odtworzyć.",
+    "description": "Wiadomości odebrane przez integrację komunikatora, których nie udało się przetworzyć. Timon ponawia próby przez około dobę, potem przestaje i przechowuje wiadomość tutaj przez okres retencji, abyś mógł ją odtworzyć.",
     "healthy": "Wszystkie wiadomości przechodzą.",
     "stage": {
       "inbox": "Uruchamianie misji",
@@ -1525,7 +1525,7 @@
   },
   "pluginWebhooks": {
     "title": "Przychodzące webhooki",
-    "description": "Usługa spoza Rooks (GitHub, Stripe, Slack…) może wywoływać tę wtyczkę pod tymi adresami. Każde wywołanie jest weryfikowane we własnym formacie podpisu usługi, zanim zobaczy je wtyczka.",
+    "description": "Usługa spoza Timon (GitHub, Stripe, Slack…) może wywoływać tę wtyczkę pod tymi adresami. Każde wywołanie jest weryfikowane we własnym formacie podpisu usługi, zanim zobaczy je wtyczka.",
     "copyUrl": "Kopiuj adres",
     "urlCopied": "Skopiowano adres",
     "notConfigured": "Brak sekretu: wywołania są odrzucane.",
@@ -1586,7 +1586,7 @@
     },
     "tab": {
       "instructions": {
-        "preamble": "Preambuła Rooks",
+        "preamble": "Preambuła Timon",
         "global": "Instrukcje globalne"
       },
       "interface": {
@@ -2002,12 +2002,12 @@
     "loadOlderMessages": "Pokaż starsze wiadomości",
     "loadingOlderMessages": "Wczytywanie starszych wiadomości…",
     "turnInterrupted": "tura przerwana",
-    "turnCutByRestart": "tura przerwana: Rooks został uruchomiony ponownie",
+    "turnCutByRestart": "tura przerwana: Timon został uruchomiony ponownie",
     "conversationResumable": "rozmowę można wznowić — następna wiadomość podejmie ją z kontekstem",
     "hardStop": "TWARDE ZATRZYMANIE: ten backend nie może wznowić sesji, następna wiadomość zacznie od zera",
-    "spawnFailedMissing": "Nie udało się uruchomić CLI {backend}: nie znaleziono polecenia `{binary}` na tej maszynie. Zainstaluj je lub wskaż je Rooks przez `host.binaries.{binary}` w konfiguracji.",
-    "spawnFailedNotExecutable": "Nie udało się uruchomić CLI {backend}: `{binary}` istnieje, ale nie jest wykonywalny. Popraw jego uprawnienia lub wskaż Rooks inną kopię przez `host.binaries.{binary}` w konfiguracji.",
-    "spawnFailedUnknown": "Nie udało się uruchomić CLI {backend}: nie można wystartować `{binary}`. Sprawdź, czy jest zainstalowany, lub wskaż go Rooks przez `host.binaries.{binary}` w konfiguracji.",
+    "spawnFailedMissing": "Nie udało się uruchomić CLI {backend}: nie znaleziono polecenia `{binary}` na tej maszynie. Zainstaluj je lub wskaż je Timon przez `host.binaries.{binary}` w konfiguracji.",
+    "spawnFailedNotExecutable": "Nie udało się uruchomić CLI {backend}: `{binary}` istnieje, ale nie jest wykonywalny. Popraw jego uprawnienia lub wskaż Timon inną kopię przez `host.binaries.{binary}` w konfiguracji.",
+    "spawnFailedUnknown": "Nie udało się uruchomić CLI {backend}: nie można wystartować `{binary}`. Sprawdź, czy jest zainstalowany, lub wskaż go Timon przez `host.binaries.{binary}` w konfiguracji.",
     "backendFailed": "Backend {backend} zatrzymał się bez odpowiedzi (kod wyjścia {code}). Sprawdź, czy jest zalogowany i czy może działać na tej maszynie.",
     "backendFailedDetail": "Jego ostatnie słowa: {detail}",
     "backendFailedMission": "Misja {missionId}",
@@ -2029,9 +2029,9 @@
     "providerRecovered": "Połączono ponownie po {count} {count, plural, one {próbie} few {próbach} many {próbach} other {próbach}}",
     "providerRecoveredOne": "Połączono ponownie po 1 próbie",
     "providerExhausted": "Serwery {provider} nieosiągalne po {count} {count, plural, one {próbie} few {próbach} many {próbach} other {próbach}}",
-    "providerExhaustedWithTimon": "Serwery {provider} nieosiągalne po próbach dostawcy: {count} i próbach Rooks: {timon}",
-    "timonRetryIn": "Ponowienie Rooks {attempt}/{max} za {seconds} s…",
-    "timonRetryRunning": "Ponowienie Rooks {attempt}/{max}…",
+    "providerExhaustedWithTimon": "Serwery {provider} nieosiągalne po próbach dostawcy: {count} i próbach Timon: {timon}",
+    "timonRetryIn": "Ponowienie Timon {attempt}/{max} za {seconds} s…",
+    "timonRetryRunning": "Ponowienie Timon {attempt}/{max}…",
     "retryTurn": "Ponów",
     "retryTurnUnavailable": "Nie ma czego ponowić: ostatniej wiadomości nie ma już w tej rozmowie.",
     "quotaExhaustedTitle": "Limit wyczerpany",
@@ -2050,7 +2050,7 @@
     "steerUnavailableQueued": "tego agenta nie można teraz przekierować — wiadomość zakolejkowana na koniec tury",
     "messageQueuedInline": "wiadomość zakolejkowana — wyjdzie na końcu bieżącej tury",
     "voiceDictationUnavailable": "Dyktowanie głosowe nie jest dostępne w tej przeglądarce.",
-    "voiceDictationDesktopUnavailable": "Dyktowanie głosowe nie jest dostępne w tej aplikacji desktopowej: zaktualizuj Rooks albo ten komputer nie jest obsługiwany. Działa, gdy Rooks jest otwarty w Chrome lub Edge.",
+    "voiceDictationDesktopUnavailable": "Dyktowanie głosowe nie jest dostępne w tej aplikacji desktopowej: zaktualizuj Timon albo ten komputer nie jest obsługiwany. Działa, gdy Timon jest otwarty w Chrome lub Edge.",
     "dictationUnavailable": "Dyktowanie niedostępne: {error}",
     "messagePlaceholder": "Wiadomość do {name}…",
     "stopDictation": "Zatrzymaj dyktowanie",
@@ -2171,7 +2171,7 @@
     "openFailed": "nie udało się otworzyć",
     "openedInExplorer": "otwarto w eksploratorze: {path}",
     "openRootInExplorer": "Otwórz katalog główny w eksploratorze systemu",
-    "revealNoDesktop": "Ten plik jest na komputerze, na którym działa demon Rooks, a ten nie ma sesji pulpitu, w której mógłby go pokazać. Otwórz go z aplikacji desktopowej Rooks na tamtym komputerze.",
+    "revealNoDesktop": "Ten plik jest na komputerze, na którym działa demon Timon, a ten nie ma sesji pulpitu, w której mógłby go pokazać. Otwórz go z aplikacji desktopowej Timon na tamtym komputerze.",
     "refreshFiles": "Odśwież pliki",
     "cannotOpen": "nie udało się otworzyć {path}",
     "dirtyWorkingTreeConfirm": "Niezatwierdzone zmiany w drzewie roboczym ({count} {count, plural, one {plik} few {pliki} many {plików} other {pliku}}). Mimo to przełączyć na „{branch}”?",
@@ -2289,15 +2289,15 @@
     }
   },
   "timonPreamble": {
-    "title": "Preambuła Rooks",
-    "description": "Budowana na bieżąco przy każdym uruchomieniu i wysyłana jako pierwsza do każdego agenta. Tylko do odczytu: pochodzi od Rooks, nie z twojego pliku. Pokazana w wersji dla głównego agenta.",
+    "title": "Preambuła Timon",
+    "description": "Budowana na bieżąco przy każdym uruchomieniu i wysyłana jako pierwsza do każdego agenta. Tylko do odczytu: pochodzi od Timon, nie z twojego pliku. Pokazana w wersji dla głównego agenta.",
     "empty": "Brak preambuły dla tego agenta.",
     "loading": "Odczytywanie preambuły…",
     "error": "Nie udało się odczytać preambuły: {message}"
   },
   "globalInstructions": {
     "title": "Instrukcje globalne",
-    "description": "Czego oczekujesz od każdego agenta; wysyłane przy każdym uruchomieniu zaraz po preambule Rooks: twój język, sposób pisania commitów, sposób testowania. Reguły projektu należą do AGENTS.md projektu, reguły agenta — do jego dokumentów tożsamości.",
+    "description": "Czego oczekujesz od każdego agenta; wysyłane przy każdym uruchomieniu zaraz po preambule Timon: twój język, sposób pisania commitów, sposób testowania. Reguły projektu należą do AGENTS.md projektu, reguły agenta — do jego dokumentów tożsamości.",
     "path": "Plik: {path}",
     "limit": "{tokens} · najwyżej {max} znaków",
     "empty": "Jeszcze nic. Każdy agent zaczyna bez twoich instrukcji.",
@@ -2408,9 +2408,9 @@
       "not_found": "Ten folder nie istnieje na tamtej maszynie.",
       "not_a_directory": "Ta ścieżka to plik, nie folder.",
       "relative_path": "Wpisz pełną ścieżkę, od katalogu głównego dysku.",
-      "unreadable": "Rooks nie może odczytać tego folderu na tamtej maszynie.",
+      "unreadable": "Timon nie może odczytać tego folderu na tamtej maszynie.",
       "forbidden": "Twoje konto nie może przeglądać folderów tej maszyny. Wpisz ścieżkę bezpośrednio.",
-      "outdated": "Ta maszyna ma starszy Rooks, który nie potrafi wyświetlić jej folderów. Wpisz ścieżkę bezpośrednio.",
+      "outdated": "Ta maszyna ma starszy Timon, który nie potrafi wyświetlić jej folderów. Wpisz ścieżkę bezpośrednio.",
       "failed": "Nie udało się odczytać folderów tej maszyny. Spróbuj ponownie lub wpisz ścieżkę bezpośrednio."
     },
     "file": {
@@ -2427,14 +2427,14 @@
       "selected": "Wybrano: {path}",
       "errors": {
         "forbidden": "Tylko administrator może przeglądać pliki tej maszyny.",
-        "outdated": "Ta maszyna ma starszy Rooks, który nie potrafi wyświetlić jej plików: najpierw go zaktualizuj."
+        "outdated": "Ta maszyna ma starszy Timon, który nie potrafi wyświetlić jej plików: najpierw go zaktualizuj."
       }
     }
   },
   "editPage": {
     "name": "Nazwa",
     "nameHint": "widoczna w grafie i konsoli",
-    "directoryPickerUnavailable": "Aby przeglądać foldery, użyj aktualnej aplikacji desktopowej Rooks. Możesz też wpisać ścieżkę bezpośrednio.",
+    "directoryPickerUnavailable": "Aby przeglądać foldery, użyj aktualnej aplikacji desktopowej Timon. Możesz też wpisać ścieżkę bezpośrednio.",
     "directoryPickerFailed": "Nie udało się otworzyć wyboru folderu. Możesz wpisać ścieżkę bezpośrednio.",
     "imageInvalid": "oczekiwano pliku obrazu (png, jpg, webp, gif)",
     "imageTooLarge": "obraz za duży (maks. 8 MB)",
@@ -2491,7 +2491,7 @@
     "permissionHintMcpBridge": "Ten backend rozstrzyga każde użycie narzędzia: klasyfikator załatwia jasne przypadki i pokazuje kartę Zezwól/Odmów w UI tylko dla niejednoznacznych.",
     "mcpIntro": "Serwery Model Context Protocol dodane przez ciebie. Wybrane tutaj łączą się z tym agentem przy każdym uruchomieniu; zarządzaj nimi na",
     "mcpEmpty": "Nie dodano jeszcze serwerów MCP — dodaj je na",
-    "mcpBuiltinTitle": "Wbudowane w Rooks — zawsze włączone, nic do przyznania",
+    "mcpBuiltinTitle": "Wbudowane w Timon — zawsze włączone, nic do przyznania",
     "mcpBuiltinHint": "Każdy agent otrzymuje je na każdym backendzie, niezależnie od wyboru poniżej, a nadpisanie MCP w zadaniu Kanban nigdy ich nie usuwa. Niektóre narzędzia timon (tworzenie agentów lub projektów, deklarowanie serwerów MCP) wymagają też uprawnień twojego konta na stronie Użytkownicy, których ta lista nie zmienia.",
     "mcpBuiltinTimon": "Kanban, misje, agenci, pamięć, ta dokumentacja",
     "mcpBuiltinAsk": "Formularze, które pytają cię w czacie",
@@ -2500,7 +2500,7 @@
     "permissionHintSandbox": "Ten backend nie może rozstrzygać w trakcie tury: tryb jest tłumaczony przy uruchomieniu na poziom piaskownicy (plan → tylko odczyt, bypassPermissions → pełny dostęp, w pozostałych przypadkach workspace-write). Bez karty Zezwól/Odmów, bez klasyfikatora.",
     "permissionHintNone": "Ten backend nie udostępnia żadnej kontroli uprawnień — poniższy tryb nie ma na niego wpływu.",
     "permissionHintProtocol": "Ten backend pyta przez swój protokół przed użyciem narzędzia: dostajesz kartę Zezwól/Odmów w UI. To, o czym agent decyduje sam, nigdy do ciebie nie trafia i podlega jego własnym regułom — poniższy tryb ich nie nadpisuje.",
-    "permissionHintProtocolMode": "Ten backend pyta Rooks przed użyciem narzędzia, a Rooks najpierw stosuje poniższy tryb: odczyty przechodzą, plan odrzuca edycje i polecenia, acceptEdits i auto przepuszczają edycje wewnątrz folderu roboczego. To, czego nie rozstrzygają tryb i dozwolone narzędzia agenta, staje się kartą Zezwól/Odmów w UI.",
+    "permissionHintProtocolMode": "Ten backend pyta Timon przed użyciem narzędzia, a Timon najpierw stosuje poniższy tryb: odczyty przechodzą, plan odrzuca edycje i polecenia, acceptEdits i auto przepuszczają edycje wewnątrz folderu roboczego. To, czego nie rozstrzygają tryb i dozwolone narzędzia agenta, staje się kartą Zezwól/Odmów w UI.",
     "permissionsSelfBadge": "Sam zarządza uprawnieniami",
     "permissionsSelfBadgeHint": "Ten agent sam decyduje o użyciu narzędzi: obowiązuje piaskownica ustawiona w jego konfiguracji, a TIMON nie pokazuje dla niego karty Zezwól/Odmów.",
     "permissionModeLabel": "Tryb uprawnień",
@@ -2573,7 +2573,7 @@
     },
     "notificationCenter": {
       "title": "Centrum powiadomień",
-      "description": "Powiadomienia zgłoszone przez twoich agentów i przez Rooks, do przeczytania i obsłużenia."
+      "description": "Powiadomienia zgłoszone przez twoich agentów i przez Timon, do przeczytania i obsłużenia."
     },
     "taskQueue": {
       "title": "Kolejka zadań",
@@ -2581,7 +2581,7 @@
     },
     "injections": {
       "title": "Wstrzyknięcia agenta",
-      "description": "Wszystko, co Rooks przekazuje agentowi przy starcie (reguły, pamięć, umiejętności), aby zrozumieć agenta, który zbacza z kursu."
+      "description": "Wszystko, co Timon przekazuje agentowi przy starcie (reguły, pamięć, umiejętności), aby zrozumieć agenta, który zbacza z kursu."
     },
     "bell": {
       "title": "Dzwonek powiadomień",
@@ -2620,8 +2620,8 @@
       "description": "Czy stos projektu działa, pod jakim lokalnym URL-em i która usługa nie działa; uruchom, zrestartuj lub zatrzymaj go."
     },
     "timonDaemon": {
-      "title": "Demon Rooks",
-      "description": "Stan samego Rooks, dla projektu timon."
+      "title": "Demon Timon",
+      "description": "Stan samego Timon, dla projektu timon."
     },
     "missionDetails": {
       "title": "Szczegóły misji",
@@ -2733,7 +2733,7 @@
     "writeOnlyNotice": "Zapisana wartość domyślnie nigdy nie jest pokazywana. Aby ją odczytać, użyj Pokaż (wymagane hasło konta); aby ją zmienić, zastąp ją.",
     "new": "Nowy sekret",
     "refresh": "Odśwież",
-    "empty": "Brak sekretów. Demon nadal czyta ~/.rooks/secrets.env, ale nic nie jest przypisane do agenta.",
+    "empty": "Brak sekretów. Demon nadal czyta ~/.timon/secrets.env, ale nic nie jest przypisane do agenta.",
     "saved": "Sekret zapisany.",
     "confirmDelete": "Usunąć {name}? Agenci, którzy na nim polegają, stracą dostęp.",
     "configured": "skonfigurowany",
@@ -2856,7 +2856,7 @@
     "contains": "Instaluje",
     "enable": "Włącz {name}",
     "disable": "Wyłącz {name}",
-    "bundled": "Dołączone do Rooks",
+    "bundled": "Dołączone do Timon",
     "bundledSubtitle": "Moduły produktu. Wyłączenie modułu zostawia go zainstalowanym i działa od razu.",
     "thirdParty": "Zainstalowane tutaj",
     "notInLicence": "Nie obejmuje tego twoja licencja",
@@ -2931,7 +2931,7 @@
     "noAgent": "Brak agentów.",
     "loading": "Odczytywanie wstrzyknięć…",
     "error": "Nie udało się odczytać wstrzyknięć: {message}",
-    "listLabel": "Wstrzyknięcia w kolejności, w jakiej Rooks przekazuje je modelowi",
+    "listLabel": "Wstrzyknięcia w kolejności, w jakiej Timon przekazuje je modelowi",
     "tokens": "~{n} tokenów",
     "beforeFirst": "Przed pierwszą wiadomością wychodzi około {tokens} tokenów kontekstu.",
     "onDemand": "Umiejętności z katalogu dodają ~{tokens} tokenów tylko wtedy, gdy agent je czyta (skill_get): nie wchodzą do tej sumy.",
@@ -2973,15 +2973,15 @@
       "role": "rola",
       "agent": "ten agent",
       "config": "zaznaczona",
-      "code": "dodana przez Rooks"
+      "code": "dodana przez Timon"
     },
     "skillReads": {
-      "title": "Odczyty przez misje tego agenta w ostatnich dniach ({days}): wywołania skill_get i pliki otwarte pełną ścieżką. To minimum: odczyt, którego Rooks nie widzi, nie jest liczony.",
+      "title": "Odczyty przez misje tego agenta w ostatnich dniach ({days}): wywołania skill_get i pliki otwarte pełną ścieżką. To minimum: odczyt, którego Timon nie widzi, nie jest liczony.",
       "read": "odczytano {reads}× · misje {missions}/{total} · {days} d.",
       "never": "nigdy nieodczytana · misje: {total} · {days} d.",
       "idle": "brak misji w {days} d.",
       "unmeasured": "odczyty niemierzone na tym backendzie · {days} d.",
-      "unmeasuredTitle": "Misje tego agenta działały na backendzie bez narzędzia skill_get: Rooks nie może stwierdzić, czy czytały tę umiejętność.",
+      "unmeasuredTitle": "Misje tego agenta działały na backendzie bez narzędzia skill_get: Timon nie może stwierdzić, czy czytały tę umiejętność.",
       "neverCount": "nigdy nieodczytane: {n}",
       "neverHint": "Żadna misja tego agenta nie czytała tej umiejętności w ciągu {days} dni: przepisz jej opis, aby agent wiedział, kiedy po nią sięgać."
     },
@@ -2994,12 +2994,12 @@
     "masking": {
       "shown": "Zamaskowane tylko na tym ekranie: agent otrzymuje wartości z sejfu jawnym tekstem.",
       "cli": "Zamaskowane tylko na tym ekranie: jeśli CLI backendu czyta ten plik, agent otrzymuje wartości z sejfu jawnym tekstem.",
-      "sent": "Maskowane także przy wysyłaniu: ten backend nie ma dostępu ani do folderu umiejętności, ani do narzędzi Rooks, więc agent nie otrzymuje tych wartości z sejfu."
+      "sent": "Maskowane także przy wysyłaniu: ten backend nie ma dostępu ani do folderu umiejętności, ani do narzędzi Timon, więc agent nie otrzymuje tych wartości z sejfu."
     },
     "why": {
       "redacted": "Zapisanie zamaskowanego tekstu nadpisałoby prawdziwą wartość, więc nie można go edytować z tej listy.",
-      "cli": "Znaleziony w katalogu roboczym. Rooks go nie wstrzykuje: czy CLI backendu go czyta i gdzie trafia w prompcie, zależy od tego CLI, więc ten wiersz nie należy do mierzonej kolejności. Edytuj plik w projekcie.",
-      "code": "Zapisane przez Rooks w kodzie: nie do edycji.",
+      "cli": "Znaleziony w katalogu roboczym. Timon go nie wstrzykuje: czy CLI backendu go czyta i gdzie trafia w prompcie, zależy od tego CLI, więc ten wiersz nie należy do mierzonej kolejności. Edytuj plik w projekcie.",
+      "code": "Zapisane przez Timon w kodzie: nie do edycji.",
       "roleShared": "Edycja zmienia rolę dla każdego agenta, który ją ma."
     }
   },
@@ -3021,19 +3021,19 @@
     "emptyBody": "Brak zadań w toku lub oczekujących."
   },
   "systemSettings": {
-    "description": "Jak Rooks działa na tej maszynie. Tę kartę widzi tylko superadministrator.",
+    "description": "Jak Timon działa na tej maszynie. Tę kartę widzi tylko superadministrator.",
     "forbidden": "Tylko superadministrator może zobaczyć instalację.",
     "loadError": "Nie udało się odczytać instalacji. Sprawdź, czy demon działa.",
     "unknown": "nieznane",
     "yes": "tak",
     "no": "nie",
     "versionTitle": "Wersja",
-    "daemonVersion": "Rooks (demon)",
+    "daemonVersion": "Timon (demon)",
     "desktopVersion": "Aplikacja desktopowa",
-    "versionGap": "Aplikacja ma wersję {desktop}, a jej demon {daemon}: demon nie został zaktualizowany. Zamknij i ponownie otwórz Rooks; jeśli wersje nadal się różnią, uruchom w terminalu:",
+    "versionGap": "Aplikacja ma wersję {desktop}, a jej demon {daemon}: demon nie został zaktualizowany. Zamknij i ponownie otwórz Timon; jeśli wersje nadal się różnią, uruchom w terminalu:",
     "dataVersion": "Wersja danych",
     "dataBehind": "Twoje dane otworzyła ostatnio wersja {data}; ten demon to {version}. Zostaną zaktualizowane przy następnym starcie, gdy zaakceptujesz aktualizację.",
-    "dataAhead": "Twoje dane otworzył nowszy Rooks ({data}) niż ten demon ({version}). Zaktualizuj tę instalację, zanim jej użyjesz.",
+    "dataAhead": "Twoje dane otworzył nowszy Timon ({data}) niż ten demon ({version}). Zaktualizuj tę instalację, zanim jej użyjesz.",
     "license": "Licencja",
     "licenseValue": "{edition} · {plan} · {status} · kompilacja {channel}",
     "licenseValid": "aktywna",
@@ -3045,7 +3045,7 @@
     "daemonTitle": "Demon",
     "mode": "Działa jako",
     "modeValue": {
-      "embedded": "W aplikacji (przenośny): zatrzymuje się, gdy zamkniesz Rooks",
+      "embedded": "W aplikacji (przenośny): zatrzymuje się, gdy zamkniesz Timon",
       "service": "Usługa systemowa: działa dalej po zamknięciu aplikacji",
       "process": "Uruchomiony ręcznie (terminal lub skrypt)"
     },
@@ -3065,7 +3065,7 @@
       "stopped": "Zainstalowana, niedziałająca",
       "running": "Zainstalowana i działa"
     },
-    "serviceNextLaunch": "Port zajmuje własny demon aplikacji: usługa przejmie go przy następnym uruchomieniu Rooks.",
+    "serviceNextLaunch": "Port zajmuje własny demon aplikacji: usługa przejmie go przy następnym uruchomieniu Timon.",
     "supervisor": {
       "systemd-user": "Jednostka systemd",
       "launchd": "Etykieta launchd",
@@ -3074,14 +3074,14 @@
     "windowsRevision": "Rewizja zadania",
     "windowsRevisionValue": "{revision} (bieżąca: {expected})",
     "windowsUnmarked": "Jego program uruchamiający nie ma znacznika pakietu.",
-    "installWhy": "Z usługą Rooks działa dalej po zamknięciu aplikacji i startuje razem z komputerem.",
+    "installWhy": "Z usługą Timon działa dalej po zamknięciu aplikacji i startuje razem z komputerem.",
     "repairWhy": "Ponowna instalacja nadpisuje usługę definicją z tej wersji. Twoje dane pozostają nietknięte.",
     "installService": "Zainstaluj usługę",
     "repairService": "Napraw usługę",
     "serviceBusy": "Trwa praca…",
-    "serviceFromTerminal": "Ten demon jest samą usługą: uruchom to w terminalu (zrestartuje Rooks)",
+    "serviceFromTerminal": "Ten demon jest samą usługą: uruchom to w terminalu (zrestartuje Timon)",
     "serviceInstalledRunning": "Usługa zainstalowana i działa.",
-    "serviceInstalledNext": "Usługa zainstalowana. Przejmie pracę przy następnym uruchomieniu Rooks.",
+    "serviceInstalledNext": "Usługa zainstalowana. Przejmie pracę przy następnym uruchomieniu Timon.",
     "serviceFailed": "Nie udało się zainstalować usługi.",
     "pathsTitle": "Ścieżki",
     "installDir": "Folder instalacji",
@@ -3097,18 +3097,18 @@
     "exporting": "Eksportowanie…",
     "exported": "Archiwum zapisane: {path}",
     "exportFailed": "Eksport nie powiódł się.",
-    "importWhy": "Import zastępuje bazę danych, więc nie może działać, gdy działa Rooks. Zamknij aplikację Rooks, a potem uruchom w terminalu te polecenia po kolei, zastępując ARCHIVE.tar.gz swoim archiwum. Twoje dane zostają na miejscu aż do importu.",
-    "importWhyEmbedded": "Import zastępuje bazę danych, więc nie może działać, gdy działa Rooks. Zamknij aplikację Rooks, a potem uruchom w terminalu to polecenie, zastępując ARCHIVE.tar.gz swoim archiwum.",
+    "importWhy": "Import zastępuje bazę danych, więc nie może działać, gdy działa Timon. Zamknij aplikację Timon, a potem uruchom w terminalu te polecenia po kolei, zastępując ARCHIVE.tar.gz swoim archiwum. Twoje dane zostają na miejscu aż do importu.",
+    "importWhyEmbedded": "Import zastępuje bazę danych, więc nie może działać, gdy działa Timon. Zamknij aplikację Timon, a potem uruchom w terminalu to polecenie, zastępując ARCHIVE.tar.gz swoim archiwum.",
     "importStep": "W terminalu",
     "supportTitle": "Diagnostyka dla wsparcia",
-    "supportWhy": "Wszystko, czego potrzebuje wsparcie, za jednym razem: wersje, jak Rooks tu działa, usługa, wykryte problemy i ostatnie wiersze dziennika (najnowsze najpierw). Tokeny i sekrety są zamaskowane. Wklej to do zgłoszenia.",
+    "supportWhy": "Wszystko, czego potrzebuje wsparcie, za jednym razem: wersje, jak Timon tu działa, usługa, wykryte problemy i ostatnie wiersze dziennika (najnowsze najpierw). Tokeny i sekrety są zamaskowane. Wklej to do zgłoszenia.",
     "copyReport": "Kopiuj diagnostykę",
     "reportPreparing": "Przygotowywanie…",
     "saveReport": "Zapisz raport",
     "showReport": "Pokaż raport",
     "hideReport": "Ukryj raport",
     "openLogs": "Otwórz folder dzienników",
-    "openAbout": "O Rooks i licencjach stron trzecich",
+    "openAbout": "O Timon i licencjach stron trzecich",
     "reportCopied": "Diagnostyka skopiowana: wklej ją do zgłoszenia (Discord, e-mail).",
     "reportCopyFailed": "Schowek odrzucił kopiowanie: zaznacz raport poniżej i skopiuj go ręcznie albo zapisz go.",
     "reportSaved": "Raport pobrany jako {name}.",
@@ -3120,23 +3120,23 @@
   },
   "desktopUninstall": {
     "category": "Aplikacja desktopowa",
-    "title": "Odinstaluj Rooks",
+    "title": "Odinstaluj Timon",
     "description": "Zatrzymuje agentów, przepływy i przeglądarki na tym komputerze, usuwa usługę i wyłącza uruchamianie przy logowaniu. Aplikacje PWA połączone z tą instancją zostaną rozłączone.",
     "dataPath": "Katalog danych tej instalacji",
     "dataChoice": "Co zrobić z twoimi danymi?",
     "keep": "Zachowaj moje dane (zalecane)",
     "keepDescription": "Zachowuje agentów, rozmowy, ustawienia, dane logowania i profile przeglądarki na potrzeby ponownej instalacji. Kopie programu używane przez usługę zostaną usunięte.",
     "delete": "Usuń wszystko",
-    "deleteDescription": "Trwale usuwa całą zawartość pokazanego wyżej katalogu Rooks, w tym agentów, rozmowy, ustawienia, sekrety, ciasteczka i profile przeglądarki. Tego nie można cofnąć.",
-    "external": "Foldery projektów i zewnętrzne konfiguracje (Claude, Codex itp.) poza katalogiem Rooks zostają zachowane. Dowiązania symboliczne do zewnętrznych katalogów nie są śledzone.",
+    "deleteDescription": "Trwale usuwa całą zawartość pokazanego wyżej katalogu Timon, w tym agentów, rozmowy, ustawienia, sekrety, ciasteczka i profile przeglądarki. Tego nie można cofnąć.",
+    "external": "Foldery projektów i zewnętrzne konfiguracje (Claude, Codex itp.) poza katalogiem Timon zostają zachowane. Dowiązania symboliczne do zewnętrznych katalogów nie są śledzone.",
     "confirmation": "Wpisz SUPPRIMER, aby zezwolić na trwałe usunięcie.",
     "finish": {
-      "mac": "Gdy Rooks się zamknie i sprzątanie się zakończy, przenieś Rooks.app do Kosza w Finderze.",
-      "windows": "Po zakończeniu sprzątania usuń Rooks w ustawieniach Aplikacje systemu Windows.",
+      "mac": "Gdy Timon się zamknie i sprzątanie się zakończy, przenieś Timon.app do Kosza w Finderze.",
+      "windows": "Po zakończeniu sprzątania usuń Timon w ustawieniach Aplikacje systemu Windows.",
       "appimage": "Po zakończeniu sprzątania usuń plik AppImage.",
-      "linux": "Po zakończeniu sprzątania usuń pakiet Rooks menedżerem oprogramowania swojej dystrybucji."
+      "linux": "Po zakończeniu sprzątania usuń pakiet Timon menedżerem oprogramowania swojej dystrybucji."
     },
-    "action": "Odinstaluj Rooks…",
+    "action": "Odinstaluj Timon…",
     "busy": "Odinstalowywanie…"
   },
   "freeLicense": {
@@ -3144,7 +3144,7 @@
     "retainedData": "Po powrocie do Free dodatkowe konta pozostają zapisane, ale niedostępne. Wszystkie funkcje i wtyczki pozostają dostępne. Ważna licencja przywraca konta, które obejmuje.",
     "local_free": "Free jest lokalny i nie ma aktywacji maszyny do zarządzania.",
     "free_unavailable": "Rejestracja Free nie jest jeszcze otwarta dla tej wersji. Spróbuj później lub użyj istniejącego klucza licencji.",
-    "client_upgrade_required": "Zaktualizuj Rooks do obsługiwanej wersji i spróbuj ponownie.",
+    "client_upgrade_required": "Zaktualizuj Timon do obsługiwanej wersji i spróbuj ponownie.",
     "summary": "Free działa lokalnie bez klucza i odnawiania: wszystkie funkcje i wtyczki dla jednego aktywnego superadministratora.",
     "plugin_composition_fixed": "Ta oferta ma stały zestaw wtyczek. Skonfiguruj dołączone wtyczki lub przejdź na wyższy plan, aby go zmienić.",
     "single_superadmin_required": "Free pozwala na jedno aktywne konto, które musi być superadministratorem.",
@@ -3152,7 +3152,7 @@
     "license_changed": "Licencja zmieniła się w trakcie tego żądania. Odśwież i spróbuj ponownie.",
     "activation_key_missing": "Na tym urządzeniu nie zapisano klucza aktywacyjnego. Użyj konta licencyjnego lub skontaktuj się ze wsparciem, aby go zwolnić.",
     "deactivate": "Dezaktywuj tę maszynę",
-    "deactivateConfirm": "Dezaktywować tę maszynę? Rooks będzie działał dalej w wersji Free. Dodatkowe konta zostaną zawieszone; ich dane zostaną zachowane.",
+    "deactivateConfirm": "Dezaktywować tę maszynę? Timon będzie działał dalej w wersji Free. Dodatkowe konta zostaną zawieszone; ich dane zostaną zachowane.",
     "deactivated": "Maszyna dezaktywowana. Stanowisko pozostaje wydzierżawione, dopóki nie wygaśnie ostatni token tej maszyny; wcześniejsza próba aktywacji innej maszyny otrzyma dokładny czas ponowienia.",
     "transfer_pending": "Token poprzedniej maszyny jeszcze nie wygasł. Poczekaj przed aktywacją tej maszyny.",
     "transfer_pending_until": "Token poprzedniej maszyny jeszcze nie wygasł: ta maszyna może zostać aktywowana od {until}."
@@ -3215,7 +3215,7 @@
     "fieldLinkedTasks": "powiązane zadania",
     "linkedTasksHint": "Pomysł zamknie się sam, gdy ich praca zostanie scalona.",
     "fieldExternalLinks": "gdzie indziej",
-    "externalLinksHint": "Gdzie ten pomysł istnieje poza Rooks, tak jak zapisała to wtyczka, która go powiązała.",
+    "externalLinksHint": "Gdzie ten pomysł istnieje poza Timon, tak jak zapisała to wtyczka, która go powiązała.",
     "urgency": {
       "critical": "Krytyczne",
       "bug": "Błąd",
@@ -3266,18 +3266,18 @@
   "dictation": {
     "egressReload": {
       "title": "{plugin} wymaga odświeżenia",
-      "body": "Rooks otwarto przed instalacją tej wtyczki, więc okno nie pozwala jej jeszcze łączyć się z {host}. Odśwież, aby jej użyć.",
+      "body": "Timon otwarto przed instalacją tej wtyczki, więc okno nie pozwala jej jeszcze łączyć się z {host}. Odśwież, aby jej użyć.",
       "reload": "Odśwież"
     },
     "localEngine": {
-      "label": "Rooks (na tym komputerze)"
+      "label": "Timon (na tym komputerze)"
     },
     "destination": {
       "title": "Dokąd trafia twój głos",
       "device": "Twój głos zostaje na tym komputerze.",
       "window": "Twój głos zostaje w tym oknie: wtyczka deklaruje, że nic z niego nie wychodzi.",
-      "daemon": "Twój głos jest wysyłany do demona Rooks na {machine}.",
-      "daemonActive": "Twój głos jest wysyłany do demona Rooks aktywnej maszyny.",
+      "daemon": "Twój głos jest wysyłany do demona Timon na {machine}.",
+      "daemonActive": "Twój głos jest wysyłany do demona Timon aktywnej maszyny.",
       "hosts": "Twój głos jest wysyłany do {hosts}.",
       "undeclared": "Ten silnik nie mówi, dokąd trafia twój głos.",
       "engineLine": "{engine}: {line}",
@@ -3289,7 +3289,7 @@
     "consent": {
       "title": "Pozwolić {engine} cię słuchać?",
       "from": "Silnik dyktowania wtyczki {plugin}",
-      "scope": "Ten wybór dotyczy tylko {machine}. Rooks zapyta ponownie, jeśli wtyczka zmieni miejsce, dokąd trafia twój głos.",
+      "scope": "Ten wybór dotyczy tylko {machine}. Timon zapyta ponownie, jeśli wtyczka zmieni miejsce, dokąd trafia twój głos.",
       "allow": "Zezwól",
       "deny": "Nie zezwalaj",
       "granted": "Zezwolono. Kliknij mikrofon, aby dyktować.",
@@ -3299,7 +3299,7 @@
       "title": "Silnik dyktowania",
       "intro": "Który silnik dyktuje w czacie i w trybie głosowym kokpitu na {machine}.",
       "auto": "Automatycznie",
-      "autoHint": "Najpierw własny silnik Rooks; w przeglądarce rozpoznawanie przeglądarki przed jakąkolwiek wtyczką.",
+      "autoHint": "Najpierw własny silnik Timon; w przeglądarce rozpoznawanie przeglądarki przed jakąkolwiek wtyczką.",
       "webSpeech": "Przeglądarka (Web Speech)",
       "webSpeechHint": "Rozpoznawanie mowy twojej przeglądarki. Chrome i Edge wysyłają głos do usługi swojego producenta.",
       "unavailableOption": "{engine} (niedostępny)",
@@ -3314,20 +3314,20 @@
       "inUse": "Używany do dyktowania",
       "granted": "Dozwolony na {machine}.",
       "refused": "Niedozwolony: dyktowanie tym silnikiem pozostaje wyłączone.",
-      "notAsked": "Jeszcze niedozwolony: Rooks zapyta przy pierwszym dyktowaniu.",
+      "notAsked": "Jeszcze niedozwolony: Timon zapyta przy pierwszym dyktowaniu.",
       "withdraw": "Wycofaj",
       "undeclared": "Nieużywany: jego wtyczka nie mówi, dokąd trafia twój głos."
     },
     "errors": {
       "modelMissing": "Lokalne dyktowanie wymaga modelu mowy: pobierz go w {settingsPath}.",
-      "microphoneDenied": "Rooks nie ma zgody na użycie mikrofonu. Zezwól na to w ustawieniach prywatności systemu i spróbuj ponownie.",
+      "microphoneDenied": "Timon nie ma zgody na użycie mikrofonu. Zezwól na to w ustawieniach prywatności systemu i spróbuj ponownie.",
       "microphoneLost": "Mikrofon został odłączony: dyktowanie zatrzymane.",
       "busy": "Dyktowanie zatrzymane: uruchomiono je w innym oknie lub panelu.",
       "engineCrashed": "Silnik dyktowania nieoczekiwanie się zatrzymał. Kliknij mikrofon, aby zacząć od nowa.",
       "engineUnavailable": "Lokalne dyktowanie nie jest dostępne na tym komputerze.",
       "initFailed": "Nie udało się uruchomić silnika dyktowania. Spróbuj ponownie albo usuń i pobierz ponownie model mowy w {settingsPath}.",
       "engineNotAllowed": "Ten silnik dyktowania jest niedozwolony. Zezwól na niego w {settingsPath}.",
-      "engineUndeclared": "Ten silnik dyktowania nie mówi, dokąd trafia twój głos: Rooks go nie używa."
+      "engineUndeclared": "Ten silnik dyktowania nie mówi, dokąd trafia twój głos: Timon go nie używa."
     },
     "model": {
       "consentTitle": "Lokalne dyktowanie",
@@ -3401,18 +3401,18 @@
       "peakMemory": "{size} pamięci w szczycie",
       "languageRequired": "Wymaga języka dyktowania: nie potrafi go zgadnąć (bez Auto).",
       "finalOnly": "Pokazuje tylko tekst końcowy.",
-      "fromPlugin": "Z wtyczki {plugin}. Rooks nie może ręczyć za model zewnętrzny.",
+      "fromPlugin": "Z wtyczki {plugin}. Timon nie może ręczyć za model zewnętrzny.",
       "addPack": "Dodaj i pobierz {size}…",
       "packErrors": {
         "invalid": "Wpis modelu tej wtyczki jest nieprawidłowy.",
-        "unknownFamily": "Ten model wymaga nowszej wersji Rooks.",
+        "unknownFamily": "Ten model wymaga nowszej wersji Timon.",
         "exists": "Ten model jest już w twoim katalogu.",
         "busy": "Inny model czeka na twoją odpowiedź.",
         "engineUnavailable": "Lokalne dyktowanie nie jest dostępne na tym komputerze.",
         "notFound": "Wtyczka nie oferuje już tego modelu.",
         "unavailable": "Nie udało się odczytać modeli wtyczki. Spróbuj ponownie."
       },
-      "unverified": "Niezweryfikowany: Rooks nie może ręczyć za te pliki.",
+      "unverified": "Niezweryfikowany: Timon nie może ręczyć za te pliki.",
       "usedFor": "Używany dla: {languages}",
       "download": "Pobierz {size}",
       "confirmLarge": "{model} waży {size}. Pobiera się jednorazowo i podczas dyktowania potrzebuje do {memory} pamięci. Twój głos zostaje na tym komputerze.",
@@ -3422,7 +3422,7 @@
     "import": {
       "button": "Dodaj model lokalny…",
       "trust": "Importuj tylko modele ze źródeł, którym ufasz.",
-      "done": "Dodano {model}. Nie jest zweryfikowany: Rooks nie może ręczyć za jego pliki.",
+      "done": "Dodano {model}. Nie jest zweryfikowany: Timon nie może ręczyć za jego pliki.",
       "whichFamily": "Jaki rodzaj modelu zawiera ten folder?",
       "languages": "Języki modelu",
       "languagesHint": "Kody języków, np. fr, en. Zostaw puste dla modelu, który wykrywa język.",
@@ -3440,7 +3440,7 @@
         "tooManyFiles": "Folder zawiera zbyt wiele plików jak na model mowy.",
         "tooLarge": "Model jest większy niż 8 GB.",
         "roles": "Folder nie wygląda na model mowy (pliki encodera, decodera i tokenów).",
-        "unsupportedFamily": "Ta wersja Rooks nie obsługuje jeszcze tego rodzaju modelu.",
+        "unsupportedFamily": "Ta wersja Timon nie obsługuje jeszcze tego rodzaju modelu.",
         "unsafeGraph": "Ten model wskazuje pliki poza swoim folderem: został odrzucony.",
         "changed": "Plik zmienił się podczas kopiowania. Spróbuj ponownie.",
         "diskFull": "Za mało miejsca na dysku, aby skopiować model.",
@@ -3503,7 +3503,7 @@
         "none": "brak"
       }
     },
-    "intro": "Zarządzaj wszystkimi dostawcami LLM i ich modelami. Zmiany działają bez ponownego uruchamiania Rooks.",
+    "intro": "Zarządzaj wszystkimi dostawcami LLM i ich modelami. Zmiany działają bez ponownego uruchamiania Timon.",
     "edit": "Edytuj",
     "editTitle": "Edytuj dostawcę",
     "saved": "Dostawca zaktualizowany.",
@@ -3549,7 +3549,7 @@
     "testButton": "Testuj",
     "destinationNotice": "Każdy prompt misji uruchomionej u tego dostawcy jest wysyłany do {host}.",
     "keyHint": "Przechowywany w sejfie sekretów, nigdy w pliku, i nigdy więcej niepokazywany. Zostaw puste dla lokalnego serwera, który go nie wymaga.",
-    "fileHint": "Każdy dostawca to plik w ~/.rooks/backends/. Możesz też ręcznie wrzucić tam plik JSON: zostanie wykryty w ciągu sekundy.",
+    "fileHint": "Każdy dostawca to plik w ~/.timon/backends/. Możesz też ręcznie wrzucić tam plik JSON: zostanie wykryty w ciągu sekundy.",
     "fields": {
       "name": "Nazwa",
       "protocol": "Protokół",
@@ -3588,11 +3588,11 @@
     "reorder": "Przeciągnij, aby zmienić kolejność tego dostawcy",
     "claudeToken": {
       "title": "Długotrwały token Claude",
-      "hint": "Opcjonalny. Uruchom `claude setup-token` w terminalu i wklej tu token: każda misja Claude będzie go używać zamiast logowania samego CLI. Na macOS pozwala to Rooks działać bez otwartej sesji; potem uruchom `timon service install`, aby przełączyć usługę. Token jest przechowywany zaszyfrowany i nigdy więcej niepokazywany.",
+      "hint": "Opcjonalny. Uruchom `claude setup-token` w terminalu i wklej tu token: każda misja Claude będzie go używać zamiast logowania samego CLI. Na macOS pozwala to Timon działać bez otwartej sesji; potem uruchom `timon service install`, aby przełączyć usługę. Token jest przechowywany zaszyfrowany i nigdy więcej niepokazywany.",
       "none": "Nieustawiony",
       "set": "Ustawiony",
       "unreadable": "Ustawiony, ale nieczytelny — wklej go ponownie",
-      "required": "Rooks działa jako usługa w tle macOS: misje Claude będą się nie udawać, dopóki nie ustawisz tokenu.",
+      "required": "Timon działa jako usługa w tle macOS: misje Claude będą się nie udawać, dopóki nie ustawisz tokenu.",
       "saved": "Token Claude zapisany.",
       "cleared": "Token Claude usunięty.",
       "clear": "Usuń"
@@ -3602,7 +3602,7 @@
     "disableTitle": "Wyłączyć {name}?",
     "disableHint": "Zniknie z selektorów. Nowe uruchomienia, które jawnie go używają, zostaną odrzucone, bez automatycznego przełączenia. Istniejące wybory poniżej zostaną zachowane.",
     "disable": "Wyłącz dostawcę",
-    "managedHint": "Możesz zmieniać nazwy, dodawać, usuwać i ukrywać modele oraz zmieniać nazwy, obrazki i model domyślny. Ustawieniami połączenia zarządza Rooks lub wtyczka dostawcy.",
+    "managedHint": "Możesz zmieniać nazwy, dodawać, usuwać i ukrywać modele oraz zmieniać nazwy, obrazki i model domyślny. Ustawieniami połączenia zarządza Timon lub wtyczka dostawcy.",
     "origins": {
       "builtin": "Wbudowany",
       "plugin": "Wtyczka",
@@ -3705,12 +3705,12 @@
     },
     "tabHints": {
       "routines": "Harmonogramy (cron): każdy cykl uruchamia akcje o stałej porze.",
-      "webhooks": "Usługa zewnętrzna wywołuje adres Rooks podpisany sekretem.",
-      "events": "Coś dzieje się w Rooks: zadanie się zamyka, misja się kończy, agent pisze, przychodzi powiadomienie."
+      "webhooks": "Usługa zewnętrzna wywołuje adres Timon podpisany sekretem.",
+      "events": "Coś dzieje się w Timon: zadanie się zamyka, misja się kończy, agent pisze, przychodzi powiadomienie."
     },
     "redirecting": "Strona Rutyny jest teraz kartą Rutyny w Wyzwalaczach…",
     "loopback": {
-      "body": "Demon nasłuchuje tylko na tej maszynie (pętla zwrotna). Webhook jest osiągalny z zewnątrz tylko przez tunel lub reverse proxy skonfigurowane przez ciebie: Rooks sam niczego nie otwiera.",
+      "body": "Demon nasłuchuje tylko na tej maszynie (pętla zwrotna). Webhook jest osiągalny z zewnątrz tylko przez tunel lub reverse proxy skonfigurowane przez ciebie: Timon sam niczego nie otwiera.",
       "none": "Trasa bez uwierzytelniania odpowiada tylko na wywołania wykonane na tej maszynie, bezpośrednio do demona: nigdy nie wystawiaj jej przez tunel."
     },
     "scheduleTriggers": "Wyzwalacze harmonogramu",
@@ -3722,7 +3722,7 @@
     "countOther": "{count} {count, plural, one {wyzwalacz} few {wyzwalacze} many {wyzwalaczy} other {wyzwalacza}}",
     "empty": {
       "schedule": "Brak wyzwalaczy harmonogramu.",
-      "webhook": "Brak webhooków. Utwórz webhook, aby usługa (GitHub, GitLab, bot…) mogła wrzucać pracę do Rooks.",
+      "webhook": "Brak webhooków. Utwórz webhook, aby usługa (GitHub, GitLab, bot…) mogła wrzucać pracę do Timon.",
       "event": "Brak wyzwalaczy zdarzeń."
     },
     "enable": "Kliknij, aby włączyć",
@@ -3738,7 +3738,7 @@
       "github": "Podpis GitHub",
       "gitlab": "Token GitLab",
       "standard": "Standard Webhooks",
-      "generic": "Podpis Rooks",
+      "generic": "Podpis Timon",
       "none": "Bez uwierzytelniania"
     },
     "events": {
@@ -3777,7 +3777,7 @@
     "secret": {
       "title": "Sekret webhooka",
       "outboundTitle": "Sekret podpisu wysyłanych wywołań",
-      "howtoOutbound": "Wklej go w usłudze odbierającej: każde wywołanie niesie webhook-id, webhook-timestamp i webhook-signature (Standard Webhooks, HMAC-SHA256 z „id.timestamp.body” tym sekretem whsec_). To nie jest sekret żadnego webhooka odbieranego przez Rooks.",
+      "howtoOutbound": "Wklej go w usłudze odbierającej: każde wywołanie niesie webhook-id, webhook-timestamp i webhook-signature (Standard Webhooks, HMAC-SHA256 z „id.timestamp.body” tym sekretem whsec_). To nie jest sekret żadnego webhooka odbieranego przez Timon.",
       "once": "Skopiuj go teraz: nie zostanie pokazany ponownie. Jeśli go zgubisz, nadaj webhookowi nowy.",
       "label": "Sekret (zamaskowany)",
       "copy": "Kopiuj sekret",
@@ -3789,7 +3789,7 @@
         "github": "GitHub: Settings repozytorium → Webhooks → Add webhook. Payload URL: adres poniżej, content type application/json, Secret: ten sekret.",
         "gitlab": "GitLab: Settings → Webhooks. URL: adres poniżej, Secret token: ten sekret. GitLab wysyła go bez zmian, więc przechwycone wywołanie można powtórzyć: wybierz schemat z podpisem, jeśli nadawca go oferuje.",
         "standard": "Standard Webhooks (Svix, Clerk, Resend…): wklej ten sekret podpisu (whsec_…) w ustawieniach punktu końcowego dostawcy.",
-        "generic": "Twój własny nadawca: wysyłaj X-Rooks-Timestamp (sekundy Unix) i X-Rooks-Signature: sha256=<hex HMAC-SHA256 z „timestamp.body” tym sekretem>. Wywołania starsze niż 5 minut są odrzucane.",
+        "generic": "Twój własny nadawca: wysyłaj X-Timon-Timestamp (sekundy Unix) i X-Timon-Signature: sha256=<hex HMAC-SHA256 z „timestamp.body” tym sekretem>. Wywołania starsze niż 5 minut są odrzucane.",
         "none": "Brak sekretu: ta trasa odpowiada tylko na wywołania wykonane na tej maszynie."
       }
     },
@@ -3825,7 +3825,7 @@
         "github": "X-Hub-Signature-256: HMAC treści. Sekret jest generowany przy tworzeniu.",
         "gitlab": "X-Gitlab-Token: sam sekret, wysyłany z każdym wywołaniem.",
         "standard": "Nagłówki webhook-id, webhook-timestamp i webhook-signature, ±5 minut.",
-        "generic": "X-Rooks-Timestamp i X-Rooks-Signature, ±5 minut.",
+        "generic": "X-Timon-Timestamp i X-Timon-Signature, ±5 minut.",
         "none": "Bez dowodu pochodzenia: akceptowane są tylko wywołania wykonane na tej maszynie, bezpośrednio do demona."
       },
       "event": "Zdarzenie",
@@ -3871,7 +3871,7 @@
       "actionN": "Akcja {n}",
       "actionType": "Typ akcji {n}",
       "webhookUrl": "Adres (https) *",
-      "webhookHint": "Rooks wysyła tu POST '{type, timestamp, data}', gdzie data to dane w otrzymanej postaci, podpisane sekretem pokazanym jednorazowo przy zapisie. Ponawiane z wycofywaniem do 10 prób. Wszystko, co przepuści filtr, opuszcza tę maszynę.",
+      "webhookHint": "Timon wysyła tu POST '{type, timestamp, data}', gdzie data to dane w otrzymanej postaci, podpisane sekretem pokazanym jednorazowo przy zapisie. Ponawiane z wycofywaniem do 10 prób. Wszystko, co przepuści filtr, opuszcza tę maszynę.",
       "removeAction": "usuń",
       "addAction": "+ Akcja",
       "todoText": "Pomysł *",
@@ -3983,7 +3983,7 @@
     "deleteConfirm": "Usunąć konto „{name}”? Jego logowanie zostanie usunięte z tej maszyny, a ustawieni na nim agenci i zadania nie będą działać, dopóki nie wybierzesz innego konta.",
     "deleted": "Konto usunięte",
     "signedInAs": "Zalogowano jako {identity}",
-    "notSignedIn": "Niezalogowane przez Rooks",
+    "notSignedIn": "Niezalogowane przez Timon",
     "ownerInstance": "Instancja (misje bez właściciela)",
     "errorGeneric": "Żądanie nie powiodło się. Spróbuj ponownie.",
     "rename": "Zmień nazwę",
@@ -4018,7 +4018,7 @@
       "create": "Utwórz i zaloguj"
     },
     "login": {
-      "starting": "Rozpoczynanie logowania na maszynie Rooks…",
+      "starting": "Rozpoczynanie logowania na maszynie Timon…",
       "openPage": "Otwórz stronę logowania",
       "copy": "Kopiuj",
       "copied": "Skopiowano",
@@ -4044,8 +4044,8 @@
       "mismatch": "To konto należy do {identity}: zaloguj się tą subskrypcją lub dodaj inne konto.",
       "not_signed_in": "Logowanie nie zostało ukończone. Zacznij od nowa.",
       "cli_failed": "Narzędzie wiersza poleceń dostawcy zawiodło podczas logowania. Zacznij od nowa.",
-      "cli_missing": "Narzędzie wiersza poleceń dostawcy nie jest zainstalowane na maszynie Rooks.",
-      "unsupported": "Tego dostawcy nie można zalogować z Rooks."
+      "cli_missing": "Narzędzie wiersza poleceń dostawcy nie jest zainstalowane na maszynie Timon.",
+      "unsupported": "Tego dostawcy nie można zalogować z Timon."
     }
   },
   "mcpPage": {
@@ -4125,7 +4125,7 @@
       "restart": "Zacznij rozmowę od nowa",
       "skipFailed": "Nie udało się pominąć tego kroku. Spróbuj ponownie za chwilę.",
       "tool_error": {
-        "title": "Twój asystent nie może używać Rooks",
+        "title": "Twój asystent nie może używać Timon",
         "body": "Jego żądania są odrzucane, więc nie może dokończyć swojej konfiguracji. Pomiń ten krok: nazwę i charakter możesz mu nadać później, na jego stronie."
       },
       "interrupted": {
@@ -4141,7 +4141,7 @@
         "body": "Jeszcze nic nie powiedział. Poczekaj dalej albo pomiń ten krok i skonfiguruj go później na jego stronie."
       },
       "disconnected": {
-        "title": "Rooks nie odpowiada",
+        "title": "Timon nie odpowiada",
         "body": "Połączenie zostało utracone. Poczekaj chwilę albo pomiń ten krok i skonfiguruj asystenta później na jego stronie."
       }
     },
@@ -4149,7 +4149,7 @@
     "voice": "Dyktuj",
     "voiceStop": "Zatrzymaj dyktowanie",
     "send": "Wyślij",
-    "toTour": "Rozejrzyjmy się po Rooks…",
+    "toTour": "Rozejrzyjmy się po Timon…",
     "starting": "Budzenie asystenta…",
     "name": {
       "title": "Jak ma się nazywać twój asystent?",
@@ -4157,13 +4157,13 @@
       "submitNamed": "Poznaj: {name}"
     },
     "troubleshoot": {
-      "title": "Aby kontynuować, Rooks potrzebuje jednego dostępnego modelu AI. Zainstaluj jeden z tych CLI i zaloguj się w nim:",
+      "title": "Aby kontynuować, Timon potrzebuje jednego dostępnego modelu AI. Zainstaluj jeden z tych CLI i zaloguj się w nim:",
       "other": "Albo połącz inny model kluczem API w {settingsPath}.",
       "openSettings": "Otwórz Ustawienia"
     },
     "unavailable": {
       "title": "Twój asystent nie może jeszcze wystartować",
-      "body": "Rooks nie mógł połączyć się z modelem AI. Sprawdź, czy konto modelu jest połączone w {settingsPath}, i spróbuj ponownie — albo pomiń ten krok i zajmij się tym później.",
+      "body": "Timon nie mógł połączyć się z modelem AI. Sprawdź, czy konto modelu jest połączone w {settingsPath}, i spróbuj ponownie — albo pomiń ten krok i zajmij się tym później.",
       "retry": "Spróbuj ponownie"
     },
     "avatar": {
@@ -4178,10 +4178,10 @@
   },
   "guidedTour": {
     "menu": "Przewodnik",
-    "firstMessage": "Oprowadź mnie po Rooks i pomóż mi urządzić ekran.",
+    "firstMessage": "Oprowadź mnie po Timon i pomóż mi urządzić ekran.",
     "failed": "Nie udało się uruchomić przewodnika. Spróbuj ponownie z menu wyglądu.",
     "offer": {
-      "title": "Chcesz krótko poznać Rooks?",
+      "title": "Chcesz krótko poznać Timon?",
       "body": "Twój asystent oprowadzi cię i pomoże urządzić ekran. Może otwierać za ciebie strony; przewodnik możesz zakończyć w każdej chwili. Później znajdziesz go w menu wyglądu (ikona palety) › Przewodnik.",
       "start": "Oprowadź mnie",
       "later": "Nie teraz",
@@ -4274,7 +4274,7 @@
       "emptyFooter": "nic",
       "apply": "Zastosuj do menu"
     },
-    "unknownKind": "Ta wersja Rooks nie może pokazać tej propozycji.",
+    "unknownKind": "Ta wersja Timon nie może pokazać tej propozycji.",
     "errors": {
       "stale": "To rozmieszczenie nie pasuje już do twojego konta: {reasons}",
       "already_decided": "Na tę propozycję już odpowiedziano.",
@@ -4290,7 +4290,7 @@
       "mission": "Przechowywany do końca tej misji.",
       "persistent": "Przechowywany w sejfie po tej misji."
     },
-    "hosts": "Wysyłany tylko do {hosts} (nagłówek {header}) przez Rooks — agent nigdy go nie widzi.",
+    "hosts": "Wysyłany tylko do {hosts} (nagłówek {header}) przez Timon — agent nigdy go nie widzi.",
     "origin": "Wpisywany tylko na stronie {origin}, we wbudowanej przeglądarce — agent nigdy go nie widzi, ale po wypełnieniu ta strona go zawiera.",
     "environment": "Trafia do środowiska agenta przy jego następnym uruchomieniu: wszystko, co uruchomi, może go odczytać.",
     "field": "Wartość {name}",
@@ -4318,7 +4318,7 @@
     }
   },
   "uiDocument": {
-    "unavailable": "Dokumenty są wyłączone w tym Rooks: tego nie można pokazać.",
+    "unavailable": "Dokumenty są wyłączone w tym Timon: tego nie można pokazać.",
     "expired": "Ten dokument nie jest już przechowywany: jego rozmowa zakończyła się jakiś czas temu.",
     "dismissed": "Ten dokument został zamknięty.",
     "answered": "odpowiedziano",
@@ -4392,7 +4392,7 @@
     "unknownError": "nieznany błąd",
     "turnInFlight": "Agent odpowiada: kompaktuj, gdy skończy.",
     "alreadyRunning": "Kompaktowanie tej rozmowy już trwa.",
-    "lost": "Rooks stracił ślad tego kompaktowania (usługa została zrestartowana). Spróbuj ponownie.",
+    "lost": "Timon stracił ślad tego kompaktowania (usługa została zrestartowana). Spróbuj ponownie.",
     "traceRequested": "Zażądano kompaktowania",
     "traceForked": "Skompaktowano do nowej rozmowy",
     "traceNativeTokens": "Rozmowa skompaktowana · {from} → {to} tokenów",
@@ -4422,14 +4422,14 @@
   "telemetrySettings": {
     "tab": "Prywatność",
     "title": "Anonimowe statystyki użycia",
-    "description": "Rooks może informować swój zespół, jak aplikacja jest używana — które funkcje, jak często tury się udają, gdzie zatrzymuje się konfiguracja — abyśmy wiedzieli, co naprawić najpierw. To anonimowe: losowy identyfikator wygenerowany na tym komputerze, nigdy twoje konto ani maszyna.",
+    "description": "Timon może informować swój zespół, jak aplikacja jest używana — które funkcje, jak często tury się udają, gdzie zatrzymuje się konfiguracja — abyśmy wiedzieli, co naprawić najpierw. To anonimowe: losowy identyfikator wygenerowany na tym komputerze, nigdy twoje konto ani maszyna.",
     "share": "Udostępniaj anonimowe statystyki użycia",
     "shareDescription": "Domyślnie włączone. Wyłączenie natychmiast zatrzymuje wysyłanie; ostatnia wiadomość odnotowuje, że to wyłączyłeś.",
     "lockedEnv": "Ustawione przez zmienną środowiskową TIMON_TELEMETRY: zmień je tam.",
     "lockedEnvMalformed": "TIMON_TELEMETRY ma wartość, która nie jest ani yes, ani no: udostępnianie jest wyłączone.",
-    "lockedConfig": "Ustawione przez telemetry.enabled w rooks.config.json: zmień je tam.",
-    "lockedConfigMalformed": "telemetry.enabled w rooks.config.json nie jest ani true, ani false: udostępnianie jest wyłączone.",
-    "inactiveBuild": "Ta kompilacja Rooks niczego nie wysyła, niezależnie od tego ustawienia.",
+    "lockedConfig": "Ustawione przez telemetry.enabled w timon.config.json: zmień je tam.",
+    "lockedConfigMalformed": "telemetry.enabled w timon.config.json nie jest ani true, ani false: udostępnianie jest wyłączone.",
+    "inactiveBuild": "Ta kompilacja Timon niczego nie wysyła, niezależnie od tego ustawienia.",
     "sentTitle": "Co jest wysyłane",
     "sent": "Wersja aplikacji, system operacyjny, poziom licencji; uruchomienia i aktualizacje aplikacji; kroki konfiguracji; tury, ich czas trwania, wynik i liczby tokenów; używane wbudowane narzędzia i dostawcy; działania na zadaniach, wtyczkach, licencji i przeglądarce jako liczniki.",
     "neverTitle": "Co nigdy nie jest wysyłane",
@@ -4437,7 +4437,7 @@
     "learnMore": "Przeczytaj informację o prywatności",
     "loadFailed": "Nie udało się odczytać tego ustawienia.",
     "saveFailed": "Nie udało się zapisać tego ustawienia.",
-    "forbidden": "Tylko administrator tego Rooks może zmienić to ustawienie."
+    "forbidden": "Tylko administrator tego Timon może zmienić to ustawienie."
   },
   "grepaiPanel": {
     "project": "projekt",

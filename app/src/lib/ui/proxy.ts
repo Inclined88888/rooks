@@ -16,7 +16,7 @@
  */
 import { cookies, headers as requestHeaders } from 'next/headers';
 import { machineTarget, relayFetch, targetFor, type RelayOptions } from '../machines/target';
-import { browserOriginHeaders, proxyAuthHeaders, readSessionToken } from './proxy-auth';
+import { browserOriginHeaders, proxyAuthHeaders, SESSION_COOKIE } from './proxy-auth';
 import { htmlFailureAsJson } from './proxy-errors';
 import { uiDocumentProxyHeaders } from './ui-document-headers';
 
@@ -74,7 +74,7 @@ function browserProxyHeaders(): Record<string, string> {
 
 function sessionTokenFromCookies(): string | undefined {
   try {
-    return readSessionToken((name) => cookies().get(name)?.value);
+    return cookies().get(SESSION_COOKIE)?.value;
   } catch {
     return undefined;
   }

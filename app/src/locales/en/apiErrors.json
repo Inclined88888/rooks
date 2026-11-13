@@ -39,7 +39,7 @@
     "workspace_unknown": "Unknown workspace.",
     "project_no_cwd": "This project has no folder configured.",
     "invalid_repo": "This repository is not a folder inside the project.",
-    "path_unknown": "This path is unknown to Rooks: it is neither an agent folder nor a task worktree.",
+    "path_unknown": "This path is unknown to Timon: it is neither an agent folder nor a task worktree.",
     "secret_unknown": "Unknown secret.",
     "vault_unavailable": "The secrets vault is unavailable.",
     "license_server_unreachable": "The license server cannot be reached.",
@@ -71,7 +71,7 @@
     "email_code_origin_limited": "Too many codes were requested from this network. Try again in {seconds, plural, one {# second} other {# seconds}}.",
     "email_code_busy": "Too many codes are pending. Try again in {seconds, plural, one {# second} other {# seconds}}.",
     "email_connection_required": "An internet connection is needed to confirm the email address.",
-    "email_service_unavailable": "Rooks's email service is unavailable right now. Try again in a few minutes.",
+    "email_service_unavailable": "Timon's email service is unavailable right now. Try again in a few minutes.",
     "email_rate_limited": "Too many emails were sent to this address. Try again in {seconds, plural, one {# second} other {# seconds}}.",
     "email_rejected": "This email address cannot receive a code.",
     "password_too_short": "The password must be at least {min} characters."

@@ -8,7 +8,7 @@
     "title": "官方连接器",
     "subtitle": "一键连接智能体所用服务的 MCP 服务器。",
     "count": "已连接 {connected} 个 · 共 {total} 个连接器",
-    "loadFailed": "无法加载连接器。请确认 Rooks 正在运行，然后重新加载页面。",
+    "loadFailed": "无法加载连接器。请确认 Timon 正在运行，然后重新加载页面。",
     "noMatch": "没有符合搜索条件的连接器。",
     "footer": "每个连接器都是由发布者托管的远程 MCP 服务器，会接收智能体发送的数据。建立连接后，还需在智能体的 MCP 服务器设置中添加该连接器。仅加载本地 MCP 服务器的后端会跳过远程连接器。",
     "category": {
@@ -40,7 +40,7 @@
         "blocked": "已存在同名的 MCP 服务器"
       },
       "examples": "你可以这样问",
-      "keyKept": "密钥保存在 Rooks 的密钥库中，只会发送给此连接器。",
+      "keyKept": "密钥保存在 Timon 的密钥库中，只会发送给此连接器。",
       "vaultOff": "密钥库已关闭，无法连接此连接器。",
       "getKey": "获取密钥",
       "consentPending": "请在打开的页面上登录，然后返回这里。",
@@ -104,7 +104,7 @@
     "unauthorized": "请重新登录后再保存此技能。",
     "forbidden": "你的账号无权管理技能。",
     "failed": "无法保存技能。请检查 ID 和指令后重试。",
-    "network": "无法连接 Rooks。请检查网络连接后重试。",
+    "network": "无法连接 Timon。请检查网络连接后重试。",
     "idLabel": "技能 ID",
     "idError": "ID 只能包含小写字母、数字、'.'、'_' 或 '-'，且不能是 '.' 或 '..'。",
     "contentError": "请先填写指令，再保存技能。"
@@ -208,7 +208,7 @@
       "plugin": "插件"
     },
     "sectionTimon": "{brand} 技能",
-    "sectionTimonHint": "~/.rooks/skills — 可分配给智能体，列入其技能目录或完整导入",
+    "sectionTimonHint": "~/.timon/skills — 可分配给智能体，列入其技能目录或完整导入",
     "sectionUser": "全局 Claude 技能",
     "sectionUserHint": "~/.claude/skills 和 ~/.claude/commands — 任务会话不会加载，需先导入 {brand} 才能分配",
     "sectionProject": "项目技能",
@@ -251,7 +251,7 @@
     "forbidden": "你的账号无权删除此任务或其验证链中的部分任务。",
     "notFound": "此任务已不存在，或你的账号无权访问。请刷新看板。",
     "failed": "无法删除任务，请重试。",
-    "network": "无法连接 Rooks。请检查网络连接后重试。"
+    "network": "无法连接 Timon。请检查网络连接后重试。"
   },
   "starterWidgets": {
     "loading": "正在加载…",
@@ -290,7 +290,7 @@
     "moveToTeam": "移入团队",
     "leaveTeam": "退出团队",
     "forbidden": "你的账号无权修改团队。",
-    "daemonUnreachable": "无法连接 Rooks。",
+    "daemonUnreachable": "无法连接 Timon。",
     "writeFailed": "更改请求被拒绝。",
     "newBot": "新建 TIM",
     "welcomeConversation": "{name} 的欢迎对话",
@@ -839,12 +839,12 @@
     "emailSending": "正在发送…",
     "emailRequested": "确认链接已生成。",
     "emailError": "无法提交更换申请。",
-    "emailLinkHint": "请从新邮箱打开此链接进行确认。Rooks 不会发送邮件，请像发送邀请一样自行复制并发送链接。",
+    "emailLinkHint": "请从新邮箱打开此链接进行确认。Timon 不会发送邮件，请像发送邀请一样自行复制并发送链接。",
     "emailLinkCopy": "复制链接",
     "emailLinkCopied": "链接已复制。",
     "emailLinkCopyFailed": "无法复制链接。",
     "licenseTitle": "许可证密钥",
-    "licenseDescription": "Rooks 可免费使用，一个账号即可使用所有功能和插件。若要在此机器上使用更多账号，请输入许可证密钥以启用付费方案。",
+    "licenseDescription": "Timon 可免费使用，一个账号即可使用所有功能和插件。若要在此机器上使用更多账号，请输入许可证密钥以启用付费方案。",
     "licensePlan": "方案",
     "licenseFree": "免费版",
     "licenseFreeHint": "无需密钥、注册或续订。",
@@ -874,7 +874,7 @@
     "paymentActive": "无欠款",
     "paymentPastDue": "已逾期",
     "noneTitle": "免费版，无需许可证",
-    "noneDescription": "Rooks 在本地运行，允许一个已启用的超级管理员账号使用全部功能和插件。无需密钥、注册或续订。只有在需要添加账号时才需激活许可证。",
+    "noneDescription": "Timon 在本地运行，允许一个已启用的超级管理员账号使用全部功能和插件。无需密钥、注册或续订。只有在需要添加账号时才需激活许可证。",
     "buy": "在 {domain} 查看许可证",
     "replaceTitle": "更换许可证",
     "machineTitle": "此机器",
@@ -902,7 +902,7 @@
     "pastDueUntil": "付款已逾期，订阅将于 {date} 到期",
     "notActivated": "当前使用免费版，添加账号需要许可证",
     "activate": "激活",
-    "offlineSince": "自 {date} 起无法连接许可证服务器。离线宽限期内仍可使用付费权益，宽限期结束后 Rooks 将恢复为免费版。",
+    "offlineSince": "自 {date} 起无法连接许可证服务器。离线宽限期内仍可使用付费权益，宽限期结束后 Timon 将恢复为免费版。",
     "buildEndsSoon": "此测试版本将于 {date} 停止运行。请在此之前安装最新版本。",
     "buildEndsUrgent": "此测试版本将于 {date} 停止运行。请立即安装最新版本。",
     "licenseEndsSoon": "你的许可证将于 {date} 到期。请在此之前输入新密钥。",
@@ -937,7 +937,7 @@
     "retry": "重试"
   },
   "activate": {
-    "title": "激活 Rooks",
+    "title": "激活 Timon",
     "description": "粘贴你收到的激活密钥（需连接许可证服务器兑换），或粘贴许可证令牌（在本地验证，无需联网）。",
     "rejected": "许可证被拒绝",
     "deviceMismatch": "当前设备为 {device}",
@@ -1181,11 +1181,11 @@
         "fileSize": "此照片超过 25 MB。请选择较小的文件。",
         "decode": "无法打开此图片。请尝试重新导出为 JPEG 或 PNG。",
         "encode": "无法优化此照片以便上传。请尝试较小的图片。",
-        "network": "无法连接到照片服务。请检查与 Rooks 的连接后重试。",
+        "network": "无法连接到照片服务。请检查与 Timon 的连接后重试。",
         "session": "没有权限上传照片。请重新登录后重试。",
-        "unavailable": "此服务器不支持上传照片。必须启动更新后的 Rooks 守护进程，仅刷新页面无效。",
+        "unavailable": "此服务器不支持上传照片。必须启动更新后的 Timon 守护进程，仅刷新页面无效。",
         "server": "服务器无法接收此照片。请重试。",
-        "storage": "Rooks 无法将照片保存到磁盘。请检查可用空间和写入权限。"
+        "storage": "Timon 无法将照片保存到磁盘。请检查可用空间和写入权限。"
       }
     },
     "menu": {
@@ -1358,7 +1358,7 @@
     "categories": "类别",
     "selectCategory": "类别",
     "modified": "已修改",
-    "definedInConfig": "由 rooks.config.json 指定",
+    "definedInConfig": "由 timon.config.json 指定",
     "forcedByEnv": "由环境变量强制指定",
     "default": "默认值",
     "empty": "（空）",
@@ -1372,7 +1372,7 @@
     "secretConfigured": "已配置密钥"
   },
   "devicesSettings": {
-    "description": "这些设备可通过另一个 Rooks 界面，使用你的账号权限访问此计算机。你可以用一次性代码授权设备，也可以随时撤销授权。",
+    "description": "这些设备可通过另一个 Timon 界面，使用你的账号权限访问此计算机。你可以用一次性代码授权设备，也可以随时撤销授权。",
     "authorize": "授权新设备",
     "enterCode": "输入另一台计算机的代码",
     "enterCodeOff": {
@@ -1386,7 +1386,7 @@
     "codeTitle": "配对码",
     "codeHint": "在用于控制此计算机的另一台计算机上，打开 {path} → 添加计算机（须先启用 Machines 插件），然后输入此配对码和此计算机的地址。配对码仅可使用一次。",
     "reachable": {
-      "lead": "Rooks 可以通过 tailscale serve 将此计算机的守护进程发布到你的 tailnet。只有你自己的 tailnet 设备可以访问，公网无法访问。",
+      "lead": "Timon 可以通过 tailscale serve 将此计算机的守护进程发布到你的 tailnet。只有你自己的 tailnet 设备可以访问，公网无法访问。",
       "action": "允许访问此计算机",
       "retry": "重试",
       "busy": "正在发布…",
@@ -1402,7 +1402,7 @@
         "not_connected": "已安装 Tailscale，但此计算机尚未连接到你的 tailnet。",
         "serve_disabled": "你的 tailnet 尚未启用 HTTPS，Tailscale 无法发布此计算机。",
         "permission": "Tailscale 拒绝更改配置：此账号没有权限。",
-        "unreadable": "Tailscale 没有返回 Rooks 可识别的状态信息。原始消息如下。",
+        "unreadable": "Tailscale 没有返回 Timon 可识别的状态信息。原始消息如下。",
         "no_free_port": "此计算机的 8443、10000 和 443 端口均已被 tailscale serve 占用。请释放其中一个端口后重试。",
         "listen_not_loopback": "守护进程监听的是网络地址，而非本机回环地址，tailscale serve 无法连接。请将 daemon.listen.host 设为 127.0.0.1。",
         "failed": "Tailscale 无法发布此计算机。",
@@ -1412,33 +1412,33 @@
     },
     "tailscale": {
       "checking": "正在检查此计算机上的 Tailscale…",
-      "installLead": "此计算机未安装 Tailscale。Rooks 可以从 Tailscale 官网下载安装。系统会要求你输入密码，Rooks 不会接触你的密码。",
+      "installLead": "此计算机未安装 Tailscale。Timon 可以从 Tailscale 官网下载安装。系统会要求你输入密码，Timon 不会接触你的密码。",
       "install": "安装 Tailscale",
       "downloading": "正在从 Tailscale 官网下载安装包…",
       "verifying": "正在验证安装包是否由 Tailscale 签名…",
       "installingMac": "请在 macOS 安装器窗口中完成安装（安装器会要求输入密码）…",
       "installingWindows": "请在 Windows 管理员权限提示中确认，以完成安装…",
       "installingLinux": "请在系统对话框中输入密码，以完成安装…",
-      "handoffMac": "Rooks 会打开 macOS 安装器。请在安装器中完成安装（需要输入密码）…",
+      "handoffMac": "Timon 会打开 macOS 安装器。请在安装器中完成安装（需要输入密码）…",
       "reopenInstaller": "重新打开安装器",
-      "handoffWindows": "Rooks 会打开 Tailscale 安装器。请在 Windows 管理员权限提示中确认，以完成安装…",
+      "handoffWindows": "Timon 会打开 Tailscale 安装器。请在 Windows 管理员权限提示中确认，以完成安装…",
       "connectLead": "已安装 Tailscale。请登录以将此计算机接入你的 tailnet，浏览器将打开 Tailscale 页面。",
       "connect": "登录 Tailscale",
       "waitingLogin": "正在等待你在浏览器中登录 Tailscale…",
       "openSignIn": "打开 Tailscale 登录页面",
       "ready": "Tailscale 已连接。",
-      "operatorLead": "允许 Rooks 管理此计算机上的 Tailscale。系统只需验证一次密码，之后 Rooks 发布此计算机时无需再输入密码。",
-      "operator": "允许 Rooks 管理 Tailscale",
+      "operatorLead": "允许 Timon 管理此计算机上的 Tailscale。系统只需验证一次密码，之后 Timon 发布此计算机时无需再输入密码。",
+      "operator": "允许 Timon 管理 Tailscale",
       "operatorWaiting": "请在系统对话框中输入密码…",
       "failures": {
         "download_failed": "无法从 Tailscale 官网下载安装包。",
         "checksum_mismatch": "下载的安装包与 Tailscale 发布的版本不符，未打开。",
         "signature_invalid": "下载的安装包没有 Tailscale 的有效签名，未打开。",
-        "no_desktop": "Rooks 在后台运行，无法访问桌面，因此无法从此浏览器打开安装器。请在此计算机的 Rooks 桌面应用中点击「安装 Tailscale」，或运行下方命令。",
-        "elevation_unavailable": "Rooks 无法在此计算机上请求管理员权限。",
+        "no_desktop": "Timon 在后台运行，无法访问桌面，因此无法从此浏览器打开安装器。请在此计算机的 Timon 桌面应用中点击「安装 Tailscale」，或运行下方命令。",
+        "elevation_unavailable": "Timon 无法在此计算机上请求管理员权限。",
         "cancelled": "安装已取消。",
         "installer_failed": "Tailscale 安装未完成。",
-        "unsupported": "Rooks 不支持在此系统上安装 Tailscale。",
+        "unsupported": "Timon 不支持在此系统上安装 Tailscale。",
         "not_installed": "此计算机未安装 Tailscale。",
         "not_running": "Tailscale 尚未运行。请打开 Tailscale 应用，完成设置后重试。",
         "permission": "Tailscale 拒绝操作：此账号无权更改其设置。",
@@ -1490,7 +1490,7 @@
   },
   "integrationReceipts": {
     "title": "消息集成",
-    "description": "这里显示通过消息集成收到但未能处理的消息。Rooks 会重试约一天，之后停止重试，并在保留期内将消息留在这里，供你重新处理。",
+    "description": "这里显示通过消息集成收到但未能处理的消息。Timon 会重试约一天，之后停止重试，并在保留期内将消息留在这里，供你重新处理。",
     "healthy": "所有消息均处理正常。",
     "stage": {
       "inbox": "正在启动任务会话",
@@ -1559,7 +1559,7 @@
   },
   "pluginWebhooks": {
     "title": "入站 Webhook",
-    "description": "GitHub、Stripe、Slack 等 Rooks 外部服务可通过这些地址调用此插件。每次调用都会按该服务的签名格式验证，验证通过后才会转交给插件。",
+    "description": "GitHub、Stripe、Slack 等 Timon 外部服务可通过这些地址调用此插件。每次调用都会按该服务的签名格式验证，验证通过后才会转交给插件。",
     "copyUrl": "复制地址",
     "urlCopied": "已复制地址",
     "notConfigured": "尚未设置密钥，调用将被拒绝。",
@@ -1620,7 +1620,7 @@
     },
     "tab": {
       "instructions": {
-        "preamble": "Rooks 前置指令",
+        "preamble": "Timon 前置指令",
         "global": "全局指令"
       },
       "interface": {
@@ -2037,7 +2037,7 @@
     "loadOlderMessages": "显示更早的消息",
     "loadingOlderMessages": "正在加载更早的消息…",
     "turnInterrupted": "当前轮次已中断",
-    "turnCutByRestart": "Rooks 已重启，当前轮次已中断",
+    "turnCutByRestart": "Timon 已重启，当前轮次已中断",
     "conversationResumable": "对话仍可恢复，下一条消息将沿用当前上下文",
     "hardStop": "对话已终止：此后端无法恢复会话，下一条消息将从头开始",
     "spawnFailedMissing": "无法启动 {backend} CLI：在此计算机上找不到命令 `{binary}`。请安装它，或在配置中的 `host.binaries.{binary}` 指定其路径。",
@@ -2064,9 +2064,9 @@
     "providerRecovered": "重试 {count} 次后已重新连接",
     "providerRecoveredOne": "重试 1 次后已重新连接",
     "providerExhausted": "重试 {count} 次后仍无法连接 {provider} 的服务器",
-    "providerExhaustedWithTimon": "提供商重试 {count} 次、Rooks 重试 {timon} 次后，仍无法连接 {provider} 的服务器",
-    "timonRetryIn": "Rooks 将在 {seconds} 秒后重试（{attempt}/{max}）…",
-    "timonRetryRunning": "Rooks 正在重试（{attempt}/{max}）…",
+    "providerExhaustedWithTimon": "提供商重试 {count} 次、Timon 重试 {timon} 次后，仍无法连接 {provider} 的服务器",
+    "timonRetryIn": "Timon 将在 {seconds} 秒后重试（{attempt}/{max}）…",
+    "timonRetryRunning": "Timon 正在重试（{attempt}/{max}）…",
     "retryTurn": "重试",
     "retryTurnUnavailable": "无法重试：上一条消息已不在此对话中。",
     "quotaExhaustedTitle": "配额已用尽",
@@ -2085,7 +2085,7 @@
     "steerUnavailableQueued": "暂时无法调整此智能体的当前轮次，消息已排队，将在本轮结束时发送",
     "messageQueuedInline": "消息已排队，将在当前轮次结束时发送",
     "voiceDictationUnavailable": "此浏览器不支持语音输入。",
-    "voiceDictationDesktopUnavailable": "此桌面应用无法使用语音输入。请更新 Rooks；如果仍无法使用，则可能是此计算机不受支持。也可以在 Chrome 或 Edge 中打开 Rooks 使用此功能。",
+    "voiceDictationDesktopUnavailable": "此桌面应用无法使用语音输入。请更新 Timon；如果仍无法使用，则可能是此计算机不受支持。也可以在 Chrome 或 Edge 中打开 Timon 使用此功能。",
     "dictationUnavailable": "语音输入不可用：{error}",
     "messagePlaceholder": "向 {name} 发消息…",
     "stopDictation": "停止语音输入",
@@ -2206,7 +2206,7 @@
     "openFailed": "无法打开",
     "openedInExplorer": "已在文件管理器中打开：{path}",
     "openRootInExplorer": "在系统文件管理器中打开根目录",
-    "revealNoDesktop": "此文件位于运行 Rooks 守护进程的计算机上，但该计算机没有可显示文件的桌面会话。请在该计算机上使用 Rooks 桌面应用打开它。",
+    "revealNoDesktop": "此文件位于运行 Timon 守护进程的计算机上，但该计算机没有可显示文件的桌面会话。请在该计算机上使用 Timon 桌面应用打开它。",
     "refreshFiles": "刷新文件列表",
     "cannotOpen": "无法打开 {path}",
     "dirtyWorkingTreeConfirm": "工作树中有 {count} 个文件存在未提交的更改。仍要切换到“{branch}”吗？",
@@ -2324,15 +2324,15 @@
     }
   },
   "timonPreamble": {
-    "title": "Rooks 前置指令",
-    "description": "每次启动时动态生成，作为第一段内容发送给每个智能体。此内容由 Rooks 提供，并非来自你的文件，因此只读。此处显示的是为主智能体生成的内容。",
+    "title": "Timon 前置指令",
+    "description": "每次启动时动态生成，作为第一段内容发送给每个智能体。此内容由 Timon 提供，并非来自你的文件，因此只读。此处显示的是为主智能体生成的内容。",
     "empty": "此智能体没有前置指令。",
     "loading": "正在读取前置指令…",
     "error": "无法读取前置指令：{message}"
   },
   "globalInstructions": {
     "title": "全局指令",
-    "description": "适用于所有智能体的要求，例如使用的语言、提交信息的写法和测试方式。每次启动时紧接在 Rooks 前置指令之后发送。项目规则应写在项目的 AGENTS.md 中，智能体专属规则应写在其身份文档中。",
+    "description": "适用于所有智能体的要求，例如使用的语言、提交信息的写法和测试方式。每次启动时紧接在 Timon 前置指令之后发送。项目规则应写在项目的 AGENTS.md 中，智能体专属规则应写在其身份文档中。",
     "path": "文件：{path}",
     "limit": "{tokens} · 最多 {max} 个字符",
     "empty": "尚无全局指令。智能体启动时不会收到你的全局指令。",
@@ -2443,9 +2443,9 @@
       "not_found": "此设备上不存在该文件夹。",
       "not_a_directory": "此路径指向文件，而不是文件夹。",
       "relative_path": "请输入从磁盘根目录开始的完整路径。",
-      "unreadable": "Rooks 无法读取此设备上的该文件夹。",
+      "unreadable": "Timon 无法读取此设备上的该文件夹。",
       "forbidden": "你的账号无法浏览此设备上的文件夹。请直接输入路径。",
-      "outdated": "此设备上的 Rooks 版本较旧，无法列出文件夹。请直接输入路径。",
+      "outdated": "此设备上的 Timon 版本较旧，无法列出文件夹。请直接输入路径。",
       "failed": "无法读取此设备上的文件夹。请重试或直接输入路径。"
     },
     "file": {
@@ -2462,7 +2462,7 @@
       "selected": "已选择：{path}",
       "errors": {
         "forbidden": "只有管理员可以浏览此设备上的文件。",
-        "outdated": "此设备上的 Rooks 版本较旧，无法列出文件。请先更新。"
+        "outdated": "此设备上的 Timon 版本较旧，无法列出文件。请先更新。"
       }
     }
   },
@@ -2501,7 +2501,7 @@
     },
     "name": "名称",
     "nameHint": "显示在关系图和控制台中",
-    "directoryPickerUnavailable": "请使用最新版 Rooks 桌面应用浏览文件夹，也可以直接输入路径。",
+    "directoryPickerUnavailable": "请使用最新版 Timon 桌面应用浏览文件夹，也可以直接输入路径。",
     "directoryPickerFailed": "无法打开文件夹选择器。你可以直接输入路径。",
     "imageInvalid": "请选择图片文件（png、jpg、webp、gif）",
     "imageTooLarge": "图片过大（最大 8 MB）",
@@ -2558,7 +2558,7 @@
     "permissionHintMcpBridge": "此后端会裁定每一次工具调用：情况明确时由分类器直接决定，只有无法明确判断时才会在界面上显示「允许／拒绝」卡片。",
     "mcpIntro": "你自行添加的模型上下文协议（MCP）服务器。此处选中的服务器将在每次启动时连接到此智能体。管理入口：",
     "mcpEmpty": "尚未添加 MCP 服务器。添加入口：",
-    "mcpBuiltinTitle": "Rooks 内置功能：始终启用，无需授权",
+    "mcpBuiltinTitle": "Timon 内置功能：始终启用，无需授权",
     "mcpBuiltinHint": "无论使用哪个后端或在下方选择了什么，每个智能体都可使用这些功能。看板任务的 MCP 覆盖设置也不会移除它们。部分 timon 工具（创建智能体或项目、声明 MCP 服务器）还要求你的账号在「用户」页面拥有相应权限，此列表不会更改这些权限。",
     "mcpBuiltinTimon": "看板、任务会话、智能体、记忆及本文档",
     "mcpBuiltinAsk": "在聊天中向你提问的表单",
@@ -2567,7 +2567,7 @@
     "permissionHintSandbox": "此后端无法在单轮交互中途裁定权限。启动时会将权限模式转换为沙箱级别（plan → read-only，bypassPermissions → 完全访问，其他 → workspace-write）。不会显示「允许／拒绝」卡片，也不使用分类器。",
     "permissionHintNone": "此后端不提供权限防护，下方模式对其无效。",
     "permissionHintProtocol": "此后端在调用工具前会通过其协议询问，你会在界面上看到「允许／拒绝」卡片。智能体自行决定的调用不会通知你，仍遵循其自身规则，下方模式不会覆盖这些规则。",
-    "permissionHintProtocolMode": "此后端在调用工具前会询问 Rooks，Rooks 会先应用下方的模式：读取操作直接放行，plan 拒绝编辑和命令，acceptEdits 和 auto 允许编辑工作目录中的文件。如果模式和智能体的工具许可均无法裁定，界面上就会显示「允许／拒绝」卡片。",
+    "permissionHintProtocolMode": "此后端在调用工具前会询问 Timon，Timon 会先应用下方的模式：读取操作直接放行，plan 拒绝编辑和命令，acceptEdits 和 auto 允许编辑工作目录中的文件。如果模式和智能体的工具许可均无法裁定，界面上就会显示「允许／拒绝」卡片。",
     "permissionsSelfBadge": "自行管理权限",
     "permissionsSelfBadgeHint": "此智能体自行决定是否调用工具，并使用自身配置指定的沙箱。TIMON 不会为它显示「允许／拒绝」卡片。",
     "permissionModeLabel": "权限模式",
@@ -2640,7 +2640,7 @@
     },
     "notificationCenter": {
       "title": "通知中心",
-      "description": "查看和处理智能体及 Rooks 发出的通知。"
+      "description": "查看和处理智能体及 Timon 发出的通知。"
     },
     "taskQueue": {
       "title": "任务队列",
@@ -2648,7 +2648,7 @@
     },
     "injections": {
       "title": "智能体注入内容",
-      "description": "查看 Rooks 在智能体启动时提供的规则、记忆、技能等内容，排查行为偏差。"
+      "description": "查看 Timon 在智能体启动时提供的规则、记忆、技能等内容，排查行为偏差。"
     },
     "bell": {
       "title": "通知铃",
@@ -2687,8 +2687,8 @@
       "description": "查看项目服务栈是否正在运行、可用的本地 URL，以及哪些服务已停止；可启动、重启或停止服务栈。"
     },
     "timonDaemon": {
-      "title": "Rooks 守护进程",
-      "description": "在 timon 项目中查看 Rooks 自身的状态。"
+      "title": "Timon 守护进程",
+      "description": "在 timon 项目中查看 Timon 自身的状态。"
     },
     "missionDetails": {
       "title": "任务会话详情",
@@ -2800,7 +2800,7 @@
     "writeOnlyNotice": "默认不显示已存储的值。要查看，请点击「显示」（需输入账户密码）；要修改，请替换该值。",
     "new": "新建机密",
     "refresh": "刷新",
-    "empty": "尚无机密。守护进程仍会读取 ~/.rooks/secrets.env，但未向任何智能体授权。",
+    "empty": "尚无机密。守护进程仍会读取 ~/.timon/secrets.env，但未向任何智能体授权。",
     "saved": "机密已保存。",
     "confirmDelete": "删除 {name}？依赖它的智能体将无法再访问它。",
     "configured": "已配置",
@@ -2923,8 +2923,8 @@
     "contains": "安装内容",
     "enable": "启用 {name}",
     "disable": "停用 {name}",
-    "bundled": "Rooks 自带",
-    "bundledSubtitle": "Rooks 自带的模块。停用后仍保留安装，且立即生效。",
+    "bundled": "Timon 自带",
+    "bundledSubtitle": "Timon 自带的模块。停用后仍保留安装，且立即生效。",
     "thirdParty": "本机安装",
     "notInLicence": "不在你的许可证范围内",
     "coreLocked": "核心模块，守护进程必须依赖它才能运行。",
@@ -2998,7 +2998,7 @@
     "noAgent": "尚无智能体。",
     "loading": "正在读取注入内容…",
     "error": "无法读取注入内容：{message}",
-    "listLabel": "注入内容，按 Rooks 提供给模型的顺序排列",
+    "listLabel": "注入内容，按 Timon 提供给模型的顺序排列",
     "tokens": "约 {n} 个词元",
     "beforeFirst": "发送第一条消息前，会先发送约 {tokens} 个词元的上下文。",
     "onDemand": "目录中的技能只有在智能体通过 skill_get 读取时才会额外消耗约 {tokens} 个词元，不计入此处总数。",
@@ -3018,7 +3018,7 @@
       "source": "源码"
     },
     "origin": {
-      "timon": "Rooks",
+      "timon": "Timon",
       "user": "你",
       "agent": "智能体",
       "memory": "记忆",
@@ -3040,15 +3040,15 @@
       "role": "角色",
       "agent": "此智能体",
       "config": "已勾选",
-      "code": "由 Rooks 添加"
+      "code": "由 Timon 添加"
     },
     "skillReads": {
-      "title": "此智能体的任务会话在过去 {days} 天内读取技能的情况：统计 skill_get 调用和通过完整路径打开的文件。统计仅为下限，Rooks 无法观测到的读取不计入。",
+      "title": "此智能体的任务会话在过去 {days} 天内读取技能的情况：统计 skill_get 调用和通过完整路径打开的文件。统计仅为下限，Timon 无法观测到的读取不计入。",
       "read": "读取 {reads} 次 · {missions}/{total} 个任务会话 · {days} 天",
       "never": "从未读取 · {total} 个任务会话 · {days} 天",
       "idle": "过去 {days} 天没有任务会话",
       "unmeasured": "此后端未统计读取次数 · {days} 天",
-      "unmeasuredTitle": "此智能体的任务会话在不提供 skill_get 工具的后端上运行，Rooks 无法判断是否读取过此技能。",
+      "unmeasuredTitle": "此智能体的任务会话在不提供 skill_get 工具的后端上运行，Timon 无法判断是否读取过此技能。",
       "neverCount": "从未读取：{n}",
       "neverHint": "过去 {days} 天内，未观测到此智能体的任何任务会话读取此技能。请改写技能说明，让智能体知道何时使用它。"
     },
@@ -3061,12 +3061,12 @@
     "masking": {
       "shown": "仅在此界面遮盖：智能体收到的是机密库中的明文值。",
       "cli": "仅在此界面遮盖：如果后端 CLI 读取此文件，智能体收到的是机密库中的明文值。",
-      "sent": "发送时也会遮盖：此后端既无法访问技能所在目录，也无法调用 Rooks 的工具，因此智能体不会收到这些机密值。"
+      "sent": "发送时也会遮盖：此后端既无法访问技能所在目录，也无法调用 Timon 的工具，因此智能体不会收到这些机密值。"
     },
     "why": {
       "redacted": "保存遮盖后的文本会覆盖真实值，因此不能在此列表中编辑。",
-      "cli": "此项来自工作目录。Rooks 不会注入它；后端 CLI 是否读取它，以及它在提示词中的位置，均由该 CLI 决定，因此此项不计入所统计的发送顺序。请在项目中编辑对应文件。",
-      "code": "由 Rooks 写在代码中，不可编辑。",
+      "cli": "此项来自工作目录。Timon 不会注入它；后端 CLI 是否读取它，以及它在提示词中的位置，均由该 CLI 决定，因此此项不计入所统计的发送顺序。请在项目中编辑对应文件。",
+      "code": "由 Timon 写在代码中，不可编辑。",
       "roleShared": "编辑此项会更改所有使用此角色的智能体。"
     }
   },
@@ -3088,19 +3088,19 @@
     "emptyBody": "没有正在运行或等待的任务。"
   },
   "systemSettings": {
-    "description": "查看 Rooks 在本机的运行方式。仅超级管理员可见此标签页。",
+    "description": "查看 Timon 在本机的运行方式。仅超级管理员可见此标签页。",
     "forbidden": "仅超级管理员可以查看安装信息。",
     "loadError": "无法读取安装信息。请检查守护进程是否正在运行。",
     "unknown": "未知",
     "yes": "是",
     "no": "否",
     "versionTitle": "版本",
-    "daemonVersion": "Rooks（守护进程）",
+    "daemonVersion": "Timon（守护进程）",
     "desktopVersion": "桌面应用",
-    "versionGap": "应用版本为 {desktop}，守护进程版本为 {daemon}：守护进程未更新。请退出并重新打开 Rooks；如果版本仍不一致，请在终端中运行：",
+    "versionGap": "应用版本为 {desktop}，守护进程版本为 {daemon}：守护进程未更新。请退出并重新打开 Timon；如果版本仍不一致，请在终端中运行：",
     "dataVersion": "数据版本",
     "dataBehind": "上次打开数据的版本是 {data}，当前守护进程版本为 {version}。接受更新后，数据将在下次启动时更新。",
-    "dataAhead": "你的数据曾由较新版本的 Rooks（{data}）打开，当前守护进程版本为 {version}。请先更新此安装，再继续使用。",
+    "dataAhead": "你的数据曾由较新版本的 Timon（{data}）打开，当前守护进程版本为 {version}。请先更新此安装，再继续使用。",
     "license": "许可证",
     "licenseValue": "{edition} · {plan} · {status} · {channel} 构建版本",
     "licenseValid": "已激活",
@@ -3112,7 +3112,7 @@
     "daemonTitle": "守护进程",
     "mode": "运行方式",
     "modeValue": {
-      "embedded": "应用内运行（便携模式）：退出 Rooks 时停止",
+      "embedded": "应用内运行（便携模式）：退出 Timon 时停止",
       "service": "系统服务：关闭应用后继续运行",
       "process": "手动启动（通过终端或脚本）"
     },
@@ -3132,7 +3132,7 @@
       "stopped": "已安装，未运行",
       "running": "已安装并正在运行"
     },
-    "serviceNextLaunch": "应用自带的守护进程占用了端口。下次启动 Rooks 时将由服务接管。",
+    "serviceNextLaunch": "应用自带的守护进程占用了端口。下次启动 Timon 时将由服务接管。",
     "supervisor": {
       "systemd-user": "systemd 单元",
       "launchd": "launchd 标签",
@@ -3141,14 +3141,14 @@
     "windowsRevision": "任务修订号",
     "windowsRevisionValue": "{revision}（当前版本：{expected}）",
     "windowsUnmarked": "任务启动器缺少打包标记。",
-    "installWhy": "安装服务后，Rooks 会随计算机启动，并在关闭应用后继续运行。",
+    "installWhy": "安装服务后，Timon 会随计算机启动，并在关闭应用后继续运行。",
     "repairWhy": "重新安装会按此版本的定义重写服务，不会改动你的数据。",
     "installService": "安装服务",
     "repairService": "修复服务",
     "serviceBusy": "正在处理…",
-    "serviceFromTerminal": "当前守护进程就是服务本身，请在终端中运行以下命令（会重启 Rooks）",
+    "serviceFromTerminal": "当前守护进程就是服务本身，请在终端中运行以下命令（会重启 Timon）",
     "serviceInstalledRunning": "服务已安装并正在运行。",
-    "serviceInstalledNext": "服务已安装，将在下次启动 Rooks 时接管。",
+    "serviceInstalledNext": "服务已安装，将在下次启动 Timon 时接管。",
     "serviceFailed": "无法安装服务。",
     "pathsTitle": "路径",
     "installDir": "安装文件夹",
@@ -3164,8 +3164,8 @@
     "exporting": "正在导出…",
     "exported": "归档已写入：{path}",
     "exportFailed": "导出失败。",
-    "importWhy": "导入会替换数据库，因此无法在 Rooks 运行时进行。请退出 Rooks，再在终端中依次运行以下命令，并将 ARCHIVE.tar.gz 替换为你的归档文件。导入前，现有数据不会变动。",
-    "importWhyEmbedded": "导入会替换数据库，因此无法在 Rooks 运行时进行。请退出 Rooks，再在终端中运行以下命令，并将 ARCHIVE.tar.gz 替换为你的归档文件。",
+    "importWhy": "导入会替换数据库，因此无法在 Timon 运行时进行。请退出 Timon，再在终端中依次运行以下命令，并将 ARCHIVE.tar.gz 替换为你的归档文件。导入前，现有数据不会变动。",
+    "importWhyEmbedded": "导入会替换数据库，因此无法在 Timon 运行时进行。请退出 Timon，再在终端中运行以下命令，并将 ARCHIVE.tar.gz 替换为你的归档文件。",
     "importStep": "在终端中运行",
     "supportTitle": "支持诊断",
     "supportWhy": "一次收集技术支持所需的信息：版本、本机运行方式、服务、检测到的问题和最近的日志（最新的在前）。令牌和机密信息均已遮盖。请将报告粘贴到你的支持请求中。",
@@ -3175,7 +3175,7 @@
     "showReport": "显示报告",
     "hideReport": "隐藏报告",
     "openLogs": "打开日志文件夹",
-    "openAbout": "关于 Rooks 和第三方许可证",
+    "openAbout": "关于 Timon 和第三方许可证",
     "reportCopied": "已复制诊断报告。请将其粘贴到你的支持请求中（Discord 或电子邮件）。",
     "reportCopyFailed": "无法复制到剪贴板。请选中下方的报告手动复制，或将其保存。",
     "reportSaved": "报告已下载为 {name}。",
@@ -3187,23 +3187,23 @@
   },
   "desktopUninstall": {
     "category": "桌面应用",
-    "title": "卸载 Rooks",
+    "title": "卸载 Timon",
     "description": "停止本机的智能体、工作流和浏览器，移除服务，并关闭登录时启动。连接到此实例的 PWA 将断开连接。",
     "dataPath": "此安装的数据目录",
     "dataChoice": "如何处理你的数据？",
     "keep": "保留我的数据（推荐）",
     "keepDescription": "保留智能体、对话、设置、凭据和浏览器配置文件，以便重新安装。服务使用的程序副本将被移除。",
     "delete": "删除所有数据",
-    "deleteDescription": "永久删除上方 Rooks 目录中的所有内容，包括智能体、对话、设置、机密信息、Cookie 和浏览器配置文件。此操作无法撤销。",
-    "external": "Rooks 目录之外的项目文件夹和外部配置（Claude、Codex 等）将保留。不会沿符号链接删除外部目录中的内容。",
+    "deleteDescription": "永久删除上方 Timon 目录中的所有内容，包括智能体、对话、设置、机密信息、Cookie 和浏览器配置文件。此操作无法撤销。",
+    "external": "Timon 目录之外的项目文件夹和外部配置（Claude、Codex 等）将保留。不会沿符号链接删除外部目录中的内容。",
     "confirmation": "输入 SUPPRIMER 确认永久删除。",
     "finish": {
-      "mac": "Rooks 关闭且清理完成后，请在 Finder 中将 Rooks.app 移到废纸篓。",
-      "windows": "清理完成后，请在 Windows 的应用设置中卸载 Rooks。",
+      "mac": "Timon 关闭且清理完成后，请在 Finder 中将 Timon.app 移到废纸篓。",
+      "windows": "清理完成后，请在 Windows 的应用设置中卸载 Timon。",
       "appimage": "清理完成后，请删除 AppImage 文件。",
-      "linux": "清理完成后，请通过你的发行版的软件管理器移除 Rooks 软件包。"
+      "linux": "清理完成后，请通过你的发行版的软件管理器移除 Timon 软件包。"
     },
-    "action": "卸载 Rooks…",
+    "action": "卸载 Timon…",
     "busy": "正在卸载…"
   },
   "freeLicense": {
@@ -3211,7 +3211,7 @@
     "retainedData": "切回免费版后，额外账号仍会保留，但无法使用。所有功能和插件仍可使用。有效的许可证可恢复其涵盖的账号。",
     "local_free": "免费版在本地运行，无需管理设备激活。",
     "free_unavailable": "此版本尚未开放免费注册。请稍后重试，或使用现有的许可证密钥。",
-    "client_upgrade_required": "请将 Rooks 更新到受支持的版本后重试。",
+    "client_upgrade_required": "请将 Timon 更新到受支持的版本后重试。",
     "summary": "免费版在本地运行，无需密钥或续期。一名处于启用状态的超级管理员可使用所有功能和插件。",
     "plugin_composition_fixed": "此方案的插件组合是固定的。你可以配置其中的插件，或升级方案以更改组合。",
     "single_superadmin_required": "免费版仅允许启用一个账号，且该账号必须是超级管理员。",
@@ -3219,7 +3219,7 @@
     "license_changed": "处理此请求期间，许可证发生了变化。请重新加载后重试。",
     "activation_key_missing": "此设备未保存激活密钥。请使用你的许可证账号，或联系技术支持释放设备名额。",
     "deactivate": "停用此设备",
-    "deactivateConfirm": "要停用此设备吗？Rooks 将切换到免费版并继续运行。额外账号将被暂停，但其数据会保留。",
+    "deactivateConfirm": "要停用此设备吗？Timon 将切换到免费版并继续运行。额外账号将被暂停，但其数据会保留。",
     "deactivated": "设备已停用。此设备最后一个令牌过期前，仍会占用许可证名额。若提前激活另一台设备，系统会提示确切的重试时间。",
     "transfer_pending": "上一台设备的令牌尚未过期。请等待令牌过期后再激活此设备。",
     "transfer_pending_until": "上一台设备的令牌尚未过期。此设备可从 {until} 起激活。"
@@ -3282,7 +3282,7 @@
     "fieldLinkedTasks": "关联任务",
     "linkedTasksHint": "关联任务的工作成果全部合并后，此想法将自动关闭。",
     "fieldExternalLinks": "外部链接",
-    "externalLinksHint": "显示此想法在 Rooks 之外的位置，由建立关联的插件记录。",
+    "externalLinksHint": "显示此想法在 Timon 之外的位置，由建立关联的插件记录。",
     "urgency": {
       "critical": "严重问题",
       "bug": "缺陷",
@@ -3338,18 +3338,18 @@
   "dictation": {
     "egressReload": {
       "title": "{plugin} 需要重新加载",
-      "body": "此插件是在打开 Rooks 之后安装的，当前窗口尚不允许它访问 {host}。请重新加载后再使用。",
+      "body": "此插件是在打开 Timon 之后安装的，当前窗口尚不允许它访问 {host}。请重新加载后再使用。",
       "reload": "重新加载"
     },
     "localEngine": {
-      "label": "Rooks（本机）"
+      "label": "Timon（本机）"
     },
     "destination": {
       "title": "语音数据去向",
       "device": "你的语音数据仅保留在本机。",
       "window": "你的语音数据不会离开此窗口：插件声明不会向窗口外发送任何数据。",
-      "daemon": "你的语音数据将发送到 {machine} 的 Rooks 守护进程。",
-      "daemonActive": "你的语音数据将发送到当前设备的 Rooks 守护进程。",
+      "daemon": "你的语音数据将发送到 {machine} 的 Timon 守护进程。",
+      "daemonActive": "你的语音数据将发送到当前设备的 Timon 守护进程。",
       "hosts": "你的语音数据将发送到 {hosts}。",
       "undeclared": "此引擎未说明语音数据会发送到哪里。",
       "engineLine": "{engine}：{line}",
@@ -3361,7 +3361,7 @@
     "consent": {
       "title": "允许 {engine} 接收你的语音吗？",
       "from": "由 {plugin} 插件提供的语音输入引擎",
-      "scope": "此选择仅适用于 {machine}。如果插件更改语音数据的去向，Rooks 会再次征求你的同意。",
+      "scope": "此选择仅适用于 {machine}。如果插件更改语音数据的去向，Timon 会再次征求你的同意。",
       "allow": "允许",
       "deny": "不允许",
       "granted": "已允许。点击麦克风即可进行语音输入。",
@@ -3371,7 +3371,7 @@
       "title": "语音输入引擎",
       "intro": "选择在 {machine} 上用于聊天和控制台语音模式的引擎。",
       "auto": "自动",
-      "autoHint": "优先使用 Rooks 自带的引擎。在浏览器中，优先使用浏览器的识别功能，而不是插件。",
+      "autoHint": "优先使用 Timon 自带的引擎。在浏览器中，优先使用浏览器的识别功能，而不是插件。",
       "webSpeech": "浏览器（Web Speech）",
       "webSpeechHint": "使用浏览器的语音识别功能。Chrome 和 Edge 会将语音发送到各自厂商的服务。",
       "unavailableOption": "{engine}（不可用）",
@@ -3386,20 +3386,20 @@
       "inUse": "用于语音输入",
       "granted": "已在 {machine} 上授权。",
       "refused": "未授权：此引擎的语音输入保持关闭。",
-      "notAsked": "尚未授权：首次使用语音输入时，Rooks 会询问你。",
+      "notAsked": "尚未授权：首次使用语音输入时，Timon 会询问你。",
       "withdraw": "撤销授权",
       "undeclared": "不使用：该引擎的插件未说明语音数据会发送到哪里。"
     },
     "errors": {
       "modelMissing": "本地语音输入需要语音模型。请在 {settingsPath} 中下载。",
-      "microphoneDenied": "Rooks 无权使用麦克风。请在系统隐私设置中授权后重试。",
+      "microphoneDenied": "Timon 无权使用麦克风。请在系统隐私设置中授权后重试。",
       "microphoneLost": "麦克风已断开连接，语音输入已停止。",
       "busy": "另一个窗口或面板已开启语音输入，此处的语音输入已停止。",
       "engineCrashed": "语音输入引擎意外停止。点击麦克风重新开始。",
       "engineUnavailable": "本机不支持本地语音输入。",
       "initFailed": "无法启动语音输入引擎。请重试，或在 {settingsPath} 中删除语音模型后重新下载。",
       "engineNotAllowed": "此语音输入引擎未获授权。请在 {settingsPath} 中授权。",
-      "engineUndeclared": "此语音输入引擎未说明语音数据会发送到哪里，因此 Rooks 不会使用它。"
+      "engineUndeclared": "此语音输入引擎未说明语音数据会发送到哪里，因此 Timon 不会使用它。"
     },
     "model": {
       "consentTitle": "本地语音输入",
@@ -3473,18 +3473,18 @@
       "peakMemory": "峰值内存占用 {size}",
       "languageRequired": "必须指定语音输入语言：此模型无法自动识别语言，不支持自动模式。",
       "finalOnly": "仅显示最终识别结果。",
-      "fromPlugin": "由 {plugin} 插件提供。Rooks 无法为第三方模型提供保证。",
+      "fromPlugin": "由 {plugin} 插件提供。Timon 无法为第三方模型提供保证。",
       "addPack": "添加并下载 {size}…",
       "packErrors": {
         "invalid": "此插件的模型条目无效。",
-        "unknownFamily": "此模型需要更新版本的 Rooks。",
+        "unknownFamily": "此模型需要更新版本的 Timon。",
         "exists": "此模型已在你的模型目录中。",
         "busy": "另一个模型正在等待你确认。",
         "engineUnavailable": "本机不支持本地语音输入。",
         "notFound": "此插件已不再提供该模型。",
         "unavailable": "无法读取插件提供的模型。请重试。"
       },
-      "unverified": "未经验证：Rooks 无法为这些文件提供保证。",
+      "unverified": "未经验证：Timon 无法为这些文件提供保证。",
       "usedFor": "用于 {languages}",
       "download": "下载 {size}",
       "confirmLarge": "{model} 大小为 {size}，只需下载一次。语音输入时最多占用 {memory} 内存。你的语音数据不会离开本机。",
@@ -3494,7 +3494,7 @@
     "import": {
       "button": "添加本地模型…",
       "trust": "请仅从你信任的来源导入模型。",
-      "done": "已添加 {model}。此模型未经验证，Rooks 无法为其中的文件提供保证。",
+      "done": "已添加 {model}。此模型未经验证，Timon 无法为其中的文件提供保证。",
       "whichFamily": "此文件夹包含哪种模型？",
       "languages": "模型支持的语言",
       "languagesHint": "请输入语言代码，例如 fr、en。如果模型能自动识别语言，请留空。",
@@ -3512,7 +3512,7 @@
         "tooManyFiles": "文件夹中的文件数量超出语音模型的上限。",
         "tooLarge": "模型大小超过 8 GB。",
         "roles": "此文件夹似乎不包含有效的语音模型（应包含编码器、解码器和词元文件）。",
-        "unsupportedFamily": "此版本的 Rooks 尚不支持运行此类模型。",
+        "unsupportedFamily": "此版本的 Timon 尚不支持运行此类模型。",
         "unsafeGraph": "此模型引用了其文件夹之外的文件，已拒绝导入。",
         "changed": "复制期间有文件发生变化。请重试。",
         "diskFull": "磁盘空间不足，无法复制模型。",
@@ -3575,7 +3575,7 @@
         "none": "不显示"
       }
     },
-    "intro": "管理所有大语言模型提供商及其模型。更改无需重启 Rooks 即可生效。",
+    "intro": "管理所有大语言模型提供商及其模型。更改无需重启 Timon 即可生效。",
     "edit": "编辑",
     "editTitle": "编辑提供商",
     "saved": "提供商已更新。",
@@ -3621,7 +3621,7 @@
     "testButton": "测试",
     "destinationNotice": "使用此提供商运行任务会话时，所有提示词都会发送到 {host}。",
     "keyHint": "密钥存放在密钥保险库中，不会写入文件，保存后也不会再显示。如果本地服务器不需要密钥，请留空。",
-    "fileHint": "每个提供商对应 ~/.rooks/backends/ 中的一个文件。也可以手动将 JSON 文件放入此目录，Rooks 会在一秒内识别。",
+    "fileHint": "每个提供商对应 ~/.timon/backends/ 中的一个文件。也可以手动将 JSON 文件放入此目录，Timon 会在一秒内识别。",
     "fields": {
       "name": "名称",
       "protocol": "协议",
@@ -3660,11 +3660,11 @@
     "reorder": "拖动以调整此提供商的顺序",
     "claudeToken": {
       "title": "Claude 长期令牌",
-      "hint": "可选。在终端运行 `claude setup-token`，并将令牌粘贴到此处。此后，所有 Claude 任务会话都会使用该令牌，而不再依赖 CLI 自身的登录状态。在 macOS 上，这样即使未登录系统，Rooks 也能继续运行；完成后请运行 `timon service install` 以切换服务。令牌会加密保存，保存后不会再显示。",
+      "hint": "可选。在终端运行 `claude setup-token`，并将令牌粘贴到此处。此后，所有 Claude 任务会话都会使用该令牌，而不再依赖 CLI 自身的登录状态。在 macOS 上，这样即使未登录系统，Timon 也能继续运行；完成后请运行 `timon service install` 以切换服务。令牌会加密保存，保存后不会再显示。",
       "none": "未设置",
       "set": "已设置",
       "unreadable": "已设置但无法读取，请重新粘贴",
-      "required": "Rooks 正作为 macOS 后台服务运行。在设置令牌前，Claude 任务会话将无法运行。",
+      "required": "Timon 正作为 macOS 后台服务运行。在设置令牌前，Claude 任务会话将无法运行。",
       "saved": "Claude 令牌已保存。",
       "cleared": "Claude 令牌已移除。",
       "clear": "移除"
@@ -3674,7 +3674,7 @@
     "disableTitle": "要禁用 {name} 吗？",
     "disableHint": "禁用后，此提供商不会出现在选择器中。明确指定使用它的新运行请求将被拒绝，不会自动改用其他提供商。下方已有的选项会保留。",
     "disable": "禁用提供商",
-    "managedHint": "你可以重命名、添加、删除或隐藏模型，也可以更改名称、图标和默认模型。连接设置由 Rooks 或提供商插件管理。",
+    "managedHint": "你可以重命名、添加、删除或隐藏模型，也可以更改名称、图标和默认模型。连接设置由 Timon 或提供商插件管理。",
     "origins": {
       "builtin": "内置",
       "plugin": "插件",
@@ -3777,12 +3777,12 @@
     },
     "tabHints": {
       "routines": "定时计划（cron）：每到设定时间就执行操作。",
-      "webhooks": "外部服务使用密钥签名，向 Rooks 的指定地址发起请求。",
-      "events": "由 Rooks 内部事件触发，例如任务关闭、任务会话结束、智能体发送消息或收到通知。"
+      "webhooks": "外部服务使用密钥签名，向 Timon 的指定地址发起请求。",
+      "events": "由 Timon 内部事件触发，例如任务关闭、任务会话结束、智能体发送消息或收到通知。"
     },
     "redirecting": "例行任务页面已移至「触发器」下的「例行任务」标签页…",
     "loopback": {
-      "body": "守护进程仅监听本机（回环地址）。如需从外部访问 Webhook，必须自行配置隧道或反向代理；Rooks 不会主动开放访问。",
+      "body": "守护进程仅监听本机（回环地址）。如需从外部访问 Webhook，必须自行配置隧道或反向代理；Timon 不会主动开放访问。",
       "none": "未经身份验证的路由仅响应本机直接发给守护进程的请求。切勿通过隧道对外开放此类路由。"
     },
     "scheduleTriggers": "定时触发器",
@@ -3794,7 +3794,7 @@
     "countOther": "{count} 个触发器",
     "empty": {
       "schedule": "暂无定时触发器。",
-      "webhook": "暂无 Webhook。创建一个，让 GitHub、GitLab 或机器人等服务向 Rooks 提交工作。",
+      "webhook": "暂无 Webhook。创建一个，让 GitHub、GitLab 或机器人等服务向 Timon 提交工作。",
       "event": "暂无事件触发器。"
     },
     "enable": "点击启用",
@@ -3810,7 +3810,7 @@
       "github": "GitHub 签名",
       "gitlab": "GitLab 令牌",
       "standard": "Standard Webhooks",
-      "generic": "Rooks 签名",
+      "generic": "Timon 签名",
       "none": "无身份验证"
     },
     "events": {
@@ -3849,7 +3849,7 @@
     "secret": {
       "title": "Webhook 密钥",
       "outboundTitle": "出站请求签名密钥",
-      "howtoOutbound": "将此密钥粘贴到接收服务的配置中。每个请求都携带 webhook-id、webhook-timestamp 和 webhook-signature（遵循 Standard Webhooks，使用此 whsec_ 密钥对 \"id.timestamp.body\" 计算 HMAC-SHA256）。此密钥不用于 Rooks 接收的任何 Webhook。",
+      "howtoOutbound": "将此密钥粘贴到接收服务的配置中。每个请求都携带 webhook-id、webhook-timestamp 和 webhook-signature（遵循 Standard Webhooks，使用此 whsec_ 密钥对 \"id.timestamp.body\" 计算 HMAC-SHA256）。此密钥不用于 Timon 接收的任何 Webhook。",
       "once": "请立即复制，关闭后不再显示。如果丢失，请为此 Webhook 更换密钥。",
       "label": "密钥（已遮盖）",
       "copy": "复制密钥",
@@ -3861,7 +3861,7 @@
         "github": "GitHub：打开仓库的 Settings → Webhooks → Add webhook。将下方地址填入 Payload URL，将内容类型设为 application/json，并将此密钥填入 Secret。",
         "gitlab": "GitLab：打开 Settings → Webhooks。将下方地址填入 URL，将此密钥填入 Secret token。GitLab 会原样发送令牌，因此截获的请求可被重放。如果发送方支持签名，建议优先使用签名方式。",
         "standard": "Standard Webhooks（Svix、Clerk、Resend 等）：将此签名密钥（whsec_…）粘贴到提供商的端点设置中。",
-        "generic": "自定义发送方：发送 X-Rooks-Timestamp（Unix 时间戳，单位为秒）和 X-Rooks-Signature: sha256=<hex HMAC-SHA256 of \"timestamp.body\" with this secret>。超过 5 分钟的请求会被拒绝。",
+        "generic": "自定义发送方：发送 X-Timon-Timestamp（Unix 时间戳，单位为秒）和 X-Timon-Signature: sha256=<hex HMAC-SHA256 of \"timestamp.body\" with this secret>。超过 5 分钟的请求会被拒绝。",
         "none": "无需密钥：此路由仅响应来自本机的请求。"
       }
     },
@@ -3897,7 +3897,7 @@
         "github": "X-Hub-Signature-256：请求正文的 HMAC。创建时自动生成密钥。",
         "gitlab": "X-Gitlab-Token：每次请求都发送密钥原文。",
         "standard": "使用 webhook-id、webhook-timestamp 和 webhook-signature 请求头，允许 ±5 分钟的时间偏差。",
-        "generic": "使用 X-Rooks-Timestamp 和 X-Rooks-Signature，允许 ±5 分钟的时间偏差。",
+        "generic": "使用 X-Timon-Timestamp 和 X-Timon-Signature，允许 ±5 分钟的时间偏差。",
         "none": "不验证来源：仅接受本机直接发给守护进程的请求。"
       },
       "event": "事件",
@@ -3943,7 +3943,7 @@
       "actionN": "操作 {n}",
       "actionType": "操作 {n} 的类型",
       "webhookUrl": "地址（HTTPS）*",
-      "webhookHint": "Rooks 向此地址 POST '{type, timestamp, data}'，其中 data 是收到的原始载荷。请求使用密钥签名，密钥仅在保存时显示一次。失败后会延时重试，总共最多尝试 10 次。所有通过筛选的数据都会发送到本机之外。",
+      "webhookHint": "Timon 向此地址 POST '{type, timestamp, data}'，其中 data 是收到的原始载荷。请求使用密钥签名，密钥仅在保存时显示一次。失败后会延时重试，总共最多尝试 10 次。所有通过筛选的数据都会发送到本机之外。",
       "removeAction": "移除",
       "addAction": "+ 添加操作",
       "todoText": "想法 *",
@@ -4055,7 +4055,7 @@
     "deleteConfirm": "要删除账号「{name}」吗？此设备将移除该账号的登录信息，使用它的智能体和任务将无法运行，直到改用其他账号。",
     "deleted": "已删除账号",
     "signedInAs": "已登录为 {identity}",
-    "notSignedIn": "未通过 Rooks 登录",
+    "notSignedIn": "未通过 Timon 登录",
     "ownerInstance": "实例（无所有者的任务会话）",
     "errorGeneric": "请求失败，请重试。",
     "rename": "重命名",
@@ -4090,7 +4090,7 @@
       "create": "创建并登录"
     },
     "login": {
-      "starting": "正在 Rooks 所在设备上启动登录流程…",
+      "starting": "正在 Timon 所在设备上启动登录流程…",
       "openPage": "打开登录页面",
       "copy": "复制",
       "copied": "已复制",
@@ -4116,8 +4116,8 @@
       "mismatch": "此账号属于 {identity}，请使用对应的订阅登录，或添加其他账号。",
       "not_signed_in": "登录未完成，请重新登录。",
       "cli_failed": "提供商的命令行工具在登录时出错，请重新登录。",
-      "cli_missing": "Rooks 所在设备未安装该提供商的命令行工具。",
-      "unsupported": "此提供商不支持通过 Rooks 登录。"
+      "cli_missing": "Timon 所在设备未安装该提供商的命令行工具。",
+      "unsupported": "此提供商不支持通过 Timon 登录。"
     }
   },
   "mcpPage": {
@@ -4197,7 +4197,7 @@
       "restart": "重新开始对话",
       "skipFailed": "无法跳过此步骤，请稍后重试。",
       "tool_error": {
-        "title": "你的助手无法使用 Rooks",
+        "title": "你的助手无法使用 Timon",
         "body": "助手的请求遭到拒绝，无法完成自我设置。你可以跳过此步骤，稍后在助手页面为它取名并设定性格。"
       },
       "interrupted": {
@@ -4213,7 +4213,7 @@
         "body": "助手还没有发送消息。你可以继续等待，或跳过此步骤，稍后在助手页面完成设置。"
       },
       "disconnected": {
-        "title": "Rooks 未响应",
+        "title": "Timon 未响应",
         "body": "连接已断开。你可以稍等片刻，或跳过此步骤，稍后在助手页面完成设置。"
       }
     },
@@ -4221,7 +4221,7 @@
     "voice": "语音输入",
     "voiceStop": "停止语音输入",
     "send": "发送",
-    "toTour": "来看看 Rooks 吧…",
+    "toTour": "来看看 Timon 吧…",
     "starting": "正在启动你的助手…",
     "name": {
       "title": "你想给助手取什么名字？",
@@ -4229,13 +4229,13 @@
       "submitNamed": "认识 {name}"
     },
     "troubleshoot": {
-      "title": "Rooks 需要连接一个 AI 模型才能继续。请安装以下任一命令行工具并登录：",
+      "title": "Timon 需要连接一个 AI 模型才能继续。请安装以下任一命令行工具并登录：",
       "other": "你也可以在 {settingsPath} 中使用 API 密钥连接其他模型。",
       "openSettings": "打开设置"
     },
     "unavailable": {
       "title": "暂时无法启动你的助手",
-      "body": "Rooks 无法连接到 AI 模型。请在 {settingsPath} 中确认模型账号已连接，然后重试；也可以跳过此步骤，稍后再配置。",
+      "body": "Timon 无法连接到 AI 模型。请在 {settingsPath} 中确认模型账号已连接，然后重试；也可以跳过此步骤，稍后再配置。",
       "retry": "重试"
     },
     "avatar": {
@@ -4250,11 +4250,11 @@
   },
   "guidedTour": {
     "menu": "功能导览",
-    "firstMessage": "带我熟悉一下 Rooks，并帮我布置界面。",
+    "firstMessage": "带我熟悉一下 Timon，并帮我布置界面。",
     "failed": "无法启动导览，请在外观菜单中重试。",
     "offer": {
-      "title": "想快速了解一下 Rooks 吗？",
-      "body": "你的助手会带你熟悉 Rooks，帮你布置界面，还能替你打开页面。你可以随时结束导览，之后也能在外观菜单（调色板图标）› 功能导览中再次启动。",
+      "title": "想快速了解一下 Timon 吗？",
+      "body": "你的助手会带你熟悉 Timon，帮你布置界面，还能替你打开页面。你可以随时结束导览，之后也能在外观菜单（调色板图标）› 功能导览中再次启动。",
       "start": "开始导览",
       "later": "暂不",
       "laterHint": "没问题，你可以随时从顶部栏的外观菜单（调色板图标）› 功能导览启动。"
@@ -4346,7 +4346,7 @@
       "emptyFooter": "无",
       "apply": "应用到菜单"
     },
-    "unknownKind": "此版本的 Rooks 无法显示该提议。",
+    "unknownKind": "此版本的 Timon 无法显示该提议。",
     "errors": {
       "stale": "此布局已不适用于你的账户：{reasons}",
       "already_decided": "此提议已处理。",
@@ -4362,7 +4362,7 @@
       "mission": "保留到此任务会话结束。",
       "persistent": "此任务会话结束后仍保存在机密库中。"
     },
-    "hosts": "Rooks 只会通过请求头 {header} 将其发送给 {hosts}，智能体无法看到它。",
+    "hosts": "Timon 只会通过请求头 {header} 将其发送给 {hosts}，智能体无法看到它。",
     "origin": "只会填写到内置浏览器中属于 {origin} 的页面。智能体无法看到它，但填入后该页面会持有它。",
     "environment": "智能体下次启动时，此值会进入其运行环境。它运行的任何程序都可以读取此值。",
     "field": "{name} 的值",
@@ -4390,7 +4390,7 @@
     }
   },
   "uiDocument": {
-    "unavailable": "此 Rooks 实例未启用文档功能，无法显示此文档。",
+    "unavailable": "此 Timon 实例未启用文档功能，无法显示此文档。",
     "expired": "此文档已不再保留，因为所属对话已结束一段时间。",
     "dismissed": "此文档已关闭。",
     "answered": "已回答",
@@ -4464,7 +4464,7 @@
     "unknownError": "未知错误",
     "turnInFlight": "智能体正在回复，请等回复结束后再压缩。",
     "alreadyRunning": "此对话已在压缩中。",
-    "lost": "服务已重启，Rooks 无法继续跟踪此次压缩。请重试。",
+    "lost": "服务已重启，Timon 无法继续跟踪此次压缩。请重试。",
     "traceRequested": "已请求压缩",
     "traceForked": "已压缩到新对话",
     "traceNativeTokens": "对话已压缩 · {from} → {to} 个词元",
@@ -4494,14 +4494,14 @@
   "telemetrySettings": {
     "tab": "隐私",
     "title": "匿名使用统计",
-    "description": "Rooks 可以向开发团队报告应用的使用情况，包括使用了哪些功能、对话轮次的成功率，以及设置流程在哪一步中断，帮助我们确定优先改进的事项。统计数据是匿名的，仅使用在本机随机生成的标识符，不会标识你的账户或设备。",
+    "description": "Timon 可以向开发团队报告应用的使用情况，包括使用了哪些功能、对话轮次的成功率，以及设置流程在哪一步中断，帮助我们确定优先改进的事项。统计数据是匿名的，仅使用在本机随机生成的标识符，不会标识你的账户或设备。",
     "share": "共享匿名使用统计",
     "shareDescription": "默认开启。关闭后会立即停止发送统计数据，仅会再发送一条消息记录关闭操作。",
     "lockedEnv": "此设置由 TIMON_TELEMETRY 环境变量控制，请修改该变量。",
     "lockedEnvMalformed": "TIMON_TELEMETRY 的值不是 yes 或 no，已关闭共享。",
-    "lockedConfig": "此设置由 rooks.config.json 中的 telemetry.enabled 控制，请在该文件中修改。",
-    "lockedConfigMalformed": "rooks.config.json 中 telemetry.enabled 的值不是 true 或 false，已关闭共享。",
-    "inactiveBuild": "无论此设置如何，当前 Rooks 构建均不会发送统计数据。",
+    "lockedConfig": "此设置由 timon.config.json 中的 telemetry.enabled 控制，请在该文件中修改。",
+    "lockedConfigMalformed": "timon.config.json 中 telemetry.enabled 的值不是 true 或 false，已关闭共享。",
+    "inactiveBuild": "无论此设置如何，当前 Timon 构建均不会发送统计数据。",
     "sentTitle": "会发送哪些信息",
     "sent": "应用版本、操作系统和许可证级别；应用启动和更新事件；设置步骤；对话轮次及其耗时、结果和词元数；使用了哪些内置工具和提供商；以及任务、插件、许可证和浏览器相关操作的次数。",
     "neverTitle": "绝不会发送哪些信息",
@@ -4509,7 +4509,7 @@
     "learnMore": "阅读隐私声明",
     "loadFailed": "无法读取此设置。",
     "saveFailed": "无法保存此设置。",
-    "forbidden": "只有此 Rooks 实例的管理员才能更改此设置。"
+    "forbidden": "只有此 Timon 实例的管理员才能更改此设置。"
   },
   "grepaiPanel": {
     "project": "项目",
@@ -4562,7 +4562,7 @@
   },
   "updates": {
     "banner": {
-      "available": "Rooks {version} 已发布，当前版本为 {installed}。",
+      "available": "Timon {version} 已发布，当前版本为 {installed}。",
       "buildEnds": "此构建将于 {date} 停止运行。",
       "downloadLinux": "下载 Linux 版（{format}）",
       "downloadMac": "下载 macOS 版（{format}）",
@@ -4590,26 +4590,26 @@
       "missions": "{count, plural, other {有 # 个任务会话正在运行}}。{count, plural, other {现在安装会停止这些会话}}。",
       "wait": "等待",
       "installAnyway": "仍然安装",
-      "restarting": "Rooks 正在重启并切换到新版本…",
-      "closing": "安装程序已打开。Rooks 将退出，以便安装新版本。",
-      "pkgOpened": "请按照安装程序的提示操作，然后退出并重新打开 Rooks。",
-      "debGuided": "软件管理器会打开安装包。如果未能安装，请在终端中运行以下命令，再重新打开 Rooks：",
-      "debNotOpened": "请在终端中运行以下命令安装软件包，然后重新打开 Rooks：",
+      "restarting": "Timon 正在重启并切换到新版本…",
+      "closing": "安装程序已打开。Timon 将退出，以便安装新版本。",
+      "pkgOpened": "请按照安装程序的提示操作，然后退出并重新打开 Timon。",
+      "debGuided": "软件管理器会打开安装包。如果未能安装，请在终端中运行以下命令，再重新打开 Timon：",
+      "debNotOpened": "请在终端中运行以下命令安装软件包，然后重新打开 Timon：",
       "copyCommand": "复制",
       "copied": "已复制",
-      "notWritable": "当前 AppImage 所在的文件夹不可写。新的 AppImage 已存放在 Rooks 的数据文件夹中，请用它替换当前文件。",
+      "notWritable": "当前 AppImage 所在的文件夹不可写。新的 AppImage 已存放在 Timon 的数据文件夹中，请用它替换当前文件。",
       "installFailed": "未能开始安装。当前版本未更改。",
       "installNone": "这台电脑上已没有通过验证的安装程序。请重新下载后再安装。",
       "downloadAgain": "重新下载",
       "error": {
         "noOffer": "尚未发布适用于此电脑的安装程序。",
-        "daemon": "Rooks 服务未响应。请稍后重试。",
+        "daemon": "Timon 服务未响应。请稍后重试。",
         "network": "下载已中断。",
         "http": "下载服务器拒绝了请求。",
         "insecure": "下载被重定向到不安全的地址，已停止。",
         "integrity": "下载的文件与发布的安装程序不一致，已删除该文件。",
         "diskFull": "磁盘空间不足，无法下载安装程序。",
-        "filesystem": "无法将安装程序保存到 Rooks 的数据文件夹。"
+        "filesystem": "无法将安装程序保存到 Timon 的数据文件夹。"
       }
     }
   }

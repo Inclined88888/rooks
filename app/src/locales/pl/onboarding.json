@@ -17,11 +17,11 @@
     },
     "llm": {
       "title": "Wybierz\nswój LLM.",
-      "subtitle": "Rooks działa na subskrypcjach AI, które już masz. Nigdy rachunku za tokeny."
+      "subtitle": "Timon działa na subskrypcjach AI, które już masz. Nigdy rachunku za tokeny."
     },
     "profile": {
       "title": "Co cię tu sprowadza?",
-      "subtitle": "Rooks dopasuje ustawienia domyślne i przewodnik do twojej odpowiedzi."
+      "subtitle": "Timon dopasuje ustawienia domyślne i przewodnik do twojej odpowiedzi."
     },
     "agent": {
       "templates": {
@@ -39,7 +39,7 @@
     },
     "signin": {
       "title": "Witaj ponownie",
-      "subtitle": "Rooks ma nowy wygląd. Zaloguj się na swoje konto Rooks, aby kontynuować."
+      "subtitle": "Timon ma nowy wygląd. Zaloguj się na swoje konto Timon, aby kontynuować."
     },
     "mascot": {
       "title": "Poznaj maskotkę agenta {name}",
@@ -48,8 +48,7 @@
     "scheme": {
       "label": "Tryb jasny lub ciemny",
       "light": "Jasny",
-      "dark": "Ciemny",
-      "system": "System"
+      "dark": "Ciemny"
     },
     "discover": {
       "label": "Poznaj Timona",

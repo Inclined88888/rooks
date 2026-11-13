@@ -1,49 +1,49 @@
 'use client';
 
+/**
+ * Light or dark, at the top of every onboarding step. The onboarding follows
+ * the OS until someone picks here; the pick applies at once, holds for the
+ * whole flow, and becomes the account's scheme when the account step creates
+ * it (`firstRunScheme`). Rendered by the shell, so it never depends on a step.
+ */
 import type { ReactElement } from 'react';
-import { Monitor, Sun } from 'lucide-react';
-import { useColorScheme } from '@/components/theme-provider';
+import { Moon, Sun } from 'lucide-react';
+import { useOptionalColorScheme } from '@/components/theme-provider';
+import type { ColorScheme } from '@/lib/auth';
 import { t } from '@/lib/i18n';
-import { appliedScheme, osScheme, readSchemeMode, storeSchemeMode, type SchemeMode } from '@/lib/scheme-mode';
 import { cn } from '@/lib/utils';
 
-const CHOICES: readonly { mode: SchemeMode; Icon: typeof Sun }[] = [
-  { mode: 'light', Icon: Sun },
-  { mode: 'system', Icon: Monitor },
+const CHOICES: readonly { scheme: ColorScheme; Icon: typeof Sun }[] = [
+  { scheme: 'light', Icon: Sun },
+  { scheme: 'dark', Icon: Moon },
 ];
 
-/** Light, or the operating system's mode. Dark is only what System paints. */
-export function SchemeSwitch({ className }: { className?: string }): ReactElement {
-  const { chooseFirstRunScheme } = useColorScheme();
-  const mode = readSchemeMode();
-  const pick = (next: SchemeMode): void => {
-    storeSchemeMode(next);
-    chooseFirstRunScheme(next === 'system' ? osScheme() : 'light');
-    window.dispatchEvent(new Event('rooks-scheme-mode'));
-  };
+export function SchemeSwitch({ className }: { className?: string }): ReactElement | null {
+  const color = useOptionalColorScheme();
+  if (!color) return null;
+  const { applied, chooseFirstRunScheme } = color;
   return (
-    <div role="group" aria-label={t('onboarding.scheme.label')} className={cn('inline-flex rounded-full bg-muted p-1', className)}>
-      {CHOICES.map(({ mode: choice, Icon }) => {
-        const on = mode === choice;
+    <div role="group" aria-label={t('onboarding.scheme.label')} className={cn('flex gap-0.5 rounded-full bg-muted/70 p-0.5', className)}>
+      {CHOICES.map(({ scheme, Icon }) => {
+        const on = applied === scheme;
         return (
           <button
-            key={choice}
+            key={scheme}
             type="button"
-            data-scheme={choice}
+            data-scheme={scheme}
             aria-pressed={on}
-            aria-label={t(`onboarding.scheme.${choice}`)}
-            onClick={() => pick(choice)}
-            className={cn('inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium', on ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}
+            aria-label={t(`onboarding.scheme.${scheme}`)}
+            title={t(`onboarding.scheme.${scheme}`)}
+            onClick={() => chooseFirstRunScheme(scheme)}
+            className={cn(
+              'flex h-7 w-7 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              on ? 'bg-card text-foreground shadow-elev-1' : 'text-muted-foreground hover:text-foreground',
+            )}
           >
-            <Icon className="size-3.5" aria-hidden />
-            {t(`onboarding.scheme.${choice}`)}
+            <Icon className="h-3.5 w-3.5" aria-hidden />
           </button>
         );
       })}
     </div>
   );
-}
-
-export function currentAppliedScheme(): 'light' | 'dark' {
-  return appliedScheme();
 }

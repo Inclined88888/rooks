@@ -43,7 +43,7 @@ test('deferred restart stays accessible after navigation, retries errors and dis
     assert.match(document.querySelector('[role="status"]')!.textContent!, /finish setup/);
     dom.window.history.pushState(null, '', '/agents');
     await remount();
-    assert.equal(document.querySelector('button')!.textContent, 'Restart Rooks');
+    assert.equal(document.querySelector('button')!.textContent, 'Restart Timon');
     await React.act(async () => document.querySelector('button')!.click());
     assert.ok(document.querySelector('[role="alert"]'));
     assert.equal(document.querySelector('button')!.disabled, false);

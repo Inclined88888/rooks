@@ -112,7 +112,7 @@ export function daemonMode(env: NodeJS.ProcessEnv, platform: NodeJS.Platform, jo
   // launchd sets the job label.
   if (platform === 'win32' && env.TIMON_SERVICE_LOG) return 'service';
   if (platform === 'linux' && journal) return 'service';
-  if (platform === 'darwin' && (env.XPC_SERVICE_NAME === MACOS_LABEL || env.XPC_SERVICE_NAME === 'com.timon.daemon' || env.XPC_SERVICE_NAME === 'com.rooks.daemon')) return 'service';
+  if (platform === 'darwin' && env.XPC_SERVICE_NAME === MACOS_LABEL) return 'service';
   return 'process';
 }
 

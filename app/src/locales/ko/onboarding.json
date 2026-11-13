@@ -12,16 +12,16 @@
     },
     "account": {
       "title": "로컬 계정 만들기",
-      "subtitle": "이 계정으로 Rooks에 로그인합니다. 당신이 관리자입니다.",
+      "subtitle": "이 계정으로 Timon에 로그인합니다. 당신이 관리자입니다.",
       "privacy": "비밀번호를 재설정할 경우에 대비해 이메일만 수집합니다. 만든 계정은 로컬에 남습니다."
     },
     "llm": {
       "title": "LLM을\n선택하세요.",
-      "subtitle": "Rooks은 이미 가진 AI 구독으로 작동합니다. 토큰당 요금은 없습니다."
+      "subtitle": "Timon은 이미 가진 AI 구독으로 작동합니다. 토큰당 요금은 없습니다."
     },
     "profile": {
       "title": "어떤 일로 오셨나요?",
-      "subtitle": "답변에 맞춰 Rooks이 기본 설정과 둘러보기를 조정합니다."
+      "subtitle": "답변에 맞춰 Timon이 기본 설정과 둘러보기를 조정합니다."
     },
     "agent": {
       "templates": {
@@ -39,7 +39,7 @@
     },
     "signin": {
       "title": "다시 오신 것을 환영합니다",
-      "subtitle": "Rooks이 새로워졌습니다. 계속하려면 Rooks 계정으로 로그인하세요."
+      "subtitle": "Timon이 새로워졌습니다. 계속하려면 Timon 계정으로 로그인하세요."
     },
     "mascot": {
       "title": "{name}의 마스코트를 만나 보세요",
@@ -48,11 +48,10 @@
     "scheme": {
       "label": "라이트 또는 다크 모드",
       "light": "라이트",
-      "dark": "다크",
-      "system": "System"
+      "dark": "다크"
     },
     "discover": {
-      "label": "Rooks 알아보기",
+      "label": "Timon 알아보기",
       "slide": "슬라이드 {current}/{total}",
       "next": "다음",
       "skip": "모두 건너뛰기",

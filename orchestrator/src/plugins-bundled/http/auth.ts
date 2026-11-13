@@ -17,7 +17,7 @@ import { dirname } from 'node:path';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { DAEMON_TOKEN_FILE } from '../../paths.js';
 import { dbApi } from '../../db.js';
-import { hashSessionToken, readSessionCookie, renewedExpiry, serializeSessionCookie } from '../../users/session.js';
+import { hashSessionToken, readCookie, renewedExpiry, serializeSessionCookie, SESSION_COOKIE } from '../../users/session.js';
 import { config } from '../../config/load.js';
 import '../../users/identity.js';
 import { freeAccountAllowed, FREE_ACCOUNT_RESTRICTED_MESSAGE } from '../../users/free-access.js';
@@ -302,7 +302,10 @@ export function createDaemonAuthMiddleware(opts: {
         return;
       }
     }
-    const raw = readSessionCookie(typeof req.headers.cookie === 'string' ? req.headers.cookie : undefined);
+    const raw = readCookie(
+      typeof req.headers.cookie === 'string' ? req.headers.cookie : undefined,
+      SESSION_COOKIE,
+    );
     if (raw) {
       const live = dbApi.getLiveSession(hashSessionToken(raw));
       if (live) {

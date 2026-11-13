@@ -1,13 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { browserOriginHeaders, proxyAuthHeaders, readSessionToken, SESSION_COOKIE } from './proxy-auth';
-
-test('an older Rooks session cookie still signs the window in', () => {
-  const get = (name: string) => name === 'rooks_session' ? 'legacy-token' : null;
-  assert.equal(readSessionToken(get), 'legacy-token');
-  assert.equal(readSessionToken(() => null), undefined);
-  assert.equal(readSessionToken((name) => name === SESSION_COOKIE ? ' current ' : 'legacy'), 'current');
-});
+import { browserOriginHeaders, proxyAuthHeaders, SESSION_COOKIE } from './proxy-auth';
 
 test('a session cookie is forwarded as-is', () => {
   const headers = proxyAuthHeaders({ sessionToken: 'sess-1' });

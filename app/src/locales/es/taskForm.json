@@ -10,7 +10,7 @@
       "failed": "No se pudo desvincular el worktree: {error}"
     },
     "markMerged": {
-      "title": "¿Fusionada fuera de Rooks?",
+      "title": "¿Fusionada fuera de Timon?",
       "hint": "Si la rama de esta tarea ya se fusionó (un pull request fusionado en GitHub, un merge a mano), indica el commit de fusión: la tarea se cierra como hecha y arrancan las tareas que dependen de ella.",
       "shaLabel": "Commit de fusión",
       "shaPlaceholder": "SHA del commit, p. ej. bcd02520",
@@ -20,8 +20,8 @@
       "doneUnverified": "Tarea marcada como fusionada. Este commit aún no está en la copia local del repositorio, así que no se pudo comprobar.",
       "notInBase": "Este commit no está en la rama base del repositorio. Comprueba el sha del merge.",
       "failed": "No se pudo marcar la tarea como fusionada: {error}",
-      "unreachable": "Rooks no respondió",
-      "hintDone": "Esta tarea está hecha pero su rama nunca pasó por un merge en Rooks. Si se fusionó en otro sitio (un pull request fusionado en GitHub, un merge a mano), indica el commit de fusión: se registra y arrancan las tareas que dependen de ella.",
+      "unreachable": "Timon no respondió",
+      "hintDone": "Esta tarea está hecha pero su rama nunca pasó por un merge en Timon. Si se fusionó en otro sitio (un pull request fusionado en GitHub, un merge a mano), indica el commit de fusión: se registra y arrancan las tareas que dependen de ella.",
       "cardAction": "¿fusionada?"
     },
     "editTitle": "Editar tarea",
@@ -90,12 +90,12 @@
     "modelInheritHint": "Decide el rol del proyecto para este tipo de tarea; si no, el agente",
     "modelInherited": "{model} (heredado)",
     "modelHelp": "«Rol del proyecto» ejecuta la tarea con lo que decida el rol del proyecto para este tipo; si no, el agente.",
-    "worktreeBlocked": "Este backend trabaja fuera de la carpeta de Rooks: una tarea de código o de merge asignada a él quedará bloqueada.",
+    "worktreeBlocked": "Este backend trabaja fuera de la carpeta de Timon: una tarea de código o de merge asignada a él quedará bloqueada.",
     "fallback": {
       "short": "Respaldo",
       "label": "Respaldo si se agota la cuota",
       "inherit": "Ajuste de la serie o global",
-      "inheritHint": "Decide el plan de la serie; si no, el ajuste de Rooks",
+      "inheritHint": "Decide el plan de la serie; si no, el ajuste de Timon",
       "never": "No cambiar nunca por sí solo"
     },
     "permission": "Permiso",

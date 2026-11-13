@@ -96,7 +96,7 @@
   nsExec::ExecToLog /TIMEOUT=30000 '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\timon-cli-path.ps1" -Action ${action} -InstallDirectory "$INSTDIR" -Scope "$installMode"'
   Pop $0
   ${If} $0 != 0
-    DetailPrint "Rooks CLI PATH update failed (result: $0)."
+    DetailPrint "Timon CLI PATH update failed (result: $0)."
   ${EndIf}
   SendMessage 0xffff 0x001A 0 "STR:Environment" /TIMEOUT=5000
 !macroend
@@ -139,10 +139,10 @@
         ${If} $0 == 0
           DetailPrint "Prerequisites installed."
         ${Else}
-          DetailPrint "Some prerequisites were not installed (result $0, log $4). Rooks's setup screen offers them again."
+          DetailPrint "Some prerequisites were not installed (result $0, log $4). Timon's setup screen offers them again."
         ${EndIf}
       ${Else}
-        DetailPrint "Prerequisites skipped ($1). Rooks's setup screen offers them again."
+        DetailPrint "Prerequisites skipped ($1). Timon's setup screen offers them again."
       ${EndIf}
     ${EndIf}
   ${EndIf}
@@ -193,9 +193,9 @@
 
   timon_task_fallback:
   ${If} $0 != 0
-    DetailPrint "Removing the Rooks logon task directly (CLI result: $0)..."
+    DetailPrint "Removing the Timon logon task directly (CLI result: $0)..."
   ${Else}
-    DetailPrint "Verifying removal of the Rooks logon task..."
+    DetailPrint "Verifying removal of the Timon logon task..."
   ${EndIf}
   ; Independent commands: /End may fail for an already stopped task.
   nsExec::ExecToLog /TIMEOUT=10000 '"$SYSDIR\schtasks.exe" /End /TN TimonOrchestrator'
@@ -209,7 +209,7 @@
       ; Per-user uninstallers need elevation to remove an elevated logon task.
       ; Unattended uninstall must be launched elevated; never prompt under /S.
       ${IfNot} ${Silent}
-        DetailPrint "Windows permission is required to remove the Rooks logon task."
+        DetailPrint "Windows permission is required to remove the Timon logon task."
         ${StdUtils.ExecShellWaitEx} $1 $2 "$SYSDIR\cmd.exe" "runas" '/d /s /c ""$SYSDIR\schtasks.exe" /End /TN TimonOrchestrator & "$SYSDIR\schtasks.exe" /Delete /TN TimonOrchestrator /F"'
         ${If} $1 == "ok"
           ${StdUtils.WaitForProcEx} $0 $2
@@ -235,7 +235,7 @@
     Delete "$PROFILE\.timon\run\session-witness.dpapi"
     Delete "$PROFILE\.timon\run\service-repair-declined"
   ${EndIf}
-  DetailPrint "Rooks data has been kept."
+  DetailPrint "Timon data has been kept."
   ; Cleanup is best effort, including cancellation of UAC and an absent task.
   ClearErrors
   timon_task_done:

@@ -132,6 +132,11 @@ export function OnboardingShell({
   return (
     <OnboardingProvider value={nav}>
       <div className="fixed inset-0 overflow-hidden bg-background text-foreground">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{ backgroundImage: 'radial-gradient(ellipse 55% 45% at 50% 15%, hsl(var(--primary) / 0.10), transparent 70%)' }}
+        />
         {dots && (
           <div className="absolute left-1/2 top-[22px] z-20 flex -translate-x-1/2 gap-[7px]">
             <span className="sr-only">

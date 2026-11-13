@@ -10,7 +10,7 @@
       "failed": "Der Worktree konnte nicht gelöst werden: {error}"
     },
     "markMerged": {
-      "title": "Außerhalb von Rooks gemergt?",
+      "title": "Außerhalb von Timon gemergt?",
       "hint": "Wenn der Branch dieser Aufgabe bereits gemergt wurde (ein auf GitHub gemergter Pull Request, ein Merge von Hand), gib den Merge-Commit an: Die Aufgabe wird als erledigt geschlossen, und die abhängigen Aufgaben starten.",
       "shaLabel": "Merge-Commit",
       "shaPlaceholder": "Commit-SHA, z. B. bcd02520",
@@ -20,8 +20,8 @@
       "doneUnverified": "Aufgabe als gemergt markiert. Dieser Commit ist noch nicht in der lokalen Kopie des Repositorys und konnte daher nicht geprüft werden.",
       "notInBase": "Dieser Commit ist nicht im Basis-Branch des Repositorys. Prüfe die SHA des Merges.",
       "failed": "Die Aufgabe konnte nicht als gemergt markiert werden: {error}",
-      "unreachable": "Rooks hat nicht geantwortet",
-      "hintDone": "Diese Aufgabe ist erledigt, aber ihr Branch ging in Rooks nie durch einen Merge. Wurde er anderswo gemergt (ein auf GitHub gemergter Pull Request, ein Merge von Hand), gib den Merge-Commit an: Er wird festgehalten, und die abhängigen Aufgaben starten.",
+      "unreachable": "Timon hat nicht geantwortet",
+      "hintDone": "Diese Aufgabe ist erledigt, aber ihr Branch ging in Timon nie durch einen Merge. Wurde er anderswo gemergt (ein auf GitHub gemergter Pull Request, ein Merge von Hand), gib den Merge-Commit an: Er wird festgehalten, und die abhängigen Aufgaben starten.",
       "cardAction": "gemergt?"
     },
     "editTitle": "Aufgabe bearbeiten",
@@ -90,12 +90,12 @@
     "modelInheritHint": "Die Rolle des Projekts für diesen Aufgabentyp entscheidet, sonst der Agent",
     "modelInherited": "{model} (geerbt)",
     "modelHelp": "« Projektrolle » führt die Aufgabe mit dem aus, was die Rolle des Projekts für diesen Typ, sonst der Agent, festlegt.",
-    "worktreeBlocked": "Dieses Backend arbeitet außerhalb des Ordners von Rooks: Eine ihm zugewiesene Code- oder Merge-Aufgabe wird blockiert.",
+    "worktreeBlocked": "Dieses Backend arbeitet außerhalb des Ordners von Timon: Eine ihm zugewiesene Code- oder Merge-Aufgabe wird blockiert.",
     "fallback": {
       "short": "Fallback",
       "label": "Fallback, wenn das Kontingent ausgeht",
       "inherit": "Einstellung der Serie oder global",
-      "inheritHint": "Der Serienplan entscheidet, sonst die Einstellung von Rooks",
+      "inheritHint": "Der Serienplan entscheidet, sonst die Einstellung von Timon",
       "never": "Nie selbst wechseln"
     },
     "permission": "Berechtigung",

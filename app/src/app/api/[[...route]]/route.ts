@@ -1,12 +1,12 @@
 import type { NextRequest } from 'next/server';
-import { readSessionToken } from '@/lib/ui/proxy-auth';
+import { SESSION_COOKIE } from '@/lib/ui/proxy-auth';
 
 export const dynamic = 'force-dynamic';
 
 // Reserve unknown API paths so they cannot fall through to the plugin page shell.
 // A cookie is not proof of authentication: even its holder gets no resource here.
 export function GET(req: NextRequest): Response {
-  const hasCookie = Boolean(readSessionToken((name) => req.cookies.get(name)?.value));
+  const hasCookie = Boolean(req.cookies.get(SESSION_COOKIE)?.value?.trim());
   return Response.json(
     { error: hasCookie ? 'not_found' : 'unauthorized' },
     { status: hasCookie ? 404 : 401, headers: { 'cache-control': 'no-store' } },

@@ -5,25 +5,20 @@ import { instanceId } from './service.js';
 export type Identity = 'timon' | 'foreign';
 
 export type HealthResult =
-  /** `packaged` is absent before 0.1.6: unknown, never read as "not packaged".
-   *  `version` and `builtAt` are absent on a daemon from before this build. */
-  | { ok: true; status: number; identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean; version?: string; builtAt?: string | null }
+  /** `packaged` is absent before 0.1.6: unknown, never read as "not packaged". */
+  | { ok: true; status: number; identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean }
   | { ok: false; status: number | null; error?: string };
 
 /** The daemon's own id, as `plugins-bundled/http/routes.ts` publishes it. */
 export const SERVICE_ID = 'timon';
-/** An older Rooks package published `rooks`. Both are this product. */
-const PRODUCT_IDS = new Set([SERVICE_ID, 'rooks']);
 
-async function identify(res: Response): Promise<{ identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean; version?: string; builtAt?: string | null }> {
+async function identify(res: Response): Promise<{ identity: Identity; instance?: string; updatePending?: boolean; packaged?: boolean }> {
   if (!res.ok) return { identity: 'foreign' };
   try {
-    const body = await res.json() as { service?: unknown; instance?: unknown; status?: unknown; packaged?: unknown; version?: unknown; builtAt?: unknown } | null;
-    if (typeof body?.service !== 'string' || !PRODUCT_IDS.has(body.service)) return { identity: 'foreign' };
+    const body = await res.json() as { service?: unknown; instance?: unknown; status?: unknown; packaged?: unknown } | null;
+    if (body?.service !== SERVICE_ID) return { identity: 'foreign' };
     return { identity: 'timon', ...(body.status === 'update_pending' ? { updatePending: true } : {}), ...(typeof body.instance === 'string' ? { instance: body.instance } : {}),
-      ...(typeof body.packaged === 'boolean' ? { packaged: body.packaged } : {}),
-      ...(typeof body.version === 'string' ? { version: body.version } : {}),
-      ...(typeof body.builtAt === 'string' || body.builtAt === null ? { builtAt: body.builtAt } : {}) };
+      ...(typeof body.packaged === 'boolean' ? { packaged: body.packaged } : {}) };
   } catch { return { identity: 'foreign' }; }
 }
 

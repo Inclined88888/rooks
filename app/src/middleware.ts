@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { pageRequiresLogin } from './lib/auth';
 import { clientOrigin } from './lib/client-origin';
-import { readSessionToken } from './lib/ui/proxy-auth';
+import { SESSION_COOKIE } from './lib/ui/proxy-auth';
 import { URL_HEADER } from './lib/workspace-route';
 
 /**
@@ -50,7 +50,7 @@ function withUrl(req: NextRequest): NextResponse {
 
 export function middleware(req: NextRequest): NextResponse {
   if (!pageRequiresLogin(req.nextUrl.pathname)) return withUrl(req);
-  const session = readSessionToken((name) => req.cookies.get(name)?.value);
+  const session = req.cookies.get(SESSION_COOKIE)?.value?.trim();
   if (session) return withUrl(req);
   return redirectTo(req, '/login');
 }

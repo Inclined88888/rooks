@@ -21,6 +21,7 @@ import { PlatformGlobals } from '@/lib/plugin-host/platform-globals';
 import { ClientPluginHost } from '@/lib/plugin-host/client-plugin-host';
 import { SettingsDialogHost } from '@/components/settings/settings-dialog-host';
 import { FirstRunGate } from '@/components/first-run-gate';
+import { FIRST_RUN_ALLOWED, FIRST_RUN_SCHEME_KEY } from '@/lib/first-run-gate';
 import { BetaLockScreen } from '@/components/beta-lock-screen';
 import { betaLock, type BetaLock } from '@/lib/license';
 import { SlotSingle } from '@/lib/plugin-host/render';
@@ -114,7 +115,7 @@ async function loadInitialMe(): Promise<{ scheme: ColorScheme; owner: string | n
     if (!res.ok) return { scheme: DEFAULT_USER_PREFS.scheme, owner: null, theme: DEFAULT_USER_PREFS.theme };
     const body = (await res.json()) as { prefs?: { scheme?: unknown; theme?: unknown }; user?: { id?: unknown } | null };
     return {
-      scheme: body.prefs?.scheme === 'dark' ? 'dark' : 'light',
+      scheme: body.prefs?.scheme === 'light' ? 'light' : 'dark',
       owner: typeof body.user?.id === 'string' ? body.user.id : null,
       // The theme the page is painted with before the plugins mount (`ThemeFloor`).
       theme: typeof body.prefs?.theme === 'string' && body.prefs.theme ? body.prefs.theme : DEFAULT_USER_PREFS.theme,
@@ -243,10 +244,16 @@ export default async function RootLayout({
     >
       <head>
         <script type="importmap" dangerouslySetInnerHTML={{ __html: JSON.stringify({ imports: PLATFORM_MODULES }) }} />
-        {/* First paint is light unless Settings is following a dark system.
-            `suppressHydrationWarning` on <html> lets this class differ from the server's. */}
+        {/* Onboarding opens dark for everyone, and it must do so BEFORE the
+            first paint: the scheme is resolved on the server from the account
+            preference, which does not exist yet during a first run. Same
+            decision as `ThemeProvider` (`schemeFollowsSystem`), applied early
+            enough to be invisible; a scheme picked on the onboarding's switch
+            (`FIRST_RUN_SCHEME_KEY`) wins, as it does there. The slash character class survives template escaping.
+            `suppressHydrationWarning` on <html> is what lets the
+            class differ from the server's. */}
         <script
-          dangerouslySetInnerHTML={{ __html: `(function(){try{var mode=null;try{mode=localStorage.getItem('rooks.appearance.schemeMode');}catch(e){}var dark=false;if(mode==='system'){try{dark=window.matchMedia('(prefers-color-scheme: dark)').matches;}catch(e2){dark=false;}}var c=document.documentElement.classList;c.toggle('light',!dark);c.toggle('dark',dark);}catch(e){}})()` }}
+          dangerouslySetInnerHTML={{ __html: `(function(){try{var a=${JSON.stringify(FIRST_RUN_ALLOWED)};var p=location.pathname.replace(/[/]+$/,'')||'/';if(!a.some(function(x){return p===x||p.indexOf(x+'/')===0;}))return;var s=null;try{s=sessionStorage.getItem(${JSON.stringify(FIRST_RUN_SCHEME_KEY)});}catch(e){}var l=s==='light';var c=document.documentElement.classList;c.toggle('light',l);c.toggle('dark',!l);}catch(e){}})()` }}
         />
       </head>
       <body>

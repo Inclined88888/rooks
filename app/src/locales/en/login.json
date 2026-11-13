@@ -11,7 +11,7 @@
     "licenseRateLimited": "Too many attempts. Wait a moment and try again.",
     "setupInProgress": "Account creation is already in progress. Please wait and try again.",
     "setupToken": "Setup token",
-    "setupTokenHint": "This server is reachable from the network: run this command on the machine that hosts Rooks and paste the result.",
+    "setupTokenHint": "This server is reachable from the network: run this command on the machine that hosts Timon and paste the result.",
     "setupTokenInvalid": "Setup token missing or wrong. Run the command below on the server and try again.",
     "alreadySetUp": "An administrator account already exists. Reload this page to sign in.",
     "licenseUserLimit": "This license does not allow an administrator profile. Contact support.",
@@ -19,7 +19,7 @@
     "title": "Sign in",
     "sessionExpired": "Your session has expired. Sign in again.",
     "forgot": "Forgot your password?",
-    "description": "Sign in with the email and password of your Rooks account.",
+    "description": "Sign in with the email and password of your Timon account.",
     "email": "Email",
     "password": "Password",
     "submit": "Sign in",
@@ -27,10 +27,10 @@
     "failed": "Sign-in failed",
     "setupFailed": "Setup was refused",
     "freeUnavailable": "Free registration is not open for this version yet. Try again later or use an existing licence key.",
-    "clientUpgradeRequired": "Update Rooks to a supported release, then try again.",
+    "clientUpgradeRequired": "Update Timon to a supported release, then try again.",
     "transferPending": "The previous machine’s token has not expired yet. Wait before activating this machine.",
     "freeIncompatible": "Free cannot be activated with the current accounts or plugins. Your data has been kept.",
     "freeAccountRestricted": "Free allows the first active superadmin only. Your account and data are preserved. Ask that administrator to activate a license to restore access.",
-    "local": "This account is local: signing in never calls the Rooks server."
+    "local": "This account is local: signing in never calls the Timon server."
   }
 }

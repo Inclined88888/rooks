@@ -15,14 +15,11 @@ import {
   Brain, CalendarDays, Check, Clock, FolderOpen, Mail, MessageSquare, Plug, Puzzle, ScrollText, Workflow, Wrench, Sparkles,
   type LucideIcon,
 } from 'lucide-react';
+import { AgentMascotHost } from '@/components/mascot/agent-mascot';
 import { defaultLookFor, type AgentLook } from '@/components/mascot/agent-look';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { DiscoverSlideId } from '../discover-slides';
-
-function AgentMascotHost({ size = 40 }: { size?: number; look?: unknown; live?: boolean; label?: string | null }): ReactElement {
-  return <span aria-hidden className="inline-block" style={{ width: size, height: size }} />;
-}
 
 export type DiscoverDrawingProps = { look: AgentLook };
 

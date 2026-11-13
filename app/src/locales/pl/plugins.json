@@ -43,10 +43,10 @@
     "verified": "Zweryfikowana",
     "unverified": "Niezweryfikowana",
     "builtin": "Wbudowana",
-    "builtinHint": "Dostarczana z Rooks: można ją wyłączyć, nie odinstalować.",
+    "builtinHint": "Dostarczana z Timon: można ją wyłączyć, nie odinstalować.",
     "awaitingApproval": "Do zatwierdzenia na tym komputerze",
     "awaitingApprovalHint": "Ta maszyna ją uruchamia, ale jej kod interfejsu wczyta się tutaj dopiero, gdy ta sama wersja, z tym samym podpisem, zostanie zainstalowana i włączona na tym komputerze.",
-    "awaitingApprovalBuiltinHint": "Ta maszyna ją uruchamia, ale jej kod interfejsu wczyta się tutaj dopiero, gdy ten komputer będzie miał tę samą wersję wtyczki, z tym samym kodem interfejsu, i będzie ją miał włączoną. Dwa wydania Rooks mogą zawierać różny kod pod tą samą wersją wtyczki: zaktualizuj starszą maszynę.",
+    "awaitingApprovalBuiltinHint": "Ta maszyna ją uruchamia, ale jej kod interfejsu wczyta się tutaj dopiero, gdy ten komputer będzie miał tę samą wersję wtyczki, z tym samym kodem interfejsu, i będzie ją miał włączoną. Dwa wydania Timon mogą zawierać różny kod pod tą samą wersją wtyczki: zaktualizuj starszą maszynę.",
     "modules": {
       "@timon/db": {
         "label": "Baza danych",
@@ -178,11 +178,11 @@
       },
       "@timon/terminal-web": {
         "label": "Wbudowany terminal",
-        "description": "Terminal wewnątrz Rooks — na komputerze, w przeglądarce lub telefonie — z powłoką na tej maszynie. Zarezerwowany dla kont, które mogą go otwierać."
+        "description": "Terminal wewnątrz Timon — na komputerze, w przeglądarce lub telefonie — z powłoką na tej maszynie. Zarezerwowany dla kont, które mogą go otwierać."
       },
       "@timon/ui-documents": {
         "label": "Dokumenty w czacie",
-        "description": "Interaktywne dokumenty HTML pokazywane w rozmowie przez agenta, ciebie lub wtyczkę, odizolowane od Rooks w ramce piaskownicy."
+        "description": "Interaktywne dokumenty HTML pokazywane w rozmowie przez agenta, ciebie lub wtyczkę, odizolowane od Timon w ramce piaskownicy."
       },
       "@timon/orchestrator-self": {
         "label": "Demon",
@@ -210,11 +210,11 @@
       },
       "@timon/telemetry": {
         "label": "Statystyki użycia",
-        "description": "Wysyła anonimowe statystyki użycia do zespołu Rooks: które funkcje są używane, jak przebiegają tury, gdzie zatrzymuje się konfiguracja. Nigdy twoje treści, nazwy ani ścieżki. Można to wyłączyć w ustawieniach Prywatność."
+        "description": "Wysyła anonimowe statystyki użycia do zespołu Timon: które funkcje są używane, jak przebiegają tury, gdzie zatrzymuje się konfiguracja. Nigdy twoje treści, nazwy ani ścieżki. Można to wyłączyć w ustawieniach Prywatność."
       },
       "@timon/machines": {
         "label": "Maszyny",
-        "description": "Paruj inne maszyny Rooks z tą i przechowuj ich dostęp w sejfie, aby przełączać interfejs między maszynami. Wyłączone, dopóki tego nie włączysz."
+        "description": "Paruj inne maszyny Timon z tą i przechowuj ich dostęp w sejfie, aby przełączać interfejs między maszynami. Wyłączone, dopóki tego nie włączysz."
       },
       "@timon/company": {
         "label": "Firma",
@@ -262,8 +262,8 @@
       "tampered": "Zmieniony pakiet",
       "unsignedLoads": "Niepodpisana — wczytuje się w trybie dewelopera",
       "unsignedBlocked": "Niepodpisana — nie zostanie wczytana",
-      "manifestRefused": "Rooks nie może użyć tej wtyczki: {reason}",
-      "nodeEngineRefused": "Ta wtyczka nie działa na wersji Node używanej przez ten Rooks: {reason}",
+      "manifestRefused": "Timon nie może użyć tej wtyczki: {reason}",
+      "nodeEngineRefused": "Ta wtyczka nie działa na wersji Node używanej przez ten Timon: {reason}",
       "tamperedHint": "Pliki nie zgadzają się już z podpisem: pakiet został zmieniony po podpisaniu. Nie można go zainstalować.",
       "permissions": "Prosi o",
       "permissionsNone": "brak uprawnień",
@@ -286,7 +286,7 @@
           "unreadable": "Można ją odczytać dopiero po instalacji: zostanie zainstalowana bez przyznania czegokolwiek. Przyznaj jej sekrety na stronie Sekrety; jeśli jest dostawcą, pozostanie nieaktywna, dopóki nie autoryzujesz jej w {settingsPath}.",
           "unresolved": "Żadna z zależności tego pakietu jej nie dostarcza: nie zostanie zainstalowana, więc nic dla niej nie jest wymagane.",
           "tampered": "Jej pliki nie zgadzają się już z podpisem: nie zostanie wczytana, więc nic dla niej nie jest wymagane.",
-          "nodeEngine": "Nie działa na wersji Node używanej przez ten Rooks: nie zostanie wczytana, więc nic dla niej nie jest wymagane. {reason}"
+          "nodeEngine": "Nie działa na wersji Node używanej przez ten Timon: nie zostanie wczytana, więc nic dla niej nie jest wymagane. {reason}"
         },
         "refused": {
           "not-installed": "„{name}” nie została zainstalowana, więc jej programy nie zostały autoryzowane.",
@@ -305,7 +305,7 @@
         "read": "Czyta sekrety z sejfu po nazwie, nie wymieniając ich w tym arkuszu: każdy przekazujesz tej wtyczce w Sekretach albo z karty, którą wyświetla, gdy o niego prosi.",
         "broker": "Wywołuje API w imieniu tożsamości z sejfu, nie widząc ich kluczy — tylko tych przyznanych jej z nazwy.",
         "brokerNoHttp": "Nie deklaruje http:outbound, więc jej wywołania API przez pośrednika zostaną odrzucone.",
-        "network": "Jej dostęp do sieci jest ograniczony do hostów otwartych w rooks.config.json — dla wszystkich wtyczek (pluginPolicy.http.allow) lub tylko dla tej (pluginPolicy.http.byPlugin) — oraz do adresów zatwierdzonych połączeń.",
+        "network": "Jej dostęp do sieci jest ograniczony do hostów otwartych w timon.config.json — dla wszystkich wtyczek (pluginPolicy.http.allow) lub tylko dla tej (pluginPolicy.http.byPlugin) — oraz do adresów zatwierdzonych połączeń.",
         "secretsLead": "Sekrety, które wymienia. Zaznaczony sekret jest przyznawany tylko tej wtyczce; odznaczenie nigdy nie odbiera przyznania (to robi się w Sekretach).",
         "hostsLead": "Hosty, z którymi się łączy. Zaznaczony host jest otwierany tylko dla tej wtyczki.",
         "hostOwn": "Już otwarty dla tej wtyczki. Odznacz, aby go zamknąć: jej hosty zostaną zastąpione zaznaczonymi tutaj.",
@@ -325,7 +325,7 @@
         "choose": "Wybierz na stronie Sekrety"
       },
       "disclaimerTitle": "Wtyczka zewnętrzna",
-      "disclaimer": "Ta wtyczka nie jest tworzona, sprawdzana ani gwarantowana przez Rooks, a Rooks nie odpowiada za jej działanie. Po instalacji działa wewnątrz Rooks z uprawnieniami twojego konta. Instaluj tylko wtyczki od autorów, którym ufasz.",
+      "disclaimer": "Ta wtyczka nie jest tworzona, sprawdzana ani gwarantowana przez Timon, a Timon nie odpowiada za jej działanie. Po instalacji działa wewnątrz Timon z uprawnieniami twojego konta. Instaluj tylko wtyczki od autorów, którym ufasz.",
       "cancel": "Anuluj",
       "installing": "Instalowanie…",
       "reinstall": "Zainstaluj tę wersję",
@@ -333,7 +333,7 @@
       "refreshed": "{reason} Arkusz poniżej jest aktualny: przejrzyj go i zainstaluj ponownie.",
       "errors": {
         "unauthenticated": "Twoja sesja wygasła — zaloguj się ponownie.",
-        "forbidden": "Tylko superadministrator zalogowany do Rooks może zainstalować wtyczkę.",
+        "forbidden": "Tylko superadministrator zalogowany do Timon może zainstalować wtyczkę.",
         "too-large": "Ta wtyczka jest za duża (najwyżej archiwum 25 MB, 200 MB plików).",
         "too-many-entries": "Ta wtyczka zawiera zbyt wiele plików.",
         "not-gzip": "To nie jest archiwum wtyczki: oczekiwano .tgz lub .zip.",
@@ -343,22 +343,22 @@
         "corrupt": "To archiwum jest uszkodzone.",
         "not-archive": "To nie jest archiwum wtyczki: oczekiwano .tgz lub .zip.",
         "not-zip": "To nie jest prawidłowe archiwum .zip.",
-        "zip64": "Ten .zip używa formatu zip64, którego Rooks nie czyta. Spakuj wtyczkę ponownie standardowym narzędziem lub użyj .tgz.",
+        "zip64": "Ten .zip używa formatu zip64, którego Timon nie czyta. Spakuj wtyczkę ponownie standardowym narzędziem lub użyj .tgz.",
         "encrypted": "Ten .zip jest chroniony hasłem. Spakuj wtyczkę ponownie bez hasła.",
         "multi-volume": "Ten .zip jest podzielony na kilka części. Utwórz pojedynczy .zip.",
-        "compression": "Ten .zip używa metody kompresji, której Rooks nie czyta. Spakuj wtyczkę ponownie ze standardową kompresją.",
-        "not-a-plugin": "To nie jest wtyczka Rooks: brak package.json z manifestem `timon`.",
+        "compression": "Ten .zip używa metody kompresji, której Timon nie czyta. Spakuj wtyczkę ponownie ze standardową kompresją.",
+        "not-a-plugin": "To nie jest wtyczka Timon: brak package.json z manifestem `timon`.",
         "invalid-path": "Tej ścieżki nie można użyć.",
         "forbidden-path": "Z tego folderu nie można instalować wtyczek.",
         "not-found": "Niczego już tam nie znaleziono.",
         "expired": "Ten podgląd wygasł. Wybierz wtyczkę ponownie.",
         "tampered": "Pakiet został zmieniony po podpisaniu. Nie można go zainstalować.",
         "manifest": "Manifest wtyczki jest nieprawidłowy. Nie można jej zainstalować.",
-        "npm-missing": "npm nie jest dostępny na maszynie, na której działa Rooks. Zainstaluj Node.js i spróbuj ponownie.",
-        "install-failed": "Instalacja nie powiodła się. Szczegóły są w dzienniku Rooks.",
+        "npm-missing": "npm nie jest dostępny na maszynie, na której działa Timon. Zainstaluj Node.js i spróbuj ponownie.",
+        "install-failed": "Instalacja nie powiodła się. Szczegóły są w dzienniku Timon.",
         "name-taken": "Inny pakiet używa już tej nazwy w folderze wtyczek.",
         "generic": "Demon odmówił (HTTP {status}).",
-        "unreadable": "Rooks nie ma uprawnień do odczytu tej lokalizacji. Na macOS zezwól na to w Ustawieniach systemowych › Prywatność i ochrona albo przenieś wtyczkę w inne miejsce.",
+        "unreadable": "Timon nie ma uprawnień do odczytu tej lokalizacji. Na macOS zezwól na to w Ustawieniach systemowych › Prywatność i ochrona albo przenieś wtyczkę w inne miejsce.",
         "mismatch": "To, o co prosi ta wtyczka (program, sekret lub host), zmieniło się od czasu wyświetlenia.",
         "refused": "Ten program nigdy nie może być uruchamiany przez wtyczkę.",
         "not-provider": "Ta wtyczka nie jest dostawcą.",
@@ -373,7 +373,7 @@
   },
   "providersSettings": {
     "title": "Dostawcy",
-    "description": "Wtyczki dostawców wnoszą do Rooks usługę AI. Każdy program uruchamiany przez dostawcę jest tutaj autoryzowany według rozwiązanej ścieżki, zanim będzie mógł działać.",
+    "description": "Wtyczki dostawców wnoszą do Timon usługę AI. Każdy program uruchamiany przez dostawcę jest tutaj autoryzowany według rozwiązanej ścieżki, zanim będzie mógł działać.",
     "cancel": "Anuluj",
     "consent": {
       "prompts": "Otrzymuje każdą instrukcję i każdą odpowiedź obsługiwanych misji.",
@@ -384,7 +384,7 @@
       "osCredentialAccount": "Czyta wpis „{service}” ({account}) z systemowego magazynu poświadczeń (pęk kluczy macOS). Tylko odczyt."
     },
     "install": {
-      "allow": "Zezwól Rooks na uruchamianie programów wymienionych powyżej.",
+      "allow": "Zezwól Timon na uruchamianie programów wymienionych powyżej.",
       "allowHint": "Bez tego dostawca jest zainstalowany, ale pozostaje nieaktywny, dopóki nie autoryzujesz go w {settingsPath}."
     },
     "plugins": {
@@ -394,7 +394,7 @@
       "notFound": "niezainstalowany na tej maszynie",
       "authorize": "Przejrzyj i autoryzuj",
       "authorizeTitle": "Autoryzuj {name}",
-      "authorizeBody": "Rooks rozwiązał te programy na tej maszynie. Zezwalaj tylko na ścieżki, które rozpoznajesz.",
+      "authorizeBody": "Timon rozwiązał te programy na tej maszynie. Zezwalaj tylko na ścieżki, które rozpoznajesz.",
       "authorizeConfirm": "Zezwól na te programy",
       "authorized": "Autoryzowano {name}.",
       "state": {
@@ -412,10 +412,10 @@
     },
     "acp": {
       "title": "Rejestr ACP",
-      "description": "Agenci opublikowani w oficjalnym rejestrze Agent Client Protocol. Rooks pobiera program, sprawdza go i uruchamia jako backend.",
+      "description": "Agenci opublikowani w oficjalnym rejestrze Agent Client Protocol. Timon pobiera program, sprawdza go i uruchamia jako backend.",
       "browse": "Przeglądaj rejestr",
       "refresh": "Odśwież",
-      "stale": "Nie udało się połączyć z rejestrem; to ostatnia lista odczytana przez Rooks.",
+      "stale": "Nie udało się połączyć z rejestrem; to ostatnia lista odczytana przez Timon.",
       "verified": "Zweryfikowany sha256",
       "noHash": "Brak opublikowanego skrótu",
       "unsupported": "Niedostępny tutaj: {reason}",
@@ -438,7 +438,7 @@
       "confirmAction": "Mimo to zainstaluj"
     },
     "errors": {
-      "forbidden": "Tylko superadministrator zalogowany do Rooks może zarządzać dostawcami.",
+      "forbidden": "Tylko superadministrator zalogowany do Timon może zarządzać dostawcami.",
       "generic": "Demon odmówił (HTTP {status}).",
       "mismatch": "Program zmienił się od czasu wyświetlenia. Przejrzyj go ponownie.",
       "refused": "Ten program nigdy nie może być uruchamiany przez wtyczkę.",
@@ -452,14 +452,14 @@
       "checksum": "Pobrany plik nie zgadza się z opublikowaną sumą kontrolną. Został usunięty.",
       "archive": "Archiwum zostało odrzucone jako niebezpieczne.",
       "command-missing": "Programu wskazanego przez rejestr nie ma w archiwum.",
-      "definition-refused": "Rooks odrzucił tego agenta: jego opis jest wewnętrznie sprzeczny.",
-      "authorize-failed": "Nie udało się autoryzować programu. Szczegóły są w dzienniku Rooks.",
-      "failed": "Operacja nie powiodła się. Szczegóły są w dzienniku Rooks."
+      "definition-refused": "Timon odrzucił tego agenta: jego opis jest wewnętrznie sprzeczny.",
+      "authorize-failed": "Nie udało się autoryzować programu. Szczegóły są w dzienniku Timon.",
+      "failed": "Operacja nie powiodła się. Szczegóły są w dzienniku Timon."
     }
   },
   "binariesSettings": {
     "title": "Pliki binarne CLI",
-    "description": "Gdzie Rooks znalazł narzędzie wiersza poleceń każdego dostawcy AI na tej maszynie. Jeśli któregoś brakuje lub jest w nietypowym miejscu, przypnij jego pełną ścieżkę: zadziała przy następnej misji, bez restartu Rooks.",
+    "description": "Gdzie Timon znalazł narzędzie wiersza poleceń każdego dostawcy AI na tej maszynie. Jeśli któregoś brakuje lub jest w nietypowym miejscu, przypnij jego pełną ścieżkę: zadziała przy następnej misji, bez restartu Timon.",
     "recheck": "Sprawdź ponownie",
     "rechecked": "Pliki binarne sprawdzone ponownie.",
     "none": "Żaden lokalny dostawca nie używa narzędzia wiersza poleceń.",
@@ -473,7 +473,7 @@
     "save": "Zapisz ścieżkę",
     "clear": "Usuń przypięcie",
     "saved": "{name}: ścieżka zapisana. Nowe misje będą jej używać.",
-    "cleared": "{name}: przypięcie usunięte. Rooks znowu szuka go sam.",
+    "cleared": "{name}: przypięcie usunięte. Timon znowu szuka go sam.",
     "state": {
       "found": "Znaleziony",
       "pinned": "Przypięty",
@@ -488,7 +488,7 @@
       "path_not_file": "To folder. Wybierz sam plik programu.",
       "path_not_executable": "Tego pliku nie można uruchomić: nie jest wykonywalny.",
       "no_config": "Najpierw dokończ konfigurację.",
-      "config_unreadable": "Nie można odczytać rooks.config.json. Napraw go lub przywróć, a potem sprawdź ponownie.",
+      "config_unreadable": "Nie można odczytać timon.config.json. Napraw go lub przywróć, a potem sprawdź ponownie.",
       "invalid_body": "Tej ścieżki nie można zapisać.",
       "browse": "Nie udało się otworzyć wyboru pliku.",
       "generic": "Zmiana nie powiodła się (błąd {status})."

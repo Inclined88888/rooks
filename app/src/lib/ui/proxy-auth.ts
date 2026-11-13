@@ -10,16 +10,6 @@
  * that machine's device token instead: a local session never leaves.
  */
 export const SESSION_COOKIE = 'timon_session';
-/** Older Rooks test builds signed the same session in under this name. */
-export const LEGACY_SESSION_COOKIE = 'rooks_session';
-
-/** The live session token: this build's cookie, or the one an older Rooks build left. */
-export function readSessionToken(get: (name: string) => string | null | undefined): string | undefined {
-  const primary = get(SESSION_COOKIE)?.trim();
-  if (primary) return primary;
-  const legacy = get(LEGACY_SESSION_COOKIE)?.trim();
-  return legacy || undefined;
-}
 
 export function proxyAuthHeaders(opts: {
   sessionToken?: string | null;

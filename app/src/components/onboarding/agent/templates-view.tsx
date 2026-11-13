@@ -2,13 +2,10 @@
 
 /** Beginner (mockup `agentBeginnerView`): six ready-made profiles, each with its mascot. */
 import type { ReactElement } from 'react';
+import { AgentMascotHost } from '@/components/mascot/agent-mascot';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { TEMPLATE_IDS, templateLook, type TemplateId } from '../agent-draft';
-
-function AgentMascotHost({ size = 40 }: { size?: number; look?: unknown; shadow?: boolean; fit?: boolean }): ReactElement {
-  return <span aria-hidden className="inline-block shrink-0" style={{ width: size, height: size }} />;
-}
 
 export function TemplatesView({ picked, onPick }: { picked: TemplateId | null; onPick: (id: TemplateId) => void }): ReactElement {
   return (

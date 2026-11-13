@@ -12,7 +12,7 @@ import { ChevronRight } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { AgentLook } from '@/components/mascot/agent-look';
-import { usePrefersReducedMotion } from '@/components/mascot/agent-mascot';
+import { AgentMascotHost, usePrefersReducedMotion } from '@/components/mascot/agent-mascot';
 import { useOnboarding } from '../onboarding-context';
 import { useOnboardingProfile, type OnboardingProfile } from '../onboarding-profile';
 
@@ -81,8 +81,8 @@ export function ProfileStep(): ReactElement {
               (recorded === row.profile || picked === row.profile) && 'bg-muted',
             )}
           >
-            <span aria-hidden className="grid size-[46px] shrink-0 place-items-center rounded-xl bg-muted text-sm font-semibold text-muted-foreground">
-              {t(`onboarding.profile.${row.profile}.title`).slice(0, 1)}
+            <span className={cn('shrink-0', picked === row.profile && 'timon-mascot-jump')}>
+              <AgentMascotHost look={row.look} size={46} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[14.5px] font-semibold">{t(`onboarding.profile.${row.profile}.title`)}</span>

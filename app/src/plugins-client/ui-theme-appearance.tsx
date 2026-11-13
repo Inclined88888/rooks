@@ -123,10 +123,6 @@ function RadioList({
 export function AppearanceSettings(): ReactElement {
   const caps = useCapabilities();
   const { scheme } = useColorScheme();
-  const [schemeMode, setSchemeMode] = useState<'light' | 'system'>('light');
-  useEffect(() => {
-    try { setSchemeMode(window.localStorage.getItem('rooks.appearance.schemeMode') === 'system' ? 'system' : 'light'); } catch { /* private mode */ }
-  }, []);
   const [native, setNative] = useState<NativeAppearance>(DEFAULT_APPEARANCE);
   const [variantReady, setVariantReady] = useState(false);
   useEffect(() => { void loadLayout({ scope: APPEARANCE_SCOPE, storage: null }).then((out) => {
@@ -283,28 +279,6 @@ export function AppearanceSettings(): ReactElement {
 
   return (
     <div className="flex flex-col gap-2">
-      <fieldset className="pb-2 pt-4">
-        <legend className="text-sm font-medium">{t('onboarding.scheme.label')}</legend>
-        <div className="mt-3 flex flex-wrap gap-4 text-[13px]">
-          {(['light', 'system'] as const).map((choice) => (
-            <label key={choice} className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="scheme-mode"
-                checked={schemeMode === choice}
-                onChange={() => {
-                  const painted = choice === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                  window.localStorage.setItem('rooks.appearance.schemeMode', choice);
-                  setSchemeMode(choice);
-                  window.dispatchEvent(new Event('rooks-scheme-mode'));
-                  void fetch('/api/ui/prefs', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scheme: painted }) });
-                }}
-              />
-              <span>{t(`onboarding.scheme.${choice}`)}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
       {selectedTheme === '@timon/ui-theme' && <fieldset className="pb-6 pt-4">
         <legend className="text-sm font-medium">{t('appearance.styleTitle')}</legend>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t('appearance.styleHint')}</p>
